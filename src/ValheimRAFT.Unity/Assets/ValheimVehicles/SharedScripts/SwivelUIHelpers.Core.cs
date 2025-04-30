@@ -20,17 +20,17 @@ namespace ValheimVehicles.SharedScripts.UI
       return spacer;
     }
 
-    public static void ApplyLabelStyle(TextMeshProUGUI label, int fontSize = SwivelUIConstants.FontSizeRow)
+    public static void ApplyLabelStyle(TextMeshProUGUI label, Unity2dStyles styles)
     {
-      label.fontSize = fontSize;
-      label.color = SwivelUIConstants.LabelColor;
+      label.fontSize = styles.FontSizeRowLabel;
+      label.color = styles.LabelColor;
       label.alignment = TextAlignmentOptions.Left;
     }
 
-    public static void ApplyInputStyle(TextMeshProUGUI label)
+    public static void ApplyInputStyle(TextMeshProUGUI label, Unity2dStyles styles)
     {
-      label.fontSize = SwivelUIConstants.FontSizeRow;
-      label.color = SwivelUIConstants.InputTextColor;
+      label.fontSize = styles.FontSizeDropdownLabel;
+      label.color = styles.LabelColor;
       label.alignment = TextAlignmentOptions.Left;
     }
   }

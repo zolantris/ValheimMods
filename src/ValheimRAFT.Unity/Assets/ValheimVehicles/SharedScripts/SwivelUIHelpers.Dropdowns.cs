@@ -12,7 +12,15 @@ namespace ValheimVehicles.SharedScripts.UI
 {
   public static partial class SwivelUIHelpers
   {
-    public static TMP_Dropdown AddDropdownRow(Transform parent, string label, string[] options, UnityAction<int> onChanged)
+    private static string GetCaptionText(string selectedOption, string[] options)
+    {
+      return selectedOption != ""
+        ? selectedOption
+        : options.Length > 0
+          ? options[0]
+          : "";
+    }
+    public static TMP_Dropdown AddDropdownRow(Transform parent, Unity2dStyles styles, string label, string[] options, string selectedOption, UnityAction<int> onChanged)
     {
       // === Root Vertical Group ===
       var root = new GameObject($"{label}_DropdownGroup", typeof(RectTransform), typeof(VerticalLayoutGroup));
@@ -29,8 +37,8 @@ namespace ValheimVehicles.SharedScripts.UI
       labelGO.transform.SetParent(root.transform, false);
       var labelText = labelGO.GetComponent<TextMeshProUGUI>();
       labelText.text = label;
-      labelText.fontSize = SwivelUIConstants.FontSizeRow;
-      labelText.color = SwivelUIConstants.LabelColor;
+      labelText.fontSize = styles.FontSizeRowLabel;
+      labelText.color = styles.LabelColor;
       labelText.alignment = TextAlignmentOptions.Left;
       labelText.enableWordWrapping = false;
 
@@ -57,12 +65,20 @@ namespace ValheimVehicles.SharedScripts.UI
 
       // === Caption ===
       var captionGO = new GameObject("Caption", typeof(TextMeshProUGUI));
+      var captionRect = captionGO.GetComponent<RectTransform>();
+      captionRect.anchorMin = new Vector2(0, 0.5f);
+      captionRect.anchorMax = new Vector2(1, 0.5f);
+      captionRect.offsetMin = new Vector2(styles.DropdownContentPaddingLeft, 0);
+      captionRect.offsetMax = new Vector2(-styles.DropdownContentPaddingRight, 0);
+      captionRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, 40);
+
       captionGO.transform.SetParent(dropdownGO.transform, false);
       var caption = captionGO.GetComponent<TextMeshProUGUI>();
-      caption.text = options.Length > 0 ? options[0] : "";
-      caption.color = SwivelUIConstants.InputTextColor;
+      caption.text = GetCaptionText(selectedOption, options);
+      caption.color = styles.InputTextColor;
       caption.alignment = TextAlignmentOptions.Left;
       caption.enableWordWrapping = false;
+      caption.enableAutoSizing = true;
       caption.overflowMode = TextOverflowModes.Ellipsis;
       dropdown.captionText = caption;
 
@@ -73,9 +89,9 @@ namespace ValheimVehicles.SharedScripts.UI
       var templateRT = templateGO.GetComponent<RectTransform>();
       templateRT.pivot = new Vector2(0.5f, 1f);
       templateRT.anchorMin = new Vector2(0, 0);
-      templateRT.anchorMax = new Vector2(1, 0);
-      templateRT.sizeDelta = new Vector2(0, SwivelUIConstants.DropdownHeight);
-      templateGO.GetComponent<Image>().color = new Color(0.75f, 0.75f, 0.75f, 1f); // Medium gray
+      templateRT.anchorMax = new Vector2(1, 1);
+      templateRT.sizeDelta = new Vector2(0, Mathf.Clamp(styles.DropdownItemHeight * options.Length + styles.DropdownItemHeight, 150f, styles.DropdownContentHeight));
+      templateGO.GetComponent<Image>().color = styles.DropdownOptionsContainerColor;
 
       dropdown.template = templateRT;
       var scrollRect = templateGO.GetComponent<ScrollRect>();
@@ -90,7 +106,7 @@ namespace ValheimVehicles.SharedScripts.UI
       viewportRT.anchorMin = Vector2.zero;
       viewportRT.anchorMax = Vector2.one;
       viewportRT.offsetMin = Vector2.zero;
-      viewportRT.offsetMax = Vector2.zero;
+      viewportRT.offsetMax = Vector2.one;
 
       scrollRect.viewport = viewportRT;
       viewportGO.GetComponent<Image>().color = new Color(0.85f, 0.85f, 0.85f, 1f);
@@ -99,9 +115,9 @@ namespace ValheimVehicles.SharedScripts.UI
       var contentGO = new GameObject("Content", typeof(RectTransform), typeof(VerticalLayoutGroup), typeof(ContentSizeFitter));
       contentGO.transform.SetParent(viewportGO.transform, false);
       var contentRT = contentGO.GetComponent<RectTransform>();
-      contentRT.anchorMin = new Vector2(0, 1);
+      contentRT.anchorMin = new Vector2(0, 0);
       contentRT.anchorMax = new Vector2(1, 1);
-      contentRT.pivot = new Vector2(0.5f, 1f);
+      contentRT.pivot = new Vector2(0, 1f);
       contentRT.anchoredPosition = Vector2.zero;
       contentRT.sizeDelta = new Vector2(0, 0);
       scrollRect.content = contentRT;
@@ -109,8 +125,8 @@ namespace ValheimVehicles.SharedScripts.UI
       var contentLayout = contentGO.GetComponent<VerticalLayoutGroup>();
       contentLayout.childControlHeight = true;
       contentLayout.childForceExpandHeight = false;
-      contentLayout.spacing = 2f;
-      contentLayout.padding = new RectOffset(0, 0, 4, 4); // top and bottom spacing
+      contentLayout.spacing = 18f;
+      contentLayout.padding = new RectOffset(styles.DropdownContentPaddingLeft, styles.DropdownContentPaddingRight, styles.DropdownContentPaddingTop, styles.DropdownContentPaddingBottom); // Extra padding top/bottom between items
 
       var contentFitter = contentGO.GetComponent<ContentSizeFitter>();
       contentFitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
@@ -120,7 +136,9 @@ namespace ValheimVehicles.SharedScripts.UI
       itemGO.transform.SetParent(contentGO.transform, false);
       var itemRT = itemGO.GetComponent<RectTransform>();
       itemRT.anchorMin = new Vector2(0, 0.5f);
-      itemRT.anchorMax = new Vector2(0, 0.5f);
+      itemRT.anchorMax = new Vector2(1, 0.5f);
+      itemRT.offsetMin = new Vector2(styles.DropdownContentPaddingLeft, 0);
+      itemRT.offsetMax = new Vector2(styles.DropdownContentPaddingRight, 0);
       itemRT.pivot = new Vector2(0, 0.5f);
 
       var itemBG = itemGO.AddComponent<Image>();
@@ -131,17 +149,26 @@ namespace ValheimVehicles.SharedScripts.UI
       itemToggle.graphic = itemBG;
 
       var itemLayout = itemGO.AddComponent<LayoutElement>();
-      itemLayout.minHeight = SwivelUIConstants.DropdownItemHeight;
-      itemLayout.preferredHeight = SwivelUIConstants.DropdownItemHeight;
+      itemLayout.minHeight = styles.DropdownItemHeight;
+      itemLayout.preferredHeight = styles.DropdownItemHeight;
 
       var itemLabelGO = new GameObject("Item Label", typeof(TextMeshProUGUI));
       itemLabelGO.transform.SetParent(itemGO.transform, false);
+
+      var itemLabelRT = itemLabelGO.GetComponent<RectTransform>();
+      itemLabelRT.anchorMin = new Vector2(0, 0.5f);
+      itemLabelRT.anchorMax = new Vector2(1, 0.5f);
+      itemLabelRT.pivot = new Vector2(0, 0.5f);
+      itemLabelRT.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, 0);
+
       var itemLabel = itemLabelGO.GetComponent<TextMeshProUGUI>();
       itemLabel.text = "Option";
-      itemLabel.color = SwivelUIConstants.InputTextColor;
+      itemLabel.color = styles.InputTextColor;
       itemLabel.alignment = TextAlignmentOptions.Left;
-      itemLabel.enableWordWrapping = false;
-      itemLabel.overflowMode = TextOverflowModes.Ellipsis;
+      itemLabel.enableWordWrapping = true;
+      itemLabel.overflowMode = TextOverflowModes.Overflow;
+      itemLabel.fontSize = styles.FontSizeRowLabel;
+      itemLabel.enableAutoSizing = true;
 
       dropdown.itemText = itemLabel;
       dropdown.itemImage = itemBG;

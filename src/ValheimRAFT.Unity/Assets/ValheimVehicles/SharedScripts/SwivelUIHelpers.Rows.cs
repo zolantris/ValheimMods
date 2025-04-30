@@ -10,7 +10,7 @@ namespace ValheimVehicles.SharedScripts.UI
 {
   public static partial class SwivelUIHelpers
   {
-    public static GameObject CreateRow(Transform parent, string label, out TextMeshProUGUI labelText)
+    public static GameObject CreateRow(Transform parent, Unity2dStyles styles, string label, out TextMeshProUGUI labelText)
     {
       var rowGO = new GameObject($"{label}_Row", typeof(RectTransform), typeof(HorizontalLayoutGroup));
       rowGO.transform.SetParent(parent, false);
@@ -25,13 +25,13 @@ namespace ValheimVehicles.SharedScripts.UI
       labelGO.transform.SetParent(rowGO.transform, false);
       labelText = labelGO.GetComponent<TextMeshProUGUI>();
       labelText.text = label;
-      labelText.fontSize = SwivelUIConstants.FontSizeRow;
-      labelText.color = SwivelUIConstants.LabelColor;
+      labelText.fontSize = styles.FontSizeRowLabel;
+      labelText.color = styles.LabelColor;
       labelText.alignment = TextAlignmentOptions.Left;
 
       var labelLayout = labelGO.GetComponent<LayoutElement>();
-      labelLayout.minWidth = SwivelUIConstants.LabelMinWidth;
-      labelLayout.preferredWidth = SwivelUIConstants.LabelPreferredWidth;
+      labelLayout.minWidth = styles.LabelMinWidth;
+      labelLayout.preferredWidth = styles.LabelPreferredWidth;
 
       return rowGO;
     }

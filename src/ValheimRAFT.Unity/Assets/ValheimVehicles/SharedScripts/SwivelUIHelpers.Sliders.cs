@@ -10,9 +10,9 @@ namespace ValheimVehicles.SharedScripts.UI
 {
   public static partial class SwivelUIHelpers
   {
-    public static Slider AddSliderRow(Transform parent, string label, float min, float max, float initial, UnityAction<float> onChanged)
+    public static Slider AddSliderRow(Transform parent, Unity2dStyles styles, string label, float min, float max, float initial, UnityAction<float> onChanged)
     {
-      var row = CreateRow(parent, label, out _);
+      var row = CreateRow(parent, styles, label, out _);
 
       var sliderGO = new GameObject("Slider", typeof(RectTransform), typeof(Slider));
       sliderGO.transform.SetParent(row.transform, false);

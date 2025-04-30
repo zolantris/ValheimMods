@@ -38,7 +38,7 @@ namespace ValheimVehicles.SharedScripts
     [Header("Door Mode Settings")]
     [SerializeField] private bool isDoorOpen;
     [SerializeField] private float doorLerpSpeed = 2f;
-    [SerializeField] private DoorHingeMode hingeMode = DoorHingeMode.ZOnly;
+    [SerializeField] public DoorHingeMode hingeMode = DoorHingeMode.ZOnly;
     [SerializeField] private HingeDirection zHingeDirection = HingeDirection.Forward;
     [SerializeField] private HingeDirection yHingeDirection = HingeDirection.Forward;
 
@@ -84,29 +84,36 @@ namespace ValheimVehicles.SharedScripts
       {
         case SwivelMode.None:
           break;
-        case SwivelMode.TargetWindDirection:
-          _targetRotation = CalculateTargetWindDirectionRotation();
-          break;
-        case SwivelMode.TargetNearestEnemy:
+        case SwivelMode.Target:
+          // todo add a swivel target type "enemy", "friendly", "direction", "wind", "enemies"
+          // _targetRotation = CalculateTargetWindDirectionRotation();
           _targetRotation = CalculateTargetNearestEnemyRotation();
           break;
-        case SwivelMode.TargetLargestClusterOfEnemies:
-          _targetRotation = CalculateTargetLargestClusterOfEnemies();
-          break;
+        // case SwivelMode.TargetNearestEnemy:
+        //   break;
+        // case SwivelMode.TargetLargestClusterOfEnemies:
+        //   _targetRotation = CalculateTargetLargestClusterOfEnemies();
+        //   break;
         case SwivelMode.DoorMode:
           _targetRotation = CalculateDoorModeRotation();
           break;
       }
     }
 
+    private static Quaternion NormalizeQuaternion(Quaternion q)
+    {
+      var mag = Mathf.Sqrt(q.x * q.x + q.y * q.y + q.z * q.z + q.w * q.w);
+      return mag > Mathf.Epsilon ? new Quaternion(q.x / mag, q.y / mag, q.z / mag, q.w / mag) : Quaternion.identity;
+    }
+
     private void ApplyRotation()
     {
-      if (_rigidbody == null || planeTransform == null)
+      if (_rigidbody == null || planeTransform == null || mode == SwivelMode.None)
         return;
 
       var currentRotation = planeTransform.rotation;
       var newRotation = Quaternion.Slerp(currentRotation, _targetRotation, turningLerpSpeed * Time.fixedDeltaTime);
-      _rigidbody.MoveRotation(newRotation);
+      _rigidbody.MoveRotation(NormalizeQuaternion(newRotation));
     }
 
     public void SetMode(SwivelMode newMode)

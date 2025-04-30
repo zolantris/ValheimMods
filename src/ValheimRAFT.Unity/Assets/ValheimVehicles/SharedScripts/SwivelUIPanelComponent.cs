@@ -13,6 +13,10 @@ namespace ValheimVehicles.SharedScripts.UI
   {
     [Header("UI Settings")]
     [SerializeField] public float MaxUIWidth = 700f;
+
+    [SerializeField]
+    public Unity2dStyles styles = new();
+    private bool _hasCreatedUI;
     private Toggle doorToggle;
     private TMP_Dropdown hingeDropdown;
     private Transform layoutParent;
@@ -24,15 +28,15 @@ namespace ValheimVehicles.SharedScripts.UI
     private TMP_Dropdown yDirDropdown;
     private TMP_Dropdown zDirDropdown;
 
-    protected override void OnAwake()
-    {
-      CreateUI();
-      Hide();
-    }
-
     public void BindTo(SwivelComponent target)
     {
       swivel = target;
+
+      if (swivel == null) return;
+      if (!_hasCreatedUI)
+      {
+        CreateUI();
+      }
 
       modeDropdown.SetValueWithoutNotify((int)swivel.Mode);
       doorToggle.isOn = swivel.IsDoorOpen;
@@ -84,6 +88,8 @@ namespace ValheimVehicles.SharedScripts.UI
       viewportRT.offsetMin = Vector2.zero;
       viewportRT.offsetMax = Vector2.zero;
       scrollRect.viewport = viewportRT;
+      var viewportBGImage = viewportGO.GetComponent<Image>();
+      viewportBGImage.color = styles.ScrollViewBackgroundColor;
 
       var contentGO = new GameObject("Content", typeof(RectTransform), typeof(VerticalLayoutGroup), typeof(ContentSizeFitter));
       contentGO.transform.SetParent(viewportGO.transform, false);
@@ -108,8 +114,8 @@ namespace ValheimVehicles.SharedScripts.UI
 
       scrollRect.content = contentRT;
 
-      SwivelUIHelpers.AddSectionLabel(layoutParent, "Swivel Config");
-      modeDropdown = SwivelUIHelpers.AddDropdownRow(layoutParent, "Swivel Mode", EnumNames<SwivelMode>(), i =>
+      SwivelUIHelpers.AddSectionLabel(layoutParent, styles, "Swivel Config");
+      modeDropdown = SwivelUIHelpers.AddDropdownRow(layoutParent, styles, "Swivel Mode", EnumNames<SwivelMode>(), swivel.Mode.ToString(), i =>
       {
         if (swivel != null)
         {
@@ -118,12 +124,12 @@ namespace ValheimVehicles.SharedScripts.UI
         }
       });
 
-      SwivelUIHelpers.AddSectionLabel(layoutParent, "Door Mode Settings");
-      doorToggle = SwivelUIHelpers.AddToggleRow(layoutParent, "Door Open", false, isOn =>
+      SwivelUIHelpers.AddSectionLabel(layoutParent, styles, "Door Mode Settings");
+      doorToggle = SwivelUIHelpers.AddToggleRow(layoutParent, styles, "Door Open", false, isOn =>
       {
         if (swivel != null) swivel.SetDoorOpen(isOn);
       });
-      hingeDropdown = SwivelUIHelpers.AddDropdownRow(layoutParent, "Hinge Mode", EnumNames<SwivelComponent.DoorHingeMode>(), i =>
+      hingeDropdown = SwivelUIHelpers.AddDropdownRow(layoutParent, styles, "Hinge Mode", EnumNames<SwivelComponent.DoorHingeMode>(), swivel.CurrentHingeMode.ToString(), i =>
       {
         if (swivel != null)
         {
@@ -131,22 +137,24 @@ namespace ValheimVehicles.SharedScripts.UI
           RefreshUI();
         }
       });
-      zDirDropdown = SwivelUIHelpers.AddDropdownRow(layoutParent, "Z Hinge Dir", EnumNames<SwivelComponent.HingeDirection>(), i =>
+      zDirDropdown = SwivelUIHelpers.AddDropdownRow(layoutParent, styles, "Z Hinge Dir", EnumNames<SwivelComponent.HingeDirection>(), swivel.CurrentZHingeDirection.ToString(), i =>
       {
         if (swivel != null) swivel.SetZHingeDirection((SwivelComponent.HingeDirection)i);
       });
-      yDirDropdown = SwivelUIHelpers.AddDropdownRow(layoutParent, "Y Hinge Dir", EnumNames<SwivelComponent.HingeDirection>(), i =>
+      yDirDropdown = SwivelUIHelpers.AddDropdownRow(layoutParent, styles, "Y Hinge Dir", EnumNames<SwivelComponent.HingeDirection>(), swivel.CurrentYHingeDirection.ToString(), i =>
       {
         if (swivel != null) swivel.SetYHingeDirection((SwivelComponent.HingeDirection)i);
       });
-      maxZSlider = SwivelUIHelpers.AddSliderRow(layoutParent, "Max Z Angle", 0f, 90f, 0f, v =>
+      maxZSlider = SwivelUIHelpers.AddSliderRow(layoutParent, styles, "Max Z Angle", 0f, 90f, 0f, v =>
       {
         if (swivel != null) swivel.SetMaxInclineZ(v);
       });
-      maxYSlider = SwivelUIHelpers.AddSliderRow(layoutParent, "Max Y Angle", 0f, 90f, 0f, v =>
+      maxYSlider = SwivelUIHelpers.AddSliderRow(layoutParent, styles, "Max Y Angle", 0f, 90f, 0f, v =>
       {
         if (swivel != null) swivel.SetMaxYAngle(v);
       });
+
+      _hasCreatedUI = true;
     }
 
     private void RefreshUI()

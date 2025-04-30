@@ -4,9 +4,7 @@
   public enum SwivelMode
   {
     None,
-    TargetWindDirection,
-    TargetNearestEnemy,
-    TargetLargestClusterOfEnemies,
+    Target,
     DoorMode
   }
 }
