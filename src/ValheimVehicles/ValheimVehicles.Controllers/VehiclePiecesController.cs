@@ -46,7 +46,7 @@ public class VehiclePieceActivator : BasePieceActivatorComponent
 
 /// <summary>controller used for all vehicles</summary>
 /// <description> This is a controller used for all vehicles, Currently it must be initialized within a vehicle view IE VehicleShip or upcoming VehicleWheeled, and VehicleFlying instances.</description>
-public class VehiclePiecesController : BasePiecesController, IMonoUpdater, IPieceActivatorHost
+public sealed class VehiclePiecesController : BasePiecesController, IMonoUpdater, IVehicleControllers, IPieceActivatorHost, IRaycastPieceActivator
 {
   /*
    * Get all the instances statically
@@ -223,15 +223,20 @@ public class VehiclePiecesController : BasePiecesController, IMonoUpdater, IPiec
   public float cachedTotalSailArea = 0f;
   public float cachedSailForce = 0f;
 
-  public virtual IVehicleShip? VehicleInstance { set; get; }
-  private VehicleShip _vehicle;
+  public IVehicleBaseProperties? VehicleInstance { set; get; }
+  private VehicleBaseController _vehicle;
   public int PersistentZdoId => VehicleInstance?.PersistentZdoId ?? 0;
+
+  public VehiclePiecesController PiecesController => this;
 
   public VehicleMovementController? MovementController =>
     VehicleInstance?.MovementController;
+  public VehicleConfigSyncComponent? VehicleConfigSync
+  {
+    get;
+  }
 
-  public VehicleWheelController? WheelController =>
-    VehicleInstance?.WheelController;
+  public VehicleBaseController? BaseController => VehicleInstance?.BaseController;
 
   public VehicleOnboardController? OnboardController =>
     VehicleInstance?.OnboardController;
@@ -321,11 +326,11 @@ public class VehiclePiecesController : BasePiecesController, IMonoUpdater, IPiec
 
   public void LoadInitState()
   {
-    if (!VehicleInstance?.NetView || !VehicleInstance?.Instance ||
+    if (!VehicleInstance?.NetView || !BaseController ||
         !MovementController)
     {
       Logger.LogDebug(
-        $"Vehicle setting state to Pending as it is not ready, must have netview: {VehicleInstance.NetView}, VehicleInstance {VehicleInstance?.Instance}, MovementController {MovementController}");
+        $"Vehicle setting state to Pending as it is not ready, must have netview: {VehicleInstance.NetView}, VehicleInstance {BaseController}, MovementController {MovementController}");
       _baseVehicleInitializationState = InitializationState.Pending;
       return;
     }
@@ -349,8 +354,8 @@ public class VehiclePiecesController : BasePiecesController, IMonoUpdater, IPiec
 
   public void FireErrorOnNull(Collider obj, string name)
   {
-    if (!(bool)obj)
-      Logger.LogError(
+    if (obj == null)
+      LoggerProvider.LogError(
         $"BaseVehicleError: collider not initialized for <{name}>");
   }
 
@@ -361,18 +366,13 @@ public class VehiclePiecesController : BasePiecesController, IMonoUpdater, IPiec
     FireErrorOnNull(OnboardCollider, PrefabNames.WaterVehicleOnboardCollider);
   }
 
-  private void HideGhostContainer()
-  {
-    VehicleInstance?.Instance?.GhostContainer()?.SetActive(false);
-  }
-
   /// <summary>
   /// Coroutine to init vehicle just in case things get delayed or desync. This allows for it to wait until things are ready without skipping critical initialization
   /// </summary>
   /// TODO this might need to be removed or more guards need to be added.
   /// <param name="vehicleShip"></param>
   /// <returns></returns>
-  private IEnumerator InitVehicle(VehicleShip vehicleShip)
+  private IEnumerator InitVehicle(VehicleBaseController vehicleShip)
   {
     while (!(VehicleInstance?.NetView || !MovementController) &&
            InitializationTimer.ElapsedMilliseconds < 5000)
@@ -393,23 +393,23 @@ public class VehiclePiecesController : BasePiecesController, IMonoUpdater, IPiec
   /// <summary>
   /// Method to be called from the Parent Component that adds this VehiclePiecesController
   /// </summary>
-  public void InitFromShip(VehicleShip vehicleShip)
+  public void InitFromShip(VehicleBaseController vehicle)
   {
-    _vehicle = vehicleShip;
-    VehicleInstance = vehicleShip;
+    _vehicle = vehicle;
+    VehicleInstance = vehicle;
 
-    var hasInitializedSuccessfully = InitializeBaseVehicleValuesWhenReady(vehicleShip);
+    var hasInitializedSuccessfully = InitializeBaseVehicleValuesWhenReady(vehicle);
 
     // wait more time if the vehicle is somehow taking forever to init
     if (!hasInitializedSuccessfully)
-      StartCoroutine(InitVehicle(vehicleShip));
+      StartCoroutine(InitVehicle(vehicle));
   }
 
   private IEnumerator ZdoReadyStart()
   {
-    if (VehicleInstance?.Instance != null)
+    if (VehicleInstance?.BaseController != null)
     {
-      InitializeBaseVehicleValuesWhenReady(VehicleInstance.Instance);
+      InitializeBaseVehicleValuesWhenReady(VehicleInstance.BaseController);
     }
 
     if (VehicleInstance == null)
@@ -419,15 +419,14 @@ public class VehiclePiecesController : BasePiecesController, IMonoUpdater, IPiec
     yield return null;
   }
 
-  public static VehiclePiecesController? GetPieceControllerFromPlayer(
-    GameObject playerGo)
+  /// <summary>
+  /// Gets the RaycastPieceActivator which is used for Swivels and VehiclePiecesController components. These components are responsible for activation and parenting of vehicle pieces and will always exist above the current piece in transform hierarchy.
+  /// </summary>
+  public static VehiclePiecesController? GetVehiclePiecesController(
+    GameObject obj)
   {
-    var controller =
-      playerGo.transform.root.GetComponent<VehiclePiecesController>();
-    if (!controller)
-      controller = playerGo.GetComponentInParent<VehiclePiecesController>();
-
-    return controller != null ? controller : null;
+    var controller = obj.GetComponentInParent<VehiclePiecesController>();
+    return controller;
   }
 
   /// <summary>
@@ -643,25 +642,26 @@ public class VehiclePiecesController : BasePiecesController, IMonoUpdater, IPiec
    * Possible alternatives to this approach:
    * - Add a setter that triggers initializeBaseVehicleValues when the zdo is falsy -> truthy
    */
-  private bool InitializeBaseVehicleValuesWhenReady(VehicleShip vehicleShip)
+  private bool InitializeBaseVehicleValuesWhenReady(VehicleBaseController vehicle)
   {
     if (ZNetView.m_forceDisableInit) return false;
     // vehicleInstance is the persistent ID, the pieceContainer only has a netView for syncing ship position
-    if (vehicleShip.NetView == null)
+    if (vehicle.NetView == null)
     {
       Logger.LogWarning(
         "Warning netview not detected on vehicle, this means any netview attached events will not bind correctly");
       return false;
     }
 
-    if (vehicleShip.vehicleMovementCollidersTransform)
+    if (vehicle.vehicleMovementCollidersTransform)
     {
       // must set parent to be the vehicle colliders
-      convexHullComponent.parentTransform = vehicleShip.vehicleMovementCollidersTransform;
+      convexHullComponent.parentTransform = vehicle.vehicleMovementCollidersTransform;
     }
     
     LoadInitState();
-    HideGhostContainer();
+
+    BaseController.HideGhostContainer();
     LinkFixedJoint();
     return true;
   }
@@ -762,7 +762,7 @@ public class VehiclePiecesController : BasePiecesController, IMonoUpdater, IPiec
     if (_serverUpdatePiecesCoroutine != null)
       StopCoroutine(_serverUpdatePiecesCoroutine);
 
-    if (VehicleInstance?.Instance == null)
+    if (BaseController == null)
       Logger.LogError("Cleanup called but there is no valid VehicleInstance");
 
     if (!ZNetScene.instance || VehicleInstance?.PersistentZdoId == null ||
@@ -806,12 +806,12 @@ public class VehiclePiecesController : BasePiecesController, IMonoUpdater, IPiec
     }
   }
 
-  public virtual void SyncRigidbodyStats(float drag, float angularDrag,
+  public void SyncRigidbodyStats(float drag, float angularDrag,
     bool flight)
   {
     if (!isActiveAndEnabled) return;
     if (MovementController?.m_body == null || m_statsOverride ||
-        !VehicleInstance?.Instance || !m_localRigidbody)
+        !BaseController || !m_localRigidbody)
       return;
 
     if (VehiclePhysicsMode.ForceSyncedRigidbody !=
@@ -986,7 +986,7 @@ public class VehiclePiecesController : BasePiecesController, IMonoUpdater, IPiec
     var isInvalid = m_localRigidbody == null || VehicleInstance?.MovementControllerRigidbody == null ||
                     VehicleInstance?.MovementController == null ||
                     VehicleInstance.NetView == null ||
-                    VehicleInstance.Instance == null;
+                    BaseController == null;
     _isInvalid = isInvalid;
 
     return _isInvalid;
@@ -1202,8 +1202,8 @@ public class VehiclePiecesController : BasePiecesController, IMonoUpdater, IPiec
 
   private void UpdatePlayers()
   {
-    // if (VehicleInstance?.Instance?.m_players == null) return;
-    // var vehiclePlayers = VehicleInstance.Instance.m_players;
+    // if (BaseController?.m_players == null) return;
+    // var vehiclePlayers = BaseController.m_players;
     // foreach (var vehiclePlayer in vehiclePlayers)
     // {
     //   AddDynamicParentForVehicle(vehiclePlayer.m_nview, this);
@@ -1395,7 +1395,7 @@ public class VehiclePiecesController : BasePiecesController, IMonoUpdater, IPiec
 
         case RudderComponent rudder:
           m_rudderPieces.Remove(rudder);
-          if (VehicleInstance?.Instance && m_rudderPieces.Count > 0)
+          if (BaseController && m_rudderPieces.Count > 0)
             SetShipWakeBounds();
 
           break;
@@ -1524,9 +1524,9 @@ public class VehiclePiecesController : BasePiecesController, IMonoUpdater, IPiec
     var pieceCount = GetPieceCount();
 
     if (pieceCount > 0 || VehicleInstance?.NetView == null) return;
-    if (VehicleInstance?.Instance == null) return;
+    if (BaseController == null) return;
 
-    var wntShip = VehicleInstance.Instance.GetComponent<WearNTear>();
+    var wntShip = BaseController.GetComponent<WearNTear>();
     if ((bool)wntShip) wntShip.Destroy();
   }
 
@@ -1784,7 +1784,7 @@ public class VehiclePiecesController : BasePiecesController, IMonoUpdater, IPiec
       if (ZNetScene.instance.InLoadingScreen())
         yield return new WaitForFixedUpdate();
 
-      if (VehicleInstance?.Instance?.NetView == null)
+      if (BaseController?.NetView == null)
       {
         // NetView somehow unmounted;
         OnActivatePendingPiecesComplete(PendingPieceStateEnum.ForceReset);
@@ -2336,9 +2336,9 @@ public class VehiclePiecesController : BasePiecesController, IMonoUpdater, IPiec
 
     if (RamPrefabs.IsRam(netView.name))
     {
-      if (VehicleInstance != null && VehicleInstance.Instance != null)
+      if (VehicleInstance != null && BaseController != null)
       {
-        netView.transform.SetParent(VehicleInstance.Instance.transform);
+        netView.transform.SetParent(BaseController.transform);
       }
       return;
     }
@@ -2353,18 +2353,32 @@ public class VehiclePiecesController : BasePiecesController, IMonoUpdater, IPiec
    */
   public static bool CanDestroyVehicle(ZNetView? netView)
   {
-    if (!netView || netView == null) return false;
-    var vehicleShip = netView.GetComponent<VehicleShip>();
-    var hasPendingPieces =
-      m_pendingPieces.TryGetValue(vehicleShip.PersistentZdoId,
-        out var pendingPieces);
-    var hasPieces = vehicleShip.PiecesController.GetPieceCount() != 0;
+    try
+    {
 
-    // if there are pending pieces, do not let vehicle be destroyed
-    if (pendingPieces != null && hasPendingPieces && pendingPieces.Count > 0)
+      if (!netView || netView == null) return false;
+      var vehicleController = netView.GetComponent<VehicleBaseController>();
+      if (vehicleController == null || vehicleController.PiecesController == null)
+      {
+        LoggerProvider.LogDebug("Bailing vehicle deletion attempt: Valheim Attempted to delete a vehicle that matched the ValheimVehicle prefab instance but there was no VehicleBaseController or VehiclePiecesController found. This could mean there is a mod breaking the vehicle registration of ValheimRAFT.");
+        return false;
+      }
+      var hasPendingPieces =
+        m_pendingPieces.TryGetValue(vehicleController.PersistentZdoId,
+          out var pendingPieces);
+      var hasPieces = vehicleController.PiecesController.GetPieceCount() != 0;
+
+      // if there are pending pieces, do not let vehicle be destroyed
+      if (pendingPieces != null && hasPendingPieces && pendingPieces.Count > 0)
+        return false;
+
+      return !hasPieces;
+    }
+    catch (Exception e)
+    {
+      LoggerProvider.LogWarning("A error was thrown in CanDestroyVehicle. This likely means the vehicle is corrupt. This check will protect the vehicle from being deleted.");
       return false;
-
-    return !hasPieces;
+    }
   }
 
   public static Dictionary<Material, Material> FixMaterialUniqueInstances = new();
@@ -2761,7 +2775,7 @@ public class VehiclePiecesController : BasePiecesController, IMonoUpdater, IPiec
       m_ramPieces.Add(netView);
       var vehicleRamAoe = netView.GetComponentInChildren<VehicleRamAoe>();
       if ((bool)vehicleRamAoe)
-        vehicleRamAoe.m_vehicle = VehicleInstance.Instance;
+        vehicleRamAoe.m_vehicle = BaseController;
     }
 
     // Remove non-kinematic rigidbodies if not a ram
@@ -2801,13 +2815,13 @@ public class VehiclePiecesController : BasePiecesController, IMonoUpdater, IPiec
 // for increasing ship wake size.
   private void SetShipWakeBounds()
   {
-    if (VehicleInstance?.Instance?.ShipEffectsObj == null) return;
+    if (BaseController?.ShipEffectsObj == null) return;
 
     var firstRudder = m_rudderPieces.First();
     if (firstRudder == null)
     {
       var bounds = FloatCollider.bounds;
-      VehicleInstance.Instance.ShipEffectsObj.transform.localPosition =
+      BaseController.ShipEffectsObj.transform.localPosition =
         new Vector3(FloatCollider.transform.localPosition.x,
           bounds.center.y,
           bounds.min.z);
@@ -2815,7 +2829,7 @@ public class VehiclePiecesController : BasePiecesController, IMonoUpdater, IPiec
     }
 
     var localPosition = firstRudder.transform.localPosition;
-    VehicleInstance.Instance.ShipEffectsObj.transform.localPosition =
+    BaseController.ShipEffectsObj.transform.localPosition =
       new Vector3(
         localPosition.x,
         FloatCollider.bounds.center.y,
@@ -2989,9 +3003,9 @@ public class VehiclePiecesController : BasePiecesController, IMonoUpdater, IPiec
 
   // public void RebuildConvexHull()
   // {
-  //   if (VehicleInstance?.Instance == null || MovementController == null) return;
+  //   if (BaseController == null || MovementController == null) return;
   //   var vehicleMovementCollidersTransform =
-  //     VehicleInstance.Instance.vehicleMovementCollidersTransform;
+  //     BaseController.vehicleMovementCollidersTransform;
   //   var nvChildGameObjects = m_nviewPieces.Select(x => x.gameObject)
   //     .Where(x => !IsExcludedBoundsItem(x.gameObject.name)).ToList();
   //   if (WaterConfig.HasUnderwaterHullBubbleEffect.Value)
@@ -3040,7 +3054,7 @@ public class VehiclePiecesController : BasePiecesController, IMonoUpdater, IPiec
    */
   public void IgnoreAllVehicleColliders()
   {
-    if (VehicleInstance?.Instance == null || MovementController == null) return;
+    if (BaseController == null || MovementController == null) return;
 
     // ✅ Clear before refilling to avoid stale data
 
@@ -3048,7 +3062,7 @@ public class VehiclePiecesController : BasePiecesController, IMonoUpdater, IPiec
     // if (_shouldUpdateVehicleColliders)
     // {
     //   tempVehicleColliders.Clear();
-    //   VehicleInstance.Instance.GetComponentsInChildren(true, tempVehicleColliders);
+    //   BaseController.GetComponentsInChildren(true, tempVehicleColliders);
     // }
     //
     // if (_shouldUpdatePieceColliders)
@@ -3057,7 +3071,7 @@ public class VehiclePiecesController : BasePiecesController, IMonoUpdater, IPiec
     //   GetComponentsInChildren(true, tempPieceColliders);
     // }
 
-    var vehicleColliders = VehicleInstance.Instance.GetComponentsInChildren<Collider>(true);
+    var vehicleColliders = BaseController.GetComponentsInChildren<Collider>(true);
     if (vehicleColliders == null) return;
 
     foreach (var prefabPieceDataItem in prefabPieceDataItems.Values)
@@ -3112,8 +3126,8 @@ public class VehiclePiecesController : BasePiecesController, IMonoUpdater, IPiec
     var character = gameObject.GetComponentInParent<Character>();
     var isCharacter = character != null;
     if (!colliders.Any()) return;
-    if (VehicleInstance == null || VehicleInstance.Instance == null) return;
-    var allVehicleColliders = VehicleInstance.Instance.GetComponentsInChildren<Collider>(true);
+    if (VehicleInstance == null || BaseController == null) return;
+    var allVehicleColliders = BaseController.GetComponentsInChildren<Collider>(true);
     foreach (var collider in colliders)
     {
       foreach (var allVehicleCollider in allVehicleColliders)

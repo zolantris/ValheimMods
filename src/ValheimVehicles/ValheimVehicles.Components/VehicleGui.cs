@@ -231,7 +231,7 @@ public class VehicleGui : SingletonBehaviour<VehicleGui>
     hasInitialized = true;
   }
 
-  public VehicleShip? targetInstance;
+  public VehicleBaseController? targetInstance;
 
   private GenericInputAction _getCurrentVehicleGenericInputAction = new()
   {

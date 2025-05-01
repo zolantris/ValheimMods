@@ -11,6 +11,7 @@ using ValheimVehicles.Components;
 using ValheimVehicles.Controllers;
 using ValheimVehicles.Interfaces;
 using ValheimVehicles.Patches;
+using ValheimVehicles.SharedScripts;
 using Logger = Jotunn.Logger;
 using Object = UnityEngine.Object;
 
@@ -117,6 +118,14 @@ public class Player_Patch
 
     var bvc = PatchSharedData.PlayerLastRayPiece?.transform?.parent?
       .GetComponent<VehiclePiecesController>() ?? null;
+    var swivel = PatchSharedData.PlayerLastRayPiece?.GetComponentInParent<SwivelComponentIntegration>() ?? null;
+
+    if (swivel != null && netView != null)
+    {
+      SwivelComponentIntegration.TryAddPieceToSwivelContainer(netView, netView.GetZDO());
+      return gameObject;
+    }
+    
     if (bvc != null)
     {
       if (gameObject.name.StartsWith(PrefabNames.CustomWaterFloatation))
@@ -140,45 +149,134 @@ public class Player_Patch
     return gameObject;
   }
 
-  public static bool HandleGameObjectRayCast(Transform transform,
+  /// <summary>
+  /// Verbose way to track allowed prefabs that can have other prefabs raycast hit to.
+  /// </summary>
+  /// <param name="collider"></param>
+  /// <returns></returns>
+  public static bool CanHitPiece(Collider collider)
+  {
+    if (!collider.gameObject.name.StartsWith(PrefabNames.SwivelPrefabName))
+    {
+      return true;
+    }
+    if (collider.GetComponentInParent<VehiclePiecesController>() != null) return true;
+    return false;
+  }
+
+  /// <summary>
+  /// Original RayTest Method
+  /// </summary>
+  /// <param name="point"></param>
+  /// <param name="normal"></param>
+  /// <param name="piece"></param>
+  /// <param name="heightmap"></param>
+  /// <param name="waterSurface"></param>
+  /// <param name="water"></param>
+  /// <returns></returns>
+  public bool PieceRayTest(
+    Player __instance,
+    ref Vector3 point,
+    ref Vector3 normal,
+    ref Piece piece,
+    ref Heightmap heightmap,
+    ref Collider waterSurface,
+    bool water)
+  {
+    var layerMask = __instance.m_placeRayMask;
+    if (water)
+      layerMask = __instance.m_placeWaterRayMask;
+    RaycastHit hitInfo;
+    if (Physics.Raycast(GameCamera.instance.transform.position, GameCamera.instance.transform.forward, out hitInfo, 50f, layerMask))
+    {
+      var maxPlaceDistance = __instance.m_maxPlaceDistance;
+      if ((bool)(Object)__instance.m_placementGhost)
+      {
+        var component = __instance.m_placementGhost.GetComponent<Piece>();
+        if (component != null)
+          maxPlaceDistance += (float)component.m_extraPlacementDistance;
+      }
+      if ((bool)(Object)hitInfo.collider && !(bool)(Object)hitInfo.collider.attachedRigidbody && (double)Vector3.Distance(__instance.m_eye.position, hitInfo.point) < (double)maxPlaceDistance)
+      {
+        point = hitInfo.point;
+        normal = hitInfo.normal;
+        piece = hitInfo.collider.GetComponentInParent<Piece>();
+        heightmap = hitInfo.collider.GetComponent<Heightmap>();
+        waterSurface = hitInfo.collider.gameObject.layer != LayerMask.NameToLayer("Water") ? (Collider)null : hitInfo.collider;
+        return true;
+      }
+    }
+    point = Vector3.zero;
+    normal = Vector3.zero;
+    piece = (Piece)null;
+    heightmap = (Heightmap)null;
+    waterSurface = (Collider)null;
+    return false;
+  }
+
+  public static void HandleGameObjectRayCast(Transform? vehicleTransform,
     LayerMask layerMask,
     Player __instance, ref bool __result,
     ref Vector3 point,
     ref Vector3 normal, ref Piece piece, ref Heightmap heightmap,
     ref Collider waterSurface,
-    bool water)
+    bool water, out bool ShouldRunOriginalMethod)
   {
-    if ((bool)transform)
+    ShouldRunOriginalMethod = true;
+
+    // if (transform == null)
+    // {
+    //   return;
+    // }
+
+    // var localPos = transform == null ? Player.m_localPlayer.transform.position
+    //   transform.InverseTransformPoint(__instance.transform
+    //     .position);
+    // var start = localPos + Vector3.up * 2f;
+    // start = transform.TransformPoint(start);
+    // var localDir = ((Character)__instance).m_lookYaw * Quaternion.Euler(
+    //   __instance.m_lookPitch,
+    //   0 - transform.transform.rotation.eulerAngles.y +
+    //   PatchSharedData.YawOffset, 0);
+    // var end = transform.rotation * localDir * Vector3.forward;
+
+    var gameCameraTransform = GameCamera.instance.transform;
+    var start = gameCameraTransform.position;
+    var end = gameCameraTransform.forward;
+
+    if (vehicleTransform != null)
     {
-      var localPos =
-        transform.transform.InverseTransformPoint(__instance.transform
+      var localPos = vehicleTransform.InverseTransformPoint(__instance.transform
           .position);
-      var start = localPos + Vector3.up * 2f;
-      start = transform.transform.TransformPoint(start);
+      var localStart = localPos + Vector3.up * 2f;
       var localDir = ((Character)__instance).m_lookYaw * Quaternion.Euler(
         __instance.m_lookPitch,
-        0 - transform.transform.rotation.eulerAngles.y +
+        0 - vehicleTransform.transform.rotation.eulerAngles.y +
         PatchSharedData.YawOffset, 0);
-      var end = transform.transform.rotation * localDir * Vector3.forward;
-      if (Physics.Raycast(start, end, out var hitInfo, 10f, layerMask) &&
-          (bool)hitInfo.collider)
-      {
-        var target =
-          hitInfo.collider.GetComponentInParent<VehiclePiecesController>();
 
-        if (target == null) return true;
-
-        point = hitInfo.point;
-        normal = hitInfo.normal;
-        piece = hitInfo.collider.GetComponentInParent<Piece>();
-        heightmap = null;
-        waterSurface = null;
-        __result = true;
-        return true;
-      }
+      start = vehicleTransform.TransformPoint(localStart);
+      end = vehicleTransform.rotation * localDir * Vector3.forward;
     }
 
-    return true;
+    if (Physics.Raycast(start, end, out var hitInfo, 10f, layerMask) &&
+        (bool)hitInfo.collider)
+    {
+      if (!CanHitPiece(hitInfo.collider))
+      {
+        ShouldRunOriginalMethod = true;
+        return;
+      }
+
+      point = hitInfo.point;
+      normal = hitInfo.normal;
+      piece = hitInfo.collider.GetComponentInParent<Piece>();
+      heightmap = null;
+      waterSurface = null;
+      __result = true;
+
+      // Let the prefix run. This means we double up on Raycasts which is heavier on performance...
+      ShouldRunOriginalMethod = true;
+    }
   }
 
   [HarmonyPatch(typeof(Player), "PieceRayTest")]
@@ -189,20 +287,34 @@ public class Player_Patch
     ref Collider waterSurface,
     bool water)
   {
+    // var isRigidbodyAllowed = hasAttachedRigidbody;
+    //
+    // if (hasAttachedRigidbody&& hitInfo.collider.attachedRigidbody.transform.parent != null && hitInfo.collider.attachedRigidbody.transform.parent.name.StartsWith(PrefabNames.SwivelPrefabName))
+    // {
+    //   isRigidbodyAllowed = true;
+    // }
     var layerMask = __instance.m_placeRayMask;
 
-    var bvc =
-      VehiclePiecesController.GetPieceControllerFromPlayer(
-        __instance.gameObject);
+    var transformOverride = PieceActivatorHelpers.GetRaycastPieceActivator(__instance.transform);
 
-    if (bvc != null)
-      return HandleGameObjectRayCast(bvc.transform, layerMask, __instance,
+    HandleGameObjectRayCast(bvc != null ? bvc.transform : null, layerMask, __instance,
         ref __result, ref point,
         ref normal, ref piece,
         ref heightmap,
-        ref waterSurface, water);
+        ref waterSurface, water, out var shouldRunOriginalMethod);
 
-    return true;
+    return shouldRunOriginalMethod;
+  }
+
+  [HarmonyPatch(typeof(Player), "PieceRayTest")]
+  [HarmonyPostfix]
+  public static void PieceRayTestPostfix(Player __instance, ref bool __result,
+    ref Vector3 point,
+    ref Vector3 normal, ref Piece piece, ref Heightmap heightmap,
+    ref Collider waterSurface,
+    bool water)
+  {
+    PatchSharedData.PlayerLastRayPiece = piece;
   }
 
 
@@ -216,17 +328,6 @@ public class Player_Patch
       VehiclePiecesController.AddTempParent(__instance.m_nview,
         __instance.m_lastGroundCollider.gameObject);
     }
-  }
-
-  [HarmonyPatch(typeof(Player), "PieceRayTest")]
-  [HarmonyPostfix]
-  public static void PieceRayTestPostfix(Player __instance, ref bool __result,
-    ref Vector3 point,
-    ref Vector3 normal, ref Piece piece, ref Heightmap heightmap,
-    ref Collider waterSurface,
-    bool water)
-  {
-    PatchSharedData.PlayerLastRayPiece = piece;
   }
 
   [HarmonyPatch(typeof(Player), "FindHoverObject")]

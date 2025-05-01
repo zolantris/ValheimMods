@@ -91,7 +91,7 @@ public class WearNTear_Patch
 
     if (RamPrefabs.IsRam(__instance.name))
     {
-      var vehicle = __instance.GetComponentInParent<VehicleShip>();
+      var vehicle = __instance.GetComponentInParent<VehicleBaseController>();
       vehicle?.PiecesController?.DestroyPiece(__instance);
     }
 

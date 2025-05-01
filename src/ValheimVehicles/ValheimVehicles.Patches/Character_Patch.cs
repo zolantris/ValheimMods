@@ -78,7 +78,7 @@ public class Character_Patch
 
     if (WaterZoneUtils.IsOnboard(__instance, out var data))
     {
-      return VehicleShipCompat.InitFromUnknown(data?.VehicleShip);
+      return VehicleControllersCompat.InitFromUnknown(data?.VehicleShip);
     }
 
     var lastOnShip = __instance.m_lastGroundBody.GetComponent<Ship>();

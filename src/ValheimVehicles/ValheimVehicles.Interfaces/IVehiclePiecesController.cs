@@ -6,5 +6,5 @@ public interface IVehiclePiecesController
 {
   // this may need to be omitted
   public void CleanUp();
-  public VehicleShip VehicleInstance { get; }
+  public VehicleBaseController VehicleInstance { get; }
 }

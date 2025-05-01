@@ -4,7 +4,8 @@ namespace ValheimVehicles.Interfaces;
 
 public interface IPieceActivatorHost
 {
-  int GetPersistentId();
-  ZNetView? GetNetView();
-  Transform GetPieceContainer();
+  Transform transform { get; }
+  public int GetPersistentId();
+  public ZNetView? GetNetView();
+  public Transform GetPieceContainer();
 }

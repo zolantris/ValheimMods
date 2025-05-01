@@ -27,7 +27,7 @@ public class WaterZoneCharacterData : ICharacterOnboardData
   // can turn null
   public VehicleOnboardController? OnboardController;
 
-  public VehicleShip? VehicleShip =>
+  public VehicleBaseController? VehicleShip =>
     OnboardController?.vehicleShip?.Instance;
 
   public WaterZoneController? WaterZoneController;

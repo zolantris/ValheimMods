@@ -1,3 +1,5 @@
+using Jotunn.Configs;
+using Jotunn.Entities;
 using Jotunn.Managers;
 using ValheimVehicles.Components;
 using ValheimVehicles.Prefabs.Registry;
@@ -25,7 +27,24 @@ public class SwivelPrefab : RegisterPrefab<SwivelPrefab>
     PrefabRegistryHelpers.AddNetViewWithPersistence(prefab);
 
     prefab.AddComponent<SwivelComponentIntegration>();
-    PrefabRegistryHelpers.AddPieceForPrefab(PrefabNames.SwivelPrefabName, prefab);
+    var piece = PrefabRegistryHelpers.AddPieceForPrefab(PrefabNames.SwivelPrefabName, prefab);
+
+    PieceManager.Instance.AddPiece(new CustomPiece(prefab, true,
+      new PieceConfig
+      {
+        PieceTable = PrefabRegistryController.GetPieceTableName(),
+        Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Tools),
+        Enabled = true,
+        Requirements =
+        [
+          new RequirementConfig
+          {
+            Amount = 20,
+            Item = "RoundLog",
+            Recover = true
+          }
+        ]
+      }));
   }
 
   public override void OnRegister()

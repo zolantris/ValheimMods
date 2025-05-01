@@ -33,7 +33,7 @@ namespace ValheimVehicles.SharedScripts
     [SerializeField] private float maxTurnAnglePerSecond = 90f;
     [SerializeField] private float maxTurnAngle = 90f; // turn angle maximum from the original forward rotation position of the swivel.
     [SerializeField] private float maxInclineZ = 90f;
-    [SerializeField] private float turningLerpSpeed = 5f;
+    [SerializeField] public float turningLerpSpeed = 50f;
 
     [Header("Enemy Tracking Settings")]
     [SerializeField] private float minTrackingRange = 5f;
@@ -42,7 +42,7 @@ namespace ValheimVehicles.SharedScripts
 
     [Header("Door Mode Settings")]
     [SerializeField] private bool isDoorOpen;
-    [SerializeField] private float doorLerpSpeed = 2f;
+    [SerializeField] public float doorLerpSpeed = 100f;
     [SerializeField] private DoorHingeMode hingeMode = DoorHingeMode.ZOnly;
     [SerializeField] private HingeDirection zHingeDirection = HingeDirection.Forward;
     [SerializeField] private HingeDirection yHingeDirection = HingeDirection.Forward;
@@ -60,6 +60,8 @@ namespace ValheimVehicles.SharedScripts
 
     [Header("Other Settings")]
     private Rigidbody _rigidbody;
+
+    public const string AnimatedContainerName = "animated";
 
     private Transform _snappoint;
     private Quaternion _targetRotation;
@@ -80,7 +82,9 @@ namespace ValheimVehicles.SharedScripts
       FindSnappoint();
       animatedTransform = transform.Find("animated");
       pieceContainer = animatedTransform.Find("piece_container");
-      connectorContainer = animatedTransform.Find("connector_container");
+      // connectorContainer = animatedTransform.Find("connector_container");
+      // temp top level. To test patch issues.
+      connectorContainer = transform.Find("connector_container");
 
       _rigidbody = animatedTransform.GetComponent<Rigidbody>();
       _rigidbody.isKinematic = true;

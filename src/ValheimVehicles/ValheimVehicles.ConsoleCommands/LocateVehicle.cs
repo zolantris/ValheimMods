@@ -24,7 +24,7 @@ public abstract class LocateVehicle
 
   private static int LocateVehicleShips()
   {
-    var ships = UnityEngine.Object.FindObjectsOfType<VehicleShip>();
+    var ships = UnityEngine.Object.FindObjectsOfType<VehicleBaseController>();
 
     return ships.ToList().Count;
   }

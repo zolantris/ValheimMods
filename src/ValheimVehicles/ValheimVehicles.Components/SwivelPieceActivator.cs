@@ -7,9 +7,9 @@ namespace ValheimVehicles.Components;
 /// Todo move this to the base activator with Type passthrough or write a interface for Init so these Flavors of Base can use that.
 /// </summary>
 /// <typeparam name="TSelf"></typeparam>
-public class SwivelPieceActivator<TSelf> : BasePieceActivatorComponent where TSelf : MonoBehaviour, IPieceActivatorHost
+public class SwivelPieceActivator : BasePieceActivatorComponent
 {
-  [SerializeField] private TSelf _host;
+  [SerializeField] private SwivelComponentIntegration _host;
   public override IPieceActivatorHost Host => _host;
   
   protected override void TrySetPieceToParent(ZNetView netView)
@@ -18,7 +18,7 @@ public class SwivelPieceActivator<TSelf> : BasePieceActivatorComponent where TSe
     netView.transform.SetParent(_host.GetPieceContainer(), false);
   }
 
-  public void Init(TSelf host)
+  public void Init(SwivelComponentIntegration host)
   {
     _host = host;
   }

@@ -235,6 +235,7 @@ public static class PrefabRegistryController
     SwitchAndLeverPrefabs.Instance.Register(prefabManager, pieceManager);
     CustomMeshPrefabs.Instance.Register(prefabManager, pieceManager);
 
+    SwivelPrefab.Register();
     AnchorPrefabs.Register();
     
     ShipRudderPrefabs.Instance.Register(prefabManager, pieceManager);
@@ -249,6 +250,9 @@ public static class PrefabRegistryController
 
     // new way to register components
     CustomVehicleMastRegistry.Register();
+
+    // register experimental prefabs.
+    ExperimentalPrefabRegistry.Register();
   }
 
   public static void RegisterAllItemPrefabs()

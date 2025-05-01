@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 639333384229567903}
   - component: {fileID: 8725381715435635582}
+  - component: {fileID: 9206372496466992442}
   m_Layer: 10
   m_Name: swivel
   m_TagString: Untagged
@@ -31,6 +32,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 8751185516264099117}
+  - {fileID: 114147236260727973}
   - {fileID: 6309620622325178624}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -61,6 +63,27 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
+--- !u!65 &9206372496466992442
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 431750421511392768}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.5, y: 0.02, z: 0.5}
+  m_Center: {x: 0, y: 0.01, z: 0}
 --- !u!1 &2102602196577789000
 GameObject:
   m_ObjectHideFlags: 0
@@ -91,7 +114,6 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 114147236260727973}
   - {fileID: 1425455312203302204}
   m_Father: {fileID: 639333384229567903}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -187,14 +209,14 @@ Transform:
   m_GameObject: {fileID: 5047236336228081609}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: -0.01, z: 0}
+  m_LocalPosition: {x: 0, y: 0.011, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1721856686699493685}
   - {fileID: 5033443817716505959}
   - {fileID: 9063609014592299036}
-  m_Father: {fileID: 6309620622325178624}
+  m_Father: {fileID: 639333384229567903}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &5309518213294787682
 GameObject:
@@ -497,7 +519,7 @@ BoxCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 3
   m_Size: {x: 1, y: 1, z: 1}
   m_Center: {x: 0, y: 0, z: 0}

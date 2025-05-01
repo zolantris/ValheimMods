@@ -269,7 +269,7 @@ public class PropulsionConfig : BepInExBaseConfig<PropulsionConfig>
         VehicleMovementController.SetPhysicsSyncTarget(
           DefaultPhysicsMode
             .Value);
-    AllowFlight.SettingChanged += VehicleShip.OnAllowFlight;
+    AllowFlight.SettingChanged += VehicleBaseController.OnAllowFlight;
     // setters that must be called on init
     VehicleMovementController.SetPhysicsSyncTarget(
       DefaultPhysicsMode.Value);
@@ -321,6 +321,6 @@ public class PropulsionConfig : BepInExBaseConfig<PropulsionConfig>
       ConfigHelpers.CreateConfigDescription(
         "Turn speed for landvehicles. Zero is half the normal speed, 50% is normal speed, and 100% is double normal speed.", true, false, new AcceptableValueRange<float>(0, 1f)));
 
-    VehicleLandTurnSpeed.SettingChanged += (sender, args) => VehicleShip.UpdateAllWheelControllers();
+    VehicleLandTurnSpeed.SettingChanged += (sender, args) => VehicleBaseController.UpdateAllWheelControllers();
   }
 }

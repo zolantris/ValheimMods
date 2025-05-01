@@ -101,7 +101,7 @@ public class DynamicLocationsLoginIntegration : DynamicLoginIntegration
     }
   }
 
-  private bool MovePlayerToBedOnShip(VehicleShip vehicle)
+  private bool MovePlayerToBedOnShip(VehicleBaseController vehicle)
   {
     var bedPieces = vehicle.Instance.PiecesController.GetBedPieces();
     if (bedPieces.Count < 1) return false;
@@ -123,11 +123,11 @@ public class DynamicLocationsLoginIntegration : DynamicLoginIntegration
 
   // Internal Methods
 
-  private VehicleShip? GetVehicleFromZdo(ZDO zdo)
+  private VehicleBaseController? GetVehicleFromZdo(ZDO zdo)
   {
     var vehicleShipNetView = ZNetScene.instance.FindInstance(zdo);
     if (!vehicleShipNetView) return null;
-    var vehicleShip = vehicleShipNetView.GetComponent<VehicleShip>();
+    var vehicleShip = vehicleShipNetView.GetComponent<VehicleBaseController>();
     return vehicleShip;
   }
 }

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using ValheimVehicles.Controllers;
 using ValheimVehicles.Helpers;
@@ -23,10 +24,13 @@ namespace ValheimVehicles.Components;
 /// - Swivels can function outside a vehicle.
 /// - Swivels can function inside the hierarchy of a vehicle. This requires setting the children of swivels and escaping out of any logic that sets the parent to the VehiclePiecesController container.
 /// </logic>
-public class SwivelComponentIntegration : SwivelComponent, IPieceActivatorHost, Hoverable, Interactable
+///
+/// Notes
+/// IRaycastPieceActivator is used for simplicity. It will easily match any component extending this in unity.
+public sealed class SwivelComponentIntegration : SwivelComponent, IPieceActivatorHost, IRaycastPieceActivator, Hoverable, Interactable
 {
   public VehiclePiecesController? m_piecesController;
-  public VehicleShip? m_vehicle => m_piecesController?.VehicleInstance?.Instance;
+  public VehicleBaseController? m_vehicle => m_piecesController == null ? null : m_piecesController.BaseController;
 
   private ZNetView m_nview;
   private int _persistentZdoId;
@@ -34,7 +38,7 @@ public class SwivelComponentIntegration : SwivelComponent, IPieceActivatorHost, 
   public List<ZNetView> m_nviewPieces = [];
   public List<ZNetView> m_tempPieces = [];
 
-  private SwivelPieceActivator<SwivelComponentIntegration> _pieceActivator = null!;
+  private SwivelPieceActivator _pieceActivator = null!;
 
   public override void Awake()
   {
@@ -42,7 +46,7 @@ public class SwivelComponentIntegration : SwivelComponent, IPieceActivatorHost, 
     m_nview = GetComponent<ZNetView>();
 
     // TODO share activation logic with another component so we can reuse things.
-    _pieceActivator = gameObject.AddComponent<SwivelPieceActivator<SwivelComponentIntegration>>();
+    _pieceActivator = gameObject.AddComponent<SwivelPieceActivator>();
     _pieceActivator.Init(this);
     _pieceActivator.StartInitPersistentId();
   }
@@ -68,6 +72,24 @@ public class SwivelComponentIntegration : SwivelComponent, IPieceActivatorHost, 
       return;
     }
     ActiveInstances.Remove(persistentId);
+  }
+
+  public override void FixedUpdate()
+  {
+    base.FixedUpdate();
+  }
+
+  public void AddNearestPiece()
+  {
+    var hits = Physics.SphereCastAll(transform.position, 30f, Vector3.up, 30f, LayerHelpers.PhysicalLayers);
+    if (hits == null || hits.Length == 0) return;
+    var listHits = hits.ToList().Select(x => x.transform.transform.GetComponentInParent<Piece>()).Where(x => x != null && x.transform.root != transform.root).ToList();
+    listHits.Sort((x, y) =>
+      Vector3.Distance(transform.position, x.transform.position)
+        .CompareTo(Vector3.Distance(transform.position, y.transform.position)));
+
+    var firstHit = listHits.First();
+    TryAddPieceToSwivelContainer(GetPersistentId(), firstHit.transform.GetComponentInParent<ZNetView>());
   }
 
   public static bool TryAddPieceToSwivelContainer(int persistentId, ZNetView netViewPrefab)

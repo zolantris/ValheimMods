@@ -27,7 +27,7 @@ public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
   [FormerlySerializedAs("minimumVelocityToTriggerHit")]
   public float MinimumVelocityToTriggerHit = 0.5f;
 
-  public VehicleShip? m_vehicle;
+  public VehicleBaseController? m_vehicle;
   public RamPrefabs.RamType m_RamType;
 
   [FormerlySerializedAs("m_isVehicleRam")]

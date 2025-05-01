@@ -11,7 +11,7 @@ namespace ValheimVehicles.Controllers;
 
 public class VehicleConfigSyncComponent : MonoBehaviour
 {
-  private VehicleShip _vehicle;
+  private VehicleBaseController _vehicle;
   private ZNetView? m_nview => _vehicle.NetView;
   private VehiclePiecesController? PiecesController => _vehicle.PiecesController;
   private VehicleOnboardController? OnboardController => _vehicle.OnboardController;
@@ -26,7 +26,7 @@ public class VehicleConfigSyncComponent : MonoBehaviour
   public void Awake()
   {
     _rpcRegisterRetry = new RetryGuard(this);
-    _vehicle = GetComponent<VehicleShip>();
+    _vehicle = GetComponent<VehicleBaseController>();
   }
 
   private void OnEnable()

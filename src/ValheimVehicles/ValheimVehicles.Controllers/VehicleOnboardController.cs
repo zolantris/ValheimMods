@@ -283,7 +283,7 @@ public class VehicleOnboardController : MonoBehaviour, IDeferredTrigger
       if (data.OnboardController == null)
         data.OnboardController =
           VehiclePiecesController
-            .GetPieceControllerFromPlayer(data.character.gameObject)?
+            .GetRaycastPieceActivator(data.character.gameObject)?
             .VehicleInstance?.OnboardController;
 
       if (data.OnboardController == null)
