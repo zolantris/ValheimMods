@@ -1,14 +1,18 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using UnityEngine;
-using ValheimVehicles.Controllers;
-using ValheimVehicles.Helpers;
-using ValheimVehicles.Interfaces;
-using ValheimVehicles.SharedScripts;
-using ValheimVehicles.SharedScripts.UI;
-using ValheimVehicles.Structs;
-using ZdoWatcher;
+#region
+
+  using System;
+  using System.Collections.Generic;
+  using System.Linq;
+  using UnityEngine;
+  using ValheimVehicles.Controllers;
+  using ValheimVehicles.Helpers;
+  using ValheimVehicles.Interfaces;
+  using ValheimVehicles.SharedScripts;
+  using ValheimVehicles.SharedScripts.UI;
+  using ValheimVehicles.Structs;
+
+#endregion
+
 namespace ValheimVehicles.Components;
 
 /// <summary>
@@ -27,7 +31,7 @@ namespace ValheimVehicles.Components;
 ///
 /// Notes
 /// IRaycastPieceActivator is used for simplicity. It will easily match any component extending this in unity.
-public sealed class SwivelComponentIntegration : SwivelComponent, IPieceActivatorHost, IRaycastPieceActivator, Hoverable, Interactable
+public sealed class SwivelComponentIntegration : SwivelComponent, IPieceActivatorHost, IPieceController, IRaycastPieceActivator, Hoverable, Interactable
 {
   public VehiclePiecesController? m_piecesController;
   public VehicleBaseController? m_vehicle => m_piecesController == null ? null : m_piecesController.BaseController;
@@ -163,6 +167,7 @@ public sealed class SwivelComponentIntegration : SwivelComponent, IPieceActivato
   {
     m_piecesController = GetComponentInParent<VehiclePiecesController>();
   }
+  
 
   protected override Quaternion CalculateTargetWindDirectionRotation()
   {
@@ -219,4 +224,19 @@ public sealed class SwivelComponentIntegration : SwivelComponent, IPieceActivato
   {
     return false;
   }
+
+#region IPieceController
+
+  public void AddPiece(ZNetView nv, bool isNew = false)
+  {
+    if (nv == null) return;
+    nv.transform.SetParent(pieceContainer);
+  }
+  public void RemovePiece(ZNetView nv)
+  {
+    throw new NotImplementedException();
+  }
+
+#endregion
+
 }

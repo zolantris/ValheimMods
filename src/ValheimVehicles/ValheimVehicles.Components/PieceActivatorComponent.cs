@@ -1,11 +1,19 @@
-using System.Collections;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using UnityEngine;
-using ValheimVehicles.Enums;
-using ValheimVehicles.Interfaces;
-using ValheimVehicles.Structs;
+#region
+
+  using System.Collections;
+  using System.Collections.Generic;
+  using System.Diagnostics;
+  using System.Linq;
+  using UnityEngine;
+  using ValheimVehicles.Controllers;
+  using ValheimVehicles.Enums;
+  using ValheimVehicles.Interfaces;
+  using ValheimVehicles.Prefabs;
+  using ValheimVehicles.Structs;
+  using ZdoWatcher;
+  using static ValheimVehicles.Prefabs.Registry.RamPrefabs;
+
+#endregion
 
 namespace ValheimVehicles.Components;
 
@@ -129,4 +137,81 @@ public abstract class BasePieceActivatorComponent : MonoBehaviour
   }
 
   protected abstract void TrySetPieceToParent(ZNetView netView);
+
+  public static int GetSwivelParentId(ZDO zdo)
+  {
+    var id = zdo.GetInt(VehicleZdoVars.SwivelParentId);
+    return id;
+  }
+  
+  private static bool TryInitSwivelParentPiece( ZNetView netView, ZDO zdo)
+  {
+    var id = GetSwivelParentId(zdo);
+    if (id == 0) return false;
+
+    var parentObj = ZdoWatchController.Instance.GetGameObject(id);
+
+    var swivelController = parentObj == null ? null : parentObj.GetComponent<SwivelComponentIntegration>();
+    if (swivelController != null)
+    {
+      swivelController.AddPiece(netView);
+      // SwivelComponentIntegration.AddInactivePiece(id, netView, null);
+      return true;
+    }
+    
+    // todo should be ActivatePiece.
+    // activate SwivelController if the piece exists.
+    // if (swivelController.m_piecesController != null)
+    // {
+    //   swivelController.m_piecesController.ActivatePiece(netView);
+    // }
+    return false;
+  }
+  
+  private static bool TryInitVehicleParentPiece(ZNetView netView, ZDO zdo)
+  {
+    var id = VehiclePiecesController.GetParentID(zdo);
+    if (id == 0) return false;
+
+    var parentObj = ZdoWatchController.Instance.GetGameObject(id);
+    
+    var vehicleBaseController = parentObj == null ? null : parentObj.GetComponent<VehicleBaseController>();
+    if (vehicleBaseController != null && vehicleBaseController.PiecesController != null)
+    {
+      vehicleBaseController.PiecesController.ActivatePiece(netView);
+      return true;
+    }
+    
+    VehiclePiecesController.AddInactivePiece(id, netView, null);
+    
+    return false;
+  }
+  
+  public static bool IsExcludedPrefab(GameObject netView)
+  {
+    if (PrefabNames.IsVehicle(netView.name) ||
+        netView.name.StartsWith(PrefabNames.VehiclePiecesContainer))
+      return true;
+
+    return false;
+  }
+
+  public static void InitPiece(ZNetView netView)
+  {
+    if (!netView) return;
+    if (VehiclePiecesController.TryInitTempPiece(netView)) return;
+    
+    var isPiecesOrWaterVehicle = IsExcludedPrefab(netView.gameObject);
+    
+    if (isPiecesOrWaterVehicle) return;
+    
+    var rb = netView.GetComponentInChildren<Rigidbody>();
+    if ((bool)rb && !rb.isKinematic && !IsRam(netView.name)) return;
+
+    var zdo = netView.GetZDO();
+    if (zdo == null) return;
+
+    TryInitSwivelParentPiece(netView, zdo);
+    TryInitVehicleParentPiece(netView, zdo);
+  }
 }

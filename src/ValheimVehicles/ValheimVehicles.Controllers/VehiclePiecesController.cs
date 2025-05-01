@@ -49,7 +49,7 @@ public class VehiclePieceActivator : BasePieceActivatorComponent
 
 /// <summary>controller used for all vehicles</summary>
 /// <description> This is a controller used for all vehicles, Currently it must be initialized within a vehicle view IE VehicleShip or upcoming VehicleWheeled, and VehicleFlying instances.</description>
-public sealed class VehiclePiecesController : BasePiecesController, IMonoUpdater, IVehicleSharedProperties, IPieceActivatorHost, IRaycastPieceActivator
+public sealed class VehiclePiecesController : BasePiecesController, IMonoUpdater, IVehicleSharedProperties, IPieceActivatorHost, IPieceController, IRaycastPieceActivator
 {
   /*
    * Get all the instances statically
@@ -2119,7 +2119,7 @@ public sealed class VehiclePiecesController : BasePiecesController, IMonoUpdater
     itemsRemovedDuringWait = true;
   }
 
-  private static int GetParentID(ZDO zdo)
+  public static int GetParentID(ZDO zdo)
   {
     var id = zdo.GetInt(VehicleZdoVars.MBParentId);
     if (id == 0)
@@ -2143,16 +2143,7 @@ public sealed class VehiclePiecesController : BasePiecesController, IMonoUpdater
     return id;
   }
 
-  public static bool IsExcludedPrefab(GameObject netView)
-  {
-    if (PrefabNames.IsVehicle(netView.name) ||
-        netView.name.StartsWith(PrefabNames.VehiclePiecesContainer))
-      return true;
-
-    return false;
-  }
-
-  private static bool TryInitTempPiece(ZNetView netView)
+  public static bool TryInitTempPiece(ZNetView netView)
   {
     if (netView != null) return false;
     var zdo = netView.GetZDO();
@@ -2203,38 +2194,6 @@ public sealed class VehiclePiecesController : BasePiecesController, IMonoUpdater
     }
 
     pendingTempPiecesList.Clear();
-  }
-
-  public static void InitPiece(ZNetView netView)
-  {
-    if (!netView) return;
-    if (TryInitTempPiece(netView)) return;
-    
-    var isPiecesOrWaterVehicle = IsExcludedPrefab(netView.gameObject);
-    
-    if (isPiecesOrWaterVehicle) return;
-
-    var rb = netView.GetComponentInChildren<Rigidbody>();
-    if ((bool)rb && !rb.isKinematic && !RamPrefabs.IsRam(netView.name)) return;
-
-    var zdo = netView.GetZDO();
-    if (zdo == null) return;
-
-    var id = GetParentID(zdo);
-    if (id == 0) return;
-
-    var parentObj = ZdoWatchController.Instance.GetGameObject(id);
-    if (parentObj != null)
-    {
-      var vehicleShip = parentObj.GetComponent<VehicleBaseController>();
-      if (vehicleShip != null && vehicleShip.PiecesController != null)
-      {
-        vehicleShip.PiecesController.ActivatePiece(netView);
-        return;
-      }
-    }
-
-    AddInactivePiece(id, netView, null);
   }
 
   public void ActivatePiece(ZNetView netView)

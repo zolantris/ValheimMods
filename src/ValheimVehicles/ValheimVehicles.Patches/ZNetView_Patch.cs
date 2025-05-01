@@ -1,10 +1,10 @@
-using HarmonyLib;
-using UnityEngine;
-using ValheimVehicles.Components;
-using ValheimVehicles.Controllers;
-using ValheimVehicles.Prefabs;
+#region
 
-using Logger = Jotunn.Logger;
+  using HarmonyLib;
+  using ValheimVehicles.Components;
+  using ValheimVehicles.Controllers;
+
+#endregion
 
 namespace ValheimVehicles.Patches;
 
@@ -29,7 +29,10 @@ public class ZNetView_Patch
   {
     if (__instance.m_zdo == null) return;
 
-    VehiclePiecesController.InitPiece(__instance);
+    // for any vehicle like components
+    BasePieceActivatorComponent.InitPiece(__instance);
+    
+    // other components
     CultivatableComponent.InitPiece(__instance);
   }
 
