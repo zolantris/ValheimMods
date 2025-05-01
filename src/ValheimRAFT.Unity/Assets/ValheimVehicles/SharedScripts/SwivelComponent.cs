@@ -58,7 +58,6 @@ namespace ValheimVehicles.SharedScripts
     private float _currentZAngle;
 
     [Header("Other Settings")]
-    private Rigidbody _rigidbody;
 
     public const string AnimatedContainerName = "animated";
 
@@ -90,9 +89,7 @@ namespace ValheimVehicles.SharedScripts
       // connectorContainer = animatedTransform.Find("connector_container");
       // temp top level. To test patch issues.
       connectorContainer = transform.Find("connector_container");
-
-      _rigidbody = animatedTransform.GetComponent<Rigidbody>();
-      _rigidbody.isKinematic = true;
+      
       if (!pieceContainer || !connectorContainer)
       {
         Debug.LogError($"{nameof(SwivelComponent)} missing pieceContainer or connectorContainer!");
@@ -161,12 +158,14 @@ namespace ValheimVehicles.SharedScripts
 
     private void ApplyRotation()
     {
-      if (_rigidbody == null || pieceContainer == null || mode == SwivelMode.None)
+      if (pieceContainer == null || mode == SwivelMode.None)
         return;
-
-      var currentRotation = pieceContainer.localRotation;
-      var newRotation = Quaternion.Slerp(currentRotation, _targetRotation, turningLerpSpeed * Time.fixedDeltaTime);
-      _rigidbody.MoveRotation(NormalizeQuaternion(newRotation));
+      
+      animatedTransform.localRotation = Quaternion.Slerp(
+        NormalizeQuaternion(animatedTransform.localRotation),
+        _targetRotation,
+        turningLerpSpeed * Time.fixedDeltaTime
+      );
     }
 
     public void ResetRotation()

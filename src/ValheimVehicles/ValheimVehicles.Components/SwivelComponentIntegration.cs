@@ -215,6 +215,8 @@ public sealed class SwivelComponentIntegration : SwivelComponent, IPieceActivato
     m_hoverFadeText.ResetHoverTimer();
     m_hoverFadeText.currentText = ModTranslations.Swivel_Connected;
     
+    // must call this otherwise everything is in world position. 
+    AddPieceToParent(netView.transform);
     
     netView.m_zdo.Set(VehicleZdoVars.MBRotationVecHash,
       netView.transform.localRotation.eulerAngles);
@@ -339,11 +341,20 @@ public sealed class SwivelComponentIntegration : SwivelComponent, IPieceActivato
     nv.transform.SetParent(pieceContainer);
     PieceActivatorHelpers.FixPieceMeshes(nv);
     m_pieces.Add(nv);
+
+    if (connectorContainer != null)
+    {
+      connectorContainer.gameObject.SetActive(m_pieces.Count > 0);
+    }
   }
   
   public void RemovePiece(ZNetView nv)
   {
     m_pieces.Remove(nv);
+    if (connectorContainer != null)
+    {
+      connectorContainer.gameObject.SetActive(m_pieces.Count > 0);
+    }
   }
 
   /**

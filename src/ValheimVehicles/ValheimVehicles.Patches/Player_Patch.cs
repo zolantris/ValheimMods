@@ -250,8 +250,12 @@ public class Player_Patch
       start = vehicleTransform.TransformPoint(localStart);
       end = vehicleTransform.rotation * localDir * Vector3.forward;
     }
+    
+    // allows raycast to work properly when zoomed out.
+    var distanceBetweenPlayerAndCamera = Vector3.Distance(__instance.transform.position, gameCameraTransform.position);
+    var castDistance = distanceBetweenPlayerAndCamera + 10f;
 
-    if (Physics.Raycast(start, end, out var hitInfo, 10f, layerMask) &&
+    if (Physics.Raycast(start, end, out var hitInfo, castDistance, layerMask) &&
         (bool)hitInfo.collider)
     {
       if (!CanHitPiece(hitInfo.collider))

@@ -144,8 +144,8 @@ public abstract class BasePieceActivatorComponent : MonoBehaviour
     if (netView == null || netView.m_zdo == null) return;
 
     var t = netView.transform;
-    t.localPosition = netView.m_zdo.GetVec3(VehicleZdoVars.MBPositionHash, t.localPosition);
-    t.localRotation = Quaternion.Euler(netView.m_zdo.GetVec3(VehicleZdoVars.MBRotationVecHash, t.localRotation.eulerAngles));
+    t.localPosition = netView.m_zdo.GetVec3(VehicleZdoVars.MBPositionHash, Vector3.zero);
+    t.localRotation = Quaternion.Euler(netView.m_zdo.GetVec3(VehicleZdoVars.MBRotationVecHash, Vector3.zero));
 
     if (netView.TryGetComponent<WearNTear>(out var wnt))
       wnt.enabled = true;
