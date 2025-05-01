@@ -1,13 +1,17 @@
-using UnityEngine;
-namespace ValheimVehicles.Interfaces;
+#region
 
-public interface IVehicleBaseProperties : IVehicleControllers
+  using UnityEngine;
+
+#endregion
+
+  namespace ValheimVehicles.Interfaces;
+
+public interface IVehicleBaseProperties : IVehicleSharedProperties
 
 {
   public bool IsLandVehicle { get; }
   public BoxCollider? FloatCollider { get; }
   public Rigidbody? MovementControllerRigidbody { get; }
   public Transform ControlGuiPosition { get; set; }
-  public ZNetView? NetView { get; }
   public int PersistentZdoId { get; }
 }

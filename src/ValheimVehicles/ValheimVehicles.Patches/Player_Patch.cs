@@ -1,19 +1,22 @@
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection.Emit;
-using HarmonyLib;
-using UnityEngine;
-using Valheim.UI;
-using ValheimVehicles.Helpers;
-using ValheimVehicles.Prefabs;
-using ValheimVehicles.Propulsion.Rudder;
-using ValheimVehicles.Components;
-using ValheimVehicles.Controllers;
-using ValheimVehicles.Interfaces;
-using ValheimVehicles.Patches;
-using ValheimVehicles.SharedScripts;
-using Logger = Jotunn.Logger;
-using Object = UnityEngine.Object;
+#region
+
+  using System;
+  using System.Collections.Generic;
+  using System.Linq;
+  using System.Reflection.Emit;
+  using HarmonyLib;
+  using UnityEngine;
+  using Valheim.UI;
+  using ValheimVehicles.Components;
+  using ValheimVehicles.Controllers;
+  using ValheimVehicles.Helpers;
+  using ValheimVehicles.Interfaces;
+  using ValheimVehicles.Prefabs;
+  using ValheimVehicles.Propulsion.Rudder;
+  using Logger = Jotunn.Logger;
+  using Object = UnityEngine.Object;
+
+#endregion
 
 namespace ValheimVehicles.Patches;
 
@@ -31,9 +34,9 @@ public class Player_Patch
   {
     var operand = HarmonyPatchMethods.GetGenericMethod(
       typeof(Object), "Instantiate", 1,
-      new System.Type[3]
+      new Type[3]
       {
-        typeof(System.Type),
+        typeof(Type),
         typeof(Vector3),
         typeof(Quaternion)
       }).MakeGenericMethod(typeof(GameObject));
@@ -44,7 +47,7 @@ public class Player_Patch
     return new CodeMatcher(instructions).MatchForward(true, matches)
       .Advance(1)
       .InsertAndAdvance(
-        Transpilers.EmitDelegate<System.Func<GameObject, GameObject>>(
+        Transpilers.EmitDelegate<Func<GameObject, GameObject>>(
           PlacedPiece))
       .InstructionEnumeration();
   }
@@ -80,7 +83,7 @@ public class Player_Patch
   public static void HidePreviewComponent(ZNetView netView)
   {
     if (!PrefabNames.IsVehicle(netView.name)) return;
-    var vehicleShip = netView.GetComponent<VehicleShip>();
+    var vehicleShip = netView.GetComponent<VehicleBaseController>();
     if (vehicleShip == null) return;
     var ghostContainer = vehicleShip.GhostContainer();
     if (ghostContainer != null)
@@ -295,9 +298,9 @@ public class Player_Patch
     // }
     var layerMask = __instance.m_placeRayMask;
 
-    var transformOverride = PieceActivatorHelpers.GetRaycastPieceActivator(__instance.transform);
+    var raycastPieceActivator = PieceActivatorHelpers.GetRaycastPieceActivator(__instance.transform);
 
-    HandleGameObjectRayCast(bvc != null ? bvc.transform : null, layerMask, __instance,
+    HandleGameObjectRayCast(raycastPieceActivator?.transform, layerMask, __instance,
         ref __result, ref point,
         ref normal, ref piece,
         ref heightmap,
@@ -339,7 +342,7 @@ public class Player_Patch
     hoverCreature = null;
     var array = Physics.RaycastAll(GameCamera.instance.transform.position,
       GameCamera.instance.transform.forward, 50f, __instance.m_interactMask);
-    System.Array.Sort(array,
+    Array.Sort(array,
       (RaycastHit x, RaycastHit y) => x.distance.CompareTo(y.distance));
     var array2 = array;
     
@@ -513,7 +516,7 @@ public class Player_Patch
 
     var vvShipResult =
       hasDoodadController && isShipWheelControllerValid
-        ? controlledComponent as IVehicleShip
+        ? controlledComponent as IVehicleBaseProperties
         : null;
 
     return vvShipResult;

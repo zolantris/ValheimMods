@@ -1,21 +1,25 @@
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using DynamicLocations.Constants;
-using DynamicLocations.Controllers;
-using Jotunn.Managers;
-using TMPro;
-using UnityEngine;
-using UnityEngine.UI;
-using ValheimVehicles.Config;
-using ValheimVehicles.ConsoleCommands;
-using ValheimVehicles.Constants;
-using ValheimVehicles.Controllers;
-using ValheimVehicles.Prefabs;
-using ValheimVehicles.SharedScripts;
-using ValheimVehicles.Structs;
-using ValheimVehicles.GUI;
-using Logger = Jotunn.Logger;
+#region
+
+  using System;
+  using System.Collections.Generic;
+  using System.Diagnostics;
+  using DynamicLocations.Constants;
+  using DynamicLocations.Controllers;
+  using Jotunn.Managers;
+  using TMPro;
+  using UnityEngine;
+  using UnityEngine.UI;
+  using ValheimVehicles.Config;
+  using ValheimVehicles.ConsoleCommands;
+  using ValheimVehicles.Constants;
+  using ValheimVehicles.Controllers;
+  using ValheimVehicles.GUI;
+  using ValheimVehicles.Prefabs;
+  using ValheimVehicles.SharedScripts;
+  using ValheimVehicles.Structs;
+  using Logger = Jotunn.Logger;
+
+#endregion
 
 namespace ValheimVehicles.Components;
 
@@ -245,7 +249,7 @@ public class VehicleGui : SingletonBehaviour<VehicleGui>
         Instance.targetInstance = null;
         return;
       }
-      Instance.targetInstance = piecesController.VehicleInstance?.Instance;
+      Instance.targetInstance = piecesController.BaseController;
     }
   };
 
@@ -639,16 +643,15 @@ public class VehicleGui : SingletonBehaviour<VehicleGui>
     if (GUILayout.Button("Delete ShipZDO"))
     {
       var currentShip = VehicleDebugHelpers.GetVehiclePiecesController();
-      if (currentShip != null)
-        ZNetScene.instance.Destroy(currentShip?.VehicleInstance?.NetView?
+      if (currentShip != null && currentShip.NetView != null && ZNetScene.instance != null)
+        ZNetScene.instance.Destroy(currentShip.NetView
           .gameObject);
     }
 
     if (GUILayout.Button("Set logoutpoint"))
     {
       var zdo = Player.m_localPlayer
-        .GetComponentInParent<VehiclePiecesController>()?.VehicleInstance
-        ?.NetView?
+        .GetComponentInParent<VehiclePiecesController>().NetView
         .GetZDO();
       if (zdo != null) PlayerSpawnController.Instance?.SyncLogoutPoint(zdo);
     }
@@ -671,10 +674,10 @@ public class VehicleGui : SingletonBehaviour<VehicleGui>
 
     if (GUILayout.Button("Force Move Vehicle"))
     {
-      var currentShip = VehicleDebugHelpers.GetVehiclePiecesController();
-      if (currentShip != null)
+      var currentVehicle = VehicleDebugHelpers.GetVehiclePiecesController();
+      if (currentVehicle != null)
       {
-        var shipBody = currentShip.VehicleInstance?.Instance?.MovementController?.m_body;
+        var shipBody = currentVehicle?.MovementController?.m_body;
         if (shipBody == null) return;
         shipBody.MovePosition(shipBody.position + Vector3.forward);
       }

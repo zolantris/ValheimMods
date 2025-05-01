@@ -1,15 +1,15 @@
-using System;
-using Jotunn;
-using Jotunn.Configs;
+#region
+
+  using Jotunn.Configs;
 using Jotunn.Entities;
-using Jotunn.Extensions;
 using Jotunn.Managers;
 using UnityEngine;
-
+using ValheimVehicles.Components;
 using ValheimVehicles.Config;
 using ValheimVehicles.SharedScripts;
-using ValheimVehicles.Components;
 using Object = UnityEngine.Object;
+
+#endregion
 
 namespace ValheimVehicles.Prefabs.Registry;
 
@@ -35,7 +35,7 @@ public class VehiclePrefabs : IRegisterPrefab
      * ShipControls were a gameObject with a script attached to them. This approach directly attaches the script instead of having the rudder show.
      */
 
-    var shipInstance = prefab.AddComponent<VehicleShip>();
+    var shipInstance = prefab.AddComponent<VehicleBaseController>();
     shipInstance.gameObject.layer = LayerHelpers.CustomRaftLayer;
 
     // todo fix ship water effects so they do not cause ship materials to break
@@ -137,7 +137,7 @@ public class VehiclePrefabs : IRegisterPrefab
       LoadValheimVehicleAssets.VehicleLand);
 
     CreateWaterVehiclePrefab(landVehiclePrefab);
-    var vehicleShip = landVehiclePrefab.GetComponent<VehicleShip>();
+    var vehicleShip = landVehiclePrefab.GetComponent<VehicleBaseController>();
     vehicleShip.IsLandVehicleFromPrefab = true;
     vehicleShip.IsLandVehicle = true;
 

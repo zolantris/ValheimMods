@@ -1,20 +1,21 @@
-using System;
-using System.Diagnostics.CodeAnalysis;
+#region
+
+  using System.Diagnostics.CodeAnalysis;
 using UnityEngine;
 using ValheimVehicles.Components;
 using ValheimVehicles.Config;
 using ValheimVehicles.Enums;
+using ValheimVehicles.Interfaces;
 using ValheimVehicles.SharedScripts;
-using ValheimVehicles.Structs;
+
+#endregion
 
 namespace ValheimVehicles.Controllers;
 
-public class VehicleConfigSyncComponent : MonoBehaviour
+public class VehicleConfigSyncComponent : MonoBehaviour, IVehicleSharedProperties
 {
   private VehicleBaseController _vehicle;
   private ZNetView? m_nview => _vehicle.NetView;
-  private VehiclePiecesController? PiecesController => _vehicle.PiecesController;
-  private VehicleOnboardController? OnboardController => _vehicle.OnboardController;
   private BoxCollider? FloatCollider => _vehicle.FloatCollider;
   private bool _hasRegister;
   private RetryGuard _rpcRegisterRetry;
@@ -188,4 +189,46 @@ public class VehicleConfigSyncComponent : MonoBehaviour
     if (PiecesController == null) return;
     PiecesController.RequestBoundsRebuild();
   }
+
+#region IVehicleSharedProperties
+
+  public VehiclePiecesController? PiecesController
+  {
+    get;
+    set;
+  }
+  public VehicleMovementController? MovementController
+  {
+    get;
+    set;
+  }
+  public VehicleConfigSyncComponent? VehicleConfigSync
+  {
+    get;
+    set;
+  }
+  public VehicleOnboardController? OnboardController
+  {
+    get;
+    set;
+  }
+  public VehicleWheelController? WheelController
+  {
+    get;
+    set;
+  }
+  public VehicleBaseController? BaseController
+  {
+    get;
+    set;
+  }
+  
+  public ZNetView? NetView
+  {
+    get;
+    set;
+  }
+
+#endregion
+  
 }

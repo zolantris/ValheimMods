@@ -1,10 +1,13 @@
-using System.Collections.Generic;
-using UnityEngine;
-using UnityEngine.EventSystems;
-using ValheimVehicles.Config;
-using ValheimVehicles.Controllers;
-using ValheimVehicles.Prefabs;
+#region
 
+  using System.Collections.Generic;
+  using UnityEngine;
+  using UnityEngine.EventSystems;
+  using ValheimVehicles.Config;
+  using ValheimVehicles.Controllers;
+  using ValheimVehicles.Prefabs;
+
+#endregion
 
 namespace ValheimVehicles.Components;
 
@@ -143,6 +146,8 @@ public class RopeLadderComponent : MonoBehaviour, Interactable, Hoverable
     m_currentRight = INVALID_STEP;
     m_targetLeft = INVALID_STEP;
     m_targetRight = INVALID_STEP;
+    if (m_attachPoint.parent == null) return;
+    
     m_attachPoint.localPosition = new Vector3(m_attachPoint.localPosition.x,
       ClampOffset(m_attachPoint.parent
         .InverseTransformPoint(player.transform.position).y),
@@ -154,14 +159,22 @@ public class RopeLadderComponent : MonoBehaviour, Interactable, Hoverable
 
   private bool IsFlyingAndNotAnchored(Vector3 hitPoint)
   {
-    var targetHeight = vehiclePiecesController?.VehicleInstance?.Instance
-      ?.TargetHeight;
-    if (targetHeight != null && vehiclePiecesController?.VehicleInstance
-          ?.Instance?.TargetHeight >
+    if (vehiclePiecesController == null || vehiclePiecesController.MovementController == null)
+    {
+      return false;
+    }
+    
+    var movementController = vehiclePiecesController.MovementController;
+    
+    var targetHeight = movementController
+      .TargetHeight;
+    if (targetHeight >
         0f &&
-        !(vehiclePiecesController?.MovementController?.isAnchored ?? false) &&
-        hitPoint.y < vehiclePiecesController?.GetColliderBottom())
+        !movementController.isAnchored &&
+        hitPoint.y < vehiclePiecesController.GetColliderBottom())
+    {
       return true;
+    }
 
     return false;
   }

@@ -1,6 +1,10 @@
-using ValheimVehicles.Controllers;
+#region
 
-namespace ValheimVehicles.Components;
+  using ValheimVehicles.Controllers;
+
+#endregion
+
+  namespace ValheimVehicles.Components;
 
 public interface ICharacterOnboardData
 {
@@ -28,7 +32,7 @@ public class WaterZoneCharacterData : ICharacterOnboardData
   public VehicleOnboardController? OnboardController;
 
   public VehicleBaseController? VehicleShip =>
-    OnboardController?.vehicleShip?.Instance;
+    OnboardController == null ? null : OnboardController.BaseController;
 
   public WaterZoneController? WaterZoneController;
   private WaterVolume? _prevWaterVolume;

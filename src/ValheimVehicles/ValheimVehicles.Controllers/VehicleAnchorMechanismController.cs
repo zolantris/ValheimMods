@@ -1,10 +1,12 @@
-﻿using System;
-using UnityEngine;
-using UnityEngine.PlayerLoop;
-using ValheimVehicles.Config;
-using ValheimVehicles.Constants;
-using ValheimVehicles.SharedScripts;
-using Logger = Jotunn.Logger;
+﻿#region
+
+  using System;
+  using UnityEngine;
+  using ValheimVehicles.Config;
+  using ValheimVehicles.Constants;
+  using ValheimVehicles.SharedScripts;
+
+#endregion
 
 namespace ValheimVehicles.Controllers;
 
@@ -52,27 +54,28 @@ public class VehicleAnchorMechanismController : AnchorMechanismController
   {
     if (isLandVehicle)
     {
-      return anchorState == AnchorState.Anchored ? ModTranslations.breakingText : ModTranslations.idleText;
+      return anchorState == AnchorState.Anchored ? ModTranslations.AnchorPrefab_breakingText : ModTranslations.AnchorPrefab_idleText;
     }
 
     return anchorState switch
     {
       AnchorState.Idle => "Idle",
-      AnchorState.Lowering => ModTranslations.loweringText,
-      AnchorState.Anchored => ModTranslations.anchoredText,
-      AnchorState.Reeling => ModTranslations.reelingText,
-      AnchorState.Recovered => ModTranslations.Anchor_RecoveredAnchorText,
+      AnchorState.Lowering => ModTranslations.AnchorPrefab_loweringText,
+      AnchorState.Anchored => ModTranslations.AnchorPrefab_anchoredText,
+      AnchorState.Reeling => ModTranslations.AnchorPrefab_reelingText,
+      AnchorState.Recovered => ModTranslations.AnchorPrefab_RecoveredAnchorText,
       _ => throw new ArgumentOutOfRangeException()
     };
   }
 
+  public bool IsLandVehicle()
+  {
+    return MovementController != null && MovementController.BaseController != null && MovementController.BaseController.IsLandVehicle;
+  }
+
   public override string GetCurrentStateText()
   {
-    var isLandVehicle = MovementController != null && MovementController.VehicleInstance is
-    {
-      IsLandVehicle: true
-    };
-    return GetCurrentStateTextStatic(currentState, isLandVehicle);
+    return GetCurrentStateTextStatic(currentState, IsLandVehicle());
   }
 
   public override void OnAnchorStateChange(AnchorState newState)

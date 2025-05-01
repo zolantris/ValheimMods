@@ -1,6 +1,10 @@
-using DynamicLocations.Controllers;
-using HarmonyLib;
-using ValheimVehicles.Controllers;
+#region
+
+  using DynamicLocations.Controllers;
+  using HarmonyLib;
+  using ValheimVehicles.Controllers;
+
+#endregion
 
 namespace ValheimVehicles.Patches;
 
@@ -16,19 +20,19 @@ public class DynamicLocations_Game_LogoutPatch
     if (Player.m_localPlayer == null) return;
     var playerZdoid = Player.m_localPlayer.GetZDOID();
     if (playerZdoid == ZDOID.None) return;
+    if (PlayerSpawnController.Instance == null) return;
 
     var onboardData =
       VehicleOnboardController.GetOnboardCharacterData(Player.m_localPlayer
         .GetZDOID());
-    if (onboardData == null || onboardData.OnboardController == null)
+    
+    if (onboardData == null || onboardData.OnboardController == null || onboardData.OnboardController.NetView == null || onboardData.OnboardController.NetView.GetZDO() == null)
     {
-      PlayerSpawnController.Instance?.SyncLogoutPoint(null, true);
+      PlayerSpawnController.Instance.SyncLogoutPoint(null, true);
       return;
     }
-
-    if (onboardData.OnboardController == null) return;
-
-    PlayerSpawnController.Instance?.SyncLogoutPoint(
-      onboardData?.OnboardController?.vehicleShip?.NetView?.GetZDO());
+    
+    PlayerSpawnController.Instance.SyncLogoutPoint(
+      onboardData.OnboardController.NetView.GetZDO());
   }
 }

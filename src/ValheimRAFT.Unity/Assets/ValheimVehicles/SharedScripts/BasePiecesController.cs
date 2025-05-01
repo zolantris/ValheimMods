@@ -75,7 +75,7 @@ namespace ValheimVehicles.SharedScripts
     private List<int> tris = new();
 
     private List<Vector3> verts = new();
-    public VehicleWheelController WheelController { get; set; }
+    public VehicleWheelController? WheelController { get; set; }
 
     public List<GameObject> convexHullMeshes =>
       m_convexHullAPI.convexHullMeshes;

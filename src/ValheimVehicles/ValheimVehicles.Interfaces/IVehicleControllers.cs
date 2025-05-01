@@ -20,10 +20,10 @@ namespace ValheimVehicles.Interfaces;
 /// 
 public interface IVehicleControllers
 {
-  public VehiclePiecesController? PiecesController { get; }
-  public VehicleMovementController? MovementController { get; }
-  public VehicleConfigSyncComponent? VehicleConfigSync { get; }
-  public VehicleOnboardController? OnboardController { get; }
-  public VehicleWheelController? WheelController { get; }
-  public VehicleBaseController? BaseController { get; }
+  public VehiclePiecesController? PiecesController { get; set; }
+  public VehicleMovementController? MovementController { get; set; }
+  public VehicleConfigSyncComponent? VehicleConfigSync { get; set; }
+  public VehicleOnboardController? OnboardController { get; set; }
+  public VehicleWheelController? WheelController { get; set; }
+  public VehicleBaseController? BaseController { get; set; }
 }

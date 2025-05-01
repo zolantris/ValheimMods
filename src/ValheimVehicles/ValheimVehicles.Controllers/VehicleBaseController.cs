@@ -1,19 +1,23 @@
-using System;
-using System.Collections.Generic;
-using Jotunn.Extensions;
-using Jotunn.Managers;
-using Registry;
-using UnityEngine;
-using ValheimVehicles.Config;
-using ValheimVehicles.Prefabs;
-using ValheimVehicles.SharedScripts;
-using ValheimVehicles.Controllers;
-using ValheimVehicles.Enums;
-using ValheimVehicles.Helpers;
-using ValheimVehicles.Interfaces;
-using ValheimVehicles.Structs;
-using static ValheimVehicles.Config.PrefabConfig;
-using Logger = Jotunn.Logger;
+#region
+
+  using System;
+  using System.Collections.Generic;
+  using Jotunn.Extensions;
+  using Jotunn.Managers;
+  using Registry;
+  using UnityEngine;
+  using ValheimVehicles.Config;
+  using ValheimVehicles.Controllers;
+  using ValheimVehicles.Enums;
+  using ValheimVehicles.Helpers;
+  using ValheimVehicles.Interfaces;
+  using ValheimVehicles.Prefabs;
+  using ValheimVehicles.SharedScripts;
+  using ValheimVehicles.Structs;
+  using static ValheimVehicles.Config.PrefabConfig;
+  using Logger = Jotunn.Logger;
+
+#endregion
 
 namespace ValheimVehicles.Components;
 
@@ -36,7 +40,7 @@ public static class VehicleShipHelpers
 /*
  * Acts as a Delegate component between the ship physics and the controller
  */
-public class VehicleBaseController : MonoBehaviour, IVehicleBaseProperties
+public class VehicleBaseController : MonoBehaviour, IVehicleBaseProperties, IVehicleSharedProperties
 {
   public GameObject RudderObject { get; set; }
   public const float MinimumRigibodyMass = 1000;
@@ -122,7 +126,15 @@ public class VehicleBaseController : MonoBehaviour, IVehicleBaseProperties
 
   public VehicleOnboardController? OnboardController { get; set; }
   public VehicleWheelController? WheelController { get; set; }
-  public VehicleBaseController BaseController => this;
+
+  public VehicleBaseController BaseController
+  {
+    get => this;
+    set
+    {
+      // do nothing
+    }
+  }
 
   public VehicleBaseController Instance => this;
 
@@ -304,6 +316,22 @@ public class VehicleBaseController : MonoBehaviour, IVehicleBaseProperties
     InitializeShipEffects();
     InitializeWheelController();
 
+    if (PiecesController == null || MovementController == null || OnboardController == null)
+    {
+      LoggerProvider.LogError($"Component Controllers should not be null but got null controllers \nPiecesController: {PiecesController} \nMovementController: {MovementController} \nOnboardController: {OnboardController}");
+      
+      return;
+    }
+
+    var allControllers = new List<IVehicleSharedProperties>
+    {
+      PiecesController,
+      MovementController,
+      OnboardController,
+      VehicleConfigSync,
+    };
+
+    VehicleSharedPropertiesUtils.BindAllControllers(this, allControllers);
 
     // Re-attaches all the components to the initialized components (if they are valid).
     RebindAllComponents();
@@ -312,7 +340,7 @@ public class VehicleBaseController : MonoBehaviour, IVehicleBaseProperties
     // For starting the vehicle pieces.
     if (PiecesController != null)
     {
-      PiecesController.InitFromShip(Instance);
+      PiecesController.InitFromShip();
       InitStarterPiece();
     }
     else
@@ -379,7 +407,7 @@ public class VehicleBaseController : MonoBehaviour, IVehicleBaseProperties
     OnboardController = PiecesController.OnboardCollider
       .gameObject
       .AddComponent<VehicleOnboardController>();
-    OnboardController.vehicleShip = this;
+    OnboardController.BaseController = this;
   }
 
   public void UpdateWheelControllerProperties()
@@ -642,7 +670,7 @@ public class VehicleBaseController : MonoBehaviour, IVehicleBaseProperties
       parent = transform
     });
     VehicleDebugHelpersInstance.VehicleObj = gameObject;
-    VehicleDebugHelpersInstance.vehicleControllersInstance = this;
+    VehicleDebugHelpersInstance.vehicleBaseControllerInstance = this;
   }
 
   /// <summary>

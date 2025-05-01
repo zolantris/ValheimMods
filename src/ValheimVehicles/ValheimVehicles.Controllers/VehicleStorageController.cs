@@ -1,20 +1,25 @@
-using System;
+#region
+
+  using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using BepInEx;
 using Jotunn.Managers;
-using UnityEngine;
-using ValheimVehicles.SharedScripts; // Assume you want the shared scripts style.
 using Newtonsoft.Json;
 using TMPro;
+using UnityEngine;
 using ValheimVehicles.Compat;
-using ValheimVehicles.ConsoleCommands;
-using ValheimVehicles.Prefabs;
-using ValheimVehicles.GUI;
 using ValheimVehicles.Components;
+using ValheimVehicles.ConsoleCommands;
+using ValheimVehicles.GUI;
+using ValheimVehicles.Prefabs;
+using ValheimVehicles.SharedScripts;
 using ValheimVehicles.Storage.Serialization;
+// Assume you want the shared scripts style.
 using Object = UnityEngine.Object;
+
+#endregion
 
 namespace ValheimVehicles.Controllers;
 
@@ -123,7 +128,7 @@ public static class VehicleStorageController
     SelectedVehicle = vehicleName;
   }
 
-  public static VehicleTypeEnum GetVehicleType(VehicleShip vehicle)
+  public static VehicleTypeEnum GetVehicleType(VehicleBaseController vehicle)
   {
     return vehicle.IsLandVehicle ? VehicleTypeEnum.Land : VehicleTypeEnum.All;
   }
@@ -250,21 +255,21 @@ public static class VehicleStorageController
     GameObject vehiclePrefabInstance;
     try
     {
-      VehicleShip.CanInitHullPiece = false;
+      VehicleBaseController.CanInitHullPiece = false;
       vehiclePrefabInstance = Object.Instantiate(vehiclePrefab, position, Quaternion.identity);
       if (!vehiclePrefabInstance) return;
     }
     catch (Exception e)
     {
-      VehicleShip.CanInitHullPiece = true;
+      VehicleBaseController.CanInitHullPiece = true;
       return;
     }
-    VehicleShip.CanInitHullPiece = true;
+    VehicleBaseController.CanInitHullPiece = true;
 
     if (vehiclePrefabInstance == null) return;
 
 
-    var vehicleShip = vehiclePrefabInstance.GetComponent<VehicleShip>();
+    var vehicleShip = vehiclePrefabInstance.GetComponent<VehicleBaseController>();
     if (vehicleShip == null) return;
     if (vehicleShip.PiecesController == null)
     {

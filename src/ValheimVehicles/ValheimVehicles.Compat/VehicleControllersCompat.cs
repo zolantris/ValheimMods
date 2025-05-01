@@ -249,15 +249,7 @@ public class VehicleControllersCompat : IVehicleControllers, IValheimShip
   }
 
   public GameObject RudderObject { get; set; }
-  public VehiclePiecesController? PiecesController { get; }
-  public VehicleMovementController MovementController { get; }
-  public VehicleConfigSyncComponent VehicleConfigSync
-  {
-    get;
-  }
-  
-  public VehicleOnboardController? OnboardController { get; }
-  public VehicleWheelController? WheelController { get; } = null;
+
   public Rigidbody? MovementControllerRigidbody { get; }
   public bool IsLandVehicle
   {
@@ -267,9 +259,7 @@ public class VehicleControllersCompat : IVehicleControllers, IValheimShip
   public Transform? ShipDirection { get; }
   public Transform ControlGuiPosition { get; set; }
   public Transform m_controlGuiPos { get; set; }
-
-  public VehicleBaseController? BaseController => VehicleShipInstance;
-
+  
   public ZNetView? NetView
   {
     get
@@ -283,4 +273,39 @@ public class VehicleControllersCompat : IVehicleControllers, IValheimShip
   }
 
   public int PersistentZdoId => 0;
+
+#region IVehicleControllers
+
+  public VehiclePiecesController? PiecesController
+  {
+    get;
+    set;
+  }
+  public VehicleMovementController? MovementController
+  {
+    get;
+    set;
+  }
+  public VehicleConfigSyncComponent? VehicleConfigSync
+  {
+    get;
+    set;
+  }
+  public VehicleOnboardController? OnboardController
+  {
+    get;
+    set;
+  }
+  public VehicleWheelController? WheelController
+  {
+    get;
+    set;
+  }
+  public VehicleBaseController? BaseController
+  {
+    get;
+    set;
+  }
+
+#endregion
 }

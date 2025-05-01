@@ -330,12 +330,13 @@ public class VehicleCommands : ConsoleCommand
     if (data.Value.charactersOnShip.Count <= 0) yield break;
     var piecesController =
       data.Value.OnboardController?.PiecesController?.transform;
-    var zdo = data.Value.OnboardController?.vehicleShip?.NetView?.m_zdo;
+    var zdo = data.Value.OnboardController?.BaseController?.NetView?.GetZDO();
 
+    if (piecesController == null || zdo == null) yield break;
+    
     foreach (var safeMoveCharacterData in data.Value.charactersOnShip)
     {
       var targetLocation = nextPosition + safeMoveCharacterData.lastLocalOffset;
-      if (piecesController != null && zdo != null)
       {
         var safeMoveCharacterPos = safeMoveCharacterData.character.transform.position;
         var piecesControllerPos = piecesController.transform.position;
@@ -349,7 +350,7 @@ public class VehicleCommands : ConsoleCommand
 
         if (Mathf.Abs(deltaX) > 50f || Mathf.Abs(deltaY) > 50f ||
             Mathf.Abs(deltaZ) > 50f)
-          targetLocation = zdo
+          targetLocation = zdo!
                              .GetPosition() +
                            safeMoveCharacterData.lastLocalOffset;
         
@@ -425,9 +426,10 @@ public class VehicleCommands : ConsoleCommand
     yield return null;
   }
 
-  private static IEnumerator MoveVehicleIntoFarZone(VehicleShip vehicleInstance,
+  private static IEnumerator MoveVehicleIntoFarZone(VehicleBaseController vehicleInstance,
     Vector3 offset, Action<Vector3> onPositionReady)
   {
+    if (vehicleInstance.PiecesController == null) yield break;
     var newLocation =
       VectorUtils.MergeVectors(vehicleInstance.transform.position, offset);
 
@@ -456,7 +458,7 @@ public class VehicleCommands : ConsoleCommand
   /// </summary>
   /// <param name="vehicleInstance">The vehicle instance to move.</param>
   /// <param name="offset">The offset vector to apply.</param>
-  private static IEnumerator MoveVehicle(VehicleShip? vehicleInstance,
+  private static IEnumerator MoveVehicle(VehicleBaseController? vehicleInstance,
     Vector3 offset)
   {
     if (vehicleInstance?.OnboardController == null)
@@ -576,22 +578,21 @@ public class VehicleCommands : ConsoleCommand
   private static void VehicleRotate(string[] args)
   {
     var vehicleController = VehicleDebugHelpers.GetVehiclePiecesController();
-    if (!vehicleController)
+    if (vehicleController == null || vehicleController.MovementController == null)
     {
       Logger.LogMessage("No VehicleController Detected");
       return;
     }
 
     if (args.Length == 1)
-      Game.instance.StartCoroutine(vehicleController?.VehicleInstance
-        ?.MovementController?.FixShipRotation());
+      Game.instance.StartCoroutine(vehicleController.MovementController.FixShipRotation());
 
     if (args.Length == 4)
     {
       float.TryParse(args[1], out var x);
       float.TryParse(args[2], out var y);
       float.TryParse(args[3], out var z);
-      vehicleController?.VehicleInstance?.Instance?.MovementController?.m_body
+      vehicleController.MovementController.m_body
         .MoveRotation(
           Quaternion.Euler(
             Mathf.Approximately(0f, x) ? 0 : x,
@@ -631,7 +632,7 @@ public class VehicleCommands : ConsoleCommand
     }
   }
 
-  public static VehicleShip? GetNearestVehicleShip(Vector3 position)
+  public static VehicleBaseController? GetNearestVehicleShip(Vector3 position)
   {
     if (!Physics.Raycast(
           GameCamera.instance.transform.position,
@@ -647,10 +648,10 @@ public class VehicleCommands : ConsoleCommand
     var vehiclePiecesController =
       hitinfo.collider.GetComponentInParent<VehiclePiecesController>();
 
-    if (!(bool)vehiclePiecesController?.VehicleInstance?.Instance) return null;
+    if (!(bool)vehiclePiecesController.BaseController) return null;
 
     var vehicleShipController =
-      vehiclePiecesController?.VehicleInstance?.Instance;
+      vehiclePiecesController.BaseController;
     return vehicleShipController;
   }
 
@@ -802,7 +803,7 @@ public class VehicleCommands : ConsoleCommand
     LoggerProvider.LogMessage("Completed creative mode commands.");
   }
 
-  private static Vector3 GetCreativeModeTargetPosition(VehicleShip vehicleInstance)
+  private static Vector3 GetCreativeModeTargetPosition(VehicleBaseController vehicleInstance)
   {
     if (vehicleInstance == null || vehicleInstance.MovementController == null) return Vector3.zero;
 

@@ -1,14 +1,19 @@
-using System.Collections.Generic;
-using System.Linq;
-using DynamicLocations.Controllers;
-using JetBrains.Annotations;
-using UnityEngine;
-using ValheimVehicles.Components;
-using ValheimVehicles.Config;
-using ValheimVehicles.Helpers;
-using ValheimVehicles.Patches;
-using ValheimVehicles.SharedScripts;
-using Logger = Jotunn.Logger;
+#region
+
+  using System.Collections.Generic;
+  using System.Linq;
+  using DynamicLocations.Controllers;
+  using JetBrains.Annotations;
+  using UnityEngine;
+  using ValheimVehicles.Components;
+  using ValheimVehicles.Config;
+  using ValheimVehicles.Helpers;
+  using ValheimVehicles.Interfaces;
+  using ValheimVehicles.Patches;
+  using ValheimVehicles.SharedScripts;
+  using Logger = Jotunn.Logger;
+
+#endregion
 
 namespace ValheimVehicles.Controllers;
 
@@ -17,13 +22,9 @@ namespace ValheimVehicles.Controllers;
 ///
 /// TODO in multiplayer make sure that not only the host, but all clients add all Characters that are players to the VehiclePieces controller. This way there is no jitters
 /// </summary>
-public class VehicleOnboardController : MonoBehaviour, IDeferredTrigger
+public class VehicleOnboardController : MonoBehaviour, IVehicleSharedProperties, IDeferredTrigger
 {
-  public VehicleMovementController? MovementController => vehicleShip != null
-    ? vehicleShip.MovementController
-    : null;
-
-  public VehicleShip? vehicleShip;
+  
 
   // todo Possibly localize these lists and have a delegate to select correct list or skip immediately
   [UsedImplicitly]
@@ -52,13 +53,13 @@ public class VehicleOnboardController : MonoBehaviour, IDeferredTrigger
     set;
   }
 
-  public VehiclePiecesController? PiecesController =>
-    vehicleShip != null ? vehicleShip.PiecesController : null;
-
   private Rigidbody onboardRigidbody;
-  
+
   private void Awake()
   {
+    OnboardController = this;
+    
+    
     OnboardCollider = GetComponent<BoxCollider>();
     InvokeRepeating(nameof(ValidateCharactersAreOnShip), 1f, 30f);
 
@@ -77,7 +78,7 @@ public class VehicleOnboardController : MonoBehaviour, IDeferredTrigger
   public void UpdateReadyForCollisions()
   {
     CancelInvoke(nameof(UpdateReadyForCollisions));
-    if (!MovementController || !vehicleShip || !PiecesController)
+    if (!MovementController || !PiecesController)
     {
       isReadyForCollisions = false;
       Invoke(nameof(UpdateReadyForCollisions), 0.1f);
@@ -280,11 +281,20 @@ public class VehicleOnboardController : MonoBehaviour, IDeferredTrigger
     controller = null;
     if (CharacterOnboardDataItems.TryGetValue(zdoid, out var data))
     {
+      if (data.character == null)
+      {
+        CharacterOnboardDataItems.Remove(zdoid);
+        return false;
+      }
+      
       if (data.OnboardController == null)
-        data.OnboardController =
-          VehiclePiecesController
-            .GetRaycastPieceActivator(data.character.gameObject)?
-            .VehicleInstance?.OnboardController;
+      {
+        var piecesController = VehiclePiecesController.GetVehiclePiecesController(data.character.gameObject);
+        if (piecesController != null)
+        {
+          data.OnboardController = piecesController.OnboardController;
+        }
+      }
 
       if (data.OnboardController == null)
       {
@@ -486,7 +496,7 @@ public class VehicleOnboardController : MonoBehaviour, IDeferredTrigger
   private Player? GetPlayerComponent(Collider collider)
   {
     if (MovementController == null) return null;
-    if (MovementController.VehicleInstance?.Instance == null) return null;
+    if (BaseController == null) return null;
     var playerComponent = collider.GetComponent<Player>();
     if (!playerComponent) return null;
 
@@ -504,7 +514,7 @@ public class VehicleOnboardController : MonoBehaviour, IDeferredTrigger
   public static void RestorePlayerBlockingCamera(Player player)
   {
     if (!PhysicsConfig.removeCameraCollisionWithObjectsOnBoat.Value) return;
-    if (Player.m_localPlayer == player &&
+    if (Player.m_localPlayer == player && GameCamera.instance != null &&
         GameCamera.instance.m_blockCameraMask == 0)
       GameCamera.instance.m_blockCameraMask =
         GameCamera_WaterPatches.BlockingWaterMask;
@@ -635,8 +645,8 @@ public class VehicleOnboardController : MonoBehaviour, IDeferredTrigger
     LoggerProvider.LogDebug(
       $"Player: {playerInList.GetPlayerName()} on-board, total onboard {m_localPlayers.Count}");
 
-    var vehicleZdo = MovementController.VehicleInstance?.NetView != null
-      ? MovementController.VehicleInstance.NetView.GetZDO()
+    var vehicleZdo = MovementController?.NetView != null
+      ? MovementController.NetView.GetZDO()
       : null;
 
     if (playerInList == Player.m_localPlayer && vehicleZdo != null)
@@ -648,9 +658,9 @@ public class VehicleOnboardController : MonoBehaviour, IDeferredTrigger
     KeyValuePair<ZDOID, Player> delayedExitSubscription)
   {
     if (MovementController == null ||
-        MovementController.VehicleInstance?.NetView == null) return;
+        MovementController?.NetView == null) return;
     var vehicleZdo = MovementController
-      .VehicleInstance.NetView.GetZDO();
+      .NetView.GetZDO();
     if (delayedExitSubscription.Value == Player.m_localPlayer &&
         vehicleZdo != null && PlayerSpawnController.Instance != null)
       PlayerSpawnController.Instance.SyncLogoutPoint(vehicleZdo, true);
@@ -725,4 +735,45 @@ public class VehicleOnboardController : MonoBehaviour, IDeferredTrigger
       yield return new WaitForSeconds(15);
     }
   }
+
+#region IVehicleSharedProperties
+
+  public VehiclePiecesController? PiecesController
+  {
+    get;
+    set;
+  }
+  public VehicleMovementController? MovementController
+  {
+    get;
+    set;
+  }
+  public VehicleConfigSyncComponent? VehicleConfigSync
+  {
+    get;
+    set;
+  }
+  public VehicleOnboardController? OnboardController
+  {
+    get;
+    set;
+  }
+  public VehicleWheelController? WheelController
+  {
+    get;
+    set;
+  }
+  public VehicleBaseController? BaseController
+  {
+    get;
+    set;
+  }
+  
+  public ZNetView? NetView
+  {
+    get;
+    set;
+  }
+
+#endregion
 }
