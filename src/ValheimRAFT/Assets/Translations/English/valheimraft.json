@@ -165,5 +165,6 @@
   "valheim_vehicles_custom_floatation_height": "Custom Floatation Height",
   "valheim_vehicles_level": "level",
   "valheim_vehicles_custom_mast": "Custom Mast",
-  "valheim_vehicles_custom_mast_desc": "A custom mast meant to simplify vehicle masts. These do not contain sails, but they can be equipped with a custom sail easily."
+  "valheim_vehicles_custom_mast_desc": "A custom mast meant to simplify vehicle masts. These do not contain sails, but they can be equipped with a custom sail easily.",
+  "valheim_vehicles_owner": "Owner"
 }

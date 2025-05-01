@@ -1,7 +1,11 @@
-using System;
+#region
 
-using ValheimVehicles.SharedScripts;
-using ValheimVehicles.SharedScripts.Validation;
+  using System;
+  using ValheimVehicles.SharedScripts;
+  using ValheimVehicles.SharedScripts.Validation;
+
+#endregion
+
 namespace ValheimVehicles.Constants;
 
 /// <summary>
@@ -22,6 +26,8 @@ public class ModTranslations
   public static string EnabledText = null!;
   public static string DisabledText = null!;
   
+  public static string ValheimInput_KeyUse = null!;
+  
 
   public static string ToggleSwitch_CommandsHudText = null!;
   public static string ToggleSwitch_MaskColliderEditMode = null!;
@@ -32,14 +38,23 @@ public class ModTranslations
   public static string VehicleConfig_CustomFloatationHeight = null!;
 
   public static string WheelControls_Name = null!;
+  public static string WheelControls_Error = null!;
 
   // anchor
-  public static string Anchor_RecoveredAnchorText = "";
-  public static string reelingText = "";
-  public static string anchoredText = "";
-  public static string loweringText = "";
-  public static string breakingText = "";
-  public static string idleText = "";
+  public static string Anchor_WheelUse_EnableAnchor = null!;
+  public static string Anchor_WheelUse_DisableAnchor = null!;
+  public static string Anchor_WheelUse_UseText = null!;
+  
+  public static string AnchorPrefab_RecoveredAnchorText = null!;
+  public static string AnchorPrefab_reelingText = null!;
+  public static string AnchorPrefab_anchoredText = null!;
+  public static string AnchorPrefab_loweringText = null!;
+  public static string AnchorPrefab_breakingText = null!;
+  public static string AnchorPrefab_idleText = null!;
+  
+  // generic
+  public static string VehicleConfig_Owner = null!;
+  public static string VehicleConfig_Beached = null!;
 
   public static string CurrentLocalizeLanguage = "";
 
@@ -101,22 +116,29 @@ public class ModTranslations
 
   private static void UpdateAnchorTranslations()
   {
-    breakingText = SafeLocalize("$valheim_vehicles_land_state_breaking");
+    AnchorPrefab_breakingText = SafeLocalize("$valheim_vehicles_land_state_breaking");
 
-    idleText = SafeLocalize("$valheim_vehicles_land_state_idle");
+    AnchorPrefab_idleText = SafeLocalize("$valheim_vehicles_land_state_idle");
 
-    reelingText =
+    AnchorPrefab_reelingText =
       SafeLocalize("$valheim_vehicles_anchor_state_reeling");
 
-    Anchor_RecoveredAnchorText =
+    AnchorPrefab_RecoveredAnchorText =
       SafeLocalize(
         "$valheim_vehicles_anchor_state_recovered");
 
-    anchoredText =
+    AnchorPrefab_anchoredText =
       SafeLocalize("$valheim_vehicles_anchor_state_anchored");
 
-    loweringText =
+    AnchorPrefab_loweringText =
       SafeLocalize("$valheim_vehicles_anchor_state_lowering");
+
+    Anchor_WheelUse_EnableAnchor = SafeLocalize("$valheim_vehicles_wheel_use_anchor_enable_detail");
+    
+    Anchor_WheelUse_DisableAnchor = SafeLocalize("$valheim_vehicles_wheel_use_anchor_disable_detail");
+    
+   
+    Anchor_WheelUse_UseText = SafeLocalize("$valheim_vehicles_wheel_use");
   }
 
   private static void UpdateToggleSwitchTranslations()
@@ -149,11 +171,14 @@ public class ModTranslations
   private static void UpdateVehicleConfigTranslations()
   {
     VehicleConfig_CustomFloatationHeight = SafeLocalize("$valheim_vehicles_custom_floatation_height");
+    VehicleConfig_Owner = SafeLocalize("$valheim_vehicles_owner");
+    VehicleConfig_Beached = SafeLocalize("$valheim_vehicles_gui_vehicle_is_beached");
   }
 
   private static void UpdateVehicleWheelTranslations()
   {
     WheelControls_Name = SafeLocalize("$valheim_vehicles_wheel");
+    WheelControls_Error = SafeLocalize("<color=white><b>$valheim_vehicles_wheel_use_error</b></color>");
   }
 
   private static void SetCurrentLocalizedLanguage()
@@ -181,6 +206,11 @@ public class ModTranslations
     }
   }
 
+  public static void UpdateValheimInputTranslations()
+  {
+    ValheimInput_KeyUse = SafeLocalize("$KEY_Use");
+  }
+
   /// <summary>
   /// Possibly move to a localization generator to generate these on the fly based on the current english translations.
   /// </summary>
@@ -194,6 +224,7 @@ public class ModTranslations
       UpdateGuiEditMenuTranslations();
       UpdateVehicleConfigTranslations();
       UpdateToggleSwitchTranslations();
+      UpdateValheimInputTranslations();
       UpdateAnchorTranslations();
     }
     catch (Exception e)
