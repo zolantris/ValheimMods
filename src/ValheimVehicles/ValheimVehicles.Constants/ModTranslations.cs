@@ -51,9 +51,20 @@ public class ModTranslations
   public static string AnchorPrefab_loweringText = null!;
   public static string AnchorPrefab_breakingText = null!;
   public static string AnchorPrefab_idleText = null!;
+ 
   
-  // generic
-  public static string VehicleConfig_Owner = null!;
+  public static string Swivel_Edit = null!;
+  public static string Swivel_Connected = null!;
+  
+  // full text string. This is computed from a few values.
+  public static string Swivel_HoverText = null!;
+  
+  
+  // generic/shared-keys
+  public static string SharedKeys_Owner = null!;
+  public static string SharedKeys_Hold = null!;
+  
+  // vehicle config
   public static string VehicleConfig_Beached = null!;
 
   public static string CurrentLocalizeLanguage = "";
@@ -171,7 +182,6 @@ public class ModTranslations
   private static void UpdateVehicleConfigTranslations()
   {
     VehicleConfig_CustomFloatationHeight = SafeLocalize("$valheim_vehicles_custom_floatation_height");
-    VehicleConfig_Owner = SafeLocalize("$valheim_vehicles_owner");
     VehicleConfig_Beached = SafeLocalize("$valheim_vehicles_gui_vehicle_is_beached");
   }
 
@@ -179,6 +189,14 @@ public class ModTranslations
   {
     WheelControls_Name = SafeLocalize("$valheim_vehicles_wheel");
     WheelControls_Error = SafeLocalize("<color=white><b>$valheim_vehicles_wheel_use_error</b></color>");
+  }
+  
+  public static string WithBoldText(string text, string color ="white") => $"<color={color}><b>{text}</b></color>"; 
+
+  public static void UpdateSharedTranslations()
+  {
+    SharedKeys_Owner = SafeLocalize("$valheim_vehicles_shared_keys_owner");
+    SharedKeys_Hold = SafeLocalize("$valheim_vehicles_shared_keys_hold");
   }
 
   private static void SetCurrentLocalizedLanguage()
@@ -211,6 +229,13 @@ public class ModTranslations
     ValheimInput_KeyUse = SafeLocalize("$KEY_Use");
   }
 
+  public static void UpdateSwivelTranslations()
+  {
+    Swivel_Edit = SafeLocalize("$valheim_vehicles_swivel_edit");
+    Swivel_Connected = SafeLocalize("$valheim_vehicles_swivel_connected");
+    Swivel_HoverText =$"{WithBoldText(SharedKeys_Hold)} {WithBoldText(ValheimInput_KeyUse, "yellow")} {Swivel_Edit}"; 
+  }
+
   /// <summary>
   /// Possibly move to a localization generator to generate these on the fly based on the current english translations.
   /// </summary>
@@ -220,12 +245,14 @@ public class ModTranslations
     try
     {
       // only updates here.
+      UpdateSharedTranslations();
       UpdateVehicleWheelTranslations();
       UpdateGuiEditMenuTranslations();
       UpdateVehicleConfigTranslations();
       UpdateToggleSwitchTranslations();
       UpdateValheimInputTranslations();
       UpdateAnchorTranslations();
+      UpdateSwivelTranslations();
     }
     catch (Exception e)
     {

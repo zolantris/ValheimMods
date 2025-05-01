@@ -1,6 +1,5 @@
 ﻿namespace ValheimVehicles.SharedScripts
 {
-
   public enum SwivelMode
   {
     None,

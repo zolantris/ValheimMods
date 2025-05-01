@@ -1,17 +1,20 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection.Emit;
-using HarmonyLib;
-using UnityEngine;
-using ValheimVehicles.Config;
-using ValheimVehicles.Controllers;
-using ValheimVehicles.Prefabs;
-using ValheimVehicles.Prefabs.Registry;
-using ValheimVehicles.Structs;
-using ValheimVehicles.Components;
-using ZdoWatcher;
-using Logger = Jotunn.Logger;
+#region
+
+  using System.Collections.Generic;
+  using System.Linq;
+  using System.Reflection.Emit;
+  using HarmonyLib;
+  using UnityEngine;
+  using ValheimVehicles.Components;
+  using ValheimVehicles.Config;
+  using ValheimVehicles.Controllers;
+  using ValheimVehicles.Interfaces;
+  using ValheimVehicles.Prefabs;
+  using ValheimVehicles.Prefabs.Registry;
+  using ValheimVehicles.Structs;
+  using ZdoWatcher;
+
+#endregion
 
 namespace ValheimVehicles.Patches;
 
@@ -95,10 +98,10 @@ public class WearNTear_Patch
       vehicle?.PiecesController?.DestroyPiece(__instance);
     }
 
-    var bv = __instance.GetComponentInParent<VehiclePiecesController>();
-    if ((bool)bv)
+    var pieceController = __instance.GetComponentInParent<IPieceController>();
+    if (pieceController != null)
     {
-      bv.DestroyPiece(__instance);
+      pieceController.DestroyPiece(__instance);
     }
 
     return true;
@@ -202,11 +205,14 @@ public class WearNTear_Patch
   {
     if (!__instance.isActiveAndEnabled) return false;
     var baseVehicle =
-      __instance.GetComponentInParent<VehiclePiecesController>();
+      __instance.GetComponentInParent<IPieceActivatorHost>();
     if (baseVehicle == null) return true;
 
     // makes all support values below 1f very high
-    __instance.m_nview.GetZDO().Set(ZDOVars.s_support, 1500f);
+    if (!Mathf.Approximately(__instance.m_support, 1500f) && __instance.m_nview != null && __instance.m_nview.GetZDO() != null)
+    {
+      __instance.m_nview.GetZDO().Set(ZDOVars.s_support, 1500f);
+    }
     __instance.m_support = 1500f;
     __instance.m_supports = true;
     __instance.m_noSupportWear = true;

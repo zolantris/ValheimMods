@@ -119,13 +119,18 @@ public class Player_Patch
       if (cul != null) cul.AddNewChild(netView);
     }
 
-    var bvc = PatchSharedData.PlayerLastRayPiece?.transform?.parent?
-      .GetComponent<VehiclePiecesController>() ?? null;
-    var swivel = PatchSharedData.PlayerLastRayPiece?.GetComponentInParent<SwivelComponentIntegration>() ?? null;
+    if (PatchSharedData.PlayerLastRayPiece == null)
+    {
+      return gameObject;
+    } 
+    
+    var bvc = PatchSharedData.PlayerLastRayPiece
+      .GetComponentInParent<VehiclePiecesController>();
+    var swivel = PatchSharedData.PlayerLastRayPiece.GetComponentInParent<SwivelComponentIntegration>();
 
     if (swivel != null && netView != null)
     {
-      SwivelComponentIntegration.TryAddPieceToSwivelContainer(netView, netView.GetZDO());
+      swivel.AddNewPiece(netView);
       return gameObject;
     }
     
@@ -159,63 +164,64 @@ public class Player_Patch
   /// <returns></returns>
   public static bool CanHitPiece(Collider collider)
   {
-    if (!collider.gameObject.name.StartsWith(PrefabNames.SwivelPrefabName))
+    if (collider.gameObject.name.StartsWith(PrefabNames.SwivelPrefabName))
     {
       return true;
     }
-    if (collider.GetComponentInParent<VehiclePiecesController>() != null) return true;
+    var genericPieceController = collider.GetComponentInParent<IPieceController>();
+    if (genericPieceController != null) return true;
     return false;
   }
 
-  /// <summary>
-  /// Original RayTest Method
-  /// </summary>
-  /// <param name="point"></param>
-  /// <param name="normal"></param>
-  /// <param name="piece"></param>
-  /// <param name="heightmap"></param>
-  /// <param name="waterSurface"></param>
-  /// <param name="water"></param>
-  /// <returns></returns>
-  public bool PieceRayTest(
-    Player __instance,
-    ref Vector3 point,
-    ref Vector3 normal,
-    ref Piece piece,
-    ref Heightmap heightmap,
-    ref Collider waterSurface,
-    bool water)
-  {
-    var layerMask = __instance.m_placeRayMask;
-    if (water)
-      layerMask = __instance.m_placeWaterRayMask;
-    RaycastHit hitInfo;
-    if (Physics.Raycast(GameCamera.instance.transform.position, GameCamera.instance.transform.forward, out hitInfo, 50f, layerMask))
-    {
-      var maxPlaceDistance = __instance.m_maxPlaceDistance;
-      if ((bool)(Object)__instance.m_placementGhost)
-      {
-        var component = __instance.m_placementGhost.GetComponent<Piece>();
-        if (component != null)
-          maxPlaceDistance += (float)component.m_extraPlacementDistance;
-      }
-      if ((bool)(Object)hitInfo.collider && !(bool)(Object)hitInfo.collider.attachedRigidbody && (double)Vector3.Distance(__instance.m_eye.position, hitInfo.point) < (double)maxPlaceDistance)
-      {
-        point = hitInfo.point;
-        normal = hitInfo.normal;
-        piece = hitInfo.collider.GetComponentInParent<Piece>();
-        heightmap = hitInfo.collider.GetComponent<Heightmap>();
-        waterSurface = hitInfo.collider.gameObject.layer != LayerMask.NameToLayer("Water") ? (Collider)null : hitInfo.collider;
-        return true;
-      }
-    }
-    point = Vector3.zero;
-    normal = Vector3.zero;
-    piece = (Piece)null;
-    heightmap = (Heightmap)null;
-    waterSurface = (Collider)null;
-    return false;
-  }
+  // /// <summary>
+  // /// Original RayTest Method
+  // /// </summary>
+  // /// <param name="point"></param>
+  // /// <param name="normal"></param>
+  // /// <param name="piece"></param>
+  // /// <param name="heightmap"></param>
+  // /// <param name="waterSurface"></param>
+  // /// <param name="water"></param>
+  // /// <returns></returns>
+  // public bool PieceRayTest(
+  //   Player __instance,
+  //   ref Vector3 point,
+  //   ref Vector3 normal,
+  //   ref Piece piece,
+  //   ref Heightmap heightmap,
+  //   ref Collider waterSurface,
+  //   bool water)
+  // {
+  //   var layerMask = __instance.m_placeRayMask;
+  //   if (water)
+  //     layerMask = __instance.m_placeWaterRayMask;
+  //   RaycastHit hitInfo;
+  //   if (Physics.Raycast(GameCamera.instance.transform.position, GameCamera.instance.transform.forward, out hitInfo, 50f, layerMask))
+  //   {
+  //     var maxPlaceDistance = __instance.m_maxPlaceDistance;
+  //     if ((bool)(Object)__instance.m_placementGhost)
+  //     {
+  //       var component = __instance.m_placementGhost.GetComponent<Piece>();
+  //       if (component != null)
+  //         maxPlaceDistance += (float)component.m_extraPlacementDistance;
+  //     }
+  //     if ((bool)(Object)hitInfo.collider && !(bool)(Object)hitInfo.collider.attachedRigidbody && (double)Vector3.Distance(__instance.m_eye.position, hitInfo.point) < (double)maxPlaceDistance)
+  //     {
+  //       point = hitInfo.point;
+  //       normal = hitInfo.normal;
+  //       piece = hitInfo.collider.GetComponentInParent<Piece>();
+  //       heightmap = hitInfo.collider.GetComponent<Heightmap>();
+  //       waterSurface = hitInfo.collider.gameObject.layer != LayerMask.NameToLayer("Water") ? (Collider)null : hitInfo.collider;
+  //       return true;
+  //     }
+  //   }
+  //   point = Vector3.zero;
+  //   normal = Vector3.zero;
+  //   piece = (Piece)null;
+  //   heightmap = (Heightmap)null;
+  //   waterSurface = (Collider)null;
+  //   return false;
+  // }
 
   public static void HandleGameObjectRayCast(Transform? vehicleTransform,
     LayerMask layerMask,
@@ -226,22 +232,6 @@ public class Player_Patch
     bool water, out bool ShouldRunOriginalMethod)
   {
     ShouldRunOriginalMethod = true;
-
-    // if (transform == null)
-    // {
-    //   return;
-    // }
-
-    // var localPos = transform == null ? Player.m_localPlayer.transform.position
-    //   transform.InverseTransformPoint(__instance.transform
-    //     .position);
-    // var start = localPos + Vector3.up * 2f;
-    // start = transform.TransformPoint(start);
-    // var localDir = ((Character)__instance).m_lookYaw * Quaternion.Euler(
-    //   __instance.m_lookPitch,
-    //   0 - transform.transform.rotation.eulerAngles.y +
-    //   PatchSharedData.YawOffset, 0);
-    // var end = transform.rotation * localDir * Vector3.forward;
 
     var gameCameraTransform = GameCamera.instance.transform;
     var start = gameCameraTransform.position;
@@ -278,7 +268,7 @@ public class Player_Patch
       __result = true;
 
       // Let the prefix run. This means we double up on Raycasts which is heavier on performance...
-      ShouldRunOriginalMethod = true;
+      ShouldRunOriginalMethod = false;
     }
   }
 

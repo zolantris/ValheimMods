@@ -1,6 +1,10 @@
-﻿using TMPro;
-using UnityEngine;
-using static System.String;
+﻿#region
+
+  using TMPro;
+  using UnityEngine;
+  using static System.String;
+
+#endregion
 
 // ReSharper disable ArrangeNamespaceBody
 // ReSharper disable NamespaceStyle
@@ -45,12 +49,12 @@ namespace ValheimVehicles.SharedScripts
       return timePassedSinceStateUpdate >= hideTextTimer;
     }
 
-    private void hideText()
+    public void Hide()
     {
       if (gameObject.activeSelf) gameObject.SetActive(false);
     }
 
-    private void showText()
+    public void Show()
     {
       if (!gameObject.activeSelf) gameObject.SetActive(true);
     }
@@ -69,11 +73,11 @@ namespace ValheimVehicles.SharedScripts
       if (Camera.main == null) return;
       if (!hasHudEnabled || currentText == Empty || ShouldHideAfterLastStateUpdate() || textMeshPro == null)
       {
-        hideText();
+        Hide();
         return;
       }
 
-      showText();
+      Show();
 
       if (hideTextTimer != 0f)
         timePassedSinceStateUpdate += Time.fixedDeltaTime;

@@ -1,5 +1,6 @@
 #region
 
+  using System;
   using System.Collections;
   using System.Collections.Generic;
   using System.Diagnostics;
@@ -9,6 +10,7 @@
   using ValheimVehicles.Enums;
   using ValheimVehicles.Interfaces;
   using ValheimVehicles.Prefabs;
+  using ValheimVehicles.SharedScripts;
   using ValheimVehicles.Structs;
   using ZdoWatcher;
   using static ValheimVehicles.Prefabs.Registry.RamPrefabs;
@@ -34,7 +36,15 @@ public abstract class BasePieceActivatorComponent : MonoBehaviour
 
   private Coroutine? _initPersistentIdCoroutine;
   private bool _isInitComplete = false;
-
+  public Action OnActivationComplete = () =>
+  {
+    LoggerProvider.LogWarning("No OnActivationComplete assigned");
+  };
+  public Action OnInitComplete = () =>
+  {
+    LoggerProvider.LogWarning("No OnInitComplete assigned");
+  };
+   
   public void StartInitPersistentId()
   {
     if (_initPersistentIdCoroutine != null) return;
@@ -50,10 +60,7 @@ public abstract class BasePieceActivatorComponent : MonoBehaviour
     _initPersistentIdCoroutine = null;
     _isInitComplete = true;
 
-    if (CanActivatePendingPieces)
-    {
-      StartActivatePendingPieces();
-    }
+    OnInitComplete.Invoke();
   }
 
 
@@ -62,7 +69,11 @@ public abstract class BasePieceActivatorComponent : MonoBehaviour
     if (!CanActivatePendingPieces) return;
 
     var id = Host.GetPersistentId();
-    if (!m_pendingPieces.TryGetValue(id, out var pending) || pending.Count == 0) return;
+    if (!m_pendingPieces.TryGetValue(id, out var pending) || pending.Count == 0)
+    {
+      OnActivationComplete.Invoke();
+      return;
+    }
 
     if (_pendingPiecesCoroutine == null)
       _pendingPiecesCoroutine = StartCoroutine(ActivatePendingPiecesCoroutine());
@@ -77,6 +88,7 @@ public abstract class BasePieceActivatorComponent : MonoBehaviour
     if (persistentId == 0)
     {
       _pendingPiecesCoroutine = null;
+      OnActivationComplete.Invoke();
       yield break;
     }
 
@@ -86,6 +98,7 @@ public abstract class BasePieceActivatorComponent : MonoBehaviour
     {
       _pendingPiecesState = PendingPieceStateEnum.Complete;
       _pendingPiecesCoroutine = null;
+      OnActivationComplete.Invoke();
       yield break;
     }
 
@@ -98,6 +111,7 @@ public abstract class BasePieceActivatorComponent : MonoBehaviour
       {
         _pendingPiecesState = PendingPieceStateEnum.ForceReset;
         _pendingPiecesCoroutine = null;
+        OnActivationComplete.Invoke();
         yield break;
       }
 
@@ -122,6 +136,7 @@ public abstract class BasePieceActivatorComponent : MonoBehaviour
 
     _pendingPiecesState = PendingPieceStateEnum.Complete;
     _pendingPiecesCoroutine = null;
+    OnActivationComplete.Invoke();
   }
 
   protected void FinalizeTransform(ZNetView netView)
@@ -143,6 +158,28 @@ public abstract class BasePieceActivatorComponent : MonoBehaviour
     var id = zdo.GetInt(VehicleZdoVars.SwivelParentId);
     return id;
   }
+
+  public static void AddPendingPiece(int swivelParentId, ZNetView netView)
+  {
+    if (!m_pendingPieces.TryGetValue(swivelParentId, out var list) || list.Count == 0)
+    {
+      list = [netView];
+      
+      // must set the list.
+      m_pendingPieces[swivelParentId] = list;
+      return;
+    }
+    
+    if (!list.Contains(netView))
+    {
+      list.Add(netView);
+    }
+    
+    if (SwivelComponentIntegration.ActiveInstances.TryGetValue(swivelParentId, out var swivel))
+    {
+      swivel.StartActivatePendingSwivelPieces();
+    }
+  }
   
   private static bool TryInitSwivelParentPiece( ZNetView netView, ZDO zdo)
   {
@@ -154,17 +191,12 @@ public abstract class BasePieceActivatorComponent : MonoBehaviour
     var swivelController = parentObj == null ? null : parentObj.GetComponent<SwivelComponentIntegration>();
     if (swivelController != null)
     {
-      swivelController.AddPiece(netView);
-      // SwivelComponentIntegration.AddInactivePiece(id, netView, null);
+      swivelController.ActivatePiece(netView);
       return true;
     }
     
-    // todo should be ActivatePiece.
-    // activate SwivelController if the piece exists.
-    // if (swivelController.m_piecesController != null)
-    // {
-    //   swivelController.m_piecesController.ActivatePiece(netView);
-    // }
+    // If the ZDO object is not loaded add it to a Pending Piece.
+    AddPendingPiece(id, netView);
     return false;
   }
   

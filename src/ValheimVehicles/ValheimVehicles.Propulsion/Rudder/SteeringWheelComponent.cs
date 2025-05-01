@@ -146,7 +146,7 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable,
     }
 
     return
-      $"\n[<color=green><b>{ModTranslations.VehicleConfig_Owner}: {_currentPlayerName}</b></color>]";
+      $"\n[<color=green><b>{ModTranslations.SharedKeys_Owner}: {_currentPlayerName}</b></color>]";
   }
 
   private string GetBeachedHoverText()

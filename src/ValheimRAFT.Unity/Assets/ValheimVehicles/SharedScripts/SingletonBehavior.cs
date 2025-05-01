@@ -1,7 +1,6 @@
 #region
 
-using System;
-using UnityEngine;
+  using UnityEngine;
 
 #endregion
 
@@ -18,7 +17,7 @@ namespace ValheimVehicles.SharedScripts
       if (Instance != null && Instance != this)
       {
         Destroy(this);
-        throw new Exception("An instance of this singleton already exists.");
+        return;
       }
       Instance = (T)this;
       OnAwake();

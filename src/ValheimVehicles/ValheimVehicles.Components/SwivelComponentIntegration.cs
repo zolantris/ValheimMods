@@ -1,12 +1,13 @@
 #region
 
-  using System;
   using System.Collections.Generic;
   using System.Linq;
   using UnityEngine;
+  using ValheimVehicles.Constants;
   using ValheimVehicles.Controllers;
   using ValheimVehicles.Helpers;
   using ValheimVehicles.Interfaces;
+  using ValheimVehicles.Prefabs;
   using ValheimVehicles.SharedScripts;
   using ValheimVehicles.SharedScripts.UI;
   using ValheimVehicles.Structs;
@@ -39,32 +40,49 @@ public sealed class SwivelComponentIntegration : SwivelComponent, IPieceActivato
   private ZNetView m_nview;
   private int _persistentZdoId;
   public static readonly Dictionary<int, SwivelComponentIntegration> ActiveInstances = [];
-  public List<ZNetView> m_nviewPieces = [];
+  public List<ZNetView> m_pieces = [];
   public List<ZNetView> m_tempPieces = [];
 
   private SwivelPieceActivator _pieceActivator = null!;
+  public static float turnTime = 50f;
 
+  private HoverFadeText m_hoverFadeText;
+  
   public override void Awake()
   {
     base.Awake();
+    
     m_nview = GetComponent<ZNetView>();
 
-    // TODO share activation logic with another component so we can reuse things.
-    _pieceActivator = gameObject.AddComponent<SwivelPieceActivator>();
-    _pieceActivator.Init(this);
-    _pieceActivator.StartInitPersistentId();
+    SetupHoverFadeText();
+    
+    SetupPieceActivator();
+  }
+
+  public void SetupHoverFadeText()
+  {
+    m_hoverFadeText = HoverFadeText.CreateHoverFadeText();
+    m_hoverFadeText.currentText = ModTranslations.Swivel_Connected;
+    m_hoverFadeText.Hide();
   }
 
   public void OnEnable()
   {
     var persistentId = GetPersistentId();
     if (persistentId == 0) return;
-
     if (ActiveInstances.TryGetValue(persistentId, out var swivelComponentIntegration))
     {
       return;
     }
     ActiveInstances.Add(persistentId, this);
+  }
+
+  public void SetupPieceActivator()
+  {
+    _pieceActivator = gameObject.AddComponent<SwivelPieceActivator>();
+    _pieceActivator.Init(this);
+    _pieceActivator.OnActivationComplete = OnActivationComplete;
+    _pieceActivator.OnInitComplete = OnInitComplete;
   }
 
   public void OnDisable()
@@ -81,6 +99,7 @@ public sealed class SwivelComponentIntegration : SwivelComponent, IPieceActivato
   public override void FixedUpdate()
   {
     base.FixedUpdate();
+    m_hoverFadeText.FixedUpdate_UpdateText();
   }
 
   public void AddNearestPiece()
@@ -104,13 +123,43 @@ public sealed class SwivelComponentIntegration : SwivelComponent, IPieceActivato
       return false;
     }
 
-    netViewPrefab.transform.SetParent(swivelComponentIntegration.pieceContainer);
     return true;
+  }
+
+  public void AddPieceToParent(Transform pieceTransform)
+  {
+    pieceTransform.SetParent(pieceContainer);
   }
 
   public void StartActivatePendingSwivelPieces()
   {
     _pieceActivator.StartActivatePendingPieces();
+  }
+
+  public void ActivatePiece(ZNetView netView)
+  {
+    if (netView == null) return;
+    var zdo = netView.GetZDO();
+    if (netView.m_zdo == null) return;
+
+    AddPieceToParent(netView.transform);
+
+    // This should work just like finalize transform...so not needed technically. Need to see where the break in the logic is.
+    netView.transform.localPosition =
+      netView.m_zdo.GetVec3(VehicleZdoVars.MBPositionHash, Vector3.zero);
+    netView.transform.localRotation =
+      Quaternion.Euler(netView.m_zdo.GetVec3(VehicleZdoVars.MBRotationVecHash,
+        Vector3.zero));
+
+    var wnt = netView.GetComponent<WearNTear>();
+    if ((bool)wnt) wnt.enabled = true;
+
+    AddPiece(netView);
+  }
+
+  public void OnActivationComplete()
+  {
+    CanUpdate = true;
   }
 
   public void Register() {}
@@ -125,10 +174,11 @@ public sealed class SwivelComponentIntegration : SwivelComponent, IPieceActivato
   {
     if (!isActiveAndEnabled) return;
     if (ZNetScene.instance == null || Game.instance == null) return;
-    foreach (var nvPiece in m_nviewPieces)
+    foreach (var nvPiece in m_pieces)
     {
       if (nvPiece == null || nvPiece.GetZDO() == null) continue;
       nvPiece.GetZDO().RemoveInt(VehicleZdoVars.SwivelParentId);
+      nvPiece.transform.SetParent(null);
     }
   }
 
@@ -149,6 +199,31 @@ public sealed class SwivelComponentIntegration : SwivelComponent, IPieceActivato
     return true;
   }
 
+  public void AddNewPiece(ZNetView netView)
+  {
+    
+    // do not add a swivel within a swivel. This could cause some really weird behaviors so it's not supported.
+    if (netView.name.StartsWith(PrefabNames.SwivelPrefabName)) return;
+    if (netView == null || netView.GetZDO() == null) return;
+    var persistentId = GetPersistentId();
+    if (persistentId == 0) return;
+    var zdo = netView.GetZDO();
+    zdo.Set(VehicleZdoVars.SwivelParentId, persistentId);
+   
+    m_hoverFadeText.Show();
+    m_hoverFadeText.transform.position = transform.position + Vector3.up;
+    m_hoverFadeText.ResetHoverTimer();
+    m_hoverFadeText.currentText = ModTranslations.Swivel_Connected;
+    
+    
+    netView.m_zdo.Set(VehicleZdoVars.MBRotationVecHash,
+      netView.transform.localRotation.eulerAngles);
+    netView.m_zdo.Set(VehicleZdoVars.MBPositionHash,
+      netView.transform.localPosition);
+    
+    AddPiece(netView);
+  }
+
   public static bool TryGetSwivelParentId(ZDO? zdo, out int swivelParentId)
   {
     swivelParentId = 0;
@@ -166,12 +241,43 @@ public sealed class SwivelComponentIntegration : SwivelComponent, IPieceActivato
   public void Start()
   {
     m_piecesController = GetComponentInParent<VehiclePiecesController>();
+    UpdateRotation();
+    _pieceActivator.StartInitPersistentId();
   }
-  
+
+  public void OnInitComplete()
+  {
+    StartActivatePendingSwivelPieces();
+  }
+
+  public void UpdateRotation()
+  {
+    if (m_nview != null && m_nview.GetZDO() != null)
+    {
+      var zdoRotation = m_nview.GetZDO().GetRotation();
+      m_startPieceRotation = zdoRotation;
+    }
+    else
+    {
+      m_startPieceRotation = transform.localRotation;
+    }
+  }
 
   protected override Quaternion CalculateTargetWindDirectionRotation()
   {
-    if (m_vehicle == null || m_vehicle.MovementController == null) return base.CalculateTargetWindDirectionRotation();
+    if (m_vehicle == null || m_vehicle.MovementController == null)
+    {
+      var windDir = EnvMan.instance != null ? EnvMan.instance.GetWindDir() : transform.forward;
+      
+      // these calcs are probably all wrong.
+      // var dir = Utils.YawFromDirection(transform.InverseTransformDirection(windDir));
+      var dir = Quaternion.LookRotation(
+        -Vector3.Lerp(windDir,
+          Vector3.Normalize(windDir - pieceContainer.forward), turnTime),
+        pieceContainer.up);
+        
+      return Quaternion.RotateTowards(pieceContainer.transform.rotation, dir, 30f * Time.fixedDeltaTime) ;
+    }
     // use the sync mast
     return m_vehicle.MovementController.m_mastObject.transform.localRotation;
   }
@@ -197,7 +303,7 @@ public sealed class SwivelComponentIntegration : SwivelComponent, IPieceActivato
 
   public string GetHoverText()
   {
-    return "Hover text";
+    return ModTranslations.Swivel_HoverText;
   }
   public string GetHoverName()
   {
@@ -224,17 +330,33 @@ public sealed class SwivelComponentIntegration : SwivelComponent, IPieceActivato
   {
     return false;
   }
-
+  
 #region IPieceController
 
   public void AddPiece(ZNetView nv, bool isNew = false)
   {
     if (nv == null) return;
     nv.transform.SetParent(pieceContainer);
+    PieceActivatorHelpers.FixPieceMeshes(nv);
+    m_pieces.Add(nv);
   }
+  
   public void RemovePiece(ZNetView nv)
   {
-    throw new NotImplementedException();
+    m_pieces.Remove(nv);
+  }
+
+  /**
+  * prevent ship destruction on m_nview null
+  * - if null it would prevent getting the ZDO information for the ship pieces
+  */
+  public void DestroyPiece(WearNTear wnt)
+  {
+    if (wnt != null)
+    {
+      var nv = wnt.GetComponent<ZNetView>();
+      RemovePiece(nv);
+    }
   }
 
 #endregion

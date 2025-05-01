@@ -271,13 +271,7 @@ public sealed class VehiclePiecesController : BasePiecesController, IMonoUpdater
   public bool m_statsOverride;
   private static bool itemsRemovedDuringWait;
 
-  private static readonly int TriplanarLocalPos =
-    Shader.PropertyToID("_TriplanarLocalPos");
 
-  private static readonly int RippleDistance =
-    Shader.PropertyToID("_RippleDistance");
-
-  private static readonly int ValueNoise = Shader.PropertyToID("_ValueNoise");
   private Coroutine? _pendingPiecesCoroutine;
   private Coroutine? _serverUpdatePiecesCoroutine;
   private Coroutine? _bedUpdateCoroutine;
@@ -2230,8 +2224,8 @@ public sealed class VehiclePiecesController : BasePiecesController, IMonoUpdater
     AddTempPieceProperties(netView, this);
     TrySetPieceToParent(netView, zdo);
 
-    // Likely do not want to call this.
-    FixPieceMeshes(netView);
+    // still need this for flickering but it may cause problems when the object leaves the area.
+    PieceActivatorHelpers.FixPieceMeshes(netView);
 
     if (!shouldSkipIgnoreColliders)
     {
@@ -2352,45 +2346,7 @@ public sealed class VehiclePiecesController : BasePiecesController, IMonoUpdater
       return false;
     }
   }
-
-  public static Dictionary<Material, Material> FixMaterialUniqueInstances = new();
-  /// <summary>
-  /// Must return a new material
-  /// </summary>
-  /// <param name="material"></param>
-  /// <returns></returns>
-  public static Material FixMaterial(Material material)
-  {
-    if (!material) return null;
-
-    // Check if material has any of the target properties
-    if (!material.HasFloat(RippleDistance) && !material.HasFloat(ValueNoise) && !material.HasFloat(TriplanarLocalPos))
-    {
-      return material; // No need to fix
-    }
-
-    // If already fixed, return the cached instance
-    if (FixMaterialUniqueInstances.TryGetValue(material, out var fixedMaterialInstance))
-    {
-      return fixedMaterialInstance;
-    }
-
-    // 🔹 Fix: Create a NEW material BEFORE modifying it
-    var newMaterial = new Material(material);
-
-    if (material.name.Contains("blackmarble"))
-    {
-      newMaterial.SetFloat(TriplanarLocalPos, 1f);
-    }
-
-    newMaterial.SetFloat(RippleDistance, 0f);
-    newMaterial.SetFloat(ValueNoise, 0f);
-
-    // Cache the fixed material
-    FixMaterialUniqueInstances[material] = newMaterial;
-
-    return newMaterial;
-  }
+  
   // public static Material FixMaterial(Material material)
   // {
   //   var isBlackMarble = material.name.Contains("blackmarble");
@@ -2406,37 +2362,6 @@ public sealed class VehiclePiecesController : BasePiecesController, IMonoUpdater
   //   }
   //   return fixedMaterialInstance;
   // }
-  
-  public static void FixPieceMeshes(ZNetView netView)
-  {
-    /*
-     * It fixes shadow flicker on all of valheim's prefabs with boats
-     * If this is removed, the raft is seizure inducing.
-     */
-    var meshes = netView.GetComponentsInChildren<MeshRenderer>(true);
-    foreach (var meshRenderer in meshes)
-    {
-      // foreach (var meshRendererMaterial in meshRenderer.materials)
-      //   FixMaterial(meshRendererMaterial);
-
-      if (meshRenderer.sharedMaterials.Length > 0)
-      {
-        var sharedMaterials = meshRenderer.sharedMaterials;
-        for (var j = 0; j < sharedMaterials.Length; j++)
-          sharedMaterials[j] = FixMaterial(sharedMaterials[j]);
-
-        meshRenderer.sharedMaterials = sharedMaterials;
-      }
-      else if (meshRenderer.materials.Length > 0)
-      {
-        var materials = meshRenderer.materials;
-
-        for (var j = 0; j < materials.Length; j++)
-          materials[j] = FixMaterial(materials[j]);
-        meshRenderer.materials = materials;
-      }
-    }
-  }
 
   // public static void FixPieceMeshes(ZNetView netView)
   // {
@@ -2663,7 +2588,7 @@ public sealed class VehiclePiecesController : BasePiecesController, IMonoUpdater
     }
     // incrementRevision
     IncrementPieceRevision();    
-    FixPieceMeshes(netView);
+    PieceActivatorHelpers.FixPieceMeshes(netView);
     ResetSailCachedValues();
     OnPieceAdded(netView.gameObject);
 
