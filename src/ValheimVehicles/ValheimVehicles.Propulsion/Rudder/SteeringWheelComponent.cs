@@ -130,9 +130,9 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable,
   private string GetOwnerHoverText()
   {
     var controller = ControllersInstance.Manager;
-    if (controller == null || controller.NetView == null || controller.NetView.GetZDO() == null) return "";
+    if (controller == null || controller.m_nview == null || controller.m_nview.GetZDO() == null) return "";
 
-    var ownerId = controller.NetView.GetZDO().GetOwner();
+    var ownerId = controller.m_nview.GetZDO().GetOwner();
     if (ownerId != _currentOwner || _currentPlayerName == null)
     {
       var matchingOwnerInPlayers =

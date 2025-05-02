@@ -643,15 +643,15 @@
       if (GUILayout.Button("Delete ShipZDO"))
       {
         var currentShip = VehicleDebugHelpers.GetVehiclePiecesController();
-        if (currentShip != null && currentShip.NetView != null && ZNetScene.instance != null)
-          ZNetScene.instance.Destroy(currentShip.NetView
+        if (currentShip != null && currentShip.m_nview != null && ZNetScene.instance != null)
+          ZNetScene.instance.Destroy(currentShip.m_nview
             .gameObject);
       }
 
       if (GUILayout.Button("Set logoutpoint"))
       {
         var zdo = Player.m_localPlayer
-          .GetComponentInParent<VehiclePiecesController>().NetView
+          .GetComponentInParent<VehiclePiecesController>().m_nview
           .GetZDO();
         if (zdo != null) PlayerSpawnController.Instance?.SyncLogoutPoint(zdo);
       }

@@ -457,7 +457,7 @@
 
     public override void CustomFixedUpdate(float deltaTime)
     {
-      if (NetView == null) return;
+      if (m_nview == null) return;
       if (CanUpdateHoverFadeText)
       {
         m_hoverFadeText.FixedUpdate_UpdateText();
@@ -474,7 +474,7 @@
 
     public ZNetView? GetNetView()
     {
-      return NetView;
+      return m_nview;
     }
 
     public Transform GetPieceContainer()
@@ -588,7 +588,7 @@
 
       var pieceCount = GetPieceCount();
 
-      if (pieceCount > 0 || NetView == null) return;
+      if (pieceCount > 0 || m_nview == null) return;
       if (Manager == null) return;
 
       var wntShip = Manager.GetComponent<WearNTear>();
@@ -758,16 +758,16 @@
 
     public void LoadInitState()
     {
-      if (!NetView || !Manager ||
+      if (!m_nview || !Manager ||
           !MovementController)
       {
         Logger.LogDebug(
-          $"Vehicle setting state to Pending as it is not ready, must have netview: {Manager.NetView}, VehicleInstance {Manager}, MovementController {MovementController}");
+          $"Vehicle setting state to Pending as it is not ready, must have netview: {Manager.m_nview}, VehicleInstance {Manager}, MovementController {MovementController}");
         BaseVehicleInitState = InitializationState.Pending;
         return;
       }
 
-      var initialized = NetView?.GetZDO()
+      var initialized = m_nview?.GetZDO()
         .GetBool(VehicleZdoVars.ZdoKeyBaseVehicleInitState) ?? false;
 
       BaseVehicleInitState = initialized
@@ -777,7 +777,7 @@
 
     public void SetInitComplete()
     {
-      NetView?.GetZDO()
+      m_nview?.GetZDO()
         .Set(VehicleZdoVars.ZdoKeyBaseVehicleInitState, true);
       BaseVehicleInitState = InitializationState.Complete;
       IgnoreAllVehicleColliders();
@@ -806,10 +806,10 @@
     /// <returns></returns>
     private IEnumerator InitVehicle(VehicleManager vehicleShip)
     {
-      while (!(NetView || !MovementController) &&
+      while (!(m_nview || !MovementController) &&
              InitializationTimer.ElapsedMilliseconds < 5000)
       {
-        if (!NetView || !MovementController)
+        if (!m_nview || !MovementController)
         {
           yield return ZdoReadyStart();
         }
@@ -1021,7 +1021,7 @@
     {
       if (ZNetView.m_forceDisableInit) return false;
       // vehicleInstance is the persistent ID, the pieceContainer only has a netView for syncing ship position
-      if (vehicle.NetView == null)
+      if (vehicle.m_nview == null)
       {
         Logger.LogWarning(
           "Warning netview not detected on vehicle, this means any netview attached events will not bind correctly");
@@ -1150,7 +1150,7 @@
     /// <returns></returns>
     public Quaternion GetRotationWithLean()
     {
-      if (MovementController == null || NetView == null)
+      if (MovementController == null || m_nview == null)
         return Quaternion.identity;
 
       var baseRotation = MovementController.m_body.rotation;
@@ -1277,7 +1277,7 @@
                       Manager == null ||
                       MovementController == null ||
                       MovementController.rigidbody == null ||
-                      Manager.NetView == null ||
+                      Manager.m_nview == null ||
                       Manager == null;
       _isInvalid = isInvalid;
 
@@ -1316,9 +1316,9 @@
       var currentPieceControllerSector =
         ZoneSystem.GetZone(vehiclePosition);
 
-      if (NetView == null || NetView.GetZDO() == null) return;
+      if (m_nview == null || m_nview.GetZDO() == null) return;
       // use center of rigidbody to set position.
-      NetView.GetZDO().SetPosition(vehiclePosition);
+      m_nview.GetZDO().SetPosition(vehiclePosition);
 
       for (var index = 0; index < m_pieces.Count; index++)
       {
@@ -1409,7 +1409,7 @@
     /// <returns></returns>
     private bool IsPlayerOwnerOfNetview()
     {
-      return NetView?.GetZDO()?.IsOwner() ?? false;
+      return m_nview?.GetZDO()?.IsOwner() ?? false;
     }
 
     /// <summary>
@@ -1501,8 +1501,8 @@
       Logger.LogMessage("UpdatePiecesInEachSectorWorker started");
       while (isActiveAndEnabled)
       {
-        if (!NetView)
-          yield return new WaitUntil(() => (bool)Manager.NetView);
+        if (!m_nview)
+          yield return new WaitUntil(() => (bool)Manager.m_nview);
 
         var output =
           m_allPieces.TryGetValue(Manager.PersistentZdoId, out var list);
@@ -1702,7 +1702,7 @@
 
       RemovePlayersFromBoat();
 
-      if (!CanDestroyVehicle(NetView)) return;
+      if (!CanDestroyVehicle(m_nview)) return;
 
       if ((bool)wntVehicle)
         wntVehicle.Destroy();
@@ -1933,7 +1933,7 @@
         if (ZNetScene.instance.InLoadingScreen())
           yield return new WaitForFixedUpdate();
 
-        if (Manager?.NetView == null)
+        if (Manager?.m_nview == null)
         {
           // NetView somehow unmounted;
           OnActivatePendingPiecesComplete(PendingPieceStateEnum.ForceReset);
@@ -2658,7 +2658,7 @@
     }
 
     /// <summary>
-    /// We can actually assume all "fireplace" components will have the EffectArea nested in them. So doing a query on them is actually pretty efficient. Name checks are more prone to breaks or mod incompatibility so skipping this.
+    /// We can actually assume all "fireplace" components will have the EffectArea nested in them. So doing a query on them is actually pretty efficient. Name checks are more prone to breaks or mod incompatibility, so skipping this.
     /// </summary>
     /// <param name="netView"></param>
     public void AddFireEffectAreaComponent(ZNetView netView)
@@ -2717,9 +2717,9 @@
 
     private void UpdatePieceCount()
     {
-      if ((bool)Manager.NetView &&
-          NetView?.m_zdo != null)
-        Manager.NetView.m_zdo.Set(VehicleZdoVars.MBPieceCount,
+      if ((bool)Manager.m_nview &&
+          m_nview?.m_zdo != null)
+        Manager.m_nview.m_zdo.Set(VehicleZdoVars.MBPieceCount,
           m_pieces.Count);
     }
 
@@ -2750,11 +2750,12 @@
 
     private float GetVehicleFloatHeight()
     {
+      if (Manager == null) return 0f;
       _pendingHullBounds = new Bounds();
 
       var totalHeight = 0f;
 
-      Manager.VehicleConfigSync.SyncVehicleConfig();
+      Manager.VehicleConfigSync.SyncPrefabConfig();
       var hullFloatationMode = Manager.VehicleConfigSync.GetWaterFloatationHeightMode();
 
       var isAverageOfPieces = hullFloatationMode ==
@@ -2790,7 +2791,7 @@
         case VehicleFloatationMode.Fixed:
           return HullFloatationColliderAlignmentOffset;
         case VehicleFloatationMode.Custom:
-          return Manager.VehicleConfigSync.CustomZdoConfig.CustomFloatationHeight;
+          return Manager.VehicleConfigSync.CustomConfig.CustomFloatationHeight;
         case VehicleFloatationMode.Center:
         default:
           return BaseControllerHullBounds.center.y;
@@ -3388,12 +3389,12 @@
 
     public override int GetPieceCount()
     {
-      if (Manager == null || Manager.NetView == null ||
-          Manager.NetView.m_zdo == null)
+      if (Manager == null || Manager.m_nview == null ||
+          Manager.m_nview.m_zdo == null)
         return base.GetPieceCount();
 
       var count =
-        Manager.NetView.m_zdo.GetInt(VehicleZdoVars.MBPieceCount,
+        Manager.m_nview.m_zdo.GetInt(VehicleZdoVars.MBPieceCount,
           m_pieces.Count);
       return count;
     }
@@ -3426,7 +3427,7 @@
     public VehicleOnboardController? OnboardController { get; set; }
     public VehicleManager? Manager { get; set; }
 
-    public ZNetView? NetView
+    public ZNetView? m_nview
     {
       get;
       set;

@@ -284,12 +284,12 @@
     {
       AwakeSetupShipComponents();
       DamageColliders = VehicleManager.GetVehicleMovementDamageColliders(transform);
-      m_nview = GetComponent<ZNetView>();
+      base.m_nview = GetComponent<ZNetView>();
 
       var excludedLayers = LayerMask.GetMask("piece", "piece_nonsolid");
       m_body.excludeLayers = excludedLayers;
 
-      if (!m_nview) m_nview = GetComponent<ZNetView>();
+      if (!base.m_nview) base.m_nview = GetComponent<ZNetView>();
 
       if (PropulsionConfig.AllowFlight.Value) OnFlightChangePolling();
 
@@ -661,18 +661,18 @@
     /// <param name="dt"></param>
     public void UpdateControls(float dt)
     {
-      if (m_nview.IsOwner())
+      if (base.m_nview.IsOwner())
       {
-        m_nview.GetZDO().Set(ZDOVars.s_forward, (int)vehicleSpeed);
-        m_nview.GetZDO().Set(ZDOVars.s_rudder, m_rudderValue);
+        base.m_nview.GetZDO().Set(ZDOVars.s_forward, (int)vehicleSpeed);
+        base.m_nview.GetZDO().Set(ZDOVars.s_rudder, m_rudderValue);
         return;
       }
 
       if (Time.time - m_sendRudderTime > 1f)
       {
         if (HasPendingAnchor) return;
-        vehicleSpeed = (Ship.Speed)m_nview.GetZDO().GetInt(ZDOVars.s_forward);
-        m_rudderValue = m_nview.GetZDO().GetFloat(ZDOVars.s_rudder);
+        vehicleSpeed = (Ship.Speed)base.m_nview.GetZDO().GetInt(ZDOVars.s_forward);
+        m_rudderValue = base.m_nview.GetZDO().GetFloat(ZDOVars.s_rudder);
       }
 
       if (WheelController != null)
@@ -770,7 +770,7 @@
         return;
       }
 
-      if (m_nview.GetZDO().GetInt(VehicleZdoVars.VehicleAnchorState) ==
+      if (base.m_nview.GetZDO().GetInt(VehicleZdoVars.VehicleAnchorState) ==
           (int)state)
         return;
 
@@ -784,7 +784,7 @@
       SetAnchor(state);
       if (state == AnchorState.Anchored) SendSpeedChange(DirectionChange.Stop);
 
-      m_nview.InvokeRPC(nameof(RPC_SetAnchor), (int)state);
+      base.m_nview.InvokeRPC(nameof(RPC_SetAnchor), (int)state);
     }
 
     public VehiclePhysicsState GetCachedVehiclePhysicsState()
@@ -1007,7 +1007,7 @@
         _impactEffect.m_toolTier = 1000;
       }
 
-      _impactEffect.m_nview = m_nview;
+      _impactEffect.m_nview = base.m_nview;
       _impactEffect.m_body = m_body;
       _impactEffect.m_hitType = HitData.HitType.Boat;
       _impactEffect.m_interval = 0.5f;
@@ -1207,12 +1207,12 @@
       // this delay is added to prevent added items from causing collisions in the brief moment they are not ignoring collisions.
       Invoke(nameof(UpdateRemovePieceCollisionExclusions), 5f);
 
-      if (!m_nview) m_nview = GetComponent<ZNetView>();
+      if (!base.m_nview) base.m_nview = GetComponent<ZNetView>();
 
       if (!m_body) m_body = GetComponent<Rigidbody>();
 
       var zdoAnchorState =
-        (AnchorState)m_nview.GetZDO()
+        (AnchorState)base.m_nview.GetZDO()
           .GetInt(VehicleZdoVars.VehicleAnchorState);
       vehicleAnchorState = zdoAnchorState;
 
@@ -1224,7 +1224,7 @@
 
     public string GetVehicleMapKey()
     {
-      return $"{vehicleKeyPrefix}_{m_nview.GetZDO().GetOwner()}";
+      return $"{vehicleKeyPrefix}_{base.m_nview.GetZDO().GetOwner()}";
     }
 
     public void UpdateVehicleLocation(float deltaTime)
@@ -1644,7 +1644,7 @@
         }
       }
 
-      var isOwner = m_nview.IsOwner();
+      var isOwner = base.m_nview.IsOwner();
       if (!isOwner) return;
 
       if (shouldUpdateLandInputs)
@@ -2336,8 +2336,8 @@
       }
 
       _isInvalid = !isActiveAndEnabled || m_body == null || m_floatcollider == null ||
-                   FloatCollider == null || !Manager || !PiecesController || !OnboardController || !m_nview ||
-                   m_nview.m_zdo == null ||
+                   FloatCollider == null || !Manager || !PiecesController || !OnboardController || !base.m_nview ||
+                   base.m_nview.m_zdo == null ||
                    !ShipDirection;
       return _isInvalid;
     }
@@ -2563,8 +2563,8 @@
     {
       if (IsInvalid()) return;
 
-      var hasOwner = m_nview.HasOwner();
-      var owner = m_nview.IsOwner();
+      var hasOwner = base.m_nview.HasOwner();
+      var owner = base.m_nview.IsOwner();
       if (!VehicleDebugConfig.SyncShipPhysicsOnAllClients.Value && !owner && hasOwner ||
           isBeached) return;
 
@@ -2942,7 +2942,7 @@
           .AddComponent<VehicleRamAoe>();
       // negative check, should never hit this...
       if (vehicleRam == null) return;
-      if (vehicleRam.m_nview == null) vehicleRam.m_nview = m_nview;
+      if (vehicleRam.m_nview == null) vehicleRam.m_nview = base.m_nview;
 
       vehicleRam.m_RamType = isLandVehicleFromPrefab ? RamPrefabs.RamType.LandVehicle : RamPrefabs.RamType.WaterVehicle;
       vehicleRam.m_vehicle = Manager;
@@ -3177,20 +3177,20 @@
       switch (PropulsionConfig.AllowFlight.Value)
       {
         case false:
-          m_nview?.m_zdo.Set(VehicleZdoVars.VehicleTargetHeight, 0f);
+          base.m_nview?.m_zdo.Set(VehicleZdoVars.VehicleTargetHeight, 0f);
           break;
         case true:
-          m_nview?.m_zdo.Set(VehicleZdoVars.VehicleTargetHeight, val);
+          base.m_nview?.m_zdo.Set(VehicleZdoVars.VehicleTargetHeight, val);
           break;
       }
     }
 
     private void SyncTargetHeight()
     {
-      if (!NetView) return;
-      if (NetView == null) return;
+      if (!m_nview) return;
+      if (m_nview == null) return;
 
-      var zdoTargetHeight = NetView.m_zdo.GetFloat(
+      var zdoTargetHeight = m_nview.m_zdo.GetFloat(
         VehicleZdoVars.VehicleTargetHeight,
         TargetHeight);
       TargetHeight = zdoTargetHeight;
@@ -3208,31 +3208,31 @@
     private void UnregisterRPCListeners()
     {
       CancelInvoke(nameof(SyncTargetHeight));
-      if (!_hasRegister || m_nview == null)
+      if (!_hasRegister || base.m_nview == null)
       {
         _hasRegister = false;
         return;
       }
 
       // vehicle target height (for flying and other mechanics)
-      m_nview.Unregister(nameof(RPC_TargetHeight));
+      base.m_nview.Unregister(nameof(RPC_TargetHeight));
 
       // ship speed
-      m_nview.Unregister(nameof(RPC_SpeedChange));
+      base.m_nview.Unregister(nameof(RPC_SpeedChange));
 
       // anchor logic
-      m_nview.Unregister(nameof(RPC_SetAnchor));
+      base.m_nview.Unregister(nameof(RPC_SetAnchor));
 
       // rudder direction
-      m_nview.Unregister(nameof(RPC_Rudder));
+      base.m_nview.Unregister(nameof(RPC_Rudder));
 
       // boat sway
-      m_nview.Unregister(nameof(RPC_SetOceanSway));
+      base.m_nview.Unregister(nameof(RPC_SetOceanSway));
 
       // steering
-      m_nview.Unregister(nameof(RPC_RequestControl));
-      m_nview.Unregister(nameof(RPC_RequestResponse));
-      m_nview.Unregister(nameof(RPC_ReleaseControl));
+      base.m_nview.Unregister(nameof(RPC_RequestControl));
+      base.m_nview.Unregister(nameof(RPC_RequestResponse));
+      base.m_nview.Unregister(nameof(RPC_ReleaseControl));
 
       _hasRegister = false;
     }
@@ -3240,7 +3240,7 @@
     private void RegisterRPCListeners()
     {
       // logic is a duplicate of VehicleConfigSync
-      if (m_nview == null)
+      if (base.m_nview == null)
       {
         if (rpcRegisterDelayCount > MAX_DELAYS) return;
         Invoke(nameof(RegisterRPCListeners), 1f);
@@ -3251,26 +3251,26 @@
       if (_hasRegister) return;
 
       // ship target height
-      m_nview.Register<float>(nameof(RPC_TargetHeight), RPC_TargetHeight);
+      base.m_nview.Register<float>(nameof(RPC_TargetHeight), RPC_TargetHeight);
 
       // ship speed
-      m_nview.Register<int>(nameof(RPC_SpeedChange), RPC_SpeedChange);
+      base.m_nview.Register<int>(nameof(RPC_SpeedChange), RPC_SpeedChange);
 
       // anchor logic
-      m_nview.Register<int>(nameof(RPC_SetAnchor), RPC_SetAnchor);
+      base.m_nview.Register<int>(nameof(RPC_SetAnchor), RPC_SetAnchor);
 
       // rudder direction
-      m_nview.Register<float>(nameof(RPC_Rudder), RPC_Rudder);
+      base.m_nview.Register<float>(nameof(RPC_Rudder), RPC_Rudder);
 
       // todo consider moving boat sway to VehicleConfigSync
       // boat sway
-      m_nview.Register<bool>(nameof(RPC_SetOceanSway), RPC_SetOceanSway);
+      base.m_nview.Register<bool>(nameof(RPC_SetOceanSway), RPC_SetOceanSway);
 
       // steering
-      m_nview.Register<long>(nameof(RPC_RequestControl), RPC_RequestControl);
-      m_nview.Register<bool, long, long>(nameof(RPC_RequestResponse),
+      base.m_nview.Register<long>(nameof(RPC_RequestControl), RPC_RequestControl);
+      base.m_nview.Register<bool, long, long>(nameof(RPC_RequestResponse),
         RPC_RequestResponse);
-      m_nview.Register<long>(nameof(RPC_ReleaseControl),
+      base.m_nview.Register<long>(nameof(RPC_ReleaseControl),
         RPC_ReleaseControl);
 
       _hasRegister = true;
@@ -3283,7 +3283,7 @@
     public void DEPRECATED_InitializeRudderWithShip(
       SteeringWheelComponent steeringWheel, Ship ship)
     {
-      m_nview = ship.m_nview;
+      base.m_nview = ship.m_nview;
       ship.m_controlGuiPos = steeringWheel.transform;
       var rudderAttachPoint = steeringWheel.transform.Find("attachpoint");
       if (rudderAttachPoint != null) AttachPoint = rudderAttachPoint;
@@ -3333,7 +3333,7 @@
     /// </summary>
     public IEnumerator DebouncedForceTakeoverControls(long playerId)
     {
-      if (Manager.NetView == null) yield break;
+      if (Manager.m_nview == null) yield break;
       yield return new WaitForSeconds(2f);
       ForceTakeoverControls(playerId);
     }
@@ -3349,9 +3349,9 @@
 
     public void SendRequestControl(long playerId)
     {
-      if (m_nview == null) return;
+      if (base.m_nview == null) return;
       CancelDebounceTakeoverControls();
-      m_nview.InvokeRPC(ZRoutedRpc.Everybody, nameof(RPC_RequestControl),
+      base.m_nview.InvokeRPC(ZRoutedRpc.Everybody, nameof(RPC_RequestControl),
         playerId);
     }
 
@@ -3365,7 +3365,7 @@
     /// <param name="targetPlayerId"></param>
     private void RPC_RequestControl(long sender, long targetPlayerId)
     {
-      if (m_nview == null || ZNet.instance == null) return;
+      if (base.m_nview == null || ZNet.instance == null) return;
       CancelDebounceTakeoverControls();
 
       _debouncedForceTakeoverControlsInstance =
@@ -3374,7 +3374,7 @@
       var previousUserId = GetUser();
       var isInBoat = WaterZoneUtils.IsOnboard(Player.GetPlayer(targetPlayerId));
 
-      if (!m_nview.IsOwner())
+      if (!base.m_nview.IsOwner())
       {
         if (ModEnvironment.IsDebug) Logger.LogDebug("Not zdo owner, skipping...");
 
@@ -3389,20 +3389,20 @@
       if (!isInBoat) return;
 
       // the previous user could be invalid so always makes the current user valid if so.
-      m_nview.InvokeRPC(ZRoutedRpc.Everybody, nameof(RPC_RequestResponse),
+      base.m_nview.InvokeRPC(ZRoutedRpc.Everybody, nameof(RPC_RequestResponse),
         true, targetPlayerId, previousUserId);
     }
 
     private void RPC_ReleaseControl(long sender, long playerId)
     {
       CancelDebounceTakeoverControls();
-      if (m_nview == null) return;
+      if (base.m_nview == null) return;
 
       var previousUser = GetUser();
       var previousPlayer = Player.GetPlayer(previousUser);
       EjectPreviousPlayerFromControls(previousPlayer);
 
-      if (m_nview.IsOwner()) m_nview.GetZDO().Set(ZDOVars.s_user, 0L);
+      if (base.m_nview.IsOwner()) base.m_nview.GetZDO().Set(ZDOVars.s_user, 0L);
     }
 
     /// <summary>
@@ -3507,7 +3507,7 @@
     /// <param name="forceUpdate"></param>
     public void UpdateTargetHeight(float rawValue, bool forceUpdate = false)
     {
-      if (Manager == null || m_nview == null) return;
+      if (Manager == null || base.m_nview == null) return;
 
       _previousTargetHeight = TargetHeight;
       var maxSurfaceLevelOffset = GetSurfaceOffset();
@@ -3527,13 +3527,13 @@
       if (Mathf.Approximately(_previousTargetHeight, TargetHeight)) return;
 
 
-      m_nview.GetZDO().Set(VehicleZdoVars.VehicleTargetHeight, TargetHeight);
+      base.m_nview.GetZDO().Set(VehicleZdoVars.VehicleTargetHeight, TargetHeight);
 
       Manager.UpdateShipEffects();
 
       if (lastSyncTargetHeight > 2f)
       {
-        m_nview.InvokeRPC(0, nameof(RPC_TargetHeight), TargetHeight);
+        base.m_nview.InvokeRPC(0, nameof(RPC_TargetHeight), TargetHeight);
         lastSyncTargetHeight = 0f;
       }
       else
@@ -3816,7 +3816,7 @@
 
     public void SyncRudder(float rudder)
     {
-      m_nview.InvokeRPC(0L, nameof(RPC_Rudder), rudder);
+      base.m_nview.InvokeRPC(0L, nameof(RPC_Rudder), rudder);
     }
 
 
@@ -3850,16 +3850,16 @@
 
     public void SendToggleOceanSway()
     {
-      m_nview.InvokeRPC(0, nameof(RPC_SetOceanSway), !HasOceanSwayDisabled);
+      base.m_nview.InvokeRPC(0, nameof(RPC_SetOceanSway), !HasOceanSwayDisabled);
     }
 
     public void RPC_SetOceanSway(long sender, bool state)
     {
-      if (!m_nview) return;
-      var isOwner = m_nview.IsOwner();
+      if (!base.m_nview) return;
+      var isOwner = base.m_nview.IsOwner();
       if (isOwner)
       {
-        var zdo = m_nview.GetZDO();
+        var zdo = base.m_nview.GetZDO();
         zdo.Set(VehicleZdoVars.VehicleOceanSway, state);
       }
 
@@ -3880,9 +3880,9 @@
     private void SyncOceanSway()
     {
       if (ZNetView.m_forceDisableInit) return;
-      if (!m_nview) return;
+      if (!base.m_nview) return;
 
-      var zdo = m_nview.GetZDO();
+      var zdo = base.m_nview.GetZDO();
       if (zdo == null) return;
 
       var isEnabled = zdo.GetBool(VehicleZdoVars.VehicleOceanSway);
@@ -3894,13 +3894,13 @@
       if (ZNetView.m_forceDisableInit) return;
       if (!isActiveAndEnabled) return;
       // exit if we do not have anchor prefab or m_nview
-      if (!CanAnchor || m_nview == null)
+      if (!CanAnchor || base.m_nview == null)
       {
         vehicleAnchorState = AnchorState.Idle;
         return;
       }
 
-      if (m_nview.isActiveAndEnabled != true) return;
+      if (base.m_nview.isActiveAndEnabled != true) return;
 
       var isNotAnchoredWithNobodyOnboard =
         OnboardController.m_localPlayers.Count == 0 && !isAnchored;
@@ -3913,7 +3913,7 @@
       }
 
       var zdoAnchorState =
-        AnchorMechanismController.GetSafeAnchorState(m_nview.GetZDO()
+        AnchorMechanismController.GetSafeAnchorState(base.m_nview.GetZDO()
           .GetInt(VehicleZdoVars.VehicleAnchorState, (int)vehicleAnchorState));
 
       if (vehicleAnchorState != zdoAnchorState)
@@ -3939,9 +3939,9 @@
       Logger.LogDebug(
         $"Setting anchor to: {state} the new movementFlag should be {newFlags}");
 
-      if (m_nview.IsOwner() || hasOverride)
+      if (base.m_nview.IsOwner() || hasOverride)
       {
-        var zdo = m_nview.GetZDO();
+        var zdo = base.m_nview.GetZDO();
         zdo.Set(VehicleZdoVars.VehicleAnchorState, (int)state);
       }
 
@@ -3980,7 +3980,7 @@
     {
       if (targetPlayer == null || !Manager ||
           PiecesController == null ||
-          m_nview == null || m_nview.m_zdo == null)
+          base.m_nview == null || base.m_nview.m_zdo == null)
         return;
 
       EjectPreviousPlayerFromControls(previousPlayer);
@@ -3994,9 +3994,9 @@
       // the person controlling the ship should control physics
       var playerOwner = targetPlayer.GetOwner();
 
-      m_nview.GetZDO().SetOwner(playerOwner);
+      base.m_nview.GetZDO().SetOwner(playerOwner);
       if (previousUserId != targetPlayer.GetPlayerID() || previousUserId == 0L)
-        m_nview.GetZDO().Set(ZDOVars.s_user, targetPlayer.GetPlayerID());
+        base.m_nview.GetZDO().Set(ZDOVars.s_user, targetPlayer.GetPlayerID());
 
       LoggerProvider.LogDebug("Changing ship owner to " + playerOwner +
                               $", name: {targetPlayer.GetPlayerName()}");
@@ -4082,7 +4082,7 @@
           break;
       }
 
-      m_nview.InvokeRPC(0, nameof(RPC_SpeedChange), (int)vehicleSpeed);
+      base.m_nview.InvokeRPC(0, nameof(RPC_SpeedChange), (int)vehicleSpeed);
     }
 
     internal void RPC_SpeedChange(long sender, int speed)
@@ -4156,9 +4156,9 @@
     public void SendReleaseControl(Player player)
     {
       CancelDebounceTakeoverControls();
-      if (m_nview == null) return;
-      if (!m_nview.IsValid()) return;
-      m_nview.InvokeRPC(ZRoutedRpc.Everybody, nameof(RPC_ReleaseControl),
+      if (base.m_nview == null) return;
+      if (!base.m_nview.IsValid()) return;
+      base.m_nview.InvokeRPC(ZRoutedRpc.Everybody, nameof(RPC_ReleaseControl),
         player.GetPlayerID());
     }
 
@@ -4200,10 +4200,10 @@
     /// <returns></returns>
     private long GetUser()
     {
-      if (!m_nview) return 0L;
-      return !m_nview.IsValid()
+      if (!base.m_nview) return 0L;
+      return !base.m_nview.IsValid()
         ? 0L
-        : m_nview.GetZDO().GetLong(ZDOVars.s_user);
+        : base.m_nview.GetZDO().GetLong(ZDOVars.s_user);
     }
 
   #region IVehicleSharedProperties
@@ -4239,7 +4239,7 @@
       set;
     }
 
-    public ZNetView? NetView
+    public ZNetView? m_nview
     {
       get;
       set;

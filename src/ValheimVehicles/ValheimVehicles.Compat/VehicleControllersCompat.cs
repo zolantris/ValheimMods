@@ -22,7 +22,7 @@ public class VehicleControllersCompat : IVehicleControllers, IValheimShip
 
   public ZNetView? GetNetView()
   {
-    if (IsVehicleShip) return VehicleShipInstance.NetView;
+    if (IsVehicleShip) return VehicleShipInstance.m_nview;
 
     if (IsValheimShip) return ShipInstance.m_nview;
 
@@ -264,7 +264,7 @@ public class VehicleControllersCompat : IVehicleControllers, IValheimShip
   {
     get
     {
-      if (IsVehicleShip) return VehicleShipInstance.NetView;
+      if (IsVehicleShip) return VehicleShipInstance.m_nview;
 
       if (IsValheimShip) return ShipInstance.m_nview;
 

@@ -55,7 +55,7 @@
     // The rudder force multiplier applied to the ship speed
     private float _rudderForce = 1f;
 
-    public VehicleCustomZdoConfig VehicleCustomZdoConfig { get; set; }
+    public VehicleCustomConfig VehicleCustomConfig { get; set; }
 
     public GameObject GhostContainer()
     {
@@ -111,7 +111,7 @@
 
     public VehiclePiecesController? PiecesController { get; set; }
 
-    public ZNetView NetView { get; set; }
+    public ZNetView m_nview { get; set; }
 
     public Transform vehicleMovementTransform;
     public Transform vehicleMovementCollidersTransform;
@@ -269,13 +269,13 @@
 
     private int GetPersistentID()
     {
-      return PersistentIdHelper.GetPersistentIdFrom(NetView, ref _persistentZdoId);
+      return PersistentIdHelper.GetPersistentIdFrom(m_nview, ref _persistentZdoId);
     }
 
     private void Awake()
     {
       if (ZNetView.m_forceDisableInit) return;
-      NetView = GetComponent<ZNetView>();
+      m_nview = GetComponent<ZNetView>();
       GetPersistentID();
 
       VehicleConfigSync = gameObject.AddComponent<VehicleConfigSyncComponent>();
@@ -295,10 +295,10 @@
       else
         VehicleInstances.Add(PersistentZdoId, this);
 
-      if (!NetView)
+      if (!m_nview)
       {
         Logger.LogWarning("No NetView but tried to set it before");
-        NetView = GetComponent<ZNetView>();
+        m_nview = GetComponent<ZNetView>();
       }
 
       vehicleMovementTransform = GetVehicleMovementTransform(transform);
@@ -468,13 +468,13 @@
 
     public void OnEnable()
     {
-      if (!NetView) NetView = GetComponent<ZNetView>();
+      if (!m_nview) m_nview = GetComponent<ZNetView>();
 
-      var isValidZdo = NetView != null && NetView.GetZDO() != null;
+      var isValidZdo = m_nview != null && m_nview.GetZDO() != null;
 
       if (isValidZdo && !IsLandVehicleFromPrefab)
       {
-        var zdo = NetView.GetZDO();
+        var zdo = m_nview.GetZDO();
         if (zdo != null)
           IsLandVehicle = IsLandVehicleFromPrefab ||
                           zdo.GetBool(VehicleZdoVars.IsLandVehicle);
@@ -501,13 +501,13 @@
 
     public void UpdateShipZdoPosition()
     {
-      if (!(bool)NetView || NetView.GetZDO() == null || NetView.m_ghost ||
+      if (!(bool)m_nview || m_nview.GetZDO() == null || m_nview.m_ghost ||
           PiecesController == null ||
           !isActiveAndEnabled) return;
       var position = transform.position;
 
       var sector = ZoneSystem.GetZone(position);
-      var zdo = NetView.GetZDO();
+      var zdo = m_nview.GetZDO();
 
       zdo.SetPosition(PiecesController.m_localRigidbody.worldCenterOfMass);
       zdo.SetSector(sector);
@@ -578,7 +578,7 @@
       if (PiecesController == null) return;
       if (!CanInitHullPiece)
       {
-        NetView.GetZDO().Set(VehicleZdoVars.ZdoKeyBaseVehicleInitState, true);
+        m_nview.GetZDO().Set(VehicleZdoVars.ZdoKeyBaseVehicleInitState, true);
         return;
       }
 
@@ -685,7 +685,7 @@
     public void InitializeVehiclePiecesController()
     {
       if (ZNetView.m_forceDisableInit) return;
-      if (NetView == null || NetView.GetZDO() == null || NetView.m_ghost ||
+      if (m_nview == null || m_nview.GetZDO() == null || m_nview.m_ghost ||
           PiecesController != null || PersistentZdoId == 0 || _vehiclePiecesContainerInstance != null) return;
 
       var ladders = GetComponentsInChildren<Ladder>();

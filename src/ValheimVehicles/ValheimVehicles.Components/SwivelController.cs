@@ -5,6 +5,7 @@
   using System.Linq;
   using UnityEngine;
   using UnityEngine.Serialization;
+  using ValheimVehicles.Config;
   using ValheimVehicles.Constants;
   using ValheimVehicles.Controllers;
   using ValheimVehicles.Helpers;
@@ -50,6 +51,8 @@
     public static float turnTime = 50f;
 
     private HoverFadeText m_hoverFadeText;
+    private readonly PrefabConfigRPCSync<SwivelCustomConfig> _prefabConfigSync = new();
+    public SwivelCustomConfig m_config => _prefabConfigSync.CustomConfig;
 
     public override void Awake()
     {
@@ -71,8 +74,11 @@
 
     public void OnEnable()
     {
+      _prefabConfigSync.RegisterRPCListeners();
+
       var persistentId = GetPersistentId();
       if (persistentId == 0) return;
+
       if (ActiveInstances.TryGetValue(persistentId, out var swivelComponentIntegration))
       {
         return;
@@ -90,6 +96,8 @@
 
     public void OnDisable()
     {
+      _prefabConfigSync.UnregisterRPCListeners();
+
       var persistentId = GetPersistentId();
       if (persistentId == 0) return;
       if (!ActiveInstances.TryGetValue(persistentId, out var swivelComponentIntegration))
@@ -184,15 +192,7 @@
       {
         if (nvPiece == null || nvPiece.GetZDO() == null) continue;
         nvPiece.GetZDO().RemoveInt(VehicleZdoVars.SwivelParentId);
-
-        if (m_vehiclePiecesController != null)
-        {
-          m_vehiclePiecesController.AddNewPiece(nvPiece);
-        }
-        else
-        {
-          nvPiece.transform.SetParent(null);
-        }
+        nvPiece.transform.SetParent(null);
       }
     }
 
@@ -425,10 +425,12 @@
       TogglePlacementContainer(m_pieces.Count == 0);
     }
 
-    /**
-    * prevent ship destruction on m_nview null
-    * - if null it would prevent getting the ZDO information for the ship pieces
-    */
+    ///
+    /// <summary>
+    ///   prevents ship destruction on m_nview null
+    ///   - if null it would prevent getting the ZDO information for the ship pieces
+    /// </summary>
+    /// 
     public void DestroyPiece(WearNTear wnt)
     {
       if (wnt == null) return;

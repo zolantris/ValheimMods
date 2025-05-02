@@ -329,7 +329,7 @@ public class VehicleCommands : ConsoleCommand
     if (data.Value.charactersOnShip.Count <= 0) yield break;
     var piecesController =
       data.Value.OnboardController?.PiecesController?.transform;
-    var zdo = data.Value.OnboardController?.Manager?.NetView?.GetZDO();
+    var zdo = data.Value.OnboardController?.Manager?.m_nview?.GetZDO();
 
     if (piecesController == null || zdo == null) yield break;
 
@@ -444,10 +444,10 @@ public class VehicleCommands : ConsoleCommand
       ZoneSystem.instance.IsZoneLoaded(newLocation) ||
       timer.ElapsedMilliseconds > 5000);
 
-    if (vehicleInstance.NetView == null || vehicleInstance.NetView.m_zdo == null) yield break;
+    if (vehicleInstance.m_nview == null || vehicleInstance.m_nview.m_zdo == null) yield break;
 
     vehicleInstance.transform.position = newLocation;
-    vehicleInstance.NetView.m_zdo.SetPosition(newLocation);
+    vehicleInstance.m_nview.m_zdo.SetPosition(newLocation);
     vehicleInstance.PiecesController.ForceUpdateAllPiecePositions(newLocation);
     onPositionReady(vehicleInstance.transform.position);
   }
@@ -835,7 +835,7 @@ public class VehicleCommands : ConsoleCommand
       piecesControllerMNviewPiece.Destroy();
     }
 
-    closestVehicle.Instance.NetView.Destroy();
+    closestVehicle.Instance.m_nview.Destroy();
 
     LoggerProvider.LogMessage("Completed destroy vehicle command.");
   }

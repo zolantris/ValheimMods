@@ -645,8 +645,8 @@
       LoggerProvider.LogDebug(
         $"Player: {playerInList.GetPlayerName()} on-board, total onboard {m_localPlayers.Count}");
 
-      var vehicleZdo = MovementController?.NetView != null
-        ? MovementController.NetView.GetZDO()
+      var vehicleZdo = MovementController?.m_nview != null
+        ? MovementController.m_nview.GetZDO()
         : null;
 
       if (playerInList == Player.m_localPlayer && vehicleZdo != null)
@@ -658,9 +658,9 @@
       KeyValuePair<ZDOID, Player> delayedExitSubscription)
     {
       if (MovementController == null ||
-          MovementController?.NetView == null) return;
+          MovementController?.m_nview == null) return;
       var vehicleZdo = MovementController
-        .NetView.GetZDO();
+        .m_nview.GetZDO();
       if (delayedExitSubscription.Value == Player.m_localPlayer &&
           vehicleZdo != null && PlayerSpawnController.Instance != null)
         PlayerSpawnController.Instance.SyncLogoutPoint(vehicleZdo, true);
@@ -769,7 +769,7 @@
       set;
     }
 
-    public ZNetView? NetView
+    public ZNetView? m_nview
     {
       get;
       set;

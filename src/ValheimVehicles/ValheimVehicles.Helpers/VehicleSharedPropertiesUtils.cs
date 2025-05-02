@@ -17,7 +17,7 @@
       to.OnboardController = from.OnboardController;
       to.WheelController = from.WheelController;
       to.Manager = from.Manager;
-      to.NetView = from.NetView;
+      to.m_nview = from.m_nview;
     }
 
     public static void BindAllControllers(IVehicleSharedProperties from, List<IVehicleSharedProperties> toControllers)

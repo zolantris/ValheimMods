@@ -5,11 +5,12 @@ namespace ValheimVehicles.Structs;
 /// <summary>
 /// ZdoVars do not need to be a hashcode. Using a Hashcode makes it harder to see what the ZDO value relates to as well. So for any future ZDOVars they should be strings.
 /// </summary>
-
 public static class VehicleZdoVars
 {
   public const string ZdoKeyBaseVehicleInitState =
     "ValheimVehicles_BaseVehicle_Initialized";
+
+  public const string ModVersion = "ValheimVehicles_ModVersion";
 
   public const string VehicleFloatationHeight = "ValheimVehicles_VehicleFloatationHeight";
   public const string VehicleFloatationCustomModeEnabled = "ValheimVehicles_VehicleFloatationCustomModeEnabled";

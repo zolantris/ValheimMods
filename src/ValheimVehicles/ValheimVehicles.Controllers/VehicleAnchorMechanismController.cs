@@ -105,7 +105,7 @@
           throw new ArgumentOutOfRangeException(nameof(newState), newState, null);
       }
 
-      if (MovementController != null && MovementController.m_nview.IsOwner())
+      if (MovementController != null && ((ValheimBaseGameShip)MovementController).m_nview.IsOwner())
         MovementController.SendSetAnchor(newState);
     }
   }
