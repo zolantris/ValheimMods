@@ -83,7 +83,7 @@
     public static void HidePreviewComponent(ZNetView netView)
     {
       if (!PrefabNames.IsVehicle(netView.name)) return;
-      var vehicleShip = netView.GetComponent<VehicleBaseController>();
+      var vehicleShip = netView.GetComponent<VehicleManager>();
       if (vehicleShip == null) return;
       var ghostContainer = vehicleShip.GhostContainer();
       if (ghostContainer != null)
@@ -169,7 +169,11 @@
         return true;
       }
       var genericPieceController = collider.GetComponentInParent<IPieceController>();
-      if (genericPieceController != null) return true;
+      if (genericPieceController != null && genericPieceController.CanRaycastHitPiece())
+      {
+        return true;
+      }
+
       return false;
     }
 

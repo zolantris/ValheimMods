@@ -329,7 +329,7 @@ public class VehicleCommands : ConsoleCommand
     if (data.Value.charactersOnShip.Count <= 0) yield break;
     var piecesController =
       data.Value.OnboardController?.PiecesController?.transform;
-    var zdo = data.Value.OnboardController?.BaseController?.NetView?.GetZDO();
+    var zdo = data.Value.OnboardController?.Manager?.NetView?.GetZDO();
 
     if (piecesController == null || zdo == null) yield break;
 
@@ -425,7 +425,7 @@ public class VehicleCommands : ConsoleCommand
     yield return null;
   }
 
-  private static IEnumerator MoveVehicleIntoFarZone(VehicleBaseController vehicleInstance,
+  private static IEnumerator MoveVehicleIntoFarZone(VehicleManager vehicleInstance,
     Vector3 offset, Action<Vector3> onPositionReady)
   {
     if (vehicleInstance.PiecesController == null) yield break;
@@ -444,9 +444,11 @@ public class VehicleCommands : ConsoleCommand
       ZoneSystem.instance.IsZoneLoaded(newLocation) ||
       timer.ElapsedMilliseconds > 5000);
 
+    if (vehicleInstance.NetView == null || vehicleInstance.NetView.m_zdo == null) yield break;
+
     vehicleInstance.transform.position = newLocation;
     vehicleInstance.NetView.m_zdo.SetPosition(newLocation);
-    VehiclePiecesController.ForceUpdateAllPiecePositions(newLocation);
+    vehicleInstance.PiecesController.ForceUpdateAllPiecePositions(newLocation);
     onPositionReady(vehicleInstance.transform.position);
   }
 
@@ -456,7 +458,7 @@ public class VehicleCommands : ConsoleCommand
   /// </summary>
   /// <param name="vehicleInstance">The vehicle instance to move.</param>
   /// <param name="offset">The offset vector to apply.</param>
-  private static IEnumerator MoveVehicle(VehicleBaseController? vehicleInstance,
+  private static IEnumerator MoveVehicle(VehicleManager? vehicleInstance,
     Vector3 offset)
   {
     if (vehicleInstance?.OnboardController == null)
@@ -630,7 +632,7 @@ public class VehicleCommands : ConsoleCommand
     }
   }
 
-  public static VehicleBaseController? GetNearestVehicleShip(Vector3 position)
+  public static VehicleManager? GetNearestVehicleShip(Vector3 position)
   {
     if (!Physics.Raycast(
           GameCamera.instance.transform.position,
@@ -646,10 +648,10 @@ public class VehicleCommands : ConsoleCommand
     var vehiclePiecesController =
       hitinfo.collider.GetComponentInParent<VehiclePiecesController>();
 
-    if (!(bool)vehiclePiecesController.BaseController) return null;
+    if (!(bool)vehiclePiecesController.Manager) return null;
 
     var vehicleShipController =
-      vehiclePiecesController.BaseController;
+      vehiclePiecesController.Manager;
     return vehicleShipController;
   }
 
@@ -801,7 +803,7 @@ public class VehicleCommands : ConsoleCommand
     LoggerProvider.LogMessage("Completed creative mode commands.");
   }
 
-  private static Vector3 GetCreativeModeTargetPosition(VehicleBaseController vehicleInstance)
+  private static Vector3 GetCreativeModeTargetPosition(VehicleManager vehicleInstance)
   {
     if (vehicleInstance == null || vehicleInstance.MovementController == null) return Vector3.zero;
 

@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using Jotunn.Entities;
-
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.Components;
 
@@ -24,7 +23,7 @@ public abstract class LocateVehicle
 
   private static int LocateVehicleShips()
   {
-    var ships = UnityEngine.Object.FindObjectsOfType<VehicleBaseController>();
+    var ships = UnityEngine.Object.FindObjectsOfType<VehicleManager>();
 
     return ships.ToList().Count;
   }

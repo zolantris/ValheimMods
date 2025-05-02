@@ -25,5 +25,5 @@ public interface IVehicleControllers
   public VehicleConfigSyncComponent? VehicleConfigSync { get; set; }
   public VehicleOnboardController? OnboardController { get; set; }
   public VehicleWheelController? WheelController { get; set; }
-  public VehicleBaseController? BaseController { get; set; }
+  public VehicleManager? Manager { get; set; }
 }

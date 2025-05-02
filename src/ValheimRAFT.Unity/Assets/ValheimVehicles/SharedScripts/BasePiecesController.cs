@@ -7,6 +7,7 @@
   using JetBrains.Annotations;
   using Unity.Collections;
   using UnityEngine;
+  using ValheimVehicles.Prefabs;
 
 #endregion
 
@@ -62,7 +63,7 @@
       internal int _lastRebuildPieceRevision = -1;
 
       internal float _lastRebuildTime;
-      internal Coroutine? _rebuildBoundsTimer;
+      internal Coroutine? _rebuildBoundsRoutineInstance;
 
       // collision logic
       internal bool _shouldUpdatePieceColliders;
@@ -107,10 +108,10 @@
 
       public virtual void OnDisable()
       {
-        if (_rebuildBoundsTimer != null)
+        if (_rebuildBoundsRoutineInstance != null)
         {
-          StopCoroutine(_rebuildBoundsTimer);
-          _rebuildBoundsTimer = null;
+          StopCoroutine(_rebuildBoundsRoutineInstance);
+          _rebuildBoundsRoutineInstance = null;
         }
       }
 
@@ -203,7 +204,7 @@
       public virtual void RequestBoundsRebuild()
       {
         // if we are already queuing up an update, we can skip any additional requests.
-        if (_rebuildBoundsTimer != null)
+        if (_rebuildBoundsRoutineInstance != null)
         {
           return;
         }
@@ -219,7 +220,7 @@
           return;
         }
 
-        _rebuildBoundsTimer = StartCoroutine(RebuildBoundsThrottleRoutine(() => RebuildBounds()));
+        _rebuildBoundsRoutineInstance = StartCoroutine(RebuildBoundsThrottleRoutine(() => RebuildBounds()));
       }
 
       /// <summary>
@@ -229,7 +230,7 @@
       /// <param name="isForced"></param>
       public virtual void RebuildBounds(bool isForced = false)
       {
-        _rebuildBoundsTimer = null;
+        _rebuildBoundsRoutineInstance = null;
         if (!isActiveAndEnabled) return;
 
         _shouldUpdateVehicleColliders = true;
@@ -261,7 +262,7 @@
         }
       }
 
-      internal virtual int GetPieceCount()
+      public virtual int GetPieceCount()
       {
         return m_prefabPieceDataItems.Count;
       }
@@ -277,7 +278,7 @@
         if (hasMinimumWait)
         {
           yield return new WaitForSeconds(RebuildPieceMinDelay);
-          _rebuildBoundsTimer = null;
+          _rebuildBoundsRoutineInstance = null;
           onRebuildReadyCallback.Invoke();
           yield break;
         }
@@ -285,7 +286,7 @@
         var pieceCount = GetPieceCount();
         if (pieceCount <= 0)
         {
-          _rebuildBoundsTimer = null;
+          _rebuildBoundsRoutineInstance = null;
           yield break;
         }
 
@@ -309,7 +310,7 @@
           yield return new WaitForSeconds(timeToWait);
         }
 
-        _rebuildBoundsTimer = null;
+        _rebuildBoundsRoutineInstance = null;
         onRebuildReadyCallback.Invoke();
       }
 
@@ -407,10 +408,12 @@
           foreach (var item in m_prefabPieceDataItems.Values)
           {
             var itemCollectionData = item.ColliderPointData;
+            if (item.IsSwivelChild) continue;
+            if (item.Prefab == null || item.Prefab.name.StartsWith(PrefabNames.SwivelPrefabName)) continue;
             if (itemCollectionData == null) continue;
-            if (itemCollectionData.Value.Points == null)
+            if (itemCollectionData.Value.Points.Length == 0)
             {
-              LoggerProvider.LogDebug($"Unexpected Points list is null for item: {item}");
+              LoggerProvider.LogDebug($"Unexpected Points list has zero points for item: {item}");
               continue;
             }
 
@@ -437,14 +440,13 @@
 
         // We cannot generate a convex collider with so view points. This is not a good situation to be in.
         // todo add a fallback that uses a simple box collider in this case. (IE THE BASIC RENDER)
-        if (points.Count <= 4)
+        if (points.Count <= 4 || !m_convexHullCalculator.GenerateHull(points, false, ref verts, ref tris, ref normals, out var hasBailed))
         {
           LoggerProvider.LogError("Points cannot be less than 4. This is likely an error with the mod or the vehicle only contains a piece without collider points.");
           callback?.Invoke();
           return;
         }
 
-        m_convexHullCalculator.GenerateHull(points, false, ref verts, ref tris, ref normals);
         m_convexHullAPI.GenerateMeshFromConvexOutput(verts.ToArray(), tris.ToArray(), normals.ToArray(), 0);
 
         Debug.Log("✅ Convex Hull Generation Complete!");

@@ -53,8 +53,8 @@ public class VehicleGlobalConfig : BepInExBaseConfig<VehicleGlobalConfig>
       true,
       "Toggles ShipInWater Sounds, the sound of the hull hitting water");
 
-    EnableShipSailSounds.SettingChanged += VehicleBaseController.UpdateAllShipSounds;
-    EnableShipWakeSounds.SettingChanged += VehicleBaseController.UpdateAllShipSounds;
-    EnableShipInWaterSounds.SettingChanged += VehicleBaseController.UpdateAllShipSounds;
+    EnableShipSailSounds.SettingChanged += VehicleManager.UpdateAllShipSounds;
+    EnableShipWakeSounds.SettingChanged += VehicleManager.UpdateAllShipSounds;
+    EnableShipInWaterSounds.SettingChanged += VehicleManager.UpdateAllShipSounds;
   }
 }

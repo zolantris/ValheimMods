@@ -14,7 +14,7 @@ namespace ValheimVehicles.Compat;
 public class VehicleControllersCompat : IVehicleControllers, IValheimShip
 {
   public Ship? ShipInstance;
-  public VehicleBaseController? VehicleShipInstance;
+  public VehicleManager? VehicleShipInstance;
   private bool _isValheimShip;
   private bool _isVehicleShip;
 
@@ -41,7 +41,7 @@ public class VehicleControllersCompat : IVehicleControllers, IValheimShip
     if (vehicleOrShip?.GetType() == typeof(VehicleControllersCompat))
       return vehicleOrShip as VehicleControllersCompat;
 
-    var vehicleShip = vehicleOrShip as VehicleBaseController;
+    var vehicleShip = vehicleOrShip as VehicleManager;
     if (vehicleShip != null) return InitWithVehicleShip(vehicleShip);
 
     var ship = vehicleOrShip as Ship;
@@ -130,14 +130,14 @@ public class VehicleControllersCompat : IVehicleControllers, IValheimShip
     if (IsValheimShip) ShipInstance?.UpdateControlls(dt);
   }
 
-  private static VehicleControllersCompat InitWithVehicleShip(VehicleBaseController vehicleBaseController)
+  private static VehicleControllersCompat InitWithVehicleShip(VehicleManager vehicleManager)
   {
     return new VehicleControllersCompat
     {
-      VehicleShipInstance = vehicleBaseController,
+      VehicleShipInstance = vehicleManager,
       _isVehicleShip = true,
       _isValheimShip = false,
-      m_controlGuiPos = vehicleBaseController.m_controlGuiPos
+      m_controlGuiPos = vehicleManager.m_controlGuiPos
     };
   }
 
@@ -259,7 +259,7 @@ public class VehicleControllersCompat : IVehicleControllers, IValheimShip
   public Transform? ShipDirection { get; }
   public Transform ControlGuiPosition { get; set; }
   public Transform m_controlGuiPos { get; set; }
-  
+
   public ZNetView? NetView
   {
     get
@@ -301,11 +301,12 @@ public class VehicleControllersCompat : IVehicleControllers, IValheimShip
     get;
     set;
   }
-  public VehicleBaseController? BaseController
+  public VehicleManager? Manager
   {
     get;
     set;
   }
 
 #endregion
+
 }

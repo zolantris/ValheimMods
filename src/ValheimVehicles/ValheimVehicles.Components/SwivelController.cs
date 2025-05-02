@@ -1,5 +1,6 @@
 #region
 
+  using System;
   using System.Collections.Generic;
   using System.Linq;
   using UnityEngine;
@@ -37,7 +38,7 @@
   {
     [FormerlySerializedAs("m_piecesController")]
     public VehiclePiecesController? m_vehiclePiecesController;
-    public VehicleBaseController? m_vehicle => m_vehiclePiecesController == null ? null : m_vehiclePiecesController.BaseController;
+    public VehicleManager? m_vehicle => m_vehiclePiecesController == null ? null : m_vehiclePiecesController.Manager;
 
     private ZNetView m_nview;
     private int _persistentZdoId;
@@ -63,7 +64,7 @@
 
     public void SetupHoverFadeText()
     {
-      m_hoverFadeText = HoverFadeText.CreateHoverFadeText();
+      m_hoverFadeText = HoverFadeText.CreateHoverFadeText(transform);
       m_hoverFadeText.currentText = ModTranslations.Swivel_Connected;
       m_hoverFadeText.Hide();
     }
@@ -101,7 +102,10 @@
     public override void FixedUpdate()
     {
       base.FixedUpdate();
-      m_hoverFadeText.FixedUpdate_UpdateText();
+      if (m_pieces.Count > 0)
+      {
+        m_hoverFadeText.FixedUpdate_UpdateText();
+      }
     }
 
     public void AddNearestPiece()
@@ -144,11 +148,6 @@
       var zdo = netView.GetZDO();
       if (netView.m_zdo == null) return;
 
-      if (m_vehiclePiecesController != null)
-      {
-        m_vehiclePiecesController.AddTemporaryPiece();
-      }
-
       AddPieceToParent(netView.transform);
 
       // This should work just like finalize transform...so not needed technically. Need to see where the break in the logic is.
@@ -185,7 +184,15 @@
       {
         if (nvPiece == null || nvPiece.GetZDO() == null) continue;
         nvPiece.GetZDO().RemoveInt(VehicleZdoVars.SwivelParentId);
-        nvPiece.transform.SetParent(null);
+
+        if (m_vehiclePiecesController != null)
+        {
+          m_vehiclePiecesController.AddNewPiece(nvPiece);
+        }
+        else
+        {
+          nvPiece.transform.SetParent(null);
+        }
       }
     }
 
@@ -342,26 +349,80 @@
 
   #region IPieceController
 
+    public bool CanDestroy()
+    {
+      return GetPieceCount() == 0;
+    }
+
+    public int GetPieceCount()
+    {
+      if (m_nview == null || m_nview.GetZDO() == null) return m_pieces.Count;
+      var pieceCount = m_nview.GetZDO().GetInt(VehicleZdoVars.MBPieceCount, m_pieces.Count);
+      return pieceCount;
+    }
+
+    public bool CanRaycastHitPiece()
+    {
+      return GetPieceCount() > 0;
+    }
+
+    public static bool CanDestroySwivel(ZNetView? netView)
+    {
+      try
+      {
+
+        if (netView == null) return false;
+        var swivelController = netView.GetComponent<SwivelController>();
+        if (swivelController == null)
+        {
+          LoggerProvider.LogDebug("Bailing vehicle deletion attempt: Valheim Attempted to delete a vehicle that matched the ValheimVehicle prefab instance but there was no VehicleBaseController or VehiclePiecesController found. This could mean there is a mod breaking the vehicle registration of ValheimRAFT.");
+          return false;
+        }
+        var hasPendingPieces =
+          BasePieceActivatorComponent.m_pendingPieces.TryGetValue(swivelController.GetPersistentId(),
+            out var pendingPieces);
+        var hasPieces = swivelController.GetPieceCount() != 0;
+
+        // if there are pending pieces, do not let vehicle be destroyed
+        if (pendingPieces != null && hasPendingPieces && pendingPieces.Count > 0)
+          return false;
+
+        return !hasPieces;
+      }
+      catch (Exception e)
+      {
+        LoggerProvider.LogWarning("A error was thrown in CanDestroyVehicle. This likely means the vehicle is corrupt. This check will protect the vehicle from being deleted.");
+        return false;
+      }
+    }
+
     public void AddPiece(ZNetView nv, bool isNew = false)
     {
       if (nv == null) return;
-      nv.transform.SetParent(pieceContainer);
+      AddPieceToParent(nv.transform);
+
+      if (m_vehiclePiecesController != null)
+      {
+        m_vehiclePiecesController.AddPiece(nv);
+      }
+
       PieceActivatorHelpers.FixPieceMeshes(nv);
       m_pieces.Add(nv);
 
-      if (connectorContainer != null)
-      {
-        connectorContainer.gameObject.SetActive(m_pieces.Count > 0);
-      }
+      TogglePlacementContainer(m_pieces.Count == 0);
     }
 
     public void RemovePiece(ZNetView nv)
     {
+      if (nv == null) return;
       m_pieces.Remove(nv);
-      if (connectorContainer != null)
+
+      if (m_vehiclePiecesController != null)
       {
-        connectorContainer.gameObject.SetActive(m_pieces.Count > 0);
+        m_vehiclePiecesController.RemoveTempPiece(nv);
       }
+
+      TogglePlacementContainer(m_pieces.Count == 0);
     }
 
     /**
@@ -370,11 +431,9 @@
     */
     public void DestroyPiece(WearNTear wnt)
     {
-      if (wnt != null)
-      {
-        var nv = wnt.GetComponent<ZNetView>();
-        RemovePiece(nv);
-      }
+      if (wnt == null) return;
+      var nv = wnt.GetComponent<ZNetView>();
+      RemovePiece(nv);
     }
 
   #endregion

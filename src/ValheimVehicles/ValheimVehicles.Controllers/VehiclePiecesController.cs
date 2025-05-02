@@ -333,7 +333,7 @@
 
     public float TotalMass => ShipMass;
 
-    public int PersistentZdoId => BaseController?.PersistentZdoId ?? 0;
+    public int PersistentZdoId => Manager?.PersistentZdoId ?? 0;
 
     public BoxCollider? FloatCollider { get; set; }
 
@@ -409,9 +409,9 @@
 
       InitializeBasePiecesControllerOverrides();
 
-      if (BaseController != null &&
-          !ActiveInstances.ContainsKey(BaseController.PersistentZdoId))
-        ActiveInstances.Add(BaseController.PersistentZdoId, this);
+      if (Manager != null &&
+          !ActiveInstances.ContainsKey(Manager.PersistentZdoId))
+        ActiveInstances.Add(Manager.PersistentZdoId, this);
 
       StartClientServerUpdaters();
     }
@@ -438,9 +438,9 @@
 
       if (MonoUpdaterInstances.Contains(this)) MonoUpdaterInstances.Remove(this);
 
-      if (BaseController != null &&
-          ActiveInstances.GetValueSafe(BaseController.PersistentZdoId))
-        ActiveInstances.Remove(BaseController.PersistentZdoId);
+      if (Manager != null &&
+          ActiveInstances.GetValueSafe(Manager.PersistentZdoId))
+        ActiveInstances.Remove(Manager.PersistentZdoId);
 
       InitializationTimer.Stop();
       if (_serverUpdatePiecesCoroutine != null)
@@ -522,14 +522,14 @@
 
           case RudderComponent rudder:
             m_rudderPieces.Remove(rudder);
-            if (BaseController && m_rudderPieces.Count > 0)
+            if (Manager && m_rudderPieces.Count > 0)
               SetShipWakeBounds();
 
             break;
 
           case SteeringWheelComponent wheel:
             _steeringWheelPieces.Remove(wheel);
-            VehicleMovementController.RemoveAllShipControls(BaseController
+            VehicleMovementController.RemoveAllShipControls(Manager
               ?.MovementController);
             break;
 
@@ -542,7 +542,7 @@
             m_anchorPieces.Remove(netView);
 
             if (MovementController != null)
-              MovementController.CanAnchor = m_anchorPieces.Count > 0 || BaseController!.IsLandVehicle;
+              MovementController.CanAnchor = m_anchorPieces.Count > 0 || Manager!.IsLandVehicle;
             break;
 
           case BoardingRampComponent ramp:
@@ -584,9 +584,9 @@
       var pieceCount = GetPieceCount();
 
       if (pieceCount > 0 || NetView == null) return;
-      if (BaseController == null) return;
+      if (Manager == null) return;
 
-      var wntShip = BaseController.GetComponent<WearNTear>();
+      var wntShip = Manager.GetComponent<WearNTear>();
       if ((bool)wntShip) wntShip.Destroy();
     }
 
@@ -649,9 +649,9 @@
             m_anchorPieces.Add(netView);
             if (MovementController != null)
             {
-              MovementController.CanAnchor = m_anchorPieces.Count > 0 || BaseController!.IsLandVehicle;
+              MovementController.CanAnchor = m_anchorPieces.Count > 0 || Manager!.IsLandVehicle;
               anchorMechanismController.UpdateAnchorState(MovementController
-                .vehicleAnchorState, VehicleAnchorMechanismController.GetCurrentStateTextStatic(MovementController.vehicleAnchorState, BaseController != null && BaseController.IsLandVehicle));
+                .vehicleAnchorState, VehicleAnchorMechanismController.GetCurrentStateTextStatic(MovementController.vehicleAnchorState, Manager != null && Manager.IsLandVehicle));
             }
 
             break;
@@ -664,7 +664,7 @@
           case SteeringWheelComponent wheel:
             OnAddSteeringWheelDestroyPrevious(netView, wheel);
             _steeringWheelPieces.Add(wheel);
-            wheel.InitializeControls(netView, BaseController);
+            wheel.InitializeControls(netView, Manager);
             break;
 
           case TeleportWorld portal:
@@ -682,7 +682,7 @@
         m_ramPieces.Add(netView);
         var vehicleRamAoe = netView.GetComponentInChildren<VehicleRamAoe>();
         if (vehicleRamAoe != null)
-          vehicleRamAoe.m_vehicle = BaseController;
+          vehicleRamAoe.m_vehicle = Manager;
       }
 
       // Remove non-kinematic rigidbodies if not a ram
@@ -745,11 +745,11 @@
 
     public void LoadInitState()
     {
-      if (!NetView || !BaseController ||
+      if (!NetView || !Manager ||
           !MovementController)
       {
         Logger.LogDebug(
-          $"Vehicle setting state to Pending as it is not ready, must have netview: {BaseController.NetView}, VehicleInstance {BaseController}, MovementController {MovementController}");
+          $"Vehicle setting state to Pending as it is not ready, must have netview: {Manager.NetView}, VehicleInstance {Manager}, MovementController {MovementController}");
         BaseVehicleInitState = InitializationState.Pending;
         return;
       }
@@ -791,7 +791,7 @@
     /// TODO this might need to be removed or more guards need to be added.
     /// <param name="vehicleShip"></param>
     /// <returns></returns>
-    private IEnumerator InitVehicle(VehicleBaseController vehicleShip)
+    private IEnumerator InitVehicle(VehicleManager vehicleShip)
     {
       while (!(NetView || !MovementController) &&
              InitializationTimer.ElapsedMilliseconds < 5000)
@@ -813,27 +813,27 @@
     /// </summary>
     public void InitFromShip()
     {
-      if (BaseController == null)
+      if (Manager == null)
       {
         LoggerProvider.LogError("InitFromShip should have a valid BaseController");
         return;
       }
 
-      var hasInitializedSuccessfully = InitializeBaseVehicleValuesWhenReady(BaseController);
+      var hasInitializedSuccessfully = InitializeBaseVehicleValuesWhenReady(Manager);
 
       // wait more time if the vehicle is somehow taking forever to init
       if (!hasInitializedSuccessfully)
-        StartCoroutine(InitVehicle(BaseController));
+        StartCoroutine(InitVehicle(Manager));
     }
 
     private IEnumerator ZdoReadyStart()
     {
-      if (BaseController != null)
+      if (Manager != null)
       {
-        InitializeBaseVehicleValuesWhenReady(BaseController);
+        InitializeBaseVehicleValuesWhenReady(Manager);
       }
 
-      if (BaseController == null)
+      if (Manager == null)
         Logger.LogError(
           "No ShipInstance detected");
 
@@ -1004,7 +1004,7 @@
      * Possible alternatives to this approach:
      * - Add a setter that triggers initializeBaseVehicleValues when the zdo is falsy -> truthy
      */
-    private bool InitializeBaseVehicleValuesWhenReady(VehicleBaseController vehicle)
+    private bool InitializeBaseVehicleValuesWhenReady(VehicleManager vehicle)
     {
       if (ZNetView.m_forceDisableInit) return false;
       // vehicleInstance is the persistent ID, the pieceContainer only has a netView for syncing ship position
@@ -1023,7 +1023,7 @@
 
       LoadInitState();
 
-      BaseController.HideGhostContainer();
+      Manager.HideGhostContainer();
       LinkFixedJoint();
       return true;
     }
@@ -1071,7 +1071,7 @@
       if (_serverUpdatePiecesCoroutine != null)
         StopCoroutine(_serverUpdatePiecesCoroutine);
 
-      if (BaseController == null)
+      if (Manager == null)
         Logger.LogError("Cleanup called but there is no valid VehicleInstance");
 
       if (!ZNetScene.instance || PersistentZdoId == null ||
@@ -1086,7 +1086,7 @@
         }
 
         piece.transform.SetParent(null);
-        AddInactivePiece(BaseController!.PersistentZdoId, piece, null, true);
+        AddInactivePiece(Manager!.PersistentZdoId, piece, null, true);
       }
 
       // todo might need to do some freezing of positions if these pieces are rigidbodies/physics related such as animals and npcs.
@@ -1107,7 +1107,7 @@
     {
       if (!isActiveAndEnabled) return;
       if (MovementController?.m_body == null || m_statsOverride ||
-          !BaseController || !m_localRigidbody)
+          !Manager || !m_localRigidbody)
         return;
 
       if (VehiclePhysicsMode.ForceSyncedRigidbody !=
@@ -1261,11 +1261,11 @@
       }
 
       var isInvalid = m_localRigidbody == null ||
-                      BaseController == null ||
+                      Manager == null ||
                       MovementController == null ||
                       MovementController.rigidbody == null ||
-                      BaseController.NetView == null ||
-                      BaseController == null;
+                      Manager.NetView == null ||
+                      Manager == null;
       _isInvalid = isInvalid;
 
       return _isInvalid;
@@ -1356,7 +1356,9 @@
         }
 
         var combinedBounds = GetCombinedColliderBoundsInPiece(nv.gameObject);
-        if (!convexHullBounds.Intersects(combinedBounds))
+
+        // todo handle edge cases like if the temp piece is very close the vehicle.
+        if (!convexHullBounds.Intersects(combinedBounds) && _rebuildBoundsRoutineInstance == null)
         {
           nv.transform.SetParent(null);
           m_tempPieces.FastRemoveAt(ref index);
@@ -1486,10 +1488,10 @@
       while (isActiveAndEnabled)
       {
         if (!NetView)
-          yield return new WaitUntil(() => (bool)BaseController.NetView);
+          yield return new WaitUntil(() => (bool)Manager.NetView);
 
         var output =
-          m_allPieces.TryGetValue(BaseController.PersistentZdoId, out var list);
+          m_allPieces.TryGetValue(Manager.PersistentZdoId, out var list);
         if (list == null || !output)
         {
           yield return new WaitForSeconds(Math.Max(
@@ -1784,7 +1786,7 @@
           $"ActivatePendingPiecesCoroutine(): pendingPieces count: {m_pendingPieces.Count}");
       if (!CanActivatePendingPieces) return;
 
-      if (BaseController == null) return;
+      if (Manager == null) return;
 
       // do not run if in a Pending or Created state or if no pending pieces
       if (BaseVehicleInitState != InitializationState.Complete &&
@@ -1877,8 +1879,8 @@
           dic = null;
         }
 
-        if (BaseController != null)
-          m_dynamicObjects.Remove(BaseController.PersistentZdoId);
+        if (Manager != null)
+          m_dynamicObjects.Remove(Manager.PersistentZdoId);
 
         yield return null;
       }
@@ -1917,7 +1919,7 @@
         if (ZNetScene.instance.InLoadingScreen())
           yield return new WaitForFixedUpdate();
 
-        if (BaseController?.NetView == null)
+        if (Manager?.NetView == null)
         {
           // NetView somehow unmounted;
           OnActivatePendingPiecesComplete(PendingPieceStateEnum.ForceReset);
@@ -2069,7 +2071,7 @@
         return;
       }
 
-      var isLandVehicle = MovementController != null && MovementController.BaseController is
+      var isLandVehicle = MovementController != null && MovementController.Manager is
       {
         IsLandVehicle: true
       };
@@ -2289,19 +2291,19 @@
     /// </summary>
     public void ActivateTempPieces()
     {
-      if (BaseController == null) return;
-      if (!m_pendingTempPieces.TryGetValue(BaseController.PersistentZdoId, out var pendingTempPiecesList))
+      if (Manager == null) return;
+      if (!m_pendingTempPieces.TryGetValue(Manager.PersistentZdoId, out var pendingTempPiecesList))
       {
-        LoggerProvider.LogDebug($"No temp pieces found for vehicle {BaseController.PersistentZdoId}");
+        LoggerProvider.LogDebug($"No temp pieces found for vehicle {Manager.PersistentZdoId}");
         return;
       }
 
       foreach (var activationPieceData in pendingTempPiecesList)
       {
         if (activationPieceData.netView == null) continue;
-        if (activationPieceData.vehicleId != BaseController.PersistentZdoId)
+        if (activationPieceData.vehicleId != Manager.PersistentZdoId)
         {
-          LoggerProvider.LogError($"VehicleId of temp piece {activationPieceData.gameObject.name} vehicleId: {activationPieceData.vehicleId} is not equal to currently activating vehicle {BaseController.PersistentZdoId}");
+          LoggerProvider.LogError($"VehicleId of temp piece {activationPieceData.gameObject.name} vehicleId: {activationPieceData.vehicleId} is not equal to currently activating vehicle {Manager.PersistentZdoId}");
           continue;
         }
         if (hasDebug)
@@ -2363,6 +2365,8 @@
         TrySetPieceToParent(netView, zdo);
       }
 
+      OnPieceAdded(netView.gameObject);
+
       // still need this for flickering but it may cause problems when the object leaves the area.
       // PieceActivatorHelpers.FixPieceMeshes(netView);
 
@@ -2400,9 +2404,9 @@
       if (netView == null || zdo == null) return;
       if (RamPrefabs.IsRam(netView.name))
       {
-        if (BaseController != null && BaseController != null)
+        if (Manager != null && Manager != null)
         {
-          netView.transform.SetParent(BaseController.transform);
+          netView.transform.SetParent(Manager.transform);
         }
         return;
       }
@@ -2419,8 +2423,8 @@
       try
       {
 
-        if (!netView || netView == null) return false;
-        var vehicleController = netView.GetComponent<VehicleBaseController>();
+        if (netView == null) return false;
+        var vehicleController = netView.GetComponent<VehicleManager>();
         if (vehicleController == null || vehicleController.PiecesController == null)
         {
           LoggerProvider.LogDebug("Bailing vehicle deletion attempt: Valheim Attempted to delete a vehicle that matched the ValheimVehicle prefab instance but there was no VehicleBaseController or VehiclePiecesController found. This could mean there is a mod breaking the vehicle registration of ValheimRAFT.");
@@ -2502,10 +2506,10 @@
       if (!prefab.name.StartsWith(PrefabNames.CustomWaterFloatation)) return;
       prefab.transform.SetParent(_piecesContainerTransform);
 
-      var isVehicleUsingCustomFloatation = BaseController.VehicleConfigSync.GetWaterFloatationHeightMode() == VehicleFloatationMode.Custom;
+      var isVehicleUsingCustomFloatation = Manager.VehicleConfigSync.GetWaterFloatationHeightMode() == VehicleFloatationMode.Custom;
       var nextState = !isVehicleUsingCustomFloatation;
 
-      BaseController.VehicleConfigSync.SendSyncFloatationMode(nextState, prefab.transform.localPosition.y);
+      Manager.VehicleConfigSync.SendSyncFloatationMode(nextState, prefab.transform.localPosition.y);
 
       var stateText = nextState ? ModTranslations.EnabledText : ModTranslations.DisabledText;
 
@@ -2573,7 +2577,7 @@
       {
         if (PersistentZdoId != null)
           netView.m_zdo.Set(VehicleZdoVars.MBParentId,
-            BaseController.PersistentZdoId);
+            Manager.PersistentZdoId);
         else
           // We should not reach this, but this would be a critical issue and should be tracked.
           Logger.LogError(
@@ -2679,9 +2683,9 @@
 
     private void UpdatePieceCount()
     {
-      if ((bool)BaseController.NetView &&
+      if ((bool)Manager.NetView &&
           NetView?.m_zdo != null)
-        BaseController.NetView.m_zdo.Set(VehicleZdoVars.MBPieceCount,
+        Manager.NetView.m_zdo.Set(VehicleZdoVars.MBPieceCount,
           m_pieces.Count);
     }
 
@@ -2689,13 +2693,13 @@
 // for increasing ship wake size.
     private void SetShipWakeBounds()
     {
-      if (BaseController?.ShipEffectsObj == null) return;
+      if (Manager?.ShipEffectsObj == null) return;
 
       var firstRudder = m_rudderPieces.First();
       if (firstRudder == null)
       {
         var bounds = FloatCollider.bounds;
-        BaseController.ShipEffectsObj.transform.localPosition =
+        Manager.ShipEffectsObj.transform.localPosition =
           new Vector3(FloatCollider.transform.localPosition.x,
             bounds.center.y,
             bounds.min.z);
@@ -2703,7 +2707,7 @@
       }
 
       var localPosition = firstRudder.transform.localPosition;
-      BaseController.ShipEffectsObj.transform.localPosition =
+      Manager.ShipEffectsObj.transform.localPosition =
         new Vector3(
           localPosition.x,
           FloatCollider.bounds.center.y,
@@ -2716,8 +2720,8 @@
 
       var totalHeight = 0f;
 
-      BaseController.VehicleConfigSync.SyncVehicleConfig();
-      var hullFloatationMode = BaseController.VehicleConfigSync.GetWaterFloatationHeightMode();
+      Manager.VehicleConfigSync.SyncVehicleConfig();
+      var hullFloatationMode = Manager.VehicleConfigSync.GetWaterFloatationHeightMode();
 
       var isAverageOfPieces = hullFloatationMode ==
                               VehicleFloatationMode.AverageOfHullPieces;
@@ -2752,7 +2756,7 @@
         case VehicleFloatationMode.Fixed:
           return HullFloatationColliderAlignmentOffset;
         case VehicleFloatationMode.Custom:
-          return BaseController.VehicleConfigSync.CustomZdoConfig.CustomFloatationHeight;
+          return Manager.VehicleConfigSync.CustomZdoConfig.CustomFloatationHeight;
         case VehicleFloatationMode.Center:
         default:
           return BaseControllerHullBounds.center.y;
@@ -2770,7 +2774,7 @@
       var firstWheel = _steeringWheelPieces.First();
       if (firstWheel == null || !firstWheel.enabled) return;
 
-      BaseController.MovementController.UpdateShipDirection(
+      Manager.MovementController.UpdateShipDirection(
         firstWheel.transform
           .localRotation);
     }
@@ -2880,7 +2884,7 @@
      */
     public void IgnoreAllVehicleColliders()
     {
-      if (BaseController == null || MovementController == null) return;
+      if (Manager == null || MovementController == null) return;
 
       // ✅ Clear before refilling to avoid stale data
 
@@ -2897,7 +2901,7 @@
       //   GetComponentsInChildren(true, tempPieceColliders);
       // }
 
-      var vehicleColliders = BaseController.GetComponentsInChildren<Collider>(true);
+      var vehicleColliders = Manager.GetComponentsInChildren<Collider>(true);
       if (vehicleColliders == null) return;
 
       foreach (var prefabPieceDataItem in m_prefabPieceDataItems.Values)
@@ -2943,6 +2947,8 @@
       // }
     }
 
+    public List<Collider> allVehicleColliders = new();
+
     // For when pieces are added
     // extremely unoptimized and allocates. But should work without complex logic managing removals.
     public void IgnoreAllVehicleCollidersForGameObjectChildren(GameObject gameObject)
@@ -2952,8 +2958,9 @@
       var character = gameObject.GetComponentInParent<Character>();
       var isCharacter = character != null;
       if (!colliders.Any()) return;
-      if (BaseController == null || BaseController == null) return;
-      var allVehicleColliders = BaseController.GetComponentsInChildren<Collider>(true);
+      if (Manager == null) return;
+
+      Manager.GetComponentsInChildren<Collider>(true, allVehicleColliders);
       foreach (var collider in colliders)
       {
         foreach (var allVehicleCollider in allVehicleColliders)
@@ -2966,6 +2973,8 @@
           Physics.IgnoreCollision(collider, allVehicleCollider, true);
         }
       }
+
+      allVehicleColliders.Clear();
     }
 
     // public void IgnoreColliderForWheelColliders(Collider collider)
@@ -3014,14 +3023,14 @@
     public void TryAddRamToVehicle()
     {
       if (MovementController == null) return;
-      BaseController.MovementController.TryAddRamAoeToVehicle();
+      Manager.MovementController.TryAddRamAoeToVehicle();
     }
 
     public void ForceRebuildBounds()
     {
-      if (_rebuildBoundsTimer != null)
+      if (_rebuildBoundsRoutineInstance != null)
       {
-        StopCoroutine(_rebuildBoundsTimer);
+        StopCoroutine(_rebuildBoundsRoutineInstance);
       }
 
       RebuildBounds(true);
@@ -3384,17 +3393,31 @@
       return new Bounds(tempBounds.center, tempBounds.size);
     }
 
-    internal override int GetPieceCount()
+  #region IPieceController
+
+    public override int GetPieceCount()
     {
-      if (BaseController == null || BaseController.NetView == null ||
-          BaseController.NetView.m_zdo == null)
+      if (Manager == null || Manager.NetView == null ||
+          Manager.NetView.m_zdo == null)
         return base.GetPieceCount();
 
       var count =
-        BaseController.NetView.m_zdo.GetInt(VehicleZdoVars.MBPieceCount,
+        Manager.NetView.m_zdo.GetInt(VehicleZdoVars.MBPieceCount,
           m_pieces.Count);
       return count;
     }
+
+    public bool CanRaycastHitPiece()
+    {
+      return true;
+    }
+
+    public bool CanDestroy()
+    {
+      return GetPieceCount() == 0;
+    }
+
+  #endregion
 
   #region IVehicleSharedProperties
 
@@ -3410,7 +3433,7 @@
     public VehicleMovementController? MovementController { get; set; }
     public VehicleConfigSyncComponent? VehicleConfigSync { get; set; }
     public VehicleOnboardController? OnboardController { get; set; }
-    public VehicleBaseController? BaseController { get; set; }
+    public VehicleManager? Manager { get; set; }
 
     public ZNetView? NetView
     {

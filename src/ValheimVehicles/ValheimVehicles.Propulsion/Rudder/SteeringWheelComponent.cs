@@ -113,7 +113,7 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable,
 
     var anchorMessage = GetAnchorMessage(isAnchored, anchorKeyString);
 
-    return 
+    return
       $"[<color=yellow><b>{ModTranslations.ValheimInput_KeyUse}</b></color>]<color=white><b>{ModTranslations.Anchor_WheelUse_UseText}</b></color>\n{anchorMessage}\n{shipStatsText}";
   }
 
@@ -129,7 +129,7 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable,
   /// <returns>String</returns>
   private string GetOwnerHoverText()
   {
-    var controller = ControllersInstance.BaseController;
+    var controller = ControllersInstance.Manager;
     if (controller == null || controller.NetView == null || controller.NetView.GetZDO() == null) return "";
 
     var ownerId = controller.NetView.GetZDO().GetOwner();
@@ -166,15 +166,15 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable,
     }
 
     var isAnchored = VehicleMovementController.GetIsAnchoredSafe(ControllersInstance);
-      
-    
+
+
     var anchorKeyString = GetAnchorHotkeyString();
     var hoverText = GetHoverTextFromShip(piecesController.cachedTotalSailArea,
       piecesController.TotalMass,
       piecesController.ShipMass, piecesController.GetSailingForce(),
       isAnchored,
       anchorKeyString);
-    
+
     if (onboardController.m_localPlayers.Any())
       hoverText += GetOwnerHoverText();
 
@@ -209,10 +209,10 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable,
   public bool Interact(Humanoid user, bool hold, bool alt)
   {
     if (!isActiveAndEnabled) return false;
-    
+
     var canUse = InUseDistance(user);
 
-    var HasInvalidVehicle = ControllersInstance.BaseController == null;
+    var HasInvalidVehicle = ControllersInstance.Manager == null;
     if (hold || HasInvalidVehicle || !canUse) return false;
 
     SetLastUsedWheel();
@@ -229,7 +229,7 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable,
     if (playerOnShipViaShipInstance?.Length == 0 ||
         playerOnShipViaShipInstance == null)
       playerOnShipViaShipInstance =
-        ControllersInstance?.BaseController?.OnboardController?.m_localPlayers.ToArray() ??
+        ControllersInstance?.Manager?.OnboardController?.m_localPlayers.ToArray() ??
         null;
 
     /*
@@ -242,7 +242,7 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable,
         Logger.LogDebug(
           $"Interact PlayerId {playerInstance.GetPlayerID()}, currentPlayerId: {player.GetPlayerID()}");
         if (playerInstance.GetPlayerID() != player.GetPlayerID()) continue;
-        ControllersInstance?.BaseController?.MovementController?.SendRequestControl(
+        ControllersInstance?.Manager?.MovementController?.SendRequestControl(
           playerInstance.GetPlayerID());
         return true;
       }
@@ -259,9 +259,9 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable,
       return false;
     }
 
-    if (!ControllersInstance?.BaseController?.MovementController) return false;
+    if (!ControllersInstance?.Manager?.MovementController) return false;
 
-    ControllersInstance.BaseController.MovementController?.SendRequestControl(
+    ControllersInstance.Manager.MovementController?.SendRequestControl(
       player.GetPlayerID());
     return true;
   }
@@ -273,23 +273,23 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable,
 
   public void OnUseStop(Player player)
   {
-    ControllersInstance.BaseController?.MovementController?.SendReleaseControl(player);
+    ControllersInstance.Manager?.MovementController?.SendReleaseControl(player);
   }
 
   public void ApplyControlls(Vector3 moveDir, Vector3 lookDir, bool run,
     bool autoRun, bool block)
   {
-    if (ControllersInstance.BaseController == null || ControllersInstance.BaseController.MovementController == null)
+    if (ControllersInstance.Manager == null || ControllersInstance.Manager.MovementController == null)
     {
       return;
     }
 
-    ControllersInstance?.BaseController.MovementController.ApplyControls(moveDir);
+    ControllersInstance?.Manager.MovementController.ApplyControls(moveDir);
   }
 
   public Component? GetControlledComponent()
   {
-    return ControllersInstance.BaseController;
+    return ControllersInstance.Manager;
   }
 
   public Vector3 GetPosition()
@@ -321,7 +321,7 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable,
 
     if (!(bool)_controls)
       _controls =
-        vehicleShip.BaseController.MovementController;
+        vehicleShip.Manager.MovementController;
 
     if (_controls != null)
     {

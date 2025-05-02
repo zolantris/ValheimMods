@@ -207,7 +207,7 @@
 
       var parentObj = ZdoWatchController.Instance.GetGameObject(id);
 
-      var vehicleBaseController = parentObj == null ? null : parentObj.GetComponent<VehicleBaseController>();
+      var vehicleBaseController = parentObj == null ? null : parentObj.GetComponent<VehicleManager>();
       if (vehicleBaseController != null && vehicleBaseController.PiecesController != null)
       {
         vehicleBaseController.PiecesController.ActivatePiece(netView);

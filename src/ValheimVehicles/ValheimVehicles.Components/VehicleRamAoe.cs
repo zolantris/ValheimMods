@@ -27,7 +27,7 @@ public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
   [FormerlySerializedAs("minimumVelocityToTriggerHit")]
   public float MinimumVelocityToTriggerHit = 0.5f;
 
-  public VehicleBaseController? m_vehicle;
+  public VehicleManager? m_vehicle;
   public RamPrefabs.RamType m_RamType;
 
   [FormerlySerializedAs("m_isVehicleRam")]
@@ -61,7 +61,7 @@ public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
 
   private float _disableTime = 0f;
   private const float _disableTimeMax = 0.5f;
-  
+
   public bool isReadyForCollisions { get; set; }
   public bool isRebuildingCollisions
   {
@@ -165,7 +165,7 @@ public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
 
     m_radius = Mathf.Clamp(IsVehicleRamType ? RamConfig.VehicleRamHitRadius.Value : RamConfig.HitRadius.Value, 0.1f, 50f);
     m_radius *= m_RamType == RamPrefabs.RamType.Stake ? 0.5f : 1f;
-   
+
     m_useTriggers = true;
     m_triggerEnterOnly = !IsVehicleRamType && RamConfig.AllowContinuousDamage.Value;
     m_useCollider = null;
@@ -234,7 +234,7 @@ public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
     // must initialize after Awake so we can set these values after AddComponent is called.
     InitializeFromConfig();
     InitAoe();
-    
+
     Invoke(nameof(UpdateReadyForCollisions), 1f);
   }
 
@@ -266,7 +266,7 @@ public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
     // Must be within the BaseVehiclePieces after initialization otherwise this AOE could attempt to damage items within the raft ball
     var root = transform.root;
     var rootName = root.name;
-    
+
     var isChildOfBaseVehicle =
       PrefabNames.IsVehicle(rootName) ||
       rootName.StartsWith(PrefabNames.VehiclePiecesContainer) ||
@@ -341,7 +341,7 @@ public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
     float slashDamage = 0;
     float chopDamage = 0;
     float pierceDamage = 0;
-    
+
     if (m_RamType == RamPrefabs.RamType.Stake)
       pierceDamage = baseDamage.m_pierce * multiplier;
 
@@ -392,7 +392,7 @@ public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
     var damageSum = slashDamage + bluntDamage + pierceDamage + chopDamage + pickaxeDamage;
     if (damageSum < 1)
     {
-      m_damage = new HitData.DamageTypes()
+      m_damage = new HitData.DamageTypes
       {
         m_blunt = 0,
         m_pierce = 0,
@@ -402,8 +402,8 @@ public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
       };
       return false;
     }
-    
-    m_damage = new HitData.DamageTypes()
+
+    m_damage = new HitData.DamageTypes
     {
       m_blunt = bluntDamage,
       m_pierce = pierceDamage,
@@ -412,7 +412,7 @@ public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
       m_pickaxe = pickaxeDamage
     };
 
-    selfDamage = new HitData.DamageTypes()
+    selfDamage = new HitData.DamageTypes
     {
       m_blunt = bluntDamage * PercentageDamageToSelf,
       m_pierce = pierceDamage * PercentageDamageToSelf,
@@ -430,7 +430,7 @@ public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
     {
       m_damageSelf =
         nextTotalDamage *
-      PercentageDamageToSelf;
+        PercentageDamageToSelf;
     }
 
     return true;
@@ -444,7 +444,7 @@ public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
   {
     if (cachedSelfDamageHitData != null) return cachedSelfDamageHitData;
     var collisionDir = collider.bounds.center.DirTo(collisionPoint);
-    var hitData = new HitData()
+    var hitData = new HitData
     {
       m_point = collisionPoint,
       m_hitCollider = collider,
@@ -520,7 +520,7 @@ public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
   {
     if (!IsReady()) return false;
     var colliderObj = collider.gameObject;
-    
+
     var character = collider.GetComponentInParent<Character>();
     if (WaterZoneUtils.IsOnboard(character))
     {
@@ -603,7 +603,7 @@ public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
       IgnoreCollider(collider);
       return true;
     }
-    
+
     var character = collider.GetComponentInParent<Character>();
     if (character != null)
     {
@@ -753,7 +753,7 @@ public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
   public void SetBaseDamageFromConfig()
   {
     Logger.LogDebug("Setting Damage config for Ram");
-    SetBaseDamage(new HitData.DamageTypes()
+    SetBaseDamage(new HitData.DamageTypes
     {
       m_slash = RamBaseSlashDamage,
       m_pierce = RamBasePierceDamage,

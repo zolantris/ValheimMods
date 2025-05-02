@@ -5,8 +5,8 @@
 
 #endregion
 
-namespace ValheimVehicles.SharedScripts
-{
+  namespace ValheimVehicles.SharedScripts;
+
   public class SwivelComponent : MonoBehaviour
   {
     public enum DoorHingeMode
@@ -53,12 +53,12 @@ namespace ValheimVehicles.SharedScripts
 
     [Description("_connectorContainer is meant to be shown until an object is connected to the swivel component. It will also display a forward direction indicator.")]
     public Transform connectorContainer;
+    private BoxCollider m_collider;
 
     private float _currentYAngle;
     private float _currentZAngle;
 
     [Header("Other Settings")]
-
     public const string AnimatedContainerName = "animated";
 
     private Transform _snappoint;
@@ -74,12 +74,12 @@ namespace ValheimVehicles.SharedScripts
     public float MaxInclineZ => maxInclineZ;
 
     public float MaxYAngle => maxYAngle;
-    
+
     public Quaternion m_startPieceRotation = Quaternion.identity;
 
     // protects against running an update before objects have been parented properly.
     public bool CanUpdate;
-    
+
     public virtual void Awake()
     {
       m_startPieceRotation = transform.localRotation;
@@ -89,7 +89,8 @@ namespace ValheimVehicles.SharedScripts
       // connectorContainer = animatedTransform.Find("connector_container");
       // temp top level. To test patch issues.
       connectorContainer = transform.Find("connector_container");
-      
+      m_collider = GetComponent<BoxCollider>();
+
       if (!pieceContainer || !connectorContainer)
       {
         Debug.LogError($"{nameof(SwivelComponent)} missing pieceContainer or connectorContainer!");
@@ -102,6 +103,18 @@ namespace ValheimVehicles.SharedScripts
       UpdateTargetRotation();
       ApplyRotation();
       SyncSnappoint();
+    }
+
+    public void TogglePlacementContainer(bool isActive)
+    {
+      if (connectorContainer != null)
+      {
+        connectorContainer.gameObject.SetActive(isActive);
+      }
+      if (m_collider != null)
+      {
+        m_collider.enabled = isActive;
+      }
     }
 
     /// <summary>
@@ -160,7 +173,7 @@ namespace ValheimVehicles.SharedScripts
     {
       if (pieceContainer == null || mode == SwivelMode.None)
         return;
-      
+
       animatedTransform.localRotation = Quaternion.Slerp(
         NormalizeQuaternion(animatedTransform.localRotation),
         _targetRotation,
@@ -296,4 +309,3 @@ namespace ValheimVehicles.SharedScripts
       return Quaternion.Euler(euler);
     }
   }
-}

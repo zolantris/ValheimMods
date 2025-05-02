@@ -128,7 +128,7 @@
       SelectedVehicle = vehicleName;
     }
 
-    public static VehicleTypeEnum GetVehicleType(VehicleBaseController vehicle)
+    public static VehicleTypeEnum GetVehicleType(VehicleManager vehicle)
     {
       return vehicle.IsLandVehicle ? VehicleTypeEnum.Land : VehicleTypeEnum.All;
     }
@@ -255,21 +255,21 @@
       GameObject vehiclePrefabInstance;
       try
       {
-        VehicleBaseController.CanInitHullPiece = false;
+        VehicleManager.CanInitHullPiece = false;
         vehiclePrefabInstance = Object.Instantiate(vehiclePrefab, position, Quaternion.identity);
         if (!vehiclePrefabInstance) return;
       }
       catch (Exception e)
       {
-        VehicleBaseController.CanInitHullPiece = true;
+        VehicleManager.CanInitHullPiece = true;
         return;
       }
-      VehicleBaseController.CanInitHullPiece = true;
+      VehicleManager.CanInitHullPiece = true;
 
       if (vehiclePrefabInstance == null) return;
 
 
-      var vehicleShip = vehiclePrefabInstance.GetComponent<VehicleBaseController>();
+      var vehicleShip = vehiclePrefabInstance.GetComponent<VehicleManager>();
       if (vehicleShip == null) return;
       if (vehicleShip.PiecesController == null)
       {

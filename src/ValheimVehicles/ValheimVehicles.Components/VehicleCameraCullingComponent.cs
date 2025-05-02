@@ -43,7 +43,7 @@ public class VehicleCameraCullingComponent : MonoBehaviour
     if (ZNetScene.instance == null || Camera.main == null) return;
     if (!ZNetScene.instance.IsAreaReady(Camera.main.transform.position)) return;
 
-    foreach (var vehicle in VehicleBaseController.VehicleInstances.Values)
+    foreach (var vehicle in VehicleManager.VehicleInstances.Values)
     {
       var piecesController = vehicle.PiecesController;
       if (piecesController == null) continue;

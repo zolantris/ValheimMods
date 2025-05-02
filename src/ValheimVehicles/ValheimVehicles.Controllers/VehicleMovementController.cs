@@ -164,7 +164,7 @@
 
     // The rudder force multiplier applied to the ship speed
     private float _rudderForce = 1f;
-    
+
     private AnchorState _vehicleAnchorState = AnchorState.Idle;
 
     private GameObject _vehiclePiecesContainerInstance;
@@ -218,7 +218,7 @@
     }
 
     public BoxCollider? OnboardCollider =>
-      BaseController != null ? BaseController.OnboardCollider : null;
+      Manager != null ? Manager.OnboardCollider : null;
 
     public Rigidbody rigidbody => m_body;
     public Transform AttachPoint { get; set; }
@@ -226,8 +226,8 @@
 
     public GameObject RudderObject { get; set; }
 
-    public bool isCreative => BaseController != null && BaseController.isCreative;
-    
+    public bool isCreative => Manager != null && Manager.isCreative;
+
     private Ship.Speed VehicleSpeed => GetSpeedSetting();
 
     public Transform ShipDirection { get; set; } = null!;
@@ -238,9 +238,9 @@
 
     public static float staminaHaulCost = 5;
     public static bool ShouldHaulingLineSnapOnZeroStamina = false;
-    
+
     public BoxCollider? FloatCollider =>
-      BaseController != null ? BaseController.FloatCollider : null;
+      Manager != null ? Manager.FloatCollider : null;
 
     public Transform ControlGuiPosition
     {
@@ -283,7 +283,7 @@
     internal override void Awake()
     {
       AwakeSetupShipComponents();
-      DamageColliders = VehicleBaseController.GetVehicleMovementDamageColliders(transform);
+      DamageColliders = VehicleManager.GetVehicleMovementDamageColliders(transform);
       m_nview = GetComponent<ZNetView>();
 
       var excludedLayers = LayerMask.GetMask("piece", "piece_nonsolid");
@@ -330,8 +330,8 @@
 
     private void Update()
     {
-      if (BaseController == null) return;
-      if (BaseController.IsLandVehicleFromPrefab)
+      if (Manager == null) return;
+      if (Manager.IsLandVehicleFromPrefab)
       {
         var hasControllingPlayer = HaveControllingPlayer();
 
@@ -466,7 +466,7 @@
       }
 
       // if the vehicle has not initialized pieces physics should never be run.
-      if (!BaseController!
+      if (!Manager!
             .PiecesController!.isInitialPieceActivationComplete)
       {
         m_body.isKinematic = true;
@@ -474,7 +474,7 @@
       }
 
       // if the vehicle has not generated a convex hull collider. We do not want to use physics.
-      if (BaseController!.PiecesController!.convexHullComponent.convexHullMeshColliders.Count < 1)
+      if (Manager!.PiecesController!.convexHullComponent.convexHullMeshColliders.Count < 1)
       {
         m_body.isKinematic = true;
         return;
@@ -820,7 +820,7 @@
         }
       }
     }
-    
+
     public static bool GetIsAnchoredSafe(IVehicleControllers? controller)
     {
       if (controller == null) return false;
@@ -948,11 +948,11 @@
     /// </summary>
     public void UpdateVehicleSpeedThrottle()
     {
-      if (!BaseController) return;
+      if (!Manager) return;
       maxYLinearVelocity = PhysicsConfig.MaxLinearYVelocity.Value;
       m_body.maxLinearVelocity = PhysicsConfig.MaxLinearVelocity.Value;
 
-      if (BaseController!.IsLandVehicle)
+      if (Manager!.IsLandVehicle)
       {
         // heavily throttle turning to prevent infinite spin issues especially uphill.
         m_body.maxAngularVelocity = Mathf.Min(PhysicsConfig.MaxAngularVelocity.Value, 0.3f);
@@ -989,7 +989,7 @@
     public void InitColliders()
     {
       if (PiecesController == null) return;
-      var vehicleMovementObj = VehicleBaseController.GetVehicleMovementTransform(transform);
+      var vehicleMovementObj = VehicleManager.GetVehicleMovementTransform(transform);
       ShipDirection =
         vehicleMovementObj.transform.Find(PrefabNames
           .VehicleShipMovementOrientation);
@@ -1061,7 +1061,7 @@
 
     public void AwakeSetupShipComponents()
     {
-      BaseController = GetComponent<VehicleBaseController>();
+      Manager = GetComponent<VehicleManager>();
       ShipDirection = transform.Find(
         $"vehicle_movement/{PrefabNames.VehicleShipMovementOrientation}");
 
@@ -1128,7 +1128,7 @@
     /// <returns></returns>
     public IEnumerator FixShipRotation()
     {
-      if (BaseController == null) yield break;
+      if (Manager == null) yield break;
       var eulerAngles = transform.rotation.eulerAngles;
       var eulerX = eulerAngles.x;
       var eulerY = eulerAngles.y;
@@ -1138,7 +1138,7 @@
       var transformedZ = eulerZ;
       var shouldUpdate = false;
 
-      if (BaseController.IsLandVehicle)
+      if (Manager.IsLandVehicle)
       {
         if (Mathf.Abs(eulerX) is > 90 and < 270)
         {
@@ -1190,7 +1190,7 @@
         Invoke(nameof(UpdateRemovePieceCollisionExclusions), 5f);
         return;
       }
-      
+
       var excludedLayers = LayerMask.GetMask("piece_nonsolid");
 
       if (!m_body) GetRigidbody();
@@ -1837,7 +1837,7 @@
       // sideways force
 
       if (!CanRunSidewaysWaterForceUpdate) return;
-      
+
       // todo rename variables for this section to something meaningful
       // todo abstract this to a method
       var forward = ShipDirection.forward;
@@ -2336,7 +2336,7 @@
       }
 
       _isInvalid = !isActiveAndEnabled || m_body == null || m_floatcollider == null ||
-                   FloatCollider == null || !BaseController || !PiecesController || !OnboardController || !m_nview ||
+                   FloatCollider == null || !Manager || !PiecesController || !OnboardController || !m_nview ||
                    m_nview.m_zdo == null ||
                    !ShipDirection;
       return _isInvalid;
@@ -2416,8 +2416,8 @@
       }
     }
 
-    private static float HaulingBreakPushForce = 30f; 
-    
+    private static float HaulingBreakPushForce = 30f;
+
     public void UpdateVehicleFromHaulPosition()
     {
       if (!isPlayerHaulingVehicle) return;
@@ -2474,7 +2474,7 @@
         if (nextDamage > 1)
         {
           // makes the player lose health as they continue to haul.
-          var hit = new HitData()
+          var hit = new HitData
           {
             m_hitType = HitData.HitType.PlayerHit,
             m_backstabBonus = 1,
@@ -2562,7 +2562,7 @@
     public void VehicleMovementUpdatesOwnerOnly()
     {
       if (IsInvalid()) return;
-      
+
       var hasOwner = m_nview.HasOwner();
       var owner = m_nview.IsOwner();
       if (!VehicleDebugConfig.SyncShipPhysicsOnAllClients.Value && !owner && hasOwner ||
@@ -2577,7 +2577,7 @@
       }
 
       // for land-vehicle prefab only.
-      if (BaseController!.IsLandVehicleFromPrefab)
+      if (Manager!.IsLandVehicleFromPrefab)
       {
         UpdateVehicleLandSpeed();
         return;
@@ -2595,7 +2595,7 @@
         UpdateShipFloatation(ShipFloatationObj);
       else if (isFlying)
         UpdateFlyingVehicle();
-      else if (PrefabConfig.EnableLandVehicles.Value && BaseController.IsLandVehicle)
+      else if (PrefabConfig.EnableLandVehicles.Value && Manager.IsLandVehicle)
         UpdateVehicleLandSpeed();
 
       // both flying and floatation use this
@@ -2927,14 +2927,14 @@
     /// </summary>
     public void TryAddRamAoeToVehicle()
     {
-      if (BaseController == null) return;
+      if (Manager == null) return;
 
-      var isLandVehicleFromPrefab = BaseController.IsLandVehicleFromPrefab;
+      var isLandVehicleFromPrefab = Manager.IsLandVehicleFromPrefab;
       if (isLandVehicleFromPrefab && !RamConfig.LandVehiclesAreRams.Value || !isLandVehicleFromPrefab && !RamConfig.WaterVehiclesAreRams.Value)
       {
         return;
       }
-      
+
       vehicleRam = DamageColliders.gameObject.GetComponent<VehicleRamAoe>();
 
       if (vehicleRam == null)
@@ -2945,7 +2945,7 @@
       if (vehicleRam.m_nview == null) vehicleRam.m_nview = m_nview;
 
       vehicleRam.m_RamType = isLandVehicleFromPrefab ? RamPrefabs.RamType.LandVehicle : RamPrefabs.RamType.WaterVehicle;
-      vehicleRam.m_vehicle = BaseController;
+      vehicleRam.m_vehicle = Manager;
     }
 
     public Vector3 GetRudderPosition()
@@ -3233,7 +3233,7 @@
       m_nview.Unregister(nameof(RPC_RequestControl));
       m_nview.Unregister(nameof(RPC_RequestResponse));
       m_nview.Unregister(nameof(RPC_ReleaseControl));
-      
+
       _hasRegister = false;
     }
 
@@ -3249,7 +3249,7 @@
       }
       rpcRegisterDelayCount = 0;
       if (_hasRegister) return;
-      
+
       // ship target height
       m_nview.Register<float>(nameof(RPC_TargetHeight), RPC_TargetHeight);
 
@@ -3272,7 +3272,7 @@
         RPC_RequestResponse);
       m_nview.Register<long>(nameof(RPC_ReleaseControl),
         RPC_ReleaseControl);
-      
+
       _hasRegister = true;
     }
 
@@ -3314,7 +3314,7 @@
     public void InitializeWheelWithShip(
       SteeringWheelComponent steeringWheel)
     {
-      BaseController.m_controlGuiPos = transform;
+      Manager.m_controlGuiPos = transform;
 
       var rudderAttachPoint = steeringWheel.transform.Find("attachpoint");
       if (rudderAttachPoint != null) AttachPoint = rudderAttachPoint.transform;
@@ -3333,7 +3333,7 @@
     /// </summary>
     public IEnumerator DebouncedForceTakeoverControls(long playerId)
     {
-      if (BaseController.NetView == null) yield break;
+      if (Manager.NetView == null) yield break;
       yield return new WaitForSeconds(2f);
       ForceTakeoverControls(playerId);
     }
@@ -3507,7 +3507,7 @@
     /// <param name="forceUpdate"></param>
     public void UpdateTargetHeight(float rawValue, bool forceUpdate = false)
     {
-      if (BaseController == null || m_nview == null) return;
+      if (Manager == null || m_nview == null) return;
 
       _previousTargetHeight = TargetHeight;
       var maxSurfaceLevelOffset = GetSurfaceOffset();
@@ -3529,7 +3529,7 @@
 
       m_nview.GetZDO().Set(VehicleZdoVars.VehicleTargetHeight, TargetHeight);
 
-      BaseController.UpdateShipEffects();
+      Manager.UpdateShipEffects();
 
       if (lastSyncTargetHeight > 2f)
       {
@@ -3774,9 +3774,9 @@
  */
     public void ToggleAnchor()
     {
-      if (BaseController == null) return;
+      if (Manager == null) return;
       // Flying does not animate anchor.
-      if (IsFlying() || BaseController.IsLandVehicle)
+      if (IsFlying() || Manager.IsLandVehicle)
       {
         SendSetAnchor(!isAnchored ? AnchorState.Anchored : AnchorState.Recovered);
         if (WheelController != null)
@@ -3786,7 +3786,7 @@
         return;
       }
 
-      AnchorState newState = isAnchored
+      var newState = isAnchored
         ? AnchorState.Reeling
         : AnchorState.Lowering;
 
@@ -3978,7 +3978,7 @@
     public void OnControlsHandOff(Player? targetPlayer, Player? previousPlayer)
 
     {
-      if (targetPlayer == null || !BaseController ||
+      if (targetPlayer == null || !Manager ||
           PiecesController == null ||
           m_nview == null || m_nview.m_zdo == null)
         return;
@@ -4014,9 +4014,9 @@
         false, false,
         true, m_attachAnimation, detachOffset);
 
-      if (BaseController != null &&
+      if (Manager != null &&
           lastUsedWheelComponent.wheelTransform != null)
-        BaseController.m_controlGuiPos =
+        Manager.m_controlGuiPos =
           lastUsedWheelComponent.wheelTransform;
     }
 
@@ -4032,7 +4032,7 @@
     {
       CancelDebounceTakeoverControls();
 
-      if (!Player.m_localPlayer || !BaseController) return;
+      if (!Player.m_localPlayer || !Manager) return;
 
       if (granted)
       {
@@ -4165,7 +4165,7 @@
     public bool HaveValidUser()
     {
       var user = GetUser();
-      if (BaseController == null) return false;
+      if (Manager == null) return false;
       return user != 0L && IsPlayerInBoat(user);
     }
 
@@ -4233,7 +4233,7 @@
       get;
       set;
     }
-    public VehicleBaseController? BaseController
+    public VehicleManager? Manager
     {
       get;
       set;
@@ -4244,6 +4244,7 @@
       get;
       set;
     }
+
   #endregion
 
   }

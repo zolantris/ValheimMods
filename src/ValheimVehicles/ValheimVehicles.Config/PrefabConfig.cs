@@ -152,7 +152,7 @@ public class PrefabConfig : BepInExBaseConfig<PrefabConfig>
     AllowExperimentalPrefabs.SettingChanged +=
       ExperimentalPrefabRegistry.OnExperimentalPrefabSettingsChange;
 
-    ExperimentalTreadScaleX.SettingChanged += (sender, args) => VehicleBaseController.UpdateAllWheelControllers();
+    ExperimentalTreadScaleX.SettingChanged += (sender, args) => VehicleManager.UpdateAllWheelControllers();
     VehicleStaminaHaulingCost.SettingChanged += (_, __) =>
     {
       VehicleMovementController.staminaHaulCost = VehicleStaminaHaulingCost.Value;

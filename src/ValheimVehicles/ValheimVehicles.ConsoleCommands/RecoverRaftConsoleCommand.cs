@@ -167,7 +167,7 @@ public class RecoverRaftConsoleCommand : ConsoleCommand
     foreach (var id in unattachedVehicleNetViews.Keys)
     {
       var list = unattachedVehicleNetViews[id];
-      var vehicleShip = VehicleBaseController.InitWithoutStarterPiece(list[0].transform);
+      var vehicleShip = VehicleManager.InitWithoutStarterPiece(list[0].transform);
       foreach (var piece in list)
       {
         piece.transform.SetParent(

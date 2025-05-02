@@ -20,7 +20,7 @@ public class PhysicsConfig : BepInExBaseConfig<PhysicsConfig>
     FloatationPhysicsSectionKey = $"{SectionKey}: Floatation";
 
   private static string VelocityModeSectionKey = $"{SectionKey}: Velocity Mode";
-  
+
   public static ConfigEntry<int> VehicleLandMaxTreadWidth = null!;
   public static ConfigEntry<int> VehicleLandMaxTreadLength = null!;
 
@@ -83,7 +83,7 @@ public class PhysicsConfig : BepInExBaseConfig<PhysicsConfig>
 
   public static ConfigEntry<CollisionDetectionMode>
     vehiclePiecesShipCollisionDetectionMode = null!;
-  
+
   private static AcceptableValueRange<float>
     SafeDampingRangeWaterVehicle =
       new(0.05f,
@@ -108,7 +108,7 @@ public class PhysicsConfig : BepInExBaseConfig<PhysicsConfig>
     get;
     set;
   }
-  
+
   public static ConfigEntry<float> MaxAngularVelocity = null!;
 
   public static ConfigEntry<float> MaxLinearVelocity = null!;
@@ -304,7 +304,7 @@ public class PhysicsConfig : BepInExBaseConfig<PhysicsConfig>
       -1f,
       ConfigHelpers.CreateConfigDescription(
         "Wheel offset. Allowing for raising the treads higher. May require increasing suspension distance so the treads spawn then push the vehicle upwards. Negative lowers the wheels. Positive raises the treads", true, false, new AcceptableValueRange<float>(-10f, 10f)));
-    VehicleLandTreadOffset.SettingChanged += (sender, args) => VehicleBaseController.UpdateAllWheelControllers();
+    VehicleLandTreadOffset.SettingChanged += (sender, args) => VehicleManager.UpdateAllWheelControllers();
 
     // guards for max values
     MaxLinearVelocity = config.Bind(SectionKey, $"MaxVehicleLinearVelocity_{VersionedConfigUtil.GetDynamicMinorVersionKey()}", 100f,
@@ -331,7 +331,7 @@ public class PhysicsConfig : BepInExBaseConfig<PhysicsConfig>
       ConfigHelpers.CreateConfigDescription(
         "Hull Floatation Collider will determine the location the ship floats and hovers above the sea. Average is the average height of all Vehicle Hull Pieces attached to the vehicle. The point calculate is the center of the prefab. Center is the center point of all the float boats. This center point is determined by the max and min height points included for ship hulls. Lowest is the lowest most hull piece will determine the float height, allowing users to easily raise the ship if needed by adding a piece at the lowest point of the ship. Custom allows for setting floatation between -20 and 20",
         true, false));
-    
+
 
     vehiclePiecesShipCollisionDetectionMode = config.Bind(
       FloatationPhysicsSectionKey,
@@ -342,7 +342,7 @@ public class PhysicsConfig : BepInExBaseConfig<PhysicsConfig>
         true, true));
     vehiclePiecesShipCollisionDetectionMode.SettingChanged += (_, _) =>
     {
-      foreach (var keyValuePair in VehicleBaseController.VehicleInstances)
+      foreach (var keyValuePair in VehicleManager.VehicleInstances)
       {
         if (keyValuePair.Value != null)
         {
@@ -445,8 +445,8 @@ public class PhysicsConfig : BepInExBaseConfig<PhysicsConfig>
     };
 
 
-    VehicleLandMaxTreadWidth.SettingChanged += (sender, args) => VehicleBaseController.UpdateAllWheelControllers();
-    VehicleLandMaxTreadLength.SettingChanged += (sender, args) => VehicleBaseController.UpdateAllWheelControllers();
+    VehicleLandMaxTreadWidth.SettingChanged += (sender, args) => VehicleManager.UpdateAllWheelControllers();
+    VehicleLandMaxTreadLength.SettingChanged += (sender, args) => VehicleManager.UpdateAllWheelControllers();
 
     floatationVelocityMode.SettingChanged += (sender, args) =>
       ForceSetVehiclePhysics(floatationVelocityMode);
