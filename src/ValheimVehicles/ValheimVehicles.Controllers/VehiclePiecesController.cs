@@ -216,10 +216,11 @@
     private readonly List<ZNetView> _newPendingPiecesQueue = [];
 
     /// <summary>
-    /// ZDOID of the fire component. Since these are nested it's much heavier to find it.
+    /// ZDOID of the fire component per netview. Since these are nested it's much heavier to find it.
     /// </summary>
+    /// Premise: 1 Unique EffectArea per NetView. (this could be wrong in future updates)
     public readonly Dictionary<ZDOID, EffectArea>
-      cachedVehicleBurningEffectAreas = new();
+      m_vehicleBurningEffectAreas = new();
 
 
     private Coroutine? _bedUpdateCoroutine;
@@ -486,6 +487,12 @@
       return PersistentZdoId;
     }
 
+    public void RemoveEffectAreaFromVehicle(ZNetView? netView)
+    {
+      if (netView == null || netView.m_zdo == null) return;
+      m_vehicleBurningEffectAreas.Remove(netView.m_zdo.m_uid);
+    }
+
     public void RemovePiece(ZNetView netView)
     {
       if (PrefabNames.IsVehicle(netView.name)) return;
@@ -512,9 +519,7 @@
             break;
 
           case Fireplace fireplace:
-            if (netView.m_zdo != null)
-              cachedVehicleBurningEffectAreas.Remove(netView.m_zdo.m_uid);
-
+            RemoveEffectAreaFromVehicle(netView);
             break;
           case MastComponent mast:
             m_mastPieces.Remove(mast);
@@ -611,6 +616,14 @@
 
       // Cache components
       var components = netView.GetComponents<Component>();
+
+#if DEBUG
+      var effectsAreas = netView.GetComponentsInChildren<EffectArea>();
+      if (effectsAreas != null)
+      {
+        LoggerProvider.LogInfo($"Detecting EffectsArea for {netView.name} count: {effectsAreas.Length} {effectsAreas}");
+      }
+#endif
 
       foreach (var component in components)
         switch (component)
@@ -1260,7 +1273,7 @@
         return false;
       }
 
-      var isInvalid = m_localRigidbody == null ||
+      var isInvalid = !isActiveAndEnabled || m_localRigidbody == null ||
                       Manager == null ||
                       MovementController == null ||
                       MovementController.rigidbody == null ||
@@ -1959,18 +1972,43 @@
     /// A bit heavy for iteration, likely better than raycast logic, allows for accurately detecting if in vehicle area. But it could be inaccurate since the point is not technically a part of the pieces list.
     /// </summary>
     /// - Used for fires and other Effects Area logic which requires movement support for static struct of bounds.
-    /// <param name="p"></param>
-    /// <returns></returns>
     public static bool IsPointWithin(Vector3 p,
       out VehiclePiecesController? controller)
     {
       controller = null;
       foreach (var instance in ActiveInstances.Values)
-        if (instance.OnboardCollider.bounds.Contains(p))
+        if (instance != null && instance.OnboardCollider != null && instance.OnboardCollider.bounds.Contains(p))
         {
           controller = instance;
           return true;
         }
+
+      return false;
+    }
+
+    public static bool IsPointWithinEffectsArea(Vector3 p, out EffectArea? effectArea)
+    {
+      effectArea = null;
+      if (!IsPointWithin(p, out var piecesController))
+      {
+        return false;
+      }
+
+      if (piecesController == null) return false;
+
+      var matchingInstance =
+        piecesController.m_vehicleBurningEffectAreas.Values.FirstOrDefault(
+          x =>
+          {
+            if (x != null && x.m_collider != null && x.m_collider.bounds.Contains(p)) return true;
+            return false;
+          });
+
+      if (matchingInstance != null)
+      {
+        effectArea = matchingInstance;
+        return true;
+      }
 
       return false;
     }
@@ -2620,18 +2658,6 @@
     }
 
     /// <summary>
-    /// Likely not needed
-    /// </summary>
-    /// <deprecated>Use fireplace component check</deprecated>
-    /// <param name="obj"></param>
-    /// <returns></returns>
-    public bool IsBurningEffectAreaComponent(ZNetView obj)
-    {
-      return obj.name == "fire_pit(Clone)" ||
-             obj.name == "hearth_clone";
-    }
-
-    /// <summary>
     /// We can actually assume all "fireplace" components will have the EffectArea nested in them. So doing a query on them is actually pretty efficient. Name checks are more prone to breaks or mod incompatibility so skipping this.
     /// </summary>
     /// <param name="netView"></param>
@@ -2640,12 +2666,12 @@
       var effectAreaItems = netView.GetComponentsInChildren<EffectArea>();
       foreach (var effectAreaItem in effectAreaItems)
       {
-        if (effectAreaItem.m_type != EffectArea.Type.Burning) continue;
-        cachedVehicleBurningEffectAreas.Add(netView.m_zdo.m_uid,
+        // player base burning type is for all fireplace fires. At least in >=0.219
+        if (effectAreaItem.m_type != EffectArea.Type.PlayerBase) continue;
+        m_vehicleBurningEffectAreas.Add(netView.m_zdo.m_uid,
           effectAreaItem);
         break;
       }
-
     }
 
     /// <summary>
@@ -2654,6 +2680,8 @@
     public void OnAddPieceIgnoreColliders(ZNetView netView)
     {
       IgnoreAllVehicleCollidersForGameObjectChildren(netView.gameObject);
+
+#if DEBUG
       // OnPieceAddedIgnoreAllColliders(netView.gameObject);
 
 
@@ -2678,6 +2706,7 @@
       // rams must always have new pieces added to their list ignored. So that the new piece does not hit the ram.
       // IgnoreCollidersForRamPieces(netView);
       // IgnoreCollidersForAnchorPieces(netView);
+#endif
     }
 
     public void IncrementPieceRevision()
@@ -2982,53 +3011,10 @@
       allVehicleColliders.Clear();
     }
 
-    // public void IgnoreColliderForWheelColliders(Collider collider)
-    // {
-    //   if (collider == null || WheelController == null) return;
-    //   foreach (var wheelCollider in WheelController.wheelColliders)
-    //   {
-    //     if (wheelCollider == null)
-    //     {
-    //       continue;
-    //     }
-    //
-    //     Physics.IgnoreCollision(collider, wheelCollider, true);
-    //   }
-    // }
-
-    // public void IgnoreWheelColliders(List<Collider> colliders)
-    // {
-    //   if (WheelController == null) return;
-    //   colliders.ForEach(IgnoreColliderForWheelColliders);
-    // }
-
-    // public void IgnoreAllWheelColliders()
-    // {
-    //   if (WheelController == null || WheelController.wheelColliders.Count == 0) return;
-    //   //
-    //   // var colliders = new List<Collider>();
-    //   // foreach (var wheelCollider in WheelController.wheelColliders.ToList())
-    //   // {
-    //   //   if (wheelCollider == null)
-    //   //   {
-    //   //     continue;
-    //   //   }
-    //   // OnPieceAddedIgnoreAllColliders(wheelCollider);
-    //   //
-    //   //   var collider = wheelCollider.GetComponent<Collider>();
-    //   //   if (collider == null) continue;
-    //   //
-    //   //   IgnoreShipColliderForCollider(collider, true);
-    //   //   colliders.Add(collider);
-    //   // }
-    //   //
-    //   // IgnoreCollidersForList(colliders, m_nviewPieces);
-    // }
-
     public void TryAddRamToVehicle()
     {
       if (MovementController == null) return;
-      Manager.MovementController.TryAddRamAoeToVehicle();
+      MovementController.TryAddRamAoeToVehicle();
     }
 
     public void ForceRebuildBounds()

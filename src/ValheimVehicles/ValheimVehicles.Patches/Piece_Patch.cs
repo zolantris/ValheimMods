@@ -4,7 +4,7 @@ namespace ValheimVehicles.Patches;
 
 public class Piece_Patch
 {
-  [HarmonyPatch(nameof(Piece), nameof(Piece.CanBeRemoved))]
+  [HarmonyPatch(typeof(Piece), "CanBeRemoved")]
   [HarmonyPostfix]
   public static void Swivel_CanRemove(Piece __instance, ref bool __result)
   {
