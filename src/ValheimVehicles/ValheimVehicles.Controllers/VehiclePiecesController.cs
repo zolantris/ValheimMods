@@ -1358,9 +1358,10 @@
         var combinedBounds = GetCombinedColliderBoundsInPiece(nv.gameObject);
 
         // todo handle edge cases like if the temp piece is very close the vehicle.
-        if (!convexHullBounds.Intersects(combinedBounds) && _rebuildBoundsRoutineInstance == null)
+        if (!convexHullBounds.Intersects(combinedBounds))
         {
-          nv.transform.SetParent(null);
+          // do not remove the piece otherwise it mutates the current list.
+          RemoveTempPiece(nv, false);
           m_tempPieces.FastRemoveAt(ref index);
           continue;
         }
@@ -2382,11 +2383,15 @@
       }
     }
 
-    public void RemoveTempPiece(ZNetView netView)
+    public void RemoveTempPiece(ZNetView netView, bool shouldRemoveFromList = true)
     {
       RemoveDynamicParentForVehicle(netView);
       netView.transform.SetParent(null);
-      m_tempPieces.Remove(netView);
+
+      if (shouldRemoveFromList)
+      {
+        m_tempPieces.Remove(netView);
+      }
     }
 
     public void TrySetPieceToParent(ZNetView? netView)
