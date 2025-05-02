@@ -1,13 +1,11 @@
 ﻿#region
 
-  using System;
-  using System.Collections;
-  using System.Collections.Generic;
-  using System.Linq;
-  using JetBrains.Annotations;
-  using Unity.Collections;
-  using UnityEngine;
-  using ValheimVehicles.Prefabs;
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
+using Unity.Collections;
+using UnityEngine;
 
 #endregion
 
@@ -71,7 +69,7 @@
 
       internal bool isInitialPieceActivationComplete;
 
-      private ConvexHullCalculator m_convexHullCalculator = new();
+      private readonly ConvexHullCalculator m_convexHullCalculator = new();
       private List<Vector3> normals = new();
       private List<int> tris = new();
 
@@ -100,7 +98,7 @@
       }
 
 #if UNITY_EDITOR
-    public void FixedUpdate()
+      public void FixedUpdate()
     {
       CustomFixedUpdate(Time.fixedDeltaTime);
     }

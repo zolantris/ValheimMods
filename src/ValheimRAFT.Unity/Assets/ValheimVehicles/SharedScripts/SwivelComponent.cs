@@ -1,11 +1,13 @@
 #region
 
-  using System.ComponentModel;
-  using UnityEngine;
+using System.ComponentModel;
+using UnityEngine;
 
 #endregion
-
-  namespace ValheimVehicles.SharedScripts;
+// ReSharper disable ArrangeNamespaceBody
+// ReSharper disable NamespaceStyle
+namespace ValheimVehicles.SharedScripts
+{
 
   public class SwivelComponent : MonoBehaviour
   {
@@ -23,6 +25,9 @@
     }
 
     public const string SNAPPOINT_TAG = "snappoint";
+
+    [Header("Other Settings")]
+    public const string AnimatedContainerName = "animated";
 
     [Header("Swivel Settings")]
     [SerializeField] private SwivelMode mode = SwivelMode.DoorMode;
@@ -53,16 +58,18 @@
 
     [Description("_connectorContainer is meant to be shown until an object is connected to the swivel component. It will also display a forward direction indicator.")]
     public Transform connectorContainer;
-    private BoxCollider m_collider;
+
+    public Quaternion m_startPieceRotation = Quaternion.identity;
+
+    // protects against running an update before objects have been parented properly.
+    public bool CanUpdate;
 
     private float _currentYAngle;
     private float _currentZAngle;
 
-    [Header("Other Settings")]
-    public const string AnimatedContainerName = "animated";
-
     private Transform _snappoint;
     private Quaternion _targetRotation;
+    private BoxCollider m_collider;
 
     public DoorHingeMode CurrentHingeMode => hingeMode;
     public HingeDirection CurrentZHingeDirection => zHingeDirection;
@@ -74,11 +81,6 @@
     public float MaxInclineZ => maxInclineZ;
 
     public float MaxYAngle => maxYAngle;
-
-    public Quaternion m_startPieceRotation = Quaternion.identity;
-
-    // protects against running an update before objects have been parented properly.
-    public bool CanUpdate;
 
     public virtual void Awake()
     {
@@ -309,3 +311,4 @@
       return Quaternion.Euler(euler);
     }
   }
+}
