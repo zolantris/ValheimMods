@@ -13,7 +13,6 @@ using Jotunn.Entities;
 using Jotunn.Managers;
 using UnityEngine;
 using UnityEngine.Assertions.Must;
-
 using ValheimVehicles.Config;
 using ValheimVehicles.Helpers;
 using ValheimVehicles.Prefabs;
@@ -244,8 +243,8 @@ public class VehicleCommands : ConsoleCommand
           ? character.transform.localPosition
           : Vector3.zero;
         character.transform.SetParent(null);
-        
-        characterData.Add(new SafeMoveCharacterData()
+
+        characterData.Add(new SafeMoveCharacterData
         {
           character = character,
           isDebugFlying = isDebugFlying,
@@ -257,7 +256,7 @@ public class VehicleCommands : ConsoleCommand
     var wasDebugFlying = Player.m_localPlayer.IsDebugFlying();
     if (!wasDebugFlying) Player.m_localPlayer.m_body.isKinematic = true;
 
-    return new SafeMoveData()
+    return new SafeMoveData
     {
       charactersOnShip = characterData,
       IsLocalPlayerDebugFlying = wasDebugFlying,
@@ -333,7 +332,7 @@ public class VehicleCommands : ConsoleCommand
     var zdo = data.Value.OnboardController?.BaseController?.NetView?.GetZDO();
 
     if (piecesController == null || zdo == null) yield break;
-    
+
     foreach (var safeMoveCharacterData in data.Value.charactersOnShip)
     {
       var targetLocation = nextPosition + safeMoveCharacterData.lastLocalOffset;
@@ -353,7 +352,7 @@ public class VehicleCommands : ConsoleCommand
           targetLocation = zdo!
                              .GetPosition() +
                            safeMoveCharacterData.lastLocalOffset;
-        
+
         TeleportImmediately(safeMoveCharacterData.character,
           targetLocation);
       }
@@ -394,7 +393,7 @@ public class VehicleCommands : ConsoleCommand
         }
 
         playerData.character.m_body.isKinematic = playerData.isKinematic;
-        
+
         ResetPlayerVelocities(playerData.character);
       }
 
@@ -447,8 +446,7 @@ public class VehicleCommands : ConsoleCommand
 
     vehicleInstance.transform.position = newLocation;
     vehicleInstance.NetView.m_zdo.SetPosition(newLocation);
-    VehiclePiecesController.ForceUpdateAllPiecePositions(
-      vehicleInstance.PiecesController, newLocation);
+    VehiclePiecesController.ForceUpdateAllPiecePositions(newLocation);
     onPositionReady(vehicleInstance.transform.position);
   }
 
@@ -612,7 +610,7 @@ public class VehicleCommands : ConsoleCommand
     {
       VehicleGui.AddRemoveVehicleGui();
     }
-    
+
     VehicleGui.ToggleConfigPanelState(true);
   }
 
@@ -702,9 +700,9 @@ public class VehicleCommands : ConsoleCommand
       string.Join(",", vehiclePendingPieces?.Select(x => x.name) ?? []);
     if (pendingPiecesString == string.Empty) pendingPiecesString = "None";
 
-    var piecesCount = pieceController.m_nviewPieces.Count;
+    var piecesCount = pieceController.m_pieces.Count;
     var piecesString = string.Join(",",
-      pieceController.m_nviewPieces?.Select(x => x.name) ?? []);
+      pieceController.m_pieces?.Select(x => x.name) ?? []);
 
     // todo swap all m_players to OnboardController.characterData check instead.
     var playersOnVehicle =
@@ -827,7 +825,7 @@ public class VehicleCommands : ConsoleCommand
     var closestVehicle = GetNearestVehicleShip(Player.m_localPlayer.transform.position);
     if (closestVehicle == null || closestVehicle.PiecesController == null) return;
 
-    var nvPiecesClone = closestVehicle.PiecesController.m_nviewPieces.ToList();
+    var nvPiecesClone = closestVehicle.PiecesController.m_pieces.ToList();
 
     foreach (var piecesControllerMNviewPiece in nvPiecesClone)
     {

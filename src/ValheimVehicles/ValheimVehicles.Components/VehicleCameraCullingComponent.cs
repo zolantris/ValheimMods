@@ -47,7 +47,7 @@ public class VehicleCameraCullingComponent : MonoBehaviour
     {
       var piecesController = vehicle.PiecesController;
       if (piecesController == null) continue;
-      foreach (var piece in piecesController.m_nviewPieces)
+      foreach (var piece in piecesController.m_pieces)
       {
         var obj = piece.gameObject;
         var isObjectOccluded = IsObjectOccluded(obj);

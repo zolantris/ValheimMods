@@ -26,7 +26,7 @@ public class SwivelPrefab : RegisterPrefab<SwivelPrefab>
     var prefab = PrefabManager.Instance.CreateClonedPrefab(PrefabNames.SwivelPrefabName, LoadValheimVehicleAssets.Swivel);
     PrefabRegistryHelpers.AddNetViewWithPersistence(prefab);
 
-    prefab.AddComponent<SwivelComponentIntegration>();
+    prefab.AddComponent<SwivelController>();
     var piece = PrefabRegistryHelpers.AddPieceForPrefab(PrefabNames.SwivelPrefabName, prefab);
 
     PieceManager.Instance.AddPiece(new CustomPiece(prefab, true,
