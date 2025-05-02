@@ -19,12 +19,12 @@
   using ValheimVehicles.Prefabs.Registry;
   using ValheimVehicles.Propulsion.Rudder;
   using ValheimVehicles.SharedScripts;
+  using ValheimVehicles.SharedScripts.Enums;
   using ValheimVehicles.Structs;
   using ZdoWatcher;
   using static ValheimVehicles.Propulsion.Sail.SailAreaForce;
   using Component = UnityEngine.Component;
   using Logger = Jotunn.Logger;
-  using PrefabNames = ValheimVehicles.Prefabs.PrefabNames;
 
 #endregion
 
@@ -1647,7 +1647,7 @@
 
       if (pieceName.StartsWith(PrefabNames.HullRib))
       {
-        if (pieceName.Contains(ShipHulls.HullMaterial.Iron)) return 720f;
+        if (pieceName.Contains(HullMaterial.Iron)) return 720f;
 
         return 180f;
       }

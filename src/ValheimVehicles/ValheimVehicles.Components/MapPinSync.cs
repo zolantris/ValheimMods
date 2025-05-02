@@ -9,6 +9,7 @@ using Jotunn.Managers;
 using UnityEngine;
 using ValheimVehicles.Config;
 using ValheimVehicles.Prefabs;
+using ValheimVehicles.SharedScripts;
 using ZdoWatcher;
 
 namespace ValheimVehicles.Components;

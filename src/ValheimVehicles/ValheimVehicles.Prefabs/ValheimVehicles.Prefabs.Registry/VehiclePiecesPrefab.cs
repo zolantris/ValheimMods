@@ -1,6 +1,7 @@
 using Jotunn.Managers;
 using UnityEngine;
 using ValheimVehicles.Prefabs;
+using ValheimVehicles.SharedScripts;
 
 
 namespace Registry;

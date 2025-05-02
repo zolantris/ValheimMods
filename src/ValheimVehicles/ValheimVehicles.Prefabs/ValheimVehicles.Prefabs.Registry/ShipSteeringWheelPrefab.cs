@@ -2,6 +2,7 @@ using Jotunn.Configs;
 using Jotunn.Entities;
 using Jotunn.Managers;
 using ValheimVehicles.Propulsion.Rudder;
+using ValheimVehicles.SharedScripts;
 using Object = UnityEngine.Object;
 
 namespace ValheimVehicles.Prefabs.Registry;

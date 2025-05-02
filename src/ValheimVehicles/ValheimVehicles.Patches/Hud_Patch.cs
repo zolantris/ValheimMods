@@ -9,6 +9,7 @@ using ValheimVehicles.Compat;
 using ValheimVehicles.Controllers;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.Components;
+using ValheimVehicles.SharedScripts;
 using Logger = Jotunn.Logger;
 
 namespace ValheimVehicles.Patches;

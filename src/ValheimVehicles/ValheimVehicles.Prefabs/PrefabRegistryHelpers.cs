@@ -9,6 +9,9 @@ using UnityEngine;
 using ValheimVehicles.Config;
 using ValheimVehicles.Controllers;
 using ValheimVehicles.Prefabs.Registry;
+using ValheimVehicles.SharedScripts;
+using ValheimVehicles.SharedScripts.Enums;
+using ValheimVehicles.SharedScripts.Prefabs;
 using Logger = Jotunn.Logger;
 using Object = UnityEngine.Object;
 
@@ -117,7 +120,7 @@ public abstract class PrefabRegistryHelpers
         Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
           .WaterFloatationHeight)
       });
-    
+
     PieceDataDictionary.Add(PrefabNames.CustomWaterMaskCreator,
       new PieceData
       {
@@ -153,7 +156,7 @@ public abstract class PrefabRegistryHelpers
         PrefabTiers.GetTierMaterialTranslation(ramMaterial);
       foreach (var ramSize in ramSizes)
         PieceDataDictionary.Add(
-          PrefabNames.GetRamStakeName(ramMaterial, ramSize), new PieceData()
+          PrefabNames.GetRamStakeName(ramMaterial, ramSize), new PieceData
           {
             Name =
               $"$valheim_vehicles_ram_stake  {materialTranslation}",
@@ -167,7 +170,7 @@ public abstract class PrefabRegistryHelpers
 
     foreach (var bladeDir in bladeDirs)
       PieceDataDictionary.Add(
-        PrefabNames.GetRamBladeName(bladeDir), new PieceData()
+        PrefabNames.GetRamBladeName(bladeDir), new PieceData
         {
           Name =
             $"$valheim_vehicles_ram_blade $valheim_vehicles_direction_{bladeDir} $valheim_vehicles_material_bronze",
@@ -185,7 +188,7 @@ public abstract class PrefabRegistryHelpers
     const string description =
       $"Experimental Nautilus technology discovered. Have Fun!";
     PieceDataDictionary.Add(
-      PrefabNames.Nautilus, new PieceData()
+      PrefabNames.Nautilus, new PieceData
       {
         Name = prefabName,
         Description = description,
@@ -210,7 +213,7 @@ public abstract class PrefabRegistryHelpers
       PrefabNames.PrefabSizeVariant.FourByFour
     ];
     List<string> materialVariants =
-      [ShipHulls.HullMaterial.Wood, ShipHulls.HullMaterial.Iron];
+      [HullMaterial.Wood, HullMaterial.Iron];
 
     foreach (var sizeVariant in sizeVariants)
     {
@@ -220,7 +223,7 @@ public abstract class PrefabRegistryHelpers
         var materialName = materialVariant.ToLower();
         PieceDataDictionary.Add(
           PrefabNames.GetHullSlabName(materialVariant,
-            sizeVariant), new PieceData()
+            sizeVariant), new PieceData
           {
             Name =
               $"{pieceName} $valheim_vehicles_material_{materialName} {sizeName}",
@@ -246,7 +249,7 @@ public abstract class PrefabRegistryHelpers
       PrefabNames.PrefabSizeVariant.FourByFour
     ];
     List<string> materialVariants =
-      [ShipHulls.HullMaterial.Wood, ShipHulls.HullMaterial.Iron];
+      [HullMaterial.Wood, HullMaterial.Iron];
 
     foreach (var sizeVariant in sizeVariants)
     {
@@ -256,7 +259,7 @@ public abstract class PrefabRegistryHelpers
         var materialName = materialVariant.ToLower();
         PieceDataDictionary.Add(
           PrefabNames.GetHullWallName(materialVariant,
-            sizeVariant), new PieceData()
+            sizeVariant), new PieceData
           {
             Name =
               $"{pieceName} $valheim_vehicles_material_{materialName} {sizeName}",
@@ -279,7 +282,7 @@ public abstract class PrefabRegistryHelpers
     List<PrefabNames.DirectionVariant> directionVariants =
       [PrefabNames.DirectionVariant.Left, PrefabNames.DirectionVariant.Right];
     List<string> materialVariants =
-      [ShipHulls.HullMaterial.Wood, ShipHulls.HullMaterial.Iron];
+      [HullMaterial.Wood, HullMaterial.Iron];
 
     foreach (var directionVariant in directionVariants)
     {
@@ -289,7 +292,7 @@ public abstract class PrefabRegistryHelpers
         var materialName = materialVariant.ToLower();
         var prefabName = PrefabNames.GetHullRibCornerFloorName(materialVariant,
           directionVariant);
-        var pieceData = new PieceData()
+        var pieceData = new PieceData
         {
           Name =
             $"{pieceName} $valheim_vehicles_material_{materialName} $valheim_vehicles_direction_{directionName}",
@@ -310,15 +313,15 @@ public abstract class PrefabRegistryHelpers
     const string pieceName = $"${pieceBaseName}";
     const string pieceDescription = $"${pieceBaseName}_desc";
     const string iconBaseName = "hull_rib_corner";
-    
+
     List<string> materialVariants =
-      [ShipHulls.HullMaterial.Wood, ShipHulls.HullMaterial.Iron];
+      [HullMaterial.Wood, HullMaterial.Iron];
 
     foreach (var materialVariant in materialVariants)
     {
       var materialName = materialVariant.ToLower();
       var prefabName = PrefabNames.GetHullRibCornerName(materialVariant);
-      var pieceData = new PieceData()
+      var pieceData = new PieceData
       {
         Name =
           $"{pieceName} $valheim_vehicles_material_{materialName}",
@@ -345,7 +348,7 @@ public abstract class PrefabRegistryHelpers
       PrefabNames.PrefabSizeVariant.FourByFour
     ];
     List<string> materialVariants =
-      [ShipHulls.HullMaterial.Wood, ShipHulls.HullMaterial.Iron];
+      [HullMaterial.Wood, HullMaterial.Iron];
 
     foreach (var sizeVariant in sizeVariants)
     {
@@ -361,7 +364,7 @@ public abstract class PrefabRegistryHelpers
         var variantDescription =
           $"{pieceDescription} {materialDescription}";
 
-        var pieceData = new PieceData()
+        var pieceData = new PieceData
         {
           Name =
             $"{pieceName} $valheim_vehicles_material_{materialName} {sizeName}",
@@ -384,7 +387,7 @@ public abstract class PrefabRegistryHelpers
     RegisterCustomMastPieces();
     RegisterCustomMeshPieces();
     RegisterVehicleBoundsControllerPieces();
-    
+
     RegisterRamPieces();
     RegisterExternalShips();
 
@@ -394,7 +397,7 @@ public abstract class PrefabRegistryHelpers
     RegisterHullRibCornerWalls();
     RegisterHullRibCornerFloors();
 
-    PieceDataDictionary.Add(PrefabNames.WaterVehicleShip, new PieceData()
+    PieceDataDictionary.Add(PrefabNames.WaterVehicleShip, new PieceData
     {
       Name = "$valheim_vehicles_water_vehicle",
       Description = "$valheim_vehicles_water_vehicle_desc",
@@ -402,13 +405,13 @@ public abstract class PrefabRegistryHelpers
     });
 
     var woodMatDesc =
-      ShipHulls.GetHullMaterialDescription(ShipHulls.HullMaterial.Wood);
+      ShipHulls.GetHullMaterialDescription(HullMaterial.Wood);
     var ironMatDesc =
-      ShipHulls.GetHullMaterialDescription(ShipHulls.HullMaterial.Iron);
+      ShipHulls.GetHullMaterialDescription(HullMaterial.Iron);
 
     // hull rib variants
     PieceDataDictionary.Add(
-      PrefabNames.GetHullRibName(ShipHulls.HullMaterial.Wood), new PieceData()
+      PrefabNames.GetHullRibName(HullMaterial.Wood), new PieceData
       {
         Name =
           "$valheim_vehicles_hull_rib_side $valheim_vehicles_material_wood",
@@ -417,7 +420,7 @@ public abstract class PrefabRegistryHelpers
           .HullRibWood)
       });
     PieceDataDictionary.Add(
-      PrefabNames.GetHullRibName(ShipHulls.HullMaterial.Iron), new PieceData()
+      PrefabNames.GetHullRibName(HullMaterial.Iron), new PieceData
       {
         Name =
           "$valheim_vehicles_hull_rib_side $valheim_vehicles_material_iron",
@@ -429,7 +432,7 @@ public abstract class PrefabRegistryHelpers
 
     // hull center variants
     PieceDataDictionary.Add(PrefabNames.ShipHullCenterWoodPrefabName,
-      new PieceData()
+      new PieceData
       {
         Name = "$valheim_vehicles_hull_center $valheim_vehicles_material_wood",
         Description = $"$valheim_vehicles_hull_center_desc {woodMatDesc}",
@@ -438,7 +441,7 @@ public abstract class PrefabRegistryHelpers
       });
 
     PieceDataDictionary.Add(PrefabNames.ShipHullCenterIronPrefabName,
-      new PieceData()
+      new PieceData
       {
         Name = "$valheim_vehicles_hull_center $valheim_vehicles_material_iron",
         Description = $"valheim_vehicles_hull_center_desc {ironMatDesc}",
@@ -447,7 +450,7 @@ public abstract class PrefabRegistryHelpers
       });
 
 
-    PieceDataDictionary.Add(PrefabNames.ShipSteeringWheel, new PieceData()
+    PieceDataDictionary.Add(PrefabNames.ShipSteeringWheel, new PieceData
     {
       Name = "$valheim_vehicles_wheel",
       Description = "$valheim_vehicles_wheel_desc",
@@ -455,7 +458,7 @@ public abstract class PrefabRegistryHelpers
         .ShipSteeringWheel)
     });
 
-    PieceDataDictionary.Add(PrefabNames.ShipKeel, new PieceData()
+    PieceDataDictionary.Add(PrefabNames.ShipKeel, new PieceData
     {
       Name = "$valheim_vehicles_keel",
       Description = "$valheim_vehicles_keel_desc",
@@ -463,7 +466,7 @@ public abstract class PrefabRegistryHelpers
         .ShipKeel)
     });
 
-    PieceDataDictionary.Add(PrefabNames.ShipRudderBasic, new PieceData()
+    PieceDataDictionary.Add(PrefabNames.ShipRudderBasic, new PieceData
     {
       Name = "$valheim_vehicles_rudder_basic",
       Description = "$valheim_vehicles_rudder_basic_desc",
@@ -471,7 +474,7 @@ public abstract class PrefabRegistryHelpers
         .ShipRudderBasic)
     });
 
-    PieceDataDictionary.Add(PrefabNames.ShipRudderAdvancedWood, new PieceData()
+    PieceDataDictionary.Add(PrefabNames.ShipRudderAdvancedWood, new PieceData
     {
       Name =
         "$valheim_vehicles_rudder_advanced $valheim_vehicles_material_wood",
@@ -479,7 +482,7 @@ public abstract class PrefabRegistryHelpers
       Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
         .ShipRudderAdvancedWood)
     });
-    PieceDataDictionary.Add(PrefabNames.ShipRudderAdvancedIron, new PieceData()
+    PieceDataDictionary.Add(PrefabNames.ShipRudderAdvancedIron, new PieceData
     {
       Name =
         "$valheim_vehicles_rudder_advanced $valheim_vehicles_material_iron",
@@ -489,7 +492,7 @@ public abstract class PrefabRegistryHelpers
     });
 
     PieceDataDictionary.Add(PrefabNames.ShipRudderAdvancedDoubleWood,
-      new PieceData()
+      new PieceData
       {
         Name =
           "$valheim_vehicles_rudder_advanced_double $valheim_vehicles_material_wood",
@@ -498,7 +501,7 @@ public abstract class PrefabRegistryHelpers
           .ShipRudderAdvancedDoubleWood)
       });
     PieceDataDictionary.Add(PrefabNames.ShipRudderAdvancedDoubleIron,
-      new PieceData()
+      new PieceData
       {
         Name =
           "$valheim_vehicles_rudder_advanced_double $valheim_vehicles_material_iron",
@@ -507,7 +510,7 @@ public abstract class PrefabRegistryHelpers
           .ShipRudderAdvancedDoubleIron)
       });
 
-    PieceDataDictionary.Add(PrefabNames.ToggleSwitch, new PieceData()
+    PieceDataDictionary.Add(PrefabNames.ToggleSwitch, new PieceData
     {
       Name = "$valheim_vehicles_toggle_switch",
       Description = "$valheim_vehicles_toggle_switch_desc",
@@ -516,7 +519,7 @@ public abstract class PrefabRegistryHelpers
     });
 
     PieceDataDictionary.Add(PrefabNames.WindowWallPorthole2x2Prefab,
-      new PieceData()
+      new PieceData
       {
         Name = "$valheim_vehicles_window_wall_porthole 2x2",
         Description = "$valheim_vehicles_window_wall_porthole_desc 2x2",
@@ -525,7 +528,7 @@ public abstract class PrefabRegistryHelpers
       });
 
     PieceDataDictionary.Add(PrefabNames.WindowWallPorthole4x4Prefab,
-      new PieceData()
+      new PieceData
       {
         Name = "$valheim_vehicles_window_wall_porthole 4x4",
         Description = "$valheim_vehicles_window_wall_porthole_desc 4x4",
@@ -534,7 +537,7 @@ public abstract class PrefabRegistryHelpers
       });
 
     PieceDataDictionary.Add(PrefabNames.WindowWallPorthole8x4Prefab,
-      new PieceData()
+      new PieceData
       {
         Name = "$valheim_vehicles_window_wall_porthole 8x4",
         Description = "$valheim_vehicles_window_wall_porthole_desc 8x4",
@@ -543,7 +546,7 @@ public abstract class PrefabRegistryHelpers
       });
 
     PieceDataDictionary.Add(PrefabNames.WindowFloorPorthole4x4Prefab,
-      new PieceData()
+      new PieceData
       {
         Name = "$valheim_vehicles_window_floor_porthole 4x4",
         Description = "$valheim_vehicles_window_floor_porthole_desc 4x4",
@@ -552,7 +555,7 @@ public abstract class PrefabRegistryHelpers
       });
 
     PieceDataDictionary.Add(PrefabNames.WindowPortholeStandalonePrefab,
-      new PieceData()
+      new PieceData
       {
         Name = "$valheim_vehicles_window_porthole_standalone",
         Description = "$valheim_vehicles_window_porthole_standalone_desc",
@@ -561,7 +564,7 @@ public abstract class PrefabRegistryHelpers
       });
 
     PieceDataDictionary.Add(PrefabNames.WindowWallSquareWoodPrefabName,
-      new PieceData()
+      new PieceData
       {
         Name =
           "$valheim_vehicles_window_wall_square $valheim_vehicles_material_wood",
@@ -573,7 +576,7 @@ public abstract class PrefabRegistryHelpers
 
 
     PieceDataDictionary.Add(PrefabNames.WindowWallSquareIronPrefabName,
-      new PieceData()
+      new PieceData
       {
         Name =
           "$valheim_vehicles_window_wall_square $valheim_vehicles_material_iron",
@@ -584,7 +587,7 @@ public abstract class PrefabRegistryHelpers
       });
 
     PieceDataDictionary.Add(PrefabNames.ShipAnchorWood,
-      new PieceData()
+      new PieceData
       {
         Name =
           "$valheim_vehicles_ship_anchor $valheim_vehicles_material_wood",
@@ -595,7 +598,7 @@ public abstract class PrefabRegistryHelpers
       });
 
     PieceDataDictionary.Add(PrefabNames.LandVehicle,
-      new PieceData()
+      new PieceData
       {
         Name =
           "$valheim_vehicles_land_vehicle",
@@ -745,7 +748,7 @@ public abstract class PrefabRegistryHelpers
    */
   public static void AddSnapPoint(string name, GameObject parentObj)
   {
-    var snappointObj = new GameObject()
+    var snappointObj = new GameObject
     {
       name = name,
       tag = SnappointTag
@@ -872,7 +875,7 @@ public abstract class PrefabRegistryHelpers
       HoistSnappointChildren(prefab.transform, snappointParent);
       return;
     }
-    
+
     var transformObjs = parent.GetComponentsInChildren<Transform>(true);
     foreach (var transformObj in transformObjs)
     {

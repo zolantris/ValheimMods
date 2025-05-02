@@ -13,6 +13,7 @@
   using ValheimVehicles.Interfaces;
   using ValheimVehicles.Prefabs;
   using ValheimVehicles.SharedScripts;
+  using ValheimVehicles.SharedScripts.Enums;
   using ValheimVehicles.Structs;
   using static ValheimVehicles.Config.PrefabConfig;
   using Logger = Jotunn.Logger;
@@ -517,19 +518,19 @@
       string selectedPrefab;
       if (IsLandVehicle)
         return PrefabManager.Instance.GetPrefab(PrefabNames.GetHullSlabName(
-          ShipHulls.HullMaterial.Wood,
+          HullMaterial.Wood,
           PrefabNames.PrefabSizeVariant.FourByFour));
 
       switch (StartingPiece?.Value)
       {
         case VehicleShipInitPiece.HullFloor2X2:
           selectedPrefab = PrefabNames.GetHullSlabName(
-            ShipHulls.HullMaterial.Wood,
+            HullMaterial.Wood,
             PrefabNames.PrefabSizeVariant.TwoByTwo);
           break;
         case VehicleShipInitPiece.HullFloor4X4:
           selectedPrefab = PrefabNames.GetHullSlabName(
-            ShipHulls.HullMaterial.Wood,
+            HullMaterial.Wood,
             PrefabNames.PrefabSizeVariant.FourByFour);
           break;
         case VehicleShipInitPiece.Nautilus:

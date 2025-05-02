@@ -1,3 +1,4 @@
+using ValheimVehicles.SharedScripts;
 namespace ValheimVehicles.Prefabs;
 
 public abstract class SpriteNames

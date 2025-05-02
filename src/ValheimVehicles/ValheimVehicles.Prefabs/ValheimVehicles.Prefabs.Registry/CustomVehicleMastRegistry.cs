@@ -2,6 +2,7 @@ using Jotunn.Configs;
 using Jotunn.Entities;
 using Jotunn.Managers;
 using ValheimVehicles.Prefabs.Registry;
+using ValheimVehicles.SharedScripts;
 namespace ValheimVehicles.Prefabs.ValheimVehicles.Prefabs.Registry;
 
 public class CustomVehicleMastRegistry : RegisterPrefab<CustomVehicleMastRegistry>

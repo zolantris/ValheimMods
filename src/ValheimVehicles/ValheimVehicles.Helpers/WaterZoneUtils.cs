@@ -9,6 +9,7 @@ using ValheimVehicles.Patches;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.Components;
 using ValheimVehicles.Controllers;
+using ValheimVehicles.SharedScripts;
 using Zolantris.Shared;
 
 namespace ValheimVehicles.Helpers;
@@ -152,7 +153,7 @@ public static class WaterZoneUtils
 
     var isCharacterStandingOnVehicle =
       HasShipUnderneath(character, out var shipUnderneath);
-    
+
     // Force adds the player if they are onboard but somehow not on the ship.
     if (isCharacterStandingOnVehicle && shipUnderneath != null && shipUnderneath.OnboardController != null && !isCharacterOnboard)
     {

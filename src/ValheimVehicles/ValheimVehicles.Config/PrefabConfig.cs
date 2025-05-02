@@ -7,6 +7,7 @@ using ValheimVehicles.Components;
 using ValheimVehicles.Helpers;
 using ValheimVehicles.Prefabs.Registry;
 using ValheimVehicles.Prefabs.ValheimVehicles.Prefabs.Registry;
+using ValheimVehicles.SharedScripts;
 
 namespace ValheimVehicles.Config;
 
