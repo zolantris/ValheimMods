@@ -1,6 +1,5 @@
 namespace ValheimVehicles.Interfaces;
 
-public interface IVehicleSharedProperties : IVehicleControllers
+public interface IVehicleSharedProperties : IVehicleControllers, INetView
 {
-  ZNetView? m_nview { get; set; }
 }

@@ -1,9 +1,8 @@
 namespace ValheimVehicles.Interfaces;
 
-public interface IPrefabCustomConfigRPCSync<T>
+public interface IPrefabCustomConfigRPCSync<T> : INetView
 {
   T CustomConfig { get; set; }
-  ZNetView m_nview { get; set; }
   // SyncPrefabConfig is called after the SetPrefabConfig RPC is called.
   public void RPC_SyncPrefabConfig(long sender);
   public void RPC_SetPrefabConfig(long sender, ZPackage pkg);

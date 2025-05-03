@@ -62,16 +62,14 @@
 
     public override void UnregisterRPCListeners()
     {
-      base.UnregisterRPCListeners();
+      if (!hasRegisteredRPCListeners) return;
       if (!IsValid(out var netView))
       {
         hasRegisteredRPCListeners = false;
         return;
       }
 
-      UnregisterRPCListeners();
-
-      if (!hasRegisteredRPCListeners) return;
+      base.UnregisterRPCListeners();
 
       // ship piece bounds syncing
       netView.Unregister(nameof(RPC_SyncBounds));

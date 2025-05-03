@@ -14,7 +14,6 @@
   using ValheimVehicles.Helpers;
   using ValheimVehicles.Interfaces;
   using ValheimVehicles.Patches;
-  using ValheimVehicles.Prefabs;
   using ValheimVehicles.Prefabs.Registry;
   using ValheimVehicles.Propulsion.Rudder;
   using ValheimVehicles.SharedScripts;
