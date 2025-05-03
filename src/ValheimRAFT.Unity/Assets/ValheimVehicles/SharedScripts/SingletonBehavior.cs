@@ -1,28 +1,33 @@
 #region
 
+  using System;
   using UnityEngine;
 
 #endregion
 
 // ReSharper disable ArrangeNamespaceBody
 // ReSharper disable NamespaceStyle
-namespace ValheimVehicles.SharedScripts
-{
-  public class SingletonBehaviour<T> : MonoBehaviour where T : SingletonBehaviour<T>
+  namespace ValheimVehicles.SharedScripts
   {
-    public static T? Instance { get; protected set; }
-
-    public void Awake()
+    public class SingletonBehaviour<T> : MonoBehaviour where T : SingletonBehaviour<T>
     {
-      if (Instance != null && Instance != this)
-      {
-        Destroy(this);
-        return;
-      }
-      Instance = (T)this;
-      OnAwake();
-    }
 
-    protected virtual void OnAwake() {}
+      public static T? Instance { get; protected set; }
+
+      // for actions listening to this behavior but not part of the component directly.
+      public static event Action? OnPostAwake;
+      public virtual void OnAwake() {}
+
+      public void Awake()
+      {
+        if (Instance != null && Instance != this)
+        {
+          Destroy(this);
+          return;
+        }
+        Instance = (T)this;
+        OnAwake();
+        OnPostAwake?.Invoke();
+      }
+    }
   }
-}

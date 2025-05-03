@@ -11,6 +11,7 @@
   using ValheimVehicles.Interfaces;
   using ValheimVehicles.Patches;
   using ValheimVehicles.SharedScripts;
+  using ValheimVehicles.UI;
   using Logger = Jotunn.Logger;
 
 #endregion

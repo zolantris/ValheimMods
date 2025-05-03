@@ -9,19 +9,18 @@
   using TMPro;
   using UnityEngine;
   using UnityEngine.UI;
+  using ValheimVehicles.Components;
   using ValheimVehicles.Config;
   using ValheimVehicles.ConsoleCommands;
   using ValheimVehicles.Constants;
   using ValheimVehicles.Controllers;
-  using ValheimVehicles.GUI;
-  using ValheimVehicles.Prefabs;
   using ValheimVehicles.SharedScripts;
   using ValheimVehicles.Structs;
   using Logger = Jotunn.Logger;
 
 #endregion
 
-  namespace ValheimVehicles.Components;
+  namespace ValheimVehicles.UI;
 
   public class VehicleGui : SingletonBehaviour<VehicleGui>
   {
@@ -74,7 +73,6 @@
     }
 
 
-    // todo translate this
     public static string vehicleCommandsHide => $"{ModTranslations.GuiCommandsMenuTitle} ({ModTranslations.GuiHide})";
     public static string vehicleCommandsShow => $"{ModTranslations.GuiCommandsMenuTitle} ({ModTranslations.GuiShow})";
 
@@ -422,6 +420,13 @@
       return panel;
     }
 
+    private void OnWindowCommandsPanelToggle(Text buttonText)
+    {
+      var nextState = !commandsWindow.activeSelf;
+      buttonText.text = nextState ? vehicleCommandsHide : vehicleCommandsShow;
+      HideOrShowCommandPanel(nextState, false);
+    }
+
     private GameObject CreateCommandsTogglePanel()
     {
       var panel = DefaultControls.CreatePanel(
@@ -460,9 +465,7 @@
       var button = buttonObject.GetComponent<Button>();
       button.onClick.AddListener(() =>
       {
-        var nextState = !commandsWindow.activeSelf;
-        buttonText.text = nextState ? vehicleCommandsHide : vehicleCommandsShow;
-        HideOrShowCommandPanel(nextState, false);
+        OnWindowCommandsPanelToggle(buttonText);
       });
 
       panel.SetActive(hasCommandsWindowOpened);

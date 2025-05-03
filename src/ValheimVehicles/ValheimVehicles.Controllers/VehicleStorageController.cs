@@ -12,7 +12,7 @@
   using ValheimVehicles.Compat;
   using ValheimVehicles.Components;
   using ValheimVehicles.ConsoleCommands;
-  using ValheimVehicles.GUI;
+  using ValheimVehicles.UI;
   using ValheimVehicles.Prefabs;
   using ValheimVehicles.SharedScripts;
   using ValheimVehicles.Storage.Serialization;
