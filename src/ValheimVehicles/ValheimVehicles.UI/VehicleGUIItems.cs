@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using ValheimVehicles.ConsoleCommands;
 using ValheimVehicles.Controllers;
 using ValheimVehicles.Structs;
-namespace ValheimVehicles.Components;
+namespace ValheimVehicles.UI;
 
 /// <summary>
 /// Nit-pick: rename GUI to different value. It makes names messy
@@ -57,7 +57,7 @@ public static class VehicleGUIItems
         VehicleGui.VehicleSelectDropdown = dropdown;
         VehicleStorageController.RefreshVehicleSelectionGui(dropdown);
       },
-      OnDropdownChanged = VehicleGui.VehicleSelectOnDropdownChanged,
+      OnDropdownChanged = VehicleGui.VehicleSelectOnDropdownChanged
       // OnPointerEnterAction = VehicleStorageAPI.RefreshVehicleSelectionGui
     },
     new()

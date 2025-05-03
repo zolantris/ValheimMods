@@ -1,8 +1,8 @@
 #region
 
-using System.Collections.Generic;
-using JetBrains.Annotations;
-using UnityEngine;
+  using System.Collections.Generic;
+  using JetBrains.Annotations;
+  using UnityEngine;
 
 #endregion
 
@@ -11,93 +11,95 @@ using UnityEngine;
 // ReSharper disable ArrangeNamespaceBody
 
 // ReSharper disable NamespaceStyle
-namespace ValheimVehicles.SharedScripts
-{
-  public static class LayerHelpers
+  namespace ValheimVehicles.SharedScripts
   {
-    public const int CustomRaftLayer = 29;
-
-    public static int TerrainLayer = LayerMask.NameToLayer("terrain");
-    public static int UILayer = LayerMask.NameToLayer("UI");
-    public static int PieceLayer = LayerMask.NameToLayer("piece");
-    public static int ItemLayer = LayerMask.NameToLayer("item"); // should be 12
-
-    public static bool IsItemLayer(int layer)
+    public static class LayerHelpers
     {
-      return layer == ItemLayer;
-    }
+      public const int CustomRaftLayer = 29;
 
-    public static LayerMask CustomRaftLayerMask =
-      LayerMask.GetMask(LayerMask.LayerToName(CustomRaftLayer));
+      public static int TerrainLayer = LayerMask.NameToLayer("terrain");
+      public static int UILayer = LayerMask.NameToLayer("UI");
+      public static int PieceLayer = LayerMask.NameToLayer("piece");
+      public static int ItemLayer = LayerMask.NameToLayer("item"); // should be 12
 
-    public static LayerMask PhysicalLayers = LayerMask.GetMask("Default",
-      "character", "piece",
-      "terrain",
-      "static_solid", "Default_small",
-      "character_net", "vehicle",
-      LayerMask.LayerToName(CustomRaftLayer));
+      public static bool IsItemLayer(int layer)
+      {
+        return layer == ItemLayer;
+      }
 
-    public static LayerMask OnboardLayers = LayerMask.GetMask("item", "character");
+      public static LayerMask CustomRaftLayerMask =
+        LayerMask.GetMask(LayerMask.LayerToName(CustomRaftLayer));
 
-    public static LayerMask BlockingColliderExcludeLayers = LayerMask.GetMask(
-      "character", "character_net", "character_trigger", "viewbox",
-      "character_nonenv",
-      LayerMask.LayerToName(CustomRaftLayer));
+      public static LayerMask PhysicalLayers = LayerMask.GetMask("Default",
+        "character", "piece",
+        "terrain",
+        "static_solid", "Default_small",
+        "character_net", "vehicle",
+        LayerMask.LayerToName(CustomRaftLayer));
 
-    public static List<string> ActiveLayersForBlockingMask = new();
+      public static LayerMask OnboardLayers = LayerMask.GetMask("item", "character");
 
-    public static int NonSolidLayer =
-      LayerMask.NameToLayer("piece_nonsolid");
+      public static string SmokeLayerString = LayerMask.LayerToName(31);
 
-    public static int IgnoreRaycastLayer =
-      LayerMask.NameToLayer("Ignore Raycast");
+      public static LayerMask BlockingColliderExcludeLayers = LayerMask.GetMask(
+        "character", "character_net", "character_trigger", "viewbox",
+        "character_nonenv",
+        LayerMask.LayerToName(CustomRaftLayer), SmokeLayerString);
 
-    public static LayerMask RamColliderExcludeLayers = LayerMask.GetMask(
-      "character_trigger", "viewbox", "character_nonenv", "UI",
-      "effect", "ghost", "piece_nonsolid", "Water", "WaterVolume", "skybox",
-      "hitbox",
-      "character_ghost");
+      public static List<string> ActiveLayersForBlockingMask = new();
 
-    public static int CharacterLayer = LayerMask.NameToLayer("character");
+      public static int NonSolidLayer =
+        LayerMask.NameToLayer("piece_nonsolid");
 
-    public static bool IsContainedWithinLayerMask(int layer, LayerMask mask)
-    {
-      return (mask.value & 1 << layer) != 0;
-    }
+      public static int IgnoreRaycastLayer =
+        LayerMask.NameToLayer("Ignore Raycast");
 
-    [UsedImplicitly]
-    public static List<int> GetActiveLayers(LayerMask mask)
-    {
-      ActiveLayersForBlockingMask.Clear();
-      var activeLayers = new List<int>();
+      public static LayerMask RamColliderExcludeLayers = LayerMask.GetMask(
+        "character_trigger", "viewbox", "character_nonenv", "UI",
+        "effect", "ghost", "piece_nonsolid", "Water", "WaterVolume", "skybox",
+        "hitbox",
+        "character_ghost");
 
-      // Iterate through all 32 possible layers
-      for (var i = 0; i < 32; i++)
-        // Check if the i-th bit in the mask is set
-        if ((mask.value & 1 << i) != 0)
-        {
-          var name = LayerMask.LayerToName(i);
-          ActiveLayersForBlockingMask.Add(name);
-          activeLayers.Add(i); // Add the layer index to the list
-        }
+      public static int CharacterLayer = LayerMask.NameToLayer("character");
+
+      public static bool IsContainedWithinLayerMask(int layer, LayerMask mask)
+      {
+        return (mask.value & 1 << layer) != 0;
+      }
+
+      [UsedImplicitly]
+      public static List<int> GetActiveLayers(LayerMask mask)
+      {
+        ActiveLayersForBlockingMask.Clear();
+        var activeLayers = new List<int>();
+
+        // Iterate through all 32 possible layers
+        for (var i = 0; i < 32; i++)
+          // Check if the i-th bit in the mask is set
+          if ((mask.value & 1 << i) != 0)
+          {
+            var name = LayerMask.LayerToName(i);
+            ActiveLayersForBlockingMask.Add(name);
+            activeLayers.Add(i); // Add the layer index to the list
+          }
 
 #if DEBUG
-      Debug.Log(string.Join(",", ActiveLayersForBlockingMask));
+        Debug.Log(string.Join(",", ActiveLayersForBlockingMask));
 #endif
 
-      return activeLayers;
-    }
+        return activeLayers;
+      }
 
-    /// <summary>
-    ///   Shortcut to combining masks
-    /// </summary>
-    /// <param name="originalMask"></param>
-    /// <param name="layerToAdd"></param>
-    /// <returns></returns>
-    public static LayerMask CombineLayerMask(LayerMask originalMask,
-      int layerToAdd)
-    {
-      return originalMask | 1 << layerToAdd;
+      /// <summary>
+      ///   Shortcut to combining masks
+      /// </summary>
+      /// <param name="originalMask"></param>
+      /// <param name="layerToAdd"></param>
+      /// <returns></returns>
+      public static LayerMask CombineLayerMask(LayerMask originalMask,
+        int layerToAdd)
+      {
+        return originalMask | 1 << layerToAdd;
+      }
     }
   }
-}
