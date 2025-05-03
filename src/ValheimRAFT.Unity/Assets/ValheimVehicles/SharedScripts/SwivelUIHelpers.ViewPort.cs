@@ -21,7 +21,8 @@
         viewportRT.anchorMin = Vector2.zero;
         viewportRT.anchorMax = Vector2.one;
         viewportRT.offsetMin = Vector2.zero;
-        viewportRT.offsetMax = Vector2.zero;
+        viewportRT.offsetMax = Vector2.one;
+        // viewportRT.offsetMax = Vector2.zero;
 
         scrollRect.viewport = viewportRT;
         var viewportImage = viewportGO.GetComponent<Image>();

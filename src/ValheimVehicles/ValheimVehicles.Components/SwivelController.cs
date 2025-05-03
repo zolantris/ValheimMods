@@ -142,7 +142,7 @@
 
     public void AddPieceToParent(Transform pieceTransform)
     {
-      pieceTransform.SetParent(pieceContainer);
+      pieceTransform.SetParent(piecesContainer);
     }
 
     public void StartActivatePendingSwivelPieces()
@@ -254,11 +254,19 @@
       return zdo.GetInt(VehicleZdoVars.SwivelParentId) != 0;
     }
 
-    public void Start()
+    public override void Start()
     {
+      base.Start();
       m_vehiclePiecesController = GetComponentInParent<VehiclePiecesController>();
       UpdateRotation();
       _pieceActivator.StartInitPersistentId();
+    }
+
+    public override void SetInitialLocalRotation()
+    {
+      if (m_nview == null || m_nview.GetZDO() == null) return;
+      var localRotation = m_nview.GetZDO().GetVec3(VehicleZdoVars.MBRotationVecHash, transform.localRotation.eulerAngles);
+      m_startPieceRotation = Quaternion.Euler(localRotation);
     }
 
     public void OnInitComplete()
@@ -289,10 +297,10 @@
         // var dir = Utils.YawFromDirection(transform.InverseTransformDirection(windDir));
         var dir = Quaternion.LookRotation(
           -Vector3.Lerp(windDir,
-            Vector3.Normalize(windDir - pieceContainer.forward), turnTime),
-          pieceContainer.up);
+            Vector3.Normalize(windDir - piecesContainer.forward), turnTime),
+          piecesContainer.up);
 
-        return Quaternion.RotateTowards(pieceContainer.transform.rotation, dir, 30f * Time.fixedDeltaTime);
+        return Quaternion.RotateTowards(piecesContainer.transform.rotation, dir, 30f * Time.fixedDeltaTime);
       }
       // use the sync mast
       return m_vehicle.MovementController.m_mastObject.transform.localRotation;
@@ -311,7 +319,7 @@
     }
     public Transform GetPieceContainer()
     {
-      return pieceContainer;
+      return piecesContainer;
     }
 
   #endregion

@@ -15,19 +15,48 @@ public class PanelUtil
 {
   public static GameObject CreateBasicPanel(string panelName, bool hasImage)
   {
-    var panel = DefaultControls.CreatePanel(
-      GUIManager.Instance.ValheimControlResources
-    );
-    panel.name = panelName;
+    // Create root panel object
+    var uiElementRoot = new GameObject(panelName, typeof(RectTransform), typeof(Image));
 
+    uiElementRoot.name = panelName;
+
+    // Optionally disable background image
     if (!hasImage)
     {
-      var image = panel.GetComponent<Image>();
+      var image = uiElementRoot.GetComponent<Image>();
       image.enabled = false;
     }
 
-    return panel;
+    // Set transform
+    var rect = uiElementRoot.GetComponent<RectTransform>();
+    rect.anchorMin = new Vector2(0.5f, 0.5f);
+    rect.anchorMax = new Vector2(0.5f, 0.5f);
+    rect.pivot = new Vector2(0.5f, 0.5f);
+    rect.anchoredPosition = Vector2.zero;
+    rect.sizeDelta = new Vector2(600f, 0f); // width fixed, height driven by children
+
+    // Add layout group
+    var layout = uiElementRoot.AddComponent<VerticalLayoutGroup>();
+    layout.childControlHeight = true;
+    layout.childForceExpandHeight = false;
+    layout.childControlWidth = true;
+    layout.childForceExpandWidth = true;
+    layout.spacing = 10f;
+    layout.padding = new RectOffset(20, 20, 20, 20);
+
+    // Let the panel grow with its content
+    var fitter = uiElementRoot.AddComponent<ContentSizeFitter>();
+    fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+    fitter.horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+    // Clamp panel height to screen height
+    var layoutElement = uiElementRoot.AddComponent<LayoutElement>();
+    layoutElement.preferredHeight = Mathf.Clamp(Screen.height - 100f, 500, 800f);
+    layoutElement.flexibleHeight = 0;
+
+    return uiElementRoot;
   }
+
 
   public static void OnPanelPositionChange(RectTransform panelTransform, ConfigEntry<Vector2> WindowPosition)
   {
@@ -69,10 +98,14 @@ public class PanelUtil
       buttonStyles.position,
       buttonStyles.width ?? 150,
       buttonStyles.height ?? 150);
-
+    var buttonLayout = buttonObject.AddComponent<LayoutElement>();
+    buttonLayout.flexibleHeight = 0; // Don't stretch vertically
+    buttonLayout.preferredHeight = buttonStyles.height ?? 40f; // Set fixed height
+    buttonLayout.minHeight = 32f; // Prevent collapsing
     var text = buttonObject.GetComponentInChildren<Text>();
     // Add a listener to the button to close the panel again
     var button = buttonObject.GetComponent<Button>();
+
 
     var hasToggle = onToggle != null;
 

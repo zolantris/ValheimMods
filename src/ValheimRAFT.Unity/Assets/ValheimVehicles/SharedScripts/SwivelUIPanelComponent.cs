@@ -83,6 +83,17 @@
       {
         panelRoot = CreateUIRoot();
         var scrollRect = SwivelUIHelpers.CreateScrollView(panelRoot.transform, viewStyles);
+        var scrollViewLayoutElement = scrollRect.gameObject.AddComponent<LayoutElement>();
+        scrollViewLayoutElement.flexibleHeight = 800f; // Don't stretch vertically
+        scrollViewLayoutElement.flexibleWidth = 800f;
+
+        // guards
+        scrollViewLayoutElement.minWidth = 500f;
+        scrollViewLayoutElement.minHeight = 300f; // Prevent collapsing
+
+        scrollViewLayoutElement.preferredHeight = 500f; // Set fixed height
+
+
         var scrollViewport = SwivelUIHelpers.CreateViewport(scrollRect, viewStyles);
 
         var scrollViewContent = SwivelUIHelpers.CreateContent("Content", scrollViewport.transform, viewStyles);

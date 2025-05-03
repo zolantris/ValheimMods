@@ -42,7 +42,7 @@ public class ScreenSizeWatcher : SingletonBehaviour<ScreenSizeWatcher>
     while (isActiveAndEnabled)
     {
       yield return new WaitForSeconds(3f);
-      yield return new WaitForFixedUpdate();
+      yield return new WaitForEndOfFrame();
       SyncScreenSize();
     }
   }
