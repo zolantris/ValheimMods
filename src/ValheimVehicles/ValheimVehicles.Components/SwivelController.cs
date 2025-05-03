@@ -116,6 +116,7 @@
       }
     }
 
+#if DEBUG
     public void AddNearestPiece()
     {
       var hits = Physics.SphereCastAll(transform.position, 30f, Vector3.up, 30f, LayerHelpers.PhysicalLayers);
@@ -128,6 +129,7 @@
       var firstHit = listHits.First();
       TryAddPieceToSwivelContainer(GetPersistentId(), firstHit.transform.GetComponentInParent<ZNetView>());
     }
+#endif
 
     public static bool TryAddPieceToSwivelContainer(int persistentId, ZNetView netViewPrefab)
     {
@@ -150,26 +152,26 @@
       _pieceActivator.StartActivatePendingPieces();
     }
 
-    public void ActivatePiece(ZNetView netView)
-    {
-      if (netView == null) return;
-      var zdo = netView.GetZDO();
-      if (netView.m_zdo == null) return;
-
-      AddPieceToParent(netView.transform);
-
-      // This should work just like finalize transform...so not needed technically. Need to see where the break in the logic is.
-      netView.transform.localPosition =
-        netView.m_zdo.GetVec3(VehicleZdoVars.MBPositionHash, Vector3.zero);
-      netView.transform.localRotation =
-        Quaternion.Euler(netView.m_zdo.GetVec3(VehicleZdoVars.MBRotationVecHash,
-          Vector3.zero));
-
-      var wnt = netView.GetComponent<WearNTear>();
-      if ((bool)wnt) wnt.enabled = true;
-
-      AddPiece(netView);
-    }
+    // public void ActivatePiece(ZNetView netView)
+    // {
+    //   if (netView == null) return;
+    //   var zdo = netView.GetZDO();
+    //   if (netView.m_zdo == null) return;
+    //
+    //   AddPieceToParent(netView.transform);
+    //
+    //   // This should work just like finalize transform...so not needed technically. Need to see where the break in the logic is.
+    //   netView.transform.localPosition =
+    //     netView.m_zdo.GetVec3(VehicleZdoVars.MBPositionHash, Vector3.zero);
+    //   netView.transform.localRotation =
+    //     Quaternion.Euler(netView.m_zdo.GetVec3(VehicleZdoVars.MBRotationVecHash,
+    //       Vector3.zero));
+    //
+    //   var wnt = netView.GetComponent<WearNTear>();
+    //   if ((bool)wnt) wnt.enabled = true;
+    //
+    //   AddPiece(netView);
+    // }
 
     public void OnActivationComplete()
     {
@@ -191,7 +193,6 @@
       foreach (var nvPiece in m_pieces)
       {
         if (nvPiece == null || nvPiece.GetZDO() == null) continue;
-        nvPiece.GetZDO().RemoveInt(VehicleZdoVars.SwivelParentId);
         nvPiece.transform.SetParent(null);
       }
     }
@@ -226,7 +227,6 @@
 
       m_hoverFadeText.Show();
       m_hoverFadeText.transform.position = transform.position + Vector3.up;
-      m_hoverFadeText.ResetHoverTimer();
       m_hoverFadeText.currentText = ModTranslations.Swivel_Connected;
 
       // must call this otherwise everything is in world position. 
@@ -372,7 +372,7 @@
       if (SwivelUIPanelComponent.Instance == null) Game.instance.gameObject.AddComponent<SwivelUIPanelComponent>();
       if (SwivelUIPanelComponent.Instance != null)
       {
-        if (SwivelUIPanelComponent.Instance.gameObject.activeInHierarchy)
+        if (SwivelUIPanelComponent.Instance.panelRoot != null && SwivelUIPanelComponent.Instance.panelRoot.activeInHierarchy)
         {
           SwivelUIPanelComponent.Instance.Hide();
         }
@@ -440,7 +440,11 @@
 
     public void AddPiece(ZNetView nv, bool isNew = false)
     {
-      if (nv == null) return;
+      if (nv == null)
+      {
+        BasePieceActivatorComponent.AddPendingPiece(GetPersistentId(), nv);
+        return;
+      }
       AddPieceToParent(nv.transform);
 
       if (m_vehiclePiecesController != null)
@@ -461,10 +465,16 @@
 
       if (m_vehiclePiecesController != null)
       {
-        m_vehiclePiecesController.RemoveTempPiece(nv);
+        m_vehiclePiecesController.RemovePiece(nv);
       }
 
-      TogglePlacementContainer(m_pieces.Count == 0);
+      var currentPieceCount = GetPieceCount();
+      var hasZeroPieces = currentPieceCount == 0;
+      if (hasZeroPieces)
+      {
+        m_hoverFadeText.Hide();
+      }
+      TogglePlacementContainer(hasZeroPieces);
     }
 
     ///

@@ -181,10 +181,13 @@
         {
           case SwivelMode.None:
             break;
-          case SwivelMode.Target:
+          case SwivelMode.TargetEnemy:
             // todo add a swivel target type "enemy", "friendly", "direction", "wind", "enemies"
             // _targetRotation = CalculateTargetWindDirectionRotation();
             _targetRotation = CalculateTargetNearestEnemyRotation();
+            break;
+          case SwivelMode.TargetWind:
+            CalculateTargetWindDirectionRotation();
             break;
           // case SwivelMode.TargetNearestEnemy:
           //   break;
@@ -221,6 +224,8 @@
         {
           piecesContainer.localRotation = m_startPieceRotation;
         }
+        _currentYAngle = 0f;
+        _currentZAngle = 0f;
       }
 
       public void SetMode(SwivelMode newMode)

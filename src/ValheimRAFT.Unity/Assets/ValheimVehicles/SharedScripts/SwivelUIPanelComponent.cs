@@ -63,14 +63,21 @@
           CreateUI();
         }
 
-        if (panelRoot)
+        if (panelRoot != null)
         {
           panelRoot.gameObject.SetActive(true);
         }
       }
       public void Hide()
       {
-        gameObject.SetActive(false);
+        if (panelRoot != null)
+        {
+          panelRoot.gameObject.SetActive(false);
+        }
+        else
+        {
+          LoggerProvider.LogError("SwivelPanel was null, cannot hide. This call should not happen.");
+        }
       }
 
       public virtual GameObject CreateUIRoot()

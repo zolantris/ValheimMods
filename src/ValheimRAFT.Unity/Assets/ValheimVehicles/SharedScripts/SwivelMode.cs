@@ -1,9 +1,9 @@
-﻿namespace ValheimVehicles.SharedScripts
+﻿namespace ValheimVehicles.SharedScripts;
+
+public enum SwivelMode
 {
-  public enum SwivelMode
-  {
-    None,
-    Target,
-    DoorMode
-  }
+  None,
+  TargetEnemy,
+  TargetWind,
+  DoorMode
 }

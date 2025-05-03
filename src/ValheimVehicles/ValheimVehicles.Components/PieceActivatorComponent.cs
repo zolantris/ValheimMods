@@ -45,6 +45,9 @@
       LoggerProvider.LogWarning("No OnInitComplete assigned");
     };
 
+    protected abstract void TrySetPieceToParent(ZNetView netView);
+    protected abstract void AddPiece(ZNetView netView, bool isNewPiece = false);
+
     public void StartInitPersistentId()
     {
       if (_initPersistentIdCoroutine != null) return;
@@ -119,8 +122,7 @@
 
         foreach (var piece in currentPieces.ToList())
         {
-          TrySetPieceToParent(piece);
-          FinalizeTransform(piece);
+          ActivatePiece(piece);
         }
 
         currentPieces.Clear();
@@ -136,7 +138,7 @@
 
       _pendingPiecesState = PendingPieceStateEnum.Complete;
       _pendingPiecesCoroutine = null;
-      OnActivationComplete.Invoke();
+      OnActivationComplete?.Invoke();
     }
 
     protected void FinalizeTransform(ZNetView netView)
@@ -150,8 +152,13 @@
       if (netView.TryGetComponent<WearNTear>(out var wnt))
         wnt.enabled = true;
     }
+    public void ActivatePiece(ZNetView netView)
+    {
+      TrySetPieceToParent(netView);
+      FinalizeTransform(netView);
+      AddPiece(netView);
+    }
 
-    protected abstract void TrySetPieceToParent(ZNetView netView);
 
     public static int GetSwivelParentId(ZDO zdo)
     {
@@ -188,10 +195,10 @@
 
       var parentObj = ZdoWatchController.Instance.GetGameObject(id);
 
-      var swivelController = parentObj == null ? null : parentObj.GetComponent<SwivelController>();
-      if (swivelController != null)
+      var swivelPieceActivator = parentObj == null ? null : parentObj.GetComponent<SwivelPieceActivator>();
+      if (swivelPieceActivator != null)
       {
-        swivelController.ActivatePiece(netView);
+        swivelPieceActivator.ActivatePiece(netView);
         return true;
       }
 

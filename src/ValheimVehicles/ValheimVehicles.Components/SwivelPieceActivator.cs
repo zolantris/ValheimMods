@@ -18,6 +18,11 @@ public class SwivelPieceActivator : BasePieceActivatorComponent
     netView.transform.SetParent(_host.GetPieceContainer(), false);
   }
 
+  protected override void AddPiece(ZNetView netView, bool isNewPiece = false)
+  {
+    _host.AddPiece(netView, isNewPiece);
+  }
+
   public void Init(SwivelController host)
   {
     _host = host;

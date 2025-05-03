@@ -46,6 +46,10 @@
       // Classic vehicle-specific logic
       netView.transform.SetParent(_host.GetPiecesContainer(), false);
     }
+    protected override void AddPiece(ZNetView netView, bool isNewPiece = false)
+    {
+      _host.AddPiece(netView, isNewPiece);
+    }
   }
 
   /// <summary>controller used for all vehicles</summary>
@@ -493,6 +497,12 @@
       m_vehicleBurningEffectAreas.Remove(netView.m_zdo.m_uid);
     }
 
+    public void InitSwivelController(SwivelController swivelController)
+    {
+      swivelController.m_vehiclePiecesController = this;
+      swivelController.StartActivatePendingSwivelPieces();
+    }
+
     public void RemovePiece(ZNetView netView)
     {
       if (PrefabNames.IsVehicle(netView.name)) return;
@@ -628,6 +638,9 @@
       foreach (var component in components)
         switch (component)
         {
+          case SwivelController swivelController:
+            InitSwivelController(swivelController);
+            break;
           case WearNTear wnt
             when PrefabConfig.MakeAllPiecesWaterProof.Value:
             wnt.m_noRoofWear = false;
@@ -1349,11 +1362,13 @@
             var swivel = nv.GetComponentInParent<SwivelController>();
             if (swivel != null)
             {
-              nv.m_zdo?.SetPosition(CanUseActualPiecePosition ? nv.transform.position : vehiclePosition);
+              nv.m_zdo?.SetPosition(CanUseActualPiecePosition ? swivel.transform.position : vehiclePosition);
+              continue;
             }
           }
         }
 
+        // updates the zdo for the current location of the piece.
         nv.m_zdo?.SetPosition(CanUseActualPiecePosition ? nv.transform.position : vehiclePosition);
       }
       var convexHullBounds = convexHullComponent.GetConvexHullBounds(false);
@@ -2764,6 +2779,11 @@
 
       foreach (var piece in items)
       {
+        if (piece == null)
+        {
+          LoggerProvider.LogDev("Piece is null during GetVehicleFloatHeight calc.");
+          continue;
+        }
         var newBounds = EncapsulateColliders(BaseControllerHullBounds.center,
           BaseControllerHullBounds.size,
           piece.gameObject);
