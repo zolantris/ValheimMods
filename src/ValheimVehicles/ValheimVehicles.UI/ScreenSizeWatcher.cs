@@ -29,6 +29,7 @@ public class ScreenSizeWatcher : SingletonBehaviour<ScreenSizeWatcher>
 
   private void SyncScreenSize()
   {
+    if (!isActiveAndEnabled) return;
     var currentSize = new Vector2Int(Screen.width, Screen.height);
     if (currentSize != _lastSize)
     {

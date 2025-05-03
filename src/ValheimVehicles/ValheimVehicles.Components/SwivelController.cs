@@ -175,6 +175,7 @@
 
     public void OnActivationComplete()
     {
+      SetInitialLocalRotation();
       CanUpdate = true;
     }
 
@@ -258,7 +259,7 @@
     {
       base.Start();
       m_vehiclePiecesController = GetComponentInParent<VehiclePiecesController>();
-      UpdateRotation();
+      SetInitialLocalRotation();
       _pieceActivator.StartInitPersistentId();
     }
 
@@ -306,19 +307,6 @@
     public void OnInitComplete()
     {
       StartActivatePendingSwivelPieces();
-    }
-
-    public void UpdateRotation()
-    {
-      if (m_nview != null && m_nview.GetZDO() != null)
-      {
-        var zdoRotation = m_nview.GetZDO().GetRotation();
-        m_startPieceRotation = zdoRotation;
-      }
-      else
-      {
-        m_startPieceRotation = transform.localRotation;
-      }
     }
 
     protected override Quaternion CalculateTargetWindDirectionRotation()

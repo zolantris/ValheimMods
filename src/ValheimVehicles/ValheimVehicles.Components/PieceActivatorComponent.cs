@@ -32,7 +32,7 @@
 
     public static readonly Dictionary<int, List<ZNetView>> m_pendingPieces = new();
 
-    protected bool CanActivatePendingPieces => _pendingPiecesCoroutine == null && _isInitComplete && Host.GetPersistentId() != 0;
+    protected bool CanActivatePendingPieces => _pendingPiecesCoroutine == null && _isInitComplete && Host != null && Host.GetPersistentId() != 0;
 
     private Coroutine? _initPersistentIdCoroutine;
     private bool _isInitComplete = false;
@@ -66,10 +66,19 @@
       OnInitComplete.Invoke();
     }
 
+    public void OnDisable()
+    {
+      if (_pendingPiecesCoroutine != null)
+      {
+        StopCoroutine(_pendingPiecesCoroutine);
+        _pendingPiecesCoroutine = null;
+      }
+    }
+
 
     public void StartActivatePendingPieces()
     {
-      if (!CanActivatePendingPieces) return;
+      if (!CanActivatePendingPieces || !isActiveAndEnabled || ZNet.instance == null || ZNetScene.instance == null) return;
 
       var id = Host.GetPersistentId();
       if (!m_pendingPieces.TryGetValue(id, out var pending) || pending.Count == 0)
