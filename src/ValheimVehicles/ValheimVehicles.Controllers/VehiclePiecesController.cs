@@ -2655,9 +2655,10 @@
 
     private void UpdatePieceCount()
     {
-      if ((bool)Manager.m_nview &&
-          m_nview?.m_zdo != null)
-        Manager.m_nview.m_zdo.Set(VehicleZdoVars.MBPieceCount,
+      if (IsInvalid()) return;
+      if (m_nview != null &&
+          m_nview.m_zdo != null)
+        m_nview.m_zdo.Set(VehicleZdoVars.MBPieceCount,
           m_pieces.Count);
     }
 
