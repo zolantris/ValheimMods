@@ -41,7 +41,7 @@ public class VehicleShipEffects : MonoBehaviour, IMonoUpdater
 
   private Rigidbody m_body;
 
-  private VehicleShip m_ship;
+  private VehicleManager _mManager;
 
   public static List<VehicleShipEffects> Instances { get; } = [];
   public static List<IMonoUpdater> MonoUpdaters = [];
@@ -70,7 +70,7 @@ public class VehicleShipEffects : MonoBehaviour, IMonoUpdater
     }
 
     m_body = GetComponentInParent<Rigidbody>();
-    m_ship = GetComponentInParent<VehicleShip>();
+    _mManager = GetComponentInParent<VehicleManager>();
     if ((bool)m_speedWakeRoot)
       m_wakeParticles =
         m_speedWakeRoot.GetComponentsInChildren<ParticleSystem>();
@@ -145,18 +145,18 @@ public class VehicleShipEffects : MonoBehaviour, IMonoUpdater
     FadeSounds(m_inWaterSounds, true, deltaTime);
 
     // flying and submerged states should never have a wake.
-    if (m_ship.MovementController != null &&
-        (m_ship.MovementController.IsSubmerged() ||
-         m_ship.MovementController.IsFlying()))
+    if (_mManager.MovementController != null &&
+        (_mManager.MovementController.IsSubmerged() ||
+         _mManager.MovementController.IsFlying()))
     {
       m_speedWakeRoot.SetActive(false);
     }
     else
     {
-      if (m_ship.MovementController != null)
+      if (_mManager.MovementController != null)
       {
         var speedWakePos = m_speedWakeRoot.transform.position;
-        speedWakePos.y = m_ship.MovementController.ShipFloatationObj
+        speedWakePos.y = _mManager.MovementController.ShipFloatationObj
           .AverageWaterHeight;
         m_speedWakeRoot.transform.position = speedWakePos;
       }
@@ -165,14 +165,14 @@ public class VehicleShipEffects : MonoBehaviour, IMonoUpdater
       SetWake(flag, deltaTime);
     }
 
-    if (m_sailSound != null && m_ship.MovementController != null)
+    if (m_sailSound != null && _mManager.MovementController != null)
     {
-      var target = m_ship!.MovementController!.IsSailUp() ? m_sailBaseVol : 0f;
+      var target = _mManager!.MovementController!.IsSailUp() ? m_sailBaseVol : 0f;
       FadeSound(m_sailSound, target, m_sailFadeDuration, deltaTime);
     }
 
-    if (m_splashEffects != null && m_ship.MovementController != null)
-      m_splashEffects.SetActive(m_ship!.OnboardController!.HasPlayersOnboard);
+    if (m_splashEffects != null && _mManager.MovementController != null)
+      m_splashEffects.SetActive(_mManager!.OnboardController!.HasPlayersOnboard);
   }
 
   private void SetWake(bool enabled, float dt)

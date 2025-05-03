@@ -17,6 +17,8 @@ namespace ValheimVehicles.SharedScripts
     public GameObject Prefab;
     public List<Collider> AllColliders;
     public List<Collider> HullColliders;
+    public bool IsSwivelChild;
+    public bool IsBed;
     public PrefabColliderPointData? ColliderPointData;
 
     public PrefabPieceData(GameObject prefab, Allocator allocator)
@@ -25,11 +27,30 @@ namespace ValheimVehicles.SharedScripts
       AllColliders = new List<Collider>();
       HullColliders = new List<Collider>();
       ColliderPointData = null;
+      IsBed = false;
+      IsSwivelChild = false;
 
-      InitializeColliders(prefab.transform.root, allocator);
+      InitComponentProperties(prefab);
+      InitColliders(prefab.transform.root, allocator);
     }
 
-    public void InitializeColliders(Transform root, Allocator allocator)
+    /// <summary>
+    /// called within the constructor in order to mutate the original data before it's returned.
+    /// </summary>
+    /// <param name="prefab"></param>
+    private void InitComponentProperties(GameObject prefab)
+    {
+      IsBed = false;
+      // IsBed = prefab.GetComponent<Bed>();
+      IsSwivelChild = prefab.GetComponentInParent<SwivelComponent>() != null;
+    }
+
+    /// <summary>
+    /// called within the constructor in order to mutate the original data before it's returned.
+    /// </summary>
+    /// <param name="root"></param>
+    /// <param name="allocator"></param>
+    private void InitColliders(Transform root, Allocator allocator)
     {
       Prefab.GetComponentsInChildren(true, AllColliders);
 

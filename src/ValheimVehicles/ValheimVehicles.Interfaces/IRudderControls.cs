@@ -6,7 +6,7 @@ public interface IRudderControls
 {
   public string m_hoverText { get; set; }
 
-  public IVehicleShip ShipInstance { get; }
+  public IVehicleControllers ControllersInstance { get; }
 
   public float MaxUseRange { get; set; }
 

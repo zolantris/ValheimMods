@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.Serialization;
 using ValheimVehicles.Config;
 using ValheimVehicles.Controllers;
 using ValheimVehicles.Helpers;
@@ -155,6 +156,7 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
     Shader.PropertyToID("_LogoRotation");
 
   private static readonly int LogoNormal = Shader.PropertyToID("_LogoNormal");
+  public bool hasRegisteredRPC = false;
 
   public void Awake()
   {
@@ -166,6 +168,23 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
     m_mesh = GetComponent<SkinnedMeshRenderer>();
     m_meshCollider = GetComponent<MeshCollider>();
     m_nview = GetComponent<ZNetView>();
+  }
+
+
+  public void RegisterRPC()
+  {
+    if (hasRegisteredRPC)
+    {
+      return;
+    }
+    m_nview.Register(nameof(RPC_SyncSailData), RPC_SyncSailData);
+    hasRegisteredRPC = true;
+  }
+
+  public void UnregisterRPC()
+  {
+    m_nview.Unregister(nameof(RPC_SyncSailData));
+    hasRegisteredRPC = false;
   }
 
   private IEnumerator WaitForInitialization()
@@ -183,6 +202,7 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
       yield break;
     }
 
+    RegisterRPC();
     LoadZDO();
   }
 
@@ -214,6 +234,7 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
   {
     if (GetIsInitialized())
     {
+      RegisterRPC();
       LoadZDO();
     }
     else
@@ -245,6 +266,7 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
   {
     CancelInvoke();
     StopAllCoroutines();
+    UnregisterRPC();
   }
 
   private void DestroySelfOnError()
@@ -567,6 +589,39 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
     var zdo = m_nview.m_zdo;
     var data = CreateStoredSailData();
     data.ApplyToZDO(zdo, this);
+  }
+
+  /// <summary>
+  /// Request for all peers to sync this new data. Does not send the data. This expects the data to arrive within a short period of time.
+  /// </summary>
+  public void RequestSyncZDOData()
+  {
+    if (m_nview == null || m_nview.m_zdo == null) return;
+    m_nview.InvokeRPC(nameof(RPC_SyncSailData));
+  }
+
+  public void RPC_SyncSailData(long sender)
+  {
+    if (!isActiveAndEnabled) return;
+    if (LoadZDOCoroutine != null) return;
+    LoadZDOCoroutine = StartCoroutine(Debounce_LoadZDO());
+  }
+
+  private Coroutine? LoadZDOCoroutine = null;
+
+  public IEnumerator Debounce_LoadZDO()
+  {
+    yield return new WaitForSeconds(0.1f);
+    yield return new WaitForFixedUpdate();
+    try
+    {
+      LoadZDO();
+    }
+    catch (Exception e)
+    {
+      // ignored
+    }
+    LoadZDOCoroutine = null;
   }
 
   /// <summary>

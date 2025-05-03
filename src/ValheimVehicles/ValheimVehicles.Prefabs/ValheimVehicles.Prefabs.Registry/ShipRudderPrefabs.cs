@@ -5,6 +5,7 @@ using Jotunn.Managers;
 using UnityEngine;
 using ValheimVehicles.Prefabs.Registry;
 using ValheimVehicles.Components;
+using ValheimVehicles.SharedScripts;
 
 namespace ValheimVehicles.Prefabs;
 

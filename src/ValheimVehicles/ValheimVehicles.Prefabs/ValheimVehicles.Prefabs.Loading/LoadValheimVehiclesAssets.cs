@@ -24,6 +24,8 @@ public class LoadValheimVehicleAssets : ILoadAssets
 
   public static GameObject ShipAnchorWood = null!;
 
+  public static GameObject Swivel = null!;
+
   // hull
   public static GameObject ShipHullWoodAsset = null!;
   public static GameObject ShipHullIronAsset = null!;
@@ -286,6 +288,8 @@ public class LoadValheimVehicleAssets : ILoadAssets
         $"vehicle_land.prefab");
 
     VehicleHammer = assetBundle.LoadAsset<GameObject>("vehicle_hammer.prefab");
+
+    Swivel = assetBundle.LoadAsset<GameObject>("swivel.prefab"); 
 
     MovingTreadComponent.fallbackPrefab = TankTreadsSingle;
 

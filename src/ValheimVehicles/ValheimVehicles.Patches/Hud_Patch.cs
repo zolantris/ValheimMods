@@ -9,6 +9,7 @@ using ValheimVehicles.Compat;
 using ValheimVehicles.Controllers;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.Components;
+using ValheimVehicles.SharedScripts;
 using Logger = Jotunn.Logger;
 
 namespace ValheimVehicles.Patches;
@@ -59,7 +60,7 @@ public class Hud_Patch
       AnchorHud.transform.localPosition = rudderIndicator.localPosition;
   }
 
-  private static void ToggleAnchorHud(VehicleShip? vehicleShip)
+  private static void ToggleAnchorHud(VehicleManager? vehicleShip)
   {
     if (vehicleShip == null || vehicleShip.MovementController == null) return;
     var isAnchored = vehicleShip.MovementController.isAnchored;
@@ -94,7 +95,7 @@ public class Hud_Patch
   /// <param name="dt"></param>
   /// <param name="vehicleInterface"></param>
   public static void UpdateShipHudV2(Hud __instance, Player player, float dt,
-    VehicleShipCompat vehicleInterface)
+    VehicleControllersCompat vehicleInterface)
   {
     var speedSetting = vehicleInterface.GetSpeedSetting();
     var rudder = vehicleInterface.GetRudder();
@@ -125,7 +126,7 @@ public class Hud_Patch
     }
 
     rudder2.SetActive((byte)active != 0);
-    if ((rudder > 0f && rudderValue < 1f) || (rudder < 0f && rudderValue > -1f))
+    if (rudder > 0f && rudderValue < 1f || rudder < 0f && rudderValue > -1f)
       __instance.m_shipRudderIcon.transform.Rotate(new Vector3(0f, 0f,
         200f * (0f - rudder) * dt));
 
@@ -172,10 +173,10 @@ public class Hud_Patch
     var controlledShipObj = Player_Patch.HandleGetControlledShip(player);
     if (controlledShipObj == null) return true;
 
-    var vehicleInterface = VehicleShipCompat.InitFromUnknown(controlledShipObj);
+    var vehicleInterface = VehicleControllersCompat.InitFromUnknown(controlledShipObj);
 
     if (vehicleInterface == null) return true;
-    
+
     if (vehicleInterface.IsVehicleShip)
       ToggleAnchorHud(vehicleInterface.VehicleShipInstance);
     else

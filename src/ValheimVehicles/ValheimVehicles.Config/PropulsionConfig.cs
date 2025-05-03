@@ -55,7 +55,7 @@ public class PropulsionConfig : BepInExBaseConfig<PropulsionConfig>
   public static ConfigEntry<float> SailCustomAreaTier1Multiplier { get; set; }
 
   public static ConfigEntry<bool> ShowShipStats { get; set; }
-  
+
   public static ConfigEntry<float> VerticalSmoothingSpeed
   {
     get;
@@ -269,7 +269,7 @@ public class PropulsionConfig : BepInExBaseConfig<PropulsionConfig>
         VehicleMovementController.SetPhysicsSyncTarget(
           DefaultPhysicsMode
             .Value);
-    AllowFlight.SettingChanged += VehicleShip.OnAllowFlight;
+    AllowFlight.SettingChanged += VehicleManager.OnAllowFlight;
     // setters that must be called on init
     VehicleMovementController.SetPhysicsSyncTarget(
       DefaultPhysicsMode.Value);
@@ -321,6 +321,6 @@ public class PropulsionConfig : BepInExBaseConfig<PropulsionConfig>
       ConfigHelpers.CreateConfigDescription(
         "Turn speed for landvehicles. Zero is half the normal speed, 50% is normal speed, and 100% is double normal speed.", true, false, new AcceptableValueRange<float>(0, 1f)));
 
-    VehicleLandTurnSpeed.SettingChanged += (sender, args) => VehicleShip.UpdateAllWheelControllers();
+    VehicleLandTurnSpeed.SettingChanged += (sender, args) => VehicleManager.UpdateAllWheelControllers();
   }
 }

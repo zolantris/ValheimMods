@@ -4,6 +4,7 @@ using Jotunn.Entities;
 using Jotunn.Managers;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.Prefabs.Registry;
+using ValheimVehicles.SharedScripts;
 
 namespace Registry;
 

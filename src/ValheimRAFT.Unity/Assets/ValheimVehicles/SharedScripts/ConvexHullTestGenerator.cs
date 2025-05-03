@@ -1,11 +1,11 @@
 #region
 
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
-using JetBrains.Annotations;
-using UnityEngine;
-using UnityEngine.Serialization;
+  using System.Collections;
+  using System.Collections.Generic;
+  using System.Linq;
+  using JetBrains.Annotations;
+  using UnityEngine;
+  using UnityEngine.Serialization;
 
 #endregion
 
@@ -320,7 +320,7 @@ namespace ValheimVehicles.SharedScripts
     /// <returns></returns>
     public Vector3? GetPieceOffset()
     {
-      var pieceCount = basePiecesController.prefabPieceDataItems.Count;
+      var pieceCount = basePiecesController.m_prefabPieceDataItems.Count;
       var currentVector = new Vector3(4 * xOffset, 4 * yOffset, 4 * zOffset);
 
       if (yOffset > MaxYGeneration)
@@ -360,11 +360,11 @@ namespace ValheimVehicles.SharedScripts
     private IEnumerator TestAddPieceToVehicleChild()
     {
       if (!prefabFloorPiece) yield break;
-      if (basePiecesController.prefabPieceDataItems.Count > maxPiecesToAdd) yield break;
-      var currentPieces = basePiecesController.prefabPieceDataItems.Count;
+      if (basePiecesController.m_prefabPieceDataItems.Count > maxPiecesToAdd) yield break;
+      var currentPieces = basePiecesController.m_prefabPieceDataItems.Count;
 
       var current = 0;
-      while (BatchAddSize > current && basePiecesController.prefabPieceDataItems.Count < maxPiecesToAdd)
+      while (BatchAddSize > current && basePiecesController.m_prefabPieceDataItems.Count < maxPiecesToAdd)
       {
         InstantiatePrefab(prefabFloorPiece);
         InstantiatePrefab(prefabWallPiece);

@@ -194,7 +194,7 @@ public class WaterVolume_WaterPatches
         (IsCameraBelowWater && !isCurrentlyFlipped))
     {
       if (!isCurrentlyFlipped && (CanFlipEverywhere || (CanFlipOnlyOffboard &&
-            !VehicleOnboardController.IsCharacterOnboard(
+                                                        !VehicleOnboardController.IsCharacterOnboard(
               Player.m_localPlayer))))
       {
         FlipWaterSurface(__instance, normalizedDepth);

@@ -50,7 +50,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
     "Valheim Mod for building on the sea, requires Jotunn to be installed.";
   public const string CopyRight = "Copyright © 2023-2024, GNU-v3 licensed";
   // ReSharper restore MemberCanBePrivate.Global
-  
+
   public static ValheimRaftPlugin Instance { get; private set; }
 
   // public ConfigEntry<bool> EnableMetrics { get; set; }
@@ -62,7 +62,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
     return new ConfigDescription(
       description,
       acceptableValues,
-      new ConfigurationManagerAttributes()
+      new ConfigurationManagerAttributes
       {
         IsAdminOnly = isAdmin,
         IsAdvanced = isAdvanced
@@ -118,7 +118,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
 #endif
 
   public void Awake()
-  {    
+  {
     Instance = this;
 
     // RegisterHost command might need to be called before AddComponent
@@ -128,7 +128,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
     // must be done before any other services that require LoggerProvider otherwise it will not work.
     ProviderInitializers.InitProviders(Logger, gameObject);
     ValheimVehicles.Compat.ValheimRAFT_API.RegisterHost(Instance);
-    ValheimVehiclesPlugin.CreateConfigFromRAFTConfig(Config);
+    ValheimVehiclesPlugin.CreateConfigFromValheimRAFTPluginConfig(Config);
 
     // @warning patch controller must be called after CreateConfig.
     PatchController.Apply(HarmonyGuid);
@@ -137,7 +137,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
 
     RegisterVehicleConsoleCommands();
 
-    
+
     PrefabManager.OnVanillaPrefabsAvailable += () =>
     {
       // do not load custom textures on a dedicated server. This will do nothing but cause an error.

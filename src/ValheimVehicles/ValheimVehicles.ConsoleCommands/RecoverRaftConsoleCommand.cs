@@ -120,7 +120,7 @@ public class RecoverRaftConsoleCommand : ConsoleCommand
       if (withinVehicleRoot) continue;
 
       var zdoid2 = nv.m_zdo.GetZDOID(VehicleZdoVars.MBParentHash);
-      var mbRaftZdo = nv.m_zdo.GetInt(VehicleZdoVars.MBParentIdHash);
+      var mbRaftZdo = nv.m_zdo.GetInt(VehicleZdoVars.MBParentId);
 
 
       var parentInstance = ZNetScene.instance.FindInstance(zdoid2);
@@ -167,7 +167,7 @@ public class RecoverRaftConsoleCommand : ConsoleCommand
     foreach (var id in unattachedVehicleNetViews.Keys)
     {
       var list = unattachedVehicleNetViews[id];
-      var vehicleShip = VehicleShip.InitWithoutStarterPiece(list[0].transform);
+      var vehicleShip = VehicleManager.InitWithoutStarterPiece(list[0].transform);
       foreach (var piece in list)
       {
         piece.transform.SetParent(

@@ -1,2 +1,3 @@
 ﻿[*.cs]
 dotnet_style_namespace_declarations = file_scoped:silent
+unity_project = true

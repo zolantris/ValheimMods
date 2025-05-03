@@ -47,7 +47,8 @@ public class VehicleDebugHelpers : MonoBehaviour
   public bool autoUpdateColliders = false;
   private List<DrawTargetColliders> targetColliders = [];
   public GameObject VehicleObj;
-  public VehicleShip VehicleShipInstance;
+  [FormerlySerializedAs("vehicleBaseControllerInstance")] [FormerlySerializedAs("vehicleBaseBaseControllerInstance")] [FormerlySerializedAs("vehicleMainControllerInstance")] [FormerlySerializedAs("vehicleControllersInstance")] [FormerlySerializedAs("VehicleShipInstance")]
+  public VehicleManager vehicleManagerInstance;
   private Coroutine? _drawColliderCoroutine = null;
   private GameObject? worldCenterOfMassCube;
   private GameObject? vehicleMovementAutomaticCenterOfMassCube;
@@ -67,10 +68,10 @@ public class VehicleDebugHelpers : MonoBehaviour
 
   private void RenderDebugCubes()
   {
-    if (VehicleShipInstance == null ||
-        VehicleShipInstance.MovementController == null || VehicleShipInstance.PiecesController == null) return;
+    if (vehicleManagerInstance == null ||
+        vehicleManagerInstance.MovementController == null || vehicleManagerInstance.PiecesController == null) return;
 
-    var shipFloatation = VehicleShipInstance
+    var shipFloatation = vehicleManagerInstance
       .MovementController.GetShipFloatation();
 
     // physics should be orange
@@ -86,15 +87,15 @@ public class VehicleDebugHelpers : MonoBehaviour
     }
 
     // center of mass debugging should be yellow
-    RenderDebugCube(ref worldCenterOfMassCube, VehicleShipInstance.MovementController.m_body.worldCenterOfMass, "center_of_mass", Color.yellow, Vector3.up * 1);
-    RenderDebugCube(ref vehiclePiecesCenterOfMassCube, VehicleShipInstance.PiecesController.m_localRigidbody.worldCenterOfMass, "vehicle_pieces_automatic_center_of_mass", Color.yellow, Vector3.up * 0.5f);
-    RenderDebugCube(ref vehicleMovementAutomaticCenterOfMassCube, VehicleShipInstance.MovementController.m_body.position + VehicleShipInstance.MovementController.vehicleAutomaticCenterOfMassPoint, "vehicle_automatic_center_of_mass", Color.yellow, Vector3.up * 2);
+    RenderDebugCube(ref worldCenterOfMassCube, vehicleManagerInstance.MovementController.m_body.worldCenterOfMass, "center_of_mass", Color.yellow, Vector3.up * 1);
+    RenderDebugCube(ref vehiclePiecesCenterOfMassCube, vehicleManagerInstance.PiecesController.m_localRigidbody.worldCenterOfMass, "vehicle_pieces_automatic_center_of_mass", Color.yellow, Vector3.up * 0.5f);
+    RenderDebugCube(ref vehicleMovementAutomaticCenterOfMassCube, vehicleManagerInstance.MovementController.m_body.position + vehicleManagerInstance.MovementController.vehicleAutomaticCenterOfMassPoint, "vehicle_automatic_center_of_mass", Color.yellow, Vector3.up * 2);
 
     // vehicle center debugging should be green
-    RenderDebugCube(ref vehiclePiecesCenterCube, VehicleShipInstance.PiecesController.transform.position, "vehicle_piece_center", Color.green, Vector3.up * 3);
-    RenderDebugCube(ref vehicleMovementCenterCube, VehicleShipInstance.MovementController.transform.position, "vehicle_movement_center", Color.green, Vector3.up * 4);
+    RenderDebugCube(ref vehiclePiecesCenterCube, vehicleManagerInstance.PiecesController.transform.position, "vehicle_piece_center", Color.green, Vector3.up * 3);
+    RenderDebugCube(ref vehicleMovementCenterCube, vehicleManagerInstance.MovementController.transform.position, "vehicle_movement_center", Color.green, Vector3.up * 4);
 
-    RenderDebugCube(ref vehiclePieceCenterPoint, VehicleShipInstance.PiecesController.vehicleCenter.transform.position, "piece_vehicle_center_point", Color.red, Vector3.up * 5);
+    RenderDebugCube(ref vehiclePieceCenterPoint, vehicleManagerInstance.PiecesController.vehicleCenter.transform.position, "piece_vehicle_center_point", Color.red, Vector3.up * 5);
   }
 
   private void FixedUpdate()
@@ -195,7 +196,7 @@ public class VehicleDebugHelpers : MonoBehaviour
       return;
     }
 
-    if (VehicleShipInstance.MovementController == null) return;
+    if (vehicleManagerInstance.MovementController == null) return;
 
     if (cube == null)
     {
@@ -232,7 +233,7 @@ public class VehicleDebugHelpers : MonoBehaviour
     // Update the cube's position and set its parent
     cube.transform.position = position;
     cube.transform.SetParent(
-      VehicleShipInstance.PiecesController.transform,
+      vehicleManagerInstance.PiecesController.transform,
       true);
 
     // Ensure the text always faces the camera
@@ -268,7 +269,7 @@ public class VehicleDebugHelpers : MonoBehaviour
 
     vehicleInstance.AddOrRemoveVehicleDebugger();
     var helper = vehicleInstance.Instance.VehicleDebugHelpersInstance;
-    
+
     return helper;
   }
 
@@ -281,22 +282,22 @@ public class VehicleDebugHelpers : MonoBehaviour
 
   public void FlipShip()
   {
-    if (!(bool)VehicleShipInstance?.MovementController?.m_body) return;
-    if (VehicleShipInstance == null) return;
-    if (VehicleShipInstance.MovementController == null) return;
+    if (!(bool)vehicleManagerInstance?.MovementController?.m_body) return;
+    if (vehicleManagerInstance == null) return;
+    if (vehicleManagerInstance.MovementController == null) return;
     // flips the x and z axis which act as the boat depth and sides
     // y-axis is boat height. Flipping that would just rotate boat which is why it is omitted
-    if (!VehicleShipInstance.isCreative)
-      VehicleShipInstance.MovementController.m_body.isKinematic = true;
+    if (!vehicleManagerInstance.isCreative)
+      vehicleManagerInstance.MovementController.m_body.isKinematic = true;
 
     // transform.rotation = Quaternion.Euler(0, VehicleObj.transform.eulerAngles.y,
     //   0);
-    VehicleShipInstance.MovementController.m_body.rotation = Quaternion.Euler(0,
+    vehicleManagerInstance.MovementController.m_body.rotation = Quaternion.Euler(0,
       VehicleObj.transform.eulerAngles.y,
       0);
 
-    if (!VehicleShipInstance.isCreative)
-      VehicleShipInstance.MovementController.m_body.isKinematic = false;
+    if (!vehicleManagerInstance.isCreative)
+      vehicleManagerInstance.MovementController.m_body.isKinematic = false;
   }
 
   private static void DrawLine(Vector3 start, Vector3 end, int index,
@@ -448,7 +449,7 @@ public class VehicleDebugHelpers : MonoBehaviour
       lines.Add(boxCollider.name, colliderItems);
     }
 
-    var lineRendererData = new DrawLineData()
+    var lineRendererData = new DrawLineData
     {
       color = color,
       boxCollider = boxCollider,

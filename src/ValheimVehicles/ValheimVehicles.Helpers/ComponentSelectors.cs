@@ -9,7 +9,7 @@ namespace ValheimVehicles.Helpers;
 /// </summary>
 public static class ComponentSelectors
 {
-  public static VehiclePiecesController? GetVehiclePiecesController(VehicleShip? m_vehicle)
+  public static VehiclePiecesController? GetVehiclePiecesController(VehicleManager? m_vehicle)
   {
     if (m_vehicle != null && m_vehicle.PiecesController != null)
     {
@@ -20,7 +20,7 @@ public static class ComponentSelectors
   }
 
   public static bool TryGetVehiclePiecesController(
-    VehicleShip? vehicle,
+    VehicleManager? vehicle,
     [NotNullWhen(true)] out VehiclePiecesController? controller)
   {
     if (vehicle != null && vehicle.PiecesController != null)

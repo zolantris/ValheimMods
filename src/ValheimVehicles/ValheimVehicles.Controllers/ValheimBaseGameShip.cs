@@ -94,7 +94,7 @@ public class ValheimBaseGameShip : MonoBehaviour
 
   public Rigidbody m_body { get; set; }
 
-  internal ZNetView m_nview;
+  internal ZNetView? m_nview { get; set; }
 
   internal Cloth m_sailCloth;
 

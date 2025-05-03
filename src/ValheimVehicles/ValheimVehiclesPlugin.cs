@@ -9,6 +9,8 @@ using ValheimVehicles.Constants;
 using ValheimVehicles.Controllers;
 using ValheimVehicles.QuickStartWorld.Config;
 using ValheimVehicles.SharedScripts;
+using ValheimVehicles.SharedScripts.UI;
+using ValheimVehicles.UI;
 using Zolantris.Shared.Debug;
 
 namespace ValheimVehicles;
@@ -31,6 +33,8 @@ public class ValheimVehiclesPlugin : MonoBehaviour
   private RetryGuard _languageRetry;
 
   private MapPinSync _mapPinSync;
+  private SwivelUIPanelComponentIntegration _swivelUIPanel;
+  private ScreenSizeWatcher _screenSizeWatcher;
 
   public static ValheimVehiclesPlugin Instance { get; private set; }
 
@@ -87,6 +91,8 @@ public class ValheimVehiclesPlugin : MonoBehaviour
   private void SetupComponents()
   {
     _mapPinSync = gameObject.AddComponent<MapPinSync>();
+    _swivelUIPanel = gameObject.AddComponent<SwivelUIPanelComponentIntegration>();
+    _screenSizeWatcher = gameObject.AddComponent<ScreenSizeWatcher>();
   }
 
   private void OnLanguageChanged()
@@ -108,12 +114,13 @@ public class ValheimVehiclesPlugin : MonoBehaviour
   /// </summary>
   /// <param name="config"></param>
   [UsedImplicitly]
-  public static void CreateConfigFromRAFTConfig(ConfigFile config)
+  public static void CreateConfigFromValheimRAFTPluginConfig(ConfigFile config)
   {
     if (HasCreatedConfig)
     {
       return;
     }
+
 
     PatchConfig.BindConfig(config);
     RamConfig.BindConfig(config);
@@ -129,6 +136,8 @@ public class ValheimVehiclesPlugin : MonoBehaviour
     CameraConfig.BindConfig(config);
     RenderingConfig.BindConfig(config);
     VehicleGlobalConfig.BindConfig(config);
+    GuiConfig.BindConfig(config);
+
 
 #if DEBUG
     // Meant for only being run in debug builds for testing quickly

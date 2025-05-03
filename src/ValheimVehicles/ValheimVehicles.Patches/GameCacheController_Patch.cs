@@ -15,6 +15,6 @@ public class GameCacheController_Patch
   [HarmonyPostfix]
   private static void ZNetScene_Awake(ZNetScene __instance)
   {
-    __instance.gameObject.AddComponent<GameCacheController>();
+    // __instance.gameObject.AddComponent<GameCacheController>();
   }
 }

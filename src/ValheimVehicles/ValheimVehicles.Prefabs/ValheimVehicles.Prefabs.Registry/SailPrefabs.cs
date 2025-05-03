@@ -7,6 +7,7 @@ using UnityEngine;
 using UnityEngine.Rendering;
 using ValheimVehicles.Components;
 using ValheimVehicles.Config;
+using ValheimVehicles.SharedScripts;
 using Logger = Jotunn.Logger;
 
 namespace ValheimVehicles.Prefabs.Registry;
@@ -31,9 +32,9 @@ public class SailPrefabs : IRegisterPrefab
 
   public static bool IsSail(string objName)
   {
-    return (objName.StartsWith(PrefabNames.Tier1RaftMastName) &&
-            objName.StartsWith(PrefabNames
-              .Tier1CustomSailName)) ||
+    return objName.StartsWith(PrefabNames.Tier1RaftMastName) &&
+           objName.StartsWith(PrefabNames
+             .Tier1CustomSailName) ||
            objName.StartsWith(PrefabNames.Tier2RaftMastName) ||
            objName.StartsWith(PrefabNames.Tier3RaftMastName) ||
            objName.StartsWith(PrefabNames.Tier4RaftMastName);

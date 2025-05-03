@@ -3,6 +3,7 @@ using ValheimVehicles.Controllers;
 using ValheimVehicles.SharedScripts;
 using ValheimVehicles.Components;
 using ValheimVehicles.Helpers;
+using ValheimVehicles.UI;
 using Zolantris.Shared;
 
 namespace ValheimVehicles.Config;
@@ -188,14 +189,14 @@ public class VehicleDebugConfig : BepInExBaseConfig<VehicleDebugConfig>
         "Outputs more debug information for the vehicle pieces controller which manages all pieces placement. Meant for debugging mod issues. Will cause performance issues and lots of logging when enabled.",
         false, true));
 
-    
+
     CommandsWindowPosX = Config.Bind(SectionName, "CommandsWindowPosX", 0f);
     CommandsWindowPosY = Config.Bind(SectionName, "CommandsWindowPosY", 0f);
     VehicleConfigWindowPosX = Config.Bind(SectionName, "ConfigWindowPosX", 0f);
     VehicleConfigWindowPosY = Config.Bind(SectionName, "ConfigWindowPosY", 0f);
     ButtonFontSize = Config.Bind(SectionName, "ButtonFontSize", 18);
     TitleFontSize = Config.Bind(SectionName, "LabelFontSize", 22);
-    
+
     VehicleBoundsRebuildDelayPerPiece.SettingChanged += (sender, args) =>
     {
       BasePiecesController.RebuildBoundsDelayPerPiece = VehicleBoundsRebuildDelayPerPiece.Value;

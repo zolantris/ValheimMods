@@ -6,6 +6,8 @@ using ValheimVehicles.Prefabs;
 using ValheimVehicles.Components;
 using ValheimVehicles.Helpers;
 using ValheimVehicles.Prefabs.Registry;
+using ValheimVehicles.Prefabs.ValheimVehicles.Prefabs.Registry;
+using ValheimVehicles.SharedScripts;
 
 namespace ValheimVehicles.Config;
 
@@ -149,9 +151,9 @@ public class PrefabConfig : BepInExBaseConfig<PrefabConfig>
       ));
 
     AllowExperimentalPrefabs.SettingChanged +=
-      VehiclePrefabs.Instance.OnExperimentalPrefabSettingsChange;
+      ExperimentalPrefabRegistry.OnExperimentalPrefabSettingsChange;
 
-    ExperimentalTreadScaleX.SettingChanged += (sender, args) => VehicleShip.UpdateAllWheelControllers();
+    ExperimentalTreadScaleX.SettingChanged += (sender, args) => VehicleManager.UpdateAllWheelControllers();
     VehicleStaminaHaulingCost.SettingChanged += (_, __) =>
     {
       VehicleMovementController.staminaHaulCost = VehicleStaminaHaulingCost.Value;

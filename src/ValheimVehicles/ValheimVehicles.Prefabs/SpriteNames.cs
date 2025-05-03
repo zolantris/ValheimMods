@@ -1,3 +1,4 @@
+using ValheimVehicles.SharedScripts;
 namespace ValheimVehicles.Prefabs;
 
 public abstract class SpriteNames
@@ -57,6 +58,9 @@ public abstract class SpriteNames
   public const string WindowWallSquareWood = "hull_wall_window_square_wood_2x2";
 
   public const string Nautilus = "nautilus";
+
+  public const string SwivelIcon = "swivel";
+
 
   /// <summary>
   /// Can be top,bottom,left,right this helper is likely not needed, but provided for organization

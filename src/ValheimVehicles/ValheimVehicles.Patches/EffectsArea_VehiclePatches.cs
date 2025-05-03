@@ -8,6 +8,8 @@ namespace ValheimVehicles.Patches;
 
 /// <summary>
 /// Valheim 0.219.1 (bogwitch) patch
+///
+/// These are fireplace and cooking fixes.
 /// </summary>
 /// <param name="p"></param>
 /// todo add patches for monster areas too. Could prevent spawning of monsters in theory and add booleans to allow spawning when the vehicle is re-rendered as the bounds would then be accurate and prevent spawns.
@@ -23,9 +25,9 @@ public static class EffectsArea_VehiclePatches
     ref bool __result)
   {
     EffectArea effectArea = null!;
-    var prefixOutput = GetPrefix_EffectWithinVehicleArea(p, ref effectArea);
+    GetPrefix_EffectWithinVehicleArea(p, ref effectArea, out var shouldSkipOriginalMethod);
     __result = effectArea != null;
-    return prefixOutput;
+    return shouldSkipOriginalMethod;
   }
 
   [HarmonyPatch(typeof(EffectArea),
@@ -35,31 +37,22 @@ public static class EffectsArea_VehiclePatches
   private static bool EffectArea_GetBurningAreaPointPlus025(Vector3 p,
     ref EffectArea __result)
   {
-    return GetPrefix_EffectWithinVehicleArea(p, ref __result);
+    GetPrefix_EffectWithinVehicleArea(p, ref __result, out var shouldSkipOriginalMethod);
+    return shouldSkipOriginalMethod;
   }
 
-  private static bool GetPrefix_EffectWithinVehicleArea(Vector3 p,
-    ref EffectArea __result)
+  private static void GetPrefix_EffectWithinVehicleArea(Vector3 p,
+    ref EffectArea __result, out bool shouldSkipOriginalMethod)
   {
-    if (!VehiclePiecesController.IsPointWithin(p, out var piecesController))
+    shouldSkipOriginalMethod = false;
+
+    if (VehiclePiecesController.IsPointWithinEffectsArea(p, out var matchingEffectsArea) && matchingEffectsArea != null)
     {
-      return true;
+      __result = matchingEffectsArea;
+      shouldSkipOriginalMethod = true;
+      return;
     }
 
-    if (piecesController == null) return true;
-
-    // we cannot be certain of the ZDOID.
-    var matchingInstance =
-      piecesController.cachedVehicleBurningEffectAreas.Values.FirstOrDefault(
-        x => x.m_collider.bounds.Contains(p));
-
-    if (matchingInstance == null)
-    {
-      return true;
-    }
-
-    __result = matchingInstance;
-
-    return false;
+    shouldSkipOriginalMethod = false;
   }
 }

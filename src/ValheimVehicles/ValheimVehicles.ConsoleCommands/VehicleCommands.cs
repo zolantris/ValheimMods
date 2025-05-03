@@ -13,13 +13,13 @@ using Jotunn.Entities;
 using Jotunn.Managers;
 using UnityEngine;
 using UnityEngine.Assertions.Must;
-
 using ValheimVehicles.Config;
 using ValheimVehicles.Helpers;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.SharedScripts;
 using ValheimVehicles.Components;
 using ValheimVehicles.Controllers;
+using ValheimVehicles.UI;
 using Zolantris.Shared.Debug;
 using Logger = Jotunn.Logger;
 using Object = UnityEngine.Object;
@@ -244,8 +244,8 @@ public class VehicleCommands : ConsoleCommand
           ? character.transform.localPosition
           : Vector3.zero;
         character.transform.SetParent(null);
-        
-        characterData.Add(new SafeMoveCharacterData()
+
+        characterData.Add(new SafeMoveCharacterData
         {
           character = character,
           isDebugFlying = isDebugFlying,
@@ -257,7 +257,7 @@ public class VehicleCommands : ConsoleCommand
     var wasDebugFlying = Player.m_localPlayer.IsDebugFlying();
     if (!wasDebugFlying) Player.m_localPlayer.m_body.isKinematic = true;
 
-    return new SafeMoveData()
+    return new SafeMoveData
     {
       charactersOnShip = characterData,
       IsLocalPlayerDebugFlying = wasDebugFlying,
@@ -330,12 +330,13 @@ public class VehicleCommands : ConsoleCommand
     if (data.Value.charactersOnShip.Count <= 0) yield break;
     var piecesController =
       data.Value.OnboardController?.PiecesController?.transform;
-    var zdo = data.Value.OnboardController?.vehicleShip?.NetView?.m_zdo;
+    var zdo = data.Value.OnboardController?.Manager?.m_nview?.GetZDO();
+
+    if (piecesController == null || zdo == null) yield break;
 
     foreach (var safeMoveCharacterData in data.Value.charactersOnShip)
     {
       var targetLocation = nextPosition + safeMoveCharacterData.lastLocalOffset;
-      if (piecesController != null && zdo != null)
       {
         var safeMoveCharacterPos = safeMoveCharacterData.character.transform.position;
         var piecesControllerPos = piecesController.transform.position;
@@ -349,10 +350,10 @@ public class VehicleCommands : ConsoleCommand
 
         if (Mathf.Abs(deltaX) > 50f || Mathf.Abs(deltaY) > 50f ||
             Mathf.Abs(deltaZ) > 50f)
-          targetLocation = zdo
+          targetLocation = zdo!
                              .GetPosition() +
                            safeMoveCharacterData.lastLocalOffset;
-        
+
         TeleportImmediately(safeMoveCharacterData.character,
           targetLocation);
       }
@@ -393,7 +394,7 @@ public class VehicleCommands : ConsoleCommand
         }
 
         playerData.character.m_body.isKinematic = playerData.isKinematic;
-        
+
         ResetPlayerVelocities(playerData.character);
       }
 
@@ -425,9 +426,10 @@ public class VehicleCommands : ConsoleCommand
     yield return null;
   }
 
-  private static IEnumerator MoveVehicleIntoFarZone(VehicleShip vehicleInstance,
+  private static IEnumerator MoveVehicleIntoFarZone(VehicleManager vehicleInstance,
     Vector3 offset, Action<Vector3> onPositionReady)
   {
+    if (vehicleInstance.PiecesController == null) yield break;
     var newLocation =
       VectorUtils.MergeVectors(vehicleInstance.transform.position, offset);
 
@@ -443,10 +445,11 @@ public class VehicleCommands : ConsoleCommand
       ZoneSystem.instance.IsZoneLoaded(newLocation) ||
       timer.ElapsedMilliseconds > 5000);
 
+    if (vehicleInstance.m_nview == null || vehicleInstance.m_nview.m_zdo == null) yield break;
+
     vehicleInstance.transform.position = newLocation;
-    vehicleInstance.NetView.m_zdo.SetPosition(newLocation);
-    VehiclePiecesController.ForceUpdateAllPiecePositions(
-      vehicleInstance.PiecesController, newLocation);
+    vehicleInstance.m_nview.m_zdo.SetPosition(newLocation);
+    vehicleInstance.PiecesController.ForceUpdateAllPiecePositions(newLocation);
     onPositionReady(vehicleInstance.transform.position);
   }
 
@@ -456,7 +459,7 @@ public class VehicleCommands : ConsoleCommand
   /// </summary>
   /// <param name="vehicleInstance">The vehicle instance to move.</param>
   /// <param name="offset">The offset vector to apply.</param>
-  private static IEnumerator MoveVehicle(VehicleShip? vehicleInstance,
+  private static IEnumerator MoveVehicle(VehicleManager? vehicleInstance,
     Vector3 offset)
   {
     if (vehicleInstance?.OnboardController == null)
@@ -576,22 +579,21 @@ public class VehicleCommands : ConsoleCommand
   private static void VehicleRotate(string[] args)
   {
     var vehicleController = VehicleDebugHelpers.GetVehiclePiecesController();
-    if (!vehicleController)
+    if (vehicleController == null || vehicleController.MovementController == null)
     {
       Logger.LogMessage("No VehicleController Detected");
       return;
     }
 
     if (args.Length == 1)
-      Game.instance.StartCoroutine(vehicleController?.VehicleInstance
-        ?.MovementController?.FixShipRotation());
+      Game.instance.StartCoroutine(vehicleController.MovementController.FixShipRotation());
 
     if (args.Length == 4)
     {
       float.TryParse(args[1], out var x);
       float.TryParse(args[2], out var y);
       float.TryParse(args[3], out var z);
-      vehicleController?.VehicleInstance?.Instance?.MovementController?.m_body
+      vehicleController.MovementController.m_body
         .MoveRotation(
           Quaternion.Euler(
             Mathf.Approximately(0f, x) ? 0 : x,
@@ -611,7 +613,7 @@ public class VehicleCommands : ConsoleCommand
     {
       VehicleGui.AddRemoveVehicleGui();
     }
-    
+
     VehicleGui.ToggleConfigPanelState(true);
   }
 
@@ -631,7 +633,7 @@ public class VehicleCommands : ConsoleCommand
     }
   }
 
-  public static VehicleShip? GetNearestVehicleShip(Vector3 position)
+  public static VehicleManager? GetNearestVehicleShip(Vector3 position)
   {
     if (!Physics.Raycast(
           GameCamera.instance.transform.position,
@@ -647,10 +649,10 @@ public class VehicleCommands : ConsoleCommand
     var vehiclePiecesController =
       hitinfo.collider.GetComponentInParent<VehiclePiecesController>();
 
-    if (!(bool)vehiclePiecesController?.VehicleInstance?.Instance) return null;
+    if (!(bool)vehiclePiecesController.Manager) return null;
 
     var vehicleShipController =
-      vehiclePiecesController?.VehicleInstance?.Instance;
+      vehiclePiecesController.Manager;
     return vehicleShipController;
   }
 
@@ -701,9 +703,9 @@ public class VehicleCommands : ConsoleCommand
       string.Join(",", vehiclePendingPieces?.Select(x => x.name) ?? []);
     if (pendingPiecesString == string.Empty) pendingPiecesString = "None";
 
-    var piecesCount = pieceController.m_nviewPieces.Count;
+    var piecesCount = pieceController.m_pieces.Count;
     var piecesString = string.Join(",",
-      pieceController.m_nviewPieces?.Select(x => x.name) ?? []);
+      pieceController.m_pieces?.Select(x => x.name) ?? []);
 
     // todo swap all m_players to OnboardController.characterData check instead.
     var playersOnVehicle =
@@ -802,7 +804,7 @@ public class VehicleCommands : ConsoleCommand
     LoggerProvider.LogMessage("Completed creative mode commands.");
   }
 
-  private static Vector3 GetCreativeModeTargetPosition(VehicleShip vehicleInstance)
+  private static Vector3 GetCreativeModeTargetPosition(VehicleManager vehicleInstance)
   {
     if (vehicleInstance == null || vehicleInstance.MovementController == null) return Vector3.zero;
 
@@ -826,7 +828,7 @@ public class VehicleCommands : ConsoleCommand
     var closestVehicle = GetNearestVehicleShip(Player.m_localPlayer.transform.position);
     if (closestVehicle == null || closestVehicle.PiecesController == null) return;
 
-    var nvPiecesClone = closestVehicle.PiecesController.m_nviewPieces.ToList();
+    var nvPiecesClone = closestVehicle.PiecesController.m_pieces.ToList();
 
     foreach (var piecesControllerMNviewPiece in nvPiecesClone)
     {
@@ -834,7 +836,7 @@ public class VehicleCommands : ConsoleCommand
       piecesControllerMNviewPiece.Destroy();
     }
 
-    closestVehicle.Instance.NetView.Destroy();
+    closestVehicle.Instance.m_nview.Destroy();
 
     LoggerProvider.LogMessage("Completed destroy vehicle command.");
   }

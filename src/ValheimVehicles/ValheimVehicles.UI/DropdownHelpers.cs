@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using TMPro;
 using ValheimVehicles.SharedScripts;
-namespace ValheimVehicles.GUI;
+namespace ValheimVehicles.UI;
 
 public static class DropdownHelpers
 {
