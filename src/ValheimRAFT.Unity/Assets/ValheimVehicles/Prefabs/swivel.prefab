@@ -744,7 +744,7 @@ GameObject:
   - component: {fileID: 1088190664190276483}
   - component: {fileID: 9186758140731428884}
   m_Layer: 10
-  m_Name: direction_debugger
+  m_Name: direction_debugger_arrow
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

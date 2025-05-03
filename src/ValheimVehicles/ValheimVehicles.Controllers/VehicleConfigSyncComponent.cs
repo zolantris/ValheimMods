@@ -42,21 +42,19 @@
 
     public override void RegisterRPCListeners()
     {
-      base.RegisterRPCListeners();
-      // retry guards. Sometimes things are not available on Awake().
       if (!IsValid(out var netView))
       {
         _rpcRegisterRetry.Retry(RegisterRPCListeners, 1);
         return;
       }
+
+      base.RegisterRPCListeners();
+      // retry guards. Sometimes things are not available on Awake().
       if (hasRegisteredRPCListeners) return;
       // ship piece bounds syncing
       netView.Register(nameof(RPC_SyncBounds), RPC_SyncBounds);
 
       // all config sync
-      netView.Register<ZPackage>(nameof(RPC_SetPrefabConfig), RPC_SetPrefabConfig);
-      netView.Register(nameof(RPC_SyncPrefabConfig), RPC_SyncPrefabConfig);
-
       CustomConfig.Load(netView.GetZDO());
 
       hasRegisteredRPCListeners = true;

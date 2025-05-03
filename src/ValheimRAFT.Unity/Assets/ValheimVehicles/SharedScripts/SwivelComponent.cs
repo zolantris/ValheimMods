@@ -57,8 +57,7 @@
 
       [Description("Piece component meant for containing all pieces that will be swivelled.")]
       public Transform piecesContainer;
-      [FormerlySerializedAs("directionDebugger")]
-      public GameObject directionDebuggerArrow;
+      public Transform directionDebuggerArrow;
 
       [Description("_connectorContainer is meant to be shown until an object is connected to the swivel component. It will also display a forward direction indicator.")]
       public Transform connectorContainer;
@@ -91,7 +90,7 @@
         FindSnappoint();
         animatedTransform = transform.Find("animated");
         piecesContainer = animatedTransform.Find("piece_container");
-        directionDebuggerArrow = piecesContainer.Find("direction_debugger_arrow").gameObject;
+        directionDebuggerArrow = piecesContainer.Find("direction_debugger_arrow");
 
         connectorContainer = transform.Find("connector_container");
         m_collider = GetComponent<BoxCollider>();
@@ -104,30 +103,14 @@
 
       public void ToggleDebugger()
       {
-        ToggleDebugger(!directionDebuggerArrow.activeSelf);
+        if (!directionDebuggerArrow) return;
+        ToggleDebugger(!directionDebuggerArrow.gameObject.activeSelf);
       }
 
-      public void ToggleDebugger(bool val)
+      public virtual void ToggleDebugger(bool val)
       {
-        var colliders = piecesContainer.GetComponentsInChildren<Collider>();
-        Bounds? bounds = null;
-        foreach (var collider in colliders)
-        {
-          var colliderBounds = collider.bounds;
-          bounds ??= new Bounds(colliderBounds.center, Vector3.zero);
-          bounds.Value.Encapsulate(colliderBounds);
-        }
-
-        if (bounds.HasValue)
-        {
-          directionDebuggerArrow.transform.position = bounds.Value.center;
-        }
-        else
-        {
-          directionDebuggerArrow.transform.position = Player.m_localPlayer.m_body.ClosestPointOnBounds(Player.m_localPlayer.transform.up * 3f);
-        }
-
-        directionDebuggerArrow.SetActive(val);
+        if (!directionDebuggerArrow) return;
+        directionDebuggerArrow.gameObject.SetActive(val);
       }
 
 

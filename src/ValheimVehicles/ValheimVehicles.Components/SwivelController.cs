@@ -262,6 +262,40 @@
       _pieceActivator.StartInitPersistentId();
     }
 
+    /// <summary>
+    /// Inefficient no-cache way to update the debugger arrow. This is not meant to be called a bunch.
+    /// </summary>
+    private void AdjustDebuggerArrowLocation()
+    {
+      var colliders = piecesContainer.GetComponentsInChildren<Collider>();
+      Bounds? bounds = null;
+      foreach (var collider in colliders)
+      {
+        var colliderBounds = collider.bounds;
+        bounds ??= new Bounds(colliderBounds.center, Vector3.zero);
+        bounds.Value.Encapsulate(colliderBounds);
+      }
+
+      if (bounds.HasValue)
+      {
+        directionDebuggerArrow.position = bounds.Value.center;
+      }
+      else
+      {
+        directionDebuggerArrow.position = Player.m_localPlayer.m_body.ClosestPointOnBounds(Player.m_localPlayer.transform.up * 3f);
+      }
+    }
+
+    public override void ToggleDebugger(bool val)
+    {
+      if (val)
+      {
+        AdjustDebuggerArrowLocation();
+      }
+
+      base.ToggleDebugger(val);
+    }
+
     public override void SetInitialLocalRotation()
     {
       if (m_nview == null || m_nview.GetZDO() == null) return;
