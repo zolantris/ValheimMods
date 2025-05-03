@@ -15,6 +15,7 @@
   using ValheimVehicles.Constants;
   using ValheimVehicles.Controllers;
   using ValheimVehicles.SharedScripts;
+  using ValheimVehicles.SharedScripts.UI;
   using ValheimVehicles.Structs;
   using Logger = Jotunn.Logger;
 
@@ -377,7 +378,7 @@
         GUIManager.Instance.ValheimControlResources
       );
       panel.name = "ValheimVehicles_configWindow";
-      var dragWindowExtension = panel.AddComponent<DragWindowCntrlExtension>();
+      var dragWindowExtension = panel.AddComponent<DragWindowControllerExtension>();
       panel.transform.SetParent(GUIManager.CustomGUIFront.transform, false);
       panel.GetComponent<Image>().pixelsPerUnitMultiplier = 1f;
       var panelTransform = (RectTransform)panel.transform;
@@ -388,9 +389,9 @@
       panelTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, panelWidth);
       panelTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, buttonHeight);
 
-      dragWindowExtension.OnDragCalled += () =>
+      dragWindowExtension.OnDragCalled += (rectTransform) =>
       {
-        var anchoredPosition = panelTransform.anchoredPosition;
+        var anchoredPosition = rectTransform.anchoredPosition;
         VehicleDebugConfig.VehicleConfigWindowPosX.Value = anchoredPosition.x;
         VehicleDebugConfig.VehicleConfigWindowPosY.Value = anchoredPosition.y;
       };
@@ -427,48 +428,71 @@
       HideOrShowCommandPanel(nextState, false);
     }
 
+    private const string CommandsPanelWindowName = "ValheimVehicles_commandsWindow";
+
+    /// <summary>
+    /// Todo replace with PanelUtils.CreatePanel
+    /// </summary>
+    /// <returns></returns>
     private GameObject CreateCommandsTogglePanel()
     {
-      var panel = DefaultControls.CreatePanel(
-        GUIManager.Instance.ValheimControlResources
-      );
-      panel.name = "ValheimVehicles_commandsWindow";
-      var dragWindowExtension = panel.AddComponent<DragWindowCntrlExtension>();
-      panel.transform.SetParent(GUIManager.CustomGUIFront.transform, false);
-      panel.GetComponent<Image>().pixelsPerUnitMultiplier = 1f;
-      var panelTransform = (RectTransform)panel.transform;
-      panelTransform.anchoredPosition = new Vector2(VehicleDebugConfig.CommandsWindowPosX.Value, VehicleDebugConfig.CommandsWindowPosY.Value);
-      panelTransform.anchorMin = anchorMin;
-      panelTransform.anchorMax = anchorMax;
-
-      panelTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, panelWidth);
-      panelTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, buttonHeight);
-
-      dragWindowExtension.OnDragCalled += () =>
+      var panelStyles = new Unity2dViewStyles
       {
-        var anchoredPosition = panelTransform.anchoredPosition;
-        VehicleDebugConfig.CommandsWindowPosX.Value = anchoredPosition.x;
-        VehicleDebugConfig.CommandsWindowPosY.Value = anchoredPosition.y;
+        anchorMin = anchorMin,
+        anchorMax = anchorMax
       };
-      // Create the button object above the gui manager. So it can hide itself.
-      var buttonObject = GUIManager.Instance.CreateButton(
-        vehicleCommandsHide,
-        panel.transform,
-        new Vector2(0.5f, 0.5f),
-        new Vector2(0.5f, 0.5f),
-        new Vector2(0, 0),
-        buttonWidth,
-        buttonHeight);
-      var buttonText = buttonObject.GetComponentInChildren<Text>();
 
-      // Add a listener to the button to close the panel again
-      var button = buttonObject.GetComponent<Button>();
-      button.onClick.AddListener(() =>
+      var buttonStyles = new Unity2dViewStyles
       {
-        OnWindowCommandsPanelToggle(buttonText);
-      });
+        anchorMin = new Vector2(0.5f, 0.5f),
+        anchorMax = new Vector2(0.5f, 0.5f),
+        position = Vector2.zero,
+        height = buttonHeight,
+        width = buttonWidth
+      };
 
-      panel.SetActive(hasCommandsWindowOpened);
+      var panel = PanelUtil.CreateDraggableHideShowPanel(CommandsPanelWindowName, panelStyles, buttonStyles, vehicleCommandsHide, vehicleCommandsShow, GuiConfig.VehicleCommandsPanelLocation, OnWindowCommandsPanelToggle);
+
+      // var panel = DefaultControls.CreatePanel(
+      //   GUIManager.Instance.ValheimControlResources
+      // );
+      // panel.name = "ValheimVehicles_commandsWindow";
+      // var dragWindowExtension = panel.AddComponent<DragWindowControllerExtension>();
+      // panel.transform.SetParent(GUIManager.CustomGUIFront.transform, false);
+      // panel.GetComponent<Image>().pixelsPerUnitMultiplier = 1f;
+      // var panelTransform = (RectTransform)panel.transform;
+      // panelTransform.anchoredPosition = new Vector2(VehicleDebugConfig.CommandsWindowPosX.Value, VehicleDebugConfig.CommandsWindowPosY.Value);
+      // panelTransform.anchorMin = anchorMin;
+      // panelTransform.anchorMax = anchorMax;
+      //
+      // panelTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, panelWidth);
+      // panelTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, buttonHeight);
+      //
+      // dragWindowExtension.OnDragCalled += (rectTransform) =>
+      // {
+      //   var anchoredPosition = rectTransform.anchoredPosition;
+      //   VehicleDebugConfig.CommandsWindowPosX.Value = anchoredPosition.x;
+      //   VehicleDebugConfig.CommandsWindowPosY.Value = anchoredPosition.y;
+      // };
+      // // Create the button object above the gui manager. So it can hide itself.
+      // var buttonObject = GUIManager.Instance.CreateButton(
+      //   vehicleCommandsHide,
+      //   panel.transform,
+      //   new Vector2(0.5f, 0.5f),
+      //   new Vector2(0.5f, 0.5f),
+      //   new Vector2(0, 0),
+      //   buttonWidth,
+      //   buttonHeight);
+      // var buttonText = buttonObject.GetComponentInChildren<Text>();
+      //
+      // // Add a listener to the button to close the panel again
+      // var button = buttonObject.GetComponent<Button>();
+      // button.onClick.AddListener(() =>
+      // {
+      //   OnWindowCommandsPanelToggle(buttonText);
+      // });
+      //
+      // panel.SetActive(hasCommandsWindowOpened);
 
       return panel;
     }

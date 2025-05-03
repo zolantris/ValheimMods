@@ -208,7 +208,7 @@
       {
         get;
         set;
-      }
+      } = Vector2.zero;
 
       public float? height
       {

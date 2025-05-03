@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using BepInEx.Configuration;
 using ValheimVehicles.SharedScripts;
 using ValheimVehicles.SharedScripts.Validation;
@@ -17,6 +18,7 @@ public class BepInExBaseConfig<TSelf> : IBepInExBaseConfig
   where TSelf : BepInExBaseConfig<TSelf>, new()
 {
   internal static readonly TSelf Instance = new();
+  private static BepInExBaseConfigDelegate configDelegate = new(Instance);
 
   /// <summary>
   /// We must always validate the Config class for requires null values. 

@@ -34,6 +34,7 @@ public class ValheimVehiclesPlugin : MonoBehaviour
 
   private MapPinSync _mapPinSync;
   private SwivelUIPanelComponentIntegration _swivelUIPanel;
+  private ScreenSizeWatcher _screenSizeWatcher;
 
   public static ValheimVehiclesPlugin Instance { get; private set; }
 
@@ -91,6 +92,7 @@ public class ValheimVehiclesPlugin : MonoBehaviour
   {
     _mapPinSync = gameObject.AddComponent<MapPinSync>();
     _swivelUIPanel = gameObject.AddComponent<SwivelUIPanelComponentIntegration>();
+    _screenSizeWatcher = gameObject.AddComponent<ScreenSizeWatcher>();
   }
 
   private void OnLanguageChanged()
@@ -112,12 +114,16 @@ public class ValheimVehiclesPlugin : MonoBehaviour
   /// </summary>
   /// <param name="config"></param>
   [UsedImplicitly]
-  public static void CreateConfigFromRAFTConfig(ConfigFile config)
+  public static void CreateConfigFromValheimRAFTPluginConfig(ConfigFile config)
   {
     if (HasCreatedConfig)
     {
       return;
     }
+
+    // test to see if BindAllConfig actually works with static inheritance. So far looks like it does not register each child extension of static methods meaning instances of these methods do not action exist until bind config is fired.
+
+    BepInExBaseConfigDelegate.BindAllConfig(config);
 
     PatchConfig.BindConfig(config);
     RamConfig.BindConfig(config);
@@ -133,6 +139,10 @@ public class ValheimVehiclesPlugin : MonoBehaviour
     CameraConfig.BindConfig(config);
     RenderingConfig.BindConfig(config);
     VehicleGlobalConfig.BindConfig(config);
+    GuiConfig.BindConfig(config);
+
+    BepInExBaseConfigDelegate.BindAllConfig(config);
+
 
 #if DEBUG
     // Meant for only being run in debug builds for testing quickly

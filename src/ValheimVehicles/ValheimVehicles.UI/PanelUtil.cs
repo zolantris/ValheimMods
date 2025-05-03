@@ -1,4 +1,5 @@
 using System;
+using BepInEx.Configuration;
 using Jotunn.Managers;
 using UnityEngine;
 using UnityEngine.UI;
@@ -12,19 +13,37 @@ namespace ValheimVehicles.UI;
 
 public class PanelUtil
 {
-  public static GameObject CreateDraggableHideShowPanel(Unity2dViewStyles panelStyles, Unity2dViewStyles buttonStyles, string hideText, string showText,
-    string buttonTitle, Action<Text>? onToggle = null, bool isActive = false)
+  public static GameObject CreateBasicPanel(string panelName, bool hasImage)
   {
-
     var panel = DefaultControls.CreatePanel(
       GUIManager.Instance.ValheimControlResources
     );
-    panel.name = "ValheimVehicles_commandsWindow";
-    var dragWindowExtension = panel.AddComponent<DragWindowCntrlExtension>();
+    panel.name = panelName;
+
+    if (!hasImage)
+    {
+      var image = panel.GetComponent<Image>();
+      image.enabled = false;
+    }
+
+    return panel;
+  }
+
+  public static void OnPanelPositionChange(RectTransform panelTransform, ConfigEntry<Vector2> WindowPosition)
+  {
+    var anchoredPosition = panelTransform.anchoredPosition;
+    WindowPosition.Value = anchoredPosition;
+  }
+
+  public static GameObject CreateDraggableHideShowPanel(string panelName, Unity2dViewStyles panelStyles, Unity2dViewStyles buttonStyles, string hideText, string showText, ConfigEntry<Vector2> WindowPosition, Action<Text>? onToggle = null, bool isActive = false)
+  {
+    var panel = CreateBasicPanel(panelName, false);
+    var dragWindowExtension = panel.AddComponent<DragWindowControllerExtension>();
     panel.transform.SetParent(GUIManager.CustomGUIFront.transform, false);
     panel.GetComponent<Image>().pixelsPerUnitMultiplier = 1f;
+
     var panelTransform = (RectTransform)panel.transform;
-    panelTransform.anchoredPosition = new Vector2(VehicleDebugConfig.CommandsWindowPosX.Value, VehicleDebugConfig.CommandsWindowPosY.Value);
+    panelTransform.anchoredPosition = WindowPosition.Value;
     panelTransform.anchorMin = panelStyles.anchorMin;
     panelTransform.anchorMax = panelStyles.anchorMax;
 
@@ -37,11 +56,9 @@ public class PanelUtil
       panelTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, panelStyles.height ?? 0);
     }
 
-    dragWindowExtension.OnDragCalled += () =>
+    dragWindowExtension.OnDragCalled += (_panelTransform) =>
     {
-      var anchoredPosition = panelTransform.anchoredPosition;
-      VehicleDebugConfig.CommandsWindowPosX.Value = anchoredPosition.x;
-      VehicleDebugConfig.CommandsWindowPosY.Value = anchoredPosition.y;
+      OnPanelPositionChange(_panelTransform, WindowPosition);
     };
     // Create the button object above the gui manager. So it can hide itself.
     var buttonObject = GUIManager.Instance.CreateButton(
