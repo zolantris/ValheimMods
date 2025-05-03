@@ -121,9 +121,6 @@ public class ValheimVehiclesPlugin : MonoBehaviour
       return;
     }
 
-    // test to see if BindAllConfig actually works with static inheritance. So far looks like it does not register each child extension of static methods meaning instances of these methods do not action exist until bind config is fired.
-
-    BepInExBaseConfigDelegate.BindAllConfig(config);
 
     PatchConfig.BindConfig(config);
     RamConfig.BindConfig(config);
@@ -140,8 +137,6 @@ public class ValheimVehiclesPlugin : MonoBehaviour
     RenderingConfig.BindConfig(config);
     VehicleGlobalConfig.BindConfig(config);
     GuiConfig.BindConfig(config);
-
-    BepInExBaseConfigDelegate.BindAllConfig(config);
 
 
 #if DEBUG

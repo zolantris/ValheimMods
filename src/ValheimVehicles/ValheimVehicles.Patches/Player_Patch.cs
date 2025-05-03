@@ -10,6 +10,7 @@
   using ValheimVehicles.Components;
   using ValheimVehicles.Controllers;
   using ValheimVehicles.Helpers;
+  using ValheimVehicles.Integrations;
   using ValheimVehicles.Interfaces;
   using ValheimVehicles.Prefabs;
   using ValheimVehicles.Propulsion.Rudder;
@@ -127,7 +128,7 @@
 
       var bvc = PatchSharedData.PlayerLastRayPiece
         .GetComponentInParent<VehiclePiecesController>();
-      var swivel = PatchSharedData.PlayerLastRayPiece.GetComponentInParent<SwivelController>();
+      var swivel = PatchSharedData.PlayerLastRayPiece.GetComponentInParent<SwivelComponentIntegration>();
 
       if (swivel != null && netView != null)
       {

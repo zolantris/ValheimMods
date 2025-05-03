@@ -363,10 +363,10 @@
 
     private void OnDisable()
     {
+      StopCoroutine(nameof(ShipFixRoutine));
       if (_hasRegister) UnregisterRPCListeners();
       Instances.Remove(this);
       MonoUpdaterInstances.Remove(this);
-      StopCoroutine(nameof(ShipFixRoutine));
     }
 
     private void OnDestroy()
@@ -1128,6 +1128,7 @@
     /// <returns></returns>
     public IEnumerator FixShipRotation()
     {
+      if (IsInvalid()) yield break;
       if (Manager == null) yield break;
       var eulerAngles = transform.rotation.eulerAngles;
       var eulerX = eulerAngles.x;

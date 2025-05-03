@@ -337,6 +337,8 @@
 
     private void OnDisable()
     {
+      CancelInvoke(nameof(DebounceExitVehicleBounds));
+
       // protect character so it removes this list on unmount of onboard controller
       foreach (var character in CharacterOnboardDataItems.Values.ToList())
         if (character.OnboardController == this)

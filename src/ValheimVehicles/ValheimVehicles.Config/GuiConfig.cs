@@ -11,8 +11,8 @@ public class GuiConfig : BepInExBaseConfig<GuiConfig>
   public const string SectionKey = "Gui";
   public static ConfigEntry<Vector2> SwivelPanelLocation = null!;
   public static ConfigEntry<Vector2> VehicleCommandsPanelLocation = null!;
-  public static ConfigEntry<Vector2> VehicleConfigPanelLocation = null!;
-  public static ConfigEntry<Vector2> SailPanelLocation = null!;
+  // public static ConfigEntry<Vector2> VehicleConfigPanelLocation = null!;
+  // public static ConfigEntry<Vector2> SailPanelLocation = null!;
 
   public const float DefaultPanelWidth = 500f;
   public const float DefaultPanelHeight = 500f;
@@ -21,6 +21,11 @@ public class GuiConfig : BepInExBaseConfig<GuiConfig>
 
   public static void EnsurePanelInScreenBounds(Vector2 inputCoordinates, ConfigEntry<Vector2> configEntry)
   {
+    if (ZNet.instance == null)
+    {
+      return;
+    }
+
     var nextCoordinates = inputCoordinates;
     var hasMutated = false;
 
@@ -68,7 +73,10 @@ public class GuiConfig : BepInExBaseConfig<GuiConfig>
     // If you resize valheim client it will not update this property and cause problems.
     ScreenSizeWatcher.OnScreenSizeChanged += (_) =>
     {
-      EnsurePanelInScreenBounds(entry.Value, entry);
+      if (entry != null && entry.Value != Vector2.zero)
+      {
+        EnsurePanelInScreenBounds(entry.Value, entry);
+      }
     };
 
     EnsurePanelInScreenBounds(entry.Value, entry);
@@ -79,8 +87,11 @@ public class GuiConfig : BepInExBaseConfig<GuiConfig>
   public override void OnBindConfig(ConfigFile config)
   {
     CreatePanelLocationConfig(config, "SwivelPanelLocation", $"SwivelPanel screen location. {ProtectedScreenValue}", out SwivelPanelLocation);
-    CreatePanelLocationConfig(config, "SailPanelLocation", $"SailPanel screen location. {ProtectedScreenValue}", out SailPanelLocation);
     CreatePanelLocationConfig(config, "VehicleCommandsPanelLocation", $"VehicleCommands panel screen location. {ProtectedScreenValue}", out VehicleCommandsPanelLocation);
-    CreatePanelLocationConfig(config, "VehicleConfigPanelLocation", $"VehicleConfig panel screen location. {ProtectedScreenValue}", out VehicleConfigPanelLocation);
+
+#if DEBUG
+    // CreatePanelLocationConfig(config, "SailPanelLocation", $"SailPanel screen location. {ProtectedScreenValue}", out SailPanelLocation);
+    // CreatePanelLocationConfig(config, "VehicleConfigPanelLocation", $"VehicleConfig panel screen location. {ProtectedScreenValue}", out VehicleConfigPanelLocation);
+#endif
   }
 }

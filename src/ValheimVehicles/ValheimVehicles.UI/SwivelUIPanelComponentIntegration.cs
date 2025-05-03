@@ -24,7 +24,7 @@ public class SwivelUIPanelComponentIntegration : SwivelUIPanelComponent
 
   public override void OnAwake()
   {
-    OnPanelToggleAction += OnPanelToggle;
+    if (ZNetView.m_forceDisableInit) return;
   }
 
   public void OnEnable()
@@ -32,7 +32,7 @@ public class SwivelUIPanelComponentIntegration : SwivelUIPanelComponent
     OnPanelToggleAction += OnPanelToggle;
   }
 
-  public void OnDestroy()
+  public void OnDisable()
   {
     OnPanelToggleAction -= OnPanelToggle;
   }

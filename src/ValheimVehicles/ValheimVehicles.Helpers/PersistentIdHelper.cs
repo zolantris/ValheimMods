@@ -4,7 +4,7 @@ namespace ValheimVehicles.Helpers;
 
 public static class PersistentIdHelper
 {
-  public static int GetPersistentIdFrom(ZNetView nview, ref int cache)
+  public static int GetPersistentIdFrom(ZNetView netView, ref int cache)
   {
     if (ZNetView.m_forceDisableInit || ZNetScene.instance == null || Game.instance == null)
       return 0;
@@ -17,10 +17,10 @@ public static class PersistentIdHelper
       return 0;
     }
 
-    if (!nview || nview.GetZDO() == null)
+    if (netView == null || netView.GetZDO() == null)
       return 0;
 
-    cache = ZdoWatchController.Instance.GetOrCreatePersistentID(nview.GetZDO());
+    cache = ZdoWatchController.Instance.GetOrCreatePersistentID(netView.GetZDO());
     return cache;
   }
 }

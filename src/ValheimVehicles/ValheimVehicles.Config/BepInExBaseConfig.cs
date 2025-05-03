@@ -17,8 +17,7 @@ public interface IBepInExBaseConfig
 public class BepInExBaseConfig<TSelf> : IBepInExBaseConfig
   where TSelf : BepInExBaseConfig<TSelf>, new()
 {
-  internal static readonly TSelf Instance = new();
-  private static BepInExBaseConfigDelegate configDelegate = new(Instance);
+  private static readonly TSelf Instance = new();
 
   /// <summary>
   /// We must always validate the Config class for requires null values. 

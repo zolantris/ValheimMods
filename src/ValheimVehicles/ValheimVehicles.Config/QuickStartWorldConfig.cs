@@ -66,8 +66,9 @@ public class QuickStartWorldConfig : BepInExBaseConfig<QuickStartWorldConfig>
   public static void OnQuickStartEnabled()
   {
     if (FejdStartup.instance == null) return;
-    if (ZNet.instance.IsServer()) return;
-    if (ZNet.instance.IsDedicated()) return;
+
+    // these cannot be valid otherwise it could trigger while playing the main game.
+    if (ZNet.instance != null) return;
     if (ZNetScene.instance != null) return;
 
     if (QuickStartEnabled.Value)

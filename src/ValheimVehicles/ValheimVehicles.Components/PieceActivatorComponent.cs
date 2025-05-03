@@ -8,8 +8,9 @@
   using UnityEngine;
   using ValheimVehicles.Controllers;
   using ValheimVehicles.Enums;
+  using ValheimVehicles.Helpers;
+  using ValheimVehicles.Integrations;
   using ValheimVehicles.Interfaces;
-  using ValheimVehicles.Prefabs;
   using ValheimVehicles.SharedScripts;
   using ValheimVehicles.Structs;
   using ZdoWatcher;
@@ -26,7 +27,6 @@
     protected bool _pendingPiecesDirty;
     protected List<ZNetView> _newPendingPiecesQueue = new();
     protected Stopwatch PendingPiecesTimer = new();
-
 
     public abstract IPieceActivatorHost Host { get; }
 
@@ -68,11 +68,8 @@
 
     public void OnDisable()
     {
-      if (_pendingPiecesCoroutine != null)
-      {
-        StopCoroutine(_pendingPiecesCoroutine);
-        _pendingPiecesCoroutine = null;
-      }
+      StopAllCoroutines();
+      _pendingPiecesCoroutine = null;
     }
 
 
@@ -177,21 +174,22 @@
 
     public static void AddPendingPiece(int swivelParentId, ZNetView netView)
     {
+      if (!NetworkValidation.IsCurrentGameHealthy() || !NetworkValidation.IsNetViewValid(netView, out var validNetView)) return;
       if (!m_pendingPieces.TryGetValue(swivelParentId, out var list) || list.Count == 0)
       {
-        list = [netView];
+        list = [validNetView];
 
         // must set the list.
         m_pendingPieces[swivelParentId] = list;
         return;
       }
 
-      if (!list.Contains(netView))
+      if (!list.Contains(validNetView))
       {
-        list.Add(netView);
+        list.Add(validNetView);
       }
 
-      if (SwivelController.ActiveInstances.TryGetValue(swivelParentId, out var swivel))
+      if (SwivelComponentIntegration.ActiveInstances.TryGetValue(swivelParentId, out var swivel))
       {
         swivel.StartActivatePendingSwivelPieces();
       }
@@ -246,7 +244,12 @@
 
     public static void InitPiece(ZNetView netView)
     {
-      if (!netView) return;
+      if (!NetworkValidation.IsCurrentGameHealthy())
+      {
+        return;
+      }
+
+      if (netView == null) return;
       if (VehiclePiecesController.TryInitTempPiece(netView)) return;
 
       var isPiecesOrWaterVehicle = IsExcludedPrefab(netView.gameObject);
@@ -259,7 +262,9 @@
       var zdo = netView.GetZDO();
       if (zdo == null) return;
 
-      TryInitSwivelParentPiece(netView, zdo);
-      TryInitVehicleParentPiece(netView, zdo);
+      if (TryInitSwivelParentPiece(netView, zdo)) return;
+      if (TryInitVehicleParentPiece(netView, zdo)) return;
+
+      // todo other logic;
     }
   }

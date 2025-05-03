@@ -5,6 +5,7 @@
   using System.Linq;
   using UnityEngine;
   using UnityEngine.Serialization;
+  using ValheimVehicles.Components;
   using ValheimVehicles.Config;
   using ValheimVehicles.Constants;
   using ValheimVehicles.Controllers;
@@ -17,7 +18,7 @@
 
 #endregion
 
-  namespace ValheimVehicles.Components;
+  namespace ValheimVehicles.Integrations;
 
   /// <summary>
   /// Integration component for SwivelComponent which allow it to work in Valheim.
@@ -35,7 +36,7 @@
   ///
   /// Notes
   /// IRaycastPieceActivator is used for simplicity. It will easily match any component extending this in unity.
-  public sealed class SwivelController : SwivelComponent, IPieceActivatorHost, IPieceController, IRaycastPieceActivator, Hoverable, Interactable
+  public sealed class SwivelComponentIntegration : SwivelComponent, IPieceActivatorHost, IPieceController, IRaycastPieceActivator, Hoverable, Interactable
   {
     [FormerlySerializedAs("m_piecesController")]
     public VehiclePiecesController? m_vehiclePiecesController;
@@ -43,7 +44,7 @@
 
     private ZNetView m_nview;
     private int _persistentZdoId;
-    public static readonly Dictionary<int, SwivelController> ActiveInstances = [];
+    public static readonly Dictionary<int, SwivelComponentIntegration> ActiveInstances = [];
     public List<ZNetView> m_pieces = [];
     public List<ZNetView> m_tempPieces = [];
 
@@ -402,7 +403,7 @@
       {
 
         if (netView == null) return false;
-        var swivelController = netView.GetComponent<SwivelController>();
+        var swivelController = netView.GetComponent<SwivelComponentIntegration>();
         if (swivelController == null)
         {
           LoggerProvider.LogDebug("Bailing vehicle deletion attempt: Valheim Attempted to delete a vehicle that matched the ValheimVehicle prefab instance but there was no VehicleBaseController or VehiclePiecesController found. This could mean there is a mod breaking the vehicle registration of ValheimRAFT.");

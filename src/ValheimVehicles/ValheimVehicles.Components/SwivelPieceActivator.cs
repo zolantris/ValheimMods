@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using ValheimVehicles.Integrations;
 using ValheimVehicles.Interfaces;
 namespace ValheimVehicles.Components;
 
@@ -9,7 +10,7 @@ namespace ValheimVehicles.Components;
 /// <typeparam name="TSelf"></typeparam>
 public class SwivelPieceActivator : BasePieceActivatorComponent
 {
-  [SerializeField] private SwivelController _host;
+  [SerializeField] private SwivelComponentIntegration _host;
   public override IPieceActivatorHost Host => _host;
 
   protected override void TrySetPieceToParent(ZNetView netView)
@@ -23,7 +24,7 @@ public class SwivelPieceActivator : BasePieceActivatorComponent
     _host.AddPiece(netView, isNewPiece);
   }
 
-  public void Init(SwivelController host)
+  public void Init(SwivelComponentIntegration host)
   {
     _host = host;
   }

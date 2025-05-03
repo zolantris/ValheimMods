@@ -1,11 +1,11 @@
 ﻿#region
 
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
-using Unity.Collections;
-using UnityEngine;
+  using System;
+  using System.Collections;
+  using System.Collections.Generic;
+  using System.Linq;
+  using Unity.Collections;
+  using UnityEngine;
 
 #endregion
 
@@ -201,6 +201,7 @@ using UnityEngine;
       /// </summary>
       public virtual void RequestBoundsRebuild()
       {
+        if (!isActiveAndEnabled) return;
         // if we are already queuing up an update, we can skip any additional requests.
         if (_rebuildBoundsRoutineInstance != null)
         {

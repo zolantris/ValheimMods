@@ -2,6 +2,7 @@ using Jotunn.Configs;
 using Jotunn.Entities;
 using Jotunn.Managers;
 using ValheimVehicles.Components;
+using ValheimVehicles.Integrations;
 using ValheimVehicles.Prefabs.Registry;
 using ValheimVehicles.SharedScripts;
 namespace ValheimVehicles.Prefabs;
@@ -26,8 +27,8 @@ public class SwivelPrefab : RegisterPrefab<SwivelPrefab>
     var prefab = PrefabManager.Instance.CreateClonedPrefab(PrefabNames.SwivelPrefabName, LoadValheimVehicleAssets.Swivel);
     PrefabRegistryHelpers.AddNetViewWithPersistence(prefab);
 
-    prefab.AddComponent<SwivelController>();
-    var piece = PrefabRegistryHelpers.AddPieceForPrefab(PrefabNames.SwivelPrefabName, prefab);
+    prefab.AddComponent<SwivelComponentIntegration>();
+    PrefabRegistryHelpers.AddPieceForPrefab(PrefabNames.SwivelPrefabName, prefab);
 
     PieceManager.Instance.AddPiece(new CustomPiece(prefab, true,
       new PieceConfig
@@ -39,8 +40,14 @@ public class SwivelPrefab : RegisterPrefab<SwivelPrefab>
         [
           new RequirementConfig
           {
-            Amount = 20,
-            Item = "RoundLog",
+            Amount = 10,
+            Item = "BronzeNails",
+            Recover = true
+          },
+          new RequirementConfig
+          {
+            Amount = 1,
+            Item = "Bronze",
             Recover = true
           }
         ]

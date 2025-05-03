@@ -63,7 +63,7 @@ public class PrefabConfigRPCSync<T> : MonoBehaviour, IPrefabCustomConfigRPCSync<
   /// <param name="package"></param>
   public void RPC_SetPrefabConfig(long sender, ZPackage package)
   {
-    if (!ZNetViewExtensions.IsValid(m_nview, out var netView)) return;
+    if (!NetworkValidation.IsNetViewValid(m_nview, out var netView)) return;
     var localVehicleConfig = CustomConfig.Deserialize(package);
     LoggerProvider.LogDebug($"Received config: {CustomConfig}");
     CustomConfig = localVehicleConfig;
@@ -87,12 +87,12 @@ public class PrefabConfigRPCSync<T> : MonoBehaviour, IPrefabCustomConfigRPCSync<
     {
       return;
     }
-    if (!ZNetViewExtensions.IsValid(m_nview, out var netView)) return;
+    if (!NetworkValidation.IsNetViewValid(m_nview, out var netView)) return;
     CustomConfig = CustomConfig.Load(netView.GetZDO());
   }
   public void SendPrefabConfig()
   {
-    if (!ZNetViewExtensions.IsValid(m_nview, out var netView)) return;
+    if (!NetworkValidation.IsNetViewValid(m_nview, out var netView)) return;
     var package = new ZPackage();
     CustomConfig.Serialize(package);
     netView.InvokeRPC(ZRoutedRpc.Everybody, nameof(RPC_SetPrefabConfig), package);
@@ -100,14 +100,14 @@ public class PrefabConfigRPCSync<T> : MonoBehaviour, IPrefabCustomConfigRPCSync<
 
   public virtual void UnregisterRPCListeners()
   {
-    if (!ZNetViewExtensions.IsValid(m_nview, out var netView)) return;
+    if (!NetworkValidation.IsNetViewValid(m_nview, out var netView)) return;
     netView.Unregister(nameof(RPC_SetPrefabConfig));
     netView.Unregister(nameof(RPC_SyncPrefabConfig));
   }
 
   public virtual void RegisterRPCListeners()
   {
-    if (!ZNetViewExtensions.IsValid(m_nview, out var netView)) return;
+    if (!NetworkValidation.IsNetViewValid(m_nview, out var netView)) return;
     netView.Register<ZPackage>(nameof(RPC_SetPrefabConfig), RPC_SetPrefabConfig);
     netView.Register(nameof(RPC_SyncPrefabConfig), RPC_SyncPrefabConfig);
   }

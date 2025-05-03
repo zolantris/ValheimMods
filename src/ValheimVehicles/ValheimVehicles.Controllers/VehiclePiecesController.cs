@@ -14,6 +14,7 @@
   using ValheimVehicles.Constants;
   using ValheimVehicles.Enums;
   using ValheimVehicles.Helpers;
+  using ValheimVehicles.Integrations;
   using ValheimVehicles.Interfaces;
   using ValheimVehicles.Prefabs;
   using ValheimVehicles.Prefabs.Registry;
@@ -272,8 +273,6 @@
 
     internal List<BoardingRampComponent> m_boardingRamps = [];
 
-    internal FixedJoint m_fixedJoint;
-
     internal List<ZNetView> m_hullPieces = [];
 
     internal List<RopeLadderComponent> m_ladders = [];
@@ -397,7 +396,6 @@
       _piecesContainerTransform = GetPiecesContainer();
       _movingPiecesContainerTransform = CreateMovingPiecesContainer();
       m_localRigidbody = _piecesContainerTransform.GetComponent<Rigidbody>();
-      m_fixedJoint = _piecesContainerTransform.GetComponent<FixedJoint>();
       InitializationTimer.Start();
     }
 
@@ -451,6 +449,10 @@
       if (_serverUpdatePiecesCoroutine != null)
         StopCoroutine(_serverUpdatePiecesCoroutine);
 
+
+      // probably safer to just do this.
+      StopAllCoroutines();
+
       CleanUp();
     }
 
@@ -497,10 +499,10 @@
       m_vehicleBurningEffectAreas.Remove(netView.m_zdo.m_uid);
     }
 
-    public void InitSwivelController(SwivelController swivelController)
+    public void InitSwivelController(SwivelComponentIntegration swivelComponentIntegration)
     {
-      swivelController.m_vehiclePiecesController = this;
-      swivelController.StartActivatePendingSwivelPieces();
+      swivelComponentIntegration.m_vehiclePiecesController = this;
+      swivelComponentIntegration.StartActivatePendingSwivelPieces();
     }
 
     public void RemovePiece(ZNetView netView)
@@ -517,8 +519,83 @@
       var isRam = RamPrefabs.IsRam(netView.name);
       if (isRam) m_ramPieces.Remove(netView);
 
+
+    }
+
+    public void AddPieceDataForComponents(ZNetView netView)
+    {
+      var components = netView.GetComponents<Component>();
+      foreach (var component in components)
+        switch (component)
+        {
+          case SwivelComponentIntegration swivelController:
+            InitSwivelController(swivelController);
+            break;
+          case WearNTear wnt when PrefabConfig.MakeAllPiecesWaterProof.Value:
+            wnt.m_noRoofWear = false;
+            break;
+          case Fireplace fireplace:
+            AddFireEffectAreaComponent(netView);
+            break;
+          case CultivatableComponent cultivatable:
+            cultivatable.UpdateMaterial();
+            break;
+          case MastComponent mast:
+            m_mastPieces.Add(mast);
+            break;
+          case SailComponent sail:
+            m_sailPieces.Add(sail);
+            break;
+          case Bed bed:
+            m_bedPieces.Add(bed);
+            break;
+          case BoardingRampComponent ramp:
+            ramp.ForceRampUpdate();
+            m_boardingRamps.Add(ramp);
+            break;
+          case VehicleAnchorMechanismController anchorMechanismController:
+          {
+            m_anchorMechanismComponents.Add(anchorMechanismController);
+            InitAnchorComponent(anchorMechanismController);
+            m_anchorPieces.Add(netView);
+            if (MovementController != null)
+            {
+              MovementController.CanAnchor = m_anchorPieces.Count > 0 || Manager!.IsLandVehicle;
+              anchorMechanismController.UpdateAnchorState(MovementController
+                .vehicleAnchorState, VehicleAnchorMechanismController.GetCurrentStateTextStatic(MovementController.vehicleAnchorState, Manager != null && Manager.IsLandVehicle));
+            }
+            break;
+          }
+          case RudderComponent rudder:
+            m_rudderPieces.Add(rudder);
+            SetShipWakeBounds();
+            break;
+          case SteeringWheelComponent wheel:
+            OnAddSteeringWheelDestroyPrevious(netView, wheel);
+            _steeringWheelPieces.Add(wheel);
+            wheel.InitializeControls(netView, Manager);
+            break;
+          case TeleportWorld portal:
+            m_portals.Add(netView);
+            break;
+          case RopeLadderComponent ladder:
+            m_ladders.Add(ladder);
+            ladder.vehiclePiecesController = this;
+            break;
+        }
+    }
+
+    public void RemovePieceDataForComponents(ZNetView netView)
+    {
+      // Avoid invalid memory access
+      if (!netView || !netView.gameObject || !netView.gameObject.activeInHierarchy)
+      {
+        return;
+      }
+
       var components = netView.GetComponents<Component>();
 
+      if (components == null) return;
       foreach (var component in components)
       {
         if (component == null) continue;
@@ -527,47 +604,42 @@
           case SailComponent sail:
             m_sailPieces.Remove(sail);
             break;
-
           case Fireplace fireplace:
             RemoveEffectAreaFromVehicle(netView);
             break;
           case MastComponent mast:
             m_mastPieces.Remove(mast);
             break;
-
           case RudderComponent rudder:
+          {
             m_rudderPieces.Remove(rudder);
             if (Manager && m_rudderPieces.Count > 0)
               SetShipWakeBounds();
-
             break;
-
+          }
           case SteeringWheelComponent wheel:
             _steeringWheelPieces.Remove(wheel);
             VehicleMovementController.RemoveAllShipControls(Manager
               ?.MovementController);
             break;
-
           case Bed bed:
             m_bedPieces.Remove(bed);
             break;
-
           case VehicleAnchorMechanismController anchorMechanismController:
+          {
             m_anchorMechanismComponents.Remove(anchorMechanismController);
             m_anchorPieces.Remove(netView);
 
             if (MovementController != null)
               MovementController.CanAnchor = m_anchorPieces.Count > 0 || Manager!.IsLandVehicle;
             break;
-
+          }
           case BoardingRampComponent ramp:
             m_boardingRamps.Remove(ramp);
             break;
-
           case TeleportWorld portal:
             m_portals.Remove(netView);
             break;
-
           case RopeLadderComponent ladder:
             m_ladders.Remove(ladder);
             ladder.vehiclePiecesController = null;
@@ -583,6 +655,7 @@
      */
     public void DestroyPiece(WearNTear wnt)
     {
+      if (IsInvalid()) return;
       if ((bool)wnt)
       {
         if (PrefabNames.IsVehicle(wnt.name))
@@ -607,6 +680,7 @@
 
     public void AddPiece(ZNetView netView, bool isNew = false)
     {
+      if (IsInvalid()) return;
       if (!(bool)netView)
       {
         Logger.LogError("netView does not exist but somehow called AddPiece()");
@@ -624,84 +698,8 @@
       m_pieces.Add(netView);
       UpdatePieceCount();
 
-      // Cache components
-      var components = netView.GetComponents<Component>();
+      AddPieceDataForComponents(netView);
 
-#if DEBUG
-      var effectsAreas = netView.GetComponentsInChildren<EffectArea>();
-      if (effectsAreas != null)
-      {
-        LoggerProvider.LogInfo($"Detecting EffectsArea for {netView.name} count: {effectsAreas.Length} {effectsAreas}");
-      }
-#endif
-
-      foreach (var component in components)
-        switch (component)
-        {
-          case SwivelController swivelController:
-            InitSwivelController(swivelController);
-            break;
-          case WearNTear wnt
-            when PrefabConfig.MakeAllPiecesWaterProof.Value:
-            wnt.m_noRoofWear = false;
-            break;
-          case Fireplace fireplace:
-            AddFireEffectAreaComponent(netView);
-            break;
-          case CultivatableComponent cultivatable:
-            cultivatable.UpdateMaterial();
-            break;
-
-          case MastComponent mast:
-            m_mastPieces.Add(mast);
-            break;
-
-          case SailComponent sail:
-            m_sailPieces.Add(sail);
-            break;
-
-          case Bed bed:
-            m_bedPieces.Add(bed);
-            break;
-
-          case BoardingRampComponent ramp:
-            ramp.ForceRampUpdate();
-            m_boardingRamps.Add(ramp);
-            break;
-
-          case VehicleAnchorMechanismController anchorMechanismController:
-            m_anchorMechanismComponents.Add(anchorMechanismController);
-            InitAnchorComponent(anchorMechanismController);
-            m_anchorPieces.Add(netView);
-            if (MovementController != null)
-            {
-              MovementController.CanAnchor = m_anchorPieces.Count > 0 || Manager!.IsLandVehicle;
-              anchorMechanismController.UpdateAnchorState(MovementController
-                .vehicleAnchorState, VehicleAnchorMechanismController.GetCurrentStateTextStatic(MovementController.vehicleAnchorState, Manager != null && Manager.IsLandVehicle));
-            }
-
-            break;
-
-          case RudderComponent rudder:
-            m_rudderPieces.Add(rudder);
-            SetShipWakeBounds();
-            break;
-
-          case SteeringWheelComponent wheel:
-            OnAddSteeringWheelDestroyPrevious(netView, wheel);
-            _steeringWheelPieces.Add(wheel);
-            wheel.InitializeControls(netView, Manager);
-            break;
-
-          case TeleportWorld portal:
-            m_portals.Add(netView);
-            break;
-
-          case RopeLadderComponent ladder:
-            m_ladders.Add(ladder);
-            ladder.vehiclePiecesController = this;
-            break;
-        }
 
       if (RamPrefabs.IsRam(netView.name))
       {
@@ -724,6 +722,7 @@
             Destroy(rbsItem);
           }
       }
+
 
       UpdateMass(netView);
 
@@ -975,39 +974,6 @@
       }
     }
 
-    private void LinkFixedJoint()
-    {
-      if (MovementController == null) return;
-      if (!m_fixedJoint) m_fixedJoint = GetComponent<FixedJoint>();
-      if (!m_fixedJoint)
-      {
-        m_fixedJoint = gameObject.AddComponent<FixedJoint>();
-      }
-
-      if (m_fixedJoint == null)
-      {
-        Logger.LogError(
-          "No FixedJoint found. This means the vehicle is not syncing positions");
-        return;
-      }
-
-      if (m_fixedJoint.connectedBody == null)
-      {
-        var movementPosition = MovementController.transform.position;
-        var movementRotation = MovementController.transform.rotation;
-        if (movementPosition != transform.position)
-        {
-          transform.position = movementPosition;
-        }
-        if (movementRotation != transform.rotation)
-        {
-          transform.rotation = movementRotation;
-        }
-
-        m_fixedJoint.connectedBody = MovementController!.GetRigidbody();
-      }
-    }
-
 
     public void UpdateBedSpawn()
     {
@@ -1049,8 +1015,10 @@
 
       LoadInitState();
 
-      Manager.HideGhostContainer();
-      LinkFixedJoint();
+      if (Manager != null)
+      {
+        Manager.HideGhostContainer();
+      }
       return true;
     }
 
@@ -1219,9 +1187,6 @@
     {
       if (IsInvalid()) return;
 
-      if (m_fixedJoint && m_fixedJoint.connectedBody)
-        m_fixedJoint.connectedBody = null;
-
       var rotation = GetRotationWithLean();
       var position = MovementController!.m_body.position;
       m_localRigidbody.Move(
@@ -1229,17 +1194,6 @@
         rotation
       );
 
-    }
-
-    public void JointSync()
-    {
-      if (m_localRigidbody.isKinematic) m_localRigidbody.isKinematic = false;
-
-      if (MovementController != null &&
-          MovementController.m_body.rotation != m_localRigidbody.rotation)
-        m_localRigidbody.rotation = MovementController.m_body.rotation;
-
-      if (m_fixedJoint.connectedBody == null) LinkFixedJoint();
     }
 
     /// <summary>
@@ -1281,17 +1235,16 @@
     }
     public bool IsInvalid()
     {
-      if (isActiveAndEnabled && !_isInvalid)
-      {
-        return false;
-      }
+      // if (isActiveAndEnabled && !_isInvalid)
+      // {
+      //   return false;
+      // }
 
       var isInvalid = !isActiveAndEnabled || m_localRigidbody == null ||
                       Manager == null ||
-                      MovementController == null ||
-                      MovementController.rigidbody == null ||
                       Manager.m_nview == null ||
-                      Manager == null;
+                      MovementController == null ||
+                      MovementController.rigidbody == null;
       _isInvalid = isInvalid;
 
       return _isInvalid;
@@ -1329,7 +1282,7 @@
       var currentPieceControllerSector =
         ZoneSystem.GetZone(vehiclePosition);
 
-      if (m_nview == null || m_nview.GetZDO() == null) return;
+      if (!isActiveAndEnabled || m_nview == null || m_nview.GetZDO() == null) return;
       // use center of rigidbody to set position.
       m_nview.GetZDO().SetPosition(vehiclePosition);
 
@@ -1359,7 +1312,7 @@
           }
           if (prefabPieceData.IsSwivelChild)
           {
-            var swivel = nv.GetComponentInParent<SwivelController>();
+            var swivel = nv.GetComponentInParent<SwivelComponentIntegration>();
             if (swivel != null)
             {
               nv.m_zdo?.SetPosition(CanUseActualPiecePosition ? swivel.transform.position : vehiclePosition);
@@ -1404,6 +1357,7 @@
      */
     public void Client_UpdateAllPieces()
     {
+      if (IsInvalid()) return;
       var sector = ZoneSystem.GetZone(transform.position);
 
       if (sector == m_sector)
@@ -1517,7 +1471,7 @@
       while (isActiveAndEnabled)
       {
         if (!m_nview)
-          yield return new WaitUntil(() => (bool)Manager.m_nview);
+          yield return new WaitUntil(() => Manager != null && Manager.m_nview != null);
 
         var output =
           m_allPieces.TryGetValue(Manager.PersistentZdoId, out var list);
@@ -1566,6 +1520,11 @@
     public static void AddInactivePiece(int id, ZNetView netView,
       VehiclePiecesController? instance, bool skipActivation = false)
     {
+      if (!NetworkValidation.IsCurrentGameHealthy())
+      {
+        return;
+      }
+
       if (hasDebug)
         Logger.LogDebug($"addInactivePiece called with {id} for {netView.name}");
 
@@ -1588,7 +1547,7 @@
       var wnt = netView.GetComponent<WearNTear>();
       if ((bool)wnt) wnt.enabled = false;
 
-      if (!skipActivation && instance != null && instance.isActiveAndEnabled)
+      if (!skipActivation && instance != null && ZNet.instance != null && !instance.IsInvalid())
         // This will queue up a re-run of ActivatePendingPieces if there are any
         instance.Invoke(nameof(StartActivatePendingPieces), 0.1f);
     }
@@ -1705,10 +1664,17 @@
 
     public void RemovePlayersFromBoat()
     {
-      var players = Player.GetAllPlayers();
-      foreach (var t in players.Where(t =>
-                 (bool)t && t.transform.parent == transform))
-        t.transform.SetParent(null);
+      try
+      {
+        var players = Player.GetAllPlayers();
+        foreach (var t in players.Where(t =>
+                   (bool)t && t.transform.parent == transform))
+          t.transform.SetParent(null);
+      }
+      catch (Exception e)
+      {
+        LoggerProvider.LogError("Error while removing player from boat.");
+      }
     }
 
     public void DestroyVehicle()
@@ -2289,7 +2255,10 @@
 
       var id = GetParentID(zdo);
       if (id == 0 || !m_allPieces.TryGetValue(id, out var list)) return;
-      list.FastRemove(zdo);
+
+      // fast remove might not be threadsafe
+      list.Remove(zdo);
+
       itemsRemovedDuringWait = true;
     }
 
@@ -2319,7 +2288,7 @@
 
     public static bool TryInitTempPiece(ZNetView netView)
     {
-      if (netView != null) return false;
+      if (netView == null) return false;
       var zdo = netView.GetZDO();
       if (zdo == null) return false;
 
@@ -2409,7 +2378,7 @@
       var zdo = netView.GetZDO();
       if (zdo == null) return;
 
-      var isSwivelParent = SwivelController.IsSwivelParent(zdo);
+      var isSwivelParent = SwivelComponentIntegration.IsSwivelParent(zdo);
 
       // Guard for cases where we should not add a tempPiece parent or properties but want to run the rest of the logic.
       // todo maybe adding an additional object set such as swivel_pieces would be cleaner.
@@ -2449,8 +2418,8 @@
 
     public void TrySetPieceToParent(ZNetView? netView)
     {
-      if (netView == null) return;
-      TrySetPieceToParent(netView, netView.GetZDO());
+      if (IsInvalid()) return;
+      TrySetPieceToParent(netView, netView!.GetZDO());
     }
 
     /// <summary>
@@ -2459,8 +2428,9 @@
     /// </summary>
     public void TrySetPieceToParent(ZNetView? netView, ZDO? zdo)
     {
-      if (netView == null || zdo == null) return;
-      if (RamPrefabs.IsRam(netView.name))
+      if (IsInvalid()) return;
+
+      if (RamPrefabs.IsRam(netView!.name))
       {
         if (Manager != null && Manager != null)
         {
@@ -2480,14 +2450,14 @@
     {
       try
       {
-
         if (netView == null) return false;
         var vehicleController = netView.GetComponent<VehicleManager>();
-        if (vehicleController == null || vehicleController.PiecesController == null)
+        if (vehicleController == null || vehicleController.PiecesController == null || vehicleController.PiecesController.IsInvalid())
         {
           LoggerProvider.LogDebug("Bailing vehicle deletion attempt: Valheim Attempted to delete a vehicle that matched the ValheimVehicle prefab instance but there was no VehicleBaseController or VehiclePiecesController found. This could mean there is a mod breaking the vehicle registration of ValheimRAFT.");
           return false;
         }
+
         var hasPendingPieces =
           m_pendingPieces.TryGetValue(vehicleController.PersistentZdoId,
             out var pendingPieces);
@@ -2506,61 +2476,13 @@
       }
     }
 
-    // public static Material FixMaterial(Material material)
-    // {
-    //   var isBlackMarble = material.name.Contains("blackmarble");
-    //   if (!material.HasFloat(RippleDistance) && !material.HasFloat(ValueNoise) && !material.HasFloat(TriplanarLocalPos)) return material;
-    //   if (!FixMaterialUniqueInstances.TryGetValue(material, out var fixedMaterialInstance))
-    //   {
-    //     if (isBlackMarble) material.SetFloat(TriplanarLocalPos, 1f);
-    //     material.SetFloat(RippleDistance, 0f);
-    //     material.SetFloat(ValueNoise, 0f);
-    //     var newMaterial = new Material(material);
-    //     FixMaterialUniqueInstances.Add(material, newMaterial);
-    //     fixedMaterialInstance = newMaterial;
-    //   }
-    //   return fixedMaterialInstance;
-    // }
-
-    // public static void FixPieceMeshes(ZNetView netView)
-    // {
-    //   /*
-    //    * It fixes shadow flicker on all of valheim's prefabs with boats
-    //    * If this is removed, the raft is seizure inducing.
-    //    */
-    //   var meshes = netView.GetComponentsInChildren<MeshRenderer>(true);
-    //   foreach (var meshRenderer in meshes)
-    //   {
-    //     // for (var index = 0; index < meshRenderer.sharedMaterials.Length; index++)
-    //     // {
-    //     //   var meshRendererMaterial = meshRenderer.sharedMaterials[index];
-    //     //   meshRenderer.materials[index] = FixMaterial(meshRendererMaterial);
-    //     // }
-    //     // for (var index = 0; index < meshRenderer.materials.Length; index++)
-    //     // {
-    //     //   var meshRendererMaterial = meshRenderer.materials[index];
-    //     //   meshRenderer.materials[index] = FixMaterial(meshRendererMaterial);
-    //     // }
-    //     //
-    //     if (meshRenderer.sharedMaterial)
-    //     {
-    //       // todo disable triplanar shader which causes shader to move on black marble
-    //       var sharedMaterials = meshRenderer.sharedMaterials;
-    //     
-    //       for (var j = 0; j < sharedMaterials.Length; j++)
-    //         sharedMaterials[j] = FixMaterial(sharedMaterials[j]);
-    //     
-    //       meshRenderer.sharedMaterials = sharedMaterials;
-    //     }
-    //   }
-    // }
-
     /// <summary>
     /// For custom config cubes that are deleted near instantly.
     /// </summary>
     /// <param name="prefab"></param>
     public void AddCustomFloatationPrefab(GameObject prefab)
     {
+      if (IsInvalid()) return;
       if (!prefab.name.StartsWith(PrefabNames.CustomWaterFloatation)) return;
       prefab.transform.SetParent(_piecesContainerTransform);
 
@@ -2583,6 +2505,7 @@
 
     public void AddNewPiece(Piece piece)
     {
+      if (IsInvalid()) return;
       if (!(bool)piece)
       {
         Logger.LogError("piece does not exist");
