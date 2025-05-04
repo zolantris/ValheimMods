@@ -13,7 +13,7 @@ public class LoadValheimVehicleAssets : ILoadAssets
 {
   // CustomSail
   public static GameObject CustomSail = null!;
-  
+
   public static Material DoubleSidedTransparentMat = null!;
 
   public static GameObject VehicleHammer = null!;
@@ -46,7 +46,7 @@ public class LoadValheimVehicleAssets : ILoadAssets
   public static GameObject VehicleLand = null!;
   public static GameObject WheelSingle = null!;
   public static GameObject TankTreadsSingle = null!;
-  
+
   // slabs (act as hulls too)
   public static GameObject ShipHullSlab2X2WoodAsset = null!;
   public static GameObject ShipHullSlab2X2IronAsset = null!;
@@ -165,7 +165,7 @@ public class LoadValheimVehicleAssets : ILoadAssets
   public void Init(AssetBundle assetBundle)
   {
     _bundle = assetBundle;
-    
+
     DoubleSidedTransparentMat =
       assetBundle.LoadAsset<Material>(
         "double_sided_transparent.mat");
@@ -289,10 +289,10 @@ public class LoadValheimVehicleAssets : ILoadAssets
 
     VehicleHammer = assetBundle.LoadAsset<GameObject>("vehicle_hammer.prefab");
 
-    Swivel = assetBundle.LoadAsset<GameObject>("swivel.prefab"); 
+    Swivel = assetBundle.LoadAsset<GameObject>("swivel.prefab");
 
     MovingTreadComponent.fallbackPrefab = TankTreadsSingle;
 
-    StaticFieldValidator.ValidateRequiredNonNullFields<LoadValheimVehicleAssets>();
+    NullabilityValidator.ValidateRequiredNonNullFields<LoadValheimVehicleAssets>();
   }
 }

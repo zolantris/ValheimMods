@@ -2,6 +2,7 @@
 
   using System;
   using System.Collections.Generic;
+  using System.Diagnostics.CodeAnalysis;
   using Jotunn.Extensions;
   using Jotunn.Managers;
   using Registry;
@@ -109,14 +110,9 @@
     public GameObject? ShipEffectsObj;
     public VehicleShipEffects? ShipEffects;
 
-    public VehiclePiecesController? PiecesController { get; set; }
+    public bool IsInitialized { get; set; } = false;
 
-    public ZNetView m_nview { get; set; }
-
-    public Transform vehicleMovementTransform;
-    public Transform vehicleMovementCollidersTransform;
-
-    public VehicleDebugHelpers? VehicleDebugHelpersInstance { get; private set; }
+  #region IVehicleSharedProperties
 
     public VehicleMovementController? MovementController { get; set; }
     public VehicleConfigSyncComponent VehicleConfigSync
@@ -136,6 +132,17 @@
         // do nothing
       }
     }
+
+  #endregion
+
+    public VehiclePiecesController? PiecesController { get; set; }
+
+    public ZNetView m_nview { get; set; }
+
+    public Transform vehicleMovementTransform;
+    public Transform vehicleMovementCollidersTransform;
+
+    public VehicleDebugHelpers? VehicleDebugHelpersInstance { get; private set; }
 
     public VehicleManager Instance => this;
 
@@ -304,26 +311,40 @@
       vehicleMovementTransform = GetVehicleMovementTransform(transform);
     }
 
-    public void InitializeAllComponents()
+    private bool ShouldRunInitialization()
     {
-      var shouldRun =
-        MovementController == null || PiecesController == null ||
-        OnboardController == null;
-      if (!shouldRun) return;
+      return MovementController == null || PiecesController == null ||
+             OnboardController == null || VehicleConfigSync == null;
+    }
 
-      InitializeVehiclePiecesController();
-      InitializeMovementController();
-      InitializeOnboardController();
-      InitializeShipEffects();
-      InitializeWheelController();
-
-      if (PiecesController == null || MovementController == null || OnboardController == null)
+    private bool TryGetControllersToBind([NotNullWhen(true)] out List<IVehicleSharedProperties>? controllersToBind)
+    {
+      var allControllers = new List<IVehicleSharedProperties?>
       {
-        LoggerProvider.LogError($"Component Controllers should not be null but got null controllers \nPiecesController: {PiecesController} \nMovementController: {MovementController} \nOnboardController: {OnboardController}");
+        PiecesController,
+        MovementController,
+        OnboardController,
+        VehicleConfigSync
+      };
+      controllersToBind = null;
 
-        return;
+      var validControllers = new List<IVehicleSharedProperties>();
+      foreach (var controller in allControllers)
+      {
+        if (controller == null)
+        {
+          return false;
+        }
+        validControllers.Add(controller);
       }
 
+      controllersToBind = validControllers;
+
+      return true;
+    }
+
+    private List<IVehicleSharedProperties> GetControllersToBind()
+    {
       var allControllers = new List<IVehicleSharedProperties>
       {
         PiecesController,
@@ -331,11 +352,19 @@
         OnboardController,
         VehicleConfigSync
       };
+      return allControllers;
+    }
 
-      VehicleSharedPropertiesUtils.BindAllControllers(this, allControllers);
+    public void InitializeAllComponents()
+    {
+      if (!TryGetControllersToBind(out var controllersToBind)) return;
+      InitializeVehiclePiecesController();
+      InitializeMovementController();
+      InitializeOnboardController();
+      InitializeShipEffects();
+      InitializeWheelController();
 
-      // Re-attaches all the components to the initialized components (if they are valid).
-      RebindAllComponents();
+      BindAllControllersAndData(controllersToBind);
 
 
       // For starting the vehicle pieces.
@@ -349,6 +378,13 @@
         Logger.LogError(
           "InitializeAllComponents somehow failed, PiecesController does not exist");
       }
+    }
+
+    public void BindAllControllersAndData(List<IVehicleSharedProperties> controllersToBind)
+    {
+      VehicleSharedPropertiesUtils.BindAllControllers(this, controllersToBind);
+      RebindAllComponents();
+      IsInitialized = true;
     }
 
     /// <summary>

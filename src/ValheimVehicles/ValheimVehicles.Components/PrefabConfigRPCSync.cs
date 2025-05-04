@@ -16,23 +16,11 @@ public class PrefabConfigRPCSync<T> : MonoBehaviour, IPrefabCustomConfigRPCSync<
   public bool hasRegisteredRPCListeners { get; set; }
 
   public T CustomConfig { get; set; } = new();
+  internal SafeRPCHandler rpcHandler;
 
   public virtual void Awake()
   {
     m_nview = GetComponent<ZNetView>();
-  }
-
-  public bool IsValid()
-  {
-    return isActiveAndEnabled && m_nview != null && m_nview.GetZDO() != null;
-  }
-
-  public bool IsValid([NotNullWhen(true)] out ZNetView? netView)
-  {
-    netView = null;
-    if (!IsValid()) return false;
-    netView = m_nview;
-    return true;
   }
 
   public void RPC_SetPrefabConfig(long sender, ZPackage package)
@@ -82,8 +70,12 @@ public class PrefabConfigRPCSync<T> : MonoBehaviour, IPrefabCustomConfigRPCSync<
 
   public virtual void RegisterRPCListeners()
   {
-    if (!IsValid(out var netView)) return;
-    if (hasRegisteredRPCListeners) return;
+    if (!NetworkValidation.IsNetViewValid(m_nview, out var netView)) return;
+
+    _rpcHandler = new SafeRPCHandler(netView);
+    _rpcHandler.Register<ZPackage>(nameof(RPC_SetPrefabConfig), RPC_SetPrefabConfig);
+    _rpcHandler.Register(nameof(RPC_SyncPrefabConfig), RPC_SyncPrefabConfig);
+    _rpcHandler.Register(nameof(RPC_SyncBounds), RPC_SyncBounds);
 
     netView.Register<ZPackage>(nameof(RPC_SetPrefabConfig), RPC_SetPrefabConfig);
     netView.Register(nameof(RPC_SyncPrefabConfig), RPC_SyncPrefabConfig);

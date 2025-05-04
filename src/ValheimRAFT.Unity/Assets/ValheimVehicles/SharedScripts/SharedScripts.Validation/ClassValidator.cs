@@ -8,7 +8,7 @@ using System.Runtime.CompilerServices;
 namespace ValheimVehicles.SharedScripts.Validation
 {
 
-  public static class StaticFieldValidator
+  public static class ClassValidator
   {
     private const string ModIssuesPage = "https://github.com/zolantris/ValheimMods/issues";
     /// <summary>
