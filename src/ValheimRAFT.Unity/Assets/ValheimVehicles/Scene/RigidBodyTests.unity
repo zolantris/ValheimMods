@@ -127,11 +127,6 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 4091230241380027639, guid: 414b5becc4d3b5b4f8e9408b18e19b5b, type: 3}
   m_PrefabInstance: {fileID: 1633238899}
   m_PrefabAsset: {fileID: 0}
---- !u!23 &124257548 stripped
-MeshRenderer:
-  m_CorrespondingSourceObject: {fileID: 4718361334321202322, guid: 9a9615c8672345642819c92995b12158, type: 3}
-  m_PrefabInstance: {fileID: 1897373911}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1 &139923064
 GameObject:
   m_ObjectHideFlags: 0
@@ -69293,11 +69288,6 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 5721838593751922162, guid: 9c1024920fb8fab49a638ca8cd5f6583, type: 3}
   m_PrefabInstance: {fileID: 755238691}
   m_PrefabAsset: {fileID: 0}
---- !u!23 &774626680 stripped
-MeshRenderer:
-  m_CorrespondingSourceObject: {fileID: 4603404899932029778, guid: 9a9615c8672345642819c92995b12158, type: 3}
-  m_PrefabInstance: {fileID: 1897373911}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1 &819427349
 GameObject:
   m_ObjectHideFlags: 0
@@ -90254,11 +90244,6 @@ LineRenderer:
   m_UseWorldSpace: 1
   m_Loop: 0
   m_ApplyActiveColorSpace: 1
---- !u!23 &1355549003 stripped
-MeshRenderer:
-  m_CorrespondingSourceObject: {fileID: 4361611844711740663, guid: 9a9615c8672345642819c92995b12158, type: 3}
-  m_PrefabInstance: {fileID: 1897373911}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1460667952
 GameObject:
   m_ObjectHideFlags: 0
@@ -101102,50 +101087,6 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 4109548173543759512, guid: 9a9615c8672345642819c92995b12158, type: 3}
-      propertyPath: m_Size
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 4109548173543759512, guid: 9a9615c8672345642819c92995b12158, type: 3}
-      propertyPath: m_LocalReferencePoint.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4109548173543759512, guid: 9a9615c8672345642819c92995b12158, type: 3}
-      propertyPath: m_LocalReferencePoint.y
-      value: 0.5064707
-      objectReference: {fileID: 0}
-    - target: {fileID: 4109548173543759512, guid: 9a9615c8672345642819c92995b12158, type: 3}
-      propertyPath: m_LocalReferencePoint.z
-      value: 0.031614184
-      objectReference: {fileID: 0}
-    - target: {fileID: 4109548173543759512, guid: 9a9615c8672345642819c92995b12158, type: 3}
-      propertyPath: m_LODs.Array.data[0].renderers.Array.size
-      value: 4
-      objectReference: {fileID: 0}
-    - target: {fileID: 4109548173543759512, guid: 9a9615c8672345642819c92995b12158, type: 3}
-      propertyPath: m_LODs.Array.data[0].screenRelativeHeight
-      value: 0.10849643
-      objectReference: {fileID: 0}
-    - target: {fileID: 4109548173543759512, guid: 9a9615c8672345642819c92995b12158, type: 3}
-      propertyPath: m_LODs.Array.data[0].renderers.Array.data[0].renderer
-      value: 
-      objectReference: {fileID: 774626680}
-    - target: {fileID: 4109548173543759512, guid: 9a9615c8672345642819c92995b12158, type: 3}
-      propertyPath: m_LODs.Array.data[0].renderers.Array.data[1].renderer
-      value: 
-      objectReference: {fileID: 1355549003}
-    - target: {fileID: 4109548173543759512, guid: 9a9615c8672345642819c92995b12158, type: 3}
-      propertyPath: m_LODs.Array.data[0].renderers.Array.data[2].renderer
-      value: 
-      objectReference: {fileID: 1967510766}
-    - target: {fileID: 4109548173543759512, guid: 9a9615c8672345642819c92995b12158, type: 3}
-      propertyPath: m_LODs.Array.data[0].renderers.Array.data[3].renderer
-      value: 
-      objectReference: {fileID: 124257548}
-    - target: {fileID: 4109548173543759512, guid: 9a9615c8672345642819c92995b12158, type: 3}
-      propertyPath: m_LODs.Array.data[0].renderers.Array.data[4].renderer
-      value: 
-      objectReference: {fileID: 0}
     - target: {fileID: 4281724173091590173, guid: 9a9615c8672345642819c92995b12158, type: 3}
       propertyPath: m_Name
       value: mechanical_switch
@@ -101259,11 +101200,6 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 8e756d977fe26c74a99de2e65081acc7, type: 3}
---- !u!23 &1967510766 stripped
-MeshRenderer:
-  m_CorrespondingSourceObject: {fileID: 5244918069372427048, guid: 9a9615c8672345642819c92995b12158, type: 3}
-  m_PrefabInstance: {fileID: 1897373911}
-  m_PrefabAsset: {fileID: 0}
 --- !u!21 &1984038275
 Material:
   serializedVersion: 8
