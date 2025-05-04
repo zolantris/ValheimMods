@@ -301,7 +301,7 @@ public class VehicleControllersCompat : IVehicleControllers, IValheimShip
     get;
     set;
   }
-  public VehicleManager? Manager
+  public VehicleManager Manager
   {
     get;
     set;

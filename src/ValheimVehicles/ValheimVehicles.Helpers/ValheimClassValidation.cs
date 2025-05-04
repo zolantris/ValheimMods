@@ -21,6 +21,15 @@ public static class ValheimClassValidation
     return false;
   }
 
+  public static bool IsNetViewValid(this INetView instance)
+  {
+    if (instance.m_nview != null && instance.m_nview.GetZDO() != null && instance.m_nview.IsValid())
+    {
+      return true;
+    }
+    return false;
+  }
+
   public static bool IsCurrentGameHealthy()
   {
     if (ZNet.instance == null || ZNetScene.instance == null)

@@ -158,17 +158,17 @@
       get;
       set;
     } = null!;
-    public VehicleManager? Manager
+    public VehicleManager Manager
     {
       get;
       set;
     } = null!;
 
-    public bool IsControllerValid => Manager != null && Manager.IsControllerValid;
+    public bool IsControllerValid => Manager.IsControllerValid;
 
-    public bool IsInitialized => Manager != null && Manager.IsInitialized;
+    public bool IsInitialized => Manager.IsInitialized;
 
-    public bool IsDestroying => Manager != null && Manager.IsDestroying;
+    public bool IsDestroying => Manager.IsDestroying;
 
   #endregion
 

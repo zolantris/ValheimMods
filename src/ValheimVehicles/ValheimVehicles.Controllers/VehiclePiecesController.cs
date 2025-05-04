@@ -3369,7 +3369,7 @@
     public VehicleMovementController? MovementController { get; set; }
     public VehicleConfigSyncComponent? VehicleConfigSync { get; set; }
     public VehicleOnboardController? OnboardController { get; set; }
-    public VehicleManager? Manager { get; set; }
+    public VehicleManager Manager { get; set; } = null!;
 
     public ZNetView? m_nview
     {
@@ -3377,11 +3377,11 @@
       set;
     }
 
-    public bool IsControllerValid => Manager != null && Manager.IsControllerValid;
+    public bool IsControllerValid => Manager.IsControllerValid;
 
-    public bool IsInitialized => Manager != null && Manager.IsInitialized;
+    public bool IsInitialized => Manager.IsInitialized;
 
-    public bool IsDestroying => Manager != null && Manager.IsDestroying;
+    public bool IsDestroying => Manager.IsDestroying;
 
   #endregion
 
