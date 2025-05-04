@@ -12,9 +12,10 @@ public static class ValheimClassValidation
   /// <returns></returns>
   public static bool IsNetViewValid(this INetView instance, [NotNullWhen(true)] out ZNetView? validNetView)
   {
-    validNetView = instance.m_nview;
-    if (validNetView != null && validNetView.m_zdo != null && validNetView.IsValid())
+    validNetView = null;
+    if (instance.m_nview != null && instance.m_nview.GetZDO() != null && instance.m_nview.IsValid())
     {
+      validNetView = instance.m_nview;
       return true;
     }
     return false;

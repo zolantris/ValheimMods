@@ -404,7 +404,7 @@
           var vehicle = JsonConvert.DeserializeObject<StoredVehicleData>(json);
           if (vehicle != null)
           {
-            // Vehicle name should match the file name. This will prevent problems.
+            // The vehicle name should match the file name. This will prevent problems.
             var fileTextName = file.Replace(SavedVehiclesFolderPath, "").Replace("\\", "").Replace(".json", "");
 
             // always use the filename as vehicle name.

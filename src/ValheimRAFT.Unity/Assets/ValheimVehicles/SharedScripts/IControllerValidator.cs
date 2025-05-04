@@ -5,6 +5,8 @@ namespace ValheimVehicles.SharedScripts.Validation
 {
   /// <summary>
   /// For any Controller that must not be null or access whiled in a bad state
+  ///
+  /// There are no setters as these properties should be coming from the VehicleManager.
   /// </summary>
   public interface IControllerValidator
   {
@@ -17,11 +19,11 @@ namespace ValheimVehicles.SharedScripts.Validation
     /// <summary>
     /// Can run all methods.
     /// </summary>
-    internal bool IsInitialized { get; set; }
+    internal bool IsInitialized { get; }
 
     /// <summary>
     /// should never run anything on this while in this state
     /// </summary>
-    internal bool IsDestroying { get; set; }
+    internal bool IsDestroying { get; }
   }
 }

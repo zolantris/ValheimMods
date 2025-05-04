@@ -2,6 +2,7 @@
 
   using System.Collections.Generic;
   using System.Diagnostics.CodeAnalysis;
+  using System.Linq;
   using UnityEngine;
   using UnityEngine.Serialization;
   using ValheimVehicles.Components;
@@ -70,29 +71,32 @@
     public void SendRPCToAllClients(List<long> clients, string methodName, bool skipLocal = false)
     {
       if (!this.IsNetViewValid(out var netView)) return;
+
+      // TODO ensure that GetZDO owner is the same as Player.GetPlayerID otherwise it could be GetOwner but that is the ownerId of the player's current netview.
       var currentPlayer = Player.m_localPlayer.GetPlayerID();
       var nvOwner = netView.m_zdo.GetOwner();
       var hasSentSyncToOwner = false;
 
 
-      OnboardController.m_localPlayers.ForEach(x =>
+      clients.ForEach(clientId =>
       {
-        var playerOwnerId = x.GetPlayerID();
-
-        if (playerOwnerId == nvOwner)
+        if (!skipLocal && clientId == nvOwner)
         {
           hasSentSyncToOwner = true;
         }
-        if (currentPlayer == playerOwnerId)
+        if (currentPlayer == clientId)
         {
           SyncVehicleBounds();
           return;
         }
 
-        rpcHandler.InvokeRPC(playerOwnerId, nameof(RPC_SyncBounds));
+        rpcHandler?.InvokeRPC(clientId, nameof(RPC_SyncBounds));
       });
 
-      Invoke(nameof(methodName), 0.5f);
+      if (!hasSentSyncToOwner)
+      {
+        Invoke(nameof(methodName), 0.5f);
+      }
     }
 
     /// <summary>
@@ -106,34 +110,8 @@
       if (!this.IsNetViewValid(out var netView)) return;
       if (!this || OnboardController == null) return;
 
-      // TODO ensure that GetZDO owner is the same as Player.GetPlayerID otherwise it could be GetOwner but that is the ownerId of the player's current netview.
-      var currentPlayer = Player.m_localPlayer.GetPlayerID();
-      var nvOwner = netView.m_zdo.GetOwner();
-      var hasSentSyncToOwner = false;
-
-      OnboardController.m_localPlayers.ForEach(x =>
-      {
-        var playerOwnerId = x.GetPlayerID();
-
-        if (playerOwnerId == nvOwner)
-        {
-          hasSentSyncToOwner = true;
-        }
-        if (currentPlayer == playerOwnerId)
-        {
-          SyncVehicleBounds();
-          return;
-        }
-
-        netView.InvokeRPC(playerOwnerId, nameof(RPC_SyncBounds));
-      });
-
-      if (!hasSentSyncToOwner)
-      {
-        netView.InvokeRPC(nvOwner, nameof(RPC_SyncBounds));
-      }
-
-
+      var playerIds = OnboardController.m_localPlayers.Where(x => x != null).Select(x => x.GetPlayerID()).ToList();
+      SendRPCToAllClients(playerIds, nameof(RPC_SyncBounds), false);
     }
 
     /// <summary>
@@ -186,20 +164,11 @@
       set;
     } = null!;
 
-    public bool IsControllerValid
-    {
-      get;
-    }
-    public bool IsInitialized
-    {
-      get;
-      set;
-    }
-    public bool IsDestroying
-    {
-      get;
-      set;
-    }
+    public bool IsControllerValid => Manager != null && Manager.IsControllerValid;
+
+    public bool IsInitialized => Manager != null && Manager.IsInitialized;
+
+    public bool IsDestroying => Manager != null && Manager.IsDestroying;
 
   #endregion
 

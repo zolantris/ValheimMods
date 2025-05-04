@@ -1,6 +1,7 @@
 #region
 
   using System;
+  using System.Collections;
   using System.Collections.Generic;
   using System.Diagnostics.CodeAnalysis;
   using Jotunn.Managers;
@@ -80,6 +81,7 @@
     }
 
     public bool HasVehicleDebugger = false;
+    private Coroutine? _validateVehicleCoroutineInstance;
 
     public void SetCreativeMode(bool val)
     {
@@ -95,16 +97,10 @@
 
   #region IVehicleSharedProperties
 
-    public bool IsInitialized { get; set; }
-    public bool IsDestroying { get; set; }
-
-    public bool IsControllerValid =>
-      !IsDestroying &&
-      IsInitialized &&
-      PiecesController != null &&
-      MovementController != null &&
-      OnboardController != null &&
-      VehicleConfigSync != null;
+    // setters are added here for VehicleManager only
+    public bool IsInitialized { get; private set; }
+    public bool IsDestroying { get; private set; }
+    public bool IsControllerValid { get; private set; }
 
     public VehicleMovementController? MovementController { get; set; }
     public VehicleConfigSyncComponent VehicleConfigSync
@@ -173,6 +169,23 @@
     public static Transform GetVehicleMovementTransform(Transform prefabRoot)
     {
       return prefabRoot.Find("vehicle_movement");
+    }
+
+    public void UpdateIsControllerValid()
+    {
+      var isValid = isActiveAndEnabled && !IsDestroying &&
+                    IsInitialized && !IsDestroying &&
+                    PiecesController != null &&
+                    MovementController != null &&
+                    OnboardController != null &&
+                    VehicleConfigSync != null;
+
+      if (IsLandVehicle && WheelController == null)
+      {
+        isValid = false;
+      }
+
+      IsControllerValid = isValid;
     }
 
     public static Transform GetVehicleMovementDamageColliders(
@@ -248,6 +261,17 @@
       }
     }
 
+    private void OnDisable()
+    {
+      if (_validateVehicleCoroutineInstance != null)
+      {
+        StopCoroutine(_validateVehicleCoroutineInstance);
+        _validateVehicleCoroutineInstance = null;
+      }
+      UpdateIsControllerValid();
+      IsControllerValid = false;
+    }
+
     public void OnDestroy()
     {
       IsDestroying = true;
@@ -306,7 +330,7 @@
 
     private bool ShouldRunInitialization()
     {
-      return MovementController == null || PiecesController == null ||
+      return !IsDestroying && MovementController == null || PiecesController == null ||
              OnboardController == null || VehicleConfigSync == null;
     }
 
@@ -381,7 +405,7 @@
 
     public void BindAllControllersAndData(List<IVehicleSharedProperties> controllersToBind)
     {
-      if (!VehicleSharedPropertiesUtils.BindAllControllers(this, controllersToBind))
+      if (!VehicleSharedPropertiesUtils.BindAllControllers(this, controllersToBind, VehicleConfigSync.CustomConfig.))
       {
         IsInitialized = false;
         return;
@@ -507,13 +531,37 @@
       UpdateShipEffects();
     }
 
+    private IEnumerator ValidateVehicleCoroutineRoutine()
+    {
+      while (isActiveAndEnabled)
+      {
+        if (ShouldRunInitialization())
+        {
+          InitializeAllComponents();
+          yield return null;
+        }
+
+        UpdateIsControllerValid();
+        yield return new WaitForSeconds(0.1f);
+        yield return new WaitForFixedUpdate();
+      }
+
+      IsControllerValid = false;
+    }
+
     public void OnEnable()
     {
-      if (!m_nview) m_nview = GetComponent<ZNetView>();
+      // OnEnable should always reset this value.
+      IsDestroying = false;
+      IsInitialized = false;
 
-      var isValidZdo = m_nview != null && m_nview.GetZDO() != null;
+      if (!this.IsNetViewValid(out var netView))
+      {
+        m_nview = GetComponent<ZNetView>();
+        netView = m_nview;
+      }
 
-      if (isValidZdo && !IsLandVehicleFromPrefab)
+      if (netView && !IsLandVehicleFromPrefab)
       {
         var zdo = m_nview.GetZDO();
         if (zdo != null)
@@ -534,10 +582,15 @@
 
       PhysicUtils.IgnoreAllCollisionsBetweenChildren(transform);
 
-      if (isValidZdo) InitializeAllComponents();
+      if (this.IsNetViewValid())
+      {
+        InitializeAllComponents();
+      }
 
       if (HasVehicleDebugger && PiecesController != null)
         AddOrRemoveVehicleDebugger();
+
+      _validateVehicleCoroutineInstance = StartCoroutine(ValidateVehicleCoroutineRoutine());
     }
 
     public void UpdateShipZdoPosition()

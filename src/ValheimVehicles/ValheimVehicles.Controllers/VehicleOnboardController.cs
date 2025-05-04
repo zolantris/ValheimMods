@@ -1,5 +1,6 @@
 #region
 
+  using System;
   using System.Collections.Generic;
   using System.Linq;
   using DynamicLocations.Controllers;
@@ -739,12 +740,12 @@
 
   #region IVehicleSharedProperties
 
-    public VehiclePiecesController PiecesController
+    public VehiclePiecesController? PiecesController
     {
       get;
       set;
     } = null!;
-    public VehicleMovementController MovementController
+    public VehicleMovementController? MovementController
     {
       get;
       set;
@@ -754,17 +755,17 @@
       get;
       set;
     } = null!;
-    public VehicleOnboardController OnboardController
+    public VehicleOnboardController? OnboardController
     {
       get;
       set;
     } = null!;
-    public VehicleWheelController WheelController
+    public VehicleWheelController? WheelController
     {
       get;
       set;
     } = null!;
-    public VehicleManager Manager
+    public VehicleManager? Manager
     {
       get;
       set;
@@ -775,6 +776,12 @@
       get;
       set;
     } = null!;
+
+    public bool IsControllerValid => Manager != null && Manager.IsControllerValid;
+
+    public bool IsInitialized => Manager != null && Manager.IsInitialized;
+
+    public bool IsDestroying => Manager != null && Manager.IsDestroying;
 
   #endregion
 

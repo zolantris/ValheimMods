@@ -4245,7 +4245,13 @@
       get;
       set;
     }
+    public bool IsControllerValid => Manager != null && Manager.IsControllerValid;
+
+    public bool IsInitialized => Manager != null && Manager.IsInitialized;
+
+    public bool IsDestroying => Manager != null && Manager.IsDestroying;
 
   #endregion
+
 
   }
