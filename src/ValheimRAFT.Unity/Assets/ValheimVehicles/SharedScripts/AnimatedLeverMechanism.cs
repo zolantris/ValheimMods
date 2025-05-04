@@ -1,13 +1,20 @@
 #region
 
+#region
+
 using System;
 using UnityEngine;
 
 #endregion
 
+#endregion
+
+// ReSharper disable ArrangeNamespaceBody
+// ReSharper disable NamespaceStyle
+
 namespace ValheimVehicles.SharedScripts
 {
-    [RequireComponent(typeof(LineRenderer))]
+    [RequireComponent(typeof(DynamicLineConnector))]
     public class AnimatedLeverMechanism : MonoBehaviour
     {
         private const float ToggleDuration = 1f;
@@ -29,14 +36,12 @@ namespace ValheimVehicles.SharedScripts
         public float GearMinRunTime = 1.5f;
         public float GearMaxRunTime = 5f;
         public float GearStartDelay;
-        private readonly Vector3[] _curvePoints = new Vector3[20];
-        private float _emissionPulseTime;
+
+        private DynamicLineConnector _dynamicWire;
         private float _gearElapsed;
         private bool _isGearRunning;
 
         private bool _isToggleInProgress;
-
-        private LineRenderer _lineRenderer;
         private bool _mToggleState;
         private bool _pendingDelayedGearStart;
         private Quaternion _startRotation;
@@ -44,46 +49,27 @@ namespace ValheimVehicles.SharedScripts
 
         private float _toggleElapsed;
 
-        /// <summary>
-        /// Callback when lever toggle completes. Parameter is the new state: true = enabled, false = disabled.
-        /// </summary>
-        public Action<bool>? OnToggleCompleted;
 
-        /// <summary>
-        /// Callback to allow external code to stop gear spinning early.
-        /// </summary>
+        public Action<bool>? OnToggleCompleted;
         public Func<bool>? ShouldStopGearEarly;
 
         private void Awake()
         {
-            attachPoint = transform.Find("lever/lever_face/attach_point");
+            attachPoint = transform.Find("lever/lever_handle/attach_point");
             wireConnector = transform.Find("lever/lever_face/wire_connector");
-            wireTargetPoint = transform.Find("lever/lever_face/wire_target") ?? wireConnector;
+
             leverHandle = transform.Find("lever/lever_handle");
             leverGearBack = transform.Find("lever/lever_gear_back");
             leverGearFront = transform.Find("lever/lever_gear_front");
 
-            _lineRenderer = GetComponent<LineRenderer>();
-            if (wireTargetPoint == null) Debug.LogWarning("Wire target point is not assigned or found.");
-            _lineRenderer.positionCount = _curvePoints.Length;
-            _lineRenderer.startWidth = 0.02f;
-            _lineRenderer.endWidth = 0.02f;
-
-            if (_lineRenderer.material == null)
+            _dynamicWire = GetComponent<DynamicLineConnector>();
+            if (_dynamicWire != null)
             {
-                var defaultMaterial = new Material(Shader.Find("Sprites/Default"));
-                defaultMaterial.color = Color.black;
-                _lineRenderer.material = defaultMaterial;
+                _dynamicWire.useCurvedWire = false;
+                _dynamicWire.ShouldRender = () => wireConnector != null && wireTargetPoint != null;
+                _dynamicWire.startTransform = wireConnector; // set to actual wire start
+                _dynamicWire.endTransform = wireTargetPoint; // set via prefab or runtime
             }
-            else
-            {
-                _lineRenderer.material.color = Color.black;
-            }
-
-            // Add a glowing pulse effect
-            _lineRenderer.material.EnableKeyword("_EMISSION");
-            _lineRenderer.material.globalIlluminationFlags = MaterialGlobalIlluminationFlags.RealtimeEmissive;
-            _lineRenderer.material.SetColor("_EmissionColor", Color.black * 1.5f);
         }
 
 #if UNITY_EDITOR
@@ -99,7 +85,6 @@ namespace ValheimVehicles.SharedScripts
             {
                 _toggleElapsed += Time.fixedDeltaTime;
                 float t = Mathf.Clamp01(_toggleElapsed / ToggleDuration);
-
                 leverHandle.localRotation = Quaternion.Slerp(_startRotation, _targetRotation, t);
 
                 if (t >= 1f)
@@ -125,7 +110,6 @@ namespace ValheimVehicles.SharedScripts
             if (_isGearRunning)
             {
                 _gearElapsed += Time.fixedDeltaTime;
-
                 RotateGearLocal(leverGearFront, _gearFrontRotationAxis, Time.fixedDeltaTime);
                 RotateGearLocal(leverGearBack, _gearBackRotationAxis, Time.fixedDeltaTime);
 
@@ -136,19 +120,12 @@ namespace ValheimVehicles.SharedScripts
                     _gearElapsed = 0f;
                 }
             }
-
-            UpdateWire();
-            UpdateWireGlow();
         }
 
-        public void ToggleActivationState()
-        {
-            SetActivationState(!_mToggleState);
-        }
+        public void ToggleActivationState() => SetActivationState(!_mToggleState);
 
         public void SetActivationState(bool newState)
         {
-            // Start gears immediately (pending delay) when toggling
             _gearElapsed = 0f;
             _pendingDelayedGearStart = true;
             if (_mToggleState == newState && !_isToggleInProgress) return;
@@ -164,7 +141,6 @@ namespace ValheimVehicles.SharedScripts
         private void RotateGearLocal(Transform gear, Vector3 axis, float deltaTime)
         {
             if (!gear) return;
-
             float angle = GearRotationSpeed * deltaTime;
             gear.localRotation *= Quaternion.AngleAxis(angle, axis);
         }
@@ -175,58 +151,9 @@ namespace ValheimVehicles.SharedScripts
             _gearElapsed = 0f;
         }
 
-        public void SetWireEndpoints(Transform connector, Transform target)
-        {
-            wireConnector = connector;
-            wireTargetPoint = target;
-            _lineRenderer.positionCount = _curvePoints.Length;
-            UpdateWire();
-            wireConnector = connector;
-            wireTargetPoint = target;
-        }
-
-        public void ClearWireEndpoints()
-        {
-            _lineRenderer.positionCount = 0;
-            wireConnector = null;
-            wireTargetPoint = null;
-            _lineRenderer.positionCount = 0;
-        }
-
-        private void UpdateWire()
-        {
-            if (_lineRenderer == null || wireConnector == null || wireTargetPoint == null) return;
-
-            Vector3 start = wireConnector.position;
-            Vector3 end = wireTargetPoint.position;
-
-            for (int i = 0; i < _curvePoints.Length; i++)
-            {
-                float t = i / (float)(_curvePoints.Length - 1);
-                Vector3 point = Vector3.Lerp(start, end, t);
-                float arcHeight = Mathf.Sin(t * Mathf.PI) * 0.2f; // bump height
-                point += Vector3.up * arcHeight;
-                _curvePoints[i] = point;
-            }
-
-            _lineRenderer.positionCount = _curvePoints.Length;
-            _lineRenderer.SetPositions(_curvePoints);
-        }
-
         public static Transform GetSnappointsContainer(AnimatedLeverMechanism lever)
         {
             return lever.transform.Find("lever/lever_face/snappoints");
-        }
-
-        private void UpdateWireGlow()
-        {
-            if (_lineRenderer?.material == null) return;
-
-            _emissionPulseTime += Time.fixedDeltaTime;
-            float pulse = Mathf.PingPong(_emissionPulseTime * 2f, 1f); // pulsate between 0 and 1
-            Color baseColor = Color.black;
-            Color emission = baseColor * (0.75f + pulse * 0.75f); // range: 0.75–1.5 multiplier
-            _lineRenderer.material.SetColor("_EmissionColor", emission);
         }
 
         public void UpdateRotation() { } // Stub for compatibility

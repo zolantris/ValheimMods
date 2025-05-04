@@ -1,9 +1,14 @@
-﻿namespace ValheimVehicles.SharedScripts;
+﻿
+// ReSharper disable ArrangeNamespaceBody
+// ReSharper disable NamespaceStyle
 
-public enum SwivelMode
+namespace ValheimVehicles.SharedScripts
 {
-  None,
-  TargetEnemy,
-  TargetWind,
-  DoorMode
+  public enum SwivelMode
+  {
+    None,
+    TargetEnemy,
+    TargetWind,
+    DoorMode
+  }
 }

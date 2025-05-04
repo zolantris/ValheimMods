@@ -5,8 +5,9 @@ using ValheimVehicles.ConsoleCommands;
 using ValheimVehicles.Constants;
 using ValheimVehicles.Components;
 using ValheimVehicles.Structs;
+using ValheimVehicles.SharedScripts;
 
-namespace Components;
+namespace ValheimVehicles.Components;
 
 public class CustomToggleSwitch : AnimatedLeverMechanism, Interactable, Hoverable
 {
