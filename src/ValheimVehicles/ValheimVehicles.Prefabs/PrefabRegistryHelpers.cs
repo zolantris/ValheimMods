@@ -515,7 +515,7 @@ public abstract class PrefabRegistryHelpers
       Name = "$valheim_vehicles_toggle_switch",
       Description = "$valheim_vehicles_toggle_switch_desc",
       Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
-        .VehicleSwitch)
+        .MechanicalSwitch)
     });
 
     PieceDataDictionary.Add(PrefabNames.WindowWallPorthole2x2Prefab,

@@ -24,7 +24,9 @@ public class LoadValheimVehicleAssets : ILoadAssets
 
   public static GameObject ShipAnchorWood = null!;
 
+  // mechanisms/energy
   public static GameObject Swivel = null!;
+  public static GameObject CoalEngine = null!;
 
   // hull
   public static GameObject ShipHullWoodAsset = null!;
@@ -95,6 +97,9 @@ public class LoadValheimVehicleAssets : ILoadAssets
   {
     return obj.FindDeepChild(PrefabNames.GhostContainer).gameObject;
   }
+
+  public static Material LightningMaterial = null!;
+  public static GameObject ElectricPylon = null!;
 
   public static GameObject GetPiecesContainer(GameObject obj)
   {
@@ -290,6 +295,13 @@ public class LoadValheimVehicleAssets : ILoadAssets
     VehicleHammer = assetBundle.LoadAsset<GameObject>("vehicle_hammer.prefab");
 
     Swivel = assetBundle.LoadAsset<GameObject>("swivel.prefab");
+    CoalEngine = assetBundle.LoadAsset<GameObject>("coal_engine.prefab");
+    ElectricPylon = assetBundle.LoadAsset<GameObject>("electric_pylon.prefab");
+
+    // from Plugin, todo rename the casing problematic asset.
+    LightningMaterial = assetBundle.LoadAsset<Material>("LightningBoltMaterialAnimatedAdditive.mat");
+
+    SharedScripts.ElectricPylon.LightningMaterial = LightningMaterial;
 
     MovingTreadComponent.fallbackPrefab = TankTreadsSingle;
 

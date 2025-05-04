@@ -384,20 +384,21 @@
 
     public void InitializeAllComponents()
     {
-      if (!TryGetControllersToBind(out var controllersToBind))
-      {
-        LoggerProvider.LogError("Error while Initializing components. This likely means ValheimVehicles Mod is broken for this Vehicle Type.");
-        return;
-      }
+      if (!this.IsNetViewValid()) return;
       // must have latest data loaded into the Vehicle otherwise config can be inaccurate.
-      if (InitializeData()) return;
-
+      if (!InitializeData()) return;
 
       InitializeVehiclePiecesController();
       InitializeMovementController();
       InitializeOnboardController();
       InitializeShipEffects();
       InitializeWheelController();
+
+      if (!TryGetControllersToBind(out var controllersToBind))
+      {
+        LoggerProvider.LogError("Error while Initializing components. This likely means ValheimVehicles Mod is broken for this Vehicle Type.");
+        return;
+      }
 
       BindAllControllersAndData(controllersToBind);
 

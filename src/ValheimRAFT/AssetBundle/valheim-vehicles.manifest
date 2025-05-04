@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 1286641425
+CRC: 3735968869
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 6ce8770ea0b6de9b485533a2e925f373
+    Hash: 15ed82f257eb31741e0873fd31e2b627
   TypeTreeHash:
     serializedVersion: 2
-    Hash: cbca681f9021208bbcc6d59371405a02
+    Hash: 9f0c579a313ddfa9ffc6f4a2a90be77e
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 6ce8770ea0b6de9b485533a2e925f373
+    Hash: 15ed82f257eb31741e0873fd31e2b627
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -38,6 +38,10 @@ ClassTypes:
   Script: {instanceID: 0}
 - Class: 108
   Script: {instanceID: 0}
+- Class: 114
+  Script: {fileID: 11500000, guid: a6a11edc47564972a7df3bc509a5b7be, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 61069978c4f25294990003151a6011bc, type: 3}
 - Class: 114
   Script: {fileID: 11500000, guid: 8aa93d7854518e94aaf1cc6faf180375, type: 3}
 - Class: 114
@@ -158,6 +162,7 @@ Assets:
 - Assets/ValheimVehicles/Prefabs/GUI/Slider.prefab
 - Assets/ValheimVehicles/Prefabs/hull_slab_iron_2x2.prefab
 - Assets/ValheimVehicles/Prefabs/shared_hull_wall_wood_2x2_new.prefab
+- Assets/mechanical_switch.prefab
 - Assets/ValheimVehicles/Prefabs/hull_corner_floor_left_wood.prefab
 - Assets/ValheimVehicles/Prefabs/shared_nautilus.prefab
 - Assets/ValheimVehicles/Prefabs/anchor_full_chain.prefab
@@ -168,10 +173,12 @@ Assets:
 - Assets/ValheimVehicles/Prefabs/shared_tank_tread.prefab
 - Assets/ValheimVehicles/Prefabs/vehicle_ship_pieces.prefab
 - Assets/ValheimVehicles/Prefabs/nautilus_hatch.prefab
+- Assets/ValheimVehicles/Prefabs/coal_engine.prefab
 - Assets/ValheimVehicles/Prefabs/nautilus.prefab
 - Assets/ValheimVehicles/Prefabs/rudder_advanced_single_iron.prefab
 - Assets/ValheimVehicles/Prefabs/GUI/ship_compass.prefab
 - Assets/ValheimVehicles/Prefabs/shared_hull_rib_prow_2x2.prefab
+- Assets/ValheimVehicles/Prefabs/electric_pylon.prefab
 - Assets/ValheimVehicles/Prefabs/hull_rib_iron.prefab
 - Assets/ValheimVehicles/Prefabs/steering_wheel.prefab
 - Assets/ValheimVehicles/Prefabs/wheel_single_2.prefab
@@ -313,7 +320,7 @@ Assets:
 - Assets/ValheimVehicles/Prefabs/shared_ram_blade.prefab
 - Assets/ValheimVehicles/Prefabs/bottom_stand.prefab
 - Assets/ValheimVehicles/Material/double_sided_transparent.mat
-- Assets/ValheimVehicles/Prefabs/mechanical_switch.prefab
+- Assets/ValheimVehicles/Prefabs/mechanical_switch_old.prefab
 - Assets/ValheimVehicles/Material/wood_piece_valheim.mat
 - Assets/ValheimVehicles/Prefabs/hull_wall_window_square_wood_4x4.prefab
 - Assets/ValheimVehicles/Material/wood_alt_piece_bg_rib_4x4.mat

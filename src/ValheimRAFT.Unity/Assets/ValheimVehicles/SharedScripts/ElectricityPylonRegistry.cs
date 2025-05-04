@@ -12,11 +12,11 @@ namespace ValheimVehicles.SharedScripts
 {
   public static class ElectricityPylonRegistry
   {
-    public static readonly List<ElectricityPylon> All = new();
+    public static readonly List<ElectricPylon> All = new();
 
     public static event Action? OnPylonListChanged;
 
-    public static void Add(ElectricityPylon pylon)
+    public static void Add(ElectricPylon pylon)
     {
       if (!All.Contains(pylon))
       {
@@ -25,7 +25,7 @@ namespace ValheimVehicles.SharedScripts
       }
     }
 
-    public static void Remove(ElectricityPylon pylon)
+    public static void Remove(ElectricPylon pylon)
     {
       if (All.Remove(pylon))
       {

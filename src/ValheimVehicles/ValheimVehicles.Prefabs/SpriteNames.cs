@@ -1,6 +1,9 @@
 using ValheimVehicles.SharedScripts;
 namespace ValheimVehicles.Prefabs;
 
+/// <summary>
+/// TODO from the exported assets bundle auto generate this...good luck.
+/// </summary>
 public abstract class SpriteNames
 {
   public const string VikingMast = "vikingmast";
@@ -26,7 +29,11 @@ public abstract class SpriteNames
 
   public const string ShipRudderBasic = "rudder_basic";
   public const string ShipKeel = "keel";
-  public const string VehicleSwitch = "mechanical_switch";
+
+  public const string MechanicalSwitch = "mechanical_switch";
+  public const string ElectricPylon = "electric_pylon";
+  public const string CoalEngine = "coal_engine";
+
   public const string HullCenterWood = "hull_center_wood";
   public const string HullCenterIron = "hull_center_iron";
   public const string RopeLadder = "rope_ladder";

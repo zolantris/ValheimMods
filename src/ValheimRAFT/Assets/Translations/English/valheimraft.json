@@ -169,5 +169,9 @@
   "valheim_vehicles_shared_keys_owner": "Owner",
   "valheim_vehicles_shared_keys_hold": "Hold",
   "valheim_vehicles_swivel_edit": "to Edit",
-  "valheim_vehicles_swivel_connected": "Connected"
+  "valheim_vehicles_swivel_connected": "Connected",
+  "valheim_vehicles_electric_pylon": "Electric Pylon",
+  "valheim_vehicles_electric_pylon_desc": "Allows for sharing power within a specific radius. Collects unstable electricity.",
+  "valheim_vehicles_coal_engine": "Coal Engine",
+  "valheim_vehicles_coal_engine_desc": "Engines supply LandVehicles with power an. Without an engine fuel players will have to haul their vehicle."
 }

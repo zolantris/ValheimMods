@@ -6,7 +6,6 @@ using System.IO;
 using System.Linq;
 using BepInEx.Logging;
 using ComfyGizmo;
-using Components;
 using HarmonyLib;
 using Jotunn;
 using Jotunn.Entities;
