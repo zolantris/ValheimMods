@@ -37,6 +37,7 @@ public class ValheimVehiclesPlugin : MonoBehaviour
   private ScreenSizeWatcher _screenSizeWatcher;
 
   public static ValheimVehiclesPlugin Instance { get; private set; }
+  private Coroutine? translationRoutine = null;
 
   private void Awake()
   {
@@ -44,7 +45,7 @@ public class ValheimVehiclesPlugin : MonoBehaviour
     _languageRetry = new RetryGuard(Instance);
   }
 
-  private IEnumerator Start()
+  private IEnumerator UpdateTranslationsRoutine()
   {
     // bail at 10 seconds and add OnLanguageChanged regardless
     var timer = DebugSafeTimer.StartNew();
@@ -55,17 +56,39 @@ public class ValheimVehiclesPlugin : MonoBehaviour
     Localization.OnLanguageChange += OnLanguageChanged;
 
     // must wait for next-frame otherwise Awake and other lifecycles might not have fired for translations api.
-    yield return null;
+    yield return new WaitForFixedUpdate();
     OnLanguageChanged();
+
+    // wait a bit then fire next update. ModTranslations API is flaky on init.
+    yield return new WaitForSeconds(20f);
+    _languageRetry.Reset();
+    OnLanguageChanged();
+
+    // do it 1 more time.
+    yield return new WaitForSeconds(20f);
+    _languageRetry.Reset();
+    OnLanguageChanged();
+
+    translationRoutine = null;
   }
 
   private void OnEnable()
   {
     Setup();
+    translationRoutine = StartCoroutine(UpdateTranslationsRoutine());
   }
 
   private void OnDisable()
   {
+    // cancels retries.
+    CancelInvoke();
+
+    if (translationRoutine != null)
+    {
+      StopCoroutine(translationRoutine);
+      translationRoutine = null;
+    }
+
     HasRunSetup = false;
     if (_mapPinSync != null)
     {
@@ -97,10 +120,10 @@ public class ValheimVehiclesPlugin : MonoBehaviour
 
   private void OnLanguageChanged()
   {
-    ModTranslations.UpdateTranslations();
+    ModTranslations.ForceUpdateTranslations();
     if (!ModTranslations.IsHealthy())
     {
-      _languageRetry.Retry(ModTranslations.UpdateTranslations, 1f);
+      _languageRetry.Retry(OnLanguageChanged, 1f);
     }
     else
     {

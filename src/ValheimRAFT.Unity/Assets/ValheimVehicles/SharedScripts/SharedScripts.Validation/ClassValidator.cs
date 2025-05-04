@@ -1,13 +1,14 @@
 // ReSharper disable ArrangeNamespaceBody
 // ReSharper disable NamespaceStyle
 
+#region
+
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
-using ValheimVehicles.Helpers;
+
+#endregion
 
 namespace ValheimVehicles.SharedScripts.Validation
 {

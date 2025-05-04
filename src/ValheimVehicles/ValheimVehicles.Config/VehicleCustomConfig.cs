@@ -20,6 +20,9 @@ public class VehicleCustomConfig : ISerializableConfig<VehicleCustomConfig>
   private const string Key_CustomFloatationHeight = "vehicle_customFloatationHeight";
   private const string Key_CenterOfMassOffset = "vehicle_centerOfMassOffset";
 
+  // todo support custom variant
+  // private const string Key_VehicleVariant = "vehicle_variant";
+
   // Backing fields
   private string _version = ValheimRAFT_API.GetPluginVersion();
   private float _treadDistance;
@@ -28,6 +31,9 @@ public class VehicleCustomConfig : ISerializableConfig<VehicleCustomConfig>
   private bool _hasCustomFloatationHeight;
   private float _customFloatationHeight;
   private float _centerOfMassOffset;
+
+  // todo support custom variant
+  // private float _vehicleVariant;
 
   // Properties
   public string Version

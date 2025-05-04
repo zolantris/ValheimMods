@@ -48,6 +48,8 @@
         PrefabNames.GhostContainer);
     }
 
+    public VehicleVariant vehicleVariant = VehicleVariant.All;
+
     public GameObject PiecesContainer()
     {
       return TransformUtils.GetOrFindObj(_piecesContainer,
@@ -61,8 +63,8 @@
     private GameObject _ghostContainer;
     private ImpactEffect _impactEffect;
     public float TargetHeight => MovementController?.TargetHeight ?? 0f;
-    public bool IsLandVehicleFromPrefab = false;
-    public bool IsLandVehicle { get; set; }
+    private bool m_isLandVehicle = false;
+    public bool IsLandVehicle => m_isLandVehicle;
     public bool isCreative;
 
     private BoxCollider m_floatCollider;
@@ -373,6 +375,13 @@
       return allControllers;
     }
 
+    public bool InitializeData()
+    {
+      if (!this.IsNetViewValid()) return false;
+      VehicleCustomConfig.Load(m_nview.GetZDO());
+      return true;
+    }
+
     public void InitializeAllComponents()
     {
       if (!TryGetControllersToBind(out var controllersToBind))
@@ -380,6 +389,9 @@
         LoggerProvider.LogError("Error while Initializing components. This likely means ValheimVehicles Mod is broken for this Vehicle Type.");
         return;
       }
+      // must have latest data loaded into the Vehicle otherwise config can be inaccurate.
+      if (InitializeData()) return;
+
 
       InitializeVehiclePiecesController();
       InitializeMovementController();
@@ -405,7 +417,9 @@
 
     public void BindAllControllersAndData(List<IVehicleSharedProperties> controllersToBind)
     {
-      if (!VehicleSharedPropertiesUtils.BindAllControllers(this, controllersToBind, VehicleConfigSync.CustomConfig.))
+      // todo get vehicle variant from config before running this so init is not wrong.
+      // does not affect any prefabs with hardcoded variants.
+      if (!VehicleSharedPropertiesUtils.BindAllControllers(this, controllersToBind, vehicleVariant))
       {
         IsInitialized = false;
         return;
@@ -561,20 +575,6 @@
         netView = m_nview;
       }
 
-      if (netView && !IsLandVehicleFromPrefab)
-      {
-        var zdo = m_nview.GetZDO();
-        if (zdo != null)
-          IsLandVehicle = IsLandVehicleFromPrefab ||
-                          zdo.GetBool(VehicleZdoVars.IsLandVehicle);
-        else
-          IsLandVehicle = IsLandVehicleFromPrefab;
-      }
-      else
-      {
-        IsLandVehicle = IsLandVehicleFromPrefab;
-      }
-
       GetPersistentID();
 
       if (PersistentZdoId != 0 && !VehicleInstances.ContainsKey(PersistentZdoId))
@@ -582,7 +582,7 @@
 
       PhysicUtils.IgnoreAllCollisionsBetweenChildren(transform);
 
-      if (this.IsNetViewValid())
+      if (netView)
       {
         InitializeAllComponents();
       }

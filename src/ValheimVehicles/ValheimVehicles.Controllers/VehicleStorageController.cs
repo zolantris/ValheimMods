@@ -91,7 +91,7 @@
 
     public static VehicleVariant GetVehicleType(VehicleManager vehicle)
     {
-      return vehicle.IsLandVehicle ? VehicleVariant.Land : VehicleVariant.All;
+      return vehicle.vehicleVariant;
     }
 
     public static void SaveClosestVehicle()

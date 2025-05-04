@@ -95,7 +95,7 @@
       try
       {
         if (!HasRunLocalizationOnCurrentLanguage()) return false;
-        return ClassValidator.ValidateRequiredNonNullFields<ModTranslations>(null, null, false);
+        return ClassValidator.ValidateRequiredNonNullFields<ModTranslations>(null, null, null, false);
       }
       catch (Exception e)
       {
@@ -207,12 +207,12 @@
       CurrentLocalizeLanguage = Localization.instance.GetSelectedLanguage();
     }
 
-    public static bool CanLocalizeCurrentLanguage()
+    public static bool CanLocalizeCurrentLanguage(bool forceUpdate = false)
     {
       if (!CanRunLocalization()) return false;
       try
       {
-        if (!HasRunLocalizationOnCurrentLanguage())
+        if (forceUpdate || !HasRunLocalizationOnCurrentLanguage())
         {
           SetCurrentLocalizedLanguage();
           return true;
@@ -239,12 +239,17 @@
       Swivel_HoverText = $"{WithBoldText(SharedKeys_Hold)} {WithBoldText(ValheimInput_KeyUse, "yellow")} {Swivel_Edit}";
     }
 
+    public static void ForceUpdateTranslations()
+    {
+      UpdateTranslations(true);
+    } 
+
     /// <summary>
     /// Possibly move to a localization generator to generate these on the fly based on the current english translations.
     /// </summary>
-    public static void UpdateTranslations()
+    public static void UpdateTranslations(bool forceUpdate = false)
     {
-      if (!CanLocalizeCurrentLanguage()) return;
+      if (!CanLocalizeCurrentLanguage(forceUpdate)) return;
       try
       {
         // only updates here.

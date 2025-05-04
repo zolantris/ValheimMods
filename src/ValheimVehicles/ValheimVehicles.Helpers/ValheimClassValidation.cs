@@ -4,6 +4,17 @@ namespace ValheimVehicles.Helpers;
 
 public static class ValheimClassValidation
 {
+
+  // non-extension method
+  public static bool IsNetViewValid(ZNetView? netView, [NotNullWhen(true)] out ZNetView? validNetView)
+  {
+    validNetView = null;
+    if (netView == null || netView.GetZDO() == null || !netView.IsValid()) return false;
+    validNetView = netView;
+    return true;
+  }
+
+
   /// <summary>
   /// INetView extensions.
   /// </summary>
@@ -13,12 +24,7 @@ public static class ValheimClassValidation
   public static bool IsNetViewValid(this INetView instance, [NotNullWhen(true)] out ZNetView? validNetView)
   {
     validNetView = null;
-    if (instance.m_nview != null && instance.m_nview.GetZDO() != null && instance.m_nview.IsValid())
-    {
-      validNetView = instance.m_nview;
-      return true;
-    }
-    return false;
+    return IsNetViewValid(instance.m_nview, out validNetView);
   }
 
   public static bool IsNetViewValid(this INetView instance)

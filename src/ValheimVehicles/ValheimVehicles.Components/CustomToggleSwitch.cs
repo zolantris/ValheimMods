@@ -8,7 +8,7 @@ using ValheimVehicles.Structs;
 
 namespace Components;
 
-public class CustomToggleSwitch : MonoBehaviour, Interactable, Hoverable
+public class CustomToggleSwitch : AnimatedLeverMechanism, Interactable, Hoverable
 {
   /// <summary>
   /// Actions for VehicleCommmands

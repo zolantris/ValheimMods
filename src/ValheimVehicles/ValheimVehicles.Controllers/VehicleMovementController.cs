@@ -330,7 +330,7 @@
     private void Update()
     {
       if (Manager == null) return;
-      if (Manager.IsLandVehicleFromPrefab)
+      if (Manager.IsLandVehicle)
       {
         var hasControllingPlayer = HaveControllingPlayer();
 
@@ -2578,7 +2578,7 @@
       }
 
       // for land-vehicle prefab only.
-      if (Manager!.IsLandVehicleFromPrefab)
+      if (Manager.IsLandVehicle)
       {
         UpdateVehicleLandSpeed();
         return;
@@ -2930,11 +2930,10 @@
     {
       if (Manager == null) return;
 
-      var isLandVehicleFromPrefab = Manager.IsLandVehicleFromPrefab;
-      if (isLandVehicleFromPrefab && !RamConfig.LandVehiclesAreRams.Value || !isLandVehicleFromPrefab && !RamConfig.WaterVehiclesAreRams.Value)
-      {
-        return;
-      }
+      var isLandVehicle = Manager.IsLandVehicle;
+
+      if (isLandVehicle && !RamConfig.LandVehiclesAreRams.Value) return;
+      if (!isLandVehicle && !RamConfig.WaterVehiclesAreRams.Value) return;
 
       vehicleRam = DamageColliders.gameObject.GetComponent<VehicleRamAoe>();
 
@@ -2945,7 +2944,7 @@
       if (vehicleRam == null) return;
       if (vehicleRam.m_nview == null) vehicleRam.m_nview = m_nview;
 
-      vehicleRam.m_RamType = isLandVehicleFromPrefab ? RamPrefabs.RamType.LandVehicle : RamPrefabs.RamType.WaterVehicle;
+      vehicleRam.m_RamType = isLandVehicle ? RamPrefabs.RamType.LandVehicle : RamPrefabs.RamType.WaterVehicle;
       vehicleRam.m_vehicle = Manager;
     }
 

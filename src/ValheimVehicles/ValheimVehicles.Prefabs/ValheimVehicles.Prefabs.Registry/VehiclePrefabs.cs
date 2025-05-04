@@ -6,6 +6,7 @@
   using UnityEngine;
   using ValheimVehicles.Components;
   using ValheimVehicles.Config;
+  using ValheimVehicles.Enums;
   using ValheimVehicles.SharedScripts;
   using Object = UnityEngine.Object;
 
@@ -36,6 +37,10 @@
        */
 
       var shipInstance = prefab.AddComponent<VehicleManager>();
+
+      // required property otherwise it will match other mods.
+      shipInstance.vehicleVariant = VehicleVariant.Water;
+
       shipInstance.gameObject.layer = LayerHelpers.CustomRaftLayer;
 
       // todo fix ship water effects so they do not cause ship materials to break
@@ -137,9 +142,8 @@
         LoadValheimVehicleAssets.VehicleLand);
 
       CreateWaterVehiclePrefab(landVehiclePrefab);
-      var vehicleShip = landVehiclePrefab.GetComponent<VehicleManager>();
-      vehicleShip.IsLandVehicleFromPrefab = true;
-      vehicleShip.IsLandVehicle = true;
+      var vehicleManager = landVehiclePrefab.GetComponent<VehicleManager>();
+      vehicleManager.vehicleVariant = VehicleVariant.Land;
 
       var piece =
         PrefabRegistryHelpers.AddPieceForPrefab(PrefabNames.LandVehicle,
