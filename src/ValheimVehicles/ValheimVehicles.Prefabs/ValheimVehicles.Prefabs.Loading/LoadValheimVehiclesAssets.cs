@@ -293,6 +293,6 @@ public class LoadValheimVehicleAssets : ILoadAssets
 
     MovingTreadComponent.fallbackPrefab = TankTreadsSingle;
 
-    NullabilityValidator.ValidateRequiredNonNullFields<LoadValheimVehicleAssets>();
+    ClassValidator.ValidateRequiredNonNullFields<LoadValheimVehicleAssets>();
   }
 }

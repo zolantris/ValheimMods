@@ -1520,7 +1520,7 @@
     public static void AddInactivePiece(int id, ZNetView netView,
       VehiclePiecesController? instance, bool skipActivation = false)
     {
-      if (!NetworkValidation.IsCurrentGameHealthy())
+      if (!ValheimClassValidation.IsCurrentGameHealthy())
       {
         return;
       }

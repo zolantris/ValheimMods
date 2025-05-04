@@ -26,7 +26,7 @@ public class BepInExBaseConfig<TSelf> : IBepInExBaseConfig
   public static void BindConfig(ConfigFile config)
   {
     Instance.OnBindConfig(config);
-    NullabilityValidator.ValidateRequiredNonNullFields<TSelf>();
+    ClassValidator.ValidateRequiredNonNullFields<TSelf>();
   }
 
   /// <summary>

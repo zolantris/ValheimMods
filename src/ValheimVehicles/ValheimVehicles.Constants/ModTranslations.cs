@@ -95,7 +95,7 @@
       try
       {
         if (!HasRunLocalizationOnCurrentLanguage()) return false;
-        return NullabilityValidator.ValidateRequiredNonNullFields<ModTranslations>(null, null, false);
+        return ClassValidator.ValidateRequiredNonNullFields<ModTranslations>(null, null, false);
       }
       catch (Exception e)
       {

@@ -1,6 +1,10 @@
 #region
 
+  using System;
   using System.Collections.Generic;
+  using System.Text.RegularExpressions;
+  using ValheimVehicles.Controllers;
+  using ValheimVehicles.Enums;
   using ValheimVehicles.Interfaces;
   using ValheimVehicles.SharedScripts.Validation;
 
@@ -21,15 +25,29 @@
       to.m_nview = from.m_nview;
     }
 
-    /// <summary>
-    /// The main method that binds to all controllers. These controllers values are then considered not-null.
-    /// </summary>
-    /// <param name="fromController"></param>
-    /// <param name="toControllers"></param>
-    /// <returns></returns>
-    public static bool BindAllControllers(IVehicleSharedProperties fromController, List<IVehicleSharedProperties> toControllers)
+    private static readonly Regex NonLandVehicleAllowedNullKeys = StringValidatorExtensions.GenerateRegexFromList([nameof(IVehicleSharedProperties.WheelController)]);
+
+    private static Regex? GetSkipRegexpForVehicleType(VehicleVariant vehicleVariant)
     {
-      if (!ClassValidator.ValidateRequiredNonNullFields(fromController)) return false;
+      switch (vehicleVariant)
+      {
+        case VehicleVariant.Land:
+          return null;
+        case VehicleVariant.Water:
+        case VehicleVariant.Sub:
+        case VehicleVariant.Air:
+        case VehicleVariant.All:
+        default:
+          return NonLandVehicleAllowedNullKeys;
+      }
+    }
+
+    /// <summary>
+    /// The main method that binds to all controllers. These controller values are then considered not-null.
+    /// </summary>
+    public static bool BindAllControllers(IVehicleSharedProperties fromController, List<IVehicleSharedProperties> toControllers, VehicleVariant vehicleVariant)
+    {
+      if (!ClassValidator.ValidateRequiredNonNullFields<IVehicleSharedProperties>(fromController, null, GetSkipRegexpForVehicleType(vehicleVariant))) return false;
       foreach (var to in toControllers)
       {
         BindControllers(fromController, to);

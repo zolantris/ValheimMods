@@ -59,8 +59,6 @@
     private void Awake()
     {
       OnboardController = this;
-
-
       OnboardCollider = GetComponent<BoxCollider>();
       InvokeRepeating(nameof(ValidateCharactersAreOnShip), 1f, 30f);
 
@@ -741,42 +739,42 @@
 
   #region IVehicleSharedProperties
 
-    public VehiclePiecesController? PiecesController
+    public VehiclePiecesController PiecesController
     {
       get;
       set;
-    }
-    public VehicleMovementController? MovementController
+    } = null!;
+    public VehicleMovementController MovementController
     {
       get;
       set;
-    }
+    } = null!;
     public VehicleConfigSyncComponent? VehicleConfigSync
     {
       get;
       set;
-    }
-    public VehicleOnboardController? OnboardController
+    } = null!;
+    public VehicleOnboardController OnboardController
     {
       get;
       set;
-    }
-    public VehicleWheelController? WheelController
+    } = null!;
+    public VehicleWheelController WheelController
     {
       get;
       set;
-    }
-    public VehicleManager? Manager
+    } = null!;
+    public VehicleManager Manager
     {
       get;
       set;
-    }
+    } = null!;
 
-    public ZNetView? m_nview
+    public ZNetView m_nview
     {
       get;
       set;
-    }
+    } = null!;
 
   #endregion
 

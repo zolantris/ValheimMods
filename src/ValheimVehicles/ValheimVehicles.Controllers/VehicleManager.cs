@@ -3,7 +3,6 @@
   using System;
   using System.Collections.Generic;
   using System.Diagnostics.CodeAnalysis;
-  using Jotunn.Extensions;
   using Jotunn.Managers;
   using Registry;
   using UnityEngine;
@@ -22,22 +21,6 @@
 #endregion
 
   namespace ValheimVehicles.Components;
-
-  public static class VehicleShipHelpers
-  {
-    public static GameObject GetOrFindObj(GameObject returnObj,
-      GameObject searchObj,
-      string objectName)
-    {
-      if ((bool)returnObj) return returnObj;
-
-      var gameObjTransform = searchObj.transform.FindDeepChild(objectName);
-      if (!gameObjTransform) return returnObj;
-
-      returnObj = gameObjTransform.gameObject;
-      return returnObj;
-    }
-  }
 
   /// <summary>
   /// The main initializer for all vehicle components and a way to access all properties of the vehicle.
@@ -60,13 +43,13 @@
 
     public GameObject GhostContainer()
     {
-      return VehicleShipHelpers.GetOrFindObj(_ghostContainer, gameObject,
+      return TransformUtils.GetOrFindObj(_ghostContainer, gameObject,
         PrefabNames.GhostContainer);
     }
 
     public GameObject PiecesContainer()
     {
-      return VehicleShipHelpers.GetOrFindObj(_piecesContainer,
+      return TransformUtils.GetOrFindObj(_piecesContainer,
         transform.parent.gameObject,
         PrefabNames.VehiclePiecesContainer);
     }
@@ -110,9 +93,18 @@
     public GameObject? ShipEffectsObj;
     public VehicleShipEffects? ShipEffects;
 
-    public bool IsInitialized { get; set; } = false;
-
   #region IVehicleSharedProperties
+
+    public bool IsInitialized { get; set; }
+    public bool IsDestroying { get; set; }
+
+    public bool IsControllerValid =>
+      !IsDestroying &&
+      IsInitialized &&
+      PiecesController != null &&
+      MovementController != null &&
+      OnboardController != null &&
+      VehicleConfigSync != null;
 
     public VehicleMovementController? MovementController { get; set; }
     public VehicleConfigSyncComponent VehicleConfigSync
@@ -258,6 +250,7 @@
 
     public void OnDestroy()
     {
+      IsDestroying = true;
       UnloadAndDestroyPieceContainer();
 
       if (PersistentZdoId != 0 && VehicleInstances.ContainsKey(PersistentZdoId))
@@ -326,6 +319,7 @@
         OnboardController,
         VehicleConfigSync
       };
+
       controllersToBind = null;
 
       var validControllers = new List<IVehicleSharedProperties>();
@@ -357,7 +351,12 @@
 
     public void InitializeAllComponents()
     {
-      if (!TryGetControllersToBind(out var controllersToBind)) return;
+      if (!TryGetControllersToBind(out var controllersToBind))
+      {
+        LoggerProvider.LogError("Error while Initializing components. This likely means ValheimVehicles Mod is broken for this Vehicle Type.");
+        return;
+      }
+
       InitializeVehiclePiecesController();
       InitializeMovementController();
       InitializeOnboardController();
@@ -382,8 +381,14 @@
 
     public void BindAllControllersAndData(List<IVehicleSharedProperties> controllersToBind)
     {
-      VehicleSharedPropertiesUtils.BindAllControllers(this, controllersToBind);
+      if (!VehicleSharedPropertiesUtils.BindAllControllers(this, controllersToBind))
+      {
+        IsInitialized = false;
+        return;
+      }
+
       RebindAllComponents();
+      IsDestroying = false;
       IsInitialized = true;
     }
 

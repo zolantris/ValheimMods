@@ -35,6 +35,9 @@
         <Compile Update="..\ValheimRAFT.Unity\Assets\ValheimVehicles\SharedScripts\DragWindowCntrlExtension.cs">
             <Link>SharedScripts\DragWindowCntrlExtension.cs</Link>
         </Compile>
+        <Compile Update="..\ValheimRAFT.Unity\Assets\ValheimVehicles\SharedScripts\IControllerValidator.cs">
+            <Link>SharedScripts\IControllerValidator.cs</Link>
+        </Compile>
     </ItemGroup>
     <ItemGroup Label="Internal ValheimVehicles scripts">
         <!-- Includes all namespace folders -->

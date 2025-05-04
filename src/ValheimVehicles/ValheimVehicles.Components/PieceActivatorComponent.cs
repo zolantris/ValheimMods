@@ -174,7 +174,7 @@
 
     public static void AddPendingPiece(int swivelParentId, ZNetView netView)
     {
-      if (!NetworkValidation.IsCurrentGameHealthy() || !NetworkValidation.IsNetViewValid(netView, out var validNetView)) return;
+      if (!ValheimClassValidation.IsCurrentGameHealthy() || !ValheimClassValidation.IsNetViewValid(netView, out var validNetView)) return;
       if (!m_pendingPieces.TryGetValue(swivelParentId, out var list) || list.Count == 0)
       {
         list = [validNetView];
@@ -244,7 +244,7 @@
 
     public static void InitPiece(ZNetView netView)
     {
-      if (!NetworkValidation.IsCurrentGameHealthy())
+      if (!ValheimClassValidation.IsCurrentGameHealthy())
       {
         return;
       }

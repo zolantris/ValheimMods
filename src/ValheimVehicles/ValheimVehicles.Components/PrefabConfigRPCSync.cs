@@ -1,6 +1,7 @@
 using System;
 using System.Diagnostics.CodeAnalysis;
 using UnityEngine;
+using ValheimVehicles.Controllers;
 using ValheimVehicles.Helpers;
 using ValheimVehicles.Interfaces;
 using ValheimVehicles.SharedScripts;
@@ -16,16 +17,44 @@ public class PrefabConfigRPCSync<T> : MonoBehaviour, IPrefabCustomConfigRPCSync<
   public bool hasRegisteredRPCListeners { get; set; }
 
   public T CustomConfig { get; set; } = new();
-  internal SafeRPCHandler rpcHandler;
+  internal SafeRPCHandler? rpcHandler;
+  internal RetryGuard retryGuard = null!;
 
   public virtual void Awake()
   {
+    retryGuard = new RetryGuard(this);
     m_nview = GetComponent<ZNetView>();
+    InitRPCHandler();
+  }
+
+  public virtual void OnEnable()
+  {
+    RegisterRPCListeners();
+  }
+
+
+  public virtual void OnDisable()
+  {
+    UnregisterRPCListeners();
+
+    // cancel all Invoke calls from retryGuard.
+    CancelInvoke();
+  }
+
+  public void InitRPCHandler()
+  {
+    if (rpcHandler != null) return;
+    if (m_nview == null)
+    {
+      LoggerProvider.LogError("InitRPCHandler failed to invoke");
+      return;
+    }
+    rpcHandler = new SafeRPCHandler(m_nview);
   }
 
   public void RPC_SetPrefabConfig(long sender, ZPackage package)
   {
-    if (!NetworkValidation.IsNetViewValid(m_nview, out var netView)) return;
+    if (!this.IsNetViewValid(out var netView)) return;
 
     try
     {
@@ -46,23 +75,32 @@ public class PrefabConfigRPCSync<T> : MonoBehaviour, IPrefabCustomConfigRPCSync<
     }
   }
 
+  /// <summary>
+  /// Tells all clients they need to update their local config as a value has been updated.
+  /// </summary>
+  /// <param name="sender"></param>
   public void RPC_SyncPrefabConfig(long sender)
   {
     SyncPrefabConfig();
   }
 
+  /// <summary>
+  /// Syncs RPC data from ZDO to local values.
+  /// </summary>
+  /// <param name="forceUpdate"></param>
   public void SyncPrefabConfig(bool forceUpdate = false)
   {
     if (m_configCache != null && !forceUpdate) return;
-    if (!NetworkValidation.IsNetViewValid(m_nview, out var netView)) return;
-
+    if (!this.IsNetViewValid(out var netView)) return;
     CustomConfig = CustomConfig.Load(netView.GetZDO());
   }
 
+  /// <summary>
+  /// Sends an RPC from client.
+  /// </summary>
   public void SendPrefabConfig()
   {
-    if (!NetworkValidation.IsNetViewValid(m_nview, out var netView)) return;
-
+    if (!this.IsNetViewValid(out var netView)) return;
     var package = new ZPackage();
     CustomConfig.Serialize(package);
     netView.InvokeRPC(ZRoutedRpc.Everybody, nameof(RPC_SetPrefabConfig), package);
@@ -70,29 +108,11 @@ public class PrefabConfigRPCSync<T> : MonoBehaviour, IPrefabCustomConfigRPCSync<
 
   public virtual void RegisterRPCListeners()
   {
-    if (!NetworkValidation.IsNetViewValid(m_nview, out var netView)) return;
-
-    _rpcHandler = new SafeRPCHandler(netView);
-    _rpcHandler.Register<ZPackage>(nameof(RPC_SetPrefabConfig), RPC_SetPrefabConfig);
-    _rpcHandler.Register(nameof(RPC_SyncPrefabConfig), RPC_SyncPrefabConfig);
-    _rpcHandler.Register(nameof(RPC_SyncBounds), RPC_SyncBounds);
-
-    netView.Register<ZPackage>(nameof(RPC_SetPrefabConfig), RPC_SetPrefabConfig);
-    netView.Register(nameof(RPC_SyncPrefabConfig), RPC_SyncPrefabConfig);
-    hasRegisteredRPCListeners = true;
+    rpcHandler?.Register<ZPackage>(nameof(RPC_SetPrefabConfig), RPC_SetPrefabConfig);
   }
 
   public virtual void UnregisterRPCListeners()
   {
-    if (!hasRegisteredRPCListeners) return;
-    if (!IsValid(out var netView))
-    {
-      hasRegisteredRPCListeners = false;
-      return;
-    }
-
-    netView.Unregister(nameof(RPC_SetPrefabConfig));
-    netView.Unregister(nameof(RPC_SyncPrefabConfig));
-    hasRegisteredRPCListeners = false;
+    rpcHandler?.UnregisterAll();
   }
 }
