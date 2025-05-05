@@ -39,54 +39,8 @@ public class VehicleHammerTableRegistry : GuardedRegistry<VehicleHammerTableRegi
     }
   }
 
-
-#if DEBUG
-  public static void AddRepairToolToPieceTable(PieceTable table)
-  {
-    var repairToolPrefab = PrefabManager.Instance.GetPrefab("RepairTool");
-    if (repairToolPrefab == null)
-    {
-      Jotunn.Logger.LogError("RepairTool prefab not found in ObjectDB!");
-      return;
-    }
-
-    // Add to each defined category in the table
-    foreach (var category in table.m_categories)
-    {
-      // Avoid duplicates
-      var alreadyExists = table.m_pieces.Any(p =>
-      {
-        var piece = p.GetComponent<Piece>();
-        return piece && piece.m_name == "RepairTool" && piece.m_category == category;
-      });
-
-      if (alreadyExists)
-        continue;
-
-      // Clone the RepairTool prefab so each can have its own category
-      var repairClone = Object.Instantiate(repairToolPrefab);
-      var repairPiece = repairClone.GetComponent<Piece>();
-      repairPiece.m_category = category;
-
-      // Optional: Give each one a unique name so it's not overridden
-      repairPiece.m_name = $"RepairTool_{category}";
-
-      // Add it to the piece table
-      table.m_pieces.Insert(0, repairClone);
-      Jotunn.Logger.LogInfo($"Added RepairTool to VehicleHammerTable category {category}");
-    }
-  }
-#endif
-
   public override void OnRegister()
   {
     RegisterVehicleHammerTable();
-
-#if DEBUG
-    // if (VehicleHammerTable != null)
-    // {
-    //   AddRepairToolToPieceTable(VehicleHammerTable.PieceTable);
-    // }
-#endif
   }
 }

@@ -1,5 +1,6 @@
 using HarmonyLib;
 using ValheimVehicles.Components;
+using ValheimVehicles.Interfaces;
 using ValheimVehicles.Propulsion.Rudder;
 
 namespace ValheimVehicles.Patches;
@@ -15,19 +16,10 @@ public class CharacterAnimEvent_Patch
     if (__instance.m_character is Player player && player.IsAttached() &&
         (bool)player.m_attachPoint && (bool)player.m_attachPoint.parent)
     {
-      var rudder = player.m_attachPoint?.parent
-        ?.GetComponent<SteeringWheelComponent>();
-      if (rudder != null)
+      var animator = player.m_attachPoint.GetComponentInParent<IAnimateUpdater>();
+      if (animator != null)
       {
-        rudder.UpdateIK((player).m_animator);
-        return false;
-      }
-
-      var ladder =
-        player.m_attachPoint?.parent?.GetComponent<RopeLadderComponent>();
-      if (ladder != null)
-      {
-        ladder.UpdateIK((player).m_animator);
+        animator.UpdateIK(player.m_animator);
         return false;
       }
     }

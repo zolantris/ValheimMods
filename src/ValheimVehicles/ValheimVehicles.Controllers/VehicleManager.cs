@@ -40,7 +40,7 @@
     // The rudder force multiplier applied to the ship speed
     private float _rudderForce = 1f;
 
-    public VehicleCustomConfig VehicleCustomConfig { get; set; }
+    public VehicleCustomConfig VehicleCustomConfig { get; set; } = new();
 
     public GameObject GhostContainer()
     {
@@ -312,7 +312,6 @@
         GetVehicleMovementCollidersTransform(transform);
       vehicleMovementTransform = GetVehicleMovementTransform(transform);
 
-
       if (PersistentZdoId == 0)
         Logger.LogWarning("PersistewnZdoId, did not get a zdo from the NetView");
 
@@ -402,6 +401,7 @@
 
       BindAllControllersAndData(controllersToBind);
 
+      if (!IsInitialized) return;
 
       // For starting the vehicle pieces.
       if (PiecesController != null)

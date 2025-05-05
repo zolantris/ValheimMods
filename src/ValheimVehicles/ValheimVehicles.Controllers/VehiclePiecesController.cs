@@ -1233,13 +1233,13 @@
         meshRenderer.sharedMaterial.enableInstancing = true;
       }
     }
+
+    /// <summary>
+    /// Todo add a Coroutine to evalutate this. If there is an error in FixedUpdate set this flag to false. Then do a full evaluation similar to MovementController
+    /// </summary>
+    /// <returns></returns>
     public bool IsInvalid()
     {
-      // if (isActiveAndEnabled && !_isInvalid)
-      // {
-      //   return false;
-      // }
-
       var isInvalid = !isActiveAndEnabled || m_localRigidbody == null ||
                       Manager == null ||
                       Manager.m_nview == null ||
@@ -1520,7 +1520,7 @@
     public static void AddInactivePiece(int id, ZNetView netView,
       VehiclePiecesController? instance, bool skipActivation = false)
     {
-      if (!ValheimClassValidation.IsCurrentGameHealthy())
+      if (!ValheimValidation.IsCurrentGameHealthy())
       {
         return;
       }
@@ -2419,6 +2419,7 @@
     public void TrySetPieceToParent(ZNetView? netView)
     {
       if (IsInvalid()) return;
+      if (netView) return;
       TrySetPieceToParent(netView, netView!.GetZDO());
     }
 

@@ -132,6 +132,7 @@ public class VehicleShipEffects : MonoBehaviour, IMonoUpdater
 
   public void CustomLateUpdate(float deltaTime)
   {
+    if (!_mManager.IsInitialized) return;
     if (!Floating.IsUnderWater(transform.position, ref m_previousWaterVolume))
     {
       m_shadow.gameObject.SetActive(false);

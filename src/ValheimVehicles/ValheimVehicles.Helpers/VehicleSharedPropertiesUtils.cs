@@ -47,7 +47,8 @@
     /// </summary>
     public static bool BindAllControllers(IVehicleSharedProperties fromController, List<IVehicleSharedProperties> toControllers, VehicleVariant vehicleVariant)
     {
-      if (!ClassValidator.ValidateRequiredNonNullFields<IVehicleSharedProperties>(fromController, null, GetSkipRegexpForVehicleType(vehicleVariant))) return false;
+      // todo would require adding a validator ignore for most of VehicleManager.
+      // if (!ClassValidator.ValidateRequiredNonNullFields<IVehicleSharedProperties>(fromController, null, GetSkipRegexpForVehicleType(vehicleVariant))) return false;
       foreach (var to in toControllers)
       {
         BindControllers(fromController, to);

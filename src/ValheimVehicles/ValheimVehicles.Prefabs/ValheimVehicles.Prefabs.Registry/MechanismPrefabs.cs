@@ -1,4 +1,3 @@
-using HarmonyLib;
 using Jotunn.Configs;
 using Jotunn.Entities;
 using Jotunn.Managers;
@@ -16,18 +15,18 @@ public class MechanismPrefabs : RegisterPrefab<MechanismPrefabs>
   private void RegisterCoalEngine()
   {
     var prefab = PrefabManager.Instance.CreateClonedPrefab(
-      PrefabNames.CoalEngine,
-      LoadValheimVehicleAssets.CoalEngine);
+      PrefabNames.Mechanism_CoalEngine,
+      LoadValheimVehicleAssets.Mechanism_Engine_Coal);
 
     PrefabRegistryHelpers.AddNetViewWithPersistence(prefab);
-    PrefabRegistryHelpers.PieceDataDictionary.Add(PrefabNames.CoalEngine, new PrefabRegistryHelpers.PieceData
+    PrefabRegistryHelpers.PieceDataDictionary.Add(PrefabNames.Mechanism_CoalEngine, new PrefabRegistryHelpers.PieceData
     {
-      Name = "$valheim_vehicles_coal_engine",
-      Description = "$valheim_vehicles_coal_engine_desc",
+      Name = "$valheim_vehicles_mechanism_engine_coal",
+      Description = "$valheim_vehicles_mechanism_engine_coal_desc",
       Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
         .CoalEngine)
     });
-    PrefabRegistryHelpers.GetPieceNameFromPrefab(PrefabNames.CoalEngine);
+    PrefabRegistryHelpers.AddPieceForPrefab(PrefabNames.Mechanism_CoalEngine, prefab);
 
     // main toggle switch.
     prefab.AddComponent<VehicleEngineIntegration>();
@@ -55,21 +54,34 @@ public class MechanismPrefabs : RegisterPrefab<MechanismPrefabs>
     }));
   }
 
+  /// <summary>
+  /// Todo an alternative way to add any command via placement. The item must not have a ZDO and must be a Temp netview.
+  /// </summary>
+  private static void CreateCommandPrefabAction()
+  {
+    var prefab = PrefabManager.Instance.CreateEmptyPrefab(
+      "ValheimVehicles_CommandsMenuToggleOnPlace", false);
+
+    PrefabRegistryHelpers.AddTempNetView(prefab);
+    PrefabRegistryHelpers.AddPieceForPrefab(PrefabNames.Mechanism_ElectricPylon, prefab);
+  }
+
   private void RegisterElectricPylonPrefab()
   {
     var prefab = PrefabManager.Instance.CreateClonedPrefab(
-      PrefabNames.ElectricPylon,
-      LoadValheimVehicleAssets.ElectricPylon);
+      PrefabNames.Mechanism_ElectricPylon,
+      LoadValheimVehicleAssets.Mechanism_ElectricPylon);
 
+    PrefabRegistryHelpers.HoistSnapPointsToPrefab(prefab);
     PrefabRegistryHelpers.AddNetViewWithPersistence(prefab);
-    PrefabRegistryHelpers.PieceDataDictionary.Add(PrefabNames.ElectricPylon, new PrefabRegistryHelpers.PieceData
+    PrefabRegistryHelpers.PieceDataDictionary.Add(PrefabNames.Mechanism_ElectricPylon, new PrefabRegistryHelpers.PieceData
     {
-      Name = "$valheim_vehicles_electric_pylon",
-      Description = "$valheim_vehicles_electric_pylon_desc",
+      Name = "$valheim_vehicles_mechanism_electric_pylon",
+      Description = "$valheim_vehicles_mechanism_electric_pylon_desc",
       Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
         .ElectricPylon)
     });
-    PrefabRegistryHelpers.GetPieceNameFromPrefab(PrefabNames.ElectricPylon);
+    PrefabRegistryHelpers.AddPieceForPrefab(PrefabNames.Mechanism_ElectricPylon, prefab);
 
     // main toggle switch.
     prefab.AddComponent<ElectricityPylonIntegration>();
@@ -97,22 +109,30 @@ public class MechanismPrefabs : RegisterPrefab<MechanismPrefabs>
     }));
   }
 
+
   // ToggleSwitch and possibly a register multi-level switches
   private void RegisterToggleSwitch()
   {
     var prefab = PrefabManager.Instance.CreateClonedPrefab(
-      PrefabNames.ToggleSwitch,
-      LoadValheimVehicleAssets.MechanicalSwitch);
-    var pieceTranslations =
-      PrefabRegistryHelpers.PieceDataDictionary.GetValueSafe(PrefabNames
-        .ToggleSwitch);
+      PrefabNames.Mechanism_ToggleSwitch,
+      LoadValheimVehicleAssets.Mechanism_Switch);
 
+    PrefabRegistryHelpers.HoistSnapPointsToPrefab(prefab, AnimatedLeverMechanism.GetSnappointsContainer(prefab));
+    PrefabRegistryHelpers.SetWearNTear(prefab);
     PrefabRegistryHelpers.AddNetViewWithPersistence(prefab);
-    PrefabRegistryHelpers.GetPieceNameFromPrefab(PrefabNames.ToggleSwitch);
 
+    PrefabRegistryHelpers.PieceDataDictionary.Add(PrefabNames.Mechanism_ToggleSwitch, new PrefabRegistryHelpers.PieceData
+    {
+      Name = "$valheim_vehicles_mechanism_toggle_switch",
+      Description = "$valheim_vehicles_mechanism_toggle_switch_desc",
+      Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
+        .MechanismSwitch)
+    });
+
+    PrefabRegistryHelpers.AddPieceForPrefab(PrefabNames.Mechanism_ToggleSwitch, prefab);
 
     // main toggle switch.
-    prefab.AddComponent<CustomToggleSwitch>();
+    prefab.AddComponent<MechanismSwitch>();
 
     PieceManager.Instance.AddPiece(new CustomPiece(prefab, true, new PieceConfig
     {

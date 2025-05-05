@@ -1,30 +1,32 @@
+#region
+
 using System.Collections.Generic;
 using System.IO;
 using UnityEditor;
 using UnityEngine;
-using UnityEngine.U2D;
 
+#endregion
 
 namespace ValheimVehicles.scripts
 {
     public class PrefabSceneThumbnailGenerator : MonoBehaviour
     {
+        static readonly string outputDirPath = "Assets/ValheimVehicles/GeneratedIcons/"; // output dir
+
+        private static readonly List<string> excludedNames = new()
+            { "shared_", "steering_wheel", "rope_ladder", "dirt_floor", "dirtfloor_icon", "rope_anchor", "keel", "rudder_basic", "custom_sail" };
         public Object searchDirectory;
         public Object targetSpriteAtlas;
         public string searchDirectoryPath = "Assets/ValheimVehicles/Prefabs/";
         public string targetSpriteAtlasPath = "Assets/ValheimVehicles/vehicle_icons.spriteatlasv2";
-        private List<GameObject> objList = new();
-        private Object outputDirObj;
-        static string outputDirPath = "Assets/ValheimVehicles/GeneratedIcons/"; // output dir
-        int width = 100; // image width
-        int height = 100; // image height
+        readonly int height = 100; // image height
 
         private bool isRunning;
+        private readonly List<GameObject> objList = new();
+        private Object outputDirObj;
 
-        private static readonly List<string> excludedNames = new()
-            { "shared_", "steering_wheel", "rope_ladder", "dirt_floor", "dirtfloor_icon", "rope_anchor", "keel", "rudder_basic", "custom_sail" };
-
-        private List<string> spritePaths = new();
+        private readonly List<string> spritePaths = new();
+        readonly int width = 100; // image width
 
         private GUIContent CaptureRunButtonText =>
             new GUIContent(isRunning ? "Generating...please wait" : "Generated Sprite Icons");
@@ -77,8 +79,6 @@ namespace ValheimVehicles.scripts
             
             foreach (var obj in objList)
             {
-                Debug.Log("OBJ :  " + obj.name);
-
                 var shouldExit = false;
                 foreach (var excludedName in excludedNames)
                 {
@@ -110,7 +110,7 @@ namespace ValheimVehicles.scripts
 
         private string GetSpriteAtlasPath()
         {
-            return targetSpriteAtlas ? AssetDatabase.GetAssetPath(targetSpriteAtlas) : this.targetSpriteAtlasPath;
+            return targetSpriteAtlas ? AssetDatabase.GetAssetPath(targetSpriteAtlas) : targetSpriteAtlasPath;
         }
 
         // must use the AssetDatabase get the current sprites and nuke them
@@ -201,7 +201,7 @@ namespace ValheimVehicles.scripts
         {
             // Uses alpha to make transparent, black is good for edges of object that are not perfectly cut
             RuntimePreviewGenerator.BackgroundColor = new Color(0,0,0,0);
-            var pg = RuntimePreviewGenerator.GenerateModelPreview(obj.transform, width, height, false);
+            var pg = RuntimePreviewGenerator.GenerateModelPreview(obj.transform, width, height);
             var texturePath = $"{outputDirPath}{obj.name}.png";
             WriteTextureToFile(pg, texturePath);
             

@@ -27,6 +27,8 @@ public abstract class PrefabRegistryHelpers
     private string _name;
     private string _description;
 
+    public bool IsInverse;
+
     public string Name
     {
       get => _name;
@@ -377,9 +379,14 @@ public abstract class PrefabRegistryHelpers
     }
   }
 
-  /// todo consider using Jotunn.Manager.RenderManager for these Icon generation
-  /// todo auto generate this from the translations json
-  /// 4x4 and 2x2 icons look similar, may remove 4x4
+  /// <summary>
+  /// Used to initialize all PrefabData
+  /// </summary>
+  ///
+  /// <deprecated>
+  /// This is deprecated because each RegisterPiece should be adding inline or adding these pieces within that class. This current Init approach makes it harder to track dependencies per registered vehicle.
+  /// </deprecated>
+  /// 
   public static void Init()
   {
     PieceLayer = LayerMask.NameToLayer("piece");
@@ -510,14 +517,6 @@ public abstract class PrefabRegistryHelpers
           .ShipRudderAdvancedDoubleIron)
       });
 
-    PieceDataDictionary.Add(PrefabNames.ToggleSwitch, new PieceData
-    {
-      Name = "$valheim_vehicles_toggle_switch",
-      Description = "$valheim_vehicles_toggle_switch_desc",
-      Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
-        .MechanicalSwitch)
-    });
-
     PieceDataDictionary.Add(PrefabNames.WindowWallPorthole2x2Prefab,
       new PieceData
       {
@@ -647,25 +646,28 @@ public abstract class PrefabRegistryHelpers
       .Name);
   }
 
-  public static Piece AddPieceForPrefab(string prefabName, GameObject prefab,
-    bool isInverse = false)
+  public static Piece AddPieceForPrefab(GameObject prefab, PieceData pieceData)
   {
-    var pieceInformation = PieceDataDictionary.GetValueSafe(prefabName);
-
     var piece = prefab.AddComponent<Piece>();
 
-    piece.m_name = pieceInformation.Name;
-    piece.m_description = pieceInformation.Description;
-    piece.m_icon = pieceInformation.Icon;
+    piece.m_name = pieceData.Name;
+    piece.m_description = pieceData.Description;
+    piece.m_icon = pieceData.Icon;
 
-    // todo yet another helper might be needed.
-    if (isInverse)
+    if (pieceData.IsInverse)
     {
       piece.m_name = $"$valheim_vehicles_inverse {piece.m_name}";
       piece.m_description =
         $"$valheim_vehicles_inverse_desc {piece.m_description}";
     }
 
+    return piece;
+  }
+
+  public static Piece AddPieceForPrefab(string prefabName, GameObject prefab)
+  {
+    var pieceInformation = PieceDataDictionary.GetValueSafe(prefabName);
+    var piece = AddPieceForPrefab(prefab, pieceInformation);
     return piece;
   }
 

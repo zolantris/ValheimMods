@@ -19,7 +19,7 @@ using Logger = Jotunn.Logger;
 
 namespace ValheimVehicles.Propulsion.Rudder;
 
-public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable,
+public class SteeringWheelComponent : MonoBehaviour, IAnimateUpdater, Hoverable, Interactable,
   IDoodadController
 {
   private VehicleMovementController _controls;
@@ -373,7 +373,7 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable,
     if (!m_currentRightHand)
     {
       var playerHandTransform =
-        Player.m_localPlayer.transform.TransformPoint(m_leftHandPosition);
+        transform.TransformPoint(m_rightHandPosition);
       m_currentRightHand = GetNearestSpoke(playerHandTransform);
     }
 

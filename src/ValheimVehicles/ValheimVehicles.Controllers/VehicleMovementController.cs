@@ -2337,7 +2337,7 @@
       }
 
       _isInvalid = !isActiveAndEnabled || m_body == null || m_floatcollider == null ||
-                   FloatCollider == null || !Manager || !PiecesController || !OnboardController || !m_nview ||
+                   FloatCollider == null || !Manager || !Manager.IsInitialized || !PiecesController || !OnboardController || m_nview == null ||
                    m_nview.m_zdo == null ||
                    !ShipDirection;
       return _isInvalid;

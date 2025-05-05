@@ -17,8 +17,10 @@ public abstract class SpriteNames
   public const string ShipRudderAdvancedIron = "rudder_advanced_single_iron";
   public const string Anchor = "anchor";
 
+  // Items
   public const string VehicleHammer = "vehicle_hammer";
 
+  // Walls/Floors
   public const string ShipRudderAdvancedDoubleWood =
     "rudder_advanced_double_wood";
 
@@ -29,10 +31,6 @@ public abstract class SpriteNames
 
   public const string ShipRudderBasic = "rudder_basic";
   public const string ShipKeel = "keel";
-
-  public const string MechanicalSwitch = "mechanical_switch";
-  public const string ElectricPylon = "electric_pylon";
-  public const string CoalEngine = "coal_engine";
 
   public const string HullCenterWood = "hull_center_wood";
   public const string HullCenterIron = "hull_center_iron";
@@ -47,6 +45,8 @@ public abstract class SpriteNames
 
   public const string HullRibWood = "hull_rib_wood";
   public const string HullRibIron = "hull_rib_iron";
+
+  // Windows
   public const string WindowPortholeStandalone = "window_porthole_standalone";
 
   public const string WindowWallPorthole2x2 =
@@ -64,9 +64,14 @@ public abstract class SpriteNames
   public const string WindowWallSquareIron = "hull_wall_window_square_iron_2x2";
   public const string WindowWallSquareWood = "hull_wall_window_square_wood_2x2";
 
+  // Experimental Prefabs
   public const string Nautilus = "nautilus";
 
-  public const string SwivelIcon = "swivel";
+  // Mechanisms
+  public const string MechanismSwitch = "mechanism_switch";
+  public const string ElectricPylon = "mechanism_electric_pylon";
+  public const string CoalEngine = "mechanism_engine_coal";
+  public const string MechanismSwivel = "swivel";
 
 
   /// <summary>

@@ -234,15 +234,15 @@
 
     public static void UpdateSwivelTranslations()
     {
-      Swivel_Edit = SafeLocalize("$valheim_vehicles_swivel_edit");
-      Swivel_Connected = SafeLocalize("$valheim_vehicles_swivel_connected");
+      Swivel_Edit = SafeLocalize("$valheim_vehicles_mechanism_swivel_edit");
+      Swivel_Connected = SafeLocalize("$valheim_vehicles_mechanism_swivel_connected");
       Swivel_HoverText = $"{WithBoldText(SharedKeys_Hold)} {WithBoldText(ValheimInput_KeyUse, "yellow")} {Swivel_Edit}";
     }
 
     public static void ForceUpdateTranslations()
     {
       UpdateTranslations(true);
-    } 
+    }
 
     /// <summary>
     /// Possibly move to a localization generator to generate these on the fly based on the current english translations.

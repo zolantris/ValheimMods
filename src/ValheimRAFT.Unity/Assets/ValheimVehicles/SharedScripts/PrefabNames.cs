@@ -37,190 +37,190 @@
 
       private static readonly string ValheimVehiclesPrefix = "ValheimVehicles";
 
-      public static string LandVehicle = $"{ValheimVehiclesPrefix}_VehicleLand";
-      public static string AirVehicle = $"{ValheimVehiclesPrefix}_VehicleAir";
-      public static string WheelSet = $"{ValheimVehiclesPrefix}_WheelSet";
+      public static readonly string LandVehicle = $"{ValheimVehiclesPrefix}_VehicleLand";
+      public static readonly string AirVehicle = $"{ValheimVehiclesPrefix}_VehicleAir";
+      public static readonly string WheelSet = $"{ValheimVehiclesPrefix}_WheelSet";
 
-      public static string MBRopeAnchor = "MBRopeAnchor";
+      public static readonly string MBRopeAnchor = "MBRopeAnchor";
 
-      public static string CustomWaterFloatation =
+      public static readonly string CustomWaterFloatation =
         $"{ValheimVehiclesPrefix}_CustomWaterFloatation";
 
-      public static string CustomWaterMask =
+      public static readonly string CustomWaterMask =
         $"{ValheimVehiclesPrefix}_CustomWaterMask";
 
-      public static string CustomWaterMaskCreator =
+      public static readonly string CustomWaterMaskCreator =
         $"{ValheimVehiclesPrefix}_CustomWaterMaskCreator";
 
-      public static string CustomVehicleMaxCollisionHeightCreator =
+      public static readonly string CustomVehicleMaxCollisionHeightCreator =
         $"{ValheimVehiclesPrefix}_CustomVehicleMaxCollisionHeightCreator";
 
-      public static string PlayerSpawnControllerObj =
+      public static readonly string PlayerSpawnControllerObj =
         $"{ValheimVehiclesPrefix}_PlayerSpawnControllerObj";
 
-      public static string ShipAnchorWood =
+      public static readonly string ShipAnchorWood =
         $"{ValheimVehiclesPrefix}_ShipAnchor_{HullMaterial.Wood}";
 
-      public static string MBRopeLadder = "MBRopeLadder";
-      public static string MBRaft = "MBRaft";
+      public static readonly string MBRopeLadder = "MBRopeLadder";
+      public static readonly string MBRaft = "MBRaft";
 
-      public static string Nautilus =
+      public static readonly string Nautilus =
         $"{ValheimVehiclesPrefix}_VehiclePresets_Nautilus";
-      public static string Tier1RaftMastName = "MBRaftMast";
-      public static string Tier2RaftMastName = "MBKarveMast";
-      public static string Tier3RaftMastName = "MBVikingShipMast";
+      public static readonly string Tier1RaftMastName = "MBRaftMast";
+      public static readonly string Tier2RaftMastName = "MBKarveMast";
+      public static readonly string Tier3RaftMastName = "MBVikingShipMast";
 
-      public static string Tier4RaftMastName =
+      public static readonly string Tier4RaftMastName =
         $"{ValheimVehiclesPrefix}_DrakkalMast";
 
-      public static string Tier1CustomSailName = "MBSail";
-      public static string BoardingRamp = "MBBoardingRamp";
-      public static string BoardingRampWide = "MBBoardingRamp_Wide";
-      public static string WaterVehicleFloatCollider = "VehicleShip_FloatCollider";
+      public static readonly string Tier1CustomSailName = "MBSail";
+      public static readonly string BoardingRamp = "MBBoardingRamp";
+      public static readonly string BoardingRampWide = "MBBoardingRamp_Wide";
+      public static readonly string WaterVehicleFloatCollider = "VehicleShip_FloatCollider";
 
-      public static string WaterVehicleBlockingCollider =
+      public static readonly string WaterVehicleBlockingCollider =
         "VehicleShip_BlockingCollider";
 
-      public static string WaterVehicleOnboardCollider =
+      public static readonly string WaterVehicleOnboardCollider =
         "VehicleShip_OnboardTriggerCollider";
 
-      public static string DEPRECATED_ValheimRaftMenuName = "Raft";
+      public static readonly string DEPRECATED_ValheimRaftMenuName = "Raft";
 
       // Containers that are nested within a VehiclePrefab top level
       // utilize the Get<Name> methods within the LoadValheimVehiclesAssets class to get these GameObjects
       private static readonly string PiecesContainer =
         "piecesContainer";
 
-      public static string MovingPiecesContainer =
+      public static readonly string MovingPiecesContainer =
         "movingPiecesContainer";
 
-      public static string GhostContainer =
+      public static readonly string GhostContainer =
         "ghostContainer";
 
-      public static string VehicleContainer =
+      public static readonly string VehicleContainer =
         "vehicleContainer";
 
-      public static string VehiclePiecesContainer =
+      public static readonly string VehiclePiecesContainer =
         $"{ValheimVehiclesPrefix}_{PiecesContainer}";
 
-      public static string VehicleMovingPiecesContainer =
+      public static readonly string VehicleMovingPiecesContainer =
         $"{ValheimVehiclesPrefix}_{MovingPiecesContainer}";
 
-      public static string WaterVehicleShip =
+      public static readonly string WaterVehicleShip =
         $"{ValheimVehiclesPrefix}_WaterVehicleShip";
 
-      public static string HullProw = $"{ValheimVehiclesPrefix}_Ship_Hull_Prow";
+      public static readonly string HullProw = $"{ValheimVehiclesPrefix}_Ship_Hull_Prow";
 
-      public static string HullRibCorner =
+      public static readonly string HullRibCorner =
         $"{ValheimVehiclesPrefix}_Ship_Hull_Rib_Corner";
 
-      public static string HullRibCornerFloor =
+      public static readonly string HullRibCornerFloor =
         $"{ValheimVehiclesPrefix}_Ship_Hull_Rib_Corner_Floor";
 
-      public static string HullRib = $"{ValheimVehiclesPrefix}_Ship_Hull_Rib";
+      public static readonly string HullRib = $"{ValheimVehiclesPrefix}_Ship_Hull_Rib";
 
       // to only be used for matching with generic prefab names
-      public static string HullSlab = $"{ValheimVehiclesPrefix}_Hull_Slab";
+      public static readonly string HullSlab = $"{ValheimVehiclesPrefix}_Hull_Slab";
 
-      public static string HullWall =
+      public static readonly string HullWall =
         $"{ValheimVehiclesPrefix}_Hull_Wall";
 
-      public static string HullCornerFloor =
+      public static readonly string HullCornerFloor =
         $"{ValheimVehiclesPrefix}_Hull_Corner_Floor";
 
-      public static string KeelColliderPrefix = "keel_collider";
+      public static readonly string KeelColliderPrefix = "keel_collider";
 
-      public static string ShipHullPrefabName = "Ship_Hull";
+      public static readonly string ShipHullPrefabName = "Ship_Hull";
 
-      public static string WindowWallPorthole2x2Prefab =
+      public static readonly string WindowWallPorthole2x2Prefab =
         $"{ValheimVehiclesPrefix}_ShipWindow_Wall_Porthole_2x2";
 
-      public static string WindowWallPorthole4x4Prefab =
+      public static readonly string WindowWallPorthole4x4Prefab =
         $"{ValheimVehiclesPrefix}_ShipWindow_Wall_Porthole_4x4";
 
-      public static string WindowWallPorthole8x4Prefab =
+      public static readonly string WindowWallPorthole8x4Prefab =
         $"{ValheimVehiclesPrefix}_ShipWindow_Wall_Porthole_8x4";
 
-      public static string WindowFloorPorthole4x4Prefab =
+      public static readonly string WindowFloorPorthole4x4Prefab =
         $"{ValheimVehiclesPrefix}_ShipWindow_Floor_Porthole_4x4";
 
-      public static string WindowWallSquareIronPrefabName =
+      public static readonly string WindowWallSquareIronPrefabName =
         $"{ValheimVehiclesPrefix}_ShipWindow_Wall_Square_{HullMaterial.Iron}_2x2";
 
-      public static string WindowWallSquareWoodPrefabName =
+      public static readonly string WindowWallSquareWoodPrefabName =
         $"{ValheimVehiclesPrefix}_ShipWindow_Wall_Square_{HullMaterial.Wood}_2x2";
 
-      public static string WindowPortholeStandalonePrefab =
+      public static readonly string WindowPortholeStandalonePrefab =
         $"{ValheimVehiclesPrefix}_ShipWindow_Porthole_standalone";
 
       // hull
-      public static string ShipHullCenterWoodPrefabName =
+      public static readonly string ShipHullCenterWoodPrefabName =
         $"{ValheimVehiclesPrefix}_{ShipHullPrefabName}_Wood";
 
-      public static string ShipHullCenterIronPrefabName =
+      public static readonly string ShipHullCenterIronPrefabName =
         $"{ValheimVehiclesPrefix}_{ShipHullPrefabName}_Iron";
 
-      public static string ShipRudderBasic =
+      public static readonly string ShipRudderBasic =
         $"{ValheimVehiclesPrefix}_ShipRudderBasic";
 
-      public static string ShipRudderAdvancedWood =
+      public static readonly string ShipRudderAdvancedWood =
         $"{ValheimVehiclesPrefix}_ShipRudderAdvanced_Wood";
 
-      public static string ShipRudderAdvancedIron =
+      public static readonly string ShipRudderAdvancedIron =
         $"{ValheimVehiclesPrefix}_ShipRudderAdvanced_Iron";
 
-      public static string ShipRudderAdvancedDoubleWood =
+      public static readonly string ShipRudderAdvancedDoubleWood =
         $"{ValheimVehiclesPrefix}_ShipRudderAdvanced_Tail_Wood";
 
-      public static string ShipRudderAdvancedDoubleIron =
+      public static readonly string ShipRudderAdvancedDoubleIron =
         $"{ValheimVehiclesPrefix}_ShipRudderAdvanced_Tail_Iron";
 
-      public static string ShipSteeringWheel =
+      public static readonly string ShipSteeringWheel =
         $"{ValheimVehiclesPrefix}_ShipSteeringWheel";
 
-      public static string ShipKeel = $"{ValheimVehiclesPrefix}_ShipKeel";
+      public static readonly string ShipKeel = $"{ValheimVehiclesPrefix}_ShipKeel";
 
-      public static string WaterVehiclePreviewHull =
+      public static readonly string WaterVehiclePreviewHull =
         $"{ValheimVehiclesPrefix}_WaterVehiclePreviewHull";
 
-      public static string VehicleSail = $"{ValheimVehiclesPrefix}_VehicleSail";
+      public static readonly string VehicleSail = $"{ValheimVehiclesPrefix}_VehicleSail";
 
-      public static string VehicleShipTransform =
+      public static readonly string VehicleShipTransform =
         $"{ValheimVehiclesPrefix}_VehicleShipTransform";
 
-      public static string VehicleShipEffects =
+      public static readonly string VehicleShipEffects =
         $"{ValheimVehiclesPrefix}_VehicleShipEffects";
 
-      public static string VehicleSailMast =
+      public static readonly string VehicleSailMast =
         $"{ValheimVehiclesPrefix}_VehicleSailMast";
 
-      public static string VehicleSailCloth = $"{ValheimVehiclesPrefix}_SailCloth";
+      public static readonly string VehicleSailCloth = $"{ValheimVehiclesPrefix}_SailCloth";
 
-      public static string ToggleSwitch =
+      public static readonly string Mechanism_ToggleSwitch =
         $"{ValheimVehiclesPrefix}_ToggleSwitch";
 
-      public static string ElectricPylon =
+      public static readonly string Mechanism_ElectricPylon =
         $"{ValheimVehiclesPrefix}_ElectricityPylon";
 
-      public static string CoalEngine =
+      public static readonly string Mechanism_CoalEngine =
         $"{ValheimVehiclesPrefix}_CoalEngine";
 
-      public static string VehicleShipMovementOrientation =
+      public static readonly string VehicleShipMovementOrientation =
         "VehicleShip_MovementOrientation";
 
-      public static string VehicleHudAnchorIndicator =
+      public static readonly string VehicleHudAnchorIndicator =
         $"{ValheimVehiclesPrefix}_HudAnchorIndicator";
 
       // hammers must contain "hammer" in the string to match.
-      public static string VehicleHammer = $"{ValheimVehiclesPrefix}_vehicle_hammer";
+      public static readonly string VehicleHammer = $"{ValheimVehiclesPrefix}_vehicle_hammer";
 
-      public static string RamBladePrefix = $"{ValheimVehiclesPrefix}_ram_blade";
-      public static string RamStakePrefix = $"{ValheimVehiclesPrefix}_ram_stake";
+      public static readonly string RamBladePrefix = $"{ValheimVehiclesPrefix}_ram_blade";
+      public static readonly string RamStakePrefix = $"{ValheimVehiclesPrefix}_ram_stake";
 
-      public static string ConvexHull = $"{ValheimVehiclesPrefix}_ConvexHull";
+      public static readonly string ConvexHull = $"{ValheimVehiclesPrefix}_ConvexHull";
 
-      public static string SwivelPrefabName = $"{ValheimVehiclesPrefix}_Swivel";
-      public static string SwivelAssetName = "swivel";
+      public static readonly string SwivelPrefabName = $"{ValheimVehiclesPrefix}_Swivel";
+      public static readonly string SwivelAssetName = "swivel";
 
       /// <summary>
       /// For usage with icons and other prefab registrations
@@ -414,9 +414,9 @@
 
       public static class MastLevels
       {
-        public static string ONE = "level_1";
-        public static string TWO = "level_2";
-        public static string THREE = "level_3";
+        public static readonly string ONE = "level_1";
+        public static readonly string TWO = "level_2";
+        public static readonly string THREE = "level_3";
       }
     }
   }
