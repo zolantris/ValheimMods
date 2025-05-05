@@ -53,7 +53,7 @@
       public Action<bool>? OnToggleCompleted;
       public Func<bool>? ShouldStopGearEarly;
 
-      private void Awake()
+      public virtual void Awake()
       {
         attachPoint = transform.Find("lever/lever_handle/attach_point");
         wireConnector = transform.Find("lever/lever_face/wire_connector");
@@ -72,6 +72,8 @@
         }
       }
 
+      public bool IsToggleInProgress => _isToggleInProgress;
+
 #if UNITY_EDITOR
         private void Start()
         {
@@ -79,7 +81,7 @@
         }
 #endif
 
-      private void FixedUpdate()
+      public virtual void FixedUpdate()
       {
         if (_isToggleInProgress)
         {

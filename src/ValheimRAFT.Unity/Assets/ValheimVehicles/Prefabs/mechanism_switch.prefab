@@ -231,8 +231,8 @@ GameObject:
   m_Component:
   - component: {fileID: 1147447790663725055}
   m_Layer: 10
-  m_Name: attachpoint
-  m_TagString: Untagged
+  m_Name: attach_point
+  m_TagString: grabpoint
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0

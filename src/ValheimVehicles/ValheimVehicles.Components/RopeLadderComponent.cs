@@ -12,7 +12,7 @@
 
   namespace ValheimVehicles.Components;
 
-  public class RopeLadderComponent : MonoBehaviour, IAnimateUpdater, Interactable, Hoverable
+  public class RopeLadderComponent : MonoBehaviour, IAnimatorHandler, Interactable, Hoverable
   {
     public GameObject m_stepObject;
 
