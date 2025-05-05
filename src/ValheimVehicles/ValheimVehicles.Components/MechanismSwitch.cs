@@ -8,6 +8,7 @@ using ValheimVehicles.Constants;
 using ValheimVehicles.Components;
 using ValheimVehicles.Helpers;
 using ValheimVehicles.Interfaces;
+using ValheimVehicles.Patches;
 using ValheimVehicles.Structs;
 using ValheimVehicles.SharedScripts;
 
@@ -31,9 +32,9 @@ public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interac
   private ZNetView netView;
 
   // todo might be better to just run OnAnimatorIK in the fixed update loop.
-  public static Dictionary<Humanoid, IAnimatorHandler> m_animatedHumanoids = new();
   private List<Humanoid> m_localAnimatedHumanoids = new();
   private SmoothToggleLerp _handDistanceLerp = new();
+  public static bool m_forceRunAnimateOnFixedUpdate = false;
 
   public override void Awake()
   {
@@ -68,15 +69,18 @@ public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interac
 
     if (m_localAnimatedHumanoids.Count == 0) return;
 
-    for (var index = 0; index < m_localAnimatedHumanoids.Count; index++)
+    if (m_forceRunAnimateOnFixedUpdate)
     {
-      var humanoid = m_localAnimatedHumanoids[index];
-      if (humanoid == null)
+      for (var index = 0; index < m_localAnimatedHumanoids.Count; index++)
       {
-        m_localAnimatedHumanoids.FastRemoveAt(ref index);
-        continue;
+        var humanoid = m_localAnimatedHumanoids[index];
+        if (humanoid == null)
+        {
+          m_localAnimatedHumanoids.FastRemoveAt(ref index);
+          continue;
+        }
+        UpdateIK(humanoid.m_animator);
       }
-      UpdateIK(humanoid.m_animator);
     }
 
     _handDistanceLerp.Update(IsToggleInProgress, Time.fixedDeltaTime);
@@ -129,23 +133,22 @@ public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interac
   {
     foreach (var humanoid in m_localAnimatedHumanoids.ToList())
     {
-      if (humanoid == null) continue;
-      if (m_animatedHumanoids.TryGetValue(humanoid, out _))
+      if (humanoid == null || humanoid.m_animator == null) continue;
+      if (CharacterAnimEvent_Patch.m_animatedHumanoids.TryGetValue(humanoid.m_animator, out _))
       {
-        m_animatedHumanoids.Remove(humanoid);
+        CharacterAnimEvent_Patch.m_animatedHumanoids.Remove(humanoid.m_animator);
       }
-      humanoid.AttachStop();
     }
 
-    m_animatedHumanoids.Clear();
+    m_localAnimatedHumanoids.Clear();
   }
 
   public void AddPlayerToPullSwitchAnimations(Humanoid humanoid)
   {
-    // humanoid.AttachStart(attachPoint, null, true, false, false, "Standing Torch Idle right", detachOffset);
-    if (!m_animatedHumanoids.TryGetValue(humanoid, out _))
+    if (humanoid == null || humanoid.m_animator == null) return;
+    if (!CharacterAnimEvent_Patch.m_animatedHumanoids.TryGetValue(humanoid.m_animator, out _))
     {
-      m_animatedHumanoids.Add(humanoid, this);
+      CharacterAnimEvent_Patch.m_animatedHumanoids.Add(humanoid.m_animator, this);
     }
 
     if (!m_localAnimatedHumanoids.Contains(humanoid))
@@ -200,7 +203,7 @@ public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interac
     else
     {
       animator.SetIKPosition(AvatarIKGoal.RightHand, attachPoint.position);
-      animator.SetIKPositionWeight(AvatarIKGoal.RightHand, 1f);
+      animator.SetIKPositionWeight(AvatarIKGoal.RightHand, lerpedHandDistance);
     }
   }
 

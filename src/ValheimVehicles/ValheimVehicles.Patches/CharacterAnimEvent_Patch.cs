@@ -1,25 +1,24 @@
+using System.Collections.Generic;
 using HarmonyLib;
-using ValheimVehicles.Components;
+using UnityEngine;
 using ValheimVehicles.Interfaces;
-using ValheimVehicles.Propulsion.Rudder;
 
 namespace ValheimVehicles.Patches;
 
 [HarmonyPatch]
 public class CharacterAnimEvent_Patch
 {
+  public static Dictionary<Animator, IAnimatorHandler> m_animatedHumanoids = new();
+
   [HarmonyPatch(typeof(CharacterAnimEvent), "OnAnimatorIK")]
   [HarmonyPrefix]
   private static bool OnAnimatorIK(CharacterAnimEvent __instance,
     int layerIndex)
   {
-    if (MechanismSwitch.m_animatedHumanoids.Count > 0)
+    if (m_animatedHumanoids.Count > 0 && __instance.m_animator != null && m_animatedHumanoids.TryGetValue(__instance.m_animator, out var activator))
     {
-      foreach (var mAnimatedHumanoid in MechanismSwitch.m_animatedHumanoids)
-      {
-        if (mAnimatedHumanoid.Key == null || mAnimatedHumanoid.Key.m_animator == null || mAnimatedHumanoid.Value == null) continue;
-        mAnimatedHumanoid.Value.UpdateIK(mAnimatedHumanoid.Key.m_animator);
-      }
+      activator.UpdateIK(__instance.m_animator);
+      return false;
     }
     if (__instance.m_character is Player player && player.IsAttached() &&
         (bool)player.m_attachPoint && (bool)player.m_attachPoint.parent)

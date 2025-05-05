@@ -44,6 +44,7 @@
 
     protected override void TrySetPieceToParent(ZNetView netView)
     {
+      if (netView == null || PrefabNames.IsVehicle(netView.name)) return;
       // Classic vehicle-specific logic
       netView.transform.SetParent(_host.GetPiecesContainer(), false);
     }
@@ -881,7 +882,6 @@
     /// <returns></returns>
     public Transform GetPiecesContainer()
     {
-      // return transform.Find("pieces");
       return transform;
     }
 
@@ -2430,6 +2430,7 @@
     public void TrySetPieceToParent(ZNetView? netView, ZDO? zdo)
     {
       if (IsInvalid()) return;
+      if (netView == null || PrefabNames.IsVehicle(netView.name)) return;
 
       if (RamPrefabs.IsRam(netView!.name))
       {

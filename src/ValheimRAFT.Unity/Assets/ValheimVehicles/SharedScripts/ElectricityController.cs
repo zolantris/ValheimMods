@@ -122,12 +122,12 @@ namespace ValheimVehicles.SharedScripts
       line.material = GetWireMaterial();
       line.widthMultiplier = 0.02f;
       line.textureMode = LineTextureMode.Tile;
-      line.useWorldSpace = true;
+      line.useWorldSpace = false;
 
       var points = new List<Vector3>();
       foreach (var pylon in chain)
       {
-        points.Add(pylon.wireConnector.position);
+        points.Add(obj.transform.InverseTransformPoint(pylon.wireConnector.position));
       }
 
       var curvedPoints = new List<Vector3>();
