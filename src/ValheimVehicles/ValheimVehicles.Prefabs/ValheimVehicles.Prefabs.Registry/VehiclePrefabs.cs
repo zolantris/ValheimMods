@@ -36,12 +36,12 @@
        * ShipControls were a gameObject with a script attached to them. This approach directly attaches the script instead of having the rudder show.
        */
 
-      var shipInstance = prefab.AddComponent<VehicleManager>();
+      var vehicleManager = prefab.AddComponent<VehicleManager>();
 
       // required property otherwise it will match other mods.
-      shipInstance.vehicleVariant = VehicleVariant.Water;
+      vehicleManager.SetVehicleVariant(VehicleVariant.Water);
 
-      shipInstance.gameObject.layer = LayerHelpers.CustomRaftLayer;
+      vehicleManager.gameObject.layer = LayerHelpers.CustomRaftLayer;
 
       // todo fix ship water effects so they do not cause ship materials to break
 
@@ -55,8 +55,8 @@
       Object.Destroy(shipEffects);
 
       vehicleShipEffects.transform.localPosition = new Vector3(0, -2, 0);
-      shipInstance.ShipEffectsObj = vehicleShipEffects.gameObject;
-      shipInstance.ShipEffects = vehicleShipEffects;
+      vehicleManager.ShipEffectsObj = vehicleShipEffects.gameObject;
+      vehicleManager.ShipEffects = vehicleShipEffects;
 
       // WearNTear may need to be removed or tweaked
       prefab.AddComponent<WearNTear>();
@@ -142,8 +142,10 @@
         LoadValheimVehicleAssets.VehicleLand);
 
       CreateWaterVehiclePrefab(landVehiclePrefab);
+
+      // Must set the vehicle to land mode.
       var vehicleManager = landVehiclePrefab.GetComponent<VehicleManager>();
-      vehicleManager.vehicleVariant = VehicleVariant.Land;
+      vehicleManager.SetVehicleVariant(VehicleVariant.Land);
 
       var piece =
         PrefabRegistryHelpers.AddPieceForPrefab(PrefabNames.LandVehicle,

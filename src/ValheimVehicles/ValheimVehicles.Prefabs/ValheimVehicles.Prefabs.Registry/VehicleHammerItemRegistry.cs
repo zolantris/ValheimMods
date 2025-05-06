@@ -36,8 +36,8 @@ public class VehicleHammerItemRegistry : GuardedRegistry<VehicleHammerItemRegist
     var nv = PrefabRegistryHelpers.AddNetViewWithPersistence(hammerPrefab);
     var zSyncTransform = hammerPrefab.AddComponent<ZSyncTransform>();
 
-    hammerPrefab.AddComponent<VehicleBuildHammer>();
-    hammerPrefab.AddComponent<VehicleHammerInputListener>();
+    // hammerPrefab.AddComponent<VehicleBuildHammer>();
+    // hammerPrefab.AddComponent<VehicleHammerInputListener>();
 
     // verbosely add these.
     zSyncTransform.m_syncBodyVelocity = false;

@@ -48,6 +48,7 @@
         PrefabNames.GhostContainer);
     }
 
+
     public VehicleVariant vehicleVariant = VehicleVariant.All;
 
     public GameObject PiecesContainer()
@@ -304,6 +305,10 @@
       m_nview = GetComponent<ZNetView>();
       GetPersistentID();
 
+      // todo figure out why when setting this value on the prefab directly it is inaccurate.
+      // has to set itself. Otherwise it is mismatched unless saved as a ZDO value.
+      SetVehicleVariant(vehicleVariant);
+
       VehicleConfigSync = gameObject.AddComponent<VehicleConfigSyncComponent>();
       // this flag can be updated manually via VehicleCommands.
       HasVehicleDebugger = VehicleDebugConfig.VehicleDebugMenuEnabled.Value;
@@ -542,8 +547,17 @@
     {
       if (HasVehicleDebugger && PiecesController) AddOrRemoveVehicleDebugger();
 
+      // Required for vehicle to update well.
+      SetVehicleVariant(vehicleVariant);
+
       UpdateShipSounds(this);
       UpdateShipEffects();
+    }
+
+    public void SetVehicleVariant(VehicleVariant variant)
+    {
+      vehicleVariant = variant;
+      m_isLandVehicle = variant == VehicleVariant.Land;
     }
 
     private IEnumerator ValidateVehicleCoroutineRoutine()

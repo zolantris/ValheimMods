@@ -632,27 +632,43 @@ public class VehicleCommands : ConsoleCommand
     }
   }
 
+  public static void BoatNotDetectedMessage()
+  {
+    LoggerProvider.LogWarning(
+      $"boat not detected within 50f, get nearer to the boat and look directly at the boat");
+  }
+
   public static VehicleManager? GetNearestVehicleShip(Vector3 position)
   {
+    if (GameCamera.instance == null) return null;
     if (!Physics.Raycast(
           GameCamera.instance.transform.position,
           GameCamera.instance.transform.forward,
           out var hitinfo, 50f,
           LayerMask.GetMask("piece") + LayerMask.GetMask("CustomVehicleLayer")))
     {
-      Logger.LogWarning(
-        $"boat not detected within 50f, get nearer to the boat and look directly at the boat");
+      BoatNotDetectedMessage();
+      return null;
+    }
+
+    if (hitinfo.collider == null)
+    {
+      BoatNotDetectedMessage();
       return null;
     }
 
     var vehiclePiecesController =
       hitinfo.collider.GetComponentInParent<VehiclePiecesController>();
 
-    if (!(bool)vehiclePiecesController.Manager) return null;
 
-    var vehicleShipController =
+    var vehicleManager =
       vehiclePiecesController.Manager;
-    return vehicleShipController;
+    if (vehiclePiecesController.Manager == null)
+    {
+      BoatNotDetectedMessage();
+      return null;
+    }
+    return vehicleManager;
   }
 
   public static string GetPlayerPathInfo()

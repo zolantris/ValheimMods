@@ -11,28 +11,12 @@ namespace ValheimVehicles.SharedScripts
 {
   public class ElectricPylon : MonoBehaviour
   {
+    public static Material LightningMaterial = null !;
     public Transform wireConnector;
-    public PylonLightningBolt lightningBolt;
+    public LightningBolt lightningBolt;
     public Transform coilTop;
     public Transform coilBottom;
     public Transform lightningBoltParent;
-    public static Material LightningMaterial = null !;
-
-    private void SetupPylonLightningConfig()
-    {
-      var lineRenderer = lightningBoltParent.GetComponent<LineRenderer>() ? lightningBoltParent.GetComponent<LineRenderer>() : lightningBoltParent.gameObject.AddComponent<LineRenderer>();
-      lineRenderer.material = LightningMaterial;
-
-      lightningBolt = lightningBoltParent.gameObject.AddComponent<PylonLightningBolt>();
-      lightningBolt.Duration = 0.4f;
-      lightningBolt.ChaosFactor = 0.15f;
-      lightningBolt.Rows = 8;
-      lightningBolt.Columns = 1;
-      lightningBolt.AnimationMode = LightningBoltAnimationMode.PingPong;
-
-      lineRenderer.startWidth = 0.02f;
-      lineRenderer.endWidth = 0.01f;
-    }
 
     private void Awake()
     {
@@ -42,7 +26,7 @@ namespace ValheimVehicles.SharedScripts
       coilBottom = transform.Find("coil/end");
       wireConnector = transform.Find("wire_connector");
 
-      lightningBolt = lightningBoltParent.GetComponent<PylonLightningBolt>();
+      lightningBolt = lightningBoltParent.GetComponent<LightningBolt>();
       if (!lightningBolt)
       {
         SetupPylonLightningConfig();
@@ -67,6 +51,22 @@ namespace ValheimVehicles.SharedScripts
     {
       if (!Application.isPlaying) return;
       ElectricityPylonRegistry.Remove(this);
+    }
+
+    private void SetupPylonLightningConfig()
+    {
+      var lineRenderer = lightningBoltParent.GetComponent<LineRenderer>() ? lightningBoltParent.GetComponent<LineRenderer>() : lightningBoltParent.gameObject.AddComponent<LineRenderer>();
+      lineRenderer.material = LightningMaterial;
+
+      lightningBolt = lightningBoltParent.gameObject.AddComponent<LightningBolt>();
+      lightningBolt.Duration = 0.4f;
+      lightningBolt.ChaosFactor = 0.15f;
+      lightningBolt.m_rows = 8;
+      lightningBolt.Columns = 1;
+      lightningBolt.AnimationMode = LightningBoltAnimationMode.PingPong;
+
+      lineRenderer.startWidth = 0.02f;
+      lineRenderer.endWidth = 0.01f;
     }
 
     public void UpdateCoilPosition(GameObject start, GameObject end)

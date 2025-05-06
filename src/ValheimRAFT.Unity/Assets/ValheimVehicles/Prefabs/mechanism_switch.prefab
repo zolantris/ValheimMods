@@ -382,7 +382,6 @@ GameObject:
   - component: {fileID: 3220803765360514847}
   - component: {fileID: 4109548173543759512}
   - component: {fileID: 1544261187459106135}
-  - component: {fileID: 2176295510617307415}
   m_Layer: 10
   m_Name: mechanism_switch
   m_TagString: Untagged
@@ -539,26 +538,6 @@ LineRenderer:
   m_UseWorldSpace: 1
   m_Loop: 0
   m_ApplyActiveColorSpace: 1
---- !u!114 &2176295510617307415
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4281724173091590173}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a6a11edc47564972a7df3bc509a5b7be, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  startTransform: {fileID: 0}
-  endTransform: {fileID: 0}
-  useCurvedWire: 0
-  enableGlow: 1
-  wireSagAmount: 0.2
-  segmentCount: 20
-  wireColor: {r: 0, g: 0, b: 0, a: 1}
-  smoothTime: 0.05
 --- !u!1 &4467231704294297036
 GameObject:
   m_ObjectHideFlags: 0

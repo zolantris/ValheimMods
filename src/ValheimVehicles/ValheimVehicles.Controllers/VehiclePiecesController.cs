@@ -44,7 +44,7 @@
 
     protected override void TrySetPieceToParent(ZNetView netView)
     {
-      if (netView == null || PrefabNames.IsVehicle(netView.name)) return;
+      // if (netView == null || PrefabNames.IsVehicle(netView.name)) return;
       // Classic vehicle-specific logic
       netView.transform.SetParent(_host.GetPiecesContainer(), false);
     }
@@ -712,7 +712,7 @@
 
       // Remove non-kinematic rigidbodies if not a ram
       if (!RamPrefabs.IsRam(netView.name) &&
-          !netView.name.Contains(PrefabNames.ShipAnchorWood))
+          !netView.name.Contains(PrefabNames.ShipAnchorWood) && !PrefabNames.IsVehicle(name) && !netView.name.StartsWith(PrefabNames.SwivelPrefabName))
       {
         var rbs = netView.GetComponentsInChildren<Rigidbody>();
         foreach (var rbsItem in rbs)
@@ -1091,7 +1091,8 @@
           continue;
         }
         // we must update the position as these pieces/characters can move while on Vehicles.
-        tempPiece.m_zdo.Set(VehicleZdoVars.MBPositionHash, tempPiece.transform.localPosition);
+        // todo we may wan to not update any values for temp pieces as this removeall process could be inaccurate and set a location way outside expected range.
+        // tempPiece.m_zdo.Set(VehicleZdoVars.MBPositionHash, tempPiece.transform.localPosition);
         tempPiece.transform.SetParent(null);
       }
     }
@@ -1278,9 +1279,10 @@
     /// </summary>
     public void ForceUpdateAllPiecePositions(Vector3 vehiclePosition)
     {
+      if (!Manager.IsInitialized) return;
+      if (Manager.isCreative) return;
+
       Physics.SyncTransforms();
-      var currentPieceControllerSector =
-        ZoneSystem.GetZone(vehiclePosition);
 
       if (!isActiveAndEnabled || m_nview == null || m_nview.GetZDO() == null) return;
       // use center of rigidbody to set position.
@@ -2380,9 +2382,11 @@
 
       var isSwivelParent = SwivelComponentIntegration.IsSwivelParent(zdo);
 
+      var character = netView.GetComponent<Character>();
+      var shouldSkipAddingProperties = !isSwivelParent && character != null && character.IsPlayer();
+
       // Guard for cases where we should not add a tempPiece parent or properties but want to run the rest of the logic.
-      // todo maybe adding an additional object set such as swivel_pieces would be cleaner.
-      if (!isSwivelParent)
+      if (!shouldSkipAddingProperties)
       {
         AddTempPieceProperties(netView, this);
         TrySetPieceToParent(netView, zdo);

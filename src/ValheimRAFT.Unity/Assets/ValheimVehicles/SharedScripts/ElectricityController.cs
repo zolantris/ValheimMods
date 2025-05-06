@@ -113,8 +113,12 @@ namespace ValheimVehicles.SharedScripts
 
     private void GenerateChainLine(List<ElectricPylon> chain)
     {
+      // Use the first pylon's root (e.g., rigidbody parent) as anchor
+      var parent = chain[0].transform.root;
+
       var obj = new GameObject("PylonChainConnector");
-      obj.transform.position = chain[0].wireConnector.position;
+      obj.transform.SetParent(parent, false);
+      obj.transform.localPosition = Vector3.zero;
 
       var line = obj.AddComponent<LineRenderer>();
       _activeLines.Add(line);
@@ -124,17 +128,12 @@ namespace ValheimVehicles.SharedScripts
       line.textureMode = LineTextureMode.Tile;
       line.useWorldSpace = false;
 
-      var points = new List<Vector3>();
-      foreach (var pylon in chain)
-      {
-        points.Add(obj.transform.InverseTransformPoint(pylon.wireConnector.position));
-      }
-
       var curvedPoints = new List<Vector3>();
-      for (var i = 0; i < points.Count - 1; i++)
+
+      for (var i = 0; i < chain.Count - 1; i++)
       {
-        var start = points[i];
-        var end = points[i + 1];
+        var start = parent.InverseTransformPoint(chain[i].wireConnector.position);
+        var end = parent.InverseTransformPoint(chain[i + 1].wireConnector.position);
 
         for (var j = 0; j < MaxPoints; j++)
         {
@@ -148,6 +147,7 @@ namespace ValheimVehicles.SharedScripts
       line.positionCount = curvedPoints.Count;
       line.SetPositions(curvedPoints.ToArray());
     }
+
 
     private Material GetWireMaterial()
     {

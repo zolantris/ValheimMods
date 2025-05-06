@@ -150,6 +150,7 @@
 
     public void StartActivatePendingSwivelPieces()
     {
+      if (!_pieceActivator) return;
       _pieceActivator.StartActivatePendingPieces();
     }
 
