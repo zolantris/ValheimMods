@@ -25,8 +25,11 @@ public class NearestTargetListener : MonoBehaviour, IAnimatorHandler
   private Transform rightHandObj;
   private Transform leftHandObj;
   public float lightningRange = 15f;
+
+
+  public bool isActivatedPressed = false;
   public bool IsToggled = true;
-  public static bool CanToggle = true;
+
   public float lerpedBoltSizeMin = 0.02f;
   public float lerpedBoltSizeMax = 0.6f;
   public float lerpedBoltSize = 0.02f;
@@ -36,6 +39,7 @@ public class NearestTargetListener : MonoBehaviour, IAnimatorHandler
   public float lastUpdate = 0f;
   public float m_lightningDamage = 20f;
   public Random random = new();
+  public static bool hasEndPosition = false;
 
   // todo make this higher.
   public float eitrCost = 0f;
@@ -90,7 +94,7 @@ public class NearestTargetListener : MonoBehaviour, IAnimatorHandler
 
   public void ToggleLightning()
   {
-    if (IsToggled)
+    if (isActivatedPressed)
     {
       ShowLightning();
     }
@@ -100,19 +104,29 @@ public class NearestTargetListener : MonoBehaviour, IAnimatorHandler
     }
   }
 
+  private bool GetToggleKeyPressed()
+  {
+    var useButton = ZInput.GetButton("Use");
+    return useButton;
+    // return ZInput.GetButton("Z");
+    // return ZInput.IsNonClassicFunctionality() && ZInput.IsGamepadActive() ? ZInput.GetButton("JoyAltKeys") : ZInput.GetButton("AltPlace") || ZInput.GetButton("JoyAltPlace");
+  }
+
+  private void UpdateToggleKeyState()
+  {
+    var isKeyPressed = GetToggleKeyPressed();
+    isActivatedPressed = isKeyPressed;
+  }
+
+  private void HeavyUpdate()
+  {
+    if (!CanDoHeavyUpdate()) return;
+    UpdateLatestTarget();
+  }
+
   private void Update()
   {
-    var alt = ZInput.IsNonClassicFunctionality() && ZInput.IsGamepadActive() ? ZInput.GetButton("JoyAltKeys") : ZInput.GetButton("AltPlace") || ZInput.GetButton("JoyAltPlace");
-    if (Time.time - _lastUpdateTime < updateInterval) return;
-    if (m_boltRight == null || m_boltLeft == null) return;
-    if (CanToggle && IsToggled && alt != true)
-    {
-      ToggleLightning();
-      return;
-    }
-
-    IsToggled = alt && !IsToggled;
-    ToggleLightning();
+    UpdateToggleKeyState();
   }
 
   public void ApplyLightningDamage()
@@ -158,13 +172,13 @@ public class NearestTargetListener : MonoBehaviour, IAnimatorHandler
 
   private void UpdateBoltSize(bool alt)
   {
-    if (!alt)
-    {
-      lerpedBoltSize = lerpedBoltSizeMin;
-      return;
-    }
-    lerpedBoltSize = Mathf.Clamp(lerpedBoltSize + fixedUpdateBoltSizeMultiplier * Time.fixedDeltaTime, lerpedBoltSizeMin, lerpedBoltSizeMax);
-    m_boltRight.UpdateLightningSize(lerpedBoltSize * random.Next(1, 20) / 10);
+    // if (!alt)
+    // {
+    //   lerpedBoltSize = lerpedBoltSizeMin;
+    //   return;
+    // }
+    lerpedBoltSize = Mathf.Clamp(lerpedBoltSize + fixedUpdateBoltSizeMultiplier * Time.fixedDeltaTime * random.Next(1, 20) / 10, lerpedBoltSizeMin, lerpedBoltSizeMax);
+    m_boltRight.UpdateLightningSize(lerpedBoltSize);
     m_boltLeft.UpdateLightningSize(lerpedBoltSize);
   }
 
@@ -185,11 +199,10 @@ public class NearestTargetListener : MonoBehaviour, IAnimatorHandler
     {
       transform =
       {
-        parent = parentTransform
+        parent = parentTransform,
+        position = leftHandObj.position
       }
     };
-
-    lightningBoltParent.transform.position = leftHandObj.position;
 
     var lineRenderer = lightningBoltParent.GetComponent<LineRenderer>() ? lightningBoltParent.GetComponent<LineRenderer>() : lightningBoltParent.gameObject.AddComponent<LineRenderer>();
     lineRenderer.material = LoadValheimVehicleAssets.LightningMaterial;
@@ -208,7 +221,6 @@ public class NearestTargetListener : MonoBehaviour, IAnimatorHandler
 
   }
 
-  public static bool hasEndPosition = false;
   private void UpdateLightningTarget()
   {
     if (NearestHostile == null || !m_boltRight || !m_boltLeft) return;
@@ -239,33 +251,51 @@ public class NearestTargetListener : MonoBehaviour, IAnimatorHandler
 
   private bool IsInRange()
   {
+    if (selfCharacter == null) return false;
+    if (NearestHostile == null) return false;
     return NearestHostile != null && Vector3.Distance(selfCharacter.transform.position, NearestHostile.transform.position) > lightningRange;
   }
 
-  private void FixedUpdate()
+  private bool CanDoHeavyUpdate()
   {
-    if (ZNet.instance == null || ZNetScene.instance == null || Game.instance == null) return;
+    return Time.fixedTime - _lastUpdateTime > updateInterval;
+  }
 
-    var canDoHeavyUpdate = Time.time - _lastUpdateTime > updateInterval;
-    if (canDoHeavyUpdate)
-    {
-      _lastUpdateTime = Time.time;
-      UpdateNearestHostile();
-    }
+  private void UpdateLatestTarget()
+  {
+    var canDoHeavyUpdate = CanDoHeavyUpdate();
+    if (!canDoHeavyUpdate) return;
+    _lastUpdateTime = Time.fixedTime;
+    UpdateNearestHostile();
+  }
 
-    if (NearestHostile == null || !IsInRange())
+  private void UpdateLightningEffects()
+  {
+    if (!IsInRange())
     {
-      m_boltLeft.EndObject = null;
-      m_boltRight.EndObject = null;
-      HideLightning();
+      if (rightHandObj != null && leftHandObj != null && m_boltRight != null && m_boltLeft != null)
+      {
+        m_boltLeft.EndObject = rightHandObj.gameObject;
+        m_boltRight.EndObject = leftHandObj.gameObject;
+      }
+
       RemoveCharacterFromAnimators();
+      UpdateBoltSize(false);
+      HideLightning();
       return;
     }
 
     AddCharacterToAnimators();
     UpdateBoltSize(IsToggled);
     ShowLightning();
+  }
 
+  private void FixedUpdate()
+  {
+    if (ZNet.instance == null || ZNetScene.instance == null || Game.instance == null) return;
+    HeavyUpdate();
+
+    UpdateLightningEffects();
     ApplyLightningDamage();
   }
 
@@ -322,9 +352,7 @@ public class NearestTargetListener : MonoBehaviour, IAnimatorHandler
     // Try humanoid bone
     if (animator.isHuman)
     {
-      var chest = animator.GetBoneTransform(HumanBodyBones.Chest)
-                  ?? animator.GetBoneTransform(HumanBodyBones.Spine);
-
+      var chest = animator.GetBoneTransform(HumanBodyBones.Chest) ? animator.GetBoneTransform(HumanBodyBones.Chest) : animator.GetBoneTransform(HumanBodyBones.Spine);
       if (chest != null) return chest;
     }
 
@@ -339,8 +367,11 @@ public class NearestTargetListener : MonoBehaviour, IAnimatorHandler
     // Common bone name patterns for chests/spines across Valheim creatures
     string[] chestKeywords = { "chest", "spine", "torso", "body" };
 
-    return candidates.FirstOrDefault(t =>
+    var found = candidates.FirstOrDefault(t =>
       chestKeywords.Any(k => t.name.ToLowerInvariant().Contains(k)));
+
+    if (found != null) return found;
+    return animator.transform;
   }
 
   public void UpdateIK(Animator animator)

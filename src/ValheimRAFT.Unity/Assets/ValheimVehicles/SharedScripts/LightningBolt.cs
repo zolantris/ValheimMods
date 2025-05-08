@@ -364,12 +364,14 @@ namespace ValheimVehicles.SharedScripts
     public void HideLightning()
     {
       if (lineRenderer == null) return;
+      if (enabled == false) return;
       lineRenderer.positionCount = 0;
       enabled = false;
     }
 
     public void ShowLightning()
     {
+      if (enabled) return;
       enabled = true;
     }
 

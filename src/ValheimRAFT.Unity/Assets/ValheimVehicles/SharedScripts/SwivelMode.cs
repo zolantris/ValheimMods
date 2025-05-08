@@ -7,8 +7,9 @@ namespace ValheimVehicles.SharedScripts
   public enum SwivelMode
   {
     None,
+    Rotate,
+    Move,
     TargetEnemy,
     TargetWind,
-    DoorMode
   }
 }
