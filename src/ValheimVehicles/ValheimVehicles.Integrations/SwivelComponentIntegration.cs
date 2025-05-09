@@ -57,6 +57,7 @@
 
     public override void Awake()
     {
+      CanUpdate = false;
       base.Awake();
 
       m_nview = GetComponent<ZNetView>();

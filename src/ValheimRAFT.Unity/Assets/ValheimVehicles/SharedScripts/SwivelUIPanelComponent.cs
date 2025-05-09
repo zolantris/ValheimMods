@@ -101,7 +101,8 @@ namespace ValheimVehicles.SharedScripts.UI
             layout.minHeight = 300f;
             layout.preferredHeight = 500f;
 
-            SwivelUIHelpers.AddSectionLabel(layoutParent, viewStyles, Strings.SwivelConfig);
+
+            SwivelUIHelpers.AddHeaderWithCloseButton(layoutParent, viewStyles, Strings.SwivelConfig, Hide);
 
             modeDropdown = SwivelUIHelpers.AddDropdownRow(layoutParent, viewStyles, Strings.SwivelMode, EnumNames<SwivelMode>(), swivel.Mode.ToString(), i =>
             {
