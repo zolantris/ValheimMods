@@ -20,40 +20,36 @@ namespace ValheimVehicles.SharedScripts.UI
 
         [Header("UI Settings")]
         [SerializeField] public float MaxUIWidth = 700f;
+        [FormerlySerializedAs("styles")] [SerializeField] public SwivelUISharedStyles viewStyles = new();
+        public SwivelUIPanelStrings Strings = new();
 
         private bool _hasCreatedUI;
+        internal GameObject panelRoot;
         private Transform layoutParent;
+        private SwivelComponent swivel;
 
+        private TMP_Dropdown modeDropdown;
+        private TMP_Dropdown motionStateDropdown;
+
+        private GameObject movementLerpRow;
+        private GameObject hingeAxisRow;
         private GameObject maxXRow;
         private GameObject maxYRow;
         private GameObject maxZRow;
-        private TMP_Dropdown modeDropdown;
-        private TMP_Dropdown motionStateDropdown;
-        private GameObject movementLerpRow;
-        private GameObject hingeAxesRow;
-        internal GameObject panelRoot;
-        private SwivelComponent swivel;
         private GameObject targetDistanceXRow;
         private GameObject targetDistanceYRow;
         private GameObject targetDistanceZRow;
 
-        [FormerlySerializedAs("styles")] [SerializeField]
-        public SwivelUISharedStyles viewStyles = new();
-
         public void BindTo(SwivelComponent target)
         {
             swivel = target;
-
             if (swivel == null) return;
+
             if (!_hasCreatedUI)
-            {
                 CreateUI();
-            }
 
             modeDropdown.SetValueWithoutNotify((int)swivel.Mode);
             motionStateDropdown.SetValueWithoutNotify((int)swivel.CurrentMotionState);
-
-            UpdateHingeAxisToggles();
 
             var max = swivel.MaxEuler;
             maxXRow.GetComponentInChildren<Slider>().SetValueWithoutNotify(max.x);
@@ -74,12 +70,12 @@ namespace ValheimVehicles.SharedScripts.UI
         public void Show()
         {
             if (panelRoot == null) CreateUI();
-            panelRoot?.SetActive(true);
+            panelRoot.gameObject.SetActive(true);
         }
 
         public void Hide()
         {
-            panelRoot?.SetActive(false);
+            if (panelRoot != null) panelRoot.gameObject.SetActive(false);
         }
 
         public virtual GameObject CreateUIRoot()
@@ -92,117 +88,97 @@ namespace ValheimVehicles.SharedScripts.UI
         {
             panelRoot = CreateUIRoot();
             var scrollRect = SwivelUIHelpers.CreateScrollView(panelRoot.transform, viewStyles);
-            var scrollViewLayoutElement = scrollRect.gameObject.AddComponent<LayoutElement>();
-            scrollViewLayoutElement.flexibleHeight = 800f;
-            scrollViewLayoutElement.flexibleWidth = 800f;
-            scrollViewLayoutElement.minWidth = 500f;
-            scrollViewLayoutElement.minHeight = 300f;
-            scrollViewLayoutElement.preferredHeight = 500f;
-
             var scrollViewport = SwivelUIHelpers.CreateViewport(scrollRect, viewStyles);
             var scrollViewContent = SwivelUIHelpers.CreateContent("Content", scrollViewport.transform, viewStyles);
-
             layoutParent = scrollViewContent.transform;
             scrollRect.content = scrollViewContent;
 
-            SwivelUIHelpers.AddSectionLabel(layoutParent, viewStyles, "Swivel Config");
+            var layout = scrollRect.gameObject.AddComponent<LayoutElement>();
+            layout.flexibleHeight = 800f;
+            layout.flexibleWidth = 800f;
+            layout.minWidth = 500f;
+            layout.minHeight = 300f;
+            layout.preferredHeight = 500f;
 
-            modeDropdown = SwivelUIHelpers.AddDropdownRow(layoutParent, viewStyles, "Swivel Mode", EnumNames<SwivelMode>(), swivel.Mode.ToString(), i =>
+            SwivelUIHelpers.AddSectionLabel(layoutParent, viewStyles, Strings.SwivelConfig);
+
+            modeDropdown = SwivelUIHelpers.AddDropdownRow(layoutParent, viewStyles, Strings.SwivelMode, EnumNames<SwivelMode>(), swivel.Mode.ToString(), i =>
             {
-                if (swivel != null)
-                {
-                    swivel.SetMode((SwivelMode)i);
-                    RefreshUI();
-                }
+                swivel.SetMode((SwivelMode)i);
+                RefreshUI();
             });
 
-            motionStateDropdown = SwivelUIHelpers.AddDropdownRow(layoutParent, viewStyles, "Motion State", EnumNames<MotionState>(), swivel.CurrentMotionState.ToString(), i =>
+            motionStateDropdown = SwivelUIHelpers.AddDropdownRow(layoutParent, viewStyles, Strings.MotionState, EnumNames<MotionState>(), swivel.CurrentMotionState.ToString(), i =>
             {
-                if (swivel != null)
-                {
-                    swivel.SetMotionState((MotionState)i);
-                }
+                swivel.SetMotionState((MotionState)i);
             });
 
-            movementLerpRow = SwivelUIHelpers.AddSliderRow(layoutParent, viewStyles, "Lerp Speed", 1f, 100f, swivel.MovementLerpSpeed, v =>
+            movementLerpRow = SwivelUIHelpers.AddSliderRow(layoutParent, viewStyles, Strings.InterpolationSpeed, 1f, 100f, swivel.MovementLerpSpeed, v =>
             {
-                if (swivel != null) swivel.SetMovementLerpSpeed(v);
+                swivel.SetMovementLerpSpeed(v);
             });
 
-            SwivelUIHelpers.AddSectionLabel(layoutParent, viewStyles, "Rotation Settings");
+            SwivelUIHelpers.AddSectionLabel(layoutParent, viewStyles, Strings.RotationSettings);
 
-            hingeAxesRow = SwivelUIHelpers.AddMultiToggleRow(layoutParent, viewStyles, "Hinge Axes", new[] { "X", "Y", "Z" }, GetHingeAxisStates(), states =>
-            {
-                if (swivel != null)
+            hingeAxisRow = SwivelUIHelpers.AddMultiToggleRow(layoutParent, viewStyles, Strings.HingeAxes,
+                new[] { "X", "Y", "Z" },
+                new[]
                 {
-                    HingeAxis newAxes = HingeAxis.None;
-                    if (states[0]) newAxes |= HingeAxis.X;
-                    if (states[1]) newAxes |= HingeAxis.Y;
-                    if (states[2]) newAxes |= HingeAxis.Z;
-                    swivel.SetHingeAxes(newAxes);
-                }
+                    swivel.HingeAxes.HasFlag(HingeAxis.X),
+                    swivel.HingeAxes.HasFlag(HingeAxis.Y),
+                    swivel.HingeAxes.HasFlag(HingeAxis.Z)
+                },
+                selected =>
+                {
+                    var axis = HingeAxis.None;
+                    if (selected[0]) axis |= HingeAxis.X;
+                    if (selected[1]) axis |= HingeAxis.Y;
+                    if (selected[2]) axis |= HingeAxis.Z;
+                    swivel.SetHingeAxes(axis);
+                });
+
+            maxXRow = SwivelUIHelpers.AddSliderRow(layoutParent, viewStyles, Strings.MaxXAngle, 0f, 360f, swivel.MaxEuler.x, v =>
+            {
+                var e = swivel.MaxEuler;
+                e.x = v;
+                swivel.SetMaxEuler(e);
             });
 
-            maxXRow = SwivelUIHelpers.AddSliderRow(layoutParent, viewStyles, "Max X Angle", 0f, 360f, swivel.MaxEuler.x, v =>
+            maxYRow = SwivelUIHelpers.AddSliderRow(layoutParent, viewStyles, Strings.MaxYAngle, 0f, 360f, swivel.MaxEuler.y, v =>
             {
-                if (swivel != null)
-                {
-                    var e = swivel.MaxEuler;
-                    e.x = v;
-                    swivel.SetMaxEuler(e);
-                }
+                var e = swivel.MaxEuler;
+                e.y = v;
+                swivel.SetMaxEuler(e);
             });
 
-            maxYRow = SwivelUIHelpers.AddSliderRow(layoutParent, viewStyles, "Max Y Angle", 0f, 360f, swivel.MaxEuler.y, v =>
+            maxZRow = SwivelUIHelpers.AddSliderRow(layoutParent, viewStyles, Strings.MaxZAngle, 0f, 360f, swivel.MaxEuler.z, v =>
             {
-                if (swivel != null)
-                {
-                    var e = swivel.MaxEuler;
-                    e.y = v;
-                    swivel.SetMaxEuler(e);
-                }
+                var e = swivel.MaxEuler;
+                e.z = v;
+                swivel.SetMaxEuler(e);
             });
 
-            maxZRow = SwivelUIHelpers.AddSliderRow(layoutParent, viewStyles, "Max Z Angle", 0f, 360f, swivel.MaxEuler.z, v =>
+            SwivelUIHelpers.AddSectionLabel(layoutParent, viewStyles, Strings.MovementSettings);
+
+            targetDistanceXRow = SwivelUIHelpers.AddSliderRow(layoutParent, viewStyles, Strings.TargetXOffset, MinTargetOffset, MaxTargetOffset, swivel.GetMovementOffset().x, v =>
             {
-                if (swivel != null)
-                {
-                    var e = swivel.MaxEuler;
-                    e.z = v;
-                    swivel.SetMaxEuler(e);
-                }
+                var o = swivel.GetMovementOffset();
+                o.x = v;
+                swivel.SetMovementOffset(o);
             });
 
-            SwivelUIHelpers.AddSectionLabel(layoutParent, viewStyles, "Movement Settings");
-
-            targetDistanceXRow = SwivelUIHelpers.AddSliderRow(layoutParent, viewStyles, "Target X Offset", MinTargetOffset, MaxTargetOffset, swivel.GetMovementOffset().x, v =>
+            targetDistanceYRow = SwivelUIHelpers.AddSliderRow(layoutParent, viewStyles, Strings.TargetYOffset, MinTargetOffset, MaxTargetOffset, swivel.GetMovementOffset().y, v =>
             {
-                if (swivel != null)
-                {
-                    var o = swivel.GetMovementOffset();
-                    o.x = v;
-                    swivel.SetMovementOffset(o);
-                }
+                var o = swivel.GetMovementOffset();
+                o.y = v;
+                swivel.SetMovementOffset(o);
             });
 
-            targetDistanceYRow = SwivelUIHelpers.AddSliderRow(layoutParent, viewStyles, "Target Y Offset", MinTargetOffset, MaxTargetOffset, swivel.GetMovementOffset().y, v =>
+            targetDistanceZRow = SwivelUIHelpers.AddSliderRow(layoutParent, viewStyles, Strings.TargetZOffset, MinTargetOffset, MaxTargetOffset, swivel.GetMovementOffset().z, v =>
             {
-                if (swivel != null)
-                {
-                    var o = swivel.GetMovementOffset();
-                    o.y = v;
-                    swivel.SetMovementOffset(o);
-                }
-            });
-
-            targetDistanceZRow = SwivelUIHelpers.AddSliderRow(layoutParent, viewStyles, "Target Z Offset", MinTargetOffset, MaxTargetOffset, swivel.GetMovementOffset().z, v =>
-            {
-                if (swivel != null)
-                {
-                    var o = swivel.GetMovementOffset();
-                    o.z = v;
-                    swivel.SetMovementOffset(o);
-                }
+                var o = swivel.GetMovementOffset();
+                o.z = v;
+                swivel.SetMovementOffset(o);
             });
 
             _hasCreatedUI = true;
@@ -211,11 +187,10 @@ namespace ValheimVehicles.SharedScripts.UI
         private void RefreshUI()
         {
             if (swivel == null) return;
-
             bool isRotating = swivel.Mode == SwivelMode.Rotate;
             bool isMoving = swivel.Mode == SwivelMode.Move;
 
-            hingeAxesRow.SetActive(isRotating);
+            hingeAxisRow.SetActive(isRotating);
             maxXRow.SetActive(isRotating);
             maxYRow.SetActive(isRotating);
             maxZRow.SetActive(isRotating);
@@ -225,34 +200,26 @@ namespace ValheimVehicles.SharedScripts.UI
             targetDistanceZRow.SetActive(isMoving);
         }
 
-        private void UpdateHingeAxisToggles()
-        {
-            if (hingeAxesRow == null || swivel == null) return;
+        private string[] EnumNames<T>() where T : Enum => Enum.GetNames(typeof(T));
+    }
 
-            var toggles = hingeAxesRow.GetComponentsInChildren<Toggle>();
-            var states = GetHingeAxisStates();
+    [Serializable]
+    public class SwivelUIPanelStrings
+    {
+        public string SwivelConfig = "Swivel Config";
+        public string SwivelMode = "Swivel Mode";
+        public string MotionState = "Motion State";
+        public string InterpolationSpeed = "Interpolation Speed";
 
-            for (int i = 0; i < toggles.Length && i < states.Length; i++)
-            {
-                toggles[i].SetIsOnWithoutNotify(states[i]);
-            }
-        }
+        public string RotationSettings = "Rotation Settings";
+        public string HingeAxes = "Hinge Axes";
+        public string MaxXAngle = "Max X Angle";
+        public string MaxYAngle = "Max Y Angle";
+        public string MaxZAngle = "Max Z Angle";
 
-        private bool[] GetHingeAxisStates()
-        {
-            if (swivel == null) return new[] { false, true, false }; // default Y only
-            var axes = swivel.HingeAxes;
-            return new[]
-            {
-                (axes & HingeAxis.X) != 0,
-                (axes & HingeAxis.Y) != 0,
-                (axes & HingeAxis.Z) != 0
-            };
-        }
-
-        private string[] EnumNames<T>() where T : Enum
-        {
-            return Enum.GetNames(typeof(T));
-        }
+        public string MovementSettings = "Movement Settings";
+        public string TargetXOffset = "Target X Offset";
+        public string TargetYOffset = "Target Y Offset";
+        public string TargetZOffset = "Target Z Offset";
     }
 }

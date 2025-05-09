@@ -4,6 +4,7 @@
 #region
 
 using System;
+using System.ComponentModel;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -13,7 +14,7 @@ namespace ValheimVehicles.SharedScripts
 {
     [Flags]
     public enum HingeAxis { None = 0, X = 1, Y = 2, Z = 4 }
-    
+
     public class SwivelComponent : MonoBehaviour
     {
         public enum HingeDirection { Forward, Backward }
@@ -28,7 +29,7 @@ namespace ValheimVehicles.SharedScripts
         [SerializeField] private SwivelMode mode = SwivelMode.Rotate;
         [SerializeField] private float movementLerpSpeed = 2f;
         [SerializeField] private Transform animatedTransform;
-        [SerializeField] private float maxTurnAnglePerSecond = 90f;
+        [SerializeField] private MotionState currentMotionState = MotionState.Idle;
 
         [Header("Enemy Tracking Settings")]
         [SerializeField] private float minTrackingRange = 5f;
@@ -40,41 +41,41 @@ namespace ValheimVehicles.SharedScripts
         [SerializeField] private HingeDirection xHingeDirection = HingeDirection.Forward;
         [SerializeField] private HingeDirection yHingeDirection = HingeDirection.Forward;
         [SerializeField] private HingeDirection zHingeDirection = HingeDirection.Forward;
-        [SerializeField] private Vector3 maxRotationEuler = new Vector3(45f, 90f, 45f);
+        [SerializeField] private Vector3 maxRotationEuler = new(45f, 90f, 45f);
         [SerializeField] private UnityEvent onRotationReachedTarget;
         [SerializeField] private UnityEvent onRotationReturned;
 
         [Header("Movement Mode Settings")]
-        [SerializeField] private Vector3 movementOffset = new Vector3(0f, 2f, 0f);
+        [SerializeField] private Vector3 movementOffset = new(0f, 2f, 0f);
         [SerializeField] private bool useWorldPosition;
         [SerializeField] private UnityEvent onMovementReachedTarget;
         [SerializeField] private UnityEvent onMovementReturned;
 
+        [Description("Piece container containing all children to be rotated or moved.")]
         public Transform piecesContainer;
-        public Transform connectorContainer;
-        public Transform directionDebuggerArrow;
 
+        [Description("Shown until an object is connected to the swivel.")]
+        public Transform connectorContainer;
+
+        public Transform directionDebuggerArrow;
         private Rigidbody animatedRigidbody;
 
         private bool hasReachedTarget;
         private bool hasReturned;
         private bool hasRotatedReturn;
         private bool hasRotatedTarget;
+
         private Vector3 hingeEndEuler;
         private float hingeLerpProgress;
         private Transform snappoint;
+
         private Vector3 startLocalPosition;
         private Quaternion startRotation;
         private Vector3 targetMovementPosition;
         private Quaternion targetRotation;
 
         public SwivelMode Mode => mode;
-        public MotionState CurrentMotionState
-        {
-            get;
-            private set;
-        } = MotionState.Idle;
-
+        public MotionState CurrentMotionState => currentMotionState;
         public HingeAxis HingeAxes => hingeAxes;
         public Vector3 MaxEuler => maxRotationEuler;
         public float MovementLerpSpeed => movementLerpSpeed;
@@ -94,15 +95,15 @@ namespace ValheimVehicles.SharedScripts
             startRotation = animatedTransform.localRotation;
             startLocalPosition = animatedTransform.localPosition;
 
-            animatedRigidbody = animatedTransform.GetComponent<Rigidbody>() ?? animatedTransform.gameObject.AddComponent<Rigidbody>();
+            animatedRigidbody = animatedTransform.GetComponent<Rigidbody>();
+            if (!animatedRigidbody)
+                animatedRigidbody = animatedTransform.gameObject.AddComponent<Rigidbody>();
+
             animatedRigidbody.isKinematic = true;
             animatedRigidbody.interpolation = RigidbodyInterpolation.Interpolate;
         }
 
-        public virtual void Start()
-        {
-            SyncSnappoint();
-        }
+        public virtual void Start() => SyncSnappoint();
 
         public virtual void FixedUpdate()
         {
@@ -114,59 +115,74 @@ namespace ValheimVehicles.SharedScripts
             {
                 case SwivelMode.Rotate:
                     targetRotation = CalculateRotationTarget();
-                    float angleToTarget = Quaternion.Angle(animatedTransform.localRotation, targetRotation);
-                    animatedRigidbody.Move(transform.position, transform.rotation * targetRotation);
+                    var current = animatedTransform.localRotation;
+                    var interpolated = Quaternion.Slerp(current, targetRotation, movementLerpSpeed * Time.fixedDeltaTime);
+                    animatedRigidbody.Move(transform.position, transform.rotation * interpolated);
                     didMove = true;
 
-                    if (CurrentMotionState == MotionState.GoingToTarget && !hasRotatedTarget && angleToTarget < angleThreshold)
+                    float angleToTarget = Quaternion.Angle(current, targetRotation);
+
+                    if (currentMotionState == MotionState.GoingToTarget && !hasRotatedTarget && angleToTarget < angleThreshold)
                     {
                         hasRotatedTarget = true;
                         onRotationReachedTarget?.Invoke();
                     }
-                    else if (CurrentMotionState == MotionState.Returning && !hasRotatedReturn && angleToTarget < angleThreshold)
+                    else if (currentMotionState == MotionState.Returning && !hasRotatedReturn && angleToTarget < angleThreshold)
                     {
                         hasRotatedReturn = true;
                         onRotationReturned?.Invoke();
                     }
 
-                    if (CurrentMotionState == MotionState.Returning && hasRotatedTarget) hasRotatedReturn = false;
-                    if (CurrentMotionState == MotionState.GoingToTarget && hasRotatedReturn) hasRotatedTarget = false;
+                    if (currentMotionState == MotionState.Returning && hasRotatedTarget) hasRotatedReturn = false;
+                    if (currentMotionState == MotionState.GoingToTarget && hasRotatedReturn) hasRotatedTarget = false;
                     break;
 
                 case SwivelMode.Move:
-                    targetMovementPosition = CurrentMotionState == MotionState.Returning ? startLocalPosition : startLocalPosition + movementOffset;
+                    targetMovementPosition = currentMotionState == MotionState.Returning
+                        ? startLocalPosition
+                        : startLocalPosition + movementOffset;
+
                     Vector3 currentLocal = animatedTransform.localPosition;
                     Vector3 nextLocal = Vector3.Lerp(currentLocal, targetMovementPosition, movementLerpSpeed * Time.fixedDeltaTime);
                     Vector3 worldTarget = transform.TransformPoint(nextLocal);
                     Quaternion moveWorldRot = transform.rotation;
+
                     animatedRigidbody.Move(worldTarget, moveWorldRot);
                     didMove = true;
 
                     float distanceToTarget = Vector3.Distance(currentLocal, targetMovementPosition);
-                    if (CurrentMotionState == MotionState.GoingToTarget && !hasReachedTarget && distanceToTarget < positionThreshold)
+                    if (currentMotionState == MotionState.GoingToTarget && !hasReachedTarget && distanceToTarget < positionThreshold)
                     {
                         hasReachedTarget = true;
                         onMovementReachedTarget?.Invoke();
                     }
-                    else if (CurrentMotionState == MotionState.Returning && !hasReturned && distanceToTarget < positionThreshold)
+                    else if (currentMotionState == MotionState.Returning && !hasReturned && distanceToTarget < positionThreshold)
                     {
                         hasReturned = true;
                         onMovementReturned?.Invoke();
                     }
 
-                    if (CurrentMotionState == MotionState.Returning && hasReachedTarget) hasReturned = false;
-                    if (CurrentMotionState == MotionState.GoingToTarget && hasReturned) hasReachedTarget = false;
+                    if (currentMotionState == MotionState.Returning && hasReachedTarget) hasReturned = false;
+                    if (currentMotionState == MotionState.GoingToTarget && hasReturned) hasReachedTarget = false;
                     break;
 
                 case SwivelMode.TargetEnemy:
                     targetRotation = CalculateTargetNearestEnemyRotation();
-                    animatedRigidbody.MoveRotation(Quaternion.Slerp(animatedRigidbody.rotation, targetRotation, maxTurnAnglePerSecond * Time.fixedDeltaTime));
+                    animatedRigidbody.MoveRotation(Quaternion.Slerp(
+                        animatedRigidbody.rotation,
+                        targetRotation,
+                        movementLerpSpeed * Time.fixedDeltaTime
+                    ));
                     didMove = true;
                     break;
 
                 case SwivelMode.TargetWind:
                     targetRotation = CalculateTargetWindDirectionRotation();
-                    animatedRigidbody.MoveRotation(Quaternion.Slerp(animatedRigidbody.rotation, targetRotation, maxTurnAnglePerSecond * Time.fixedDeltaTime));
+                    animatedRigidbody.MoveRotation(Quaternion.Slerp(
+                        animatedRigidbody.rotation,
+                        targetRotation,
+                        movementLerpSpeed * Time.fixedDeltaTime
+                    ));
                     didMove = true;
                     break;
             }
@@ -175,7 +191,8 @@ namespace ValheimVehicles.SharedScripts
             {
                 Vector3 syncPos = animatedTransform.position;
                 Quaternion syncRot = transform.rotation;
-                if ((animatedRigidbody.position - syncPos).sqrMagnitude > 0.0001f || Quaternion.Angle(animatedRigidbody.rotation, syncRot) > 0.01f)
+                if ((animatedRigidbody.position - syncPos).sqrMagnitude > 0.0001f ||
+                    Quaternion.Angle(animatedRigidbody.rotation, syncRot) > 0.01f)
                 {
                     animatedRigidbody.Move(syncPos, syncRot);
                 }
@@ -201,10 +218,9 @@ namespace ValheimVehicles.SharedScripts
             if ((hingeAxes & HingeAxis.Z) != 0)
                 hingeEndEuler.z = (zHingeDirection == HingeDirection.Forward ? 1f : -1f) * maxRotationEuler.z;
 
-            float target = CurrentMotionState == MotionState.Returning ? 0f : 1f;
+            float target = currentMotionState == MotionState.Returning ? 0f : 1f;
             hingeLerpProgress = Mathf.MoveTowards(hingeLerpProgress, target, movementLerpSpeed * Time.fixedDeltaTime);
-            Vector3 euler = Vector3.Lerp(Vector3.zero, hingeEndEuler, hingeLerpProgress);
-            return Quaternion.Euler(euler);
+            return Quaternion.Euler(Vector3.Lerp(Vector3.zero, hingeEndEuler, hingeLerpProgress));
         }
 
         private Quaternion CalculateTargetNearestEnemyRotation()
@@ -219,31 +235,22 @@ namespace ValheimVehicles.SharedScripts
 
         private Quaternion CalculateTargetWindDirectionRotation()
         {
-            Vector3 windDir = Vector3.forward;
-            return Quaternion.LookRotation(windDir, Vector3.up);
+            return Quaternion.LookRotation(Vector3.forward, Vector3.up);
         }
 
-        // === Public API ===
-
         public void SetMode(SwivelMode newMode) => mode = newMode;
-
+        public void SetHingeAxes(HingeAxis axes) => hingeAxes = axes;
+        public void SetMaxEuler(Vector3 maxEuler) => maxRotationEuler = maxEuler;
+        public Vector3 GetMovementOffset() => movementOffset;
+        public void SetMovementOffset(Vector3 offset) => movementOffset = offset;
+        public void SetMovementLerpSpeed(float speed) => movementLerpSpeed = Mathf.Clamp(speed, 1f, 100f);
         public void SetMotionState(MotionState state)
         {
-            CurrentMotionState = state;
+            currentMotionState = state;
             hasReachedTarget = false;
             hasReturned = false;
             hasRotatedTarget = false;
             hasRotatedReturn = false;
         }
-
-        public void SetHingeAxes(HingeAxis axes) => hingeAxes = axes;
-
-        public void SetMaxEuler(Vector3 maxEuler) => maxRotationEuler = maxEuler;
-
-        public void SetMovementLerpSpeed(float speed) => movementLerpSpeed = Mathf.Clamp(speed, 1f, 100f);
-
-        public Vector3 GetMovementOffset() => movementOffset;
-
-        public void SetMovementOffset(Vector3 offset) => movementOffset = offset;
     }
 }
