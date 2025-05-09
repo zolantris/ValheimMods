@@ -11,7 +11,8 @@ namespace ValheimVehicles.SharedScripts.UI
 {
     public static partial class SwivelUIHelpers
     {
-        public static Slider AddSliderRow(Transform parent, SwivelUISharedStyles viewStyles, string label, float min, float max, float initial, UnityAction<float> onChanged)
+
+        public static GameObject AddSliderRow(Transform parent, SwivelUISharedStyles viewStyles, string label, float min, float max, float initial, UnityAction<float> onChanged)
         {
             var row = CreateRow(parent, viewStyles, label, out _);
 
@@ -35,7 +36,7 @@ namespace ValheimVehicles.SharedScripts.UI
             var backgroundGO = new GameObject("Background", typeof(RectTransform), typeof(Image));
             backgroundGO.transform.SetParent(sliderGO.transform, false);
             var bgImage = backgroundGO.GetComponent<Image>();
-            bgImage.color = new Color(0.4f, 0.4f, 0.4f, 1f);
+            bgImage.color = SwivelUIColors.grayBg;
             bgImage.raycastTarget = false;
 
             var bgRT = backgroundGO.GetComponent<RectTransform>();
@@ -118,7 +119,7 @@ namespace ValheimVehicles.SharedScripts.UI
                 onChanged?.Invoke(v);
             });
 
-            return slider;
+            return row;
         }
     }
 }

@@ -365,14 +365,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   mode: 1
+  movementLerpSpeed: 2
   animatedTransform: {fileID: 0}
   maxTurnAnglePerSecond: 90
-  turningLerpSpeed: 5
   minTrackingRange: 0
   maxTrackingRange: 50
   nearestTarget: {fileID: 0}
-  rotationReturning: 0
-  rotationLerpSpeed: 10
   hingeAxes: 2
   xHingeDirection: 0
   yHingeDirection: 0
@@ -384,9 +382,7 @@ MonoBehaviour:
   onRotationReturned:
     m_PersistentCalls:
       m_Calls: []
-  isReturning: 0
   movementOffset: {x: 0, y: 10, z: 0}
-  movementLerpSpeed: 2
   useWorldPosition: 0
   onMovementReachedTarget:
     m_PersistentCalls:
@@ -445,14 +441,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   mode: 2
+  movementLerpSpeed: 2
   animatedTransform: {fileID: 0}
   maxTurnAnglePerSecond: 90
-  turningLerpSpeed: 5
   minTrackingRange: 0
   maxTrackingRange: 50
   nearestTarget: {fileID: 0}
-  rotationReturning: 1
-  rotationLerpSpeed: 10
   hingeAxes: 2
   xHingeDirection: 0
   yHingeDirection: 0
@@ -464,9 +458,7 @@ MonoBehaviour:
   onRotationReturned:
     m_PersistentCalls:
       m_Calls: []
-  isReturning: 0
   movementOffset: {x: 0, y: 10, z: 0}
-  movementLerpSpeed: 2
   useWorldPosition: 0
   onMovementReachedTarget:
     m_PersistentCalls:
@@ -2048,14 +2040,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   mode: 1
+  movementLerpSpeed: 2
   animatedTransform: {fileID: 0}
   maxTurnAnglePerSecond: 90
-  turningLerpSpeed: 5
   minTrackingRange: 0
   maxTrackingRange: 50
   nearestTarget: {fileID: 0}
-  rotationReturning: 1
-  rotationLerpSpeed: 10
   hingeAxes: 2
   xHingeDirection: 0
   yHingeDirection: 0
@@ -2067,9 +2057,7 @@ MonoBehaviour:
   onRotationReturned:
     m_PersistentCalls:
       m_Calls: []
-  isReturning: 0
   movementOffset: {x: 0, y: 2, z: 0}
-  movementLerpSpeed: 2
   useWorldPosition: 0
   onMovementReachedTarget:
     m_PersistentCalls:
@@ -3058,14 +3046,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   mode: 2
+  movementLerpSpeed: 2
   animatedTransform: {fileID: 0}
   maxTurnAnglePerSecond: 90
-  turningLerpSpeed: 5
   minTrackingRange: 0
   maxTrackingRange: 50
   nearestTarget: {fileID: 0}
-  rotationReturning: 1
-  rotationLerpSpeed: 10
   hingeAxes: 2
   xHingeDirection: 0
   yHingeDirection: 0
@@ -3077,9 +3063,7 @@ MonoBehaviour:
   onRotationReturned:
     m_PersistentCalls:
       m_Calls: []
-  isReturning: 1
   movementOffset: {x: 0, y: 10, z: 0}
-  movementLerpSpeed: 2
   useWorldPosition: 0
   onMovementReachedTarget:
     m_PersistentCalls:
@@ -3664,7 +3648,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 875d49c235d0b3e4bb5da8171ae30a27, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  swivelComponent: {fileID: 1518158247}
+  swivelComponent: {fileID: 110488665}
 --- !u!1001 &1944813006
 PrefabInstance:
   m_ObjectHideFlags: 0
