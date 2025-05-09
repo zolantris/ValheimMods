@@ -106,6 +106,7 @@ using UnityEngine.UIElements;
     public static class SwivelUIColors
     {
       public static Color grayBg = new Color(0.4f, 0.4f, 0.4f, 1f);
+      public static Color greenBg = new Color(0.2f, 0.8f, 0.2f, 1f);
     }
 
     [Serializable]

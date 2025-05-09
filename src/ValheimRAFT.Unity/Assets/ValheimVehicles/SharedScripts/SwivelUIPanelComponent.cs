@@ -22,7 +22,6 @@ namespace ValheimVehicles.SharedScripts.UI
         [SerializeField] public float MaxUIWidth = 700f;
 
         private bool _hasCreatedUI;
-        private GameObject hingeAxesRow;
         private Transform layoutParent;
 
         private GameObject maxXRow;
@@ -31,6 +30,7 @@ namespace ValheimVehicles.SharedScripts.UI
         private TMP_Dropdown modeDropdown;
         private TMP_Dropdown motionStateDropdown;
         private GameObject movementLerpRow;
+        private GameObject hingeAxesRow;
         internal GameObject panelRoot;
         private SwivelComponent swivel;
         private GameObject targetDistanceXRow;
@@ -223,6 +223,19 @@ namespace ValheimVehicles.SharedScripts.UI
             targetDistanceXRow.SetActive(isMoving);
             targetDistanceYRow.SetActive(isMoving);
             targetDistanceZRow.SetActive(isMoving);
+        }
+
+        private void UpdateHingeAxisToggles()
+        {
+            if (hingeAxesRow == null || swivel == null) return;
+
+            var toggles = hingeAxesRow.GetComponentsInChildren<Toggle>();
+            var states = GetHingeAxisStates();
+
+            for (int i = 0; i < toggles.Length && i < states.Length; i++)
+            {
+                toggles[i].SetIsOnWithoutNotify(states[i]);
+            }
         }
 
         private bool[] GetHingeAxisStates()
