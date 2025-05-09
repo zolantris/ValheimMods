@@ -3,170 +3,146 @@
 using System;
 using TMPro;
 using UnityEngine;
-using UnityEngine.Serialization;
 using UnityEngine.UI;
 
 #endregion
 
-// ReSharper disable ArrangeNamespaceBody
-// ReSharper disable NamespaceStyle
-  namespace ValheimVehicles.SharedScripts.UI
-  {
-
+namespace ValheimVehicles.SharedScripts.UI
+{
     public class SwivelUIPanelComponent : SingletonBehaviour<SwivelUIPanelComponent>
     {
-      [Header("UI Settings")]
-      [SerializeField] public float MaxUIWidth = 700f;
-      private bool _hasCreatedUI;
-      private Toggle doorToggle;
-      private TMP_Dropdown hingeDropdown;
-      private Transform layoutParent;
-      private Slider maxYSlider;
-      private Slider maxZSlider;
-      private TMP_Dropdown modeDropdown;
+        [Header("UI Settings")]
+        [SerializeField] public float MaxUIWidth = 700f;
 
-      internal GameObject panelRoot;
+        private bool _hasCreatedUI;
+        private Transform layoutParent;
+        private Slider maxXSlider;
+        private Slider maxYSlider;
+        private Slider maxZSlider;
 
-      private SwivelComponent swivel;
+        private TMP_Dropdown modeDropdown;
+        private Slider movementSpeedSlider;
+        internal GameObject panelRoot;
+        private Toggle rotationReturnToggle;
 
-      [FormerlySerializedAs("styles")] [SerializeField]
-      public SwivelUISharedStyles viewStyles = new();
-      private TMP_Dropdown yDirDropdown;
-      private TMP_Dropdown zDirDropdown;
+        private SwivelComponent swivel;
+        [SerializeField] public SwivelUISharedStyles viewStyles = new();
+        private Toggle xHingeToggle;
+        private Toggle yHingeToggle;
+        private Toggle zHingeToggle;
 
-      // public void BindTo(SwivelComponent target)
-      // {
-      //   swivel = target;
-      //
-      //   if (swivel == null) return;
-      //   if (!_hasCreatedUI)
-      //   {
-      //     CreateUI();
-      //   }
-      //
-      //   modeDropdown.SetValueWithoutNotify((int)swivel.Mode);
-      //   doorToggle.isOn = swivel.IsDoorOpen;
-      //   hingeDropdown.SetValueWithoutNotify((int)swivel.CurrentHingeMode);
-      //   zDirDropdown.SetValueWithoutNotify((int)swivel.CurrentZHingeDirection);
-      //   yDirDropdown.SetValueWithoutNotify((int)swivel.CurrentYHingeDirection);
-      //   maxZSlider.SetValueWithoutNotify(swivel.MaxInclineZ);
-      //   maxYSlider.SetValueWithoutNotify(swivel.MaxYAngle);
-      //
-      //   RefreshUI();
-      //   Show();
-      // }
-      //
-      // public void Show()
-      // {
-      //   if (panelRoot == null)
-      //   {
-      //     CreateUI();
-      //   }
-      //
-      //   if (panelRoot != null)
-      //   {
-      //     panelRoot.gameObject.SetActive(true);
-      //   }
-      // }
-      // public void Hide()
-      // {
-      //   if (panelRoot != null)
-      //   {
-      //     panelRoot.gameObject.SetActive(false);
-      //   }
-      //   else
-      //   {
-      //     LoggerProvider.LogError("SwivelPanel was null, cannot hide. This call should not happen.");
-      //   }
-      // }
-      //
-      // public virtual GameObject CreateUIRoot()
-      // {
-      //   var rootUI = SwivelUIHelpers.CreateUICanvas("SwivelUICanvas", transform);
-      //   return rootUI.gameObject;
-      // }
-      //
-      // private void CreateUI()
-      // {
-      //   panelRoot = CreateUIRoot();
-      //   var scrollRect = SwivelUIHelpers.CreateScrollView(panelRoot.transform, viewStyles);
-      //   var scrollViewLayoutElement = scrollRect.gameObject.AddComponent<LayoutElement>();
-      //   scrollViewLayoutElement.flexibleHeight = 800f; // Don't stretch vertically
-      //   scrollViewLayoutElement.flexibleWidth = 800f;
-      //
-      //   // guards
-      //   scrollViewLayoutElement.minWidth = 500f;
-      //   scrollViewLayoutElement.minHeight = 300f; // Prevent collapsing
-      //
-      //   scrollViewLayoutElement.preferredHeight = 500f; // Set fixed height
-      //
-      //
-      //   var scrollViewport = SwivelUIHelpers.CreateViewport(scrollRect, viewStyles);
-      //
-      //   var scrollViewContent = SwivelUIHelpers.CreateContent("Content", scrollViewport.transform, viewStyles);
-      //
-      //   layoutParent = scrollViewContent.transform;
-      //   scrollRect.content = scrollViewContent;
-      //
-      //   SwivelUIHelpers.AddSectionLabel(layoutParent, viewStyles, "Swivel Config");
-      //
-      //   modeDropdown = SwivelUIHelpers.AddDropdownRow(layoutParent, viewStyles, "Swivel Mode", EnumNames<SwivelMode>(), swivel.Mode.ToString(), i =>
-      //   {
-      //     if (swivel != null)
-      //     {
-      //       swivel.SetMode((SwivelMode)i);
-      //       RefreshUI();
-      //     }
-      //   });
-      //
-      //   SwivelUIHelpers.AddSectionLabel(layoutParent, viewStyles, "Door Mode Settings");
-      //   doorToggle = SwivelUIHelpers.AddToggleRow(layoutParent, viewStyles, "Door Open", false, isOn =>
-      //   {
-      //     if (swivel != null) swivel.SetDoorOpen(isOn);
-      //   });
-      //   hingeDropdown = SwivelUIHelpers.AddDropdownRow(layoutParent, viewStyles, "Hinge Mode", EnumNames<SwivelComponent.DoorHingeMode>(), swivel.CurrentHingeMode.ToString(), i =>
-      //   {
-      //     if (swivel != null)
-      //     {
-      //       swivel.SetHingeMode((SwivelComponent.DoorHingeMode)i);
-      //       RefreshUI();
-      //     }
-      //   });
-      //   zDirDropdown = SwivelUIHelpers.AddDropdownRow(layoutParent, viewStyles, "Z Hinge Dir", EnumNames<SwivelComponent.HingeDirection>(), swivel.CurrentZHingeDirection.ToString(), i =>
-      //   {
-      //     if (swivel != null) swivel.SetZHingeDirection((SwivelComponent.HingeDirection)i);
-      //   });
-      //   yDirDropdown = SwivelUIHelpers.AddDropdownRow(layoutParent, viewStyles, "Y Hinge Dir", EnumNames<SwivelComponent.HingeDirection>(), swivel.CurrentYHingeDirection.ToString(), i =>
-      //   {
-      //     if (swivel != null) swivel.SetYHingeDirection((SwivelComponent.HingeDirection)i);
-      //   });
-      //   maxZSlider = SwivelUIHelpers.AddSliderRow(layoutParent, viewStyles, "Max Z Angle", 0f, 90f, 0f, v =>
-      //   {
-      //     if (swivel != null) swivel.SetMaxInclineZ(v);
-      //   });
-      //   maxYSlider = SwivelUIHelpers.AddSliderRow(layoutParent, viewStyles, "Max Y Angle", 0f, 90f, 0f, v =>
-      //   {
-      //     if (swivel != null) swivel.SetMaxYAngle(v);
-      //   });
-      //
-      //   _hasCreatedUI = true;
-      // }
+        public void BindTo(SwivelComponent target)
+        {
+            swivel = target;
+            if (swivel == null) return;
 
-      private void RefreshUI()
-      {
-        if (swivel == null) return;
-        var isDoor = swivel.Mode == SwivelMode.Rotate;
-        doorToggle.gameObject.SetActive(isDoor);
-        hingeDropdown.gameObject.SetActive(isDoor);
-        zDirDropdown.gameObject.SetActive(isDoor);
-        yDirDropdown.gameObject.SetActive(isDoor);
-        maxZSlider.gameObject.SetActive(isDoor);
-        maxYSlider.gameObject.SetActive(isDoor);
-      }
+            if (!_hasCreatedUI)
+                CreateUI();
 
-      private string[] EnumNames<T>() where T : Enum
-      {
-        return Enum.GetNames(typeof(T));
-      }
+            RefreshUI();
+            Show();
+        }
+
+        public void Show()
+        {
+            if (panelRoot != null)
+                panelRoot.SetActive(true);
+        }
+
+        public void Hide()
+        {
+            if (panelRoot != null)
+                panelRoot.SetActive(false);
+        }
+
+        private void CreateUI()
+        {
+            panelRoot = SwivelUIHelpers.CreateUICanvas("SwivelUIPanel", transform).gameObject;
+            var scrollRect = SwivelUIHelpers.CreateScrollView(panelRoot.transform, viewStyles);
+            var scrollViewport = SwivelUIHelpers.CreateViewport(scrollRect, viewStyles);
+            var scrollViewContent = SwivelUIHelpers.CreateContent("Content", scrollViewport.transform, viewStyles);
+            layoutParent = scrollViewContent.transform;
+            scrollRect.content = scrollViewContent;
+
+            SwivelUIHelpers.AddSectionLabel(layoutParent, viewStyles, "Swivel Config");
+
+            modeDropdown = SwivelUIHelpers.AddDropdownRow(layoutParent, viewStyles, "Swivel Mode", Enum.GetNames(typeof(SwivelMode)), swivel.Mode.ToString(), i =>
+            {
+                swivel.SetMode((SwivelMode)i);
+                RefreshUI();
+            });
+
+            movementSpeedSlider = SwivelUIHelpers.AddSliderRow(layoutParent, viewStyles, "Lerp Speed", 1f, 100f, swivel.MovementLerpSpeed, v =>
+            {
+                swivel.SetMovementLerpSpeed(v);
+            });
+
+            SwivelUIHelpers.AddSectionLabel(layoutParent, viewStyles, "Rotation Settings");
+
+            rotationReturnToggle = SwivelUIHelpers.AddToggleRow(layoutParent, viewStyles, "Return After Rotation", swivel.IsRotationReturning, val =>
+            {
+                swivel.SetRotationReturning(val);
+            });
+
+            xHingeToggle = SwivelUIHelpers.AddToggleRow(layoutParent, viewStyles, "Enable X Axis", (swivel.HingeAxes & HingeAxis.X) != 0, val =>
+            {
+                var axes = swivel.HingeAxes;
+                axes = val ? (axes | HingeAxis.X) : (axes & ~HingeAxis.X);
+                swivel.SetHingeAxes(axes);
+            });
+
+            yHingeToggle = SwivelUIHelpers.AddToggleRow(layoutParent, viewStyles, "Enable Y Axis", (swivel.HingeAxes & HingeAxis.Y) != 0, val =>
+            {
+                var axes = swivel.HingeAxes;
+                axes = val ? (axes | HingeAxis.Y) : (axes & ~HingeAxis.Y);
+                swivel.SetHingeAxes(axes);
+            });
+
+            zHingeToggle = SwivelUIHelpers.AddToggleRow(layoutParent, viewStyles, "Enable Z Axis", (swivel.HingeAxes & HingeAxis.Z) != 0, val =>
+            {
+                var axes = swivel.HingeAxes;
+                axes = val ? (axes | HingeAxis.Z) : (axes & ~HingeAxis.Z);
+                swivel.SetHingeAxes(axes);
+            });
+
+            maxXSlider = SwivelUIHelpers.AddSliderRow(layoutParent, viewStyles, "Max X Angle", 0f, 180f, swivel.MaxEuler.x, v =>
+            {
+                var e = swivel.MaxEuler;
+                e.x = v;
+                swivel.SetMaxEuler(e);
+            });
+
+            maxYSlider = SwivelUIHelpers.AddSliderRow(layoutParent, viewStyles, "Max Y Angle", 0f, 180f, swivel.MaxEuler.y, v =>
+            {
+                var e = swivel.MaxEuler;
+                e.y = v;
+                swivel.SetMaxEuler(e);
+            });
+
+            maxZSlider = SwivelUIHelpers.AddSliderRow(layoutParent, viewStyles, "Max Z Angle", 0f, 180f, swivel.MaxEuler.z, v =>
+            {
+                var e = swivel.MaxEuler;
+                e.z = v;
+                swivel.SetMaxEuler(e);
+            });
+
+            _hasCreatedUI = true;
+        }
+
+        private void RefreshUI()
+        {
+            if (swivel == null) return;
+
+            modeDropdown.SetValueWithoutNotify((int)swivel.Mode);
+            rotationReturnToggle.isOn = swivel.IsRotationReturning;
+            xHingeToggle.isOn = (swivel.HingeAxes & HingeAxis.X) != 0;
+            yHingeToggle.isOn = (swivel.HingeAxes & HingeAxis.Y) != 0;
+            zHingeToggle.isOn = (swivel.HingeAxes & HingeAxis.Z) != 0;
+
+            // maxXSlider.SetValueWithoutNotify(swivel.MaxEuler.x);
+            // maxYSlider.SetValueWithoutNotify(swivel.MaxEuler.y);
+            // maxZSlider.SetValueWithoutNotify(swivel.MaxEuler.z);
+            movementSpeedSlider.SetValueWithoutNotify(swivel.MovementLerpSpeed);
+        }
     }
-  }
+}

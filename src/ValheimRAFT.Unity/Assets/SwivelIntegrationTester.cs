@@ -14,10 +14,10 @@ namespace ValheimVehicles.SharedScripts
     private void Start()
     {
       if (!swivelComponent) GetComponent<SwivelComponent>();
-      // if (swivelComponent && SwivelUIPanelComponent.Instance)
-      // {
-      //   SwivelUIPanelComponent.Instance.BindTo(swivelComponent);
-      // }
+      if (swivelComponent && SwivelUIPanelComponent.Instance)
+      {
+        SwivelUIPanelComponent.Instance.BindTo(swivelComponent);
+      }
     }
   }
 }

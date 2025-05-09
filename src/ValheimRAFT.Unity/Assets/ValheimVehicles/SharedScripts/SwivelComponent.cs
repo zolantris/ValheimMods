@@ -24,11 +24,11 @@ namespace ValheimVehicles.SharedScripts
         private const float positionThreshold = 0.01f;
         private const float angleThreshold = 0.1f;
 
-        [Header("Swivel Settings")]
-        [SerializeField] private SwivelMode mode = SwivelMode.Rotate;
+        [Header("Swivel General Settings")]
+        [SerializeField] public SwivelMode mode = SwivelMode.Rotate;
+        [SerializeField] private float movementLerpSpeed = 2f;
         [SerializeField] private Transform animatedTransform;
         [SerializeField] private float maxTurnAnglePerSecond = 90f;
-        [SerializeField] private float turningLerpSpeed = 50f;
 
         [Header("Enemy Tracking Settings")]
         [SerializeField] private float minTrackingRange = 5f;
@@ -37,7 +37,6 @@ namespace ValheimVehicles.SharedScripts
 
         [Header("Rotation Mode Settings")]
         [SerializeField] private bool rotationReturning = true;
-        [SerializeField] public float rotationLerpSpeed = 10f;
         [SerializeField] private HingeAxis hingeAxes = HingeAxis.Y;
         [SerializeField] private HingeDirection xHingeDirection = HingeDirection.Forward;
         [SerializeField] private HingeDirection yHingeDirection = HingeDirection.Forward;
@@ -49,7 +48,6 @@ namespace ValheimVehicles.SharedScripts
         [Header("Movement Mode Settings")]
         [SerializeField] private bool isReturning;
         [SerializeField] private Vector3 movementOffset = new(0f, 2f, 0f);
-        [SerializeField] private float movementLerpSpeed = 2f;
         [SerializeField] private bool useWorldPosition;
         [SerializeField] private UnityEvent onMovementReachedTarget;
         [SerializeField] private UnityEvent onMovementReturned;
@@ -75,10 +73,13 @@ namespace ValheimVehicles.SharedScripts
         private Quaternion startRotation;
         private Vector3 targetMovementPosition;
         private Quaternion targetRotation;
+        // [SerializeField] private float turningLerpSpeed = 50f;
+        public float MovementLerpSpeed => movementLerpSpeed;
 
         public HingeAxis HingeAxes => hingeAxes;
         public SwivelMode Mode => mode;
         public bool IsRotationReturning => rotationReturning;
+        public Vector3 MaxEuler => maxRotationEuler;
 
         public virtual void Awake()
         {
@@ -168,7 +169,7 @@ namespace ValheimVehicles.SharedScripts
                     animatedRigidbody.MoveRotation(Quaternion.Slerp(
                         animatedRigidbody.rotation,
                         targetRotation,
-                        turningLerpSpeed * Time.fixedDeltaTime
+                        movementLerpSpeed * Time.fixedDeltaTime
                     ));
                     didMove = true;
                     break;
@@ -178,7 +179,7 @@ namespace ValheimVehicles.SharedScripts
                     animatedRigidbody.MoveRotation(Quaternion.Slerp(
                         animatedRigidbody.rotation,
                         targetRotation,
-                        turningLerpSpeed * Time.fixedDeltaTime
+                        movementLerpSpeed * Time.fixedDeltaTime
                     ));
                     didMove = true;
                     break;
@@ -196,6 +197,11 @@ namespace ValheimVehicles.SharedScripts
             }
 
             SyncSnappoint();
+        }
+
+        public void SetMovementLerpSpeed(float speed)
+        {
+            movementLerpSpeed = Mathf.Clamp(speed, 1f, 100f);
         }
 
         public void SetMode(SwivelMode newMode) => mode = newMode;
@@ -226,7 +232,7 @@ namespace ValheimVehicles.SharedScripts
                 hingeEndEuler.z = (zHingeDirection == HingeDirection.Forward ? 1f : -1f) * maxRotationEuler.z;
 
             float target = rotationReturning ? 0f : 1f;
-            hingeLerpProgress = Mathf.MoveTowards(hingeLerpProgress, target, rotationLerpSpeed * Time.fixedDeltaTime);
+            hingeLerpProgress = Mathf.MoveTowards(hingeLerpProgress, target, movementLerpSpeed * Time.fixedDeltaTime);
             var euler = Vector3.Lerp(Vector3.zero, hingeEndEuler, hingeLerpProgress);
             return Quaternion.Euler(euler);
         }
