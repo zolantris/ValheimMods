@@ -290,31 +290,31 @@
       }
     }
 
-    public override void ToggleDebugger(bool val)
-    {
-      if (val)
-      {
-        AdjustDebuggerArrowLocation();
-      }
+    // public override void ToggleDebugger(bool val)
+    // {
+    //   if (val)
+    //   {
+    //     AdjustDebuggerArrowLocation();
+    //   }
+    //
+    //   base.ToggleDebugger(val);
+    // }
 
-      base.ToggleDebugger(val);
-    }
-
-    public override void SetInitialLocalRotation()
-    {
-      if (m_nview == null || m_nview.GetZDO() == null) return;
-      var localRotation = m_nview.GetZDO().GetVec3(VehicleZdoVars.MBRotationVecHash, transform.localRotation.eulerAngles);
-      m_startPieceRotation = Quaternion.Euler(localRotation);
-    }
+    // public override void SetInitialLocalRotation()
+    // {
+    //   if (m_nview == null || m_nview.GetZDO() == null) return;
+    //   var localRotation = m_nview.GetZDO().GetVec3(VehicleZdoVars.MBRotationVecHash, transform.localRotation.eulerAngles);
+    //   m_startPieceRotation = Quaternion.Euler(localRotation);
+    // }
 
     public void OnInitComplete()
     {
       StartActivatePendingSwivelPieces();
     }
 
-    protected override Quaternion CalculateTargetWindDirectionRotation()
+    public override Quaternion CalculateTargetWindDirectionRotation()
     {
-      if (m_vehicle == null || m_vehicle.MovementController == null)
+      if (!m_vehicle || !m_vehicle.MovementController)
       {
         var windDir = EnvMan.instance != null ? EnvMan.instance.GetWindDir() : transform.forward;
 
@@ -447,6 +447,11 @@
       m_pieces.Add(nv);
 
       TogglePlacementContainer(m_pieces.Count == 0);
+    }
+
+    public void TogglePlacementContainer(bool isZeroPieces)
+    {
+      connectorContainer.gameObject.SetActive(isZeroPieces);
     }
 
     public void RemovePiece(ZNetView nv)

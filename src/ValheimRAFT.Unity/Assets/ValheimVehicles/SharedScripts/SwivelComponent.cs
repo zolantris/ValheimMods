@@ -35,6 +35,8 @@ namespace ValheimVehicles.SharedScripts
     private const float positionThreshold = 0.01f;
     private const float angleThreshold = 0.1f;
 
+    public static Vector3 cachedWindDirection = Vector3.zero;
+
     [Header("Swivel General Settings")]
     [SerializeField] private SwivelMode mode = SwivelMode.Rotate;
     [SerializeField] private float movementLerpSpeed = 2f;
@@ -68,6 +70,8 @@ namespace ValheimVehicles.SharedScripts
     public Transform connectorContainer;
 
     public Transform directionDebuggerArrow;
+
+    public bool CanUpdate = true;
     private Rigidbody animatedRigidbody;
 
     private bool hasReachedTarget;
@@ -112,8 +116,6 @@ namespace ValheimVehicles.SharedScripts
       animatedRigidbody.isKinematic = true;
       animatedRigidbody.interpolation = RigidbodyInterpolation.Interpolate;
     }
-
-    public bool CanUpdate = true;
 
     public virtual void Start()
     {
@@ -184,21 +186,13 @@ namespace ValheimVehicles.SharedScripts
 
         case SwivelMode.TargetEnemy:
           targetRotation = CalculateTargetNearestEnemyRotation();
-          animatedRigidbody.MoveRotation(Quaternion.Slerp(
-            animatedRigidbody.rotation,
-            targetRotation,
-            movementLerpSpeed * Time.fixedDeltaTime
-          ));
+          animatedRigidbody.Move(transform.position, transform.rotation * targetRotation);
           didMove = true;
           break;
 
         case SwivelMode.TargetWind:
           targetRotation = CalculateTargetWindDirectionRotation();
-          animatedRigidbody.MoveRotation(Quaternion.Slerp(
-            animatedRigidbody.rotation,
-            targetRotation,
-            movementLerpSpeed * Time.fixedDeltaTime
-          ));
+          animatedRigidbody.Move(transform.position,transform.rotation* targetRotation);
           didMove = true;
           break;
       }
@@ -249,10 +243,47 @@ namespace ValheimVehicles.SharedScripts
       return Quaternion.LookRotation(flat.normalized, Vector3.up);
     }
 
-    private Quaternion CalculateTargetWindDirectionRotation()
+    private static float NormalizeAngle(float angle)
     {
-      return Quaternion.LookRotation(Vector3.forward, Vector3.up);
+      angle %= 360f;
+      return angle > 180f ? angle - 360f : angle;
     }
+
+    public virtual Quaternion CalculateTargetWindDirectionRotation()
+    {
+      // Ensure direction is valid
+      var flatWind = new Vector3(cachedWindDirection.x, 0f, cachedWindDirection.z).normalized;
+      if (flatWind.sqrMagnitude < 0.001f)
+        return animatedTransform.localRotation;
+
+      // Calculate target look rotation
+      var target = Quaternion.LookRotation(flatWind, Vector3.up);
+      var current = animatedTransform.localRotation;
+
+      // Lerp toward wind direction using movementLerpSpeed
+      var next = Quaternion.Slerp(current, target, movementLerpSpeed * Time.fixedDeltaTime);
+
+      // Clamp Y (yaw) rotation
+      var euler = next.eulerAngles;
+      var clampedY = Mathf.Clamp(
+        NormalizeAngle(euler.y),
+        -maxRotationEuler.y,
+        maxRotationEuler.y
+      );
+
+      return Quaternion.Euler(0f, clampedY, 0f);
+    }
+
+    // public virtual Quaternion CalculateTargetWindDirectionRotation()
+    // {
+    //   // var nextQuaternion = Quaternion.Slerp(animatedTransform.localRotation, Quaternion.LookRotation(cachedWindDirection, transform.up), movementLerpSpeed);
+    //   var nextQuaternion = Quaternion.LookRotation(cachedWindDirection, transform.up);
+    //   if (nextQuaternion.eulerAngles.y > maxRotationEuler.y || nextQuaternion.eulerAngles.y < -maxRotationEuler.y)
+    //   {
+    //     nextQuaternion = Quaternion.Euler(0f, maxRotationEuler.y, 0f);
+    //   }
+    //   return nextQuaternion;
+    // }
 
     public void SetMode(SwivelMode newMode)
     {
