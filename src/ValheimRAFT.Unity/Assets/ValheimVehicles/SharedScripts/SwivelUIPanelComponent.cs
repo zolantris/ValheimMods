@@ -6,7 +6,6 @@
 using System;
 using TMPro;
 using UnityEngine;
-using UnityEngine.Serialization;
 using UnityEngine.UI;
 
 #endregion
@@ -20,25 +19,27 @@ namespace ValheimVehicles.SharedScripts.UI
 
         [Header("UI Settings")]
         [SerializeField] public float MaxUIWidth = 700f;
-        [FormerlySerializedAs("styles")] [SerializeField] public SwivelUISharedStyles viewStyles = new();
         public SwivelUIPanelStrings Strings = new();
 
         private bool _hasCreatedUI;
-        internal GameObject panelRoot;
+        private GameObject hingeAxisRow;
         private Transform layoutParent;
-        private SwivelComponent swivel;
+        private GameObject maxXRow;
+        private GameObject maxYRow;
+        private GameObject maxZRow;
 
         private TMP_Dropdown modeDropdown;
         private TMP_Dropdown motionStateDropdown;
 
         private GameObject movementLerpRow;
-        private GameObject hingeAxisRow;
-        private GameObject maxXRow;
-        private GameObject maxYRow;
-        private GameObject maxZRow;
+        private GameObject movementSectionLabel;
+        internal GameObject panelRoot;
+        private GameObject rotationSectionLabel;
+        private SwivelComponent swivel;
         private GameObject targetDistanceXRow;
         private GameObject targetDistanceYRow;
         private GameObject targetDistanceZRow;
+        public SwivelUISharedStyles viewStyles = new();
 
         public void BindTo(SwivelComponent target)
         {
@@ -118,7 +119,7 @@ namespace ValheimVehicles.SharedScripts.UI
                 swivel.SetMovementLerpSpeed(v);
             });
 
-            SwivelUIHelpers.AddSectionLabel(layoutParent, viewStyles, Strings.RotationSettings);
+            rotationSectionLabel = SwivelUIHelpers.AddSectionLabel(layoutParent, viewStyles, Strings.RotationSettings);
 
             hingeAxisRow = SwivelUIHelpers.AddMultiToggleRow(layoutParent, viewStyles, Strings.HingeAxes,
                 new[] { "X", "Y", "Z" },
@@ -158,7 +159,7 @@ namespace ValheimVehicles.SharedScripts.UI
                 swivel.SetMaxEuler(e);
             });
 
-            SwivelUIHelpers.AddSectionLabel(layoutParent, viewStyles, Strings.MovementSettings);
+            movementSectionLabel = SwivelUIHelpers.AddSectionLabel(layoutParent, viewStyles, Strings.MovementSettings);
 
             targetDistanceXRow = SwivelUIHelpers.AddSliderRow(layoutParent, viewStyles, Strings.TargetXOffset, MinTargetOffset, MaxTargetOffset, swivel.GetMovementOffset().x, v =>
             {
@@ -190,6 +191,7 @@ namespace ValheimVehicles.SharedScripts.UI
             bool isRotating = swivel.Mode == SwivelMode.Rotate;
             bool isMoving = swivel.Mode == SwivelMode.Move;
 
+            rotationSectionLabel.SetActive(isRotating);
             hingeAxisRow.SetActive(isRotating);
             maxXRow.SetActive(isRotating);
             maxYRow.SetActive(isRotating);
@@ -198,6 +200,7 @@ namespace ValheimVehicles.SharedScripts.UI
             targetDistanceXRow.SetActive(isMoving);
             targetDistanceYRow.SetActive(isMoving);
             targetDistanceZRow.SetActive(isMoving);
+            movementSectionLabel.SetActive(isMoving);
         }
 
         private string[] EnumNames<T>() where T : Enum => Enum.GetNames(typeof(T));

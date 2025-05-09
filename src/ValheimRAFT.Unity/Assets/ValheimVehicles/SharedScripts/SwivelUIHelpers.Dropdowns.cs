@@ -1,10 +1,10 @@
 ﻿#region
 
-  using System.Collections.Generic;
-  using TMPro;
-  using UnityEngine;
-  using UnityEngine.Events;
-  using UnityEngine.UI;
+using System.Collections.Generic;
+using TMPro;
+using UnityEngine;
+using UnityEngine.Events;
+using UnityEngine.UI;
 
 #endregion
 
@@ -93,7 +93,7 @@
         templateRT.pivot = new Vector2(0.5f, 1f);
         templateRT.anchorMin = new Vector2(0, 0);
         templateRT.anchorMax = new Vector2(1, 1);
-        templateRT.sizeDelta = new Vector2(0, Mathf.Clamp(viewStyles.DropdownItemHeight * options.Length + viewStyles.DropdownItemHeight, 150f, viewStyles.DropdownContentHeight));
+        templateRT.sizeDelta = new Vector2(0, Mathf.Clamp(viewStyles.DropdownItemHeight * options.Length *2 + viewStyles.DropdownItemHeight, 150f, 1000));
         templateGO.GetComponent<Image>().color = viewStyles.DropdownOptionsContainerColor;
 
         dropdown.template = templateRT;
