@@ -54,7 +54,6 @@ really should require rams to be enabled (but you can toggle them off).
 - MapSync should have 0 Null reference errors. But this logic will continue to
   be improved/optimize.
 
-
 ------
 
 This mod has both a beta and a non-beta on Thunderstore. Please make sure you
@@ -377,6 +376,8 @@ and it should no longer cause errors for not having PlanBuild installed.
 ## FAQs
 
 Please read these if you are experiencing trouble.
+
+### Help My Vehicle
 
 ### Help My Raft is A Box
 

@@ -18,7 +18,7 @@
       public static event Action? OnPostAwake;
       public virtual void OnAwake() {}
 
-      public void Awake()
+      public virtual void Awake()
       {
         if (Instance != null && Instance != this)
         {

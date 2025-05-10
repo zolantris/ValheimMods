@@ -5,8 +5,6 @@ using HarmonyLib;
 using UnityEngine;
 using ValheimVehicles.Compat;
 using ValheimVehicles.Helpers;
-using ValheimVehicles.Prefabs;
-
 using ValheimVehicles.Controllers;
 
 namespace ValheimVehicles.Patches;
@@ -14,7 +12,23 @@ namespace ValheimVehicles.Patches;
 [HarmonyPatch]
 public class Character_Patch
 {
-  
+  public static bool HasTargettingManager = false;
+  [HarmonyPatch(typeof(Character), "Awake")]
+  [HarmonyPostfix]
+  public static void Character_Awake(Character __instance)
+  {
+#if DEBUG
+    if (HasTargettingManager)
+    {
+      if (NearestTargetScanManager.Instance == null)
+      {
+        __instance.gameObject.AddComponent<NearestTargetScanManager>();
+      }
+      __instance.gameObject.AddComponent<NearestTargetListener>();
+    }
+#endif
+  }
+
   [HarmonyPatch(typeof(Character), "ApplyGroundForce")]
   [HarmonyTranspiler]
   public static IEnumerable<CodeInstruction> Character_Patch_ApplyGroundForce(
@@ -128,7 +142,7 @@ public class Character_Patch
     if (!bvc && __instance.transform.parent != null)
       __instance.transform.SetParent(null);
   }
-  
+
   /// <summary>
   /// Fixes issue where player is running on a moving boat and then enters flying mode or hover mode if moving near edge and ship is moving forward but player is moving backwards
   /// </summary>

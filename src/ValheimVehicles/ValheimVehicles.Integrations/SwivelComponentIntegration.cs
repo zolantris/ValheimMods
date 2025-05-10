@@ -36,13 +36,13 @@
   ///
   /// Notes
   /// IRaycastPieceActivator is used for simplicity. It will easily match any component extending this in unity.
-  public sealed class SwivelComponentIntegration : SwivelComponent, IPieceActivatorHost, IPieceController, IRaycastPieceActivator, Hoverable, Interactable
+  public sealed class SwivelComponentIntegration : SwivelComponent, IPieceActivatorHost, IPieceController, IRaycastPieceActivator
   {
     [FormerlySerializedAs("m_piecesController")]
     public VehiclePiecesController? m_vehiclePiecesController;
     public VehicleManager? m_vehicle => m_vehiclePiecesController == null ? null : m_vehiclePiecesController.Manager;
 
-    private ZNetView m_nview;
+    public ZNetView m_nview;
     private int _persistentZdoId;
     public static readonly Dictionary<int, SwivelComponentIntegration> ActiveInstances = [];
     public List<ZNetView> m_pieces = [];
@@ -52,11 +52,18 @@
     public static float turnTime = 50f;
 
     private HoverFadeText m_hoverFadeText;
-    private readonly PrefabConfigRPCSync<SwivelCustomConfig> _prefabConfigSync = new();
-    public SwivelCustomConfig m_config => _prefabConfigSync.CustomConfig;
+    public SwivelConfigRPCSync prefabConfigSync;
+    public SwivelCustomConfig m_config => prefabConfigSync.CustomConfig;
 
     public override void Awake()
     {
+      if (!prefabConfigSync)
+      {
+        prefabConfigSync = gameObject.AddComponent<SwivelConfigRPCSync>();
+      }
+      prefabConfigSync.SetComponentFromInstance(this);
+
+      CanUpdate = false;
       base.Awake();
 
       m_nview = GetComponent<ZNetView>();
@@ -64,6 +71,17 @@
       SetupHoverFadeText();
 
       SetupPieceActivator();
+    }
+
+    public MotionState GetNextMotionState()
+    {
+      return MotionState != MotionState.Returning ? MotionState.Returning : MotionState.GoingToTarget;
+    }
+
+    public void RequestNextMotionState()
+    {
+      var nextMotionState = GetNextMotionState();
+      prefabConfigSync.RequestNextMotionState(nextMotionState);
     }
 
     public void SetupHoverFadeText()
@@ -75,7 +93,7 @@
 
     public void OnEnable()
     {
-      _prefabConfigSync.RegisterRPCListeners();
+      prefabConfigSync.RegisterRPCListeners();
 
       var persistentId = GetPersistentId();
       if (persistentId == 0) return;
@@ -97,7 +115,7 @@
 
     public void OnDisable()
     {
-      _prefabConfigSync.UnregisterRPCListeners();
+      prefabConfigSync.UnregisterRPCListeners();
 
       var persistentId = GetPersistentId();
       if (persistentId == 0) return;
@@ -150,6 +168,7 @@
 
     public void StartActivatePendingSwivelPieces()
     {
+      if (!_pieceActivator) return;
       _pieceActivator.StartActivatePendingPieces();
     }
 
@@ -176,7 +195,7 @@
 
     public void OnActivationComplete()
     {
-      SetInitialLocalRotation();
+      // SetInitialLocalRotation();
       CanUpdate = true;
     }
 
@@ -260,7 +279,6 @@
     {
       base.Start();
       m_vehiclePiecesController = GetComponentInParent<VehiclePiecesController>();
-      SetInitialLocalRotation();
       _pieceActivator.StartInitPersistentId();
     }
 
@@ -288,31 +306,24 @@
       }
     }
 
-    public override void ToggleDebugger(bool val)
-    {
-      if (val)
-      {
-        AdjustDebuggerArrowLocation();
-      }
-
-      base.ToggleDebugger(val);
-    }
-
-    public override void SetInitialLocalRotation()
-    {
-      if (m_nview == null || m_nview.GetZDO() == null) return;
-      var localRotation = m_nview.GetZDO().GetVec3(VehicleZdoVars.MBRotationVecHash, transform.localRotation.eulerAngles);
-      m_startPieceRotation = Quaternion.Euler(localRotation);
-    }
+    // public override void ToggleDebugger(bool val)
+    // {
+    //   if (val)
+    //   {
+    //     AdjustDebuggerArrowLocation();
+    //   }
+    //
+    //   base.ToggleDebugger(val);
+    // }
 
     public void OnInitComplete()
     {
       StartActivatePendingSwivelPieces();
     }
 
-    protected override Quaternion CalculateTargetWindDirectionRotation()
+    public override Quaternion CalculateTargetWindDirectionRotation()
     {
-      if (m_vehicle == null || m_vehicle.MovementController == null)
+      if (!m_vehicle || !m_vehicle.MovementController)
       {
         var windDir = EnvMan.instance != null ? EnvMan.instance.GetWindDir() : transform.forward;
 
@@ -326,7 +337,7 @@
         return Quaternion.RotateTowards(piecesContainer.transform.rotation, dir, 30f * Time.fixedDeltaTime);
       }
       // use the sync mast
-      return m_vehicle.MovementController.m_mastObject.transform.localRotation;
+      return m_vehicle.MovementController!.m_mastObject.transform.localRotation;
     }
 
   #region IBasePieceActivator
@@ -347,43 +358,15 @@
 
   #endregion
 
-
-    public string GetHoverText()
-    {
-      return ModTranslations.Swivel_HoverText;
-    }
-    public string GetHoverName()
-    {
-      return "Hover name";
-    }
-    public bool Interact(Humanoid user, bool hold, bool alt)
-    {
-      if (SwivelUIPanelComponent.Instance == null) Game.instance.gameObject.AddComponent<SwivelUIPanelComponent>();
-      if (SwivelUIPanelComponent.Instance != null)
-      {
-        if (SwivelUIPanelComponent.Instance.panelRoot != null && SwivelUIPanelComponent.Instance.panelRoot.activeInHierarchy)
-        {
-          SwivelUIPanelComponent.Instance.Hide();
-        }
-        else
-        {
-          SwivelUIPanelComponent.Instance.BindTo(this);
-        }
-        return true;
-      }
-      return false;
-    }
-    public bool UseItem(Humanoid user, ItemDrop.ItemData item)
-    {
-      return false;
-    }
-
   #region IPieceController
 
     public bool CanDestroy()
     {
       return GetPieceCount() == 0;
     }
+
+    private static string _ComponentName => PrefabNames.SwivelPrefabName;
+    public string ComponentName => _ComponentName;
 
     public int GetPieceCount()
     {
@@ -447,6 +430,24 @@
       TogglePlacementContainer(m_pieces.Count == 0);
     }
 
+    public void AddCustomPiece(ZNetView nv, bool isNew = false)
+    {
+      LoggerProvider.LogWarning("CustomPieces not supported for SwivelComponentIntegration. This is likely a bug. Please report this to the mod author.");
+      return;
+    }
+
+    public void AddCustomPiece(GameObject prefab, bool isNew = false)
+    {
+      LoggerProvider.LogWarning("CustomPieces not supported for SwivelComponentIntegration. This is likely a bug. Please report this to the mod author.");
+      return;
+    }
+
+
+    public void TogglePlacementContainer(bool isZeroPieces)
+    {
+      connectorContainer.gameObject.SetActive(isZeroPieces);
+    }
+
     public void RemovePiece(ZNetView nv)
     {
       if (nv == null) return;
@@ -464,6 +465,10 @@
         m_hoverFadeText.Hide();
       }
       TogglePlacementContainer(hasZeroPieces);
+    }
+    public void TrySetPieceToParent(ZNetView netView)
+    {
+      throw new NotImplementedException();
     }
 
     ///

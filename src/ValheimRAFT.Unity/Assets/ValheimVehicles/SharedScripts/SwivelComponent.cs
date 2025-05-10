@@ -1,351 +1,369 @@
+// ReSharper disable ArrangeNamespaceBody
+// ReSharper disable NamespaceStyle
+
 #region
 
-  using System.ComponentModel;
-  using UnityEngine;
-  using UnityEngine.Serialization;
+using System;
+using System.ComponentModel;
+using UnityEngine;
+using UnityEngine.Events;
+using ValheimVehicles.SharedScripts.UI;
 
 #endregion
 
-// ReSharper disable ArrangeNamespaceBody
-// ReSharper disable NamespaceStyle
-  namespace ValheimVehicles.SharedScripts
+namespace ValheimVehicles.SharedScripts
+{
+  [Flags]
+  public enum HingeAxis
   {
-
-    public class SwivelComponent : MonoBehaviour
-    {
-      public enum DoorHingeMode
-      {
-        ZOnly,
-        YOnly,
-        Both
-      }
-
-      public enum HingeDirection
-      {
-        Forward, // positive angle
-        Backward // negative angle
-      }
-
-      public const string SNAPPOINT_TAG = "snappoint";
-
-      [Header("Other Settings")]
-      public const string AnimatedContainerName = "animated";
-
-      [Header("Swivel Settings")]
-      [SerializeField] private SwivelMode mode = SwivelMode.DoorMode;
-      [SerializeField]
-      private Transform animatedTransform;
-
-      [SerializeField] private float maxTurnAnglePerSecond = 90f;
-      [SerializeField] private float maxTurnAngle = 90f; // turn angle maximum from the original forward rotation position of the swivel.
-      [SerializeField] private float maxInclineZ = 90f;
-      [SerializeField] public float turningLerpSpeed = 50f;
-
-      [Header("Enemy Tracking Settings")]
-      [SerializeField] private float minTrackingRange = 5f;
-      [SerializeField] private float maxTrackingRange = 50f;
-      [SerializeField] internal GameObject? nearestTarget;
-
-      [Header("Door Mode Settings")]
-      [SerializeField] private bool isDoorOpen;
-      [SerializeField] public float doorLerpSpeed = 100f;
-      [SerializeField] private DoorHingeMode hingeMode = DoorHingeMode.YOnly;
-      [SerializeField] private HingeDirection zHingeDirection = HingeDirection.Forward;
-      [SerializeField] private HingeDirection yHingeDirection = HingeDirection.Forward;
-
-      [SerializeField] private float maxYAngle = 90f; // optional Y rotation max (like a normal swing door)
-
-      [Description("Piece component meant for containing all pieces that will be swivelled.")]
-      public Transform piecesContainer;
-      public Transform directionDebuggerArrow;
-
-      [Description("_connectorContainer is meant to be shown until an object is connected to the swivel component. It will also display a forward direction indicator.")]
-      public Transform connectorContainer;
-
-      public Quaternion m_startPieceRotation = Quaternion.identity;
-
-      // protects against running an update before objects have been parented properly.
-      public bool CanUpdate;
-
-      private float _currentYAngle;
-      private float _currentZAngle;
-
-      private Transform _snappoint;
-      private Quaternion _targetRotation;
-      private BoxCollider m_collider;
-
-      public DoorHingeMode CurrentHingeMode => hingeMode;
-      public HingeDirection CurrentZHingeDirection => zHingeDirection;
-      public HingeDirection CurrentYHingeDirection => yHingeDirection;
-      public SwivelMode Mode => mode;
-
-      public bool IsDoorOpen => isDoorOpen;
-
-      public float MaxInclineZ => maxInclineZ;
-
-      public float MaxYAngle => maxYAngle;
-
-      public virtual void Awake()
-      {
-        FindSnappoint();
-        animatedTransform = transform.Find("animated");
-        piecesContainer = animatedTransform.Find("piece_container");
-        directionDebuggerArrow = piecesContainer.Find("direction_debugger_arrow");
-
-        connectorContainer = transform.Find("connector_container");
-        m_collider = GetComponent<BoxCollider>();
-
-        if (!piecesContainer || !connectorContainer)
-        {
-          Debug.LogError($"{nameof(SwivelComponent)} missing pieceContainer or connectorContainer!");
-        }
-      }
-
-      public void ToggleDebugger()
-      {
-        if (!directionDebuggerArrow) return;
-        ToggleDebugger(!directionDebuggerArrow.gameObject.activeSelf);
-      }
-
-      public virtual void ToggleDebugger(bool val)
-      {
-        if (!directionDebuggerArrow) return;
-        directionDebuggerArrow.gameObject.SetActive(val);
-      }
-
-
-      public virtual void Start()
-      {
-        SetInitialLocalRotation();
-      }
-
-      /// <summary>
-      /// must be called after parenting the to a vehicle otherwise this will desync the localRotation.
-      ///
-      /// This method should be overridden and use ZNetView position of local rotation from MBParent and default with transform.localRotation.
-      /// </summary>
-      public virtual void SetInitialLocalRotation()
-      {
-        m_startPieceRotation = transform.localRotation;
-      }
-
-      public virtual void FixedUpdate()
-      {
-        if (!CanUpdate) return;
-        UpdateTargetRotation();
-        ApplyRotation();
-        SyncSnappoint();
-      }
-
-      public void TogglePlacementContainer(bool isActive)
-      {
-        if (connectorContainer != null)
-        {
-          connectorContainer.gameObject.SetActive(isActive);
-        }
-        if (m_collider != null)
-        {
-          m_collider.enabled = isActive;
-        }
-      }
-
-      /// <summary>
-      /// Sync snappoint to the moving section. This will allow for building on these moving pieces without having to reload the vehicle zero the position again.
-      ///
-      /// use connector container as this will not be adding pieces which could mutate a position.
-      ///
-      /// </summary>
-      /// todo not sure if this does anythign now.
-      public void SyncSnappoint()
-      {
-        if (_snappoint == null || animatedTransform == null) return;
-        _snappoint.transform.position = connectorContainer.position;
-      }
-
-      public void FindSnappoint()
-      {
-        for (var i = 0; i < transform.childCount; i++)
-        {
-          var child = transform.GetChild(i);
-          if (child.CompareTag(SNAPPOINT_TAG))
-          {
-            _snappoint = transform.GetChild(i);
-            break;
-          }
-        }
-      }
-
-      private void UpdateTargetRotation()
-      {
-        switch (mode)
-        {
-          case SwivelMode.None:
-            break;
-          case SwivelMode.TargetEnemy:
-            // todo add a swivel target type "enemy", "friendly", "direction", "wind", "enemies"
-            // _targetRotation = CalculateTargetWindDirectionRotation();
-            _targetRotation = CalculateTargetNearestEnemyRotation();
-            break;
-          case SwivelMode.TargetWind:
-            CalculateTargetWindDirectionRotation();
-            break;
-          // case SwivelMode.TargetNearestEnemy:
-          //   break;
-          // case SwivelMode.TargetLargestClusterOfEnemies:
-          //   _targetRotation = CalculateTargetLargestClusterOfEnemies();
-          //   break;
-          case SwivelMode.DoorMode:
-            _targetRotation = CalculateDoorModeRotation();
-            break;
-        }
-      }
-
-      private static Quaternion NormalizeQuaternion(Quaternion q)
-      {
-        var mag = Mathf.Sqrt(q.x * q.x + q.y * q.y + q.z * q.z + q.w * q.w);
-        return mag > Mathf.Epsilon ? new Quaternion(q.x / mag, q.y / mag, q.z / mag, q.w / mag) : Quaternion.identity;
-      }
-
-      private void ApplyRotation()
-      {
-        if (piecesContainer == null || mode == SwivelMode.None)
-          return;
-
-        animatedTransform.localRotation = Quaternion.Slerp(
-          NormalizeQuaternion(animatedTransform.localRotation),
-          _targetRotation,
-          turningLerpSpeed * Time.fixedDeltaTime
-        );
-      }
-
-      public void ResetRotation()
-      {
-        if (piecesContainer.localRotation != m_startPieceRotation)
-        {
-          piecesContainer.localRotation = m_startPieceRotation;
-        }
-        _currentYAngle = 0f;
-        _currentZAngle = 0f;
-      }
-
-      public void SetMode(SwivelMode newMode)
-      {
-        ResetRotation();
-        mode = newMode;
-      }
-      public void SetDoorOpen(bool open)
-      {
-        isDoorOpen = open;
-      }
-
-      public void SetHingeMode(DoorHingeMode mode)
-      {
-        ResetRotation();
-        hingeMode = mode;
-      }
-      public void SetZHingeDirection(HingeDirection dir)
-      {
-        ResetRotation();
-        zHingeDirection = dir;
-      }
-      public void SetYHingeDirection(HingeDirection dir)
-      {
-        ResetRotation();
-        yHingeDirection = dir;
-      }
-      public void SetMaxInclineZ(float v)
-      {
-        ResetRotation();
-        maxInclineZ = v;
-      }
-      public void SetMaxYAngle(float v)
-      {
-        ResetRotation();
-        maxYAngle = v;
-      }
-
-      /// <summary>
-      /// Toggle the door open/close state manually (e.g. via UI or command).
-      /// </summary>
-      public void ToggleDoorState()
-      {
-        isDoorOpen = !isDoorOpen;
-      }
-
-      // --- Functional Override Points Below ---
-
-      protected virtual Quaternion CalculateTargetWindDirectionRotation()
-      {
-        var windDirection = Vector3.forward;
-        var target = Quaternion.LookRotation(windDirection, Vector3.up);
-        return ClampYawOnly(target);
-      }
-
-      protected virtual Quaternion CalculateTargetNearestEnemyRotation()
-      {
-        if (nearestTarget == null)
-        {
-          // No target: Face forward by default
-          return transform.localRotation;
-        }
-
-        var toTarget = nearestTarget.transform.position - piecesContainer.position;
-        var distance = toTarget.magnitude;
-
-        if (distance < minTrackingRange || distance > maxTrackingRange)
-        {
-          // Outside tracking range: No rotation change
-          return transform.localRotation;
-        }
-
-        // Calculate direction and target rotation
-        var flatDirection = new Vector3(toTarget.x, 0f, toTarget.z).normalized;
-        if (flatDirection.sqrMagnitude < 0.001f)
-        {
-          return transform.localRotation;
-        }
-
-        var targetRotation = Quaternion.LookRotation(flatDirection, Vector3.up);
-        return ClampYawOnly(targetRotation);
-      }
-
-      protected virtual Quaternion CalculateTargetLargestClusterOfEnemies()
-      {
-        var targetDirection = Vector3.forward;
-        return ClampYawOnly(Quaternion.LookRotation(targetDirection, Vector3.up));
-      }
-
-      protected virtual Quaternion CalculateDoorModeRotation()
-      {
-        if (piecesContainer == null)
-          return m_startPieceRotation;
-
-        var targetZ = _currentZAngle;
-        var targetY = _currentYAngle;
-
-        if (hingeMode == DoorHingeMode.ZOnly || hingeMode == DoorHingeMode.Both)
-        {
-          var direction = zHingeDirection == HingeDirection.Forward ? 1f : -1f;
-          targetZ = isDoorOpen ? 0f : direction * maxInclineZ;
-          _currentZAngle = Mathf.MoveTowards(_currentZAngle, targetZ, doorLerpSpeed * Time.fixedDeltaTime);
-        }
-
-        if (hingeMode == DoorHingeMode.YOnly || hingeMode == DoorHingeMode.Both)
-        {
-          var direction = yHingeDirection == HingeDirection.Forward ? 1f : -1f;
-          targetY = isDoorOpen ? 0f : direction * maxYAngle;
-          _currentYAngle = Mathf.MoveTowards(_currentYAngle, targetY, doorLerpSpeed * Time.fixedDeltaTime);
-        }
-
-        return Quaternion.Euler(0f, _currentYAngle, _currentZAngle);
-      }
-
-      private Quaternion ClampYawOnly(Quaternion rotation)
-      {
-        var euler = rotation.eulerAngles;
-        euler.z = 0f; // Lock Z
-        euler.x = 0f; // Lock X
-        return Quaternion.Euler(euler);
-      }
-    }
+    None = 0,
+    X = 1,
+    Y = 2,
+    Z = 4
   }
+
+  public class SwivelComponent : MonoBehaviour, ISwivelConfig
+  {
+    public enum HingeDirection
+    {
+      Forward,
+      Backward
+    }
+
+    public const string SNAPPOINT_TAG = "snappoint";
+    public const string AnimatedContainerName = "animated";
+
+    private const float positionThreshold = 0.01f;
+    private const float angleThreshold = 0.1f;
+
+    public static Vector3 cachedWindDirection = Vector3.zero;
+
+    public static float RotationInterpolateSpeedMultiplier = 0.5f;
+    public static float MovementInterpolationSpeedMultiplier = 0.05f;
+
+    [Header("Swivel General Settings")]
+    [SerializeField] public SwivelMode mode = SwivelMode.Rotate;
+    [SerializeField] public float interpolationSpeed = 2f;
+    [SerializeField] public Transform animatedTransform;
+    [SerializeField] public MotionState currentMotionState = MotionState.Idle;
+
+    [Header("Enemy Tracking Settings")]
+    [SerializeField] public float minTrackingRange = 5f;
+    [SerializeField] public float maxTrackingRange = 50f;
+    [SerializeField] internal GameObject nearestTarget;
+
+    [Header("Rotation Mode Settings")]
+    [SerializeField] public HingeAxis hingeAxes = HingeAxis.Y;
+    [SerializeField] public HingeDirection xHingeDirection = HingeDirection.Forward;
+    [SerializeField] public HingeDirection yHingeDirection = HingeDirection.Forward;
+    [SerializeField] public HingeDirection zHingeDirection = HingeDirection.Forward;
+    [SerializeField] public Vector3 maxRotationEuler = new(45f, 90f, 45f);
+    [SerializeField] public UnityEvent onRotationReachedTarget;
+    [SerializeField] public UnityEvent onRotationReturned;
+
+    [Header("Movement Mode Settings")]
+    [SerializeField] public Vector3 movementOffset = new(0f, 0f, 0f);
+    [SerializeField] public bool useWorldPosition;
+    [SerializeField] public UnityEvent onMovementReachedTarget;
+    [SerializeField] public UnityEvent onMovementReturned;
+
+    [Description("Piece container containing all children to be rotated or moved.")]
+    public Transform piecesContainer;
+
+    [Description("Shown until an object is connected to the swivel.")]
+    public Transform connectorContainer;
+
+    public Transform directionDebuggerArrow;
+
+    public bool CanUpdate = true;
+    private Rigidbody animatedRigidbody;
+
+    private bool hasReachedTarget;
+    private bool hasReturned;
+    private bool hasRotatedReturn;
+    private bool hasRotatedTarget;
+
+    private Vector3 hingeEndEuler;
+    private float hingeLerpProgress;
+    private Transform snappoint;
+
+    private Vector3 startLocalPosition;
+    private Quaternion startRotation;
+    private Vector3 targetMovementPosition;
+    private Quaternion targetRotation;
+
+    public MotionState CurrentMotionState => currentMotionState;
+    public HingeAxis HingeAxes => hingeAxes;
+    public Vector3 MaxEuler => maxRotationEuler;
+
+    public float InterpolationSpeed => interpolationSpeed;
+
+    public virtual void Awake()
+    {
+      snappoint = transform.Find(SNAPPOINT_TAG);
+
+      animatedTransform = transform.Find(AnimatedContainerName);
+      if (!animatedTransform)
+        throw new MissingComponentException("Missing animated container");
+
+      piecesContainer = animatedTransform.Find("piece_container");
+      directionDebuggerArrow = piecesContainer?.Find("direction_debugger_arrow");
+      connectorContainer = transform.Find("connector_container");
+
+      startRotation = animatedTransform.localRotation;
+      startLocalPosition = animatedTransform.localPosition;
+
+      animatedRigidbody = animatedTransform.GetComponent<Rigidbody>();
+      if (!animatedRigidbody)
+        animatedRigidbody = animatedTransform.gameObject.AddComponent<Rigidbody>();
+
+      animatedRigidbody.isKinematic = true;
+      animatedRigidbody.interpolation = RigidbodyInterpolation.Interpolate;
+    }
+
+    public virtual void Start()
+    {
+      SyncSnappoint();
+    }
+
+    public virtual void FixedUpdate()
+    {
+      if (!piecesContainer || !animatedRigidbody || !animatedTransform.parent) return;
+      if (!CanUpdate) return;
+
+      var didMove = false;
+
+      switch (mode)
+      {
+        case SwivelMode.Rotate:
+          targetRotation = CalculateRotationTarget();
+          var current = animatedTransform.localRotation;
+          var interpolated = Quaternion.Slerp(current, targetRotation, interpolationSpeed * RotationInterpolateSpeedMultiplier * Time.fixedDeltaTime);
+          animatedRigidbody.Move(transform.position, transform.rotation * interpolated);
+          didMove = true;
+
+          var angleToTarget = Quaternion.Angle(current, targetRotation);
+
+          if (currentMotionState == MotionState.GoingToTarget && !hasRotatedTarget && angleToTarget < angleThreshold)
+          {
+            hasRotatedTarget = true;
+            onRotationReachedTarget?.Invoke();
+          }
+          else if (currentMotionState == MotionState.Returning && !hasRotatedReturn && angleToTarget < angleThreshold)
+          {
+            hasRotatedReturn = true;
+            onRotationReturned?.Invoke();
+          }
+
+          if (currentMotionState == MotionState.Returning && hasRotatedTarget) hasRotatedReturn = false;
+          if (currentMotionState == MotionState.GoingToTarget && hasRotatedReturn) hasRotatedTarget = false;
+          break;
+
+        case SwivelMode.Move:
+          targetMovementPosition = currentMotionState == MotionState.Returning
+            ? startLocalPosition
+            : startLocalPosition + movementOffset;
+
+          var currentLocal = animatedTransform.localPosition;
+          var nextLocal = Vector3.Lerp(currentLocal, targetMovementPosition, interpolationSpeed * MovementInterpolationSpeedMultiplier * Time.fixedDeltaTime);
+          var worldTarget = transform.TransformPoint(nextLocal);
+          var moveWorldRot = transform.rotation;
+
+          animatedRigidbody.Move(worldTarget, moveWorldRot);
+          didMove = true;
+
+          var distanceToTarget = Vector3.Distance(currentLocal, targetMovementPosition);
+          if (currentMotionState == MotionState.GoingToTarget && !hasReachedTarget && distanceToTarget < positionThreshold)
+          {
+            hasReachedTarget = true;
+            onMovementReachedTarget?.Invoke();
+          }
+          else if (currentMotionState == MotionState.Returning && !hasReturned && distanceToTarget < positionThreshold)
+          {
+            hasReturned = true;
+            onMovementReturned?.Invoke();
+          }
+
+          if (currentMotionState == MotionState.Returning && hasReachedTarget) hasReturned = false;
+          if (currentMotionState == MotionState.GoingToTarget && hasReturned) hasReachedTarget = false;
+          break;
+
+        case SwivelMode.TargetEnemy:
+          targetRotation = CalculateTargetNearestEnemyRotation();
+          animatedRigidbody.Move(transform.position, transform.rotation * targetRotation);
+          didMove = true;
+          break;
+
+        case SwivelMode.TargetWind:
+          targetRotation = CalculateTargetWindDirectionRotation();
+          animatedRigidbody.Move(transform.position, transform.rotation * targetRotation);
+          didMove = true;
+          break;
+      }
+
+      if (!didMove)
+      {
+        var syncPos = animatedTransform.position;
+        var syncRot = transform.rotation;
+        if ((animatedRigidbody.position - syncPos).sqrMagnitude > 0.0001f ||
+            Quaternion.Angle(animatedRigidbody.rotation, syncRot) > 0.01f)
+        {
+          animatedRigidbody.Move(syncPos, syncRot);
+        }
+      }
+
+      SyncSnappoint();
+    }
+
+    public void SetTrackingRange(float min, float max)
+    {
+      MinTrackingRange = min;
+      MaxTrackingRange = max;
+    }
+
+    private void SyncSnappoint()
+    {
+      if (snappoint && connectorContainer)
+        snappoint.position = connectorContainer.position;
+    }
+
+    private Quaternion CalculateRotationTarget()
+    {
+      hingeEndEuler = Vector3.zero;
+
+      if ((hingeAxes & HingeAxis.X) != 0)
+        hingeEndEuler.x = (xHingeDirection == HingeDirection.Forward ? 1f : -1f) * maxRotationEuler.x;
+      if ((hingeAxes & HingeAxis.Y) != 0)
+        hingeEndEuler.y = (yHingeDirection == HingeDirection.Forward ? 1f : -1f) * maxRotationEuler.y;
+      if ((hingeAxes & HingeAxis.Z) != 0)
+        hingeEndEuler.z = (zHingeDirection == HingeDirection.Forward ? 1f : -1f) * maxRotationEuler.z;
+
+      var target = currentMotionState == MotionState.Returning ? 0f : 1f;
+      hingeLerpProgress = Mathf.MoveTowards(hingeLerpProgress, target, interpolationSpeed * Time.fixedDeltaTime);
+      return Quaternion.Euler(Vector3.Lerp(Vector3.zero, hingeEndEuler, hingeLerpProgress));
+    }
+
+    private Quaternion CalculateTargetNearestEnemyRotation()
+    {
+      if (!nearestTarget || !piecesContainer) return animatedTransform.localRotation;
+      var toTarget = nearestTarget.transform.position - piecesContainer.position;
+      if (toTarget.magnitude is < 5f or > 50f) return animatedTransform.localRotation;
+      var flat = new Vector3(toTarget.x, 0f, toTarget.z);
+      if (flat.sqrMagnitude < 0.001f) return animatedTransform.localRotation;
+      return Quaternion.LookRotation(flat.normalized, Vector3.up);
+    }
+
+    private static float NormalizeAngle(float angle)
+    {
+      angle %= 360f;
+      return angle > 180f ? angle - 360f : angle;
+    }
+
+    public virtual Quaternion CalculateTargetWindDirectionRotation()
+    {
+      // Ensure direction is valid
+      var flatWind = new Vector3(cachedWindDirection.x, 0f, cachedWindDirection.z).normalized;
+      if (flatWind.sqrMagnitude < 0.001f)
+        return animatedTransform.localRotation;
+
+      // Calculate target look rotation
+      var target = Quaternion.LookRotation(flatWind, Vector3.up);
+      var current = animatedTransform.localRotation;
+
+      // Lerp toward wind direction using movementLerpSpeed
+      var next = Quaternion.Slerp(current, target, interpolationSpeed * Time.fixedDeltaTime);
+
+      // Clamp Y (yaw) rotation
+      var euler = next.eulerAngles;
+      var clampedY = Mathf.Clamp(
+        NormalizeAngle(euler.y),
+        -maxRotationEuler.y,
+        maxRotationEuler.y
+      );
+
+      return Quaternion.Euler(0f, clampedY, 0f);
+    }
+
+    public void SetMode(SwivelMode newMode)
+    {
+      mode = newMode;
+    }
+    public void SetHingeAxes(HingeAxis axes)
+    {
+      hingeAxes = axes;
+    }
+    public void SetMaxEuler(Vector3 maxEuler)
+    {
+      maxRotationEuler = maxEuler;
+    }
+    public void SetMovementOffset(Vector3 offset)
+    {
+      movementOffset = offset;
+    }
+    public void SetMovementLerpSpeed(float speed)
+    {
+      interpolationSpeed = Mathf.Clamp(speed, 1f, 100f);
+    }
+    public void SetMotionState(MotionState state)
+    {
+      currentMotionState = state;
+      hasReachedTarget = false;
+      hasReturned = false;
+      hasRotatedTarget = false;
+      hasRotatedReturn = false;
+    }
+
+    #region ISwivelConfig
+
+    float ISwivelConfig.MovementLerpSpeed
+    {
+      get => interpolationSpeed;
+      set => interpolationSpeed = value;
+    }
+
+    public float MinTrackingRange
+    {
+      get => minTrackingRange;
+      set => minTrackingRange = value;
+    }
+
+    public float MaxTrackingRange
+    {
+      get => maxTrackingRange;
+      set => maxTrackingRange = value;
+    }
+
+    HingeAxis ISwivelConfig.HingeAxes
+    {
+      get => hingeAxes;
+      set => SetHingeAxes(value);
+    }
+
+    Vector3 ISwivelConfig.MaxEuler
+    {
+      get => maxRotationEuler;
+      set => SetMaxEuler(value);
+    }
+
+    public Vector3 MovementOffset
+    {
+      get => movementOffset;
+      set => SetMovementOffset(value);
+    }
+
+    public MotionState MotionState
+    {
+      get => currentMotionState;
+      set => SetMotionState(value);
+    }
+
+    public SwivelMode Mode
+    {
+      get => mode;
+      set => mode = value;
+    }
+
+    #endregion
+
+  }
+}

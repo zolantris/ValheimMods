@@ -1,11 +1,14 @@
 #region
 
+  using System.Collections.Generic;
   using System.Diagnostics.CodeAnalysis;
+  using System.Linq;
   using UnityEngine;
   using UnityEngine.Serialization;
   using ValheimVehicles.Components;
   using ValheimVehicles.Config;
   using ValheimVehicles.Enums;
+  using ValheimVehicles.Helpers;
   using ValheimVehicles.Interfaces;
   using ValheimVehicles.SharedScripts;
 
@@ -13,68 +16,73 @@
 
   namespace ValheimVehicles.Controllers;
 
-  public class VehicleConfigSyncComponent : PrefabConfigRPCSync<VehicleCustomConfig>, IVehicleSharedProperties
+  public class VehicleConfigSyncComponent : PrefabConfigRPCSync<VehicleCustomConfig, IVehicleConfig>, IVehicleSharedProperties
   {
-    private VehicleManager _vehicle;
-    private BoxCollider? FloatCollider => _vehicle.FloatCollider;
-    private RetryGuard _rpcRegisterRetry;
+    private VehicleManager? _vehicle;
+    private BoxCollider? FloatCollider => _vehicle != null ? _vehicle.FloatCollider : null;
     private VehicleFloatationMode _cachedFloatationMode = VehicleFloatationMode.Average;
     private float _cachedFloatationHeight = 0;
 
+    // public string Version
+    // {
+    //   get => VehicleConfigSync.Version;
+    //   set => VehicleConfigSync.Version = value;
+    // }
+    //
+    // public float TreadDistance
+    // {
+    //   get;
+    //   set;
+    // }
+    // public float TreadHeight
+    // {
+    //   get;
+    //   set;
+    // }
+    // public float TreadScaleX
+    // {
+    //   get;
+    //   set;
+    // }
+    // public bool HasCustomFloatationHeight
+    // {
+    //   get;
+    //   set;
+    // }
+    // public float CustomFloatationHeight
+    // {
+    //   get;
+    //   set;
+    // }
+    // public float CenterOfMassOffset
+    // {
+    //   get;
+    //   set;
+    // }
+
     public override void Awake()
     {
-      base.Awake();
-      _rpcRegisterRetry = new RetryGuard(this);
       _vehicle = GetComponent<VehicleManager>();
-    }
-
-    private void OnEnable()
-    {
-      RegisterRPCListeners();
-    }
-
-    private void OnDisable()
-    {
-      UnregisterRPCListeners();
+      base.Awake();
     }
 
   #region IRPCSync
 
+    /// <summary>
+    /// This adds a retryGuard.
+    /// </summary>
     public override void RegisterRPCListeners()
     {
-      if (!IsValid(out var netView))
+      if (!this.IsNetViewValid(out var netView))
       {
-        _rpcRegisterRetry.Retry(RegisterRPCListeners, 1);
+        retryGuard.Retry(RegisterRPCListeners, 1);
         return;
       }
 
       base.RegisterRPCListeners();
-      // retry guards. Sometimes things are not available on Awake().
-      if (hasRegisteredRPCListeners) return;
-      // ship piece bounds syncing
-      netView.Register(nameof(RPC_SyncBounds), RPC_SyncBounds);
-
-      // all config sync
-      CustomConfig.Load(netView.GetZDO());
+      rpcHandler?.Register(nameof(RPC_SyncBounds), RPC_SyncBounds);
 
       hasRegisteredRPCListeners = true;
-    }
-
-    public override void UnregisterRPCListeners()
-    {
-      if (!hasRegisteredRPCListeners) return;
-      if (!IsValid(out var netView))
-      {
-        hasRegisteredRPCListeners = false;
-        return;
-      }
-
-      base.UnregisterRPCListeners();
-
-      // ship piece bounds syncing
-      netView.Unregister(nameof(RPC_SyncBounds));
-
-      hasRegisteredRPCListeners = false;
     }
 
   #endregion
@@ -88,7 +96,7 @@
     public void SendSyncFloatationMode(bool isCustom, float relativeHeight)
     {
       // do nothing for land-vehicles.
-      if (_vehicle.IsLandVehicle) return;
+      if (!_vehicle || _vehicle.IsLandVehicle) return;
 
       // set config immediately, but it might not be updated if the ranges are out of bounds
       CustomConfig.HasCustomFloatationHeight = isCustom;
@@ -97,21 +105,50 @@
       SendPrefabConfig();
     }
 
-    // bounds sync
+    public void SendRPCToAllClients(List<long> clients, string methodName, bool skipLocal = false)
+    {
+      if (!this.IsNetViewValid(out var netView)) return;
+
+      // TODO ensure that GetZDO owner is the same as Player.GetPlayerID otherwise it could be GetOwner but that is the ownerId of the player's current netview.
+      var currentPlayer = Player.m_localPlayer.GetPlayerID();
+      var nvOwner = netView.m_zdo.GetOwner();
+      var hasSentSyncToOwner = false;
+
+
+      clients.ForEach(clientId =>
+      {
+        if (!skipLocal && clientId == nvOwner)
+        {
+          hasSentSyncToOwner = true;
+        }
+        if (currentPlayer == clientId)
+        {
+          SyncVehicleBounds();
+          return;
+        }
+
+        rpcHandler?.InvokeRPC(clientId, nameof(RPC_SyncBounds));
+      });
+
+      if (!hasSentSyncToOwner)
+      {
+        Invoke(nameof(methodName), 0.5f);
+      }
+    }
 
     /// <summary>
+    /// bounds sync for all players on the boat.
     /// Todo integrate this and confirm it works. This will help avoid any one player from updating too quickly.
     ///
     /// Also should prevent desyncs if we can synchronize it.
     /// </summary>
     public void SendSyncBounds()
     {
-      if (!IsValid(out var netView) || OnboardController == null) return;
+      if (!this.IsNetViewValid(out var netView)) return;
+      if (!this || OnboardController == null) return;
 
-      OnboardController.m_localPlayers.ForEach(x =>
-      {
-        netView.InvokeRPC(x.GetPlayerID(), nameof(RPC_SyncBounds));
-      });
+      var playerIds = OnboardController.m_localPlayers.Where(x => x != null).Select(x => x.GetPlayerID()).ToList();
+      SendRPCToAllClients(playerIds, nameof(RPC_SyncBounds), false);
     }
 
     /// <summary>
@@ -137,32 +174,38 @@
     {
       get;
       set;
-    }
+    } = null!;
     public VehicleMovementController? MovementController
     {
       get;
       set;
-    }
+    } = null!;
     public VehicleConfigSyncComponent? VehicleConfigSync
     {
       get;
       set;
-    }
+    } = null!;
     public VehicleOnboardController? OnboardController
     {
       get;
       set;
-    }
+    } = null!;
     public VehicleWheelController? WheelController
     {
       get;
       set;
-    }
-    public VehicleManager? Manager
+    } = null!;
+    public VehicleManager Manager
     {
       get;
       set;
-    }
+    } = null!;
+
+    public bool IsControllerValid => Manager.IsControllerValid;
+
+    public bool IsInitialized => Manager.IsInitialized;
+
+    public bool IsDestroying => Manager.IsDestroying;
 
   #endregion
 

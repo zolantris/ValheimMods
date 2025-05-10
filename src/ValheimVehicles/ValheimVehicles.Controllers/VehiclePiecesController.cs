@@ -44,6 +44,7 @@
 
     protected override void TrySetPieceToParent(ZNetView netView)
     {
+      // if (netView == null || PrefabNames.IsVehicle(netView.name)) return;
       // Classic vehicle-specific logic
       netView.transform.SetParent(_host.GetPiecesContainer(), false);
     }
@@ -84,6 +85,8 @@
     // public static Dictionary<ZDOID, ZNetView> temporaryMaterials = new();
 
     public static List<IMonoUpdater> MonoUpdaterInstances = [];
+    private static string _ComponentName => PrefabNames.VehiclePiecesContainer;
+    public string ComponentName => _ComponentName;
 
     private static bool _allowPendingPiecesToActivate = true;
 
@@ -711,7 +714,7 @@
 
       // Remove non-kinematic rigidbodies if not a ram
       if (!RamPrefabs.IsRam(netView.name) &&
-          !netView.name.Contains(PrefabNames.ShipAnchorWood))
+          !netView.name.Contains(PrefabNames.ShipAnchorWood) && !PrefabNames.IsVehicle(name) && !netView.name.StartsWith(PrefabNames.SwivelPrefabName))
       {
         var rbs = netView.GetComponentsInChildren<Rigidbody>();
         foreach (var rbsItem in rbs)
@@ -881,7 +884,6 @@
     /// <returns></returns>
     public Transform GetPiecesContainer()
     {
-      // return transform.Find("pieces");
       return transform;
     }
 
@@ -1091,7 +1093,8 @@
           continue;
         }
         // we must update the position as these pieces/characters can move while on Vehicles.
-        tempPiece.m_zdo.Set(VehicleZdoVars.MBPositionHash, tempPiece.transform.localPosition);
+        // todo we may wan to not update any values for temp pieces as this removeall process could be inaccurate and set a location way outside expected range.
+        // tempPiece.m_zdo.Set(VehicleZdoVars.MBPositionHash, tempPiece.transform.localPosition);
         tempPiece.transform.SetParent(null);
       }
     }
@@ -1233,13 +1236,13 @@
         meshRenderer.sharedMaterial.enableInstancing = true;
       }
     }
+
+    /// <summary>
+    /// Todo add a Coroutine to evalutate this. If there is an error in FixedUpdate set this flag to false. Then do a full evaluation similar to MovementController
+    /// </summary>
+    /// <returns></returns>
     public bool IsInvalid()
     {
-      // if (isActiveAndEnabled && !_isInvalid)
-      // {
-      //   return false;
-      // }
-
       var isInvalid = !isActiveAndEnabled || m_localRigidbody == null ||
                       Manager == null ||
                       Manager.m_nview == null ||
@@ -1278,9 +1281,10 @@
     /// </summary>
     public void ForceUpdateAllPiecePositions(Vector3 vehiclePosition)
     {
+      if (!Manager.IsInitialized) return;
+      if (Manager.isCreative) return;
+
       Physics.SyncTransforms();
-      var currentPieceControllerSector =
-        ZoneSystem.GetZone(vehiclePosition);
 
       if (!isActiveAndEnabled || m_nview == null || m_nview.GetZDO() == null) return;
       // use center of rigidbody to set position.
@@ -1520,7 +1524,7 @@
     public static void AddInactivePiece(int id, ZNetView netView,
       VehiclePiecesController? instance, bool skipActivation = false)
     {
-      if (!NetworkValidation.IsCurrentGameHealthy())
+      if (!ValheimExtensions.IsCurrentGameHealthy())
       {
         return;
       }
@@ -2380,9 +2384,11 @@
 
       var isSwivelParent = SwivelComponentIntegration.IsSwivelParent(zdo);
 
+      var character = netView.GetComponent<Character>();
+      var shouldSkipAddingProperties = !isSwivelParent && character != null && character.IsPlayer();
+
       // Guard for cases where we should not add a tempPiece parent or properties but want to run the rest of the logic.
-      // todo maybe adding an additional object set such as swivel_pieces would be cleaner.
-      if (!isSwivelParent)
+      if (!shouldSkipAddingProperties)
       {
         AddTempPieceProperties(netView, this);
         TrySetPieceToParent(netView, zdo);
@@ -2419,6 +2425,7 @@
     public void TrySetPieceToParent(ZNetView? netView)
     {
       if (IsInvalid()) return;
+      if (netView) return;
       TrySetPieceToParent(netView, netView!.GetZDO());
     }
 
@@ -2429,6 +2436,7 @@
     public void TrySetPieceToParent(ZNetView? netView, ZDO? zdo)
     {
       if (IsInvalid()) return;
+      if (netView == null || PrefabNames.IsVehicle(netView.name)) return;
 
       if (RamPrefabs.IsRam(netView!.name))
       {
@@ -2476,11 +2484,29 @@
       }
     }
 
+    public void AddCustomPiece(GameObject prefab, bool isNew = false)
+    {
+      if (prefab.name.StartsWith(PrefabNames.CustomWaterFloatation))
+      {
+        AddCustomFloatationPrefab(prefab);
+        return;
+      }
+    }
+
+    public void AddCustomPiece(ZNetView prefab, bool isNew = false)
+    {
+      if (prefab.name.StartsWith(PrefabNames.CustomWaterFloatation))
+      {
+        AddCustomFloatationPrefab(prefab.gameObject);
+        return;
+      }
+    }
+
     /// <summary>
     /// For custom config cubes that are deleted near instantly.
     /// </summary>
     /// <param name="prefab"></param>
-    public void AddCustomFloatationPrefab(GameObject prefab)
+    private void AddCustomFloatationPrefab(GameObject prefab)
     {
       if (IsInvalid()) return;
       if (!prefab.name.StartsWith(PrefabNames.CustomWaterFloatation)) return;
@@ -3369,13 +3395,19 @@
     public VehicleMovementController? MovementController { get; set; }
     public VehicleConfigSyncComponent? VehicleConfigSync { get; set; }
     public VehicleOnboardController? OnboardController { get; set; }
-    public VehicleManager? Manager { get; set; }
+    public VehicleManager Manager { get; set; } = null!;
 
     public ZNetView? m_nview
     {
       get;
       set;
     }
+
+    public bool IsControllerValid => Manager.IsControllerValid;
+
+    public bool IsInitialized => Manager.IsInitialized;
+
+    public bool IsDestroying => Manager.IsDestroying;
 
   #endregion
 

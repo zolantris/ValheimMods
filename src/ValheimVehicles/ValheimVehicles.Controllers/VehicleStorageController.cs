@@ -9,9 +9,11 @@
   using Newtonsoft.Json;
   using TMPro;
   using UnityEngine;
+  using UnityEngine.Serialization;
   using ValheimVehicles.Compat;
   using ValheimVehicles.Components;
   using ValheimVehicles.ConsoleCommands;
+  using ValheimVehicles.Enums;
   using ValheimVehicles.UI;
   using ValheimVehicles.Prefabs;
   using ValheimVehicles.SharedScripts;
@@ -31,47 +33,6 @@
     static VehicleStorageController()
     {
       EnsureStorageFolderExists();
-    }
-
-    // This will handle all enums and fallback to ALL if there is an unknown value.
-    [JsonConverter(typeof(SafeVehicleTypeEnumConverter))]
-    public enum VehicleTypeEnum
-    {
-      Water,
-      Sub,
-      Land,
-      All,
-      Air
-    }
-
-    public class SafeVehicleTypeEnumConverter : JsonConverter<VehicleTypeEnum>
-    {
-      public override void WriteJson(JsonWriter writer, VehicleTypeEnum value, JsonSerializer serializer)
-      {
-        writer.WriteValue(value.ToString());
-      }
-
-      public override VehicleTypeEnum ReadJson(JsonReader reader, Type objectType, VehicleTypeEnum existingValue, bool hasExistingValue, JsonSerializer serializer)
-      {
-        if (reader.TokenType == JsonToken.String)
-        {
-          var enumText = reader.Value?.ToString();
-          if (!string.IsNullOrEmpty(enumText))
-          {
-            // Manual mapping without TryParse to avoid recursion
-            foreach (var name in Enum.GetNames(typeof(VehicleTypeEnum)))
-            {
-              if (string.Equals(name, enumText, StringComparison.OrdinalIgnoreCase))
-              {
-                return (VehicleTypeEnum)Enum.Parse(typeof(VehicleTypeEnum), name);
-              }
-            }
-          }
-        }
-
-        // fallback to All
-        return VehicleTypeEnum.All;
-      }
     }
 
     private static void EnsureStorageFolderExists()
@@ -95,7 +56,7 @@
     [Serializable]
     public struct VehicleSettings
     {
-      public VehicleTypeEnum VehicleType;
+      public VehicleVariant vehicleVariant;
     }
 
 
@@ -128,9 +89,9 @@
       SelectedVehicle = vehicleName;
     }
 
-    public static VehicleTypeEnum GetVehicleType(VehicleManager vehicle)
+    public static VehicleVariant GetVehicleType(VehicleManager vehicle)
     {
-      return vehicle.IsLandVehicle ? VehicleTypeEnum.Land : VehicleTypeEnum.All;
+      return vehicle.vehicleVariant;
     }
 
     public static void SaveClosestVehicle()
@@ -168,7 +129,7 @@
         Pieces = pieces,
         Settings = new VehicleSettings
         {
-          VehicleType = vehicleType
+          vehicleVariant = vehicleType
         }
       };
 
@@ -382,15 +343,15 @@
 
     public static GameObject GetVehicleTypeFromVehicleData(StoredVehicleData vehicleData)
     {
-      switch (vehicleData.Settings.VehicleType)
+      switch (vehicleData.Settings.vehicleVariant)
       {
-        case VehicleTypeEnum.Land:
+        case VehicleVariant.Land:
           return PrefabManager.Instance.GetPrefab(PrefabNames.LandVehicle);
-        case VehicleTypeEnum.Air:
+        case VehicleVariant.Air:
           return PrefabManager.Instance.GetPrefab(PrefabNames.AirVehicle);
-        case VehicleTypeEnum.Water:
-        case VehicleTypeEnum.Sub:
-        case VehicleTypeEnum.All:
+        case VehicleVariant.Water:
+        case VehicleVariant.Sub:
+        case VehicleVariant.All:
         default:
           return PrefabManager.Instance.GetPrefab(PrefabNames.WaterVehicleShip);
       }
@@ -443,7 +404,7 @@
           var vehicle = JsonConvert.DeserializeObject<StoredVehicleData>(json);
           if (vehicle != null)
           {
-            // Vehicle name should match the file name. This will prevent problems.
+            // The vehicle name should match the file name. This will prevent problems.
             var fileTextName = file.Replace(SavedVehiclesFolderPath, "").Replace("\\", "").Replace(".json", "");
 
             // always use the filename as vehicle name.

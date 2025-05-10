@@ -13,9 +13,9 @@ public class SwivelPrefab : RegisterPrefab<SwivelPrefab>
   {
     PrefabRegistryHelpers.PieceDataDictionary.Add(PrefabNames.SwivelPrefabName, new PrefabRegistryHelpers.PieceData
     {
-      Name = "$valheim_vehicles_swivel",
-      Description = "$valheim_vehicles_swivel_desc",
-      Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames.SwivelIcon)
+      Name = "$valheim_vehicles_mechanism_swivel",
+      Description = "$valheim_vehicles_mechanism_swivel_desc",
+      Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames.MechanismSwivel)
     });
   }
 
@@ -24,7 +24,7 @@ public class SwivelPrefab : RegisterPrefab<SwivelPrefab>
   /// </summary>
   private void RegisterSwivelComponent()
   {
-    var prefab = PrefabManager.Instance.CreateClonedPrefab(PrefabNames.SwivelPrefabName, LoadValheimVehicleAssets.Swivel);
+    var prefab = PrefabManager.Instance.CreateClonedPrefab(PrefabNames.SwivelPrefabName, LoadValheimVehicleAssets.Mechanism_Swivel);
     PrefabRegistryHelpers.AddNetViewWithPersistence(prefab);
 
     prefab.AddComponent<SwivelComponentIntegration>();

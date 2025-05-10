@@ -6,7 +6,6 @@ using System.IO;
 using System.Linq;
 using BepInEx.Logging;
 using ComfyGizmo;
-using Components;
 using HarmonyLib;
 using Jotunn;
 using Jotunn.Entities;
@@ -620,7 +619,7 @@ public class VehicleCommands : ConsoleCommand
   public static void ToggleVehicleCommandsHud()
   {
     if (!CanRunCheatCommand()) return;
-
+    if (Player.m_localPlayer == null) return;
     // must do this otherwise the commands panel will not cycle debug value if we need to enable it.
     VehicleGui.ToggleCommandsPanelState(true);
 
@@ -633,27 +632,44 @@ public class VehicleCommands : ConsoleCommand
     }
   }
 
+  public static void BoatNotDetectedMessage()
+  {
+    LoggerProvider.LogWarning(
+      $"boat not detected within 50f, get nearer to the boat and look directly at the boat");
+  }
+
   public static VehicleManager? GetNearestVehicleShip(Vector3 position)
   {
+    if (!GameCamera.instance || !GameCamera.instance) return null;
     if (!Physics.Raycast(
           GameCamera.instance.transform.position,
           GameCamera.instance.transform.forward,
           out var hitinfo, 50f,
           LayerMask.GetMask("piece") + LayerMask.GetMask("CustomVehicleLayer")))
     {
-      Logger.LogWarning(
-        $"boat not detected within 50f, get nearer to the boat and look directly at the boat");
+      BoatNotDetectedMessage();
+      return null;
+    }
+
+    if (!hitinfo.collider)
+    {
+      BoatNotDetectedMessage();
       return null;
     }
 
     var vehiclePiecesController =
       hitinfo.collider.GetComponentInParent<VehiclePiecesController>();
 
-    if (!(bool)vehiclePiecesController.Manager) return null;
+    if (!vehiclePiecesController) return null;
 
-    var vehicleShipController =
+    var vehicleManager =
       vehiclePiecesController.Manager;
-    return vehicleShipController;
+    if (!vehiclePiecesController.Manager)
+    {
+      BoatNotDetectedMessage();
+      return null;
+    }
+    return vehicleManager;
   }
 
   public static string GetPlayerPathInfo()

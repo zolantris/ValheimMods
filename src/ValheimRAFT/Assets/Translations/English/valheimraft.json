@@ -114,8 +114,6 @@
   "valheim_vehicles_rudder_advanced": "Ship Rudder (Advanced) 1x1",
   "valheim_vehicles_rudder_advanced_double": "Ship Rudder (Advanced)x2",
   "valheim_vehicles_rudder_advanced_desc": "Advanced Ship Rudder, the technology of steering has advanced. You now can steer better. Allows for turning ships of large mass, the direction a rudder faces will determine the boat sailing direction",
-  "valheim_vehicles_toggle_switch": "Toggle Switch",
-  "valheim_vehicles_toggle_switch_desc": "Toggle Switch used for toggling vehicle features and showing additional menus.",
   "valheim_vehicles_ram_stake": "Ram Stake",
   "valheim_vehicles_ram_stake_desc": "Used to puncture hulls, enemies, and terrain. Less area damage, but can smash rocks harder within a small area. Cannot damage trees.",
   "valheim_vehicles_ram_blade": "Ram Blade",
@@ -168,6 +166,14 @@
   "valheim_vehicles_custom_mast_desc": "A custom mast meant to simplify vehicle masts. These do not contain sails, but they can be equipped with a custom sail easily.",
   "valheim_vehicles_shared_keys_owner": "Owner",
   "valheim_vehicles_shared_keys_hold": "Hold",
-  "valheim_vehicles_swivel_edit": "to Edit",
-  "valheim_vehicles_swivel_connected": "Connected"
+  "valheim_vehicles_mechanism_toggle_switch": "Toggle Switch",
+  "valheim_vehicles_mechanism_toggle_switch_desc": "Toggle Switch used for toggling vehicle features and showing additional menus. Place it near a swivel to confirm the swivel.",
+  "valheim_vehicles_mechanism_swivel": "Swivel",
+  "valheim_vehicles_mechanism_swivel_desc": "A mechanism that allows for rotating and moving items on a vehicle or anywhere independently.",
+  "valheim_vehicles_mechanism_swivel_edit": "to Edit",
+  "valheim_vehicles_mechanism_swivel_connected": "Connected",
+  "valheim_vehicles_mechanism_electric_pylon": "Electric Pylon",
+  "valheim_vehicles_mechanism_electric_pylon_desc": "Allows for sharing power within a specific radius. Collects unstable electricity.",
+  "valheim_vehicles_mechanism_engine_coal": "Coal Engine",
+  "valheim_vehicles_mechanism_engine_coal_desc": "Engines supply LandVehicles with power an. Without an engine fuel players will have to haul their vehicle."
 }

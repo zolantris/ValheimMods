@@ -1,7 +1,7 @@
 ﻿#region
 
-  using TMPro;
-  using UnityEngine;
+using TMPro;
+using UnityEngine;
 
 #endregion
 
@@ -11,7 +11,7 @@
   {
     public static partial class SwivelUIHelpers
     {
-      public static void AddSectionLabel(Transform parent, SwivelUISharedStyles viewStyles, string text)
+      public static GameObject AddSectionLabel(Transform parent, SwivelUISharedStyles viewStyles, string text)
       {
         var labelGO = new GameObject("Label", typeof(RectTransform));
         labelGO.transform.SetParent(parent, false);
@@ -21,6 +21,7 @@
         label.fontSize = viewStyles.FontSizeSectionLabel;
         label.color = Color.white;
         label.alignment = TextAlignmentOptions.Left;
+        return labelGO;
       }
     }
   }

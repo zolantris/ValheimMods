@@ -197,29 +197,31 @@ public class ShipHullPrefab : IRegisterPrefab
   /// <summary>
   /// Experimental, will likely not be used in production without a feature flag flip
   /// </summary>
+  /// TODO if this is kept it needs to update the retreived piece data with IsInverse = true and inline the prefab registry.
+  /// 
   /// <param name="hullMaterial"></param>
   /// <param name="directionVariant"></param>
   public void RegisterInverseHullRibCorner(string hullMaterial,
     PrefabNames.DirectionVariant directionVariant)
   {
-    var prefabName = PrefabNames.GetHullRibCornerName(hullMaterial);
-    var prefabInverseName = $"{prefabName}_inverse";
-    // must get the opposite IE if left get right for the flipped mesh to align
-    var prefabAsset =
-      LoadValheimVehicleAssets.GetShipHullRibCorner(hullMaterial);
-    var prefabInverse =
-      PrefabManager.Instance.CreateClonedPrefab(
-        prefabInverseName, prefabAsset);
-
-    // must flip this mesh upside down and then rotate 180 on X.
-    prefabInverse.transform.FindDeepChild("mesh").rotation =
-      Quaternion.Euler(180f, 180f, 0);
-
-    // does not need prefabInverseName
-    // todo might need to add a inverse description
-    SetupHullPrefab(prefabInverse, prefabName,
-      hullMaterial, 1, prefabInverse.transform.FindDeepChild("mesh"),
-      ["mesh"], true);
+    // var prefabName = PrefabNames.GetHullRibCornerName(hullMaterial);
+    // var prefabInverseName = $"{prefabName}_inverse";
+    // // must get the opposite IE if left get right for the flipped mesh to align
+    // var prefabAsset =
+    //   LoadValheimVehicleAssets.GetShipHullRibCorner(hullMaterial);
+    // var prefabInverse =
+    //   PrefabManager.Instance.CreateClonedPrefab(
+    //     prefabInverseName, prefabAsset);
+    //
+    // // must flip this mesh upside down and then rotate 180 on X.
+    // prefabInverse.transform.FindDeepChild("mesh").rotation =
+    //   Quaternion.Euler(180f, 180f, 0);
+    //
+    // // does not need prefabInverseName
+    // // todo might need to add a inverse description
+    // SetupHullPrefab(prefabInverse, prefabName,
+    //   hullMaterial, 1, prefabInverse.transform.FindDeepChild("mesh"),
+    //   ["mesh"]);
   }
 
   public void RegisterHullRibCorner(
@@ -291,8 +293,7 @@ public class ShipHullPrefab : IRegisterPrefab
     string prefabName,
     string hullMaterial,
     int materialCount,
-    Transform? hoistParent = null, string[]? hoistFilters = null,
-    bool isInverse = false)
+    Transform? hoistParent = null, string[]? hoistFilters = null)
   {
     try
     {
@@ -310,7 +311,7 @@ public class ShipHullPrefab : IRegisterPrefab
       PrefabRegistryHelpers.AddNewOldPiecesToWearNTear(prefab, wnt);
 
       PrefabRegistryHelpers.AddNetViewWithPersistence(prefab);
-      PrefabRegistryHelpers.AddPieceForPrefab(prefabName, prefab, isInverse);
+      PrefabRegistryHelpers.AddPieceForPrefab(prefabName, prefab);
 
       PieceManager.Instance.AddPiece(new CustomPiece(prefab, false,
         new PieceConfig

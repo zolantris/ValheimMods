@@ -10,6 +10,8 @@ namespace ValheimVehicles.SharedScripts
   public class SwivelIntegrationTester : MonoBehaviour
   {
     public SwivelComponent swivelComponent;
+
+    [SerializeField] public Transform windDirection;
     // Start is called before the first frame update
     private void Start()
     {
@@ -17,6 +19,14 @@ namespace ValheimVehicles.SharedScripts
       if (swivelComponent && SwivelUIPanelComponent.Instance)
       {
         SwivelUIPanelComponent.Instance.BindTo(swivelComponent);
+      }
+    }
+
+    public void FixedUpdate()
+    {
+      if (windDirection)
+      {
+        SwivelComponent.cachedWindDirection = windDirection.forward;
       }
     }
   }

@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 1286641425
+CRC: 3466309437
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 6ce8770ea0b6de9b485533a2e925f373
+    Hash: 5d1705f5895b918a28918e2c5fa43704
   TypeTreeHash:
     serializedVersion: 2
-    Hash: cbca681f9021208bbcc6d59371405a02
+    Hash: c1905afc80290793c1dfd117ca21791a
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 6ce8770ea0b6de9b485533a2e925f373
+    Hash: 5d1705f5895b918a28918e2c5fa43704
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -158,6 +158,7 @@ Assets:
 - Assets/ValheimVehicles/Prefabs/GUI/Slider.prefab
 - Assets/ValheimVehicles/Prefabs/hull_slab_iron_2x2.prefab
 - Assets/ValheimVehicles/Prefabs/shared_hull_wall_wood_2x2_new.prefab
+- Assets/ValheimVehicles/Prefabs/mechanism_switch.prefab
 - Assets/ValheimVehicles/Prefabs/hull_corner_floor_left_wood.prefab
 - Assets/ValheimVehicles/Prefabs/shared_nautilus.prefab
 - Assets/ValheimVehicles/Prefabs/anchor_full_chain.prefab
@@ -168,10 +169,12 @@ Assets:
 - Assets/ValheimVehicles/Prefabs/shared_tank_tread.prefab
 - Assets/ValheimVehicles/Prefabs/vehicle_ship_pieces.prefab
 - Assets/ValheimVehicles/Prefabs/nautilus_hatch.prefab
+- Assets/ValheimVehicles/Prefabs/mechanism_engine_coal.prefab
 - Assets/ValheimVehicles/Prefabs/nautilus.prefab
 - Assets/ValheimVehicles/Prefabs/rudder_advanced_single_iron.prefab
 - Assets/ValheimVehicles/Prefabs/GUI/ship_compass.prefab
 - Assets/ValheimVehicles/Prefabs/shared_hull_rib_prow_2x2.prefab
+- Assets/ValheimVehicles/Prefabs/mechanism_electric_pylon.prefab
 - Assets/ValheimVehicles/Prefabs/hull_rib_iron.prefab
 - Assets/ValheimVehicles/Prefabs/steering_wheel.prefab
 - Assets/ValheimVehicles/Prefabs/wheel_single_2.prefab
@@ -229,7 +232,7 @@ Assets:
 - Assets/ValheimVehicles/vehicle_icons.spriteatlasv2
 - Assets/ValheimVehicles/Prefabs/boarding_ramp.prefab
 - Assets/ValheimVehicles/Material/bronze_nautilus_metal.mat
-- Assets/ValheimVehicles/Prefabs/swivel.prefab
+- Assets/ValheimVehicles/Prefabs/mechanism_swivel.prefab
 - Assets/ValheimVehicles/Prefabs/rope_anchor.prefab
 - Assets/ValheimVehicles/Material/wood_alt_piece_bg_valheim_wood.mat
 - Assets/ValheimVehicles/Prefabs/GUI/hud_anchor.prefab
@@ -282,6 +285,7 @@ Assets:
 - Assets/ValheimVehicles/Prefabs/shared_rudder_advanced_double.prefab
 - Assets/ValheimVehicles/Prefabs/hull_corner_floor_left_iron.prefab
 - Assets/ValheimVehicles/Prefabs/rudder_advanced_single_wood.prefab
+- Assets/ValheimVehicles/ExternalAssets/LightningBolt/lightning_bolt_material_animated_additive.mat
 - Assets/ValheimVehicles/Prefabs/propeller.prefab
 - Assets/ValheimVehicles/Prefabs/ram_blade_right.prefab
 - Assets/ValheimVehicles/Prefabs/shared_hull_rib_iron.prefab
@@ -313,13 +317,12 @@ Assets:
 - Assets/ValheimVehicles/Prefabs/shared_ram_blade.prefab
 - Assets/ValheimVehicles/Prefabs/bottom_stand.prefab
 - Assets/ValheimVehicles/Material/double_sided_transparent.mat
-- Assets/ValheimVehicles/Prefabs/mechanical_switch.prefab
 - Assets/ValheimVehicles/Material/wood_piece_valheim.mat
 - Assets/ValheimVehicles/Prefabs/hull_wall_window_square_wood_4x4.prefab
 - Assets/ValheimVehicles/Material/wood_alt_piece_bg_rib_4x4.mat
 - Assets/ValheimVehicles/Prefabs/anchor_base.prefab
-- Assets/ValheimVehicles/Prefabs/ram_nose.prefab
 - Assets/ValheimVehicles/Prefabs/dirt_floor.prefab
+- Assets/ValheimVehicles/Prefabs/ram_nose.prefab
 - Assets/ValheimVehicles/Prefabs/hull_corner_floor_right_iron.prefab
 - Assets/ValheimVehicles/Prefabs/side_ram.prefab
 - Assets/ValheimVehicles/Material/iron_metal_no_tiling.mat

@@ -1,8 +1,9 @@
 #region
 
   using System;
+  using System.Collections;
   using System.Collections.Generic;
-  using Jotunn.Extensions;
+  using System.Diagnostics.CodeAnalysis;
   using Jotunn.Managers;
   using Registry;
   using UnityEngine;
@@ -22,22 +23,6 @@
 
   namespace ValheimVehicles.Components;
 
-  public static class VehicleShipHelpers
-  {
-    public static GameObject GetOrFindObj(GameObject returnObj,
-      GameObject searchObj,
-      string objectName)
-    {
-      if ((bool)returnObj) return returnObj;
-
-      var gameObjTransform = searchObj.transform.FindDeepChild(objectName);
-      if (!gameObjTransform) return returnObj;
-
-      returnObj = gameObjTransform.gameObject;
-      return returnObj;
-    }
-  }
-
   /// <summary>
   /// The main initializer for all vehicle components and a way to access all properties of the vehicle.
   /// </summary>
@@ -55,17 +40,20 @@
     // The rudder force multiplier applied to the ship speed
     private float _rudderForce = 1f;
 
-    public VehicleCustomConfig VehicleCustomConfig { get; set; }
+    public VehicleCustomConfig VehicleCustomConfig { get; set; } = new();
 
     public GameObject GhostContainer()
     {
-      return VehicleShipHelpers.GetOrFindObj(_ghostContainer, gameObject,
+      return TransformUtils.GetOrFindObj(_ghostContainer, gameObject,
         PrefabNames.GhostContainer);
     }
 
+
+    public VehicleVariant vehicleVariant = VehicleVariant.All;
+
     public GameObject PiecesContainer()
     {
-      return VehicleShipHelpers.GetOrFindObj(_piecesContainer,
+      return TransformUtils.GetOrFindObj(_piecesContainer,
         transform.parent.gameObject,
         PrefabNames.VehiclePiecesContainer);
     }
@@ -76,8 +64,8 @@
     private GameObject _ghostContainer;
     private ImpactEffect _impactEffect;
     public float TargetHeight => MovementController?.TargetHeight ?? 0f;
-    public bool IsLandVehicleFromPrefab = false;
-    public bool IsLandVehicle { get; set; }
+    private bool m_isLandVehicle = false;
+    public bool IsLandVehicle => m_isLandVehicle;
     public bool isCreative;
 
     private BoxCollider m_floatCollider;
@@ -96,6 +84,7 @@
     }
 
     public bool HasVehicleDebugger = false;
+    private Coroutine? _validateVehicleCoroutineInstance;
 
     public void SetCreativeMode(bool val)
     {
@@ -109,14 +98,12 @@
     public GameObject? ShipEffectsObj;
     public VehicleShipEffects? ShipEffects;
 
-    public VehiclePiecesController? PiecesController { get; set; }
+  #region IVehicleSharedProperties
 
-    public ZNetView m_nview { get; set; }
-
-    public Transform vehicleMovementTransform;
-    public Transform vehicleMovementCollidersTransform;
-
-    public VehicleDebugHelpers? VehicleDebugHelpersInstance { get; private set; }
+    // setters are added here for VehicleManager only
+    public bool IsInitialized { get; private set; }
+    public bool IsDestroying { get; private set; }
+    public bool IsControllerValid { get; private set; }
 
     public VehicleMovementController? MovementController { get; set; }
     public VehicleConfigSyncComponent VehicleConfigSync
@@ -136,6 +123,17 @@
         // do nothing
       }
     }
+
+  #endregion
+
+    public VehiclePiecesController? PiecesController { get; set; }
+
+    public ZNetView m_nview { get; set; }
+
+    public Transform vehicleMovementTransform;
+    public Transform vehicleMovementCollidersTransform;
+
+    public VehicleDebugHelpers? VehicleDebugHelpersInstance { get; private set; }
 
     public VehicleManager Instance => this;
 
@@ -174,6 +172,23 @@
     public static Transform GetVehicleMovementTransform(Transform prefabRoot)
     {
       return prefabRoot.Find("vehicle_movement");
+    }
+
+    public void UpdateIsControllerValid()
+    {
+      var isValid = isActiveAndEnabled && !IsDestroying &&
+                    IsInitialized && !IsDestroying &&
+                    PiecesController != null &&
+                    MovementController != null &&
+                    OnboardController != null &&
+                    VehicleConfigSync != null;
+
+      if (IsLandVehicle && WheelController == null)
+      {
+        isValid = false;
+      }
+
+      IsControllerValid = isValid;
     }
 
     public static Transform GetVehicleMovementDamageColliders(
@@ -249,8 +264,20 @@
       }
     }
 
+    private void OnDisable()
+    {
+      if (_validateVehicleCoroutineInstance != null)
+      {
+        StopCoroutine(_validateVehicleCoroutineInstance);
+        _validateVehicleCoroutineInstance = null;
+      }
+      UpdateIsControllerValid();
+      IsControllerValid = false;
+    }
+
     public void OnDestroy()
     {
+      IsDestroying = true;
       UnloadAndDestroyPieceContainer();
 
       if (PersistentZdoId != 0 && VehicleInstances.ContainsKey(PersistentZdoId))
@@ -278,6 +305,10 @@
       m_nview = GetComponent<ZNetView>();
       GetPersistentID();
 
+      // todo figure out why when setting this value on the prefab directly it is inaccurate.
+      // has to set itself. Otherwise it is mismatched unless saved as a ZDO value.
+      SetVehicleVariant(vehicleVariant);
+
       VehicleConfigSync = gameObject.AddComponent<VehicleConfigSyncComponent>();
       // this flag can be updated manually via VehicleCommands.
       HasVehicleDebugger = VehicleDebugConfig.VehicleDebugMenuEnabled.Value;
@@ -285,7 +316,6 @@
       vehicleMovementCollidersTransform =
         GetVehicleMovementCollidersTransform(transform);
       vehicleMovementTransform = GetVehicleMovementTransform(transform);
-
 
       if (PersistentZdoId == 0)
         Logger.LogWarning("PersistewnZdoId, did not get a zdo from the NetView");
@@ -304,27 +334,15 @@
       vehicleMovementTransform = GetVehicleMovementTransform(transform);
     }
 
-    public void InitializeAllComponents()
+    private bool ShouldRunInitialization()
     {
-      var shouldRun =
-        MovementController == null || PiecesController == null ||
-        OnboardController == null;
-      if (!shouldRun) return;
+      return !IsDestroying && MovementController == null || PiecesController == null ||
+             OnboardController == null || VehicleConfigSync == null;
+    }
 
-      InitializeVehiclePiecesController();
-      InitializeMovementController();
-      InitializeOnboardController();
-      InitializeShipEffects();
-      InitializeWheelController();
-
-      if (PiecesController == null || MovementController == null || OnboardController == null)
-      {
-        LoggerProvider.LogError($"Component Controllers should not be null but got null controllers \nPiecesController: {PiecesController} \nMovementController: {MovementController} \nOnboardController: {OnboardController}");
-
-        return;
-      }
-
-      var allControllers = new List<IVehicleSharedProperties>
+    private bool TryGetControllersToBind([NotNullWhen(true)] out List<IVehicleSharedProperties>? controllersToBind)
+    {
+      var allControllers = new List<IVehicleSharedProperties?>
       {
         PiecesController,
         MovementController,
@@ -332,11 +350,63 @@
         VehicleConfigSync
       };
 
-      VehicleSharedPropertiesUtils.BindAllControllers(this, allControllers);
+      controllersToBind = null;
 
-      // Re-attaches all the components to the initialized components (if they are valid).
-      RebindAllComponents();
+      var validControllers = new List<IVehicleSharedProperties>();
+      foreach (var controller in allControllers)
+      {
+        if (controller == null)
+        {
+          return false;
+        }
+        validControllers.Add(controller);
+      }
 
+      controllersToBind = validControllers;
+
+      return true;
+    }
+
+    private List<IVehicleSharedProperties> GetControllersToBind()
+    {
+      var allControllers = new List<IVehicleSharedProperties>
+      {
+        PiecesController,
+        MovementController,
+        OnboardController,
+        VehicleConfigSync
+      };
+      return allControllers;
+    }
+
+    public bool InitializeData()
+    {
+      if (!this.IsNetViewValid()) return false;
+      VehicleCustomConfig.Load(m_nview.GetZDO(), VehicleCustomConfig);
+      return true;
+    }
+
+    public void InitializeAllComponents()
+    {
+      if (!this.IsNetViewValid()) return;
+      // must have latest data loaded into the Vehicle otherwise config can be inaccurate.
+      if (!InitializeData()) return;
+
+      InitializeVehiclePiecesController();
+      InitializeMovementController();
+      InitializeOnboardController();
+      InitializeShipEffects();
+      InitializeWheelController();
+
+      if (!TryGetControllersToBind(out var controllersToBind))
+      {
+        LoggerProvider.LogError("Error while Initializing components. This likely means ValheimVehicles Mod is broken for this Vehicle Type.");
+        return;
+      }
+
+      BindAllControllersAndData(controllersToBind);
+
+      if (!IsInitialized) return;
 
       // For starting the vehicle pieces.
       if (PiecesController != null)
@@ -349,6 +419,21 @@
         Logger.LogError(
           "InitializeAllComponents somehow failed, PiecesController does not exist");
       }
+    }
+
+    public void BindAllControllersAndData(List<IVehicleSharedProperties> controllersToBind)
+    {
+      // todo get vehicle variant from config before running this so init is not wrong.
+      // does not affect any prefabs with hardcoded variants.
+      if (!VehicleSharedPropertiesUtils.BindAllControllers(this, controllersToBind, vehicleVariant))
+      {
+        IsInitialized = false;
+        return;
+      }
+
+      RebindAllComponents();
+      IsDestroying = false;
+      IsInitialized = true;
     }
 
     /// <summary>
@@ -434,7 +519,7 @@
       WheelController.maxTreadLength = PhysicsConfig.VehicleLandMaxTreadLength.Value;
       WheelController.maxTreadWidth = PhysicsConfig.VehicleLandMaxTreadWidth.Value;
       WheelController.forwardDirection = MovementController.ShipDirection;
-      WheelController.wheelBottomOffset = PhysicsConfig.VehicleLandTreadOffset.Value;
+      WheelController.wheelBottomOffset = PhysicsConfig.VehicleLandTreadVerticalOffset.Value;
     }
 
     /// <summary>
@@ -462,28 +547,47 @@
     {
       if (HasVehicleDebugger && PiecesController) AddOrRemoveVehicleDebugger();
 
+      // Required for vehicle to update well.
+      SetVehicleVariant(vehicleVariant);
+
       UpdateShipSounds(this);
       UpdateShipEffects();
     }
 
+    public void SetVehicleVariant(VehicleVariant variant)
+    {
+      vehicleVariant = variant;
+      m_isLandVehicle = variant == VehicleVariant.Land;
+    }
+
+    private IEnumerator ValidateVehicleCoroutineRoutine()
+    {
+      while (isActiveAndEnabled)
+      {
+        if (ShouldRunInitialization())
+        {
+          InitializeAllComponents();
+          yield return null;
+        }
+
+        UpdateIsControllerValid();
+        yield return new WaitForSeconds(0.1f);
+        yield return new WaitForFixedUpdate();
+      }
+
+      IsControllerValid = false;
+    }
+
     public void OnEnable()
     {
-      if (!m_nview) m_nview = GetComponent<ZNetView>();
+      // OnEnable should always reset this value.
+      IsDestroying = false;
+      IsInitialized = false;
 
-      var isValidZdo = m_nview != null && m_nview.GetZDO() != null;
-
-      if (isValidZdo && !IsLandVehicleFromPrefab)
+      if (!this.IsNetViewValid(out var netView))
       {
-        var zdo = m_nview.GetZDO();
-        if (zdo != null)
-          IsLandVehicle = IsLandVehicleFromPrefab ||
-                          zdo.GetBool(VehicleZdoVars.IsLandVehicle);
-        else
-          IsLandVehicle = IsLandVehicleFromPrefab;
-      }
-      else
-      {
-        IsLandVehicle = IsLandVehicleFromPrefab;
+        m_nview = GetComponent<ZNetView>();
+        netView = m_nview;
       }
 
       GetPersistentID();
@@ -493,10 +597,15 @@
 
       PhysicUtils.IgnoreAllCollisionsBetweenChildren(transform);
 
-      if (isValidZdo) InitializeAllComponents();
+      if (netView)
+      {
+        InitializeAllComponents();
+      }
 
       if (HasVehicleDebugger && PiecesController != null)
         AddOrRemoveVehicleDebugger();
+
+      _validateVehicleCoroutineInstance = StartCoroutine(ValidateVehicleCoroutineRoutine());
     }
 
     public void UpdateShipZdoPosition()

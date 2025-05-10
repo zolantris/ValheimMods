@@ -1,5 +1,6 @@
+using ValheimVehicles.SharedScripts.Validation;
 namespace ValheimVehicles.Interfaces;
 
-public interface IVehicleSharedProperties : IVehicleControllers, INetView
+public interface IVehicleSharedProperties : IVehicleControllers, IControllerValidator, INetView
 {
 }

@@ -7,6 +7,7 @@ using JetBrains.Annotations;
 using UnityEditor;
 using UnityEditor.U2D;
 using UnityEngine;
+using UnityEngine.Serialization;
 using UnityEngine.U2D;
 using Object = UnityEngine.Object;
 
@@ -18,61 +19,37 @@ using Object = UnityEngine.Object;
 /// </summary>
 public class PrefabThumbnailGenerator : EditorWindow
 {
+
+  private const int GuiWidth = 150;
   private static string outputDirPath = "Assets/ValheimVehicles/GeneratedIcons/"; // output dir
 
-  private static readonly List<string> excludedNames = new()
-    { "shared_", "steering_wheel", "rope_ladder", "dirt_floor", "dirtfloor_icon", "rope_anchor", "keel", "rudder_basic", "custom_sail" };
   private static GameObject sceneLight;
+
+  [FormerlySerializedAs("excludedContainsPrefabNames")] public List<string> excludeContainsPrefabNames = new()
+    { "shared_", "steering_wheel", "rope_ladder", "dirt_floor", "dirtfloor_icon", "rope_anchor", "keel", "rudder_basic", "custom_sail", "mechanism_swivel", "_old", "_test_variant", "tank_tread_icon", "vehicle_hammer" };
+  public List<string> excludeExactPrefabNames = new()
+    { "shared_", "steering_wheel", "rope_ladder", "dirt_floor", "dirtfloor_icon", "rope_anchor", "keel", "rudder_basic", "custom_sail", "mechanism_swivel", "_old", "_test_variant", "tank_tread_icon", "vehicle_hammer" };
+
   public Object searchDirectory;
   public Object targetSpriteAtlas;
   public string searchDirectoryPath = "Assets/ValheimVehicles/Prefabs/";
   public string targetSpriteAtlasPath = "Assets/ValheimVehicles/vehicle_icons.spriteatlasv2";
+  private readonly List<GameObject> objList = new();
+
+  private readonly List<string> spritePaths = new();
   private int height = 100; // image height
 
   private bool isRunning;
 
   private Vector3 lastPosition = Vector3.zero;
-  private List<GameObject> objList = new();
   private Object outputDirObj;
 
   private Camera previewCamera;
-
-  private List<string> spritePaths = new();
   private int width = 100; // image width
 
-  private GUIContent CaptureRunButtonText => new(isRunning ? "Generating...please wait" : "Generated Sprite Icons");
+  private GUIContent CaptureRunButtonText => new(isRunning ? "Generating icons...please wait" : "Generate New Sprite Icons");
   private void OnGUI()
   {
-    GUILayout.BeginHorizontal();
-    GUILayout.Label("Sprite Atlas To Pack", GUILayout.Width(110));
-    targetSpriteAtlas = EditorGUILayout.ObjectField(targetSpriteAtlas, typeof(SpriteAtlas), false);
-    GUILayout.EndHorizontal();
-    EditorGUILayout.Space();
-
-    GUILayout.BeginHorizontal();
-    GUILayout.Label("Search Directory : ", GUILayout.Width(110));
-    searchDirectory = EditorGUILayout.ObjectField(searchDirectory, typeof(Object), true);
-    GUILayout.EndHorizontal();
-    EditorGUILayout.Space();
-
-    GUILayout.BeginHorizontal();
-    GUILayout.Label("Save directory : ", GUILayout.Width(110));
-    outputDirPath = EditorGUILayout.TextField(outputDirPath);
-    GUILayout.EndHorizontal();
-    EditorGUILayout.Space();
-
-    GUILayout.BeginHorizontal();
-    GUILayout.Label("Width : ", GUILayout.Width(110));
-    width = EditorGUILayout.IntField(width);
-    GUILayout.EndHorizontal();
-    EditorGUILayout.Space();
-
-    GUILayout.BeginHorizontal();
-    GUILayout.Label("Height : ", GUILayout.Width(110));
-    height = EditorGUILayout.IntField(height);
-    GUILayout.EndHorizontal();
-    EditorGUILayout.Space();
-
     var runCaptureGuiContent = CaptureRunButtonText;
     if (GUILayout.Button(runCaptureGuiContent))
     {
@@ -88,6 +65,56 @@ public class PrefabThumbnailGenerator : EditorWindow
 
       isRunning = false;
     }
+    
+    GUILayout.BeginHorizontal();
+    var dynamicStatus = isRunning ? "Running" : "Idle";
+    var status =$"Status: {dynamicStatus}";
+    GUILayout.Label(status, GUILayout.Width(GuiWidth));
+    GUILayout.EndHorizontal();
+    EditorGUILayout.Space();
+    
+    GUILayout.BeginHorizontal();
+    GUILayout.Label("Sprite Atlas To Pack", GUILayout.Width(GuiWidth));
+    targetSpriteAtlas = EditorGUILayout.ObjectField(targetSpriteAtlas, typeof(SpriteAtlas), false);
+    GUILayout.EndHorizontal();
+    EditorGUILayout.Space();
+
+    GUILayout.BeginHorizontal();
+    GUILayout.Label("Search Directory : ", GUILayout.Width(GuiWidth));
+    searchDirectory = EditorGUILayout.ObjectField(searchDirectory, typeof(Object), true);
+    GUILayout.EndHorizontal();
+    EditorGUILayout.Space();
+
+    GUILayout.BeginHorizontal();
+    GUILayout.Label("Save directory : ", GUILayout.Width(GuiWidth));
+    outputDirPath = EditorGUILayout.TextField(outputDirPath);
+    GUILayout.EndHorizontal();
+    EditorGUILayout.Space();
+
+    GUILayout.BeginHorizontal();
+    GUILayout.Label("Width : ", GUILayout.Width(GuiWidth));
+    width = EditorGUILayout.IntField(width);
+    GUILayout.EndHorizontal();
+    EditorGUILayout.Space();
+
+    GUILayout.BeginHorizontal();
+    GUILayout.Label("Height : ", GUILayout.Width(GuiWidth));
+    height = EditorGUILayout.IntField(height);
+    GUILayout.EndHorizontal();
+    EditorGUILayout.Space();
+    
+    
+    GUILayout.BeginHorizontal();
+    GUILayout.Label("ExcludeContains PrefabNames", GUILayout.Width(GuiWidth));
+    GUILayout.TextArea(string.Join( ",\n", excludeContainsPrefabNames));
+    GUILayout.EndHorizontal();
+    EditorGUILayout.Space();
+    
+    GUILayout.BeginHorizontal();
+    GUILayout.Label("ExcludeExact PrefabNames", GUILayout.Width(GuiWidth));
+    GUILayout.TextArea(string.Join( ",\n", excludeExactPrefabNames));
+    GUILayout.EndHorizontal();
+    EditorGUILayout.Space();
   }
 
   [MenuItem("Window/PrefabThumbnailGenerator")]
@@ -131,7 +158,6 @@ public class PrefabThumbnailGenerator : EditorWindow
     var tempObjList = GetFilesFromSearchPath();
     DeleteAllFilesInOutputFolder();
     // DeleteCurrentSpritesInTargetAtlas();
-    Debug.Log($"TEMP OBJ LIST, {tempObjList.Count}");
 
     // for (int i = 0; i < tempObjList.Count; i++)
     // {
@@ -146,8 +172,10 @@ public class PrefabThumbnailGenerator : EditorWindow
     {
       Debug.Log("OBJ :  " + obj.name);
 
+      // todo this all could be a regexp.
+      
       var shouldExit = false;
-      foreach (var excludedName in excludedNames)
+      foreach (var excludedName in excludeContainsPrefabNames)
       {
         if (obj.name.Contains(excludedName))
         {
@@ -155,6 +183,16 @@ public class PrefabThumbnailGenerator : EditorWindow
           break;
         }
       }
+      
+      foreach (var excludedName in excludeExactPrefabNames)
+      {
+        if (obj.name == excludedName)
+        {
+          shouldExit = true;
+          break;
+        }
+      }
+      
       if (shouldExit) continue;
       try
       {

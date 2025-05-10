@@ -55,20 +55,20 @@ namespace ValheimVehicles.SharedScripts
     {
       "Combined", "Combined_Mesh"
     };
-
-
-    internal BasePiecesController MBasePiecesController;
-    internal GameObject combinedMeshParent;
-    internal Dictionary<Material, GameObject> _currentCombinedMeshObjects = new(); // Store previous combined meshes
     internal List<MeshCollider> _currentCombinedMeshColliders = new(); // Store previous combined meshes
+    internal Dictionary<Material, GameObject> _currentCombinedMeshObjects = new(); // Store previous combined meshes
     public Dictionary<GameObject, List<Material>> _relatedGameObjectToMaterialsMap = new();
     internal Dictionary<Material, List<GameObject>> _relatedMaterialToGameObjectsMap = new(); // Store previous combined meshes
     public Dictionary<GameObject, List<Material>> CombinedMeshMaterialsObjMap = new();
+    internal GameObject combinedMeshParent;
     private List<GameObject> currentMeshObjects = new();
     public Dictionary<GameObject, List<MeshRenderer>> hiddenMeshRenderersObjMap = new();
 
     public Action IgnoreAllVehicleCollidersCallback = () => {};
-    private HashSet<GameObject> wntSubscribers = new();
+
+
+    internal BasePiecesController MBasePiecesController;
+    private readonly HashSet<GameObject> wntSubscribers = new();
 
     public void Awake()
     {
@@ -186,7 +186,7 @@ namespace ValheimVehicles.SharedScripts
 
       return validRenderers;
     }
-    
+
     private bool IsChildOfWNT(Transform child, [CanBeNull] IWearNTearStub wnt)
     {
       // Ensure WNT exists before checking
@@ -198,7 +198,7 @@ namespace ValheimVehicles.SharedScripts
              wnt.m_broken && child.IsChildOf(wnt.m_broken.transform) ||
              wnt.m_new && child.IsChildOf(wnt.m_new.transform);
     }
-    
+
     public void RestoreGeneratedMeshes(GameObject obj)
     {
       if (hiddenMeshRenderersObjMap.TryGetValue(obj, out var renderers))
@@ -275,7 +275,7 @@ namespace ValheimVehicles.SharedScripts
         if (!prefabItem) continue; // Skip inactive
         if (prefabExclusionRegex.IsMatch(prefabItem.gameObject.name)) continue; // 🔹 Skip excluded objects
 
-        var wnt = ValheimExtensions.GetWearNTear(prefabItem);
+        var wnt = prefabItem.GetWearNTear();
         List<MeshRenderer> selectedRenderers = new();
 
         if (wnt != null)

@@ -26,7 +26,7 @@ public class PhysicsConfig : BepInExBaseConfig<PhysicsConfig>
 
   // all vehicles
   public static ConfigEntry<float> VehicleCenterOfMassOffset = null!;
-  public static ConfigEntry<float> VehicleLandTreadOffset = null!;
+  public static ConfigEntry<float> VehicleLandTreadVerticalOffset = null!;
 
   // flight
   public static ConfigEntry<float> flightAngularDamping = null!;
@@ -299,12 +299,12 @@ public class PhysicsConfig : BepInExBaseConfig<PhysicsConfig>
     landDrag = config.Bind(SectionKey, "landDrag", 0.05f);
     landAngularDrag = config.Bind(SectionKey, "landAngularDrag", 1.2f);
 
-    VehicleLandTreadOffset = config.Bind(SectionKey,
-      "LandVehicle TreadOffset",
+    VehicleLandTreadVerticalOffset = config.Bind(SectionKey,
+      "LandVehicle Tread Vertical Offset",
       -1f,
       ConfigHelpers.CreateConfigDescription(
-        "Wheel offset. Allowing for raising the treads higher. May require increasing suspension distance so the treads spawn then push the vehicle upwards. Negative lowers the wheels. Positive raises the treads", true, false, new AcceptableValueRange<float>(-10f, 10f)));
-    VehicleLandTreadOffset.SettingChanged += (sender, args) => VehicleManager.UpdateAllWheelControllers();
+        "Wheel offset for Y position. Allowing for raising the treads higher. May require increasing suspension distance so the treads spawn then push the vehicle upwards. Negative lowers the wheels. Positive raises the treads. This value will not override custom config vehicles.", true, false, new AcceptableValueRange<float>(-10f, 10f)));
+    VehicleLandTreadVerticalOffset.SettingChanged += (sender, args) => VehicleManager.UpdateAllWheelControllers();
 
     // guards for max values
     MaxLinearVelocity = config.Bind(SectionKey, $"MaxVehicleLinearVelocity_{VersionedConfigUtil.GetDynamicMinorVersionKey()}", 100f,

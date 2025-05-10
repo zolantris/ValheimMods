@@ -25,7 +25,12 @@ public static class VehicleZdoVars
   public static string CustomMeshPrimitiveType =
     "ValheimVehicles_CustomMeshPrimitiveType";
 
-  public static string IsLandVehicle = "ValheimVehicles_IsLandVehicle";
+  /// <summary>
+  ///  for vehicles that could be both submarines or watervehicles or airships this should be a required key to force flags.
+  /// </summary>
+  ///
+  /// TODO make custom vehicles which are flagged under the "All" variant.
+  public static string CustomVehicleVariant = "ValheimVehicles_CustomVehicleVariant";
 
   public static readonly int MBCultivatableParentIdHash =
     "MBCultivatableParentId".GetStableHashCode();

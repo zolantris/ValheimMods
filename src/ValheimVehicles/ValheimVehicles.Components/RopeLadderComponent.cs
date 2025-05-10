@@ -5,489 +5,490 @@
   using UnityEngine.EventSystems;
   using ValheimVehicles.Config;
   using ValheimVehicles.Controllers;
+  using ValheimVehicles.Interfaces;
   using ValheimVehicles.Prefabs;
 
 #endregion
 
-namespace ValheimVehicles.Components;
+  namespace ValheimVehicles.Components;
 
-public class RopeLadderComponent : MonoBehaviour, Interactable, Hoverable
-{
-  public GameObject m_stepObject;
-
-  public LineRenderer m_ropeLine;
-
-  public BoxCollider m_collider;
-
-  public Transform m_attachPoint;
-  public Transform m_exitPoint;
-  
-  public VehiclePiecesController vehiclePiecesController;
-
-  public float m_stepDistance = 0.5f;
-
-  public float m_ladderHeight = 1f;
-
-  public float baseLadderMoveSpeed = 2f;
-  public float ladderRunSpeedMult => PrefabConfig.RopeLadderRunMultiplier.Value;
-
-
-  public int m_stepOffsetUp = 1;
-
-  public int m_stepOffsetDown = 0;
-
-  private List<GameObject> m_steps = [];
-
-  private bool m_ghostObject;
-
-  private LineRenderer m_ghostAttachPoint;
-
-  private float m_lastHitWaterDistance;
-
-  private static readonly int INVALID_STEP = int.MaxValue;
-
-  private static int rayMask = 0;
-
-  internal float m_currentMoveDir;
-
-  internal int m_currentLeft;
-
-  internal int m_currentRight;
-
-  internal float m_leftMoveTime;
-
-  internal float m_rightMoveTime;
-
-  internal int m_targetLeft;
-
-  internal int m_targetRight;
-
-  internal bool m_lastMovedLeft;
-
-  public bool isRunning = false;
-  public bool hasAutoClimb = false;
-
-  private MoveDirection _autoClimbDir = MoveDirection.None;
-
-  public string GetHoverName()
+  public class RopeLadderComponent : MonoBehaviour, IAnimatorHandler, Interactable, Hoverable
   {
-    return "";
-  }
+    public GameObject m_stepObject;
 
-  public static string WithYellowBold(string val)
-  {
-    return $"[<color=yellow><b>{val}</b></color>]";
-  }
+    public LineRenderer m_ropeLine;
 
-  public string GetHoverText()
-  {
-    var localizationString =
-      $"{WithYellowBold("$KEY_Use")} $mb_rope_ladder_use";
+    public BoxCollider m_collider;
 
-    List<string> modifiers =
-      [isRunning ? "$valheim_vehicles_fast" : "$valheim_vehicles_slow"];
-    if (hasAutoClimb) modifiers.Add("$valheim_vehicles_auto");
+    public Transform m_attachPoint;
+    public Transform m_exitPoint;
 
-    var modifiersString =
-      WithYellowBold(string.Join(", ", modifiers.ToArray()));
-    localizationString += $" {modifiersString}";
+    public VehiclePiecesController vehiclePiecesController;
 
-    if (PrefabConfig.RopeLadderHints.Value)
+    public float m_stepDistance = 0.5f;
+
+    public float m_ladderHeight = 1f;
+
+    public float baseLadderMoveSpeed = 2f;
+    public float ladderRunSpeedMult => PrefabConfig.RopeLadderRunMultiplier.Value;
+
+
+    public int m_stepOffsetUp = 1;
+
+    public int m_stepOffsetDown = 0;
+
+    private List<GameObject> m_steps = [];
+
+    private bool m_ghostObject;
+
+    private LineRenderer m_ghostAttachPoint;
+
+    private float m_lastHitWaterDistance;
+
+    private static readonly int INVALID_STEP = int.MaxValue;
+
+    private static int rayMask = 0;
+
+    internal float m_currentMoveDir;
+
+    internal int m_currentLeft;
+
+    internal int m_currentRight;
+
+    internal float m_leftMoveTime;
+
+    internal float m_rightMoveTime;
+
+    internal int m_targetLeft;
+
+    internal int m_targetRight;
+
+    internal bool m_lastMovedLeft;
+
+    public bool isRunning = false;
+    public bool hasAutoClimb = false;
+
+    private MoveDirection _autoClimbDir = MoveDirection.None;
+
+    public string GetHoverName()
     {
-      localizationString +=
-        $"\n{WithYellowBold("$KEY_AutoRun")} $mb_rope_ladder_use $valheim_vehicles_auto";
-      localizationString +=
-        $"\n{WithYellowBold("$KEY_Run")} $mb_rope_ladder_use $valheim_vehicles_fast";
+      return "";
     }
 
-    return Localization.instance.Localize(
-      localizationString);
-  }
-
-  public bool Interact(Humanoid user, bool hold, bool alt)
-  {
-    ClimbLadder(Player.m_localPlayer);
-    return true;
-  }
-
-  public bool UseItem(Humanoid user, ItemDrop.ItemData item)
-  {
-    return false;
-  }
-
-  private void Awake()
-  {
-    m_stepObject = transform.Find("step").gameObject;
-    m_ropeLine = GetComponent<LineRenderer>();
-    m_exitPoint = transform.Find("exitpoint");
-    m_collider = GetComponentInChildren<BoxCollider>();
-    m_ghostObject = ZNetView.m_forceDisableInit;
-    m_attachPoint = transform.Find("attachpoint");
-    InvokeRepeating(nameof(UpdateSteps), 0.1f, m_ghostObject ? 0.1f : 5f);
-  }
-
-  public static float LadderExitOffsetMult = 0.75f;
-
-  private Vector3 GetExitOffset()
-  {
-    return m_exitPoint.position + PrefabConfig.RopeLadderEjectionOffset.Value;
-  }
-
-  private void ClimbLadder(Player player)
-  {
-    if (!(bool)player) return;
-    if (player.IsAttached())
+    public static string WithYellowBold(string val)
     {
-      player.AttachStop();
-      return;
+      return $"[<color=yellow><b>{val}</b></color>]";
     }
 
-    m_currentLeft = INVALID_STEP;
-    m_currentRight = INVALID_STEP;
-    m_targetLeft = INVALID_STEP;
-    m_targetRight = INVALID_STEP;
-    if (m_attachPoint.parent == null) return;
-    
-    m_attachPoint.localPosition = new Vector3(m_attachPoint.localPosition.x,
-      ClampOffset(m_attachPoint.parent
-        .InverseTransformPoint(player.transform.position).y),
-      m_attachPoint.localPosition.z);
-    player.AttachStart(m_attachPoint, null, true, false,
-      false,
-      "Movement", Vector3.zero);
-  }
+    public string GetHoverText()
+    {
+      var localizationString =
+        $"{WithYellowBold("$KEY_Use")} $mb_rope_ladder_use";
 
-  private bool IsFlyingAndNotAnchored(Vector3 hitPoint)
-  {
-    if (vehiclePiecesController == null || vehiclePiecesController.MovementController == null)
-    {
-      return false;
+      List<string> modifiers =
+        [isRunning ? "$valheim_vehicles_fast" : "$valheim_vehicles_slow"];
+      if (hasAutoClimb) modifiers.Add("$valheim_vehicles_auto");
+
+      var modifiersString =
+        WithYellowBold(string.Join(", ", modifiers.ToArray()));
+      localizationString += $" {modifiersString}";
+
+      if (PrefabConfig.RopeLadderHints.Value)
+      {
+        localizationString +=
+          $"\n{WithYellowBold("$KEY_AutoRun")} $mb_rope_ladder_use $valheim_vehicles_auto";
+        localizationString +=
+          $"\n{WithYellowBold("$KEY_Run")} $mb_rope_ladder_use $valheim_vehicles_fast";
+      }
+
+      return Localization.instance.Localize(
+        localizationString);
     }
-    
-    var movementController = vehiclePiecesController.MovementController;
-    
-    var targetHeight = movementController
-      .TargetHeight;
-    if (targetHeight >
-        0f &&
-        !movementController.isAnchored &&
-        hitPoint.y < vehiclePiecesController.GetColliderBottom())
+
+    public bool Interact(Humanoid user, bool hold, bool alt)
     {
+      ClimbLadder(Player.m_localPlayer);
       return true;
     }
 
-    return false;
-  }
-
-  private void UpdateSteps()
-  {
-    if (!m_stepObject) return;
-
-    if (Mathf.Abs(transform.rotation.eulerAngles.x) > 40 ||
-        Mathf.Abs(transform.rotation.eulerAngles.z) > 40)
-      return;
-
-    if (rayMask == 0)
-      rayMask = LayerMask.GetMask("Default", "static_solid", "Default_small",
-        "piece", "terrain");
-
-    m_ladderHeight = 200f;
-    var hitpoint = new Vector3(m_attachPoint.transform.position.x, 0f,
-      m_attachPoint.transform.position.z);
-    var raystart = new Vector3(m_attachPoint.transform.position.x,
-      transform.position.y,
-      m_attachPoint.transform.position.z);
-    var hits = Physics.RaycastAll(
-      new Ray(raystart, -m_attachPoint.transform.up),
-      m_ladderHeight, rayMask);
-    for (var i = 0; i < hits.Length; i++)
+    public bool UseItem(Humanoid user, ItemDrop.ItemData item)
     {
-      var hit = hits[i];
-      if (!(hit.collider == m_collider) &&
-          !hit.collider.GetComponentInParent<Character>() &&
-          hit.distance < m_ladderHeight)
+      return false;
+    }
+
+    private void Awake()
+    {
+      m_stepObject = transform.Find("step").gameObject;
+      m_ropeLine = GetComponent<LineRenderer>();
+      m_exitPoint = transform.Find("exitpoint");
+      m_collider = GetComponentInChildren<BoxCollider>();
+      m_ghostObject = ZNetView.m_forceDisableInit;
+      m_attachPoint = transform.Find("attachpoint");
+      InvokeRepeating(nameof(UpdateSteps), 0.1f, m_ghostObject ? 0.1f : 5f);
+    }
+
+    public static float LadderExitOffsetMult = 0.75f;
+
+    private Vector3 GetExitOffset()
+    {
+      return m_exitPoint.position + PrefabConfig.RopeLadderEjectionOffset.Value;
+    }
+
+    private void ClimbLadder(Player player)
+    {
+      if (!(bool)player) return;
+      if (player.IsAttached())
       {
-        m_ladderHeight = hit.distance;
-        hitpoint = hit.point;
+        player.AttachStop();
+        return;
       }
+
+      m_currentLeft = INVALID_STEP;
+      m_currentRight = INVALID_STEP;
+      m_targetLeft = INVALID_STEP;
+      m_targetRight = INVALID_STEP;
+      if (m_attachPoint.parent == null) return;
+
+      m_attachPoint.localPosition = new Vector3(m_attachPoint.localPosition.x,
+        ClampOffset(m_attachPoint.parent
+          .InverseTransformPoint(player.transform.position).y),
+        m_attachPoint.localPosition.z);
+      player.AttachStart(m_attachPoint, null, true, false,
+        false,
+        "Movement", Vector3.zero);
     }
 
-    if (IsFlyingAndNotAnchored(hitpoint))
+    private bool IsFlyingAndNotAnchored(Vector3 hitPoint)
     {
-      if (vehiclePiecesController)
-        hitpoint.y = vehiclePiecesController.GetColliderBottom();
-
-      m_ladderHeight = (hitpoint - raystart).magnitude;
-      m_lastHitWaterDistance = 0f;
-    }
-    else if (hitpoint.y < ZoneSystem.instance.m_waterLevel)
-    {
-      if (WaterConfig.UnderwaterAccessMode.Value ==
-          WaterConfig.UnderwaterAccessModeType.Disabled)
-        hitpoint.y = ZoneSystem.instance.m_waterLevel;
-
-      var waterdist = (hitpoint - raystart).magnitude + 2f;
-      if (waterdist < m_ladderHeight)
+      if (vehiclePiecesController == null || vehiclePiecesController.MovementController == null)
       {
-        if (m_lastHitWaterDistance != 0f) waterdist = m_lastHitWaterDistance;
-
-        m_ladderHeight = waterdist;
-        m_lastHitWaterDistance = waterdist;
+        return false;
       }
+
+      var movementController = vehiclePiecesController.MovementController;
+
+      var targetHeight = movementController
+        .TargetHeight;
+      if (targetHeight >
+          0f &&
+          !movementController.isAnchored &&
+          hitPoint.y < vehiclePiecesController.GetColliderBottom())
+      {
+        return true;
+      }
+
+      return false;
     }
 
-    if (m_ghostObject)
+    private void UpdateSteps()
     {
-      if (!m_ghostAttachPoint)
+      if (!m_stepObject) return;
+
+      if (Mathf.Abs(transform.rotation.eulerAngles.x) > 40 ||
+          Mathf.Abs(transform.rotation.eulerAngles.z) > 40)
+        return;
+
+      if (rayMask == 0)
+        rayMask = LayerMask.GetMask("Default", "static_solid", "Default_small",
+          "piece", "terrain");
+
+      m_ladderHeight = 200f;
+      var hitpoint = new Vector3(m_attachPoint.transform.position.x, 0f,
+        m_attachPoint.transform.position.z);
+      var raystart = new Vector3(m_attachPoint.transform.position.x,
+        transform.position.y,
+        m_attachPoint.transform.position.z);
+      var hits = Physics.RaycastAll(
+        new Ray(raystart, -m_attachPoint.transform.up),
+        m_ladderHeight, rayMask);
+      for (var i = 0; i < hits.Length; i++)
       {
-        var go2 = new GameObject();
-        go2.transform.SetParent(m_attachPoint);
-        m_ghostAttachPoint = go2.AddComponent<LineRenderer>();
-        var material = new Material(LoadValheimAssets.CustomPieceShader)
+        var hit = hits[i];
+        if (!(hit.collider == m_collider) &&
+            !hit.collider.GetComponentInParent<Character>() &&
+            hit.distance < m_ladderHeight)
         {
-          color = Color.green
-        };
-        m_ghostAttachPoint.material = material;
-        m_ghostAttachPoint.widthMultiplier = 0.1f;
+          m_ladderHeight = hit.distance;
+          hitpoint = hit.point;
+        }
       }
 
-      m_ghostAttachPoint.SetPosition(0, m_attachPoint.transform.position);
-      m_ghostAttachPoint.SetPosition(1,
-        m_attachPoint.transform.position +
-        -m_attachPoint.transform.up * m_ladderHeight);
+      if (IsFlyingAndNotAnchored(hitpoint))
+      {
+        if (vehiclePiecesController)
+          hitpoint.y = vehiclePiecesController.GetColliderBottom();
+
+        m_ladderHeight = (hitpoint - raystart).magnitude;
+        m_lastHitWaterDistance = 0f;
+      }
+      else if (hitpoint.y < ZoneSystem.instance.m_waterLevel)
+      {
+        if (WaterConfig.UnderwaterAccessMode.Value ==
+            WaterConfig.UnderwaterAccessModeType.Disabled)
+          hitpoint.y = ZoneSystem.instance.m_waterLevel;
+
+        var waterdist = (hitpoint - raystart).magnitude + 2f;
+        if (waterdist < m_ladderHeight)
+        {
+          if (m_lastHitWaterDistance != 0f) waterdist = m_lastHitWaterDistance;
+
+          m_ladderHeight = waterdist;
+          m_lastHitWaterDistance = waterdist;
+        }
+      }
+
+      if (m_ghostObject)
+      {
+        if (!m_ghostAttachPoint)
+        {
+          var go2 = new GameObject();
+          go2.transform.SetParent(m_attachPoint);
+          m_ghostAttachPoint = go2.AddComponent<LineRenderer>();
+          var material = new Material(LoadValheimAssets.CustomPieceShader)
+          {
+            color = Color.green
+          };
+          m_ghostAttachPoint.material = material;
+          m_ghostAttachPoint.widthMultiplier = 0.1f;
+        }
+
+        m_ghostAttachPoint.SetPosition(0, m_attachPoint.transform.position);
+        m_ghostAttachPoint.SetPosition(1,
+          m_attachPoint.transform.position +
+          -m_attachPoint.transform.up * m_ladderHeight);
+      }
+
+      var steps = Mathf.RoundToInt(m_ladderHeight / m_stepDistance);
+      if (m_steps.Count != steps)
+      {
+        var wnt = GetComponent<WearNTear>();
+        wnt.ResetHighlight();
+        while (m_steps.Count > steps)
+        {
+          Destroy(m_steps[m_steps.Count - 1]);
+          m_steps.RemoveAt(m_steps.Count - 1);
+        }
+
+        while (m_steps.Count < steps)
+        {
+          var go = Instantiate(m_stepObject, transform);
+          m_steps.Add(go);
+          go.transform.localPosition =
+            new Vector3(0f, (0f - m_stepDistance) * (float)m_steps.Count, 0f);
+        }
+
+        m_ropeLine.useWorldSpace = false;
+        m_ropeLine.SetPosition(0, new Vector3(0.4f, 0f, 0f));
+        m_ropeLine.SetPosition(1,
+          new Vector3(0.4f, (0f - m_stepDistance) * (float)m_steps.Count, 0f));
+        m_ropeLine.SetPosition(2,
+          new Vector3(-0.4f, (0f - m_stepDistance) * (float)m_steps.Count, 0f));
+        m_ropeLine.SetPosition(3, new Vector3(-0.4f, 0f, 0f));
+        if (!m_ghostObject)
+        {
+          m_collider.size = new Vector3(1f, m_ladderHeight, 0.1f);
+          m_collider.transform.localPosition =
+            new Vector3(0f, (0f - m_ladderHeight) / 2f, 0f);
+        }
+      }
     }
 
-    var steps = Mathf.RoundToInt(m_ladderHeight / m_stepDistance);
-    if (m_steps.Count != steps)
+    public void UpdateIK(Animator animator)
     {
-      var wnt = GetComponent<WearNTear>();
-      wnt.ResetHighlight();
-      while (m_steps.Count > steps)
+      var center =
+        Mathf.RoundToInt(m_attachPoint.localPosition.y / m_stepDistance);
+      if (m_currentRight == INVALID_STEP) m_currentRight = center;
+
+      if (m_currentLeft == INVALID_STEP) m_currentLeft = center;
+
+      var currentMoveDir =
+        hasAutoClimb ? _autoClimbDir : GetMovementDir(m_currentMoveDir);
+
+      if (m_targetLeft == INVALID_STEP && m_targetRight == INVALID_STEP &&
+          currentMoveDir != MoveDirection.None)
       {
-        Destroy(m_steps[m_steps.Count - 1]);
-        m_steps.RemoveAt(m_steps.Count - 1);
+        if (currentMoveDir == MoveDirection.Up &&
+            m_currentLeft < m_currentRight ||
+            currentMoveDir == MoveDirection.Down &&
+            m_currentLeft > m_currentRight ||
+            !m_lastMovedLeft)
+        {
+          m_targetLeft = center +
+                         (currentMoveDir == MoveDirection.Up
+                           ? m_stepOffsetUp
+                           : m_stepOffsetDown);
+          m_leftMoveTime = Time.time;
+          m_lastMovedLeft = true;
+        }
+        else
+        {
+          m_targetRight = center +
+                          (currentMoveDir == MoveDirection.Up
+                            ? m_stepOffsetUp
+                            : m_stepOffsetDown);
+          m_rightMoveTime = Time.time;
+          m_lastMovedLeft = false;
+        }
       }
 
-      while (m_steps.Count < steps)
-      {
-        var go = Instantiate(m_stepObject, transform);
-        m_steps.Add(go);
-        go.transform.localPosition =
-          new Vector3(0f, (0f - m_stepDistance) * (float)m_steps.Count, 0f);
-      }
-
-      m_ropeLine.useWorldSpace = false;
-      m_ropeLine.SetPosition(0, new Vector3(0.4f, 0f, 0f));
-      m_ropeLine.SetPosition(1,
-        new Vector3(0.4f, (0f - m_stepDistance) * (float)m_steps.Count, 0f));
-      m_ropeLine.SetPosition(2,
-        new Vector3(-0.4f, (0f - m_stepDistance) * (float)m_steps.Count, 0f));
-      m_ropeLine.SetPosition(3, new Vector3(-0.4f, 0f, 0f));
-      if (!m_ghostObject)
-      {
-        m_collider.size = new Vector3(1f, m_ladderHeight, 0.1f);
-        m_collider.transform.localPosition =
-          new Vector3(0f, (0f - m_ladderHeight) / 2f, 0f);
-      }
-    }
-  }
-
-  public void UpdateIK(Animator animator)
-  {
-    var center =
-      Mathf.RoundToInt(m_attachPoint.localPosition.y / m_stepDistance);
-    if (m_currentRight == INVALID_STEP) m_currentRight = center;
-
-    if (m_currentLeft == INVALID_STEP) m_currentLeft = center;
-
-    var currentMoveDir =
-      hasAutoClimb ? _autoClimbDir : GetMovementDir(m_currentMoveDir);
-
-    if (m_targetLeft == INVALID_STEP && m_targetRight == INVALID_STEP &&
-        currentMoveDir != MoveDirection.None)
-    {
-      if ((currentMoveDir == MoveDirection.Up &&
-           m_currentLeft < m_currentRight) ||
-          (currentMoveDir == MoveDirection.Down &&
-           m_currentLeft > m_currentRight) ||
-          !m_lastMovedLeft)
-      {
-        m_targetLeft = center +
-                       (currentMoveDir == MoveDirection.Up
-                         ? m_stepOffsetUp
-                         : m_stepOffsetDown);
-        m_leftMoveTime = Time.time;
-        m_lastMovedLeft = true;
-      }
-      else
-      {
-        m_targetRight = center +
-                        (currentMoveDir == MoveDirection.Up
-                          ? m_stepOffsetUp
-                          : m_stepOffsetDown);
-        m_rightMoveTime = Time.time;
-        m_lastMovedLeft = false;
-      }
-    }
-
-    var leftHand =
-      transform.TransformPoint(new Vector3(-0.3f,
-        (float)(m_currentLeft + 2) * m_stepDistance,
-        -0.1f));
-    var leftFoot =
-      transform.TransformPoint(
-        new Vector3(-0.2f, (float)m_currentLeft * m_stepDistance, -0.3f));
-    var rightHand =
-      transform.TransformPoint(new Vector3(0.3f,
-        (float)(m_currentRight + 2) * m_stepDistance,
-        -0.1f));
-    var rightFoot =
-      transform.TransformPoint(
-        new Vector3(0.2f, (float)m_currentRight * m_stepDistance, -0.3f));
-    if (m_targetLeft != INVALID_STEP)
-    {
-      var targetLeftHand =
+      var leftHand =
         transform.TransformPoint(new Vector3(-0.3f,
-          (float)(m_targetLeft + 3) * m_stepDistance,
-          0f));
-      var targetLeftFoot =
-        transform.TransformPoint(new Vector3(-0.2f,
-          (float)m_targetLeft * m_stepDistance, 0f));
-      var leftAlpha =
-        Mathf.Clamp01((Time.time - m_leftMoveTime) *
-                      (baseLadderMoveSpeed / m_stepDistance));
-      leftHand = Vector3.Lerp(leftHand, targetLeftHand, leftAlpha);
-      leftFoot = Vector3.Lerp(leftFoot, targetLeftFoot, leftAlpha);
-      if (Mathf.Approximately(leftAlpha, 1f))
-      {
-        m_currentLeft = m_targetLeft;
-        m_targetLeft = INVALID_STEP;
-      }
-    }
-    else if (m_targetRight != INVALID_STEP)
-    {
-      var targetRightHand =
+          (float)(m_currentLeft + 2) * m_stepDistance,
+          -0.1f));
+      var leftFoot =
+        transform.TransformPoint(
+          new Vector3(-0.2f, (float)m_currentLeft * m_stepDistance, -0.3f));
+      var rightHand =
         transform.TransformPoint(new Vector3(0.3f,
-          (float)(m_targetRight + 3) * m_stepDistance,
-          0f));
-      var targetRightFoot =
-        transform.TransformPoint(new Vector3(0.2f,
-          (float)m_targetRight * m_stepDistance, 0f));
-      var rightAlpha =
-        Mathf.Clamp01((Time.time - m_rightMoveTime) *
-                      (baseLadderMoveSpeed / m_stepDistance));
-      rightHand = Vector3.Lerp(rightHand, targetRightHand, rightAlpha);
-      rightFoot = Vector3.Lerp(rightFoot, targetRightFoot, rightAlpha);
-      if (Mathf.Approximately(rightAlpha, 1f))
+          (float)(m_currentRight + 2) * m_stepDistance,
+          -0.1f));
+      var rightFoot =
+        transform.TransformPoint(
+          new Vector3(0.2f, (float)m_currentRight * m_stepDistance, -0.3f));
+      if (m_targetLeft != INVALID_STEP)
       {
-        m_currentRight = m_targetRight;
-        m_targetRight = INVALID_STEP;
+        var targetLeftHand =
+          transform.TransformPoint(new Vector3(-0.3f,
+            (float)(m_targetLeft + 3) * m_stepDistance,
+            0f));
+        var targetLeftFoot =
+          transform.TransformPoint(new Vector3(-0.2f,
+            (float)m_targetLeft * m_stepDistance, 0f));
+        var leftAlpha =
+          Mathf.Clamp01((Time.time - m_leftMoveTime) *
+                        (baseLadderMoveSpeed / m_stepDistance));
+        leftHand = Vector3.Lerp(leftHand, targetLeftHand, leftAlpha);
+        leftFoot = Vector3.Lerp(leftFoot, targetLeftFoot, leftAlpha);
+        if (Mathf.Approximately(leftAlpha, 1f))
+        {
+          m_currentLeft = m_targetLeft;
+          m_targetLeft = INVALID_STEP;
+        }
       }
+      else if (m_targetRight != INVALID_STEP)
+      {
+        var targetRightHand =
+          transform.TransformPoint(new Vector3(0.3f,
+            (float)(m_targetRight + 3) * m_stepDistance,
+            0f));
+        var targetRightFoot =
+          transform.TransformPoint(new Vector3(0.2f,
+            (float)m_targetRight * m_stepDistance, 0f));
+        var rightAlpha =
+          Mathf.Clamp01((Time.time - m_rightMoveTime) *
+                        (baseLadderMoveSpeed / m_stepDistance));
+        rightHand = Vector3.Lerp(rightHand, targetRightHand, rightAlpha);
+        rightFoot = Vector3.Lerp(rightFoot, targetRightFoot, rightAlpha);
+        if (Mathf.Approximately(rightAlpha, 1f))
+        {
+          m_currentRight = m_targetRight;
+          m_targetRight = INVALID_STEP;
+        }
+      }
+
+      animator.SetIKPosition(AvatarIKGoal.LeftHand, leftHand);
+      animator.SetIKPositionWeight(AvatarIKGoal.LeftHand, 1f);
+      animator.SetIKPosition(AvatarIKGoal.LeftFoot, leftFoot);
+      animator.SetIKPositionWeight(AvatarIKGoal.LeftFoot, 1f);
+      animator.SetIKPosition(AvatarIKGoal.RightHand, rightHand);
+      animator.SetIKPositionWeight(AvatarIKGoal.RightHand, 1f);
+      animator.SetIKPosition(AvatarIKGoal.RightFoot, rightFoot);
+      animator.SetIKPositionWeight(AvatarIKGoal.RightFoot, 1f);
     }
 
-    animator.SetIKPosition(AvatarIKGoal.LeftHand, leftHand);
-    animator.SetIKPositionWeight(AvatarIKGoal.LeftHand, 1f);
-    animator.SetIKPosition(AvatarIKGoal.LeftFoot, leftFoot);
-    animator.SetIKPositionWeight(AvatarIKGoal.LeftFoot, 1f);
-    animator.SetIKPosition(AvatarIKGoal.RightHand, rightHand);
-    animator.SetIKPositionWeight(AvatarIKGoal.RightHand, 1f);
-    animator.SetIKPosition(AvatarIKGoal.RightFoot, rightFoot);
-    animator.SetIKPositionWeight(AvatarIKGoal.RightFoot, 1f);
-  }
+    private float previousDir = 0;
 
-  private float previousDir = 0;
-
-  private float UpdateMoveOffset(MoveDirection moveDir, float offset)
-  {
-    var ladderMoveSpeed =
-      isRunning
-        ? baseLadderMoveSpeed * ladderRunSpeedMult
-        : baseLadderMoveSpeed;
-    switch (moveDir)
+    private float UpdateMoveOffset(MoveDirection moveDir, float offset)
     {
-      case MoveDirection.Up:
-        offset += ladderMoveSpeed * Time.deltaTime;
-        break;
-      case MoveDirection.Down:
-        offset -= ladderMoveSpeed * Time.deltaTime;
-        break;
+      var ladderMoveSpeed =
+        isRunning
+          ? baseLadderMoveSpeed * ladderRunSpeedMult
+          : baseLadderMoveSpeed;
+      switch (moveDir)
+      {
+        case MoveDirection.Up:
+          offset += ladderMoveSpeed * Time.deltaTime;
+          break;
+        case MoveDirection.Down:
+          offset -= ladderMoveSpeed * Time.deltaTime;
+          break;
+      }
+
+      return offset;
     }
 
-    return offset;
-  }
-
-  public MoveDirection GetMovementDir(float val)
-  {
-    return val switch
+    public MoveDirection GetMovementDir(float val)
     {
-      > 0f => MoveDirection.Up,
-      < 0f => MoveDirection.Down,
-      _ => MoveDirection.None
-    };
-  }
-
-  /// <summary>
-  /// VIP for making ladders easier to use
-  /// </summary>
-  public void DetectInputKeys(float moveDir)
-  {
-    var isPressingRun = ZInput.GetButtonUp("Run") || ZInput.GetButton("JoyRun");
-    var isAutoRunPressed = ZInput.GetButtonUp("AutoRun");
-
-    if (isAutoRunPressed)
-    {
-      hasAutoClimb = !hasAutoClimb;
-      _autoClimbDir = hasAutoClimb
-        ? GetMovementDir(moveDir)
-        : MoveDirection.None;
+      return val switch
+      {
+        > 0f => MoveDirection.Up,
+        < 0f => MoveDirection.Down,
+        _ => MoveDirection.None
+      };
     }
 
-    if (isPressingRun) isRunning = !isRunning;
+    /// <summary>
+    /// VIP for making ladders easier to use
+    /// </summary>
+    public void DetectInputKeys(float moveDir)
+    {
+      var isPressingRun = ZInput.GetButtonUp("Run") || ZInput.GetButton("JoyRun");
+      var isAutoRunPressed = ZInput.GetButtonUp("AutoRun");
+
+      if (isAutoRunPressed)
+      {
+        hasAutoClimb = !hasAutoClimb;
+        _autoClimbDir = hasAutoClimb
+          ? GetMovementDir(moveDir)
+          : MoveDirection.None;
+      }
+
+      if (isPressingRun) isRunning = !isRunning;
+    }
+
+    public void MoveOnLadder(Player player, float moveDir)
+    {
+      DetectInputKeys(moveDir);
+
+      var offset = m_attachPoint.localPosition.y;
+
+      var dir = GetMovementDir(moveDir);
+
+      if (hasAutoClimb && dir != MoveDirection.None && dir != _autoClimbDir)
+        _autoClimbDir = _autoClimbDir == MoveDirection.None
+          ? dir
+          : MoveDirection.None;
+
+      offset = UpdateMoveOffset(hasAutoClimb ? _autoClimbDir : dir, offset);
+
+      m_attachPoint.localPosition = new Vector3(m_attachPoint.localPosition.x,
+        ClampOffset(offset),
+        m_attachPoint.localPosition.z);
+      m_currentMoveDir = moveDir;
+    }
+
+    private float ClampOffset(float offset)
+    {
+      return Mathf.Clamp(offset, 0f - m_collider.size.y, 0.5f);
+    }
+
+    /// <summary>
+    /// Prevents the annoying bug of the player falling after getting to the top of the ladder and wanting to move forwards, but then failing down the whole ladder.
+    /// </summary>
+    /// <param name="player"></param>
+    public void OnNearTopExitForwards(Player player)
+    {
+      var deltaY = player.transform.position.y - m_exitPoint.position.y;
+      if (Mathf.Abs(deltaY) < 1f) player.transform.position = GetExitOffset();
+    }
+
+    /// <summary>
+    /// Callback bound to player onAttachStop
+    /// </summary>
+    /// <param name="player"></param>
+    public void OnStepOffLadder(Player player)
+    {
+      player.m_attachPoint = null;
+      OnNearTopExitForwards(player);
+    }
   }
-
-  public void MoveOnLadder(Player player, float moveDir)
-  {
-    DetectInputKeys(moveDir);
-
-    var offset = m_attachPoint.localPosition.y;
-
-    var dir = GetMovementDir(moveDir);
-
-    if (hasAutoClimb && dir != MoveDirection.None && dir != _autoClimbDir)
-      _autoClimbDir = _autoClimbDir == MoveDirection.None
-        ? dir
-        : MoveDirection.None;
-
-    offset = UpdateMoveOffset(hasAutoClimb ? _autoClimbDir : dir, offset);
-
-    m_attachPoint.localPosition = new Vector3(m_attachPoint.localPosition.x,
-      ClampOffset(offset),
-      m_attachPoint.localPosition.z);
-    m_currentMoveDir = moveDir;
-  }
-
-  private float ClampOffset(float offset)
-  {
-    return Mathf.Clamp(offset, 0f - m_collider.size.y, 0.5f);
-  }
-
-  /// <summary>
-  /// Prevents the annoying bug of the player falling after getting to the top of the ladder and wanting to move forwards, but then failing down the whole ladder.
-  /// </summary>
-  /// <param name="player"></param>
-  public void OnNearTopExitForwards(Player player)
-  {
-    var deltaY = player.transform.position.y - m_exitPoint.position.y;
-    if (Mathf.Abs(deltaY) < 1f) player.transform.position = GetExitOffset();
-  }
-
-  /// <summary>
-  /// Callback bound to player onAttachStop
-  /// </summary>
-  /// <param name="player"></param>
-  public void OnStepOffLadder(Player player)
-  {
-    player.m_attachPoint = null;
-    OnNearTopExitForwards(player);
-  }
-}

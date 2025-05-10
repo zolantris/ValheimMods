@@ -330,7 +330,7 @@
     private void Update()
     {
       if (Manager == null) return;
-      if (Manager.IsLandVehicleFromPrefab)
+      if (Manager.IsLandVehicle)
       {
         var hasControllingPlayer = HaveControllingPlayer();
 
@@ -2337,7 +2337,7 @@
       }
 
       _isInvalid = !isActiveAndEnabled || m_body == null || m_floatcollider == null ||
-                   FloatCollider == null || !Manager || !PiecesController || !OnboardController || !m_nview ||
+                   FloatCollider == null || !Manager || !Manager.IsInitialized || !PiecesController || !OnboardController || m_nview == null ||
                    m_nview.m_zdo == null ||
                    !ShipDirection;
       return _isInvalid;
@@ -2578,7 +2578,7 @@
       }
 
       // for land-vehicle prefab only.
-      if (Manager!.IsLandVehicleFromPrefab)
+      if (Manager.IsLandVehicle)
       {
         UpdateVehicleLandSpeed();
         return;
@@ -2930,11 +2930,10 @@
     {
       if (Manager == null) return;
 
-      var isLandVehicleFromPrefab = Manager.IsLandVehicleFromPrefab;
-      if (isLandVehicleFromPrefab && !RamConfig.LandVehiclesAreRams.Value || !isLandVehicleFromPrefab && !RamConfig.WaterVehiclesAreRams.Value)
-      {
-        return;
-      }
+      var isLandVehicle = Manager.IsLandVehicle;
+
+      if (isLandVehicle && !RamConfig.LandVehiclesAreRams.Value) return;
+      if (!isLandVehicle && !RamConfig.WaterVehiclesAreRams.Value) return;
 
       vehicleRam = DamageColliders.gameObject.GetComponent<VehicleRamAoe>();
 
@@ -2945,7 +2944,7 @@
       if (vehicleRam == null) return;
       if (vehicleRam.m_nview == null) vehicleRam.m_nview = m_nview;
 
-      vehicleRam.m_RamType = isLandVehicleFromPrefab ? RamPrefabs.RamType.LandVehicle : RamPrefabs.RamType.WaterVehicle;
+      vehicleRam.m_RamType = isLandVehicle ? RamPrefabs.RamType.LandVehicle : RamPrefabs.RamType.WaterVehicle;
       vehicleRam.m_vehicle = Manager;
     }
 
@@ -4002,7 +4001,10 @@
       LoggerProvider.LogDebug("Changing ship owner to " + playerOwner +
                               $", name: {targetPlayer.GetPlayerName()}");
 
-      VehicleConfigSync.SyncVehicleBounds();
+      if (VehicleConfigSync != null)
+      {
+        VehicleConfigSync.SyncVehicleBounds();
+      }
       var attachTransform = lastUsedWheelComponent.AttachPoint;
 
       // local player only.
@@ -4234,7 +4236,7 @@
       get;
       set;
     }
-    public VehicleManager? Manager
+    public VehicleManager Manager
     {
       get;
       set;
@@ -4245,7 +4247,13 @@
       get;
       set;
     }
+    public bool IsControllerValid => Manager.IsControllerValid;
+
+    public bool IsInitialized => Manager.IsInitialized;
+
+    public bool IsDestroying => Manager.IsDestroying;
 
   #endregion
+
 
   }

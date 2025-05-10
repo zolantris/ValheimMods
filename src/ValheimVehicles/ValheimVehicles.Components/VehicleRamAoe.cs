@@ -190,21 +190,6 @@ public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
     base.Awake();
   }
 
-  public static Regex GenerateRegexFromList(List<string> prefixes)
-  {
-    // Escape special characters in the strings and join them with a pipe (|) for OR condition
-    var escapedPrefixes = new List<string>();
-    foreach (var prefix in prefixes)
-    {
-      escapedPrefixes.Add(Regex.Escape(prefix));
-    }
-
-    // Create a regex pattern that matches the start of the string (^)
-    // It will match any of the provided prefixes at the start of the string
-    var pattern = "^(" + string.Join("|", escapedPrefixes) + ")";
-    return new Regex(pattern);
-  }
-
   public override void Awake()
   {
     if (!RamInstances.Contains(this)) RamInstances.Add(this);
@@ -568,9 +553,9 @@ public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
 
     if (colliderObj.layer == LayerHelpers.ItemLayer)
     {
-      #if DEBUG
+#if DEBUG
       LoggerProvider.LogDev($"Ignoring itemLayer {colliderObj.layer} for gameobject {colliderObj.name} because items are not allowed to be collider by vehicle ram colliders.");
-      #endif
+#endif
       if (ComponentSelectors.TryGetVehiclePiecesController(m_vehicle, out var piecesController) && collider.transform.root != piecesController.transform)
       {
         vehiclePiecesController = piecesController;

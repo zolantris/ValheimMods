@@ -13,7 +13,6 @@ using ValheimVehicles.Config;
 using ValheimVehicles.Prefabs.Registry;
 using ValheimVehicles.Prefabs.ValheimVehicles.Prefabs.Registry;
 using ValheimVehicles.SharedScripts;
-
 using Logger = Jotunn.Logger;
 using Object = UnityEngine.Object;
 
@@ -92,7 +91,7 @@ public static class PrefabRegistryController
     var allObjects = Resources.FindObjectsOfTypeAll<GameObject>();
     foreach (var obj in allObjects)
       if (obj.name.Contains($"{PrefabNames.WaterVehicleShip}(Clone)") ||
-          (PrefabNames.IsHull(obj) && obj.name.Contains("(Clone)")))
+          PrefabNames.IsHull(obj) && obj.name.Contains("(Clone)"))
       {
         var wnt = obj.GetComponent<WearNTear>();
         if (wnt)
@@ -232,12 +231,12 @@ public static class PrefabRegistryController
 
   public static void RegisterValheimVehiclesPrefabs()
   {
-    SwitchAndLeverPrefabs.Instance.Register(prefabManager, pieceManager);
+    MechanismPrefabs.Register();
     CustomMeshPrefabs.Instance.Register(prefabManager, pieceManager);
 
     SwivelPrefab.Register();
     AnchorPrefabs.Register();
-    
+
     ShipRudderPrefabs.Instance.Register(prefabManager, pieceManager);
 
     // Raft Structure

@@ -75,16 +75,17 @@
 
     <!--  Other bepinex plugins  -->
     <ItemGroup>
-        <Reference Include="SentryUnityWrapper">
-            <HintPath>$(SolutionDir)\src\SentryUnityWrapper\bin\Debug\SentryUnityWrapper.dll</HintPath>
-            <Private>False</Private>
-        </Reference>
+        <!--        <Reference Include="SentryUnityWrapper">-->
+        <!--            <HintPath>$(SolutionDir)\src\SentryUnityWrapper\bin\Debug\SentryUnityWrapper.dll</HintPath>-->
+        <!--            <Private>False</Private>-->
+        <!--        </Reference>-->
         <Reference Include="PlanBuild">
             <HintPath>$(SolutionDir)\libs\PlanBuild.dll</HintPath>
             <Private>False</Private>
         </Reference>
     </ItemGroup>
     <ItemGroup>
+        <Folder Include="docs-images\"/>
         <Folder Include="ValheimRAFT.Patches\"/>
     </ItemGroup>
 

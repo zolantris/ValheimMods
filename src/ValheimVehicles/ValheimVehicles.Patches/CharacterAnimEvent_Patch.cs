@@ -1,33 +1,32 @@
+using System.Collections.Generic;
 using HarmonyLib;
-using ValheimVehicles.Components;
-using ValheimVehicles.Propulsion.Rudder;
+using UnityEngine;
+using ValheimVehicles.Interfaces;
 
 namespace ValheimVehicles.Patches;
 
 [HarmonyPatch]
 public class CharacterAnimEvent_Patch
 {
+  public static Dictionary<Animator, IAnimatorHandler> m_animatedHumanoids = new();
+
   [HarmonyPatch(typeof(CharacterAnimEvent), "OnAnimatorIK")]
   [HarmonyPrefix]
   private static bool OnAnimatorIK(CharacterAnimEvent __instance,
     int layerIndex)
   {
+    if (m_animatedHumanoids.Count > 0 && __instance.m_animator != null && m_animatedHumanoids.TryGetValue(__instance.m_animator, out var activator))
+    {
+      activator.UpdateIK(__instance.m_animator);
+      return false;
+    }
     if (__instance.m_character is Player player && player.IsAttached() &&
         (bool)player.m_attachPoint && (bool)player.m_attachPoint.parent)
     {
-      var rudder = player.m_attachPoint?.parent
-        ?.GetComponent<SteeringWheelComponent>();
-      if (rudder != null)
+      var animator = player.m_attachPoint.GetComponentInParent<IAnimatorHandler>();
+      if (animator != null)
       {
-        rudder.UpdateIK((player).m_animator);
-        return false;
-      }
-
-      var ladder =
-        player.m_attachPoint?.parent?.GetComponent<RopeLadderComponent>();
-      if (ladder != null)
-      {
-        ladder.UpdateIK((player).m_animator);
+        animator.UpdateIK(player.m_animator);
         return false;
       }
     }

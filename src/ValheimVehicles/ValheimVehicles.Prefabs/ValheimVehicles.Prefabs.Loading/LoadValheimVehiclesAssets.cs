@@ -13,7 +13,7 @@ public class LoadValheimVehicleAssets : ILoadAssets
 {
   // CustomSail
   public static GameObject CustomSail = null!;
-  
+
   public static Material DoubleSidedTransparentMat = null!;
 
   public static GameObject VehicleHammer = null!;
@@ -24,7 +24,9 @@ public class LoadValheimVehicleAssets : ILoadAssets
 
   public static GameObject ShipAnchorWood = null!;
 
-  public static GameObject Swivel = null!;
+  // mechanisms/energy
+  public static GameObject Mechanism_Swivel = null!;
+  public static GameObject Mechanism_Engine_Coal = null!;
 
   // hull
   public static GameObject ShipHullWoodAsset = null!;
@@ -46,7 +48,7 @@ public class LoadValheimVehicleAssets : ILoadAssets
   public static GameObject VehicleLand = null!;
   public static GameObject WheelSingle = null!;
   public static GameObject TankTreadsSingle = null!;
-  
+
   // slabs (act as hulls too)
   public static GameObject ShipHullSlab2X2WoodAsset = null!;
   public static GameObject ShipHullSlab2X2IronAsset = null!;
@@ -75,7 +77,7 @@ public class LoadValheimVehicleAssets : ILoadAssets
   public static GameObject SteeringWheel = null!;
   public static GameObject VehicleShipAsset = null!;
   public static GameObject VehiclePiecesAsset = null!;
-  public static GameObject MechanicalSwitch = null!;
+  public static GameObject Mechanism_Switch = null!;
 
   public static GameObject ShipWindowPortholeWall2x2 = null!;
   public static GameObject ShipWindowPortholeWall4x4 = null!;
@@ -95,6 +97,9 @@ public class LoadValheimVehicleAssets : ILoadAssets
   {
     return obj.FindDeepChild(PrefabNames.GhostContainer).gameObject;
   }
+
+  public static Material LightningMaterial = null!;
+  public static GameObject Mechanism_ElectricPylon = null!;
 
   public static GameObject GetPiecesContainer(GameObject obj)
   {
@@ -165,7 +170,7 @@ public class LoadValheimVehicleAssets : ILoadAssets
   public void Init(AssetBundle assetBundle)
   {
     _bundle = assetBundle;
-    
+
     DoubleSidedTransparentMat =
       assetBundle.LoadAsset<Material>(
         "double_sided_transparent.mat");
@@ -183,7 +188,6 @@ public class LoadValheimVehicleAssets : ILoadAssets
 
     SteeringWheel = assetBundle.LoadAsset<GameObject>("steering_wheel.prefab");
     ShipKeelAsset = assetBundle.LoadAsset<GameObject>("keel");
-    MechanicalSwitch = assetBundle.LoadAsset<GameObject>("mechanical_switch");
     VehicleShipAsset =
       assetBundle.LoadAsset<GameObject>("vehicle_ship.prefab");
     VehiclePiecesAsset =
@@ -289,10 +293,21 @@ public class LoadValheimVehicleAssets : ILoadAssets
 
     VehicleHammer = assetBundle.LoadAsset<GameObject>("vehicle_hammer.prefab");
 
-    Swivel = assetBundle.LoadAsset<GameObject>("swivel.prefab"); 
+    // Mechanism prefabs
+    Mechanism_Switch = assetBundle.LoadAsset<GameObject>("mechanism_switch");
+    Mechanism_Swivel = assetBundle.LoadAsset<GameObject>("mechanism_swivel.prefab");
+    Mechanism_Engine_Coal = assetBundle.LoadAsset<GameObject>("mechanism_engine_coal.prefab");
+    Mechanism_ElectricPylon = assetBundle.LoadAsset<GameObject>("mechanism_electric_pylon.prefab");
 
+    // Effects Prefabs
+    // from Plugin, todo rename the casing problematic asset.
+    LightningMaterial = assetBundle.LoadAsset<Material>("lightning_bolt_material_animated_additive.mat");
+
+
+    // Data rebinds done inline
+    ElectricPylon.LightningMaterial = LightningMaterial;
     MovingTreadComponent.fallbackPrefab = TankTreadsSingle;
 
-    StaticFieldValidator.ValidateRequiredNonNullFields<LoadValheimVehicleAssets>();
+    ClassValidator.ValidateRequiredNonNullFields<LoadValheimVehicleAssets>();
   }
 }

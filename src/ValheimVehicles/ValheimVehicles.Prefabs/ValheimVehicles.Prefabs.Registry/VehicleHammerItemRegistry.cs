@@ -3,6 +3,7 @@ using Jotunn.Entities;
 using Jotunn.Managers;
 using UnityEngine;
 using Valheim.UI;
+using ValheimVehicles.Components;
 using ValheimVehicles.SharedScripts;
 namespace ValheimVehicles.Prefabs.Registry;
 
@@ -35,13 +36,14 @@ public class VehicleHammerItemRegistry : GuardedRegistry<VehicleHammerItemRegist
     var nv = PrefabRegistryHelpers.AddNetViewWithPersistence(hammerPrefab);
     var zSyncTransform = hammerPrefab.AddComponent<ZSyncTransform>();
 
-    hammerPrefab.AddComponent<VehicleBuildHammer>();
+    // hammerPrefab.AddComponent<VehicleBuildHammer>();
+    // hammerPrefab.AddComponent<VehicleHammerInputListener>();
 
     // verbosely add these.
     zSyncTransform.m_syncBodyVelocity = false;
     zSyncTransform.m_syncRotation = true;
     zSyncTransform.m_syncPosition = true;
-    
+
     var itemDrop = hammerPrefab.AddComponent<ItemDrop>();
     if (itemDrop.m_nview == null)
     {
@@ -79,7 +81,7 @@ public class VehicleHammerItemRegistry : GuardedRegistry<VehicleHammerItemRegist
       itemDrop.m_itemData.m_shared.m_attack = new Attack();
     }
 
-    
+
     itemDrop.m_itemData.m_shared.m_attack.m_attackAnimation = "swing_hammer";
     itemDrop.m_itemData.m_shared.m_attack.m_attackType = Attack.AttackType.Horizontal;
     itemDrop.m_itemData.m_shared.m_attack.m_attackStamina = 5;
@@ -120,7 +122,7 @@ public class VehicleHammerItemRegistry : GuardedRegistry<VehicleHammerItemRegist
     {
       LoggerProvider.LogError($"Error occurred while registering {PrefabNames.VehicleHammer}");
     }
-    
+
     LoggerProvider.LogMessage("Registered VehicleHammer with empty custom build menu.");
   }
 
