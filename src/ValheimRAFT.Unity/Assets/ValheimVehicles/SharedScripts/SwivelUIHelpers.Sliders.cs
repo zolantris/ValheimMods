@@ -136,7 +136,7 @@ namespace ValheimVehicles.SharedScripts.UI
         onChanged?.Invoke(v);
       });
 
-      return row;
+      return container;
     }
   }
 }

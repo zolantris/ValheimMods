@@ -55,6 +55,7 @@
 
     public static string Swivel_Edit = null!;
     public static string Swivel_Connected = null!;
+    public static string Swivel_Activate = null!;
 
     // full text string. This is computed from a few values.
     public static string Swivel_HoverText = null!;
@@ -157,7 +158,7 @@
       ToggleSwitch_CurrentActionString = SafeLocalize(
         "[<color=yellow><b>$KEY_Use</b></color>] $valheim_vehicles_activate");
       ToggleSwitch_NextActionString = SafeLocalize(
-        "[<color=yellow><b>$KEY_AltPlace + $KEY_Use</b></color>] $valheim_vehicles_toggle");
+        "[<color=yellow><b>$KEY_AltPlace + $KEY_Use</b></color>] $valheim_vehicles_commands_edit_menu");
 
       ToggleSwitch_MaskColliderEditMode = SafeLocalize(
         "$valheim_vehicles_commands_mask_edit_mode");
@@ -235,8 +236,10 @@
     public static void UpdateSwivelTranslations()
     {
       Swivel_Edit = SafeLocalize("$valheim_vehicles_mechanism_swivel_edit");
+      Swivel_Activate = SafeLocalize("$valheim_vehicles_mechanism_swivel_activate");
       Swivel_Connected = SafeLocalize("$valheim_vehicles_mechanism_swivel_connected");
-      Swivel_HoverText = $"{WithBoldText(SharedKeys_Hold)} {WithBoldText(ValheimInput_KeyUse, "yellow")} {Swivel_Edit}";
+      // Swivel_HoverText = $"{WithBoldText(SharedKeys_Hold)} {WithBoldText(ValheimInput_KeyUse, "yellow")} {Swivel_Edit}";
+      Swivel_HoverText = $"{WithBoldText(SharedKeys_Hold)} {WithBoldText(ValheimInput_KeyUse, "yellow")} {Swivel_Activate}";
     }
 
     public static void ForceUpdateTranslations()

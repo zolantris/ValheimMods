@@ -7,34 +7,30 @@ using ValheimVehicles.ConsoleCommands;
 using ValheimVehicles.Constants;
 using ValheimVehicles.Components;
 using ValheimVehicles.Helpers;
+using ValheimVehicles.Integrations;
 using ValheimVehicles.Interfaces;
 using ValheimVehicles.Patches;
 using ValheimVehicles.Structs;
 using ValheimVehicles.SharedScripts;
+using ValheimVehicles.SharedScripts.UI;
 
 namespace ValheimVehicles.Components;
 
-public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interactable, Hoverable
+public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interactable, IHoverableObj, IMechanismActionSetter
 {
-  /// <summary>
-  /// Actions for VehicleCommmands
-  /// </summary>
-  /// todo
-  /// Add actions for Non-vehicle commands to open a panel or just add a panel toggle as another command. Also retain the last position of the command.
-  public enum ToggleSwitchAction
-  {
-    CommandsHud,
-    CreativeMode,
-    ColliderEditMode
-  }
-
-  public ToggleSwitchAction mToggleSwitchType = ToggleSwitchAction.CommandsHud;
   private ZNetView netView;
 
   // todo might be better to just run OnAnimatorIK in the fixed update loop.
   private List<Humanoid> m_localAnimatedHumanoids = new();
   private SmoothToggleLerp _handDistanceLerp = new();
   public static bool m_forceRunAnimateOnFixedUpdate = false;
+  private MechanismAction _selectedMechanismAction = MechanismAction.CommandsHud;
+
+  public MechanismAction SelectedAction
+  {
+    get => _selectedMechanismAction;
+    set => _selectedMechanismAction = value;
+  }
 
   public override void Awake()
   {
@@ -44,23 +40,23 @@ public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interac
 
   public void Start()
   {
-    SyncSwitchMode();
+    SyncMechanismAction();
   }
 
   public void OnEnable()
   {
     OnToggleCompleted += OnAnimationsComplete;
-    netView.Register(nameof(RPC_UpdateSwitch), RPC_UpdateSwitch);
+    netView.Register(nameof(RPC_UpdateMechanismAction), RPC_UpdateMechanismAction);
   }
 
   public void OnDisable()
   {
-    netView.Unregister(nameof(RPC_UpdateSwitch));
+    netView.Unregister(nameof(RPC_UpdateMechanismAction));
   }
 
-  public void RPC_UpdateSwitch(long sender)
+  public void RPC_UpdateMechanismAction(long sender)
   {
-    SyncSwitchMode();
+    SyncMechanismAction();
   }
 
   public override void FixedUpdate()
@@ -87,31 +83,68 @@ public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interac
     lerpedHandDistance = _handDistanceLerp.Value;
   }
 
+  public void SetMechanismAction(MechanismAction action)
+  {
+    SelectedAction = action;
+    switch (action)
+    {
+
+      case MechanismAction.CommandsHud:
+        break;
+      case MechanismAction.CreativeMode:
+        break;
+      case MechanismAction.ColliderEditMode:
+        break;
+      case MechanismAction.SwivelEditMode:
+      {
+        if (!FindNearestSwivel(out _))
+        {
+          SelectedAction = MechanismAction.CommandsHud;
+          // todo localize.
+          Player.m_localPlayer.Message(MessageHud.MessageType.Center, "No swivel nearby");
+          return;
+        }
+        break;
+      }
+      case MechanismAction.SwivelActivateMode:
+        if (!FindNearestSwivel(out _))
+        {
+          SelectedAction = MechanismAction.CommandsHud;
+          // todo localize.
+          Player.m_localPlayer.Message(MessageHud.MessageType.Center, "No swivel nearby");
+          return;
+        }
+        break;
+      default:
+        throw new ArgumentOutOfRangeException(nameof(action), action, null);
+    }
+    UpdateSwitch();
+  }
   /// <summary>
   /// This must be run by the client that needs to update the switch
   /// </summary>
   public void UpdateSwitch()
   {
-    netView.m_zdo.Set(VehicleZdoVars.ToggleSwitchAction, mToggleSwitchType.ToString());
+    netView.m_zdo.Set(VehicleZdoVars.ToggleSwitchAction, SelectedAction.ToString());
     // todo may want to just send the string to other clients.
-    netView.InvokeRPC(ZRoutedRpc.Everybody, nameof(RPC_UpdateSwitch));
+    netView.InvokeRPC(ZRoutedRpc.Everybody, nameof(RPC_UpdateMechanismAction));
   }
 
-  public ToggleSwitchAction GetActivationActionFromString(string activationActionString)
+  public MechanismAction GetActivationActionFromString(string activationActionString)
   {
-    if (!Enum.TryParse<ToggleSwitchAction>(activationActionString, out var result))
+    if (!Enum.TryParse<MechanismAction>(activationActionString, out var result))
     {
-      result = ToggleSwitchAction.CommandsHud;
+      result = MechanismAction.CommandsHud;
     }
 
     return result;
   }
 
-  public void SyncSwitchMode()
+  public void SyncMechanismAction()
   {
     if (!netView || netView.GetZDO() == null || !isActiveAndEnabled) return;
-    var activationActionString = netView.GetZDO().GetString(VehicleZdoVars.ToggleSwitchAction, nameof(ToggleSwitchAction.CreativeMode));
-    mToggleSwitchType = GetActivationActionFromString(activationActionString);
+    var activationActionString = netView.GetZDO().GetString(VehicleZdoVars.ToggleSwitchAction, nameof(MechanismAction.CreativeMode));
+    SelectedAction = GetActivationActionFromString(activationActionString);
   }
 
   private void HandleToggleCreativeMode()
@@ -164,20 +197,64 @@ public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interac
     ToggleActivationState();
     AddPlayerToPullSwitchAnimations(humanoid);
 
-    switch (mToggleSwitchType)
+    switch (SelectedAction)
     {
-      case ToggleSwitchAction.CommandsHud:
+      case MechanismAction.CommandsHud:
         HandleToggleCommandsHud();
         break;
-      case ToggleSwitchAction.CreativeMode:
+      case MechanismAction.CreativeMode:
         HandleToggleCreativeMode();
         break;
-      case ToggleSwitchAction.ColliderEditMode:
+      case MechanismAction.ColliderEditMode:
         VehicleCommands.ToggleColliderEditMode();
+        break;
+      case MechanismAction.SwivelEditMode:
+        TriggerSwivelPanel();
+        break;
+      case MechanismAction.SwivelActivateMode:
+        TriggerSwivelAction();
         break;
       default:
         throw new ArgumentOutOfRangeException();
     }
+  }
+
+  private SwivelComponentIntegration m_nearestSwivel;
+
+
+  public void TriggerSwivelPanel()
+  {
+    if (!m_nearestSwivel) return;
+    m_nearestSwivel.RequestNextMotionState();
+  }
+
+  public void TriggerSwivelAction()
+  {
+    return;
+  }
+
+  public RaycastHit[] m_raycasthits = new RaycastHit[20];
+
+  public bool FindNearestSwivel(out SwivelComponentIntegration swivelComponentIntegration)
+  {
+    swivelComponentIntegration = GetComponentInParent<SwivelComponentIntegration>();
+    if (swivelComponentIntegration)
+    {
+      m_nearestSwivel = swivelComponentIntegration;
+      return true;
+    }
+
+    var num = Physics.SphereCastNonAlloc(transform.position, 0.1f, Vector3.up, m_raycasthits, 100f, LayerHelpers.PieceLayer);
+    for (var i = 0; i < num; i++)
+    {
+      var raycastHit = m_raycasthits[i];
+      swivelComponentIntegration = raycastHit.collider.GetComponentInParent<SwivelComponentIntegration>();
+      if (swivelComponentIntegration)
+      {
+        return true;
+      }
+    }
+    return false;
   }
 
   public float lerpedHandDistance = 0f;
@@ -197,7 +274,6 @@ public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interac
 
     if (!IsToggleInProgress)
     {
-
       animator.SetIKPositionWeight(AvatarIKGoal.RightHand, lerpedHandDistance);
     }
     else
@@ -207,30 +283,15 @@ public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interac
     }
   }
 
-  /// <summary>
-  /// This must always loop from first to last -> first.
-  /// </summary>
-  /// <returns></returns>
-  public ToggleSwitchAction GetNextAction()
-  {
-    return mToggleSwitchType switch
-    {
-      ToggleSwitchAction.CommandsHud => ToggleSwitchAction.CreativeMode,
-      ToggleSwitchAction.CreativeMode => ToggleSwitchAction.ColliderEditMode,
-      ToggleSwitchAction.ColliderEditMode => ToggleSwitchAction.CommandsHud,
-      _ => throw new ArgumentOutOfRangeException()
-    };
-  }
-
-  public void SwapHandlerToNextAction()
-  {
-    mToggleSwitchType = GetNextAction();
-  }
 
   public void OnAltPressHandler()
   {
-    SwapHandlerToNextAction();
-    UpdateSwitch();
+    if (!MechanismSelectorPanelIntegration.Instance)
+    {
+      MechanismSelectorPanelIntegration.InitComponent();
+      if (!MechanismSelectorPanelIntegration.Instance) return;
+    }
+    MechanismSelectorPanelIntegration.Instance.BindTo(SelectedAction, this);
   }
 
   public bool Interact(Humanoid character, bool hold, bool alt)
@@ -248,13 +309,15 @@ public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interac
     return true;
   }
 
-  public string GetLocalizedActionText(ToggleSwitchAction action)
+  public string GetLocalizedActionText(MechanismAction action)
   {
     return action switch
     {
-      ToggleSwitchAction.CommandsHud => ModTranslations.ToggleSwitch_CommandsHudText,
-      ToggleSwitchAction.CreativeMode => ModTranslations.CreativeMode,
-      ToggleSwitchAction.ColliderEditMode => ModTranslations.ToggleSwitch_MaskColliderEditMode,
+      MechanismAction.CommandsHud => ModTranslations.ToggleSwitch_CommandsHudText,
+      MechanismAction.CreativeMode => ModTranslations.CreativeMode,
+      MechanismAction.ColliderEditMode => ModTranslations.ToggleSwitch_MaskColliderEditMode,
+      MechanismAction.SwivelEditMode => ModTranslations.Swivel_Edit,
+      MechanismAction.SwivelActivateMode => ModTranslations.Swivel_Activate,
       _ => throw new ArgumentOutOfRangeException(nameof(action), action, null)
     };
   }
@@ -272,6 +335,6 @@ public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interac
 
   public string GetHoverText()
   {
-    return $"{ModTranslations.ToggleSwitch_CurrentActionString} {GetLocalizedActionText(mToggleSwitchType)}\n{ModTranslations.ToggleSwitch_NextActionString} {GetLocalizedActionText(GetNextAction())}";
+    return $"{ModTranslations.ToggleSwitch_CurrentActionString} {GetLocalizedActionText(SelectedAction)}\n{ModTranslations.ToggleSwitch_NextActionString}";
   }
 }

@@ -1,7 +1,7 @@
 ﻿#region
 
-  using UnityEngine;
-  using UnityEngine.UI;
+using UnityEngine;
+using UnityEngine.UI;
 
 #endregion
 
@@ -12,9 +12,9 @@
 
     public static partial class SwivelUIHelpers
     {
-      public static RectTransform CreateContent(string name, Transform parent, SwivelUISharedStyles viewStyles)
+      public static RectTransform CreateContent(string name, Transform parent, SwivelUISharedStyles viewStyles, Vector2? anchorMin, Vector2? anchorMax)
       {
-        var contentGO = new GameObject("Content", typeof(RectTransform), typeof(VerticalLayoutGroup), typeof(ContentSizeFitter));
+        var contentGO = new GameObject("Content", typeof(RectTransform), typeof(VerticalLayoutGroup), typeof(ContentSizeFitter), typeof(LayoutElement));
         contentGO.transform.SetParent(parent, false);
 
         var layoutGroup = contentGO.GetComponent<VerticalLayoutGroup>();
@@ -29,8 +29,8 @@
         fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
 
         var contentRT = contentGO.GetComponent<RectTransform>();
-        contentRT.anchorMin = new Vector2(0, 1);
-        contentRT.anchorMax = new Vector2(1, 1);
+        contentRT.anchorMin = anchorMin ?? new Vector2(0, 1);
+        contentRT.anchorMax = anchorMax ?? new Vector2(1, 1);
         contentRT.pivot = new Vector2(0.5f, 1);
         contentRT.sizeDelta = new Vector2(0, 0);
         return contentRT;

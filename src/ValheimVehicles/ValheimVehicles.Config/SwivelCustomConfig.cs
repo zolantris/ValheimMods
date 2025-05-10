@@ -14,18 +14,18 @@ namespace ValheimVehicles.Config
 {
   public class SwivelCustomConfig : ISerializableConfig<SwivelCustomConfig, ISwivelConfig>, ISwivelConfig
   {
-    private const string Key_Mode = "swivel_mode";
-    private const string Key_LerpSpeed = "swivel_lerpSpeed";
-    private const string Key_TrackMin = "swivel_trackMin";
-    private const string Key_TrackMax = "swivel_trackMax";
-    private const string Key_HingeAxes = "swivel_hingeAxes";
-    private const string Key_MaxX = "swivel_maxX";
-    private const string Key_MaxY = "swivel_maxY";
-    private const string Key_MaxZ = "swivel_maxZ";
-    private const string Key_MotionState = "swivel_motionState";
-    private const string Key_OffsetX = "swivel_offsetX";
-    private const string Key_OffsetY = "swivel_offsetY";
-    private const string Key_OffsetZ = "swivel_offsetZ";
+    public const string Key_Mode = "swivel_mode";
+    public const string Key_LerpSpeed = "swivel_lerpSpeed";
+    public const string Key_TrackMin = "swivel_trackMin";
+    public const string Key_TrackMax = "swivel_trackMax";
+    public const string Key_HingeAxes = "swivel_hingeAxes";
+    public const string Key_MaxX = "swivel_maxX";
+    public const string Key_MaxY = "swivel_maxY";
+    public const string Key_MaxZ = "swivel_maxZ";
+    public const string Key_MotionState = "swivel_motionState";
+    public const string Key_OffsetX = "swivel_offsetX";
+    public const string Key_OffsetY = "swivel_offsetY";
+    public const string Key_OffsetZ = "swivel_offsetZ";
 
     public void Serialize(ZPackage package)
     {

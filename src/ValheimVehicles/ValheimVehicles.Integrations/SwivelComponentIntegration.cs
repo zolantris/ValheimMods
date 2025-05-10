@@ -36,7 +36,7 @@
   ///
   /// Notes
   /// IRaycastPieceActivator is used for simplicity. It will easily match any component extending this in unity.
-  public sealed class SwivelComponentIntegration : SwivelComponent, IPieceActivatorHost, IPieceController, IRaycastPieceActivator, Hoverable, Interactable
+  public sealed class SwivelComponentIntegration : SwivelComponent, IPieceActivatorHost, IPieceController, IRaycastPieceActivator
   {
     [FormerlySerializedAs("m_piecesController")]
     public VehiclePiecesController? m_vehiclePiecesController;
@@ -71,6 +71,17 @@
       SetupHoverFadeText();
 
       SetupPieceActivator();
+    }
+
+    public MotionState GetNextMotionState()
+    {
+      return MotionState != MotionState.Returning ? MotionState.Returning : MotionState.GoingToTarget;
+    }
+
+    public void RequestNextMotionState()
+    {
+      var nextMotionState = GetNextMotionState();
+      prefabConfigSync.RequestNextMotionState(nextMotionState);
     }
 
     public void SetupHoverFadeText()
@@ -347,43 +358,15 @@
 
   #endregion
 
-
-    public string GetHoverText()
-    {
-      return ModTranslations.Swivel_HoverText;
-    }
-    public string GetHoverName()
-    {
-      return "Hover name";
-    }
-    public bool Interact(Humanoid user, bool hold, bool alt)
-    {
-      if (SwivelUIPanelComponent.Instance == null) Game.instance.gameObject.AddComponent<SwivelUIPanelComponent>();
-      if (SwivelUIPanelComponent.Instance != null)
-      {
-        if (SwivelUIPanelComponent.Instance.panelRoot != null && SwivelUIPanelComponent.Instance.panelRoot.activeInHierarchy)
-        {
-          SwivelUIPanelComponent.Instance.Hide();
-        }
-        else
-        {
-          SwivelUIPanelComponent.Instance.BindTo(this);
-        }
-        return true;
-      }
-      return false;
-    }
-    public bool UseItem(Humanoid user, ItemDrop.ItemData item)
-    {
-      return false;
-    }
-
   #region IPieceController
 
     public bool CanDestroy()
     {
       return GetPieceCount() == 0;
     }
+
+    private static string _ComponentName => PrefabNames.SwivelPrefabName;
+    public string ComponentName => _ComponentName;
 
     public int GetPieceCount()
     {
@@ -447,6 +430,19 @@
       TogglePlacementContainer(m_pieces.Count == 0);
     }
 
+    public void AddCustomPiece(ZNetView nv, bool isNew = false)
+    {
+      LoggerProvider.LogWarning("CustomPieces not supported for SwivelComponentIntegration. This is likely a bug. Please report this to the mod author.");
+      return;
+    }
+
+    public void AddCustomPiece(GameObject prefab, bool isNew = false)
+    {
+      LoggerProvider.LogWarning("CustomPieces not supported for SwivelComponentIntegration. This is likely a bug. Please report this to the mod author.");
+      return;
+    }
+
+
     public void TogglePlacementContainer(bool isZeroPieces)
     {
       connectorContainer.gameObject.SetActive(isZeroPieces);
@@ -469,6 +465,10 @@
         m_hoverFadeText.Hide();
       }
       TogglePlacementContainer(hasZeroPieces);
+    }
+    public void TrySetPieceToParent(ZNetView netView)
+    {
+      throw new NotImplementedException();
     }
 
     ///

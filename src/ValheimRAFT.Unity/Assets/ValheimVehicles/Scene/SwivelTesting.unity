@@ -416,10 +416,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   mode: 1
-  movementLerpSpeed: 2
+  interpolationSpeed: 2
   animatedTransform: {fileID: 0}
   currentMotionState: 0
-  minTrackingRange: 0
+  minTrackingRange: 5
   maxTrackingRange: 50
   nearestTarget: {fileID: 0}
   hingeAxes: 2
@@ -494,10 +494,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   mode: 2
-  movementLerpSpeed: 2
+  interpolationSpeed: 2
   animatedTransform: {fileID: 0}
   currentMotionState: 0
-  minTrackingRange: 0
+  minTrackingRange: 5
   maxTrackingRange: 50
   nearestTarget: {fileID: 0}
   hingeAxes: 2
@@ -2440,10 +2440,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   mode: 1
-  movementLerpSpeed: 2
+  interpolationSpeed: 2
   animatedTransform: {fileID: 0}
   currentMotionState: 0
-  minTrackingRange: 0
+  minTrackingRange: 5
   maxTrackingRange: 50
   nearestTarget: {fileID: 0}
   hingeAxes: 2
@@ -2914,6 +2914,66 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 3715165887456535575, guid: 787da180fb9f6b448a6c5a0880b633c5, type: 3}
   m_PrefabInstance: {fileID: 796784105}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &1123771586
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1123771589}
+  - component: {fileID: 1123771588}
+  - component: {fileID: 1123771587}
+  m_Layer: 0
+  m_Name: toggle-ui
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1123771587
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1123771586}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 636cd3950e71467ab507f6b0a4a2763b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  MaxUIWidth: 400
+--- !u!114 &1123771588
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1123771586}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 875d49c235d0b3e4bb5da8171ae30a27, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  swivelComponent: {fileID: 1518158247}
+  windDirection: {fileID: 0}
+--- !u!4 &1123771589
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1123771586}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 240.05733, y: 19.268635, z: -148.0163}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &1185318841
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -3028,10 +3088,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   mode: 4
-  movementLerpSpeed: 2
+  interpolationSpeed: 2
   animatedTransform: {fileID: 0}
   currentMotionState: 0
-  minTrackingRange: 0
+  minTrackingRange: 5
   maxTrackingRange: 50
   nearestTarget: {fileID: 0}
   hingeAxes: 2
@@ -3623,10 +3683,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   mode: 2
-  movementLerpSpeed: 2
+  interpolationSpeed: 2
   animatedTransform: {fileID: 0}
   currentMotionState: 0
-  minTrackingRange: 0
+  minTrackingRange: 5
   maxTrackingRange: 50
   nearestTarget: {fileID: 0}
   hingeAxes: 2
@@ -4355,10 +4415,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   mode: 4
-  movementLerpSpeed: 2
+  interpolationSpeed: 2
   animatedTransform: {fileID: 0}
   currentMotionState: 0
-  minTrackingRange: 0
+  minTrackingRange: 5
   maxTrackingRange: 50
   nearestTarget: {fileID: 0}
   hingeAxes: 2
@@ -4401,7 +4461,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &1938631050
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4415,20 +4475,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   MaxUIWidth: 700
-  Strings:
-    SwivelConfig: Swivel Config
-    SwivelMode: Swivel Mode
-    MotionState: Motion State
-    InterpolationSpeed: Interpolation Speed
-    RotationSettings: Rotation Settings
-    HingeAxes: Hinge Axes
-    MaxXAngle: Max X Angle
-    MaxYAngle: Max Y Angle
-    MaxZAngle: Max Z Angle
-    MovementSettings: Movement Settings
-    TargetXOffset: Target X Offset
-    TargetYOffset: Target Y Offset
-    TargetZOffset: Target Z Offset
 --- !u!4 &1938631051
 Transform:
   m_ObjectHideFlags: 0
@@ -4451,7 +4497,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1938631049}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 875d49c235d0b3e4bb5da8171ae30a27, type: 3}
   m_Name: 
@@ -4962,6 +5008,7 @@ SceneRoots:
   - {fileID: 1037735333}
   - {fileID: 1884303819}
   - {fileID: 1938631051}
+  - {fileID: 1123771589}
   - {fileID: 1764351493}
   - {fileID: 2006843082}
   - {fileID: 1185318841}

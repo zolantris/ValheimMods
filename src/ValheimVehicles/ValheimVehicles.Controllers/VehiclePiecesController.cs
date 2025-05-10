@@ -85,6 +85,8 @@
     // public static Dictionary<ZDOID, ZNetView> temporaryMaterials = new();
 
     public static List<IMonoUpdater> MonoUpdaterInstances = [];
+    private static string _ComponentName => PrefabNames.VehiclePiecesContainer;
+    public string ComponentName => _ComponentName;
 
     private static bool _allowPendingPiecesToActivate = true;
 
@@ -1522,7 +1524,7 @@
     public static void AddInactivePiece(int id, ZNetView netView,
       VehiclePiecesController? instance, bool skipActivation = false)
     {
-      if (!ValheimValidation.IsCurrentGameHealthy())
+      if (!ValheimExtensions.IsCurrentGameHealthy())
       {
         return;
       }
@@ -2482,11 +2484,29 @@
       }
     }
 
+    public void AddCustomPiece(GameObject prefab, bool isNew = false)
+    {
+      if (prefab.name.StartsWith(PrefabNames.CustomWaterFloatation))
+      {
+        AddCustomFloatationPrefab(prefab);
+        return;
+      }
+    }
+
+    public void AddCustomPiece(ZNetView prefab, bool isNew = false)
+    {
+      if (prefab.name.StartsWith(PrefabNames.CustomWaterFloatation))
+      {
+        AddCustomFloatationPrefab(prefab.gameObject);
+        return;
+      }
+    }
+
     /// <summary>
     /// For custom config cubes that are deleted near instantly.
     /// </summary>
     /// <param name="prefab"></param>
-    public void AddCustomFloatationPrefab(GameObject prefab)
+    private void AddCustomFloatationPrefab(GameObject prefab)
     {
       if (IsInvalid()) return;
       if (!prefab.name.StartsWith(PrefabNames.CustomWaterFloatation)) return;

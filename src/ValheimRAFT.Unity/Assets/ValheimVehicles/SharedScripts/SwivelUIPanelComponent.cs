@@ -81,6 +81,17 @@ namespace ValheimVehicles.SharedScripts.UI
       Show();
     }
 
+    public void Toggle()
+    {
+      if (panelRoot == null)
+      {
+        Show();
+        return;
+      }
+      if (panelRoot.activeSelf) Hide();
+      else Show();
+    }
+
     public void Show()
     {
       if (panelRoot == null) CreateUI();
@@ -128,9 +139,33 @@ namespace ValheimVehicles.SharedScripts.UI
     private void CreateUI()
     {
       panelRoot = CreateUIRoot();
-      var scrollRect = SwivelUIHelpers.CreateScrollView(panelRoot.transform, viewStyles);
-      var scrollViewport = SwivelUIHelpers.CreateViewport(scrollRect, viewStyles);
-      var scrollViewContent = SwivelUIHelpers.CreateContent("Content", scrollViewport.transform, viewStyles);
+
+      // var rootViewPort = SwivelUIHelpers.CreateViewport(panelRoot.transform, viewStyles, false, true);
+      // var viewPortRT = rootViewPort.GetComponent<RectTransform>();
+      // viewPortRT.pivot = new Vector2(0f, 1f);
+      // viewPortRT.anchorMin= new Vector2(0f, 0f);
+      // viewPortRT.anchorMax = new Vector2(1f, 1f);
+      //
+      // var rootViewPortLayout = viewPortRT.gameObject.AddComponent<LayoutElement>();
+      // rootViewPortLayout.flexibleHeight = 800f;
+      // rootViewPortLayout.flexibleWidth = 800f;
+      // rootViewPortLayout.minWidth = 500f;
+      // rootViewPortLayout.minHeight = 300f;
+      // rootViewPortLayout.preferredHeight = 500f;
+
+      // var maxWidth = Mathf.Clamp(Screen.width * 0.3f, viewStyles.minWidth, viewStyles.maxWidth);
+      // var maxWidth = Mathf.Min(800f, Screen.width);
+      // var maxHeight = Mathf.Min(viewStyles.maxHeight, Screen.height);
+      //
+      // viewPortRT.sizeDelta = new Vector2(maxWidth, maxHeight);
+      // viewPortRT.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, maxHeight);
+      // viewPortRT.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, maxWidth);
+
+      // var rootContent = SwivelUIHelpers.CreateContent("Content", panelRoot.transform, viewStyles, new Vector2(0f, 1f), new Vector2(0f, 1f));
+
+      var scrollGo = SwivelUIHelpers.CreateScrollView(panelRoot.transform, viewStyles, out var scrollRect);
+      var scrollViewport = SwivelUIHelpers.CreateViewport(scrollGo.transform, viewStyles, true);
+      var scrollViewContent = SwivelUIHelpers.CreateContent("Content", scrollViewport.transform, viewStyles, null, null);
       layoutParent = scrollViewContent.transform;
       scrollRect.content = scrollViewContent;
 
@@ -141,9 +176,7 @@ namespace ValheimVehicles.SharedScripts.UI
       layout.minHeight = 300f;
       layout.preferredHeight = 500f;
 
-
       SwivelUIHelpers.AddRowWithButton(layoutParent, viewStyles, SwivelUIPanelStrings.SwivelConfig, "X", 48f, 48f, out _, Hide);
-
       modeDropdown = SwivelUIHelpers.AddDropdownRow(layoutParent, viewStyles, SwivelUIPanelStrings.SwivelMode, EnumNames<SwivelMode>(), CurrentSwivel.Mode.ToString(), i =>
       {
         CurrentSwivel.SetMode((SwivelMode)i);

@@ -94,6 +94,11 @@
       }
     }
 
+    /// <summary>
+    /// Important for piece side-effects
+    /// </summary>
+    /// <param name="gameObject"></param>
+    /// <returns></returns>
     public static GameObject PlacedPiece(GameObject gameObject)
     {
       var piece = gameObject.GetComponent<Piece>();
@@ -126,33 +131,31 @@
         return gameObject;
       }
 
-      var bvc = PatchSharedData.PlayerLastRayPiece
-        .GetComponentInParent<VehiclePiecesController>();
-      var swivel = PatchSharedData.PlayerLastRayPiece.GetComponentInParent<SwivelComponentIntegration>();
+      var pieceController = PatchSharedData.PlayerLastRayPiece.GetComponentInParent<IPieceController>();
 
-      if (swivel != null && netView != null)
+      if (pieceController != null && pieceController.ComponentName == PrefabNames.SwivelPrefabName && netView)
       {
-        swivel.AddNewPiece(netView);
+        pieceController.AddNewPiece(netView);
         return gameObject;
       }
 
-      if (bvc != null)
+      if (pieceController != null && pieceController.ComponentName == PrefabNames.VehiclePiecesContainer)
       {
         if (gameObject.name.StartsWith(PrefabNames.CustomWaterFloatation))
         {
-          bvc.AddCustomFloatationPrefab(gameObject);
+          pieceController.AddCustomPiece(gameObject);
           return gameObject;
         }
         if (netView != null)
         {
           Logger.LogDebug(
             $"BaseVehicleController: adding new piece {piece.name} {gameObject.name}");
-          bvc.AddNewPiece(netView);
+          pieceController.AddNewPiece(netView);
         }
         else
         {
           Logger.LogDebug("BaseVehicleController: adding temp piece");
-          bvc.TrySetPieceToParent(piece.m_nview);
+          pieceController.TrySetPieceToParent(piece.m_nview);
         }
       }
 
@@ -179,55 +182,6 @@
       return false;
     }
 
-    // /// <summary>
-    // /// Original RayTest Method
-    // /// </summary>
-    // /// <param name="point"></param>
-    // /// <param name="normal"></param>
-    // /// <param name="piece"></param>
-    // /// <param name="heightmap"></param>
-    // /// <param name="waterSurface"></param>
-    // /// <param name="water"></param>
-    // /// <returns></returns>
-    // public bool PieceRayTest(
-    //   Player __instance,
-    //   ref Vector3 point,
-    //   ref Vector3 normal,
-    //   ref Piece piece,
-    //   ref Heightmap heightmap,
-    //   ref Collider waterSurface,
-    //   bool water)
-    // {
-    //   var layerMask = __instance.m_placeRayMask;
-    //   if (water)
-    //     layerMask = __instance.m_placeWaterRayMask;
-    //   RaycastHit hitInfo;
-    //   if (Physics.Raycast(GameCamera.instance.transform.position, GameCamera.instance.transform.forward, out hitInfo, 50f, layerMask))
-    //   {
-    //     var maxPlaceDistance = __instance.m_maxPlaceDistance;
-    //     if ((bool)(Object)__instance.m_placementGhost)
-    //     {
-    //       var component = __instance.m_placementGhost.GetComponent<Piece>();
-    //       if (component != null)
-    //         maxPlaceDistance += (float)component.m_extraPlacementDistance;
-    //     }
-    //     if ((bool)(Object)hitInfo.collider && !(bool)(Object)hitInfo.collider.attachedRigidbody && (double)Vector3.Distance(__instance.m_eye.position, hitInfo.point) < (double)maxPlaceDistance)
-    //     {
-    //       point = hitInfo.point;
-    //       normal = hitInfo.normal;
-    //       piece = hitInfo.collider.GetComponentInParent<Piece>();
-    //       heightmap = hitInfo.collider.GetComponent<Heightmap>();
-    //       waterSurface = hitInfo.collider.gameObject.layer != LayerMask.NameToLayer("Water") ? (Collider)null : hitInfo.collider;
-    //       return true;
-    //     }
-    //   }
-    //   point = Vector3.zero;
-    //   normal = Vector3.zero;
-    //   piece = (Piece)null;
-    //   heightmap = (Heightmap)null;
-    //   waterSurface = (Collider)null;
-    //   return false;
-    // }
 
     public static void HandleGameObjectRayCast(Transform? vehicleTransform,
       LayerMask layerMask,
@@ -365,6 +319,10 @@
         {
           if (raycastHit.collider.GetComponent<Hoverable>() != null)
             hover = raycastHit.collider.gameObject;
+          else if (raycastHit.collider && raycastHit.collider.name.StartsWith("lever") && ValheimExtensions.TryGetHoverableParent(raycastHit.collider.gameObject, out var leverHoverableParent))
+          {
+            hover = leverHoverableParent;
+          }
           else if ((bool)raycastHit.collider.attachedRigidbody && !raycastHit
                      .collider
                      .attachedRigidbody.GetComponent<VehiclePiecesController>())

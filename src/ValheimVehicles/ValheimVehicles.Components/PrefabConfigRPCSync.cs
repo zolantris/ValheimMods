@@ -21,7 +21,7 @@ public class PrefabConfigRPCSync<T, TComponentInterface> : MonoBehaviour, IPrefa
   public T CustomConfig { get; set; } = new();
   internal SafeRPCHandler? rpcHandler;
   internal RetryGuard retryGuard = null!;
-  private TComponentInterface controller;
+  public TComponentInterface controller;
 
   public virtual void Awake()
   {

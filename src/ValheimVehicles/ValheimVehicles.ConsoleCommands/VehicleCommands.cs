@@ -619,7 +619,7 @@ public class VehicleCommands : ConsoleCommand
   public static void ToggleVehicleCommandsHud()
   {
     if (!CanRunCheatCommand()) return;
-
+    if (Player.m_localPlayer == null) return;
     // must do this otherwise the commands panel will not cycle debug value if we need to enable it.
     VehicleGui.ToggleCommandsPanelState(true);
 
@@ -640,7 +640,7 @@ public class VehicleCommands : ConsoleCommand
 
   public static VehicleManager? GetNearestVehicleShip(Vector3 position)
   {
-    if (GameCamera.instance == null) return null;
+    if (!GameCamera.instance || !GameCamera.instance) return null;
     if (!Physics.Raycast(
           GameCamera.instance.transform.position,
           GameCamera.instance.transform.forward,
@@ -651,7 +651,7 @@ public class VehicleCommands : ConsoleCommand
       return null;
     }
 
-    if (hitinfo.collider == null)
+    if (!hitinfo.collider)
     {
       BoatNotDetectedMessage();
       return null;
@@ -660,10 +660,11 @@ public class VehicleCommands : ConsoleCommand
     var vehiclePiecesController =
       hitinfo.collider.GetComponentInParent<VehiclePiecesController>();
 
+    if (!vehiclePiecesController) return null;
 
     var vehicleManager =
       vehiclePiecesController.Manager;
-    if (vehiclePiecesController.Manager == null)
+    if (!vehiclePiecesController.Manager)
     {
       BoatNotDetectedMessage();
       return null;

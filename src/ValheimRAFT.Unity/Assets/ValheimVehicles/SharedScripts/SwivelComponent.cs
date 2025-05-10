@@ -62,7 +62,7 @@ namespace ValheimVehicles.SharedScripts
     [SerializeField] public UnityEvent onRotationReturned;
 
     [Header("Movement Mode Settings")]
-    [SerializeField] public Vector3 movementOffset = new(0f, 2f, 0f);
+    [SerializeField] public Vector3 movementOffset = new(0f, 0f, 0f);
     [SerializeField] public bool useWorldPosition;
     [SerializeField] public UnityEvent onMovementReachedTarget;
     [SerializeField] public UnityEvent onMovementReturned;
