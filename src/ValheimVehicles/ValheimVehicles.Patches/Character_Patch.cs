@@ -5,7 +5,6 @@ using HarmonyLib;
 using UnityEngine;
 using ValheimVehicles.Compat;
 using ValheimVehicles.Helpers;
-using ValheimVehicles.Prefabs;
 using ValheimVehicles.Controllers;
 
 namespace ValheimVehicles.Patches;
@@ -13,16 +12,20 @@ namespace ValheimVehicles.Patches;
 [HarmonyPatch]
 public class Character_Patch
 {
+  public static bool HasTargettingManager = false;
   [HarmonyPatch(typeof(Character), "Awake")]
   [HarmonyPostfix]
   public static void Character_Awake(Character __instance)
   {
 #if DEBUG
-    if (NearestTargetScanManager.Instance == null)
+    if (HasTargettingManager)
     {
-      __instance.gameObject.AddComponent<NearestTargetScanManager>();
+      if (NearestTargetScanManager.Instance == null)
+      {
+        __instance.gameObject.AddComponent<NearestTargetScanManager>();
+      }
+      __instance.gameObject.AddComponent<NearestTargetListener>();
     }
-    __instance.gameObject.AddComponent<NearestTargetListener>();
 #endif
   }
 
