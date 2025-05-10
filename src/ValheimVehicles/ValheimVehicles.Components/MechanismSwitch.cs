@@ -13,6 +13,7 @@ using ValheimVehicles.Patches;
 using ValheimVehicles.Structs;
 using ValheimVehicles.SharedScripts;
 using ValheimVehicles.SharedScripts.UI;
+using ValheimVehicles.UI;
 
 namespace ValheimVehicles.Components;
 
@@ -224,12 +225,21 @@ public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interac
 
   public void TriggerSwivelPanel()
   {
-    if (!m_nearestSwivel) return;
-    m_nearestSwivel.RequestNextMotionState();
+    if (!m_nearestSwivel)
+    {
+      FindNearestSwivel(out m_nearestSwivel);
+      return;
+    }
+    if (!SwivelUIPanelComponentIntegration.Instance)
+    {
+      SwivelUIPanelComponentIntegration.Init();
+    }
+    SwivelUIPanelComponentIntegration.Instance.BindTo(m_nearestSwivel, true);
   }
 
   public void TriggerSwivelAction()
   {
+    m_nearestSwivel.RequestNextMotionState();
     return;
   }
 
@@ -288,10 +298,10 @@ public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interac
   {
     if (!MechanismSelectorPanelIntegration.Instance)
     {
-      MechanismSelectorPanelIntegration.InitComponent();
+      MechanismSelectorPanelIntegration.Init();
       if (!MechanismSelectorPanelIntegration.Instance) return;
     }
-    MechanismSelectorPanelIntegration.Instance.BindTo(SelectedAction, this);
+    MechanismSelectorPanelIntegration.Instance.BindTo(this, true);
   }
 
   public bool Interact(Humanoid character, bool hold, bool alt)
@@ -317,7 +327,7 @@ public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interac
       MechanismAction.CreativeMode => ModTranslations.CreativeMode,
       MechanismAction.ColliderEditMode => ModTranslations.ToggleSwitch_MaskColliderEditMode,
       MechanismAction.SwivelEditMode => ModTranslations.Swivel_Edit,
-      MechanismAction.SwivelActivateMode => ModTranslations.Swivel_Activate,
+      MechanismAction.SwivelActivateMode => ModTranslations.Swivel_Name,
       _ => throw new ArgumentOutOfRangeException(nameof(action), action, null)
     };
   }

@@ -6,6 +6,7 @@
 using System;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 using ValheimVehicles.Interfaces;
 
 #endregion
@@ -18,7 +19,7 @@ namespace ValheimVehicles.SharedScripts.UI
     [SerializeField] public float MaxUIWidth = 400f;
     private TMP_Dropdown actionDropdown;
 
-    internal GameObject panelRoot;
+    public GameObject panelRoot;
     [SerializeField] public SwivelUISharedStyles viewStyles = new();
     private IMechanismActionSetter _mechanismActionSetterComponent;
     public MechanismAction SelectedAction
@@ -26,26 +27,37 @@ namespace ValheimVehicles.SharedScripts.UI
       get;
       private set;
     }
-#if UNITY_EDITOR
-    public override void Awake()
-    {
-      base.Awake();
-      BindTo(MechanismActions.SwivelEditMode);
-    }
-#endif
 
     public Action<MechanismAction>? OnSelectedActionChanged;
 
-    public virtual void BindTo(MechanismAction current, IMechanismActionSetter mechanismActionSetter)
+    public virtual void BindTo(IMechanismActionSetter mechanismActionSetter, bool isToggle = false)
     {
       _mechanismActionSetterComponent = mechanismActionSetter;
-      SelectedAction = current;
+      SelectedAction = mechanismActionSetter.SelectedAction;
 
       if (panelRoot == null)
         CreateUI();
 
       actionDropdown.SetValueWithoutNotify((int)SelectedAction);
-      Show();
+      if (!isToggle)
+      {
+        Show();
+      }
+      else
+      {
+        Toggle();
+      }
+    }
+
+    public void Toggle()
+    {
+      if (panelRoot == null) return;
+      if (!panelRoot.activeSelf)
+      {
+        Show();
+        return;
+      }
+      Hide();
     }
 
     public void Show()
@@ -61,11 +73,12 @@ namespace ValheimVehicles.SharedScripts.UI
 
     public virtual GameObject CreateUIRoot()
     {
-      var root = SwivelUIHelpers.CreateUICanvas("ToggleUICanvas", transform);
-      return root.gameObject;
+      throw new NotImplementedException();
+      // var root = SwivelUIHelpers.CreateUICanvas("ToggleUICanvas", transform);
+      // return root.gameObject;
     }
 
-    private void CreateUI()
+    public virtual void CreateUI()
     {
       panelRoot = CreateUIRoot();
       var scrollContainer = SwivelUIHelpers.CreateScrollView(panelRoot.transform, viewStyles, out var scrollRect);

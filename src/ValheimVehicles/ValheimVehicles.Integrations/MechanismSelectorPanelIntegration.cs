@@ -21,13 +21,24 @@ public class MechanismSelectorPanelIntegration : MechanismSelectorPanel
     width = 150
   };
 
-  public static void InitComponent()
+  public static void Init()
   {
-    Game.instance.gameObject.AddComponent<MechanismSelectorPanel>();
+    Game.instance.gameObject.AddComponent<MechanismSelectorPanelIntegration>();
   }
 
   public override GameObject CreateUIRoot()
   {
     return PanelUtil.CreateDraggableHideShowPanel(PanelName, panelStyles, buttonStyles, ModTranslations.GuiShow, ModTranslations.GuiHide, GuiConfig.SwivelPanelLocation);
   }
+
+  /// <summary>
+  /// TODO use create draggable CreateDraggableHideShowPanel() from PanelUtil instead for this smaller component
+  /// </summary>
+  // public override void CreateUI()
+  // {
+  //
+  //   // CreateDraggableHideShowPanel
+  //   panelRoot = CreateUIRoot();
+  //   base.CreateUI();
+  // }
 }

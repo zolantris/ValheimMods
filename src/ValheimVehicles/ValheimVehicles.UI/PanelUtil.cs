@@ -52,6 +52,9 @@ public class PanelUtil
     // Clamp panel height to screen height
     var layoutElement = uiElementRoot.AddComponent<LayoutElement>();
     layoutElement.preferredHeight = Mathf.Clamp(Screen.height - 100f, 500, 800f);
+    layoutElement.flexibleWidth = 1;
+    layoutElement.minWidth = 300;
+    layoutElement.preferredWidth = 500;
     layoutElement.flexibleHeight = 0;
 
     return uiElementRoot;
@@ -99,6 +102,7 @@ public class PanelUtil
       buttonStyles.width ?? 150,
       buttonStyles.height ?? 150);
     var buttonLayout = buttonObject.AddComponent<LayoutElement>();
+    buttonLayout.flexibleWidth = 150f;
     buttonLayout.flexibleHeight = 0; // Don't stretch vertically
     buttonLayout.preferredHeight = buttonStyles.height ?? 40f; // Set fixed height
     buttonLayout.minHeight = 32f; // Prevent collapsing

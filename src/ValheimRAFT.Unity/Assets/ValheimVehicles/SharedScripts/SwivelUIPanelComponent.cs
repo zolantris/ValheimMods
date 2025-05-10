@@ -54,7 +54,7 @@ namespace ValheimVehicles.SharedScripts.UI
     // for integrations
     [UsedImplicitly]
     public virtual void OnBindTo() {}
-    public void BindTo(SwivelComponent target)
+    public void BindTo(SwivelComponent target, bool isToggle = false)
     {
       CurrentSwivel = target;
       if (CurrentSwivel == null) return;
@@ -78,18 +78,25 @@ namespace ValheimVehicles.SharedScripts.UI
       movementLerpRow.GetComponentInChildren<Slider>().SetValueWithoutNotify(CurrentSwivel.InterpolationSpeed);
 
       RefreshUI();
-      Show();
+      if (!isToggle)
+      {
+        Show();
+      }
+      else
+      {
+        Toggle();
+      }
     }
 
     public void Toggle()
     {
-      if (panelRoot == null)
+      if (panelRoot == null) return;
+      if (!panelRoot.activeSelf)
       {
         Show();
         return;
       }
-      if (panelRoot.activeSelf) Hide();
-      else Show();
+      Hide();
     }
 
     public void Show()

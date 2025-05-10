@@ -171,7 +171,6 @@
   "valheim_vehicles_mechanism_swivel": "Swivel",
   "valheim_vehicles_mechanism_swivel_desc": "A mechanism that allows for rotating and moving items on a vehicle or anywhere independently.",
   "valheim_vehicles_mechanism_swivel_edit": "to Edit",
-  "valheim_vehicles_mechanism_swivel_activate": "to Activate",
   "valheim_vehicles_mechanism_swivel_connected": "Connected",
   "valheim_vehicles_mechanism_electric_pylon": "Electric Pylon",
   "valheim_vehicles_mechanism_electric_pylon_desc": "Allows for sharing power within a specific radius. Collects unstable electricity.",

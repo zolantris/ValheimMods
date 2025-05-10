@@ -39,6 +39,14 @@ public class SwivelUIPanelComponentIntegration : SwivelUIPanelComponent
     OnPanelToggleAction -= OnPanelToggle;
   }
 
+  public static void Init()
+  {
+    if (!Instance && Game.instance)
+    {
+      Game.instance.gameObject.AddComponent<SwivelUIPanelComponentIntegration>();
+    }
+  }
+
   public override void OnBindTo()
   {
     if (CurrentSwivel == null) return;
