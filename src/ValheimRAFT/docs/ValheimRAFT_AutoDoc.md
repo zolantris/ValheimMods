@@ -760,8 +760,8 @@ Other methods removed after 2.5.0
 - Description: 
 - Default Value: 1.2
 
-### LandVehicle TreadOffset 
-- Description: Wheel offset. Allowing for raising the treads higher. May require increasing suspension distance so the treads spawn then push the vehicle upwards. Negative lowers the wheels. Positive raises the treads
+### LandVehicle Tread Vertical Offset 
+- Description: Wheel offset for Y position. Allowing for raising the treads higher. May require increasing suspension distance so the treads spawn then push the vehicle upwards. Negative lowers the wheels. Positive raises the treads. This value will not override custom config vehicles.
 - Default Value: -1
 
 ### MaxVehicleLinearVelocity_1.0.x 
@@ -937,6 +937,16 @@ Other methods removed after 2.5.0
 ### ServerRaftUpdateZoneInterval 
 - Description: Allows Server Admin control over the update tick for the RAFT location. Larger Rafts will take much longer and lag out players, but making this ticket longer will make the raft turn into a box from a long distance away.
 - Default Value: 5
+
+## Gui
+
+### SwivelPanelLocation 
+- Description: SwivelPanel screen location. This is a protected value and will not allow panels off screen.
+- Default Value: (0.50, 0.50)
+
+### VehicleCommandsPanelLocation 
+- Description: VehicleCommands panel screen location. This is a protected value and will not allow panels off screen.
+- Default Value: (0.50, 0.50)
 
 ## QuickStartWorld
 
