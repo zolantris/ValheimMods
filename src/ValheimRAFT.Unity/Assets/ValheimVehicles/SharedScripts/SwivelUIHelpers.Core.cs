@@ -1,9 +1,9 @@
 ﻿#region
 
-using TMPro;
-using UnityEngine;
-using UnityEngine.Events;
-using UnityEngine.UI;
+  using TMPro;
+  using UnityEngine;
+  using UnityEngine.Events;
+  using UnityEngine.UI;
 
 #endregion
 
@@ -13,74 +13,76 @@ using UnityEngine.UI;
   {
     public static partial class SwivelUIHelpers
     {
-      public static GameObject AddHeaderWithCloseButton(Transform parent, SwivelUISharedStyles viewStyles, string text, UnityAction onClose)
-{
-    var row = new GameObject("HeaderRow", typeof(RectTransform), typeof(HorizontalLayoutGroup));
-    row.transform.SetParent(parent, false);
+      public static GameObject AddRowWithButton(Transform parent, SwivelUISharedStyles viewStyles, string? label, string buttonText, float buttonWidth, float buttonHeight, out TextMeshProUGUI statusTextOut, UnityAction onClick)
+      {
+        var row = new GameObject("RowWithButton", typeof(RectTransform), typeof(HorizontalLayoutGroup));
+        row.transform.SetParent(parent, false);
 
-    var layout = row.GetComponent<HorizontalLayoutGroup>();
-    layout.childAlignment = TextAnchor.MiddleCenter;
-    layout.childControlHeight = true;
-    layout.childControlWidth = true;
-    layout.childForceExpandWidth = false;
-    layout.spacing = 10f;
+        var layout = row.GetComponent<HorizontalLayoutGroup>();
+        layout.childAlignment = TextAnchor.MiddleCenter;
+        layout.childControlHeight = true;
+        layout.childControlWidth = true;
+        layout.childForceExpandWidth = false;
+        layout.spacing = 10f;
 
-    // === Label ===
-    var labelGO = new GameObject("HeaderLabel", typeof(TextMeshProUGUI), typeof(LayoutElement));
-    labelGO.transform.SetParent(row.transform, false);
-    var label = labelGO.GetComponent<TextMeshProUGUI>();
-    label.text = text;
-    label.fontSize = viewStyles.FontSizeSectionLabel;
-    label.color = Color.white;
-    label.alignment = TextAlignmentOptions.Left;
-    label.enableAutoSizing = false; // ⬅ prevent font autosize
+        if (!string.IsNullOrEmpty(label))
+        {
+          var labelGO = new GameObject("HeaderLabel", typeof(TextMeshProUGUI), typeof(LayoutElement));
+          labelGO.transform.SetParent(row.transform, false);
 
-    var labelLayout = labelGO.GetComponent<LayoutElement>();
-    labelLayout.flexibleWidth = 1f; // ⬅ allow label to stretch
-    labelLayout.minWidth = viewStyles.LabelMinWidth;
-    labelLayout.preferredWidth = viewStyles.LabelPreferredWidth;
+          var labelText = labelGO.GetComponent<TextMeshProUGUI>();
+          labelText.text = label;
+          labelText.fontSize = viewStyles.FontSizeSectionLabel;
+          labelText.color = viewStyles.LabelColor;
+          labelText.alignment = TextAlignmentOptions.Left;
+          labelText.enableAutoSizing = false;
 
-    // === Close Button ===
-    var buttonGO = new GameObject("CloseButton", typeof(RectTransform), typeof(Button), typeof(Image), typeof(LayoutElement));
-    buttonGO.transform.SetParent(row.transform, false);
-    
-    var buttonRT = buttonGO.GetComponent<RectTransform>();
-    buttonRT.sizeDelta = new Vector2(48f, 48f); // ⬅ lock button size
-    buttonRT.anchorMin = new Vector2(1f, 0.5f);
-    buttonRT.anchorMax = new Vector2(1f, 0.5f);
-    buttonRT.pivot = new Vector2(1f, 0.5f);
-    buttonRT.anchoredPosition = Vector2.zero;
+          var labelLayout = labelGO.GetComponent<LayoutElement>();
+          labelLayout.flexibleWidth = 1f;
+          labelLayout.minWidth = viewStyles.LabelMinWidth;
+          labelLayout.preferredWidth = viewStyles.LabelPreferredWidth;
+        }
 
-    var button = buttonGO.GetComponent<Button>();
-    button.onClick.AddListener(onClose);
+        var buttonGO = new GameObject("ActionButton", typeof(RectTransform), typeof(Button), typeof(Image), typeof(LayoutElement));
+        buttonGO.transform.SetParent(row.transform, false);
 
-    var buttonImage = buttonGO.GetComponent<Image>();
-    buttonImage.color = SwivelUIColors.grayBg;
+        var buttonRT = buttonGO.GetComponent<RectTransform>();
+        buttonRT.sizeDelta = new Vector2(buttonWidth, buttonHeight);
+        buttonRT.anchorMin = new Vector2(1f, 0.5f);
+        buttonRT.anchorMax = new Vector2(1f, 0.5f);
+        buttonRT.pivot = new Vector2(1f, 0.5f);
+        buttonRT.anchoredPosition = Vector2.zero;
 
-    var buttonLE = buttonGO.GetComponent<LayoutElement>();
-    buttonLE.preferredWidth = 48f;
-    buttonLE.preferredHeight = 48f;
-    buttonLE.minWidth = 48f;
-    buttonLE.minHeight = 48f;
-    buttonLE.flexibleWidth = 0;
+        var button = buttonGO.GetComponent<Button>();
+        var buttonImage = buttonGO.GetComponent<Image>();
+        buttonImage.color = SwivelUIColors.grayBg;
+        button.onClick.AddListener(onClick);
 
-    // === X Text ===
-    var textGO = new GameObject("XLabel", typeof(TextMeshProUGUI));
-    textGO.transform.SetParent(buttonGO.transform, false);
-    var xText = textGO.GetComponent<TextMeshProUGUI>();
-    xText.text = "X";
-    xText.fontSize = 32;
-    xText.color = Color.white;
-    xText.alignment = TextAlignmentOptions.Center;
+        var layoutElement = buttonGO.GetComponent<LayoutElement>();
+        layoutElement.minWidth = buttonWidth;
+        layoutElement.minHeight = buttonHeight;
+        layoutElement.preferredWidth = buttonWidth;
+        layoutElement.preferredHeight = buttonHeight;
+        layoutElement.flexibleWidth = 0;
 
-    var xRT = textGO.GetComponent<RectTransform>();
-    xRT.anchorMin = Vector2.zero;
-    xRT.anchorMax = Vector2.one;
-    xRT.offsetMin = Vector2.zero;
-    xRT.offsetMax = Vector2.zero;
+        var textGO = new GameObject("ButtonText", typeof(TextMeshProUGUI));
+        textGO.transform.SetParent(buttonGO.transform, false);
+        var btnText = textGO.GetComponent<TextMeshProUGUI>();
+        btnText.text = buttonText;
+        btnText.fontSize = 24;
+        btnText.color = Color.white;
+        btnText.alignment = TextAlignmentOptions.Center;
 
-    return row;
-}
+        statusTextOut = btnText;
+
+        var textRT = textGO.GetComponent<RectTransform>();
+        textRT.anchorMin = Vector2.zero;
+        textRT.anchorMax = Vector2.one;
+        textRT.offsetMin = Vector2.zero;
+        textRT.offsetMax = Vector2.zero;
+
+        return row;
+      }
 
 
       public static GameObject CreateSpacer(Transform parent, float height = 20f)

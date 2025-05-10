@@ -42,7 +42,7 @@
     public VehiclePiecesController? m_vehiclePiecesController;
     public VehicleManager? m_vehicle => m_vehiclePiecesController == null ? null : m_vehiclePiecesController.Manager;
 
-    private ZNetView m_nview;
+    public ZNetView m_nview;
     private int _persistentZdoId;
     public static readonly Dictionary<int, SwivelComponentIntegration> ActiveInstances = [];
     public List<ZNetView> m_pieces = [];
@@ -52,11 +52,17 @@
     public static float turnTime = 50f;
 
     private HoverFadeText m_hoverFadeText;
-    private readonly PrefabConfigRPCSync<SwivelCustomConfig> _prefabConfigSync = new();
-    public SwivelCustomConfig m_config => _prefabConfigSync.CustomConfig;
+    public SwivelConfigRPCSync prefabConfigSync;
+    public SwivelCustomConfig m_config => prefabConfigSync.CustomConfig;
 
     public override void Awake()
     {
+      if (!prefabConfigSync)
+      {
+        prefabConfigSync = gameObject.AddComponent<SwivelConfigRPCSync>();
+      }
+      prefabConfigSync.SetComponentFromInstance(this);
+
       CanUpdate = false;
       base.Awake();
 
@@ -76,7 +82,7 @@
 
     public void OnEnable()
     {
-      _prefabConfigSync.RegisterRPCListeners();
+      prefabConfigSync.RegisterRPCListeners();
 
       var persistentId = GetPersistentId();
       if (persistentId == 0) return;
@@ -98,7 +104,7 @@
 
     public void OnDisable()
     {
-      _prefabConfigSync.UnregisterRPCListeners();
+      prefabConfigSync.UnregisterRPCListeners();
 
       var persistentId = GetPersistentId();
       if (persistentId == 0) return;
@@ -178,7 +184,7 @@
 
     public void OnActivationComplete()
     {
-      SetInitialLocalRotation();
+      // SetInitialLocalRotation();
       CanUpdate = true;
     }
 
@@ -262,7 +268,6 @@
     {
       base.Start();
       m_vehiclePiecesController = GetComponentInParent<VehiclePiecesController>();
-      SetInitialLocalRotation();
       _pieceActivator.StartInitPersistentId();
     }
 
@@ -300,13 +305,6 @@
     //   base.ToggleDebugger(val);
     // }
 
-    // public override void SetInitialLocalRotation()
-    // {
-    //   if (m_nview == null || m_nview.GetZDO() == null) return;
-    //   var localRotation = m_nview.GetZDO().GetVec3(VehicleZdoVars.MBRotationVecHash, transform.localRotation.eulerAngles);
-    //   m_startPieceRotation = Quaternion.Euler(localRotation);
-    // }
-
     public void OnInitComplete()
     {
       StartActivatePendingSwivelPieces();
@@ -328,7 +326,7 @@
         return Quaternion.RotateTowards(piecesContainer.transform.rotation, dir, 30f * Time.fixedDeltaTime);
       }
       // use the sync mast
-      return m_vehicle.MovementController.m_mastObject.transform.localRotation;
+      return m_vehicle.MovementController!.m_mastObject.transform.localRotation;
     }
 
   #region IBasePieceActivator

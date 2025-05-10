@@ -1,7 +1,7 @@
 ﻿#region
 
-  using UnityEngine;
-  using UnityEngine.UI;
+using UnityEngine;
+using UnityEngine.UI;
 
 #endregion
 
@@ -22,6 +22,7 @@
         scrollRectTransform.anchorMin = new Vector2(0, 1);
         scrollRectTransform.anchorMax = new Vector2(0, 1);
         scrollRectTransform.pivot = new Vector2(0, 1);
+        scrollRect.horizontal = false;
         scrollRectTransform.anchoredPosition = new Vector2(20f, -20f);
         scrollRectTransform.sizeDelta = new Vector2(Mathf.Clamp(Screen.width * 0.3f, viewStyles.minWidth, viewStyles.maxWidth), Mathf.Min(viewStyles.maxHeight, Screen.height));
 

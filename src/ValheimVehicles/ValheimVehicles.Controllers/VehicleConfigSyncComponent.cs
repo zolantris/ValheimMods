@@ -16,17 +16,54 @@
 
   namespace ValheimVehicles.Controllers;
 
-  public class VehicleConfigSyncComponent : PrefabConfigRPCSync<VehicleCustomConfig>, IVehicleSharedProperties
+  public class VehicleConfigSyncComponent : PrefabConfigRPCSync<VehicleCustomConfig, IVehicleConfig>, IVehicleSharedProperties
   {
-    private VehicleManager _vehicle;
-    private BoxCollider? FloatCollider => _vehicle.FloatCollider;
+    private VehicleManager? _vehicle;
+    private BoxCollider? FloatCollider => _vehicle != null ? _vehicle.FloatCollider : null;
     private VehicleFloatationMode _cachedFloatationMode = VehicleFloatationMode.Average;
     private float _cachedFloatationHeight = 0;
 
+    // public string Version
+    // {
+    //   get => VehicleConfigSync.Version;
+    //   set => VehicleConfigSync.Version = value;
+    // }
+    //
+    // public float TreadDistance
+    // {
+    //   get;
+    //   set;
+    // }
+    // public float TreadHeight
+    // {
+    //   get;
+    //   set;
+    // }
+    // public float TreadScaleX
+    // {
+    //   get;
+    //   set;
+    // }
+    // public bool HasCustomFloatationHeight
+    // {
+    //   get;
+    //   set;
+    // }
+    // public float CustomFloatationHeight
+    // {
+    //   get;
+    //   set;
+    // }
+    // public float CenterOfMassOffset
+    // {
+    //   get;
+    //   set;
+    // }
+
     public override void Awake()
     {
-      base.Awake();
       _vehicle = GetComponent<VehicleManager>();
+      base.Awake();
     }
 
   #region IRPCSync
@@ -59,7 +96,7 @@
     public void SendSyncFloatationMode(bool isCustom, float relativeHeight)
     {
       // do nothing for land-vehicles.
-      if (_vehicle.IsLandVehicle) return;
+      if (!_vehicle || _vehicle.IsLandVehicle) return;
 
       // set config immediately, but it might not be updated if the ranges are out of bounds
       CustomConfig.HasCustomFloatationHeight = isCustom;

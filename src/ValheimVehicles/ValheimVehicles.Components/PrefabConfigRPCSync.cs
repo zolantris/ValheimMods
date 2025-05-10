@@ -1,15 +1,17 @@
 using System;
 using System.Diagnostics.CodeAnalysis;
 using UnityEngine;
+using ValheimVehicles.Config;
 using ValheimVehicles.Controllers;
 using ValheimVehicles.Helpers;
 using ValheimVehicles.Interfaces;
 using ValheimVehicles.SharedScripts;
+using ValheimVehicles.SharedScripts.UI;
 
 namespace ValheimVehicles.Components;
 
 [RequireComponent(typeof(ZNetView))]
-public class PrefabConfigRPCSync<T> : MonoBehaviour, IPrefabCustomConfigRPCSync<T> where T : ISerializableConfig<T>, new()
+public class PrefabConfigRPCSync<T, TComponentInterface> : MonoBehaviour, IPrefabCustomConfigRPCSync<T> where T : ISerializableConfig<T, TComponentInterface>, new()
 {
   public ZNetView? m_nview { get; set; }
   private T? m_configCache = default;
@@ -19,6 +21,7 @@ public class PrefabConfigRPCSync<T> : MonoBehaviour, IPrefabCustomConfigRPCSync<
   public T CustomConfig { get; set; } = new();
   internal SafeRPCHandler? rpcHandler;
   internal RetryGuard retryGuard = null!;
+  private TComponentInterface controller;
 
   public virtual void Awake()
   {
@@ -39,6 +42,12 @@ public class PrefabConfigRPCSync<T> : MonoBehaviour, IPrefabCustomConfigRPCSync<
 
     // cancel all Invoke calls from retryGuard.
     CancelInvoke();
+  }
+
+  public void SetComponentFromInstance(TComponentInterface instanceComponent)
+  {
+    if (controller != null) return;
+    controller = instanceComponent;
   }
 
   public void InitRPCHandler()
@@ -90,9 +99,14 @@ public class PrefabConfigRPCSync<T> : MonoBehaviour, IPrefabCustomConfigRPCSync<
   /// <param name="forceUpdate"></param>
   public void SyncPrefabConfig(bool forceUpdate = false)
   {
+    if (controller == null)
+    {
+      LoggerProvider.LogError($"SyncPrefabConfig failed to invoke due to missing component type {typeof(TComponentInterface).Name}");
+      return;
+    }
     if (m_configCache != null && !forceUpdate) return;
     if (!this.IsNetViewValid(out var netView)) return;
-    CustomConfig = CustomConfig.Load(netView.GetZDO());
+    CustomConfig = CustomConfig.Load(netView.GetZDO(), controller);
   }
 
   /// <summary>

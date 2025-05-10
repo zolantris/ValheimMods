@@ -4001,7 +4001,10 @@
       LoggerProvider.LogDebug("Changing ship owner to " + playerOwner +
                               $", name: {targetPlayer.GetPlayerName()}");
 
-      VehicleConfigSync.SyncVehicleBounds();
+      if (VehicleConfigSync != null)
+      {
+        VehicleConfigSync.SyncVehicleBounds();
+      }
       var attachTransform = lastUsedWheelComponent.AttachPoint;
 
       // local player only.

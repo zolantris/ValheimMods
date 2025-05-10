@@ -39,7 +39,10 @@
             <Link>SharedScripts\IControllerValidator.cs</Link>
         </Compile>
         <Compile Update="..\ValheimRAFT.Unity\Assets\ValheimVehicles\SharedScripts\SwivelPlatformController.cs">
-          <Link>SharedScripts\SwivelPlatformController.cs</Link>
+            <Link>SharedScripts\SwivelPlatformController.cs</Link>
+        </Compile>
+        <Compile Update="..\ValheimRAFT.Unity\Assets\ValheimVehicles\SharedScripts\ISwivelConfig.cs">
+            <Link>SharedScripts\ISwivelConfig.cs</Link>
         </Compile>
     </ItemGroup>
     <ItemGroup Label="Internal ValheimVehicles scripts">

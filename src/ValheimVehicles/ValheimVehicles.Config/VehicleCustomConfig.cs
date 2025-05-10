@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using ValheimVehicles.Compat;
+using ValheimVehicles.Components;
 using ValheimVehicles.Interfaces;
 using ValheimVehicles.SharedScripts;
 
@@ -9,7 +10,7 @@ namespace ValheimVehicles.Config;
 /// A config syncing component for per-vehicle configs.
 /// - This is not a BepInEx config component, there will be no BepInEx fields used.
 /// </summary>
-public class VehicleCustomConfig : ISerializableConfig<VehicleCustomConfig>
+public class VehicleCustomConfig : ISerializableConfig<VehicleCustomConfig, IVehicleConfig>, IVehicleConfig
 {
   // Constants for ZDO keys
   private const string Key_Version = "vehicle_version";
@@ -119,18 +120,27 @@ public class VehicleCustomConfig : ISerializableConfig<VehicleCustomConfig>
   }
 
 
-  public VehicleCustomConfig Load(ZDO zdo)
+  public VehicleCustomConfig Load(ZDO zdo, IVehicleConfig configFromComponent)
   {
     return new VehicleCustomConfig
     {
       Version = zdo.GetString(Key_Version, ValheimRAFT_API.GetPluginVersion()),
-      TreadDistance = zdo.GetFloat(Key_TreadDistance, 2f),
-      TreadHeight = zdo.GetFloat(Key_TreadHeight, 0f),
-      TreadScaleX = zdo.GetFloat(Key_TreadScaleX, 1f),
-      HasCustomFloatationHeight = zdo.GetBool(Key_HasCustomFloatationHeight),
-      CustomFloatationHeight = zdo.GetFloat(Key_CustomFloatationHeight, 0f),
-      CenterOfMassOffset = zdo.GetFloat(Key_CenterOfMassOffset, 0f)
+      TreadDistance = Mathf.Clamp(zdo.GetFloat(Key_TreadDistance, 0.1f), 0.1f, 20f),
+      TreadHeight = zdo.GetFloat(Key_TreadHeight, PhysicsConfig.VehicleLandTreadVerticalOffset.Value),
+      TreadScaleX = zdo.GetFloat(Key_TreadScaleX, PrefabConfig.ExperimentalTreadScaleX.Value),
+      HasCustomFloatationHeight = zdo.GetBool(Key_HasCustomFloatationHeight, configFromComponent.HasCustomFloatationHeight),
+      CustomFloatationHeight = zdo.GetFloat(Key_CustomFloatationHeight, configFromComponent.CustomFloatationHeight),
+      CenterOfMassOffset = zdo.GetFloat(Key_CenterOfMassOffset, configFromComponent.CenterOfMassOffset)
     };
+  }
+
+  public void ApplyFrom(IVehicleConfig config)
+  {
+    throw new System.NotImplementedException();
+  }
+  public void ApplyTo(IVehicleConfig config)
+  {
+    throw new System.NotImplementedException();
   }
 
   public VehicleCustomConfig Deserialize(ZPackage package)

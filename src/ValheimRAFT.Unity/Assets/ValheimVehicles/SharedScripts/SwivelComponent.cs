@@ -7,6 +7,7 @@ using System;
 using System.ComponentModel;
 using UnityEngine;
 using UnityEngine.Events;
+using ValheimVehicles.SharedScripts.UI;
 
 #endregion
 
@@ -21,7 +22,7 @@ namespace ValheimVehicles.SharedScripts
     Z = 4
   }
 
-  public class SwivelComponent : MonoBehaviour
+  public class SwivelComponent : MonoBehaviour, ISwivelConfig
   {
     public enum HingeDirection
     {
@@ -37,31 +38,34 @@ namespace ValheimVehicles.SharedScripts
 
     public static Vector3 cachedWindDirection = Vector3.zero;
 
+    public static float RotationInterpolateSpeedMultiplier = 0.5f;
+    public static float MovementInterpolationSpeedMultiplier = 0.05f;
+
     [Header("Swivel General Settings")]
-    [SerializeField] private SwivelMode mode = SwivelMode.Rotate;
-    [SerializeField] private float movementLerpSpeed = 2f;
-    [SerializeField] private Transform animatedTransform;
-    [SerializeField] private MotionState currentMotionState = MotionState.Idle;
+    [SerializeField] public SwivelMode mode = SwivelMode.Rotate;
+    [SerializeField] public float interpolationSpeed = 2f;
+    [SerializeField] public Transform animatedTransform;
+    [SerializeField] public MotionState currentMotionState = MotionState.Idle;
 
     [Header("Enemy Tracking Settings")]
-    [SerializeField] private float minTrackingRange = 5f;
-    [SerializeField] private float maxTrackingRange = 50f;
+    [SerializeField] public float minTrackingRange = 5f;
+    [SerializeField] public float maxTrackingRange = 50f;
     [SerializeField] internal GameObject nearestTarget;
 
     [Header("Rotation Mode Settings")]
-    [SerializeField] private HingeAxis hingeAxes = HingeAxis.Y;
-    [SerializeField] private HingeDirection xHingeDirection = HingeDirection.Forward;
-    [SerializeField] private HingeDirection yHingeDirection = HingeDirection.Forward;
-    [SerializeField] private HingeDirection zHingeDirection = HingeDirection.Forward;
-    [SerializeField] private Vector3 maxRotationEuler = new(45f, 90f, 45f);
-    [SerializeField] private UnityEvent onRotationReachedTarget;
-    [SerializeField] private UnityEvent onRotationReturned;
+    [SerializeField] public HingeAxis hingeAxes = HingeAxis.Y;
+    [SerializeField] public HingeDirection xHingeDirection = HingeDirection.Forward;
+    [SerializeField] public HingeDirection yHingeDirection = HingeDirection.Forward;
+    [SerializeField] public HingeDirection zHingeDirection = HingeDirection.Forward;
+    [SerializeField] public Vector3 maxRotationEuler = new(45f, 90f, 45f);
+    [SerializeField] public UnityEvent onRotationReachedTarget;
+    [SerializeField] public UnityEvent onRotationReturned;
 
     [Header("Movement Mode Settings")]
-    [SerializeField] private Vector3 movementOffset = new(0f, 2f, 0f);
-    [SerializeField] private bool useWorldPosition;
-    [SerializeField] private UnityEvent onMovementReachedTarget;
-    [SerializeField] private UnityEvent onMovementReturned;
+    [SerializeField] public Vector3 movementOffset = new(0f, 2f, 0f);
+    [SerializeField] public bool useWorldPosition;
+    [SerializeField] public UnityEvent onMovementReachedTarget;
+    [SerializeField] public UnityEvent onMovementReturned;
 
     [Description("Piece container containing all children to be rotated or moved.")]
     public Transform piecesContainer;
@@ -88,11 +92,11 @@ namespace ValheimVehicles.SharedScripts
     private Vector3 targetMovementPosition;
     private Quaternion targetRotation;
 
-    public SwivelMode Mode => mode;
     public MotionState CurrentMotionState => currentMotionState;
     public HingeAxis HingeAxes => hingeAxes;
     public Vector3 MaxEuler => maxRotationEuler;
-    public float MovementLerpSpeed => movementLerpSpeed;
+
+    public float InterpolationSpeed => interpolationSpeed;
 
     public virtual void Awake()
     {
@@ -134,7 +138,7 @@ namespace ValheimVehicles.SharedScripts
         case SwivelMode.Rotate:
           targetRotation = CalculateRotationTarget();
           var current = animatedTransform.localRotation;
-          var interpolated = Quaternion.Slerp(current, targetRotation, movementLerpSpeed * Time.fixedDeltaTime);
+          var interpolated = Quaternion.Slerp(current, targetRotation, interpolationSpeed * RotationInterpolateSpeedMultiplier * Time.fixedDeltaTime);
           animatedRigidbody.Move(transform.position, transform.rotation * interpolated);
           didMove = true;
 
@@ -161,7 +165,7 @@ namespace ValheimVehicles.SharedScripts
             : startLocalPosition + movementOffset;
 
           var currentLocal = animatedTransform.localPosition;
-          var nextLocal = Vector3.Lerp(currentLocal, targetMovementPosition, movementLerpSpeed * Time.fixedDeltaTime);
+          var nextLocal = Vector3.Lerp(currentLocal, targetMovementPosition, interpolationSpeed * MovementInterpolationSpeedMultiplier * Time.fixedDeltaTime);
           var worldTarget = transform.TransformPoint(nextLocal);
           var moveWorldRot = transform.rotation;
 
@@ -192,7 +196,7 @@ namespace ValheimVehicles.SharedScripts
 
         case SwivelMode.TargetWind:
           targetRotation = CalculateTargetWindDirectionRotation();
-          animatedRigidbody.Move(transform.position,transform.rotation* targetRotation);
+          animatedRigidbody.Move(transform.position, transform.rotation * targetRotation);
           didMove = true;
           break;
       }
@@ -209,6 +213,12 @@ namespace ValheimVehicles.SharedScripts
       }
 
       SyncSnappoint();
+    }
+
+    public void SetTrackingRange(float min, float max)
+    {
+      MinTrackingRange = min;
+      MaxTrackingRange = max;
     }
 
     private void SyncSnappoint()
@@ -229,7 +239,7 @@ namespace ValheimVehicles.SharedScripts
         hingeEndEuler.z = (zHingeDirection == HingeDirection.Forward ? 1f : -1f) * maxRotationEuler.z;
 
       var target = currentMotionState == MotionState.Returning ? 0f : 1f;
-      hingeLerpProgress = Mathf.MoveTowards(hingeLerpProgress, target, movementLerpSpeed * Time.fixedDeltaTime);
+      hingeLerpProgress = Mathf.MoveTowards(hingeLerpProgress, target, interpolationSpeed * Time.fixedDeltaTime);
       return Quaternion.Euler(Vector3.Lerp(Vector3.zero, hingeEndEuler, hingeLerpProgress));
     }
 
@@ -261,7 +271,7 @@ namespace ValheimVehicles.SharedScripts
       var current = animatedTransform.localRotation;
 
       // Lerp toward wind direction using movementLerpSpeed
-      var next = Quaternion.Slerp(current, target, movementLerpSpeed * Time.fixedDeltaTime);
+      var next = Quaternion.Slerp(current, target, interpolationSpeed * Time.fixedDeltaTime);
 
       // Clamp Y (yaw) rotation
       var euler = next.eulerAngles;
@@ -273,17 +283,6 @@ namespace ValheimVehicles.SharedScripts
 
       return Quaternion.Euler(0f, clampedY, 0f);
     }
-
-    // public virtual Quaternion CalculateTargetWindDirectionRotation()
-    // {
-    //   // var nextQuaternion = Quaternion.Slerp(animatedTransform.localRotation, Quaternion.LookRotation(cachedWindDirection, transform.up), movementLerpSpeed);
-    //   var nextQuaternion = Quaternion.LookRotation(cachedWindDirection, transform.up);
-    //   if (nextQuaternion.eulerAngles.y > maxRotationEuler.y || nextQuaternion.eulerAngles.y < -maxRotationEuler.y)
-    //   {
-    //     nextQuaternion = Quaternion.Euler(0f, maxRotationEuler.y, 0f);
-    //   }
-    //   return nextQuaternion;
-    // }
 
     public void SetMode(SwivelMode newMode)
     {
@@ -297,17 +296,13 @@ namespace ValheimVehicles.SharedScripts
     {
       maxRotationEuler = maxEuler;
     }
-    public Vector3 GetMovementOffset()
-    {
-      return movementOffset;
-    }
     public void SetMovementOffset(Vector3 offset)
     {
       movementOffset = offset;
     }
     public void SetMovementLerpSpeed(float speed)
     {
-      movementLerpSpeed = Mathf.Clamp(speed, 1f, 100f);
+      interpolationSpeed = Mathf.Clamp(speed, 1f, 100f);
     }
     public void SetMotionState(MotionState state)
     {
@@ -317,5 +312,58 @@ namespace ValheimVehicles.SharedScripts
       hasRotatedTarget = false;
       hasRotatedReturn = false;
     }
+
+    #region ISwivelConfig
+
+    float ISwivelConfig.MovementLerpSpeed
+    {
+      get => interpolationSpeed;
+      set => interpolationSpeed = value;
+    }
+
+    public float MinTrackingRange
+    {
+      get => minTrackingRange;
+      set => minTrackingRange = value;
+    }
+
+    public float MaxTrackingRange
+    {
+      get => maxTrackingRange;
+      set => maxTrackingRange = value;
+    }
+
+    HingeAxis ISwivelConfig.HingeAxes
+    {
+      get => hingeAxes;
+      set => SetHingeAxes(value);
+    }
+
+    Vector3 ISwivelConfig.MaxEuler
+    {
+      get => maxRotationEuler;
+      set => SetMaxEuler(value);
+    }
+
+    public Vector3 MovementOffset
+    {
+      get => movementOffset;
+      set => SetMovementOffset(value);
+    }
+
+    public MotionState MotionState
+    {
+      get => currentMotionState;
+      set => SetMotionState(value);
+    }
+
+    public SwivelMode Mode
+    {
+      get => mode;
+      set => mode = value;
+    }
+
+    #endregion
+
   }
 }

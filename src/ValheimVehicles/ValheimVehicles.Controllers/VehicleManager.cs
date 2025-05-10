@@ -382,7 +382,7 @@
     public bool InitializeData()
     {
       if (!this.IsNetViewValid()) return false;
-      VehicleCustomConfig.Load(m_nview.GetZDO());
+      VehicleCustomConfig.Load(m_nview.GetZDO(), VehicleCustomConfig);
       return true;
     }
 
@@ -519,7 +519,7 @@
       WheelController.maxTreadLength = PhysicsConfig.VehicleLandMaxTreadLength.Value;
       WheelController.maxTreadWidth = PhysicsConfig.VehicleLandMaxTreadWidth.Value;
       WheelController.forwardDirection = MovementController.ShipDirection;
-      WheelController.wheelBottomOffset = PhysicsConfig.VehicleLandTreadOffset.Value;
+      WheelController.wheelBottomOffset = PhysicsConfig.VehicleLandTreadVerticalOffset.Value;
     }
 
     /// <summary>
