@@ -6,8 +6,10 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using UnityEngine;
+using Debug = UnityEngine.Debug;
 
 #endregion
 
@@ -30,6 +32,8 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
 
     private readonly float _updateInterval = 0.25f;
     private float _nextUpdate;
+
+    public Coroutine? _rebuildPylonNetworkRoutine;
     public static Material WireMaterial { get; set; }
 
 
@@ -82,10 +86,11 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
       if (!list.Contains(node))
         list.Add(node);
     }
-
-    public void RebuildPylonNetwork()
+    public IEnumerator RebuildPylonNetworkCoroutine()
     {
+      yield return new WaitForSeconds(1f);
       _pylons.Clear();
+      var timer = Stopwatch.StartNew();
       foreach (var p in PowerPylonRegistry.All)
       {
         if (p != null) _pylons.Add(p);
@@ -104,6 +109,12 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
 
       while (_unvisited.Count > 0)
       {
+        if (timer.ElapsedMilliseconds > 10)
+        {
+          timer.Restart();
+          yield return null;
+        }
+
         _pending.Clear();
         _chain.Clear();
 
@@ -120,6 +131,11 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
 
         while (_pending.Count > 0)
         {
+          if (timer.ElapsedMilliseconds > 10)
+          {
+            timer.Restart();
+            yield return null;
+          }
           var current = _pending.Dequeue();
           _chain.Add(current);
 
@@ -161,6 +177,15 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
           GenerateChainLine(_chain);
         }
       }
+
+      yield return new WaitForSeconds(1f);
+      _rebuildPylonNetworkRoutine = null;
+    }
+
+    public void RequestRebuildPylonNetwork()
+    {
+      if (_rebuildPylonNetworkRoutine != null) { return; }
+      _rebuildPylonNetworkRoutine = StartCoroutine(RebuildPylonNetworkCoroutine());
     }
 
     private void GenerateChainLine(List<PowerPylon> chain)
@@ -179,14 +204,14 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
 
       var curvedPoints = new List<Vector3>();
 
-      for (int i = 0; i < chain.Count - 1; i++)
+      for (var i = 0; i < chain.Count - 1; i++)
       {
         var start = parent.InverseTransformPoint(chain[i].wireConnector.position);
         var end = parent.InverseTransformPoint(chain[i + 1].wireConnector.position);
 
-        for (int j = 0; j < curvedLinePoints; j++)
+        for (var j = 0; j < curvedLinePoints; j++)
         {
-          float t = j / (float)(curvedLinePoints - 1);
+          var t = j / (float)(curvedLinePoints - 1);
           var point = Vector3.Lerp(start, end, t);
           point += Vector3.up * Mathf.Sin(t * Mathf.PI) * 0.2f;
           curvedPoints.Add(point);
@@ -218,7 +243,7 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
 
     private void SimulateNetwork(List<IPowerNode> nodes)
     {
-      float deltaTime = Time.fixedDeltaTime;
+      var deltaTime = Time.fixedDeltaTime;
       _sources.Clear();
       _storage.Clear();
       _consumers.Clear();
@@ -240,30 +265,30 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
         }
       }
 
-      float totalDemand = 0f;
+      var totalDemand = 0f;
       foreach (var c in _consumers)
         totalDemand += c.RequestedPower(deltaTime);
 
-      float fromSources = 0f;
+      var fromSources = 0f;
       foreach (var s in _sources)
         fromSources += s.RequestAvailablePower(deltaTime);
 
-      float remaining = totalDemand - fromSources;
+      var remaining = totalDemand - fromSources;
 
-      float fromStorage = 0f;
+      var fromStorage = 0f;
       if (remaining > 0f)
       {
-        float safeMargin = Mathf.Max(0.01f, totalDemand * 0.01f);
+        var safeMargin = Mathf.Max(0.01f, totalDemand * 0.01f);
         foreach (var b in _storage)
           fromStorage += b.Discharge(remaining + safeMargin);
       }
 
-      float totalAvailable = fromSources + fromStorage;
+      var totalAvailable = fromSources + fromStorage;
 
       foreach (var c in _consumers)
       {
-        float required = c.RequestedPower(deltaTime);
-        float granted = Mathf.Min(required, totalAvailable);
+        var required = c.RequestedPower(deltaTime);
+        var granted = Mathf.Min(required, totalAvailable);
         totalAvailable -= granted;
 
         c.SetActive(granted >= required);
@@ -343,13 +368,13 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
     private Transform? GetClosestPylonWire(PowerPylon origin, List<PowerPylon> networkPylons)
     {
       Transform? closest = null;
-      float closestDist = float.MaxValue;
+      var closestDist = float.MaxValue;
 
       foreach (var other in networkPylons)
       {
         if (other == null || other == origin || other.wireConnector == null) continue;
 
-        float dist = Vector3.Distance(origin.wireConnector.position, other.wireConnector.position);
+        var dist = Vector3.Distance(origin.wireConnector.position, other.wireConnector.position);
         if (dist < closestDist)
         {
           closestDist = dist;

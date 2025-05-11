@@ -5,7 +5,6 @@ using UnityEngine;
 using UnityEngine.Serialization;
 using ValheimVehicles.ConsoleCommands;
 using ValheimVehicles.Constants;
-using ValheimVehicles.Components;
 using ValheimVehicles.Helpers;
 using ValheimVehicles.Integrations;
 using ValheimVehicles.Interfaces;
@@ -13,7 +12,6 @@ using ValheimVehicles.Patches;
 using ValheimVehicles.Structs;
 using ValheimVehicles.SharedScripts;
 using ValheimVehicles.SharedScripts.Interfaces;
-using ValheimVehicles.SharedScripts.UI;
 using ValheimVehicles.UI;
 
 namespace ValheimVehicles.Components;
@@ -235,13 +233,31 @@ public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interac
     {
       SwivelUIPanelComponentIntegration.Init();
     }
-    SwivelUIPanelComponentIntegration.Instance.BindTo(m_nearestSwivel, true);
+    if (SwivelUIPanelComponentIntegration.Instance)
+    {
+      SwivelUIPanelComponentIntegration.Instance.BindTo(m_nearestSwivel, true);
+    }
+    else
+    {
+      LoggerProvider.LogError("SwivelUIPanelComponentIntegration failed to initialize.");
+    }
   }
 
   public void TriggerSwivelAction()
   {
-    m_nearestSwivel.RequestNextMotionState();
-    return;
+    if (!m_nearestSwivel)
+    {
+      FindNearestSwivel(out _);
+    }
+
+    if (m_nearestSwivel)
+    {
+      m_nearestSwivel.RequestNextMotionState();
+    }
+    else
+    {
+      LoggerProvider.LogError("No swivel detected but the user is toggling a swivel action.");
+    }
   }
 
   public RaycastHit[] m_raycasthits = new RaycastHit[20];

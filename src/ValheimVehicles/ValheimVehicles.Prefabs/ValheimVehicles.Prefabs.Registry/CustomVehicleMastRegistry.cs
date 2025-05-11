@@ -1,6 +1,7 @@
 using Jotunn.Configs;
 using Jotunn.Entities;
 using Jotunn.Managers;
+using ValheimVehicles.Components;
 using ValheimVehicles.Prefabs.Registry;
 using ValheimVehicles.SharedScripts;
 namespace ValheimVehicles.Prefabs.ValheimVehicles.Prefabs.Registry;
@@ -16,6 +17,9 @@ public class CustomVehicleMastRegistry : RegisterPrefab<CustomVehicleMastRegistr
     PrefabRegistryHelpers.AddNetViewWithPersistence(prefab);
     PrefabRegistryHelpers.AddPieceForPrefab(PrefabNames.GetMastByLevelName(mastTier), prefab);
     PrefabRegistryHelpers.SetWearNTear(prefab);
+
+    prefab.AddComponent<MastComponent>();
+
     PieceManager.Instance.AddPiece(new CustomPiece(prefab, true,
       new PieceConfig
       {

@@ -9,6 +9,7 @@ using ValheimVehicles.Constants;
 using ValheimVehicles.Controllers;
 using ValheimVehicles.QuickStartWorld.Config;
 using ValheimVehicles.SharedScripts;
+using ValheimVehicles.SharedScripts.PowerSystem;
 using ValheimVehicles.SharedScripts.UI;
 using ValheimVehicles.UI;
 using Zolantris.Shared.Debug;
@@ -35,7 +36,7 @@ public class ValheimVehiclesPlugin : MonoBehaviour
   private MapPinSync _mapPinSync;
   private SwivelUIPanelComponentIntegration _swivelUIPanel;
   private ScreenSizeWatcher _screenSizeWatcher;
-  private PowerNetworkManager _powerNetworkManager;
+  private PowerNetworkController _powerNetworkController;
 
   public static ValheimVehiclesPlugin Instance { get; private set; }
   private Coroutine? translationRoutine = null;
@@ -120,7 +121,7 @@ public class ValheimVehiclesPlugin : MonoBehaviour
     _mapPinSync = gameObject.AddComponent<MapPinSync>();
     _swivelUIPanel = gameObject.AddComponent<SwivelUIPanelComponentIntegration>();
     _screenSizeWatcher = gameObject.AddComponent<ScreenSizeWatcher>();
-    _powerNetworkManager = gameObject.AddComponent<PowerNetworkManager>();
+    _powerNetworkController = gameObject.AddComponent<PowerNetworkController>();
   }
 
   private void OnLanguageChanged()

@@ -289,6 +289,7 @@ public class PrefabThumbnailGenerator : EditorWindow
 
   private static void WriteTextureToFile(Texture textureToRead, string texturePath)
   {
+    if (textureToRead == null) return;
     var readableTexture = new Texture2D(textureToRead.width, textureToRead.height);
     var renderTexture = RenderTexture.GetTemporary(textureToRead.width, textureToRead.height);
 

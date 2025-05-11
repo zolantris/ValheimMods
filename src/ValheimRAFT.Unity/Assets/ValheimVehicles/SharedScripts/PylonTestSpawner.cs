@@ -26,17 +26,17 @@ namespace ValheimVehicles.SharedScripts
       }
 
       if (spawnFive)
-        SpawnPylons(GeneratePositions(5, spacing: 10f));
+        SpawnPylons(GeneratePositions(5, 10f));
       if (spawnFifty)
-        SpawnPylons(GeneratePositions(50, spacing: 5f));
+        SpawnPylons(GeneratePositions(50, 5f));
 
     }
 
     private void Start()
     {
-      if (PowerNetworkController.Instance)
+      if (PowerNetworkController.Instance != null)
       {
-       PowerNetworkController.Instance.RebuildPylonNetwork();
+        PowerNetworkController.Instance.RequestRebuildPylonNetwork();
       }
     }
 
@@ -45,11 +45,11 @@ namespace ValheimVehicles.SharedScripts
       var positions = new List<Vector3>();
       var origin = transform.position;
 
-      for (int i = 0; i < count; i++)
+      for (var i = 0; i < count; i++)
       {
-        float x = origin.x + Random.Range(-spacing, spacing) + i * 1.25f;
-        float z = origin.z + Random.Range(-spacing, spacing) + (i % 5) * 0.5f;
-        float y = origin.y + Random.Range(-spacing, spacing) + i * 1.25f;
+        var x = origin.x + Random.Range(-spacing, spacing) + i * 1.25f;
+        var z = origin.z + Random.Range(-spacing, spacing) + i % 5 * 0.5f;
+        var y = origin.y + Random.Range(-spacing, spacing) + i * 1.25f;
         positions.Add(new Vector3(x, origin.y, z));
       }
 
@@ -64,8 +64,8 @@ namespace ValheimVehicles.SharedScripts
         obj.name = $"Pylon_{pos.x:F1}_{pos.z:F1}";
       }
 
-      if (PowerNetworkController.Instance)
-        PowerNetworkController.Instance.RebuildPylonNetwork();
+      if (PowerNetworkController.Instance != null)
+        PowerNetworkController.Instance.RequestRebuildPylonNetwork();
     }
   }
 }

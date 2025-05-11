@@ -60,7 +60,10 @@ namespace ValheimVehicles.SharedScripts.UI
       if (CurrentSwivel == null) return;
 
       if (!_hasCreatedUI)
+      {
+        isToggle = false;
         CreateUI();
+      }
 
       modeDropdown.SetValueWithoutNotify((int)CurrentSwivel.Mode);
       motionStateDropdown.SetValueWithoutNotify((int)CurrentSwivel.CurrentMotionState);

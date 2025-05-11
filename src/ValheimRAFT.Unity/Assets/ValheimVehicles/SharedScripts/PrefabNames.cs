@@ -199,11 +199,17 @@
       public static readonly string Mechanism_ToggleSwitch =
         $"{ValheimVehiclesPrefix}_ToggleSwitch";
 
-      public static readonly string Mechanism_ElectricPylon =
-        $"{ValheimVehiclesPrefix}_ElectricityPylon";
+      public static readonly string Mechanism_Power_Pylon =
+        $"{ValheimVehiclesPrefix}_Power_Pylon";
 
-      public static readonly string Mechanism_CoalEngine =
-        $"{ValheimVehiclesPrefix}_CoalEngine";
+      public static readonly string Mechanism_Power_Source_Coal =
+        $"{ValheimVehiclesPrefix}_Power_Source_Coal";
+
+      public static readonly string Mechanism_Power_Source_Eitr =
+        $"{ValheimVehiclesPrefix}_Power_Source_Eitr";
+
+      public static readonly string Mechanism_Power_Storage_Eitr =
+        $"{ValheimVehiclesPrefix}_Power_Storage_Eitr";
 
       public static readonly string VehicleShipMovementOrientation =
         "VehicleShip_MovementOrientation";

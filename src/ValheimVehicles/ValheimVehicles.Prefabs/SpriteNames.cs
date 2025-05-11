@@ -69,8 +69,10 @@ public abstract class SpriteNames
 
   // Mechanisms
   public const string MechanismSwitch = "mechanism_switch";
-  public const string ElectricPylon = "mechanism_electric_pylon";
-  public const string CoalEngine = "mechanism_engine_coal";
+  public const string PowerPylon = "mechanism_power_pylon";
+  public const string PowerSourceCoal = "mechanism_power_source_coal";
+  public const string PowerSourceEitr = "mechanism_power_source_eitr";
+  public const string PowerStorageEitr = "mechanism_power_storage_eitr";
   public const string MechanismSwivel = "swivel";
 
 
