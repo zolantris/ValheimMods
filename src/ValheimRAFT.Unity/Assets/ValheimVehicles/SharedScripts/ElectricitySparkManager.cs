@@ -5,6 +5,7 @@
 
 using System.Collections;
 using UnityEngine;
+using ValheimVehicles.SharedScripts.PowerSystem;
 
 #endregion
 
@@ -35,7 +36,7 @@ namespace ValheimVehicles.SharedScripts
     {
       _lightningActive = true;
 
-      foreach (var pylon in ElectricityPylonRegistry.All)
+      foreach (var pylon in PowerPylonRegistry.All)
       {
         if (pylon == null || pylon.lightningBolt == null || pylon.coilTop == null) continue;
 
@@ -48,7 +49,7 @@ namespace ValheimVehicles.SharedScripts
 
       yield return new WaitForSeconds(lightningDuration);
 
-      foreach (var pylon in ElectricityPylonRegistry.All)
+      foreach (var pylon in PowerPylonRegistry.All)
       {
         if (pylon == null || pylon.lightningBolt == null) continue;
         pylon.UpdateCoilPosition(pylon.coilTop.gameObject, pylon.coilBottom.gameObject);
@@ -57,12 +58,12 @@ namespace ValheimVehicles.SharedScripts
       _lightningActive = false;
     }
 
-    private Transform? GetClosestPylonWire(ElectricPylon origin)
+    private Transform? GetClosestPylonWire(PowerPylon origin)
     {
       Transform? closest = null;
       var closestDist = float.MaxValue;
 
-      foreach (var other in ElectricityPylonRegistry.All)
+      foreach (var other in PowerPylonRegistry.All)
       {
         if (other == null || other == origin || other.wireConnector == null) continue;
 

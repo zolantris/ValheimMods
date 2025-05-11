@@ -7,20 +7,23 @@ using UnityEngine;
 
 #endregion
 
-namespace ValheimVehicles.SharedScripts
+namespace ValheimVehicles.SharedScripts.PowerSystem
 {
-  public class ElectricPylon : MonoBehaviour
+  public class PowerPylon : MonoBehaviour, IPowerNode
   {
-    public static Material LightningMaterial = null !;
+    public static Material LightningMaterial = null!;
     public Transform wireConnector;
     public LightningBolt lightningBolt;
     public Transform coilTop;
     public Transform coilBottom;
     public Transform lightningBoltParent;
 
+    [SerializeField] private float maxConnectionDistance = 50f;
+
+    public float MaxConnectionDistance => maxConnectionDistance;
+
     private void Awake()
     {
-
       lightningBoltParent = transform.Find("lightning_effects");
       coilTop = transform.Find("coil/start");
       coilBottom = transform.Find("coil/end");
@@ -32,10 +35,8 @@ namespace ValheimVehicles.SharedScripts
         SetupPylonLightningConfig();
       }
 
-      var randomSpeed = lightningBolt.Duration * Random.Range(0.9f, 1.1f);
-      lightningBolt.Duration = randomSpeed;
-
-      ElectricityPylonRegistry.Add(this);
+      lightningBolt.Duration *= Random.Range(0.9f, 1.1f);
+      PowerPylonRegistry.Add(this);
     }
 
     private void OnEnable()
@@ -50,12 +51,28 @@ namespace ValheimVehicles.SharedScripts
     private void OnDestroy()
     {
       if (!Application.isPlaying) return;
-      ElectricityPylonRegistry.Remove(this);
+      PowerPylonRegistry.Remove(this);
     }
+
+    public string NetworkId
+    {
+      get;
+      private set;
+    } = string.Empty;
+
+    public Vector3 Position => transform.position;
+    public bool IsActive => true;
+
+    public Transform ConnectorPoint
+    {
+      get => wireConnector;
+    }
+
+    public void SetNetworkId(string id) => NetworkId = id;
 
     private void SetupPylonLightningConfig()
     {
-      var lineRenderer = lightningBoltParent.GetComponent<LineRenderer>() ? lightningBoltParent.GetComponent<LineRenderer>() : lightningBoltParent.gameObject.AddComponent<LineRenderer>();
+      var lineRenderer = lightningBoltParent.GetComponent<LineRenderer>() ?? lightningBoltParent.gameObject.AddComponent<LineRenderer>();
       lineRenderer.material = LightningMaterial;
 
       lightningBolt = lightningBoltParent.gameObject.AddComponent<LightningBolt>();

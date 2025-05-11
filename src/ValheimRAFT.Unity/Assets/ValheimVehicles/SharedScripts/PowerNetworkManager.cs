@@ -7,12 +7,13 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using ValheimVehicles.SharedScripts.PowerSystem;
 
 #endregion
 
 namespace ValheimVehicles.SharedScripts
 {
-  public class ElectricityController : SingletonBehaviour<ElectricityController>
+  public class PowerNetworkManager : SingletonBehaviour<PowerNetworkManager>
   {
     private static readonly int MaxPoints = 50;
     private static readonly int EmissionColor = Shader.PropertyToID("_EmissionColor");
@@ -38,13 +39,13 @@ namespace ValheimVehicles.SharedScripts
 
     private void OnDestroy()
     {
-      ElectricityPylonRegistry.OnPylonListChanged -= ScheduleRefresh;
+      PowerPylonRegistry.OnPylonListChanged -= ScheduleRefresh;
     }
 
     public override void OnAwake()
     {
       _sparkManager = gameObject.AddComponent<ElectricitySparkManager>();
-      ElectricityPylonRegistry.OnPylonListChanged += ScheduleRefresh;
+      PowerPylonRegistry.OnPylonListChanged += ScheduleRefresh;
       ScheduleRefresh();
     }
 
@@ -74,13 +75,13 @@ namespace ValheimVehicles.SharedScripts
       }
       _activeLines.Clear();
 
-      var allPylons = ElectricityPylonRegistry.All;
-      var unvisited = new HashSet<ElectricPylon>(allPylons.Where(p => p && p.wireConnector));
+      var allPylons = PowerPylonRegistry.All;
+      var unvisited = new HashSet<PowerPylon>(allPylons.Where(p => p && p.wireConnector));
 
       while (unvisited.Count > 0)
       {
-        var chain = new List<ElectricPylon>();
-        var pending = new Queue<ElectricPylon>();
+        var chain = new List<PowerPylon>();
+        var pending = new Queue<PowerPylon>();
 
         var start = unvisited.First();
         pending.Enqueue(start);
@@ -111,7 +112,7 @@ namespace ValheimVehicles.SharedScripts
       }
     }
 
-    private void GenerateChainLine(List<ElectricPylon> chain)
+    private void GenerateChainLine(List<PowerPylon> chain)
     {
       // Use the first pylon's root (e.g., rigidbody parent) as anchor
       var parent = chain[0].transform.root;

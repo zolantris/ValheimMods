@@ -12,6 +12,7 @@ using ValheimVehicles.Interfaces;
 using ValheimVehicles.Patches;
 using ValheimVehicles.Structs;
 using ValheimVehicles.SharedScripts;
+using ValheimVehicles.SharedScripts.Interfaces;
 using ValheimVehicles.SharedScripts.UI;
 using ValheimVehicles.UI;
 

@@ -383,7 +383,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 3ceccd5c24eea7545a930c22d24784c4, type: 2}
+  - {fileID: 2100000, guid: acc96f77b7a28ba4dab517bb2984c140, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -509,6 +509,37 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!1 &2207766576401400142
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 6344710822117152660}
+  m_Layer: 10
+  m_Name: power_connector
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &6344710822117152660
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2207766576401400142}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0.102, y: 1.877, z: 0.101}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 1
+  m_Children: []
+  m_Father: {fileID: 1687973354152443278}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &4615206608230606212
 GameObject:
   m_ObjectHideFlags: 0
@@ -743,7 +774,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1687973354152443278}
   m_Layer: 10
-  m_Name: mechanism_electric_pylon
+  m_Name: mechanism_power_pylon
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -764,6 +795,7 @@ Transform:
   m_Children:
   - {fileID: 2705313895221503360}
   - {fileID: 285497857363373470}
+  - {fileID: 6344710822117152660}
   - {fileID: 6492505427341741757}
   - {fileID: 8960320482743299369}
   - {fileID: 8252325243320012421}

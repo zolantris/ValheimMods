@@ -6,8 +6,7 @@
 using System;
 using TMPro;
 using UnityEngine;
-using UnityEngine.UI;
-using ValheimVehicles.Interfaces;
+using ValheimVehicles.SharedScripts.Interfaces;
 
 #endregion
 
@@ -17,18 +16,18 @@ namespace ValheimVehicles.SharedScripts.UI
   {
     [Header("UI Settings")]
     [SerializeField] public float MaxUIWidth = 400f;
-    private TMP_Dropdown actionDropdown;
 
     public GameObject panelRoot;
-    [SerializeField] public SwivelUISharedStyles viewStyles = new();
     private IMechanismActionSetter _mechanismActionSetterComponent;
+    private TMP_Dropdown actionDropdown;
+
+    public Action<MechanismAction>? OnSelectedActionChanged;
+    [SerializeField] public SwivelUISharedStyles viewStyles = new();
     public MechanismAction SelectedAction
     {
       get;
       private set;
     }
-
-    public Action<MechanismAction>? OnSelectedActionChanged;
 
     public virtual void BindTo(IMechanismActionSetter mechanismActionSetter, bool isToggle = false)
     {

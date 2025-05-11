@@ -63,7 +63,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6532735209109437486}
   m_Layer: 0
-  m_Name: mechanism_engine_coal
+  m_Name: mechanism_engine_coal_old
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

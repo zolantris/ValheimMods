@@ -8,15 +8,15 @@ using System.Collections.Generic;
 
 #endregion
 
-namespace ValheimVehicles.SharedScripts
+namespace ValheimVehicles.SharedScripts.PowerSystem
 {
-  public static class ElectricityPylonRegistry
+  public static class PowerPylonRegistry
   {
-    public static readonly List<ElectricPylon> All = new();
+    public static readonly List<PowerPylon> All = new();
 
     public static event Action? OnPylonListChanged;
 
-    public static void Add(ElectricPylon pylon)
+    public static void Add(PowerPylon pylon)
     {
       if (!All.Contains(pylon))
       {
@@ -25,7 +25,7 @@ namespace ValheimVehicles.SharedScripts
       }
     }
 
-    public static void Remove(ElectricPylon pylon)
+    public static void Remove(PowerPylon pylon)
     {
       if (All.Remove(pylon))
       {

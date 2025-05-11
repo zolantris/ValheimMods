@@ -5,6 +5,7 @@
 
 using System.Collections.Generic;
 using UnityEngine;
+using ValheimVehicles.SharedScripts.PowerSystem;
 
 #endregion
 
@@ -28,6 +29,15 @@ namespace ValheimVehicles.SharedScripts
         SpawnPylons(GeneratePositions(5, spacing: 10f));
       if (spawnFifty)
         SpawnPylons(GeneratePositions(50, spacing: 5f));
+
+    }
+
+    private void Start()
+    {
+      if (PowerNetworkController.Instance)
+      {
+       PowerNetworkController.Instance.RebuildPylonNetwork();
+      }
     }
 
     private List<Vector3> GeneratePositions(int count, float spacing)
@@ -54,8 +64,8 @@ namespace ValheimVehicles.SharedScripts
         obj.name = $"Pylon_{pos.x:F1}_{pos.z:F1}";
       }
 
-      if (ElectricityController.Instance)
-        ElectricityController.Instance.ScheduleRefresh();
+      if (PowerNetworkManager.Instance)
+        PowerNetworkManager.Instance.ScheduleRefresh();
     }
   }
 }

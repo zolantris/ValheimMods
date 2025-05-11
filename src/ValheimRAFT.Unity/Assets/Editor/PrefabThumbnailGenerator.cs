@@ -26,7 +26,7 @@ public class PrefabThumbnailGenerator : EditorWindow
   private static GameObject sceneLight;
 
   [FormerlySerializedAs("excludedContainsPrefabNames")] public List<string> excludeContainsPrefabNames = new()
-    { "shared_", "steering_wheel", "rope_ladder", "dirt_floor", "dirtfloor_icon", "rope_anchor", "keel", "rudder_basic", "custom_sail", "mechanism_swivel", "_old", "_test_variant", "tank_tread_icon", "vehicle_hammer" };
+    { "shared_", "steering_wheel", "rope_ladder", "dirt_floor", "dirtfloor_icon", "rope_anchor", "keel", "rudder_basic", "custom_sail", "mechanism_swivel", "_old", "_test_variant", "tank_tread_icon", "vehicle_hammer", "_backup", "_deprecated" };
   public List<string> excludeExactPrefabNames = new()
     { "shared_", "steering_wheel", "rope_ladder", "dirt_floor", "dirtfloor_icon", "rope_anchor", "keel", "rudder_basic", "custom_sail", "mechanism_swivel", "_old", "_test_variant", "tank_tread_icon", "vehicle_hammer" };
 

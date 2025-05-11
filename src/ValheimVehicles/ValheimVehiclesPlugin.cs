@@ -35,7 +35,7 @@ public class ValheimVehiclesPlugin : MonoBehaviour
   private MapPinSync _mapPinSync;
   private SwivelUIPanelComponentIntegration _swivelUIPanel;
   private ScreenSizeWatcher _screenSizeWatcher;
-  private ElectricityController _electricityController;
+  private PowerNetworkManager _powerNetworkManager;
 
   public static ValheimVehiclesPlugin Instance { get; private set; }
   private Coroutine? translationRoutine = null;
@@ -120,7 +120,7 @@ public class ValheimVehiclesPlugin : MonoBehaviour
     _mapPinSync = gameObject.AddComponent<MapPinSync>();
     _swivelUIPanel = gameObject.AddComponent<SwivelUIPanelComponentIntegration>();
     _screenSizeWatcher = gameObject.AddComponent<ScreenSizeWatcher>();
-    _electricityController = gameObject.AddComponent<ElectricityController>();
+    _powerNetworkManager = gameObject.AddComponent<PowerNetworkManager>();
   }
 
   private void OnLanguageChanged()
