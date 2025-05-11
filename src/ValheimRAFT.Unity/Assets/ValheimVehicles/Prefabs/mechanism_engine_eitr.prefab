@@ -109,12 +109,12 @@ Transform:
   m_GameObject: {fileID: 760723464831360735}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0.5, y: 0.5, z: 0.5}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 8561056754545564479}
-  m_Father: {fileID: 1687640914023207950}
+  m_Father: {fileID: 8563469686987296304}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!330 &2515603954002784211
 ParticleSystemForceField:
@@ -1244,7 +1244,6 @@ Transform:
   m_Children:
   - {fileID: 204970005558243547}
   - {fileID: 7859213928304732384}
-  - {fileID: 4544550258756528937}
   - {fileID: 5223024405654778601}
   - {fileID: 8563469686987296304}
   - {fileID: 8842025231899425619}
@@ -1799,7 +1798,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8842025231899425619}
-  - component: {fileID: 5199907002919203538}
   m_Layer: 0
   m_Name: power_rotator
   m_TagString: Untagged
@@ -1827,28 +1825,6 @@ Transform:
   - {fileID: 2147950586081580198}
   m_Father: {fileID: 1687640914023207950}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &5199907002919203538
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4395775571431269370}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0b96e3b9a0cb409fafa3ebcc246aad1a, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  HasMovement: 0
-  HasRotation: 1
-  HasRigidbodyAnimation: 0
-  deltaMove: 1
-  RotationSpeed: 90
-  RotationalVector: {x: 0, y: 1, z: 0}
-  MovementVector: {x: 0, y: 0, z: 1}
-  movementDirection: {x: 0, y: 1, z: 0}
-  amplitude: 0.2
-  frequency: 1
 --- !u!1 &4685050499476893867
 GameObject:
   m_ObjectHideFlags: 0
@@ -2243,7 +2219,7 @@ GameObject:
   m_Component:
   - component: {fileID: 8563469686987296304}
   m_Layer: 0
-  m_Name: energy_core
+  m_Name: power_core
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2260,8 +2236,9 @@ Transform:
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0.5, y: 0.5, z: 0.5}
   m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
+  m_ConstrainProportionsScale: 1
   m_Children:
+  - {fileID: 4544550258756528937}
   - {fileID: 244547443398718900}
   - {fileID: 2793418879189382467}
   - {fileID: 1903303517634286120}

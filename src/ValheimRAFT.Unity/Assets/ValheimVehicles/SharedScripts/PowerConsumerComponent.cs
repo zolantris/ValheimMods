@@ -13,12 +13,19 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
   public class PowerConsumerComponent : PowerNodeComponentBase
   {
     [SerializeField] private PowerConsumptionLevel consumptionLevel = PowerConsumptionLevel.Medium;
-    [SerializeField] private bool isActive = true;
+    [SerializeField] private bool isActive;
+    public float BasePowerConsumption = 10f;
+    public bool IsDemanding;
 
     public override bool IsActive => isActive;
 
     public event Action<float>? OnPowerSupplied;
     public event Action? OnPowerDenied;
+
+    public void SetDemandState(bool val)
+    {
+      IsDemanding = val;
+    }
 
     public float RequestedPower(float deltaTime)
     {
@@ -68,13 +75,13 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
       OnPowerDenied?.Invoke();
     }
 
-    private static float GetWattsForLevel(PowerConsumptionLevel level)
+    private float GetWattsForLevel(PowerConsumptionLevel level)
     {
       return level switch
       {
-        PowerConsumptionLevel.Low => 10f,
-        PowerConsumptionLevel.Medium => 50f,
-        PowerConsumptionLevel.High => 100f,
+        PowerConsumptionLevel.Low => BasePowerConsumption,
+        PowerConsumptionLevel.Medium => BasePowerConsumption * 2,
+        PowerConsumptionLevel.High => BasePowerConsumption * 4,
         _ => 0f
       };
     }

@@ -3,6 +3,7 @@
 
 #region
 
+using System.Collections.Generic;
 using UnityEngine;
 
 #endregion
@@ -11,14 +12,31 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
 {
   public abstract class PowerNodeComponentBase : MonoBehaviour, IPowerNode
   {
+    public static readonly List<PowerNodeComponentBase> Instances = new();
     [SerializeField] public Transform connectorPoint;
     protected string networkId = string.Empty;
 
     protected virtual void Awake()
     {
+      Instances.Add(this);
+
       AssignConnectorPoint();
-      PowerNetworkBootstrapper.Register(this);
+      if (!PowerNetworkController.Instance)
+      {
+        gameObject.AddComponent<PowerNetworkController>();
+      }
+
+      if (PowerNetworkController.Instance)
+      {
+        PowerNetworkController.Instance.RegisterNode(this);
+      }
     }
+
+    protected virtual void OnDestroy()
+    {
+      Instances.Remove(this);
+    }
+
     public Transform ConnectorPoint => connectorPoint;
 
     public string NetworkId => networkId;

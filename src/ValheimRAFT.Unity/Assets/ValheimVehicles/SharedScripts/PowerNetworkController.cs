@@ -5,6 +5,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 #endregion
@@ -17,7 +18,6 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
     private static readonly List<PowerStorageComponent> _storage = new();
     private static readonly List<PowerConsumerComponent> _consumers = new();
     private static readonly List<PowerPylon> _pylons = new();
-    private static readonly List<IPowerNode> _tempNearbyNodes = new();
     private static readonly Queue<PowerPylon> _pending = new();
     private static readonly List<PowerPylon> _chain = new();
     private static readonly HashSet<PowerPylon> _unvisited = new();
@@ -34,26 +34,26 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
     public override void Awake()
     {
 #if UNITY_EDITOR
-        if (WireMaterial == null)
+      if (WireMaterial == null)
+      {
+        Shader shader = Shader.Find("Sprites/Default");
+        if (shader)
         {
-          Shader shader = Shader.Find("Sprites/Default");
-          if (shader)
+          WireMaterial = new Material(shader)
           {
-            WireMaterial = new Material(shader)
-            {
-              color = Color.black
-            };
-            WireMaterial.EnableKeyword("_EMISSION");
-            WireMaterial.globalIlluminationFlags = MaterialGlobalIlluminationFlags.RealtimeEmissive;
-            WireMaterial.SetColor("_EmissionColor", Color.black * 1.5f);
-          }
-          else
-          {
-            Debug.LogWarning("Default wire shader not found. WireMaterial will be pink.");
-          }
+            color = Color.black
+          };
+          WireMaterial.EnableKeyword("_EMISSION");
+          WireMaterial.globalIlluminationFlags = MaterialGlobalIlluminationFlags.RealtimeEmissive;
+          WireMaterial.SetColor("_EmissionColor", Color.black * 1.5f);
         }
-        if (WireMaterial == null && fallbackWireMaterial != null)
-          WireMaterial = fallbackWireMaterial;
+        else
+        {
+          Debug.LogWarning("Default wire shader not found. WireMaterial will be pink.");
+        }
+      }
+      if (WireMaterial == null && fallbackWireMaterial != null)
+        WireMaterial = fallbackWireMaterial;
 #endif
       base.Awake();
     }
@@ -139,45 +139,18 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
           RegisterNode(pylon);
         }
 
-        _tempNearbyNodes.Clear();
-        foreach (var node in FindObjectsOfType<MonoBehaviour>())
+        foreach (var node in PowerNodeComponentBase.Instances)
         {
-          if (node is IPowerNode powerNode && powerNode is not PowerPylon)
-          {
-            foreach (var p in _chain)
-            {
-              if (Vector3.Distance(powerNode.Position, p.Position) <= p.MaxConnectionDistance)
-              {
-                _tempNearbyNodes.Add(powerNode);
-                break;
-              }
-            }
-          }
-        }
+          node.SetNetworkId(networkId);
 
-        foreach (var node in _tempNearbyNodes)
-        {
-          if (string.IsNullOrEmpty(node.NetworkId))
+          if (_chain.Any(p => Vector3.Distance(node.Position, p.Position) <= p.MaxConnectionDistance))
           {
-            (node as MonoBehaviour)?.GetType().GetMethod("SetNetworkId")?.Invoke(node, new object[] { networkId });
             RegisterNode(node);
-          }
-
-          PowerPylon closestPylon = null;
-          float closestDist = float.MaxValue;
-          foreach (var p in _chain)
-          {
-            float dist = Vector3.Distance(p.Position, node.Position);
-            if (dist < closestDist)
+            var closest = _chain.OrderBy(p => Vector3.Distance(p.Position, node.Position)).FirstOrDefault();
+            if (closest != null)
             {
-              closestDist = dist;
-              closestPylon = p;
+              GenerateNodeLinkLine(node, closest);
             }
-          }
-
-          if (closestPylon != null)
-          {
-            GenerateNodeLinkLine(node, closestPylon);
           }
         }
 
@@ -252,14 +225,15 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
       {
         switch (node)
         {
-          case PowerSourceComponent s when s.IsActive:
+          case PowerSourceComponent s:
             _sources.Add(s);
             break;
           case PowerStorageComponent b:
             _storage.Add(b);
             break;
-          case PowerConsumerComponent c when c.IsActive:
-            _consumers.Add(c);
+          case PowerConsumerComponent c:
+            if (c.IsDemanding)
+              _consumers.Add(c);
             break;
         }
       }
@@ -277,27 +251,20 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
       float fromStorage = 0f;
       if (remaining > 0f)
       {
+        float safeMargin = Mathf.Max(0.01f, totalDemand * 0.01f);
         foreach (var b in _storage)
-          fromStorage += b.Discharge(remaining);
+          fromStorage += b.Discharge(remaining + safeMargin);
       }
 
       float totalAvailable = fromSources + fromStorage;
-
-      if (totalAvailable <= 0f)
-      {
-        foreach (var c in _consumers)
-        {
-          c.SetActive(false);
-          c.ApplyPower(0f, deltaTime);
-        }
-        return;
-      }
 
       foreach (var c in _consumers)
       {
         float required = c.RequestedPower(deltaTime);
         float granted = Mathf.Min(required, totalAvailable);
         totalAvailable -= granted;
+
+        c.SetActive(granted >= required);
         c.ApplyPower(granted, deltaTime);
       }
 

@@ -64,8 +64,8 @@ namespace ValheimVehicles.SharedScripts
         obj.name = $"Pylon_{pos.x:F1}_{pos.z:F1}";
       }
 
-      if (PowerNetworkManager.Instance)
-        PowerNetworkManager.Instance.ScheduleRefresh();
+      if (PowerNetworkController.Instance)
+        PowerNetworkController.Instance.RebuildPylonNetwork();
     }
   }
 }

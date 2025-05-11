@@ -9,17 +9,17 @@ using UnityEngine;
 
 namespace ValheimVehicles.SharedScripts
 {
-  public class MovingObjectTester : MonoBehaviour
+  public class AnimatedMachineComponent : MonoBehaviour
   {
-    public bool HasMovement = true;
-    public bool HasRotation = true;
-    public bool HasRigidbodyAnimation = true;
+    public bool HasMovement;
+    public bool HasRotation;
+    public bool HasRigidbodyAnimation;
 
     public float deltaMove = 1f;
     public float RotationSpeed = 90f;
 
-    public Vector3 RotationalVector = Vector3.forward;
-    public Vector3 MovementVector = Vector3.forward;
+    public Vector3 RotationalVector = Vector3.zero;
+    public Vector3 MovementVector = Vector3.zero;
 
     [SerializeField] private Vector3 movementDirection = Vector3.up;
     [SerializeField] private float amplitude = 0.2f;
