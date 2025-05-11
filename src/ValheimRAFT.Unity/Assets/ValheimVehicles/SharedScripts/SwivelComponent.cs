@@ -150,6 +150,14 @@ namespace ValheimVehicles.SharedScripts
     {
       if (!CanUpdate || !animatedRigidbody || !animatedTransform.parent || !piecesContainer) return;
       if (IsPoweredSwivel && swivelPowerConsumer && !swivelPowerConsumer.IsActive) return;
+      
+#if UNITY_EDITOR
+      // for updating demand state on the fly due to toggling with serializer
+      if (Mode == SwivelMode.Rotate || Mode == SwivelMode.Move)
+      {
+        swivelPowerConsumer.SetDemandState(MotionState != MotionState.Idle);
+      }
+#endif
 
       var didMove = false;
 
