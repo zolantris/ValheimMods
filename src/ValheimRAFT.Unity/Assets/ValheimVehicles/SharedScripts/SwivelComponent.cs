@@ -7,6 +7,7 @@ using System;
 using System.ComponentModel;
 using UnityEngine;
 using UnityEngine.Events;
+using ValheimVehicles.SharedScripts.PowerSystem;
 using ValheimVehicles.SharedScripts.UI;
 
 #endregion
@@ -76,6 +77,10 @@ namespace ValheimVehicles.SharedScripts
     public Transform directionDebuggerArrow;
 
     public bool CanUpdate = true;
+
+    public PowerConsumerComponent swivelPowerConsumer;
+
+    public bool IsPoweredSwivel;
     private Rigidbody animatedRigidbody;
 
     private bool hasReachedTarget;
@@ -101,6 +106,7 @@ namespace ValheimVehicles.SharedScripts
     public virtual void Awake()
     {
       snappoint = transform.Find(SNAPPOINT_TAG);
+      
 
       animatedTransform = transform.Find(AnimatedContainerName);
       if (!animatedTransform)
@@ -124,12 +130,26 @@ namespace ValheimVehicles.SharedScripts
     public virtual void Start()
     {
       SyncSnappoint();
+
+      if (IsPoweredSwivel)
+      {
+        swivelPowerConsumer = gameObject.AddComponent<PowerConsumerComponent>();
+        if (Mode == SwivelMode.Rotate || Mode == SwivelMode.Move)
+        {
+          swivelPowerConsumer.SetDemandState(MotionState != MotionState.Idle);
+        }
+        else
+        {
+          swivelPowerConsumer.SetDemandState(false);
+        }
+        UpdateBasePowerConsumption();
+      }
     }
 
     public virtual void FixedUpdate()
     {
-      if (!piecesContainer || !animatedRigidbody || !animatedTransform.parent) return;
-      if (!CanUpdate) return;
+      if (!CanUpdate || !animatedRigidbody || !animatedTransform.parent || !piecesContainer) return;
+      if (IsPoweredSwivel && swivelPowerConsumer && !swivelPowerConsumer.IsActive) return;
 
       var didMove = false;
 
@@ -137,22 +157,22 @@ namespace ValheimVehicles.SharedScripts
       {
         case SwivelMode.Rotate:
           targetRotation = CalculateRotationTarget();
-          var current = animatedTransform.localRotation;
-          var interpolated = Quaternion.Slerp(current, targetRotation, interpolationSpeed * RotationInterpolateSpeedMultiplier * Time.fixedDeltaTime);
-          animatedRigidbody.Move(transform.position, transform.rotation * interpolated);
+          var currentRot = animatedTransform.localRotation;
+          var maxAnglePerStep = interpolationSpeed * RotationInterpolateSpeedMultiplier * Time.fixedDeltaTime;
+          var interpolatedRot = Quaternion.RotateTowards(currentRot, targetRotation, maxAnglePerStep);
+          animatedRigidbody.Move(transform.position, transform.rotation * interpolatedRot);
           didMove = true;
 
-          var angleToTarget = Quaternion.Angle(current, targetRotation);
-
+          var angleToTarget = Quaternion.Angle(currentRot, targetRotation);
           if (currentMotionState == MotionState.GoingToTarget && !hasRotatedTarget && angleToTarget < angleThreshold)
           {
             hasRotatedTarget = true;
-            onRotationReachedTarget?.Invoke();
+            SetRotationReachedTarget();
           }
           else if (currentMotionState == MotionState.Returning && !hasRotatedReturn && angleToTarget < angleThreshold)
           {
             hasRotatedReturn = true;
-            onRotationReturned?.Invoke();
+            SetRotationReturned();
           }
 
           if (currentMotionState == MotionState.Returning && hasRotatedTarget) hasRotatedReturn = false;
@@ -165,23 +185,22 @@ namespace ValheimVehicles.SharedScripts
             : startLocalPosition + movementOffset;
 
           var currentLocal = animatedTransform.localPosition;
-          var nextLocal = Vector3.Lerp(currentLocal, targetMovementPosition, interpolationSpeed * MovementInterpolationSpeedMultiplier * Time.fixedDeltaTime);
+          var moveSpeed = interpolationSpeed * MovementInterpolationSpeedMultiplier * Time.fixedDeltaTime;
+          var nextLocal = Vector3.MoveTowards(currentLocal, targetMovementPosition, moveSpeed);
           var worldTarget = transform.TransformPoint(nextLocal);
-          var moveWorldRot = transform.rotation;
-
-          animatedRigidbody.Move(worldTarget, moveWorldRot);
+          animatedRigidbody.Move(worldTarget, transform.rotation);
           didMove = true;
 
-          var distanceToTarget = Vector3.Distance(currentLocal, targetMovementPosition);
-          if (currentMotionState == MotionState.GoingToTarget && !hasReachedTarget && distanceToTarget < positionThreshold)
+          var distance = Vector3.Distance(currentLocal, targetMovementPosition);
+          if (currentMotionState == MotionState.GoingToTarget && !hasReachedTarget && distance < positionThreshold)
           {
             hasReachedTarget = true;
-            onMovementReachedTarget?.Invoke();
+            SetMoveReachedTarget();
           }
-          else if (currentMotionState == MotionState.Returning && !hasReturned && distanceToTarget < positionThreshold)
+          else if (currentMotionState == MotionState.Returning && !hasReturned && distance < positionThreshold)
           {
             hasReturned = true;
-            onMovementReturned?.Invoke();
+            SetMoveReturned();
           }
 
           if (currentMotionState == MotionState.Returning && hasReachedTarget) hasReturned = false;
@@ -205,8 +224,7 @@ namespace ValheimVehicles.SharedScripts
       {
         var syncPos = animatedTransform.position;
         var syncRot = transform.rotation;
-        if ((animatedRigidbody.position - syncPos).sqrMagnitude > 0.0001f ||
-            Quaternion.Angle(animatedRigidbody.rotation, syncRot) > 0.01f)
+        if ((animatedRigidbody.position - syncPos).sqrMagnitude > 0.0001f || Quaternion.Angle(animatedRigidbody.rotation, syncRot) > 0.01f)
         {
           animatedRigidbody.Move(syncPos, syncRot);
         }
@@ -284,6 +302,54 @@ namespace ValheimVehicles.SharedScripts
       return Quaternion.Euler(0f, clampedY, 0f);
     }
 
+    public void UpdateBasePowerConsumption()
+    {
+      if (!IsPoweredSwivel || !swivelPowerConsumer) return;
+      swivelPowerConsumer.BasePowerConsumption = 0.1f * interpolationSpeed;
+    }
+
+    public void DeactivatePowerConsumer()
+    {
+      if (IsPoweredSwivel && swivelPowerConsumer)
+      {
+       swivelPowerConsumer.SetDemandState(false);
+      }
+    }
+
+    public void ActivatePowerConsumer()
+    {
+      if (IsPoweredSwivel && swivelPowerConsumer)
+      {
+        swivelPowerConsumer.SetDemandState(true);
+      }
+    }
+
+    public void SetRotationReturned()
+    {
+      DeactivatePowerConsumer();
+      onRotationReturned?.Invoke();
+    }
+
+    public void SetRotationReachedTarget()
+    {
+      DeactivatePowerConsumer();
+
+      onRotationReachedTarget?.Invoke();
+    }
+
+    public void SetMoveReturned()
+    {
+      DeactivatePowerConsumer();
+      onMovementReturned?.Invoke();
+    }
+
+    public void SetMoveReachedTarget()
+    {
+      DeactivatePowerConsumer();
+      
+      onMovementReachedTarget?.Invoke();
+    }
+
     public void SetMode(SwivelMode newMode)
     {
       mode = newMode;
@@ -303,6 +369,7 @@ namespace ValheimVehicles.SharedScripts
     public void SetMovementLerpSpeed(float speed)
     {
       interpolationSpeed = Mathf.Clamp(speed, 1f, 100f);
+      UpdateBasePowerConsumption();
     }
     public void SetMotionState(MotionState state)
     {
@@ -311,6 +378,11 @@ namespace ValheimVehicles.SharedScripts
       hasReturned = false;
       hasRotatedTarget = false;
       hasRotatedReturn = false;
+
+      if (IsPoweredSwivel && swivelPowerConsumer)
+      {
+        swivelPowerConsumer.SetDemandState(state != MotionState.Idle);
+      }
     }
 
     #region ISwivelConfig
