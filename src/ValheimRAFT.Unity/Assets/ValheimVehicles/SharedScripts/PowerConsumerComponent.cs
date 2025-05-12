@@ -14,7 +14,25 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
   {
     [SerializeField] private PowerConsumptionLevel consumptionLevel = PowerConsumptionLevel.Medium;
     [SerializeField] private bool isActive;
-    public float BasePowerConsumption = 10f;
+
+    [Header("Power Consumption Settings")]
+    [SerializeField] private float _basePowerConsumption;
+    // values that are updated whenever BasePowerConsumption mutates.
+    private float powerNone = 0f;
+    private float powerLow = 10f;
+    private float powerMedium = 20f;
+    private float powerHigh = 30f;
+
+    public float BasePowerConsumption
+    {
+      get => _basePowerConsumption;
+      set
+      {
+        _basePowerConsumption = value;
+        UpdatePowerConsumptionValues(value);
+      }
+    }
+
     public bool IsDemanding;
 
     public override bool IsActive => isActive;
@@ -22,19 +40,41 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
     public event Action<float>? OnPowerSupplied;
     public event Action? OnPowerDenied;
 
+    protected override void Awake()
+    {
+      base.Awake();
+
+      // syncs computed values so they are not evalutated per fixedupdate.
+      UpdatePowerConsumptionValues(_basePowerConsumption);
+    }
+
     public void SetDemandState(bool val)
     {
       IsDemanding = val;
     }
 
+    public void UpdatePowerConsumptionValues(float val)
+    {
+      powerHigh = val * 4;
+      powerMedium = val * 2;
+      powerLow = val;
+      powerNone = 0f;
+    }
+
     public float RequestedPower(float deltaTime)
     {
-      if (!isActive) return 0f;
+      if (!IsDemanding) return 0f;
       return GetWattsForLevel(consumptionLevel) * deltaTime;
     }
 
-    public void SetActive(bool value) => isActive = value;
-    public void SetConsumptionLevel(PowerConsumptionLevel level) => consumptionLevel = level;
+    public void SetActive(bool value)
+    {
+      isActive = value;
+    }
+    public void SetConsumptionLevel(PowerConsumptionLevel level)
+    {
+      consumptionLevel = level;
+    }
 
     public void ApplyPower(float grantedJoules, float deltaTime)
     {
@@ -49,6 +89,7 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
       }
     }
 
+    // todo this needs to be optimized so that it calls only downwards and not attempting to upgrade when iterating through power consumption levels.
     public void ApplyPowerWithDowngrade(float grantedJoules, float deltaTime)
     {
       if (!isActive || grantedJoules <= 0f)
@@ -60,8 +101,6 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
 
       foreach (PowerConsumptionLevel level in Enum.GetValues(typeof(PowerConsumptionLevel)))
       {
-        if (level > consumptionLevel) continue;
-
         var required = GetWattsForLevel(level) * deltaTime;
         if (grantedJoules >= required)
         {
@@ -79,10 +118,10 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
     {
       return level switch
       {
-        PowerConsumptionLevel.Low => BasePowerConsumption,
-        PowerConsumptionLevel.Medium => BasePowerConsumption * 2,
-        PowerConsumptionLevel.High => BasePowerConsumption * 4,
-        _ => 0f
+        PowerConsumptionLevel.Low => powerLow,
+        PowerConsumptionLevel.Medium => powerMedium,
+        PowerConsumptionLevel.High => powerHigh,
+        _ => powerNone
       };
     }
   }

@@ -82,7 +82,7 @@ namespace ValheimVehicles.SharedScripts
 
     public PowerConsumerComponent swivelPowerConsumer;
 
-    public bool IsPoweredSwivel;
+    public static bool IsPoweredSwivel = true;
     private Rigidbody animatedRigidbody;
 
     [Description("This speed is computed with the base interpolation value to get a final interpolation.")]
@@ -126,26 +126,28 @@ namespace ValheimVehicles.SharedScripts
 
       animatedRigidbody.isKinematic = true;
       animatedRigidbody.interpolation = RigidbodyInterpolation.Interpolate;
+
+      if (IsPoweredSwivel)
+      {
+        InitPowerConsumer();
+      }
+    }
+
+    public void InitPowerConsumer()
+    {
+      if (!swivelPowerConsumer)
+      {
+        swivelPowerConsumer = gameObject.AddComponent<PowerConsumerComponent>();
+      }
+
+      UpdatePowerConsumer();
+      UpdateBasePowerConsumption();
     }
 
     public virtual void Start()
     {
       SyncSnappoint();
       SetInterpolationSpeed(interpolationSpeed);
-
-      if (IsPoweredSwivel)
-      {
-        swivelPowerConsumer = gameObject.AddComponent<PowerConsumerComponent>();
-        if (Mode == SwivelMode.Rotate || Mode == SwivelMode.Move)
-        {
-          swivelPowerConsumer.SetDemandState(MotionState != MotionState.Idle);
-        }
-        else
-        {
-          swivelPowerConsumer.SetDemandState(false);
-        }
-        UpdateBasePowerConsumption();
-      }
     }
 
     public virtual void FixedUpdate()
@@ -336,8 +338,15 @@ namespace ValheimVehicles.SharedScripts
 
     public void UpdatePowerConsumer()
     {
+      if (!IsPoweredSwivel) return;
+      if (!swivelPowerConsumer)
+      {
+        swivelPowerConsumer = gameObject.AddComponent<PowerConsumerComponent>();
+      }
+
       if (mode == SwivelMode.Rotate || mode == SwivelMode.Move)
       {
+
         if (currentMotionState != MotionState.Idle)
         {
           ActivatePowerConsumer();

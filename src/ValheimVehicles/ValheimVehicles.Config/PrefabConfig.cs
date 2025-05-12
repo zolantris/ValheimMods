@@ -27,6 +27,7 @@ public class PrefabConfig : BepInExBaseConfig<PrefabConfig>
 
   public static ConfigEntry<bool> MakeAllPiecesWaterProof { get; set; }
   public static ConfigEntry<bool> AllowTieredMastToRotate { get; set; }
+  public static ConfigEntry<bool> Swivels_DoNotRequirePower { get; set; }
 
   public static ConfigEntry<bool> AllowExperimentalPrefabs { get; set; }
   public static ConfigEntry<bool> AdminsCanOnlyBuildRaft { get; set; }
@@ -73,12 +74,18 @@ public class PrefabConfig : BepInExBaseConfig<PrefabConfig>
 
   public override void OnBindConfig(ConfigFile config)
   {
+    Swivels_DoNotRequirePower = config.Bind(SectionKey, "Swivels_DoNotRequirePower",
+      false,
+      ConfigHelpers.CreateConfigDescription(
+        "Allows you to use swivels without the vehicle power system.",
+        true, false));
+
     AllowTieredMastToRotate = config.Bind(SectionKey, "AllowTieredMastToRotateInWind", true, "allows the tiered mast to rotate in wind");
     RopeLadderEjectionOffset = config.Bind(SectionKey,
       "RopeLadderEjectionPoint", Vector3.zero,
       "The place the player is placed after they leave the ladder. Defaults to Y +0.25 and Z +0.5 meaning you are placed forwards of the ladder.");
 
-    StartingPiece = config.Bind(SectionKey, SectionKey,
+    StartingPiece = config.Bind(SectionKey, "Vehicle Hull Starting Piece",
       VehicleShipInitPiece.Hull4X8,
       ConfigHelpers.CreateConfigDescription(
         "Allows you to customize what piece the raft initializes with. Admins only as this can be overpowered.",
@@ -151,6 +158,10 @@ public class PrefabConfig : BepInExBaseConfig<PrefabConfig>
         "Makes it so all building pieces (walls, floors, etc) on the ship don't take rain damage.",
         true
       ));
+
+
+    SwivelComponent.IsPoweredSwivel = !Swivels_DoNotRequirePower.Value;
+    Swivels_DoNotRequirePower.SettingChanged += (sender, args) => SwivelComponent.IsPoweredSwivel = !Swivels_DoNotRequirePower.Value;
 
     AllowExperimentalPrefabs.SettingChanged +=
       ExperimentalPrefabRegistry.OnExperimentalPrefabSettingsChange;
