@@ -14,7 +14,7 @@ public class SwivelConfigRPCSync : PrefabConfigRPCSync<SwivelCustomConfig, ISwiv
     base.Awake();
     rpcHandler?.Register<int>(nameof(RPC_SetMotionState), RPC_SetMotionState);
   }
-  public void RequestNextMotionState(MotionState nextMotionState)
+  public void EmitNextMotionState(MotionState nextMotionState)
   {
     if (!this.IsNetViewValid(out var netView)) return;
     netView.InvokeRPC(nameof(RPC_SetMotionState), (int)nextMotionState);

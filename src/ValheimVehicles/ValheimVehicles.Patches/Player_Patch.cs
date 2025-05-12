@@ -167,29 +167,25 @@
     /// </summary>
     /// <param name="collider"></param>
     /// <returns></returns>
-    public static bool CanHitPiece(Collider collider, Piece piece)
+    public static bool CanHitPiece(Collider collider)
     {
-      if (collider.gameObject.name.StartsWith(PrefabNames.SwivelPrefabName))
+      var genericPieceController = collider.GetComponentInParent<IPieceController>();
+
+      if (genericPieceController == null) return false;
+      var colliderRoot = collider.transform.root;
+      var canHitPiece = genericPieceController.CanRaycastHitPiece();
+      var isSwivel = genericPieceController.ComponentName == PrefabNames.SwivelPrefabName;
+
+      // swivel nesting might not be necessary.
+      if (canHitPiece)
       {
-        if (piece != null && piece.m_name == PrefabNames.SwivelPrefabName)
+        // do not allow nested swivel item placement.
+        if (isSwivel && colliderRoot != genericPieceController.transform && colliderRoot.transform.name.StartsWith(PrefabNames.SwivelPrefabName))
         {
           return false;
         }
         return true;
       }
-      var genericPieceController = collider.GetComponentInParent<IPieceController>();
-
-      // guards to prevent double nesting swivels.
-      if (genericPieceController != null && genericPieceController.ComponentName == PrefabNames.SwivelPrefabName && piece.name.StartsWith(PrefabNames.SwivelPrefabName))
-      {
-        return false;
-      }
-
-      if (genericPieceController != null && genericPieceController.CanRaycastHitPiece())
-      {
-        return true;
-      }
-
       return false;
     }
 
@@ -229,7 +225,7 @@
       if (Physics.Raycast(start, end, out var hitInfo, castDistance, layerMask) &&
           (bool)hitInfo.collider)
       {
-        if (!CanHitPiece(hitInfo.collider, piece))
+        if (!CanHitPiece(hitInfo.collider))
         {
           ShouldRunOriginalMethod = true;
           return;

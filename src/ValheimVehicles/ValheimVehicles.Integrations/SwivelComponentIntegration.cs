@@ -54,9 +54,12 @@
     private HoverFadeText m_hoverFadeText;
     public SwivelConfigRPCSync prefabConfigSync;
     public SwivelCustomConfig m_config => prefabConfigSync.CustomConfig;
+    public ChildZSyncTransform childZsyncTransform;
 
     public override void Awake()
     {
+      base.Awake();
+
       if (!prefabConfigSync)
       {
         prefabConfigSync = gameObject.AddComponent<SwivelConfigRPCSync>();
@@ -64,9 +67,13 @@
       prefabConfigSync.SetComponentFromInstance(this);
 
       CanUpdate = false;
-      base.Awake();
 
       m_nview = GetComponent<ZNetView>();
+      // required for syncing the animated component across clients.
+      childZsyncTransform = animatedTransform.gameObject.AddComponent<ChildZSyncTransform>();
+      childZsyncTransform.m_syncPosition = true;
+      childZsyncTransform.m_syncRotation = true;
+      childZsyncTransform.m_syncBodyVelocity = true;
 
       SetupHoverFadeText();
 
@@ -75,13 +82,24 @@
 
     public MotionState GetNextMotionState()
     {
-      return MotionState != MotionState.Returning ? MotionState.Returning : MotionState.GoingToTarget;
+      switch (MotionState)
+      {
+        case MotionState.ToTarget:
+        case MotionState.AtTarget:
+          return MotionState.ToStart;
+        case MotionState.ToStart:
+        case MotionState.AtStart:
+          return MotionState.ToTarget;
+        default:
+          LoggerProvider.LogError("Somehow got unhandled motionState force setting user to ToStart");
+          return MotionState.ToStart;
+      }
     }
 
     public void RequestNextMotionState()
     {
       var nextMotionState = GetNextMotionState();
-      prefabConfigSync.RequestNextMotionState(nextMotionState);
+      prefabConfigSync.EmitNextMotionState(nextMotionState);
     }
 
     public void SetupHoverFadeText()
@@ -93,6 +111,8 @@
 
     public void OnEnable()
     {
+      onMovementReturned += OnMovementStateUpdate;
+
       var persistentId = GetPersistentId();
       if (persistentId == 0) return;
 
@@ -101,6 +121,15 @@
         return;
       }
       ActiveInstances.Add(persistentId, this);
+    }
+
+    /// <summary>
+    /// Should not call for non-owners
+    /// </summary>
+    private void OnMovementStateUpdate()
+    {
+      if (!m_nview.IsOwner()) return;
+      prefabConfigSync.EmitNextMotionState(MotionState);
     }
 
     public void SetupPieceActivator()
@@ -113,6 +142,8 @@
 
     public void OnDisable()
     {
+      onMovementReturned -= OnMovementStateUpdate;
+
       var persistentId = GetPersistentId();
       if (persistentId == 0) return;
       if (!ActiveInstances.TryGetValue(persistentId, out var swivelComponentIntegration))

@@ -83,18 +83,8 @@ public static class VehicleZdoVars
   public const string SwivelParentId = "SwivelParentId";
 
   // for swivels
-  public const string SwivelPersistentId = "SwivelPersistentId";
-  public const string SwivelMode = "SwivelMode";
-  public const string SwivelMaxAngleRange = "SwivelMaxAngleRange";
-
-  // SwivelDoors
-  public const string SwivelDoorIsOpened = "SwivelMode";
-  public const string SwivelDoorHingeMode = "SwivelMode";
-  public const string SwivelDoorHingDirectionY = "SwivelMode";
-  public const string SwivelDoorHingDirectionZ = "SwivelMode";
-
-  // SwivelTargeting
-  public const string SwivelTargetMode = "SwivelTargetMode";
-  public const string SwivelTargetMaxRange = "SwivelTargetMaxRange";
-  public const string SwivelTargetMinRange = "SwivelTargetMinRange";
+  public const string SwivelSyncPosition = "SwivelSync_Position";
+  public const string SwivelSyncRotation = "SwivelSync_Rotation";
+  public const string SwivelSyncVelocity = "SwivelSync_Velocity";
+  public const string SwivelSyncAngularVelocity = "SwivelSync_AngularVelocity";
 }

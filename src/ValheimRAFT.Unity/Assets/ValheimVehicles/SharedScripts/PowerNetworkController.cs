@@ -90,6 +90,8 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
 
       if (!list.Contains(node))
         list.Add(node);
+
+      RequestRebuildPylonNetwork();
     }
     public Stopwatch rebuildTimer = new();
     public IEnumerator RebuildPylonNetworkCoroutine()
@@ -163,24 +165,27 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
           RegisterNode(pylon);
         }
 
+        var nodeLinkMap = new Dictionary<PowerPylon, List<IPowerNode>>();
+
         foreach (var node in PowerNodeComponentBase.Instances)
         {
           node.SetNetworkId(networkId);
 
-          if (_chain.Any(p => Vector3.Distance(node.Position, p.Position) <= p.MaxConnectionDistance))
+          var closest = _chain.OrderBy(p => Vector3.Distance(p.Position, node.Position)).FirstOrDefault();
+          if (closest != null && Vector3.Distance(node.Position, closest.Position) <= closest.MaxConnectionDistance)
           {
             RegisterNode(node);
-            var closest = _chain.OrderBy(p => Vector3.Distance(p.Position, node.Position)).FirstOrDefault();
-            if (closest != null)
-            {
-              GenerateNodeLinkLine(node, closest);
-            }
+
+            if (!nodeLinkMap.TryGetValue(closest, out var list))
+              nodeLinkMap[closest] = list = new List<IPowerNode>();
+
+            list.Add(node);
           }
         }
 
         if (_chain.Count >= 2)
         {
-          GenerateChainLine(_chain);
+          GenerateChainLine(_chain, nodeLinkMap);
         }
       }
       rebuildTimer.Reset();
@@ -194,8 +199,43 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
       _rebuildPylonNetworkRoutine = StartCoroutine(RebuildPylonNetworkCoroutine());
     }
 
-    private void GenerateChainLine(List<PowerPylon> chain)
+    // private void GenerateChainLine(List<PowerPylon> chain)
+    // {
+    //   var parent = chain[0].transform.root;
+    //   var obj = new GameObject("PylonChainConnector");
+    //   obj.transform.SetParent(parent, false);
+    //
+    //   var line = obj.AddComponent<LineRenderer>();
+    //   _activeLines.Add(line);
+    //
+    //   line.material = WireMaterial;
+    //   line.widthMultiplier = 0.02f;
+    //   line.textureMode = LineTextureMode.Tile;
+    //   line.useWorldSpace = false;
+    //
+    //   var curvedPoints = new List<Vector3>();
+    //
+    //   for (var i = 0; i < chain.Count - 1; i++)
+    //   {
+    //     var start = parent.InverseTransformPoint(chain[i].wireConnector.position);
+    //     var end = parent.InverseTransformPoint(chain[i + 1].wireConnector.position);
+    //
+    //     for (var j = 0; j < curvedLinePoints; j++)
+    //     {
+    //       var t = j / (float)(curvedLinePoints - 1);
+    //       var point = Vector3.Lerp(start, end, t);
+    //       point += Vector3.up * Mathf.Sin(t * Mathf.PI) * 0.2f;
+    //       curvedPoints.Add(point);
+    //     }
+    //   }
+    //
+    //   line.positionCount = curvedPoints.Count;
+    //   line.SetPositions(curvedPoints.ToArray());
+    // }
+    private void GenerateChainLine(List<PowerPylon> chain, Dictionary<PowerPylon, List<IPowerNode>> nodeLinks)
     {
+      if (chain == null || chain.Count < 2) return;
+
       var parent = chain[0].transform.root;
       var obj = new GameObject("PylonChainConnector");
       obj.transform.SetParent(parent, false);
@@ -210,22 +250,47 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
 
       var curvedPoints = new List<Vector3>();
 
+      // === Chain: pylon-to-pylon segments ===
       for (var i = 0; i < chain.Count - 1; i++)
       {
         var start = parent.InverseTransformPoint(chain[i].wireConnector.position);
         var end = parent.InverseTransformPoint(chain[i + 1].wireConnector.position);
 
-        for (var j = 0; j < curvedLinePoints; j++)
+        AddCurvedPointsBetween(start, end, curvedPoints);
+      }
+
+      // === Chain: node-to-pylon links ===
+      foreach (var kvp in nodeLinks)
+      {
+        var pylon = kvp.Key;
+        if (pylon == null || !nodeLinks.TryGetValue(pylon, out var linkedNodes)) continue;
+
+        foreach (var node in linkedNodes)
         {
-          var t = j / (float)(curvedLinePoints - 1);
-          var point = Vector3.Lerp(start, end, t);
-          point += Vector3.up * Mathf.Sin(t * Mathf.PI) * 0.2f;
-          curvedPoints.Add(point);
+          if (node == null) continue;
+
+          var start = parent.InverseTransformPoint(pylon.wireConnector.position);
+          var end = parent.InverseTransformPoint(
+            node.ConnectorPoint != null ? node.ConnectorPoint.position : node.Position
+          );
+
+          AddCurvedPointsBetween(start, end, curvedPoints);
         }
       }
 
       line.positionCount = curvedPoints.Count;
       line.SetPositions(curvedPoints.ToArray());
+    }
+
+    private void AddCurvedPointsBetween(Vector3 start, Vector3 end, List<Vector3> curvedPoints)
+    {
+      for (var j = 0; j < curvedLinePoints; j++)
+      {
+        var t = j / (float)(curvedLinePoints - 1);
+        var point = Vector3.Lerp(start, end, t);
+        point += Vector3.up * Mathf.Sin(t * Mathf.PI) * 0.2f;
+        curvedPoints.Add(point);
+      }
     }
 
     private void GenerateNodeLinkLine(IPowerNode from, PowerPylon to)
@@ -276,6 +341,14 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
         totalDemand += c.RequestedPower(deltaTime);
 
       var networkIsDemanding = _consumers.Any(c => c.IsDemanding) || _storage.Any(s => s.CapacityRemaining > 0f);
+
+      // TODO when all pylons are on all PowerNodes it will look much more realistic. We might be able to remove power lines.
+      if (lightningBurstCoroutine != null)
+      {
+        StopCoroutine(lightningBurstCoroutine);
+      }
+
+      lightningBurstCoroutine = StartCoroutine(ActivateLightningBursts());
 
       var fromSources = 0f;
       foreach (var s in _sources)
@@ -328,6 +401,7 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
 
     private float _lightningTimer;
     private bool _lightningActive;
+    private Coroutine? lightningBurstCoroutine = null;
 
     private void Update()
     {
@@ -335,10 +409,10 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
 
       _lightningTimer += Time.deltaTime;
 
-      if (_lightningTimer >= lightningCycleTime && HasPoweredNetworks())
+      if (_lightningTimer >= lightningCycleTime && lightningBurstCoroutine == null && HasPoweredNetworks())
       {
         _lightningTimer = 0f;
-        StartCoroutine(ActivateLightningBursts());
+        lightningBurstCoroutine = StartCoroutine(ActivateLightningBursts());
       }
     }
 
@@ -381,6 +455,7 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
       }
 
       _lightningActive = false;
+      lightningBurstCoroutine = null;
     }
 
 

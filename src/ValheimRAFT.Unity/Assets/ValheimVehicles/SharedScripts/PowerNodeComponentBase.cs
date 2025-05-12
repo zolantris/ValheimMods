@@ -53,6 +53,9 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
         connectorPoint = transform;
     }
 
-    public virtual void SetNetworkId(string id) => networkId = id;
+    public virtual void SetNetworkId(string id)
+    {
+      networkId = id;
+    }
   }
 }
