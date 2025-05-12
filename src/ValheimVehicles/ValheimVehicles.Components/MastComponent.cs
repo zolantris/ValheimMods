@@ -4,9 +4,9 @@ namespace ValheimVehicles.Components;
 
 public class MastComponent : MonoBehaviour
 {
-  public GameObject m_sailObject;
+  public GameObject? m_sailObject;
 
-  public Cloth m_sailCloth;
+  public Cloth? m_sailCloth;
 
   public bool m_allowSailRotation = false;
 

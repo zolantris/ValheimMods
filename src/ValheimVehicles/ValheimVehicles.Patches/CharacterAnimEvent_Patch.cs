@@ -17,6 +17,11 @@ public class CharacterAnimEvent_Patch
   {
     if (m_animatedHumanoids.Count > 0 && __instance.m_animator != null && m_animatedHumanoids.TryGetValue(__instance.m_animator, out var activator))
     {
+      if (activator == null)
+      {
+        m_animatedHumanoids.Remove(__instance.m_animator);
+        return false;
+      }
       activator.UpdateIK(__instance.m_animator);
       return false;
     }

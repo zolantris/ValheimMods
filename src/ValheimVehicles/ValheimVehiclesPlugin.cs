@@ -56,16 +56,18 @@ public class ValheimVehiclesPlugin : MonoBehaviour
       yield return null;
     }
     Localization.OnLanguageChange += OnLanguageChanged;
+    OnLanguageChanged();
 
+    ModTranslations.ForceUpdateTranslations();
     // must wait for next-frame otherwise Awake and other lifecycles might not have fired for translations api.
     yield return new WaitForFixedUpdate();
-    OnLanguageChanged();
+    ModTranslations.ForceUpdateTranslations();
     yield return new WaitForSeconds(3f);
     ModTranslations.ForceUpdateTranslations();
 
 
     // wait a bit then fire next update. ModTranslations API is flaky on init.
-    yield return new WaitForSeconds(20f);
+    yield return new WaitForSeconds(10f);
     _languageRetry.Reset();
     OnLanguageChanged();
 

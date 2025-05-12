@@ -31,11 +31,17 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
     protected override void Awake()
     {
       base.Awake();
-      
+
       powerCoreTransform = transform.Find("meshes/power_core");
       animatedInnerCoreTransform = transform.Find("meshes/power_core/animated_inner_core");
-      animatedOuterCoreTransform = transform.Find("meshes/power_core/animated_outer_core");
-      animatedOuterCore = CreateAnimatedMaterialController(animatedOuterCoreTransform);
+      // animatedOuterCoreTransform = transform.Find("meshes/power_core/animated_outer_core");
+
+      // animatedOuterCoreTransform == null
+      if (animatedInnerCoreTransform == null || powerCoreTransform == null)
+      {
+        LoggerProvider.LogError("Invalid Transforms found. This is an error with the prefab");
+      }
+      // animatedOuterCore = CreateAnimatedMaterialController(animatedOuterCoreTransform);
       animatedInnerCore = CreateAnimatedMaterialController(animatedInnerCoreTransform);
     }
 
@@ -43,11 +49,11 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
     {
       UpdatePowerCoreSize();
       UpdatePowerCoreAnimations(animatedInnerCore);
-      UpdatePowerCoreAnimations(animatedOuterCore);
-      
+      // UpdatePowerCoreAnimations(animatedOuterCore);
+
       if (!isRunning || currentFuel <= 0f) return;
 
-      float fuelUsed = fuelConsumptionRate * Time.fixedDeltaTime;
+      var fuelUsed = fuelConsumptionRate * Time.fixedDeltaTime;
       currentFuel = Mathf.Max(0f, currentFuel - fuelUsed);
     }
 
@@ -58,6 +64,7 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
       {
         current = objTransform.gameObject.AddComponent<AnimatedMaterialController>();
       }
+      current.mainTexTilingBase = Vector2.one * 5;
       current.InitMainTex();
       return current;
     }
@@ -78,13 +85,29 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
       }
     }
 
-    public float RequestAvailablePower(float deltaTime)
+    public float RequestAvailablePower(float deltaTime, bool isDemanding)
     {
-      return IsActive ? maxOutputWatts * deltaTime : 0f;
+      if (!IsActive || !isDemanding) return 0f;
+
+      var fuelNeeded = fuelConsumptionRate * deltaTime;
+      if (currentFuel < fuelNeeded)
+      {
+        isRunning = false;
+        return 0f;
+      }
+
+      currentFuel -= fuelNeeded;
+      return maxOutputWatts * deltaTime;
     }
 
-    public float GetFuelLevel() => currentFuel;
-    public float GetFuelCapacity() => fuelCapacity;
+    public float GetFuelLevel()
+    {
+      return currentFuel;
+    }
+    public float GetFuelCapacity()
+    {
+      return fuelCapacity;
+    }
 
     public float Refuel(float amount)
     {
@@ -94,6 +117,9 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
       return toAdd;
     }
 
-    public void SetRunning(bool state) => isRunning = state;
+    public void SetRunning(bool state)
+    {
+      isRunning = state;
+    }
   }
 }

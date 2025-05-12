@@ -36,6 +36,12 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
       }
 
       lightningBolt.Duration *= Random.Range(0.9f, 1.1f);
+
+      if (PowerNetworkController.Instance != null)
+      {
+        PowerNetworkController.Instance.RequestRebuildPylonNetwork();
+      }
+
       PowerPylonRegistry.Add(this);
     }
 
@@ -52,6 +58,10 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
     {
       if (!Application.isPlaying) return;
       PowerPylonRegistry.Remove(this);
+      if (PowerNetworkController.Instance != null)
+      {
+        PowerNetworkController.Instance.RequestRebuildPylonNetwork();
+      }
     }
 
     public string NetworkId
@@ -63,12 +73,12 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
     public Vector3 Position => transform.position;
     public bool IsActive => true;
 
-    public Transform ConnectorPoint
-    {
-      get => wireConnector;
-    }
+    public Transform ConnectorPoint => wireConnector;
 
-    public void SetNetworkId(string id) => NetworkId = id;
+    public void SetNetworkId(string id)
+    {
+      NetworkId = id;
+    }
 
     private void SetupPylonLightningConfig()
     {

@@ -312,7 +312,7 @@ public class LoadValheimVehicleAssets : ILoadAssets
     // Data rebinds done inline
     PowerNetworkController.WireMaterial = new Material(DoubleSidedTransparentMat)
     {
-      color = Color.gray
+      color = Color.black
     };
 
     PowerPylon.LightningMaterial = LightningMaterial;

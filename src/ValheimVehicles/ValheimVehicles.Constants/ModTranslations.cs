@@ -56,6 +56,7 @@
     public static string Swivel_Edit = null!;
     public static string Swivel_Connected = null!;
     public static string Swivel_Name = null!;
+    public static string NoMechanismNearby = null!;
 
     // full text string. This is computed from a few values.
     public static string Swivel_HoverText = null!;
@@ -240,6 +241,7 @@
       Swivel_Connected = SafeLocalize("$valheim_vehicles_mechanism_swivel_connected");
       // Swivel_HoverText = $"{WithBoldText(SharedKeys_Hold)} {WithBoldText(ValheimInput_KeyUse, "yellow")} {Swivel_Edit}";
       Swivel_HoverText = $"{WithBoldText(SharedKeys_Hold)} {WithBoldText(ValheimInput_KeyUse, "yellow")} {Swivel_Name}";
+      NoMechanismNearby = SafeLocalize("$valheim_vehicles_no_mechanism_nearby");
     }
 
     public static void ForceUpdateTranslations()

@@ -3,6 +3,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using ValheimVehicles.Config;
 using ValheimVehicles.Constants;
+using ValheimVehicles.Helpers;
 using ValheimVehicles.Integrations;
 using ValheimVehicles.SharedScripts.UI;
 namespace ValheimVehicles.UI;
@@ -31,12 +32,12 @@ public class SwivelUIPanelComponentIntegration : SwivelUIPanelComponent
 
   public void OnEnable()
   {
-    OnPanelToggleAction += OnPanelToggle;
+    // OnPanelToggleAction += OnPanelToggle;
   }
 
   public void OnDisable()
   {
-    OnPanelToggleAction -= OnPanelToggle;
+    // OnPanelToggleAction -= OnPanelToggle;
   }
 
   public static void Init()
@@ -47,22 +48,41 @@ public class SwivelUIPanelComponentIntegration : SwivelUIPanelComponent
     }
   }
 
+  public void TryGetCurrentSwivelIntegration()
+  {
+    if (CurrentSwivel && !m_swivelComponentIntegration)
+    {
+      SwivelHelpers.FindNearestSwivel(CurrentSwivel.transform, out m_swivelComponentIntegration);
+      return;
+    }
+
+    if (!CurrentSwivel && !m_swivelComponentIntegration && Player.m_localPlayer && !SwivelHelpers.FindNearestSwivel(Player.m_localPlayer.transform, out m_swivelComponentIntegration))
+    {
+      return;
+    }
+
+    if (m_swivelComponentIntegration)
+    {
+      CurrentSwivel = m_swivelComponentIntegration;
+    }
+  }
+
   public override void OnBindTo()
   {
-    if (CurrentSwivel == null) return;
-    m_swivelComponentIntegration = CurrentSwivel.gameObject.GetComponent<SwivelComponentIntegration>();
+    TryGetCurrentSwivelIntegration();
   }
 
   // todo hide/show the panel from here if we want to keep hide show buttons otherwise do not use this method.
-  public void OnPanelToggle(Text text)
-  {
-    if (text == null) return;
-    var nextState = !panelRoot.activeSelf;
-    text.text = "X";
-  }
+  // public void OnPanelToggle(Text text)
+  // {
+  //   if (text == null) return;
+  //   var nextState = !panelRoot.activeSelf;
+  //   text.text = "X";
+  // }
 
   protected override void OnPanelUpdate()
   {
+    TryGetCurrentSwivelIntegration();
     if (!m_swivelComponentIntegration || !m_swivelComponentIntegration.m_nview || !m_swivelComponentIntegration.m_nview.IsValid()) return;
     m_swivelComponentIntegration.m_config.ApplyFrom(m_swivelComponentIntegration);
     m_swivelComponentIntegration.m_config.Save(m_swivelComponentIntegration.m_nview.m_zdo, m_swivelComponentIntegration.m_config);

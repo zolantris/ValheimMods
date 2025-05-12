@@ -754,6 +754,7 @@ public class VehicleCommands : ConsoleCommand
     ));
   }
 
+  public static Stopwatch _creativeModeTimer = new();
   public static Coroutine? _creativeModeCoroutineInstance = null;
 
   public static void ToggleCreativeMode()
@@ -765,11 +766,17 @@ public class VehicleCommands : ConsoleCommand
       return;
     }
 
-    if (_creativeModeCoroutineInstance != null)
+    if (_creativeModeCoroutineInstance != null && _creativeModeTimer.ElapsedMilliseconds < 5000f)
     {
       LoggerProvider.LogMessage("A creative-mode coroutine is already running. Please wait a second");
       return;
     }
+    if (_creativeModeCoroutineInstance != null)
+    {
+      Game.instance.StopCoroutine(nameof(CreativeModeCoroutine));
+      _creativeModeCoroutineInstance = null;
+    }
+    _creativeModeTimer.Restart();
     _creativeModeCoroutineInstance = Game.instance.StartCoroutine(CreativeModeCoroutine());
   }
 
@@ -790,6 +797,7 @@ public class VehicleCommands : ConsoleCommand
     if (vehicleInstance == null || vehicleInstance.OnboardController == null || vehicleInstance.MovementController == null)
     {
       _creativeModeCoroutineInstance = null;
+      _creativeModeTimer.Reset();
       yield break;
     }
 
@@ -805,6 +813,7 @@ public class VehicleCommands : ConsoleCommand
     if (nextCreativeMode == false)
     {
       _creativeModeCoroutineInstance = null;
+      _creativeModeTimer.Reset();
       yield break;
     }
 
@@ -817,6 +826,7 @@ public class VehicleCommands : ConsoleCommand
       }, null, false);
 
     _creativeModeCoroutineInstance = null;
+    _creativeModeTimer.Reset();
     LoggerProvider.LogMessage("Completed creative mode commands.");
   }
 

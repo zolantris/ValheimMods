@@ -93,8 +93,6 @@
 
     public void OnEnable()
     {
-      prefabConfigSync.RegisterRPCListeners();
-
       var persistentId = GetPersistentId();
       if (persistentId == 0) return;
 
@@ -115,8 +113,6 @@
 
     public void OnDisable()
     {
-      prefabConfigSync.UnregisterRPCListeners();
-
       var persistentId = GetPersistentId();
       if (persistentId == 0) return;
       if (!ActiveInstances.TryGetValue(persistentId, out var swivelComponentIntegration))
@@ -196,6 +192,7 @@
     public void OnActivationComplete()
     {
       // SetInitialLocalRotation();
+      // prefabConfigSync.SyncPrefabConfig();
       CanUpdate = true;
     }
 
@@ -280,6 +277,7 @@
       base.Start();
       m_vehiclePiecesController = GetComponentInParent<VehiclePiecesController>();
       _pieceActivator.StartInitPersistentId();
+      prefabConfigSync.SyncPrefabConfig();
     }
 
     /// <summary>
@@ -468,7 +466,8 @@
     }
     public void TrySetPieceToParent(ZNetView netView)
     {
-      throw new NotImplementedException();
+      if (netView == null) return;
+      AddPieceToParent(netView.transform);
     }
 
     ///

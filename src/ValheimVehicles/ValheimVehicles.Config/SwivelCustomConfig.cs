@@ -30,7 +30,7 @@ namespace ValheimVehicles.Config
     public void Serialize(ZPackage package)
     {
       package.Write((int)Mode);
-      package.Write(MovementLerpSpeed);
+      package.Write(InterpolationSpeed);
       package.Write(MinTrackingRange);
       package.Write(MaxTrackingRange);
       package.Write((int)HingeAxes);
@@ -44,7 +44,7 @@ namespace ValheimVehicles.Config
       return new SwivelCustomConfig
       {
         Mode = (SwivelMode)package.ReadInt(),
-        MovementLerpSpeed = package.ReadSingle(),
+        InterpolationSpeed = package.ReadSingle(),
         MinTrackingRange = package.ReadSingle(),
         MaxTrackingRange = package.ReadSingle(),
         HingeAxes = (HingeAxis)package.ReadInt(),
@@ -57,7 +57,7 @@ namespace ValheimVehicles.Config
     public void Save(ZDO zdo, SwivelCustomConfig config)
     {
       zdo.Set(Key_Mode, (int)config.Mode);
-      zdo.Set(Key_LerpSpeed, config.MovementLerpSpeed);
+      zdo.Set(Key_LerpSpeed, config.InterpolationSpeed);
       zdo.Set(Key_TrackMin, config.MinTrackingRange);
       zdo.Set(Key_TrackMax, config.MaxTrackingRange);
       zdo.Set(Key_HingeAxes, (int)config.HingeAxes);
@@ -75,7 +75,7 @@ namespace ValheimVehicles.Config
       return new SwivelCustomConfig
       {
         Mode = (SwivelMode)zdo.GetInt(Key_Mode, (int)configFromComponent.Mode),
-        MovementLerpSpeed = zdo.GetFloat(Key_LerpSpeed, configFromComponent.MovementLerpSpeed),
+        InterpolationSpeed = zdo.GetFloat(Key_LerpSpeed, configFromComponent.InterpolationSpeed),
         MinTrackingRange = zdo.GetFloat(Key_TrackMin, configFromComponent.MinTrackingRange),
         MaxTrackingRange = zdo.GetFloat(Key_TrackMax, configFromComponent.MaxTrackingRange),
         HingeAxes = (HingeAxis)zdo.GetInt(Key_HingeAxes, (int)configFromComponent.HingeAxes),
@@ -96,7 +96,7 @@ namespace ValheimVehicles.Config
     public void ApplyTo(ISwivelConfig component)
     {
       component.Mode = Mode;
-      component.MovementLerpSpeed = MovementLerpSpeed;
+      component.InterpolationSpeed = InterpolationSpeed;
       component.MinTrackingRange = MinTrackingRange;
       component.MaxTrackingRange = MaxTrackingRange;
       component.HingeAxes = HingeAxes;
@@ -108,7 +108,7 @@ namespace ValheimVehicles.Config
     public void ApplyFrom(ISwivelConfig component)
     {
       Mode = component.Mode;
-      MovementLerpSpeed = component.MovementLerpSpeed;
+      InterpolationSpeed = component.InterpolationSpeed;
       MinTrackingRange = component.MinTrackingRange;
       MaxTrackingRange = component.MaxTrackingRange;
       HingeAxes = component.HingeAxes;
@@ -122,7 +122,7 @@ namespace ValheimVehicles.Config
       get;
       set;
     }
-    public float MovementLerpSpeed
+    public float InterpolationSpeed
     {
       get;
       set;

@@ -48,14 +48,25 @@ namespace ValheimVehicles.SharedScripts.UI
     public SwivelComponent CurrentSwivel
     {
       get;
-      private set;
+      set;
     }
+
+    public static bool ShouldDestroyOnNewTarget = false;
 
     // for integrations
     [UsedImplicitly]
     public virtual void OnBindTo() {}
     public void BindTo(SwivelComponent target, bool isToggle = false)
     {
+      if (ShouldDestroyOnNewTarget)
+      {
+        if (CurrentSwivel != null && CurrentSwivel != target)
+        {
+          Destroy(panelRoot);
+          _hasCreatedUI = false;
+        }
+      }
+
       CurrentSwivel = target;
       if (CurrentSwivel == null) return;
 
@@ -202,7 +213,7 @@ namespace ValheimVehicles.SharedScripts.UI
 
       movementLerpRow = SwivelUIHelpers.AddSliderRow(layoutParent, viewStyles, SwivelUIPanelStrings.InterpolationSpeed, 1f, 100f, CurrentSwivel.InterpolationSpeed, v =>
       {
-        CurrentSwivel.SetMovementLerpSpeed(v);
+        CurrentSwivel.SetInterpolationSpeed(v);
         UnsetSavedState();
       });
 

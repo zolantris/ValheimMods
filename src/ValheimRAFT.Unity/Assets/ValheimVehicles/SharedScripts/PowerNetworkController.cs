@@ -64,6 +64,11 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
       base.Awake();
     }
 
+    public void Start()
+    {
+      RequestRebuildPylonNetwork();
+    }
+
     private void FixedUpdate()
     {
       if (Time.time < _nextUpdate) return;
@@ -86,11 +91,12 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
       if (!list.Contains(node))
         list.Add(node);
     }
+    public Stopwatch rebuildTimer = new();
     public IEnumerator RebuildPylonNetworkCoroutine()
     {
       yield return new WaitForSeconds(1f);
       _pylons.Clear();
-      var timer = Stopwatch.StartNew();
+      rebuildTimer.Restart();
       foreach (var p in PowerPylonRegistry.All)
       {
         if (p != null) _pylons.Add(p);
@@ -109,9 +115,9 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
 
       while (_unvisited.Count > 0)
       {
-        if (timer.ElapsedMilliseconds > 10)
+        if (rebuildTimer.ElapsedMilliseconds > 10)
         {
-          timer.Restart();
+          rebuildTimer.Restart();
           yield return null;
         }
 
@@ -131,9 +137,9 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
 
         while (_pending.Count > 0)
         {
-          if (timer.ElapsedMilliseconds > 10)
+          if (rebuildTimer.ElapsedMilliseconds > 10)
           {
-            timer.Restart();
+            rebuildTimer.Restart();
             yield return null;
           }
           var current = _pending.Dequeue();
@@ -177,7 +183,7 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
           GenerateChainLine(_chain);
         }
       }
-
+      rebuildTimer.Reset();
       yield return new WaitForSeconds(1f);
       _rebuildPylonNetworkRoutine = null;
     }
@@ -269,9 +275,11 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
       foreach (var c in _consumers)
         totalDemand += c.RequestedPower(deltaTime);
 
+      var networkIsDemanding = _consumers.Any(c => c.IsDemanding) || _storage.Any(s => s.CapacityRemaining > 0f);
+
       var fromSources = 0f;
       foreach (var s in _sources)
-        fromSources += s.RequestAvailablePower(deltaTime);
+        fromSources += s.RequestAvailablePower(deltaTime, networkIsDemanding);
 
       var remaining = totalDemand - fromSources;
 
@@ -285,13 +293,23 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
 
       var totalAvailable = fromSources + fromStorage;
 
+      if (totalAvailable <= 0f)
+      {
+        foreach (var c in _consumers)
+        {
+          c.SetActive(false);
+          c.ApplyPower(0f, deltaTime);
+        }
+        return;
+      }
+
       foreach (var c in _consumers)
       {
         var required = c.RequestedPower(deltaTime);
         var granted = Mathf.Min(required, totalAvailable);
         totalAvailable -= granted;
 
-        c.SetActive(granted >= required);
+        c.SetActive(granted > 0f);
         c.ApplyPower(granted, deltaTime);
       }
 
@@ -302,7 +320,8 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
       }
     }
 
-    #region Lightning Spark Management
+
+  #region Lightning Spark Management
 
     [SerializeField] private float lightningCycleTime = 10f;
     [SerializeField] private float lightningDuration = 3f;
@@ -385,7 +404,7 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
       return closest;
     }
 
-    #endregion
+  #endregion
 
   }
 }

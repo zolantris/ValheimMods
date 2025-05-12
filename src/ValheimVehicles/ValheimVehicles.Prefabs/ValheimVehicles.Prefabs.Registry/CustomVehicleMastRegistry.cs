@@ -2,6 +2,7 @@ using Jotunn.Configs;
 using Jotunn.Entities;
 using Jotunn.Managers;
 using ValheimVehicles.Components;
+using ValheimVehicles.Config;
 using ValheimVehicles.Prefabs.Registry;
 using ValheimVehicles.SharedScripts;
 namespace ValheimVehicles.Prefabs.ValheimVehicles.Prefabs.Registry;
@@ -18,7 +19,12 @@ public class CustomVehicleMastRegistry : RegisterPrefab<CustomVehicleMastRegistr
     PrefabRegistryHelpers.AddPieceForPrefab(PrefabNames.GetMastByLevelName(mastTier), prefab);
     PrefabRegistryHelpers.SetWearNTear(prefab);
 
-    prefab.AddComponent<MastComponent>();
+    var mastComponent = prefab.AddComponent<MastComponent>();
+    mastComponent.m_sailCloth = null;
+    mastComponent.m_sailCloth = null;
+    mastComponent.m_allowSailRotation = PrefabConfig.AllowTieredMastToRotate.Value;
+    mastComponent.m_allowSailShrinking = false;
+    mastComponent.m_rotationTransform = prefab.transform.Find("rotational_yard");
 
     PieceManager.Instance.AddPiece(new CustomPiece(prefab, true,
       new PieceConfig

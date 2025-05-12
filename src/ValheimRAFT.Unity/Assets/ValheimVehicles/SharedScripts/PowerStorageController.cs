@@ -11,8 +11,8 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
 {
   public class PowerStorageComponent : PowerNodeComponentBase
   {
-    [SerializeField] private float capacity = 500f;
-    [SerializeField] private float storedPower;
+    [SerializeField] public float capacity = 500f;
+    [SerializeField] public float storedPower;
     [SerializeField] private Transform energyLevel;
     [SerializeField] public AnimatedMachineComponent powerRotator;
     [SerializeField] public Transform powerRotatorTransform;
@@ -56,6 +56,9 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
       UpdateChargeScale();
     }
 
+    public float CapacityRemaining => capacity - storedPower;
+
+
     public float Charge(float amount)
     {
       var space = capacity - storedPower;
@@ -67,7 +70,7 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
 
     public void UpdateChargeScale()
     {
-      float percent = Mathf.Clamp01(storedPower / capacity);
+      var percent = Mathf.Clamp01(storedPower / capacity);
       var scale = energyLevel.localScale;
       scale.y = percent;
       energyLevel.localScale = scale;
@@ -83,7 +86,7 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
       {
         powerRotator.enabled = true;
       }
-      
+
       if (powerRotator.enabled)
       {
         powerRotator.RotationalVector = IsCharging ? powerRotatorChargeDirection : powerRotatorDischargeDirection;

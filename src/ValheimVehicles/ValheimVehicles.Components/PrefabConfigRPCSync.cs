@@ -1,12 +1,11 @@
 using System;
-using System.Diagnostics.CodeAnalysis;
+using System.Collections;
+using System.Diagnostics;
 using UnityEngine;
-using ValheimVehicles.Config;
 using ValheimVehicles.Controllers;
 using ValheimVehicles.Helpers;
 using ValheimVehicles.Interfaces;
 using ValheimVehicles.SharedScripts;
-using ValheimVehicles.SharedScripts.UI;
 
 namespace ValheimVehicles.Components;
 
@@ -23,8 +22,11 @@ public class PrefabConfigRPCSync<T, TComponentInterface> : MonoBehaviour, IPrefa
   internal RetryGuard retryGuard = null!;
   public TComponentInterface controller;
 
+  public bool HasLoadedInitialCache => m_configCache != null;
+
   public virtual void Awake()
   {
+    if (ZNetView.m_forceDisableInit) return;
     retryGuard = new RetryGuard(this);
     m_nview = GetComponent<ZNetView>();
     InitRPCHandler();
@@ -32,12 +34,14 @@ public class PrefabConfigRPCSync<T, TComponentInterface> : MonoBehaviour, IPrefa
 
   public virtual void OnEnable()
   {
+    if (ZNetView.m_forceDisableInit) return;
     RegisterRPCListeners();
   }
 
 
   public virtual void OnDisable()
   {
+    if (ZNetView.m_forceDisableInit) return;
     UnregisterRPCListeners();
 
     // cancel all Invoke calls from retryGuard.
@@ -76,7 +80,7 @@ public class PrefabConfigRPCSync<T, TComponentInterface> : MonoBehaviour, IPrefa
         CustomConfig.Save(netView.GetZDO(), CustomConfig);
       }
 
-      netView.InvokeRPC(ZRoutedRpc.Everybody, nameof(RPC_SyncPrefabConfig), package);
+      netView.InvokeRPC(ZRoutedRpc.Everybody, nameof(RPC_SyncPrefabConfig));
     }
     catch (Exception ex)
     {
@@ -93,20 +97,49 @@ public class PrefabConfigRPCSync<T, TComponentInterface> : MonoBehaviour, IPrefa
     SyncPrefabConfig();
   }
 
+  private Coroutine? _prefabSyncRoutine;
+
+  public Stopwatch timer = new();
+  private IEnumerator SyncPrefabConfigRoutine()
+  {
+    timer.Restart();
+    while (timer.ElapsedMilliseconds < 10000 && controller == null && !this.IsNetViewValid(out var netView))
+    {
+      yield return new WaitForFixedUpdate();
+    }
+    if (timer.ElapsedMilliseconds > 10000)
+    {
+      timer.Reset();
+      yield break;
+    }
+
+    yield return new WaitForFixedUpdate();
+    timer.Reset();
+    _prefabSyncRoutine = null;
+    SyncPrefabConfig();
+  }
   /// <summary>
-  /// Syncs RPC data from ZDO to local values.
+  /// Syncs RPC data from ZDO to local values. If it's not ready it queues up the sync.
   /// </summary>
   /// <param name="forceUpdate"></param>
   public void SyncPrefabConfig(bool forceUpdate = false)
   {
-    if (controller == null)
+    if (HasLoadedInitialCache && !forceUpdate) return;
+    if (controller == null || !this.IsNetViewValid(out var netView))
     {
-      LoggerProvider.LogError($"SyncPrefabConfig failed to invoke due to missing component type {typeof(TComponentInterface).Name}");
+      _prefabSyncRoutine ??= StartCoroutine(SyncPrefabConfigRoutine());
       return;
     }
-    if (m_configCache != null && !forceUpdate) return;
-    if (!this.IsNetViewValid(out var netView)) return;
     CustomConfig = CustomConfig.Load(netView.GetZDO(), controller);
+
+    // very important. This sets the values from Config to the actual component.
+    CustomConfig.ApplyTo(controller);
+
+    if (_prefabSyncRoutine != null)
+    {
+      StopCoroutine(_prefabSyncRoutine);
+      _prefabSyncRoutine = null;
+    }
   }
 
   /// <summary>
@@ -123,6 +156,7 @@ public class PrefabConfigRPCSync<T, TComponentInterface> : MonoBehaviour, IPrefa
   public virtual void RegisterRPCListeners()
   {
     rpcHandler?.Register<ZPackage>(nameof(RPC_SetPrefabConfig), RPC_SetPrefabConfig);
+    rpcHandler?.Register(nameof(RPC_SyncPrefabConfig), RPC_SyncPrefabConfig);
   }
 
   public virtual void UnregisterRPCListeners()

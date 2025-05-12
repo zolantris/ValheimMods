@@ -26,6 +26,7 @@ public class PrefabConfig : BepInExBaseConfig<PrefabConfig>
   }
 
   public static ConfigEntry<bool> MakeAllPiecesWaterProof { get; set; }
+  public static ConfigEntry<bool> AllowTieredMastToRotate { get; set; }
 
   public static ConfigEntry<bool> AllowExperimentalPrefabs { get; set; }
   public static ConfigEntry<bool> AdminsCanOnlyBuildRaft { get; set; }
@@ -72,6 +73,7 @@ public class PrefabConfig : BepInExBaseConfig<PrefabConfig>
 
   public override void OnBindConfig(ConfigFile config)
   {
+    AllowTieredMastToRotate = config.Bind(SectionKey, "AllowTieredMastToRotateInWind", true, "allows the tiered mast to rotate in wind");
     RopeLadderEjectionOffset = config.Bind(SectionKey,
       "RopeLadderEjectionPoint", Vector3.zero,
       "The place the player is placed after they leave the ladder. Defaults to Y +0.25 and Z +0.5 meaning you are placed forwards of the ladder.");

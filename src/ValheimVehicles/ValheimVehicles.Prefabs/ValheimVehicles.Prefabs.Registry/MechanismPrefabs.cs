@@ -30,12 +30,13 @@ public class MechanismPrefabs : RegisterPrefab<MechanismPrefabs>
     PrefabRegistryHelpers.AddPieceForPrefab(PrefabNames.Mechanism_Power_Storage_Eitr, prefab);
 
     // main toggle switch.
-    prefab.AddComponent<PowerStorageComponent>();
+    prefab.AddComponent<PowerStorageComponentIntegration>();
+    prefab.AddComponent<PowerHoverComponent>();
 
     PieceManager.Instance.AddPiece(new CustomPiece(prefab, true, new PieceConfig
     {
       PieceTable = PrefabRegistryController.GetPieceTableName(),
-      Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Propulsion),
+      Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Power),
       Enabled = true,
       Requirements =
       [
@@ -77,8 +78,9 @@ public class MechanismPrefabs : RegisterPrefab<MechanismPrefabs>
     PrefabRegistryHelpers.AddPieceForPrefab(PrefabNames.Mechanism_Power_Source_Eitr, prefab);
 
     // todo set values based on a config for these prefabs.
-    var powerSource = prefab.AddComponent<PowerSourceComponent>();
-    var powerStorage = prefab.AddComponent<PowerStorageComponent>();
+    var powerSource = prefab.AddComponent<PowerSourceComponentIntegration>();
+    var powerStorage = prefab.AddComponent<PowerStorageComponentIntegration>();
+    prefab.AddComponent<PowerHoverComponent>();
 
     PieceManager.Instance.AddPiece(new CustomPiece(prefab, true, new PieceConfig
     {

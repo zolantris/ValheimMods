@@ -97,21 +97,21 @@ public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interac
         break;
       case MechanismAction.SwivelEditMode:
       {
-        if (!FindNearestSwivel(out _))
+        if (!SwivelHelpers.FindNearestSwivel(transform, out m_nearestSwivel))
         {
-          SelectedAction = MechanismAction.CommandsHud;
+          // SelectedAction = MechanismAction.CommandsHud;
           // todo localize.
-          Player.m_localPlayer.Message(MessageHud.MessageType.Center, "No swivel nearby");
+          Player.m_localPlayer.Message(MessageHud.MessageType.Center, ModTranslations.NoMechanismNearby);
           return;
         }
         break;
       }
       case MechanismAction.SwivelActivateMode:
-        if (!FindNearestSwivel(out _))
+        if (!SwivelHelpers.FindNearestSwivel(transform, out m_nearestSwivel))
         {
-          SelectedAction = MechanismAction.CommandsHud;
+          // SelectedAction = MechanismAction.CommandsHud;
           // todo localize.
-          Player.m_localPlayer.Message(MessageHud.MessageType.Center, "No swivel nearby");
+          Player.m_localPlayer.Message(MessageHud.MessageType.Center, ModTranslations.NoMechanismNearby);
           return;
         }
         break;
@@ -224,9 +224,8 @@ public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interac
 
   public void TriggerSwivelPanel()
   {
-    if (!m_nearestSwivel)
+    if (!m_nearestSwivel && !SwivelHelpers.FindNearestSwivel(transform, out m_nearestSwivel))
     {
-      FindNearestSwivel(out m_nearestSwivel);
       return;
     }
     if (!SwivelUIPanelComponentIntegration.Instance)
@@ -247,7 +246,7 @@ public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interac
   {
     if (!m_nearestSwivel)
     {
-      FindNearestSwivel(out _);
+      SwivelHelpers.FindNearestSwivel(transform, out m_nearestSwivel);
     }
 
     if (m_nearestSwivel)
@@ -258,30 +257,6 @@ public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interac
     {
       LoggerProvider.LogError("No swivel detected but the user is toggling a swivel action.");
     }
-  }
-
-  public RaycastHit[] m_raycasthits = new RaycastHit[20];
-
-  public bool FindNearestSwivel(out SwivelComponentIntegration swivelComponentIntegration)
-  {
-    swivelComponentIntegration = GetComponentInParent<SwivelComponentIntegration>();
-    if (swivelComponentIntegration)
-    {
-      m_nearestSwivel = swivelComponentIntegration;
-      return true;
-    }
-
-    var num = Physics.SphereCastNonAlloc(transform.position, 0.1f, Vector3.up, m_raycasthits, 100f, LayerHelpers.PieceLayer);
-    for (var i = 0; i < num; i++)
-    {
-      var raycastHit = m_raycasthits[i];
-      swivelComponentIntegration = raycastHit.collider.GetComponentInParent<SwivelComponentIntegration>();
-      if (swivelComponentIntegration)
-      {
-        return true;
-      }
-    }
-    return false;
   }
 
   public float lerpedHandDistance = 0f;
@@ -362,6 +337,11 @@ public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interac
 
   public string GetHoverText()
   {
-    return $"{ModTranslations.ToggleSwitch_CurrentActionString} {GetLocalizedActionText(SelectedAction)}\n{ModTranslations.ToggleSwitch_NextActionString}";
+    var message = $"{ModTranslations.ToggleSwitch_CurrentActionString} {GetLocalizedActionText(SelectedAction)}\n{ModTranslations.ToggleSwitch_NextActionString}";
+    if ((SelectedAction == MechanismAction.SwivelActivateMode || SelectedAction == MechanismAction.SwivelEditMode) && !m_nearestSwivel)
+    {
+      message += $"\n{ModTranslations.NoMechanismNearby}";
+    }
+    return message;
   }
 }

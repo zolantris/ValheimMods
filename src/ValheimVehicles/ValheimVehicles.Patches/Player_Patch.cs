@@ -167,13 +167,24 @@
     /// </summary>
     /// <param name="collider"></param>
     /// <returns></returns>
-    public static bool CanHitPiece(Collider collider)
+    public static bool CanHitPiece(Collider collider, Piece piece)
     {
       if (collider.gameObject.name.StartsWith(PrefabNames.SwivelPrefabName))
       {
+        if (piece != null && piece.m_name == PrefabNames.SwivelPrefabName)
+        {
+          return false;
+        }
         return true;
       }
       var genericPieceController = collider.GetComponentInParent<IPieceController>();
+
+      // guards to prevent double nesting swivels.
+      if (genericPieceController != null && genericPieceController.ComponentName == PrefabNames.SwivelPrefabName && piece.name.StartsWith(PrefabNames.SwivelPrefabName))
+      {
+        return false;
+      }
+
       if (genericPieceController != null && genericPieceController.CanRaycastHitPiece())
       {
         return true;
@@ -218,7 +229,7 @@
       if (Physics.Raycast(start, end, out var hitInfo, castDistance, layerMask) &&
           (bool)hitInfo.collider)
       {
-        if (!CanHitPiece(hitInfo.collider))
+        if (!CanHitPiece(hitInfo.collider, piece))
         {
           ShouldRunOriginalMethod = true;
           return;
@@ -244,12 +255,6 @@
       ref Collider waterSurface,
       bool water)
     {
-      // var isRigidbodyAllowed = hasAttachedRigidbody;
-      //
-      // if (hasAttachedRigidbody&& hitInfo.collider.attachedRigidbody.transform.parent != null && hitInfo.collider.attachedRigidbody.transform.parent.name.StartsWith(PrefabNames.SwivelPrefabName))
-      // {
-      //   isRigidbodyAllowed = true;
-      // }
       var layerMask = __instance.m_placeRayMask;
 
       var raycastPieceActivator = PieceActivatorHelpers.GetRaycastPieceActivator(__instance.transform);

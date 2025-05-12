@@ -1846,7 +1846,7 @@ MonoBehaviour:
   fuelCapacity: 100
   fuelConsumptionRate: 1
   isRunning: 1
-  currentFuel: 0
+  currentFuel: 100
   powerCoreTransform: {fileID: 0}
   animatedInnerCoreTransform: {fileID: 0}
   animatedOuterCoreTransform: {fileID: 0}
@@ -2273,7 +2273,6 @@ GameObject:
   m_Component:
   - component: {fileID: 1695294351}
   - component: {fileID: 1695294353}
-  - component: {fileID: 1695294350}
   - component: {fileID: 1695294354}
   m_Layer: 0
   m_Name: PowerNetworkManager
@@ -2282,22 +2281,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1695294350
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1695294349}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2fc4d42eaa9445308bd78a5e073b9d7f, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  lightningCycleTime: 10
-  lightningDuration: 3
-  _lightningActive: 0
-  _lightningTimer: 0
 --- !u!4 &1695294351
 Transform:
   m_ObjectHideFlags: 0
@@ -8129,13 +8112,9 @@ PrefabInstance:
       propertyPath: m_IsActive
       value: 1
       objectReference: {fileID: 0}
-    - target: {fileID: 3157129497226360429, guid: 750d1ab133369244b9402606e76175e9, type: 3}
-      propertyPath: m_Name
-      value: animated_inner_core
-      objectReference: {fileID: 0}
     - target: {fileID: 4169035723749227788, guid: 750d1ab133369244b9402606e76175e9, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 0
+      value: -4
       objectReference: {fileID: 0}
     - target: {fileID: 4169035723749227788, guid: 750d1ab133369244b9402606e76175e9, type: 3}
       propertyPath: m_LocalPosition.y
@@ -8172,10 +8151,6 @@ PrefabInstance:
     - target: {fileID: 4169035723749227788, guid: 750d1ab133369244b9402606e76175e9, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 7590307262474091071, guid: 750d1ab133369244b9402606e76175e9, type: 3}
-      propertyPath: m_Name
-      value: animated_outer_core
       objectReference: {fileID: 0}
     m_RemovedComponents:
     - {fileID: 7303519860033192719, guid: 750d1ab133369244b9402606e76175e9, type: 3}
