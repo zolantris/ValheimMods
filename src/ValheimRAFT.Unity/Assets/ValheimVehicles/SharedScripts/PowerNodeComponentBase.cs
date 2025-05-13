@@ -12,20 +12,13 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
 {
   public abstract class PowerNodeComponentBase : MonoBehaviour, IPowerNode
   {
-    public static readonly List<PowerNodeComponentBase> Instances = new();
     [SerializeField] public Transform connectorPoint;
     protected string networkId = string.Empty;
-    [SerializeField] public bool canSelfRegisterToNetwork = true;
+    [SerializeField] public bool canSelfRegisterToNetwork = false;
 
     protected virtual void Awake()
     {
-      Instances.Add(this);
       AssignConnectorPoint();
-    }
-
-    protected virtual void OnDestroy()
-    {
-      Instances.Remove(this);
     }
 
     public Transform ConnectorPoint => connectorPoint;

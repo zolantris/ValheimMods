@@ -17,15 +17,6 @@ public static class ListUtil
     }
   }
 
-  public static void CleanNullsFast<T>(this List<T> list) where T : class
-  {
-    for (var i = 0; i < list.Count; i++)
-    {
-      if (list[i] == null)
-        list.FastRemoveAt(ref i);
-    }
-  }
-
   public static void FastRemoveAt<T>(this List<T> list, ref int index)
   {
     if (index >= 0 && index < list.Count)

@@ -1,46 +1,90 @@
+// ReSharper disable ArrangeNamespaceBody
+// ReSharper disable NamespaceStyle
+
+using UnityEngine;
 using ValheimVehicles.Helpers;
 using ValheimVehicles.Interfaces;
 using ValheimVehicles.SharedScripts.PowerSystem;
-using ValheimVehicles.Structs;
-namespace ValheimVehicles.Integrations;
+using ValheimVehicles.Integrations.ZDOConfigs;
 
-public class PowerStorageComponentIntegration : PowerStorageComponent, INetView
+namespace ValheimVehicles.Integrations
 {
-  protected override void Awake()
+  public class PowerStorageComponentIntegration :
+    NetworkedComponentIntegration<PowerStorageComponentIntegration, PowerStorageComponent, PowerStorageZDOConfig>,
+    IPowerStorage
   {
-    base.Awake();
-    m_nview = GetComponent<ZNetView>();
-  }
-
-  public void Start()
-  {
-    LoadInitialData();
-  }
-
-  public void LoadInitialData()
-  {
-    if (this.IsNetViewValid(out var netView))
+    protected override void Awake()
     {
-      storedPower = netView.GetZDO().GetFloat(VehicleZdoVars.Power_StoredPower, storedPower);
-      hasLoadedInitialData = true;
+      base.Awake();
+      PowerNetworkController.RegisterPowerComponent(this);
     }
-  }
 
-  public override void SyncNetworkedData()
-  {
-    if (!hasLoadedInitialData)
+    protected override void RegisterDefaultRPCs()
     {
-      LoadInitialData();
-      return;
+      RegisterRPC<float>(nameof(RPC_Discharge), RPC_Discharge);
+      RegisterRPC<float>(nameof(RPC_Charge), RPC_Charge);
     }
-    if (this.IsNetViewValid(out var netView) && (netView.IsOwner() || ZNet.instance && ZNet.instance.IsDedicated()))
+
+    public void ChargeOrRPC(float amount)
     {
-      netView.GetZDO().Set(VehicleZdoVars.Power_StoredPower, storedPower);
+      if (this.IsNetViewValid(out var netView) && (netView.IsOwner() || ZNet.instance.IsServer()))
+      {
+        Logic.Charge(amount);
+        UpdateNetworkedData();
+      }
+      else
+      {
+        InvokeRPC(nameof(RPC_Charge), amount);
+      }
     }
-  }
-  public ZNetView? m_nview
-  {
-    get;
-    set;
+
+    public void DischargeOrRPC(float amount)
+    {
+      if (this.IsNetViewValid(out var netView) && (netView.IsOwner() || ZNet.instance.IsServer()))
+      {
+        Logic.Discharge(amount);
+        UpdateNetworkedData();
+      }
+      else
+      {
+        InvokeRPC(nameof(RPC_Discharge), amount);
+      }
+    }
+
+    private void RPC_Charge(long sender, float amount)
+    {
+      Logic.Charge(amount);
+      UpdateNetworkedData();
+    }
+
+    private void RPC_Discharge(long sender, float amount)
+    {
+      Logic.Discharge(amount);
+      UpdateNetworkedData();
+    }
+
+    public string NetworkId => Logic.NetworkId;
+    public Vector3 Position => Logic.Position;
+    public bool IsActive => Logic.IsActive;
+    public Transform ConnectorPoint => Logic.ConnectorPoint;
+
+    public float CapacityRemaining => Logic.CapacityRemaining;
+    public bool IsCharging => Logic.IsCharging;
+    public float ChargeLevel => Logic.storedEnergy;
+    public float Capacity => Logic.energyCapacity;
+
+    public float Charge(float amount)
+    {
+      return Logic.Charge(amount);
+    }
+    public float Discharge(float amount)
+    {
+      return Logic.Discharge(amount);
+    }
+
+    public void SetNetworkId(string id)
+    {
+      Logic.SetNetworkId(id);
+    }
   }
 }

@@ -1,7 +1,7 @@
 // ReSharper disable ArrangeNamespaceBody
 // ReSharper disable NamespaceStyle
 
-namespace ValheimVehicles.SharedScripts.ZDOConfigs
+namespace ValheimVehicles.Integrations.Interfaces
 {
   public interface INetworkedZDOConfig<TComponent>
   {

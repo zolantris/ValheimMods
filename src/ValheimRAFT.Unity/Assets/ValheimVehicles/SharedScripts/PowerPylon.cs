@@ -37,12 +37,7 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
 
       lightningBolt.Duration *= Random.Range(0.9f, 1.1f);
 
-      if (PowerNetworkController.Instance != null)
-      {
-        PowerNetworkController.Instance.RequestRebuildPylonNetwork();
-      }
-
-      PowerPylonRegistry.Add(this);
+      PowerNetworkController.RegisterPowerComponent(this);
     }
 
     private void OnEnable()
@@ -57,7 +52,7 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
     private void OnDestroy()
     {
       if (!Application.isPlaying) return;
-      PowerPylonRegistry.Remove(this);
+      PowerNetworkController.RegisterPowerComponent(this);
       if (PowerNetworkController.Instance != null)
       {
         PowerNetworkController.Instance.RequestRebuildPylonNetwork();

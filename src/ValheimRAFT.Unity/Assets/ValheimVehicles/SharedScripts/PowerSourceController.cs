@@ -40,6 +40,8 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
       }
 
       powerCoreTransform = transform.Find("meshes/power_core");
+
+#if DEBUG
       // animatedInnerCoreTransform = transform.Find("meshes/power_core/animated_inner_core");
       // animatedOuterCoreTransform = transform.Find("meshes/power_core/animated_outer_core");
 
@@ -50,14 +52,14 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
       // }
       // // animatedOuterCore = CreateAnimatedMaterialController(animatedOuterCoreTransform);
       // animatedInnerCore = CreateAnimatedMaterialController(animatedInnerCoreTransform);
+#endif
     }
-    protected override void OnDestroy()
+    protected void OnDestroy()
     {
       if (canSelfRegisterToNetwork)
       {
         PowerNetworkController.UnregisterPowerComponent(this);
       }
-      base.OnDestroy();
     }
 
     private void FixedUpdate()
@@ -83,10 +85,6 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
       current.InitMainTex();
       return current;
     }
-
-    public virtual void SyncNetworkedData() {}
-
-    public virtual void UpdateNetworkedData() {}
 
     public void UpdatePowerCoreSize()
     {

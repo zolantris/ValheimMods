@@ -44,6 +44,36 @@
         <Compile Update="..\ValheimRAFT.Unity\Assets\ValheimVehicles\SharedScripts\ISwivelConfig.cs">
             <Link>SharedScripts\ISwivelConfig.cs</Link>
         </Compile>
+        <Compile Update="..\ValheimRAFT.Unity\Assets\ValheimVehicles\SharedScripts\PowerNetworkController.Rebuild.cs">
+            <Link>SharedScripts\PowerNetworkController.Rebuild.cs</Link>
+        </Compile>
+        <Compile Update="..\ValheimRAFT.Unity\Assets\ValheimVehicles\SharedScripts\PowerNetworkController.Simulate.cs">
+            <Link>SharedScripts\PowerNetworkController.Simulate.cs</Link>
+        </Compile>
+        <Compile Update="..\ValheimRAFT.Unity\Assets\ValheimVehicles\SharedScripts\IPowerStorage.cs">
+            <Link>SharedScripts\IPowerStorage.cs</Link>
+        </Compile>
+        <Compile Update="..\ValheimRAFT.Unity\Assets\ValheimVehicles\SharedScripts\IPowerSource.cs">
+            <Link>SharedScripts\IPowerSource.cs</Link>
+        </Compile>
+        <Compile Update="..\ValheimRAFT.Unity\Assets\ValheimVehicles\SharedScripts\IPowerConsumer.cs">
+            <Link>SharedScripts\IPowerConsumer.cs</Link>
+        </Compile>
+        <Compile Update="..\ValheimRAFT.Unity\Assets\ValheimVehicles\SharedScripts\PowerNetworkController.Sync.cs">
+            <Link>SharedScripts\PowerNetworkController.Sync.cs</Link>
+        </Compile>
+        <Compile Update="..\ValheimRAFT.Unity\Assets\ValheimVehicles\SharedScripts\PowerNetworkController.Sync.cs">
+            <Link>SharedScripts\PowerNetworkController.Sync.cs</Link>
+        </Compile>
+        <Compile Update="..\ValheimRAFT.Unity\Assets\ValheimVehicles\SharedScripts\INetworkedComponent.cs">
+            <Link>SharedScripts\INetworkedComponent.cs</Link>
+        </Compile>
+        <Compile Update="..\ValheimRAFT.Unity\Assets\ValheimVehicles\SharedScripts\PowerNetworkController.Visual.cs">
+            <Link>SharedScripts\PowerNetworkController.Visual.cs</Link>
+        </Compile>
+        <Compile Update="..\ValheimRAFT.Unity\Assets\ValheimVehicles\SharedScripts\PowerNetworkController.Lightning.cs">
+            <Link>SharedScripts\PowerNetworkController.Lightning.cs</Link>
+        </Compile>
     </ItemGroup>
     <ItemGroup Label="Internal ValheimVehicles scripts">
         <!-- Includes all namespace folders -->
@@ -55,6 +85,11 @@
         <ProjectReference Include="..\Shared\Shared.csproj"/>
         <ProjectReference Include="..\DynamicLocations\DynamicLocations.csproj"/>
         <ProjectReference Include="..\ZdoWatcher\ZdoWatcher.csproj"/>
+    </ItemGroup>
+    <ItemGroup>
+        <Content Include="..\ValheimRAFT.Unity\Assets\ValheimVehicles\SharedScripts\VehicleUISectionItem.cs.meta">
+            <Link>SharedScripts\VehicleUISectionItem.cs.meta</Link>
+        </Content>
     </ItemGroup>
     <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets"/>
 </Project>
