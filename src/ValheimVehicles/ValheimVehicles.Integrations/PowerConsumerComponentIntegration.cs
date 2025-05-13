@@ -2,6 +2,7 @@
 // ReSharper disable NamespaceStyle
 
 using UnityEngine;
+using ValheimVehicles.Helpers;
 using ValheimVehicles.SharedScripts.PowerSystem;
 using ValheimVehicles.SharedScripts.PowerSystem.Interfaces;
 using ValheimVehicles.SharedScripts.ZDOConfigs;
@@ -12,7 +13,7 @@ namespace ValheimVehicles.Integrations
     NetworkedComponentIntegration<PowerConsumerComponentIntegration, PowerConsumerComponent, PowerConsumerZDOConfig>,
     IPowerConsumer
   {
-    public string NetworkId { get; private set; }
+    public string NetworkId => Logic.NetworkId;
     public Vector3 Position => transform.position;
     public Transform ConnectorPoint => transform;
     public bool IsActive => Logic.IsActive;
@@ -26,10 +27,24 @@ namespace ValheimVehicles.Integrations
     {
       Logic.ApplyPower(joules, deltaTime);
     }
+    public void SetActive(bool val)
+    {
+      Logic.SetActive(val);
+    }
 
     protected override void Awake()
     {
       base.Awake();
+
+      // don't do anything when we aren't initialized.
+      if (this.IsNetViewValid(out var netView)) return;
+
+      PowerNetworkController.RegisterPowerComponent(this);
+    }
+    protected override void OnDestroy()
+    {
+      base.OnDestroy();
+      PowerNetworkController.UnregisterPowerComponent(this);
     }
 
     protected override void RegisterDefaultRPCs()
@@ -41,14 +56,9 @@ namespace ValheimVehicles.Integrations
       // Let logic handle demand evaluation and power state
     }
 
-    public PowerConsumerComponent GetLogic()
-    {
-      return Logic;
-    }
-
     public void SetNetworkId(string id)
     {
-      NetworkId = id;
+      Logic.SetNetworkId(id);
     }
   }
 }

@@ -4,11 +4,17 @@
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using ValheimVehicles.Interfaces;
+using ValheimVehicles.SharedScripts.PowerSystem.Interfaces;
 
 namespace ValheimVehicles.SharedScripts.PowerSystem
 {
   public partial class PowerNetworkController
   {
+    private readonly List<IPowerSource> _sources = new();
+    private readonly List<IPowerStorage> _storage = new();
+    private readonly List<IPowerConsumer> _consumers = new();
+
     public void SimulateNetwork(List<IPowerNode> nodes)
     {
       var deltaTime = Time.fixedDeltaTime;
@@ -20,13 +26,13 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
       {
         switch (node)
         {
-          case PowerSourceComponent s:
+          case IPowerSource s:
             _sources.Add(s);
             break;
-          case PowerStorageComponent b:
+          case IPowerStorage b:
             _storage.Add(b);
             break;
-          case PowerConsumerComponent c:
+          case IPowerConsumer c:
             if (c.IsDemanding)
               _consumers.Add(c);
             break;

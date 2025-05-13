@@ -9,7 +9,7 @@ public class PowerConsumerZDOConfig : INetworkedZDOConfig<PowerConsumerComponent
   public void Load(ZDO zdo, PowerConsumerComponentIntegration component)
   {
     var isDemanding = zdo.GetBool(VehicleZdoVars.Power_IsDemanding, component.IsDemanding);
-    component.GetLogic().SetDemandState(isDemanding);
+    component.Logic.SetDemandState(isDemanding);
   }
 
   public void Save(ZDO zdo, PowerConsumerComponentIntegration component)

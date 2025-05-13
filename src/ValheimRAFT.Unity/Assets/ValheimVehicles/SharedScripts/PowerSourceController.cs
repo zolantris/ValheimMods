@@ -54,7 +54,7 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
       // animatedInnerCore = CreateAnimatedMaterialController(animatedInnerCoreTransform);
 #endif
     }
-    protected void OnDestroy()
+    protected virtual void OnDestroy()
     {
       if (canSelfRegisterToNetwork)
       {

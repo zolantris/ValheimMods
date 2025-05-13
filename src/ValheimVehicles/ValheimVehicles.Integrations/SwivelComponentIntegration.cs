@@ -335,15 +335,13 @@
       }
     }
 
-    // public override void ToggleDebugger(bool val)
-    // {
-    //   if (val)
-    //   {
-    //     AdjustDebuggerArrowLocation();
-    //   }
-    //
-    //   base.ToggleDebugger(val);
-    // }
+    public override void InitPowerConsumer()
+    {
+      var powerConsumerIntegration = gameObject.AddComponent<PowerConsumerComponentIntegration>();
+      swivelPowerConsumer = powerConsumerIntegration.Logic;
+      UpdatePowerConsumer();
+      UpdateBasePowerConsumption();
+    }
 
     public void OnInitComplete()
     {

@@ -9,5 +9,6 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
     float GetFuelCapacity();
     bool IsRunning { get; }
     void Refuel(float amount);
+    float RequestAvailablePower(float deltaTime, bool isNetworkDemanding);
   }
 }

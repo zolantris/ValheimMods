@@ -22,7 +22,7 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
 
     public float MaxConnectionDistance => maxConnectionDistance;
 
-    private void Awake()
+    protected virtual void Awake()
     {
       lightningBoltParent = transform.Find("lightning_effects");
       coilTop = transform.Find("coil/start");
@@ -52,11 +52,7 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
     private void OnDestroy()
     {
       if (!Application.isPlaying) return;
-      PowerNetworkController.RegisterPowerComponent(this);
-      if (PowerNetworkController.Instance != null)
-      {
-        PowerNetworkController.Instance.RequestRebuildPylonNetwork();
-      }
+      PowerNetworkController.UnregisterPowerComponent(this);
     }
 
     public string NetworkId

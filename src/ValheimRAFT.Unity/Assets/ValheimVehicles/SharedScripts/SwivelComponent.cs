@@ -129,15 +129,22 @@ namespace ValheimVehicles.SharedScripts
       }
     }
 
-    public void InitPowerConsumer()
+    public virtual void InitPowerConsumer()
     {
       if (!swivelPowerConsumer)
       {
-        swivelPowerConsumer = gameObject.AddComponent<PowerConsumerComponent>();
-      }
+        swivelPowerConsumer = gameObject.GetComponent<PowerConsumerComponent>();
+        if (!swivelPowerConsumer)
+        {
+          swivelPowerConsumer = gameObject.AddComponent<PowerConsumerComponent>();
+        }
 
-      UpdatePowerConsumer();
-      UpdateBasePowerConsumption();
+        if (swivelPowerConsumer)
+        {
+          UpdatePowerConsumer();
+          UpdateBasePowerConsumption();
+        }
+      }
     }
 
     public virtual void Start()
@@ -359,7 +366,7 @@ namespace ValheimVehicles.SharedScripts
       if (!IsPoweredSwivel) return;
       if (!swivelPowerConsumer)
       {
-        swivelPowerConsumer = gameObject.AddComponent<PowerConsumerComponent>();
+        InitPowerConsumer();
       }
 
       if (mode == SwivelMode.Rotate || mode == SwivelMode.Move)

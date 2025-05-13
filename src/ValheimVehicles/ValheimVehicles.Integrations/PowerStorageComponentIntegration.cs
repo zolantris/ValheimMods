@@ -16,9 +16,15 @@ namespace ValheimVehicles.Integrations
     protected override void Awake()
     {
       base.Awake();
+      // don't do anything when we aren't initialized.
+      if (this.IsNetViewValid(out var netView)) return;
+
       PowerNetworkController.RegisterPowerComponent(this);
     }
-
+    protected void OnDestroy()
+    {
+      PowerNetworkController.UnregisterPowerComponent(this);
+    }
     protected override void RegisterDefaultRPCs()
     {
       RegisterRPC<float>(nameof(RPC_Discharge), RPC_Discharge);

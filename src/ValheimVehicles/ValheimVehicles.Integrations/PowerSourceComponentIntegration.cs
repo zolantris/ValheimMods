@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using ValheimVehicles.Helpers;
 using ValheimVehicles.Integrations.ZDOConfigs;
@@ -11,16 +12,15 @@ public class PowerSourceComponentIntegration :
   protected override void Awake()
   {
     base.Awake();
+    // don't do anything when we aren't initialized.
+    if (this.IsNetViewValid(out var netView)) return;
+
     PowerNetworkController.RegisterPowerComponent(this);
   }
 
-  public void TryRefuel(float amount)
+  protected override void OnDestroy()
   {
-    RunIfOwnerOrServer(() =>
-    {
-      Logic.Refuel(amount);
-      UpdateNetworkedData();
-    });
+    PowerNetworkController.UnregisterPowerComponent(this);
   }
 
   protected override void RegisterDefaultRPCs()
@@ -50,6 +50,10 @@ public class PowerSourceComponentIntegration :
   public void Refuel(float amount)
   {
     Logic.Refuel(amount);
+  }
+  public float RequestAvailablePower(float deltaTime, bool isNetworkDemanding)
+  {
+    return Logic.RequestAvailablePower(deltaTime, isNetworkDemanding);
   }
   public void SetRunning(bool state)
   {

@@ -55,11 +55,11 @@ public class PowerHoverComponent : MonoBehaviour, Hoverable, Interactable
     var outString = "";
     if (HasPowerSource)
     {
-      outString += $"Power Source: {_powerSourceComponent.GetFuelLevel()}/{_powerSourceComponent.GetFuelCapacity()}\n";
+      outString += $"Power Source: {Mathf.RoundToInt(_powerSourceComponent.GetFuelLevel())}/{_powerSourceComponent.GetFuelCapacity()}\n";
     }
     if (HasPowerStorage)
     {
-      outString += $"Power Storage: {_powerStorageComponent.ChargeLevel}/{_powerStorageComponent.Capacity}";
+      outString += $"Power Storage: {Mathf.RoundToInt(_powerStorageComponent.ChargeLevel)}/{_powerStorageComponent.Capacity}";
     }
     return outString;
   }

@@ -27,14 +27,25 @@ namespace ValheimVehicles.Integrations
     protected virtual void Awake()
     {
       m_nview = GetComponent<ZNetView>();
+
+      // don't do anything when we aren't initialized.
+      // if (this.IsNetViewValid(out var netView)) return;
+
       _logic = gameObject.AddComponent<TDelegateComponent>();
       RpcHandler = new SafeRPCHandler(m_nview);
+
+      RpcHandler.Register(nameof(RPC_NotifyStateUpdated), RPC_NotifyStateUpdated);
       RegisterDefaultRPCs();
     }
 
     protected virtual void Start()
     {
       LoadInitialData();
+    }
+
+    protected virtual void OnDestroy()
+    {
+      RpcHandler.UnregisterAll();
     }
 
     protected abstract void RegisterDefaultRPCs();

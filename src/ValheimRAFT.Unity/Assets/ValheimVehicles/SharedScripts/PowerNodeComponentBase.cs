@@ -23,7 +23,12 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
 
     public Transform ConnectorPoint => connectorPoint;
 
-    public string NetworkId => networkId;
+    public string NetworkId
+    {
+      get => networkId;
+      set => networkId = value;
+    }
+
     public virtual Vector3 Position => connectorPoint ? connectorPoint.position : transform.position;
     public abstract bool IsActive { get; }
 

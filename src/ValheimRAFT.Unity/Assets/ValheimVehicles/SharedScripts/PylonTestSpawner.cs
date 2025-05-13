@@ -34,10 +34,7 @@ namespace ValheimVehicles.SharedScripts
 
     private void Start()
     {
-      if (PowerNetworkController.Instance != null)
-      {
-        PowerNetworkController.Instance.RequestRebuildPylonNetwork();
-      }
+      PowerNetworkController.RequestRebuildNetwork();
     }
 
     private List<Vector3> GeneratePositions(int count, float spacing)
@@ -64,8 +61,7 @@ namespace ValheimVehicles.SharedScripts
         obj.name = $"Pylon_{pos.x:F1}_{pos.z:F1}";
       }
 
-      if (PowerNetworkController.Instance != null)
-        PowerNetworkController.Instance.RequestRebuildPylonNetwork();
+      PowerNetworkController.RequestRebuildNetwork();
     }
   }
 }

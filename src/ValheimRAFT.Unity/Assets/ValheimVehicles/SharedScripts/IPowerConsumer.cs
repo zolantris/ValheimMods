@@ -8,5 +8,6 @@ namespace ValheimVehicles.SharedScripts.PowerSystem.Interfaces
     bool IsDemanding { get; }
     float RequestedPower(float deltaTime);
     void ApplyPower(float joules, float deltaTime);
+    void SetActive(bool val);
   }
 }

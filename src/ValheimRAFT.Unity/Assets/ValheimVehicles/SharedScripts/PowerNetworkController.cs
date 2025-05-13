@@ -20,10 +20,6 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
 {
   public partial class PowerNetworkController : SingletonBehaviour<PowerNetworkController>
   {
-    internal readonly List<PowerSourceComponent> _sources = new();
-    internal readonly List<PowerStorageComponent> _storage = new();
-    internal readonly List<PowerConsumerComponent> _consumers = new();
-
     [SerializeField] private int curvedLinePoints = 50;
     [SerializeField] private Material fallbackWireMaterial;
     protected readonly Dictionary<string, List<IPowerNode>> _networks = new();
@@ -37,7 +33,7 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
     public static List<IPowerSource> Sources = new();
     public static List<IPowerStorage> Storages = new();
     public static List<IPowerConsumer> Consumers = new();
-    public static List<IPowerNode> Pylons = new();
+    public static List<PowerPylon> Pylons = new();
 
     public static void RegisterPowerComponent<T>(T component)
     {
@@ -52,13 +48,14 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
         case IPowerConsumer c:
           if (!Consumers.Contains(c)) Consumers.Add(c);
           break;
-        case IPowerNode p:
+        case PowerPylon p:
           if (!Pylons.Contains(p)) Pylons.Add(p);
           break;
         default:
           LoggerProvider.LogWarning($"[Power] Unrecognized component type: {typeof(T).Name}");
           break;
       }
+      RequestRebuildNetwork();
     }
 
     public static void UnregisterPowerComponent<T>(T component)
@@ -74,13 +71,14 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
         case IPowerConsumer c:
           Consumers.FastRemove(c);
           break;
-        case IPowerNode p:
+        case PowerPylon p:
           Pylons.FastRemove(p);
           break;
         default:
           LoggerProvider.LogWarning($"[Power] Unrecognized component type: {typeof(T).Name}");
           break;
       }
+      RequestRebuildNetwork();
     }
 
 
@@ -131,10 +129,11 @@ private static void ClearPowerListsOnReload()
         SimulateNetwork(pair.Value);
       }
     }
-    public void RequestRebuildPylonNetwork()
+    public static void RequestRebuildNetwork()
     {
-      if (_rebuildPylonNetworkRoutine != null) { return; }
-      _rebuildPylonNetworkRoutine = StartCoroutine(RebuildPowerNetworkCoroutine());
+      if (Instance == null) return;
+      if (Instance._rebuildPylonNetworkRoutine != null) { return; }
+      Instance._rebuildPylonNetworkRoutine = Instance.StartCoroutine(Instance.RebuildPowerNetworkCoroutine());
     }
   }
 }
