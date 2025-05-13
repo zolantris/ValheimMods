@@ -21,7 +21,7 @@ public class PowerStorageComponentIntegration : PowerStorageComponent, INetView
   {
     if (this.IsNetViewValid(out var netView))
     {
-      storedPower = netView.GetZDO().GetFloat(VehicleZdoVars.Power_StoredPower, 0f);
+      storedPower = netView.GetZDO().GetFloat(VehicleZdoVars.Power_StoredPower, storedPower);
       hasLoadedInitialData = true;
     }
   }

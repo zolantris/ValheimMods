@@ -15,21 +15,12 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
     public static readonly List<PowerNodeComponentBase> Instances = new();
     [SerializeField] public Transform connectorPoint;
     protected string networkId = string.Empty;
+    [SerializeField] public bool canSelfRegisterToNetwork = true;
 
     protected virtual void Awake()
     {
       Instances.Add(this);
-
       AssignConnectorPoint();
-      if (!PowerNetworkController.Instance)
-      {
-        gameObject.AddComponent<PowerNetworkController>();
-      }
-
-      if (PowerNetworkController.Instance)
-      {
-        PowerNetworkController.Instance.RegisterNode(this);
-      }
     }
 
     protected virtual void OnDestroy()

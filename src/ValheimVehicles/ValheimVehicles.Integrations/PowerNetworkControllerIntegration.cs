@@ -1,5 +1,6 @@
 using System.Collections;
 using Jotunn;
+using UnityEngine;
 using ValheimVehicles.SharedScripts.PowerSystem;
 namespace ValheimVehicles.Integrations;
 
@@ -12,7 +13,6 @@ public class PowerNetworkControllerIntegration : PowerNetworkController
     {
       return;
     }
-
 
     // only run on servers.
     // may need to run on a client if dedicated server is used.
@@ -49,7 +49,7 @@ public class PowerNetworkControllerIntegration : PowerNetworkController
     }
 
     foreach (var s in _sources)
-      s.UpdateNetworkedData();
+      s.SyncNetworkedData();
 
     foreach (var b in _storage)
       b.SyncNetworkedData();

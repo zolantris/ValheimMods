@@ -4,12 +4,13 @@
 #region
 
 using UnityEngine;
+using ValheimVehicles.Interfaces;
 
 #endregion
 
 namespace ValheimVehicles.SharedScripts.PowerSystem
 {
-  public class PowerSourceComponent : PowerNodeComponentBase
+  public class PowerSourceComponent : PowerNodeComponentBase, IPowerSource
   {
 
     private static readonly Vector3 powerCoreMaxScale = Vector3.one;
@@ -19,7 +20,7 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
     [SerializeField] private float fuelConsumptionRate = 1f; // per second
     [SerializeField] public bool isRunning = true;
 
-    [SerializeField] internal float currentFuel;
+    [SerializeField] public float currentFuel;
     [SerializeField] public Transform powerCoreTransform;
     [SerializeField] public Transform animatedInnerCoreTransform;
     [SerializeField] public Transform animatedOuterCoreTransform;
@@ -33,6 +34,11 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
     {
       base.Awake();
 
+      if (canSelfRegisterToNetwork)
+      {
+        PowerNetworkController.RegisterPowerComponent(this); // or RegisterNode(this)
+      }
+
       powerCoreTransform = transform.Find("meshes/power_core");
       // animatedInnerCoreTransform = transform.Find("meshes/power_core/animated_inner_core");
       // animatedOuterCoreTransform = transform.Find("meshes/power_core/animated_outer_core");
@@ -44,6 +50,14 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
       // }
       // // animatedOuterCore = CreateAnimatedMaterialController(animatedOuterCoreTransform);
       // animatedInnerCore = CreateAnimatedMaterialController(animatedInnerCoreTransform);
+    }
+    protected override void OnDestroy()
+    {
+      if (canSelfRegisterToNetwork)
+      {
+        PowerNetworkController.UnregisterPowerComponent(this);
+      }
+      base.OnDestroy();
     }
 
     private void FixedUpdate()
@@ -114,13 +128,12 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
     {
       return fuelCapacity;
     }
-
-    public float Refuel(float amount)
+    public bool IsRunning => isRunning;
+    public void Refuel(float amount)
     {
       var space = fuelCapacity - currentFuel;
       var toAdd = Mathf.Min(space, amount);
       currentFuel += toAdd;
-      return toAdd;
     }
 
     public void SetRunning(bool state)

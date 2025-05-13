@@ -90,5 +90,6 @@ public static class VehicleZdoVars
 
   // for power systems
   public const string Power_StoredPower = "PowerSystem_StoredPower";
+  public const string Power_IsRunning = "PowerSystem_IsRunning";
   public const string Power_StoredFuel = "PowerSystem_StoredFuel";
 }

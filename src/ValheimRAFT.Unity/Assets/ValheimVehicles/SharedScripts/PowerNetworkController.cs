@@ -36,6 +36,36 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
     public Coroutine? _rebuildPylonNetworkRoutine;
     public static Material WireMaterial { get; set; }
 
+    public static List<PowerSourceComponent> Sources = new();
+    public static List<PowerConsumerComponent> Consumers = new();
+    public static List<PowerStorageComponent> Storages = new();
+
+    public static void RegisterPowerComponent(PowerSourceComponent instance)
+    {
+      Sources.Add(instance);
+    }
+    public static void RegisterPowerComponent(PowerConsumerComponent instance)
+    {
+      Consumers.Add(instance);
+    }
+    public static void RegisterPowerComponent(PowerStorageComponent instance)
+    {
+      Storages.Add(instance);
+    }
+
+    public static void UnregisterPowerComponent(PowerSourceComponent instance)
+    {
+      Sources.Remove(instance);
+    }
+    public static void UnregisterPowerComponent(PowerConsumerComponent instance)
+    {
+      Consumers.Remove(instance);
+    }
+    public static void UnregisterPowerComponent(PowerStorageComponent instance)
+    {
+      Storages.Remove(instance);
+    }
+
 
     public override void Awake()
     {
@@ -64,10 +94,15 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
       base.Awake();
     }
 
-    public void Start()
-    {
-      RequestRebuildPylonNetwork();
-    }
+#if UNITY_EDITOR
+[UnityEditor.InitializeOnLoadMethod]
+private static void ClearPowerListsOnReload()
+{
+    PowerNetworkController.Sources.Clear();
+    PowerNetworkController.Consumers.Clear();
+    PowerNetworkController.Storages.Clear();
+}
+#endif
 
     protected virtual void FixedUpdate()
     {

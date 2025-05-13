@@ -5,6 +5,7 @@ namespace ValheimVehicles.Helpers;
 
 public static class ValheimExtensions
 {
+
   // non-extension method
   public static bool IsNetViewValid(ZNetView? netView, [NotNullWhen(true)] out ZNetView? validNetView)
   {

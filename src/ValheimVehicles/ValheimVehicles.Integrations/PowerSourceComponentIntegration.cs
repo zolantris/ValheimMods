@@ -1,62 +1,47 @@
-using ValheimVehicles.Helpers;
+using UnityEngine;
 using ValheimVehicles.Interfaces;
-using ValheimVehicles.SharedScripts;
 using ValheimVehicles.SharedScripts.PowerSystem;
-using ValheimVehicles.Structs;
+using ValheimVehicles.SharedScripts.ZDOConfigs;
+
 namespace ValheimVehicles.Integrations;
 
-public class PowerSourceComponentIntegration : PowerSourceComponent, INetView
+public class PowerSourceComponentIntegration :
+  NetworkedComponentIntegration<PowerSourceComponentIntegration, PowerSourceZDOConfig>, IPowerSource
 {
+  private PowerSourceComponent _logic;
+
   protected override void Awake()
   {
     base.Awake();
-    m_nview = GetComponent<ZNetView>();
+
+    _logic = gameObject.AddComponent<PowerSourceComponent>();
+    PowerNetworkControllerIntegration.Instance.RegisterNode(_logic);
   }
 
-  protected void Start()
+  public void TryRefuel(float amount)
   {
-    LoadInitialData();
-  }
-
-  public void LoadInitialData()
-  {
-    if (hasLoadedInitialData) return;
-    if (m_nview && m_nview.IsValid() && m_nview.GetZDO() != null)
+    RunIfOwnerOrServer(() =>
     {
-      if (!m_nview.IsOwner() && ZNet.instance.IsServer())
-      {
-        // Host claims ownership if none exists
-        m_nview.ClaimOwnership();
-      }
-      currentFuel = m_nview.GetZDO().GetFloat(VehicleZdoVars.Power_StoredFuel, currentFuel);
-      hasLoadedInitialData = true;
-    }
+      _logic.Refuel(amount);
+      UpdateNetworkedData();
+    });
   }
 
-  public override void SyncNetworkedData()
+  public void Refuel(float amount)
   {
-    if (m_nview != null)
-    {
-      m_nview.GetZDO().Set(VehicleZdoVars.Power_StoredFuel, currentFuel);
-    }
+    _logic.Refuel(amount);
   }
-
-  public override void UpdateNetworkedData()
+  public void SetRunning(bool state)
   {
-    if (!hasLoadedInitialData)
-    {
-      LoadInitialData();
-      return;
-    }
-    if (this.IsNetViewValid(out var netView) && (netView.IsOwner() || ZNet.instance.IsServer()))
-    {
-      netView.GetZDO().Set(VehicleZdoVars.Power_StoredFuel, currentFuel);
-    }
+    _logic.SetRunning(state);
   }
-
-  public ZNetView? m_nview
+  public float GetFuelLevel()
   {
-    get;
-    set;
+    return _logic.GetFuelLevel();
   }
+  public float GetFuelCapacity()
+  {
+    return _logic.GetFuelCapacity();
+  }
+  public bool IsRunning => _logic.isRunning;
 }
