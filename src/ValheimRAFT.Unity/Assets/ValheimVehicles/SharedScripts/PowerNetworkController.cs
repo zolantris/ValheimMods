@@ -17,13 +17,13 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
 {
   public class PowerNetworkController : SingletonBehaviour<PowerNetworkController>
   {
-    private static readonly List<PowerSourceComponent> _sources = new();
-    private static readonly List<PowerStorageComponent> _storage = new();
-    private static readonly List<PowerConsumerComponent> _consumers = new();
-    private static readonly List<PowerPylon> _pylons = new();
-    private static readonly Queue<PowerPylon> _pending = new();
-    private static readonly List<PowerPylon> _chain = new();
-    private static readonly HashSet<PowerPylon> _unvisited = new();
+    internal readonly List<PowerSourceComponent> _sources = new();
+    internal readonly List<PowerStorageComponent> _storage = new();
+    internal readonly List<PowerConsumerComponent> _consumers = new();
+    internal readonly List<PowerPylon> _pylons = new();
+    internal readonly Queue<PowerPylon> _pending = new();
+    internal readonly List<PowerPylon> _chain = new();
+    internal readonly HashSet<PowerPylon> _unvisited = new();
 
     [SerializeField] private int curvedLinePoints = 50;
     [SerializeField] private Material fallbackWireMaterial;
@@ -69,7 +69,7 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
       RequestRebuildPylonNetwork();
     }
 
-    private void FixedUpdate()
+    protected virtual void FixedUpdate()
     {
       if (Time.time < _nextUpdate) return;
       _nextUpdate = Time.time + _updateInterval;
@@ -260,23 +260,23 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
       }
 
       // === Chain: node-to-pylon links ===
-      foreach (var kvp in nodeLinks)
-      {
-        var pylon = kvp.Key;
-        if (pylon == null || !nodeLinks.TryGetValue(pylon, out var linkedNodes)) continue;
-
-        foreach (var node in linkedNodes)
-        {
-          if (node == null) continue;
-
-          var start = parent.InverseTransformPoint(pylon.wireConnector.position);
-          var end = parent.InverseTransformPoint(
-            node.ConnectorPoint != null ? node.ConnectorPoint.position : node.Position
-          );
-
-          AddCurvedPointsBetween(start, end, curvedPoints);
-        }
-      }
+      // foreach (var kvp in nodeLinks)
+      // {
+      //   var pylon = kvp.Key;
+      //   if (pylon == null || !nodeLinks.TryGetValue(pylon, out var linkedNodes)) continue;
+      //
+      //   foreach (var node in linkedNodes)
+      //   {
+      //     if (node == null) continue;
+      //
+      //     var start = parent.InverseTransformPoint(pylon.powerConnector.position);
+      //     var end = parent.InverseTransformPoint(
+      //       node.ConnectorPoint != null ? node.ConnectorPoint.position : node.Position
+      //     );
+      //
+      //     AddCurvedPointsBetween(start, end, curvedPoints);
+      //   }
+      // }
 
       line.positionCount = curvedPoints.Count;
       line.SetPositions(curvedPoints.ToArray());
@@ -343,12 +343,22 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
       var networkIsDemanding = _consumers.Any(c => c.IsDemanding) || _storage.Any(s => s.CapacityRemaining > 0f);
 
       // TODO when all pylons are on all PowerNodes it will look much more realistic. We might be able to remove power lines.
-      if (lightningBurstCoroutine != null)
+      if (lightningBurstCoroutine != null && !networkIsDemanding)
       {
         StopCoroutine(lightningBurstCoroutine);
+        lightningBurstCoroutine = null;
       }
 
-      lightningBurstCoroutine = StartCoroutine(ActivateLightningBursts());
+      if (networkIsDemanding)
+      {
+        if (lightningBurstCoroutine != null)
+        {
+          StopCoroutine(lightningBurstCoroutine);
+          lightningBurstCoroutine = null;
+        }
+        lightningBurstCoroutine = StartCoroutine(ActivateLightningBursts());
+      }
+
 
       var fromSources = 0f;
       foreach (var s in _sources)

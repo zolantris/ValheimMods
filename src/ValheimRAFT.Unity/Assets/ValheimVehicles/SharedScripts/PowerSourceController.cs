@@ -19,12 +19,13 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
     [SerializeField] private float fuelConsumptionRate = 1f; // per second
     [SerializeField] public bool isRunning = true;
 
-    [SerializeField] private float currentFuel;
+    [SerializeField] internal float currentFuel;
     [SerializeField] public Transform powerCoreTransform;
     [SerializeField] public Transform animatedInnerCoreTransform;
     [SerializeField] public Transform animatedOuterCoreTransform;
     [SerializeField] public AnimatedMaterialController animatedOuterCore;
     [SerializeField] public AnimatedMaterialController animatedInnerCore;
+    public bool hasLoadedInitialData = false;
 
     public override bool IsActive => isRunning && currentFuel > 0f;
 
@@ -33,22 +34,22 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
       base.Awake();
 
       powerCoreTransform = transform.Find("meshes/power_core");
-      animatedInnerCoreTransform = transform.Find("meshes/power_core/animated_inner_core");
+      // animatedInnerCoreTransform = transform.Find("meshes/power_core/animated_inner_core");
       // animatedOuterCoreTransform = transform.Find("meshes/power_core/animated_outer_core");
 
       // animatedOuterCoreTransform == null
-      if (animatedInnerCoreTransform == null || powerCoreTransform == null)
-      {
-        LoggerProvider.LogError("Invalid Transforms found. This is an error with the prefab");
-      }
-      // animatedOuterCore = CreateAnimatedMaterialController(animatedOuterCoreTransform);
-      animatedInnerCore = CreateAnimatedMaterialController(animatedInnerCoreTransform);
+      // if (animatedInnerCoreTransform == null || powerCoreTransform == null)
+      // {
+      //   LoggerProvider.LogError("Invalid Transforms found. This is an error with the prefab");
+      // }
+      // // animatedOuterCore = CreateAnimatedMaterialController(animatedOuterCoreTransform);
+      // animatedInnerCore = CreateAnimatedMaterialController(animatedInnerCoreTransform);
     }
 
     private void FixedUpdate()
     {
       UpdatePowerCoreSize();
-      UpdatePowerCoreAnimations(animatedInnerCore);
+      // UpdatePowerCoreAnimations(animatedInnerCore);
       // UpdatePowerCoreAnimations(animatedOuterCore);
 
       if (!isRunning || currentFuel <= 0f) return;
@@ -68,6 +69,11 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
       current.InitMainTex();
       return current;
     }
+
+    public virtual void SyncNetworkedData() {}
+
+    public virtual void UpdateNetworkedData() {}
+
     public void UpdatePowerCoreSize()
     {
       powerCoreTransform.localScale = Vector3.Lerp(powerCoreMinScale, powerCoreMaxScale, currentFuel / fuelCapacity);

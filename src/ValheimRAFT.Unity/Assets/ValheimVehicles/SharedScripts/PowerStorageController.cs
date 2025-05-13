@@ -11,7 +11,7 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
 {
   public class PowerStorageComponent : PowerNodeComponentBase
   {
-    [SerializeField] public float capacity = 500f;
+    [SerializeField] public float capacity = 800f;
     [SerializeField] public float storedPower;
     [SerializeField] private Transform energyLevel;
     [SerializeField] public AnimatedMachineComponent powerRotator;
@@ -24,6 +24,7 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
     public Vector3 powerRotatorDischargeDirection = Vector3.down;
 
     public override bool IsActive => true;
+    internal bool hasLoadedInitialData;
 
     protected override void Awake()
     {
@@ -38,15 +39,7 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
       powerRotator = movingObjectTester;
     }
 
-    public void Update()
-    {
-      if (Input.GetKeyDown(KeyCode.T))
-      {
-        energyLevel.localScale = new Vector3(1f, 0.1f, 1f);
-      }
-    }
-
-    private void FixedUpdate()
+    protected void FixedUpdate()
     {
       if (!energyLevel)
         energyLevel = transform.Find("energy_level");
@@ -67,6 +60,12 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
       IsCharging = true;
       return toCharge;
     }
+
+    // for syncing the power state
+    public virtual void SyncNetworkedData() {}
+
+    // for updating the power state
+    public virtual void UpdateNetworkedData() {}
 
     public void UpdateChargeScale()
     {
