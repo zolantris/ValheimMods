@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 3470970051
+CRC: 432937609
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 77f1b5de93daf6fca72fb1e67ce6099f
+    Hash: 6eefd7a167943ebed4dca1b413104aaf
   TypeTreeHash:
     serializedVersion: 2
-    Hash: 85c4797b6a4be0e57bca2582613d100f
+    Hash: 2c0e3b541c42ab403145d78b256bc1e0
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 77f1b5de93daf6fca72fb1e67ce6099f
+    Hash: 6eefd7a167943ebed4dca1b413104aaf
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -43,8 +43,6 @@ ClassTypes:
 - Class: 114
   Script: {fileID: 11500000, guid: 19bf60ab5c953fe4ba1db2f29c51ad1b, type: 3}
 - Class: 114
-  Script: {fileID: 11500000, guid: 7d873279a1e81b9419d0f6fb8b3c1fa9, type: 3}
-- Class: 114
   Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
 - Class: 114
   Script: {fileID: 11500000, guid: 67db9e8f0e2ae9c40bc1e2b64352a6b4, type: 3}
@@ -72,6 +70,8 @@ ClassTypes:
   Script: {fileID: 11500000, guid: 37593e1934874fe4db91a205982d109e, type: 3}
 - Class: 114
   Script: {fileID: 11500000, guid: 2a4db7a114972834c8e4117be1d82ba3, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 7d873279a1e81b9419d0f6fb8b3c1fa9, type: 3}
 - Class: 115
   Script: {instanceID: 0}
 - Class: 120
@@ -224,12 +224,13 @@ Assets:
 - Assets/ValheimVehicles/Prefabs/GUI/edit_sail_panel.prefab
 - Assets/ValheimVehicles/Material/iron_metal_double_side.mat
 - Assets/ValheimVehicles/Material/MaskTest_Wall.mat
-- Assets/ValheimVehicles/Prefabs/mechanism_power_storage_eitr.prefab
+- Assets/ValheimVehicles/Prefabs/mechanism_activator_plate.prefab
 - Assets/ValheimVehicles/Material/MaskTest_ObjectThroughWall.mat
 - Assets/ValheimVehicles/Material/iron_metal_custom.mat
 - Assets/ValheimVehicles/Material/wood_alt_piece_bg_masked.mat
 - Assets/edit_config_panel.prefab
 - Assets/ValheimVehicles/Prefabs/rope_ladder.prefab
+- Assets/ValheimVehicles/Prefabs/mechanism_power_storage_eitr.prefab
 - Assets/ValheimVehicles/Material/Dirtfloor 2.mat
 - Assets/ValheimVehicles/Prefabs/hull_wall_wood_2x2.prefab
 - Assets/ValheimVehicles/Prefabs/GUI/edit_texture_panel.prefab

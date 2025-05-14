@@ -6,7 +6,6 @@
 using System;
 using System.ComponentModel;
 using UnityEngine;
-using UnityEngine.Events;
 using ValheimVehicles.SharedScripts.PowerSystem;
 using ValheimVehicles.SharedScripts.UI;
 
@@ -42,6 +41,11 @@ namespace ValheimVehicles.SharedScripts
     public static float RotationInterpolateSpeedMultiplier = 3f;
     public static float MovementInterpolationSpeedMultiplier = 0.2f;
 
+    [Description("Swivel Energy Settings")]
+    public static float SwivelEnergyDrain = 0.01f;
+
+    public static bool IsPoweredSwivel = true;
+
     [Header("Swivel General Settings")]
     [SerializeField] private SwivelMode mode = SwivelMode.Rotate;
 
@@ -61,14 +65,10 @@ namespace ValheimVehicles.SharedScripts
     [SerializeField] public HingeDirection yHingeDirection = HingeDirection.Forward;
     [SerializeField] public HingeDirection zHingeDirection = HingeDirection.Forward;
     [SerializeField] public Vector3 maxRotationEuler = new(45f, 90f, 45f);
-    [SerializeField] public Action? onRotationReachedTarget;
-    [SerializeField] public Action? onRotationReturned;
 
     [Header("Movement Mode Settings")]
     [SerializeField] public Vector3 movementOffset = new(0f, 0f, 0f);
     [SerializeField] public bool useWorldPosition;
-    [SerializeField] public Action? onMovementReachedTarget;
-    [SerializeField] public Action? onMovementReturned;
 
     [Description("Piece container containing all children to be rotated or moved.")]
     public Transform piecesContainer;
@@ -81,8 +81,6 @@ namespace ValheimVehicles.SharedScripts
     public bool CanUpdate = true;
 
     public PowerConsumerComponent swivelPowerConsumer;
-
-    public static bool IsPoweredSwivel = true;
     private Rigidbody animatedRigidbody;
 
     [Description("This speed is computed with the base interpolation value to get a final interpolation.")]
@@ -90,6 +88,10 @@ namespace ValheimVehicles.SharedScripts
 
     private Vector3 hingeEndEuler;
     private float hingeLerpProgress;
+    public Action? onMovementReachedTarget;
+    public Action? onMovementReturned;
+    public Action? onRotationReachedTarget;
+    public Action? onRotationReturned;
     private Transform snappoint;
 
     private Vector3 startLocalPosition;
@@ -129,24 +131,6 @@ namespace ValheimVehicles.SharedScripts
       }
     }
 
-    public virtual void InitPowerConsumer()
-    {
-      if (!swivelPowerConsumer)
-      {
-        swivelPowerConsumer = gameObject.GetComponent<PowerConsumerComponent>();
-        if (!swivelPowerConsumer)
-        {
-          swivelPowerConsumer = gameObject.AddComponent<PowerConsumerComponent>();
-        }
-
-        if (swivelPowerConsumer)
-        {
-          UpdatePowerConsumer();
-          UpdateBasePowerConsumption();
-        }
-      }
-    }
-
     public virtual void Start()
     {
       SyncSnappoint();
@@ -160,7 +144,7 @@ namespace ValheimVehicles.SharedScripts
       // for updating demand state on the fly due to toggling with serializer
       if (Mode == SwivelMode.Rotate || Mode == SwivelMode.Move)
       {
-        swivelPowerConsumer.SetDemandState(MotionState != MotionState.Idle);
+        swivelPowerConsumer.SetDemandState(MotionState != MotionState.AtStart);
       }
 #endif
 
@@ -270,6 +254,24 @@ namespace ValheimVehicles.SharedScripts
       SyncSnappoint();
     }
 
+    public virtual void InitPowerConsumer()
+    {
+      if (!swivelPowerConsumer)
+      {
+        swivelPowerConsumer = gameObject.GetComponent<PowerConsumerComponent>();
+        if (!swivelPowerConsumer)
+        {
+          swivelPowerConsumer = gameObject.AddComponent<PowerConsumerComponent>();
+        }
+
+        if (swivelPowerConsumer)
+        {
+          UpdatePowerConsumer();
+          UpdateBasePowerConsumption();
+        }
+      }
+    }
+
     public void SetTrackingRange(float min, float max)
     {
       MinTrackingRange = min;
@@ -342,7 +344,7 @@ namespace ValheimVehicles.SharedScripts
     public void UpdateBasePowerConsumption()
     {
       if (!IsPoweredSwivel || !swivelPowerConsumer) return;
-      swivelPowerConsumer.BasePowerConsumption = 0.1f * computedInterpolationSpeed;
+      swivelPowerConsumer.BasePowerConsumption = SwivelEnergyDrain * computedInterpolationSpeed;
     }
 
     public void DeactivatePowerConsumer()
@@ -437,7 +439,7 @@ namespace ValheimVehicles.SharedScripts
       UpdatePowerConsumer();
     }
 
-  #region ISwivelConfig
+    #region ISwivelConfig
 
     public float InterpolationSpeed
     {
@@ -487,7 +489,7 @@ namespace ValheimVehicles.SharedScripts
       set => SetMode(value);
     }
 
-  #endregion
+    #endregion
 
   }
 }

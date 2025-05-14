@@ -74,6 +74,12 @@
         <Compile Update="..\ValheimRAFT.Unity\Assets\ValheimVehicles\SharedScripts\PowerNetworkController.Lightning.cs">
             <Link>SharedScripts\PowerNetworkController.Lightning.cs</Link>
         </Compile>
+        <Compile Update="..\ValheimRAFT.Unity\Assets\ValheimVehicles\SharedScripts\IPowerConduit.cs">
+            <Link>SharedScripts\IPowerConduit.cs</Link>
+        </Compile>
+        <Compile Update="..\ValheimRAFT.Unity\Assets\ValheimVehicles\SharedScripts\EnergyPlateComponent.cs">
+            <Link>SharedScripts\EnergyPlateComponent.cs</Link>
+        </Compile>
     </ItemGroup>
     <ItemGroup Label="Internal ValheimVehicles scripts">
         <!-- Includes all namespace folders -->

@@ -16,7 +16,16 @@ namespace ValheimVehicles.Integrations
     where TDelegateComponent : Component
   {
     private TDelegateComponent _logic;
-    public TDelegateComponent Logic => _logic;
+
+    public TDelegateComponent Logic
+    {
+      get
+      {
+        EnsureInitialized(); // this check is O(1)
+        return _logic;
+      }
+    }
+
     public ZNetView? m_nview { get; set; }
     public bool hasLoadedInitialData { get; private set; }
     protected SafeRPCHandler RpcHandler { get; private set; }
@@ -25,15 +34,25 @@ namespace ValheimVehicles.Integrations
     protected TConfig Config = new();
 
     public string instanced_RpcNotifyStateUpdate = null!;
+    private bool _isInitialized;
 
     protected virtual void Awake()
     {
+      EnsureInitialized();
+    }
+
+    public virtual void EnsureInitialized()
+    {
+      if (_isInitialized) return;
+      _isInitialized = true;
       m_nview = GetComponent<ZNetView>();
 
-      // this must be done if there are both PowerStorage and PowerSource on the same object.
-      instanced_RpcNotifyStateUpdate = $"{GetType().Name}_{nameof(RPC_NotifyStateUpdated)}";
+      if (!_logic)
+      {
+        _logic = gameObject.AddComponent<TDelegateComponent>();
+      }
 
-      _logic = gameObject.AddComponent<TDelegateComponent>();
+      instanced_RpcNotifyStateUpdate = $"{GetType().Name}_{nameof(RPC_NotifyStateUpdated)}";
       RpcHandler = new SafeRPCHandler(m_nview);
     }
 

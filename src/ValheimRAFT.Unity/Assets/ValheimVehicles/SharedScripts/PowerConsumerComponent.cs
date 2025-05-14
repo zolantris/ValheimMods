@@ -12,6 +12,11 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
 {
   public class PowerConsumerComponent : PowerNodeComponentBase
   {
+    public enum ConsumerType
+    {
+      Engine
+    }
+
     [SerializeField] private PowerConsumptionLevel consumptionLevel = PowerConsumptionLevel.Medium;
     [SerializeField] private bool isActive;
 
@@ -22,6 +27,8 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
     private float powerLow = 10f;
     private float powerMedium = 20f;
     private float powerHigh = 30f;
+
+    public ConsumerType m_consumerType = ConsumerType.Engine;
 
     public float BasePowerConsumption
     {
@@ -59,6 +66,9 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
         PowerNetworkController.UnregisterPowerComponent(this);
       }
     }
+
+    public virtual void OnCollisionEnter(Collision other) {}
+    public virtual void OnCollisionExit(Collision other) {}
 
     public void SetDemandState(bool val)
     {

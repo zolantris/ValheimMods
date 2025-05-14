@@ -25,7 +25,7 @@ public class MechanismPrefabs : RegisterPrefab<MechanismPrefabs>
       Name = "$valheim_vehicles_mechanism_power_storage_eitr",
       Description = "$valheim_vehicles_mechanism_power_storage_eitr_desc",
       Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
-        .PowerStorageEitr)
+        .Power_Storage_Icon)
     });
     PrefabRegistryHelpers.AddPieceForPrefab(PrefabNames.Mechanism_Power_Storage_Eitr, prefab);
 
@@ -73,7 +73,7 @@ public class MechanismPrefabs : RegisterPrefab<MechanismPrefabs>
       Name = "$valheim_vehicles_mechanism_power_source_eitr",
       Description = "$valheim_vehicles_mechanism_power_source_eitr_desc",
       Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
-        .PowerSourceEitr)
+        .Power_Source_Icon)
     });
     PrefabRegistryHelpers.AddPieceForPrefab(PrefabNames.Mechanism_Power_Source_Eitr, prefab);
 
@@ -81,6 +81,9 @@ public class MechanismPrefabs : RegisterPrefab<MechanismPrefabs>
     var powerSource = prefab.AddComponent<PowerSourceComponentIntegration>();
     var powerStorage = prefab.AddComponent<PowerStorageComponentIntegration>();
     prefab.AddComponent<PowerHoverComponent>();
+
+    powerSource.Logic.IsStorage = true;
+    powerStorage.Logic.IsSource = true;
 
     PieceManager.Instance.AddPiece(new CustomPiece(prefab, true, new PieceConfig
     {
@@ -105,6 +108,96 @@ public class MechanismPrefabs : RegisterPrefab<MechanismPrefabs>
         {
           Amount = 6,
           Item = "BlackMarble",
+          Recover = true
+        }
+      ]
+    }));
+  }
+
+  private void RegisterPowerChargePlate()
+  {
+    var prefab = PrefabManager.Instance.CreateClonedPrefab(
+      PrefabNames.Mechanism_Power_Consumer_Charge_Plate,
+      LoadValheimVehicleAssets.Mechanism_Power_Activator_Plate);
+
+    PrefabRegistryHelpers.AddNetViewWithPersistence(prefab);
+    PrefabRegistryHelpers.PieceDataDictionary.Add(PrefabNames.Mechanism_Power_Consumer_Charge_Plate, new PrefabRegistryHelpers.PieceData
+    {
+      Name = "$valheim_vehicles_mechanism_power_charge_plate",
+      Description = "$valheim_vehicles_mechanism_power_charge_plate_desc",
+      Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
+        .MechanismActivatorPlate)
+    });
+    PrefabRegistryHelpers.AddPieceForPrefab(PrefabNames.Mechanism_Power_Consumer_Charge_Plate, prefab);
+
+    // todo set values based on a config for these prefabs.
+    var powerConduit = prefab.AddComponent<PowerConduitPlateComponentIntegration>();
+    powerConduit.Logic.mode = PowerConduitPlateComponent.EnergyPlateMode.Charging;
+
+    prefab.AddComponent<PowerConduitHover>();
+
+    PieceManager.Instance.AddPiece(new CustomPiece(prefab, true, new PieceConfig
+    {
+      PieceTable = PrefabRegistryController.GetPieceTableName(),
+      Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Power),
+      Enabled = true,
+      Requirements =
+      [
+        new RequirementConfig
+        {
+          Amount = 6,
+          Item = "BlackMetal",
+          Recover = true
+        },
+        new RequirementConfig
+        {
+          Amount = 1,
+          Item = "Eitr",
+          Recover = true
+        }
+      ]
+    }));
+  }
+
+  private void RegisterPowerDrainPlate()
+  {
+    var prefab = PrefabManager.Instance.CreateClonedPrefab(
+      PrefabNames.Mechanism_Power_Consumer_Drain_Plate,
+      LoadValheimVehicleAssets.Mechanism_Power_Activator_Plate);
+
+    PrefabRegistryHelpers.AddNetViewWithPersistence(prefab);
+    PrefabRegistryHelpers.PieceDataDictionary.Add(PrefabNames.Mechanism_Power_Consumer_Drain_Plate, new PrefabRegistryHelpers.PieceData
+    {
+      Name = "$valheim_vehicles_mechanism_power_drain_plate",
+      Description = "$valheim_vehicles_mechanism_power_drain_plate_desc",
+      Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
+        .MechanismActivatorPlate)
+    });
+    PrefabRegistryHelpers.AddPieceForPrefab(PrefabNames.Mechanism_Power_Consumer_Drain_Plate, prefab);
+
+    // todo set values based on a config for these prefabs.
+    var powerConduit = prefab.AddComponent<PowerConduitPlateComponentIntegration>();
+    powerConduit.Logic.mode = PowerConduitPlateComponent.EnergyPlateMode.Draining;
+
+    prefab.AddComponent<PowerConduitHover>();
+
+    PieceManager.Instance.AddPiece(new CustomPiece(prefab, true, new PieceConfig
+    {
+      PieceTable = PrefabRegistryController.GetPieceTableName(),
+      Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Power),
+      Enabled = true,
+      Requirements =
+      [
+        new RequirementConfig
+        {
+          Amount = 6,
+          Item = "BlackMetal",
+          Recover = true
+        },
+        new RequirementConfig
+        {
+          Amount = 1,
+          Item = "Eitr",
           Recover = true
         }
       ]
@@ -258,5 +351,8 @@ public class MechanismPrefabs : RegisterPrefab<MechanismPrefabs>
     // RegisterCoalEngine();
     RegisterPowerSourceEitr();
     RegisterPowerStorageEitr();
+
+    RegisterPowerDrainPlate();
+    RegisterPowerChargePlate();
   }
 }

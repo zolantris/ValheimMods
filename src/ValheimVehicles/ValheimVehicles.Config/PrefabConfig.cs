@@ -8,6 +8,7 @@ using ValheimVehicles.Helpers;
 using ValheimVehicles.Prefabs.Registry;
 using ValheimVehicles.Prefabs.ValheimVehicles.Prefabs.Registry;
 using ValheimVehicles.SharedScripts;
+using ValheimVehicles.SharedScripts.PowerSystem;
 
 namespace ValheimVehicles.Config;
 
@@ -48,7 +49,14 @@ public class PrefabConfig : BepInExBaseConfig<PrefabConfig>
 
   public static ConfigEntry<float> VehicleStaminaHaulingCost = null!;
   public static ConfigEntry<bool> VehicleHaulingSnapsOnStaminaZero = null!;
-  public static ConfigEntry<bool> Graphics_AllowSailsFadeInFog { get; set; }
+  public static ConfigEntry<bool> Graphics_AllowSailsFadeInFog { get; set; } = null!;
+
+  public static ConfigEntry<float> SwivelPowerDrain { get; set; } = null!;
+  public static ConfigEntry<float> PowerSource_FuelCapacity { get; set; } = null!;
+  public static ConfigEntry<float> PowerSource_EitrEfficiency { get; set; } = null!;
+  public static ConfigEntry<float> PowerSource_BaseFuelEfficiency { get; set; } = null!;
+  public static ConfigEntry<float> PowerSource_FuelConsumptionRate { get; set; } = null!;
+  public static ConfigEntry<float> PowerStorage_Capacity { get; set; } = null!;
 
 
   public enum VehicleShipInitPiece
@@ -72,8 +80,86 @@ public class PrefabConfig : BepInExBaseConfig<PrefabConfig>
     prefab.Piece.m_enabled = enabled;
   }
 
+  public void UpdatePowerSources()
+  {
+    PowerSourceComponent.EitrFuelEfficiency = PowerSource_EitrEfficiency.Value;
+    PowerSourceComponent.BaseFuelEfficiency = PowerSource_BaseFuelEfficiency.Value;
+
+    foreach (var powerSource in PowerNetworkController.Sources)
+    {
+      powerSource.SetFuelConsumptionRate(PowerSource_FuelConsumptionRate.Value);
+      powerSource.SetFuelCapacity(PowerSource_FuelCapacity.Value);
+      powerSource.UpdateFuelEfficiency();
+    }
+  }
+
+  public void UpdatePowerStorages()
+  {
+    foreach (var powerStorage in PowerNetworkController.Storages)
+    {
+      powerStorage.SetCapacity(PowerStorage_Capacity.Value);
+    }
+  }
+
   public override void OnBindConfig(ConfigFile config)
   {
+    SwivelPowerDrain = config.Bind(SectionKey,
+      "SwivelPowerDrain", 1f,
+      ConfigHelpers.CreateConfigDescription(
+        "How much power (watts) is consumed by a Swivel per second. Applies only if Swivels_DoNotRequirePower is false.",
+        true, false,
+        new AcceptableValueRange<float>(0f, 100f)));
+
+    // sources
+    PowerSource_FuelCapacity = config.Bind(SectionKey,
+      "PowerSourceFuelCapacity", 100f,
+      ConfigHelpers.CreateConfigDescription(
+        "The maximum amount of fuel a power source can hold.",
+        true, false,
+        new AcceptableValueRange<float>(1f, 1000f)));
+    PowerSource_BaseFuelEfficiency = config.Bind(SectionKey,
+      "PowerSource_BaseEfficiency", 1f,
+      ConfigHelpers.CreateConfigDescription(
+        "The base efficiency of all fuel. This can be used to tweak all fuels and keep them scaling.",
+        true, false,
+        new AcceptableValueRange<float>(1f, 10f)));
+    PowerSource_EitrEfficiency = config.Bind(SectionKey,
+      "PowerSource_EitrEfficiency", 1f,
+      ConfigHelpers.CreateConfigDescription(
+        "The efficiency of Eitr as fuel. IE 1 eitr turns into X fuel. This will be used for balancing with other fuel types if more fuel types are added.",
+        true, false,
+        new AcceptableValueRange<float>(1f, 1000f)));
+    PowerSource_FuelConsumptionRate = config.Bind(SectionKey,
+      "PowerSource_FuelConsumptionRate", 0.1f,
+      ConfigHelpers.CreateConfigDescription(
+        "The amount of fuel consumed per physics update tick at full power output by a power source.",
+        true, false,
+        new AcceptableValueRange<float>(0.01f, 100f)));
+
+    // storage
+    PowerStorage_Capacity = config.Bind(SectionKey,
+      "PowerStorageCapacity", 800f,
+      ConfigHelpers.CreateConfigDescription(
+        "The maximum amount of energy a power storage unit can hold.",
+        true, false,
+        new AcceptableValueRange<float>(10f, 2000f)));
+
+    SwivelComponent.SwivelEnergyDrain = SwivelPowerDrain.Value;
+
+
+    PowerSource_FuelCapacity.SettingChanged += (sender, args) => UpdatePowerSources();
+    PowerSource_BaseFuelEfficiency.SettingChanged += (sender, args) => UpdatePowerSources();
+    PowerSource_EitrEfficiency.SettingChanged += (sender, args) => UpdatePowerSources();
+    PowerSource_FuelConsumptionRate.SettingChanged += (sender, args) => UpdatePowerSources();
+
+    SwivelPowerDrain.SettingChanged += (sender, args) => SwivelComponent.SwivelEnergyDrain = SwivelPowerDrain.Value;
+    PowerStorage_Capacity.SettingChanged += (sender, args) => UpdatePowerStorages();
+    PowerStorage_Capacity.SettingChanged += (sender, args) => UpdatePowerSources();
+
+    UpdatePowerSources();
+    UpdatePowerStorages();
+
+
     Swivels_DoNotRequirePower = config.Bind(SectionKey, "Swivels_DoNotRequirePower",
       false,
       ConfigHelpers.CreateConfigDescription(

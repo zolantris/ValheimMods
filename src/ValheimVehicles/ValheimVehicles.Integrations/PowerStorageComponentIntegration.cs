@@ -78,6 +78,10 @@ namespace ValheimVehicles.Integrations
 
     public float CapacityRemaining => Logic.CapacityRemaining;
     public bool IsCharging => Logic.IsCharging;
+    public void SetCapacity(float val)
+    {
+      Logic.SetCapacity(val);
+    }
     public void SetActive(bool val)
     {
       Logic.SetActive(val);

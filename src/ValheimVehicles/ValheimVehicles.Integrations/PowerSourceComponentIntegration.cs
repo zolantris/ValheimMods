@@ -65,6 +65,18 @@ public class PowerSourceComponentIntegration :
   {
     Logic.SetRunning(state);
   }
+  public void SetFuelCapacity(float val)
+  {
+    Logic.SetFuelCapacity(val);
+  }
+  public void SetFuelConsumptionRate(float val)
+  {
+    Logic.SetFuelConsumptionRate(val);
+  }
+  public void UpdateFuelEfficiency()
+  {
+    Logic.UpdateFuelEfficiency();
+  }
   public void SetFuelLevel(float amount)
   {
     Logic.SetFuelLevel(amount);

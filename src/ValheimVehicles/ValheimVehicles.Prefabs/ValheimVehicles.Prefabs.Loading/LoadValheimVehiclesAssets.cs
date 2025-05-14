@@ -30,6 +30,7 @@ public class LoadValheimVehicleAssets : ILoadAssets
   // public static GameObject Mechanism_PowerSource_Coal = null!;
   public static GameObject Mechanism_Power_Source_Eitr = null!;
   public static GameObject Mechanism_Power_Storage_Eitr = null!;
+  public static GameObject Mechanism_Power_Activator_Plate = null!;
 
   // hull
   public static GameObject ShipHullWoodAsset = null!;
@@ -302,6 +303,7 @@ public class LoadValheimVehicleAssets : ILoadAssets
     // Mechanism_PowerSource_Coal = assetBundle.LoadAsset<GameObject>("mechanism_power_source_coal.prefab");
     Mechanism_Power_Source_Eitr = assetBundle.LoadAsset<GameObject>("mechanism_power_source_eitr.prefab");
     Mechanism_Power_Storage_Eitr = assetBundle.LoadAsset<GameObject>("mechanism_power_storage_eitr.prefab");
+    Mechanism_Power_Activator_Plate = assetBundle.LoadAsset<GameObject>("mechanism_activator_plate.prefab");
     Mechanism_PowerPylon = assetBundle.LoadAsset<GameObject>("mechanism_power_pylon.prefab");
 
     // Effects Prefabs

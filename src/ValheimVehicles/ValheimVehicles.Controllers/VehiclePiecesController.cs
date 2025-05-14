@@ -21,6 +21,7 @@
   using ValheimVehicles.Propulsion.Rudder;
   using ValheimVehicles.SharedScripts;
   using ValheimVehicles.SharedScripts.Enums;
+  using ValheimVehicles.SharedScripts.Helpers;
   using ValheimVehicles.Structs;
   using ZdoWatcher;
   using static ValheimVehicles.Propulsion.Sail.SailAreaForce;

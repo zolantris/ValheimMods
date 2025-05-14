@@ -10,6 +10,7 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
   public class PowerStorageComponent : PowerNodeComponentBase, IPowerStorage
   {
     [Description("Energy levels in Watts")]
+    [SerializeField] public float baseEnergyCapacity = 800f;
     [SerializeField] public float energyCapacity = 800f;
     [SerializeField] public float storedEnergy;
 
@@ -20,6 +21,9 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
 
     public Vector3 powerRotatorChargeDirection = Vector3.up;
     public Vector3 powerRotatorDischargeDirection = Vector3.down;
+
+    // will half capacity 
+    [SerializeField] public bool IsSource = false;
 
     private bool isActive = false;
     public override bool IsActive => isActive;
@@ -49,6 +53,17 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
       powerRotator = rotator;
     }
 
+    public virtual void Start()
+    {
+      IsSource = GetComponent<PowerSourceComponent>() != null;
+      UpdateCapacity();
+    }
+
+    public void UpdateCapacity()
+    {
+      SetCapacity(baseEnergyCapacity);
+    }
+
     protected void FixedUpdate()
     {
       UpdatePowerAnimations();
@@ -72,6 +87,11 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
       return toDischarge;
     }
 
+    public void SetCapacity(float val)
+    {
+      baseEnergyCapacity = val;
+      energyCapacity = IsSource ? Mathf.Round(val * 0.5f) : val;
+    }
     public void SetActive(bool value)
     {
       isActive = value;

@@ -1,6 +1,7 @@
 // ReSharper disable ArrangeNamespaceBody
 // ReSharper disable NamespaceStyle
 
+using System.Collections.Generic;
 using UnityEngine;
 using ValheimVehicles.Helpers;
 using ValheimVehicles.SharedScripts.PowerSystem;
@@ -36,6 +37,11 @@ namespace ValheimVehicles.Integrations
     {
       base.Awake();
     }
+
+    public List<Character> charactersWithinActivatorZone = new();
+
+    public virtual void OnCollisionEnter(Collision other) {}
+    public virtual void OnCollisionExit(Collision other) {}
 
     protected override void Start()
     {

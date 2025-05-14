@@ -14,6 +14,7 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
     private readonly List<IPowerSource> _sources = new();
     private readonly List<IPowerStorage> _storage = new();
     private readonly List<IPowerConsumer> _consumers = new();
+    private readonly List<IPowerConduit> _conduits = new();
 
     public void SimulateNetwork(List<IPowerNode> nodes)
     {
@@ -21,6 +22,7 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
       _sources.Clear();
       _storage.Clear();
       _consumers.Clear();
+      _conduits.Clear();
 
       foreach (var node in nodes)
       {
@@ -36,6 +38,9 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
             if (c.IsDemanding)
               _consumers.Add(c);
             break;
+          case IPowerConduit conduit:
+            _conduits.Add(conduit);
+            break;
         }
       }
 
@@ -43,21 +48,44 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
       foreach (var c in _consumers)
         totalDemand += c.RequestedPower(deltaTime);
 
-      var networkIsDemanding = _consumers.Any(c => c.IsDemanding) || _storage.Any(s => s.CapacityRemaining > 0f);
-
-      var fromSources = 0f;
-      foreach (var s in _sources)
+      // conduits can both request or discharge power
+      foreach (var conduit in _conduits)
       {
-        fromSources += s.RequestAvailablePower(deltaTime, fromSources, totalDemand, networkIsDemanding);
+        if (conduit.IsDemanding)
+          totalDemand += conduit.RequestPower(deltaTime);
       }
 
-      var remaining = totalDemand - fromSources;
+      var networkIsDemanding = _consumers.Any(c => c.IsDemanding) || _storage.Any(s => s.CapacityRemaining > 0f);
+
       var fromStorage = 0f;
+      var remainingDemand = totalDemand;
+
+      foreach (var conduit in _conduits)
+      {
+        if (remainingDemand <= 0f) break;
+        var supplied = conduit.SupplyPower(deltaTime);
+        fromStorage += supplied;
+        remainingDemand -= supplied;
+      }
+
+      foreach (var b in _storage)
+      {
+        if (remainingDemand <= 0f) break;
+        var supplied = b.Discharge(remainingDemand);
+        fromStorage += supplied;
+        remainingDemand -= supplied;
+      }
+
+      var remaining = totalDemand - fromStorage;
+
+      var fromSources = 0f;
       if (remaining > 0f)
       {
-        var safeMargin = Mathf.Max(0.01f, totalDemand * 0.01f);
-        foreach (var b in _storage)
-          fromStorage += b.Discharge(remaining + safeMargin);
+        foreach (var s in _sources)
+        {
+          fromSources += s.RequestAvailablePower(deltaTime, fromStorage, totalDemand, networkIsDemanding);
+          if (fromStorage + fromSources >= totalDemand) break;
+        }
       }
 
       var totalAvailable = fromSources + fromStorage;

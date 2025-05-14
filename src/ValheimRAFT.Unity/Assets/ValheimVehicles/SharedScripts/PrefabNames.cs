@@ -208,6 +208,11 @@
       public static readonly string Mechanism_Power_Source_Eitr =
         $"{ValheimVehiclesPrefix}_Power_Source_Eitr";
 
+      public static readonly string Mechanism_Power_Consumer_Charge_Plate =
+        $"{ValheimVehiclesPrefix}_Power_Consumer_Charge_Plate";
+      public static readonly string Mechanism_Power_Consumer_Drain_Plate =
+        $"{ValheimVehiclesPrefix}_Power_Consumer_Drain_Plate";
+
       public static readonly string Mechanism_Power_Storage_Eitr =
         $"{ValheimVehiclesPrefix}_Power_Storage_Eitr";
 

@@ -9,8 +9,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using UnityEngine;
-using ValheimVehicles.Helpers;
-using Debug = UnityEngine.Debug;
+using ValheimVehicles.SharedScripts.Helpers;
+using ValheimVehicles.SharedScripts.PowerSystem.Interfaces;
 
 #endregion
 
@@ -21,11 +21,11 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
     private const float MaxNetworkJoinDistance = 16f;
     private const float MaxNetworkJoinDistanceSqr = MaxNetworkJoinDistance * MaxNetworkJoinDistance;
 
-    private readonly Stopwatch rebuildTimer = new();
-
     private static readonly List<IPowerNode> _allNodes = new();
     private static readonly HashSet<IPowerNode> _unvisited = new();
     private static readonly Queue<IPowerNode> _pending = new();
+
+    private readonly Stopwatch rebuildTimer = new();
 
     public IEnumerator RebuildPowerNetworkCoroutine()
     {
@@ -33,6 +33,10 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
 
       // Step 1: Aggregate all valid power nodes
       _allNodes.Clear();
+
+      for (var i = 0; i < Conduits.Count; i++)
+        if (Conduits.TryGetValidElement(ref i, out var conduit))
+          _allNodes.Add(conduit);
 
       for (var i = 0; i < Pylons.Count; i++)
         if (Pylons.TryGetValidElement(ref i, out var pylon))

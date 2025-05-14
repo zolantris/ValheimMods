@@ -1,0 +1,199 @@
+using System;
+using System.Collections.Generic;
+using UnityEngine;
+using ValheimVehicles.Helpers;
+using ValheimVehicles.Integrations;
+using ValheimVehicles.SharedScripts.Helpers;
+using ValheimVehicles.SharedScripts.PowerSystem;
+using ValheimVehicles.SharedScripts.PowerSystem.Interfaces;
+
+public class PowerConduitPlateComponentIntegration :
+  NetworkedComponentIntegration<PowerConduitPlateComponentIntegration, PowerConduitPlateComponent, NoZDOConfig<PowerConduitPlateComponentIntegration>>,
+  IPowerConduit
+{
+  private const float MinEitrDrainThreshold = 0.01f;
+  private const float MaxEitrCapMargin = 0.1f; // If within 0.1 of max, skip charging
+  public string NetworkId => Logic.NetworkId;
+  public Vector3 Position => transform.position;
+  public Transform ConnectorPoint => transform;
+
+  public bool IsActive => true;
+  public bool IsDemanding => Logic.IsDemanding;
+
+  private readonly List<Player> _playersWithinZone = new();
+
+  // Missing method for Players. There is no syncing method for Eitr additions only removals.
+  private const string RPC_AddEitr = "VVC_RPC_AddEitr";
+
+  protected override void RegisterDefaultRPCs()
+  {
+    RpcHandler.Register<float>(RPC_AddEitr, (sender, amount) =>
+    {
+      if (Player.m_localPlayer != null)
+      {
+        Player.m_localPlayer.AddEitr(amount);
+      }
+    });
+  }
+
+  public static void SendAddEitr(Player player, float amount)
+  {
+    if (player == null || amount <= 0f) return;
+
+    var nview = player.GetComponent<ZNetView>();
+    if (nview == null || !nview.IsValid()) return;
+
+    // Only send to the owner of this player
+    if (!nview.IsOwner())
+    {
+      var zdoOwner = nview.GetZDO().GetOwner();
+      nview.InvokeRPC(zdoOwner, RPC_AddEitr, amount);
+    }
+    else
+    {
+      player.AddEitr(amount);
+    }
+  }
+
+  private void OnTriggerEnter(Collider other)
+  {
+    var player = other.GetComponentInParent<Player>();
+    if (player != null && !_playersWithinZone.Contains(player))
+    {
+      _playersWithinZone.Add(player);
+    }
+  }
+
+  private void OnTriggerExit(Collider other)
+  {
+    var player = other.GetComponentInParent<Player>();
+    if (player != null)
+    {
+      _playersWithinZone.Remove(player);
+    }
+  }
+
+  protected override void Start()
+  {
+    if (!this.IsNetViewValid(out var netView)) return;
+    base.Start();
+    PowerNetworkController.RegisterPowerComponent(this);
+
+    Logic.GetPlayerEitr = GetAverageEitr;
+    Logic.AddPlayerEitr = AddEitrToPlayers;
+    Logic.SubtractPlayerEitr = SubtractEitrFromPlayers;
+  }
+
+  protected override void OnDestroy()
+  {
+    PowerNetworkController.UnregisterPowerComponent(this);
+    base.OnDestroy();
+  }
+
+  public void SetNetworkId(string id)
+  {
+    Logic.SetNetworkId(id);
+  }
+
+  public float RequestPower(float deltaTime)
+  {
+    return Logic.RequestPower(deltaTime);
+  }
+  public float SupplyPower(float deltaTime)
+  {
+    return Logic.SupplyPower(deltaTime);
+  }
+
+  private void CleanupPlayerList()
+  {
+    for (var i = 0; i < _playersWithinZone.Count; i++)
+    {
+      if (_playersWithinZone[i] == null)
+      {
+        _playersWithinZone.FastRemoveAt(ref i);
+        i--;
+      }
+    }
+  }
+
+  private float GetAverageEitr()
+  {
+    CleanupPlayerList();
+
+    var count = 0;
+    var total = 0f;
+
+    foreach (var player in _playersWithinZone)
+    {
+      total += player.m_eitr;
+      count++;
+    }
+
+    return count > 0 ? total / count : 0f;
+  }
+
+  private void AddEitrToPlayers(float amount)
+  {
+    CleanupPlayerList();
+
+    if (_playersWithinZone.Count == 0 || amount <= 0f) return;
+
+    // Filter out players near Eitr cap
+    List<Player> validReceivers = new(_playersWithinZone.Count);
+    foreach (var player in _playersWithinZone)
+    {
+      if (player.m_eitr < player.m_maxEitr - MaxEitrCapMargin)
+      {
+        validReceivers.Add(player);
+      }
+    }
+
+    if (validReceivers.Count == 0) return;
+
+    var perPlayer = amount / validReceivers.Count;
+    foreach (var player in validReceivers)
+    {
+      player.AddEitr(perPlayer);
+    }
+  }
+
+  private void SubtractEitrFromPlayers(float amount)
+  {
+    CleanupPlayerList();
+
+    if (_playersWithinZone.Count == 0 || amount <= 0f) return;
+
+    List<Player> validPlayers = new(_playersWithinZone.Count);
+    foreach (var player in _playersWithinZone)
+    {
+      if (player.HaveEitr(0.01f)) // Must have *some* Eitr
+      {
+        validPlayers.Add(player);
+      }
+    }
+
+    if (validPlayers.Count == 0) return;
+
+    var remaining = amount;
+    var attempts = 0;
+
+    while (remaining > 0f && attempts++ < 5)
+    {
+      var perPlayer = remaining / validPlayers.Count;
+      List<Player> stillValid = new(validPlayers.Count);
+
+      foreach (var player in validPlayers)
+      {
+        if (player.HaveEitr(perPlayer))
+        {
+          player.UseEitr(perPlayer);
+          remaining -= perPlayer;
+          stillValid.Add(player);
+        }
+      }
+
+      if (stillValid.Count == 0) break;
+      validPlayers = stillValid;
+    }
+  }
+}
