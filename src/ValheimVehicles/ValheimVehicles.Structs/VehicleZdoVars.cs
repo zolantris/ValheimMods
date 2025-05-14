@@ -90,7 +90,10 @@ public static class VehicleZdoVars
 
   // for power systems
   public const string Power_StoredEnergy = "PowerSystem_StoredEnergy";
-  public const string Power_IsRunning = "PowerSystem_IsRunning";
   public const string Power_StoredFuel = "PowerSystem_StoredFuel";
-  public const string Power_IsDemanding = "PowerSystem_IsDemanding";
+
+  // power system booleans
+  public const string Power_IsForceDeactivated = "PowerSystem_ForceDeactivated"; // generators/storage
+  public const string Power_IsRunning = "PowerSystem_IsRunning"; // generators
+  public const string Power_IsDemanding = "PowerSystem_IsDemanding"; // consumers and storage
 }

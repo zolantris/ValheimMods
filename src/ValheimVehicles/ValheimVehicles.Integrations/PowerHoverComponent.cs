@@ -23,7 +23,7 @@ public class PowerHoverComponent : MonoBehaviour, Hoverable, Interactable
     {
       if (HasPowerSource)
       {
-        _powerSourceComponent.RefuelOrRPC(2);
+        _powerSourceComponent.AddFuelOrRPC(2);
         return true;
       }
     }
@@ -31,14 +31,14 @@ public class PowerHoverComponent : MonoBehaviour, Hoverable, Interactable
     {
       if (HasPowerSource)
       {
-        _powerSourceComponent.RefuelOrRPC(10);
+        _powerSourceComponent.AddFuelOrRPC(10);
         return true;
       }
     }
 
     if (HasPowerSource)
     {
-      _powerSourceComponent.RefuelOrRPC(1);
+      _powerSourceComponent.AddFuelOrRPC(1);
       return true;
     }
 

@@ -12,5 +12,6 @@ namespace ValheimVehicles.Interfaces
     float Charge(float amount);
     float Discharge(float amount);
     bool IsCharging { get; }
+    void SetActive(bool val);
   }
 }

@@ -8,7 +8,8 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
     float GetFuelLevel();
     float GetFuelCapacity();
     bool IsRunning { get; }
-    void Refuel(float amount);
-    float RequestAvailablePower(float deltaTime, bool isNetworkDemanding);
+    void AddFuel(float amount);
+    float RequestAvailablePower(float deltaTime, float supplyFromSources, float totalDemand, bool isDemanding);
+    void SetRunning(bool val);
   }
 }

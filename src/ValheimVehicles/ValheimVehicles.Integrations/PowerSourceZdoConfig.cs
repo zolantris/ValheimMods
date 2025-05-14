@@ -14,7 +14,7 @@ namespace ValheimVehicles.Integrations.ZDOConfigs
       var fuel = zdo.GetFloat(VehicleZdoVars.Power_StoredFuel, component.GetFuelLevel());
       var running = zdo.GetBool(VehicleZdoVars.Power_IsRunning, component.IsRunning);
 
-      component.Refuel(fuel - component.GetFuelLevel());
+      component.SetFuelLevel(fuel);
       component.SetRunning(running);
     }
 

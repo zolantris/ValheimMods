@@ -45,25 +45,11 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
 
       var networkIsDemanding = _consumers.Any(c => c.IsDemanding) || _storage.Any(s => s.CapacityRemaining > 0f);
 
-      if (lightningBurstCoroutine != null && !networkIsDemanding)
-      {
-        StopCoroutine(lightningBurstCoroutine);
-        lightningBurstCoroutine = null;
-      }
-
-      if (networkIsDemanding)
-      {
-        if (lightningBurstCoroutine != null)
-        {
-          StopCoroutine(lightningBurstCoroutine);
-          lightningBurstCoroutine = null;
-        }
-        lightningBurstCoroutine = StartCoroutine(ActivateLightningBursts());
-      }
-
       var fromSources = 0f;
       foreach (var s in _sources)
-        fromSources += s.RequestAvailablePower(deltaTime, networkIsDemanding);
+      {
+        fromSources += s.RequestAvailablePower(deltaTime, fromSources, totalDemand, networkIsDemanding);
+      }
 
       var remaining = totalDemand - fromSources;
       var fromStorage = 0f;
@@ -100,6 +86,25 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
       {
         if (totalAvailable <= 0f) break;
         totalAvailable -= b.Charge(totalAvailable);
+      }
+
+
+      // lightning effects.
+
+      if (lightningBurstCoroutine != null && !networkIsDemanding)
+      {
+        StopCoroutine(lightningBurstCoroutine);
+        lightningBurstCoroutine = null;
+      }
+
+      if (networkIsDemanding)
+      {
+        if (lightningBurstCoroutine != null)
+        {
+          StopCoroutine(lightningBurstCoroutine);
+          lightningBurstCoroutine = null;
+        }
+        lightningBurstCoroutine = StartCoroutine(ActivateLightningBursts());
       }
     }
   }

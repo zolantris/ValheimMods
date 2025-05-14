@@ -28,7 +28,9 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
     [SerializeField] public AnimatedMaterialController animatedInnerCore;
     public bool hasLoadedInitialData = false;
 
-    public override bool IsActive => isRunning && currentFuel > 0f;
+    private bool _isActive = true;
+    // todo may need to turn it off so having it point to another var is good.
+    public override bool IsActive => _isActive;
 
     protected override void Awake()
     {
@@ -103,31 +105,55 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
       }
     }
 
-    public float RequestAvailablePower(float deltaTime, bool isDemanding)
+    public float RequestAvailablePower(float deltaTime, float supplyFromSources, float totalDemand, bool isDemanding)
     {
-      if (!IsActive || !isDemanding) return 0f;
-
-      var fuelNeeded = fuelConsumptionRate * deltaTime;
-      if (currentFuel < fuelNeeded)
+      if (!IsActive)
       {
-        isRunning = false;
+        SetRunning(false);
         return 0f;
       }
 
-      currentFuel -= fuelNeeded;
-      return maxOutputWatts * deltaTime;
+      var remainingDemand = totalDemand - supplyFromSources;
+
+      if (!isDemanding || remainingDemand <= 0f)
+      {
+        SetRunning(false);
+        return 0f;
+      }
+
+      if (!isRunning)
+      {
+        SetRunning(true);
+      }
+
+      var maxEnergy = maxOutputWatts * deltaTime;
+      var energyToProduce = Mathf.Min(remainingDemand, maxEnergy);
+      var fuelRequired = energyToProduce / maxEnergy * (fuelConsumptionRate * deltaTime);
+
+      if (currentFuel < fuelRequired)
+      {
+        SetRunning(false);
+        return 0f;
+      }
+
+      currentFuel -= fuelRequired;
+      return energyToProduce;
     }
 
     public float GetFuelLevel()
     {
       return currentFuel;
     }
+    public void SetFuelLevel(float val)
+    {
+      currentFuel = Mathf.Clamp(val, 0f, fuelCapacity);
+    }
     public float GetFuelCapacity()
     {
       return fuelCapacity;
     }
     public bool IsRunning => isRunning;
-    public void Refuel(float amount)
+    public void AddFuel(float amount)
     {
       var space = fuelCapacity - currentFuel;
       var toAdd = Mathf.Min(space, amount);

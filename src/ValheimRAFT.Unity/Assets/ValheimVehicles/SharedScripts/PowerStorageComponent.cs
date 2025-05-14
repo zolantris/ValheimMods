@@ -21,7 +21,8 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
     public Vector3 powerRotatorChargeDirection = Vector3.up;
     public Vector3 powerRotatorDischargeDirection = Vector3.down;
 
-    public override bool IsActive => true;
+    private bool isActive = false;
+    public override bool IsActive => isActive;
     public float ChargeLevel => storedEnergy;
 
     public float Capacity => energyCapacity;
@@ -69,6 +70,11 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
       storedEnergy -= toDischarge;
       IsCharging = false;
       return toDischarge;
+    }
+
+    public void SetActive(bool value)
+    {
+      isActive = value;
     }
 
     public bool IsCharging { get; set; }
