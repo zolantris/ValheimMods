@@ -4,6 +4,7 @@
   using System.Collections;
   using System.Collections.Generic;
   using System.Linq;
+  using DynamicLocations.Interfaces;
   using Unity.Collections;
   using UnityEngine;
 
@@ -16,7 +17,7 @@
     /// <summary>
     /// This is meant to be extended for VehiclePiecesController, allowing non-Valheim asset replication of movement without all other piece logic.
     /// </summary>
-    public class BasePiecesController : MonoBehaviour
+    public class BasePiecesController : MonoBehaviour, IVehiclePiecesController
     {
 
       public enum HullGenerationMode
@@ -187,6 +188,9 @@
         //   }
         // }
 
+        // will only update if there is a subscription for this texture.
+        m_meshClusterComponent.OnPieceDestroyHandler(piece);
+
         if (shouldRebuild)
         {
           RequestBoundsRebuild();
@@ -261,6 +265,10 @@
         }
       }
 
+      public bool IsActivationComplete
+      {
+        get;
+      }
       public virtual int GetPieceCount()
       {
         return m_prefabPieceDataItems.Count;
@@ -273,14 +281,14 @@
       /// <returns></returns>
       internal virtual IEnumerator RebuildBoundsThrottleRoutine(Action onRebuildReadyCallback)
       {
-        var hasMinimumWait = _lastRebuildTime + 40 < Time.fixedTime && Mathf.Abs(m_prefabPieceDataItems.Count - _lastRebuildItemCount) > 20f;
-        if (hasMinimumWait)
-        {
-          yield return new WaitForSeconds(RebuildPieceMinDelay);
-          _rebuildBoundsRoutineInstance = null;
-          onRebuildReadyCallback.Invoke();
-          yield break;
-        }
+        // var hasMinimumWait = _lastRebuildTime + 40 < Time.fixedTime && Mathf.Abs(m_prefabPieceDataItems.Count - _lastRebuildItemCount) > 20f;
+        // if (hasMinimumWait)
+        // {
+        //   yield return new WaitForSeconds(RebuildPieceMinDelay);
+        //   _rebuildBoundsRoutineInstance = null;
+        //   onRebuildReadyCallback.Invoke();
+        //   yield break;
+        // }
 
         var pieceCount = GetPieceCount();
         if (pieceCount <= 0)

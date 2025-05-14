@@ -39,7 +39,7 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
     [SerializeField] public static float SurtlingCoreFuelEfficiency = 3f;
     [SerializeField] public static float EitrFuelEfficiency = 12f;
 
-    [SerializeField] public bool isRunning = true;
+    [SerializeField] public bool isRunning = false;
 
     [SerializeField] public float currentFuel;
     [SerializeField] public Transform powerCoreTransform;
@@ -104,20 +104,6 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
     private void FixedUpdate()
     {
       UpdatePowerCoreSize();
-// #if DEBUG
-//       if (animatedInnerCore)
-//       {
-//         UpdatePowerCoreAnimations(animatedInnerCore);
-//       }
-//       if (animatedOuterCore)
-//       {
-//         UpdatePowerCoreAnimations(animatedOuterCore);
-//       }
-// #endif
-      if (!IsActive || !isRunning || currentFuel <= 0f) return;
-
-      var fuelUsed = fuelConsumptionRate * Time.fixedDeltaTime;
-      currentFuel = Mathf.Max(0f, currentFuel - fuelUsed);
     }
 
     public AnimatedMaterialController CreateAnimatedMaterialController(Transform objTransform)
@@ -159,11 +145,14 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
       fuelConsumptionRate = val;
     }
 
+    private float _lastProducedEnergy = 0f;
+
     public float RequestAvailablePower(float deltaTime, float supplyFromSources, float totalDemand, bool isDemanding)
     {
       if (!IsActive)
       {
         SetRunning(false);
+        _lastProducedEnergy = 0f;
         return 0f;
       }
 
@@ -172,29 +161,36 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
       if (!isDemanding || remainingDemand <= 0f)
       {
         SetRunning(false);
+        _lastProducedEnergy = 0f;
         return 0f;
       }
 
       if (!isRunning)
-      {
         SetRunning(true);
-      }
 
       var maxEnergy = maxOutputWatts * deltaTime;
       var energyToProduce = Mathf.Min(remainingDemand, maxEnergy);
 
-      // Convert required energy to fuel
       var requiredFuel = energyToProduce / (fuelEnergyYield * fuelEfficiency);
 
       if (currentFuel < requiredFuel)
       {
         SetRunning(false);
+        _lastProducedEnergy = 0f;
         return 0f;
       }
 
-      currentFuel -= requiredFuel;
+      // Don't burn yet — just record how much would be offered
+      _lastProducedEnergy = energyToProduce;
       return energyToProduce;
     }
+
+    public void CommitEnergyUsed(float energyUsed)
+    {
+      var requiredFuel = energyUsed / (fuelEnergyYield * fuelEfficiency);
+      currentFuel = Mathf.Max(0f, currentFuel - requiredFuel);
+    }
+
 
     public void UpdateFuelEfficiency()
     {

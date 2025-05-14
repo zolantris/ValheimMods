@@ -73,6 +73,8 @@ public class PowerConduitPlateComponentIntegration :
     }
   }
 
+  public bool MustSync = false;
+  public Rigidbody m_body;
   protected override void Start()
   {
     if (!this.IsNetViewValid(out var netView)) return;
@@ -82,6 +84,39 @@ public class PowerConduitPlateComponentIntegration :
     Logic.GetPlayerEitr = GetAverageEitr;
     Logic.AddPlayerEitr = AddEitrToPlayers;
     Logic.SubtractPlayerEitr = SubtractEitrFromPlayers;
+
+    var parentRigidbody = GetComponentInParent<Rigidbody>();
+    if (parentRigidbody != null)
+    {
+      MustSync = true;
+    }
+
+    m_body = gameObject.AddComponent<Rigidbody>();
+    m_body.isKinematic = true;
+  }
+  private Vector3 frozenLocalPos;
+  private Quaternion frozenLocalRot;
+  private bool isFrozen;
+
+  public void FixedUpdate()
+  {
+    if (MustSync)
+    {
+      if (!isFrozen)
+      {
+        frozenLocalPos = transform.localPosition;
+        frozenLocalRot = transform.localRotation;
+        isFrozen = true;
+      }
+
+      var parent = transform.parent;
+      if (parent != null)
+      {
+        var worldPos = parent.TransformPoint(frozenLocalPos);
+        var worldRot = parent.rotation * frozenLocalRot;
+        m_body.Move(worldPos, worldRot);
+      }
+    }
   }
 
   protected override void OnDestroy()
@@ -153,7 +188,7 @@ public class PowerConduitPlateComponentIntegration :
     var perPlayer = amount / validReceivers.Count;
     foreach (var player in validReceivers)
     {
-      player.AddEitr(perPlayer);
+      SendAddEitr(player, perPlayer);
     }
   }
 

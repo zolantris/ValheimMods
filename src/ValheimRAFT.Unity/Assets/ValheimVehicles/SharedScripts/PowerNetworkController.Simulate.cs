@@ -2,138 +2,182 @@
 // ReSharper disable NamespaceStyle
 
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 using ValheimVehicles.Interfaces;
 using ValheimVehicles.SharedScripts.PowerSystem.Interfaces;
 
-namespace ValheimVehicles.SharedScripts.PowerSystem
+namespace ValheimVehicles.SharedScripts.PowerSystem;
+
+public partial class PowerNetworkController
 {
-  public partial class PowerNetworkController
+  private readonly List<IPowerSource> _sources = new();
+  private readonly List<IPowerStorage> _storage = new();
+  private readonly List<IPowerConsumer> _consumers = new();
+  private readonly List<IPowerConduit> _conduits = new();
+
+  public static float BatteryDemandPercentage = 0.75f;
+
+  public void SimulateNetwork(List<IPowerNode> nodes)
   {
-    private readonly List<IPowerSource> _sources = new();
-    private readonly List<IPowerStorage> _storage = new();
-    private readonly List<IPowerConsumer> _consumers = new();
-    private readonly List<IPowerConduit> _conduits = new();
+    var deltaTime = Time.fixedDeltaTime;
 
-    public void SimulateNetwork(List<IPowerNode> nodes)
+    _sources.Clear();
+    _storage.Clear();
+    _consumers.Clear();
+    _conduits.Clear();
+
+    // Categorize nodes
+    foreach (var node in nodes)
     {
-      var deltaTime = Time.fixedDeltaTime;
-      _sources.Clear();
-      _storage.Clear();
-      _consumers.Clear();
-      _conduits.Clear();
-
-      foreach (var node in nodes)
+      switch (node)
       {
-        switch (node)
+        case IPowerSource source:
+          _sources.Add(source);
+          break;
+        case IPowerStorage storage:
+          _storage.Add(storage);
+          break;
+        case IPowerConsumer consumer when consumer.IsDemanding:
+          _consumers.Add(consumer);
+          break;
+        case IPowerConduit conduit:
+          _conduits.Add(conduit);
+          break;
+      }
+    }
+
+    // 1. Calculate total demand
+    var totalDemand = 0f;
+
+    foreach (var consumer in _consumers)
+      totalDemand += consumer.RequestedPower(deltaTime);
+
+    foreach (var conduit in _conduits)
+    {
+      if (conduit.IsDemanding)
+        totalDemand += conduit.RequestPower(deltaTime);
+    }
+
+    // Add demand from storage up to BatteryDemandPercentage
+    var storageDemand = 0f;
+    foreach (var storage in _storage)
+    {
+      var targetCapacity = storage.Capacity * BatteryDemandPercentage;
+      if (storage.ChargeLevel < targetCapacity)
+        storageDemand += Mathf.Clamp(targetCapacity - storage.ChargeLevel, 0f, storage.Capacity);
+    }
+
+    totalDemand += storageDemand;
+
+    var isDemanding = totalDemand > 0f;
+
+    // 2. Try supplying from storage/conduits first
+    var suppliedFromStorage = 0f;
+    var remainingDemand = totalDemand;
+
+    foreach (var conduit in _conduits)
+    {
+      if (remainingDemand <= 0f) break;
+      var supplied = conduit.SupplyPower(deltaTime);
+      suppliedFromStorage += supplied;
+      remainingDemand -= supplied;
+    }
+
+    foreach (var storage in _storage)
+    {
+      if (remainingDemand <= 0f) break;
+      var supplied = storage.Discharge(remainingDemand);
+      suppliedFromStorage += supplied;
+      remainingDemand -= supplied;
+    }
+
+    // 3. Offer power from sources (even if no consumers, as long as storage isn't full)
+    var offeredFromSources = 0f;
+    var sourceOfferMap = new Dictionary<IPowerSource, float>();
+
+    var hasChargeableStorage = false;
+    foreach (var storage in _storage)
+    {
+      if (storage.ChargeLevel < storage.Capacity)
+      {
+        hasChargeableStorage = true;
+        break;
+      }
+    }
+
+    if (remainingDemand > 0f || hasChargeableStorage)
+    {
+      foreach (var source in _sources)
+      {
+        var offered = source.RequestAvailablePower(deltaTime, offeredFromSources, totalDemand, isDemanding);
+        if (offered > 0f)
         {
-          case IPowerSource s:
-            _sources.Add(s);
-            break;
-          case IPowerStorage b:
-            _storage.Add(b);
-            break;
-          case IPowerConsumer c:
-            if (c.IsDemanding)
-              _consumers.Add(c);
-            break;
-          case IPowerConduit conduit:
-            _conduits.Add(conduit);
+          sourceOfferMap[source] = offered;
+          offeredFromSources += offered;
+
+          if (offeredFromSources + suppliedFromStorage >= totalDemand && !hasChargeableStorage)
             break;
         }
       }
+    }
 
-      var totalDemand = 0f;
-      foreach (var c in _consumers)
-        totalDemand += c.RequestedPower(deltaTime);
+    var totalAvailable = offeredFromSources + suppliedFromStorage;
 
-      // conduits can both request or discharge power
-      foreach (var conduit in _conduits)
-      {
-        if (conduit.IsDemanding)
-          totalDemand += conduit.RequestPower(deltaTime);
-      }
+    // 4. Apply power to consumers
+    foreach (var consumer in _consumers)
+    {
+      var needed = consumer.RequestedPower(deltaTime);
+      var granted = Mathf.Min(needed, totalAvailable);
+      totalAvailable -= granted;
 
-      var networkIsDemanding = _consumers.Any(c => c.IsDemanding) || _storage.Any(s => s.CapacityRemaining > 0f);
+      consumer.SetActive(granted > 0f);
+      consumer.ApplyPower(granted, deltaTime);
+    }
 
-      var fromStorage = 0f;
-      var remainingDemand = totalDemand;
+    // 5. Feed energy to storage (charge up to full 100%)
+    var usedForStorage = 0f;
+    foreach (var storage in _storage)
+    {
+      if (totalAvailable <= 0f) break;
 
-      foreach (var conduit in _conduits)
-      {
-        if (remainingDemand <= 0f) break;
-        var supplied = conduit.SupplyPower(deltaTime);
-        fromStorage += supplied;
-        remainingDemand -= supplied;
-      }
+      var remainingCapacity = Mathf.Clamp(storage.Capacity - storage.ChargeLevel, 0f, storage.Capacity);
+      if (remainingCapacity <= 0f) continue;
 
-      foreach (var b in _storage)
-      {
-        if (remainingDemand <= 0f) break;
-        var supplied = b.Discharge(remainingDemand);
-        fromStorage += supplied;
-        remainingDemand -= supplied;
-      }
+      var accepted = storage.Charge(totalAvailable);
+      usedForStorage += accepted;
+      totalAvailable -= accepted;
+    }
 
-      var remaining = totalDemand - fromStorage;
+    // 6. Final fuel burn for used source power
+    var totalUsed = offeredFromSources + suppliedFromStorage - totalAvailable;
+    var usedFromSources = Mathf.Clamp(totalUsed - suppliedFromStorage, 0f, offeredFromSources);
+    var toCommit = usedFromSources;
 
-      var fromSources = 0f;
-      if (remaining > 0f)
-      {
-        foreach (var s in _sources)
-        {
-          fromSources += s.RequestAvailablePower(deltaTime, fromStorage, totalDemand, networkIsDemanding);
-          if (fromStorage + fromSources >= totalDemand) break;
-        }
-      }
+    foreach (var kvp in sourceOfferMap)
+    {
+      var offered = kvp.Value;
+      var committed = Mathf.Min(offered, toCommit);
+      kvp.Key.CommitEnergyUsed(committed);
+      toCommit -= committed;
 
-      var totalAvailable = fromSources + fromStorage;
+      if (toCommit <= 0f) break;
+    }
 
-      if (totalAvailable <= 0f)
-      {
-        foreach (var c in _consumers)
-        {
-          c.SetActive(false);
-          c.ApplyPower(0f, deltaTime);
-        }
-        return;
-      }
+    // 7. Lightning burst effect (visual only)
+    if (lightningBurstCoroutine != null && !isDemanding)
+    {
+      StopCoroutine(lightningBurstCoroutine);
+      lightningBurstCoroutine = null;
+    }
 
-      foreach (var c in _consumers)
-      {
-        var required = c.RequestedPower(deltaTime);
-        var granted = Mathf.Min(required, totalAvailable);
-        totalAvailable -= granted;
-
-        c.SetActive(granted > 0f);
-        c.ApplyPower(granted, deltaTime);
-      }
-
-      foreach (var b in _storage)
-      {
-        if (totalAvailable <= 0f) break;
-        totalAvailable -= b.Charge(totalAvailable);
-      }
-
-
-      // lightning effects.
-
-      if (lightningBurstCoroutine != null && !networkIsDemanding)
+    if (isDemanding)
+    {
+      if (lightningBurstCoroutine != null)
       {
         StopCoroutine(lightningBurstCoroutine);
         lightningBurstCoroutine = null;
       }
-
-      if (networkIsDemanding)
-      {
-        if (lightningBurstCoroutine != null)
-        {
-          StopCoroutine(lightningBurstCoroutine);
-          lightningBurstCoroutine = null;
-        }
-        lightningBurstCoroutine = StartCoroutine(ActivateLightningBursts());
-      }
+      lightningBurstCoroutine = StartCoroutine(ActivateLightningBursts());
     }
   }
 }

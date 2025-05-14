@@ -3,6 +3,7 @@ using UnityEngine;
 using ValheimVehicles.Helpers;
 using ValheimVehicles.Integrations.ZDOConfigs;
 using ValheimVehicles.SharedScripts.PowerSystem;
+using ValheimVehicles.Structs;
 
 namespace ValheimVehicles.Integrations;
 
@@ -30,12 +31,34 @@ public class PowerSourceComponentIntegration :
   protected override void RegisterDefaultRPCs()
   {
     RegisterRPC<float>(nameof(RPC_AddFuel), RPC_AddFuel);
+    RegisterRPC<float>(nameof(RPC_SetFuel), RPC_SetFuel);
   }
 
   private void RPC_AddFuel(long sender, float amount)
   {
     Logic.AddFuel(amount);
     UpdateNetworkedData();
+  }
+
+  private void RPC_SetFuel(long sender, float amount)
+  {
+    Logic.SetFuelLevel(amount);
+    UpdateNetworkedData();
+  }
+
+  public void SetFuelOrRPC(float amount)
+  {
+    if (!this.IsNetViewValid(out var netView)) return;
+
+    if (netView.IsOwner() || ZNet.instance.IsServer())
+    {
+      Logic.SetFuelLevel(amount);
+      UpdateNetworkedData();
+    }
+    else
+    {
+      InvokeRPC(nameof(RPC_SetFuel), amount);
+    }
   }
 
   public void AddFuelOrRPC(float amount)
@@ -55,15 +78,23 @@ public class PowerSourceComponentIntegration :
 
   public void AddFuel(float amount)
   {
-    Logic.AddFuel(amount);
+    AddFuelOrRPC(amount);
   }
   public float RequestAvailablePower(float deltaTime, float supplyFromSources, float totalDemand, bool isDemanding)
   {
     return Logic.RequestAvailablePower(deltaTime, supplyFromSources, totalDemand, isDemanding);
   }
+  public void CommitEnergyUsed(float energyUsed)
+  {
+    Logic.CommitEnergyUsed(energyUsed);
+    UpdateNetworkedData();
+  }
   public void SetRunning(bool state)
   {
     Logic.SetRunning(state);
+
+    if (this.IsNetViewValid(out var netView))
+      netView.GetZDO().Set(VehicleZdoVars.Power_IsRunning, Logic.isRunning);
   }
   public void SetFuelCapacity(float val)
   {
@@ -79,7 +110,7 @@ public class PowerSourceComponentIntegration :
   }
   public void SetFuelLevel(float amount)
   {
-    Logic.SetFuelLevel(amount);
+    SetFuelOrRPC(amount);
   }
   public float GetFuelLevel()
   {

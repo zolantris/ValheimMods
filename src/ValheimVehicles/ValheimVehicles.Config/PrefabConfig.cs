@@ -152,7 +152,15 @@ public class PrefabConfig : BepInExBaseConfig<PrefabConfig>
     PowerSource_EitrEfficiency.SettingChanged += (sender, args) => UpdatePowerSources();
     PowerSource_FuelConsumptionRate.SettingChanged += (sender, args) => UpdatePowerSources();
 
-    SwivelPowerDrain.SettingChanged += (sender, args) => SwivelComponent.SwivelEnergyDrain = SwivelPowerDrain.Value;
+    SwivelPowerDrain.SettingChanged += (sender, args) =>
+    {
+      SwivelComponent.SwivelEnergyDrain = SwivelPowerDrain.Value;
+      foreach (var swivelComponent in SwivelComponent.Instances)
+      {
+        swivelComponent.UpdatePowerConsumer();
+        swivelComponent.UpdateBasePowerConsumption();
+      }
+    };
     PowerStorage_Capacity.SettingChanged += (sender, args) => UpdatePowerStorages();
     PowerStorage_Capacity.SettingChanged += (sender, args) => UpdatePowerSources();
 

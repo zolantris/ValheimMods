@@ -167,7 +167,7 @@ public class VehicleDebugConfig : BepInExBaseConfig<VehicleDebugConfig>
       "VehicleBoundsRebuildDelayPerPiece", 0.02f,
       ConfigHelpers.CreateConfigDescription(
         $"The delay time that is added per piece the vehicle has on it for recalculating vehicle bounds. Example 2000 * 0.02 = 40seconds delay.  Values are clamped at {BasePiecesController.RebuildPieceMinDelay} and max value: {BasePiecesController.RebuildPieceMaxDelay} so even smaller vehicles rebuild at the min value and large >2k piece vehicles build at the max value.",
-        false, true, new AcceptableValueRange<float>(0.001f, 0.1f)));
+        false, true, new AcceptableValueRange<float>(0.00001f, 0.1f)));
 
 #if DEBUG
     DisableVehicleCube = Config.Bind(VehiclePiecesSectionName,
@@ -201,6 +201,7 @@ public class VehicleDebugConfig : BepInExBaseConfig<VehicleDebugConfig>
     {
       BasePiecesController.RebuildBoundsDelayPerPiece = VehicleBoundsRebuildDelayPerPiece.Value;
     };
+    BasePiecesController.RebuildBoundsDelayPerPiece = VehicleBoundsRebuildDelayPerPiece.Value;
     // onChanged
     AutoShowVehicleColliders.SettingChanged +=
       (_, _) => OnShowVehicleDebugMenuChange();

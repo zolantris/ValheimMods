@@ -129,11 +129,7 @@ public class MechanismPrefabs : RegisterPrefab<MechanismPrefabs>
         .MechanismActivatorPlate)
     });
     PrefabRegistryHelpers.AddPieceForPrefab(PrefabNames.Mechanism_Power_Consumer_Charge_Plate, prefab);
-
-    // todo set values based on a config for these prefabs.
-    var powerConduit = prefab.AddComponent<PowerConduitPlateComponentIntegration>();
-    powerConduit.Logic.mode = PowerConduitPlateComponent.EnergyPlateMode.Charging;
-
+    prefab.AddComponent<PowerConduitPlateChargeComponentIntegration>();
     prefab.AddComponent<PowerConduitHover>();
 
     PieceManager.Instance.AddPiece(new CustomPiece(prefab, true, new PieceConfig
@@ -175,10 +171,7 @@ public class MechanismPrefabs : RegisterPrefab<MechanismPrefabs>
     });
     PrefabRegistryHelpers.AddPieceForPrefab(PrefabNames.Mechanism_Power_Consumer_Drain_Plate, prefab);
 
-    // todo set values based on a config for these prefabs.
-    var powerConduit = prefab.AddComponent<PowerConduitPlateComponentIntegration>();
-    powerConduit.Logic.mode = PowerConduitPlateComponent.EnergyPlateMode.Draining;
-
+    prefab.AddComponent<PowerConduitPlateDrainComponentIntegration>();
     prefab.AddComponent<PowerConduitHover>();
 
     PieceManager.Instance.AddPiece(new CustomPiece(prefab, true, new PieceConfig
@@ -353,6 +346,8 @@ public class MechanismPrefabs : RegisterPrefab<MechanismPrefabs>
     RegisterPowerStorageEitr();
 
     RegisterPowerDrainPlate();
+#if DEBUG
     RegisterPowerChargePlate();
+#endif
   }
 }

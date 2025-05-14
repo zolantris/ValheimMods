@@ -45,11 +45,13 @@
         new()
         {
           "wheel", "portal",
-          "door", "chest", "cart"
+          "door", "chest", "cart",
+          "mechanism",
+          PrefabNames.SwivelPrefabName
         };
       public static List<string> MeshFilterExcludeNames = new()
       {
-        "Destruction", "high", "large_lod", "vehicle_water_mesh", "largelod", "Portal_destruction", "Destruction_Cube", "animated_inner_core", "animated_outer_core", "energy_level", "energy_level_mesh"
+        "Destruction", "high", "large_lod", "vehicle_water_mesh", "largelod", "Portal_destruction", "Destruction_Cube", "animated", "animated_inner_core", "animated_outer_core", "energy_level", "energy_level_mesh"
       };
       public static List<string> MeshFilterIncludesNames = new()
       {
@@ -67,9 +69,10 @@
       public Action IgnoreAllVehicleCollidersCallback = () => {};
 
 
+      // todo refactor this to point to a shared interface so we can move this into another mod.
       internal BasePiecesController MBasePiecesController;
-      private readonly HashSet<GameObject> wntSubscribers = new();
-
+      public readonly HashSet<GameObject> wntSubscribers = new();
+      private List<GameObject> relatedDestroyedPrefabs = new();
       public void Awake()
       {
         MBasePiecesController = GetComponent<BasePiecesController>();
@@ -77,19 +80,19 @@
 
       public void OnPieceDestroyHandler(GameObject go)
       {
+        if (!wntSubscribers.Contains(go)) return;
         wntSubscribers.Remove(go);
+        relatedDestroyedPrefabs.Clear();
         if (!MBasePiecesController) return;
-        if (IsClusteringEnabled || MBasePiecesController.GetPieceCount() < ClusterRenderingPieceThreshold) return;
-        CleanupRelatedCombinedMeshes();
+        if (!IsClusteringEnabled || MBasePiecesController.GetPieceCount() < ClusterRenderingPieceThreshold) return;
 
         if (_relatedGameObjectToMaterialsMap.TryGetValue(go, out var items))
         {
-          var relatedPrefabs = new List<GameObject>();
           foreach (var material in items)
           {
             if (_relatedMaterialToGameObjectsMap.TryGetValue(material, out var relatedGameObjects))
             {
-              relatedPrefabs.AddRange(relatedGameObjects);
+              relatedDestroyedPrefabs.AddRange(relatedGameObjects);
             }
             if (_currentCombinedMeshObjects.TryGetValue(material, out var previousCombinedMeshObject))
             {
@@ -97,17 +100,20 @@
               _currentCombinedMeshObjects.Remove(material);
             }
           }
-          if (relatedPrefabs.Count < 1) return;
+          if (relatedDestroyedPrefabs.Count < 1) return;
 
           // TODO [PERFORMANCE] may want to debounce this. But it will be very laggy looking if we delay this step. 
-          GenerateCombinedMeshes(relatedPrefabs.ToArray(), true);
+          GenerateCombinedMeshes(relatedDestroyedPrefabs.ToArray(), true);
 
           // do nothing if we have no colliders to ignore. This is super inefficient if we run it every time.
           if (_currentCombinedMeshObjects.Count > 0)
           {
             IgnoreAllVehicleCollidersCallback();
           }
+          relatedDestroyedPrefabs.Clear();
         }
+
+        CleanupRelatedCombinedMeshes();
       }
 
       /// <summary>
@@ -255,15 +261,16 @@
           };
         }
       }
-
-      public void GenerateCombinedMeshes(GameObject[] prefabList, bool hasRunCleanup = false)
+      /// <summary>
+      /// Main generator method.
+      /// - canRebuildExisting = false, existing prefabs are skipped. This means we do not regenerate prefabs if they are already mapped. Saving tons of memory and processing power. This will be heavy only on first render. Afterwards it will only regenerate if the gameobject does not exist in the map.
+      /// - Destroy commands similarly will follow this principle but send it the prefabList to regenerate. This is where canRebuildExisting should be set to true
+      /// </summary>
+      /// TODO might be good to make this a coroutine and yield return to wait for fixed update per material generated if above a stopwatch increment.
+      public void GenerateCombinedMeshes(GameObject[] prefabList, bool canRebuildExisting = false)
       {
         InitCombinedMeshParentObj();
-
-        if (!hasRunCleanup)
-        {
-          CleanupRelatedCombinedMeshes();
-        }
+        CleanupRelatedCombinedMeshes();
 
         Dictionary<Material, List<CombineInstance>> materialToMeshes = new();
         var prefabExclusionRegex = GenerateRegexFromList(PrefabExcludeNames); // Compile Regex once
@@ -273,6 +280,11 @@
         foreach (var prefabItem in prefabList)
         {
           if (!prefabItem) continue; // Skip inactive
+          if (prefabItem.transform.parent != null && prefabExclusionRegex.IsMatch(prefabItem.transform.parent.name)) continue;
+          if (!canRebuildExisting && _relatedGameObjectToMaterialsMap.ContainsKey(prefabItem) && CombinedMeshMaterialsObjMap.ContainsKey(prefabItem))
+          {
+            return;
+          }
           if (prefabExclusionRegex.IsMatch(prefabItem.gameObject.name)) continue; // 🔹 Skip excluded objects
 
           var wnt = prefabItem.GetWearNTear();
@@ -283,7 +295,6 @@
             if (!wntSubscribers.Contains(prefabItem))
             {
               wntSubscribers.Add(prefabItem);
-              wnt.m_onDestroyed += () => OnPieceDestroyHandler(prefabItem.gameObject);
             }
             // 🔹 WNT Exists: Get the active component & its MeshRenderer
             var activeWNTObject = GetWNTActiveComponent(wnt);

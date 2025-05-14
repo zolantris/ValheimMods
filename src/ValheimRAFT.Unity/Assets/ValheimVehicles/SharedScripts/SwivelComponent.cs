@@ -4,6 +4,7 @@
 #region
 
 using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using UnityEngine;
 using ValheimVehicles.SharedScripts.PowerSystem;
@@ -103,6 +104,11 @@ namespace ValheimVehicles.SharedScripts
     public HingeAxis HingeAxes => hingeAxes;
     public Vector3 MaxEuler => maxRotationEuler;
 
+    public static List<SwivelComponent> Instances = new();
+    private Vector3 frozenLocalPos;
+    private Quaternion frozenLocalRot;
+    private bool isFrozen;
+
     public virtual void Awake()
     {
       snappoint = transform.Find(SNAPPOINT_TAG);
@@ -129,12 +135,22 @@ namespace ValheimVehicles.SharedScripts
       {
         InitPowerConsumer();
       }
+
+      if (!Instances.Contains(this))
+      {
+        Instances.Add(this);
+      }
     }
 
     public virtual void Start()
     {
       SyncSnappoint();
       SetInterpolationSpeed(interpolationSpeed);
+    }
+
+    protected virtual void OnDestroy()
+    {
+      Instances.Remove(this);
     }
 
     public virtual void FixedUpdate()
@@ -175,9 +191,27 @@ namespace ValheimVehicles.SharedScripts
       // only called if the swivel is not a base state like Returned or AtTarget
       if (IsPoweredSwivel && swivelPowerConsumer && !swivelPowerConsumer.IsActive)
       {
-        // must call this otherwise desync happens due to the parent being a moving parent
-        animatedRigidbody.Move(transform.position, transform.rotation);
+        if (!isFrozen)
+        {
+          frozenLocalPos = animatedTransform.localPosition;
+          frozenLocalRot = animatedTransform.localRotation;
+          isFrozen = true;
+        }
+
+        var parent = animatedTransform.parent;
+        if (parent != null)
+        {
+          var worldPos = parent.TransformPoint(frozenLocalPos);
+          var worldRot = parent.rotation * frozenLocalRot;
+
+          animatedRigidbody.Move(worldPos, worldRot);
+        }
+
         return;
+      }
+      else
+      {
+        isFrozen = false;
       }
 
       switch (mode)
@@ -439,7 +473,7 @@ namespace ValheimVehicles.SharedScripts
       UpdatePowerConsumer();
     }
 
-    #region ISwivelConfig
+  #region ISwivelConfig
 
     public float InterpolationSpeed
     {
@@ -489,7 +523,7 @@ namespace ValheimVehicles.SharedScripts
       set => SetMode(value);
     }
 
-    #endregion
+  #endregion
 
   }
 }
