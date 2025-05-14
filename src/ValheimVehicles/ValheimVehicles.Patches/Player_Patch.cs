@@ -3,6 +3,7 @@
   using System;
   using System.Collections.Generic;
   using System.Linq;
+  using System.Reflection;
   using System.Reflection.Emit;
   using HarmonyLib;
   using UnityEngine;
@@ -24,35 +25,68 @@
 
   public class Player_Patch
   {
-    /// <summary>
-    /// TODO may need to add a TryPlacePiece patch to override if blocked by water on boat.
-    /// </summary>
-    /// <param name="instructions"></param>
-    /// <returns></returns>
+    // /// <summary>
+    // /// TODO may need to add a TryPlacePiece patch to override if blocked by water on boat.
+    // /// </summary>
+    // /// <param name="instructions"></param>
+    // /// <returns></returns>
+    // [HarmonyTranspiler]
+    // [HarmonyPatch(typeof(Player), nameof(Player.PlacePiece))]
+    // private static IEnumerable<CodeInstruction> PlacePieceTranspiler(
+    //   IEnumerable<CodeInstruction> instructions)
+    // {
+    //   var operand = HarmonyPatchMethods.GetGenericMethod(
+    //     typeof(Object), "Instantiate", 1,
+    //     new Type[3]
+    //     {
+    //       typeof(Type),
+    //       typeof(Vector3),
+    //       typeof(Quaternion)
+    //     }).MakeGenericMethod(typeof(GameObject));
+    //   var matches = new CodeMatch[]
+    //   {
+    //     new(OpCodes.Call, operand)
+    //   };
+    //   return new CodeMatcher(instructions).MatchForward(true, matches)
+    //     .Advance(1)
+    //     .InsertAndAdvance(
+    //       Transpilers.EmitDelegate<Func<GameObject, GameObject>>(
+    //         PlacedPiece))
+    //     .InstructionEnumeration();
+    // }
+
+    // fix for MassFarming
     [HarmonyTranspiler]
     [HarmonyPatch(typeof(Player), nameof(Player.PlacePiece))]
-    private static IEnumerable<CodeInstruction> PlacePieceTranspiler(
-      IEnumerable<CodeInstruction> instructions)
+    private static IEnumerable<CodeInstruction> PlacePieceTranspiler(IEnumerable<CodeInstruction> instructions)
     {
-      var operand = HarmonyPatchMethods.GetGenericMethod(
-        typeof(Object), "Instantiate", 1,
-        new Type[3]
-        {
-          typeof(Type),
-          typeof(Vector3),
-          typeof(Quaternion)
-        }).MakeGenericMethod(typeof(GameObject));
-      var matches = new CodeMatch[]
+      var codes = new List<CodeInstruction>(instructions);
+
+      // Match the generic Instantiate<GameObject>(...)
+      var instantiateGeneric = typeof(Object)
+        .GetMethods()
+        .First(m => m.Name == "Instantiate"
+                    && m.IsGenericMethodDefinition
+                    && m.GetParameters().Length == 3)
+        .MakeGenericMethod(typeof(GameObject));
+
+      for (var i = 0; i < codes.Count; i++)
       {
-        new(OpCodes.Call, operand)
-      };
-      return new CodeMatcher(instructions).MatchForward(true, matches)
-        .Advance(1)
-        .InsertAndAdvance(
-          Transpilers.EmitDelegate<Func<GameObject, GameObject>>(
-            PlacedPiece))
-        .InstructionEnumeration();
+        if (codes[i].opcode == OpCodes.Call && codes[i].operand as MethodInfo == instantiateGeneric)
+        {
+          codes[i] = CodeInstruction.Call(typeof(Player_Patch), nameof(WrapInstantiateWithPlacedPiece));
+        }
+      }
+
+      return codes;
     }
+
+    public static GameObject WrapInstantiateWithPlacedPiece(Object original, Vector3 pos, Quaternion rot)
+    {
+      var obj = Object.Instantiate(original, pos, rot) as GameObject;
+      return PlacedPiece(obj); // your side-effect logic
+    }
+
 
     [HarmonyPatch(typeof(Player), nameof(Player.InRepairMode))]
     [HarmonyPostfix]
