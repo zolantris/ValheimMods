@@ -84,11 +84,15 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
 
     public void UpdatePowerAnimations()
     {
-      if (storedEnergy <= 0f && powerRotator.enabled)
+      // disable when at 0 or at capacity
+      var isZeroOrAtCapacity = storedEnergy <= 0f || storedEnergy >= energyCapacity;
+      if (powerRotator.enabled && isZeroOrAtCapacity)
       {
         powerRotator.enabled = false;
+        return;
       }
-      if (storedEnergy > 0f && !powerRotator.enabled)
+
+      if (!isZeroOrAtCapacity && storedEnergy > 0f && !powerRotator.enabled)
       {
         powerRotator.enabled = true;
       }

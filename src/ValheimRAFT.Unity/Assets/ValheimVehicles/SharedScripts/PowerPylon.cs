@@ -36,7 +36,10 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
       }
 
       lightningBolt.Duration *= Random.Range(0.9f, 1.1f);
+    }
 
+    protected virtual void Start()
+    {
       PowerNetworkController.RegisterPowerComponent(this);
     }
 

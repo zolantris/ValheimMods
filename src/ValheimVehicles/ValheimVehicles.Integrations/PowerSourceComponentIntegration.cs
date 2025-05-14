@@ -13,8 +13,12 @@ public class PowerSourceComponentIntegration :
   {
     base.Awake();
     // don't do anything when we aren't initialized.
-    if (this.IsNetViewValid(out var netView)) return;
+  }
 
+  protected override void Start()
+  {
+    if (!this.IsNetViewValid()) return;
+    base.Start();
     PowerNetworkController.RegisterPowerComponent(this);
   }
 
@@ -36,7 +40,9 @@ public class PowerSourceComponentIntegration :
 
   public void RefuelOrRPC(float amount)
   {
-    if (this.IsNetViewValid(out var netView) && (netView.IsOwner() || ZNet.instance.IsServer()))
+    if (!this.IsNetViewValid(out var netView)) return;
+
+    if (netView.IsOwner() || ZNet.instance.IsServer())
     {
       Logic.Refuel(amount);
       UpdateNetworkedData();

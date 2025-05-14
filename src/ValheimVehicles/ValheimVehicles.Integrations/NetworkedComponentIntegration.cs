@@ -24,23 +24,26 @@ namespace ValheimVehicles.Integrations
     protected TComponent Component => (TComponent)(object)this!;
     protected TConfig Config = new();
 
+    public string instanced_RpcNotifyStateUpdate = null!;
+
     protected virtual void Awake()
     {
       m_nview = GetComponent<ZNetView>();
 
-      // don't do anything when we aren't initialized.
-      // if (this.IsNetViewValid(out var netView)) return;
+      // this must be done if there are both PowerStorage and PowerSource on the same object.
+      instanced_RpcNotifyStateUpdate = $"{GetType().Name}_{nameof(RPC_NotifyStateUpdated)}";
 
       _logic = gameObject.AddComponent<TDelegateComponent>();
       RpcHandler = new SafeRPCHandler(m_nview);
-
-      RpcHandler.Register(nameof(RPC_NotifyStateUpdated), RPC_NotifyStateUpdated);
-      RegisterDefaultRPCs();
     }
 
     protected virtual void Start()
     {
+      // don't do anything when we aren't initialized.
+      if (!this.IsNetViewValid()) return;
       LoadInitialData();
+      RpcHandler.Register(instanced_RpcNotifyStateUpdate, RPC_NotifyStateUpdated);
+      RegisterDefaultRPCs();
     }
 
     protected virtual void OnDestroy()
@@ -62,7 +65,7 @@ namespace ValheimVehicles.Integrations
       if (this.IsNetViewValid(out var netView) && netView.IsOwner())
       {
         Config.Save(netView.GetZDO(), Component);
-        netView.InvokeRPC(ZNetView.Everybody, nameof(RPC_NotifyStateUpdated));
+        netView.InvokeRPC(ZNetView.Everybody, instanced_RpcNotifyStateUpdate);
       }
     }
 
@@ -100,7 +103,6 @@ namespace ValheimVehicles.Integrations
     protected void RunIfOwnerOrServer(Action action)
     {
       if (!this.IsNetViewValid(out var netView)) return;
-
       if (netView.IsOwner() || ZNet.instance.IsServer())
       {
         if (!netView.IsOwner())

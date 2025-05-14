@@ -17,7 +17,7 @@ namespace ValheimVehicles.Integrations
     {
       base.Awake();
       // don't do anything when we aren't initialized.
-      if (this.IsNetViewValid(out var netView)) return;
+      if (!this.IsNetViewValid(out var netView)) return;
 
       PowerNetworkController.RegisterPowerComponent(this);
     }
@@ -33,7 +33,8 @@ namespace ValheimVehicles.Integrations
 
     public void ChargeOrRPC(float amount)
     {
-      if (this.IsNetViewValid(out var netView) && (netView.IsOwner() || ZNet.instance.IsServer()))
+      if (!this.IsNetViewValid(out var netView)) return;
+      if (netView.IsOwner() || ZNet.instance.IsServer())
       {
         Logic.Charge(amount);
         UpdateNetworkedData();
@@ -46,7 +47,8 @@ namespace ValheimVehicles.Integrations
 
     public void DischargeOrRPC(float amount)
     {
-      if (this.IsNetViewValid(out var netView) && (netView.IsOwner() || ZNet.instance.IsServer()))
+      if (!this.IsNetViewValid(out var netView)) return;
+      if (netView.IsOwner() || ZNet.instance.IsServer())
       {
         Logic.Discharge(amount);
         UpdateNetworkedData();

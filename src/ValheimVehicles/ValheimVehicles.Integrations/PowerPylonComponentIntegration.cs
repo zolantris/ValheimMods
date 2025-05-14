@@ -10,7 +10,6 @@ public class PowerPylonComponentIntegration : PowerPylon, Hoverable, INetView
   {
     m_nview = GetComponent<ZNetView>();
     // don't do anything when we aren't initialized.
-    if (this.IsNetViewValid()) return;
     base.Awake();
   }
   public string GetHoverText()
