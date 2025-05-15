@@ -229,11 +229,47 @@
 
 ## PrefabConfig
 
+### SwivelPowerDrain 
+- Description: How much power (watts) is consumed by a Swivel per second. Applies only if Swivels_DoNotRequirePower is false.
+- Default Value: 1
+
+### PowerSourceFuelCapacity 
+- Description: The maximum amount of fuel a power source can hold.
+- Default Value: 100
+
+### PowerSource_BaseEfficiency 
+- Description: The base efficiency of all fuel. This can be used to tweak all fuels and keep them scaling.
+- Default Value: 1
+
+### PowerSource_EitrEfficiency 
+- Description: The efficiency of Eitr as fuel. IE 1 eitr turns into X fuel. This will be used for balancing with other fuel types if more fuel types are added.
+- Default Value: 1
+
+### PowerSource_FuelConsumptionRate 
+- Description: The amount of fuel consumed per physics update tick at full power output by a power source.
+- Default Value: 0.1
+
+### PowerStorageCapacity 
+- Description: The maximum amount of energy a power storage unit can hold.
+- Default Value: 800
+
+### Mechanism_Switch_DefaultAction 
+- Description: Default action of the mechanism switch. This will be overridden by UpdateIntendedAction if a closer matching action is detected nearby.
+- Default Value: CommandsHud
+
+### Swivels_DoNotRequirePower 
+- Description: Allows you to use swivels without the vehicle power system.
+- Default Value: False
+
+### AllowTieredMastToRotateInWind 
+- Description: allows the tiered mast to rotate in wind
+- Default Value: True
+
 ### RopeLadderEjectionPoint 
 - Description: The place the player is placed after they leave the ladder. Defaults to Y +0.25 and Z +0.5 meaning you are placed forwards of the ladder.
 - Default Value: (0.00, 0.00, 0.00)
 
-### PrefabConfig 
+### Vehicle Hull Starting Piece 
 - Description: Allows you to customize what piece the raft initializes with. Admins only as this can be overpowered.
 - Default Value: Hull4X8
 
@@ -656,15 +692,15 @@ Other methods removed after 2.5.0
 50% will be the very bottom of the vehicle's collider. In future version there will be an individual config setting.
 - Default Value: 0.65
 
-### flightDamping_3.3.0 
+### flightDamping_3.4.0 
 - Description: Controls how much the water pushes the boat upwards directly. This value may affect angular damping too. Recommended to keep the original value. But tweaking can remove or add additional jitter. Higher values likely will add more jitter.
 - Default Value: 1
 
-### flightSidewaysDamping_3.3.0 
+### flightSidewaysDamping_3.4.0 
 - Description: Controls how much the water pushes the boat sideways based on wind direction and velocity.
 - Default Value: 2
 
-### flightAngularDamping_3.3.0 
+### flightAngularDamping_3.4.0 
 - Description: Controls how much the water pushes the boat from a vertical angle based on water and velocity. Lower values will cause more rocking and allow better turn rates. Higher values will make the vehicle more stable, but less turning angle and possibly less realistic. If you get motion-sickness this can allow tweaking sway without disabling it all and also prevent rapid turning.
 - Default Value: 1
 
@@ -684,15 +720,15 @@ Other methods removed after 2.5.0
 - Description: 
 - Default Value: 1.2
 
-### force_3.3.0 
+### force_3.4.0 
 - Description: EXPERIMENTAL_FORCE. Lower values will not allow the vehicle to balance fast when tilted. Lower values can reduce bobbing, but must be below the forceDistance value.
 - Default Value: 2
 
-### forceDistance_3.3.0 
+### forceDistance_3.4.0 
 - Description: EXPERIMENTAL_FORCE_DISTANCE should always be above the value of force. Otherwise bobbing will occur. Lower values will not allow the vehicle to balance fast when tilted
 - Default Value: 10
 
-### backwardForce_3.3.0 
+### backwardForce_3.4.0 
 - Description: EXPERIMENTAL_BackwardFORCE
 - Default Value: 1
 
@@ -700,15 +736,15 @@ Other methods removed after 2.5.0
 - Description: 
 - Default Value: 1
 
-### waterDamping_3.3.0 
+### waterDamping_3.4.0 
 - Description: Controls how much the water pushes the boat upwards directly. This value may affect angular damping too. Recommended to keep the original value. But tweaking can remove or add additional jitter. Higher values likely will add more jitter.
 - Default Value: 1
 
-### waterSidewaysDamping_3.3.0 
+### waterSidewaysDamping_3.4.0 
 - Description: Controls how much the water pushes the boat sideways based on wind direction and velocity.
 - Default Value: 2
 
-### waterAngularDamping_3.3.0 
+### waterAngularDamping_3.4.0 
 - Description: Controls how much the water pushes the boat from a vertical angle based on water and velocity. Lower values will cause more rocking and allow better turn rates. Higher values will make the vehicle more stable, but less turning angle and possibly less realistic. If you get motion-sickness this can allow tweaking sway without disabling it all and also prevent rapid turning.
 - Default Value: 1
 
@@ -724,15 +760,15 @@ Other methods removed after 2.5.0
 - Description: 
 - Default Value: 0.8
 
-### submersibleDamping_3.3.0 
+### submersibleDamping_3.4.0 
 - Description: Controls how much the water pushes the boat upwards directly. This value may affect angular damping too. Recommended to keep the original value. But tweaking can remove or add additional jitter. Higher values likely will add more jitter.
 - Default Value: 1
 
-### submersibleSidewaysDamping_3.3.0 
+### submersibleSidewaysDamping_3.4.0 
 - Description: Controls how much the water pushes the boat sideways based on wind direction and velocity.
 - Default Value: 2
 
-### submersibleAngularDamping_3.3.0 
+### submersibleAngularDamping_3.4.0 
 - Description: Controls how much the water pushes the boat from a vertical angle based on water and velocity. Lower values will cause more rocking and allow better turn rates. Higher values will make the vehicle more stable, but less turning angle and possibly less realistic. If you get motion-sickness this can allow tweaking sway without disabling it all and also prevent rapid turning.
 - Default Value: 1
 
