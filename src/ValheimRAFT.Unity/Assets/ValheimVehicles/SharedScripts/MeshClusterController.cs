@@ -1,6 +1,7 @@
 #region
 
   using System;
+  using System.Collections;
   using System.Collections.Generic;
   using System.Linq;
   using System.Text.RegularExpressions;
@@ -78,40 +79,96 @@
         MBasePiecesController = GetComponent<BasePiecesController>();
       }
 
-      public void OnPieceDestroyHandler(GameObject go)
+      private Coroutine? _rebuildCombinedMeshesCoroutine;
+      private List<GameObject> _scheduledRebuildGameObjects = new();
+
+      public void ScheduleRebuildCombinedMeshes(GameObject go)
       {
-        if (!wntSubscribers.Contains(go)) return;
-        wntSubscribers.Remove(go);
-        relatedDestroyedPrefabs.Clear();
-        if (!MBasePiecesController) return;
-        if (!IsClusteringEnabled || MBasePiecesController.GetPieceCount() < ClusterRenderingPieceThreshold) return;
-
-        if (_relatedGameObjectToMaterialsMap.TryGetValue(go, out var items))
+        if (_rebuildCombinedMeshesCoroutine != null)
         {
-          foreach (var material in items)
-          {
-            if (_relatedMaterialToGameObjectsMap.TryGetValue(material, out var relatedGameObjects))
-            {
-              relatedDestroyedPrefabs.AddRange(relatedGameObjects);
-            }
-            if (_currentCombinedMeshObjects.TryGetValue(material, out var previousCombinedMeshObject))
-            {
-              Destroy(previousCombinedMeshObject);
-              _currentCombinedMeshObjects.Remove(material);
-            }
-          }
-          if (relatedDestroyedPrefabs.Count < 1) return;
-
-          // TODO [PERFORMANCE] may want to debounce this. But it will be very laggy looking if we delay this step. 
-          GenerateCombinedMeshes(relatedDestroyedPrefabs.ToArray(), true);
-
-          // do nothing if we have no colliders to ignore. This is super inefficient if we run it every time.
-          if (_currentCombinedMeshObjects.Count > 0)
-          {
-            IgnoreAllVehicleCollidersCallback();
-          }
-          relatedDestroyedPrefabs.Clear();
+          _scheduledRebuildGameObjects.Add(go);
+          return;
         }
+
+        _rebuildCombinedMeshesCoroutine = StartCoroutine(RebuildDestroyedMeshes());
+      }
+
+      private void OnDisable()
+      {
+        if (_rebuildCombinedMeshesCoroutine != null)
+        {
+          StopCoroutine(_rebuildCombinedMeshesCoroutine);
+          _rebuildCombinedMeshesCoroutine = null;
+        }
+      }
+
+      private void OnDestroy()
+      {
+        if (_rebuildCombinedMeshesCoroutine != null)
+        {
+          StopCoroutine(_rebuildCombinedMeshesCoroutine);
+          _rebuildCombinedMeshesCoroutine = null;
+        }
+      }
+
+      public IEnumerator RebuildDestroyedMeshes()
+      {
+        if (!isActiveAndEnabled)
+        {
+          _rebuildCombinedMeshesCoroutine = null;
+          yield break;
+        }
+        yield return new WaitForSeconds(1f);
+        _scheduledRebuildGameObjects.Clear();
+        if (!isActiveAndEnabled)
+        {
+          _rebuildCombinedMeshesCoroutine = null;
+          yield break;
+        }
+
+        OnPieceDestroyHandler(_scheduledRebuildGameObjects.ToList());
+        _scheduledRebuildGameObjects.Clear();
+      }
+
+      public void OnPieceDestroyHandler(List<GameObject> destroyedPrefabs)
+      {
+        relatedDestroyedPrefabs.Clear();
+        foreach (var go in destroyedPrefabs)
+        {
+          if (!wntSubscribers.Contains(go)) continue;
+          wntSubscribers.Remove(go);
+          if (!MBasePiecesController) continue;
+          if (!IsClusteringEnabled || MBasePiecesController.GetPieceCount() < ClusterRenderingPieceThreshold) continue;
+
+          if (_relatedGameObjectToMaterialsMap.TryGetValue(go, out var items))
+          {
+            foreach (var material in items)
+            {
+              if (_relatedMaterialToGameObjectsMap.TryGetValue(material, out var relatedGameObjects))
+              {
+                relatedDestroyedPrefabs.AddRange(relatedGameObjects);
+              }
+              if (_currentCombinedMeshObjects.TryGetValue(material, out var previousCombinedMeshObject))
+              {
+                Destroy(previousCombinedMeshObject);
+                _currentCombinedMeshObjects.Remove(material);
+              }
+            }
+            if (relatedDestroyedPrefabs.Count < 1) return;
+          }
+        }
+
+        if (relatedDestroyedPrefabs.Count < 1) return;
+
+        // TODO [PERFORMANCE] may want to debounce this. But it will be very laggy looking if we delay this step. 
+        GenerateCombinedMeshes(relatedDestroyedPrefabs.ToArray(), true);
+
+        // do nothing if we have no colliders to ignore. This is super inefficient if we run it every time.
+        if (_currentCombinedMeshObjects.Count > 0)
+        {
+          IgnoreAllVehicleCollidersCallback();
+        }
+        relatedDestroyedPrefabs.Clear();
 
         CleanupRelatedCombinedMeshes();
       }

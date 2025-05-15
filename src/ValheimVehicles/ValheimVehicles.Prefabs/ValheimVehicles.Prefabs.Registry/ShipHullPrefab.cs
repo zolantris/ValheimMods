@@ -186,6 +186,7 @@ public class ShipHullPrefab : IRegisterPrefab
     wnt.m_supports = true;
     wnt.m_support = 2000f;
     wnt.m_noSupportWear = true;
+    wnt.m_roof = wnt.gameObject;
     wnt.m_noRoofWear = true;
     wnt.m_hitEffect = LoadValheimAssets.woodFloorPieceWearNTear.m_hitEffect;
     wnt.m_switchEffect =

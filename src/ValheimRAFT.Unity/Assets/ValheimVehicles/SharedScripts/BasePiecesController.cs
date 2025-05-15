@@ -189,7 +189,10 @@
         // }
 
         // will only update if there is a subscription for this texture.
-        m_meshClusterComponent.OnPieceDestroyHandler(piece);
+        if (isInitialPieceActivationComplete)
+        {
+          m_meshClusterComponent.ScheduleRebuildCombinedMeshes(piece);
+        }
 
         if (shouldRebuild)
         {

@@ -51,7 +51,7 @@ namespace ValheimVehicles.SharedScripts
     [SerializeField] private SwivelMode mode = SwivelMode.Rotate;
 
 
-    [SerializeField] private float interpolationSpeed = 50f;
+    [SerializeField] private float interpolationSpeed = 10f;
     [SerializeField] public Transform animatedTransform;
     [SerializeField] public MotionState currentMotionState = MotionState.AtStart;
 
@@ -85,7 +85,7 @@ namespace ValheimVehicles.SharedScripts
     private Rigidbody animatedRigidbody;
 
     [Description("This speed is computed with the base interpolation value to get a final interpolation.")]
-    private float computedInterpolationSpeed = 50f;
+    private float computedInterpolationSpeed = 10f;
 
     private Vector3 hingeEndEuler;
     private float hingeLerpProgress;

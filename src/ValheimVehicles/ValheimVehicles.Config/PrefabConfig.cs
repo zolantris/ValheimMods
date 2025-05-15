@@ -57,6 +57,7 @@ public class PrefabConfig : BepInExBaseConfig<PrefabConfig>
   public static ConfigEntry<float> PowerSource_BaseFuelEfficiency { get; set; } = null!;
   public static ConfigEntry<float> PowerSource_FuelConsumptionRate { get; set; } = null!;
   public static ConfigEntry<float> PowerStorage_Capacity { get; set; } = null!;
+  public static ConfigEntry<MechanismAction> Mechanism_Switch_DefaultAction { get; set; } = null!;
 
 
   public enum VehicleShipInitPiece
@@ -144,6 +145,10 @@ public class PrefabConfig : BepInExBaseConfig<PrefabConfig>
         true, false,
         new AcceptableValueRange<float>(10f, 2000f)));
 
+    Mechanism_Switch_DefaultAction = config.Bind(SectionKey,
+      "Mechanism_Switch_DefaultAction", MechanismAction.CommandsHud,
+      "Default action of the mechanism switch. This will be overridden by UpdateIntendedAction if a closer matching action is detected nearby.");
+
     SwivelComponent.SwivelEnergyDrain = SwivelPowerDrain.Value;
 
 
@@ -178,6 +183,7 @@ public class PrefabConfig : BepInExBaseConfig<PrefabConfig>
     RopeLadderEjectionOffset = config.Bind(SectionKey,
       "RopeLadderEjectionPoint", Vector3.zero,
       "The place the player is placed after they leave the ladder. Defaults to Y +0.25 and Z +0.5 meaning you are placed forwards of the ladder.");
+
 
     StartingPiece = config.Bind(SectionKey, "Vehicle Hull Starting Piece",
       VehicleShipInitPiece.Hull4X8,

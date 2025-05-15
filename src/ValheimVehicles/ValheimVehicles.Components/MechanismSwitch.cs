@@ -1,8 +1,10 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.Serialization;
+using ValheimVehicles.Config;
 using ValheimVehicles.ConsoleCommands;
 using ValheimVehicles.Constants;
 using ValheimVehicles.Helpers;
@@ -17,15 +19,14 @@ using ValheimVehicles.UI;
 
 namespace ValheimVehicles.Components;
 
-public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interactable, IHoverableObj, IMechanismActionSetter
+public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interactable, IHoverableObj, IMechanismActionSetter, INetView
 {
-  private ZNetView netView;
-
   // todo might be better to just run OnAnimatorIK in the fixed update loop.
   private List<Humanoid> m_localAnimatedHumanoids = new();
   private SmoothToggleLerp _handDistanceLerp = new();
   public static bool m_forceRunAnimateOnFixedUpdate = false;
   private MechanismAction _selectedMechanismAction = MechanismAction.CommandsHud;
+  private SafeRPCHandler _safeRPCHandler;
 
   public MechanismAction SelectedAction
   {
@@ -36,26 +37,84 @@ public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interac
   public override void Awake()
   {
     base.Awake();
-    netView = GetComponent<ZNetView>();
+    m_nview = GetComponent<ZNetView>();
+    _selectedMechanismAction = PrefabConfig.Mechanism_Switch_DefaultAction.Value;
   }
 
   public void Start()
   {
+    if (!this.IsNetViewValid()) return;
     SyncMechanismAction();
+    StartCoroutine(ScheduleIntendedAction());
+  }
+
+
+  public IEnumerator ScheduleIntendedAction()
+  {
+    if (!isActiveAndEnabled) yield break;
+    yield return new WaitForFixedUpdate();
+    if (!isActiveAndEnabled || !this.IsNetViewValid(out var netView))
+    {
+      yield break;
+    }
+    UpdateIntendedAction();
+  }
+
+  /// <summary>
+  /// Automatically finds the most likely action of this lever.
+  /// </summary>
+  public void UpdateIntendedAction()
+  {
+    if (SwivelHelpers.FindNearestSwivel(transform, out m_nearestSwivel))
+    {
+      SetMechanismAction(MechanismAction.SwivelActivateMode);
+      return;
+    }
+
+    var pieceController = transform.GetComponentInParent<IPieceController>();
+    if (pieceController != null)
+    {
+      if (pieceController.ComponentName == PrefabNames.SwivelPrefabName)
+      {
+        SetMechanismAction(MechanismAction.SwivelActivateMode);
+        return;
+      }
+
+      if (PrefabNames.IsVehicle(pieceController.ComponentName))
+      {
+        SetMechanismAction(MechanismAction.CommandsHud);
+      }
+    }
   }
 
   public void OnEnable()
   {
+    if (!this.IsNetViewValid(out var netView)) return;
+    _safeRPCHandler = new SafeRPCHandler(netView);
     OnToggleCompleted += OnAnimationsComplete;
-    netView.Register(nameof(RPC_UpdateMechanismAction), RPC_UpdateMechanismAction);
+    _safeRPCHandler.Register(nameof(RPC_SyncMechanismAction), RPC_SyncMechanismAction);
+    _safeRPCHandler.Register<string>(nameof(RPC_SetMechanismAction), RPC_SetMechanismAction);
+
+    StartCoroutine(ScheduleIntendedAction());
   }
 
   public void OnDisable()
   {
-    netView.Unregister(nameof(RPC_UpdateMechanismAction));
+    _safeRPCHandler.UnregisterAll();
+    StopAllCoroutines();
   }
 
-  public void RPC_UpdateMechanismAction(long sender)
+  public void RPC_SetMechanismAction(long sender, string actionString)
+  {
+    if (!this.IsNetViewValid(out var netView)) return;
+    if (netView.IsOwner())
+    {
+      SelectedAction = GetActivationActionFromString(actionString);
+      SetMechanismAction(actionString);
+    }
+  }
+
+  public void RPC_SyncMechanismAction(long sender)
   {
     SyncMechanismAction();
   }
@@ -119,16 +178,34 @@ public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interac
       default:
         throw new ArgumentOutOfRangeException(nameof(action), action, null);
     }
-    UpdateSwitch();
+    UpdateOrRPCMechanismAction();
   }
+
+  /// <summary>
+  /// To be called in Host via RPC or directly and will force a sync on all clients
+  /// </summary>
+  /// <param name="switchAction"></param>
+  public void SetMechanismAction(string switchAction)
+  {
+    if (!this.IsNetViewValid(out var netView) || !netView.IsOwner()) return;
+    netView.m_zdo.Set(VehicleZdoVars.ToggleSwitchAction, switchAction);
+    _safeRPCHandler.InvokeRPC(ZRoutedRpc.Everybody, nameof(RPC_SyncMechanismAction));
+  }
+
   /// <summary>
   /// This must be run by the client that needs to update the switch
   /// </summary>
-  public void UpdateSwitch()
+  public void UpdateOrRPCMechanismAction()
   {
-    netView.m_zdo.Set(VehicleZdoVars.ToggleSwitchAction, SelectedAction.ToString());
-    // todo may want to just send the string to other clients.
-    netView.InvokeRPC(ZRoutedRpc.Everybody, nameof(RPC_UpdateMechanismAction));
+    if (!this.IsNetViewValid(out var netView)) return;
+    if (netView.IsOwner())
+    {
+      SetMechanismAction(SelectedAction.ToString());
+    }
+    else
+    {
+      _safeRPCHandler.InvokeRPC(ZRoutedRpc.Everybody, nameof(RPC_SetMechanismAction), SelectedAction.ToString());
+    }
   }
 
   public MechanismAction GetActivationActionFromString(string activationActionString)
@@ -143,7 +220,7 @@ public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interac
 
   public void SyncMechanismAction()
   {
-    if (!netView || netView.GetZDO() == null || !isActiveAndEnabled) return;
+    if (!isActiveAndEnabled || !this.IsNetViewValid(out var netView)) return;
     var activationActionString = netView.GetZDO().GetString(VehicleZdoVars.ToggleSwitchAction, nameof(MechanismAction.CreativeMode));
     SelectedAction = GetActivationActionFromString(activationActionString);
   }
@@ -343,6 +420,19 @@ public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interac
     {
       message += $"\n{ModTranslations.NoMechanismNearby}";
     }
+    if (SelectedAction == MechanismAction.SwivelActivateMode && m_nearestSwivel && m_nearestSwivel.swivelPowerConsumer)
+    {
+      // todo do not compute this per update.
+      var activationState = m_nearestSwivel.swivelPowerConsumer.IsActive;
+      var activationText = activationState ? ModTranslations.PowerState_HasPower : ModTranslations.PowerState_NoPower;
+      var activationColor = activationState ? "yellow" : "red";
+      message += $"\n({ModTranslations.WithBoldText(activationText, activationColor)})";
+    }
     return message;
+  }
+  public ZNetView? m_nview
+  {
+    get;
+    set;
   }
 }
