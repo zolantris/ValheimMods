@@ -14,8 +14,9 @@ namespace ValheimVehicles.Integrations.ZDOConfigs
       var fuel = zdo.GetFloat(VehicleZdoVars.Power_StoredFuel, component.GetFuelLevel());
       var running = zdo.GetBool(VehicleZdoVars.Power_IsRunning, component.IsRunning);
 
-      component.SetFuelLevel(fuel);
-      component.SetRunning(running);
+      // do not call SetFuelLevel directly from integration otherwise infinite loop will occurr as it will trigger an RPC
+      component.Logic.SetFuelLevel(fuel);
+      component.Logic.SetRunning(running);
     }
 
     public void Save(ZDO zdo, PowerSourceComponentIntegration component)
