@@ -61,6 +61,7 @@
     public static string PowerState_HasPower = null!;
     public static string PowerState_NoPower = null!;
     public static string PowerState_ConnectToGrid = null!;
+    public static string PowerState_Conduit_Active = null!;
 
     // full text string. This is computed from a few values.
     public static string Swivel_HoverText = null!;
@@ -245,7 +246,6 @@
       Swivel_Connected = SafeLocalize("$valheim_vehicles_mechanism_swivel_connected");
       // Swivel_HoverText = $"{WithBoldText(SharedKeys_Hold)} {WithBoldText(ValheimInput_KeyUse, "yellow")} {Swivel_Edit}";
       Swivel_HoverText = $"{WithBoldText(SharedKeys_Hold)} {WithBoldText(ValheimInput_KeyUse, "yellow")} {Swivel_Name}";
-      NoMechanismNearby = SafeLocalize("$valheim_vehicles_no_mechanism_nearby");
     }
 
     public static void UpdatePowerTranslations()
@@ -255,9 +255,9 @@
       PowerState_ConnectToGrid = SafeLocalize("$valheim_vehicles_mechanism_power_state_connect_to_grid");
 
       Swivel_Connected = SafeLocalize("$valheim_vehicles_mechanism_swivel_connected");
-      // Swivel_HoverText = $"{WithBoldText(SharedKeys_Hold)} {WithBoldText(ValheimInput_KeyUse, "yellow")} {Swivel_Edit}";
-      Swivel_HoverText = $"{WithBoldText(SharedKeys_Hold)} {WithBoldText(ValheimInput_KeyUse, "yellow")} {Swivel_Name}";
       NoMechanismNearby = SafeLocalize("$valheim_vehicles_no_mechanism_nearby");
+
+      PowerState_Conduit_Active = SafeLocalize("$valheim_vehicles_mechanism_power_conduit_state_active");
     }
 
     public static void ForceUpdateTranslations()

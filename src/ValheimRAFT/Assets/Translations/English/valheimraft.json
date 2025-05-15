@@ -187,5 +187,6 @@
   "valheim_vehicles_mechanism_power_drain_plate_desc": "A plate to drain players of Eitr to charge a power system. This will store player regenerated Eitr into batteries and acts as a renewable resource.",
   "valheim_vehicles_mechanism_power_state_connect_to_grid": "Connect to Grid.",
   "valheim_vehicles_mechanism_power_state_has_power": "Powered",
-  "valheim_vehicles_mechanism_power_state_no_power": "Power Required"
+  "valheim_vehicles_mechanism_power_state_no_power": "Power Required",
+  "valheim_vehicles_mechanism_power_conduit_state_active": "Active"
 }

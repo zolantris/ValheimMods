@@ -35,7 +35,7 @@
         FourByEight
       }
 
-      private static readonly string ValheimVehiclesPrefix = "ValheimVehicles";
+      public static readonly string ValheimVehiclesPrefix = "ValheimVehicles";
 
       public static readonly string LandVehicle = $"{ValheimVehiclesPrefix}_VehicleLand";
       public static readonly string AirVehicle = $"{ValheimVehiclesPrefix}_VehicleAir";

@@ -5,6 +5,7 @@
   using System.Linq;
   using System.Reflection;
   using System.Reflection.Emit;
+  using DynamicLocations.Interfaces;
   using HarmonyLib;
   using UnityEngine;
   using Valheim.UI;
@@ -329,8 +330,14 @@
     {
       hover = null;
       hoverCreature = null;
-      var array = Physics.RaycastAll(GameCamera.instance.transform.position,
-        GameCamera.instance.transform.forward, 50f, __instance.m_interactMask);
+      var eyePos = Player.m_localPlayer.m_eye.position;
+      var cam = GameCamera.instance;
+
+      var targetPoint = cam.transform.position + cam.transform.forward * 100f; // Far enough to avoid near plane error
+      var rayDir = (targetPoint - eyePos).normalized;
+
+      var array = Physics.RaycastAll(eyePos,
+        rayDir, 50f, __instance.m_interactMask);
       Array.Sort(array,
         (RaycastHit x, RaycastHit y) => x.distance.CompareTo(y.distance));
       var array2 = array;
@@ -358,9 +365,9 @@
           {
             hover = leverHoverableParent;
           }
-          else if ((bool)raycastHit.collider.attachedRigidbody && !raycastHit
+          else if ((bool)raycastHit.collider.attachedRigidbody && raycastHit
                      .collider
-                     .attachedRigidbody.GetComponent<VehiclePiecesController>())
+                     .attachedRigidbody.GetComponent<IPieceActivatorHost>() == null)
             hover = raycastHit.collider.attachedRigidbody.gameObject;
           else
             hover = raycastHit.collider.gameObject;

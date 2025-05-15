@@ -26,7 +26,7 @@ public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interac
   private SmoothToggleLerp _handDistanceLerp = new();
   public static bool m_forceRunAnimateOnFixedUpdate = false;
   private MechanismAction _selectedMechanismAction = MechanismAction.CommandsHud;
-  private SafeRPCHandler _safeRPCHandler;
+  private SafeRPCHandler? _safeRPCHandler;
 
   public MechanismAction SelectedAction
   {
@@ -100,7 +100,7 @@ public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interac
 
   public void OnDisable()
   {
-    _safeRPCHandler.UnregisterAll();
+    _safeRPCHandler?.UnregisterAll();
     StopAllCoroutines();
   }
 
@@ -189,7 +189,7 @@ public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interac
   {
     if (!this.IsNetViewValid(out var netView) || !netView.IsOwner()) return;
     netView.m_zdo.Set(VehicleZdoVars.ToggleSwitchAction, switchAction);
-    _safeRPCHandler.InvokeRPC(ZRoutedRpc.Everybody, nameof(RPC_SyncMechanismAction));
+    _safeRPCHandler?.InvokeRPC(ZRoutedRpc.Everybody, nameof(RPC_SyncMechanismAction));
   }
 
   /// <summary>
@@ -204,7 +204,7 @@ public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interac
     }
     else
     {
-      _safeRPCHandler.InvokeRPC(ZRoutedRpc.Everybody, nameof(RPC_SetMechanismAction), SelectedAction.ToString());
+      _safeRPCHandler?.InvokeRPC(ZRoutedRpc.Everybody, nameof(RPC_SetMechanismAction), SelectedAction.ToString());
     }
   }
 
