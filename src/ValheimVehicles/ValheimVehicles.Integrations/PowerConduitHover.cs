@@ -26,11 +26,7 @@ public class PowerConduitHover : MonoBehaviour, Hoverable
       var activeText = ModTranslations.WithBoldText(ModTranslations.PowerState_Conduit_Active, "yellow");
       baseString += $"\n({activeText})";
     }
-    // if (_plateComponent.mode == PowerConduitPlateComponent.EnergyPlateMode.Charging)
-    // {
-    //   return "Eitr Power Charger Rate 4/s";
-    // }
-    // return "Eitr Power Drainer Rate 10/s Conversion ratio 10 eitr to 0.1 fuel";
+
     return baseString;
   }
 

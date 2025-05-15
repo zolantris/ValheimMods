@@ -262,8 +262,8 @@ public class MechanismPrefabs : RegisterPrefab<MechanismPrefabs>
     PrefabRegistryHelpers.AddNetViewWithPersistence(prefab);
     PrefabRegistryHelpers.PieceDataDictionary.Add(PrefabNames.Mechanism_Power_Pylon, new PrefabRegistryHelpers.PieceData
     {
-      Name = "$valheim_vehicles_mechanism_electric_pylon",
-      Description = "$valheim_vehicles_mechanism_electric_pylon_desc",
+      Name = "$valheim_vehicles_mechanism_power_pylon",
+      Description = "$valheim_vehicles_mechanism_power_pylon_desc",
       Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
         .PowerPylon)
     });
