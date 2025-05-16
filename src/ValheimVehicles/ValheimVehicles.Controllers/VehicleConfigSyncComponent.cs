@@ -23,43 +23,6 @@
     private VehicleFloatationMode _cachedFloatationMode = VehicleFloatationMode.Average;
     private float _cachedFloatationHeight = 0;
 
-    // public string Version
-    // {
-    //   get => VehicleConfigSync.Version;
-    //   set => VehicleConfigSync.Version = value;
-    // }
-    //
-    // public float TreadDistance
-    // {
-    //   get;
-    //   set;
-    // }
-    // public float TreadHeight
-    // {
-    //   get;
-    //   set;
-    // }
-    // public float TreadScaleX
-    // {
-    //   get;
-    //   set;
-    // }
-    // public bool HasCustomFloatationHeight
-    // {
-    //   get;
-    //   set;
-    // }
-    // public float CustomFloatationHeight
-    // {
-    //   get;
-    //   set;
-    // }
-    // public float CenterOfMassOffset
-    // {
-    //   get;
-    //   set;
-    // }
-
     public override void Awake()
     {
       _vehicle = GetComponent<VehicleManager>();
@@ -102,7 +65,7 @@
       CustomConfig.HasCustomFloatationHeight = isCustom;
       CustomConfig.CustomFloatationHeight = relativeHeight;
 
-      SendPrefabConfig();
+      Request_Save();
     }
 
     public void SendRPCToAllClients(List<long> clients, string methodName, bool skipLocal = false)

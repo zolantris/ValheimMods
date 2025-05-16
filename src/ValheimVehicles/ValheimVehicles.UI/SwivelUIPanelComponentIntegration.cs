@@ -76,7 +76,7 @@ public class SwivelUIPanelComponentIntegration : SwivelUIPanelComponent
     if (!swivelComponentIntegration || !swivelComponentIntegration.m_nview || !swivelComponentIntegration.m_nview.IsValid()) return;
     swivelComponentIntegration.m_config.ApplyFrom(swivelComponentIntegration);
     swivelComponentIntegration.m_config.Save(swivelComponentIntegration.m_nview.m_zdo, swivelComponentIntegration.m_config);
-    swivelComponentIntegration.prefabConfigSync.SendPrefabConfig();
+    swivelComponentIntegration.prefabConfigSync.Request_Save();
   }
 
   private const string PanelName = "ValheimVehicles_SwivelPanel";

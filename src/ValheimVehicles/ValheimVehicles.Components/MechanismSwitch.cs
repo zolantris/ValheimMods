@@ -75,6 +75,7 @@ public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interac
     {
       yield break;
     }
+    SyncMechanismSwivelTargetId();
     UpdateIntendedAction();
   }
 
@@ -83,9 +84,13 @@ public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interac
   /// </summary>
   public void UpdateIntendedAction()
   {
-    if (SwivelHelpers.FindAllSwivelsWithinRange(transform.position, out nearbySwivelComponents))
+    if (m_targetSwivelId == 0)
     {
-      UpdateOrRPCMechanismSwivelTargetId(nearbySwivelComponents[0]);
+      SyncMechanismSwivelTargetId();
+    }
+
+    if (m_targetSwivelId == 0 && !m_targetSwivel && SwivelHelpers.FindAllSwivelsWithinRange(transform.position, out nearbySwivelComponents, out m_targetSwivel))
+    {
       SetMechanismAction(MechanismAction.SwivelActivateMode);
       return;
     }
@@ -367,7 +372,7 @@ public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interac
 
   public void OnPressHandler(MechanismSwitch toggleSwitch, Humanoid humanoid)
   {
-    ToggleActivationState();
+    ToggleVisualActivationState();
     AddPlayerToPullSwitchAnimations(humanoid);
 
     switch (SelectedAction)

@@ -124,7 +124,7 @@
         }
       }
 
-      public void ToggleActivationState()
+      public void ToggleVisualActivationState()
       {
         SetActivationState(!_mToggleState);
       }

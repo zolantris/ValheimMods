@@ -36,13 +36,12 @@
   ///
   /// Notes
   /// IRaycastPieceActivator is used for simplicity. It will easily match any component extending this in unity.
-  public sealed class SwivelComponentIntegration : SwivelComponent, IPieceActivatorHost, IPieceController, IRaycastPieceActivator
+  public sealed class SwivelComponentIntegration : SwivelComponent, IPieceActivatorHost, IPieceController, IRaycastPieceActivator, INetView
   {
     [FormerlySerializedAs("m_piecesController")]
     public VehiclePiecesController? m_vehiclePiecesController;
     public VehicleManager? m_vehicle => m_vehiclePiecesController == null ? null : m_vehiclePiecesController.Manager;
 
-    public ZNetView m_nview;
     private int _persistentZdoId;
     public static readonly Dictionary<int, SwivelComponentIntegration> ActiveInstances = [];
     public List<ZNetView> m_pieces = [];
@@ -55,6 +54,8 @@
     public SwivelConfigRPCSync prefabConfigSync;
     public SwivelCustomConfig m_config => prefabConfigSync.CustomConfig;
     public ChildZSyncTransform childZsyncTransform;
+
+    public static bool CanAllClientsSync = true;
 
     public override void Awake()
     {
@@ -99,7 +100,7 @@
     public override void RequestNextMotionState()
     {
       var nextMotionState = GetNextMotionState();
-      prefabConfigSync.EmitNextMotionState(nextMotionState);
+      prefabConfigSync.Request_NextMotionState(nextMotionState);
     }
 
     public void SetupHoverFadeText()
@@ -128,8 +129,8 @@
     /// </summary>
     private void OnMovementStateUpdate()
     {
-      if (!m_nview.IsOwner()) return;
-      prefabConfigSync.EmitNextMotionState(MotionState);
+      if (!this.IsNetViewValid()) return;
+      prefabConfigSync.Request_NextMotionState(MotionState);
     }
 
     public void SetupPieceActivator()
@@ -155,6 +156,18 @@
 
     public override void FixedUpdate()
     {
+      if (!CanAllClientsSync)
+      {
+        if (!this.IsNetViewValid(out var netView))
+        {
+          return;
+        }
+        // non-owners do not update. All logic is done via RPC Child sync.
+        if (!netView.IsOwner())
+        {
+          return;
+        }
+      }
       base.FixedUpdate();
       if (m_pieces.Count > 0)
       {
@@ -308,7 +321,7 @@
       base.Start();
       m_vehiclePiecesController = GetComponentInParent<VehiclePiecesController>();
       _pieceActivator.StartInitPersistentId();
-      prefabConfigSync.SyncPrefabConfig();
+      prefabConfigSync.Load();
     }
 
     /// <summary>
@@ -514,4 +527,9 @@
 
   #endregion
 
+    public ZNetView? m_nview
+    {
+      get;
+      set;
+    }
   }

@@ -8,6 +8,7 @@ using ValheimVehicles.Components;
 using ValheimVehicles.Controllers;
 using ValheimVehicles.Enums;
 using ValheimVehicles.Helpers;
+using ValheimVehicles.Integrations;
 using ValheimVehicles.SharedScripts;
 
 namespace ValheimVehicles.Config;
@@ -21,12 +22,17 @@ public class PhysicsConfig : BepInExBaseConfig<PhysicsConfig>
 
   private static string VelocityModeSectionKey = $"{SectionKey}: Velocity Mode";
 
+  // Sync Logic (for performance and multiplayer)
+  public static ConfigEntry<bool> SwivelsCanSyncOnAllClients = null!;
+
+
   public static ConfigEntry<int> VehicleLandMaxTreadWidth = null!;
   public static ConfigEntry<int> VehicleLandMaxTreadLength = null!;
 
   // all vehicles
   public static ConfigEntry<float> VehicleCenterOfMassOffset = null!;
   public static ConfigEntry<float> VehicleLandTreadVerticalOffset = null!;
+
 
   // flight
   public static ConfigEntry<float> flightAngularDamping = null!;
@@ -187,6 +193,14 @@ public class PhysicsConfig : BepInExBaseConfig<PhysicsConfig>
       8,
       ConfigHelpers.CreateConfigDescription(
         $"Max width the treads can expand to. Lower values will let you make motor bikes. This affects all vehicles. {vehicleCustomSettingTodo}", true, false, new AcceptableValueRange<int>(1, 20)));
+
+    SwivelsCanSyncOnAllClients = config.Bind(SectionKey,
+      "SwivelsCanSyncOnAllClients",
+      true,
+      ConfigHelpers.CreateConfigDescription(
+        $"Allow swivels to sync on all clients. Instead of using ChildSync properties which can be a bit laggy.", false, false));
+    SwivelComponentIntegration.CanAllClientsSync = SwivelsCanSyncOnAllClients.Value;
+    SwivelsCanSyncOnAllClients.SettingChanged += (sender, args) => SwivelComponentIntegration.CanAllClientsSync = SwivelsCanSyncOnAllClients.Value;
 
     VehicleLandMaxTreadLength = config.Bind(SectionKey,
       "LandVehicle Max Tread Length",
