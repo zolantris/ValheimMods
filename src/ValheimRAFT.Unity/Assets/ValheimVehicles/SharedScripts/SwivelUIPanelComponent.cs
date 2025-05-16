@@ -45,10 +45,12 @@ namespace ValheimVehicles.SharedScripts.UI
     private GameObject targetDistanceZRow;
     public SwivelUISharedStyles viewStyles = new();
 
-    public SwivelComponent CurrentSwivel
+    internal SwivelComponent? _currentSwivel;
+
+    public SwivelComponent? CurrentSwivel
     {
-      get;
-      set;
+      get => _currentSwivel;
+      set => _currentSwivel = value;
     }
 
     public static bool ShouldDestroyOnNewTarget = false;

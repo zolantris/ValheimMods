@@ -55,6 +55,8 @@ public class MapPinSync : MonoBehaviour
   {
     MinimapManager.OnVanillaMapDataLoaded -= OnMapReady;
     StopAllCoroutines();
+    ClearAllVehiclePins();
+    _vehiclePins.Clear();
     refreshVehiclePinsRoutine = null;
     hasInitialized = false;
   }
@@ -218,7 +220,9 @@ public class MapPinSync : MonoBehaviour
       UpdateVehiclePins();
     }
   }
-
+  /// <summary>
+  /// This will attempt to clean pins on a rapid reload so there are no null references.
+  /// </summary>
   private void ClearAllVehiclePins()
   {
     if (Minimap.instance == null) return;

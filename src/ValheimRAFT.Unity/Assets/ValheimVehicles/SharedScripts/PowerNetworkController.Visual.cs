@@ -2,15 +2,108 @@
 // ReSharper disable ArrangeNamespaceBody
 // ReSharper disable NamespaceStyle
 
+#region
+
 using System.Collections.Generic;
 using UnityEngine;
+using ValheimVehicles.SharedScripts.PowerSystem.Interfaces;
+
+#endregion
 
 namespace ValheimVehicles.SharedScripts.PowerSystem
 {
   public partial class PowerNetworkController
   {
+
+    public static bool CanShowNetworkData = true;
     [SerializeField] private bool enableVisualWires = true;
     private readonly List<LineRenderer> _activeLines = new();
+
+    public static string GetPoweredUnpoweredStatus(bool hasPower)
+    {
+      var activationText = hasPower ? ModTranslations.PowerState_HasPower : ModTranslations.PowerState_NoPower;
+      var activationColor = hasPower ? "yellow" : "red";
+      return $"\n({ModTranslations.WithBoldText(activationText, activationColor)})";
+    }
+
+
+    public static string GetNetworkPowerStatus(IPowerConsumer consumer)
+    {
+      var activationState = consumer.IsActive;
+      var activationText = GetPoweredUnpoweredStatus(activationState);
+      return activationText;
+    }
+
+    /// <summary>
+    /// Consumers must be not demanding or demanding and active. To be healthy/powered.
+    /// </summary>
+    /// <returns></returns>
+    public static string GetNetworkHealthStatus(List<IPowerConsumer> consumers)
+    {
+      if (consumers.Count == 0) return ModTranslations.Power_NetworkInfo_NetworkFullPower;
+
+      var poweredOrInactiveConsumers = 0;
+      var inactiveDemandingConsumers = 0;
+
+      foreach (var powerConsumer in consumers)
+      {
+        if (!powerConsumer.IsActive && powerConsumer.IsDemanding)
+        {
+          poweredOrInactiveConsumers++;
+        }
+        else
+        {
+          inactiveDemandingConsumers++;
+        }
+      }
+
+      if (inactiveDemandingConsumers == 0) return ModTranslations.Power_NetworkInfo_NetworkFullPower;
+      if (inactiveDemandingConsumers > 0 && poweredOrInactiveConsumers > 0) return ModTranslations.Power_NetworkInfo_NetworkPartialPower;
+
+      return ModTranslations.Power_NetworkInfo_NetworkLowPower;
+    }
+
+    /// <summary>
+    /// Meant for inline integration within Hoverable interfaces.
+    /// </summary>
+    public static string GetNetworkPowerStatusString(string networkId)
+    {
+      if (CanShowNetworkData && TryNetworkPowerData(networkId, out var networkData))
+      {
+        return networkData.Cached_NetworkDataString;
+      }
+      return "";
+    }
+
+    private static string GenerateNetworkDataString(string networkId, PowerNetworkData data)
+    {
+      var baseString = "";
+      baseString += "\n";
+      baseString += $"\n{ModTranslations.Power_NetworkInfo_NetworkData}";
+      baseString += $"\n{ModTranslations.WithBoldText(ModTranslations.Power_NetworkInfo_NetworkId, "yellow")}: {networkId}";
+      baseString += $"\n{ModTranslations.WithBoldText(ModTranslations.Power_NetworkInfo_NetworkPower, "yellow")}: {data.NetworkPowerSupply}/{data.NetworkPowerCapacity}";
+      baseString += $"\n{ModTranslations.WithBoldText(ModTranslations.Power_NetworkInfo_NetworkFuel, "yellow")}: {data.NetworkFuelSupply}/{data.NetworkFuelCapacity}";
+      baseString += $"\n{ModTranslations.WithBoldText(ModTranslations.Power_NetworkInfo_NetworkDemand, "yellow")}: {data.NetworkPowerDemand}";
+
+      return baseString;
+    }
+
+    private static string GenerateNetworkDataString(string? networkId)
+    {
+      var baseString = "";
+      if (!CanShowNetworkData) return baseString;
+      if (networkId == null) return baseString;
+      if (TryNetworkPowerData(networkId, out var networkData))
+      {
+        baseString += "\n";
+        baseString += $"\n{ModTranslations.Power_NetworkInfo_NetworkData}";
+        baseString += $"\n{ModTranslations.WithBoldText(ModTranslations.Power_NetworkInfo_NetworkId, "yellow")}: {networkId}";
+        baseString += $"\n{ModTranslations.WithBoldText(ModTranslations.Power_NetworkInfo_NetworkPower, "yellow")}: {networkData.NetworkPowerSupply}/{networkData.NetworkPowerCapacity}";
+        baseString += $"\n{ModTranslations.WithBoldText(ModTranslations.Power_NetworkInfo_NetworkFuel, "yellow")}: {networkData.NetworkFuelSupply}/{networkData.NetworkFuelCapacity}";
+        baseString += $"\n{ModTranslations.WithBoldText(ModTranslations.Power_NetworkInfo_NetworkDemand, "yellow")}: {networkData.NetworkPowerDemand}";
+      }
+      return baseString;
+    }
 
     protected void ClearVisualWires()
     {

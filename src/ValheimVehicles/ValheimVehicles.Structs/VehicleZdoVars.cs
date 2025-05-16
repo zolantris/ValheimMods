@@ -81,6 +81,7 @@ public static class VehicleZdoVars
 
   // For Components that are within a Swivel
   public const string SwivelParentId = "SwivelParentId";
+  public const string Mechanism_Swivel_TargetId = "Mechanism_swivelTargetId";
 
   // for swivels
   public const string SwivelSyncPosition = "SwivelSync_Position";

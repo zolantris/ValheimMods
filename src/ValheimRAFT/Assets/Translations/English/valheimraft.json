@@ -188,5 +188,22 @@
   "valheim_vehicles_mechanism_power_state_connect_to_grid": "Connect to Grid.",
   "valheim_vehicles_mechanism_power_state_has_power": "Powered",
   "valheim_vehicles_mechanism_power_state_no_power": "Power Required",
-  "valheim_vehicles_mechanism_power_conduit_state_active": "Active"
+  "valheim_vehicles_mechanism_power_conduit_state_active": "Active",
+  "valheim_vehicles_mechanism_power_conduit_state_inactive": "Inactive",
+  "valheim_vehicles_mechanism_network_data": "Power Network Data",
+  "valheim_vehicles_mechanism_network_power": "Power",
+  "valheim_vehicles_mechanism_network_power_capacity": "Power Capacity",
+  "valheim_vehicles_mechanism_network_fuel": "Fuel",
+  "valheim_vehicles_mechanism_network_fuel_capacity": "Capacity",
+  "valheim_vehicles_mechanism_network_demand": "Power Demand",
+  "valheim_vehicles_mechanism_network_network_id": "Network ID",
+  "valheim_vehicles_mechanism_show_network_data": "Show Network Data",
+  "valheim_vehicles_mechanism_network_low_power": "Low Power",
+  "valheim_vehicles_mechanism_added_from_container": "Added from container",
+  "valheim_vehicles_mechanism_network_partial_power": "Partial Power",
+  "valheim_vehicles_mechanism_network_full_power": "Full Power",
+  "valheim_vehicles_mechanism_network_add_one": "Add One",
+  "valheim_vehicles_mechanism_interact_add_many": "Add Many",
+  "valheim_vehicles_mechanism_not_enough_fuel_in_inventory": "Not enough fuel in inventory",
+  "valheim_vehicles_mechanism_fuel_name_eitr": "Eitr"
 }

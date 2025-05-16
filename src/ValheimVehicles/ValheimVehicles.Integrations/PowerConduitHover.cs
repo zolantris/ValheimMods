@@ -1,5 +1,7 @@
 using UnityEngine;
+using ValheimVehicles.Config;
 using ValheimVehicles.Constants;
+using ValheimVehicles.SharedScripts;
 using ValheimVehicles.SharedScripts.PowerSystem;
 namespace ValheimVehicles.Integrations;
 
@@ -19,12 +21,16 @@ public class PowerConduitHover : MonoBehaviour, Hoverable
 
   public string GetHoverText()
   {
-    var baseString = $"Power Conduit: Type {GetPowerConduitModeName()}";
+    var baseString = $"{ModTranslations.PowerConduit_DrainPlate_Name}\n";
 
-    if (_plateComponent.Logic.HasPlayer)
+    if (PowerNetworkController.CanShowNetworkData || PrefabConfig.PowerNetwork_ShowAdditionalPowerInformationByDefault.Value)
     {
-      var activeText = ModTranslations.WithBoldText(ModTranslations.PowerState_Conduit_Active, "yellow");
-      baseString += $"\n({activeText})";
+      var isActive = _plateComponent.Logic.HasPlayerInRange;
+      var color = isActive ? "yellow" : "red";
+      var text = isActive ? ModTranslations.PowerState_Conduit_Active : ModTranslations.PowerState_Conduit_Inactive;
+
+      var stateText = $"({ModTranslations.WithBoldText(text, color)})";
+      baseString += stateText;
     }
 
     return baseString;
@@ -32,6 +38,6 @@ public class PowerConduitHover : MonoBehaviour, Hoverable
 
   public string GetHoverName()
   {
-    return "Power Conduit";
+    return ModTranslations.PowerConduit_DrainPlate_Name;
   }
 }

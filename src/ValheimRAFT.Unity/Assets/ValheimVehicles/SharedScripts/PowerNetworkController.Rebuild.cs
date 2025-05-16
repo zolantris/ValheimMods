@@ -33,6 +33,7 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
 
       // Step 1: Aggregate all valid power nodes
       _allNodes.Clear();
+      PowerNetworkDataInstances.Clear();
 
       for (var i = 0; i < Conduits.Count; i++)
         if (Conduits.TryGetValidElement(ref i, out var conduit))

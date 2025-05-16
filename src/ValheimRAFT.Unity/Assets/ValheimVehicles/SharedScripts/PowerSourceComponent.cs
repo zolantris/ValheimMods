@@ -157,7 +157,6 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
       }
 
       var remainingDemand = totalDemand - supplyFromSources;
-
       if (!isDemanding || remainingDemand <= 0f)
       {
         SetRunning(false);
@@ -171,8 +170,14 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
       var maxEnergy = maxOutputWatts * deltaTime;
       var energyToProduce = Mathf.Min(remainingDemand, maxEnergy);
 
-      var requiredFuel = energyToProduce / (fuelEnergyYield * fuelEfficiency);
+      // Limit based on fuel consumption rate
+      var maxFuelUsable = fuelConsumptionRate * deltaTime;
+      var maxEnergyFromFuel = maxFuelUsable * fuelEnergyYield * fuelEfficiency;
 
+      // Cap energy to available fuel and consumption rate
+      energyToProduce = Mathf.Min(energyToProduce, maxEnergyFromFuel);
+
+      var requiredFuel = energyToProduce / (fuelEnergyYield * fuelEfficiency);
       if (currentFuel < requiredFuel)
       {
         SetRunning(false);
@@ -180,7 +185,6 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
         return 0f;
       }
 
-      // Don't burn yet — just record how much would be offered
       _lastProducedEnergy = energyToProduce;
       return energyToProduce;
     }

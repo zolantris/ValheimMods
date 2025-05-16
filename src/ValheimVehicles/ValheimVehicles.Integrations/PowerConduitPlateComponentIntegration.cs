@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using ValheimVehicles.Components;
 using ValheimVehicles.Helpers;
 using ValheimVehicles.Integrations;
+using ValheimVehicles.SharedScripts;
 using ValheimVehicles.SharedScripts.Helpers;
 using ValheimVehicles.SharedScripts.PowerSystem;
 using ValheimVehicles.SharedScripts.PowerSystem.Interfaces;
@@ -23,31 +25,33 @@ public class PowerConduitPlateComponentIntegration :
   private readonly List<Player> _playersWithinZone = new();
 
   // Missing method for Players. There is no syncing method for Eitr additions only removals.
-  private const string RPC_AddEitr = "VVC_RPC_AddEitr";
+  private const string RPC_AddEitrName = "VVC_RPC_AddEitr";
 
   protected override void RegisterDefaultRPCs()
   {
-    RpcHandler.Register<float>(RPC_AddEitr, (sender, amount) =>
+    RpcHandler.Register<float>(RPC_AddEitrName, RPC_AddEitr);
+  }
+
+  private void RPC_AddEitr(long sender, float amount)
+  {
+    if (Player.m_localPlayer != null)
     {
-      if (Player.m_localPlayer != null)
-      {
-        Player.m_localPlayer.AddEitr(amount);
-      }
-    });
+      Player.m_localPlayer.AddEitr(amount);
+    }
   }
 
   public static void SendAddEitr(Player player, float amount)
   {
     if (player == null || amount <= 0f) return;
 
-    var nview = player.GetComponent<ZNetView>();
-    if (nview == null || !nview.IsValid()) return;
+    var netView = player.GetComponent<ZNetView>();
+    if (!netView || !netView.IsValid()) return;
 
     // Only send to the owner of this player
-    if (!nview.IsOwner())
+    if (!netView.IsOwner())
     {
-      var zdoOwner = nview.GetZDO().GetOwner();
-      nview.InvokeRPC(zdoOwner, RPC_AddEitr, amount);
+      var zdoOwner = netView.GetZDO().GetOwner();
+      netView.InvokeRPC(zdoOwner, RPC_AddEitrName, amount);
     }
     else
     {
@@ -62,6 +66,8 @@ public class PowerConduitPlateComponentIntegration :
     {
       _playersWithinZone.Add(player);
     }
+
+    Logic.SetHasPlayerInRange(GetAverageEitr() > 0f);
   }
 
   private void OnTriggerExit(Collider other)
@@ -71,10 +77,21 @@ public class PowerConduitPlateComponentIntegration :
     {
       _playersWithinZone.Remove(player);
     }
+
+    if (_playersWithinZone.Count == 0)
+    {
+      Logic.SetHasPlayerInRange(false);
+      return;
+    }
+
+    Logic.SetHasPlayerInRange(GetAverageEitr() > 0f);
   }
 
   public bool MustSync = false;
   public Rigidbody m_body;
+  public FixedJoint m_joint;
+  private Transform? _lastParent;
+
   protected override void Start()
   {
     if (!this.IsNetViewValid(out var netView)) return;
@@ -85,38 +102,39 @@ public class PowerConduitPlateComponentIntegration :
     Logic.AddPlayerEitr = AddEitrToPlayers;
     Logic.SubtractPlayerEitr = SubtractEitrFromPlayers;
 
-    var parentRigidbody = GetComponentInParent<Rigidbody>();
-    if (parentRigidbody != null)
-    {
-      MustSync = true;
-    }
+    _lastParent = transform.parent;
 
-    m_body = gameObject.AddComponent<Rigidbody>();
-    m_body.isKinematic = true;
+    AddRigidbodyIfParentIsRigidbody();
   }
-  private Vector3 frozenLocalPos;
-  private Quaternion frozenLocalRot;
-  private bool isFrozen;
 
-  public void FixedUpdate()
+  // Very important. Let's us detect if this component gets moved into another parent like a vehicle.
+  public void OnTransformParentChanged()
   {
-    if (MustSync)
-    {
-      if (!isFrozen)
-      {
-        frozenLocalPos = transform.localPosition;
-        frozenLocalRot = transform.localRotation;
-        isFrozen = true;
-      }
+    var newParent = transform.parent;
+    if (newParent && newParent == _lastParent) return;
+    LoggerProvider.LogDev($"Parent changed from {_lastParent?.name ?? "null"} to {newParent?.name ?? "null"}");
+    _lastParent = newParent;
+    AddRigidbodyIfParentIsRigidbody();
+  }
 
-      var parent = transform.parent;
-      if (parent != null)
-      {
-        var worldPos = parent.TransformPoint(frozenLocalPos);
-        var worldRot = parent.rotation * frozenLocalRot;
-        m_body.Move(worldPos, worldRot);
-      }
+  protected void AddRigidbodyIfParentIsRigidbody()
+  {
+    var parentRigidbody = GetComponentInParent<Rigidbody>();
+    if (!m_body)
+    {
+      m_body = gameObject.AddComponent<Rigidbody>();
     }
+    m_body.isKinematic = !parentRigidbody;
+    if (!parentRigidbody)
+    {
+      if (m_joint) Destroy(m_joint);
+      return;
+    }
+
+    // joint allows us to sync the rigidbody without running a FixedUpdate having to sync both rotation and position relative to parent and a frozen local position.
+    var joint = gameObject.AddComponent<FixedJoint>();
+    joint.connectedBody = parentRigidbody;
+    joint.enableCollision = false; // usually what you want
   }
 
   protected override void OnDestroy()

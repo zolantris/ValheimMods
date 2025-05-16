@@ -98,7 +98,7 @@
       if (pieceController == null && RamPrefabs.IsRam(__instance.name))
       {
         var vehicle = __instance.GetComponentInParent<VehicleManager>();
-        if (vehicle.PiecesController != null)
+        if (vehicle != null && vehicle.PiecesController != null)
         {
           vehicle.PiecesController?.DestroyPiece(__instance);
         }

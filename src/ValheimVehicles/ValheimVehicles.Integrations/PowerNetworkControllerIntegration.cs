@@ -11,6 +11,8 @@ public class PowerNetworkControllerIntegration : PowerNetworkController
   protected override void FixedUpdate()
   {
     if (!isActiveAndEnabled || !ZNet.instance) return;
+    if (Time.time < _nextUpdate) return;
+    _nextUpdate = Time.time + _updateInterval;
 
     foreach (var pair in _networks)
     {
@@ -23,7 +25,7 @@ public class PowerNetworkControllerIntegration : PowerNetworkController
         SyncNetworkStateClient(pair.Value);
       }
 
-      SimulateNetwork(pair.Value);
+      SimulateNetwork(pair.Value, pair.Key);
     }
   }
 }

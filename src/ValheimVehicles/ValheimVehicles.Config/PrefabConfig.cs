@@ -26,6 +26,12 @@ public class PrefabConfig : BepInExBaseConfig<PrefabConfig>
     set;
   }
 
+
+  public static ConfigEntry<bool> PowerPlate_ShowStatus { get; set; }
+  public static ConfigEntry<float> PowerPlate_DrainRate { get; set; }
+  public static ConfigEntry<float> PowerPlate_EitrToEnergyRatio { get; set; }
+  public static ConfigEntry<bool> PowerSource_AllowNearbyFuelingWithEitr { get; set; }
+  public static ConfigEntry<bool> PowerNetwork_ShowAdditionalPowerInformationByDefault { get; set; }
   public static ConfigEntry<bool> MakeAllPiecesWaterProof { get; set; }
   public static ConfigEntry<bool> AllowTieredMastToRotate { get; set; }
   public static ConfigEntry<bool> Swivels_DoNotRequirePower { get; set; }
@@ -52,6 +58,7 @@ public class PrefabConfig : BepInExBaseConfig<PrefabConfig>
   public static ConfigEntry<bool> Graphics_AllowSailsFadeInFog { get; set; } = null!;
 
   public static ConfigEntry<float> SwivelPowerDrain { get; set; } = null!;
+  public static ConfigEntry<float> PowerPlate_ChargeRate { get; set; } = null!;
   public static ConfigEntry<float> PowerSource_FuelCapacity { get; set; } = null!;
   public static ConfigEntry<float> PowerSource_EitrEfficiency { get; set; } = null!;
   public static ConfigEntry<float> PowerSource_BaseFuelEfficiency { get; set; } = null!;
@@ -94,7 +101,7 @@ public class PrefabConfig : BepInExBaseConfig<PrefabConfig>
     }
   }
 
-  public void UpdatePowerStorages()
+  public static void UpdatePowerStorages()
   {
     foreach (var powerStorage in PowerNetworkController.Storages)
     {
@@ -102,8 +109,31 @@ public class PrefabConfig : BepInExBaseConfig<PrefabConfig>
     }
   }
 
+  public static void UpdateSwivelPower()
+  {
+    SwivelComponent.SwivelEnergyDrain = SwivelPowerDrain.Value;
+    foreach (var swivelComponent in SwivelComponent.Instances)
+    {
+      swivelComponent.UpdatePowerConsumer();
+      swivelComponent.UpdateBasePowerConsumption();
+    }
+  }
+
+  public static void UpdatePowerConduits()
+  {
+    PowerConduitPlateComponent.drainRate = PowerPlate_DrainRate.Value;
+    PowerConduitPlateComponent.eitrToFuelRatio = PowerPlate_EitrToEnergyRatio.Value;
+    PowerConduitPlateComponent.chargeRate = PowerPlate_ChargeRate.Value;
+  }
+
   public override void OnBindConfig(ConfigFile config)
   {
+
+    PowerPlate_ShowStatus = config.Bind(SectionKey, "PowerDrainPlate_ShowStatus", false, ConfigHelpers.CreateConfigDescription("Shows the power drain activity and tells you what type of plate is being used when hovering over it. This flag will be ignored if the PowerNetwork inspector is enabled which allows viewing all power values.", false, false));
+    PowerSource_AllowNearbyFuelingWithEitr = config.Bind(SectionKey, "PowerSource_AllowNearbyFuelingWithEitr", false, ConfigHelpers.CreateConfigDescription("This will allow for the player to fuel from chests when interacting with Vehicle sources. This may not be needed with chest mods.", true, false));
+
+    PowerNetwork_ShowAdditionalPowerInformationByDefault = config.Bind(SectionKey, "PowerNetwork_ShowAdditionalPowerInformationByDefault", false, ConfigHelpers.CreateConfigDescription("This will show the power network information by default per prefab. This acts as a tutorial. Most power items will have a visual indicator but it may not be clear to players immediately.", false, false));
+
     SwivelPowerDrain = config.Bind(SectionKey,
       "SwivelPowerDrain", 1f,
       ConfigHelpers.CreateConfigDescription(
@@ -111,6 +141,24 @@ public class PrefabConfig : BepInExBaseConfig<PrefabConfig>
         true, false,
         new AcceptableValueRange<float>(0f, 100f)));
 
+    PowerPlate_ChargeRate = config.Bind(SectionKey,
+      "PowerPlate_ChargeRate", 1f,
+      ConfigHelpers.CreateConfigDescription(
+        "Converted rate when transfering from the power conduit. This rate should be 1 by default. Use drain rate to make player mana power balanced. Charge rate will eventually be applyed to eitr chargers which can transfer eitr to the player.",
+        true, false,
+        new AcceptableValueRange<float>(0.001f, 100f)));
+    PowerPlate_DrainRate = config.Bind(SectionKey,
+      "PowerPlate_DrainRate", 100f,
+      ConfigHelpers.CreateConfigDescription(
+        "How much eitr energy is drained to convert to power system energy units. Eitr energy is renewable but should be considered less refined. To maintain balance keep this at a higher number.",
+        true, false,
+        new AcceptableValueRange<float>(0.001f, 10000f)));
+    PowerPlate_EitrToEnergyRatio = config.Bind(SectionKey,
+      "PowerPlate_EitrToEnergyRatio", 10f,
+      ConfigHelpers.CreateConfigDescription(
+        "The amount of player eitr that is required to get 1 unit of eitr energy in the system.",
+        true, false,
+        new AcceptableValueRange<float>(0.001f, 100f)));
     // sources
     PowerSource_FuelCapacity = config.Bind(SectionKey,
       "PowerSourceFuelCapacity", 100f,
@@ -125,7 +173,7 @@ public class PrefabConfig : BepInExBaseConfig<PrefabConfig>
         true, false,
         new AcceptableValueRange<float>(1f, 10f)));
     PowerSource_EitrEfficiency = config.Bind(SectionKey,
-      "PowerSource_EitrEfficiency", 1f,
+      "PowerSource_EitrEfficiency", 10f,
       ConfigHelpers.CreateConfigDescription(
         "The efficiency of Eitr as fuel. IE 1 eitr turns into X fuel. This will be used for balancing with other fuel types if more fuel types are added.",
         true, false,
@@ -135,7 +183,7 @@ public class PrefabConfig : BepInExBaseConfig<PrefabConfig>
       ConfigHelpers.CreateConfigDescription(
         "The amount of fuel consumed per physics update tick at full power output by a power source.",
         true, false,
-        new AcceptableValueRange<float>(0.01f, 100f)));
+        new AcceptableValueRange<float>(0.0001f, 100f)));
 
     // storage
     PowerStorage_Capacity = config.Bind(SectionKey,
@@ -152,25 +200,34 @@ public class PrefabConfig : BepInExBaseConfig<PrefabConfig>
     SwivelComponent.SwivelEnergyDrain = SwivelPowerDrain.Value;
 
 
+    PowerNetwork_ShowAdditionalPowerInformationByDefault.SettingChanged += (sender, args) =>
+    {
+      PowerNetworkController.CanShowNetworkData = PowerNetwork_ShowAdditionalPowerInformationByDefault.Value;
+    };
+
+    PowerNetworkController.CanShowNetworkData = PowerNetwork_ShowAdditionalPowerInformationByDefault.Value;
+
+
+// conduits
+    PowerPlate_EitrToEnergyRatio.SettingChanged += (sender, args) => UpdatePowerConduits();
+    PowerPlate_DrainRate.SettingChanged += (sender, args) => UpdatePowerConduits();
+    PowerPlate_ChargeRate.SettingChanged += (sender, args) => UpdatePowerConduits();
+//sources
     PowerSource_FuelCapacity.SettingChanged += (sender, args) => UpdatePowerSources();
     PowerSource_BaseFuelEfficiency.SettingChanged += (sender, args) => UpdatePowerSources();
     PowerSource_EitrEfficiency.SettingChanged += (sender, args) => UpdatePowerSources();
     PowerSource_FuelConsumptionRate.SettingChanged += (sender, args) => UpdatePowerSources();
-
+// storages
     SwivelPowerDrain.SettingChanged += (sender, args) =>
-    {
-      SwivelComponent.SwivelEnergyDrain = SwivelPowerDrain.Value;
-      foreach (var swivelComponent in SwivelComponent.Instances)
-      {
-        swivelComponent.UpdatePowerConsumer();
-        swivelComponent.UpdateBasePowerConsumption();
-      }
-    };
-    PowerStorage_Capacity.SettingChanged += (sender, args) => UpdatePowerStorages();
+      PowerStorage_Capacity.SettingChanged += (sender, args) => UpdatePowerStorages();
     PowerStorage_Capacity.SettingChanged += (sender, args) => UpdatePowerSources();
 
+    // trigger synchronous updates
+    UpdateSwivelPower();
     UpdatePowerSources();
     UpdatePowerStorages();
+    UpdatePowerConduits();
+
 
 
     Swivels_DoNotRequirePower = config.Bind(SectionKey, "Swivels_DoNotRequirePower",

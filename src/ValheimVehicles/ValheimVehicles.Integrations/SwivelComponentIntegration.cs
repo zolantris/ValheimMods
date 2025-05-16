@@ -96,7 +96,7 @@
       }
     }
 
-    public void RequestNextMotionState()
+    public override void RequestNextMotionState()
     {
       var nextMotionState = GetNextMotionState();
       prefabConfigSync.EmitNextMotionState(nextMotionState);

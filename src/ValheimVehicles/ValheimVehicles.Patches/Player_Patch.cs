@@ -330,11 +330,15 @@
     {
       hover = null;
       hoverCreature = null;
-      var eyePos = Player.m_localPlayer.m_eye.position;
-      var cam = GameCamera.instance;
+      // var eyePos = Player.m_localPlayer.m_eye.position;
+      var cameraTransform = GameCamera.instance.transform;
+      var eyePos = cameraTransform.position;
+      // var cam = GameCamera.instance;
+      //
+      // var targetPoint = cam.transform.position + cam.transform.forward * 100f; // Far enough to avoid near plane error
+      // var rayDir = (targetPoint - eyePos).normalized;
 
-      var targetPoint = cam.transform.position + cam.transform.forward * 100f; // Far enough to avoid near plane error
-      var rayDir = (targetPoint - eyePos).normalized;
+      var rayDir = cameraTransform.forward;
 
       var array = Physics.RaycastAll(eyePos,
         rayDir, 50f, __instance.m_interactMask);

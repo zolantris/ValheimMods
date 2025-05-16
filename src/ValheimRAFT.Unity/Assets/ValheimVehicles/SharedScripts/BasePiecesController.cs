@@ -1,12 +1,11 @@
 ﻿#region
 
-  using System;
-  using System.Collections;
-  using System.Collections.Generic;
-  using System.Linq;
-  using DynamicLocations.Interfaces;
-  using Unity.Collections;
-  using UnityEngine;
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
+using Unity.Collections;
+using UnityEngine;
 
 #endregion
 
@@ -17,7 +16,7 @@
     /// <summary>
     /// This is meant to be extended for VehiclePiecesController, allowing non-Valheim asset replication of movement without all other piece logic.
     /// </summary>
-    public class BasePiecesController : MonoBehaviour, IVehiclePiecesController
+    public class BasePiecesController : MonoBehaviour
     {
 
       public enum HullGenerationMode
@@ -53,6 +52,8 @@
 
       public HullGenerationMode selectedHullGenerationMode = HullGenerationMode.ConvexHullForeground;
 
+      private readonly ConvexHullCalculator m_convexHullCalculator = new();
+
       public readonly Dictionary<GameObject, PrefabPieceData> m_prefabPieceDataItems = new();
       internal int _lastPieceRevision = 1;
 
@@ -69,8 +70,6 @@
       internal bool _shouldUpdateVehicleColliders;
 
       internal bool isInitialPieceActivationComplete;
-
-      private readonly ConvexHullCalculator m_convexHullCalculator = new();
       private List<Vector3> normals = new();
       private List<int> tris = new();
 
@@ -81,6 +80,11 @@
         m_convexHullAPI.convexHullMeshes;
       public List<GameObject> convexHullTriggerMeshes =>
         m_convexHullAPI.convexHullTriggerMeshes;
+
+      public bool IsActivationComplete
+      {
+        get;
+      }
 
       public virtual void Awake()
       {
@@ -266,11 +270,6 @@
           var bounds = m_convexHullAPI.GetConvexHullBounds(true);
           WheelController.Initialize(bounds);
         }
-      }
-
-      public bool IsActivationComplete
-      {
-        get;
       }
       public virtual int GetPieceCount()
       {

@@ -14,9 +14,9 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
     }
 
     public EnergyPlateMode mode;
-    public float chargeRate = 10f;
-    public float drainRate = 10f;
-    public float eitrToFuelRatio = 40f;
+    public static float chargeRate = 1f;
+    public static float drainRate = 10f;
+    public static float eitrToFuelRatio = 40f;
     public float fuelStored = 0f;
     public float maxFuelCapacity = 100f;
 
@@ -24,19 +24,25 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
     public Action<float> AddPlayerEitr = _ => {};
     public Action<float> SubtractPlayerEitr = _ => {};
 
-    public bool HasPlayer => GetPlayerEitr != null;
+    private bool m_hasPlayerInRange;
+    public bool HasPlayerInRange => m_hasPlayerInRange;
 
-    public bool IsDemanding => mode == EnergyPlateMode.Charging && HasPlayer;
+    public bool IsDemanding => mode == EnergyPlateMode.Charging && HasPlayerInRange;
 
     public float RequestPower(float deltaTime)
     {
-      if (mode != EnergyPlateMode.Charging || !HasPlayer) return 0f;
+      if (mode != EnergyPlateMode.Charging || !HasPlayerInRange) return 0f;
       return chargeRate * deltaTime;
+    }
+
+    public void SetHasPlayerInRange(bool val)
+    {
+      m_hasPlayerInRange = val;
     }
 
     public float SupplyPower(float deltaTime)
     {
-      if (mode != EnergyPlateMode.Draining || !HasPlayer) return 0f;
+      if (mode != EnergyPlateMode.Draining || !HasPlayerInRange) return 0f;
 
       var availableEitr = GetPlayerEitr();
       if (availableEitr <= 0f || fuelStored >= maxFuelCapacity) return 0f;

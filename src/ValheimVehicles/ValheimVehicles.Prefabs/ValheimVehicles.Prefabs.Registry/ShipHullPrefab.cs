@@ -312,7 +312,10 @@ public class ShipHullPrefab : IRegisterPrefab
       PrefabRegistryHelpers.AddNewOldPiecesToWearNTear(prefab, wnt);
 
       PrefabRegistryHelpers.AddNetViewWithPersistence(prefab);
-      PrefabRegistryHelpers.AddPieceForPrefab(prefabName, prefab);
+      var piece = PrefabRegistryHelpers.AddPieceForPrefab(prefabName, prefab);
+      piece.m_clipGround = true;
+      piece.m_allowRotatedOverlap = true;
+      piece.m_noClipping = false;
 
       PieceManager.Instance.AddPiece(new CustomPiece(prefab, false,
         new PieceConfig

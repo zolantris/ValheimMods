@@ -15,7 +15,9 @@ using ValheimVehicles.Structs;
 using ValheimVehicles.SharedScripts;
 using ValheimVehicles.SharedScripts.Helpers;
 using ValheimVehicles.SharedScripts.Interfaces;
+using ValheimVehicles.SharedScripts.PowerSystem;
 using ValheimVehicles.UI;
+using ZdoWatcher;
 
 namespace ValheimVehicles.Components;
 
@@ -27,6 +29,22 @@ public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interac
   public static bool m_forceRunAnimateOnFixedUpdate = false;
   private MechanismAction _selectedMechanismAction = MechanismAction.CommandsHud;
   private SafeRPCHandler? _safeRPCHandler;
+
+  private int m_targetSwivelId = 0;
+  private SwivelComponent? m_targetSwivel;
+  public List<SwivelComponent> nearbySwivelComponents = new();
+
+  public SwivelComponent? TargetSwivel
+  {
+    get => m_targetSwivel;
+    set => m_targetSwivel = value;
+  }
+
+  public List<SwivelComponent> NearestSwivels
+  {
+    get => nearbySwivelComponents;
+    set => nearbySwivelComponents = value;
+  }
 
   public MechanismAction SelectedAction
   {
@@ -65,8 +83,9 @@ public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interac
   /// </summary>
   public void UpdateIntendedAction()
   {
-    if (SwivelHelpers.FindNearestSwivel(transform, out m_nearestSwivel))
+    if (SwivelHelpers.FindAllSwivelsWithinRange(transform.position, out nearbySwivelComponents))
     {
+      UpdateOrRPCMechanismSwivelTargetId(nearbySwivelComponents[0]);
       SetMechanismAction(MechanismAction.SwivelActivateMode);
       return;
     }
@@ -90,10 +109,13 @@ public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interac
   public void OnEnable()
   {
     if (!this.IsNetViewValid(out var netView)) return;
-    _safeRPCHandler = new SafeRPCHandler(netView);
     OnToggleCompleted += OnAnimationsComplete;
+
+    _safeRPCHandler = new SafeRPCHandler(netView);
     _safeRPCHandler.Register(nameof(RPC_SyncMechanismAction), RPC_SyncMechanismAction);
     _safeRPCHandler.Register<string>(nameof(RPC_SetMechanismAction), RPC_SetMechanismAction);
+    _safeRPCHandler.Register<int>(nameof(RPC_SetMechanismSwivelTargetId), RPC_SetMechanismSwivelTargetId);
+    _safeRPCHandler.Register<int>(nameof(RPC_SyncMechanismSwivelTargetId), RPC_SyncMechanismSwivelTargetId);
 
     StartCoroutine(ScheduleIntendedAction());
   }
@@ -102,6 +124,77 @@ public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interac
   {
     _safeRPCHandler?.UnregisterAll();
     StopAllCoroutines();
+  }
+
+  public void RPC_SetMechanismSwivelTargetId(long sender, int swivelZdoId)
+  {
+    SaveMechanismSwivelTargetId(swivelZdoId);
+  }
+
+  /// <summary>
+  /// To be run only by an owner.
+  /// </summary>
+  /// <param name="swivelZdoId"></param>
+  public void SaveMechanismSwivelTargetId(int swivelZdoId)
+  {
+    if (!this.IsNetViewValid(out var netView)) return;
+    if (netView.IsOwner())
+    {
+      netView.GetZDO().Set(VehicleZdoVars.Mechanism_Swivel_TargetId, swivelZdoId);
+      _safeRPCHandler?.InvokeRPC(nameof(RPC_SyncMechanismSwivelTargetId), swivelZdoId);
+    }
+  }
+
+  public void UpdateOrRPCMechanismSwivelTargetId(SwivelComponent swivelComponent)
+  {
+    if (!swivelComponent) return;
+    SetMechanismSwivel(swivelComponent);
+    if (!this.IsNetViewValid(out var netView)) return;
+    var swivelZNetview = swivelComponent.GetComponent<ZNetView>();
+    if (!swivelZNetview || swivelZNetview.GetZDO() == null) return;
+    var zdoId = ZdoWatchController.Instance.GetOrCreatePersistentID(swivelZNetview.GetZDO());
+    if (!swivelZNetview.IsOwner())
+    {
+      // should only sync to owner. Then owner emits a sync call.
+      _safeRPCHandler?.InvokeRPC(swivelZNetview.GetZDO().GetOwner(), nameof(RPC_SetMechanismSwivelTargetId), zdoId);
+    }
+    else
+    {
+      SaveMechanismSwivelTargetId(zdoId);
+    }
+  }
+
+  public void Load()
+  {
+    SyncMechanismSwivelTargetId();
+  }
+
+  public void SyncMechanismSwivelTargetId()
+  {
+    if (!this.IsNetViewValid(out var netView)) return;
+    m_targetSwivelId = netView.GetZDO().GetInt(VehicleZdoVars.Mechanism_Swivel_TargetId, 0);
+
+    if (m_targetSwivelId == 0)
+    {
+      TargetSwivel = null;
+    }
+
+    // Get the component from the ZdoWatcherController match of the persistent swivelId.
+    var targetSwivelNetview = ZdoWatchController.Instance.GetInstance(m_targetSwivelId);
+    if (targetSwivelNetview != null)
+    {
+      m_targetSwivel = targetSwivelNetview.GetComponent<SwivelComponent>();
+    }
+  }
+
+  public void RPC_SyncMechanismSwivelTargetId(long sender, int targetSwivelId)
+  {
+    SyncMechanismSwivelTargetId();
+
+    if (m_targetSwivelId != targetSwivelId)
+    {
+      LoggerProvider.LogError("Sync somehow desynced. This is a problem with ZDO sync commands...Report this error.");
+    }
   }
 
   public void RPC_SetMechanismAction(long sender, string actionString)
@@ -113,6 +206,7 @@ public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interac
       SetMechanismAction(actionString);
     }
   }
+
 
   public void RPC_SyncMechanismAction(long sender)
   {
@@ -157,20 +251,16 @@ public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interac
         break;
       case MechanismAction.SwivelEditMode:
       {
-        if (!SwivelHelpers.FindNearestSwivel(transform, out m_nearestSwivel))
+        if (!SwivelHelpers.FindAllSwivelsWithinRange(transform.position, out nearbySwivelComponents))
         {
-          // SelectedAction = MechanismAction.CommandsHud;
-          // todo localize.
           Player.m_localPlayer.Message(MessageHud.MessageType.Center, ModTranslations.NoMechanismNearby);
           return;
         }
         break;
       }
       case MechanismAction.SwivelActivateMode:
-        if (!SwivelHelpers.FindNearestSwivel(transform, out m_nearestSwivel))
+        if (!SwivelHelpers.FindAllSwivelsWithinRange(transform.position, out nearbySwivelComponents))
         {
-          // SelectedAction = MechanismAction.CommandsHud;
-          // todo localize.
           Player.m_localPlayer.Message(MessageHud.MessageType.Center, ModTranslations.NoMechanismNearby);
           return;
         }
@@ -178,7 +268,12 @@ public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interac
       default:
         throw new ArgumentOutOfRangeException(nameof(action), action, null);
     }
+    SyncMechanismSwivelTargetId();
     UpdateOrRPCMechanismAction();
+  }
+  public void SetMechanismSwivel(SwivelComponent swivel)
+  {
+    TargetSwivel = swivel;
   }
 
   /// <summary>
@@ -297,12 +392,9 @@ public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interac
     }
   }
 
-  private SwivelComponentIntegration m_nearestSwivel;
-
-
   public void TriggerSwivelPanel()
   {
-    if (!m_nearestSwivel && !SwivelHelpers.FindNearestSwivel(transform, out m_nearestSwivel))
+    if (!TargetSwivel && !SwivelHelpers.FindAllSwivelsWithinRange(transform.position, out nearbySwivelComponents, out m_targetSwivel))
     {
       return;
     }
@@ -310,9 +402,9 @@ public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interac
     {
       SwivelUIPanelComponentIntegration.Init();
     }
-    if (SwivelUIPanelComponentIntegration.Instance)
+    if (SwivelUIPanelComponentIntegration.Instance && TargetSwivel)
     {
-      SwivelUIPanelComponentIntegration.Instance.BindTo(m_nearestSwivel, true);
+      SwivelUIPanelComponentIntegration.Instance.BindTo(TargetSwivel, true);
     }
     else
     {
@@ -322,19 +414,35 @@ public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interac
 
   public void TriggerSwivelAction()
   {
-    if (!m_nearestSwivel)
+    if (!m_targetSwivel)
     {
-      SwivelHelpers.FindNearestSwivel(transform, out m_nearestSwivel);
+      SyncMechanismSwivelTargetId();
+      if (m_targetSwivelId == 0)
+      {
+        if (nearbySwivelComponents.Count > 0)
+        {
+          m_targetSwivel = nearbySwivelComponents[0];
+        }
+        else if (SwivelHelpers.FindAllSwivelsWithinRange(transform.position, out nearbySwivelComponents))
+        {
+          m_targetSwivel = nearbySwivelComponents[0];
+        }
+      }
     }
 
-    if (m_nearestSwivel)
+    if (m_targetSwivel != null)
     {
-      m_nearestSwivel.RequestNextMotionState();
+      m_targetSwivel.RequestNextMotionState();
     }
     else
     {
       LoggerProvider.LogError("No swivel detected but the user is toggling a swivel action.");
     }
+  }
+
+  public void Save(SwivelComponent swivelComponent)
+  {
+    UpdateOrRPCMechanismSwivelTargetId(swivelComponent);
   }
 
   public float lerpedHandDistance = 0f;
@@ -416,17 +524,13 @@ public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interac
   public string GetHoverText()
   {
     var message = $"{ModTranslations.ToggleSwitch_CurrentActionString} {GetLocalizedActionText(SelectedAction)}\n{ModTranslations.ToggleSwitch_NextActionString}";
-    if ((SelectedAction == MechanismAction.SwivelActivateMode || SelectedAction == MechanismAction.SwivelEditMode) && !m_nearestSwivel)
+    if ((SelectedAction == MechanismAction.SwivelActivateMode || SelectedAction == MechanismAction.SwivelEditMode) && !m_targetSwivel)
     {
       message += $"\n{ModTranslations.NoMechanismNearby}";
     }
-    if (SelectedAction == MechanismAction.SwivelActivateMode && m_nearestSwivel && m_nearestSwivel.swivelPowerConsumer)
+    if (SelectedAction == MechanismAction.SwivelActivateMode && m_targetSwivel && m_targetSwivel.swivelPowerConsumer)
     {
-      // todo do not compute this per update.
-      var activationState = m_nearestSwivel.swivelPowerConsumer.IsActive;
-      var activationText = activationState ? ModTranslations.PowerState_HasPower : ModTranslations.PowerState_NoPower;
-      var activationColor = activationState ? "yellow" : "red";
-      message += $"\n({ModTranslations.WithBoldText(activationText, activationColor)})";
+      message += PowerNetworkController.GetNetworkPowerStatusString(m_targetSwivel.swivelPowerConsumer.NetworkId);
     }
     return message;
   }

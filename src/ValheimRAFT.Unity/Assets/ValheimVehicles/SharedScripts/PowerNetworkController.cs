@@ -28,8 +28,8 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
     [SerializeField] private Material fallbackWireMaterial;
     protected readonly Dictionary<string, List<IPowerNode>> _networks = new();
 
-    private readonly float _updateInterval = 0.25f;
-    private float _nextUpdate;
+    internal readonly float _updateInterval = 0.25f;
+    internal float _nextUpdate;
 
     public Coroutine? _rebuildPylonNetworkRoutine;
     public static Material WireMaterial { get; set; }
@@ -69,7 +69,7 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
 
       foreach (var pair in _networks)
       {
-        SimulateNetwork(pair.Value);
+        SimulateNetwork(pair.Value, pair.Key);
       }
     }
 

@@ -276,12 +276,12 @@
       }
     }
 
-    private static GameObject AddDropdownWithAction(GenericInputAction genericInputAction, int index, float StartHeight, Transform parent)
+    public static GameObject AddDropdownWithAction(GenericInputAction genericInputAction, int index, float StartHeight, Transform parent)
     {
       var tmpDropdown = TMPDropdownFactory.CreateTMPDropDown(
         parent,
         new Vector2(0f, StartHeight - index * buttonHeight),
-        new Vector2(buttonWidth, buttonHeight)
+        new Vector2(buttonWidth, buttonHeight * 1.5f)
       );
 
       // it should never be null here.

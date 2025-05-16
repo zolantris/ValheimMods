@@ -142,6 +142,8 @@ namespace ValheimVehicles.SharedScripts
       }
     }
 
+    public virtual void RequestNextMotionState() {}
+
     public virtual void Start()
     {
       SyncSnappoint();

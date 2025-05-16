@@ -1,6 +1,7 @@
 using UnityEngine;
 using ValheimVehicles.Config;
 using ValheimVehicles.Constants;
+using ValheimVehicles.SharedScripts;
 using ValheimVehicles.SharedScripts.UI;
 using ValheimVehicles.UI;
 namespace ValheimVehicles.Integrations;

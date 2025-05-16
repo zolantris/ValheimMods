@@ -5,13 +5,13 @@ using ValheimVehicles.Config;
 using ValheimVehicles.Constants;
 using ValheimVehicles.Helpers;
 using ValheimVehicles.Integrations;
+using ValheimVehicles.SharedScripts;
 using ValheimVehicles.SharedScripts.UI;
 namespace ValheimVehicles.UI;
 
 public class SwivelUIPanelComponentIntegration : SwivelUIPanelComponent
 {
   public Action<Text>? OnPanelToggleAction;
-  private SwivelComponentIntegration m_swivelComponentIntegration;
 
   public Unity2dViewStyles buttonStyles = new()
   {
@@ -50,20 +50,9 @@ public class SwivelUIPanelComponentIntegration : SwivelUIPanelComponent
 
   public void TryGetCurrentSwivelIntegration()
   {
-    if (CurrentSwivel && !m_swivelComponentIntegration)
-    {
-      SwivelHelpers.FindNearestSwivel(CurrentSwivel.transform, out m_swivelComponentIntegration);
-      return;
-    }
-
-    if (!CurrentSwivel && !m_swivelComponentIntegration && Player.m_localPlayer && !SwivelHelpers.FindNearestSwivel(Player.m_localPlayer.transform, out m_swivelComponentIntegration))
+    if (!_currentSwivel && Player.m_localPlayer && !SwivelHelpers.FindAllSwivelsWithinRange(transform.position, out _, out _currentSwivel))
     {
       return;
-    }
-
-    if (m_swivelComponentIntegration)
-    {
-      CurrentSwivel = m_swivelComponentIntegration;
     }
   }
 
@@ -83,10 +72,11 @@ public class SwivelUIPanelComponentIntegration : SwivelUIPanelComponent
   protected override void OnPanelUpdate()
   {
     TryGetCurrentSwivelIntegration();
-    if (!m_swivelComponentIntegration || !m_swivelComponentIntegration.m_nview || !m_swivelComponentIntegration.m_nview.IsValid()) return;
-    m_swivelComponentIntegration.m_config.ApplyFrom(m_swivelComponentIntegration);
-    m_swivelComponentIntegration.m_config.Save(m_swivelComponentIntegration.m_nview.m_zdo, m_swivelComponentIntegration.m_config);
-    m_swivelComponentIntegration.prefabConfigSync.SendPrefabConfig();
+    var swivelComponentIntegration = _currentSwivel as SwivelComponentIntegration;
+    if (!swivelComponentIntegration || !swivelComponentIntegration.m_nview || !swivelComponentIntegration.m_nview.IsValid()) return;
+    swivelComponentIntegration.m_config.ApplyFrom(swivelComponentIntegration);
+    swivelComponentIntegration.m_config.Save(swivelComponentIntegration.m_nview.m_zdo, swivelComponentIntegration.m_config);
+    swivelComponentIntegration.prefabConfigSync.SendPrefabConfig();
   }
 
   private const string PanelName = "ValheimVehicles_SwivelPanel";
