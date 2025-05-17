@@ -205,5 +205,7 @@
   "valheim_vehicles_mechanism_network_add_one": "Add One",
   "valheim_vehicles_mechanism_interact_add_many": "Add Many",
   "valheim_vehicles_mechanism_not_enough_fuel_in_inventory": "Not enough fuel in inventory",
-  "valheim_vehicles_mechanism_fuel_name_eitr": "Eitr"
+  "valheim_vehicles_mechanism_fuel_name_eitr": "Eitr",
+  "valheim_vehicles_mechanism_mode_none": "None",
+  "valheim_vehicles_mechanism_mode_configure": "Configure"
 }

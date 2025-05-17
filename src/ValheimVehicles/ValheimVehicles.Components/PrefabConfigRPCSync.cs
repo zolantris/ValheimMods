@@ -15,6 +15,8 @@ public class PrefabConfigRPCSync<T, TComponentInterface> : MonoBehaviour, IPrefa
   public ZNetView? m_nview { get; set; }
   private T? m_configCache = default;
 
+  public bool HasInitLoaded;
+
   public bool hasRegisteredRPCListeners { get; set; }
 
   private T CustomConfig { get; set; } = new();
@@ -49,6 +51,7 @@ public class PrefabConfigRPCSync<T, TComponentInterface> : MonoBehaviour, IPrefa
 
     // cancel all Invoke calls from retryGuard.
     CancelInvoke();
+    HasInitLoaded = false;
   }
 
   public void SetComponentFromInstance(TComponentInterface instanceComponent)
@@ -84,7 +87,8 @@ public class PrefabConfigRPCSync<T, TComponentInterface> : MonoBehaviour, IPrefa
 
   public void Save()
   {
-
+    if (!HasInitLoaded) return;
+    Request_Save();
   }
 
   /// <summary>
@@ -181,6 +185,11 @@ public class PrefabConfigRPCSync<T, TComponentInterface> : MonoBehaviour, IPrefa
     {
       StopCoroutine(_prefabSyncRoutine);
       _prefabSyncRoutine = null;
+    }
+
+    if (!HasInitLoaded)
+    {
+      HasInitLoaded = true;
     }
   }
 

@@ -89,18 +89,17 @@ public partial class ModTranslations
     Anchor_WheelUse_UseText = SafeLocalize("$valheim_vehicles_wheel_use");
   }
 
-  private static void UpdateToggleSwitchTranslations()
+  private static void UpdateMechanismSwitchTranslations()
   {
-    ToggleSwitch_CurrentActionString = SafeLocalize(
-      "[<color=yellow><b>$KEY_Use</b></color>] $valheim_vehicles_activate");
-    ToggleSwitch_NextActionString = SafeLocalize(
-      "[<color=yellow><b>$KEY_AltPlace + $KEY_Use</b></color>] $valheim_vehicles_commands_edit_menu");
-
-    ToggleSwitch_MaskColliderEditMode = SafeLocalize(
+    MechanismSwitch_MaskColliderEditMode = SafeLocalize(
       "$valheim_vehicles_commands_mask_edit_mode");
-    ToggleSwitch_CommandsHudText = SafeLocalize(
+    MechanismSwitch_CommandsHudText = SafeLocalize(
       "$valheim_vehicles_commands_edit_menu");
-    ToggleSwitch_SwitchName = SafeLocalize("$valheim_vehicles_toggle_switch");
+    MechanismSwitch_SwitchName = SafeLocalize("$valheim_vehicles_toggle_switch");
+    MechanismMode_None = SafeLocalize("$valheim_vehicles_mechanism_mode_none");
+    MechanismSwitch_CurrentActionString = SafeLocalize(
+      "[<color=yellow><b>$KEY_Use</b></color>] $valheim_vehicles_activate");
+    MechanismSwitch_AltActionString = SafeLocalize("[<color=yellow><b>$KEY_AltPlace $KEY_Use</b></color>] $valheim_vehicles_mechanism_mode_configure");
   }
 
   private static void UpdateGuiEditMenuTranslations()
@@ -162,11 +161,12 @@ public partial class ModTranslations
   public static void UpdateValheimInputTranslations()
   {
     ValheimInput_KeyUse = SafeLocalize("$KEY_Use");
+    ValheimInput_KeyAltPlace = SafeLocalize("$KEY_AltPlace");
   }
 
   public static void UpdateSwivelTranslations()
   {
-    Swivel_Edit = SafeLocalize("$valheim_vehicles_mechanism_swivel_edit");
+    MechanismMode_Swivel_Edit = SafeLocalize("$valheim_vehicles_mechanism_swivel_edit");
     Swivel_Name = SafeLocalize("$valheim_vehicles_mechanism_swivel");
     Swivel_Connected = SafeLocalize("$valheim_vehicles_mechanism_swivel_connected");
     // Swivel_HoverText = $"{WithBoldText(SharedKeys_Hold)} {WithBoldText(ValheimInput_KeyUse, "yellow")} {Swivel_Edit}";
@@ -227,13 +227,14 @@ public partial class ModTranslations
     if (!CanLocalizeCurrentLanguage(forceUpdate)) return;
     try
     {
+      // these values can be used in other translations.
+      UpdateValheimInputTranslations();
       // only updates here.
       UpdateSharedTranslations();
       UpdateVehicleWheelTranslations();
       UpdateGuiEditMenuTranslations();
       UpdateVehicleConfigTranslations();
-      UpdateToggleSwitchTranslations();
-      UpdateValheimInputTranslations();
+      UpdateMechanismSwitchTranslations();
       UpdateAnchorTranslations();
       UpdateSwivelTranslations();
       UpdatePowerTranslations();
@@ -241,6 +242,7 @@ public partial class ModTranslations
     catch (Exception e)
     {
       LoggerProvider.LogWarning($"Problem while registering ModTranslations this call was likely too early.  \n{e}");
+      CurrentLocalizeLanguage = "";
     }
   }
 }

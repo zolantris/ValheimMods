@@ -1,7 +1,9 @@
 using ValheimVehicles.Components;
 using ValheimVehicles.Config;
+using ValheimVehicles.Helpers;
 using ValheimVehicles.SharedScripts;
 using ValheimVehicles.SharedScripts.Interfaces;
+using ZdoWatcher;
 namespace ValheimVehicles.Integrations;
 
 public class MechanismSwitchConfigSync : PrefabConfigRPCSync<MechanismSwitchCustomConfig, IMechanismSwitchConfig>
@@ -10,13 +12,19 @@ public class MechanismSwitchConfigSync : PrefabConfigRPCSync<MechanismSwitchCust
   {
     // must update this before saving or invoking the RPC to serialize the sync.
     Config.SelectedAction = action;
-    Request_Save();
+    Save();
   }
 
-  public void Request_SetSwivelTargetId(int action)
+  /// <summary>
+  /// For the dropdown selector we request the swivelId
+  /// </summary>
+  public void Request_SetSwivelTargetId(SwivelComponent swivelComponent)
   {
+    var swivelNetView = swivelComponent.GetComponent<ZNetView>();
+    if (!swivelNetView || swivelNetView.GetZDO() == null) return;
+    var zdoId = ZdoWatchController.Instance.GetOrCreatePersistentID(swivelNetView.GetZDO());
     // must update this before saving or invoking the RPC to serialize the sync.
-    Config.SwivelTargetId = action;
-    Request_Save();
+    Config.SwivelTargetId = zdoId;
+    Save();
   }
 }

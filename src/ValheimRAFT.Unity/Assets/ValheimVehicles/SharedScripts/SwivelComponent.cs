@@ -142,7 +142,7 @@ namespace ValheimVehicles.SharedScripts
       }
     }
 
-    public virtual void RequestNextMotionState() {}
+    public virtual void Request_NextMotionState() {}
 
     public virtual void Start()
     {

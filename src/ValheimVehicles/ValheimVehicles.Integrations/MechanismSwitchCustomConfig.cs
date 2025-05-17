@@ -15,7 +15,7 @@ namespace ValheimVehicles.Config
 {
   public class MechanismSwitchCustomConfig : ISerializableConfig<MechanismSwitchCustomConfig, IMechanismSwitchConfig>, IPrefabConfig<MechanismSwitchCustomConfig>
   {
-    public MechanismAction SelectedAction = MechanismAction.CommandsHud;
+    public MechanismAction SelectedAction = MechanismAction.None;
     public int SwivelTargetId = 0;
 
     public MechanismSwitchCustomConfig Config => this;

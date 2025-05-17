@@ -24,24 +24,25 @@ namespace ValheimVehicles.SharedScripts.UI
     [SerializeField] public float MaxUIWidth = 400f;
 
     public GameObject panelRoot;
-    private IMechanismActionSetter _mechanismActionSetterComponent;
+    public IMechanismActionSetter mechanismAction;
     private TMP_Dropdown actionDropdown;
     private TMP_Dropdown swivelSelectorDropdown;
 
     [SerializeField] public SwivelUISharedStyles viewStyles = new();
 
-    public MechanismAction SelectedAction { get; private set; }
-    public SwivelComponent SelectedSwivel { get; private set; }
+    public MechanismAction SelectedAction { get; set; }
+    public SwivelComponent? SelectedSwivel { get; set; }
 
     public Action<MechanismAction>? OnSelectedActionChanged;
     public Action<SwivelComponent>? OnSwivelSelectedChanged;
 
     public virtual void BindTo(IMechanismActionSetter mechanismActionSetter, bool isToggle = false)
     {
-      _mechanismActionSetterComponent = mechanismActionSetter;
+      mechanismAction = mechanismActionSetter;
       SelectedAction = mechanismActionSetter.SelectedAction;
 
-      if (panelRoot == null)
+      var isFirstCreate = !panelRoot;
+      if (isFirstCreate)
         CreateUI();
 
       if (SelectedAction == MechanismAction.SwivelActivateMode || SelectedAction == MechanismAction.SwivelEditMode)
@@ -53,7 +54,7 @@ namespace ValheimVehicles.SharedScripts.UI
 
       actionDropdown.SetValueWithoutNotify((int)SelectedAction);
 
-      if (!isToggle) Show();
+      if (!isToggle || isFirstCreate) Show();
       else Toggle();
     }
 
@@ -88,11 +89,11 @@ namespace ValheimVehicles.SharedScripts.UI
 
     public void UpdateSwivelDropdown()
     {
-      if (_mechanismActionSetterComponent == null) return;
+      if (mechanismAction == null) return;
 
-      var selfPos = _mechanismActionSetterComponent.transform.position;
+      var selfPos = mechanismAction.transform.position;
 
-      var options = _mechanismActionSetterComponent.NearestSwivels
+      var options = mechanismAction.NearestSwivels
         .Select(x =>
         {
           var dist = Vector3.Distance(selfPos, x.transform.position);
@@ -102,11 +103,29 @@ namespace ValheimVehicles.SharedScripts.UI
       swivelSelectorDropdown.ClearOptions();
       swivelSelectorDropdown.AddOptions(options);
 
-      if (_mechanismActionSetterComponent.NearestSwivels.Count > 0)
+      if (mechanismAction.NearestSwivels.Count > 0)
       {
-        swivelSelectorDropdown.SetValueWithoutNotify(0);
-        SelectedSwivel = _mechanismActionSetterComponent.NearestSwivels[0];
-        _mechanismActionSetterComponent.SetMechanismSwivel(SelectedSwivel);
+        var actionInt = 0;
+        if (mechanismAction.TargetSwivel != null)
+        {
+          for (var index = 0; index < mechanismAction.NearestSwivels.Count; index++)
+          {
+            var mechanismActionNearestSwivel = mechanismAction.NearestSwivels[index];
+            if (mechanismActionNearestSwivel == null) continue;
+            if (mechanismAction.TargetSwivel == mechanismActionNearestSwivel)
+            {
+              actionInt = index;
+              break;
+            }
+          }
+        }
+        swivelSelectorDropdown.SetValueWithoutNotify(actionInt);
+        SelectedSwivel = mechanismAction.NearestSwivels[actionInt];
+
+        if (SelectedSwivel != mechanismAction.TargetSwivel)
+        {
+          mechanismAction.SetMechanismSwivel(SelectedSwivel);
+        }
         OnSwivelSelectedChanged?.Invoke(SelectedSwivel);
       }
     }
@@ -127,7 +146,7 @@ namespace ValheimVehicles.SharedScripts.UI
         index =>
         {
           SelectedAction = (MechanismAction)index;
-          _mechanismActionSetterComponent.SetMechanismAction(SelectedAction);
+          mechanismAction.SetMechanismAction(SelectedAction);
 
           if (SelectedAction == MechanismAction.SwivelActivateMode || SelectedAction == MechanismAction.SwivelEditMode)
           {
@@ -153,9 +172,9 @@ namespace ValheimVehicles.SharedScripts.UI
       //   // OnPointerEnterAction = VehicleStorageAPI.RefreshVehicleSelectionGui
       // };
       // swivelSelectorDropdown = VehicleGui.AddDropdownWithAction(dropdownAction, 0, 48, content.transform).GetComponent<TMP_Dropdown>();
-      var selfPos = _mechanismActionSetterComponent.transform.position;
+      var selfPos = mechanismAction.transform.position;
 
-      var options = _mechanismActionSetterComponent.NearestSwivels
+      var options = mechanismAction.NearestSwivels
         .Select(x =>
         {
           var dist = Vector3.Distance(selfPos, x.transform.position);
@@ -167,9 +186,9 @@ namespace ValheimVehicles.SharedScripts.UI
         options?.FirstOrDefault() ?? "",
         index =>
         {
-          if (index < 0 || index >= _mechanismActionSetterComponent.NearestSwivels.Count) return;
-          SelectedSwivel = _mechanismActionSetterComponent.NearestSwivels[index];
-          _mechanismActionSetterComponent.SetMechanismSwivel(SelectedSwivel);
+          if (index < 0 || index >= mechanismAction.NearestSwivels.Count) return;
+          SelectedSwivel = mechanismAction.NearestSwivels[index];
+          mechanismAction.SetMechanismSwivel(SelectedSwivel);
           OnSwivelSelectedChanged?.Invoke(SelectedSwivel);
         });
 

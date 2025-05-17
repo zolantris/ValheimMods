@@ -1,4 +1,8 @@
-namespace ValheimVehicles.SharedScripts {
+// ReSharper disable ArrangeNamespaceBody
+// ReSharper disable NamespaceStyle
+
+namespace ValheimVehicles.SharedScripts
+{
 
   /// <summary>
   /// Localization/Translation controller for the entire valheim-vehicles mod.
@@ -20,13 +24,18 @@ namespace ValheimVehicles.SharedScripts {
     public static string DisabledText = null!;
 
     public static string ValheimInput_KeyUse = null!;
+    public static string ValheimInput_KeyAltPlace = null!;
 
 
-    public static string ToggleSwitch_CommandsHudText = null!;
-    public static string ToggleSwitch_MaskColliderEditMode = null!;
-    public static string ToggleSwitch_NextActionString = null!;
-    public static string ToggleSwitch_CurrentActionString = null!;
-    public static string ToggleSwitch_SwitchName = null!;
+    public static string MechanismSwitch_CommandsHudText = null!;
+    public static string MechanismSwitch_MaskColliderEditMode = null!;
+    public static string MechanismSwitch_SwitchName = null!;
+    public static string MechanismSwitch_CurrentActionString = null!;
+    public static string MechanismSwitch_AltActionString = null!;
+
+    // modes
+    public static string MechanismMode_None = null!;
+    public static string MechanismMode_Swivel_Edit = null!;
 
     public static string VehicleConfig_CustomFloatationHeight = null!;
 
@@ -46,7 +55,6 @@ namespace ValheimVehicles.SharedScripts {
     public static string AnchorPrefab_idleText = null!;
 
 
-    public static string Swivel_Edit = null!;
     public static string Swivel_Connected = null!;
     public static string Swivel_Name = null!;
     public static string NoMechanismNearby = null!;

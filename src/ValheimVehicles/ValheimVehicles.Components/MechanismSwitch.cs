@@ -29,12 +29,18 @@ public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interac
   public static bool m_forceRunAnimateOnFixedUpdate = false;
   private MechanismAction _selectedMechanismAction = MechanismAction.CommandsHud;
   private SafeRPCHandler? _safeRPCHandler;
-
+  public ZNetView? m_nview
+  {
+    get;
+    set;
+  }
   private int m_targetSwivelId = 0;
   private SwivelComponent? m_targetSwivel;
   public List<SwivelComponent> nearbySwivelComponents = new();
   public MechanismSwitchConfigSync prefabConfigSync;
   public MechanismSwitchCustomConfig Config => prefabConfigSync.Config;
+  public IMechanismActionSetter mechanismAction;
+  public static Vector3 detachOffset = new(0f, 0.5f, 0f);
 
   public SwivelComponent? TargetSwivel
   {
@@ -48,24 +54,28 @@ public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interac
     set => nearbySwivelComponents = value;
   }
 
+  public float lerpedHandDistance = 0f;
+
+  /// <summary>
+  /// todo might make this only a getter.
+  /// </summary>
   public MechanismAction SelectedAction
   {
-    get => _selectedMechanismAction;
-    set => _selectedMechanismAction = value;
+    get => prefabConfigSync.Config.SelectedAction;
+    set => prefabConfigSync.Config.SelectedAction = value;
   }
 
   public override void Awake()
   {
     base.Awake();
+    mechanismAction = this;
     m_nview = GetComponent<ZNetView>();
     prefabConfigSync = gameObject.AddComponent<MechanismSwitchConfigSync>();
-    _selectedMechanismAction = PrefabConfig.Mechanism_Switch_DefaultAction.Value;
   }
 
   public void Start()
   {
     if (!this.IsNetViewValid()) return;
-    SyncMechanismAction();
     StartCoroutine(ScheduleIntendedAction());
   }
 
@@ -74,12 +84,22 @@ public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interac
   {
     if (!isActiveAndEnabled) yield break;
     yield return new WaitForFixedUpdate();
-    if (!isActiveAndEnabled || !this.IsNetViewValid(out var netView))
+    if (!isActiveAndEnabled || !prefabConfigSync || !prefabConfigSync.HasInitLoaded || !this.IsNetViewValid())
     {
       yield break;
     }
-    SyncMechanismSwivelTargetId();
     UpdateIntendedAction();
+  }
+
+  // Get the component from the ZdoWatcherController match of the persistent swivelId.
+  public bool TryFindTargetSwivelComponent()
+  {
+    if (m_targetSwivelId == 0) return false;
+    var targetSwivelNetview = ZdoWatchController.Instance.GetInstance(m_targetSwivelId);
+    if (targetSwivelNetview == null) return false;
+
+    m_targetSwivel = targetSwivelNetview.GetComponent<SwivelComponent>();
+    return true;
   }
 
   /// <summary>
@@ -89,12 +109,26 @@ public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interac
   {
     if (m_targetSwivelId == 0)
     {
-      SyncMechanismSwivelTargetId();
+      prefabConfigSync.Load();
     }
 
-    if (m_targetSwivelId == 0 && !m_targetSwivel && SwivelHelpers.FindAllSwivelsWithinRange(transform.position, out nearbySwivelComponents, out m_targetSwivel))
+    // Already set and stored a SelectedAction
+    if (SelectedAction is not MechanismAction.None)
     {
-      SetMechanismAction(MechanismAction.SwivelActivateMode);
+      if (SelectedAction is MechanismAction.SwivelActivateMode or MechanismAction.SwivelEditMode)
+      {
+        TryFindTargetSwivelComponent();
+        return;
+      }
+
+      return;
+    }
+
+    // for None status / new prefab
+    if (m_targetSwivelId == 0 && SwivelHelpers.FindAllSwivelsWithinRange(transform.position, out _, out var closestSwivel) && Vector3.Distance(transform.position, closestSwivel.transform.position) < 1f)
+    {
+      m_targetSwivel = closestSwivel;
+      SetMechanismSwivel(closestSwivel);
       return;
     }
 
@@ -112,19 +146,14 @@ public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interac
         SetMechanismAction(MechanismAction.CommandsHud);
       }
     }
+
+    SetMechanismAction(PrefabConfig.Mechanism_Switch_DefaultAction.Value);
   }
 
   public void OnEnable()
   {
     if (!this.IsNetViewValid(out var netView)) return;
     OnToggleCompleted += OnAnimationsComplete;
-
-    _safeRPCHandler = new SafeRPCHandler(netView);
-    _safeRPCHandler.Register(nameof(RPC_SyncMechanismAction), RPC_SyncMechanismAction);
-    _safeRPCHandler.Register<string>(nameof(RPC_SetMechanismAction), RPC_SetMechanismAction);
-    _safeRPCHandler.Register<int>(nameof(RPC_SetMechanismSwivelTargetId), RPC_SetMechanismSwivelTargetId);
-    _safeRPCHandler.Register<int>(nameof(RPC_SyncMechanismSwivelTargetId), RPC_SyncMechanismSwivelTargetId);
-
     StartCoroutine(ScheduleIntendedAction());
   }
 
@@ -132,93 +161,6 @@ public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interac
   {
     _safeRPCHandler?.UnregisterAll();
     StopAllCoroutines();
-  }
-
-  public void RPC_SetMechanismSwivelTargetId(long sender, int swivelZdoId)
-  {
-    SaveMechanismSwivelTargetId(swivelZdoId);
-  }
-
-  /// <summary>
-  /// To be run only by an owner.
-  /// </summary>
-  /// <param name="swivelZdoId"></param>
-  public void SaveMechanismSwivelTargetId(int swivelZdoId)
-  {
-    if (!this.IsNetViewValid(out var netView)) return;
-    if (netView.IsOwner())
-    {
-      netView.GetZDO().Set(VehicleZdoVars.Mechanism_Swivel_TargetId, swivelZdoId);
-      _safeRPCHandler?.InvokeRPC(nameof(RPC_SyncMechanismSwivelTargetId), swivelZdoId);
-    }
-  }
-
-  public void UpdateOrRPCMechanismSwivelTargetId(SwivelComponent swivelComponent)
-  {
-    if (!swivelComponent) return;
-    SetMechanismSwivel(swivelComponent);
-    if (!this.IsNetViewValid(out var netView)) return;
-    var swivelZNetview = swivelComponent.GetComponent<ZNetView>();
-    if (!swivelZNetview || swivelZNetview.GetZDO() == null) return;
-    var zdoId = ZdoWatchController.Instance.GetOrCreatePersistentID(swivelZNetview.GetZDO());
-    if (!swivelZNetview.IsOwner())
-    {
-      // should only sync to owner. Then owner emits a sync call.
-      _safeRPCHandler?.InvokeRPC(swivelZNetview.GetZDO().GetOwner(), nameof(RPC_SetMechanismSwivelTargetId), zdoId);
-    }
-    else
-    {
-      SaveMechanismSwivelTargetId(zdoId);
-    }
-  }
-
-  public void Load()
-  {
-    SyncMechanismSwivelTargetId();
-  }
-
-  public void SyncMechanismSwivelTargetId()
-  {
-    if (!this.IsNetViewValid(out var netView)) return;
-    m_targetSwivelId = netView.GetZDO().GetInt(VehicleZdoVars.Mechanism_Swivel_TargetId, 0);
-
-    if (m_targetSwivelId == 0)
-    {
-      TargetSwivel = null;
-    }
-
-    // Get the component from the ZdoWatcherController match of the persistent swivelId.
-    var targetSwivelNetview = ZdoWatchController.Instance.GetInstance(m_targetSwivelId);
-    if (targetSwivelNetview != null)
-    {
-      m_targetSwivel = targetSwivelNetview.GetComponent<SwivelComponent>();
-    }
-  }
-
-  public void RPC_SyncMechanismSwivelTargetId(long sender, int targetSwivelId)
-  {
-    SyncMechanismSwivelTargetId();
-
-    if (m_targetSwivelId != targetSwivelId)
-    {
-      LoggerProvider.LogError("Sync somehow desynced. This is a problem with ZDO sync commands...Report this error.");
-    }
-  }
-
-  public void RPC_SetMechanismAction(long sender, string actionString)
-  {
-    if (!this.IsNetViewValid(out var netView)) return;
-    if (netView.IsOwner())
-    {
-      SelectedAction = GetActivationActionFromString(actionString);
-      SetMechanismAction(actionString);
-    }
-  }
-
-
-  public void RPC_SyncMechanismAction(long sender)
-  {
-    SyncMechanismAction();
   }
 
   public override void FixedUpdate()
@@ -247,60 +189,72 @@ public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interac
 
   public void SetMechanismAction(MechanismAction action)
   {
+    // bail on recursive setting of same action.
+    if (action.Equals(SelectedAction)) return;
+
     SelectedAction = action;
+    OnMechanismActionUpdate(action);
+    prefabConfigSync.Save();
+  }
+
+  public void OnMechanismActionUpdate(MechanismAction action)
+  {
     switch (action)
     {
-
+      case MechanismAction.None:
       case MechanismAction.CommandsHud:
-        break;
       case MechanismAction.CreativeMode:
-        break;
       case MechanismAction.ColliderEditMode:
+        m_targetSwivel = null;
+        m_targetSwivelId = 0;
         break;
       case MechanismAction.SwivelEditMode:
-      {
-        if (!SwivelHelpers.FindAllSwivelsWithinRange(transform.position, out nearbySwivelComponents))
-        {
-          Player.m_localPlayer.Message(MessageHud.MessageType.Center, ModTranslations.NoMechanismNearby);
-          return;
-        }
-        break;
-      }
       case MechanismAction.SwivelActivateMode:
+      {
+        // should be fired whenever we update this state.
         if (!SwivelHelpers.FindAllSwivelsWithinRange(transform.position, out nearbySwivelComponents))
         {
           Player.m_localPlayer.Message(MessageHud.MessageType.Center, ModTranslations.NoMechanismNearby);
           return;
         }
+      }
         break;
       default:
         throw new ArgumentOutOfRangeException(nameof(action), action, null);
     }
 
-    prefabConfigSync.Save();
+    if (MechanismSelectorPanelIntegration.Instance != null && MechanismSelectorPanelIntegration.Instance.mechanismAction == mechanismAction)
+    {
+      MechanismSelectorPanelIntegration.Instance.SelectedAction = action;
+      MechanismSelectorPanelIntegration.Instance.SelectedSwivel = m_targetSwivel;
+    }
   }
+
+  /// <summary>
+  /// All syncing is delegated through config when calling Save.
+  /// </summary>
+  /// <param name="swivel"></param>
   public void SetMechanismSwivel(SwivelComponent swivel)
   {
-    TargetSwivel = swivel;
-    prefabConfigSync.Save();
+    prefabConfigSync.Request_SetSwivelTargetId(swivel);
   }
 
-  public MechanismAction GetActivationActionFromString(string activationActionString)
-  {
-    if (!Enum.TryParse<MechanismAction>(activationActionString, out var result))
-    {
-      result = MechanismAction.CommandsHud;
-    }
+  // public MechanismAction GetActivationActionFromString(string activationActionString)
+  // {
+  //   if (!Enum.TryParse<MechanismAction>(activationActionString, out var result))
+  //   {
+  //     result = MechanismAction.CommandsHud;
+  //   }
+  //
+  //   return result;
+  // }
 
-    return result;
-  }
-
-  public void SyncMechanismAction()
-  {
-    if (!isActiveAndEnabled || !this.IsNetViewValid(out var netView)) return;
-    var activationActionString = netView.GetZDO().GetString(VehicleZdoVars.ToggleSwitchAction, nameof(MechanismAction.CreativeMode));
-    SelectedAction = GetActivationActionFromString(activationActionString);
-  }
+  // public void SyncMechanismAction()
+  // {
+  //   if (!isActiveAndEnabled || !this.IsNetViewValid(out var netView)) return;
+  //   var activationActionString = netView.GetZDO().GetString(VehicleZdoVars.ToggleSwitchAction, nameof(MechanismAction.CreativeMode));
+  //   SelectedAction = GetActivationActionFromString(activationActionString);
+  // }
 
   private void HandleToggleCreativeMode()
   {
@@ -345,8 +299,6 @@ public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interac
     }
   }
 
-  public static Vector3 detachOffset = new(0f, 0.5f, 0f);
-
   public void OnPressHandler(MechanismSwitch toggleSwitch, Humanoid humanoid)
   {
     ToggleVisualActivationState();
@@ -354,6 +306,9 @@ public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interac
 
     switch (SelectedAction)
     {
+      // do nothing for this
+      case MechanismAction.None:
+        break;
       case MechanismAction.CommandsHud:
         HandleToggleCommandsHud();
         break;
@@ -398,7 +353,6 @@ public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interac
   {
     if (!m_targetSwivel)
     {
-      SyncMechanismSwivelTargetId();
       if (m_targetSwivelId == 0)
       {
         if (nearbySwivelComponents.Count > 0)
@@ -414,7 +368,7 @@ public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interac
 
     if (m_targetSwivel != null)
     {
-      m_targetSwivel.RequestNextMotionState();
+      m_targetSwivel.Request_NextMotionState();
     }
     else
     {
@@ -422,12 +376,6 @@ public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interac
     }
   }
 
-  public void Save(SwivelComponent swivelComponent)
-  {
-    UpdateOrRPCMechanismSwivelTargetId(swivelComponent);
-  }
-
-  public float lerpedHandDistance = 0f;
 
   /// <summary>
   /// TODO might need to make this more optimized. The IK animations are basic to test things.
@@ -483,11 +431,12 @@ public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interac
   {
     return action switch
     {
-      MechanismAction.CommandsHud => ModTranslations.ToggleSwitch_CommandsHudText,
+      MechanismAction.CommandsHud => ModTranslations.MechanismSwitch_CommandsHudText,
       MechanismAction.CreativeMode => ModTranslations.CreativeMode,
-      MechanismAction.ColliderEditMode => ModTranslations.ToggleSwitch_MaskColliderEditMode,
-      MechanismAction.SwivelEditMode => ModTranslations.Swivel_Edit,
+      MechanismAction.ColliderEditMode => ModTranslations.MechanismSwitch_MaskColliderEditMode,
+      MechanismAction.SwivelEditMode => ModTranslations.MechanismMode_Swivel_Edit,
       MechanismAction.SwivelActivateMode => ModTranslations.Swivel_Name,
+      MechanismAction.None => ModTranslations.MechanismMode_None,
       _ => throw new ArgumentOutOfRangeException(nameof(action), action, null)
     };
   }
@@ -500,12 +449,12 @@ public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interac
 
   public string GetHoverName()
   {
-    return ModTranslations.ToggleSwitch_SwitchName;
+    return ModTranslations.MechanismSwitch_SwitchName;
   }
 
   public string GetHoverText()
   {
-    var message = $"{ModTranslations.ToggleSwitch_CurrentActionString} {GetLocalizedActionText(SelectedAction)}\n{ModTranslations.ToggleSwitch_NextActionString}";
+    var message = $"{ModTranslations.MechanismSwitch_CurrentActionString} {GetLocalizedActionText(SelectedAction)}\n{ModTranslations.MechanismSwitch_AltActionString}";
     if ((SelectedAction == MechanismAction.SwivelActivateMode || SelectedAction == MechanismAction.SwivelEditMode) && !m_targetSwivel)
     {
       message += $"\n{ModTranslations.NoMechanismNearby}";
@@ -515,10 +464,5 @@ public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interac
       message += PowerNetworkController.GetNetworkPowerStatusString(m_targetSwivel.swivelPowerConsumer.NetworkId);
     }
     return message;
-  }
-  public ZNetView? m_nview
-  {
-    get;
-    set;
   }
 }
