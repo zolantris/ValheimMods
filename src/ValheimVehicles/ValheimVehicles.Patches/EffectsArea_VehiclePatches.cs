@@ -25,9 +25,10 @@ public static class EffectsArea_VehiclePatches
     ref bool __result)
   {
     EffectArea effectArea = null!;
-    GetPrefix_EffectWithinVehicleArea(p, ref effectArea, out var shouldSkipOriginalMethod);
+    GetPrefix_EffectWithinVehicleArea(p, ref effectArea, out var shouldRunOriginalMethod);
     __result = effectArea != null;
-    return shouldSkipOriginalMethod;
+
+    return shouldRunOriginalMethod;
   }
 
   [HarmonyPatch(typeof(EffectArea),
@@ -37,22 +38,20 @@ public static class EffectsArea_VehiclePatches
   private static bool EffectArea_GetBurningAreaPointPlus025(Vector3 p,
     ref EffectArea __result)
   {
-    GetPrefix_EffectWithinVehicleArea(p, ref __result, out var shouldSkipOriginalMethod);
-    return shouldSkipOriginalMethod;
+    GetPrefix_EffectWithinVehicleArea(p, ref __result, out var shouldRunOriginalMethod);
+    return shouldRunOriginalMethod;
   }
 
   private static void GetPrefix_EffectWithinVehicleArea(Vector3 p,
-    ref EffectArea __result, out bool shouldSkipOriginalMethod)
+    ref EffectArea __result, out bool shouldRunOriginalMethod)
   {
-    shouldSkipOriginalMethod = false;
-
     if (VehiclePiecesController.IsPointWithinEffectsArea(p, out var matchingEffectsArea) && matchingEffectsArea != null)
     {
       __result = matchingEffectsArea;
-      shouldSkipOriginalMethod = true;
+      shouldRunOriginalMethod = false;
       return;
     }
 
-    shouldSkipOriginalMethod = false;
+    shouldRunOriginalMethod = true;
   }
 }
