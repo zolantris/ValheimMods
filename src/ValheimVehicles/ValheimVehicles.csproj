@@ -83,6 +83,12 @@
         <Compile Update="..\ValheimRAFT.Unity\Assets\ValheimVehicles\SharedScripts\MathUtils.cs">
             <Link>SharedScripts\MathUtils.cs</Link>
         </Compile>
+        <Compile Update="..\ValheimRAFT.Unity\Assets\ValheimVehicles\SharedScripts\DictionaryExtensions.cs">
+            <Link>SharedScripts\DictionaryExtensions.cs</Link>
+        </Compile>
+        <Compile Update="..\ValheimRAFT.Unity\Assets\ValheimVehicles\SharedScripts\Interfaces\IMechanismSwitchConfig.cs">
+            <Link>SharedScripts\Interfaces\IMechanismSwitchConfig.cs</Link>
+        </Compile>
     </ItemGroup>
     <ItemGroup Label="Internal ValheimVehicles scripts">
         <!-- Includes all namespace folders -->

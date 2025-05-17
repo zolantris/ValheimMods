@@ -8,15 +8,23 @@ namespace ValheimVehicles.Controllers
 {
   /// <summary>
   /// A custom sync component for child transform data under a shared ZNetView.
+  /// Applies local interpolation and smoothing of synced transforms.
   /// </summary>
   public class ChildZSyncTransform : MonoBehaviour, IMonoUpdater
   {
+    [Header("Sync Settings")]
     public bool m_syncPosition = true;
     public bool m_syncRotation = true;
     public bool m_syncBodyVelocity = true;
+    public bool m_useExtrapolation = true;
 
-    public const float m_smoothnessPos = 0.2f;
-    public const float m_smoothnessRot = 0.5f;
+    [Header("Smoothing Config")]
+    public float m_positionSmoothTime = 0.2f;
+    public float m_rotationSmoothTime = 0.5f;
+    public float m_snapDistanceThreshold = 1.0f;
+    public float m_positionEpsilon = 0.01f;
+    public float m_rotationEpsilon = 0.1f;
+    public float m_extrapolationTime = 0.1f;
 
     public ZNetView m_nview;
     public Rigidbody m_body;
@@ -26,7 +34,9 @@ namespace ValheimVehicles.Controllers
     private Vector3 m_cachedVelocity = Vector3.negativeInfinity;
     private Vector3 m_cachedAngularVelocity = Vector3.negativeInfinity;
 
-    private int m_lastUpdateFrame = -1;
+    private Vector3 m_smoothVelocity;
+    private float m_smoothAngularVelocity;
+
     private bool m_isKinematic;
 
     private void Awake()
@@ -38,13 +48,15 @@ namespace ValheimVehicles.Controllers
         enabled = false;
         return;
       }
-      m_isKinematic = m_body != null && m_body.isKinematic;
+
+      m_isKinematic = m_body && m_body.isKinematic;
     }
 
     private void OnEnable()
     {
       ZSyncTransform.Instances.Add(this);
     }
+
     private void OnDisable()
     {
       ZSyncTransform.Instances.Remove(this);
@@ -52,41 +64,68 @@ namespace ValheimVehicles.Controllers
 
     public void CustomFixedUpdate(float fixedDeltaTime)
     {
-      if (!m_nview.IsValid() || m_nview.IsOwner()) return;
+      // Not used for smoothing anymore, logic moved to LateUpdate
+    }
 
+    public void CustomLateUpdate(float deltaTime)
+    {
+      if (!m_nview.IsValid()) return;
+
+      if (!m_nview.IsOwner())
+      {
+        ApplyRemoteSync(deltaTime);
+      }
+      else
+      {
+        PushOwnerSync();
+      }
+    }
+
+    private void ApplyRemoteSync(float deltaTime)
+    {
       var zdo = m_nview.GetZDO();
 
       if (m_syncPosition)
       {
         var syncedPos = zdo.GetVec3(VehicleZdoVars.SwivelSyncPosition, transform.localPosition);
-        if (Vector3.Distance(transform.localPosition, syncedPos) > 0.001f)
+        if (m_useExtrapolation)
         {
-          if (m_body && m_isKinematic)
-          {
-            var worldTarget = transform.parent ? transform.parent.TransformPoint(syncedPos) : syncedPos;
-            m_body.MovePosition(worldTarget);
-          }
-          else
-          {
-            transform.localPosition = Vector3.Lerp(transform.localPosition, syncedPos, fixedDeltaTime / m_smoothnessPos);
-          }
+          var vel = zdo.GetVec3(VehicleZdoVars.SwivelSyncVelocity, Vector3.zero);
+          syncedPos += vel * m_extrapolationTime;
+        }
+
+        var distance = Vector3.Distance(transform.localPosition, syncedPos);
+        if (distance > m_snapDistanceThreshold)
+        {
+          transform.localPosition = syncedPos;
+        }
+        else if (distance > m_positionEpsilon)
+        {
+          transform.localPosition = Vector3.SmoothDamp(
+            transform.localPosition,
+            syncedPos,
+            ref m_smoothVelocity,
+            m_positionSmoothTime,
+            float.PositiveInfinity,
+            deltaTime);
         }
       }
 
       if (m_syncRotation)
       {
         var syncedRot = zdo.GetQuaternion(VehicleZdoVars.SwivelSyncRotation, transform.localRotation);
-        if (Quaternion.Angle(transform.localRotation, syncedRot) > 0.1f)
+        var angle = Quaternion.Angle(transform.localRotation, syncedRot);
+
+        if (angle > m_snapDistanceThreshold)
         {
-          if (m_body && m_isKinematic)
-          {
-            var worldRot = transform.parent ? transform.parent.rotation * syncedRot : syncedRot;
-            m_body.MoveRotation(worldRot);
-          }
-          else
-          {
-            transform.localRotation = Quaternion.Slerp(transform.localRotation, syncedRot, fixedDeltaTime / m_smoothnessRot);
-          }
+          transform.localRotation = syncedRot;
+        }
+        else if (angle > m_rotationEpsilon)
+        {
+          transform.localRotation = Quaternion.Slerp(
+            transform.localRotation,
+            syncedRot,
+            deltaTime / m_rotationSmoothTime);
         }
       }
 
@@ -97,10 +136,8 @@ namespace ValheimVehicles.Controllers
       }
     }
 
-    public void CustomLateUpdate(float deltaTime)
+    private void PushOwnerSync()
     {
-      if (!m_nview.IsOwner()) return;
-
       var zdo = m_nview.GetZDO();
 
       if (m_syncPosition)
@@ -143,10 +180,13 @@ namespace ValheimVehicles.Controllers
     }
 
     public void CustomUpdate(float deltaTime, float time) {}
+
     public void ClientSync(float dt) {}
+
     public void SyncNow()
     {
-      CustomLateUpdate(Time.deltaTime);
+      if (m_nview.IsOwner())
+        PushOwnerSync();
     }
   }
 }

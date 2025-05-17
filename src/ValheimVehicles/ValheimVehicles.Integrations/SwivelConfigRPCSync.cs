@@ -13,7 +13,7 @@ public class SwivelConfigRPCSync : PrefabConfigRPCSync<SwivelCustomConfig, ISwiv
   public void Request_NextMotionState(MotionState nextMotionState)
   {
     // must update this before saving or invoking the RPC to serialize the sync.
-    CustomConfig.MotionState = nextMotionState;
+    Config.MotionState = nextMotionState;
     Request_Save();
   }
 }

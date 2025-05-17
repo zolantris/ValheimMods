@@ -36,9 +36,8 @@
   ///
   /// Notes
   /// IRaycastPieceActivator is used for simplicity. It will easily match any component extending this in unity.
-  public sealed class SwivelComponentIntegration : SwivelComponent, IPieceActivatorHost, IPieceController, IRaycastPieceActivator, INetView
+  public sealed class SwivelComponentIntegration : SwivelComponent, IPieceActivatorHost, IPieceController, IRaycastPieceActivator, INetView, IPrefabConfig<SwivelCustomConfig>
   {
-    [FormerlySerializedAs("m_piecesController")]
     public VehiclePiecesController? m_vehiclePiecesController;
     public VehicleManager? m_vehicle => m_vehiclePiecesController == null ? null : m_vehiclePiecesController.Manager;
 
@@ -52,7 +51,7 @@
 
     private HoverFadeText m_hoverFadeText;
     public SwivelConfigRPCSync prefabConfigSync;
-    public SwivelCustomConfig m_config => prefabConfigSync.CustomConfig;
+    public SwivelCustomConfig Config => prefabConfigSync.Config;
     public ChildZSyncTransform childZsyncTransform;
 
     public static bool CanAllClientsSync = true;

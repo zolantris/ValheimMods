@@ -169,7 +169,7 @@ namespace ValheimVehicles.SharedScripts.UI
         {
           if (index < 0 || index >= _mechanismActionSetterComponent.NearestSwivels.Count) return;
           SelectedSwivel = _mechanismActionSetterComponent.NearestSwivels[index];
-          _mechanismActionSetterComponent.Save(SelectedSwivel);
+          _mechanismActionSetterComponent.SetMechanismSwivel(SelectedSwivel);
           OnSwivelSelectedChanged?.Invoke(SelectedSwivel);
         });
 

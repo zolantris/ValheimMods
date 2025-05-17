@@ -52,7 +52,7 @@
 
     public VehicleFloatationMode GetWaterFloatationHeightMode()
     {
-      if (CustomConfig.HasCustomFloatationHeight) return VehicleFloatationMode.Custom;
+      if (Config.HasCustomFloatationHeight) return VehicleFloatationMode.Custom;
       return PhysicsConfig.HullFloatationColliderLocation.Value;
     }
 
@@ -62,8 +62,8 @@
       if (!_vehicle || _vehicle.IsLandVehicle) return;
 
       // set config immediately, but it might not be updated if the ranges are out of bounds
-      CustomConfig.HasCustomFloatationHeight = isCustom;
-      CustomConfig.CustomFloatationHeight = relativeHeight;
+      Config.HasCustomFloatationHeight = isCustom;
+      Config.CustomFloatationHeight = relativeHeight;
 
       Request_Save();
     }

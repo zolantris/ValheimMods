@@ -2762,7 +2762,7 @@
         case VehicleFloatationMode.Fixed:
           return HullFloatationColliderAlignmentOffset;
         case VehicleFloatationMode.Custom:
-          return Manager.VehicleConfigSync.CustomConfig.CustomFloatationHeight;
+          return Manager.VehicleConfigSync.Config.CustomFloatationHeight;
         case VehicleFloatationMode.Center:
         default:
           return BaseControllerHullBounds.center.y;

@@ -17,7 +17,8 @@ public class PrefabConfigRPCSync<T, TComponentInterface> : MonoBehaviour, IPrefa
 
   public bool hasRegisteredRPCListeners { get; set; }
 
-  public T CustomConfig { get; set; } = new();
+  private T CustomConfig { get; set; } = new();
+  public T Config => CustomConfig;
   internal SafeRPCHandler? rpcHandler;
   internal RetryGuard retryGuard = null!;
   public TComponentInterface controller;
@@ -73,12 +74,17 @@ public class PrefabConfigRPCSync<T, TComponentInterface> : MonoBehaviour, IPrefa
     {
       var localConfig = CustomConfig.Deserialize(package);
       CustomConfig = localConfig;
-      Save();
+      Owner_Save();
     }
     catch (Exception ex)
     {
       LoggerProvider.LogError($"Failed to deserialize {typeof(T).Name} config: {ex}");
     }
+  }
+
+  public void Save()
+  {
+
   }
 
   /// <summary>
@@ -91,7 +97,7 @@ public class PrefabConfigRPCSync<T, TComponentInterface> : MonoBehaviour, IPrefa
     // Owners do not have to RPC to self. They can save the data then fire RPC_Load instead.
     if (netView.IsOwner())
     {
-      Save();
+      Owner_Save();
     }
     else
     {
@@ -104,7 +110,7 @@ public class PrefabConfigRPCSync<T, TComponentInterface> : MonoBehaviour, IPrefa
   /// <summary>
   /// Must always trigger Load RPC otherwise Save client is accurate but other clients de-sync
   /// </summary>
-  public void Save()
+  public void Owner_Save()
   {
     if (!this.IsNetViewValid(out var netView)) return;
     LoggerProvider.LogDebug($"Received config for {typeof(T).Name}");

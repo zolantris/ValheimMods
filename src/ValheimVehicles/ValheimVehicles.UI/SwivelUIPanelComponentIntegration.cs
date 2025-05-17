@@ -74,8 +74,8 @@ public class SwivelUIPanelComponentIntegration : SwivelUIPanelComponent
     TryGetCurrentSwivelIntegration();
     var swivelComponentIntegration = _currentSwivel as SwivelComponentIntegration;
     if (!swivelComponentIntegration || !swivelComponentIntegration.m_nview || !swivelComponentIntegration.m_nview.IsValid()) return;
-    swivelComponentIntegration.m_config.ApplyFrom(swivelComponentIntegration);
-    swivelComponentIntegration.m_config.Save(swivelComponentIntegration.m_nview.m_zdo, swivelComponentIntegration.m_config);
+    swivelComponentIntegration.Config.ApplyFrom(swivelComponentIntegration);
+    swivelComponentIntegration.Config.Save(swivelComponentIntegration.m_nview.m_zdo, swivelComponentIntegration.Config);
     swivelComponentIntegration.prefabConfigSync.Request_Save();
   }
 

@@ -21,7 +21,7 @@ using ZdoWatcher;
 
 namespace ValheimVehicles.Components;
 
-public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interactable, IHoverableObj, IMechanismActionSetter, INetView
+public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interactable, IHoverableObj, IMechanismActionSetter, INetView, IPrefabConfig<MechanismSwitchCustomConfig>
 {
   // todo might be better to just run OnAnimatorIK in the fixed update loop.
   private List<Humanoid> m_localAnimatedHumanoids = new();
@@ -33,6 +33,8 @@ public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interac
   private int m_targetSwivelId = 0;
   private SwivelComponent? m_targetSwivel;
   public List<SwivelComponent> nearbySwivelComponents = new();
+  public MechanismSwitchConfigSync prefabConfigSync;
+  public MechanismSwitchCustomConfig Config => prefabConfigSync.Config;
 
   public SwivelComponent? TargetSwivel
   {
@@ -56,6 +58,7 @@ public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interac
   {
     base.Awake();
     m_nview = GetComponent<ZNetView>();
+    prefabConfigSync = gameObject.AddComponent<MechanismSwitchConfigSync>();
     _selectedMechanismAction = PrefabConfig.Mechanism_Switch_DefaultAction.Value;
   }
 
@@ -273,39 +276,13 @@ public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interac
       default:
         throw new ArgumentOutOfRangeException(nameof(action), action, null);
     }
-    SyncMechanismSwivelTargetId();
-    UpdateOrRPCMechanismAction();
+
+    prefabConfigSync.Save();
   }
   public void SetMechanismSwivel(SwivelComponent swivel)
   {
     TargetSwivel = swivel;
-  }
-
-  /// <summary>
-  /// To be called in Host via RPC or directly and will force a sync on all clients
-  /// </summary>
-  /// <param name="switchAction"></param>
-  public void SetMechanismAction(string switchAction)
-  {
-    if (!this.IsNetViewValid(out var netView) || !netView.IsOwner()) return;
-    netView.m_zdo.Set(VehicleZdoVars.ToggleSwitchAction, switchAction);
-    _safeRPCHandler?.InvokeRPC(ZRoutedRpc.Everybody, nameof(RPC_SyncMechanismAction));
-  }
-
-  /// <summary>
-  /// This must be run by the client that needs to update the switch
-  /// </summary>
-  public void UpdateOrRPCMechanismAction()
-  {
-    if (!this.IsNetViewValid(out var netView)) return;
-    if (netView.IsOwner())
-    {
-      SetMechanismAction(SelectedAction.ToString());
-    }
-    else
-    {
-      _safeRPCHandler?.InvokeRPC(ZRoutedRpc.Everybody, nameof(RPC_SetMechanismAction), SelectedAction.ToString());
-    }
+    prefabConfigSync.Save();
   }
 
   public MechanismAction GetActivationActionFromString(string activationActionString)
