@@ -27,6 +27,27 @@ namespace ValheimVehicles.Config
     public const string Key_OffsetY = "swivel_offsetY";
     public const string Key_OffsetZ = "swivel_offsetZ";
 
+    public int GetStableHashCode()
+    {
+      unchecked
+      {
+        var hash = 17;
+        hash = hash * 31 + Mode.GetHashCode();
+        hash = hash * 31 + InterpolationSpeed.GetHashCode();
+        hash = hash * 31 + MinTrackingRange.GetHashCode();
+        hash = hash * 31 + MaxTrackingRange.GetHashCode();
+        hash = hash * 31 + HingeAxes.GetHashCode();
+        hash = hash * 31 + MaxEuler.x.GetHashCode();
+        hash = hash * 31 + MaxEuler.y.GetHashCode();
+        hash = hash * 31 + MaxEuler.z.GetHashCode();
+        hash = hash * 31 + MovementOffset.x.GetHashCode();
+        hash = hash * 31 + MovementOffset.y.GetHashCode();
+        hash = hash * 31 + MovementOffset.z.GetHashCode();
+        hash = hash * 31 + MotionState.GetHashCode();
+        return hash;
+      }
+    }
+
     public void Serialize(ZPackage package)
     {
       package.Write((int)Mode);
@@ -72,7 +93,7 @@ namespace ValheimVehicles.Config
 
     public SwivelCustomConfig Load(ZDO zdo, ISwivelConfig configFromComponent)
     {
-      return new SwivelCustomConfig
+      var newConfig = new SwivelCustomConfig
       {
         Mode = (SwivelMode)zdo.GetInt(Key_Mode, (int)configFromComponent.Mode),
         InterpolationSpeed = zdo.GetFloat(Key_LerpSpeed, configFromComponent.InterpolationSpeed),
@@ -91,6 +112,10 @@ namespace ValheimVehicles.Config
         ),
         MotionState = (MotionState)zdo.GetInt(Key_MotionState, (int)configFromComponent.MotionState)
       };
+
+      LoggerProvider.LogDebug($"Loaded new config: Mode: {newConfig.Mode} \nMotionState: {newConfig.MotionState}");
+
+      return newConfig;
     }
 
     public void ApplyTo(ISwivelConfig component)
@@ -103,6 +128,8 @@ namespace ValheimVehicles.Config
       component.MaxEuler = MaxEuler;
       component.MovementOffset = MovementOffset;
       component.MotionState = MotionState;
+      LoggerProvider.LogDebug("SwivelConfig: ApplyingTo config");
+
     }
 
     public void ApplyFrom(ISwivelConfig component)
@@ -115,6 +142,8 @@ namespace ValheimVehicles.Config
       MaxEuler = component.MaxEuler;
       MovementOffset = component.MovementOffset;
       MotionState = component.MotionState;
+
+      LoggerProvider.LogDebug("SwivelConfig: ApplyingFrom config");
     }
 
     public SwivelMode Mode

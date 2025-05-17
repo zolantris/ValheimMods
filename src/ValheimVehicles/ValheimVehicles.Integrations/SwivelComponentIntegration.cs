@@ -53,8 +53,23 @@
     public SwivelConfigRPCSync prefabConfigSync;
     public SwivelCustomConfig Config => prefabConfigSync.Config;
     public ChildZSyncTransform childZsyncTransform;
+    public readonly SwivelMotionStateTracker motionTracker = new();
 
     public static bool CanAllClientsSync = true;
+
+    private int swivelId = 0;
+
+    public override int SwivelPersistentId
+    {
+      get
+      {
+        if (swivelId == 0)
+        {
+          swivelId = GetPersistentId();
+        }
+        return swivelId;
+      }
+    }
 
     public override void Awake()
     {
@@ -64,24 +79,60 @@
       {
         prefabConfigSync = gameObject.AddComponent<SwivelConfigRPCSync>();
       }
-      prefabConfigSync.SetComponentFromInstance(this);
 
       CanUpdate = false;
 
       m_nview = GetComponent<ZNetView>();
       // required for syncing the animated component across clients.
-      childZsyncTransform = animatedTransform.gameObject.AddComponent<ChildZSyncTransform>();
-      childZsyncTransform.m_syncPosition = true;
-      childZsyncTransform.m_syncRotation = true;
-      childZsyncTransform.m_syncBodyVelocity = true;
+      // childZsyncTransform = animatedTransform.gameObject.AddComponent<ChildZSyncTransform>();
+      // childZsyncTransform.m_syncPosition = true;
+      // childZsyncTransform.m_syncRotation = true;
+      // childZsyncTransform.m_syncBodyVelocity = true;
 
       SetupHoverFadeText();
 
       SetupPieceActivator();
     }
 
+    public override void SetMotionState(MotionState state)
+    {
+      // Call base first to update state
+      // base.SetMotionState(state);
+      if (!this.IsNetViewValid(out var netView))
+      {
+        return;
+      }
+
+      if (!netView.IsOwner())
+      {
+        Request_SetMotionState(state);
+      }
+      else
+      {
+        prefabConfigSync.Config.MotionState = state;
+        base.SetMotionState(state);
+        prefabConfigSync.Request_Load();
+      }
+
+      // Only record transitions that initiate movement
+      if (state is MotionState.ToTarget or MotionState.ToStart)
+      {
+        motionTracker.UpdateMotion(
+          animatedTransform.localPosition,
+          GetCurrentTargetPosition(),
+          animatedTransform.localRotation,
+          GetCurrentTargetRotation(),
+          computedInterpolationSpeed
+        );
+      }
+    }
+
+
     public MotionState GetNextMotionState()
     {
+      var previousState = MotionState;
+      prefabConfigSync.Load();
+      LoggerProvider.LogDebug("MotionState -> Previous: " + previousState.ToString() + " | Current: " + MotionState.ToString() + " |");
       switch (MotionState)
       {
         case MotionState.ToTarget:
@@ -98,8 +149,12 @@
 
     public override void Request_NextMotionState()
     {
-      var nextMotionState = GetNextMotionState();
-      prefabConfigSync.Request_NextMotionState(nextMotionState);
+      prefabConfigSync.Request_NextMotion();
+    }
+
+    public void Request_SetMotionState(MotionState state)
+    {
+      prefabConfigSync.Request_SetMotionState(state);
     }
 
     public void SetupHoverFadeText()
@@ -128,8 +183,8 @@
     /// </summary>
     private void OnMovementStateUpdate()
     {
-      if (!this.IsNetViewValid()) return;
-      prefabConfigSync.Request_NextMotionState(MotionState);
+      LoggerProvider.LogInfo("called OnMovementStateUpdate");
+      // prefabConfigSync.Request_NextMotion();
     }
 
     public void SetupPieceActivator()
@@ -167,7 +222,11 @@
           return;
         }
       }
-      base.FixedUpdate();
+      else
+      {
+        base.FixedUpdate();
+      }
+
       if (m_pieces.Count > 0)
       {
         m_hoverFadeText.FixedUpdate_UpdateText();
@@ -241,8 +300,9 @@
 
     public void Register() {}
 
-    public void OnDestroy()
+    protected override void OnDestroy()
     {
+      base.OnDestroy();
       StopAllCoroutines();
       Cleanup();
     }
@@ -383,7 +443,11 @@
 
     public int GetPersistentId()
     {
-      return PersistentIdHelper.GetPersistentIdFrom(m_nview, ref _persistentZdoId);
+      if (!this.IsNetViewValid(out var netView))
+      {
+        return 0;
+      }
+      return PersistentIdHelper.GetPersistentIdFrom(netView, ref _persistentZdoId);
     }
 
     public ZNetView? GetNetView()
@@ -423,7 +487,6 @@
     {
       try
       {
-
         if (netView == null) return false;
         var swivelController = netView.GetComponent<SwivelComponentIntegration>();
         if (swivelController == null)

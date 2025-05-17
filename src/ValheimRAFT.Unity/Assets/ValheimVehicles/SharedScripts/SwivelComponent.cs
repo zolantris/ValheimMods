@@ -85,7 +85,7 @@ namespace ValheimVehicles.SharedScripts
     private Rigidbody animatedRigidbody;
 
     [Description("This speed is computed with the base interpolation value to get a final interpolation.")]
-    private float computedInterpolationSpeed = 10f;
+    public float computedInterpolationSpeed = 10f;
 
     private Vector3 hingeEndEuler;
     private float hingeLerpProgress;
@@ -108,6 +108,7 @@ namespace ValheimVehicles.SharedScripts
     private Vector3 frozenLocalPos;
     private Quaternion frozenLocalRot;
     private bool isFrozen;
+    public virtual int SwivelPersistentId { get; set; }
 
     public virtual void Awake()
     {
@@ -153,6 +154,20 @@ namespace ValheimVehicles.SharedScripts
     protected virtual void OnDestroy()
     {
       Instances.Remove(this);
+    }
+
+    protected virtual Vector3 GetCurrentTargetPosition()
+    {
+      return currentMotionState == MotionState.ToTarget
+        ? startLocalPosition + movementOffset
+        : startLocalPosition;
+    }
+
+    protected virtual Quaternion GetCurrentTargetRotation()
+    {
+      return mode == SwivelMode.Rotate
+        ? CalculateRotationTarget()
+        : Quaternion.identity;
     }
 
     public virtual void FixedUpdate()
@@ -469,7 +484,12 @@ namespace ValheimVehicles.SharedScripts
       UpdateBasePowerConsumption();
       UpdatePowerConsumer();
     }
-    public void SetMotionState(MotionState state)
+
+    /// <summary>
+    /// Integration will override this to prevent it from being called directly if not the owner.
+    /// </summary>
+    /// <param name="state"></param>
+    public virtual void SetMotionState(MotionState state)
     {
       currentMotionState = state;
       UpdatePowerConsumer();

@@ -34,18 +34,21 @@ public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interac
     get;
     set;
   }
-  private int m_targetSwivelId = 0;
-  private SwivelComponent? m_targetSwivel;
   public List<SwivelComponent> nearbySwivelComponents = new();
   public MechanismSwitchConfigSync prefabConfigSync;
   public MechanismSwitchCustomConfig Config => prefabConfigSync.Config;
-  public IMechanismActionSetter mechanismAction;
   public static Vector3 detachOffset = new(0f, 0.5f, 0f);
 
   public SwivelComponent? TargetSwivel
   {
-    get => m_targetSwivel;
-    set => m_targetSwivel = value;
+    get;
+    set;
+  }
+
+  public int TargetSwivelId
+  {
+    get;
+    set;
   }
 
   public List<SwivelComponent> NearestSwivels
@@ -56,19 +59,26 @@ public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interac
 
   public float lerpedHandDistance = 0f;
 
-  /// <summary>
-  /// todo might make this only a getter.
-  /// </summary>
   public MechanismAction SelectedAction
   {
-    get => prefabConfigSync.Config.SelectedAction;
-    set => prefabConfigSync.Config.SelectedAction = value;
+    get => _selectedMechanismAction;
+    set
+    {
+      _selectedMechanismAction = value;
+      OnMechanismActionUpdate(_selectedMechanismAction);
+    }
+  }
+
+  public List<SwivelComponent> GetNearestSwivels()
+  {
+    SwivelHelpers.FindAllSwivelsWithinRange(transform.position, out var nearbySwivels);
+    NearestSwivels = nearbySwivels;
+    return nearbySwivels;
   }
 
   public override void Awake()
   {
     base.Awake();
-    mechanismAction = this;
     m_nview = GetComponent<ZNetView>();
     prefabConfigSync = gameObject.AddComponent<MechanismSwitchConfigSync>();
   }
@@ -88,18 +98,8 @@ public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interac
     {
       yield break;
     }
+    prefabConfigSync.Load();
     UpdateIntendedAction();
-  }
-
-  // Get the component from the ZdoWatcherController match of the persistent swivelId.
-  public bool TryFindTargetSwivelComponent()
-  {
-    if (m_targetSwivelId == 0) return false;
-    var targetSwivelNetview = ZdoWatchController.Instance.GetInstance(m_targetSwivelId);
-    if (targetSwivelNetview == null) return false;
-
-    m_targetSwivel = targetSwivelNetview.GetComponent<SwivelComponent>();
-    return true;
   }
 
   /// <summary>
@@ -107,7 +107,7 @@ public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interac
   /// </summary>
   public void UpdateIntendedAction()
   {
-    if (m_targetSwivelId == 0)
+    if (TargetSwivelId == 0)
     {
       prefabConfigSync.Load();
     }
@@ -117,7 +117,7 @@ public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interac
     {
       if (SelectedAction is MechanismAction.SwivelActivateMode or MechanismAction.SwivelEditMode)
       {
-        TryFindTargetSwivelComponent();
+        MechanismSwitchCustomConfig.ResolveSwivel(TargetSwivelId);
         return;
       }
 
@@ -125,9 +125,9 @@ public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interac
     }
 
     // for None status / new prefab
-    if (m_targetSwivelId == 0 && SwivelHelpers.FindAllSwivelsWithinRange(transform.position, out _, out var closestSwivel) && Vector3.Distance(transform.position, closestSwivel.transform.position) < 1f)
+    if (TargetSwivelId == 0 && SwivelHelpers.FindAllSwivelsWithinRange(transform.position, out _, out var closestSwivel) && Vector3.Distance(transform.position, closestSwivel.transform.position) < 1f)
     {
-      m_targetSwivel = closestSwivel;
+      TargetSwivel = closestSwivel;
       SetMechanismSwivel(closestSwivel);
       return;
     }
@@ -144,6 +144,7 @@ public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interac
       if (PrefabNames.IsVehicle(pieceController.ComponentName))
       {
         SetMechanismAction(MechanismAction.CommandsHud);
+        return;
       }
     }
 
@@ -189,12 +190,7 @@ public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interac
 
   public void SetMechanismAction(MechanismAction action)
   {
-    // bail on recursive setting of same action.
-    if (action.Equals(SelectedAction)) return;
-
-    SelectedAction = action;
-    OnMechanismActionUpdate(action);
-    prefabConfigSync.Save();
+    prefabConfigSync.Request_SetSelectedAction(action);
   }
 
   public void OnMechanismActionUpdate(MechanismAction action)
@@ -205,8 +201,8 @@ public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interac
       case MechanismAction.CommandsHud:
       case MechanismAction.CreativeMode:
       case MechanismAction.ColliderEditMode:
-        m_targetSwivel = null;
-        m_targetSwivelId = 0;
+        TargetSwivel = null;
+        TargetSwivelId = 0;
         break;
       case MechanismAction.SwivelEditMode:
       case MechanismAction.SwivelActivateMode:
@@ -223,10 +219,10 @@ public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interac
         throw new ArgumentOutOfRangeException(nameof(action), action, null);
     }
 
-    if (MechanismSelectorPanelIntegration.Instance != null && MechanismSelectorPanelIntegration.Instance.mechanismAction == mechanismAction)
+    if (MechanismSelectorPanelIntegration.Instance != null && MechanismSelectorPanelIntegration.Instance.mechanismAction != null && MechanismSelectorPanelIntegration.Instance.mechanismAction.gameObject == gameObject)
     {
       MechanismSelectorPanelIntegration.Instance.SelectedAction = action;
-      MechanismSelectorPanelIntegration.Instance.SelectedSwivel = m_targetSwivel;
+      MechanismSelectorPanelIntegration.Instance.SelectedSwivel = TargetSwivel;
     }
   }
 
@@ -236,7 +232,13 @@ public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interac
   /// <param name="swivel"></param>
   public void SetMechanismSwivel(SwivelComponent swivel)
   {
-    prefabConfigSync.Request_SetSwivelTargetId(swivel);
+    // must be set before apply from
+    // TargetSwivel = swivel;
+    // if (TargetSwivelId == 0)
+    // {
+    //   TargetSwivel = null;
+    // }
+    prefabConfigSync.Request_SetSwivelTargetId(swivel.SwivelPersistentId);
   }
 
   // public MechanismAction GetActivationActionFromString(string activationActionString)
@@ -331,8 +333,9 @@ public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interac
 
   public void TriggerSwivelPanel()
   {
-    if (!TargetSwivel && !SwivelHelpers.FindAllSwivelsWithinRange(transform.position, out nearbySwivelComponents, out m_targetSwivel))
+    if (!TargetSwivel && !SwivelHelpers.FindAllSwivelsWithinRange(transform.position, out nearbySwivelComponents, out var swivelComponent))
     {
+      TargetSwivel = swivelComponent;
       return;
     }
     if (!SwivelUIPanelComponentIntegration.Instance)
@@ -351,24 +354,34 @@ public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interac
 
   public void TriggerSwivelAction()
   {
-    if (!m_targetSwivel)
+    if (!TargetSwivel)
     {
-      if (m_targetSwivelId == 0)
+      if (TargetSwivelId == 0)
       {
         if (nearbySwivelComponents.Count > 0)
         {
-          m_targetSwivel = nearbySwivelComponents[0];
+          TargetSwivel = nearbySwivelComponents[0];
         }
         else if (SwivelHelpers.FindAllSwivelsWithinRange(transform.position, out nearbySwivelComponents))
         {
-          m_targetSwivel = nearbySwivelComponents[0];
+          TargetSwivel = nearbySwivelComponents[0];
         }
+      }
+      else
+      {
+        TargetSwivel = MechanismSwitchCustomConfig.ResolveSwivel(TargetSwivelId);
+        if (!TargetSwivel)
+        {
+          LoggerProvider.LogMessage($"Swivel with id {TargetSwivelId} not found. Resetting mechanism settings");
+          prefabConfigSync.Request_ClearSwivelId();
+        }
+        return;
       }
     }
 
-    if (m_targetSwivel != null)
+    if (TargetSwivel != null)
     {
-      m_targetSwivel.Request_NextMotionState();
+      TargetSwivel.Request_NextMotionState();
     }
     else
     {
@@ -407,8 +420,8 @@ public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interac
     if (!MechanismSelectorPanelIntegration.Instance)
     {
       MechanismSelectorPanelIntegration.Init();
-      if (!MechanismSelectorPanelIntegration.Instance) return;
     }
+    if (!MechanismSelectorPanelIntegration.Instance) return;
     MechanismSelectorPanelIntegration.Instance.BindTo(this, true);
   }
 
@@ -455,13 +468,13 @@ public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interac
   public string GetHoverText()
   {
     var message = $"{ModTranslations.MechanismSwitch_CurrentActionString} {GetLocalizedActionText(SelectedAction)}\n{ModTranslations.MechanismSwitch_AltActionString}";
-    if ((SelectedAction == MechanismAction.SwivelActivateMode || SelectedAction == MechanismAction.SwivelEditMode) && !m_targetSwivel)
+    if ((SelectedAction == MechanismAction.SwivelActivateMode || SelectedAction == MechanismAction.SwivelEditMode) && !TargetSwivel)
     {
       message += $"\n{ModTranslations.NoMechanismNearby}";
     }
-    if (SelectedAction == MechanismAction.SwivelActivateMode && m_targetSwivel && m_targetSwivel.swivelPowerConsumer)
+    if (SelectedAction == MechanismAction.SwivelActivateMode && TargetSwivel && TargetSwivel.swivelPowerConsumer)
     {
-      message += PowerNetworkController.GetNetworkPowerStatusString(m_targetSwivel.swivelPowerConsumer.NetworkId);
+      message += PowerNetworkController.GetNetworkPowerStatusString(TargetSwivel.swivelPowerConsumer.NetworkId);
     }
     return message;
   }

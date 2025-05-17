@@ -81,11 +81,13 @@ namespace ValheimVehicles.SharedScripts
     public static string PowerPylon_NetworkInformation_Hide = null!;
 
 
+    public static string PowerSource_Message_AddedFromPlayer = null!;
+    public static string PowerSource_Message_AddedFromContainer = null!;
+
     public static string PowerSource_Interact_AddOne = null!;
     public static string PowerSource_Interact_AddMany = null!;
     public static string PowerSource_FuelNameEitr = null!;
     public static string PowerSource_NotEnoughFuel = null!;
-    public static string Interact_AddedFromContainer = null!;
 
     // full text string. This is computed from a few values.
     public static string Swivel_HoverText = null!;

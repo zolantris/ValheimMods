@@ -55,52 +55,65 @@ public class PowerHoverComponent : MonoBehaviour, Hoverable, Interactable
 
   public bool TryAddFuel(Humanoid user, int amountToAdd)
   {
-#if DEBUG
     if (Time.fixedTime > _lastSearchTime + _NearbyChestSearchDebounce)
     {
       _lastSearchTime = Time.fixedTime;
       UpdateNearbyChests();
     }
-    var originalAmount = amountToAdd;
+    var message = "";
+    var originalAmountToAddForPlayer = amountToAdd;
     if (!user.IsPlayer()) return false;
     var player = user.GetComponent<Player>();
 
-    if (_NearByContainers.Count > 0)
+    var playerInventory = player.GetInventory();
+    var playerFuelItems = playerInventory.CountItemsByName([EitrInventoryItem_TokenId]);
+    if (playerFuelItems < amountToAdd)
     {
-      foreach (var nearByContainer in _NearByContainers)
+      if (_NearByContainers.Count > 0)
       {
-        if (amountToAdd <= 0) break;
-        var inventory = nearByContainer.GetInventory();
-        if (inventory == null) continue;
-        var quantity = inventory.CountItems(EitrInventoryItem_TokenId);
-        if (quantity > 0)
+        var originalAmountForContainers = amountToAdd;
+        foreach (var nearByContainer in _NearByContainers)
         {
-          var itemsToUse = Mathf.Min(quantity, amountToAdd);
-          amountToAdd -= itemsToUse;
-          inventory.RemoveItem(EitrInventoryItem_TokenId, itemsToUse);
-          _powerSourceComponent.AddFuelOrRPC(itemsToUse);
+          if (amountToAdd <= 0) break;
+          var inventory = nearByContainer.GetInventory();
+          if (inventory == null) continue;
+          var quantity = inventory.CountItems(EitrInventoryItem_TokenId);
+          if (quantity > 0)
+          {
+            var itemsToUse = Mathf.Min(quantity, amountToAdd);
+            amountToAdd -= itemsToUse;
+            inventory.RemoveItem(EitrInventoryItem_TokenId, itemsToUse);
+            _powerSourceComponent.AddFuelOrRPC(itemsToUse);
+          }
+        }
+        if (amountToAdd != originalAmountForContainers)
+        {
+          message += $"{ModTranslations.PowerSource_Message_AddedFromContainer} ({originalAmountForContainers - amountToAdd}) ({ModTranslations.PowerSource_FuelNameEitr})";
+        }
+        if (amountToAdd < 0)
+        {
+          player.Message(MessageHud.MessageType.TopLeft, message);
+          return true;
         }
       }
-      if (amountToAdd < 0)
+
+
+      if (amountToAdd > 0 && playerFuelItems < amountToAdd)
       {
-        player.Message(MessageHud.MessageType.Center, $"{ModTranslations.Interact_AddedFromContainer} ({originalAmount}) ({ModTranslations.PowerSource_FuelNameEitr})");
-        return true;
+        player.Message(MessageHud.MessageType.Center, $"{ModTranslations.PowerSource_NotEnoughFuel} \n({ModTranslations.PowerSource_FuelNameEitr})");
+        return false;
       }
     }
-#endif
-    var playerInventory = player.GetInventory();
-    var items = playerInventory.CountItemsByName([EitrInventoryItem_TokenId]);
-    if (items < amountToAdd)
-    {
-      player.Message(MessageHud.MessageType.Center, $"{ModTranslations.PowerSource_NotEnoughFuel} \n({ModTranslations.PowerSource_FuelNameEitr})");
-      return false;
-    }
+
+
 
     try
     {
+      message += $"{ModTranslations.PowerSource_Message_AddedFromPlayer} ({originalAmountToAddForPlayer}) \n({ModTranslations.PowerSource_FuelNameEitr})";
 
       playerInventory.RemoveItem(EitrInventoryItem_TokenId, amountToAdd);
       _powerSourceComponent.AddFuelOrRPC(amountToAdd);
+      player.Message(MessageHud.MessageType.TopLeft, message);
     }
     catch (Exception e)
     {
@@ -153,6 +166,7 @@ public class PowerHoverComponent : MonoBehaviour, Hoverable, Interactable
     if (HasPowerSource)
     {
       outString += $"Power Source: {MathUtils.RoundToHundredth(_powerSourceComponent.GetFuelLevel())}/{_powerSourceComponent.GetFuelCapacity()}\n";
+      outString += $"{ModTranslations.PowerSource_Interact_AddOne}\n{ModTranslations.PowerSource_Interact_AddMany}";
     }
     if (HasPowerStorage)
     {

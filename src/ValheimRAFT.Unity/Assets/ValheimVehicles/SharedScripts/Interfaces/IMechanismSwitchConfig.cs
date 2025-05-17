@@ -7,5 +7,6 @@ namespace ValheimVehicles.SharedScripts.Interfaces
   {
     MechanismAction SelectedAction { get; set; }
     SwivelComponent? TargetSwivel { get; set; }
+    int TargetSwivelId { get; set; }
   }
 }

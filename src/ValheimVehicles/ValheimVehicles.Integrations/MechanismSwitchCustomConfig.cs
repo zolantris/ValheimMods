@@ -13,25 +13,36 @@ using ZdoWatcher;
 
 namespace ValheimVehicles.Config
 {
-  public class MechanismSwitchCustomConfig : ISerializableConfig<MechanismSwitchCustomConfig, IMechanismSwitchConfig>, IPrefabConfig<MechanismSwitchCustomConfig>
+  public class MechanismSwitchCustomConfig : ISerializableConfig<MechanismSwitchCustomConfig, IMechanismSwitchConfig>, IPrefabConfig<MechanismSwitchCustomConfig>, IMechanismSwitchConfig
   {
     public MechanismAction SelectedAction = MechanismAction.None;
-    public int SwivelTargetId = 0;
-
+    public int TargetSwivelId = 0;
     public MechanismSwitchCustomConfig Config => this;
 
     public void ApplyFrom(IMechanismSwitchConfig component)
     {
       SelectedAction = component.SelectedAction;
-      SwivelTargetId = component.TargetSwivel != null && component.TargetSwivel.TryGetComponent(out ZNetView view) && view.GetZDO() != null
+      TargetSwivelId = component.TargetSwivel != null && component.TargetSwivel.TryGetComponent(out ZNetView view) && view.GetZDO() != null
         ? ZdoWatchController.Instance.GetOrCreatePersistentID(view.GetZDO())
         : 0;
+    }
+
+    public int GetStableHashCode()
+    {
+      unchecked
+      {
+        var hash = 17;
+        hash = hash * 31 + SelectedAction.GetHashCode();
+        hash = hash * 31 + TargetSwivelId;
+        return hash;
+      }
     }
 
     public void ApplyTo(IMechanismSwitchConfig component)
     {
       component.SelectedAction = SelectedAction;
-      component.TargetSwivel = ResolveSwivel(SwivelTargetId);
+      component.TargetSwivelId = TargetSwivelId;
+      component.TargetSwivel = ResolveSwivel(TargetSwivelId);
     }
 
     public MechanismSwitchCustomConfig Load(ZDO zdo, IMechanismSwitchConfig component)
@@ -39,20 +50,20 @@ namespace ValheimVehicles.Config
       return new MechanismSwitchCustomConfig
       {
         SelectedAction = ParseAction(zdo.GetString(VehicleZdoVars.ToggleSwitchAction, nameof(MechanismAction.CommandsHud))),
-        SwivelTargetId = zdo.GetInt(VehicleZdoVars.Mechanism_Swivel_TargetId, 0)
+        TargetSwivelId = zdo.GetInt(VehicleZdoVars.Mechanism_Swivel_TargetId, 0)
       };
     }
 
     public void Save(ZDO zdo, MechanismSwitchCustomConfig config)
     {
       zdo.Set(VehicleZdoVars.ToggleSwitchAction, config.SelectedAction.ToString());
-      zdo.Set(VehicleZdoVars.Mechanism_Swivel_TargetId, config.SwivelTargetId);
+      zdo.Set(VehicleZdoVars.Mechanism_Swivel_TargetId, config.TargetSwivelId);
     }
 
     public void Serialize(ZPackage pkg)
     {
       pkg.Write((int)SelectedAction);
-      pkg.Write(SwivelTargetId);
+      pkg.Write(TargetSwivelId);
     }
 
     public MechanismSwitchCustomConfig Deserialize(ZPackage pkg)
@@ -60,11 +71,11 @@ namespace ValheimVehicles.Config
       return new MechanismSwitchCustomConfig
       {
         SelectedAction = (MechanismAction)pkg.ReadInt(),
-        SwivelTargetId = pkg.ReadInt()
+        TargetSwivelId = pkg.ReadInt()
       };
     }
 
-    private static SwivelComponent? ResolveSwivel(int id)
+    public static SwivelComponent? ResolveSwivel(int id)
     {
       var netView = ZdoWatchController.Instance.GetInstance(id);
       return netView ? netView.GetComponent<SwivelComponent>() : null;
@@ -73,6 +84,26 @@ namespace ValheimVehicles.Config
     private static MechanismAction ParseAction(string actionString)
     {
       return Enum.TryParse(actionString, out MechanismAction result) ? result : MechanismAction.CommandsHud;
+    }
+
+    MechanismAction IMechanismSwitchConfig.SelectedAction
+    {
+      get => SelectedAction;
+      set => SelectedAction = value;
+    }
+
+    int IMechanismSwitchConfig.TargetSwivelId
+    {
+      get => TargetSwivelId;
+      set => TargetSwivelId = value;
+    }
+
+    SwivelComponent? IMechanismSwitchConfig.TargetSwivel
+    {
+      get => ResolveSwivel(TargetSwivelId); // optional caching if needed
+      set => TargetSwivelId = value != null && value.TryGetComponent(out ZNetView view) && view.GetZDO() != null
+        ? ZdoWatchController.Instance.GetOrCreatePersistentID(view.GetZDO())
+        : 0;
     }
   }
 }

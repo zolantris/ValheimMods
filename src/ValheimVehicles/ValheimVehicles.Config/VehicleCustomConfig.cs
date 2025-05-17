@@ -36,6 +36,23 @@ public class VehicleCustomConfig : ISerializableConfig<VehicleCustomConfig, IVeh
   // todo support custom variant
   // private float _vehicleVariant;
 
+
+  public int GetStableHashCode()
+  {
+    unchecked
+    {
+      var hash = 17;
+      hash = hash * 31 + Version.GetHashCode();
+      hash = hash * 31 + TreadDistance.GetHashCode();
+      hash = hash * 31 + TreadHeight.GetHashCode();
+      hash = hash * 31 + TreadScaleX.GetHashCode();
+      hash = hash * 31 + HasCustomFloatationHeight.GetHashCode();
+      hash = hash * 31 + CustomFloatationHeight.GetHashCode();
+      hash = hash * 31 + CenterOfMassOffset.GetHashCode();
+      return hash;
+    }
+  }
+
   // Properties
   public string Version
   {

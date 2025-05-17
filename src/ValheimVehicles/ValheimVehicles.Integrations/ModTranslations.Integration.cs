@@ -99,7 +99,7 @@ public partial class ModTranslations
     MechanismMode_None = SafeLocalize("$valheim_vehicles_mechanism_mode_none");
     MechanismSwitch_CurrentActionString = SafeLocalize(
       "[<color=yellow><b>$KEY_Use</b></color>] $valheim_vehicles_activate");
-    MechanismSwitch_AltActionString = SafeLocalize("[<color=yellow><b>$KEY_AltPlace $KEY_Use</b></color>] $valheim_vehicles_mechanism_mode_configure");
+    MechanismSwitch_AltActionString = SafeLocalize("[<color=yellow><b>$KEY_AltPlace + $KEY_Use</b></color>] $valheim_vehicles_mechanism_mode_configure");
   }
 
   private static void UpdateGuiEditMenuTranslations()
@@ -206,12 +206,16 @@ public partial class ModTranslations
     PowerPylon_NetworkInformation_Hide = SafeLocalize("[<color=yellow><b>$KEY_Use</b></color>] $valheim_vehicles_mechanism_show_network_data");
 
 
-    PowerSource_Interact_AddOne = SafeLocalize("[<color=yellow><b>$KEY_Use</b></color>] $valheim_vehicles_mechanism_show_network_data");
-    PowerSource_Interact_AddMany = SafeLocalize("[<color=yellow><b>$KEY_AltPlace $KEY_Use</b></color>] $valheim_vehicles_mechanism_show_network_data");
+    PowerSource_Interact_AddOne = SafeLocalize("[<color=yellow><b>$KEY_Use</b></color>] $valheim_vehicles_mechanism_interact_add_one");
+    PowerSource_Interact_AddMany = SafeLocalize("[<color=yellow><b>$KEY_AltPlace + $KEY_Use</b></color>] $valheim_vehicles_mechanism_interact_add_many");
+
 
     PowerSource_NotEnoughFuel = SafeLocalize("$valheim_vehicles_mechanism_not_enough_fuel_in_inventory");
     PowerSource_FuelNameEitr = SafeLocalize("$valheim_vehicles_mechanism_fuel_name_eitr");
-    Interact_AddedFromContainer = SafeLocalize("$valheim_vehicles_mechanism_added_from_container");
+
+    PowerSource_Message_AddedFromContainer = SafeLocalize("$valheim_vehicles_mechanism_added_from_container");
+
+    PowerSource_Message_AddedFromPlayer = SafeLocalize("$valheim_vehicles_mechanism_added_from_container");
   }
 
   public static void ForceUpdateTranslations()

@@ -2516,7 +2516,7 @@
       var isVehicleUsingCustomFloatation = Manager.VehicleConfigSync.GetWaterFloatationHeightMode() == VehicleFloatationMode.Custom;
       var nextState = !isVehicleUsingCustomFloatation;
 
-      Manager.VehicleConfigSync.SendSyncFloatationMode(nextState, prefab.transform.localPosition.y);
+      Manager.VehicleConfigSync.Request_SyncFloatationMode(nextState, prefab.transform.localPosition.y);
 
       var stateText = nextState ? ModTranslations.EnabledText : ModTranslations.DisabledText;
 

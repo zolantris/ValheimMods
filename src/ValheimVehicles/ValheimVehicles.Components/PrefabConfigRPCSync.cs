@@ -34,6 +34,7 @@ public class PrefabConfigRPCSync<T, TComponentInterface> : MonoBehaviour, IPrefa
     if (ZNetView.m_forceDisableInit) return;
     retryGuard = new RetryGuard(this);
     m_nview = GetComponent<ZNetView>();
+    controller = GetComponent<TComponentInterface>();
     InitRPCHandler();
   }
 
@@ -71,59 +72,15 @@ public class PrefabConfigRPCSync<T, TComponentInterface> : MonoBehaviour, IPrefa
     rpcHandler = new SafeRPCHandler(m_nview);
   }
 
-  public void RPC_Save(long sender, ZPackage package)
-  {
-    try
-    {
-      var localConfig = CustomConfig.Deserialize(package);
-      CustomConfig = localConfig;
-      Owner_Save();
-    }
-    catch (Exception ex)
-    {
-      LoggerProvider.LogError($"Failed to deserialize {typeof(T).Name} config: {ex}");
-    }
-  }
-
-  public void Save()
-  {
-    if (!HasInitLoaded) return;
-    Request_Save();
-  }
-
-  /// <summary>
-  /// Sends an RPC from client.
-  /// </summary>
-  public void Request_Save()
+  /// Only allowed to be called by the owner/server
+  public void CommitConfigChange(T newConfig)
   {
     if (!this.IsNetViewValid(out var netView)) return;
-
-    // Owners do not have to RPC to self. They can save the data then fire RPC_Load instead.
-    if (netView.IsOwner())
-    {
-      Owner_Save();
-    }
-    else
-    {
-      var package = new ZPackage();
-      CustomConfig.Serialize(package);
-      netView.InvokeRPC(ZRoutedRpc.Everybody, nameof(RPC_Save), package);
-    }
-  }
-
-  /// <summary>
-  /// Must always trigger Load RPC otherwise Save client is accurate but other clients de-sync
-  /// </summary>
-  public void Owner_Save()
-  {
-    if (!this.IsNetViewValid(out var netView)) return;
+    if (!netView.IsOwner() && !ZNet.instance.IsServer()) return;
     LoggerProvider.LogDebug($"Received config for {typeof(T).Name}");
 
-    if (!netView.HasOwner() || netView.IsOwner())
-    {
-      CustomConfig.Save(netView.GetZDO(), CustomConfig);
-    }
-
+    CustomConfig = newConfig;
+    CustomConfig.Save(netView.GetZDO(), CustomConfig);
     netView.InvokeRPC(ZRoutedRpc.Everybody, nameof(RPC_Load));
   }
 
@@ -181,6 +138,8 @@ public class PrefabConfigRPCSync<T, TComponentInterface> : MonoBehaviour, IPrefa
     // very important. This sets the values from Config to the actual component.
     CustomConfig.ApplyTo(controller);
 
+    LoggerProvider.LogDebug($"Loaded config for {typeof(T).Name}");
+
     if (_prefabSyncRoutine != null)
     {
       StopCoroutine(_prefabSyncRoutine);
@@ -193,10 +152,34 @@ public class PrefabConfigRPCSync<T, TComponentInterface> : MonoBehaviour, IPrefa
     }
   }
 
+  public void RequestCommitConfigChange(T newConfig)
+  {
+    if (!this.IsNetViewValid(out var netView)) return;
+    if (netView.IsOwner())
+    {
+      CommitConfigChange(newConfig);
+    }
+    else
+    {
+      var pkg = new ZPackage();
+      newConfig.Serialize(pkg);
+      netView.InvokeRPC(netView.GetZDO().GetOwner(), nameof(RPC_CommitConfigChange), pkg);
+    }
+  }
+
+  private void RPC_CommitConfigChange(long sender, ZPackage pkg)
+  {
+    if (!this.IsNetViewValid(out var netView)) return;
+    if (!netView.IsOwner()) return;
+    var newConfig = new T();
+    newConfig.Deserialize(pkg);
+    CommitConfigChange(newConfig);
+  }
+
   public virtual void RegisterRPCListeners()
   {
-    rpcHandler?.Register<ZPackage>(nameof(RPC_Save), RPC_Save);
     rpcHandler?.Register(nameof(RPC_Load), RPC_Load);
+    rpcHandler?.Register<ZPackage>(nameof(RPC_CommitConfigChange), RPC_CommitConfigChange);
   }
 
   public virtual void UnregisterRPCListeners()

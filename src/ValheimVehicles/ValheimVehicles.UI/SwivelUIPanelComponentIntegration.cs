@@ -50,9 +50,9 @@ public class SwivelUIPanelComponentIntegration : SwivelUIPanelComponent
 
   public void TryGetCurrentSwivelIntegration()
   {
-    if (!_currentSwivel && Player.m_localPlayer && !SwivelHelpers.FindAllSwivelsWithinRange(transform.position, out _, out _currentSwivel))
+    if (!_currentSwivel && Player.m_localPlayer)
     {
-      return;
+      SwivelHelpers.FindAllSwivelsWithinRange(transform.position, out _, out _currentSwivel);
     }
   }
 
@@ -73,10 +73,11 @@ public class SwivelUIPanelComponentIntegration : SwivelUIPanelComponent
   {
     TryGetCurrentSwivelIntegration();
     var swivelComponentIntegration = _currentSwivel as SwivelComponentIntegration;
-    if (!swivelComponentIntegration || !swivelComponentIntegration.m_nview || !swivelComponentIntegration.m_nview.IsValid()) return;
-    swivelComponentIntegration.Config.ApplyFrom(swivelComponentIntegration);
-    swivelComponentIntegration.Config.Save(swivelComponentIntegration.m_nview.m_zdo, swivelComponentIntegration.Config);
-    swivelComponentIntegration.prefabConfigSync.Request_Save();
+    if (!swivelComponentIntegration || !swivelComponentIntegration.IsNetViewValid()) return;
+
+    var config = new SwivelCustomConfig();
+    config.ApplyFrom(swivelComponentIntegration);
+    swivelComponentIntegration.prefabConfigSync.RequestCommitConfigChange(config);
   }
 
   private const string PanelName = "ValheimVehicles_SwivelPanel";

@@ -6,5 +6,4 @@ namespace ValheimVehicles.Interfaces;
 public interface IPrefabConfigActions
 {
   internal void Load(bool forceUpdate = false);
-  public void Save();
 }

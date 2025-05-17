@@ -190,7 +190,7 @@ namespace ValheimVehicles.SharedScripts.UI
       var scrollViewport = SwivelUIHelpers.CreateViewport(scrollGo.transform, viewStyles, true);
       var scrollViewContent = SwivelUIHelpers.CreateContent("Content", scrollViewport.transform, viewStyles, null, null);
       layoutParent = scrollViewContent.transform;
-      scrollRect.content = scrollViewContent;
+      scrollRect.content = scrollViewContent.GetComponent<RectTransform>();
 
       var layout = scrollRect.gameObject.AddComponent<LayoutElement>();
       layout.flexibleHeight = 800f;
