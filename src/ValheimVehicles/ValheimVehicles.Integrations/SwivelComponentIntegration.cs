@@ -94,37 +94,36 @@
       SetupPieceActivator();
     }
 
+
     public override void SetMotionState(MotionState state)
     {
-      // Call base first to update state
-      // base.SetMotionState(state);
-      if (!this.IsNetViewValid(out var netView))
+      if (prefabConfigSync.IsBroadcastSuppressed)
       {
+        base.SetMotionState(state);
         return;
       }
-      var currentState = MotionState;
 
+      if (!this.IsNetViewValid(out var netView))
+        return;
+
+      var currentState = MotionState;
       if (state == currentState)
       {
-        LoggerProvider.LogDebug("Bailing. Infinite loop detected in SetMotionState");
+        LoggerProvider.LogDebug("[Swivel] SetMotionState called with same state. Ignoring.");
         return;
       }
 
       if (!netView.IsOwner())
       {
         Request_SetMotionState(state);
-      }
-      else
-      {
-        prefabConfigSync.Config.MotionState = state;
-        if (state != currentState)
-        {
-          base.SetMotionState(state);
-          Request_SetMotionState(state);
-        }
+        return;
       }
 
-      // Only record transitions that initiate movement
+      prefabConfigSync.Config.MotionState = state;
+      base.SetMotionState(state);
+
+      Request_SetMotionState(state);
+
       if (state is MotionState.ToTarget or MotionState.ToStart)
       {
         motionTracker.UpdateMotion(

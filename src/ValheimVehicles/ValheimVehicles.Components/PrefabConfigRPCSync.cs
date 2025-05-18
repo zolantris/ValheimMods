@@ -16,8 +16,9 @@ public class PrefabConfigRPCSync<T, TComponentInterface> : MonoBehaviour, IPrefa
   private T? m_configCache = default;
 
   public bool HasInitLoaded;
-
+  public bool _suppressMotionStateBroadcast = false;
   public bool hasRegisteredRPCListeners { get; set; }
+  public bool IsBroadcastSuppressed => _suppressMotionStateBroadcast;
 
   private T CustomConfig { get; set; } = new();
   public T Config => CustomConfig;
@@ -136,7 +137,10 @@ public class PrefabConfigRPCSync<T, TComponentInterface> : MonoBehaviour, IPrefa
     CustomConfig = CustomConfig.Load(netView.GetZDO(), controller);
 
     // very important. This sets the values from Config to the actual component.
-    CustomConfig.ApplyTo(controller);
+    SuppressConfigSync(() =>
+    {
+      CustomConfig.ApplyTo(controller);
+    });
 
     LoggerProvider.LogDebug($"Loaded config for {typeof(T).Name}");
 
@@ -185,5 +189,12 @@ public class PrefabConfigRPCSync<T, TComponentInterface> : MonoBehaviour, IPrefa
   public virtual void UnregisterRPCListeners()
   {
     rpcHandler?.UnregisterAll();
+  }
+
+  public void SuppressConfigSync(Action apply)
+  {
+    _suppressMotionStateBroadcast = true;
+    try { apply(); }
+    finally { _suppressMotionStateBroadcast = false; }
   }
 }

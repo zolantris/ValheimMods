@@ -4,6 +4,7 @@
 #region
 
 using UnityEngine;
+using ValheimVehicles.Integrations;
 using ValheimVehicles.Interfaces;
 using ValheimVehicles.SharedScripts;
 using ValheimVehicles.SharedScripts.UI;
@@ -128,8 +129,7 @@ namespace ValheimVehicles.Config
       component.MaxEuler = MaxEuler;
       component.MovementOffset = MovementOffset;
       component.MotionState = MotionState;
-      LoggerProvider.LogDebug("SwivelConfig: ApplyingTo config");
-
+      LoggerProvider.LogDebug("SwivelConfig: ApplyTo completed");
     }
 
     public void ApplyFrom(ISwivelConfig component)

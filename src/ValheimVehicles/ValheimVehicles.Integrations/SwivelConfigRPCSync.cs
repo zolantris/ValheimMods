@@ -69,6 +69,23 @@ public class SwivelConfigRPCSync : PrefabConfigRPCSync<SwivelCustomConfig, ISwiv
       return;
     }
 
+    if (ZNet.instance.IsDedicated())
+    {
+      LoggerProvider.LogDebug("WE ARE A DEDICATED SERVER and get logs. YAY");
+    }
+    else if (ZNet.instance.IsServer())
+    {
+      LoggerProvider.LogDebug("WE ARE A SERVER and get logs. YAY");
+    }
+
+
+    // if (!ZNet.instance.IsServer())
+    // {
+    //   LoggerProvider.LogWarning("Desync detected on client. Resending full config.");
+    //   netView.InvokeRPC(sender, nameof(RPC_Load));
+    //   return;
+    // }
+
     LoggerProvider.LogDebug($"Server has currently has MotionState: <{Config.MotionState}>");
 
     // Valid and expected: apply to real config
