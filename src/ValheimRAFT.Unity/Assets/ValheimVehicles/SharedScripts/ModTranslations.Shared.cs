@@ -129,6 +129,19 @@ namespace ValheimVehicles.SharedScripts
     public static string SwivelMode_TargetEnemy = null!;
     public static string SwivelMode_TargetWind = null!;
 
+    public static string VehicleCommand_RaftCreative;
+    public static string VehicleCommand_SaveVehicle;
+    public static string VehicleCommand_OpenSelector;
+    public static string VehicleCommand_SpawnSelected;
+    public static string VehicleCommand_ZeroRotation;
+    public static string VehicleCommand_ToggleMaskEditor;
+    public static string VehicleCommand_ToggleOceanSway;
+    public static string VehicleCommand_RebuildBounds;
+    public static string VehicleCommand_HullDebugger;
+    public static string VehicleCommand_PhysicsDebugger;
+    public static string VehicleCommand_DestroyVehicle;
+    public static string VehicleCommand_ConfigPanel;
+
     public static string WithBoldText(string text, string color = "white")
     {
       return $"<color={color}><b>{text}</b></color>";
