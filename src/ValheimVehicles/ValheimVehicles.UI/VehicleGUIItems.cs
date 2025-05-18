@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using ValheimVehicles.Components;
 using ValheimVehicles.ConsoleCommands;
 using ValheimVehicles.Controllers;
+using ValheimVehicles.SharedScripts;
 using ValheimVehicles.Structs;
 namespace ValheimVehicles.UI;
 
@@ -31,18 +32,17 @@ public static class VehicleGUIItems
   [
     new()
     {
-      title = "Raft Creative",
+      title = ModTranslations.Swivel_Name ?? "Raft Creative",
       OnButtonPress = VehicleCommands.ToggleCreativeMode
     },
     new()
     {
-      title = "Save Vehicle",
+      title = ModTranslations.Swivel_Save ?? "Save Vehicle",
       OnButtonPress = VehicleStorageController.SaveClosestVehicle
     },
     new()
     {
-      title = "Open Save Vehicle Selector",
-      // action = VehicleGui.OpenVehicleSelectorGUi,
+      title = ModTranslations.Swivel_Saved ?? "Open Save Vehicle Selector",
       inputType = InputType.Dropdown,
       OnCreateDropdown = (dropdown) =>
       {
@@ -50,17 +50,16 @@ public static class VehicleGUIItems
         VehicleStorageController.RefreshVehicleSelectionGui(dropdown);
       },
       OnDropdownChanged = VehicleGui.VehicleSelectOnDropdownChanged
-      // OnPointerEnterAction = VehicleStorageAPI.RefreshVehicleSelectionGui
     },
     new()
     {
-      title = "[Admin] Spawn Selected Vehicle",
+      title = ModTranslations.PowerPylon_NetworkInformation_Show ?? "[Admin] Spawn Selected Vehicle",
       OnButtonPress = VehicleStorageController.SpawnSelectedVehicle,
       IsAdminOnly = true
     },
     new()
     {
-      title = "Zero Ship Rotation X/Z",
+      title = ModTranslations.SwivelMode_Rotate ?? "Zero Ship Rotation X/Z",
       OnButtonPress = () =>
       {
         var onboardHelpers = VehicleDebugHelpers.GetOnboardVehicleDebugHelper();
@@ -69,17 +68,17 @@ public static class VehicleGUIItems
     },
     new()
     {
-      title = "Toggle WaterMask Editor",
+      title = ModTranslations.MechanismSwitch_MaskColliderEditMode ?? "Toggle WaterMask Editor",
       OnButtonPress = VehicleCommands.ToggleColliderEditMode
     },
     new()
     {
-      title = "Toggle Ocean Sway",
+      title = ModTranslations.SwivelMode_TargetWind ?? "Toggle Ocean Sway",
       OnButtonPress = VehicleCommands.VehicleToggleOceanSway
     },
     new()
     {
-      title = "Rebuild Bounds",
+      title = ModTranslations.PowerState_ConnectToGrid ?? "Rebuild Bounds",
       IsAdminOnly = true,
       OnButtonPress = () =>
       {
@@ -91,23 +90,23 @@ public static class VehicleGUIItems
     },
     new()
     {
-      title = "Hull debugger",
+      title = ModTranslations.SwivelMode_Move ?? "Hull debugger",
       OnButtonPress = VehicleGui.ToggleConvexHullDebugger
     },
     new()
     {
-      title = "Physics Debugger",
+      title = ModTranslations.SwivelMode_TargetEnemy ?? "Physics Debugger",
       OnButtonPress = VehicleGui.ToggleColliderDebugger
     },
 #if DEBUG
     new()
     {
-      title = "Destroy Current Vehicle",
+      title = ModTranslations.PowerState_NoPower ?? "Destroy Current Vehicle",
       OnButtonPress = VehicleCommands.DestroyCurrentVehicle
     },
     new()
     {
-      title = "Config",
+      title = ModTranslations.Swivel_Config ?? "Config",
       OnButtonPress = () =>
       {
         VehicleGui.ToggleConfigPanelState(true);
