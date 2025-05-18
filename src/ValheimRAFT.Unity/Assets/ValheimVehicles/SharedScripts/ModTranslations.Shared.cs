@@ -91,7 +91,10 @@ namespace ValheimVehicles.SharedScripts
 
     // full text string. This is computed from a few values.
     public static string Swivel_HoverText = null!;
-
+    public static string Mechanism_Swivel_MotionState_AtStart;
+    public static string Mechanism_Swivel_MotionState_ToStart;
+    public static string Mechanism_Swivel_MotionState_AtTarget;
+    public static string Mechanism_Swivel_MotionState_ToTarget;
 
     // generic/shared-keys
     public static string SharedKeys_Owner = null!;
@@ -101,6 +104,30 @@ namespace ValheimVehicles.SharedScripts
     public static string VehicleConfig_Beached = null!;
 
     public static string CurrentLocalizeLanguage = "";
+
+    // Swivel UI Panel Strings
+    public static string Swivel_Saved = null!;
+    public static string Swivel_Save = null!;
+    public static string Swivel_Config = null!;
+    public static string Swivel_Mode = null!;
+    public static string Swivel_MotionState = null!;
+    public static string Swivel_InterpolationSpeed = null!;
+    public static string Swivel_RotationSettings = null!;
+    public static string Swivel_HingeAxes = null!;
+    public static string Swivel_MaxXAngle = null!;
+    public static string Swivel_MaxYAngle = null!;
+    public static string Swivel_MaxZAngle = null!;
+    public static string Swivel_MovementSettings = null!;
+    public static string Swivel_TargetXOffset = null!;
+    public static string Swivel_TargetYOffset = null!;
+    public static string Swivel_TargetZOffset = null!;
+
+// SwivelMode Enum Values
+    public static string SwivelMode_None = null!;
+    public static string SwivelMode_Rotate = null!;
+    public static string SwivelMode_Move = null!;
+    public static string SwivelMode_TargetEnemy = null!;
+    public static string SwivelMode_TargetWind = null!;
 
     public static string WithBoldText(string text, string color = "white")
     {

@@ -131,10 +131,13 @@ public class SwivelConfigRPCSync : PrefabConfigRPCSync<SwivelCustomConfig, ISwiv
   {
     if (controller == null || SwivelUIPanelComponentIntegration.Instance == null) return;
 
-    var controllerSwivelComponent = (SwivelComponent)controller;
-    if (SwivelUIPanelComponentIntegration.Instance.CurrentSwivel == controllerSwivelComponent)
+    var swivel = (SwivelComponent)controller;
+
+    // Only update if currently bound to this swivel
+    var panel = SwivelUIPanelComponent.Instance as SwivelUIPanelComponentIntegration;
+    if (panel != null && panel.CurrentSwivel == swivel)
     {
-      SwivelUIPanelComponentIntegration.Instance.BindTo(controllerSwivelComponent, false);
+      panel.SyncUIFromPartialConfig(Config);
     }
   }
 

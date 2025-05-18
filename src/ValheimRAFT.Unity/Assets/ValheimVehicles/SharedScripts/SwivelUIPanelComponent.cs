@@ -10,6 +10,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using ValheimVehicles.Config;
+using ValheimVehicles.SharedScripts.Helpers;
 
 #endregion
 
@@ -28,22 +29,22 @@ namespace ValheimVehicles.SharedScripts.UI
 
     private float _lastPanelUpdateTime = -999f;
     private TextMeshProUGUI _saveStatus;
-    private GameObject hingeAxisRow;
-    private Transform layoutParent;
-    private GameObject maxXRow;
-    private GameObject maxYRow;
-    private GameObject maxZRow;
+    public GameObject hingeAxisRow;
+    public Transform layoutParent;
+    public GameObject maxXRow;
+    public GameObject maxYRow;
+    public GameObject maxZRow;
 
-    private TMP_Dropdown modeDropdown;
-    private TMP_Dropdown motionStateDropdown;
+    internal TMP_Dropdown modeDropdown;
+    internal TMP_Dropdown motionStateDropdown;
 
-    private GameObject movementLerpRow;
-    private GameObject movementSectionLabel;
+    internal GameObject movementLerpRow;
+    internal GameObject movementSectionLabel;
     internal GameObject panelRoot;
-    private GameObject rotationSectionLabel;
-    private GameObject targetDistanceXRow;
-    private GameObject targetDistanceYRow;
-    private GameObject targetDistanceZRow;
+    internal GameObject rotationSectionLabel;
+    internal GameObject targetDistanceXRow;
+    internal GameObject targetDistanceYRow;
+    internal GameObject targetDistanceZRow;
     public SwivelUISharedStyles viewStyles = new();
 
     internal SwivelComponent? _currentSwivel;
@@ -143,7 +144,7 @@ namespace ValheimVehicles.SharedScripts.UI
     /// <summary>
     /// Override this to persist configuration or perform updates.
     /// </summary>
-    protected virtual void OnPanelUpdate()
+    protected virtual void OnPanelSave()
     {
       // Example: SaveConfig(swivel);
       Debug.Log("SwivelUIPanelComponent.OnPanelUpdate triggered.");
@@ -208,18 +209,30 @@ namespace ValheimVehicles.SharedScripts.UI
       layout.preferredHeight = 500f;
 
       SwivelUIHelpers.AddRowWithButton(layoutParent, viewStyles, SwivelUIPanelStrings.SwivelConfig, "X", 48f, 48f, out _, Hide);
-      modeDropdown = SwivelUIHelpers.AddDropdownRow(layoutParent, viewStyles, SwivelUIPanelStrings.SwivelMode, EnumNames<SwivelMode>(), _currentSwivelTempConfig.Mode.ToString(), i =>
-      {
-        _currentSwivelTempConfig.Mode = (SwivelMode)i;
-        RefreshUI();
-        UnsetSavedState();
-      });
+      modeDropdown = SwivelUIHelpers.AddDropdownRow(
+        layoutParent,
+        viewStyles,
+        SwivelUIPanelStrings.SwivelMode,
+        EnumDisplay.GetSwivelModeNames(),
+        EnumDisplay.GetSwivelModeNames()[(int)_currentSwivelTempConfig.Mode],
+        i =>
+        {
+          _currentSwivelTempConfig.Mode = (SwivelMode)i;
+          RefreshUI();
+          UnsetSavedState();
+        });
 
-      motionStateDropdown = SwivelUIHelpers.AddDropdownRow(layoutParent, viewStyles, SwivelUIPanelStrings.MotionState, EnumNames<MotionState>(), _currentSwivelTempConfig.MotionState.ToString(), i =>
-      {
-        _currentSwivelTempConfig.MotionState = (MotionState)i;
-        UnsetSavedState();
-      });
+      motionStateDropdown = SwivelUIHelpers.AddDropdownRow(
+        layoutParent,
+        viewStyles,
+        SwivelUIPanelStrings.MotionState,
+        EnumDisplay.GetMotionStateNames(),
+        EnumDisplay.GetMotionStateNames()[(int)_currentSwivelTempConfig.MotionState],
+        i =>
+        {
+          _currentSwivelTempConfig.MotionState = (MotionState)i;
+          UnsetSavedState();
+        });
 
       movementLerpRow = SwivelUIHelpers.AddSliderRow(layoutParent, viewStyles, SwivelUIPanelStrings.InterpolationSpeed, 1f, 100f, _currentSwivelTempConfig.InterpolationSpeed, v =>
       {
@@ -299,7 +312,7 @@ namespace ValheimVehicles.SharedScripts.UI
 
       SwivelUIHelpers.AddRowWithButton(layoutParent, viewStyles, null, SwivelUIPanelStrings.Save, 96f, 48f, out _saveStatus, () =>
       {
-        OnPanelUpdate();
+        OnPanelSave();
         if (_saveStatus != null) _saveStatus.text = SwivelUIPanelStrings.Saved;
       });
 
@@ -309,7 +322,7 @@ namespace ValheimVehicles.SharedScripts.UI
     /// <summary>
     /// Only show swivel ui values if there is one found.
     /// </summary>
-    private void RefreshUI()
+    internal void RefreshUI()
     {
       var isRotating = CurrentSwivel && _currentSwivelTempConfig.Mode == SwivelMode.Rotate;
       var isMoving = CurrentSwivel && _currentSwivelTempConfig.Mode == SwivelMode.Move;
@@ -336,22 +349,29 @@ namespace ValheimVehicles.SharedScripts.UI
   [SuppressMessage("ReSharper", "ConvertToConstant.Global")]
   public static class SwivelUIPanelStrings
   {
-    public static string Saved = "Saved";
-    public static string Save = "Save";
-    public static string SwivelConfig = "Swivel Config";
-    public static string SwivelMode = "Swivel Mode";
-    public static string MotionState = "Motion State";
-    public static string InterpolationSpeed = "Interpolation Speed";
+    public static string Saved => ModTranslations.Swivel_Saved ?? "Saved";
+    public static string Save => ModTranslations.Swivel_Save ?? "Save";
+    public static string SwivelConfig => ModTranslations.Swivel_Config ?? "Swivel Config";
+    public static string SwivelMode => ModTranslations.Swivel_Mode ?? "Swivel Mode";
+    public static string MotionState => ModTranslations.Swivel_MotionState ?? "Motion State";
+    public static string InterpolationSpeed => ModTranslations.Swivel_InterpolationSpeed ?? "Interpolation Speed";
 
-    public static string RotationSettings = "Rotation Settings";
-    public static string HingeAxes = "Hinge Axes";
-    public static string MaxXAngle = "Max X Angle";
-    public static string MaxYAngle = "Max Y Angle";
-    public static string MaxZAngle = "Max Z Angle";
+    public static string RotationSettings => ModTranslations.Swivel_RotationSettings ?? "Rotation Settings";
+    public static string HingeAxes => ModTranslations.Swivel_HingeAxes ?? "Hinge Axes";
+    public static string MaxXAngle => ModTranslations.Swivel_MaxXAngle ?? "Max X Angle";
+    public static string MaxYAngle => ModTranslations.Swivel_MaxYAngle ?? "Max Y Angle";
+    public static string MaxZAngle => ModTranslations.Swivel_MaxZAngle ?? "Max Z Angle";
 
-    public static string MovementSettings = "Movement Settings";
-    public static string TargetXOffset = "Target X Offset";
-    public static string TargetYOffset = "Target Y Offset";
-    public static string TargetZOffset = "Target Z Offset";
+    public static string MovementSettings => ModTranslations.Swivel_MovementSettings ?? "Movement Settings";
+    public static string TargetXOffset => ModTranslations.Swivel_TargetXOffset ?? "Target X Offset";
+    public static string TargetYOffset => ModTranslations.Swivel_TargetYOffset ?? "Target Y Offset";
+    public static string TargetZOffset => ModTranslations.Swivel_TargetZOffset ?? "Target Z Offset";
+
+    public static string SwivelMode_None => ModTranslations.SwivelMode_None ?? "None";
+    public static string SwivelMode_Rotate => ModTranslations.SwivelMode_Rotate ?? "Rotate";
+    public static string SwivelMode_Move => ModTranslations.SwivelMode_Move ?? "Move";
+    public static string SwivelMode_TargetEnemy => ModTranslations.SwivelMode_TargetEnemy ?? "Target Enemy";
+    public static string SwivelMode_TargetWind => ModTranslations.SwivelMode_TargetWind ?? "Target Wind";
   }
+
 }

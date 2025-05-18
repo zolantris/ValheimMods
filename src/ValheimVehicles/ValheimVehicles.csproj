@@ -89,6 +89,9 @@
         <Compile Update="..\ValheimRAFT.Unity\Assets\ValheimVehicles\SharedScripts\Interfaces\IMechanismSwitchConfig.cs">
             <Link>SharedScripts\Interfaces\IMechanismSwitchConfig.cs</Link>
         </Compile>
+        <Compile Update="..\ValheimRAFT.Unity\Assets\ValheimVehicles\SharedScripts\EnumDisplay.cs">
+            <Link>SharedScripts\EnumDisplay.cs</Link>
+        </Compile>
     </ItemGroup>
     <ItemGroup Label="Internal ValheimVehicles scripts">
         <!-- Includes all namespace folders -->

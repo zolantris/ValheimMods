@@ -77,11 +77,78 @@ public class SwivelUIPanelComponentIntegration : SwivelUIPanelComponent
     base.BindTo(target, isToggle);
   }
 
-  protected override void OnPanelUpdate()
+  public void SyncUIFromPartialConfig(SwivelCustomConfig updated)
+  {
+    if (_currentSwivel == null) return;
+
+    // Ignore MotionState (readonly)
+    var old = _currentSwivelTempConfig;
+
+    if (updated.Mode != old.Mode)
+    {
+      modeDropdown.value = (int)updated.Mode;
+      _currentSwivelTempConfig.Mode = updated.Mode;
+      RefreshUI();
+    }
+
+    if (!Mathf.Approximately(updated.InterpolationSpeed, old.InterpolationSpeed))
+    {
+      movementLerpRow.GetComponentInChildren<Slider>().SetValueWithoutNotify(updated.InterpolationSpeed);
+      _currentSwivelTempConfig.InterpolationSpeed = updated.InterpolationSpeed;
+    }
+
+    if (updated.HingeAxes != old.HingeAxes)
+    {
+      var toggles = hingeAxisRow.GetComponentsInChildren<Toggle>();
+      if (toggles.Length == 3)
+      {
+        toggles[0].isOn = updated.HingeAxes.HasFlag(HingeAxis.X);
+        toggles[1].isOn = updated.HingeAxes.HasFlag(HingeAxis.Y);
+        toggles[2].isOn = updated.HingeAxes.HasFlag(HingeAxis.Z);
+      }
+      _currentSwivelTempConfig.HingeAxes = updated.HingeAxes;
+    }
+
+    if (updated.MaxEuler != old.MaxEuler)
+    {
+      maxXRow.GetComponentInChildren<Slider>().value = updated.MaxEuler.x;
+      maxYRow.GetComponentInChildren<Slider>().value = updated.MaxEuler.y;
+      maxZRow.GetComponentInChildren<Slider>().value = updated.MaxEuler.z;
+      _currentSwivelTempConfig.MaxEuler = updated.MaxEuler;
+    }
+
+    if (updated.MovementOffset != old.MovementOffset)
+    {
+      targetDistanceXRow.GetComponentInChildren<Slider>().value = updated.MovementOffset.x;
+      targetDistanceYRow.GetComponentInChildren<Slider>().value = updated.MovementOffset.y;
+      targetDistanceZRow.GetComponentInChildren<Slider>().value = updated.MovementOffset.z;
+      _currentSwivelTempConfig.MovementOffset = updated.MovementOffset;
+    }
+
+    // Optional: update MotionState label visually if needed
+    motionStateDropdown.value = (int)updated.MotionState;
+  }
+
+
+  protected override void OnPanelSave()
   {
     TryGetCurrentSwivelIntegration();
     var swivelComponentIntegration = _currentSwivel as SwivelComponentIntegration;
     if (!swivelComponentIntegration || !swivelComponentIntegration.IsNetViewValid()) return;
+
+    // We do not let local overrides of this readonly value.
+    var saveConfig = new SwivelCustomConfig();
+    saveConfig.ApplyFrom(_currentSwivelTempConfig);
+
+    // overrides/guards for config
+    saveConfig.MotionState = swivelComponentIntegration.MotionState;
+
+    if (saveConfig.Mode == SwivelMode.None && modeDropdown.value != (int)SwivelMode.None)
+    {
+      LoggerProvider.LogWarning("Swivel is in None mode, but the UI does not match. Not saving. This is a bug.");
+      return;
+    }
+
     swivelComponentIntegration.prefabConfigSync.RequestCommitConfigChange(_currentSwivelTempConfig);
   }
 

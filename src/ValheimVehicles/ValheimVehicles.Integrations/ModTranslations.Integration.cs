@@ -99,7 +99,7 @@ public partial class ModTranslations
     MechanismMode_None = SafeLocalize("$valheim_vehicles_mechanism_mode_none");
     MechanismSwitch_CurrentActionString = SafeLocalize(
       "[<color=yellow><b>$KEY_Use</b></color>] $valheim_vehicles_activate");
-    MechanismSwitch_AltActionString = SafeLocalize("[<color=yellow><b>$KEY_AltPlace + $KEY_Use</b></color>] $valheim_vehicles_mechanism_mode_configure");
+    MechanismSwitch_AltActionString = SafeLocalize($"[<color=yellow><b>{ValheimInput_KeyAltPlace}+{ValheimInput_KeyUse}</b></color>] $valheim_vehicles_mechanism_mode_configure");
   }
 
   private static void UpdateGuiEditMenuTranslations()
@@ -207,7 +207,7 @@ public partial class ModTranslations
 
 
     PowerSource_Interact_AddOne = SafeLocalize("[<color=yellow><b>$KEY_Use</b></color>] $valheim_vehicles_mechanism_interact_add_one");
-    PowerSource_Interact_AddMany = SafeLocalize("[<color=yellow><b>$KEY_AltPlace + $KEY_Use</b></color>] $valheim_vehicles_mechanism_interact_add_many");
+    PowerSource_Interact_AddMany = SafeLocalize($"[<color=yellow><b>{ValheimInput_KeyAltPlace}+{ValheimInput_KeyUse}</b></color>] $valheim_vehicles_mechanism_interact_add_many");
 
 
     PowerSource_NotEnoughFuel = SafeLocalize("$valheim_vehicles_mechanism_not_enough_fuel_in_inventory");
@@ -216,6 +216,32 @@ public partial class ModTranslations
     PowerSource_Message_AddedFromContainer = SafeLocalize("$valheim_vehicles_mechanism_added_from_container");
 
     PowerSource_Message_AddedFromPlayer = SafeLocalize("$valheim_vehicles_mechanism_added_from_container");
+  }
+
+  public static void UpdateSwivelUITranslations()
+  {
+    Swivel_Saved = SafeLocalize("$valheim_vehicles_swivel_saved");
+    Swivel_Save = SafeLocalize("$valheim_vehicles_swivel_save");
+    Swivel_Config = SafeLocalize("$valheim_vehicles_swivel_config");
+    Swivel_Mode = SafeLocalize("$valheim_vehicles_swivel_mode");
+    Swivel_MotionState = SafeLocalize("$valheim_vehicles_swivel_motion_state ($valheim_vehicles_ui_read_only)");
+    Swivel_InterpolationSpeed = SafeLocalize("$valheim_vehicles_swivel_interpolation_speed");
+    Swivel_RotationSettings = SafeLocalize("$valheim_vehicles_swivel_rotation_settings");
+    Swivel_HingeAxes = SafeLocalize("$valheim_vehicles_swivel_hinge_axes");
+    Swivel_MaxXAngle = SafeLocalize("$valheim_vehicles_swivel_max_x_angle");
+    Swivel_MaxYAngle = SafeLocalize("$valheim_vehicles_swivel_max_y_angle");
+    Swivel_MaxZAngle = SafeLocalize("$valheim_vehicles_swivel_max_z_angle");
+    Swivel_MovementSettings = SafeLocalize("$valheim_vehicles_swivel_movement_settings");
+    Swivel_TargetXOffset = SafeLocalize("$valheim_vehicles_swivel_target_x_offset");
+    Swivel_TargetYOffset = SafeLocalize("$valheim_vehicles_swivel_target_y_offset");
+    Swivel_TargetZOffset = SafeLocalize("$valheim_vehicles_swivel_target_z_offset");
+
+// Enum values
+    SwivelMode_None = SafeLocalize("$valheim_vehicles_swivel_mode_none");
+    SwivelMode_Rotate = SafeLocalize("$valheim_vehicles_swivel_mode_rotate");
+    SwivelMode_Move = SafeLocalize("$valheim_vehicles_swivel_mode_move");
+    SwivelMode_TargetEnemy = SafeLocalize("$valheim_vehicles_swivel_mode_target_enemy");
+    SwivelMode_TargetWind = SafeLocalize("$valheim_vehicles_swivel_mode_target_wind");
   }
 
   public static void ForceUpdateTranslations()

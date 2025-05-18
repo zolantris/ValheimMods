@@ -59,6 +59,8 @@ public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interac
 
   public float lerpedHandDistance = 0f;
 
+  public bool CanFireMechanismActionSideEffects = false;
+
   public MechanismAction SelectedAction
   {
     get => _selectedMechanismAction;
@@ -87,8 +89,15 @@ public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interac
   {
     if (!this.IsNetViewValid()) return;
     StartCoroutine(ScheduleIntendedAction());
+
+    // Do not run any updaters until the awake method has called for a bit.
+    Invoke(nameof(AllowSideEffects), 2f);
   }
 
+  public void AllowSideEffects()
+  {
+    CanFireMechanismActionSideEffects = true;
+  }
 
   public IEnumerator ScheduleIntendedAction()
   {
@@ -161,6 +170,8 @@ public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interac
   public void OnDisable()
   {
     _safeRPCHandler?.UnregisterAll();
+    CanFireMechanismActionSideEffects = false;
+    CancelInvoke();
     StopAllCoroutines();
   }
 
@@ -195,35 +206,33 @@ public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interac
 
   public void OnMechanismActionUpdate(MechanismAction action)
   {
-    switch (action)
-    {
-      case MechanismAction.None:
-      case MechanismAction.CommandsHud:
-      case MechanismAction.CreativeMode:
-      case MechanismAction.ColliderEditMode:
-        TargetSwivel = null;
-        TargetSwivelId = 0;
-        break;
-      case MechanismAction.SwivelEditMode:
-      case MechanismAction.SwivelActivateMode:
-      {
-        // should be fired whenever we update this state.
-        if (!SwivelHelpers.FindAllSwivelsWithinRange(transform.position, out nearbySwivelComponents))
-        {
-          Player.m_localPlayer.Message(MessageHud.MessageType.Center, ModTranslations.NoMechanismNearby);
-          return;
-        }
-      }
-        break;
-      default:
-        throw new ArgumentOutOfRangeException(nameof(action), action, null);
-    }
+    if (!CanFireMechanismActionSideEffects) return;
 
-    // todo this is likely a logic loop. Might need to rethink this. Or add specific sync logic so we do not rely on Local switch config side-effect.
-    if (MechanismSelectorPanelIntegration.Instance != null && MechanismSelectorPanelIntegration.Instance.mechanismAction != null && MechanismSelectorPanelIntegration.Instance.mechanismAction.gameObject == gameObject)
+    try
     {
-      MechanismSelectorPanelIntegration.Instance.SelectedAction = action;
-      TargetSwivel = MechanismSelectorPanelIntegration.Instance.mechanismAction.TargetSwivel != null ? MechanismSelectorPanelIntegration.Instance.mechanismAction.TargetSwivel : TargetSwivel;
+      // if (action is MechanismAction.None or MechanismAction.CommandsHud or MechanismAction.CreativeMode or MechanismAction.ColliderEditMode)
+      // {
+      //   TargetSwivel = null;
+      //   TargetSwivelId = 0;
+      // }
+      // else if (action is MechanismAction.SwivelEditMode or MechanismAction.SwivelActivateMode)
+      // {
+      // }
+      // else
+      // {
+      //   throw new ArgumentOutOfRangeException(nameof(action), action, null);
+      // }
+      //
+      // // todo this is likely a logic loop. Might need to rethink this. Or add specific sync logic so we do not rely on Local switch config side-effect.
+      if (MechanismSelectorPanelIntegration.Instance != null && MechanismSelectorPanelIntegration.Instance.mechanismAction != null && MechanismSelectorPanelIntegration.Instance.mechanismAction.gameObject == gameObject)
+      {
+        MechanismSelectorPanelIntegration.Instance.SelectedAction = action;
+        TargetSwivel = MechanismSelectorPanelIntegration.Instance.mechanismAction.TargetSwivel != null ? MechanismSelectorPanelIntegration.Instance.mechanismAction.TargetSwivel : TargetSwivel;
+      }
+    }
+    catch (Exception e)
+    {
+      CanFireMechanismActionSideEffects = false;
     }
   }
 
