@@ -81,8 +81,14 @@ namespace ValheimVehicles.Integrations
 
     public virtual void UpdateNetworkedData()
     {
-      if (this.IsNetViewValid(out var netView) && netView.IsOwner())
+      if (!this.IsNetViewValid(out var netView)) return;
+      if (netView.IsOwner() || !netView.HasOwner())
       {
+        if (!netView.IsOwner() && ZNet.instance.IsServer())
+        {
+          netView.ClaimOwnership();
+        }
+
         Config.Save(netView.GetZDO(), Component);
         netView.InvokeRPC(ZNetView.Everybody, instanced_RpcNotifyStateUpdate);
       }

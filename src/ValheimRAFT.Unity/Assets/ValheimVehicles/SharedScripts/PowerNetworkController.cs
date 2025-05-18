@@ -3,6 +3,7 @@
 
 #region
 
+using System;
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
@@ -62,6 +63,12 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
       base.Awake();
     }
 
+    protected void OnDestroy()
+    {
+      ClearAllSimulatedNetworkData();
+      StopAllCoroutines();
+    }
+
     protected virtual void FixedUpdate()
     {
       if (Time.time < _nextUpdate) return;
@@ -69,7 +76,7 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
 
       foreach (var pair in _networks)
       {
-        SimulateNetwork(pair.Value, pair.Key);
+        Host_SimulateNetwork(pair.Value, pair.Key);
       }
     }
 

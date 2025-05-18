@@ -1,6 +1,8 @@
 // ReSharper disable ArrangeNamespaceBody
 // ReSharper disable NamespaceStyle
 
+using System.Linq;
+using Jotunn;
 using UnityEngine;
 using ValheimVehicles.SharedScripts.PowerSystem;
 
@@ -16,6 +18,27 @@ public class PowerNetworkControllerIntegration : PowerNetworkController
 
     foreach (var pair in _networks)
     {
+      if (pair.Value.Count == 0) continue;
+      var currentZone = ZoneSystem.GetZone(pair.Value[0].Position);
+
+      // skip all unloaded network simulations.
+      if (!ZoneSystem.instance.IsZoneLoaded(currentZone))
+      {
+        return;
+      }
+
+      // client + server (combo) and Dedicated server.
+      if (ZNet.instance.IsServer())
+      {
+        Host_SimulateNetwork(pair.Value, pair.Key);
+      }
+
+      // Client only. Dedicated server should not run.
+      if (!ZNet.instance.IsDedicated())
+      {
+        Client_SimulateNetwork(pair.Value, pair.Key);
+      }
+
       if (ZNet.instance.IsServer())
       {
         SyncNetworkState(pair.Value);
@@ -24,8 +47,12 @@ public class PowerNetworkControllerIntegration : PowerNetworkController
       {
         SyncNetworkStateClient(pair.Value);
       }
+    }
 
-      SimulateNetwork(pair.Value, pair.Key);
+    // To be run after all loops. Todo if this made to run per network it might be better.
+    if (ZNet.instance.IsClientInstance())
+    {
+      Client_SimulateNetworkPowerAnimations();
     }
   }
 }

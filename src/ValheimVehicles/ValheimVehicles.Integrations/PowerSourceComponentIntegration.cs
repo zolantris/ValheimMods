@@ -91,10 +91,11 @@ public class PowerSourceComponentIntegration :
   }
   public void SetRunning(bool state)
   {
+    if (!this.IsNetViewValid(out var netView))
+    {
+      return;
+    }
     Logic.SetRunning(state);
-
-    if (this.IsNetViewValid(out var netView))
-      netView.GetZDO().Set(VehicleZdoVars.Power_IsRunning, Logic.isRunning);
   }
   public void SetFuelCapacity(float val)
   {

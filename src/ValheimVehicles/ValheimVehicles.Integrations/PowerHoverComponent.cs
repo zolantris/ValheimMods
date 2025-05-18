@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using ValheimVehicles.Constants;
+using ValheimVehicles.Config;
 using ValheimVehicles.SharedScripts;
 using ValheimVehicles.SharedScripts.PowerSystem;
 namespace ValheimVehicles.Integrations;
@@ -55,7 +55,7 @@ public class PowerHoverComponent : MonoBehaviour, Hoverable, Interactable
 
   public bool TryAddFuel(Humanoid user, int amountToAdd)
   {
-    if (Time.fixedTime > _lastSearchTime + _NearbyChestSearchDebounce)
+    if (PrefabConfig.PowerSource_AllowNearbyFuelingWithEitr.Value && Time.fixedTime > _lastSearchTime + _NearbyChestSearchDebounce)
     {
       _lastSearchTime = Time.fixedTime;
       UpdateNearbyChests();
@@ -69,7 +69,7 @@ public class PowerHoverComponent : MonoBehaviour, Hoverable, Interactable
     var playerFuelItems = playerInventory.CountItemsByName([EitrInventoryItem_TokenId]);
     if (playerFuelItems < amountToAdd)
     {
-      if (_NearByContainers.Count > 0)
+      if (PrefabConfig.PowerSource_AllowNearbyFuelingWithEitr.Value && _NearByContainers.Count > 0)
       {
         var originalAmountForContainers = amountToAdd;
         foreach (var nearByContainer in _NearByContainers)
@@ -97,15 +97,12 @@ public class PowerHoverComponent : MonoBehaviour, Hoverable, Interactable
         }
       }
 
-
       if (amountToAdd > 0 && playerFuelItems < amountToAdd)
       {
         player.Message(MessageHud.MessageType.Center, $"{ModTranslations.PowerSource_NotEnoughFuel} \n({ModTranslations.PowerSource_FuelNameEitr})");
         return false;
       }
     }
-
-
 
     try
     {
@@ -166,7 +163,7 @@ public class PowerHoverComponent : MonoBehaviour, Hoverable, Interactable
     if (HasPowerSource)
     {
       outString += $"{ModTranslations.PowerSource_Interact_AddOne}\n{ModTranslations.PowerSource_Interact_AddMany}\n";
-      outString += $"Power Source: {MathUtils.RoundToHundredth(_powerSourceComponent.GetFuelLevel())}/{_powerSourceComponent.GetFuelCapacity()}";
+      outString += $"{ModTranslations.Power_NetworkInfo_NetworkFuel}: {MathUtils.RoundToHundredth(_powerSourceComponent.GetFuelLevel())}/{_powerSourceComponent.GetFuelCapacity()}";
     }
     if (HasPowerStorage)
     {
@@ -174,7 +171,7 @@ public class PowerHoverComponent : MonoBehaviour, Hoverable, Interactable
       {
         outString += "\n";
       }
-      outString += $"Power Storage: {MathUtils.RoundToHundredth(_powerStorageComponent.ChargeLevel)}/{_powerStorageComponent.Capacity}";
+      outString += $"{ModTranslations.Power_NetworkInfo_NetworkPowerCapacity}: {MathUtils.RoundToHundredth(_powerStorageComponent.ChargeLevel)}/{_powerStorageComponent.Capacity}";
     }
 
     // Only need networkId from either of these.
@@ -191,6 +188,11 @@ public class PowerHoverComponent : MonoBehaviour, Hoverable, Interactable
 
     return outString;
   }
+
+  /// <summary>
+  /// Ignore this only for item hovering which cannot be done...yet.
+  /// </summary>
+  /// <returns></returns>
   public string GetHoverName()
   {
     return "Power Source";

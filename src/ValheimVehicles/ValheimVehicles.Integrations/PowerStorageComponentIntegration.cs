@@ -86,8 +86,8 @@ namespace ValheimVehicles.Integrations
     {
       Logic.SetActive(val);
     }
-    public float ChargeLevel => Logic.storedEnergy;
-    public float Capacity => Logic.energyCapacity;
+    public float ChargeLevel => Logic.ChargeLevel;
+    public float Capacity => Logic.Capacity;
 
     public float Charge(float amount)
     {

@@ -50,14 +50,78 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
       PowerNetworkDataInstances.Clear();
     }
 
-    public void SimulateNetwork(List<IPowerNode> nodes, string networkId)
+    public void Client_SimulateNetwork(List<IPowerNode> nodes, string networkId, bool canSkip = false)
     {
-      var deltaTime = Time.fixedDeltaTime;
 
+      if (!canSkip)
+      {
+        UpdateListData(nodes);
+      }
+
+      var totalConsumerDemand = GetTotalConsumerDemand(Time.fixedDeltaTime);
+
+      var remainingStorage = 0f;
+      var totalPowerCapacity = 0f;
+      var totalFuel = 0f;
+      var totalFuelCapacity = 0f;
+
+      _storage.ForEach(x =>
+      {
+        if (x != null)
+        {
+          remainingStorage += x.ChargeLevel;
+          totalPowerCapacity += x.Capacity;
+        }
+      });
+
+      _sources.ForEach(x =>
+      {
+        totalFuel += x.GetFuelLevel();
+        totalFuelCapacity += x.GetFuelCapacity();
+      });
+
+      var newData = new PowerNetworkData
+      {
+        NetworkConsumerPowerStatus = GetNetworkHealthStatus(_consumers),
+        NetworkPowerSupply = MathUtils.RoundToHundredth(remainingStorage),
+        NetworkPowerCapacity = MathUtils.RoundToHundredth(totalPowerCapacity),
+        NetworkPowerDemand = MathUtils.RoundToHundredth(totalConsumerDemand),
+        NetworkFuelSupply = MathUtils.RoundToHundredth(totalFuel),
+        NetworkFuelCapacity = MathUtils.RoundToHundredth(totalFuelCapacity)
+      };
+      newData.Cached_NetworkDataString = GenerateNetworkDataString(networkId, newData);
+      UpdateNetworkPowerData(networkId, newData);
+    }
+
+    public float GetTotalConsumerDemand(float deltaTime)
+    {
+      var totalDemand = 0f;
+
+      foreach (var consumer in _consumers)
+        totalDemand += consumer.RequestedPower(deltaTime);
+
+      // this will be used to calculate the demand from non-conduits. Conduits do not show up on GUI.
+      var totalConsumerDemand = totalDemand;
+      return totalDemand;
+    }
+
+    public void ClearLocalListData()
+    {
       _sources.Clear();
       _storage.Clear();
       _consumers.Clear();
       _conduits.Clear();
+    }
+
+    public void ClearAllSimulatedNetworkData()
+    {
+      ClearLocalListData();
+      _networks.Clear();
+    }
+
+    public void UpdateListData(List<IPowerNode> nodes)
+    {
+      ClearLocalListData();
 
       // Categorize nodes
       foreach (var node in nodes)
@@ -78,15 +142,52 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
             break;
         }
       }
+    }
+
+    public void Client_SimulateNetworkPowerAnimations()
+    {
+
+      // foreach (var powerNetworkDataInstance in PowerNetworkDataInstances)
+      // {
+      //   if (powerNetworkDataInstance.Value.NetworkConsumerPowerStatus == "Normal")
+      //   {
+      //     // run lightning burst for this network.
+      //   }
+      // }
+      // 7. Lightning burst effect (visual only)
+      // if (lightningBurstCoroutine != null && !isDemanding)
+      // {
+      //   StopCoroutine(lightningBurstCoroutine);
+      //   lightningBurstCoroutine = null;
+      // }
+
+      // if (isDemanding)
+      // {
+      // if (lightningBurstCoroutine != null)
+      // {
+      //   StopCoroutine(lightningBurstCoroutine);
+      //   lightningBurstCoroutine = null;
+      // }
+      // if (lightningBurstCoroutine != null) return;
+      // lightningBurstCoroutine = StartCoroutine(ActivateLightningBursts());
+      // }
+    }
+
+    /// <summary>
+    /// Should only be run by the owner.
+    /// </summary>
+    /// <param name="nodes"></param>
+    /// <param name="networkId"></param>
+    public void Host_SimulateNetwork(List<IPowerNode> nodes, string networkId)
+    {
+      var deltaTime = Time.fixedDeltaTime;
+
+      UpdateListData(nodes);
 
       // 1. Calculate total demand
-      var totalDemand = 0f;
-
-      foreach (var consumer in _consumers)
-        totalDemand += consumer.RequestedPower(deltaTime);
-
-      // this will be used to calculate the demand from non-conduits. Conduits do not show up on GUI.
+      var totalDemand = GetTotalConsumerDemand(deltaTime);
       var totalConsumerDemand = totalDemand;
+
 
       foreach (var conduit in _conduits)
       {
@@ -197,56 +298,6 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
         toCommit -= committed;
 
         if (toCommit <= 0f) break;
-      }
-
-      var remainingStorage = 0f;
-      var totalPowerCapacity = 0f;
-      var totalFuel = 0f;
-      var totalFuelCapacity = 0f;
-
-      _storage.ForEach(x =>
-      {
-        if (x != null)
-        {
-          remainingStorage += x.ChargeLevel;
-          totalPowerCapacity += x.Capacity;
-        }
-      });
-
-      _sources.ForEach(x =>
-      {
-        totalFuel += x.GetFuelLevel();
-        totalFuelCapacity += x.GetFuelCapacity();
-      });
-
-      var newData = new PowerNetworkData
-      {
-        NetworkConsumerPowerStatus = GetNetworkHealthStatus(_consumers),
-        NetworkPowerSupply = MathUtils.RoundToHundredth(remainingStorage),
-        NetworkPowerCapacity = MathUtils.RoundToHundredth(totalPowerCapacity),
-        NetworkPowerDemand = MathUtils.RoundToHundredth(totalConsumerDemand),
-        NetworkFuelSupply = MathUtils.RoundToHundredth(totalFuel),
-        NetworkFuelCapacity = MathUtils.RoundToHundredth(totalFuelCapacity)
-      };
-      newData.Cached_NetworkDataString = GenerateNetworkDataString(networkId, newData);
-      UpdateNetworkPowerData(networkId, newData);
-
-      // 7. Lightning burst effect (visual only)
-      if (lightningBurstCoroutine != null && !isDemanding)
-      {
-        StopCoroutine(lightningBurstCoroutine);
-        lightningBurstCoroutine = null;
-      }
-
-      if (isDemanding)
-      {
-        // if (lightningBurstCoroutine != null)
-        // {
-        //   StopCoroutine(lightningBurstCoroutine);
-        //   lightningBurstCoroutine = null;
-        // }
-        if (lightningBurstCoroutine != null) return;
-        lightningBurstCoroutine = StartCoroutine(ActivateLightningBursts());
       }
     }
 

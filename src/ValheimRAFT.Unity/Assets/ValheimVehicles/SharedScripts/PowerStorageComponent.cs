@@ -11,8 +11,8 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
   {
     [Description("Energy levels in Watts")]
     [SerializeField] public float baseEnergyCapacity = 800f;
-    [SerializeField] public float energyCapacity = 800f;
-    [SerializeField] public float storedEnergy;
+    [SerializeField] private float energyCapacity = 800f;
+    [SerializeField] private float storedEnergy;
 
     [Description("Visual representation of energy level")]
     [SerializeField] private Transform m_visualEnergyLevel;
@@ -31,6 +31,15 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
 
     public float Capacity => energyCapacity;
     public float CapacityRemaining => energyCapacity - storedEnergy;
+
+    public void SetStoredEnergy(float val)
+    {
+      if (val == 0)
+      {
+        LoggerProvider.LogDev("Stored energy is set to Zero somehow");
+      }
+      storedEnergy = val;
+    }
 
     protected override void Awake()
     {

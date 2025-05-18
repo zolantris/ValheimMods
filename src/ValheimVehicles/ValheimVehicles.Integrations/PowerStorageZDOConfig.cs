@@ -8,12 +8,12 @@ public class PowerStorageZDOConfig : INetworkedZDOConfig<PowerStorageComponentIn
 {
   public void Load(ZDO zdo, PowerStorageComponentIntegration component)
   {
-    var stored = zdo.GetFloat(VehicleZdoVars.Power_StoredEnergy, component.Logic.storedEnergy);
-    component.Logic.storedEnergy = stored;
+    var stored = zdo.GetFloat(VehicleZdoVars.Power_StoredEnergy, component.Logic.ChargeLevel);
+    component.Logic.SetStoredEnergy(stored);
   }
 
   public void Save(ZDO zdo, PowerStorageComponentIntegration component)
   {
-    zdo.Set(VehicleZdoVars.Power_StoredEnergy, component.Logic.storedEnergy);
+    zdo.Set(VehicleZdoVars.Power_StoredEnergy, component.Logic.ChargeLevel);
   }
 }

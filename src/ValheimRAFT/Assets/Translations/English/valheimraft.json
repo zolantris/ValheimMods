@@ -194,7 +194,7 @@
   "valheim_vehicles_mechanism_network_power": "Power",
   "valheim_vehicles_mechanism_network_power_capacity": "Power Capacity",
   "valheim_vehicles_mechanism_network_fuel": "Fuel",
-  "valheim_vehicles_mechanism_network_fuel_capacity": "Capacity",
+  "valheim_vehicles_mechanism_network_fuel_capacity": "Fuel Capacity",
   "valheim_vehicles_mechanism_network_demand": "Power Demand",
   "valheim_vehicles_mechanism_network_network_id": "Network ID",
   "valheim_vehicles_mechanism_show_network_data": "Show Network Data",

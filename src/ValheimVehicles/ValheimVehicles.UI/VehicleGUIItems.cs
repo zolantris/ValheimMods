@@ -32,17 +32,17 @@ public static class VehicleGUIItems
   [
     new()
     {
-      title = ModTranslations.Swivel_Name ?? "Raft Creative",
+      title = ModTranslations.VehicleCommand_RaftCreative ?? "Raft Creative",
       OnButtonPress = VehicleCommands.ToggleCreativeMode
     },
     new()
     {
-      title = ModTranslations.Swivel_Save ?? "Save Vehicle",
+      title = ModTranslations.VehicleCommand_SaveVehicle ?? "Save Vehicle",
       OnButtonPress = VehicleStorageController.SaveClosestVehicle
     },
     new()
     {
-      title = ModTranslations.Swivel_Saved ?? "Open Save Vehicle Selector",
+      title = ModTranslations.VehicleCommand_OpenSelector ?? "Open Save Vehicle Selector",
       inputType = InputType.Dropdown,
       OnCreateDropdown = (dropdown) =>
       {
@@ -53,13 +53,13 @@ public static class VehicleGUIItems
     },
     new()
     {
-      title = ModTranslations.PowerPylon_NetworkInformation_Show ?? "[Admin] Spawn Selected Vehicle",
+      title = ModTranslations.VehicleCommand_SpawnSelected ?? "[Admin] Spawn Selected Vehicle",
       OnButtonPress = VehicleStorageController.SpawnSelectedVehicle,
       IsAdminOnly = true
     },
     new()
     {
-      title = ModTranslations.SwivelMode_Rotate ?? "Zero Ship Rotation X/Z",
+      title = ModTranslations.VehicleCommand_ZeroRotation ?? "Zero Ship Rotation X/Z",
       OnButtonPress = () =>
       {
         var onboardHelpers = VehicleDebugHelpers.GetOnboardVehicleDebugHelper();
@@ -68,17 +68,17 @@ public static class VehicleGUIItems
     },
     new()
     {
-      title = ModTranslations.MechanismSwitch_MaskColliderEditMode ?? "Toggle WaterMask Editor",
+      title = ModTranslations.VehicleCommand_ToggleMaskEditor ?? "Toggle WaterMask Editor",
       OnButtonPress = VehicleCommands.ToggleColliderEditMode
     },
     new()
     {
-      title = ModTranslations.SwivelMode_TargetWind ?? "Toggle Ocean Sway",
+      title = ModTranslations.VehicleCommand_ToggleOceanSway ?? "Toggle Ocean Sway",
       OnButtonPress = VehicleCommands.VehicleToggleOceanSway
     },
     new()
     {
-      title = ModTranslations.PowerState_ConnectToGrid ?? "Rebuild Bounds",
+      title = ModTranslations.VehicleCommand_RebuildBounds ?? "Rebuild Bounds",
       IsAdminOnly = true,
       OnButtonPress = () =>
       {
@@ -90,23 +90,23 @@ public static class VehicleGUIItems
     },
     new()
     {
-      title = ModTranslations.SwivelMode_Move ?? "Hull debugger",
+      title = ModTranslations.VehicleCommand_HullDebugger ?? "Hull debugger",
       OnButtonPress = VehicleGui.ToggleConvexHullDebugger
     },
     new()
     {
-      title = ModTranslations.SwivelMode_TargetEnemy ?? "Physics Debugger",
+      title = ModTranslations.VehicleCommand_PhysicsDebugger ?? "Physics Debugger",
       OnButtonPress = VehicleGui.ToggleColliderDebugger
     },
 #if DEBUG
     new()
     {
-      title = ModTranslations.PowerState_NoPower ?? "Destroy Current Vehicle",
+      title = ModTranslations.VehicleCommand_DestroyVehicle ?? "Destroy Current Vehicle",
       OnButtonPress = VehicleCommands.DestroyCurrentVehicle
     },
     new()
     {
-      title = ModTranslations.Swivel_Config ?? "Config",
+      title = ModTranslations.VehicleCommand_ConfigPanel ?? "Config",
       OnButtonPress = () =>
       {
         VehicleGui.ToggleConfigPanelState(true);
