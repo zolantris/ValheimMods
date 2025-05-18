@@ -4,6 +4,7 @@
 #region
 
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using TMPro;
 using UnityEngine;
@@ -88,13 +89,37 @@ namespace ValheimVehicles.SharedScripts.UI
       swivelSelectorDropdown.gameObject.SetActive(show);
     }
 
+    public List<SwivelComponent> nearestSwivels = new();
+
+    public void OnMechanismSwivelSelected(int index)
+    {
+      if (index < 0 || index >= nearestSwivels.Count) return;
+      SelectedSwivel = nearestSwivels[index];
+      if (SelectedSwivel == null)
+      {
+        // we need to update options.
+        AddOrUpdateSwivelDropdown();
+        return;
+      }
+      _currentPanelConfig.TargetSwivelId = SelectedSwivel.SwivelPersistentId;
+      OnSwivelSelectedChanged?.Invoke(SelectedSwivel);
+      UnsetSavedState();
+    }
+
     public void AddOrUpdateSwivelDropdown()
     {
-      if (mechanismAction == null) return;
+      if (mechanismAction == null)
+      {
+        swivelSelectorDropdown = SwivelUIHelpers.AddDropdownRow(panelContent.transform, viewStyles, ModTranslations.Mechanism_Switch_Swivel_SelectedSwivel,
+          ["N/A"],
+          "N/A",
+          OnMechanismSwivelSelected);
+        return;
+      }
 
       var selfPos = mechanismAction.transform.position;
 
-      var nearestSwivels = mechanismAction.GetNearestSwivels();
+      nearestSwivels = mechanismAction.GetNearestSwivels();
       var options = nearestSwivels.Where(x => x != null)
         .Select(x =>
         {
@@ -107,14 +132,7 @@ namespace ValheimVehicles.SharedScripts.UI
         swivelSelectorDropdown = SwivelUIHelpers.AddDropdownRow(panelContent.transform, viewStyles, ModTranslations.Mechanism_Switch_Swivel_SelectedSwivel,
           options.ToArray(),
           options.FirstOrDefault() ?? "N/A",
-          index =>
-          {
-            if (index < 0 || index >= nearestSwivels.Count) return;
-            SelectedSwivel = nearestSwivels[index];
-            mechanismAction.SetMechanismSwivel(SelectedSwivel);
-            OnSwivelSelectedChanged?.Invoke(SelectedSwivel);
-            UnsetSavedState();
-          });
+          OnMechanismSwivelSelected);
       }
       else
       {
@@ -184,14 +202,14 @@ namespace ValheimVehicles.SharedScripts.UI
           UnsetSavedState();
         });
 
+
+      AddOrUpdateSwivelDropdown();
+
       SwivelUIHelpers.AddRowWithButton(panelContent.transform, viewStyles, null, SwivelUIPanelStrings.Save, 96f, 48f, out _saveStatus, () =>
       {
         OnPanelSave();
         SetSavedState();
       });
-
-
-      AddOrUpdateSwivelDropdown();
 
       HideShowSwivelFinder();
     }
