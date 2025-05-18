@@ -219,10 +219,11 @@ public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interac
         throw new ArgumentOutOfRangeException(nameof(action), action, null);
     }
 
+    // todo this is likely a logic loop. Might need to rethink this. Or add specific sync logic so we do not rely on Local switch config side-effect.
     if (MechanismSelectorPanelIntegration.Instance != null && MechanismSelectorPanelIntegration.Instance.mechanismAction != null && MechanismSelectorPanelIntegration.Instance.mechanismAction.gameObject == gameObject)
     {
       MechanismSelectorPanelIntegration.Instance.SelectedAction = action;
-      MechanismSelectorPanelIntegration.Instance.SelectedSwivel = TargetSwivel;
+      TargetSwivel = MechanismSelectorPanelIntegration.Instance.mechanismAction.TargetSwivel != null ? MechanismSelectorPanelIntegration.Instance.mechanismAction.TargetSwivel : TargetSwivel;
     }
   }
 

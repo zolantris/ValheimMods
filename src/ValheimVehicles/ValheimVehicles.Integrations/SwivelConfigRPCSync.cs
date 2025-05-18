@@ -56,7 +56,12 @@ public class SwivelConfigRPCSync : PrefabConfigRPCSync<SwivelCustomConfig, ISwiv
 
   public void RPC_SetMotionState(long sender, ZPackage pkg)
   {
-    if (!this.IsNetViewValid(out var netView) || !netView.IsOwner()) return;
+    if (!this.IsNetViewValid(out var netView)) return;
+    if (!netView.IsOwner() && netView.HasOwner()) return;
+    if (!netView.HasOwner())
+    {
+      netView.ClaimOwnership();
+    }
 
     // Read client-reported MotionState
     var clientMotionState = (MotionState)pkg.ReadInt();

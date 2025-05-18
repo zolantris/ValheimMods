@@ -231,10 +231,8 @@
           return;
         }
       }
-      else
-      {
-        base.FixedUpdate();
-      }
+
+      base.FixedUpdate();
 
       if (m_pieces.Count > 0)
       {

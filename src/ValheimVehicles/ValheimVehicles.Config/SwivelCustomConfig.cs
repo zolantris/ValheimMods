@@ -114,7 +114,7 @@ namespace ValheimVehicles.Config
         MotionState = (MotionState)zdo.GetInt(Key_MotionState, (int)configFromComponent.MotionState)
       };
 
-      LoggerProvider.LogDebug($"Loaded new config: Mode: {newConfig.Mode} \nMotionState: {newConfig.MotionState}");
+      LoggerProvider.LogDebug($"Loaded new config: Mode: {newConfig.Mode} MotionState: {newConfig.MotionState}");
 
       return newConfig;
     }
