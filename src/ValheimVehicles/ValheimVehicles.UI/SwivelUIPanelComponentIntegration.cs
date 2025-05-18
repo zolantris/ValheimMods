@@ -56,28 +56,33 @@ public class SwivelUIPanelComponentIntegration : SwivelUIPanelComponent
     }
   }
 
-  public override void OnBindTo()
+  public override void BindTo(SwivelComponent target, bool isToggle = false)
   {
-    TryGetCurrentSwivelIntegration();
-  }
+    if (!target)
+    {
+      LoggerProvider.LogDebug("No swivel to open this panel");
+      Destroy(panelRoot);
+      return;
+    }
 
-  // todo hide/show the panel from here if we want to keep hide show buttons otherwise do not use this method.
-  // public void OnPanelToggle(Text text)
-  // {
-  //   if (text == null) return;
-  //   var nextState = !panelRoot.activeSelf;
-  //   text.text = "X";
-  // }
+    if (_currentSwivel)
+    {
+      var swivelComponentIntegration = _currentSwivel as SwivelComponentIntegration;
+      if (swivelComponentIntegration != null)
+      {
+        swivelComponentIntegration.prefabConfigSync.Load();
+      }
+    }
+
+    base.BindTo(target, isToggle);
+  }
 
   protected override void OnPanelUpdate()
   {
     TryGetCurrentSwivelIntegration();
     var swivelComponentIntegration = _currentSwivel as SwivelComponentIntegration;
     if (!swivelComponentIntegration || !swivelComponentIntegration.IsNetViewValid()) return;
-
-    var config = new SwivelCustomConfig();
-    config.ApplyFrom(swivelComponentIntegration);
-    swivelComponentIntegration.prefabConfigSync.RequestCommitConfigChange(config);
+    swivelComponentIntegration.prefabConfigSync.RequestCommitConfigChange(_currentSwivelTempConfig);
   }
 
   private const string PanelName = "ValheimVehicles_SwivelPanel";

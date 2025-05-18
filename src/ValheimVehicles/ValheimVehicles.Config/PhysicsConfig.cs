@@ -198,7 +198,7 @@ public class PhysicsConfig : BepInExBaseConfig<PhysicsConfig>
       "SwivelsCanSyncOnAllClients",
       true,
       ConfigHelpers.CreateConfigDescription(
-        $"Allow swivels to sync on all clients. Instead of using ChildSync properties which can be a bit laggy.", false, false));
+        $"Allow swivels to sync on all clients. Instead of using ChildSync properties which can be a bit laggy.", true, false));
     SwivelComponentIntegration.CanAllClientsSync = SwivelsCanSyncOnAllClients.Value;
     SwivelsCanSyncOnAllClients.SettingChanged += (sender, args) => SwivelComponentIntegration.CanAllClientsSync = SwivelsCanSyncOnAllClients.Value;
 

@@ -1,5 +1,4 @@
-﻿
-// ReSharper disable ArrangeNamespaceBody
+﻿// ReSharper disable ArrangeNamespaceBody
 // ReSharper disable NamespaceStyle
 
 namespace ValheimVehicles.SharedScripts
@@ -9,7 +8,10 @@ namespace ValheimVehicles.SharedScripts
     None,
     Rotate,
     Move,
+#if DEBUG
+    // not ready for prod.
     TargetEnemy,
     TargetWind,
+#endif
   }
 }

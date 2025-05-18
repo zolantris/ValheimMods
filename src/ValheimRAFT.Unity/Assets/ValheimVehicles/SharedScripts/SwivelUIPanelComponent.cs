@@ -9,6 +9,7 @@ using JetBrains.Annotations;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using ValheimVehicles.Config;
 
 #endregion
 
@@ -47,18 +48,19 @@ namespace ValheimVehicles.SharedScripts.UI
 
     internal SwivelComponent? _currentSwivel;
 
+    internal SwivelCustomConfig _currentSwivelTempConfig = new();
+
     public SwivelComponent? CurrentSwivel
     {
       get => _currentSwivel;
       set => _currentSwivel = value;
     }
 
-    public static bool ShouldDestroyOnNewTarget = false;
+    public static bool ShouldDestroyOnNewTarget = true;
 
     // for integrations
     [UsedImplicitly]
-    public virtual void OnBindTo() {}
-    public void BindTo(SwivelComponent target, bool isToggle = false)
+    public virtual void BindTo(SwivelComponent target, bool isToggle = false)
     {
       if (ShouldDestroyOnNewTarget)
       {
@@ -70,7 +72,13 @@ namespace ValheimVehicles.SharedScripts.UI
       }
 
       CurrentSwivel = target;
-      if (CurrentSwivel == null) return;
+      if (CurrentSwivel == null)
+      {
+        return;
+      }
+
+      _currentSwivelTempConfig = new SwivelCustomConfig();
+      _currentSwivelTempConfig.ApplyFrom(target);
 
       if (!_hasCreatedUI)
       {
@@ -78,20 +86,20 @@ namespace ValheimVehicles.SharedScripts.UI
         CreateUI();
       }
 
-      modeDropdown.SetValueWithoutNotify((int)CurrentSwivel.Mode);
-      motionStateDropdown.SetValueWithoutNotify((int)CurrentSwivel.CurrentMotionState);
+      modeDropdown.SetValueWithoutNotify((int)_currentSwivelTempConfig.Mode);
+      motionStateDropdown.SetValueWithoutNotify((int)_currentSwivelTempConfig.MotionState);
 
-      var max = CurrentSwivel.MaxEuler;
+      var max = _currentSwivelTempConfig.MaxEuler;
       maxXRow.GetComponentInChildren<Slider>().SetValueWithoutNotify(max.x);
       maxYRow.GetComponentInChildren<Slider>().SetValueWithoutNotify(max.y);
       maxZRow.GetComponentInChildren<Slider>().SetValueWithoutNotify(max.z);
 
-      var offset = CurrentSwivel.movementOffset;
+      var offset = _currentSwivelTempConfig.MovementOffset;
       targetDistanceXRow.GetComponentInChildren<Slider>().SetValueWithoutNotify(offset.x);
       targetDistanceYRow.GetComponentInChildren<Slider>().SetValueWithoutNotify(offset.y);
       targetDistanceZRow.GetComponentInChildren<Slider>().SetValueWithoutNotify(offset.z);
 
-      movementLerpRow.GetComponentInChildren<Slider>().SetValueWithoutNotify(CurrentSwivel.InterpolationSpeed);
+      movementLerpRow.GetComponentInChildren<Slider>().SetValueWithoutNotify(_currentSwivelTempConfig.InterpolationSpeed);
 
       RefreshUI();
       if (!isToggle)
@@ -200,22 +208,22 @@ namespace ValheimVehicles.SharedScripts.UI
       layout.preferredHeight = 500f;
 
       SwivelUIHelpers.AddRowWithButton(layoutParent, viewStyles, SwivelUIPanelStrings.SwivelConfig, "X", 48f, 48f, out _, Hide);
-      modeDropdown = SwivelUIHelpers.AddDropdownRow(layoutParent, viewStyles, SwivelUIPanelStrings.SwivelMode, EnumNames<SwivelMode>(), CurrentSwivel.Mode.ToString(), i =>
+      modeDropdown = SwivelUIHelpers.AddDropdownRow(layoutParent, viewStyles, SwivelUIPanelStrings.SwivelMode, EnumNames<SwivelMode>(), _currentSwivelTempConfig.Mode.ToString(), i =>
       {
-        CurrentSwivel.SetMode((SwivelMode)i);
+        _currentSwivelTempConfig.Mode = (SwivelMode)i;
         RefreshUI();
         UnsetSavedState();
       });
 
-      motionStateDropdown = SwivelUIHelpers.AddDropdownRow(layoutParent, viewStyles, SwivelUIPanelStrings.MotionState, EnumNames<MotionState>(), CurrentSwivel.CurrentMotionState.ToString(), i =>
+      motionStateDropdown = SwivelUIHelpers.AddDropdownRow(layoutParent, viewStyles, SwivelUIPanelStrings.MotionState, EnumNames<MotionState>(), _currentSwivelTempConfig.MotionState.ToString(), i =>
       {
-        CurrentSwivel.SetMotionState((MotionState)i);
+        _currentSwivelTempConfig.MotionState = (MotionState)i;
         UnsetSavedState();
       });
 
-      movementLerpRow = SwivelUIHelpers.AddSliderRow(layoutParent, viewStyles, SwivelUIPanelStrings.InterpolationSpeed, 1f, 100f, CurrentSwivel.InterpolationSpeed, v =>
+      movementLerpRow = SwivelUIHelpers.AddSliderRow(layoutParent, viewStyles, SwivelUIPanelStrings.InterpolationSpeed, 1f, 100f, _currentSwivelTempConfig.InterpolationSpeed, v =>
       {
-        CurrentSwivel.SetInterpolationSpeed(v);
+        _currentSwivelTempConfig.InterpolationSpeed = v;
         UnsetSavedState();
       });
 
@@ -225,9 +233,9 @@ namespace ValheimVehicles.SharedScripts.UI
         new[] { "X", "Y", "Z" },
         new[]
         {
-          CurrentSwivel.HingeAxes.HasFlag(HingeAxis.X),
-          CurrentSwivel.HingeAxes.HasFlag(HingeAxis.Y),
-          CurrentSwivel.HingeAxes.HasFlag(HingeAxis.Z)
+          _currentSwivelTempConfig.HingeAxes.HasFlag(HingeAxis.X),
+          _currentSwivelTempConfig.HingeAxes.HasFlag(HingeAxis.Y),
+          _currentSwivelTempConfig.HingeAxes.HasFlag(HingeAxis.Z)
         },
         selected =>
         {
@@ -235,57 +243,57 @@ namespace ValheimVehicles.SharedScripts.UI
           if (selected[0]) axis |= HingeAxis.X;
           if (selected[1]) axis |= HingeAxis.Y;
           if (selected[2]) axis |= HingeAxis.Z;
-          CurrentSwivel.SetHingeAxes(axis);
+          _currentSwivelTempConfig.HingeAxes = axis;
           UnsetSavedState();
         });
 
-      maxXRow = SwivelUIHelpers.AddSliderRow(layoutParent, viewStyles, SwivelUIPanelStrings.MaxXAngle, 0f, 360f, CurrentSwivel.MaxEuler.x, v =>
+      maxXRow = SwivelUIHelpers.AddSliderRow(layoutParent, viewStyles, SwivelUIPanelStrings.MaxXAngle, 0f, 360f, _currentSwivelTempConfig.MaxEuler.x, v =>
       {
-        var e = CurrentSwivel.MaxEuler;
+        var e = _currentSwivelTempConfig.MaxEuler;
         e.x = v;
-        CurrentSwivel.SetMaxEuler(e);
+        _currentSwivelTempConfig.MaxEuler = e;
         UnsetSavedState();
       });
 
-      maxYRow = SwivelUIHelpers.AddSliderRow(layoutParent, viewStyles, SwivelUIPanelStrings.MaxYAngle, 0f, 360f, CurrentSwivel.MaxEuler.y, v =>
+      maxYRow = SwivelUIHelpers.AddSliderRow(layoutParent, viewStyles, SwivelUIPanelStrings.MaxYAngle, 0f, 360f, _currentSwivelTempConfig.MaxEuler.y, v =>
       {
-        var e = CurrentSwivel.MaxEuler;
+        var e = _currentSwivelTempConfig.MaxEuler;
         e.y = v;
-        CurrentSwivel.SetMaxEuler(e);
+        _currentSwivelTempConfig.MaxEuler = e;
         UnsetSavedState();
       });
 
-      maxZRow = SwivelUIHelpers.AddSliderRow(layoutParent, viewStyles, SwivelUIPanelStrings.MaxZAngle, 0f, 360f, CurrentSwivel.MaxEuler.z, v =>
+      maxZRow = SwivelUIHelpers.AddSliderRow(layoutParent, viewStyles, SwivelUIPanelStrings.MaxZAngle, 0f, 360f, _currentSwivelTempConfig.MaxEuler.z, v =>
       {
-        var e = CurrentSwivel.MaxEuler;
+        var e = _currentSwivelTempConfig.MaxEuler;
         e.z = v;
-        CurrentSwivel.SetMaxEuler(e);
+        _currentSwivelTempConfig.MaxEuler = e;
         UnsetSavedState();
       });
 
       movementSectionLabel = SwivelUIHelpers.AddSectionLabel(layoutParent, viewStyles, SwivelUIPanelStrings.MovementSettings);
 
-      targetDistanceXRow = SwivelUIHelpers.AddSliderRow(layoutParent, viewStyles, SwivelUIPanelStrings.TargetXOffset, MinTargetOffset, MaxTargetOffset, CurrentSwivel.movementOffset.x, v =>
+      targetDistanceXRow = SwivelUIHelpers.AddSliderRow(layoutParent, viewStyles, SwivelUIPanelStrings.TargetXOffset, MinTargetOffset, MaxTargetOffset, _currentSwivelTempConfig.MovementOffset.x, v =>
       {
-        var o = CurrentSwivel.movementOffset;
+        var o = _currentSwivelTempConfig.MovementOffset;
         o.x = v;
-        CurrentSwivel.SetMovementOffset(o);
+        _currentSwivelTempConfig.MovementOffset = o;
         UnsetSavedState();
       });
 
-      targetDistanceYRow = SwivelUIHelpers.AddSliderRow(layoutParent, viewStyles, SwivelUIPanelStrings.TargetYOffset, MinTargetOffset, MaxTargetOffset, CurrentSwivel.movementOffset.y, v =>
+      targetDistanceYRow = SwivelUIHelpers.AddSliderRow(layoutParent, viewStyles, SwivelUIPanelStrings.TargetYOffset, MinTargetOffset, MaxTargetOffset, _currentSwivelTempConfig.MovementOffset.y, v =>
       {
-        var o = CurrentSwivel.movementOffset;
+        var o = _currentSwivelTempConfig.MovementOffset;
         o.y = v;
-        CurrentSwivel.SetMovementOffset(o);
+        _currentSwivelTempConfig.MovementOffset = o;
         UnsetSavedState();
       });
 
-      targetDistanceZRow = SwivelUIHelpers.AddSliderRow(layoutParent, viewStyles, SwivelUIPanelStrings.TargetZOffset, MinTargetOffset, MaxTargetOffset, CurrentSwivel.movementOffset.z, v =>
+      targetDistanceZRow = SwivelUIHelpers.AddSliderRow(layoutParent, viewStyles, SwivelUIPanelStrings.TargetZOffset, MinTargetOffset, MaxTargetOffset, _currentSwivelTempConfig.MovementOffset.z, v =>
       {
-        var o = CurrentSwivel.movementOffset;
+        var o = _currentSwivelTempConfig.MovementOffset;
         o.z = v;
-        CurrentSwivel.SetMovementOffset(o);
+        _currentSwivelTempConfig.MovementOffset = o;
         UnsetSavedState();
       });
 
@@ -298,11 +306,13 @@ namespace ValheimVehicles.SharedScripts.UI
       _hasCreatedUI = true;
     }
 
+    /// <summary>
+    /// Only show swivel ui values if there is one found.
+    /// </summary>
     private void RefreshUI()
     {
-      if (CurrentSwivel == null) return;
-      var isRotating = CurrentSwivel.Mode == SwivelMode.Rotate;
-      var isMoving = CurrentSwivel.Mode == SwivelMode.Move;
+      var isRotating = CurrentSwivel && _currentSwivelTempConfig.Mode == SwivelMode.Rotate;
+      var isMoving = CurrentSwivel && _currentSwivelTempConfig.Mode == SwivelMode.Move;
 
       rotationSectionLabel.SetActive(isRotating);
       hingeAxisRow.SetActive(isRotating);

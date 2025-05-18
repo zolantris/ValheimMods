@@ -124,6 +124,7 @@
         if (ShouldSyncClientOnlyUpdate)
         {
           prefabConfigSync.Load();
+          base.SetMotionState(prefabConfigSync.Config.MotionState);
         }
         return;
       }

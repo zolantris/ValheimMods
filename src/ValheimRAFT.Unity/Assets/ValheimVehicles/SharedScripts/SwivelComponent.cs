@@ -279,6 +279,7 @@ namespace ValheimVehicles.SharedScripts
           }
           break;
 
+#if DEBUG
         case SwivelMode.TargetEnemy:
           targetRotation = CalculateTargetNearestEnemyRotation();
           animatedRigidbody.Move(transform.position, transform.rotation * targetRotation);
@@ -290,6 +291,7 @@ namespace ValheimVehicles.SharedScripts
           animatedRigidbody.Move(transform.position, transform.rotation * targetRotation);
           didMove = true;
           break;
+#endif
       }
 
       if (!didMove)
