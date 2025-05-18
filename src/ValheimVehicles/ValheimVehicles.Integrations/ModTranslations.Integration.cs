@@ -242,6 +242,10 @@ public partial class ModTranslations
     SwivelMode_Move = SafeLocalize("$valheim_vehicles_swivel_mode_move");
     SwivelMode_TargetEnemy = SafeLocalize("$valheim_vehicles_swivel_mode_target_enemy");
     SwivelMode_TargetWind = SafeLocalize("$valheim_vehicles_swivel_mode_target_wind");
+
+    Mechanism_Switch_Swivel_SelectedSwivel = SafeLocalize("$valheim_vehicles_mechanism_switch_swivel_selected_swivel");
+    Mechanism_Switch_Mode = SafeLocalize("$valheim_vehicles_mechanism_switch_mode");
+    SharedKey_Mode = SafeLocalize("$valheim_vehicles_shared_keys_mode");
   }
 
   private static void UpdateVehicleCommandsTranslations()

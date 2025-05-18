@@ -7,6 +7,7 @@ using System;
 using System.Linq;
 using TMPro;
 using UnityEngine;
+using ValheimVehicles.Config;
 using ValheimVehicles.SharedScripts.Interfaces;
 
 #endregion
@@ -21,34 +22,38 @@ namespace ValheimVehicles.SharedScripts.UI
     public GameObject panelRoot;
     public GameObject panelContent;
     public IMechanismActionSetter? mechanismAction;
-    private TMP_Dropdown actionDropdown;
-    private TMP_Dropdown swivelSelectorDropdown;
+    internal TMP_Dropdown actionDropdown;
+    internal TMP_Dropdown swivelSelectorDropdown;
 
     [SerializeField] public SwivelUISharedStyles viewStyles = new();
 
-    public MechanismAction SelectedAction { get; set; }
     public SwivelComponent? SelectedSwivel { get; set; }
 
     public Action<MechanismAction>? OnSelectedActionChanged;
     public Action<SwivelComponent>? OnSwivelSelectedChanged;
+    public bool IsEditing = false;
+    private TextMeshProUGUI _saveStatus;
+
+    internal MechanismSwitchCustomConfig _currentPanelConfig = new();
 
     public virtual void BindTo(IMechanismActionSetter mechanismActionSetter, bool isToggle = false)
     {
       mechanismAction = mechanismActionSetter;
-      SelectedAction = mechanismActionSetter.SelectedAction;
+      _currentPanelConfig = new MechanismSwitchCustomConfig();
+      _currentPanelConfig.ApplyFrom(mechanismAction);
 
       var isFirstCreate = !panelRoot;
       if (isFirstCreate)
         CreateUI();
 
-      if (SelectedAction == MechanismAction.SwivelActivateMode || SelectedAction == MechanismAction.SwivelEditMode)
+      if (_currentPanelConfig.SelectedAction == MechanismAction.SwivelActivateMode || _currentPanelConfig.SelectedAction == MechanismAction.SwivelEditMode)
       {
         AddOrUpdateSwivelDropdown();
       }
 
       HideShowSwivelFinder();
 
-      actionDropdown.SetValueWithoutNotify((int)SelectedAction);
+      actionDropdown.SetValueWithoutNotify((int)_currentPanelConfig.SelectedAction);
 
       if (!isToggle || isFirstCreate) Show();
       else Toggle();
@@ -79,7 +84,7 @@ namespace ValheimVehicles.SharedScripts.UI
 
     public void HideShowSwivelFinder()
     {
-      var show = SelectedAction == MechanismAction.SwivelActivateMode || SelectedAction == MechanismAction.SwivelEditMode;
+      var show = _currentPanelConfig.SelectedAction == MechanismAction.SwivelActivateMode || _currentPanelConfig.SelectedAction == MechanismAction.SwivelEditMode;
       swivelSelectorDropdown.gameObject.SetActive(show);
     }
 
@@ -94,20 +99,21 @@ namespace ValheimVehicles.SharedScripts.UI
         .Select(x =>
         {
           var dist = Vector3.Distance(selfPos, x.transform.position);
-          return $"({dist:F1}m) {x.swivelPowerConsumer.NetworkId.Substring(0, 5)}...";
+          return $"({dist:F1}m) {x.SwivelPersistentId.ToString().Substring(0, 5)}";
         }).ToList();
 
       if (!swivelSelectorDropdown)
       {
-        swivelSelectorDropdown = SwivelUIHelpers.AddDropdownRow(panelContent.transform, viewStyles, "Selected Swivel",
+        swivelSelectorDropdown = SwivelUIHelpers.AddDropdownRow(panelContent.transform, viewStyles, ModTranslations.Mechanism_Switch_Swivel_SelectedSwivel,
           options.ToArray(),
-          options.FirstOrDefault() ?? "None",
+          options.FirstOrDefault() ?? "N/A",
           index =>
           {
             if (index < 0 || index >= nearestSwivels.Count) return;
             SelectedSwivel = nearestSwivels[index];
             mechanismAction.SetMechanismSwivel(SelectedSwivel);
             OnSwivelSelectedChanged?.Invoke(SelectedSwivel);
+            UnsetSavedState();
           });
       }
       else
@@ -131,18 +137,26 @@ namespace ValheimVehicles.SharedScripts.UI
             }
           }
         }
-        swivelSelectorDropdown.SetValueWithoutNotify(actionInt);
-        SelectedSwivel = nearestSwivels[actionInt];
-
-        if (SelectedSwivel != mechanismAction.TargetSwivel)
-        {
-          mechanismAction.SetMechanismSwivel(SelectedSwivel);
-        }
-        OnSwivelSelectedChanged?.Invoke(SelectedSwivel);
-
-        swivelSelectorDropdown.RefreshShownValue();
+        swivelSelectorDropdown.value = actionInt;
       }
     }
+
+    protected virtual void OnPanelSave()
+    {
+      LoggerProvider.LogInfo("Saving panel. This should not be seen in-game.");
+    }
+
+    public virtual void UnsetSavedState()
+    {
+      IsEditing = true;
+      if (_saveStatus) _saveStatus.text = SwivelUIPanelStrings.Save;
+    }
+    public virtual void SetSavedState()
+    {
+      IsEditing = false;
+      if (_saveStatus) _saveStatus.text = SwivelUIPanelStrings.Saved;
+    }
+
 
     public virtual void CreateUI()
     {
@@ -160,38 +174,22 @@ namespace ValheimVehicles.SharedScripts.UI
 
       SwivelUIHelpers.AddRowWithButton(panelContent.transform, viewStyles, "Mechanism Mode", "X", 24, 24, out _, Hide);
 
-      actionDropdown = SwivelUIHelpers.AddDropdownRow(panelContent.transform, viewStyles, "Mode",
+      actionDropdown = SwivelUIHelpers.AddDropdownRow(panelContent.transform, viewStyles, ModTranslations.SharedKey_Mode,
         Enum.GetNames(typeof(MechanismAction)),
-        SelectedAction.ToString(),
+        _currentPanelConfig.SelectedAction.ToString(),
         index =>
         {
-          SelectedAction = (MechanismAction)index;
-          mechanismAction.SetMechanismAction(SelectedAction);
-
-          if (SelectedAction == MechanismAction.SwivelActivateMode || SelectedAction == MechanismAction.SwivelEditMode)
-          {
-            AddOrUpdateSwivelDropdown();
-          }
-
-          OnSelectedActionChanged?.Invoke(SelectedAction);
+          _currentPanelConfig.SelectedAction = (MechanismAction)index;
           HideShowSwivelFinder();
+          UnsetSavedState();
         });
 
-      // var dropdownAction = new GenericInputAction
-      // {
-      //   title = "Open Save Vehicle Selector",
-      //   // action = VehicleGui.OpenVehicleSelectorGUi,
-      //   inputType = InputType.Dropdown,
-      //   OnDropdownChanged = (int index) =>
-      //   {
-      //     if (index < 0 || index >= NearestSwivels.Count) return;
-      //     SelectedSwivel = NearestSwivels[index];
-      //     _mechanismActionSetterComponent.SetMechanismSwivel(SelectedSwivel);
-      //     OnSwivelSelectedChanged?.Invoke(SelectedSwivel);
-      //   }
-      //   // OnPointerEnterAction = VehicleStorageAPI.RefreshVehicleSelectionGui
-      // };
-      // swivelSelectorDropdown = VehicleGui.AddDropdownWithAction(dropdownAction, 0, 48, content.transform).GetComponent<TMP_Dropdown>();
+      SwivelUIHelpers.AddRowWithButton(panelRoot.transform, viewStyles, null, SwivelUIPanelStrings.Save, 96f, 48f, out _saveStatus, () =>
+      {
+        OnPanelSave();
+        SetSavedState();
+      });
+
 
       AddOrUpdateSwivelDropdown();
 

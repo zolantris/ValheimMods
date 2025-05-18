@@ -204,31 +204,17 @@ public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interac
     prefabConfigSync.Request_SetSelectedAction(action);
   }
 
+  /// <summary>
+  /// for side-effects and hooks
+  /// </summary>
+  /// todo we may not want to keep this
   public void OnMechanismActionUpdate(MechanismAction action)
   {
     if (!CanFireMechanismActionSideEffects) return;
 
     try
     {
-      // if (action is MechanismAction.None or MechanismAction.CommandsHud or MechanismAction.CreativeMode or MechanismAction.ColliderEditMode)
-      // {
-      //   TargetSwivel = null;
-      //   TargetSwivelId = 0;
-      // }
-      // else if (action is MechanismAction.SwivelEditMode or MechanismAction.SwivelActivateMode)
-      // {
-      // }
-      // else
-      // {
-      //   throw new ArgumentOutOfRangeException(nameof(action), action, null);
-      // }
-      //
-      // // todo this is likely a logic loop. Might need to rethink this. Or add specific sync logic so we do not rely on Local switch config side-effect.
-      if (MechanismSelectorPanelIntegration.Instance != null && MechanismSelectorPanelIntegration.Instance.mechanismAction != null && MechanismSelectorPanelIntegration.Instance.mechanismAction.gameObject == gameObject)
-      {
-        MechanismSelectorPanelIntegration.Instance.SelectedAction = action;
-        TargetSwivel = MechanismSelectorPanelIntegration.Instance.mechanismAction.TargetSwivel != null ? MechanismSelectorPanelIntegration.Instance.mechanismAction.TargetSwivel : TargetSwivel;
-      }
+      // do stuff.
     }
     catch (Exception e)
     {
@@ -424,7 +410,6 @@ public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interac
       animator.SetIKPositionWeight(AvatarIKGoal.RightHand, lerpedHandDistance);
     }
   }
-
 
   public void OnAltPressHandler()
   {

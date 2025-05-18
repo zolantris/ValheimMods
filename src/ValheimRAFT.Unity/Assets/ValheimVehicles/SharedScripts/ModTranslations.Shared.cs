@@ -122,6 +122,10 @@ namespace ValheimVehicles.SharedScripts
     public static string Swivel_TargetYOffset = null!;
     public static string Swivel_TargetZOffset = null!;
 
+    public static string Mechanism_Switch_Swivel_SelectedSwivel = "Selected Swivel";
+    public static string Mechanism_Switch_Mode = "Mechanism Mode";
+    public static string SharedKey_Mode = "Mode";
+
 // SwivelMode Enum Values
     public static string SwivelMode_None = null!;
     public static string SwivelMode_Rotate = null!;

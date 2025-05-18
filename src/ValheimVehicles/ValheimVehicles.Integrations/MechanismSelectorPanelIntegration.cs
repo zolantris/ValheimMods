@@ -1,6 +1,9 @@
+using System.Linq;
 using UnityEngine;
+using ValheimVehicles.Components;
 using ValheimVehicles.Config;
 using ValheimVehicles.Constants;
+using ValheimVehicles.Helpers;
 using ValheimVehicles.SharedScripts;
 using ValheimVehicles.SharedScripts.UI;
 using ValheimVehicles.UI;
@@ -25,6 +28,42 @@ public class MechanismSelectorPanelIntegration : MechanismSelectorPanel
   public static void Init()
   {
     Game.instance.gameObject.AddComponent<MechanismSelectorPanelIntegration>();
+  }
+
+  protected override void OnPanelSave()
+  {
+    var mechanismSwitch = mechanismAction as MechanismSwitch;
+    if (!mechanismSwitch || !mechanismSwitch.IsNetViewValid()) return;
+
+    // We do not let local overrides of this readonly value.
+    var saveConfig = new MechanismSwitchCustomConfig();
+    saveConfig.ApplyFrom(_currentPanelConfig);
+    mechanismSwitch.prefabConfigSync.RequestCommitConfigChange(saveConfig);
+  }
+
+  public void SyncUIFromPartialConfig(MechanismSwitch updated)
+  {
+    if (mechanismAction == null) return;
+    if (IsEditing) return;
+
+    // Ignore MotionState (readonly)
+    var old = _currentPanelConfig;
+
+    if (_currentPanelConfig.SelectedAction != updated.prefabConfigSync.Config.SelectedAction)
+    {
+      actionDropdown.value = (int)updated.prefabConfigSync.Config.SelectedAction;
+      _currentPanelConfig.SelectedAction = updated.prefabConfigSync.Config.SelectedAction;
+    }
+
+    if (_currentPanelConfig.TargetSwivelId != updated.prefabConfigSync.Config.TargetSwivelId)
+    {
+      var index = swivelSelectorDropdown.options.FindIndex(x => x.text.Contains(updated.TargetSwivelId.ToString().Substring(0, 5)));
+      swivelSelectorDropdown.value = index;
+      _currentPanelConfig.TargetSwivelId = updated.prefabConfigSync.Config.TargetSwivelId;
+    }
+
+
+    IsEditing = false;
   }
 
   public override GameObject CreateUIRoot()

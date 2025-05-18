@@ -83,19 +83,19 @@ public class SwivelUIPanelComponentIntegration : SwivelUIPanelComponent
     if (IsEditing) return;
 
     // Ignore MotionState (readonly)
-    var old = _currentSwivelTempConfig;
+    var old = _currentPanelConfig;
 
     if (updated.Mode != old.Mode)
     {
       modeDropdown.value = (int)updated.Mode;
-      _currentSwivelTempConfig.Mode = updated.Mode;
+      _currentPanelConfig.Mode = updated.Mode;
       RefreshUI();
     }
 
     if (!Mathf.Approximately(updated.InterpolationSpeed, old.InterpolationSpeed))
     {
       movementLerpRow.GetComponentInChildren<Slider>().SetValueWithoutNotify(updated.InterpolationSpeed);
-      _currentSwivelTempConfig.InterpolationSpeed = updated.InterpolationSpeed;
+      _currentPanelConfig.InterpolationSpeed = updated.InterpolationSpeed;
     }
 
     if (updated.HingeAxes != old.HingeAxes)
@@ -107,7 +107,7 @@ public class SwivelUIPanelComponentIntegration : SwivelUIPanelComponent
         toggles[1].isOn = updated.HingeAxes.HasFlag(HingeAxis.Y);
         toggles[2].isOn = updated.HingeAxes.HasFlag(HingeAxis.Z);
       }
-      _currentSwivelTempConfig.HingeAxes = updated.HingeAxes;
+      _currentPanelConfig.HingeAxes = updated.HingeAxes;
     }
 
     if (updated.MaxEuler != old.MaxEuler)
@@ -115,7 +115,7 @@ public class SwivelUIPanelComponentIntegration : SwivelUIPanelComponent
       maxXRow.GetComponentInChildren<Slider>().value = updated.MaxEuler.x;
       maxYRow.GetComponentInChildren<Slider>().value = updated.MaxEuler.y;
       maxZRow.GetComponentInChildren<Slider>().value = updated.MaxEuler.z;
-      _currentSwivelTempConfig.MaxEuler = updated.MaxEuler;
+      _currentPanelConfig.MaxEuler = updated.MaxEuler;
     }
 
     if (updated.MovementOffset != old.MovementOffset)
@@ -123,7 +123,7 @@ public class SwivelUIPanelComponentIntegration : SwivelUIPanelComponent
       targetDistanceXRow.GetComponentInChildren<Slider>().value = updated.MovementOffset.x;
       targetDistanceYRow.GetComponentInChildren<Slider>().value = updated.MovementOffset.y;
       targetDistanceZRow.GetComponentInChildren<Slider>().value = updated.MovementOffset.z;
-      _currentSwivelTempConfig.MovementOffset = updated.MovementOffset;
+      _currentPanelConfig.MovementOffset = updated.MovementOffset;
     }
 
     // Optional: update MotionState label visually if needed
@@ -140,7 +140,7 @@ public class SwivelUIPanelComponentIntegration : SwivelUIPanelComponent
 
     // We do not let local overrides of this readonly value.
     var saveConfig = new SwivelCustomConfig();
-    saveConfig.ApplyFrom(_currentSwivelTempConfig);
+    saveConfig.ApplyFrom(_currentPanelConfig);
 
     // overrides/guards for config
     saveConfig.MotionState = swivelComponentIntegration.MotionState;
@@ -151,7 +151,7 @@ public class SwivelUIPanelComponentIntegration : SwivelUIPanelComponent
       return;
     }
 
-    swivelComponentIntegration.prefabConfigSync.RequestCommitConfigChange(_currentSwivelTempConfig);
+    swivelComponentIntegration.prefabConfigSync.RequestCommitConfigChange(saveConfig);
   }
 
   private const string PanelName = "ValheimVehicles_SwivelPanel";
