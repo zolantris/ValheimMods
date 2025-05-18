@@ -102,6 +102,13 @@
       {
         return;
       }
+      var currentState = MotionState;
+
+      if (state == currentState)
+      {
+        LoggerProvider.LogDebug("Bailing. Infinite loop detected in SetMotionState");
+        return;
+      }
 
       if (!netView.IsOwner())
       {
@@ -110,8 +117,11 @@
       else
       {
         prefabConfigSync.Config.MotionState = state;
-        base.SetMotionState(state);
-        prefabConfigSync.Request_Load();
+        if (state != currentState)
+        {
+          base.SetMotionState(state);
+          Request_SetMotionState(state);
+        }
       }
 
       // Only record transitions that initiate movement

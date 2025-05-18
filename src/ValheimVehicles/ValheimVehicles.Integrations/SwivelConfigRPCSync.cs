@@ -15,7 +15,7 @@ public class SwivelConfigRPCSync : PrefabConfigRPCSync<SwivelCustomConfig, ISwiv
   {
     base.RegisterRPCListeners();
     // rpcHandler?.Register(nameof(RPC_NextMotion), RPC_NextMotion);
-    rpcHandler?.Register<ZPackage>(nameof(RPC_NextMotion), RPC_NextMotion);
+    rpcHandler?.Register<ZPackage>(nameof(RPC_NextMotionState), RPC_NextMotionState);
   }
 
   // public void Request_NextMotion()
@@ -36,10 +36,11 @@ public class SwivelConfigRPCSync : PrefabConfigRPCSync<SwivelCustomConfig, ISwiv
   public void Request_SetMotionState(MotionState motionState)
   {
     if (!this.IsNetViewValid(out var netView)) return;
+    if (!netView.IsOwner() || !ZNet.instance.IsServer()) return;
     var pkg = new ZPackage();
     pkg.Write((int)motionState);
     // Send to the server/owner for validation and potential action
-    netView.InvokeRPC(netView.GetZDO().GetOwner(), nameof(RPC_NextMotion), pkg);
+    netView.InvokeRPC(netView.GetZDO().GetOwner(), nameof(RPC_NextMotionState), pkg);
   }
 
   public void Request_NextMotion()
@@ -50,10 +51,32 @@ public class SwivelConfigRPCSync : PrefabConfigRPCSync<SwivelCustomConfig, ISwiv
     pkg.Write((int)next);
 
     // Send to the server/owner for validation and potential action
-    netView.InvokeRPC(netView.GetZDO().GetOwner(), nameof(RPC_NextMotion), pkg);
+    netView.InvokeRPC(netView.GetZDO().GetOwner(), nameof(RPC_NextMotionState), pkg);
   }
 
-  public void RPC_NextMotion(long sender, ZPackage pkg)
+  public void RPC_SetMotionState(long sender, ZPackage pkg)
+  {
+    if (!this.IsNetViewValid(out var netView) || !netView.IsOwner()) return;
+
+    // Read client-reported MotionState
+    var clientMotionState = (MotionState)pkg.ReadInt();
+
+    // Clone current config (to avoid mutating it before validation)
+
+    if (clientMotionState == Config.MotionState)
+    {
+      LoggerProvider.LogDebug($"[Swivel] MotionState unchanged: <{clientMotionState}>. Ignoring.");
+      return;
+    }
+
+    LoggerProvider.LogDebug($"Server has currently has MotionState: <{Config.MotionState}>");
+
+    // Valid and expected: apply to real config
+    Config.MotionState = clientMotionState;
+    CommitConfigChange(Config);
+  }
+
+  public void RPC_NextMotionState(long sender, ZPackage pkg)
   {
     if (!this.IsNetViewValid(out var netView) || !netView.IsOwner()) return;
 
