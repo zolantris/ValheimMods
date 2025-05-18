@@ -380,6 +380,7 @@ public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interac
       }
     }
 
+
     if (TargetSwivel != null)
     {
       TargetSwivel.Request_NextMotionState();

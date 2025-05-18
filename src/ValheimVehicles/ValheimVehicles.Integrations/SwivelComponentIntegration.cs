@@ -94,6 +94,8 @@
       SetupPieceActivator();
     }
 
+    public static bool ShouldSkipClientOnlyUpdate = true;
+    public static bool ShouldSyncClientOnlyUpdate = true;
 
     public override void SetMotionState(MotionState state)
     {
@@ -115,7 +117,14 @@
 
       if (!netView.IsOwner())
       {
-        Request_SetMotionState(state);
+        if (!ShouldSkipClientOnlyUpdate)
+        {
+          Request_SetMotionState(state);
+        }
+        if (ShouldSyncClientOnlyUpdate)
+        {
+          prefabConfigSync.Load();
+        }
         return;
       }
 
@@ -158,6 +167,12 @@
 
     public override void Request_NextMotionState()
     {
+      if (!this.IsNetViewValid(out var netView)) return;
+      if (!netView.IsOwner())
+      {
+        // must load otherwise we could be desynced in any action called.
+        prefabConfigSync.Load();
+      }
       prefabConfigSync.Request_NextMotion();
     }
 
@@ -175,8 +190,6 @@
 
     public void OnEnable()
     {
-      onMovementReturned += OnMovementStateUpdate;
-
       var persistentId = GetPersistentId();
       if (persistentId == 0) return;
 
@@ -185,15 +198,6 @@
         return;
       }
       ActiveInstances.Add(persistentId, this);
-    }
-
-    /// <summary>
-    /// Should not call for non-owners
-    /// </summary>
-    private void OnMovementStateUpdate()
-    {
-      LoggerProvider.LogInfo("called OnMovementStateUpdate");
-      // prefabConfigSync.Request_NextMotion();
     }
 
     public void SetupPieceActivator()
@@ -206,8 +210,6 @@
 
     public void OnDisable()
     {
-      onMovementReturned -= OnMovementStateUpdate;
-
       var persistentId = GetPersistentId();
       if (persistentId == 0) return;
       if (!ActiveInstances.TryGetValue(persistentId, out var swivelComponentIntegration))
