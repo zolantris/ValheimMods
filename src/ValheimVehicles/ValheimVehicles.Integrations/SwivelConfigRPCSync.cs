@@ -14,8 +14,8 @@ public class SwivelConfigRPCSync : PrefabConfigRPCSync<SwivelCustomConfig, ISwiv
   public override void RegisterRPCListeners()
   {
     base.RegisterRPCListeners();
-    // rpcHandler?.Register(nameof(RPC_NextMotion), RPC_NextMotion);
     rpcHandler?.Register<ZPackage>(nameof(RPC_NextMotionState), RPC_NextMotionState);
+    rpcHandler?.Register<ZPackage>(nameof(RPC_SetMotionState), RPC_SetMotionState);
   }
 
   // public void Request_NextMotion()
@@ -40,7 +40,7 @@ public class SwivelConfigRPCSync : PrefabConfigRPCSync<SwivelCustomConfig, ISwiv
     var pkg = new ZPackage();
     pkg.Write((int)motionState);
     // Send to the server/owner for validation and potential action
-    netView.InvokeRPC(netView.GetZDO().GetOwner(), nameof(RPC_NextMotionState), pkg);
+    netView.InvokeRPC(netView.GetZDO().GetOwner(), nameof(RPC_SetMotionState), pkg);
   }
 
   public void Request_NextMotion()

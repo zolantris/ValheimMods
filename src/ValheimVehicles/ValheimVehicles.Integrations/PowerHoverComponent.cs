@@ -165,11 +165,15 @@ public class PowerHoverComponent : MonoBehaviour, Hoverable, Interactable
     var outString = "";
     if (HasPowerSource)
     {
-      outString += $"Power Source: {MathUtils.RoundToHundredth(_powerSourceComponent.GetFuelLevel())}/{_powerSourceComponent.GetFuelCapacity()}\n";
-      outString += $"{ModTranslations.PowerSource_Interact_AddOne}\n{ModTranslations.PowerSource_Interact_AddMany}";
+      outString += $"{ModTranslations.PowerSource_Interact_AddOne}\n{ModTranslations.PowerSource_Interact_AddMany}\n";
+      outString += $"Power Source: {MathUtils.RoundToHundredth(_powerSourceComponent.GetFuelLevel())}/{_powerSourceComponent.GetFuelCapacity()}";
     }
     if (HasPowerStorage)
     {
+      if (outString != "")
+      {
+        outString += "\n";
+      }
       outString += $"Power Storage: {MathUtils.RoundToHundredth(_powerStorageComponent.ChargeLevel)}/{_powerStorageComponent.Capacity}";
     }
 

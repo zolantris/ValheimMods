@@ -154,8 +154,9 @@ public static class LoggerProvider
       }
       else if (declaringType.IsGenericType)
       {
-        // Strip "`1" or "`2" from name and add generic argument names
-        var baseName = declaringType.Name[..declaringType.Name.IndexOf('`')];
+        var name = declaringType.Name;
+        var backtickIndex = name.IndexOf('`');
+        var baseName = backtickIndex >= 0 ? name.Substring(0, backtickIndex) : name;
         var genericArgs = declaringType.GetGenericArguments()
           .Select(t => t.Name)
           .ToArray();
