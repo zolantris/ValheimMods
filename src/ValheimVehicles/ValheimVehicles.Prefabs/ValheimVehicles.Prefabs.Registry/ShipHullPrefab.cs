@@ -193,6 +193,7 @@ public class ShipHullPrefab : IRegisterPrefab
       LoadValheimAssets.woodFloorPieceWearNTear.m_switchEffect;
     wnt.m_hitNoise = LoadValheimAssets.woodFloorPieceWearNTear.m_hitNoise;
     wnt.m_burnable = hullMaterial != HullMaterial.Iron;
+    wnt.m_ashDamageImmune = hullMaterial == HullMaterial.Iron;
   }
 
   /// <summary>
@@ -305,6 +306,12 @@ public class ShipHullPrefab : IRegisterPrefab
       var wnt = PrefabRegistryHelpers.SetWearNTear(prefab);
       PrefabRegistryHelpers.SetWearNTearSupport(wnt,
         WearNTear.MaterialType.Iron);
+
+
+      if (hullMaterial == HullMaterial.Iron)
+      {
+        wnt.m_ashDamageImmune = true;
+      }
 
       SetHullWnt(wnt, hullMaterial);
 

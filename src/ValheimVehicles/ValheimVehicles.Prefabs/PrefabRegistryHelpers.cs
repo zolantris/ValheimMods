@@ -717,6 +717,7 @@ public abstract class PrefabRegistryHelpers
       LoadValheimAssets.woodFloorPieceWearNTear.m_destroyedEffect;
     wearNTearComponent.m_hitEffect =
       LoadValheimAssets.woodFloorPieceWearNTear.m_hitEffect;
+    wearNTearComponent.m_noRoofWear = true;
 
     if (tierMultiplier == 1)
     {
@@ -740,7 +741,6 @@ public abstract class PrefabRegistryHelpers
 
     wearNTearComponent.m_health = PrefabRegistryController.wearNTearBaseHealth *
                                   tierMultiplier;
-    wearNTearComponent.m_noRoofWear = false;
 
     return wearNTearComponent;
   }

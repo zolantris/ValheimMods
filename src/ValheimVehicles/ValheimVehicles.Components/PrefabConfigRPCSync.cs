@@ -77,7 +77,13 @@ public class PrefabConfigRPCSync<T, TComponentInterface> : MonoBehaviour, IPrefa
   public void CommitConfigChange(T newConfig)
   {
     if (!this.IsNetViewValid(out var netView)) return;
-    if (!netView.IsOwner() && !ZNet.instance.IsServer()) return;
+    if (!netView.IsOwner() && netView.HasOwner() && !ZNet.instance.IsServer()) return;
+
+    if (!netView.HasOwner())
+    {
+      netView.ClaimOwnership();
+    }
+
     LoggerProvider.LogDebug($"Received config for {typeof(T).Name}");
 
     CustomConfig = newConfig;

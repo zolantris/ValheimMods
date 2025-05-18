@@ -14,14 +14,30 @@ namespace ValheimVehicles.Integrations;
 
 public class MechanismSwitchConfigSync : PrefabConfigRPCSync<MechanismSwitchCustomConfig, IMechanismSwitchConfig>
 {
+  private void HandleSetSelectedAction(MechanismAction action)
+  {
+    var config = new MechanismSwitchCustomConfig();
+    config.ApplyFrom(Config);
+    config.SelectedAction = action;
+    CommitConfigChange(Config);
+  }
+
+  public void HandleSetSelectedSwivelId(int persistentSwivelId)
+  {
+    var config = new MechanismSwitchCustomConfig();
+    config.ApplyFrom(Config);
+    config.TargetSwivelId = persistentSwivelId;
+
+    CommitConfigChange(config);
+  }
+
   public void Request_SetSelectedAction(MechanismAction action)
   {
     if (!this.IsNetViewValid(out var netView)) return;
 
     if (netView.IsOwner())
     {
-      Handle_SetSelectedAction(action);
-      CommitConfigChange(Config);
+      HandleSetSelectedAction(action);
     }
     else
     {
@@ -37,8 +53,7 @@ public class MechanismSwitchConfigSync : PrefabConfigRPCSync<MechanismSwitchCust
 
     if (netView.IsOwner())
     {
-      Handle_SetSwivelTargetId(persistentSwivelId);
-      CommitConfigChange(Config);
+      HandleSetSelectedSwivelId(persistentSwivelId);
     }
     else
     {
@@ -53,32 +68,24 @@ public class MechanismSwitchConfigSync : PrefabConfigRPCSync<MechanismSwitchCust
     Request_SetSwivelTargetId(0);
   }
 
-  private void Handle_SetSelectedAction(MechanismAction action)
-  {
-    Config.SelectedAction = action;
-  }
-
-  private void Handle_SetSwivelTargetId(int persistentSwivelId)
-  {
-    Config.TargetSwivelId = persistentSwivelId;
-  }
-
   private void RPC_SetSelectedAction(long sender, ZPackage pkg)
   {
-    if (!this.IsNetViewValid(out var netView) || !netView.IsOwner()) return;
+    if (!this.IsNetViewValid(out var netView)) return;
+    if (!netView.IsOwner() || !ZNet.instance.IsServer()) return;
+
+    pkg.SetPos(0);
 
     var action = (MechanismAction)pkg.ReadInt();
-    Handle_SetSelectedAction(action);
-    CommitConfigChange(Config);
+    HandleSetSelectedAction(action);
   }
 
   private void RPC_SetSwivelTargetId(long sender, ZPackage pkg)
   {
     if (!this.IsNetViewValid(out var netView) || !netView.IsOwner()) return;
+    pkg.SetPos(0);
 
-    var swivelId = pkg.ReadInt();
-    Handle_SetSwivelTargetId(swivelId);
-    CommitConfigChange(Config);
+    var persistentSwivelId = pkg.ReadInt();
+    HandleSetSelectedSwivelId(persistentSwivelId);
   }
 
   public override void RegisterRPCListeners()
