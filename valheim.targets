@@ -67,6 +67,13 @@
         </Reference>
     </ItemGroup>
 
+    <!-- Required for vehicle syncing (lots of players not using bepinex config manager)   -->
+    <ItemGroup>
+        <Reference Include="ServerSync" Version="1.19.0">
+            <HintPath>$(SolutionDir)\plugins\ServerSync.dll</HintPath>
+        </Reference>
+    </ItemGroup>
+
     <!-- Automatic publicize game libs -->
     <ItemGroup>
         <PackageReference Include="Krafs.Publicizer" Version="2.2.1">
@@ -386,6 +393,7 @@
 
         <MakeDir Directories="$(ValheimServerPath)\$(PluginDeployTarget)"/>
         <Exec Command="copy &quot;$(SolutionDir)plugins\Newtonsoft.Json.dll&quot; &quot;$(PluginDeployPath)\Newtonsoft.Json.dll&quot;"/>
+        <Exec Command="copy &quot;$(SolutionDir)plugins\ServerSync.dll&quot; &quot;$(PluginDeployPath)\ServerSync.dll&quot;"/>
 
         <Exec Command="copy &quot;$(OutDir)$(AssemblyName).dll&quot; &quot;$(ValheimServerPath)\$(PluginDeployTarget)\$(AssemblyName).dll&quot;"/>
         <Exec Command="copy &quot;$(OutDir)$(AssemblyName).pdb&quot; &quot;$(ValheimServerPath)\$(PluginDeployTarget)\$(AssemblyName).pdb&quot;"/>
@@ -402,6 +410,8 @@
 
         <!--    required plugins  -->
         <Exec Command="copy &quot;$(SolutionDir)plugins\Newtonsoft.Json.dll&quot; &quot;$(PluginDeployPath)\Newtonsoft.Json.dll&quot;"/>
+        <Exec Command="copy &quot;$(SolutionDir)plugins\ServerSync.dll&quot; &quot;$(PluginDeployPath)\ServerSync.dll&quot;"/>
+
 
         <Exec Command="copy &quot;$(OutDir)$(AssemblyName).dll&quot; &quot;$(PluginDeployPath)\$(AssemblyName).dll&quot;"/>
         <Exec Command="copy &quot;$(OutDir)$(AssemblyName).pdb&quot; &quot;$(PluginDeployPath)\$(AssemblyName).pdb&quot;"/>
@@ -416,7 +426,9 @@
     <!--     Condition=" $(AssemblyName) == 'ValheimRAFT' And Exists('$(SandboxiePluginDeployPath)') And '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' "-->
     <Target Name="Copy_To_R2ModMan_vm" AfterTargets="Copy_To_R2ModMan" Condition="'$(IsRunnable)' == 'true' and '$(SandBoxieFileExitCode)' == '0'">
         <!--   Will only run if the above passes     -->
-        <Exec Command="copy &quot;$(SolutionDir)plugins\Newtonsoft.Json.dll&quot; &quot;$(PluginDeployPath)\Newtonsoft.Json.dll&quot;"/>
+        <Exec Command="copy &quot;$(SolutionDir)plugins\Newtonsoft.Json.dll&quot; &quot;$(SandboxiePluginDeployPath)\Newtonsoft.Json.dll&quot;"/>
+        <Exec Command="copy &quot;$(SolutionDir)plugins\ServerSync.dll&quot; &quot;$(SandboxiePluginDeployPath)\ServerSync.dll&quot;"/>
+
         <Exec Condition="Exists('$(OutDir)$(AssemblyName).dll')" Command="copy &quot;$(OutDir)$(AssemblyName).dll&quot; &quot;$(SandboxiePluginDeployPath)\$(AssemblyName).dll&quot;"/>
         <Exec Condition="Exists('$(OutDir)$(AssemblyName).pdb')" Command="copy &quot;$(OutDir)$(AssemblyName).pdb&quot; &quot;$(SandboxiePluginDeployPath)\$(AssemblyName).pdb&quot;"/>
         <Exec Condition="Exists('$(OutDir)$(AssemblyName).mdb')" Command="copy &quot;$(OutDir)$(AssemblyName).mdb&quot; &quot;$(SandboxiePluginDeployPath)\$(AssemblyName).mdb&quot;"/>
@@ -449,6 +461,8 @@
         <Exec Command="if not exist &quot;$(TmpDir)$(AssemblyName)&quot; mkdir &quot;$(TmpDir)$(AssemblyName)&quot;"/>
 
         <Exec Command="copy &quot;$(SolutionDir)plugins\Newtonsoft.Json.dll&quot; &quot;$(TmpDir)plugins\Newtonsoft.Json.dll&quot;"/>
+        <Exec Command="copy &quot;$(SolutionDir)plugins\ServerSync.dll&quot; &quot;$(TmpDir)\plugins\ServerSync.dll&quot;"/>
+
         <Exec Command="copy &quot;$(OutDir)$(AssemblyName).dll&quot; &quot;$(TmpDir)plugins\$(AssemblyName).dll&quot;"/>
         <Exec Command="copy &quot;$(OutDir)$(AssemblyName).pdb&quot; &quot;$(TmpDir)plugins\$(AssemblyName).pdb&quot;"/>
         <Exec Command="copy &quot;$(RepoDir)README.md&quot; &quot;$(TmpDir)README.md&quot;"/>
@@ -498,6 +512,8 @@
         <Exec Command="if not exist &quot;$(TmpDir)$(AssemblyName)&quot; mkdir &quot;$(TmpDir)$(AssemblyName)&quot;"/>
 
         <Exec Command="copy &quot;$(SolutionDir)plugins\Newtonsoft.Json.dll&quot; &quot;$(TmpDir)plugins\Newtonsoft.Json.dll&quot;"/>
+        <Exec Command="copy &quot;$(SolutionDir)plugins\ServerSync.dll&quot; &quot;$(TmpDir)\plugins\ServerSync.dll&quot;"/>
+
         <Exec Command="copy &quot;$(OutDir)$(AssemblyName).dll&quot; &quot;$(TmpDir)plugins\$(AssemblyName).dll&quot;"/>
         <Exec Command="copy &quot;$(OutDir)$(AssemblyName).pdb&quot; &quot;$(TmpDir)plugins\$(AssemblyName).pdb&quot;"/>
         <Exec Command="copy &quot;$(SolutionDir)src\ValheimRAFT\README.md&quot; &quot;$(TmpDir)README.md&quot;"/>

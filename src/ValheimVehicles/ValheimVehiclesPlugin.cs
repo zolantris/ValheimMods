@@ -2,7 +2,9 @@
 using System.Collections;
 using BepInEx.Configuration;
 using JetBrains.Annotations;
+using ServerSync;
 using UnityEngine;
+using ValheimVehicles.Compat;
 using ValheimVehicles.Components;
 using ValheimVehicles.Config;
 using ValheimVehicles.Constants;
@@ -13,6 +15,7 @@ using ValheimVehicles.SharedScripts;
 using ValheimVehicles.SharedScripts.PowerSystem;
 using ValheimVehicles.SharedScripts.UI;
 using ValheimVehicles.UI;
+using ValheimVehicles.ValheimVehicles.Plugins;
 using Zolantris.Shared.Debug;
 
 namespace ValheimVehicles;
@@ -140,6 +143,8 @@ public class ValheimVehiclesPlugin : MonoBehaviour
     }
   }
 
+  internal static ConfigSync ModConfigSync = null!;
+
 
   /// <summary>
   /// This should only be called from the ValheimRAFT mod.
@@ -153,6 +158,13 @@ public class ValheimVehiclesPlugin : MonoBehaviour
       return;
     }
 
+    ModConfigSync = new ConfigSync(ModName)
+    {
+      DisplayName = ModName,
+      CurrentVersion = ValheimRAFT_API.GetPluginVersion(),
+      ModRequired = true,
+      IsLocked = true
+    };
 
     PatchConfig.BindConfig(config);
     RamConfig.BindConfig(config);
