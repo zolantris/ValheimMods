@@ -184,7 +184,7 @@ namespace ValheimVehicles.SharedScripts.UI
           UnsetSavedState();
         });
 
-      SwivelUIHelpers.AddRowWithButton(panelRoot.transform, viewStyles, null, SwivelUIPanelStrings.Save, 96f, 48f, out _saveStatus, () =>
+      SwivelUIHelpers.AddRowWithButton(panelContent.transform, viewStyles, null, SwivelUIPanelStrings.Save, 96f, 48f, out _saveStatus, () =>
       {
         OnPanelSave();
         SetSavedState();
