@@ -2,8 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using BepInEx.Configuration;
 using DynamicLocations.Controllers;
-using UnityEngine;
-using Logger = Jotunn.Logger;
+using Zolantris.Shared;
 
 namespace DynamicLocations.Config;
 
@@ -92,123 +91,123 @@ public static class DynamicLocationsConfig
   {
     Config = config;
 
-    DEBUG_ShouldNotRemoveTargetKey = Config.Bind(MainSection,
+    DEBUG_ShouldNotRemoveTargetKey = config.BindUnique(MainSection,
       "DEBUG_ShouldNotRemoveTargetKey",
       true,
       new ConfigDescription(
         "Debug only command: will prevent removing of data on the player. This is meant to debug issues with the player spawn points. Should not be enabled in production builds.",
         null,
-        new ConfigurationManagerAttributes()
+        new ConfigurationManagerAttributes
           { IsAdminOnly = true, IsAdvanced = true }));
 
-    LocationControlsTimeoutInMs = Config.Bind(MainSection,
+    LocationControlsTimeoutInMs = config.BindUnique(MainSection,
       "LocationControls Timeout In Ms",
       20000,
       new ConfigDescription(
         "Allows for setting the delay in which the spawn will exit logic to prevent degraded performance.",
         new AcceptableValueRange<int>(1000, 40000),
-        new ConfigurationManagerAttributes()
+        new ConfigurationManagerAttributes
           { IsAdminOnly = true, IsAdvanced = false }));
 
-    HasCustomSpawnDelay = Config.Bind(MainSection,
+    HasCustomSpawnDelay = config.BindUnique(MainSection,
       "HasCustomSpawnDelay",
       false,
       new ConfigDescription(
         $"Enables custom spawn delay. This is meant to speed-up the game.",
         null,
-        new ConfigurationManagerAttributes()
+        new ConfigurationManagerAttributes
           { IsAdminOnly = true, IsAdvanced = false }));
 
-    CustomSpawnDelay = Config.Bind(MainSection,
+    CustomSpawnDelay = config.BindUnique(MainSection,
       "CustomSpawnDelay",
       1f,
       new ConfigDescription(
         $"Will significantly speed-up respawn and login process. This mod will NOT support respawn delays above default(10) seconds, this is too punishing for players. Try to make other consequences instead of preventing people from playing.",
         new AcceptableValueRange<float>(0, 10),
-        new ConfigurationManagerAttributes()
+        new ConfigurationManagerAttributes
           { IsAdminOnly = true, IsAdvanced = false }));
 
-    DisabledLoginApiIntegrationsString = Config.Bind(MainSection,
+    DisabledLoginApiIntegrationsString = config.BindUnique(MainSection,
       "DisabledLoginApiIntegrations",
       "",
       new ConfigDescription(
         $"A list of disabled plugins by GUID or name. Each item must be separated by a comma. This list will force disable any plugins matching either the guid or name. e.g. if you don't want ValheimRAFT to be enabling dynamic locations login integrations add \"zolantris.ValheimRAFT\" or \"ValheimRAFT.2.3.0\".",
         null,
-        new ConfigurationManagerAttributes()
+        new ConfigurationManagerAttributes
           { IsAdminOnly = false, IsAdvanced = false }));
 
-    DebugDisableFreezePlayerTeleportMechanics = Config.Bind(DebugSection,
+    DebugDisableFreezePlayerTeleportMechanics = config.BindUnique(DebugSection,
       "DEBUG_DisableFreezePlayerMechanics",
       false,
       new ConfigDescription(
         $"This will disable freezing of players from integrations. Do not disable this unless you know what you are doing. Freezing is used to prevent physics happening during teleport.",
         null,
-        new ConfigurationManagerAttributes()
+        new ConfigurationManagerAttributes
           { IsAdminOnly = false, IsAdvanced = false }));
 
-    DebugDisableDistancePortal = Config.Bind(DebugSection,
+    DebugDisableDistancePortal = config.BindUnique(DebugSection,
       "DebugDistancePortal",
       false,
       new ConfigDescription(
         $"distance portal enabled, disabling this could break portals",
         null,
-        new ConfigurationManagerAttributes()
+        new ConfigurationManagerAttributes
           { IsAdminOnly = true, IsAdvanced = true }));
 
 
-    DebugForceUpdatePositionDelay = Config.Bind(DebugSection,
+    DebugForceUpdatePositionDelay = config.BindUnique(DebugSection,
       "DebugForceUpdatePositionDelay",
       0f,
       new ConfigDescription(
         $"distance portal enabled, disabling this could break portals",
         new AcceptableValueRange<float>(0, 5f),
-        new ConfigurationManagerAttributes()
+        new ConfigurationManagerAttributes
           { IsAdminOnly = true, IsAdvanced = true }));
 
 
-    DebugForceUpdatePositionAfterTeleport = Config.Bind(DebugSection,
+    DebugForceUpdatePositionAfterTeleport = config.BindUnique(DebugSection,
       "DebugForceUpdatePositionAfterTeleport",
       false,
       new ConfigDescription(
         $"distance portal enabled, disabling this could break portals",
         null,
-        new ConfigurationManagerAttributes()
+        new ConfigurationManagerAttributes
           { IsAdminOnly = true, IsAdvanced = true }));
 
-    EnableDynamicSpawnPoint = Config.Bind(MainSection,
+    EnableDynamicSpawnPoint = config.BindUnique(MainSection,
       "enableDynamicSpawnPoints",
       true,
       new ConfigDescription(
         $"Enable dynamic spawn points. This will allow the user to re-spawn in a new area of the map if a vehicle has moved.",
         null,
-        new ConfigurationManagerAttributes()
+        new ConfigurationManagerAttributes
           { IsAdminOnly = true, IsAdvanced = true }));
 
-    EnableDynamicLogoutPoint = Config.Bind(MainSection,
+    EnableDynamicLogoutPoint = config.BindUnique(MainSection,
       "enableDynamicLogoutPoints",
       true,
       new ConfigDescription(
         $"Enable dynamic logout points. This will allow the user to login to a new area of the map if a vehicle has moved",
         null,
-        new ConfigurationManagerAttributes()
+        new ConfigurationManagerAttributes
           { IsAdminOnly = true, IsAdvanced = true }));
 
-    RespawnHeightOffset = Config.Bind(MainSection,
+    RespawnHeightOffset = config.BindUnique(MainSection,
       "respawnHeightOffset",
       0,
       new ConfigDescription(
         $"Sets the respawn height for beds. Useful if the player is spawning within the bed instead of above it",
         new AcceptableValueRange<int>(-5, 10),
-        new ConfigurationManagerAttributes()
+        new ConfigurationManagerAttributes
           { IsAdminOnly = false, IsAdvanced = true }));
 
-    Debug = Config.Bind(MainSection,
+    Debug = config.BindUnique(MainSection,
       "debug",
       false,
       new ConfigDescription(
         $"Enable additional logging and debug drawing around spawn and logout points. Useful for debugging this mod",
         null,
-        new ConfigurationManagerAttributes()
+        new ConfigurationManagerAttributes
           { IsAdminOnly = true, IsAdvanced = true }));
 
     // Debug.SettingChanged += 

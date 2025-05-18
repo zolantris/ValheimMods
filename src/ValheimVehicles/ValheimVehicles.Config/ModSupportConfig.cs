@@ -1,6 +1,7 @@
 using System;
 using BepInEx.Configuration;
 using ValheimVehicles.Helpers;
+using Zolantris.Shared;
 
 namespace ValheimVehicles.Config;
 
@@ -20,7 +21,7 @@ public class ModSupportConfig : BepInExBaseConfig<ModSupportConfig>
   public override void OnBindConfig(ConfigFile config)
   {
 
-    PluginFolderName = config.Bind<string>(ModSupportAssetsKey,
+    PluginFolderName = config.BindUnique<string>(ModSupportAssetsKey,
       "pluginFolderName", "", ConfigHelpers.CreateConfigDescription(
         "Users can leave this empty. If they do not, the mod will attempt to match the folder string. Allows users to set the folder search name if their" +
         $" manager renames the folder, r2modman has a fallback case added to search for the mod folder." +
@@ -29,7 +30,7 @@ public class ModSupportConfig : BepInExBaseConfig<ModSupportConfig>
         false, false));
 
 
-    DynamicLocationsShouldSkipMovingPlayerToBed = config.Bind(
+    DynamicLocationsShouldSkipMovingPlayerToBed = config.BindUnique(
       ModSupportDynamicLocationsKey,
       "DynamicLocationLoginMovesPlayerToBed",
       true,
@@ -38,7 +39,7 @@ public class ModSupportConfig : BepInExBaseConfig<ModSupportConfig>
         true));
 
     DebugRemoveStartMenuBackground =
-      config.Bind(ModSupportDebugOptimizationsKey, "RemoveStartMenuBackground", false,
+      config.BindUnique(ModSupportDebugOptimizationsKey, "RemoveStartMenuBackground", false,
         ConfigHelpers.CreateConfigDescription(
           "Removes the start scene background, only use this if you want to speedup start time and lower GPU power cost significantly if you are idle on the start menu.",
           false, true));

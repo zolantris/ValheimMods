@@ -4,6 +4,7 @@ using ValheimVehicles.Components;
 using ValheimVehicles.Controllers;
 using ValheimVehicles.Enums;
 using ValheimVehicles.Helpers;
+using Zolantris.Shared;
 
 namespace ValheimVehicles.Config;
 
@@ -115,15 +116,15 @@ public class PropulsionConfig : BepInExBaseConfig<PropulsionConfig>
 
     CreateSpeedConfig(config);
 
-    AllowFlight = config.Bind<bool>(GenericSectionName, "AllowFlight", false,
+    AllowFlight = config.BindUnique<bool>(GenericSectionName, "AllowFlight", false,
       ConfigHelpers.CreateConfigDescription(
         "Allow the raft to fly (jump\\crouch to go up and down)", true));
-    SailingMassPercentageFactor = config.Bind(GenericSectionName, "MassPercentage", 0.5f,
+    SailingMassPercentageFactor = config.BindUnique(GenericSectionName, "MassPercentage", 0.5f,
       ConfigHelpers.CreateConfigDescription(
         "Sets the mass percentage of the ship that will slow down the sails",
         true, false, new AcceptableValueRange<float>(0.1f, 1f)));
 
-    DefaultPhysicsMode = config.Bind(GenericSectionName,
+    DefaultPhysicsMode = config.BindUnique(GenericSectionName,
       "VehiclePhysicsMode", VehiclePhysicsMode.ForceSyncedRigidbody,
       ConfigHelpers.CreateConfigDescription(
         // "SyncRigidbody - Accurately syncs physics across clients, it causes jitters during high speed.\n" +
@@ -132,62 +133,62 @@ public class PropulsionConfig : BepInExBaseConfig<PropulsionConfig>
         // "DesyncedJointRigidbodyBody - is a new UNSTABLE (you have been warned) config that allows the player to smoothly move around the raft at high speeds even if they are not the host. Can cause the ship to glitch with anything that has to do with physics including ramps and other mods that add moving parts that could be added to the boat.",
         true));
 
-    EXPERIMENTAL_LeanTowardsWindSailDirection = config.Bind(GenericSectionName,
+    EXPERIMENTAL_LeanTowardsWindSailDirection = config.BindUnique(GenericSectionName,
       "EXPERIMENTAL_LeanTowardsWindSailDirection", false,
       ConfigHelpers.CreateConfigDescription(
         "Toggles a lean while sailing with wind power. Cosmetic only and does not work in multiplayer yet. Warning for those with motion sickness, this will increase your symptoms. Prepare your dramamine!",
         true, true));
 
-    EXPERIMENTAL_LeanTowardsWindSailDirectionMaxAngle = config.Bind(GenericSectionName,
+    EXPERIMENTAL_LeanTowardsWindSailDirectionMaxAngle = config.BindUnique(GenericSectionName,
       "EXPERIMENTAL_LeanTowardsWindSailDirectionMaxAngle", 10f,
       ConfigHelpers.CreateConfigDescription(
         "Set the max lean angle when wind is hitting sides directly", true,
         true, new AcceptableValueRange<float>(0f, 30f)));
 
-    TurnPowerNoRudder = config.Bind(GenericSectionName, "turningPowerNoRudder", 0.7f,
+    TurnPowerNoRudder = config.BindUnique(GenericSectionName, "turningPowerNoRudder", 0.7f,
       ConfigHelpers.CreateConfigDescription(
         "Set the base turning power of the steering wheel without a rudder",
         true));
 
-    TurnPowerWithRudder = config.Bind(GenericSectionName, "turningPowerWithRudder", 1f,
+    TurnPowerWithRudder = config.BindUnique(GenericSectionName, "turningPowerWithRudder", 1f,
       ConfigHelpers.CreateConfigDescription(
         "Set the turning power with a rudder prefab attached to the boat. This value overrides the turningPowerNoRudder config.",
         true));
 
-    SlowAndReverseWithoutControls = config.Bind(GenericSectionName,
+    SlowAndReverseWithoutControls = config.BindUnique(GenericSectionName,
       "slowAndReverseWithoutControls", false,
       ConfigHelpers.CreateConfigDescription(
         "Vehicles do not require controls while in slow and reverse with a person on them",
         true));
 
-    AllowBaseGameSailRotation = config.Bind(GenericSectionName,
+    AllowBaseGameSailRotation = config.BindUnique(GenericSectionName,
       "enableBaseGameSailRotation", true,
       ConfigHelpers.CreateConfigDescription(
         "Lets the baseGame sails Tiers1-4 to rotate based on wind direction",
         true));
 
-    ShouldLiftAnchorOnSpeedChange = config.Bind(GenericSectionName,
+    ShouldLiftAnchorOnSpeedChange = config.BindUnique(GenericSectionName,
       "shouldLiftAnchorOnSpeedChange", false,
       ConfigHelpers.CreateConfigDescription(
         "Lifts the anchor when using a speed change key, this is a QOL to prevent anchor from being required to be pressed when attempting to change the ship speed"));
 
     // vertical flight/ballast config
 
-    FlightClimbingOffset = config.Bind(GenericSectionName,
+    FlightClimbingOffset = config.BindUnique(GenericSectionName,
       "FlightClimbingOffset",
       2f,
       ConfigHelpers.CreateConfigDescription(
         "Ascent and Descent speed for the vehicle in the air. This value is interpolated to prevent jitters.",
         true, true, new AcceptableValueRange<float>(0.01f, 10)));
 
-    BallastClimbingOffset = config.Bind(GenericSectionName,
+    BallastClimbingOffset = config.BindUnique(GenericSectionName,
       "BallastClimbingOffset",
       2f,
       ConfigHelpers.CreateConfigDescription(
         "Ascent and Descent speed for the vehicle in the water. This value is interpolated to prevent jitters.",
         true, true, new AcceptableValueRange<float>(0.01f, 10)));
 
-    VerticalSmoothingSpeed = config.Bind(GenericSectionName,
+    VerticalSmoothingSpeed = config.BindUnique(GenericSectionName,
       "VerticalSmoothingSpeed",
       0.5f,
       ConfigHelpers.CreateConfigDescription(
@@ -196,24 +197,24 @@ public class PropulsionConfig : BepInExBaseConfig<PropulsionConfig>
 
     // end vertical config.
 
-    ShowShipStats = config.Bind("Debug", "ShowShipState", true);
-    MaxSailSpeed = config.Bind(GenericSectionName, "MaxSailSpeed", 30f,
+    ShowShipStats = config.BindUnique("Debug", "ShowShipStats", true, ConfigHelpers.CreateConfigDescription("Shows the vehicle stats."));
+    MaxSailSpeed = config.BindUnique(GenericSectionName, "MaxSailSpeed", 30f,
       ConfigHelpers.CreateConfigDescription(
         "Sets the absolute max speed a ship can ever hit with sails. Prevents or enables space launches, cannot exceed MaxPropulsionSpeed.",
         true, false, new AcceptableValueRange<float>(10, 200)));
-    SpeedCapMultiplier = config.Bind(GenericSectionName, "SpeedCapMultiplier", 1f,
+    SpeedCapMultiplier = config.BindUnique(GenericSectionName, "SpeedCapMultiplier", 1f,
       ConfigHelpers.CreateConfigDescription(
         "Sets the speed at which it becomes significantly harder to gain speed per sail area",
         true));
 
     // rudder
 
-    EnableCustomPropulsionConfig = config.Bind(GenericSectionName,
+    EnableCustomPropulsionConfig = config.BindUnique(GenericSectionName,
       "EnableCustomPropulsionConfig", SailAreaForce.HasPropulsionConfigOverride,
       ConfigHelpers.CreateConfigDescription("Enables all custom propulsion values", true,
         true));
 
-    SailCustomAreaTier1Multiplier = config.Bind(GenericSectionName,
+    SailCustomAreaTier1Multiplier = config.BindUnique(GenericSectionName,
       "SailCustomAreaTier1Multiplier",
       SailAreaForce.CustomTier1AreaForceMultiplier,
       ConfigHelpers.CreateConfigDescription(
@@ -221,43 +222,43 @@ public class PropulsionConfig : BepInExBaseConfig<PropulsionConfig>
         true, true)
     );
 
-    SailTier1Area = config.Bind(GenericSectionName,
+    SailTier1Area = config.BindUnique(GenericSectionName,
       "SailTier1Area", SailAreaForce.Tier1,
       ConfigHelpers.CreateConfigDescription(
         "Manual sets the sail wind area of the tier 1 sail.", true, true)
     );
 
-    SailTier2Area = config.Bind(GenericSectionName,
+    SailTier2Area = config.BindUnique(GenericSectionName,
       "SailTier2Area", SailAreaForce.Tier2,
       ConfigHelpers.CreateConfigDescription(
         "Manual sets the sail wind area of the tier 2 sail.", true, true));
 
-    SailTier3Area = config.Bind(GenericSectionName,
+    SailTier3Area = config.BindUnique(GenericSectionName,
       "SailTier3Area", SailAreaForce.Tier3,
       ConfigHelpers.CreateConfigDescription(
         "Manual sets the sail wind area of the tier 3 sail.", true, true));
 
-    SailTier4Area = config.Bind(GenericSectionName,
+    SailTier4Area = config.BindUnique(GenericSectionName,
       "SailTier4Area", SailAreaForce.Tier4,
       ConfigHelpers.CreateConfigDescription(
         "Manual sets the sail wind area of the tier 4 sail.", true, true));
 
-    FlightVerticalToggle = config.Bind<bool>(GenericSectionName,
+    FlightVerticalToggle = config.BindUnique<bool>(GenericSectionName,
       "FlightVerticalToggle",
       true,
-      "Flight Vertical Continues UntilToggled: Saves the user's fingers by allowing the ship to continue to climb or descend without needing to hold the button");
-    FlightHasRudderOnly = config.Bind<bool>(GenericSectionName,
+      ConfigHelpers.CreateConfigDescription("Flight Vertical Continues UntilToggled: Saves the user's fingers by allowing the ship to continue to climb or descend without needing to hold the button"));
+    FlightHasRudderOnly = config.BindUnique<bool>(GenericSectionName,
       "FlightHasRudderOnly",
       false,
-      "Flight allows for different rudder speeds. Use rudder speed only. Do not use sail speed.");
+      ConfigHelpers.CreateConfigDescription("Flight allows for different rudder speeds. Use rudder speed only. Do not use sail speed."));
 
-    AllowCustomRudderSpeeds = config.Bind(GenericSectionName,
+    AllowCustomRudderSpeeds = config.BindUnique(GenericSectionName,
       "AllowCustomRudderSpeeds", true,
       ConfigHelpers.CreateConfigDescription(
         "Allow the raft to use custom rudder speeds set by the player, these speeds are applied alongside sails at half and full speed. See advanced section for the actual speed settings.",
         true));
 
-    WheelDeadZone = config.Bind(GenericSectionName,
+    WheelDeadZone = config.BindUnique(GenericSectionName,
       "WheelDeadZone",
       0.02f,
       ConfigHelpers.CreateConfigDescription(
@@ -277,45 +278,45 @@ public class PropulsionConfig : BepInExBaseConfig<PropulsionConfig>
 
   public static void CreateSpeedConfig(ConfigFile config)
   {
-    VehicleRudderSpeedBack = config.Bind(PropulsionSpeedSection, "Rudder Back Speed",
+    VehicleRudderSpeedBack = config.BindUnique(PropulsionSpeedSection, "Rudder Back Speed",
       1f,
       ConfigHelpers.CreateConfigDescription(
         "Set the Back speed of rudder, this will apply with sails", true));
-    VehicleRudderSpeedSlow = config.Bind(PropulsionSpeedSection, "Rudder Slow Speed",
+    VehicleRudderSpeedSlow = config.BindUnique(PropulsionSpeedSection, "Rudder Slow Speed",
       1f,
       ConfigHelpers.CreateConfigDescription(
         "Set the Slow speed of rudder, this will apply with sails", true));
-    VehicleRudderSpeedHalf = config.Bind(PropulsionSpeedSection, "Rudder Half Speed",
+    VehicleRudderSpeedHalf = config.BindUnique(PropulsionSpeedSection, "Rudder Half Speed",
       0f,
       ConfigHelpers.CreateConfigDescription(
         "Set the Half speed of rudder, this will apply with sails", true));
-    VehicleRudderSpeedFull = config.Bind(PropulsionSpeedSection, "Rudder Full Speed",
+    VehicleRudderSpeedFull = config.BindUnique(PropulsionSpeedSection, "Rudder Full Speed",
       0f,
       ConfigHelpers.CreateConfigDescription(
         "Set the Full speed of rudder, this will apply with sails", true));
 
-    VehicleLandSpeedBack = config.Bind(PropulsionSpeedSection, "LandVehicle Back Speed", 1f,
+    VehicleLandSpeedBack = config.BindUnique(PropulsionSpeedSection, "LandVehicle Back Speed", 1f,
       ConfigHelpers.CreateConfigDescription(
         "Set the Back speed of land vehicle.",
         true, false, new AcceptableValueRange<float>(0.0001f, 100f)));
-    VehicleLandSpeedSlow = config.Bind(PropulsionSpeedSection, "LandVehicle Slow Speed",
+    VehicleLandSpeedSlow = config.BindUnique(PropulsionSpeedSection, "LandVehicle Slow Speed",
       1f,
       ConfigHelpers.CreateConfigDescription(
         "Set the Slow speed of land vehicle.",
         true, false, new AcceptableValueRange<float>(0.05f, 4f)));
-    VehicleLandSpeedHalf = config.Bind(PropulsionSpeedSection, "LandVehicle Half Speed",
+    VehicleLandSpeedHalf = config.BindUnique(PropulsionSpeedSection, "LandVehicle Half Speed",
       1f,
       ConfigHelpers.CreateConfigDescription(
         "Set the Half speed of land vehicle.",
         true, false, new AcceptableValueRange<float>(0.05f, 4f)));
-    VehicleLandSpeedFull = config.Bind(PropulsionSpeedSection, "LandVehicle Full Speed",
+    VehicleLandSpeedFull = config.BindUnique(PropulsionSpeedSection, "LandVehicle Full Speed",
       1f,
       ConfigHelpers.CreateConfigDescription(
         "Set the Full speed of land vehicle.",
         true, false, new AcceptableValueRange<float>(0.05f, 4f)));
 
 
-    VehicleLandTurnSpeed = config.Bind(PropulsionSpeedSection,
+    VehicleLandTurnSpeed = config.BindUnique(PropulsionSpeedSection,
       "LandVehicle Turn Speed",
       0.5f,
       ConfigHelpers.CreateConfigDescription(

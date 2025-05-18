@@ -26,18 +26,9 @@ public static class VehicleGUIItems
   ];
 
 
+  // todo translate all of this.
   public static readonly List<GenericInputAction> commandButtonActions =
   [
-    new()
-    {
-      title = "Hull debugger",
-      OnButtonPress = VehicleGui.ToggleConvexHullDebugger
-    },
-    new()
-    {
-      title = "Physics Debugger",
-      OnButtonPress = VehicleGui.ToggleColliderDebugger
-    },
     new()
     {
       title = "Raft Creative",
@@ -78,6 +69,11 @@ public static class VehicleGUIItems
     },
     new()
     {
+      title = "Toggle WaterMask Editor",
+      OnButtonPress = VehicleCommands.ToggleColliderEditMode
+    },
+    new()
+    {
       title = "Toggle Ocean Sway",
       OnButtonPress = VehicleCommands.VehicleToggleOceanSway
     },
@@ -92,6 +88,16 @@ public static class VehicleGUIItems
           return;
         vpc.ForceRebuildBounds();
       }
+    },
+    new()
+    {
+      title = "Hull debugger",
+      OnButtonPress = VehicleGui.ToggleConvexHullDebugger
+    },
+    new()
+    {
+      title = "Physics Debugger",
+      OnButtonPress = VehicleGui.ToggleColliderDebugger
     },
 #if DEBUG
     new()

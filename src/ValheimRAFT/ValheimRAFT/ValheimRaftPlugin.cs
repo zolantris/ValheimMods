@@ -79,7 +79,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
 
   // private void CreateBaseConfig()
   // {
-  //   EnableMetrics = Config.Bind("Debug",
+  //   EnableMetrics = config.BindUnique("Debug",
   //     "Enable Sentry Metrics (requires sentryUnityPlugin)", true,
   //     CreateConfigDescription(
   //       "Enable sentry debug logging. Requires sentry logging plugin installed to work. Sentry Logging plugin will make it easier to troubleshoot raft errors and detect performance bottlenecks. The bare minimum is collected, and only data related to ValheimRaft. See https://github.com/zolantris/ValheimMods/tree/main/src/ValheimRAFT#logging-metrics for more details about what is collected"));

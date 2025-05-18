@@ -1,6 +1,7 @@
 using BepInEx.Configuration;
 using ValheimVehicles.Constants;
 using ValheimVehicles.Helpers;
+using Zolantris.Shared;
 
 namespace ValheimVehicles.Config;
 
@@ -94,193 +95,193 @@ public class RamConfig : BepInExBaseConfig<RamConfig>
     var damageDescription =
       "the base applied per hit on all items within the hit area. This damage is affected by velocity and ship mass.";
 
-    RamDamageEnabled = config.Bind(RamSectionName, "ramDamageEnabled", true,
+    RamDamageEnabled = config.BindUnique(RamSectionName, "ramDamageEnabled", true,
       ConfigHelpers.CreateConfigDescription(
         "Will keep the prefab available for aethetics only, will not do any damage nor will it initialize anything related to damage. Alternatives are using the damage tweaks.",
         true, true));
 
-    CanHitSwivels = config.Bind(VehicleRamSectionName, "CanHitSwivels", false,
+    CanHitSwivels = config.BindUnique(VehicleRamSectionName, "CanHitSwivels", false,
       ConfigHelpers.CreateConfigDescription(
         "Allows the vehicle to smash into swivels and destroy their contents.",
         true, true));
 
-    CanHitWhileHauling = config.Bind(VehicleRamSectionName, "CanHitWhileHauling", true,
+    CanHitWhileHauling = config.BindUnique(VehicleRamSectionName, "CanHitWhileHauling", true,
       ConfigHelpers.CreateConfigDescription(
         "Allows the vehicle to continue hitting objects while it's being hauled/moved.",
         true, true));
 
     // damage
-    RamBaseMaximumDamage = config.Bind(RamSectionName, "maximumDamage", 200f,
+    RamBaseMaximumDamage = config.BindUnique(RamSectionName, "maximumDamage", 200f,
       ConfigHelpers.CreateConfigDescription(
         "Maximum damage for all damages combined. This will throttle any calcs based on each damage value. The throttling is balanced and will fit the ratio of every damage value set. This allows for velocity to increase ram damage but still prevent total damage over specific values",
         true, true));
 
-    VehicleRamBaseMaximumDamage = config.Bind(VehicleRamSectionName, "maximumDamage", 200f,
+    VehicleRamBaseMaximumDamage = config.BindUnique(VehicleRamSectionName, "maximumDamage", 200f,
       ConfigHelpers.CreateConfigDescription(
         "Maximum damage for all damages combined. This will throttle any calcs based on each damage value. The throttling is balanced and will fit the ratio of every damage value set. This allows for velocity to increase ram damage but still prevent total damage over specific values",
         true, true));
 
     // Very important for preventing configuration or values from 
-    HasMaximumDamageCap = config.Bind(RamSectionName, "maxDamageCap", true,
+    HasMaximumDamageCap = config.BindUnique(RamSectionName, "maxDamageCap", true,
       ConfigHelpers.CreateConfigDescription(
         "enable damage caps",
         true, true));
 
     // generic rams
-    RamBaseSlashDamage = config.Bind(RamSectionName, "slashDamage", 0f,
+    RamBaseSlashDamage = config.BindUnique(RamSectionName, "slashDamage", 0f,
       ConfigHelpers.CreateConfigDescription(
         $"slashDamage for Ram Blades. {damageDescription}",
         true, false));
-    RamBaseBluntDamage = config.Bind(RamSectionName, "bluntDamage", 10f,
+    RamBaseBluntDamage = config.BindUnique(RamSectionName, "bluntDamage", 10f,
       ConfigHelpers.CreateConfigDescription(
         $"bluntDamage {damageDescription}",
         true, false));
-    RamBaseChopDamage = config.Bind(RamSectionName, "chopDamage", 5f,
+    RamBaseChopDamage = config.BindUnique(RamSectionName, "chopDamage", 5f,
       ConfigHelpers.CreateConfigDescription(
         $"chopDamage for Ram Blades excludes Ram Stakes. {damageDescription}. Will damage trees dependending on tool tier settings",
         true, false));
-    RamBasePickAxeDamage = config.Bind(RamSectionName, "pickaxeDamage", 20f,
+    RamBasePickAxeDamage = config.BindUnique(RamSectionName, "pickaxeDamage", 20f,
       ConfigHelpers.CreateConfigDescription(
         $"pickDamage {damageDescription} Will damage rocks as well as other entities",
         true, false));
-    RamBasePierceDamage = config.Bind(RamSectionName, "pierceDamage", 20f,
+    RamBasePierceDamage = config.BindUnique(RamSectionName, "pierceDamage", 20f,
       ConfigHelpers.CreateConfigDescription(
         $"Pierce damage for Ram Stakes. {damageDescription} Will damage rocks as well as other entities",
         true, false));
 
     // vehicle rams
-    VehicleRamBaseSlashDamage = config.Bind(VehicleRamSectionName, "slashDamage", 0f,
+    VehicleRamBaseSlashDamage = config.BindUnique(VehicleRamSectionName, "slashDamage", 0f,
       ConfigHelpers.CreateConfigDescription(
         $"slashDamage for Ram Blades. {damageDescription}",
         true, false));
-    VehicleRamBaseBluntDamage = config.Bind(VehicleRamSectionName, "bluntDamage", 0f,
+    VehicleRamBaseBluntDamage = config.BindUnique(VehicleRamSectionName, "bluntDamage", 0f,
       ConfigHelpers.CreateConfigDescription(
         $"bluntDamage {damageDescription}",
         true, false));
-    VehicleRamBaseChopDamage = config.Bind(VehicleRamSectionName, "chopDamage", 100f,
+    VehicleRamBaseChopDamage = config.BindUnique(VehicleRamSectionName, "chopDamage", 100f,
       ConfigHelpers.CreateConfigDescription(
         $"chopDamage for Ram Blades excludes Ram Stakes. {damageDescription}. Will damage trees depending on tool tier settings",
         true, false));
-    VehicleRamBasePickAxeDamage = config.Bind(VehicleRamSectionName, "pickaxeDamage", 100f,
+    VehicleRamBasePickAxeDamage = config.BindUnique(VehicleRamSectionName, "pickaxeDamage", 100f,
       ConfigHelpers.CreateConfigDescription(
         $"pickDamage {damageDescription} Will damage rocks as well as other entities",
         true, false));
-    VehicleRamBasePierceDamage = config.Bind(VehicleRamSectionName, "pierceDamage", 0f,
+    VehicleRamBasePierceDamage = config.BindUnique(VehicleRamSectionName, "pierceDamage", 0f,
       ConfigHelpers.CreateConfigDescription(
         $"Pierce damage for Ram Stakes. {damageDescription} Will damage rocks as well as other entities",
         true, false));
 
-    PercentageDamageToSelf = config.Bind(RamSectionName, "percentageDamageToSelf",
+    PercentageDamageToSelf = config.BindUnique(RamSectionName, "percentageDamageToSelf",
       0.01f,
       ConfigHelpers.CreateConfigDescription(
         $"Percentage Damage applied to the Ram piece per hit. Number between 0-1. This will damage the vehicle in the area hit.",
         true, true, new AcceptableValueRange<float>(0, 1)));
 
-    VehiclePercentageDamageToCollisionArea = config.Bind(VehicleRamSectionName, "percentageDamageToSelf",
+    VehiclePercentageDamageToCollisionArea = config.BindUnique(VehicleRamSectionName, "percentageDamageToSelf",
       0.01f,
       ConfigHelpers.CreateConfigDescription(
         $"Percentage Damage applied to the Vehicle pieces per hit. Number between 0-1. This will damage the vehicle in the area hit.",
         true, true, new AcceptableValueRange<float>(0, 1)));
 
-    AllowContinuousDamage = config.Bind(RamSectionName, "AllowContinuousDamage",
+    AllowContinuousDamage = config.BindUnique(RamSectionName, "AllowContinuousDamage",
       true,
       ConfigHelpers.CreateConfigDescription(
         "Rams will continue to apply damage based on their velocity even after the initial impact",
         true, true));
 
-    RamDamageToolTier = config.Bind(RamSectionName, "RamDamageToolTier", 100,
+    RamDamageToolTier = config.BindUnique(RamSectionName, "RamDamageToolTier", 100,
       ConfigHelpers.CreateConfigDescription(
         "allows rams to damage both rocks, ores, and higher tier trees and/or prefabs. Tier 1 is bronze. Setting to 100 will allow damage to all types of materials",
         true, true, new AcceptableValueRange<int>(1, 100)));
 
     // Hit Config
-    CanHitCharacters = config.Bind(RamSectionName, "CanHitCharacters", true,
+    CanHitCharacters = config.BindUnique(RamSectionName, "CanHitCharacters", true,
       ConfigHelpers.CreateConfigDescription(
         "allows rams to hit characters/entities",
         true, true));
-    CanHitEnemies = config.Bind(RamSectionName, "CanHitEnemies", true,
+    CanHitEnemies = config.BindUnique(RamSectionName, "CanHitEnemies", true,
       ConfigHelpers.CreateConfigDescription(
         "allows rams to hit enemies",
         true, true));
-    CanHitFriendly = config.Bind(RamSectionName, "CanHitFriendly", true,
+    CanHitFriendly = config.BindUnique(RamSectionName, "CanHitFriendly", true,
       ConfigHelpers.CreateConfigDescription(
         "allows rams to hit friendlies",
         true, true));
-    CanDamageSelf = config.Bind(RamSectionName, "CanDamageSelf", true,
+    CanDamageSelf = config.BindUnique(RamSectionName, "CanDamageSelf", true,
       ConfigHelpers.CreateConfigDescription(
         "allows rams to be damaged. The values set for the damage will be calculated",
         true, true));
-    CanHitEnvironmentOrTerrain = config.Bind(RamSectionName,
+    CanHitEnvironmentOrTerrain = config.BindUnique(RamSectionName,
       "CanHitEnvironmentOrTerrain", true,
       ConfigHelpers.CreateConfigDescription(
         "allows rams to hit friendlies",
         true, true));
 
-    HitRadius = config.Bind(RamSectionName, "HitRadius", 5f,
+    HitRadius = config.BindUnique(RamSectionName, "HitRadius", 5f,
       ConfigHelpers.CreateConfigDescription(
         "The base ram hit radius area. Stakes are always half the size, this will hit all pieces within this radius, capped between 5 and 10, but 50 is max. Stakes are half this value. Blades are equivalent to this value.",
         true, true, new AcceptableValueRange<float>(5f, 50f)));
 
     // VehicleRam Hit Config
-    VehicleRamCanHitCharacters = config.Bind(VehicleRamSectionName, "CanHitCharacters", true,
+    VehicleRamCanHitCharacters = config.BindUnique(VehicleRamSectionName, "CanHitCharacters", true,
       ConfigHelpers.CreateConfigDescription(
         "allows vehicle rams to hit characters/entities",
         true, true));
-    VehicleRamCanHitEnemies = config.Bind(VehicleRamSectionName, "CanHitEnemies", true,
+    VehicleRamCanHitEnemies = config.BindUnique(VehicleRamSectionName, "CanHitEnemies", true,
       ConfigHelpers.CreateConfigDescription(
         "allows vehicle rams to hit enemies",
         true, true));
-    VehicleRamCanHitFriendly = config.Bind(VehicleRamSectionName, "CanHitFriendly", true,
+    VehicleRamCanHitFriendly = config.BindUnique(VehicleRamSectionName, "CanHitFriendly", true,
       ConfigHelpers.CreateConfigDescription(
         "allows vehicle rams to hit friendlies",
         true, true));
-    VehicleRamCanDamageSelf = config.Bind(VehicleRamSectionName, "CanDamageSelf", false,
+    VehicleRamCanDamageSelf = config.BindUnique(VehicleRamSectionName, "CanDamageSelf", false,
       ConfigHelpers.CreateConfigDescription(
         "allows vehicle rams to be damaged. The values set for the damage will be calculated at same time hits are calculated. This config does not work yet so it's set to false currently on all releases",
         true, true, new AcceptableValueList<bool>(ModEnvironment.IsDebug)));
-    VehicleRamCanHitEnvironmentOrTerrain = config.Bind(VehicleRamSectionName,
+    VehicleRamCanHitEnvironmentOrTerrain = config.BindUnique(VehicleRamSectionName,
       "CanHitEnvironmentOrTerrain", true,
       ConfigHelpers.CreateConfigDescription(
         "allows vehicle rams to hit friendlies",
         true, true));
 
-    VehicleRamHitRadius = config.Bind(VehicleRamSectionName, "HitRadius", 5f,
+    VehicleRamHitRadius = config.BindUnique(VehicleRamSectionName, "HitRadius", 5f,
       ConfigHelpers.CreateConfigDescription(
         "The base hit radius of vehicle bodies. This will also effect self-damage to vehicle based on the radius.",
         true, true, new AcceptableValueRange<float>(5f, 50f)));
-    RamHitInterval = config.Bind(RamSectionName, "RamHitInterval", 1f,
+    RamHitInterval = config.BindUnique(RamSectionName, "RamHitInterval", 1f,
       ConfigHelpers.CreateConfigDescription(
         "Every X seconds, the ram will apply this damage",
         true, true, new AcceptableValueRange<float>(0.5f, 20f)));
 
-    CanRepairRams = config.Bind(RamSectionName, "RamsCanBeRepaired", false,
+    CanRepairRams = config.BindUnique(RamSectionName, "RamsCanBeRepaired", false,
       ConfigHelpers.CreateConfigDescription("Allows rams to be repaired",
         true));
 
     // Physics damage multiplier Config
-    MinimumVelocityToTriggerHit = config.Bind(RamSectionName,
+    MinimumVelocityToTriggerHit = config.BindUnique(RamSectionName,
       "minimumVelocityToTriggerHit", 1f,
       ConfigHelpers.CreateConfigDescription(
         "Minimum velocity required to activate the ram's damage",
         true, true, new AcceptableValueRange<float>(0f, 100f)));
-    MaxVelocityMultiplier = config.Bind(RamSectionName, "MaxVelocityMultiplier",
+    MaxVelocityMultiplier = config.BindUnique(RamSectionName, "MaxVelocityMultiplier",
       1f,
       ConfigHelpers.CreateConfigDescription(
         "Damage of the ram is increased by an additional % based on the additional weight of the ship. 1500 mass at 1% would be 5 extra damage. IE 1500-1000 = 500 * 0.01 = 5.",
         true, true));
 
     // vehicle configs
-    VehicleMinimumVelocityToTriggerHit = config.Bind(VehicleRamSectionName,
+    VehicleMinimumVelocityToTriggerHit = config.BindUnique(VehicleRamSectionName,
       "VehicleMinimumVelocityToTriggerHit", 1f,
       ConfigHelpers.CreateConfigDescription(
         "Minimum velocity required to activate the vehicle hull's damage",
         true, true, new AcceptableValueRange<float>(0f, 100f)));
-    VehicleMaxVelocityMultiplier = config.Bind(VehicleRamSectionName, "MaxVelocityMultiplier",
+    VehicleMaxVelocityMultiplier = config.BindUnique(VehicleRamSectionName, "MaxVelocityMultiplier",
       1f,
       ConfigHelpers.CreateConfigDescription(
         "Damage of the vehicle hull is increased by an additional % based on the additional weight of the ship. 1500 mass at 1% would be 5 extra damage. IE 1500-1000 = 500 * 0.01 = 5.",
         true, true));
-    VehicleHullMassMultiplierDamage = config.Bind(VehicleRamSectionName,
+    VehicleHullMassMultiplierDamage = config.BindUnique(VehicleRamSectionName,
       "VehicleHullMassMultiplierDamage",
       0.1f,
       ConfigHelpers.CreateConfigDescription(
@@ -288,25 +289,25 @@ public class RamConfig : BepInExBaseConfig<RamConfig>
         true, true));
 
 
-    WaterVehicleRamToolTier = config.Bind(VehicleRamSectionName,
+    WaterVehicleRamToolTier = config.BindUnique(VehicleRamSectionName,
       "WaterVehicleRamToolTier",
       100,
       ConfigHelpers.CreateConfigDescription(
         "The tier damage a water vehicle can do to a rock or other object it hits. To be balanced this should be a lower value IE (1) bronze. But ashlands will require a higher tier to smash spires FYI.",
         true, true, ToolTierRange));
-    LandVehicleRamToolTier = config.Bind(VehicleRamSectionName,
+    LandVehicleRamToolTier = config.BindUnique(VehicleRamSectionName,
       "LandVehicleRamToolTier",
       100,
       ConfigHelpers.CreateConfigDescription(
         "The tier damage a Land vehicle can do to a rock or other object it hits. This should be set to maximum as land vehicles are black metal tier.",
         true, true, ToolTierRange));
-    WaterVehiclesAreRams = config.Bind(VehicleRamSectionName,
+    WaterVehiclesAreRams = config.BindUnique(VehicleRamSectionName,
       "WaterVehiclesAreRams",
       true,
       ConfigHelpers.CreateConfigDescription(
         "Adds ram damage to a water vehicle's combined hull mesh. This affects all water vehicles vehicles. This will turn off all rams for water vehicles if set to false.",
         true, true));
-    LandVehiclesAreRams = config.Bind(VehicleRamSectionName,
+    LandVehiclesAreRams = config.BindUnique(VehicleRamSectionName,
       "LandVehiclesAreRams",
       true,
       ConfigHelpers.CreateConfigDescription(
@@ -316,7 +317,7 @@ public class RamConfig : BepInExBaseConfig<RamConfig>
     const int tierDiff = 2;
     const float defaultDamagePerTier = 0.25f;
     const int baseDamage = 1;
-    DamageIncreasePercentagePerTier = config.Bind(RamSectionName,
+    DamageIncreasePercentagePerTier = config.BindUnique(RamSectionName,
       "DamageIncreasePercentagePerTier",
       0.25f,
       ConfigHelpers.CreateConfigDescription(

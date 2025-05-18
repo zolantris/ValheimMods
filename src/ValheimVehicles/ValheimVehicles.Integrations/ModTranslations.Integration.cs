@@ -244,6 +244,22 @@ public partial class ModTranslations
     SwivelMode_TargetWind = SafeLocalize("$valheim_vehicles_swivel_mode_target_wind");
   }
 
+  private static void UpdateVehicleCommandsTranslations()
+  {
+    VehicleCommand_RaftCreative = SafeLocalize("$valheim_vehicles_commands_toggle_creative");
+    VehicleCommand_SaveVehicle = SafeLocalize("$valheim_vehicles_commands_save_vehicle");
+    VehicleCommand_OpenSelector = SafeLocalize("$valheim_vehicles_commands_open_vehicle_selector");
+    VehicleCommand_SpawnSelected = SafeLocalize("$valheim_vehicles_commands_spawn_selected_vehicle");
+    VehicleCommand_ZeroRotation = SafeLocalize("$valheim_vehicles_commands_zero_ship_rotation");
+    VehicleCommand_ToggleMaskEditor = SafeLocalize("$valheim_vehicles_commands_toggle_mask_editor");
+    VehicleCommand_ToggleOceanSway = SafeLocalize("$valheim_vehicles_commands_toggle_ocean_sway");
+    VehicleCommand_RebuildBounds = SafeLocalize("$valheim_vehicles_commands_rebuild_bounds");
+    VehicleCommand_HullDebugger = SafeLocalize("$valheim_vehicles_commands_hull_debugger");
+    VehicleCommand_PhysicsDebugger = SafeLocalize("$valheim_vehicles_commands_physics_debugger");
+    VehicleCommand_DestroyVehicle = SafeLocalize("$valheim_vehicles_commands_destroy_vehicle");
+    VehicleCommand_ConfigPanel = SafeLocalize("$valheim_vehicles_commands_config_panel");
+  }
+
   public static void ForceUpdateTranslations()
   {
     UpdateTranslations(true);
@@ -269,6 +285,7 @@ public partial class ModTranslations
       UpdateSwivelTranslations();
       UpdatePowerTranslations();
       UpdateSwivelUITranslations();
+      UpdateVehicleCommandsTranslations();
     }
     catch (Exception e)
     {

@@ -1,5 +1,6 @@
 using BepInEx.Configuration;
 using UnityEngine;
+using Zolantris.Shared;
 namespace ValheimVehicles.Config;
 
 public class InputsConfig : BepInExBaseConfig<InputsConfig>
@@ -14,7 +15,7 @@ public class InputsConfig : BepInExBaseConfig<InputsConfig>
 
 #if DEBUG
     AnchorKeyboardShortcut =
-      config.Bind("Input", "AnchorKeyboardShortcut",
+      config.BindUnique("Input", "AnchorKeyboardShortcut",
         new KeyboardShortcut(KeyCode.LeftShift),
         new ConfigDescription(
           "Anchor keyboard hotkey. Only works for DEBUG currently"));

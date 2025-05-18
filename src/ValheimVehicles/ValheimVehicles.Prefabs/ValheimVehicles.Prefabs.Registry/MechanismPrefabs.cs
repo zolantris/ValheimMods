@@ -323,7 +323,7 @@ public class MechanismPrefabs : RegisterPrefab<MechanismPrefabs>
     PieceManager.Instance.AddPiece(new CustomPiece(prefab, true, new PieceConfig
     {
       PieceTable = PrefabRegistryController.GetPieceTableName(),
-      Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Tools),
+      Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Power),
       Enabled = true,
       Requirements =
       [

@@ -99,6 +99,7 @@
 
     public override void SetMotionState(MotionState state)
     {
+      if (!prefabConfigSync) return;
       if (prefabConfigSync.IsBroadcastSuppressed)
       {
         base.SetMotionState(state);
@@ -129,7 +130,10 @@
         return;
       }
 
-      prefabConfigSync.Config.MotionState = state;
+      if (prefabConfigSync != null && prefabConfigSync.Config != null)
+      {
+        prefabConfigSync.Config.MotionState = state;
+      }
       base.SetMotionState(state);
 
       Request_SetMotionState(state);

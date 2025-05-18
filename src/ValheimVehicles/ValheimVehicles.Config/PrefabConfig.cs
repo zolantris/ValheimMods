@@ -9,6 +9,7 @@ using ValheimVehicles.Prefabs.Registry;
 using ValheimVehicles.Prefabs.ValheimVehicles.Prefabs.Registry;
 using ValheimVehicles.SharedScripts;
 using ValheimVehicles.SharedScripts.PowerSystem;
+using Zolantris.Shared;
 
 namespace ValheimVehicles.Config;
 
@@ -129,56 +130,56 @@ public class PrefabConfig : BepInExBaseConfig<PrefabConfig>
   public override void OnBindConfig(ConfigFile config)
   {
 
-    PowerPlate_ShowStatus = config.Bind(SectionKey, "PowerDrainPlate_ShowStatus", false, ConfigHelpers.CreateConfigDescription("Shows the power drain activity and tells you what type of plate is being used when hovering over it. This flag will be ignored if the PowerNetwork inspector is enabled which allows viewing all power values.", false, false));
-    PowerSource_AllowNearbyFuelingWithEitr = config.Bind(SectionKey, "PowerSource_AllowNearbyFuelingWithEitr", false, ConfigHelpers.CreateConfigDescription("This will allow for the player to fuel from chests when interacting with Vehicle sources. This may not be needed with chest mods.", true, false));
+    PowerPlate_ShowStatus = config.BindUnique(SectionKey, "PowerDrainPlate_ShowStatus", false, ConfigHelpers.CreateConfigDescription("Shows the power drain activity and tells you what type of plate is being used when hovering over it. This flag will be ignored if the PowerNetwork inspector is enabled which allows viewing all power values.", false, false));
+    PowerSource_AllowNearbyFuelingWithEitr = config.BindUnique(SectionKey, "PowerSource_AllowNearbyFuelingWithEitr", false, ConfigHelpers.CreateConfigDescription("This will allow for the player to fuel from chests when interacting with Vehicle sources. This may not be needed with chest mods.", true, false));
 
-    PowerNetwork_ShowAdditionalPowerInformationByDefault = config.Bind(SectionKey, "PowerNetwork_ShowAdditionalPowerInformationByDefault", false, ConfigHelpers.CreateConfigDescription("This will show the power network information by default per prefab. This acts as a tutorial. Most power items will have a visual indicator but it may not be clear to players immediately.", false, false));
+    PowerNetwork_ShowAdditionalPowerInformationByDefault = config.BindUnique(SectionKey, "PowerNetwork_ShowAdditionalPowerInformationByDefault", false, ConfigHelpers.CreateConfigDescription("This will show the power network information by default per prefab. This acts as a tutorial. Most power items will have a visual indicator but it may not be clear to players immediately.", false, false));
 
-    SwivelPowerDrain = config.Bind(SectionKey,
+    SwivelPowerDrain = config.BindUnique(SectionKey,
       "SwivelPowerDrain", 1f,
       ConfigHelpers.CreateConfigDescription(
         "How much power (watts) is consumed by a Swivel per second. Applies only if Swivels_DoNotRequirePower is false.",
         true, false,
         new AcceptableValueRange<float>(0f, 100f)));
 
-    PowerPlate_ChargeRate = config.Bind(SectionKey,
+    PowerPlate_ChargeRate = config.BindUnique(SectionKey,
       "PowerPlate_ChargeRate", 1f,
       ConfigHelpers.CreateConfigDescription(
         "Converted rate when transfering from the power conduit. This rate should be 1 by default. Use drain rate to make player mana power balanced. Charge rate will eventually be applyed to eitr chargers which can transfer eitr to the player.",
         true, false,
         new AcceptableValueRange<float>(0.001f, 100f)));
-    PowerPlate_DrainRate = config.Bind(SectionKey,
+    PowerPlate_DrainRate = config.BindUnique(SectionKey,
       "PowerPlate_DrainRate", 100f,
       ConfigHelpers.CreateConfigDescription(
         "How much eitr energy is drained to convert to power system energy units. Eitr energy is renewable but should be considered less refined. To maintain balance keep this at a higher number.",
         true, false,
         new AcceptableValueRange<float>(0.001f, 10000f)));
-    PowerPlate_EitrToEnergyRatio = config.Bind(SectionKey,
+    PowerPlate_EitrToEnergyRatio = config.BindUnique(SectionKey,
       "PowerPlate_EitrToEnergyRatio", 10f,
       ConfigHelpers.CreateConfigDescription(
         "The amount of player eitr that is required to get 1 unit of eitr energy in the system.",
         true, false,
         new AcceptableValueRange<float>(0.001f, 100f)));
     // sources
-    PowerSource_FuelCapacity = config.Bind(SectionKey,
+    PowerSource_FuelCapacity = config.BindUnique(SectionKey,
       "PowerSourceFuelCapacity", 100f,
       ConfigHelpers.CreateConfigDescription(
         "The maximum amount of fuel a power source can hold.",
         true, false,
         new AcceptableValueRange<float>(1f, 1000f)));
-    PowerSource_BaseFuelEfficiency = config.Bind(SectionKey,
+    PowerSource_BaseFuelEfficiency = config.BindUnique(SectionKey,
       "PowerSource_BaseEfficiency", 1f,
       ConfigHelpers.CreateConfigDescription(
         "The base efficiency of all fuel. This can be used to tweak all fuels and keep them scaling.",
         true, false,
         new AcceptableValueRange<float>(1f, 10f)));
-    PowerSource_EitrEfficiency = config.Bind(SectionKey,
+    PowerSource_EitrEfficiency = config.BindUnique(SectionKey,
       "PowerSource_EitrEfficiency", 10f,
       ConfigHelpers.CreateConfigDescription(
         "The efficiency of Eitr as fuel. IE 1 eitr turns into X fuel. This will be used for balancing with other fuel types if more fuel types are added.",
         true, false,
         new AcceptableValueRange<float>(1f, 1000f)));
-    PowerSource_FuelConsumptionRate = config.Bind(SectionKey,
+    PowerSource_FuelConsumptionRate = config.BindUnique(SectionKey,
       "PowerSource_FuelConsumptionRate", 0.1f,
       ConfigHelpers.CreateConfigDescription(
         "The amount of fuel consumed per physics update tick at full power output by a power source.",
@@ -186,16 +187,16 @@ public class PrefabConfig : BepInExBaseConfig<PrefabConfig>
         new AcceptableValueRange<float>(0.0001f, 100f)));
 
     // storage
-    PowerStorage_Capacity = config.Bind(SectionKey,
+    PowerStorage_Capacity = config.BindUnique(SectionKey,
       "PowerStorageCapacity", 800f,
       ConfigHelpers.CreateConfigDescription(
         "The maximum amount of energy a power storage unit can hold.",
         true, false,
         new AcceptableValueRange<float>(10f, 2000f)));
 
-    Mechanism_Switch_DefaultAction = config.Bind(SectionKey,
+    Mechanism_Switch_DefaultAction = config.BindUnique(SectionKey,
       "Mechanism_Switch_DefaultAction", MechanismAction.CommandsHud,
-      "Default action of the mechanism switch. This will be overridden by UpdateIntendedAction if a closer matching action is detected nearby.");
+      ConfigHelpers.CreateConfigDescription("Default action of the mechanism switch. This will be overridden by UpdateIntendedAction if a closer matching action is detected nearby."));
 
     SwivelComponent.SwivelEnergyDrain = SwivelPowerDrain.Value;
 
@@ -230,74 +231,74 @@ public class PrefabConfig : BepInExBaseConfig<PrefabConfig>
 
 
 
-    Swivels_DoNotRequirePower = config.Bind(SectionKey, "Swivels_DoNotRequirePower",
+    Swivels_DoNotRequirePower = config.BindUnique(SectionKey, "Swivels_DoNotRequirePower",
       false,
       ConfigHelpers.CreateConfigDescription(
         "Allows you to use swivels without the vehicle power system.",
         true, false));
 
-    AllowTieredMastToRotate = config.Bind(SectionKey, "AllowTieredMastToRotateInWind", true, "allows the tiered mast to rotate in wind");
-    RopeLadderEjectionOffset = config.Bind(SectionKey,
+    AllowTieredMastToRotate = config.BindUnique(SectionKey, "AllowTieredMastToRotateInWind", true, "allows the tiered mast to rotate in wind");
+    RopeLadderEjectionOffset = config.BindUnique(SectionKey,
       "RopeLadderEjectionPoint", Vector3.zero,
-      "The place the player is placed after they leave the ladder. Defaults to Y +0.25 and Z +0.5 meaning you are placed forwards of the ladder.");
+      ConfigHelpers.CreateConfigDescription("The place the player is placed after they leave the ladder. Defaults to Y +0.25 and Z +0.5 meaning you are placed forwards of the ladder."));
 
 
-    StartingPiece = config.Bind(SectionKey, "Vehicle Hull Starting Piece",
+    StartingPiece = config.BindUnique(SectionKey, "Vehicle Hull Starting Piece",
       VehicleShipInitPiece.Hull4X8,
       ConfigHelpers.CreateConfigDescription(
         "Allows you to customize what piece the raft initializes with. Admins only as this can be overpowered.",
         true, true));
-    RopeLadderRunMultiplier = config.Bind(SectionKey,
+    RopeLadderRunMultiplier = config.BindUnique(SectionKey,
       "ropeLadderRunClimbSpeedMult", 2,
       ConfigHelpers.CreateConfigDescription(
         "Allows you to customize how fast you can climb a ladder when in run mode",
         false, true, new AcceptableValueRange<int>(1, 10)));
-    RopeLadderHints = config.Bind(SectionKey, "ropeLadderHints", true,
+    RopeLadderHints = config.BindUnique(SectionKey, "ropeLadderHints", true,
       ConfigHelpers.CreateConfigDescription(
         "Shows the controls required to auto ascend/descend and run to speedup ladder"));
 
-    ProtectVehiclePiecesOnErrorFromWearNTearDamage = config.Bind(
+    ProtectVehiclePiecesOnErrorFromWearNTearDamage = config.BindUnique(
       SectionKey,
       "Protect Vehicle pieces from breaking on Error", true,
       ConfigHelpers.CreateConfigDescription(
         "Protects against crashes breaking raft/vehicle initialization causing raft/vehicles to slowly break pieces attached to it. This will make pieces attached to valid raft ZDOs unbreakable from damage, but still breakable with hammer",
         true, true));
 
-    GlassDefaultColor = config.Bind(SectionKey,
+    GlassDefaultColor = config.BindUnique(SectionKey,
       "GlassDefaultColor",
       new Color(0.60f, 0.60f, 0.60f, 0.05f),
       ConfigHelpers.CreateConfigDescription(
         "Set the experimental glass color for your vehicle. This will be used for most glass meshes. This is the default color. Eventually players can customize the color of the glass.",
         true, true));
 
-    EnableLandVehicles = config.Bind(SectionKey, "enableLandVehicles", false,
+    EnableLandVehicles = config.BindUnique(SectionKey, "enableLandVehicles", false,
       ConfigHelpers.CreateConfigDescription(
         "Vehicles land vehicle prefab will be enabled. LandVehicles will be available for all version above V3.0.0",
         true));
 
-    VehicleStaminaHaulingCost = config.Bind(SectionKey,
+    VehicleStaminaHaulingCost = config.BindUnique(SectionKey,
       "VehicleStaminaHaulingCost",
       5f,
       ConfigHelpers.CreateConfigDescription(
         "The cost per 1 meter of hauling a vehicle. This cost is on incurred if the vehicle is being pulled towards the player. When stamina runs out, the player is damaged by this amount until they release the vehicle.", true, false, new AcceptableValueRange<float>(0, 10f)));
-    VehicleHaulingSnapsOnStaminaZero = config.Bind(SectionKey,
+    VehicleHaulingSnapsOnStaminaZero = config.BindUnique(SectionKey,
       "VehicleHaulingSnapsOnStaminaZero", false,
       ConfigHelpers.CreateConfigDescription(
         "Instead of allowing the viking to use health. The vehicle hauling line will snap when you have zero stamina doing a single one-time damage.", true, false));
 
-    ExperimentalTreadScaleX = config.Bind(SectionKey,
+    ExperimentalTreadScaleX = config.BindUnique(SectionKey,
       "Experimental_TreadScaleX", 1f,
       ConfigHelpers.CreateConfigDescription(
         "Set the tank per tread piece X scale (width). This will make the treads larger or smaller allowing more/less grip.", true, false, new AcceptableValueRange<float>(0.5f, 5f)));
 
 
-    AdminsCanOnlyBuildRaft = config.Bind("Server config",
+    AdminsCanOnlyBuildRaft = config.BindUnique("Server config",
       "AdminsCanOnlyBuildRaft", false,
       ConfigHelpers.CreateConfigDescription(
         "ValheimRAFT hammer menu pieces are registered as disabled unless the user is an Admin, allowing only admins to create rafts. This will update automatically make sure to un-equip the hammer to see it apply (if your remove yourself as admin). Server / client does not need to restart",
         true, true));
 
-    AllowExperimentalPrefabs = config.Bind(SectionKey,
+    AllowExperimentalPrefabs = config.BindUnique(SectionKey,
       "AllowExperimentalPrefabs", false,
       ConfigHelpers.CreateConfigDescription(
         "Allows >=v2.0.0 experimental prefabs such as Iron variants of slabs, hulls, and ribs. They do not look great so they are disabled by default",
@@ -305,12 +306,12 @@ public class PrefabConfig : BepInExBaseConfig<PrefabConfig>
 
 
 
-    Graphics_AllowSailsFadeInFog = config.Bind("Graphics", "Sails Fade In Fog",
+    Graphics_AllowSailsFadeInFog = config.BindUnique("Graphics", "Sails Fade In Fog",
       true,
       "Allow sails to fade in fog. Unchecking this will be slightly better FPS but less realistic. Should be fine to keep enabled");
 
 
-    MakeAllPiecesWaterProof = config.Bind<bool>("Server config",
+    MakeAllPiecesWaterProof = config.BindUnique<bool>("Server config",
       "MakeAllPiecesWaterProof", true, ConfigHelpers.CreateConfigDescription(
         "Makes it so all building pieces (walls, floors, etc) on the ship don't take rain damage.",
         true
