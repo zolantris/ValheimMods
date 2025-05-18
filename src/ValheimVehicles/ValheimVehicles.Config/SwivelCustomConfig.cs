@@ -63,6 +63,8 @@ namespace ValheimVehicles.Config
 
     public SwivelCustomConfig Deserialize(ZPackage package)
     {
+      package.SetPos(0); // Always reset read pointer otherwise we start at end and fail.
+
       return new SwivelCustomConfig
       {
         Mode = (SwivelMode)package.ReadInt(),
