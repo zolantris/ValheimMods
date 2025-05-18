@@ -86,20 +86,20 @@ namespace ValheimVehicles.SharedScripts.UI
         CreateUI();
       }
 
-      modeDropdown.SetValueWithoutNotify((int)_currentSwivelTempConfig.Mode);
-      motionStateDropdown.SetValueWithoutNotify((int)_currentSwivelTempConfig.MotionState);
+      modeDropdown.value = (int)_currentSwivelTempConfig.Mode;
+      motionStateDropdown.value = (int)_currentSwivelTempConfig.MotionState;
 
       var max = _currentSwivelTempConfig.MaxEuler;
-      maxXRow.GetComponentInChildren<Slider>().SetValueWithoutNotify(max.x);
-      maxYRow.GetComponentInChildren<Slider>().SetValueWithoutNotify(max.y);
-      maxZRow.GetComponentInChildren<Slider>().SetValueWithoutNotify(max.z);
+      maxXRow.GetComponentInChildren<Slider>().value = max.x;
+      maxYRow.GetComponentInChildren<Slider>().value = max.y;
+      maxZRow.GetComponentInChildren<Slider>().value = max.z;
 
       var offset = _currentSwivelTempConfig.MovementOffset;
-      targetDistanceXRow.GetComponentInChildren<Slider>().SetValueWithoutNotify(offset.x);
-      targetDistanceYRow.GetComponentInChildren<Slider>().SetValueWithoutNotify(offset.y);
-      targetDistanceZRow.GetComponentInChildren<Slider>().SetValueWithoutNotify(offset.z);
+      targetDistanceXRow.GetComponentInChildren<Slider>().value = offset.x;
+      targetDistanceYRow.GetComponentInChildren<Slider>().value = offset.y;
+      targetDistanceZRow.GetComponentInChildren<Slider>().value = offset.z;
 
-      movementLerpRow.GetComponentInChildren<Slider>().SetValueWithoutNotify(_currentSwivelTempConfig.InterpolationSpeed);
+      movementLerpRow.GetComponentInChildren<Slider>().value = _currentSwivelTempConfig.InterpolationSpeed;
 
       RefreshUI();
       if (!isToggle)

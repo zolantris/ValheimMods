@@ -24,7 +24,7 @@ public class PrefabConfigRPCSync<T, TComponentInterface> : MonoBehaviour, IPrefa
   public T Config => CustomConfig;
   internal SafeRPCHandler? rpcHandler;
   internal RetryGuard retryGuard = null!;
-  public TComponentInterface controller;
+  public TComponentInterface? controller;
 
   public bool HasLoadedInitialCache => m_configCache != null;
   private Coroutine? _prefabSyncRoutine;
@@ -154,7 +154,11 @@ public class PrefabConfigRPCSync<T, TComponentInterface> : MonoBehaviour, IPrefa
     {
       HasInitLoaded = true;
     }
+
+    OnLoad();
   }
+
+  public virtual void OnLoad() {}
 
   public void RequestCommitConfigChange(T newConfig)
   {

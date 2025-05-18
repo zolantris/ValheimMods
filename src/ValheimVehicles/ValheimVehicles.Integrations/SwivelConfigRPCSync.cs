@@ -4,6 +4,7 @@ using ValheimVehicles.Config;
 using ValheimVehicles.Helpers;
 using ValheimVehicles.SharedScripts;
 using ValheimVehicles.SharedScripts.UI;
+using ValheimVehicles.UI;
 namespace ValheimVehicles.Integrations;
 
 /// <summary>
@@ -126,6 +127,16 @@ public class SwivelConfigRPCSync : PrefabConfigRPCSync<SwivelCustomConfig, ISwiv
     CommitConfigChange(Config);
   }
 
+  public override void OnLoad()
+  {
+    if (controller == null || SwivelUIPanelComponentIntegration.Instance == null) return;
+
+    var controllerSwivelComponent = (SwivelComponent)controller;
+    if (SwivelUIPanelComponentIntegration.Instance.CurrentSwivel == controllerSwivelComponent)
+    {
+      SwivelUIPanelComponentIntegration.Instance.BindTo(controllerSwivelComponent, false);
+    }
+  }
 
   private MotionState GetNextState(MotionState current)
   {
