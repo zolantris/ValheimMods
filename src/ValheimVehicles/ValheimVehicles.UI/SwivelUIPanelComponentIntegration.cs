@@ -80,6 +80,7 @@ public class SwivelUIPanelComponentIntegration : SwivelUIPanelComponent
   public void SyncUIFromPartialConfig(SwivelCustomConfig updated)
   {
     if (_currentSwivel == null) return;
+    if (IsEditing) return;
 
     // Ignore MotionState (readonly)
     var old = _currentSwivelTempConfig;
@@ -127,6 +128,7 @@ public class SwivelUIPanelComponentIntegration : SwivelUIPanelComponent
 
     // Optional: update MotionState label visually if needed
     motionStateDropdown.value = (int)updated.MotionState;
+    IsEditing = false;
   }
 
 

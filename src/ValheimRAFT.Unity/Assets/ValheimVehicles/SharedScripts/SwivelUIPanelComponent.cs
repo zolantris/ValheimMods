@@ -48,6 +48,7 @@ namespace ValheimVehicles.SharedScripts.UI
     public SwivelUISharedStyles viewStyles = new();
 
     internal SwivelComponent? _currentSwivel;
+    public bool IsEditing = false;
 
     internal SwivelCustomConfig _currentSwivelTempConfig = new();
 
@@ -155,7 +156,13 @@ namespace ValheimVehicles.SharedScripts.UI
     /// </summary>
     public virtual void UnsetSavedState()
     {
-      if (_saveStatus != null) _saveStatus.text = SwivelUIPanelStrings.Save;
+      IsEditing = true;
+      if (_saveStatus) _saveStatus.text = SwivelUIPanelStrings.Save;
+    }
+    public virtual void SetSavedState()
+    {
+      IsEditing = false;
+      if (_saveStatus) _saveStatus.text = SwivelUIPanelStrings.Saved;
     }
     // public virtual void RequestSaveDebounced()
     // {
@@ -313,7 +320,7 @@ namespace ValheimVehicles.SharedScripts.UI
       SwivelUIHelpers.AddRowWithButton(layoutParent, viewStyles, null, SwivelUIPanelStrings.Save, 96f, 48f, out _saveStatus, () =>
       {
         OnPanelSave();
-        if (_saveStatus != null) _saveStatus.text = SwivelUIPanelStrings.Saved;
+        SetSavedState();
       });
 
       _hasCreatedUI = true;

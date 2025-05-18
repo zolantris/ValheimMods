@@ -549,6 +549,11 @@ public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
 
     VehiclePiecesController? vehiclePiecesController = null;
 
+    if (!RamConfig.CanHitSwivels.Value && collider.GetComponentInParent<SwivelComponent>())
+    {
+      return true;
+    }
+
     var colliderObj = collider.gameObject;
 
     if (colliderObj.layer == LayerHelpers.ItemLayer)

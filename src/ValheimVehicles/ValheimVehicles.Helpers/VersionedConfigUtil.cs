@@ -1,3 +1,4 @@
+using ValheimVehicles.Compat;
 namespace ValheimVehicles.Helpers;
 
 public class VersionedConfigUtil
@@ -10,7 +11,7 @@ public class VersionedConfigUtil
       return _minorVersionKey;
     }
 
-    var parsedVersion = System.Version.Parse(ValheimVehiclesPlugin.Version);
+    var parsedVersion = System.Version.Parse(ValheimRAFT_API.GetPluginVersion());
     _minorVersionKey = $"{parsedVersion.Major}.{parsedVersion.Minor}.x";
     return _minorVersionKey;
   }

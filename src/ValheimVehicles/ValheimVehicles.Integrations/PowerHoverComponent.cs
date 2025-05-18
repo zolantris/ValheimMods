@@ -126,7 +126,7 @@ public class PowerHoverComponent : MonoBehaviour, Hoverable, Interactable
   public bool PowerSourceInteract(Humanoid user, bool hold, bool alt)
   {
     if (!HasPowerSource) return false;
-    if (!hold)
+    if (!alt)
     {
       TryAddFuel(user, AddOneCount);
       return true;

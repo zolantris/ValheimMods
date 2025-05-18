@@ -19,21 +19,6 @@ public class SwivelConfigRPCSync : PrefabConfigRPCSync<SwivelCustomConfig, ISwiv
     rpcHandler?.Register<ZPackage>(nameof(RPC_SetMotionState), RPC_SetMotionState);
   }
 
-  // public void Request_NextMotion()
-  // {
-  //   if (!this.IsNetViewValid(out var netView)) return;
-  //
-  //   // Only allow toggle if we're fully synced
-  //   if (!HasInitLoaded || !netView.IsOwner())
-  //   {
-  //     LoggerProvider.LogWarning("Motion state not synced or not owner; ignoring Request_NextMotion");
-  //     return;
-  //   }
-  //
-  //   // Request toggle motion on the owner
-  //   netView.InvokeRPC(nameof(RPC_NextMotion));
-  // }
-
   public void Request_SetMotionState(MotionState motionState)
   {
     if (!this.IsNetViewValid(out var netView)) return;
@@ -67,14 +52,13 @@ public class SwivelConfigRPCSync : PrefabConfigRPCSync<SwivelCustomConfig, ISwiv
     // Read client-reported MotionState
     var clientMotionState = (MotionState)pkg.ReadInt();
 
-    // Clone current config (to avoid mutating it before validation)
-
     if (clientMotionState == Config.MotionState)
     {
       LoggerProvider.LogDebug($"[Swivel] MotionState unchanged: <{clientMotionState}>. Ignoring.");
       return;
     }
 
+#if DEBUG
     if (ZNet.instance.IsDedicated())
     {
       LoggerProvider.LogDebug("WE ARE A DEDICATED SERVER and get logs. YAY");
@@ -83,16 +67,9 @@ public class SwivelConfigRPCSync : PrefabConfigRPCSync<SwivelCustomConfig, ISwiv
     {
       LoggerProvider.LogDebug("WE ARE A SERVER and get logs. YAY");
     }
-
-
-    // if (!ZNet.instance.IsServer())
-    // {
-    //   LoggerProvider.LogWarning("Desync detected on client. Resending full config.");
-    //   netView.InvokeRPC(sender, nameof(RPC_Load));
-    //   return;
-    // }
-
     LoggerProvider.LogDebug($"Server has currently has MotionState: <{Config.MotionState}>");
+#endif
+
 
     // Valid and expected: apply to real config
     Config.MotionState = clientMotionState;
@@ -107,7 +84,9 @@ public class SwivelConfigRPCSync : PrefabConfigRPCSync<SwivelCustomConfig, ISwiv
     var clientMotionState = (MotionState)pkg.ReadInt();
 
     // Clone current config (to avoid mutating it before validation)
+#if DEBUG
     LoggerProvider.LogDebug($"Server previous has MotionState: {Config.MotionState}");
+#endif
     var expected = new SwivelCustomConfig
     {
       // Mutate the cloned config with the next motion state
@@ -117,7 +96,7 @@ public class SwivelConfigRPCSync : PrefabConfigRPCSync<SwivelCustomConfig, ISwiv
     // Validate if client was expecting the correct next state
     if (clientMotionState != expected.MotionState)
     {
-      LoggerProvider.LogWarning($"[Swivel] MotionState desync. Got {clientMotionState} but expected {expected.MotionState} Re-sending config.");
+      LoggerProvider.LogDebug($"[Swivel] MotionState desync. Got {clientMotionState} but expected {expected.MotionState} Re-sending config.");
       netView.InvokeRPC(sender, nameof(RPC_Load));
       return;
     }

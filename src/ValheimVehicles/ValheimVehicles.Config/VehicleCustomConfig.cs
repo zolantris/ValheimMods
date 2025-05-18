@@ -99,15 +99,15 @@ public class VehicleCustomConfig : ISerializableConfig<VehicleCustomConfig, IVeh
   /// <summary>
   /// Write into ZPackage. Serialization is efficient but order dependent, so order matters when serializing and deserializing.
   /// </summary>
-  public void Serialize(ZPackage package)
+  public void Serialize(ZPackage pkg)
   {
-    package.Write(_version);
-    package.Write(_centerOfMassOffset);
-    package.Write(_customFloatationHeight);
-    package.Write(_hasCustomFloatationHeight);
-    package.Write(_treadDistance);
-    package.Write(_treadHeight);
-    package.Write(_treadScaleX);
+    pkg.Write(_version);
+    pkg.Write(_centerOfMassOffset);
+    pkg.Write(_customFloatationHeight);
+    pkg.Write(_hasCustomFloatationHeight);
+    pkg.Write(_treadDistance);
+    pkg.Write(_treadHeight);
+    pkg.Write(_treadScaleX);
   }
 
   public void Save(ZDO zdo, VehicleCustomConfig customConfig)
@@ -153,24 +153,25 @@ public class VehicleCustomConfig : ISerializableConfig<VehicleCustomConfig, IVeh
 
   public void ApplyFrom(IVehicleConfig config)
   {
-    throw new System.NotImplementedException();
+    // throw new System.NotImplementedException();
   }
   public void ApplyTo(IVehicleConfig config)
   {
-    throw new System.NotImplementedException();
+    // throw new System.NotImplementedException();
   }
 
-  public VehicleCustomConfig Deserialize(ZPackage package)
+  public VehicleCustomConfig Deserialize(ZPackage pkg)
   {
+    pkg.SetPos(0); // Always reset read pointer otherwise we start at end and fail.
     return new VehicleCustomConfig
     {
-      Version = package.ReadString(),
-      CenterOfMassOffset = package.ReadSingle(),
-      CustomFloatationHeight = package.ReadSingle(),
-      HasCustomFloatationHeight = package.ReadBool(),
-      TreadDistance = package.ReadSingle(),
-      TreadHeight = package.ReadSingle(),
-      TreadScaleX = package.ReadSingle()
+      Version = pkg.ReadString(),
+      CenterOfMassOffset = pkg.ReadSingle(),
+      CustomFloatationHeight = pkg.ReadSingle(),
+      HasCustomFloatationHeight = pkg.ReadBool(),
+      TreadDistance = pkg.ReadSingle(),
+      TreadHeight = pkg.ReadSingle(),
+      TreadScaleX = pkg.ReadSingle()
     };
   }
 }

@@ -1,7 +1,9 @@
+using System;
 using System.Collections.Generic;
 using BepInEx.Configuration;
 using ValheimVehicles.SharedScripts;
 using ValheimVehicles.SharedScripts.Validation;
+using ValheimVehicles.ValheimVehicles.Plugins;
 namespace ValheimVehicles.Config;
 
 public interface IBepInExBaseConfig
@@ -27,6 +29,7 @@ public class BepInExBaseConfig<TSelf> : IBepInExBaseConfig
   {
     Instance.OnBindConfig(config);
     ClassValidator.ValidateRequiredNonNullFields<TSelf>();
+    ServerSyncConfigSyncUtil.RegisterAllConfigEntries(ValheimVehiclesPlugin.ModConfigSync, typeof(TSelf));
   }
 
   /// <summary>

@@ -109,7 +109,7 @@ public class VehicleDebugConfig : BepInExBaseConfig<VehicleDebugConfig>
       ConfigHelpers.CreateConfigDescription(
         "Will will allow all debug commands for non-admins. Turning this to false will only allow debug (cheat) commands if the user is an admin.",
         true, true));
-    AllowEditCommandsForNonAdmins = config.Bind(SectionName, "AllowDebugCommandsForNonAdmins",
+    AllowEditCommandsForNonAdmins = config.Bind(SectionName, "AllowEditCommandsForNonAdmins",
       true,
       ConfigHelpers.CreateConfigDescription(
         "This will allow non-admins the ability to use vehicle creative to edit their vehicle. Non-admins can still use vehicle sway and config commands to edit their ship. This config is provided to improve realism at the cost of convenience.",

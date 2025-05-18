@@ -316,6 +316,8 @@ public class ShipHullPrefab : IRegisterPrefab
       piece.m_clipGround = true;
       piece.m_allowRotatedOverlap = true;
       piece.m_noClipping = false;
+      piece.m_waterPiece = true;
+      piece.m_groundPiece = true;
 
       PieceManager.Instance.AddPiece(new CustomPiece(prefab, false,
         new PieceConfig

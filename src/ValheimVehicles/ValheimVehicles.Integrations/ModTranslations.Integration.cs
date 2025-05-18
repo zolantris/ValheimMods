@@ -268,6 +268,7 @@ public partial class ModTranslations
       UpdateAnchorTranslations();
       UpdateSwivelTranslations();
       UpdatePowerTranslations();
+      UpdateSwivelUITranslations();
     }
     catch (Exception e)
     {

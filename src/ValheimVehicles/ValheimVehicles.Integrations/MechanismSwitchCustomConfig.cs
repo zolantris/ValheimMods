@@ -68,6 +68,8 @@ namespace ValheimVehicles.Config
 
     public MechanismSwitchCustomConfig Deserialize(ZPackage pkg)
     {
+      pkg.SetPos(0); // Always reset read pointer otherwise we start at end and fail.
+
       return new MechanismSwitchCustomConfig
       {
         SelectedAction = (MechanismAction)pkg.ReadInt(),

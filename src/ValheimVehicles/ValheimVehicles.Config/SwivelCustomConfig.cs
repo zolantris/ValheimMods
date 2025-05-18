@@ -49,32 +49,32 @@ namespace ValheimVehicles.Config
       }
     }
 
-    public void Serialize(ZPackage package)
+    public void Serialize(ZPackage pkg)
     {
-      package.Write((int)Mode);
-      package.Write(InterpolationSpeed);
-      package.Write(MinTrackingRange);
-      package.Write(MaxTrackingRange);
-      package.Write((int)HingeAxes);
-      package.Write(MaxEuler);
-      package.Write(MovementOffset);
-      package.Write((int)MotionState);
+      pkg.Write((int)Mode);
+      pkg.Write(InterpolationSpeed);
+      pkg.Write(MinTrackingRange);
+      pkg.Write(MaxTrackingRange);
+      pkg.Write((int)HingeAxes);
+      pkg.Write(MaxEuler);
+      pkg.Write(MovementOffset);
+      pkg.Write((int)MotionState);
     }
 
-    public SwivelCustomConfig Deserialize(ZPackage package)
+    public SwivelCustomConfig Deserialize(ZPackage pkg)
     {
-      package.SetPos(0); // Always reset read pointer otherwise we start at end and fail.
+      pkg.SetPos(0); // Always reset read pointer otherwise we start at end and fail.
 
       return new SwivelCustomConfig
       {
-        Mode = (SwivelMode)package.ReadInt(),
-        InterpolationSpeed = package.ReadSingle(),
-        MinTrackingRange = package.ReadSingle(),
-        MaxTrackingRange = package.ReadSingle(),
-        HingeAxes = (HingeAxis)package.ReadInt(),
-        MaxEuler = package.ReadVector3(),
-        MovementOffset = package.ReadVector3(),
-        MotionState = (MotionState)package.ReadInt()
+        Mode = (SwivelMode)pkg.ReadInt(),
+        InterpolationSpeed = pkg.ReadSingle(),
+        MinTrackingRange = pkg.ReadSingle(),
+        MaxTrackingRange = pkg.ReadSingle(),
+        HingeAxes = (HingeAxis)pkg.ReadInt(),
+        MaxEuler = pkg.ReadVector3(),
+        MovementOffset = pkg.ReadVector3(),
+        MotionState = (MotionState)pkg.ReadInt()
       };
     }
 

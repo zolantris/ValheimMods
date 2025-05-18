@@ -35,7 +35,7 @@ public class RamConfig : BepInExBaseConfig<RamConfig>
   public static ConfigEntry<bool> HasMaximumDamageCap { get; set; } = null!;
   public static ConfigEntry<float> PercentageDamageToSelf { get; set; } = null!;
   public static ConfigEntry<float> VehiclePercentageDamageToCollisionArea { get; set; } = null!;
-  
+
   public static ConfigEntry<bool> AllowContinuousDamage { get; set; } = null!;
   public static ConfigEntry<bool> CanHitCharacters { get; set; } = null!;
   public static ConfigEntry<bool> CanHitFriendly { get; set; } = null!;
@@ -53,7 +53,9 @@ public class RamConfig : BepInExBaseConfig<RamConfig>
 
   public static ConfigEntry<bool> CanHitWhileHauling { get; set; } =
     null!;
-  
+
+  public static ConfigEntry<bool> CanHitSwivels { get; set; }
+
   public static ConfigEntry<float> RamHitInterval { get; set; } = null!;
 
   public static ConfigEntry<bool> CanRepairRams { get; set; } = null!;
@@ -95,6 +97,11 @@ public class RamConfig : BepInExBaseConfig<RamConfig>
     RamDamageEnabled = config.Bind(RamSectionName, "ramDamageEnabled", true,
       ConfigHelpers.CreateConfigDescription(
         "Will keep the prefab available for aethetics only, will not do any damage nor will it initialize anything related to damage. Alternatives are using the damage tweaks.",
+        true, true));
+
+    CanHitSwivels = config.Bind(VehicleRamSectionName, "CanHitSwivels", false,
+      ConfigHelpers.CreateConfigDescription(
+        "Allows the vehicle to smash into swivels and destroy their contents.",
         true, true));
 
     CanHitWhileHauling = config.Bind(VehicleRamSectionName, "CanHitWhileHauling", true,
@@ -339,7 +346,7 @@ public class RamConfig : BepInExBaseConfig<RamConfig>
       VehicleRamAoe.OnBaseSettingsChange;
     VehicleMinimumVelocityToTriggerHit.SettingChanged +=
       VehicleRamAoe.OnBaseSettingsChange;
-   
+
     MaxVelocityMultiplier.SettingChanged += VehicleRamAoe.OnBaseSettingsChange;
     VehicleMaxVelocityMultiplier.SettingChanged += VehicleRamAoe.OnBaseSettingsChange;
     // ShipMassMaxMultiplier.SettingChanged += VehicleRamAoe.OnBaseSettingsChange;
