@@ -24,7 +24,9 @@ public class PhysicsConfig : BepInExBaseConfig<PhysicsConfig>
   private static string VelocityModeSectionKey = $"{SectionKey}: Velocity Mode";
 
   // Sync Logic (for performance and multiplayer)
+#if DEBUG
   public static ConfigEntry<bool> SwivelsCanSyncOnAllClients = null!;
+#endif
 
 
   public static ConfigEntry<int> VehicleLandMaxTreadWidth = null!;
@@ -195,6 +197,7 @@ public class PhysicsConfig : BepInExBaseConfig<PhysicsConfig>
       ConfigHelpers.CreateConfigDescription(
         $"Max width the treads can expand to. Lower values will let you make motor bikes. This affects all vehicles. {vehicleCustomSettingTodo}", true, false, new AcceptableValueRange<int>(1, 20)));
 
+#if DEBUG
     SwivelsCanSyncOnAllClients = config.BindUnique(SectionKey,
       "SwivelsCanSyncOnAllClients",
       true,
@@ -202,6 +205,7 @@ public class PhysicsConfig : BepInExBaseConfig<PhysicsConfig>
         $"Allow swivels to sync on all clients. Instead of using ChildSync properties which can be a bit laggy.", true, false));
     SwivelComponentIntegration.CanAllClientsSync = SwivelsCanSyncOnAllClients.Value;
     SwivelsCanSyncOnAllClients.SettingChanged += (sender, args) => SwivelComponentIntegration.CanAllClientsSync = SwivelsCanSyncOnAllClients.Value;
+#endif
 
     VehicleLandMaxTreadLength = config.BindUnique(SectionKey,
       "LandVehicle Max Tread Length",

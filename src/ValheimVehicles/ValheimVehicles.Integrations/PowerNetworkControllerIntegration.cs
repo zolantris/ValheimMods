@@ -12,7 +12,14 @@ public class PowerNetworkControllerIntegration : PowerNetworkController
   private readonly List<string> _networksToRemove = new();
   private readonly List<IPowerNode> _nodesToRemove = new();
 
-  protected override void FixedUpdate()
+  // DO nothing for fixed update. Hosts cannot run FixedUpdate on server I think...
+  protected override void FixedUpdate() {}
+  protected void Update()
+  {
+    SimulateOnClientAndServer();
+  }
+
+  public void SimulateOnClientAndServer()
   {
     if (!isActiveAndEnabled || !ZNet.instance) return;
     if (Time.time < _nextUpdate) return;

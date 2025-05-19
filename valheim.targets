@@ -392,8 +392,8 @@
         <Error Condition="!Exists('@(CheckValheimServerPath)')"/>
 
         <MakeDir Directories="$(ValheimServerPath)\$(PluginDeployTarget)"/>
-        <Exec Command="copy &quot;$(SolutionDir)plugins\Newtonsoft.Json.dll&quot; &quot;$(PluginDeployPath)\Newtonsoft.Json.dll&quot;"/>
-        <Exec Command="copy &quot;$(SolutionDir)plugins\ServerSync.dll&quot; &quot;$(PluginDeployPath)\ServerSync.dll&quot;"/>
+        <Exec Command="copy &quot;$(SolutionDir)plugins\Newtonsoft.Json.dll&quot; &quot;$(ValheimServerPath)\$(PluginDeployTarget)\Newtonsoft.Json.dll&quot;"/>
+        <Exec Command="copy &quot;$(SolutionDir)plugins\ServerSync.dll&quot; &quot;$(ValheimServerPath)\$(PluginDeployTarget)\ServerSync.dll&quot;"/>
 
         <Exec Command="copy &quot;$(OutDir)$(AssemblyName).dll&quot; &quot;$(ValheimServerPath)\$(PluginDeployTarget)\$(AssemblyName).dll&quot;"/>
         <Exec Command="copy &quot;$(OutDir)$(AssemblyName).pdb&quot; &quot;$(ValheimServerPath)\$(PluginDeployTarget)\$(AssemblyName).pdb&quot;"/>

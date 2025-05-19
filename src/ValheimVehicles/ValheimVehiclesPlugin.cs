@@ -145,26 +145,19 @@ public class ValheimVehiclesPlugin : MonoBehaviour
 
   internal static ConfigSync ModConfigSync = null!;
 
-
   /// <summary>
   /// This should only be called from the ValheimRAFT mod.
   /// </summary>
   /// <param name="config"></param>
   [UsedImplicitly]
-  public static void CreateConfigFromValheimRAFTPluginConfig(ConfigFile config)
+  public static void CreateConfigFromValheimRAFTPluginConfig(ConfigSync configSync, ConfigFile config)
   {
     if (HasCreatedConfig)
     {
       return;
     }
 
-    ModConfigSync = new ConfigSync(ModName)
-    {
-      DisplayName = ModName,
-      CurrentVersion = ValheimRAFT_API.GetPluginVersion(),
-      ModRequired = true,
-      IsLocked = true
-    };
+    ModConfigSync = configSync;
 
     PatchConfig.BindConfig(config);
     RamConfig.BindConfig(config);

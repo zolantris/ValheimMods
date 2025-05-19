@@ -15,6 +15,7 @@ public static class ValheimRAFT_API
   public const string ModNameBeta = "ValheimRAFTBETA";
 
   private static string? _cachedPluginVersion = null;
+  private static string? _cachedPluginName = null;
 
   ///
   /// <summary>
@@ -34,10 +35,20 @@ public static class ValheimRAFT_API
     _hostContext = host;
   }
 
+  public static string GetPluginName()
+  {
+    if (_cachedPluginName != null) return _cachedPluginName;
+    var method = _hostContext?.GetType().GetMethod("GetPluginName", BindingFlags.Static | BindingFlags.Public
+    );
+    var result = method?.Invoke(_hostContext, null) as string;
+    _cachedPluginName = result ?? null;
+    return result ?? ValheimVehiclesPlugin.ModName;
+  }
+
   public static string GetPluginVersion()
   {
     if (_cachedPluginVersion != null) return _cachedPluginVersion;
-    var method = _hostContext?.GetType().GetMethod("GetVersion", BindingFlags.Static | BindingFlags.Public
+    var method = _hostContext?.GetType().GetMethod("GetPluginVersion", BindingFlags.Static | BindingFlags.Public
     );
     var result = method?.Invoke(_hostContext, null) as string;
     _cachedPluginVersion = result ?? null;
