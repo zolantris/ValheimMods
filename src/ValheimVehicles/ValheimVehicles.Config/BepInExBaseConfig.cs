@@ -21,6 +21,7 @@ public class BepInExBaseConfig<TSelf> : IBepInExBaseConfig
 {
   private static readonly TSelf Instance = new();
 
+  public static bool ShouldSkipSyncOnBind = false;
   /// <summary>
   /// We must always validate the Config class for requires null values. 
   /// </summary>
@@ -29,7 +30,12 @@ public class BepInExBaseConfig<TSelf> : IBepInExBaseConfig
   {
     Instance.OnBindConfig(config);
     ClassValidator.ValidateRequiredNonNullFields<TSelf>();
-    ServerSyncConfigSyncUtil.RegisterAllConfigEntries(ValheimVehiclesPlugin.ModConfigSync, typeof(TSelf));
+
+    if (!ShouldSkipSyncOnBind)
+    {
+      ServerSyncConfigSyncUtil.RegisterAllConfigEntries(ValheimVehiclesPlugin.ModConfigSync, typeof(TSelf));
+    }
+    ShouldSkipSyncOnBind = false;
   }
 
   /// <summary>

@@ -20,9 +20,11 @@ public class InputsConfig : BepInExBaseConfig<InputsConfig>
 
   public override void OnBindConfig(ConfigFile config)
   {
+    // we do not want to sync player preferences and force players to use this for this config.
+    ShouldSkipSyncOnBind = true;
 
     PanelsCanUseKeyboardOrControllerInputs = config.BindUnique("Input", "PanelsCanUseKeyboardOrControllerInputs", true, ConfigHelpers.CreateConfigDescription("This will allow the keyboard/controller to interact with the UI when selected. You can toggle with direction keys, press tab or up down to move to the next section and enter for button submit. Turning this off disable this feature requiring mouse to directly select.", false, false));
-
+    PanelsCanUseKeyboardOrControllerInputs.SettingChanged += (_, _) => OnPanelNavigatorDisable();
     SwivelUIHelpers.CanNavigatorInteractWithPanel = PanelsCanUseKeyboardOrControllerInputs.Value;
 
 #if DEBUG

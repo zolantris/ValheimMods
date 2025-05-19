@@ -17,7 +17,6 @@ namespace ValheimVehicles.SharedScripts.UI
 
   public static partial class SwivelUIHelpers
   {
-
     public class CustomSlider : Slider
     {
       public float keyboardStep = 0.5f;
@@ -72,6 +71,7 @@ namespace ValheimVehicles.SharedScripts.UI
       slider.maxValue = max;
       slider.value = initial;
       slider.wholeNumbers = false;
+      slider.interactable = CanNavigatorInteractWithPanel;
 
       // === Background ===
       var backgroundGO = new GameObject("Background", typeof(RectTransform), typeof(Image));

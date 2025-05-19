@@ -1,6 +1,7 @@
 // ReSharper disable ArrangeNamespaceBody
 // ReSharper disable NamespaceStyle
 
+using System.Collections.Generic;
 using System.Linq;
 using Jotunn;
 using UnityEngine;
@@ -10,6 +11,9 @@ namespace ValheimVehicles.Integrations;
 
 public class PowerNetworkControllerIntegration : PowerNetworkController
 {
+  private readonly List<string> _networksToRemove = new();
+  private readonly List<IPowerNode> _nodesToRemove = new();
+
   protected override void FixedUpdate()
   {
     if (!isActiveAndEnabled || !ZNet.instance) return;
@@ -18,41 +22,67 @@ public class PowerNetworkControllerIntegration : PowerNetworkController
 
     foreach (var pair in _networks)
     {
-      if (pair.Value.Count == 0) continue;
-      var currentZone = ZoneSystem.GetZone(pair.Value[0].Position);
+      var nodes = pair.Value;
 
-      // skip all unloaded network simulations.
-      if (!ZoneSystem.instance.IsZoneLoaded(currentZone))
+      if (nodes == null || nodes.Count == 0)
       {
-        return;
+        _networksToRemove.Add(pair.Key);
+        continue;
       }
 
-      // client + server (combo) and Dedicated server.
+      _nodesToRemove.Clear();
+
+      // Prune invalid nodes
+      for (var i = 0; i < nodes.Count; i++)
+      {
+        var node = nodes[i];
+        if (node == null || !node.transform || !node.IsActive)
+          _nodesToRemove.Add(node);
+      }
+
+      if (_nodesToRemove.Count > 0)
+      {
+        foreach (var deadNode in _nodesToRemove)
+          nodes.Remove(deadNode);
+      }
+
+      if (nodes.Count == 0)
+      {
+        _networksToRemove.Add(pair.Key);
+        continue;
+      }
+
+      var currentZone = ZoneSystem.GetZone(nodes[0].Position);
+      if (!ZoneSystem.instance.IsZoneLoaded(currentZone))
+        continue;
+
       if (ZNet.instance.IsServer())
       {
-        Host_SimulateNetwork(pair.Value, pair.Key);
+        Host_SimulateNetwork(nodes, pair.Key);
       }
 
-      // Client only. Dedicated server should not run.
       if (!ZNet.instance.IsDedicated())
       {
-        Client_SimulateNetwork(pair.Value, pair.Key);
+        Client_SimulateNetwork(nodes, pair.Key);
       }
 
       if (ZNet.instance.IsServer())
       {
-        SyncNetworkState(pair.Value);
+        SyncNetworkState(nodes);
       }
       else
       {
-        SyncNetworkStateClient(pair.Value);
+        SyncNetworkStateClient(nodes);
       }
     }
 
-    // To be run after all loops. Todo if this made to run per network it might be better.
-    if (ZNet.instance.IsClientInstance())
+    foreach (var key in _networksToRemove)
     {
-      Client_SimulateNetworkPowerAnimations();
+      _networks.Remove(key);
     }
+
+    _networksToRemove.Clear();
   }
+
+
 }

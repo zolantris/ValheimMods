@@ -12,6 +12,7 @@
     {
       string NetworkId { get; }
       Vector3 Position { get; }
+      Transform transform { get; }
       bool IsActive { get; }
       Transform ConnectorPoint { get; }
       void SetNetworkId(string id);
