@@ -82,9 +82,9 @@ namespace ValheimVehicles.Integrations
     public virtual void UpdateNetworkedData()
     {
       if (!this.IsNetViewValid(out var netView)) return;
-      if (netView.IsOwner() || !netView.HasOwner())
+      if (ZNet.instance.IsServer() || netView.IsOwner() || !netView.HasOwner())
       {
-        if (!netView.IsOwner() && ZNet.instance.IsServer())
+        if (!netView.IsOwner())
         {
           netView.ClaimOwnership();
         }
