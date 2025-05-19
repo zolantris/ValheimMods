@@ -2751,22 +2751,33 @@
             PropulsionConfig.AllowBaseGameSailRotation.Value)
         {
           var newRotation = m_mastObject.transform.localRotation;
-          mast.transform.localRotation = newRotation;
+          if (mast.m_rotationTransform != null)
+          {
+            mast.m_rotationTransform.localRotation = newRotation;
+          }
+          else
+          {
+            mast.transform.localRotation = newRotation;
+          }
         }
 
-        if (mast.m_allowSailShrinking)
+        // custom masts do not have sailcloth or sail objects yet.
+        if (mast.m_sailCloth)
         {
-          if (mast.m_sailObject.transform.localScale !=
-              m_sailObject.transform.localScale)
-            mast.m_sailCloth.enabled = false;
-          mast.m_sailObject.transform.localScale =
-            m_sailObject.transform.localScale;
-          mast.m_sailCloth.enabled = true;
-        }
-        else
-        {
-          mast.m_sailObject.transform.localScale = Vector3.one;
-          mast.m_sailCloth.enabled = !mast.m_disableCloth;
+          if (mast.m_allowSailShrinking)
+          {
+            if (mast.m_sailObject.transform.localScale !=
+                m_sailObject.transform.localScale)
+              mast.m_sailCloth.enabled = false;
+            mast.m_sailObject.transform.localScale =
+              m_sailObject.transform.localScale;
+            mast.m_sailCloth.enabled = true;
+          }
+          else
+          {
+            mast.m_sailObject.transform.localScale = Vector3.one;
+            mast.m_sailCloth.enabled = !mast.m_disableCloth;
+          }
         }
       }
 

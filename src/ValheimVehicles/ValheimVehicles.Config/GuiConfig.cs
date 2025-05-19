@@ -3,6 +3,7 @@ using UnityEngine;
 using ValheimVehicles.Helpers;
 using ValheimVehicles.SharedScripts.Validation;
 using ValheimVehicles.UI;
+using Zolantris.Shared;
 
 namespace ValheimVehicles.Config;
 
@@ -60,7 +61,7 @@ public class GuiConfig : BepInExBaseConfig<GuiConfig>
 
   private static void CreatePanelLocationConfig(ConfigFile config, string key, string description, out ConfigEntry<Vector2> configEntry)
   {
-    var entry = config.Bind(
+    var entry = config.BindUnique(
       SectionKey,
       key,
       new Vector2(0.5f, 0.5f),

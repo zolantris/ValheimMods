@@ -52,6 +52,7 @@ public static class PatchController
 
 #if DEBUG
     HarmonyHelper.TryPatchAll(_harmonyInstance, typeof(QuickStartWorld_Patch));
+    // HarmonyHelper.TryPatchAll(_harmonyInstance, typeof(ZNetViewInvokeRPCHook));
 #endif
 
     if (PatchConfig.ShipPausePatch.Value)

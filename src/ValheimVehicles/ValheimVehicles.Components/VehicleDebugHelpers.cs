@@ -47,7 +47,6 @@ public class VehicleDebugHelpers : MonoBehaviour
   public bool autoUpdateColliders = false;
   private List<DrawTargetColliders> targetColliders = [];
   public GameObject VehicleObj;
-  [FormerlySerializedAs("vehicleBaseControllerInstance")] [FormerlySerializedAs("vehicleBaseBaseControllerInstance")] [FormerlySerializedAs("vehicleMainControllerInstance")] [FormerlySerializedAs("vehicleControllersInstance")] [FormerlySerializedAs("VehicleShipInstance")]
   public VehicleManager vehicleManagerInstance;
   private Coroutine? _drawColliderCoroutine = null;
   private GameObject? worldCenterOfMassCube;

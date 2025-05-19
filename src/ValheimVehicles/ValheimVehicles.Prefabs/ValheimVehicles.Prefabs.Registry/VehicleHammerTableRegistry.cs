@@ -14,7 +14,7 @@ public class VehicleHammerTableRegistry : GuardedRegistry<VehicleHammerTableRegi
 
   // optional todo: allow re-ordering categories
   // vehicles is kept last - it will not be used unless when placing new vehicles.
-  private static readonly string[] categories = [VehicleHammerTableCategories.Structure, VehicleHammerTableCategories.Tools, VehicleHammerTableCategories.Propulsion, VehicleHammerTableCategories.Vehicles];
+  private static readonly string[] categories = [VehicleHammerTableCategories.Tools, VehicleHammerTableCategories.Structure, VehicleHammerTableCategories.Power, VehicleHammerTableCategories.Propulsion, VehicleHammerTableCategories.Vehicles];
 
   public const string VehicleHammerTableName = "ValheimVehicles_HammerTable";
 

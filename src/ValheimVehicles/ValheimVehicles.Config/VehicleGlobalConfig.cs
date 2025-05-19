@@ -2,6 +2,7 @@ using BepInEx.Configuration;
 using ValheimVehicles.Components;
 using ValheimVehicles.Helpers;
 using ValheimVehicles.SharedScripts.Validation;
+using Zolantris.Shared;
 namespace ValheimVehicles.Config;
 
 public class VehicleGlobalConfig : BepInExBaseConfig<VehicleGlobalConfig>
@@ -28,14 +29,14 @@ public class VehicleGlobalConfig : BepInExBaseConfig<VehicleGlobalConfig>
 
   private static void CreateVehicleUpdaterConfig(ConfigFile config)
   {
-    ForceShipOwnerUpdatePerFrame = config.Bind("Rendering",
+    ForceShipOwnerUpdatePerFrame = config.BindUnique("Rendering",
       "Force Ship Owner Piece Update Per Frame", false,
       ConfigHelpers.CreateConfigDescription(
         "Forces an update during the Update sync of unity meaning it fires every frame for the Ship owner who also owns Physics. This will possibly make updates better for non-boat owners. Noting that the boat owner is determined by the first person on the boat, otherwise the game owns it.",
         true, true));
 
 
-    ServerRaftUpdateZoneInterval = config.Bind(VehicleGlobalUpdateKey,
+    ServerRaftUpdateZoneInterval = config.BindUnique(VehicleGlobalUpdateKey,
       "ServerRaftUpdateZoneInterval",
       5f,
       ConfigHelpers.CreateConfigDescription(
@@ -45,11 +46,11 @@ public class VehicleGlobalConfig : BepInExBaseConfig<VehicleGlobalConfig>
 
   private static void CreateSoundConfig(ConfigFile config)
   {
-    EnableShipSailSounds = config.Bind(VehicleSoundKey, "Ship Sailing Sounds", true,
+    EnableShipSailSounds = config.BindUnique(VehicleSoundKey, "Ship Sailing Sounds", true,
       "Toggles the ship sail sounds.");
-    EnableShipWakeSounds = config.Bind(VehicleSoundKey, "Ship Wake Sounds", true,
+    EnableShipWakeSounds = config.BindUnique(VehicleSoundKey, "Ship Wake Sounds", true,
       "Toggles Ship Wake sounds. Can be pretty loud");
-    EnableShipInWaterSounds = config.Bind(VehicleSoundKey, "Ship In-Water Sounds",
+    EnableShipInWaterSounds = config.BindUnique(VehicleSoundKey, "Ship In-Water Sounds",
       true,
       "Toggles ShipInWater Sounds, the sound of the hull hitting water");
 

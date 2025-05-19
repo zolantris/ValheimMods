@@ -21,6 +21,7 @@
   using ValheimVehicles.Propulsion.Rudder;
   using ValheimVehicles.SharedScripts;
   using ValheimVehicles.SharedScripts.Enums;
+  using ValheimVehicles.SharedScripts.Helpers;
   using ValheimVehicles.Structs;
   using ZdoWatcher;
   using static ValheimVehicles.Propulsion.Sail.SailAreaForce;
@@ -2515,7 +2516,7 @@
       var isVehicleUsingCustomFloatation = Manager.VehicleConfigSync.GetWaterFloatationHeightMode() == VehicleFloatationMode.Custom;
       var nextState = !isVehicleUsingCustomFloatation;
 
-      Manager.VehicleConfigSync.SendSyncFloatationMode(nextState, prefab.transform.localPosition.y);
+      Manager.VehicleConfigSync.Request_SyncFloatationMode(nextState, prefab.transform.localPosition.y);
 
       var stateText = nextState ? ModTranslations.EnabledText : ModTranslations.DisabledText;
 
@@ -2720,7 +2721,7 @@
 
       var totalHeight = 0f;
 
-      Manager.VehicleConfigSync.SyncPrefabConfig();
+      Manager.VehicleConfigSync.Load();
       var hullFloatationMode = Manager.VehicleConfigSync.GetWaterFloatationHeightMode();
 
       var isAverageOfPieces = hullFloatationMode ==
@@ -2761,7 +2762,7 @@
         case VehicleFloatationMode.Fixed:
           return HullFloatationColliderAlignmentOffset;
         case VehicleFloatationMode.Custom:
-          return Manager.VehicleConfigSync.CustomConfig.CustomFloatationHeight;
+          return Manager.VehicleConfigSync.Config.CustomFloatationHeight;
         case VehicleFloatationMode.Center:
         default:
           return BaseControllerHullBounds.center.y;

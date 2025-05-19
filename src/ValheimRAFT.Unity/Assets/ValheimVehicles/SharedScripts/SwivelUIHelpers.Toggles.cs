@@ -1,150 +1,152 @@
 ﻿#region
 
-using System;
-using TMPro;
-using UnityEngine;
-using UnityEngine.Events;
-using UnityEngine.UI;
+  using System;
+  using TMPro;
+  using UnityEngine;
+  using UnityEngine.Events;
+  using UnityEngine.UI;
 
 #endregion
 
 // ReSharper disable ArrangeNamespaceBody
 // ReSharper disable NamespaceStyle
-namespace ValheimVehicles.SharedScripts.UI
-{
+  namespace ValheimVehicles.SharedScripts.UI
+  {
     public static partial class SwivelUIHelpers
     {
-        public static GameObject AddMultiToggleRow(Transform parent, SwivelUISharedStyles viewStyles, string label, string[] toggleLabels, bool[] initialStates, Action<bool[]> onChanged)
+      public static GameObject AddMultiToggleRow(Transform parent, SwivelUISharedStyles viewStyles, string label, string[] toggleLabels, bool[] initialStates, Action<bool[]> onChanged)
+      {
+        var row = CreateRow(parent, viewStyles, label, out _, false);
+
+        var toggleStates = new bool[toggleLabels.Length];
+        var toggles = new Toggle[toggleLabels.Length];
+
+        for (var i = 0; i < toggleLabels.Length; i++)
         {
-            var row = CreateRow(parent, viewStyles, label, out _, false);
+          var toggleWrapper = new GameObject($"{toggleLabels[i]}Wrapper", typeof(RectTransform), typeof(VerticalLayoutGroup));
+          toggleWrapper.transform.SetParent(row.transform, false);
 
-            var toggleStates = new bool[toggleLabels.Length];
-            var toggles = new Toggle[toggleLabels.Length];
+          var wrapperLayout = toggleWrapper.GetComponent<VerticalLayoutGroup>();
+          wrapperLayout.childAlignment = TextAnchor.MiddleCenter;
+          wrapperLayout.childControlHeight = true;
+          wrapperLayout.childControlWidth = true;
+          wrapperLayout.childForceExpandHeight = false;
+          wrapperLayout.childForceExpandWidth = false;
+          wrapperLayout.spacing = 2f;
 
-            for (int i = 0; i < toggleLabels.Length; i++)
-            {
-                var toggleWrapper = new GameObject($"{toggleLabels[i]}Wrapper", typeof(RectTransform), typeof(VerticalLayoutGroup));
-                toggleWrapper.transform.SetParent(row.transform, false);
+          var container = new GameObject($"{toggleLabels[i]}ToggleContainer", typeof(RectTransform), typeof(LayoutElement));
+          container.transform.SetParent(toggleWrapper.transform, false);
+          var layoutElement = container.GetComponent<LayoutElement>();
+          layoutElement.minWidth = 48;
+          layoutElement.minHeight = 48;
+          layoutElement.preferredWidth = 48;
+          layoutElement.preferredHeight = 48;
+          layoutElement.flexibleWidth = 0;
 
-                var wrapperLayout = toggleWrapper.GetComponent<VerticalLayoutGroup>();
-                wrapperLayout.childAlignment = TextAnchor.MiddleCenter;
-                wrapperLayout.childControlHeight = true;
-                wrapperLayout.childControlWidth = true;
-                wrapperLayout.childForceExpandHeight = false;
-                wrapperLayout.childForceExpandWidth = false;
-                wrapperLayout.spacing = 2f;
+          var toggleGO = new GameObject($"{toggleLabels[i]}Toggle", typeof(RectTransform), typeof(Image), typeof(Toggle));
+          toggleGO.transform.SetParent(container.transform, false);
+          var toggleImage = toggleGO.GetComponent<Image>();
+          toggleImage.color = initialStates[i] ? SwivelUIColors.greenBg : SwivelUIColors.grayBg;
+          toggleImage.raycastTarget = true;
 
-                var container = new GameObject($"{toggleLabels[i]}ToggleContainer", typeof(RectTransform), typeof(LayoutElement));
-                container.transform.SetParent(toggleWrapper.transform, false);
-                var layoutElement = container.GetComponent<LayoutElement>();
-                layoutElement.minWidth = 48;
-                layoutElement.minHeight = 48;
-                layoutElement.preferredWidth = 48;
-                layoutElement.preferredHeight = 48;
-                layoutElement.flexibleWidth = 0;
+          var toggle = toggleGO.GetComponent<Toggle>();
+          toggle.interactable = CanNavigatorInteractWithPanel;
+          toggle.isOn = initialStates[i];
+          toggle.targetGraphic = toggleImage;
 
-                var toggleGO = new GameObject($"{toggleLabels[i]}Toggle", typeof(RectTransform), typeof(Image), typeof(Toggle));
-                toggleGO.transform.SetParent(container.transform, false);
-                var toggleImage = toggleGO.GetComponent<Image>();
-                toggleImage.color = initialStates[i] ? SwivelUIColors.greenBg : SwivelUIColors.grayBg;
-                toggleImage.raycastTarget = true;
+          var checkmarkGO = new GameObject("Checkmark", typeof(RectTransform), typeof(Image));
+          checkmarkGO.transform.SetParent(toggleGO.transform, false);
+          var checkmarkImage = checkmarkGO.GetComponent<Image>();
+          checkmarkImage.color = new Color(0.2f, 0.8f, 0.2f, 1f);
+          checkmarkImage.raycastTarget = false;
 
-                var toggle = toggleGO.GetComponent<Toggle>();
-                toggle.isOn = initialStates[i];
-                toggle.targetGraphic = toggleImage;
+          var checkmarkRT = checkmarkGO.GetComponent<RectTransform>();
+          checkmarkRT.anchorMin = new Vector2(0.2f, 0.2f);
+          checkmarkRT.anchorMax = new Vector2(0.8f, 0.8f);
+          checkmarkRT.offsetMin = Vector2.zero;
+          checkmarkRT.offsetMax = Vector2.zero;
 
-                var checkmarkGO = new GameObject("Checkmark", typeof(RectTransform), typeof(Image));
-                checkmarkGO.transform.SetParent(toggleGO.transform, false);
-                var checkmarkImage = checkmarkGO.GetComponent<Image>();
-                checkmarkImage.color = new Color(0.2f, 0.8f, 0.2f, 1f);
-                checkmarkImage.raycastTarget = false;
+          toggle.graphic = checkmarkImage;
+          var index = i;
+          toggle.onValueChanged.AddListener(value =>
+          {
+            toggleStates[index] = value;
+            toggleImage.color = value ? SwivelUIColors.greenBg : SwivelUIColors.grayBg;
+            onChanged(toggleStates);
+          });
 
-                var checkmarkRT = checkmarkGO.GetComponent<RectTransform>();
-                checkmarkRT.anchorMin = new Vector2(0.2f, 0.2f);
-                checkmarkRT.anchorMax = new Vector2(0.8f, 0.8f);
-                checkmarkRT.offsetMin = Vector2.zero;
-                checkmarkRT.offsetMax = Vector2.zero;
+          var toggleRT = toggleGO.GetComponent<RectTransform>();
+          toggleRT.anchorMin = Vector2.zero;
+          toggleRT.anchorMax = Vector2.one;
+          toggleRT.offsetMin = Vector2.zero;
+          toggleRT.offsetMax = Vector2.zero;
 
-                toggle.graphic = checkmarkImage;
-                int index = i;
-                toggle.onValueChanged.AddListener(value =>
-                {
-                    toggleStates[index] = value;
-                    toggleImage.color = value ? SwivelUIColors.greenBg : SwivelUIColors.grayBg;
-                    onChanged(toggleStates);
-                });
+          toggles[i] = toggle;
 
-                var toggleRT = toggleGO.GetComponent<RectTransform>();
-                toggleRT.anchorMin = Vector2.zero;
-                toggleRT.anchorMax = Vector2.one;
-                toggleRT.offsetMin = Vector2.zero;
-                toggleRT.offsetMax = Vector2.zero;
-
-                toggles[i] = toggle;
-
-                // Add label below toggle
-                var labelGO = new GameObject($"{toggleLabels[i]}Label", typeof(TextMeshProUGUI));
-                labelGO.transform.SetParent(toggleWrapper.transform, false);
-                var labelText = labelGO.GetComponent<TextMeshProUGUI>();
-                labelText.text = toggleLabels[i];
-                labelText.fontSize = viewStyles.FontSizeRowLabel;
-                labelText.color = viewStyles.LabelColor;
-                labelText.alignment = TextAlignmentOptions.Center;
-                labelText.enableAutoSizing = false;
-            }
-
-            return row;
+          // Add label below toggle
+          var labelGO = new GameObject($"{toggleLabels[i]}Label", typeof(TextMeshProUGUI));
+          labelGO.transform.SetParent(toggleWrapper.transform, false);
+          var labelText = labelGO.GetComponent<TextMeshProUGUI>();
+          labelText.text = toggleLabels[i];
+          labelText.fontSize = viewStyles.FontSizeRowLabel;
+          labelText.color = viewStyles.LabelColor;
+          labelText.alignment = TextAlignmentOptions.Center;
+          labelText.enableAutoSizing = false;
         }
-        public static GameObject AddToggleRow(Transform parent, SwivelUISharedStyles viewStyles, string label, bool initial, UnityAction<bool> onChanged)
-        {
-            var row = CreateRow(parent, viewStyles, label, out _, false);
 
-            // === Toggle Container (fix width/height to enforce square) ===
-            var toggleContainer = new GameObject("ToggleContainer", typeof(RectTransform), typeof(LayoutElement));
-            toggleContainer.transform.SetParent(row.transform, false);
+        return row;
+      }
+      public static GameObject AddToggleRow(Transform parent, SwivelUISharedStyles viewStyles, string label, bool initial, UnityAction<bool> onChanged)
+      {
+        var row = CreateRow(parent, viewStyles, label, out _, false);
 
-            var toggleContainerRT = toggleContainer.GetComponent<RectTransform>();
-            toggleContainerRT.sizeDelta = new Vector2(48, 48);
+        // === Toggle Container (fix width/height to enforce square) ===
+        var toggleContainer = new GameObject("ToggleContainer", typeof(RectTransform), typeof(LayoutElement));
+        toggleContainer.transform.SetParent(row.transform, false);
 
-            var toggleContainerLE = toggleContainer.GetComponent<LayoutElement>();
-            toggleContainerLE.minWidth = 48;
-            toggleContainerLE.minHeight = 48;
-            toggleContainerLE.preferredWidth = 48;
-            toggleContainerLE.preferredHeight = 48;
-            toggleContainerLE.flexibleWidth = 0f;
+        var toggleContainerRT = toggleContainer.GetComponent<RectTransform>();
+        toggleContainerRT.sizeDelta = new Vector2(48, 48);
 
-            // === Toggle ===
-            var toggleGO = new GameObject("Toggle", typeof(RectTransform), typeof(Image), typeof(Toggle));
-            toggleGO.transform.SetParent(toggleContainer.transform, false);
-            var toggleRT = toggleGO.GetComponent<RectTransform>();
-            toggleRT.anchorMin = Vector2.zero;
-            toggleRT.anchorMax = Vector2.one;
-            toggleRT.offsetMin = Vector2.zero;
-            toggleRT.offsetMax = Vector2.zero;
+        var toggleContainerLE = toggleContainer.GetComponent<LayoutElement>();
+        toggleContainerLE.minWidth = 48;
+        toggleContainerLE.minHeight = 48;
+        toggleContainerLE.preferredWidth = 48;
+        toggleContainerLE.preferredHeight = 48;
+        toggleContainerLE.flexibleWidth = 0f;
 
-            var toggle = toggleGO.GetComponent<Toggle>();
-            var toggleImage = toggleGO.GetComponent<Image>();
-            toggleImage.color = SwivelUIColors.grayBg; // outer box
-            toggle.targetGraphic = toggleImage;
-            toggle.isOn = initial;
+        // === Toggle ===
+        var toggleGO = new GameObject("Toggle", typeof(RectTransform), typeof(Image), typeof(Toggle));
+        toggleGO.transform.SetParent(toggleContainer.transform, false);
+        var toggleRT = toggleGO.GetComponent<RectTransform>();
+        toggleRT.anchorMin = Vector2.zero;
+        toggleRT.anchorMax = Vector2.one;
+        toggleRT.offsetMin = Vector2.zero;
+        toggleRT.offsetMax = Vector2.zero;
 
-            // === Checkmark ===
-            var checkmarkGO = new GameObject("Checkmark", typeof(RectTransform), typeof(Image));
-            checkmarkGO.transform.SetParent(toggleGO.transform, false);
-            var checkmarkImage = checkmarkGO.GetComponent<Image>();
-            checkmarkImage.color = SwivelUIColors.greenBg; // filled green check
-            checkmarkImage.raycastTarget = false;
+        var toggle = toggleGO.GetComponent<Toggle>();
+        toggle.interactable = CanNavigatorInteractWithPanel;
+        var toggleImage = toggleGO.GetComponent<Image>();
+        toggleImage.color = SwivelUIColors.grayBg; // outer box
+        toggle.targetGraphic = toggleImage;
+        toggle.isOn = initial;
 
-            var checkmarkRT = checkmarkGO.GetComponent<RectTransform>();
-            checkmarkRT.anchorMin = new Vector2(0.2f, 0.2f);
-            checkmarkRT.anchorMax = new Vector2(0.8f, 0.8f);
-            checkmarkRT.offsetMin = Vector2.zero;
-            checkmarkRT.offsetMax = Vector2.zero;
+        // === Checkmark ===
+        var checkmarkGO = new GameObject("Checkmark", typeof(RectTransform), typeof(Image));
+        checkmarkGO.transform.SetParent(toggleGO.transform, false);
+        var checkmarkImage = checkmarkGO.GetComponent<Image>();
+        checkmarkImage.color = SwivelUIColors.greenBg; // filled green check
+        checkmarkImage.raycastTarget = false;
 
-            toggle.graphic = checkmarkImage;
-            toggle.onValueChanged.AddListener(onChanged);
+        var checkmarkRT = checkmarkGO.GetComponent<RectTransform>();
+        checkmarkRT.anchorMin = new Vector2(0.2f, 0.2f);
+        checkmarkRT.anchorMax = new Vector2(0.8f, 0.8f);
+        checkmarkRT.offsetMin = Vector2.zero;
+        checkmarkRT.offsetMax = Vector2.zero;
 
-            return row;
-        }
+        toggle.graphic = checkmarkImage;
+        toggle.onValueChanged.AddListener(onChanged);
+
+        return row;
+      }
     }
-}
+  }

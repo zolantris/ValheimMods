@@ -257,7 +257,8 @@ the available configuration entries, their descriptions, and default values.
 
 ## Usage
 
-To bind the configuration, call `DynamicLocationsConfig.BindConfig(configFile)`
+To bind the configuration, call
+`DynamicLocationsconfig.BindUniqueConfig(configFile)`
 where `configFile` is an instance of `ConfigFile`.
 
 ## Conclusion

@@ -1,20 +1,20 @@
 namespace ValheimVehicles.Interfaces;
 
-public interface IPrefabCustomConfigRPCSync<T> : INetView
+public interface IPrefabCustomConfigRPCSync<T> : IPrefabConfig<T>, IPrefabConfigActions, INetView, ISuppressableConfigReceiver
 {
-  T CustomConfig { get; set; }
   // SyncPrefabConfig is called after the SetPrefabConfig RPC is called.
-  public void RPC_SyncPrefabConfig(long sender);
-  public void RPC_SetPrefabConfig(long sender, ZPackage pkg);
+  internal void RPC_Load(long sender);
 
-  // sync methods (that RPC calls)
-  public void SyncPrefabConfig(bool forceUpdate = false);
-  public void SendPrefabConfig();
 
+  void CommitConfigChange(T newConfig);
+  void RequestCommitConfigChange(T newConfig);
+
+  // request methods to be invoked by the parent.
+  internal void Request_Load();
   // booleans
-  public bool hasRegisteredRPCListeners { get; set; }
+  internal bool hasRegisteredRPCListeners { get; set; }
 
   // registration methods
-  public void UnregisterRPCListeners();
-  public void RegisterRPCListeners();
+  internal void UnregisterRPCListeners();
+  internal void RegisterRPCListeners();
 }

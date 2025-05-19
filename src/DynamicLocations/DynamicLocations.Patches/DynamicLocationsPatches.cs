@@ -183,6 +183,14 @@ public class DynamicLocationsPatches
   //   return codes.AsEnumerable();
   // }
 
+#if DEBUG
+  public static float flyFastSpeed = 50;
+  public static void SetupPlayerDebugValues()
+  {
+    Game.instance.m_fadeTimeDeath = 0;
+    Player.m_localPlayer.m_flyFastSpeed = flyFastSpeed;
+  }
+#endif
 
   /// <summary>
   /// Noting that I could override Game.FindSpawnPoint and PlayerProfile.HaveLogoutPoint to return the updated data. Updating this would then force the game to load in the correct location.
@@ -196,28 +204,34 @@ public class DynamicLocationsPatches
   [HarmonyPostfix]
   private static void OnSpawned(Game __instance, Player __result)
   {
-#if DEBUG
-    // speed up debugging.
-    Game.instance.m_fadeTimeDeath = 0;
-    Player.m_localPlayer.m_flyFastSpeed = 60;
-#endif
 
     if (ZNetView.m_forceDisableInit) return;
-    Character character = __result;
+    if (__result == null || Game.instance == null) return;
 
-    if (__instance.m_respawnAfterDeath &&
-        DynamicLocationsConfig.EnableDynamicSpawnPoint.Value &&
-        !character.InIntro())
-    {
-      PlayerSpawnController.Instance?.MovePlayerToSpawnPoint();
-    }
-    else
+#if DEBUG
+    SetupPlayerDebugValues();
+#endif
+
+    var character = __result;
+    var profile = Game.instance.GetPlayerProfile();
+
+    // Always prefer logout point if valid
+    if (profile?.HaveLogoutPoint() == true)
     {
       if (DynamicLocationsConfig.EnableDynamicLogoutPoint.Value &&
-          !character.InInterior() && !character.InIntro())
+          !character.InInterior() &&
+          !character.InIntro())
       {
         PlayerSpawnController.Instance?.MovePlayerToLogoutPoint();
       }
     }
+    // Only use spawn point if no logout point and death respawn
+    else if (__instance.m_respawnAfterDeath &&
+             DynamicLocationsConfig.EnableDynamicSpawnPoint.Value &&
+             !character.InIntro())
+    {
+      PlayerSpawnController.Instance?.MovePlayerToSpawnPoint();
+    }
   }
+
 }

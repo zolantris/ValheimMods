@@ -4,9 +4,10 @@
 #region
 
 using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using UnityEngine;
-using UnityEngine.Events;
+using ValheimVehicles.SharedScripts.PowerSystem;
 using ValheimVehicles.SharedScripts.UI;
 
 #endregion
@@ -38,14 +39,21 @@ namespace ValheimVehicles.SharedScripts
 
     public static Vector3 cachedWindDirection = Vector3.zero;
 
-    public static float RotationInterpolateSpeedMultiplier = 0.5f;
-    public static float MovementInterpolationSpeedMultiplier = 0.05f;
+    public static float RotationInterpolateSpeedMultiplier = 3f;
+    public static float MovementInterpolationSpeedMultiplier = 0.2f;
+
+    [Description("Swivel Energy Settings")]
+    public static float SwivelEnergyDrain = 0.01f;
+
+    public static bool IsPoweredSwivel = true;
 
     [Header("Swivel General Settings")]
-    [SerializeField] public SwivelMode mode = SwivelMode.Rotate;
-    [SerializeField] public float interpolationSpeed = 2f;
+    [SerializeField] private SwivelMode mode = SwivelMode.Rotate;
+
+
+    [SerializeField] private float interpolationSpeed = 10f;
     [SerializeField] public Transform animatedTransform;
-    [SerializeField] public MotionState currentMotionState = MotionState.Idle;
+    [SerializeField] public MotionState currentMotionState = MotionState.AtStart;
 
     [Header("Enemy Tracking Settings")]
     [SerializeField] public float minTrackingRange = 5f;
@@ -58,14 +66,10 @@ namespace ValheimVehicles.SharedScripts
     [SerializeField] public HingeDirection yHingeDirection = HingeDirection.Forward;
     [SerializeField] public HingeDirection zHingeDirection = HingeDirection.Forward;
     [SerializeField] public Vector3 maxRotationEuler = new(45f, 90f, 45f);
-    [SerializeField] public UnityEvent onRotationReachedTarget;
-    [SerializeField] public UnityEvent onRotationReturned;
 
     [Header("Movement Mode Settings")]
     [SerializeField] public Vector3 movementOffset = new(0f, 0f, 0f);
     [SerializeField] public bool useWorldPosition;
-    [SerializeField] public UnityEvent onMovementReachedTarget;
-    [SerializeField] public UnityEvent onMovementReturned;
 
     [Description("Piece container containing all children to be rotated or moved.")]
     public Transform piecesContainer;
@@ -76,15 +80,19 @@ namespace ValheimVehicles.SharedScripts
     public Transform directionDebuggerArrow;
 
     public bool CanUpdate = true;
+
+    public PowerConsumerComponent swivelPowerConsumer;
     private Rigidbody animatedRigidbody;
 
-    private bool hasReachedTarget;
-    private bool hasReturned;
-    private bool hasRotatedReturn;
-    private bool hasRotatedTarget;
+    [Description("This speed is computed with the base interpolation value to get a final interpolation.")]
+    public float computedInterpolationSpeed = 10f;
 
     private Vector3 hingeEndEuler;
     private float hingeLerpProgress;
+    public Action? onMovementReachedTarget;
+    public Action? onMovementReturned;
+    public Action? onRotationReachedTarget;
+    public Action? onRotationReturned;
     private Transform snappoint;
 
     private Vector3 startLocalPosition;
@@ -96,7 +104,11 @@ namespace ValheimVehicles.SharedScripts
     public HingeAxis HingeAxes => hingeAxes;
     public Vector3 MaxEuler => maxRotationEuler;
 
-    public float InterpolationSpeed => interpolationSpeed;
+    public static List<SwivelComponent> Instances = new();
+    private Vector3 frozenLocalPos;
+    private Quaternion frozenLocalRot;
+    private bool isFrozen;
+    public virtual int SwivelPersistentId { get; set; }
 
     public virtual void Awake()
     {
@@ -119,75 +131,155 @@ namespace ValheimVehicles.SharedScripts
 
       animatedRigidbody.isKinematic = true;
       animatedRigidbody.interpolation = RigidbodyInterpolation.Interpolate;
+
+      if (IsPoweredSwivel)
+      {
+        InitPowerConsumer();
+      }
+
+      if (!Instances.Contains(this))
+      {
+        Instances.Add(this);
+      }
     }
+
+    public virtual void Request_NextMotionState() {}
 
     public virtual void Start()
     {
       SyncSnappoint();
+      SetInterpolationSpeed(interpolationSpeed);
+    }
+
+    protected virtual void OnDestroy()
+    {
+      Instances.Remove(this);
+    }
+
+    protected virtual Vector3 GetCurrentTargetPosition()
+    {
+      return currentMotionState == MotionState.ToTarget
+        ? startLocalPosition + movementOffset
+        : startLocalPosition;
+    }
+
+    protected virtual Quaternion GetCurrentTargetRotation()
+    {
+      return mode == SwivelMode.Rotate
+        ? CalculateRotationTarget()
+        : Quaternion.identity;
     }
 
     public virtual void FixedUpdate()
     {
-      if (!piecesContainer || !animatedRigidbody || !animatedTransform.parent) return;
-      if (!CanUpdate) return;
+      if (!CanUpdate || !animatedRigidbody || !animatedTransform.parent || !piecesContainer) return;
+#if UNITY_EDITOR
+      // for updating demand state on the fly due to toggling with serializer
+      if (Mode == SwivelMode.Rotate || Mode == SwivelMode.Move)
+      {
+        swivelPowerConsumer.SetDemandState(MotionState != MotionState.AtStart);
+      }
+#endif
 
       var didMove = false;
+
+      // Modes that bail early.
+      if (mode == SwivelMode.Rotate && currentMotionState == MotionState.AtTarget)
+      {
+        animatedTransform.localRotation = CalculateRotationTarget();
+        return;
+      }
+      if (mode == SwivelMode.Move && currentMotionState == MotionState.AtTarget)
+      {
+        animatedTransform.localPosition = startLocalPosition + movementOffset;
+        return;
+      }
+      if (mode == SwivelMode.Rotate && currentMotionState == MotionState.AtStart)
+      {
+        animatedTransform.localRotation = Quaternion.identity;
+        return;
+      }
+      if (mode == SwivelMode.Move && currentMotionState == MotionState.AtStart)
+      {
+        animatedTransform.localPosition = startLocalPosition;
+        return;
+      }
+
+      // only called if the swivel is not a base state like Returned or AtTarget
+      if (IsPoweredSwivel && swivelPowerConsumer && !swivelPowerConsumer.IsActive)
+      {
+        if (!isFrozen)
+        {
+          frozenLocalPos = animatedTransform.localPosition;
+          frozenLocalRot = animatedTransform.localRotation;
+          isFrozen = true;
+        }
+
+        var parent = animatedTransform.parent;
+        if (parent != null)
+        {
+          var worldPos = parent.TransformPoint(frozenLocalPos);
+          var worldRot = parent.rotation * frozenLocalRot;
+
+          animatedRigidbody.Move(worldPos, worldRot);
+        }
+
+        return;
+      }
+      else
+      {
+        isFrozen = false;
+      }
 
       switch (mode)
       {
         case SwivelMode.Rotate:
           targetRotation = CalculateRotationTarget();
-          var current = animatedTransform.localRotation;
-          var interpolated = Quaternion.Slerp(current, targetRotation, interpolationSpeed * RotationInterpolateSpeedMultiplier * Time.fixedDeltaTime);
-          animatedRigidbody.Move(transform.position, transform.rotation * interpolated);
+          var currentRot = animatedTransform.localRotation;
+          var maxAnglePerStep = computedInterpolationSpeed * Time.fixedDeltaTime;
+          var interpolatedRot = Quaternion.RotateTowards(currentRot, targetRotation, maxAnglePerStep);
+          animatedRigidbody.Move(transform.position, transform.rotation * interpolatedRot);
           didMove = true;
 
-          var angleToTarget = Quaternion.Angle(current, targetRotation);
-
-          if (currentMotionState == MotionState.GoingToTarget && !hasRotatedTarget && angleToTarget < angleThreshold)
+          var angleToTarget = Quaternion.Angle(currentRot, targetRotation);
+          if (currentMotionState == MotionState.ToTarget && angleToTarget < angleThreshold)
           {
-            hasRotatedTarget = true;
-            onRotationReachedTarget?.Invoke();
+            SetMotionState(MotionState.AtTarget);
+            SetRotationReachedTarget();
           }
-          else if (currentMotionState == MotionState.Returning && !hasRotatedReturn && angleToTarget < angleThreshold)
+          else if (currentMotionState == MotionState.ToStart && angleToTarget < angleThreshold)
           {
-            hasRotatedReturn = true;
-            onRotationReturned?.Invoke();
+            SetMotionState(MotionState.AtStart);
+            SetRotationReturned();
           }
-
-          if (currentMotionState == MotionState.Returning && hasRotatedTarget) hasRotatedReturn = false;
-          if (currentMotionState == MotionState.GoingToTarget && hasRotatedReturn) hasRotatedTarget = false;
           break;
 
         case SwivelMode.Move:
-          targetMovementPosition = currentMotionState == MotionState.Returning
+          targetMovementPosition = currentMotionState == MotionState.ToStart
             ? startLocalPosition
             : startLocalPosition + movementOffset;
 
           var currentLocal = animatedTransform.localPosition;
-          var nextLocal = Vector3.Lerp(currentLocal, targetMovementPosition, interpolationSpeed * MovementInterpolationSpeedMultiplier * Time.fixedDeltaTime);
+          var moveSpeed = computedInterpolationSpeed * Time.fixedDeltaTime;
+          var nextLocal = Vector3.MoveTowards(currentLocal, targetMovementPosition, moveSpeed);
           var worldTarget = transform.TransformPoint(nextLocal);
-          var moveWorldRot = transform.rotation;
-
-          animatedRigidbody.Move(worldTarget, moveWorldRot);
+          animatedRigidbody.Move(worldTarget, transform.rotation);
           didMove = true;
 
-          var distanceToTarget = Vector3.Distance(currentLocal, targetMovementPosition);
-          if (currentMotionState == MotionState.GoingToTarget && !hasReachedTarget && distanceToTarget < positionThreshold)
+          var distance = Vector3.Distance(currentLocal, targetMovementPosition);
+          if (currentMotionState == MotionState.ToTarget && distance < positionThreshold)
           {
-            hasReachedTarget = true;
-            onMovementReachedTarget?.Invoke();
+            SetMotionState(MotionState.AtTarget);
+            SetMoveReachedTarget();
           }
-          else if (currentMotionState == MotionState.Returning && !hasReturned && distanceToTarget < positionThreshold)
+          else if (currentMotionState == MotionState.ToStart && distance < positionThreshold)
           {
-            hasReturned = true;
-            onMovementReturned?.Invoke();
+            SetMotionState(MotionState.AtStart);
+            SetMoveReturned();
           }
-
-          if (currentMotionState == MotionState.Returning && hasReachedTarget) hasReturned = false;
-          if (currentMotionState == MotionState.GoingToTarget && hasReturned) hasReachedTarget = false;
           break;
 
+#if DEBUG
         case SwivelMode.TargetEnemy:
           targetRotation = CalculateTargetNearestEnemyRotation();
           animatedRigidbody.Move(transform.position, transform.rotation * targetRotation);
@@ -199,20 +291,38 @@ namespace ValheimVehicles.SharedScripts
           animatedRigidbody.Move(transform.position, transform.rotation * targetRotation);
           didMove = true;
           break;
+#endif
       }
 
       if (!didMove)
       {
         var syncPos = animatedTransform.position;
         var syncRot = transform.rotation;
-        if ((animatedRigidbody.position - syncPos).sqrMagnitude > 0.0001f ||
-            Quaternion.Angle(animatedRigidbody.rotation, syncRot) > 0.01f)
+        if ((animatedRigidbody.position - syncPos).sqrMagnitude > 0.0001f || Quaternion.Angle(animatedRigidbody.rotation, syncRot) > 0.01f)
         {
           animatedRigidbody.Move(syncPos, syncRot);
         }
       }
 
       SyncSnappoint();
+    }
+
+    public virtual void InitPowerConsumer()
+    {
+      if (!swivelPowerConsumer)
+      {
+        swivelPowerConsumer = gameObject.GetComponent<PowerConsumerComponent>();
+        if (!swivelPowerConsumer)
+        {
+          swivelPowerConsumer = gameObject.AddComponent<PowerConsumerComponent>();
+        }
+
+        if (swivelPowerConsumer)
+        {
+          UpdatePowerConsumer();
+          UpdateBasePowerConsumption();
+        }
+      }
     }
 
     public void SetTrackingRange(float min, float max)
@@ -238,8 +348,8 @@ namespace ValheimVehicles.SharedScripts
       if ((hingeAxes & HingeAxis.Z) != 0)
         hingeEndEuler.z = (zHingeDirection == HingeDirection.Forward ? 1f : -1f) * maxRotationEuler.z;
 
-      var target = currentMotionState == MotionState.Returning ? 0f : 1f;
-      hingeLerpProgress = Mathf.MoveTowards(hingeLerpProgress, target, interpolationSpeed * Time.fixedDeltaTime);
+      var target = currentMotionState == MotionState.ToStart ? 0f : 1f;
+      hingeLerpProgress = Mathf.MoveTowards(hingeLerpProgress, target, computedInterpolationSpeed * Time.fixedDeltaTime);
       return Quaternion.Euler(Vector3.Lerp(Vector3.zero, hingeEndEuler, hingeLerpProgress));
     }
 
@@ -271,7 +381,7 @@ namespace ValheimVehicles.SharedScripts
       var current = animatedTransform.localRotation;
 
       // Lerp toward wind direction using movementLerpSpeed
-      var next = Quaternion.Slerp(current, target, interpolationSpeed * Time.fixedDeltaTime);
+      var next = Quaternion.Slerp(current, target, computedInterpolationSpeed * Time.fixedDeltaTime);
 
       // Clamp Y (yaw) rotation
       var euler = next.eulerAngles;
@@ -284,9 +394,78 @@ namespace ValheimVehicles.SharedScripts
       return Quaternion.Euler(0f, clampedY, 0f);
     }
 
+    public void UpdateBasePowerConsumption()
+    {
+      if (!IsPoweredSwivel || !swivelPowerConsumer) return;
+      swivelPowerConsumer.BasePowerConsumption = SwivelEnergyDrain * computedInterpolationSpeed;
+    }
+
+    public void DeactivatePowerConsumer()
+    {
+      if (IsPoweredSwivel && swivelPowerConsumer)
+      {
+        swivelPowerConsumer.SetDemandState(false);
+      }
+    }
+
+    public void ActivatePowerConsumer()
+    {
+      if (IsPoweredSwivel && swivelPowerConsumer)
+      {
+        swivelPowerConsumer.SetDemandState(true);
+      }
+    }
+
+    public void UpdatePowerConsumer()
+    {
+      if (!IsPoweredSwivel) return;
+      if (!swivelPowerConsumer)
+      {
+        InitPowerConsumer();
+      }
+
+      if (mode == SwivelMode.Rotate || mode == SwivelMode.Move)
+      {
+
+        if (currentMotionState == MotionState.ToStart || currentMotionState == MotionState.ToTarget)
+        {
+          ActivatePowerConsumer();
+        }
+        else
+        {
+          DeactivatePowerConsumer();
+        }
+      }
+    }
+
+    public void SetRotationReturned()
+    {
+      UpdatePowerConsumer();
+      onRotationReturned?.Invoke();
+    }
+
+    public void SetRotationReachedTarget()
+    {
+      UpdatePowerConsumer();
+      onRotationReachedTarget?.Invoke();
+    }
+
+    public void SetMoveReturned()
+    {
+      UpdatePowerConsumer();
+      onMovementReturned?.Invoke();
+    }
+
+    public void SetMoveReachedTarget()
+    {
+      UpdatePowerConsumer();
+      onMovementReachedTarget?.Invoke();
+    }
+
     public void SetMode(SwivelMode newMode)
     {
       mode = newMode;
+      UpdatePowerConsumer();
     }
     public void SetHingeAxes(HingeAxis axes)
     {
@@ -300,25 +479,30 @@ namespace ValheimVehicles.SharedScripts
     {
       movementOffset = offset;
     }
-    public void SetMovementLerpSpeed(float speed)
+    public void SetInterpolationSpeed(float speed)
     {
       interpolationSpeed = Mathf.Clamp(speed, 1f, 100f);
+      computedInterpolationSpeed = interpolationSpeed * (Mode == SwivelMode.Move ? MovementInterpolationSpeedMultiplier : RotationInterpolateSpeedMultiplier);
+      UpdateBasePowerConsumption();
+      UpdatePowerConsumer();
     }
-    public void SetMotionState(MotionState state)
+
+    /// <summary>
+    /// Integration will override this to prevent it from being called directly if not the owner.
+    /// </summary>
+    /// <param name="state"></param>
+    public virtual void SetMotionState(MotionState state)
     {
       currentMotionState = state;
-      hasReachedTarget = false;
-      hasReturned = false;
-      hasRotatedTarget = false;
-      hasRotatedReturn = false;
+      UpdatePowerConsumer();
     }
 
-    #region ISwivelConfig
+  #region ISwivelConfig
 
-    float ISwivelConfig.MovementLerpSpeed
+    public float InterpolationSpeed
     {
       get => interpolationSpeed;
-      set => interpolationSpeed = value;
+      set => SetInterpolationSpeed(value);
     }
 
     public float MinTrackingRange
@@ -360,10 +544,10 @@ namespace ValheimVehicles.SharedScripts
     public SwivelMode Mode
     {
       get => mode;
-      set => mode = value;
+      set => SetMode(value);
     }
 
-    #endregion
+  #endregion
 
   }
 }

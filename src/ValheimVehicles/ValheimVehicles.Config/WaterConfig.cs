@@ -3,6 +3,7 @@ using BepInEx.Configuration;
 using UnityEngine;
 using ValheimVehicles.Helpers;
 using ValheimVehicles.Components;
+using Zolantris.Shared;
 
 namespace ValheimVehicles.Config;
 
@@ -73,7 +74,7 @@ public class WaterConfig : BepInExBaseConfig<WaterConfig>
 
   public static ConfigEntry<bool> AllowTamedCharactersUnderwater = null!;
   public static ConfigEntry<bool> AllowMonsterCharactersUnderwater = null!;
-  
+
 
   public static ConfigEntry<bool> UnderwaterFogEnabled =
     null!;
@@ -135,7 +136,7 @@ public class WaterConfig : BepInExBaseConfig<WaterConfig>
 
   public static void InitDebugConfig(ConfigFile config)
   {
-    DEBUG_WaterDisplacementMeshPrimitive = config.Bind(SectionKeyDebug,
+    DEBUG_WaterDisplacementMeshPrimitive = config.BindUnique(SectionKeyDebug,
       "DEBUG_WaterDisplacementMeshPrimitive",
       PrimitiveType.Cube,
       ConfigHelpers.CreateConfigDescription(
@@ -144,41 +145,41 @@ public class WaterConfig : BepInExBaseConfig<WaterConfig>
 
     var depthRanges = new AcceptableValueRange<float>(0f, 50f);
 
-    DEBUG_HasDepthOverrides = config.Bind(SectionKeyDebug,
+    DEBUG_HasDepthOverrides = config.BindUnique(SectionKeyDebug,
       "DEBUG_HasDepthOverrides",
       false,
       ConfigHelpers.CreateConfigDescription(
         "Enables depth overrides",
         true, true));
-    DEBUG_WaterDepthOverride = config.Bind(SectionKeyDebug,
+    DEBUG_WaterDepthOverride = config.BindUnique(SectionKeyDebug,
       "DEBUG_WaterDepthOverride",
       30f,
       ConfigHelpers.CreateConfigDescription(
         "Force Overrides the WATER depth for character on boats. Useful for testing how a player can swim to the lowest depth (liquid depth).",
         true, true, depthRanges));
 
-    DEBUG_LiquidCacheDepthOverride = config.Bind(SectionKeyDebug,
+    DEBUG_LiquidCacheDepthOverride = config.BindUnique(SectionKeyDebug,
       "DEBUG_LiquidCacheDepthOverride",
       0f,
       ConfigHelpers.CreateConfigDescription(
         "Force Overrides the liquid CACHED depth for character on boats.",
         true, true, depthRanges));
 
-    DEBUG_LiquidDepthOverride = config.Bind(SectionKeyDebug,
+    DEBUG_LiquidDepthOverride = config.BindUnique(SectionKeyDebug,
       "DEBUG_LiquidDepthOverride",
       15f,
       ConfigHelpers.CreateConfigDescription(
         "Force Overrides the LIQUID depth for character on boats.",
         true, true, depthRanges));
 
-    DEBUG_SwimDepthOverride = config.Bind(SectionKeyDebug,
+    DEBUG_SwimDepthOverride = config.BindUnique(SectionKeyDebug,
       "DEBUG_SwimDepthOverride",
       15f,
       ConfigHelpers.CreateConfigDescription(
         "Force Overrides the Swim depth for character on boats. Values above the swim depth force the player into a swim animation.",
         true, true, depthRanges));
 
-    DEBUG_WaveSizeMultiplier = Config.Bind(
+    DEBUG_WaveSizeMultiplier = config.BindUnique(
       SectionKey,
       "DEBUG_WaveSizeMultiplier",
       1f,
@@ -196,7 +197,7 @@ public class WaterConfig : BepInExBaseConfig<WaterConfig>
 
     InitDebugConfig(Config);
 
-    WaterBallastEnabled = Config.Bind(
+    WaterBallastEnabled = config.BindUnique(
       SectionKey,
       "WaterBallastEnabled",
       false,
@@ -204,7 +205,7 @@ public class WaterConfig : BepInExBaseConfig<WaterConfig>
         "Similar to flight mechanics but at sea. Defaults with Space/Jump to increase height and Sneak/Shift to decrease height uses the same flight comamnds.",
         true, true));
 
-    AboveSurfaceBallastMaxShipSizeAboveWater = Config.Bind(
+    AboveSurfaceBallastMaxShipSizeAboveWater = config.BindUnique(
       SectionKey,
       "AboveSurfaceBallastMaxShipSizeAboveWater",
       0.5f,
@@ -212,7 +213,7 @@ public class WaterConfig : BepInExBaseConfig<WaterConfig>
         $"A fixed value to set for all vehicles. Will not be applied if config <{aboveSurfaceConfigKey}> is enabled and the ship weight is more than this value. Set it to 100% to always allow the full height of the ship above the surface.",
         true, true, new AcceptableValueRange<float>(0f, 1f)));
 
-    EXPERIMENTAL_AboveSurfaceBallastUsesShipMass = Config.Bind(
+    EXPERIMENTAL_AboveSurfaceBallastUsesShipMass = config.BindUnique(
       SectionKey,
       "EXPERIMENTAL_AboveSurfaceBallastUsesShipMass",
       false,
@@ -221,7 +222,7 @@ public class WaterConfig : BepInExBaseConfig<WaterConfig>
         true, true));
 
 
-    AllowMonsterCharactersUnderwater = Config.Bind(
+    AllowMonsterCharactersUnderwater = config.BindUnique(
       SectionKey,
       "AllowMonsterCharactersUnderwater",
       true,
@@ -229,7 +230,7 @@ public class WaterConfig : BepInExBaseConfig<WaterConfig>
         "Allows Monster characters (untamed, and enemies too) onto the ship and underwater. This means they can go underwater similar to player.",
         true, true));
 
-    AllowedCharacterList = Config.Bind(
+    AllowedCharacterList = config.BindUnique(
       SectionKey,
       "AllowedCharacterList",
       "",
@@ -237,7 +238,7 @@ public class WaterConfig : BepInExBaseConfig<WaterConfig>
         "List separated by comma for entities that are allowed on the ship. For simplicity consider enabling monsters and tame creatures.",
         true, true));
 
-    AllowTamedCharactersUnderwater = Config.Bind(
+    AllowTamedCharactersUnderwater = config.BindUnique(
       SectionKey,
       "AllowTamedCharactersUnderwater",
       true,
@@ -245,7 +246,7 @@ public class WaterConfig : BepInExBaseConfig<WaterConfig>
         "Lets tamed animals underwater too. Could break or kill them depending on config.",
         true, true));
 
-    FlipWatermeshMode = Config.Bind(
+    FlipWatermeshMode = config.BindUnique(
       SectionKey,
       "FlipWatermeshMode",
       WaterMeshFlipModeType.Disabled,
@@ -253,14 +254,14 @@ public class WaterConfig : BepInExBaseConfig<WaterConfig>
         "Flips the water mesh underwater. This can cause some jitters. Turn it on at your own risk. It's improve immersion. Recommended to keep off if you dislike seeing a bit of tearing in the water meshes. Flipping camera above to below surface should fix things.",
         true, true));
 
-    UnderwaterFogEnabled = Config.Bind(
+    UnderwaterFogEnabled = config.BindUnique(
       SectionKey,
       "UnderwaterFogEnabled",
       true,
       ConfigHelpers.CreateConfigDescription(
         "Adds fog to make underwater appear more realistic. This should be disabled if using Vikings do swim as this mod section is not compatible yet.",
         true));
-    UnderWaterFogColor = Config.Bind(
+    UnderWaterFogColor = config.BindUnique(
       SectionKey,
       "UnderwaterFogColor",
       new Color(0.10f, 0.23f, 0.07f, 1.00f),
@@ -268,7 +269,7 @@ public class WaterConfig : BepInExBaseConfig<WaterConfig>
         "Adds fog to make underwater appear more realistic. This should be disabled if using Vikings do swim as this mod section is not compatible yet.",
         true));
 
-    UnderWaterFogIntensity = Config.Bind(
+    UnderWaterFogIntensity = config.BindUnique(
       SectionKey,
       "UnderwaterFogIntensity",
       0.03f,
@@ -276,7 +277,7 @@ public class WaterConfig : BepInExBaseConfig<WaterConfig>
         "Adds fog to make underwater appear more realistic. This should be disabled if using Vikings do swim as this mod section is not compatible yet.",
         true));
 
-    UnderwaterAccessMode = Config.Bind(
+    UnderwaterAccessMode = config.BindUnique(
       SectionKey,
       "UnderwaterAccessMode",
       UnderwaterAccessModeType.Disabled,
@@ -284,7 +285,7 @@ public class WaterConfig : BepInExBaseConfig<WaterConfig>
         "Allows for walking underwater, anywhere, or onship, or eventually within the water displaced area only. Disabled with remove all water logic. DEBUG_WaterZoneOnly is not supported yet",
         true, true));
 
-    HasUnderwaterHullBubbleEffect = Config.Bind(
+    HasUnderwaterHullBubbleEffect = config.BindUnique(
       SectionKey,
       "HasUnderwaterHullBubbleEffect",
       true,
@@ -292,7 +293,7 @@ public class WaterConfig : BepInExBaseConfig<WaterConfig>
         "Adds an underwater bubble conforming around the vehicle hull. Allowing for a underwater like distortion effect without needing to use fog.",
         true, true));
 
-    UnderwaterBubbleEffectColor = Config.Bind(
+    UnderwaterBubbleEffectColor = config.BindUnique(
       SectionKey,
       "UnderwaterBubbleEffectColor",
       new Color(0f, 0.4f, 0.4f, 0.8f),

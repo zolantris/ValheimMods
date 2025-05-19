@@ -13,6 +13,9 @@
   {
     public static partial class SwivelUIHelpers
     {
+      // for all interactions
+      public static bool CanNavigatorInteractWithPanel = true;
+
       public static GameObject AddRowWithButton(Transform parent, SwivelUISharedStyles viewStyles, string? label, string buttonText, float buttonWidth, float buttonHeight, out TextMeshProUGUI statusTextOut, UnityAction onClick)
       {
         var row = new GameObject("RowWithButton", typeof(RectTransform), typeof(HorizontalLayoutGroup));
@@ -54,6 +57,8 @@
         buttonRT.anchoredPosition = Vector2.zero;
 
         var button = buttonGO.GetComponent<Button>();
+        button.interactable = CanNavigatorInteractWithPanel;
+
         var buttonImage = buttonGO.GetComponent<Image>();
         buttonImage.color = SwivelUIColors.grayBg;
         button.onClick.AddListener(onClick);

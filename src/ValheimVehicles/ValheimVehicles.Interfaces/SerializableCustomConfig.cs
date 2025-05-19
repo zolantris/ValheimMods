@@ -3,14 +3,18 @@ namespace ValheimVehicles.Interfaces;
 /// <summary>
 /// T is the SerializeableConfig, TConfig is the interface of the config. This should be shared with Components so that a component can easily grab it's config and sync it.
 /// </summary>
-/// <typeparam name="T"></typeparam>
-/// <typeparam name="TConfig"></typeparam>
-public interface ISerializableConfig<T, TConfig>
+public interface ISerializableConfig<T, TComponent>
 {
-  public void ApplyFrom(TConfig config);
-  public void ApplyTo(TConfig config);
-  public void Save(ZDO zdo, T config);
-  public T Load(ZDO zdo, TConfig config);
-  public void Serialize(ZPackage package);
-  public T Deserialize(ZPackage package);
+  void ApplyFrom(TComponent component);
+  void ApplyTo(TComponent component);
+  T Load(ZDO zdo, TComponent component);
+  void Save(ZDO zdo, T config);
+  void Serialize(ZPackage pkg);
+  T Deserialize(ZPackage pkg);
+
+  /// <summary>
+  /// Returns a deterministic hash for comparing config equality.
+  /// Should be stable across machines.
+  /// </summary>
+  int GetStableHashCode();
 }

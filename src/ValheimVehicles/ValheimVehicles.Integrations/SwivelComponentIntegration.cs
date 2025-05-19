@@ -36,13 +36,11 @@
   ///
   /// Notes
   /// IRaycastPieceActivator is used for simplicity. It will easily match any component extending this in unity.
-  public sealed class SwivelComponentIntegration : SwivelComponent, IPieceActivatorHost, IPieceController, IRaycastPieceActivator
+  public sealed class SwivelComponentIntegration : SwivelComponent, IPieceActivatorHost, IPieceController, IRaycastPieceActivator, INetView, IPrefabConfig<SwivelCustomConfig>
   {
-    [FormerlySerializedAs("m_piecesController")]
     public VehiclePiecesController? m_vehiclePiecesController;
     public VehicleManager? m_vehicle => m_vehiclePiecesController == null ? null : m_vehiclePiecesController.Manager;
 
-    public ZNetView m_nview;
     private int _persistentZdoId;
     public static readonly Dictionary<int, SwivelComponentIntegration> ActiveInstances = [];
     public List<ZNetView> m_pieces = [];
@@ -53,35 +51,139 @@
 
     private HoverFadeText m_hoverFadeText;
     public SwivelConfigRPCSync prefabConfigSync;
-    public SwivelCustomConfig m_config => prefabConfigSync.CustomConfig;
+    public SwivelCustomConfig Config => prefabConfigSync.Config;
+    public ChildZSyncTransform childZsyncTransform;
+    public readonly SwivelMotionStateTracker motionTracker = new();
+
+    public static bool CanAllClientsSync = true;
+
+    private int swivelId = 0;
+
+    public override int SwivelPersistentId
+    {
+      get
+      {
+        if (swivelId == 0)
+        {
+          swivelId = GetPersistentId();
+        }
+        return swivelId;
+      }
+    }
 
     public override void Awake()
     {
+      base.Awake();
+
       if (!prefabConfigSync)
       {
         prefabConfigSync = gameObject.AddComponent<SwivelConfigRPCSync>();
       }
-      prefabConfigSync.SetComponentFromInstance(this);
 
       CanUpdate = false;
-      base.Awake();
 
       m_nview = GetComponent<ZNetView>();
+      // required for syncing the animated component across clients.
+      // childZsyncTransform = animatedTransform.gameObject.AddComponent<ChildZSyncTransform>();
+      // childZsyncTransform.m_syncPosition = true;
+      // childZsyncTransform.m_syncRotation = true;
+      // childZsyncTransform.m_syncBodyVelocity = true;
 
       SetupHoverFadeText();
 
       SetupPieceActivator();
     }
 
-    public MotionState GetNextMotionState()
+    public static bool ShouldSkipClientOnlyUpdate = true;
+    public static bool ShouldSyncClientOnlyUpdate = true;
+
+    public override void SetMotionState(MotionState state)
     {
-      return MotionState != MotionState.Returning ? MotionState.Returning : MotionState.GoingToTarget;
+      if (!prefabConfigSync) return;
+      if (prefabConfigSync.IsBroadcastSuppressed)
+      {
+        base.SetMotionState(state);
+        return;
+      }
+
+      if (!this.IsNetViewValid(out var netView))
+        return;
+
+      var currentState = MotionState;
+      if (state == currentState)
+      {
+        LoggerProvider.LogDebug("[Swivel] SetMotionState called with same state. Ignoring.");
+        return;
+      }
+
+      if (!netView.IsOwner())
+      {
+        if (!ShouldSkipClientOnlyUpdate)
+        {
+          Request_SetMotionState(state);
+        }
+        if (ShouldSyncClientOnlyUpdate)
+        {
+          prefabConfigSync.Load();
+          base.SetMotionState(prefabConfigSync.Config.MotionState);
+        }
+        return;
+      }
+
+      if (prefabConfigSync != null && prefabConfigSync.Config != null)
+      {
+        prefabConfigSync.Config.MotionState = state;
+      }
+      base.SetMotionState(state);
+
+      Request_SetMotionState(state);
+
+      if (state is MotionState.ToTarget or MotionState.ToStart)
+      {
+        motionTracker.UpdateMotion(
+          animatedTransform.localPosition,
+          GetCurrentTargetPosition(),
+          animatedTransform.localRotation,
+          GetCurrentTargetRotation(),
+          computedInterpolationSpeed
+        );
+      }
     }
 
-    public void RequestNextMotionState()
+
+    public MotionState GetNextMotionState()
     {
-      var nextMotionState = GetNextMotionState();
-      prefabConfigSync.RequestNextMotionState(nextMotionState);
+      var previousState = MotionState;
+      prefabConfigSync.Load();
+      LoggerProvider.LogDebug("MotionState -> Previous: " + previousState.ToString() + " | Current: " + MotionState.ToString() + " |");
+      switch (MotionState)
+      {
+        case MotionState.ToTarget:
+        case MotionState.AtTarget:
+          return MotionState.ToStart;
+        case MotionState.ToStart:
+        case MotionState.AtStart:
+          return MotionState.ToTarget;
+        default:
+          LoggerProvider.LogError("Somehow got unhandled motionState force setting user to ToStart");
+          return MotionState.ToStart;
+      }
+    }
+
+    public override void Request_NextMotionState()
+    {
+      if (!this.IsNetViewValid(out var netView)) return;
+      if (!netView.IsOwner())
+      {
+        // must load otherwise we could be desynced in any action called.
+        prefabConfigSync.Load();
+      }
+      prefabConfigSync.Request_NextMotion();
+    }
+
+    public void Request_SetMotionState(MotionState state)
+    {
+      prefabConfigSync.Request_SetMotionState(state);
     }
 
     public void SetupHoverFadeText()
@@ -93,8 +195,6 @@
 
     public void OnEnable()
     {
-      prefabConfigSync.RegisterRPCListeners();
-
       var persistentId = GetPersistentId();
       if (persistentId == 0) return;
 
@@ -115,8 +215,6 @@
 
     public void OnDisable()
     {
-      prefabConfigSync.UnregisterRPCListeners();
-
       var persistentId = GetPersistentId();
       if (persistentId == 0) return;
       if (!ActiveInstances.TryGetValue(persistentId, out var swivelComponentIntegration))
@@ -128,7 +226,21 @@
 
     public override void FixedUpdate()
     {
+      if (!CanAllClientsSync)
+      {
+        if (!this.IsNetViewValid(out var netView))
+        {
+          return;
+        }
+        // non-owners do not update. All logic is done via RPC Child sync.
+        if (!netView.IsOwner())
+        {
+          return;
+        }
+      }
+
       base.FixedUpdate();
+
       if (m_pieces.Count > 0)
       {
         m_hoverFadeText.FixedUpdate_UpdateText();
@@ -196,13 +308,15 @@
     public void OnActivationComplete()
     {
       // SetInitialLocalRotation();
+      // prefabConfigSync.SyncPrefabConfig();
       CanUpdate = true;
     }
 
     public void Register() {}
 
-    public void OnDestroy()
+    protected override void OnDestroy()
     {
+      base.OnDestroy();
       StopAllCoroutines();
       Cleanup();
     }
@@ -280,6 +394,7 @@
       base.Start();
       m_vehiclePiecesController = GetComponentInParent<VehiclePiecesController>();
       _pieceActivator.StartInitPersistentId();
+      prefabConfigSync.Load();
     }
 
     /// <summary>
@@ -306,15 +421,13 @@
       }
     }
 
-    // public override void ToggleDebugger(bool val)
-    // {
-    //   if (val)
-    //   {
-    //     AdjustDebuggerArrowLocation();
-    //   }
-    //
-    //   base.ToggleDebugger(val);
-    // }
+    public override void InitPowerConsumer()
+    {
+      var powerConsumerIntegration = gameObject.AddComponent<PowerConsumerComponentIntegration>();
+      swivelPowerConsumer = powerConsumerIntegration.Logic;
+      UpdatePowerConsumer();
+      UpdateBasePowerConsumption();
+    }
 
     public void OnInitComplete()
     {
@@ -344,7 +457,11 @@
 
     public int GetPersistentId()
     {
-      return PersistentIdHelper.GetPersistentIdFrom(m_nview, ref _persistentZdoId);
+      if (!this.IsNetViewValid(out var netView))
+      {
+        return 0;
+      }
+      return PersistentIdHelper.GetPersistentIdFrom(netView, ref _persistentZdoId);
     }
 
     public ZNetView? GetNetView()
@@ -384,7 +501,6 @@
     {
       try
       {
-
         if (netView == null) return false;
         var swivelController = netView.GetComponent<SwivelComponentIntegration>();
         if (swivelController == null)
@@ -468,7 +584,8 @@
     }
     public void TrySetPieceToParent(ZNetView netView)
     {
-      throw new NotImplementedException();
+      if (netView == null) return;
+      AddPieceToParent(netView.transform);
     }
 
     ///
@@ -486,4 +603,9 @@
 
   #endregion
 
+    public ZNetView? m_nview
+    {
+      get;
+      set;
+    }
   }

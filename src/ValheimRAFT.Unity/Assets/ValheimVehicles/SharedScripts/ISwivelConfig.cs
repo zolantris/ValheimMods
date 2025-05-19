@@ -7,7 +7,7 @@ namespace ValheimVehicles.SharedScripts.UI
   public interface ISwivelConfig
   {
     public SwivelMode Mode { get; set; }
-    public float MovementLerpSpeed { get; set; }
+    public float InterpolationSpeed { get; set; }
     public float MinTrackingRange { get; set; }
     public float MaxTrackingRange { get; set; }
     public HingeAxis HingeAxes { get; set; }

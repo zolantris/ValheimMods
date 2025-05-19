@@ -2,6 +2,7 @@ using BepInEx.Configuration;
 using ValheimVehicles.Config;
 using ValheimVehicles.Helpers;
 using ValheimVehicles.QuickStartWorld.Patches;
+using Zolantris.Shared;
 
 namespace ValheimVehicles.QuickStartWorld.Config;
 
@@ -81,72 +82,72 @@ public class QuickStartWorldConfig : BepInExBaseConfig<QuickStartWorldConfig>
   public override void OnBindConfig(ConfigFile config)
   {
 #if DEBUG
-    ServerOnlineBackendType = config.Bind(QuickStartSection, "ServerOnlineBackendType", OnlineBackendType.Steamworks);
+    ServerOnlineBackendType = config.BindUnique(QuickStartSection, "ServerOnlineBackendType", OnlineBackendType.Steamworks, ConfigHelpers.CreateConfigDescription("For setting the server type."));
 
-    QuickStartWorldName = config.Bind(QuickStartSection, "QuickStartWorldName",
+    QuickStartWorldName = config.BindUnique(QuickStartSection, "QuickStartWorldName",
       "",
       ConfigHelpers.CreateConfigDescription(
         "Set the quick start World Name",
         false, false));
 
     // QuickStartProfileBackend
-    QuickStartWorldPassword = config.Bind(QuickStartSection,
+    QuickStartWorldPassword = config.BindUnique(QuickStartSection,
       "QuickStartWorldPassword",
       "",
       ConfigHelpers.CreateConfigDescription(
         "Set the quick start world password",
         false, false));
 
-    IsOpenServer = config.Bind(QuickStartSection,
+    IsOpenServer = config.BindUnique(QuickStartSection,
       "IsOpenServer",
       false,
       ConfigHelpers.CreateConfigDescription(
         "Set if hosted server is opened allowing other players to connect to the server.",
         false, false));
 
-    IsPublicServer = config.Bind(QuickStartSection,
+    IsPublicServer = config.BindUnique(QuickStartSection,
       "IsPublicServer",
       false,
       ConfigHelpers.CreateConfigDescription(
         "Set the hosted server is public and listed.",
         false, false));
 
-    IsServer = config.Bind(QuickStartSection,
+    IsServer = config.BindUnique(QuickStartSection,
       "IsServer",
       false,
       ConfigHelpers.CreateConfigDescription(
         "Set if server is public",
         false, false));
 
-    IsJoinServer = config.Bind(QuickStartSection,
+    IsJoinServer = config.BindUnique(QuickStartSection,
       "IsJoinServer",
       false,
       ConfigHelpers.CreateConfigDescription(
         "Join a server instead of hosting a server automatically.",
         false, false));
 
-    JoinServerUrl = config.Bind(QuickStartSection,
+    JoinServerUrl = config.BindUnique(QuickStartSection,
       "JoinServerUrl",
       "",
       ConfigHelpers.CreateConfigDescription(
         "Set the join server URL. This can be an IP address or a web url if hosted server can resolve from a url.",
         false, false));
 
-    JoinServerPort = config.Bind(QuickStartSection,
+    JoinServerPort = config.BindUnique(QuickStartSection,
       "JoinServerPort",
       2456,
       ConfigHelpers.CreateConfigDescription(
         "Set the join server URL. This can be an IP address or a web url if hosted server can resolve from a url.",
         false, false));
 
-    QuickStartEnabled = config.Bind(QuickStartSection,
+    QuickStartEnabled = config.BindUnique(QuickStartSection,
       "QuickStartEnabled",
       false,
       ConfigHelpers.CreateConfigDescription(
         "Enable Quick start",
         false, false));
 
-    QuickStartWorldPlayerName = config.Bind(QuickStartSection,
+    QuickStartWorldPlayerName = config.BindUnique(QuickStartSection,
       "QuickStartWorldPlayerName",
       "",
       ConfigHelpers.CreateConfigDescription(

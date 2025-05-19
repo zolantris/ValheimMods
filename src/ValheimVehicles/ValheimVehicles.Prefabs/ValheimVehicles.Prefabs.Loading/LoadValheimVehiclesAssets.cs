@@ -2,6 +2,7 @@ using Jotunn;
 using UnityEngine;
 using UnityEngine.U2D;
 using ValheimVehicles.SharedScripts;
+using ValheimVehicles.SharedScripts.PowerSystem;
 using ValheimVehicles.SharedScripts.Validation;
 
 namespace ValheimVehicles.Prefabs;
@@ -26,7 +27,10 @@ public class LoadValheimVehicleAssets : ILoadAssets
 
   // mechanisms/energy
   public static GameObject Mechanism_Swivel = null!;
-  public static GameObject Mechanism_Engine_Coal = null!;
+  // public static GameObject Mechanism_PowerSource_Coal = null!;
+  public static GameObject Mechanism_Power_Source_Eitr = null!;
+  public static GameObject Mechanism_Power_Storage_Eitr = null!;
+  public static GameObject Mechanism_Power_Activator_Plate = null!;
 
   // hull
   public static GameObject ShipHullWoodAsset = null!;
@@ -99,7 +103,7 @@ public class LoadValheimVehicleAssets : ILoadAssets
   }
 
   public static Material LightningMaterial = null!;
-  public static GameObject Mechanism_ElectricPylon = null!;
+  public static GameObject Mechanism_PowerPylon = null!;
 
   public static GameObject GetPiecesContainer(GameObject obj)
   {
@@ -296,8 +300,11 @@ public class LoadValheimVehicleAssets : ILoadAssets
     // Mechanism prefabs
     Mechanism_Switch = assetBundle.LoadAsset<GameObject>("mechanism_switch");
     Mechanism_Swivel = assetBundle.LoadAsset<GameObject>("mechanism_swivel.prefab");
-    Mechanism_Engine_Coal = assetBundle.LoadAsset<GameObject>("mechanism_engine_coal.prefab");
-    Mechanism_ElectricPylon = assetBundle.LoadAsset<GameObject>("mechanism_electric_pylon.prefab");
+    // Mechanism_PowerSource_Coal = assetBundle.LoadAsset<GameObject>("mechanism_power_source_coal.prefab");
+    Mechanism_Power_Source_Eitr = assetBundle.LoadAsset<GameObject>("mechanism_power_source_eitr.prefab");
+    Mechanism_Power_Storage_Eitr = assetBundle.LoadAsset<GameObject>("mechanism_power_storage_eitr.prefab");
+    Mechanism_Power_Activator_Plate = assetBundle.LoadAsset<GameObject>("mechanism_activator_plate.prefab");
+    Mechanism_PowerPylon = assetBundle.LoadAsset<GameObject>("mechanism_power_pylon.prefab");
 
     // Effects Prefabs
     // from Plugin, todo rename the casing problematic asset.
@@ -305,7 +312,12 @@ public class LoadValheimVehicleAssets : ILoadAssets
 
 
     // Data rebinds done inline
-    ElectricPylon.LightningMaterial = LightningMaterial;
+    PowerNetworkController.WireMaterial = new Material(DoubleSidedTransparentMat)
+    {
+      color = Color.black
+    };
+
+    PowerPylon.LightningMaterial = LightningMaterial;
     MovingTreadComponent.fallbackPrefab = TankTreadsSingle;
 
     ClassValidator.ValidateRequiredNonNullFields<LoadValheimVehicleAssets>();

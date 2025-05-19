@@ -668,7 +668,7 @@ public class ValheimAoe : MonoBehaviour, IProjectile, IMonoUpdater
 
       // must always be the hitpoint origin otherwise it will not damage thedestructible object
       hit.m_point = hitPoint;
-      
+
       hit.m_dir = vector3;
       hit.m_statusEffectHash = GetStatusEffect(character);
       var hitData = hit;
@@ -714,7 +714,7 @@ public class ValheimAoe : MonoBehaviour, IProjectile, IMonoUpdater
       {
         var componentInParent = GetComponentInParent<IDestructible>();
         if (componentInParent != null)
-          componentInParent.Damage(new HitData()
+          componentInParent.Damage(new HitData
           {
             m_damage =
             {

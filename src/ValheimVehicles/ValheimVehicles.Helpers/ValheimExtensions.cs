@@ -1,3 +1,4 @@
+using System;
 using System.Diagnostics.CodeAnalysis;
 using UnityEngine;
 using ValheimVehicles.Interfaces;
@@ -5,6 +6,7 @@ namespace ValheimVehicles.Helpers;
 
 public static class ValheimExtensions
 {
+
   // non-extension method
   public static bool IsNetViewValid(ZNetView? netView, [NotNullWhen(true)] out ZNetView? validNetView)
   {
@@ -24,6 +26,21 @@ public static class ValheimExtensions
       return true;
     }
     return false;
+  }
+
+  /// <summary>
+  /// For running on server or owner. This works much better for dedicated servers.
+  /// </summary>
+  public static void RunIfOwnerOrServerOrNoOwner(this INetView instance, Action<ZNetView> action)
+  {
+    if (!instance.IsNetViewValid(out var netView)) return;
+    if (netView.IsOwner() || ZNet.instance.IsServer() || !netView.HasOwner())
+    {
+      if (!netView.IsOwner())
+        netView.ClaimOwnership();
+
+      action.Invoke(netView);
+    }
   }
 
   /// <summary>

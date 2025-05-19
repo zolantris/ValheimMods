@@ -34,7 +34,7 @@ public class SwivelPrefab : RegisterPrefab<SwivelPrefab>
       new PieceConfig
       {
         PieceTable = PrefabRegistryController.GetPieceTableName(),
-        Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Tools),
+        Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Power),
         Enabled = true,
         Requirements =
         [

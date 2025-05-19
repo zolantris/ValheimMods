@@ -4,6 +4,7 @@
 #region
 
 using UnityEngine;
+using ValheimVehicles.Integrations;
 using ValheimVehicles.Interfaces;
 using ValheimVehicles.SharedScripts;
 using ValheimVehicles.SharedScripts.UI;
@@ -27,37 +28,60 @@ namespace ValheimVehicles.Config
     public const string Key_OffsetY = "swivel_offsetY";
     public const string Key_OffsetZ = "swivel_offsetZ";
 
-    public void Serialize(ZPackage package)
+    public int GetStableHashCode()
     {
-      package.Write((int)Mode);
-      package.Write(MovementLerpSpeed);
-      package.Write(MinTrackingRange);
-      package.Write(MaxTrackingRange);
-      package.Write((int)HingeAxes);
-      package.Write(MaxEuler);
-      package.Write(MovementOffset);
-      package.Write((int)MotionState);
+      unchecked
+      {
+        var hash = 17;
+        hash = hash * 31 + Mode.GetHashCode();
+        hash = hash * 31 + InterpolationSpeed.GetHashCode();
+        hash = hash * 31 + MinTrackingRange.GetHashCode();
+        hash = hash * 31 + MaxTrackingRange.GetHashCode();
+        hash = hash * 31 + HingeAxes.GetHashCode();
+        hash = hash * 31 + MaxEuler.x.GetHashCode();
+        hash = hash * 31 + MaxEuler.y.GetHashCode();
+        hash = hash * 31 + MaxEuler.z.GetHashCode();
+        hash = hash * 31 + MovementOffset.x.GetHashCode();
+        hash = hash * 31 + MovementOffset.y.GetHashCode();
+        hash = hash * 31 + MovementOffset.z.GetHashCode();
+        hash = hash * 31 + MotionState.GetHashCode();
+        return hash;
+      }
     }
 
-    public SwivelCustomConfig Deserialize(ZPackage package)
+    public void Serialize(ZPackage pkg)
     {
+      pkg.Write((int)Mode);
+      pkg.Write(InterpolationSpeed);
+      pkg.Write(MinTrackingRange);
+      pkg.Write(MaxTrackingRange);
+      pkg.Write((int)HingeAxes);
+      pkg.Write(MaxEuler);
+      pkg.Write(MovementOffset);
+      pkg.Write((int)MotionState);
+    }
+
+    public SwivelCustomConfig Deserialize(ZPackage pkg)
+    {
+      pkg.SetPos(0); // Always reset read pointer otherwise we start at end and fail.
+
       return new SwivelCustomConfig
       {
-        Mode = (SwivelMode)package.ReadInt(),
-        MovementLerpSpeed = package.ReadSingle(),
-        MinTrackingRange = package.ReadSingle(),
-        MaxTrackingRange = package.ReadSingle(),
-        HingeAxes = (HingeAxis)package.ReadInt(),
-        MaxEuler = package.ReadVector3(),
-        MovementOffset = package.ReadVector3(),
-        MotionState = (MotionState)package.ReadInt()
+        Mode = (SwivelMode)pkg.ReadInt(),
+        InterpolationSpeed = pkg.ReadSingle(),
+        MinTrackingRange = pkg.ReadSingle(),
+        MaxTrackingRange = pkg.ReadSingle(),
+        HingeAxes = (HingeAxis)pkg.ReadInt(),
+        MaxEuler = pkg.ReadVector3(),
+        MovementOffset = pkg.ReadVector3(),
+        MotionState = (MotionState)pkg.ReadInt()
       };
     }
 
     public void Save(ZDO zdo, SwivelCustomConfig config)
     {
       zdo.Set(Key_Mode, (int)config.Mode);
-      zdo.Set(Key_LerpSpeed, config.MovementLerpSpeed);
+      zdo.Set(Key_LerpSpeed, config.InterpolationSpeed);
       zdo.Set(Key_TrackMin, config.MinTrackingRange);
       zdo.Set(Key_TrackMax, config.MaxTrackingRange);
       zdo.Set(Key_HingeAxes, (int)config.HingeAxes);
@@ -72,10 +96,10 @@ namespace ValheimVehicles.Config
 
     public SwivelCustomConfig Load(ZDO zdo, ISwivelConfig configFromComponent)
     {
-      return new SwivelCustomConfig
+      var newConfig = new SwivelCustomConfig
       {
         Mode = (SwivelMode)zdo.GetInt(Key_Mode, (int)configFromComponent.Mode),
-        MovementLerpSpeed = zdo.GetFloat(Key_LerpSpeed, configFromComponent.MovementLerpSpeed),
+        InterpolationSpeed = zdo.GetFloat(Key_LerpSpeed, configFromComponent.InterpolationSpeed),
         MinTrackingRange = zdo.GetFloat(Key_TrackMin, configFromComponent.MinTrackingRange),
         MaxTrackingRange = zdo.GetFloat(Key_TrackMax, configFromComponent.MaxTrackingRange),
         HingeAxes = (HingeAxis)zdo.GetInt(Key_HingeAxes, (int)configFromComponent.HingeAxes),
@@ -91,30 +115,37 @@ namespace ValheimVehicles.Config
         ),
         MotionState = (MotionState)zdo.GetInt(Key_MotionState, (int)configFromComponent.MotionState)
       };
+
+      LoggerProvider.LogDebug($"Loaded new config: Mode: {newConfig.Mode} MotionState: {newConfig.MotionState}");
+
+      return newConfig;
     }
 
     public void ApplyTo(ISwivelConfig component)
     {
       component.Mode = Mode;
-      component.MovementLerpSpeed = MovementLerpSpeed;
+      component.InterpolationSpeed = InterpolationSpeed;
       component.MinTrackingRange = MinTrackingRange;
       component.MaxTrackingRange = MaxTrackingRange;
       component.HingeAxes = HingeAxes;
       component.MaxEuler = MaxEuler;
       component.MovementOffset = MovementOffset;
       component.MotionState = MotionState;
+      LoggerProvider.LogDebug("SwivelConfig: ApplyTo completed");
     }
 
     public void ApplyFrom(ISwivelConfig component)
     {
       Mode = component.Mode;
-      MovementLerpSpeed = component.MovementLerpSpeed;
+      InterpolationSpeed = component.InterpolationSpeed;
       MinTrackingRange = component.MinTrackingRange;
       MaxTrackingRange = component.MaxTrackingRange;
       HingeAxes = component.HingeAxes;
       MaxEuler = component.MaxEuler;
       MovementOffset = component.MovementOffset;
       MotionState = component.MotionState;
+
+      LoggerProvider.LogDebug("SwivelConfig: ApplyingFrom config");
     }
 
     public SwivelMode Mode
@@ -122,7 +153,7 @@ namespace ValheimVehicles.Config
       get;
       set;
     }
-    public float MovementLerpSpeed
+    public float InterpolationSpeed
     {
       get;
       set;

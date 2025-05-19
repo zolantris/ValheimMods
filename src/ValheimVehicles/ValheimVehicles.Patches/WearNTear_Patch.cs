@@ -98,7 +98,7 @@
       if (pieceController == null && RamPrefabs.IsRam(__instance.name))
       {
         var vehicle = __instance.GetComponentInParent<VehicleManager>();
-        if (vehicle.PiecesController != null)
+        if (vehicle != null && vehicle.PiecesController != null)
         {
           vehicle.PiecesController?.DestroyPiece(__instance);
         }
@@ -213,7 +213,7 @@
         __instance.GetComponentInParent<IPieceActivatorHost>();
       if (baseVehicle == null) return true;
 
-      // makes all support values below 1f very high
+      // makes all support values below 1f very high for anything within a vehicle/swivel/activator
       if (!Mathf.Approximately(__instance.m_support, 1500f) && __instance.m_nview != null && __instance.m_nview.GetZDO() != null)
       {
         __instance.m_nview.GetZDO().Set(ZDOVars.s_support, 1500f);

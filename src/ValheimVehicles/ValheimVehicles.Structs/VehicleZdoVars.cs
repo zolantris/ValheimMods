@@ -81,20 +81,20 @@ public static class VehicleZdoVars
 
   // For Components that are within a Swivel
   public const string SwivelParentId = "SwivelParentId";
+  public const string Mechanism_Swivel_TargetId = "Mechanism_swivelTargetId";
 
   // for swivels
-  public const string SwivelPersistentId = "SwivelPersistentId";
-  public const string SwivelMode = "SwivelMode";
-  public const string SwivelMaxAngleRange = "SwivelMaxAngleRange";
+  public const string SwivelSyncPosition = "SwivelSync_Position";
+  public const string SwivelSyncRotation = "SwivelSync_Rotation";
+  public const string SwivelSyncVelocity = "SwivelSync_Velocity";
+  public const string SwivelSyncAngularVelocity = "SwivelSync_AngularVelocity";
 
-  // SwivelDoors
-  public const string SwivelDoorIsOpened = "SwivelMode";
-  public const string SwivelDoorHingeMode = "SwivelMode";
-  public const string SwivelDoorHingDirectionY = "SwivelMode";
-  public const string SwivelDoorHingDirectionZ = "SwivelMode";
+  // for power systems
+  public const string Power_StoredEnergy = "PowerSystem_StoredEnergy";
+  public const string Power_StoredFuel = "PowerSystem_StoredFuel";
 
-  // SwivelTargeting
-  public const string SwivelTargetMode = "SwivelTargetMode";
-  public const string SwivelTargetMaxRange = "SwivelTargetMaxRange";
-  public const string SwivelTargetMinRange = "SwivelTargetMinRange";
+  // power system booleans
+  public const string Power_IsForceDeactivated = "PowerSystem_ForceDeactivated"; // generators/storage
+  public const string Power_IsRunning = "PowerSystem_IsRunning"; // generators
+  public const string Power_IsDemanding = "PowerSystem_IsDemanding"; // consumers and storage
 }

@@ -129,7 +129,7 @@ public class ZdoWatchController : MonoBehaviour
   public IEnumerator GetZdoFromServerAsync(int persistentId,
     Action<ZDO?> onComplete)
   {
-    if (ZNet.instance.IsServer())
+    if (ZNet.instance.IsServer() && ZNet.instance.IsDedicated())
     {
       var zdo = GetZdo(persistentId);
       Logger.LogWarning(
@@ -197,7 +197,10 @@ public class ZdoWatchController : MonoBehaviour
   }
 
 
-  public void Reset() => _zdoGuidLookup.Clear();
+  public void Reset()
+  {
+    _zdoGuidLookup.Clear();
+  }
 
   public static bool GetPersistentID(ZDO zdo, out int id)
   {
@@ -205,8 +208,10 @@ public class ZdoWatchController : MonoBehaviour
     return id != 0;
   }
 
-  public static int ZdoIdToId(ZDOID zdoid) =>
-    (int)zdoid.UserID + (int)zdoid.ID;
+  public static int ZdoIdToId(ZDOID zdoid)
+  {
+    return (int)zdoid.UserID + (int)zdoid.ID;
+  }
 
   public int GetOrCreatePersistentID(ZDO? zdo)
   {
