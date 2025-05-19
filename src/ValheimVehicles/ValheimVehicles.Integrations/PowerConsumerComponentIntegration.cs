@@ -19,6 +19,7 @@ namespace ValheimVehicles.Integrations
     public Transform ConnectorPoint => transform;
     public bool IsActive => Logic.IsActive;
     public bool IsDemanding => Logic.IsDemanding;
+    public bool IsPowerDenied => Logic.IsPowerDenied;
 
     public float RequestedPower(float deltaTime)
     {

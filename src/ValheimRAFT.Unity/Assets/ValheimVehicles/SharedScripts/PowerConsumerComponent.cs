@@ -44,6 +44,9 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
 
     public override bool IsActive => isActive;
 
+    // for PowerConsumers.
+    public bool IsPowerDenied => !IsActive && IsDemanding;
+
     public event Action<float>? OnPowerSupplied;
     public event Action? OnPowerDenied;
 

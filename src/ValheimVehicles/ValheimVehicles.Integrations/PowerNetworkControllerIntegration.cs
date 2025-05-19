@@ -2,8 +2,6 @@
 // ReSharper disable NamespaceStyle
 
 using System.Collections.Generic;
-using System.Linq;
-using Jotunn;
 using UnityEngine;
 using ValheimVehicles.SharedScripts.PowerSystem;
 
@@ -36,8 +34,12 @@ public class PowerNetworkControllerIntegration : PowerNetworkController
       for (var i = 0; i < nodes.Count; i++)
       {
         var node = nodes[i];
-        if (node == null || !node.transform || !node.IsActive)
+
+        // Only prune if the node object is destroyed or transform is invalid
+        if (node == null || node.transform == null)
+        {
           _nodesToRemove.Add(node);
+        }
       }
 
       if (_nodesToRemove.Count > 0)

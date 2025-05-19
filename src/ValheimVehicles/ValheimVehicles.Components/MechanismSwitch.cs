@@ -513,8 +513,8 @@ public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interac
 
     if (TargetSwivel && TargetSwivel.swivelPowerConsumer)
     {
-      var isActive = TargetSwivel.swivelPowerConsumer.IsActive;
-      message += $"\n[{PowerNetworkController.GetMechanismRequiredPowerStatus(isActive)}]";
+      var isPowerDenied = TargetSwivel.swivelPowerConsumer.IsPowerDenied;
+      message += $"\n[{PowerNetworkController.GetMechanismRequiredPowerStatus(!isPowerDenied)}]";
     }
 
     if ((SelectedAction == MechanismAction.SwivelActivateMode || SelectedAction == MechanismAction.SwivelEditMode) && !TargetSwivel)
