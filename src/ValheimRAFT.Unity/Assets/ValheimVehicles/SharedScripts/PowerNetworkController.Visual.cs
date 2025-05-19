@@ -20,18 +20,28 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
     [SerializeField] private bool enableVisualWires = true;
     private readonly List<LineRenderer> _activeLines = new();
 
-    public static string GetMechanismPowerConsumerStatus(bool hasPower)
+    /// <summary>
+    /// For showing activator power items. Either active or inactive status.
+    /// </summary>
+    /// <param name="isActive"></param>
+    /// <returns></returns>
+    public static string GetMechanismActivationStatus(bool isActive)
     {
-      var activationText = hasPower ? ModTranslations.PowerState_HasPower : ModTranslations.PowerState_NoPower;
-      var activationColor = hasPower ? "yellow" : "red";
-      return $"\n({ModTranslations.WithBoldText(activationText, activationColor)})";
+      var activationText = isActive ? ModTranslations.PowerState_Active : ModTranslations.PowerState_Inactive;
+      var activationColor = isActive ? "yellow" : "red";
+      return ModTranslations.WithBoldText(activationText, activationColor);
     }
 
-    public static string GetMechanismPowerSourceStatus(bool isActive)
+    /// <summary>
+    /// For showing "power" diction. Usually relates to devices that require power.
+    /// </summary>
+    /// <param name="isActive"></param>
+    /// <returns></returns>
+    public static string GetMechanismRequiredPowerStatus(bool isActive)
     {
       var activationText = isActive ? ModTranslations.PowerState_HasPower : ModTranslations.PowerState_NoPower;
       var activationColor = isActive ? "yellow" : "red";
-      return $"\n({ModTranslations.WithBoldText(activationText, activationColor)})";
+      return ModTranslations.WithBoldText(activationText, activationColor);
     }
 
 

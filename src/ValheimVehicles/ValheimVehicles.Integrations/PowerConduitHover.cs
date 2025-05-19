@@ -15,12 +15,13 @@ public class PowerConduitHover : MonoBehaviour, Hoverable
 
   public string GetHoverText()
   {
-    var baseString = $"{ModTranslations.PowerConduit_DrainPlate_Name}\n";
+    var baseString = $"{ModTranslations.PowerConduit_DrainPlate_Name}";
 
     if (PowerNetworkController.CanShowNetworkData || PrefabConfig.PowerNetwork_ShowAdditionalPowerInformationByDefault.Value)
     {
       var isActive = _plateComponent.Logic.HasPlayerInRange;
-      var stateText = PowerNetworkController.GetMechanismPowerSourceStatus(isActive);
+      var stateText = PowerNetworkController.GetMechanismActivationStatus(isActive);
+      baseString += "\n";
       baseString += stateText;
     }
 

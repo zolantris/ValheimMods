@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.Serialization;
@@ -45,10 +46,23 @@ public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interac
     set;
   }
 
+  private int targetSwivelId;
+
   public int TargetSwivelId
   {
-    get;
-    set;
+    get => targetSwivelId;
+    set
+    {
+      targetSwivelId = value;
+      if (value == 0)
+      {
+        TargetSwivel = null;
+      }
+      else
+      {
+        TargetSwivel = MechanismSwitchCustomConfig.ResolveSwivel(value);
+      }
+    }
   }
 
   public List<SwivelComponent> NearestSwivels
@@ -99,16 +113,38 @@ public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interac
     CanFireMechanismActionSideEffects = true;
   }
 
+  private readonly Stopwatch _timer = new();
+
   public IEnumerator ScheduleIntendedAction()
   {
-    if (!isActiveAndEnabled) yield break;
-    yield return new WaitForFixedUpdate();
-    if (!isActiveAndEnabled || !prefabConfigSync || !prefabConfigSync.HasInitLoaded || !this.IsNetViewValid())
+    _timer.Restart();
+    while (_timer.ElapsedMilliseconds < 10000 && !isActiveAndEnabled || !prefabConfigSync || !prefabConfigSync.HasInitLoaded || !this.IsNetViewValid())
     {
+      _timer.Reset();
+      yield return new WaitForFixedUpdate();
+    }
+
+    if (_timer.ElapsedMilliseconds >= 10000)
+    {
+      _timer.Reset();
       yield break;
     }
+
     prefabConfigSync.Load();
     UpdateIntendedAction();
+
+    // further delayed load in case we did not get the data
+    yield return new WaitForSeconds(5f);
+
+    if (!isActiveAndEnabled)
+    {
+      _timer.Reset();
+      yield break;
+    }
+
+    prefabConfigSync.Load();
+    UpdateIntendedAction();
+    _timer.Reset();
   }
 
   /// <summary>
@@ -121,13 +157,12 @@ public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interac
       prefabConfigSync.Load();
     }
 
-    // Already set and stored a SelectedAction
-    if (SelectedAction is not MechanismAction.None)
+    // Already set and stored a SelectedAction and Swivel.
+    if (targetSwivelId != 0 || SelectedAction is not MechanismAction.None)
     {
       if (SelectedAction is MechanismAction.SwivelActivateMode or MechanismAction.SwivelEditMode)
       {
-        MechanismSwitchCustomConfig.ResolveSwivel(TargetSwivelId);
-        return;
+        TargetSwivel = MechanismSwitchCustomConfig.ResolveSwivel(TargetSwivelId);
       }
 
       return;
@@ -137,6 +172,7 @@ public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interac
     if (TargetSwivelId == 0 && SwivelHelpers.FindAllSwivelsWithinRange(transform.position, out _, out var closestSwivel) && Vector3.Distance(transform.position, closestSwivel.transform.position) < 1f)
     {
       TargetSwivel = closestSwivel;
+      SetMechanismAction(MechanismAction.SwivelActivateMode);
       SetMechanismSwivel(closestSwivel);
       return;
     }
@@ -147,6 +183,11 @@ public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interac
       if (pieceController.ComponentName == PrefabNames.SwivelPrefabName)
       {
         SetMechanismAction(MechanismAction.SwivelActivateMode);
+        var swivelComponent = pieceController.transform.GetComponent<SwivelComponent>();
+        if (TargetSwivelId == 0)
+        {
+          SetMechanismSwivel(swivelComponent);
+        }
         return;
       }
 
@@ -463,12 +504,17 @@ public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interac
 
   public string GetHoverText()
   {
+    if (prefabConfigSync && !prefabConfigSync.HasInitLoaded)
+    {
+      prefabConfigSync.Load();
+    }
+
     var message = $"{ModTranslations.MechanismSwitch_CurrentActionString} {GetLocalizedActionText(SelectedAction)}\n{ModTranslations.MechanismSwitch_AltActionString}";
 
     if (TargetSwivel && TargetSwivel.swivelPowerConsumer)
     {
       var isActive = TargetSwivel.swivelPowerConsumer.IsActive;
-      message += PowerNetworkController.GetMechanismPowerSourceStatus(isActive);
+      message += $"\n[{PowerNetworkController.GetMechanismRequiredPowerStatus(isActive)}]";
     }
 
     if ((SelectedAction == MechanismAction.SwivelActivateMode || SelectedAction == MechanismAction.SwivelEditMode) && !TargetSwivel)

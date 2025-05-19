@@ -3,6 +3,7 @@
 
 #region
 
+using System.Globalization;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
@@ -132,8 +133,11 @@ namespace ValheimVehicles.SharedScripts.UI
       // === Update ===
       slider.onValueChanged.AddListener(v =>
       {
-        valueLabel.text = Mathf.RoundToInt(v).ToString();
-        onChanged?.Invoke(v);
+        // half-step IE 0.5f -> 1f -> 1.5f;
+        var rounded = Mathf.Round(v * 2f) * 0.5f;
+        slider.SetValueWithoutNotify(rounded); // prevent infinite loop
+        valueLabel.text = rounded.ToString(CultureInfo.CurrentCulture);
+        onChanged?.Invoke(rounded);
       });
 
       return container;
