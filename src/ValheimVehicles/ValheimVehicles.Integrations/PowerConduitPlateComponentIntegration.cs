@@ -24,34 +24,45 @@ public class PowerConduitPlateComponentIntegration :
 
   private readonly List<Player> _playersWithinZone = new();
 
+
+  public bool MustSync = false;
+  public Rigidbody m_body;
+  public FixedJoint m_joint;
+  private Transform? _lastParent;
+
+
   // Missing method for Players. There is no syncing method for Eitr additions only removals.
-  private const string RPC_AddEitrName = "VVC_RPC_AddEitr";
+  private const string RPC_AddEitr_Name = nameof(RPC_AddEitr);
+  private const string RPC_TriggerEnter_Name = nameof(RPC_TriggerEnter);
+  private const string RPC_TriggerExit_Name = nameof(RPC_TriggerExit);
 
   protected override void RegisterDefaultRPCs()
   {
-    RpcHandler.Register<float>(RPC_AddEitrName, RPC_AddEitr);
+    RpcHandler.Register<float>(RPC_AddEitr_Name, RPC_AddEitr);
+    RpcHandler.Register<long>(RPC_TriggerEnter_Name, RPC_TriggerEnter);
+    RpcHandler.Register<long>(RPC_TriggerExit_Name, RPC_TriggerExit);
   }
 
-  private void RPC_AddEitr(long sender, float amount)
+  public static void Request_AddEitr(Player player, float amount)
   {
-    if (Player.m_localPlayer != null)
+    if (player == null || amount <= 0f)
     {
-      Player.m_localPlayer.AddEitr(amount);
+      LoggerProvider.LogWarning($"Player is null or amount is <= 0");
+      return;
     }
-  }
-
-  public static void SendAddEitr(Player player, float amount)
-  {
-    if (player == null || amount <= 0f) return;
 
     var netView = player.GetComponent<ZNetView>();
-    if (!netView || !netView.IsValid()) return;
+    if (!netView || !netView.IsValid())
+    {
+      LoggerProvider.LogWarning($"Player has no ZNetView or is invalid");
+      return;
+    }
 
     // Only send to the owner of this player
     if (!netView.IsOwner())
     {
       var zdoOwner = netView.GetZDO().GetOwner();
-      netView.InvokeRPC(zdoOwner, RPC_AddEitrName, amount);
+      netView.InvokeRPC(zdoOwner, RPC_AddEitr_Name, amount);
     }
     else
     {
@@ -59,9 +70,8 @@ public class PowerConduitPlateComponentIntegration :
     }
   }
 
-  private void OnTriggerEnter(Collider other)
+  private void HandlePlayerEnterActiveZone(Player player)
   {
-    var player = other.GetComponentInParent<Player>();
     if (player != null && !_playersWithinZone.Contains(player))
     {
       _playersWithinZone.Add(player);
@@ -70,9 +80,8 @@ public class PowerConduitPlateComponentIntegration :
     Logic.SetHasPlayerInRange(GetAverageEitr() > 0f);
   }
 
-  private void OnTriggerExit(Collider other)
+  private void HandlePlayerExitActiveZone(Player player)
   {
-    var player = other.GetComponentInParent<Player>();
     if (player != null)
     {
       _playersWithinZone.Remove(player);
@@ -87,10 +96,62 @@ public class PowerConduitPlateComponentIntegration :
     Logic.SetHasPlayerInRange(GetAverageEitr() > 0f);
   }
 
-  public bool MustSync = false;
-  public Rigidbody m_body;
-  public FixedJoint m_joint;
-  private Transform? _lastParent;
+#region RPCS
+
+  private void RPC_AddEitr(long sender, float amount)
+  {
+    if (Player.m_localPlayer != null)
+    {
+      Player.m_localPlayer.AddEitr(amount);
+    }
+  }
+
+
+  private void RPC_TriggerEnter(long sender, long playerId)
+  {
+    var player = Player.GetPlayer(playerId);
+    if (!player) return;
+    HandlePlayerEnterActiveZone(player);
+  }
+
+  private void RPC_TriggerExit(long sender, long playerId)
+  {
+    var player = Player.GetPlayer(playerId);
+    if (!player) return;
+    HandlePlayerExitActiveZone(player);
+  }
+
+#endregion
+
+
+#region Events
+
+  // Events
+  private void OnTriggerEnter(Collider other)
+  {
+    var player = other.GetComponentInParent<Player>();
+    if (!player) return;
+
+    HandlePlayerEnterActiveZone(player);
+
+    if (this.IsNetViewValid(out var netView))
+    {
+      netView.InvokeRPC(nameof(RPC_TriggerEnter_Name), player.GetPlayerID());
+    }
+  }
+
+  private void OnTriggerExit(Collider other)
+  {
+    var player = other.GetComponentInParent<Player>();
+    HandlePlayerExitActiveZone(player);
+
+    if (this.IsNetViewValid(out var netView))
+    {
+      netView.InvokeRPC(nameof(RPC_TriggerExit_Name), player.GetPlayerID());
+    }
+  }
+
+#endregion
 
   protected override void Start()
   {
@@ -206,7 +267,7 @@ public class PowerConduitPlateComponentIntegration :
     var perPlayer = amount / validReceivers.Count;
     foreach (var player in validReceivers)
     {
-      SendAddEitr(player, perPlayer);
+      Request_AddEitr(player, perPlayer);
     }
   }
 

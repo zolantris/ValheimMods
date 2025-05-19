@@ -60,30 +60,20 @@ namespace ValheimVehicles.Integrations
 
     private void RPC_Charge(long sender, float amount)
     {
-      if (!this.IsNetViewValid(out var netView)) return;
-      if (netView.IsOwner() || !netView.HasOwner())
+      this.RunIfOwnerOrServerOrNoOwner(_ =>
       {
-        if (!netView.IsOwner() && ZNet.instance.IsServer())
-        {
-          netView.ClaimOwnership();
-        }
         Logic.Charge(amount);
         UpdateNetworkedData();
-      }
+      });
     }
 
     private void RPC_Discharge(long sender, float amount)
     {
-      if (!this.IsNetViewValid(out var netView)) return;
-      if (netView.IsOwner() || !netView.HasOwner())
+      this.RunIfOwnerOrServerOrNoOwner(_ =>
       {
-        if (!netView.IsOwner() && ZNet.instance.IsServer())
-        {
-          netView.ClaimOwnership();
-        }
         Logic.Discharge(amount);
         UpdateNetworkedData();
-      }
+      });
     }
 
     public string NetworkId => Logic.NetworkId;

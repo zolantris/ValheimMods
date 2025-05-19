@@ -2,6 +2,8 @@
 // ReSharper disable NamespaceStyle
 
 using System;
+using System.Diagnostics.CodeAnalysis;
+using JetBrains.Annotations;
 using UnityEngine;
 using ValheimVehicles.Helpers;
 using ValheimVehicles.Integrations.Interfaces;
@@ -81,17 +83,11 @@ namespace ValheimVehicles.Integrations
 
     public virtual void UpdateNetworkedData()
     {
-      if (!this.IsNetViewValid(out var netView)) return;
-      if (ZNet.instance.IsServer() || netView.IsOwner() || !netView.HasOwner())
+      this.RunIfOwnerOrServerOrNoOwner((nv) =>
       {
-        if (!netView.IsOwner())
-        {
-          netView.ClaimOwnership();
-        }
-
-        Config.Save(netView.GetZDO(), Component);
-        netView.InvokeRPC(ZNetView.Everybody, instanced_RpcNotifyStateUpdate);
-      }
+        Config.Save(nv.GetZDO(), Component);
+        nv.InvokeRPC(ZNetView.Everybody, instanced_RpcNotifyStateUpdate);
+      });
     }
 
     protected void RegisterRPC<T>(string name, Action<long, T> method)
@@ -122,18 +118,6 @@ namespace ValheimVehicles.Integrations
       if (this.IsNetViewValid(out var netView))
       {
         Config.Load(netView.GetZDO(), Component);
-      }
-    }
-
-    protected void RunIfOwnerOrServer(Action action)
-    {
-      if (!this.IsNetViewValid(out var netView)) return;
-      if (netView.IsOwner() || ZNet.instance.IsServer())
-      {
-        if (!netView.IsOwner())
-          netView.ClaimOwnership();
-
-        action();
       }
     }
   }
