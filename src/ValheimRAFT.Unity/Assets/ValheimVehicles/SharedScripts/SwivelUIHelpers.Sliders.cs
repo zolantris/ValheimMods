@@ -7,6 +7,7 @@ using System.Globalization;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 #endregion
@@ -16,6 +17,28 @@ namespace ValheimVehicles.SharedScripts.UI
 
   public static partial class SwivelUIHelpers
   {
+
+    public class CustomSlider : Slider
+    {
+      public float keyboardStep = 0.5f;
+
+      public override void OnMove(AxisEventData eventData)
+      {
+        // Prevent default slider behavior
+        if (eventData.moveDir == MoveDirection.Left || eventData.moveDir == MoveDirection.Right)
+        {
+          var delta = eventData.moveDir == MoveDirection.Right ? keyboardStep : -keyboardStep;
+          var newValue = Mathf.Clamp(value + delta, minValue, maxValue);
+          SetValueWithoutNotify(newValue);
+          onValueChanged.Invoke(newValue);
+          eventData.Use(); // prevent bubbling
+        }
+        else
+        {
+          base.OnMove(eventData); // for Up/Down/Tab etc.
+        }
+      }
+    }
 
     public static GameObject AddSliderRow(Transform parent, SwivelUISharedStyles viewStyles, string label, float min, float max, float initial, UnityAction<float> onChanged)
     {
@@ -29,7 +52,7 @@ namespace ValheimVehicles.SharedScripts.UI
       horizontalLayout.padding = new RectOffset(0, 0, 12, 12);
 
       // === Slider GameObject ===
-      var sliderGO = new GameObject("Slider", typeof(RectTransform), typeof(Slider), typeof(LayoutElement));
+      var sliderGO = new GameObject("Slider", typeof(RectTransform), typeof(CustomSlider), typeof(LayoutElement));
 
       var layoutElement = sliderGO.GetComponent<LayoutElement>();
       layoutElement.minHeight = 24;
