@@ -13,12 +13,6 @@ public class PowerConduitHover : MonoBehaviour, Hoverable
     _plateComponent = GetComponent<PowerConduitPlateComponentIntegration>();
   }
 
-  public string GetPowerConduitModeName()
-  {
-    if (!_plateComponent.Logic) return "";
-    return _plateComponent.Logic.mode.ToString();
-  }
-
   public string GetHoverText()
   {
     var baseString = $"{ModTranslations.PowerConduit_DrainPlate_Name}\n";
@@ -26,10 +20,7 @@ public class PowerConduitHover : MonoBehaviour, Hoverable
     if (PowerNetworkController.CanShowNetworkData || PrefabConfig.PowerNetwork_ShowAdditionalPowerInformationByDefault.Value)
     {
       var isActive = _plateComponent.Logic.HasPlayerInRange;
-      var color = isActive ? "yellow" : "red";
-      var text = isActive ? ModTranslations.PowerState_Conduit_Active : ModTranslations.PowerState_Conduit_Inactive;
-
-      var stateText = $"({ModTranslations.WithBoldText(text, color)})";
+      var stateText = PowerNetworkController.GetMechanismPowerSourceStatus(isActive);
       baseString += stateText;
     }
 

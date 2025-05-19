@@ -10,6 +10,8 @@ namespace ValheimVehicles.Interfaces
     float Capacity { get; }
     float CapacityRemaining { get; }
     float Charge(float amount);
+    void CommitDischarge(float amount);
+    float PeekDischarge(float amount);
     float Discharge(float amount);
     bool IsCharging { get; }
     void SetCapacity(float val);

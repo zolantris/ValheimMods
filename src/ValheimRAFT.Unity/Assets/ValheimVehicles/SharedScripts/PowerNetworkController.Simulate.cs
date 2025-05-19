@@ -184,10 +184,8 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
 
       UpdateListData(nodes);
 
-      // 1. Calculate total demand
+      // 1. Total demand from consumers and conduits
       var totalDemand = GetTotalConsumerDemand(deltaTime);
-      var totalConsumerDemand = totalDemand;
-
 
       foreach (var conduit in _conduits)
       {
@@ -195,52 +193,49 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
           totalDemand += conduit.RequestPower(deltaTime);
       }
 
-      // Add demand from storage up to BatteryDemandPercentage
+      // 1.5. Add battery demand if not full
       var storageDemand = 0f;
       foreach (var storage in _storage)
       {
-        var targetCapacity = storage.Capacity;
-        if (storage.ChargeLevel < targetCapacity)
-          storageDemand += Mathf.Clamp(targetCapacity - storage.ChargeLevel, 0f, storage.Capacity);
+        if (storage.ChargeLevel < storage.Capacity)
+          storageDemand += Mathf.Clamp(storage.Capacity - storage.ChargeLevel, 0f, storage.Capacity);
       }
 
       totalDemand += storageDemand;
-
       var isDemanding = totalDemand > 0f;
 
-      // 2. Try supplying from storage/conduits first
+      // 2. Try supplying from conduits and storage (peek only)
+      var suppliedFromConduits = 0f;
+      foreach (var conduit in _conduits)
+      {
+        if (totalDemand <= 0f) break;
+        var supplied = conduit.SupplyPower(deltaTime);
+        suppliedFromConduits += supplied;
+        totalDemand -= supplied;
+      }
+
+      var storageDischargeMap = new Dictionary<IPowerStorage, float>();
       var suppliedFromStorage = 0f;
       var remainingDemand = totalDemand;
 
-      foreach (var conduit in _conduits)
-      {
-        if (remainingDemand <= 0f) break;
-        var supplied = conduit.SupplyPower(deltaTime);
-        suppliedFromStorage += supplied;
-        remainingDemand -= supplied;
-      }
-
       foreach (var storage in _storage)
       {
         if (remainingDemand <= 0f) break;
-        var supplied = storage.Discharge(remainingDemand);
-        suppliedFromStorage += supplied;
-        remainingDemand -= supplied;
+
+        var offered = storage.PeekDischarge(remainingDemand);
+        if (offered > 0f)
+        {
+          storageDischargeMap[storage] = offered;
+          suppliedFromStorage += offered;
+          remainingDemand -= offered;
+        }
       }
 
-      // 3. Offer power from sources (even if no consumers, as long as storage isn't full)
+      // 3. Offer power from sources if demand still exists or storage needs charge
       var offeredFromSources = 0f;
       var sourceOfferMap = new Dictionary<IPowerSource, float>();
 
-      var hasChargeableStorage = false;
-      foreach (var storage in _storage)
-      {
-        if (storage.ChargeLevel < storage.Capacity)
-        {
-          hasChargeableStorage = true;
-          break;
-        }
-      }
+      var hasChargeableStorage = _storage.Exists(s => s.ChargeLevel < s.Capacity);
 
       if (remainingDemand > 0f || hasChargeableStorage)
       {
@@ -252,13 +247,13 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
             sourceOfferMap[source] = offered;
             offeredFromSources += offered;
 
-            if (offeredFromSources + suppliedFromStorage >= totalDemand && !hasChargeableStorage)
+            if (offeredFromSources + suppliedFromStorage + suppliedFromConduits >= totalDemand && !hasChargeableStorage)
               break;
           }
         }
       }
 
-      var totalAvailable = offeredFromSources + suppliedFromStorage;
+      var totalAvailable = offeredFromSources + suppliedFromStorage + suppliedFromConduits;
 
       // 4. Apply power to consumers
       foreach (var consumer in _consumers)
@@ -271,8 +266,27 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
         consumer.ApplyPower(granted, deltaTime);
       }
 
-      // 5. Feed energy to storage (charge up to full 100%)
-      var usedForStorage = 0f;
+      // 4.5. Commit Discharge for only the power that was actually used
+      var totalUsedPower = offeredFromSources + suppliedFromStorage + suppliedFromConduits - totalAvailable;
+
+      var usedFromDischarge = Mathf.Clamp(totalUsedPower - offeredFromSources - suppliedFromConduits, 0f, suppliedFromStorage);
+
+      var toCommitDischarge = usedFromDischarge;
+      foreach (var kvp in storageDischargeMap)
+      {
+        var offered = kvp.Value;
+        var commitAmount = Mathf.Min(offered, toCommitDischarge);
+        kvp.Key.CommitDischarge(commitAmount);
+        toCommitDischarge -= commitAmount;
+        if (toCommitDischarge <= 0f) break;
+      }
+
+
+// ⚠️ Prevent recharge from own discharge
+      totalAvailable -= suppliedFromStorage;
+      totalAvailable = Mathf.Max(0f, totalAvailable); // avoid negatives
+
+// 5. Feed true surplus to charge storage
       foreach (var storage in _storage)
       {
         if (totalAvailable <= 0f) break;
@@ -281,25 +295,23 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
         if (remainingCapacity <= 0f) continue;
 
         var accepted = storage.Charge(totalAvailable);
-        usedForStorage += accepted;
         totalAvailable -= accepted;
       }
 
-      // 6. Final fuel burn for used source power
-      var totalUsed = offeredFromSources + suppliedFromStorage - totalAvailable;
-      var usedFromSources = Mathf.Clamp(totalUsed - suppliedFromStorage, 0f, offeredFromSources);
-      var toCommit = usedFromSources;
+      // 6. Final fuel burn (committed energy from sources)
+      var usedFromSources = Mathf.Clamp(totalUsedPower - usedFromDischarge - suppliedFromConduits, 0f, offeredFromSources);
+      var toCommitSources = usedFromSources;
 
       foreach (var kvp in sourceOfferMap)
       {
         var offered = kvp.Value;
-        var committed = Mathf.Min(offered, toCommit);
-        kvp.Key.CommitEnergyUsed(committed);
-        toCommit -= committed;
-
-        if (toCommit <= 0f) break;
+        var commitAmount = Mathf.Min(offered, toCommitSources);
+        kvp.Key.CommitEnergyUsed(commitAmount);
+        toCommitSources -= commitAmount;
+        if (toCommitSources <= 0f) break;
       }
     }
+
 
     public class PowerNetworkData
     {

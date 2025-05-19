@@ -87,7 +87,6 @@ public class PowerSourceComponentIntegration :
   public void CommitEnergyUsed(float energyUsed)
   {
     Logic.CommitEnergyUsed(energyUsed);
-    UpdateNetworkedData();
   }
   public void SetRunning(bool state)
   {

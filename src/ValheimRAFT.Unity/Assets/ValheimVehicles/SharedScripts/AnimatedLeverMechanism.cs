@@ -33,8 +33,8 @@
 
       public float SpeedFactor = 10f;
       public float GearRotationSpeed = 360f;
-      public float GearMinRunTime = 1.5f;
-      public float GearMaxRunTime = 5f;
+      public float GearMinRunTime = ToggleDuration;
+      public float GearMaxRunTime = ToggleDuration;
       public float GearStartDelay;
 
       private DynamicLineConnector _dynamicWire;

@@ -186,8 +186,8 @@ public partial class ModTranslations
     Swivel_Connected = SafeLocalize("$valheim_vehicles_mechanism_swivel_connected");
     NoMechanismNearby = SafeLocalize("$valheim_vehicles_no_mechanism_nearby");
 
-    PowerState_Conduit_Active = SafeLocalize("$valheim_vehicles_mechanism_power_conduit_state_active");
-    PowerState_Conduit_Inactive = SafeLocalize("$valheim_vehicles_mechanism_power_conduit_state_inactive");
+    PowerState_Active = SafeLocalize("$valheim_vehicles_mechanism_power_state_active");
+    PowerState_Inactive = SafeLocalize("$valheim_vehicles_mechanism_power_state_inactive");
 
     Power_NetworkInfo_NetworkData = SafeLocalize("$valheim_vehicles_mechanism_network_data");
     Power_NetworkInfo_NetworkPower = SafeLocalize("$valheim_vehicles_mechanism_network_power");
@@ -216,6 +216,7 @@ public partial class ModTranslations
     PowerSource_Message_AddedFromContainer = SafeLocalize("$valheim_vehicles_mechanism_added_from_container");
 
     PowerSource_Message_AddedFromPlayer = SafeLocalize("$valheim_vehicles_mechanism_added_from_container");
+    Power_NetworkInfo_NetworkStatus = SafeLocalize("$valheim_vehicles_mechanism_network_status");
   }
 
   public static void UpdateSwivelUITranslations()
@@ -243,8 +244,7 @@ public partial class ModTranslations
     SwivelMode_TargetEnemy = SafeLocalize("$valheim_vehicles_swivel_mode_target_enemy");
     SwivelMode_TargetWind = SafeLocalize("$valheim_vehicles_swivel_mode_target_wind");
 
-    Mechanism_Switch_Swivel_SelectedSwivel = SafeLocalize("$valheim_vehicles_mechanism_switch_swivel_selected_swivel");
-    Mechanism_Switch_Mode = SafeLocalize("$valheim_vehicles_mechanism_switch_mode");
+    Mechanism_Switch_Swivel_SelectedSwivel = SafeLocalize("$valheim_vehicles_mechanism_switch_swivel_target_swivel");
     SharedKey_Mode = SafeLocalize("$valheim_vehicles_shared_keys_mode");
   }
 

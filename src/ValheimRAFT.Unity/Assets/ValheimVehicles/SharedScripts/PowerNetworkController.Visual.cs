@@ -4,6 +4,7 @@
 
 #region
 
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using ValheimVehicles.SharedScripts.PowerSystem.Interfaces;
@@ -19,20 +20,20 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
     [SerializeField] private bool enableVisualWires = true;
     private readonly List<LineRenderer> _activeLines = new();
 
-    public static string GetPoweredUnpoweredStatus(bool hasPower)
+    public static string GetMechanismPowerConsumerStatus(bool hasPower)
     {
       var activationText = hasPower ? ModTranslations.PowerState_HasPower : ModTranslations.PowerState_NoPower;
       var activationColor = hasPower ? "yellow" : "red";
       return $"\n({ModTranslations.WithBoldText(activationText, activationColor)})";
     }
 
-
-    public static string GetNetworkPowerStatus(IPowerConsumer consumer)
+    public static string GetMechanismPowerSourceStatus(bool isActive)
     {
-      var activationState = consumer.IsActive;
-      var activationText = GetPoweredUnpoweredStatus(activationState);
-      return activationText;
+      var activationText = isActive ? ModTranslations.PowerState_HasPower : ModTranslations.PowerState_NoPower;
+      var activationColor = isActive ? "yellow" : "red";
+      return $"\n({ModTranslations.WithBoldText(activationText, activationColor)})";
     }
+
 
     /// <summary>
     /// Consumers must be not demanding or demanding and active. To be healthy/powered.
@@ -68,18 +69,16 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
     /// </summary>
     public static string GetNetworkPowerStatusString(string networkId)
     {
-      if (CanShowNetworkData && TryNetworkPowerData(networkId, out var networkData))
-      {
-        return networkData.Cached_NetworkDataString;
-      }
-      return "";
+      if (!CanShowNetworkData) return string.Empty;
+      return TryNetworkPowerData(networkId, out var networkData) ? networkData.Cached_NetworkDataString : string.Empty;
     }
 
     private static string GenerateNetworkDataString(string networkId, PowerNetworkData data)
     {
       var baseString = "";
       baseString += "\n";
-      baseString += $"\n{ModTranslations.Power_NetworkInfo_NetworkData}";
+      baseString += $"\n{ModTranslations.WithBoldText(ModTranslations.Power_NetworkInfo_NetworkData)}";
+      baseString += $"\n{ModTranslations.WithBoldText(ModTranslations.Power_NetworkInfo_NetworkStatus, "yellow")}: {data.NetworkConsumerPowerStatus}";
       baseString += $"\n{ModTranslations.WithBoldText(ModTranslations.Power_NetworkInfo_NetworkId, "yellow")}: {networkId}";
       baseString += $"\n{ModTranslations.WithBoldText(ModTranslations.Power_NetworkInfo_NetworkPower, "yellow")}: {data.NetworkPowerSupply}/{data.NetworkPowerCapacity}";
       baseString += $"\n{ModTranslations.WithBoldText(ModTranslations.Power_NetworkInfo_NetworkFuel, "yellow")}: {data.NetworkFuelSupply}/{data.NetworkFuelCapacity}";
@@ -90,19 +89,8 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
 
     private static string GenerateNetworkDataString(string? networkId)
     {
-      var baseString = "";
-      if (!CanShowNetworkData) return baseString;
-      if (networkId == null) return baseString;
-      if (TryNetworkPowerData(networkId, out var networkData))
-      {
-        baseString += "\n";
-        baseString += $"\n{ModTranslations.Power_NetworkInfo_NetworkData}";
-        baseString += $"\n{ModTranslations.WithBoldText(ModTranslations.Power_NetworkInfo_NetworkId, "yellow")}: {networkId}";
-        baseString += $"\n{ModTranslations.WithBoldText(ModTranslations.Power_NetworkInfo_NetworkPower, "yellow")}: {networkData.NetworkPowerSupply}/{networkData.NetworkPowerCapacity}";
-        baseString += $"\n{ModTranslations.WithBoldText(ModTranslations.Power_NetworkInfo_NetworkFuel, "yellow")}: {networkData.NetworkFuelSupply}/{networkData.NetworkFuelCapacity}";
-        baseString += $"\n{ModTranslations.WithBoldText(ModTranslations.Power_NetworkInfo_NetworkDemand, "yellow")}: {networkData.NetworkPowerDemand}";
-      }
-      return baseString;
+      if (!CanShowNetworkData || networkId == null || !TryNetworkPowerData(networkId, out var networkData)) return string.Empty;
+      return GenerateNetworkDataString(networkId, networkData);
     }
 
     protected void ClearVisualWires()

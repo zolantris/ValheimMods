@@ -464,10 +464,18 @@ public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interac
   public string GetHoverText()
   {
     var message = $"{ModTranslations.MechanismSwitch_CurrentActionString} {GetLocalizedActionText(SelectedAction)}\n{ModTranslations.MechanismSwitch_AltActionString}";
+
+    if (TargetSwivel && TargetSwivel.swivelPowerConsumer)
+    {
+      var isActive = TargetSwivel.swivelPowerConsumer.IsActive;
+      message += PowerNetworkController.GetMechanismPowerSourceStatus(isActive);
+    }
+
     if ((SelectedAction == MechanismAction.SwivelActivateMode || SelectedAction == MechanismAction.SwivelEditMode) && !TargetSwivel)
     {
       message += $"\n{ModTranslations.NoMechanismNearby}";
     }
+
     if (SelectedAction == MechanismAction.SwivelActivateMode && TargetSwivel && TargetSwivel.swivelPowerConsumer)
     {
       message += PowerNetworkController.GetNetworkPowerStatusString(TargetSwivel.swivelPowerConsumer.NetworkId);

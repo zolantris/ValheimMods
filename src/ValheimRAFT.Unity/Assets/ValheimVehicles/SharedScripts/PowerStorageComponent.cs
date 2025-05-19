@@ -1,6 +1,7 @@
 ﻿// ReSharper disable ArrangeNamespaceBody
 // ReSharper disable NamespaceStyle
 
+using System;
 using System.ComponentModel;
 using UnityEngine;
 using ValheimVehicles.Interfaces;
@@ -31,14 +32,46 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
 
     public float Capacity => energyCapacity;
     public float CapacityRemaining => energyCapacity - storedEnergy;
+    private float _peekedDischargeAmount = 0f;
+    public bool IsCharging { get; set; }
 
     public void SetStoredEnergy(float val)
     {
-      if (val == 0)
+      // pre-calculation to get Charging/Active State.
+      var nextEnergyVal = Mathf.Clamp(val, 0f, energyCapacity);
+      UpdatePowerStates(storedEnergy, nextEnergyVal);
+
+      // main setter.
+      storedEnergy = nextEnergyVal;
+
+      // side effects
+      UpdatePowerAnimations();
+      UpdateChargeScale();
+    }
+
+    private float _lastCharge = 0f;
+    private float _lastChargeTime = 0f;
+    private const float chargeCheckInterval = 0.5f;
+
+    public void UpdatePowerStates(float current, float next)
+    {
+      var shouldCheckIfStayingInPlace = _lastChargeTime + chargeCheckInterval < Time.time;
+      if (Mathf.Approximately(_lastCharge, next) || Mathf.Approximately(next, 0f) || Mathf.Approximately(next, energyCapacity))
       {
-        LoggerProvider.LogDev("Stored energy is set to Zero somehow");
+        isActive = false;
       }
-      storedEnergy = val;
+      else
+      {
+        isActive = true;
+      }
+
+      if (shouldCheckIfStayingInPlace)
+      {
+        _lastChargeTime = Time.time;
+        _lastCharge = next;
+      }
+
+      IsCharging = next > current;
     }
 
     protected override void Awake()
@@ -49,7 +82,7 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
 
       if (!powerRotatorTransform)
       {
-        throw new System.Exception("PowerStorageComponent: PowerRotatorTransform not found");
+        throw new Exception("PowerStorageComponent: PowerRotatorTransform not found");
       }
 
       var rotator = powerRotatorTransform.GetComponent<AnimatedMachineComponent>();
@@ -73,26 +106,45 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
       SetCapacity(baseEnergyCapacity);
     }
 
-    protected void FixedUpdate()
+    public float PeekDischarge(float amount)
     {
-      UpdatePowerAnimations();
-      UpdateChargeScale();
+      if (_peekedDischargeAmount > 0f)
+      {
+        _peekedDischargeAmount = 0f;
+      }
+
+      _peekedDischargeAmount = MathUtils.RoundToHundredth(Mathf.Min(storedEnergy, amount));
+      return _peekedDischargeAmount;
+    }
+
+    public void CommitDischarge(float amount)
+    {
+      var commit = MathUtils.RoundToHundredth(Mathf.Min(_peekedDischargeAmount, amount));
+
+      var localEnergy = storedEnergy - commit;
+      SetStoredEnergy(localEnergy);
+
+      _peekedDischargeAmount = 0f;
     }
 
     public float Charge(float amount)
     {
       var space = energyCapacity - storedEnergy;
-      var toCharge = Mathf.Min(space, amount);
-      storedEnergy += toCharge;
-      IsCharging = true;
+      var toCharge = MathUtils.RoundToHundredth(Mathf.Min(space, amount));
+
+      var localEnergy = storedEnergy + toCharge;
+      SetStoredEnergy(localEnergy);
+
       return toCharge;
     }
 
     public float Discharge(float amount)
     {
-      var toDischarge = Mathf.Min(storedEnergy, amount);
-      storedEnergy -= toDischarge;
-      IsCharging = false;
+      var toDischarge = MathUtils.RoundToHundredth(Mathf.Min(storedEnergy, amount));
+
+      var localEnergy = storedEnergy - toDischarge;
+      SetStoredEnergy(localEnergy);
+
       return toDischarge;
     }
 
@@ -106,8 +158,9 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
       isActive = value;
     }
 
-    public bool IsCharging { get; set; }
-
+    /// <summary>
+    /// To be run in a network manager or directly in the setter as a mutation
+    /// </summary>
     private void UpdateChargeScale()
     {
       if (!m_visualEnergyLevel || energyCapacity <= 0f) return;
@@ -117,17 +170,19 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
       m_visualEnergyLevel.localScale = scale;
     }
 
+    /// <summary>
+    /// To be run in a network manager or directly in the setter as a mutation
+    /// </summary>
     public void UpdatePowerAnimations()
     {
       // disable when at 0 or at capacity
-      var isZeroOrAtCapacity = storedEnergy <= 0f || storedEnergy >= energyCapacity;
-      if (powerRotator.enabled && isZeroOrAtCapacity)
+      if (!IsActive && powerRotator.enabled)
       {
         powerRotator.enabled = false;
         return;
       }
 
-      if (!isZeroOrAtCapacity && storedEnergy > 0f && !powerRotator.enabled)
+      if (IsActive && !powerRotator.enabled)
       {
         powerRotator.enabled = true;
       }

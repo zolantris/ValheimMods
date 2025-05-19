@@ -188,9 +188,10 @@
   "valheim_vehicles_mechanism_power_state_connect_to_grid": "Connect to Grid.",
   "valheim_vehicles_mechanism_power_state_has_power": "Powered",
   "valheim_vehicles_mechanism_power_state_no_power": "Power Required",
-  "valheim_vehicles_mechanism_power_conduit_state_active": "Active",
-  "valheim_vehicles_mechanism_power_conduit_state_inactive": "Inactive",
+  "valheim_vehicles_mechanism_power_state_active": "Active",
+  "valheim_vehicles_mechanism_power_state_inactive": "Inactive",
   "valheim_vehicles_mechanism_network_data": "Power Network Data",
+  "valheim_vehicles_mechanism_network_status": "Status",
   "valheim_vehicles_mechanism_network_power": "Power",
   "valheim_vehicles_mechanism_network_power_capacity": "Power Capacity",
   "valheim_vehicles_mechanism_network_fuel": "Fuel",
@@ -246,7 +247,6 @@
   "valheim_vehicles_commands_physics_debugger": "Physics Debugger",
   "valheim_vehicles_commands_destroy_vehicle": "Destroy Current Vehicle",
   "valheim_vehicles_commands_config_panel": "Config",
-  "valheim_vehicles_mechanism_switch_swivel_selected_swivel": "Target Swivel Id",
-  "valheim_vehicles_mechanism_switch_mode": "Target Swivel Id",
+  "valheim_vehicles_mechanism_switch_swivel_target_swivel": "Target Swivel By Distance & ID",
   "valheim_vehicles_shared_keys_mode": "Mode"
 }

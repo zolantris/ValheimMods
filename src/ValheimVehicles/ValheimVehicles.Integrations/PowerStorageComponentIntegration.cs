@@ -17,8 +17,7 @@ namespace ValheimVehicles.Integrations
     {
       base.Awake();
       // don't do anything when we aren't initialized.
-      if (!this.IsNetViewValid(out var netView)) return;
-
+      if (!this.IsNetViewValid()) return;
       PowerNetworkController.RegisterPowerComponent(this);
     }
     protected void OnDestroy()
@@ -61,14 +60,30 @@ namespace ValheimVehicles.Integrations
 
     private void RPC_Charge(long sender, float amount)
     {
-      Logic.Charge(amount);
-      UpdateNetworkedData();
+      if (!this.IsNetViewValid(out var netView)) return;
+      if (netView.IsOwner() || !netView.HasOwner())
+      {
+        if (!netView.IsOwner() && ZNet.instance.IsServer())
+        {
+          netView.ClaimOwnership();
+        }
+        Logic.Charge(amount);
+        UpdateNetworkedData();
+      }
     }
 
     private void RPC_Discharge(long sender, float amount)
     {
-      Logic.Discharge(amount);
-      UpdateNetworkedData();
+      if (!this.IsNetViewValid(out var netView)) return;
+      if (netView.IsOwner() || !netView.HasOwner())
+      {
+        if (!netView.IsOwner() && ZNet.instance.IsServer())
+        {
+          netView.ClaimOwnership();
+        }
+        Logic.Discharge(amount);
+        UpdateNetworkedData();
+      }
     }
 
     public string NetworkId => Logic.NetworkId;
@@ -86,6 +101,17 @@ namespace ValheimVehicles.Integrations
     {
       Logic.SetActive(val);
     }
+
+    public float PeekDischarge(float amount)
+    {
+      return Logic.PeekDischarge(amount);
+    }
+
+    public void CommitDischarge(float amount)
+    {
+      Logic.CommitDischarge(amount);
+    }
+
     public float ChargeLevel => Logic.ChargeLevel;
     public float Capacity => Logic.Capacity;
 

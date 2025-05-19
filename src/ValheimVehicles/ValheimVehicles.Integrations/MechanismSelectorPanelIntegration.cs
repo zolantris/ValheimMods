@@ -46,9 +46,6 @@ public class MechanismSelectorPanelIntegration : MechanismSelectorPanel
     if (mechanismAction == null) return;
     if (IsEditing) return;
 
-    // Ignore MotionState (readonly)
-    var old = _currentPanelConfig;
-
     if (_currentPanelConfig.SelectedAction != updated.prefabConfigSync.Config.SelectedAction)
     {
       actionDropdown.value = (int)updated.prefabConfigSync.Config.SelectedAction;
@@ -57,11 +54,10 @@ public class MechanismSelectorPanelIntegration : MechanismSelectorPanel
 
     if (_currentPanelConfig.TargetSwivelId != updated.prefabConfigSync.Config.TargetSwivelId)
     {
-      var index = swivelSelectorDropdown.options.FindIndex(x => x.text.Contains(updated.TargetSwivelId.ToString().Substring(0, 5)));
+      var index = swivelSelectorDropdown.options.FindIndex(x => x.text.Contains(PersistentIdToString(updated.TargetSwivelId)));
       swivelSelectorDropdown.value = index;
       _currentPanelConfig.TargetSwivelId = updated.prefabConfigSync.Config.TargetSwivelId;
     }
-
 
     IsEditing = false;
   }
@@ -70,15 +66,4 @@ public class MechanismSelectorPanelIntegration : MechanismSelectorPanel
   {
     return PanelUtil.CreateDraggableHideShowPanel(PanelName, panelStyles, buttonStyles, ModTranslations.GuiShow, ModTranslations.GuiHide, GuiConfig.SwivelPanelLocation);
   }
-
-  /// <summary>
-  /// TODO use create draggable CreateDraggableHideShowPanel() from PanelUtil instead for this smaller component
-  /// </summary>
-  // public override void CreateUI()
-  // {
-  //
-  //   // CreateDraggableHideShowPanel
-  //   panelRoot = CreateUIRoot();
-  //   base.CreateUI();
-  // }
 }

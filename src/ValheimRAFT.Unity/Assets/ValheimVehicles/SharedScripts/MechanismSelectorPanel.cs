@@ -106,6 +106,11 @@ namespace ValheimVehicles.SharedScripts.UI
       UnsetSavedState();
     }
 
+    public string PersistentIdToString(int persistentId)
+    {
+      return persistentId.ToString();
+    }
+
     public void AddOrUpdateSwivelDropdown()
     {
       if (mechanismAction == null)
@@ -124,7 +129,7 @@ namespace ValheimVehicles.SharedScripts.UI
         .Select(x =>
         {
           var dist = Vector3.Distance(selfPos, x.transform.position);
-          return $"({dist:F1}m) {x.SwivelPersistentId.ToString().Substring(0, 5)}";
+          return $"({dist:F1}m) {PersistentIdToString(x.SwivelPersistentId)}";
         }).ToList();
 
       if (!swivelSelectorDropdown)

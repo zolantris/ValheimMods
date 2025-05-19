@@ -190,9 +190,10 @@
   "valheim_vehicles_mechanism_power_state_connect_to_grid": "连接到电网",
   "valheim_vehicles_mechanism_power_state_has_power": "已通电",
   "valheim_vehicles_mechanism_power_state_no_power": "需要电力",
-  "valheim_vehicles_mechanism_power_conduit_state_active": "已激活",
-  "valheim_vehicles_mechanism_power_conduit_state_inactive": "未激活",
+  "valheim_vehicles_mechanism_power_state_active": "已激活",
+  "valheim_vehicles_mechanism_power_state_inactive": "未激活",
   "valheim_vehicles_mechanism_network_data": "电网数据",
+  "valheim_vehicles_mechanism_network_status": "状态",
   "valheim_vehicles_mechanism_network_power": "电力",
   "valheim_vehicles_mechanism_network_power_capacity": "电力容量",
   "valheim_vehicles_mechanism_network_fuel": "燃料",
@@ -247,5 +248,7 @@
   "valheim_vehicles_commands_hull_debugger": "船体调试器",
   "valheim_vehicles_commands_physics_debugger": "物理调试器",
   "valheim_vehicles_commands_destroy_vehicle": "销毁当前载具",
-  "valheim_vehicles_commands_config_panel": "配置面板"
+  "valheim_vehicles_commands_config_panel": "配置面板",
+  "valheim_vehicles_mechanism_switch_swivel_target_swivel": "根据距离和 ID 选择目标旋转装置",
+  "valheim_vehicles_shared_keys_mode": "模式"
 }

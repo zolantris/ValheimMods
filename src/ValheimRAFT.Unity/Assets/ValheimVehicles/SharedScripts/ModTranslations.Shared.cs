@@ -62,8 +62,8 @@ namespace ValheimVehicles.SharedScripts
     public static string PowerState_HasPower = null!;
     public static string PowerState_NoPower = null!;
     public static string PowerState_ConnectToGrid = null!;
-    public static string PowerState_Conduit_Active = null!;
-    public static string PowerState_Conduit_Inactive = null!;
+    public static string PowerState_Active = null!;
+    public static string PowerState_Inactive = null!;
     public static string Power_NetworkInfo_NetworkData = null!;
     public static string Power_NetworkInfo_NetworkId = null!;
     public static string Power_NetworkInfo_NetworkPower = null!;
@@ -74,6 +74,7 @@ namespace ValheimVehicles.SharedScripts
     public static string Power_NetworkInfo_NetworkLowPower = null!;
     public static string Power_NetworkInfo_NetworkPartialPower = null!;
     public static string Power_NetworkInfo_NetworkFullPower = null!;
+    public static string Power_NetworkInfo_NetworkStatus = null!;
 
     public static string PowerPylon_Name = null!;
     public static string PowerConduit_DrainPlate_Name = null!;
@@ -123,7 +124,6 @@ namespace ValheimVehicles.SharedScripts
     public static string Swivel_TargetZOffset = null!;
 
     public static string Mechanism_Switch_Swivel_SelectedSwivel = "Selected Swivel";
-    public static string Mechanism_Switch_Mode = "Mechanism Mode";
     public static string SharedKey_Mode = "Mode";
 
 // SwivelMode Enum Values
