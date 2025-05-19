@@ -188,6 +188,7 @@ public partial class ModTranslations
 
     PowerState_Active = SafeLocalize("$valheim_vehicles_mechanism_power_state_active");
     PowerState_Inactive = SafeLocalize("$valheim_vehicles_mechanism_power_state_inactive");
+    PowerState_NoEitrOnPlayers = SafeLocalize("$valheim_vehicles_mechanism_power_state_no_eitr_detected");
 
     Power_NetworkInfo_NetworkData = SafeLocalize("$valheim_vehicles_mechanism_network_data");
     Power_NetworkInfo_NetworkPower = SafeLocalize("$valheim_vehicles_mechanism_network_power");

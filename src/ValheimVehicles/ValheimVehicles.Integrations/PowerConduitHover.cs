@@ -19,8 +19,18 @@ public class PowerConduitHover : MonoBehaviour, Hoverable
 
     if (PowerNetworkController.CanShowNetworkData || PrefabConfig.PowerNetwork_ShowAdditionalPowerInformationByDefault.Value)
     {
-      var isActive = _plateComponent.Logic.HasPlayerInRange;
-      var stateText = PowerNetworkController.GetMechanismActivationStatus(isActive);
+      var isActive = _plateComponent.Logic.IsActive;
+      var HasPlayerInRange = _plateComponent.Logic.HasPlayerInRange;
+      var stateText = "";
+      if (!HasPlayerInRange && isActive)
+      {
+        stateText = ModTranslations.PowerState_NoEitrOnPlayers;
+      }
+      else
+      {
+        stateText = PowerNetworkController.GetMechanismActivationStatus(isActive);
+      }
+
       baseString += "\n";
       baseString += stateText;
     }
