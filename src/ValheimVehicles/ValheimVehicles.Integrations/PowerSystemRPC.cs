@@ -89,9 +89,9 @@ namespace ValheimVehicles.Integrations.PowerSystem
           }
         }
 
-        if (isNearAny && notified.Add(playerId))
+        if (isNearAny && notified.Add(playerId) && player.m_nview && player.m_nview.m_zdo != null)
         {
-          ZRoutedRpc.instance.InvokeRoutedRPC(player.GetPlayerID(), RPC_NotifyZDOsChanged_Name, pkg);
+          ZRoutedRpc.instance.InvokeRoutedRPC(player.m_nview.m_zdo.GetOwner(), RPC_NotifyZDOsChanged_Name, pkg);
         }
       }
     }
@@ -134,6 +134,9 @@ namespace ValheimVehicles.Integrations.PowerSystem
       pkg.SetPos(0);
       var networkId = pkg.ReadString(); // Ensure this is read first
       var count = pkg.ReadInt();
+
+      PowerNetworkControllerIntegration.MarkNetworkDirty(networkId);
+
       for (var i = 0; i < count; i++)
       {
         var zdoid = pkg.ReadZDOID();

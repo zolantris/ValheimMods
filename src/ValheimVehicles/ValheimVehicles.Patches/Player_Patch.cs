@@ -84,7 +84,7 @@
 
     public static GameObject WrapInstantiateWithPlacedPiece(Object original, Vector3 pos, Quaternion rot)
     {
-      if (ZNet.instance && ZNet.instance.IsServer())
+      if (ZNet.instance && ZNet.instance.IsDedicated())
       {
         Logger.LogWarning("[WrapInstantiateWithPlacedPiece] WARNING: This should not run on server!");
       }

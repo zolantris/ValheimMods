@@ -187,27 +187,6 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
 
     public virtual void Host_SimulateNetwork(string networkId) {}
 
-
-    private static bool NeedsCharging(List<(PowerStorageData storage, ZDO zdo)> storages)
-    {
-      foreach (var (storage, _) in storages)
-      {
-        if (storage.StoredEnergy < storage.MaxCapacity)
-          return true;
-      }
-      return false;
-    }
-
-    private static Vector3 GetNetworkFallbackPosition(PowerNetworkSimData simData)
-    {
-      if (simData.Conduits.Count > 0)
-        return simData.Conduits[0].Item2.GetPosition();
-      if (simData.Storages.Count > 0)
-        return simData.Storages[0].Item2.GetPosition();
-      if (simData.Sources.Count > 0)
-        return simData.Sources[0].Item2.GetPosition();
-      return Vector3.zero;
-    }
     /// <summary>
     /// Should only be run by the owner.
     /// </summary>

@@ -98,6 +98,9 @@
         <Compile Update="..\ValheimRAFT.Unity\Assets\ValheimVehicles\SharedScripts\NetworkSimData.cs">
             <Link>SharedScripts\NetworkSimData.cs</Link>
         </Compile>
+        <Compile Update="..\ValheimRAFT.Unity\Assets\ValheimVehicles\SharedScripts\ComponentUtil.cs">
+            <Link>SharedScripts\ComponentUtil.cs</Link>
+        </Compile>
     </ItemGroup>
     <ItemGroup Label="Internal ValheimVehicles scripts">
         <!-- Includes all namespace folders -->

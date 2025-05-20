@@ -13,6 +13,7 @@
     /// </summary>
     public interface IPowerNode
     {
+      GameObject gameObject { get; }
       string NetworkId { get; }
       Vector3 Position { get; }
       bool IsActive { get; }

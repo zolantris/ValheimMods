@@ -46,6 +46,7 @@ public partial class PowerNetworkControllerIntegration : PowerNetworkController
     }
     ZDOClaimUtility.RegisterClaimZdoRpc();
     RegisterRebuildRpc();
+    PowerSystemRPC.Register();
   }
 
   // DO nothing for fixed update. Hosts cannot run FixedUpdate on server I think...
@@ -145,6 +146,118 @@ public partial class PowerNetworkControllerIntegration : PowerNetworkController
       zdos.Add(zdo);
     }
     StartCoroutine(ForceSpawnOnServerIfItDoesNotExist(zdos));
+  }
+
+  public void SimulateAllNetworks(List<IPowerNode> allNodes)
+  {
+    var groupedByNetwork = new Dictionary<string, List<IPowerNode>>();
+
+    foreach (var node in allNodes)
+    {
+      if (!ZNetScene.instance || node == null) continue;
+
+      var netView = node.gameObject.GetComponent<ZNetView>();
+      if (!netView || !netView.IsValid()) continue;
+
+      var zdo = netView.GetZDO();
+      if (zdo == null) continue;
+
+      var networkId = zdo.GetString(VehicleZdoVars.Power_NetworkId);
+      if (string.IsNullOrEmpty(networkId)) continue;
+
+      if (!groupedByNetwork.TryGetValue(networkId, out var list))
+      {
+        list = new List<IPowerNode>();
+        groupedByNetwork[networkId] = list;
+      }
+
+      list.Add(node);
+    }
+
+    foreach (var kvp in groupedByNetwork)
+    {
+      var networkId = kvp.Key;
+      var nodes = kvp.Value;
+
+      Client_SimulateNetwork(nodes, networkId, false);
+    }
+  }
+  private static readonly HashSet<string> _dirtyNetworkIds = new();
+  private float _lastSimulateTime;
+
+  private Coroutine _simulateCoroutine;
+
+  private const float IdleDelay = 1f;
+  private const float MaxDelay = 3f;
+
+  public void StartDirtyNetworkCoroutine()
+  {
+    if (_simulateCoroutine != null) return;
+    _simulateCoroutine = StartCoroutine(SimulateDirtyNetworksCoroutine());
+  }
+
+  public void StopDirtyNetworkCoroutine()
+  {
+    if (_simulateCoroutine != null)
+    {
+      StopCoroutine(_simulateCoroutine);
+      _simulateCoroutine = null;
+    }
+  }
+
+  public static void MarkNetworkDirty(string networkId)
+  {
+    _dirtyNetworkIds.Add(networkId);
+  }
+
+  private IEnumerator SimulateDirtyNetworksCoroutine()
+  {
+    while (true)
+    {
+      yield return new WaitForSeconds(0.5f);
+
+      if (_dirtyNetworkIds.Count == 0) continue;
+
+      var now = Time.time;
+      var canRun = now - _lastSimulateTime >= IdleDelay;
+
+      if (canRun || now - _lastSimulateTime >= MaxDelay)
+      {
+        foreach (var networkId in _dirtyNetworkIds.ToList())
+        {
+          if (!PowerZDONetworkManager.Networks.TryGetValue(networkId, out var zdos)) continue;
+
+          var nodes = GetNodesFromZDOs(zdos);
+          Client_SimulateNetwork(nodes, networkId);
+        }
+
+        _dirtyNetworkIds.Clear();
+        _lastSimulateTime = now;
+      }
+    }
+  }
+
+  private static List<IPowerNode> GetNodesFromZDOs(List<ZDO> zdos)
+  {
+    var nodes = new List<IPowerNode>();
+    foreach (var zdo in zdos)
+    {
+      if (ZNetScene.instance == null) continue;
+
+      var go = ZNetScene.instance.FindInstance(zdo.m_uid);
+      if (go == null) continue;
+
+      var components = go.GetComponents<MonoBehaviour>();
+      foreach (var comp in components)
+      {
+        if (comp is IPowerNode node)
+        {
+          nodes.Add(node);
+          break;
+        }
+      }
+    }
+    return nodes;
   }
 
   public override void Host_SimulateNetwork(string networkId)
@@ -297,6 +410,27 @@ public partial class PowerNetworkControllerIntegration : PowerNetworkController
     }
   }
 
+  private static bool NeedsCharging(List<(PowerStorageData storage, ZDO zdo)> storages)
+  {
+    foreach (var (storage, _) in storages)
+    {
+      if (storage.StoredEnergy < storage.MaxCapacity)
+        return true;
+    }
+    return false;
+  }
+
+  private static Vector3 GetNetworkFallbackPosition(PowerNetworkSimData simData)
+  {
+    if (simData.Conduits.Count > 0)
+      return simData.Conduits[0].Item2.GetPosition();
+    if (simData.Storages.Count > 0)
+      return simData.Storages[0].Item2.GetPosition();
+    if (simData.Sources.Count > 0)
+      return simData.Sources[0].Item2.GetPosition();
+    return Vector3.zero;
+  }
+
   public void SimulateOnClientAndServer()
   {
     if (!isActiveAndEnabled || !ZNet.instance || !ZoneSystem.instance) return;
@@ -332,7 +466,7 @@ public partial class PowerNetworkControllerIntegration : PowerNetworkController
 
       if (ZNet.instance.IsServer())
       {
-        Host_SimulateNetworkZDOFull(pair.Key);
+        Host_SimulateNetwork(pair.Key);
       }
     }
 

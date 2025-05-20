@@ -203,20 +203,6 @@ public static class PrefabRegistryController
     }
   }
 
-  public static void InitBeforeZNetSceneAwake()
-  {
-    vehicleAssetBundle =
-      AssetUtils.LoadAssetBundleFromResources("valheim-vehicles",
-        Assembly.GetCallingAssembly());
-    // dependent on ValheimVehiclesShared
-    LoadValheimRaftAssets.Instance.Init(vehicleAssetBundle);
-    // dependent on ValheimVehiclesShared and RaftAssetBundle
-    LoadValheimVehicleAssets.Instance.Init(vehicleAssetBundle);
-
-    // ValheimVehicle HammerTab, must be done before items and prefab generic registrations
-    new VehicleHammerTableRegistry().Register();
-  }
-
   /**
    * initializes the bundle for ValheimVehicles
    *
@@ -232,12 +218,23 @@ public static class PrefabRegistryController
 
     try
     {
-// todo call Assembly.GetExecutingAssembly if we move the asset bundle into ValheimVehicles mod.
+      // Assembly.GetExecutingAssembly if this mod is migrated to a BepInExPlugin
+      vehicleAssetBundle =
+        AssetUtils.LoadAssetBundleFromResources("valheim-vehicles",
+          Assembly.GetCallingAssembly());
 
       prefabManager = PrefabManager.Instance;
       pieceManager = PieceManager.Instance;
 
       LoadValheimAssets.Instance.Init(prefabManager);
+
+      // dependent on ValheimVehiclesShared
+      LoadValheimRaftAssets.Instance.Init(vehicleAssetBundle);
+      // dependent on ValheimVehiclesShared and RaftAssetBundle
+      LoadValheimVehicleAssets.Instance.Init(vehicleAssetBundle);
+
+      // ValheimVehicle HammerTab, must be done before items and prefab generic registrations
+      new VehicleHammerTableRegistry().Register();
 
       // must be called after assets are loaded
       PrefabRegistryHelpers.Init();

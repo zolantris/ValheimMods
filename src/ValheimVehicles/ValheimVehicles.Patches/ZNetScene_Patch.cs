@@ -19,27 +19,15 @@ public class ZNetScene_Patch
 #if DEBUG
   [HarmonyPatch(typeof(ZNetScene), nameof(ZNetScene.Awake))]
   [HarmonyPrefix]
-  private static void Override_Awake()
+  private static void ZNetScene_Awake_Subscribe()
   {
-    LoggerProvider.LogInfo("ZNetScene is initializing. Prefabs must be registered BEFORE this.");
-
-    LoggerProvider.LogInfo("Checking all registered PieceTables and pieces...");
-
-    foreach (var table in Resources.FindObjectsOfTypeAll<PieceTable>())
-    {
-      LoggerProvider.LogInfo($"Piece table: {table.name}, pieces: {table.m_pieces.Count}");
-
-      foreach (var piece in table.m_pieces)
-      {
-        if (piece == null) continue;
-
-        LoggerProvider.LogInfo($"  - {piece.name}");
-
-        // Verify your prefab component exists on the piece
-        var hasPowerComponent = piece.GetComponent<PowerStorageComponentIntegration>() != null;
-        LoggerProvider.LogInfo($"    - Has PowerStorageComponentIntegration: {hasPowerComponent}");
-      }
-    }
+    LoggerProvider.LogDebug("called ZNetScene.Awake.");
+  }
+  [HarmonyPatch(typeof(ZNetScene), nameof(ZNetScene.OnDestroy))]
+  [HarmonyPrefix]
+  private static void ZNetScene_OnDestroy_Subscribe()
+  {
+    LoggerProvider.LogDebug("called ZNetScene_OnDestroy");
   }
 #endif
 }

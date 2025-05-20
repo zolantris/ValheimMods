@@ -13,6 +13,7 @@
   using ValheimVehicles.Interfaces;
   using ValheimVehicles.Prefabs;
   using ValheimVehicles.SharedScripts;
+  using ValheimVehicles.SharedScripts.Helpers;
   using ValheimVehicles.SharedScripts.UI;
   using ValheimVehicles.Structs;
 
@@ -51,12 +52,12 @@
 
     private HoverFadeText m_hoverFadeText;
     public SwivelConfigRPCSync prefabConfigSync;
-    public SwivelCustomConfig Config => prefabConfigSync.Config;
+    public SwivelCustomConfig Config => this.GetOrCache(ref prefabConfigSync, ref _hasInitPrefabSync).Config;
     public ChildZSyncTransform childZsyncTransform;
     public readonly SwivelMotionStateTracker motionTracker = new();
 
     public static bool CanAllClientsSync = true;
-
+    private bool _hasInitPrefabSync = false;
     private int swivelId = 0;
 
     public override int SwivelPersistentId
@@ -77,7 +78,7 @@
 
       if (!prefabConfigSync)
       {
-        prefabConfigSync = gameObject.AddComponent<SwivelConfigRPCSync>();
+        this.GetOrCache(ref prefabConfigSync, ref _hasInitPrefabSync);
       }
 
       CanUpdate = false;

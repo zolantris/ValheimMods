@@ -41,6 +41,7 @@ public static class PowerZDONetworkManager
     if (zdo == null || _zdoMap.ContainsKey(zdo.m_uid) || !_powerHashes.Contains(zdo.m_prefab)) return;
     _trackedZDOs.Add(zdo);
     _zdoMap[zdo.m_uid] = zdo;
+    PowerNetworkRebuildScheduler.Trigger();
   }
 
   private static void TryRemove(ZDO zdo)
@@ -48,6 +49,7 @@ public static class PowerZDONetworkManager
     if (zdo == null || !_zdoMap.ContainsKey(zdo.m_uid)) return;
     _trackedZDOs.Remove(zdo);
     _zdoMap.Remove(zdo.m_uid);
+    PowerNetworkRebuildScheduler.Trigger();
   }
 
   public static IEnumerable<ZDO> GetAllTrackedZDOs()
