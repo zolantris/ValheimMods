@@ -6,14 +6,28 @@ namespace ValheimVehicles.Integrations;
 
 public partial class PowerNetworkControllerIntegration
 {
-  public static PowerNetworkSimData BuildSimDataForCluster(IEnumerable<ZDO> zdos)
+  private readonly Dictionary<string, PowerNetworkSimData> CachedSimulateData = new();
+
+  public bool TryBuildPowerNetworkSimData(string networkId, out PowerNetworkSimData simData)
+  {
+    if (!CachedSimulateData.TryGetValue(networkId, out simData))
+    {
+      if (!PowerZDONetworkManager.Networks.TryGetValue(networkId, out var zdos) || zdos == null)
+        return false;
+
+      BuildPowerNetworkSimData(networkId, zdos);
+      simData = CachedSimulateData[networkId]; // safe: just built
+    }
+    return simData != null;
+  }
+
+  public void BuildPowerNetworkSimData(string networkId, List<ZDO> zdos)
   {
     var simData = new PowerNetworkSimData();
 
     foreach (var zdo in zdos)
     {
       var prefab = zdo.GetPrefab();
-
       if (prefab == PrefabNameHashes.Mechanism_Power_Source_Coal ||
           prefab == PrefabNameHashes.Mechanism_Power_Source_Eitr)
       {
@@ -30,23 +44,28 @@ public partial class PowerNetworkControllerIntegration
       {
         if (PowerComputeFactory.TryCreateConduit(zdo, prefab, out var conduit))
         {
-          // Add players from tracker
-          if (PowerConduitStateTracker.TryGet(zdo.m_uid, out var state))
+          var zdoid = zdo.m_uid;
+          conduit.PlayerIds.Clear();
+          conduit.Players.Clear();
+
+          if (PowerConduitStateTracker.TryGet(zdoid, out var state))
           {
-            foreach (var id in state.PlayerIds)
-              conduit.AddPlayer(id);
+            foreach (var pid in state.PlayerIds)
+            {
+              conduit.PlayerIds.Add(pid);
+              var player = Player.GetPlayer(pid);
+              if (player != null)
+              {
+                conduit.Players.Add(player);
+              }
+            }
           }
 
           simData.Conduits.Add((conduit, zdo));
         }
       }
-      else if (prefab == PrefabNameHashes.Mechanism_Power_Pylon)
-      {
-        if (PowerComputeFactory.TryCreatePylon(zdo, prefab, out var pylon))
-          simData.Pylons.Add((pylon, zdo));
-      }
     }
 
-    return simData;
+    CachedSimulateData[networkId] = simData;
   }
 }

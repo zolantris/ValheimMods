@@ -48,7 +48,8 @@ public static class PowerNetworkRebuildScheduler
         _rebuildCoroutine = null;
 
         LoggerProvider.LogInfo("[PowerNetworkRebuildScheduler] Executing network rebuild.");
-        PowerNetworkControllerIntegration.BuildSimDataForCluster(PowerZDOWatcherDelegate.GetAll()); // Your existing rebuild logic
+        PowerZDONetworkManager.RebuildClusters();
+        // PowerNetworkControllerIntegration.BuildSimDataForCluster(PowerZDONetworkManager.GetAllTrackedZDOs()); // Your existing rebuild logic
         yield break;
       }
     }

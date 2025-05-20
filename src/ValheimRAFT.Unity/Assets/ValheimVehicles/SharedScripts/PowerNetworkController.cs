@@ -309,6 +309,13 @@ private static void ClearPowerListsOnReload()
     public static void RequestRebuildNetwork()
     {
       if (Instance == null || Instance._rebuildPylonNetworkRoutine != null) { return; }
+
+      // do not run on dedicated servers.
+      if (ZNet.instance.IsDedicated())
+      {
+        return;
+      }
+
       Instance._rebuildPylonNetworkRoutine = Instance.StartCoroutine(Instance.RequestRebuildPowerNetworkCoroutine());
     }
   }
