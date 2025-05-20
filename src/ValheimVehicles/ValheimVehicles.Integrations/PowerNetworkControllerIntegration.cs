@@ -20,9 +20,6 @@ public partial class PowerNetworkControllerIntegration : PowerNetworkController
 {
   private readonly List<string> _networksToRemove = new();
 
-  // prefabHash to Related component
-  public static Dictionary<int, List<object>> PowerPrefabDataControllers = new();
-
   public override void Awake()
   {
     LoggerProvider.LogDebug("Called Awake with debug");
@@ -32,12 +29,6 @@ public partial class PowerNetworkControllerIntegration : PowerNetworkController
     StartCoroutine(DelayedRegister());
   }
 
-  // public static void RegisterPowerComponentByZdo(ZDO zdo)
-  // {
-  //   RegisterControllerForPrefab(zdo.GetPrefab());
-  //   RequestRebuildNetwork();
-  // }
-
   public IEnumerator DelayedRegister()
   {
     while (ZNet.instance == null || ZRoutedRpc.instance == null)
@@ -45,107 +36,16 @@ public partial class PowerNetworkControllerIntegration : PowerNetworkController
       yield return null;
     }
     ZDOClaimUtility.RegisterClaimZdoRpc();
-    RegisterRebuildRpc();
     PowerSystemRPC.Register();
+    StartDirtyNetworkCoroutine();
   }
 
-  // DO nothing for fixed update. Hosts cannot run FixedUpdate on server I think...
+  // Do nothing for fixed update. Hosts can run for it. But a host/client could freeze and not run this causing massive desyncs for non-hosts. 
   protected override void FixedUpdate() {}
   protected override void Update()
   {
     base.Update();
     SimulateOnClientAndServer();
-  }
-
-  /// <summary>
-  /// Data-only updates are applied to ZDOs.
-  /// </summary>
-  /// <param name="zdos"></param>
-  public static void RequestRebuildNetworkWithZDOs(List<ZDOID> zdos)
-  {
-    var pkg = new ZPackage();
-    pkg.Write(zdos.Count);
-    foreach (var zdo in zdos)
-    {
-      pkg.Write(zdo); // ZDOID has a Write(ZPackage) overload
-    }
-
-    ZRoutedRpc.instance.InvokeRoutedRPC(
-      ZRoutedRpc.instance.GetServerPeerID(),
-      nameof(RequestRebuildNetworkWithZDOs),
-      pkg
-    );
-  }
-
-  private static bool _rebuildRegistered;
-  public void RegisterRebuildRpc()
-  {
-    if (_rebuildRegistered || ZRoutedRpc.instance == null)
-      return;
-
-    if (ZNet.instance.IsServer())
-    {
-      ZRoutedRpc.instance.Register<ZPackage>(nameof(RequestRebuildNetworkWithZDOs), Server_HandleRebuildRequest);
-    }
-    else
-    {
-      ZRoutedRpc.instance.Register<ZPackage>(nameof(RequestRebuildNetworkWithZDOs), (_, __) => {});
-    }
-
-    _rebuildRegistered = true;
-  }
-
-  public void Server_HandleRebuildRequest(long sender, ZPackage pkg)
-  {
-    if (!ZNet.instance.IsServer())
-      return;
-
-    pkg.SetPos(0);
-    var count = pkg.ReadInt();
-    var ids = new List<ZDOID>(count);
-
-    for (var i = 0; i < count; i++)
-    {
-      try
-      {
-
-        ids.Add(pkg.ReadZDOID());
-      }
-      catch (Exception e)
-      {
-        LoggerProvider.LogError($"Error while reading zdoid {e}");
-      }
-    }
-
-    try
-    {
-      LoggerProvider.LogInfo($"[ZDORebuild] Received rebuild request with {ids.Count} ZDOIDs");
-    }
-    catch (Exception e)
-    {
-      LoggerProvider.LogError($"{e}");
-    }
-
-    // var registerInstances = new List<GameObject>();
-    List<ZDO> zdos = new();
-    foreach (var id in ids)
-    {
-      var zdo = ZDOMan.instance.GetZDO(id);
-      if (zdo == null || !zdo.Persistent)
-      {
-        ZLog.LogWarning($"[ZDORebuild] Skipping invalid ZDO {id}");
-        continue;
-      }
-
-      if (zdo.GetOwner() != ZDOMan.GetSessionID())
-      {
-        LoggerProvider.LogDebug($"[ZDORebuild] was not owner calling setowner");
-        zdo.SetOwner(ZDOMan.GetSessionID());
-      }
-
-      zdos.Add(zdo);
-    }
-    StartCoroutine(ForceSpawnOnServerIfItDoesNotExist(zdos));
   }
 
   public void SimulateAllNetworks(List<IPowerNode> allNodes)
@@ -212,7 +112,7 @@ public partial class PowerNetworkControllerIntegration : PowerNetworkController
 
   private IEnumerator SimulateDirtyNetworksCoroutine()
   {
-    while (true)
+    while (isActiveAndEnabled)
     {
       yield return new WaitForSeconds(0.5f);
 
@@ -235,6 +135,21 @@ public partial class PowerNetworkControllerIntegration : PowerNetworkController
         _lastSimulateTime = now;
       }
     }
+  }
+
+  public override IEnumerator RequestRebuildPowerNetworkCoroutine()
+  {
+    // Skip this as it does too much now. Only need to reference our ZDOS then match them to powernodes
+    // yield return base.RequestRebuildPowerNetworkCoroutine();
+
+    // Updates the power nodes with the latest simulation. This is for all rendered nodes and will only be accurate on clients.
+    UpdateAllPowerNodes();
+
+    yield return null;
+    // for creating a network of IPowerNodes using our new logic
+    SimulateAllNetworks(AllPowerNodes);
+
+    yield return null;
   }
 
   private static List<IPowerNode> GetNodesFromZDOs(List<ZDO> zdos)
@@ -278,8 +193,8 @@ public partial class PowerNetworkControllerIntegration : PowerNetworkController
     var conduitDemand = 0f;
     foreach (var (conduit, _) in simData.Conduits)
     {
-      conduit.SanitizePlayers();
-      conduitDemand += PowerConduitPlateComponentIntegration.GetAverageEitr(conduit.Players);
+      conduit.ResolvePlayersFromIds();
+      conduitDemand += PowerConduitData.GetAverageEitr(conduit.Players);
     }
 
     totalDemand += conduitDemand;
@@ -437,7 +352,7 @@ public partial class PowerNetworkControllerIntegration : PowerNetworkController
     if (Time.time < _nextUpdate) return;
     _nextUpdate = Time.time + _updateInterval;
 
-    LoggerProvider.LogInfoDebounced($"_networks, {_networks.Count}, Consumers, {Consumers.Count}, Conduits, {Conduits.Count}, Storages, {Storages.Count}, Sources, {Sources.Count}");
+    LoggerProvider.LogInfoDebounced($"_networks, {powerNodeNetworks.Count}, Consumers, {Consumers.Count}, Conduits, {Conduits.Count}, Storages, {Storages.Count}, Sources, {Sources.Count}");
 
 
     foreach (var pair in PowerZDONetworkManager.Networks)
@@ -471,7 +386,7 @@ public partial class PowerNetworkControllerIntegration : PowerNetworkController
     }
 
     // todo clean this up or keep it but its for client only code. Components do nothing on server since most of them would have to be rendered.
-    foreach (var pair in _networks)
+    foreach (var pair in powerNodeNetworks)
     {
       var nodes = pair.Value;
       if (!ZNet.instance.IsDedicated())
@@ -491,11 +406,9 @@ public partial class PowerNetworkControllerIntegration : PowerNetworkController
 
     foreach (var key in _networksToRemove)
     {
-      _networks.Remove(key);
+      powerNodeNetworks.Remove(key);
     }
 
     _networksToRemove.Clear();
   }
-
-
 }

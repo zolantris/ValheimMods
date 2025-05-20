@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using ValheimVehicles.Integrations.PowerSystem;
 using ValheimVehicles.SharedScripts;
+using ValheimVehicles.SharedScripts.PowerSystem;
 using ValheimVehicles.SharedScripts.PowerSystem.Compute;
 namespace ValheimVehicles.Integrations;
 
@@ -48,9 +49,12 @@ public partial class PowerNetworkControllerIntegration
           conduit.PlayerIds.Clear();
           conduit.Players.Clear();
 
-          if (PowerConduitStateTracker.TryGet(zdoid, out var state))
+          if (PowerZDONetworkManager.TryGetData<PowerConduitData>(zdo, out var data))
           {
-            foreach (var pid in state.PlayerIds)
+            conduit.PlayerIds.Clear();
+            conduit.Players.Clear();
+
+            foreach (var pid in data.PlayerIds)
             {
               conduit.PlayerIds.Add(pid);
               var player = Player.GetPlayer(pid);

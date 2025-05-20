@@ -101,6 +101,12 @@
         <Compile Update="..\ValheimRAFT.Unity\Assets\ValheimVehicles\SharedScripts\ComponentUtil.cs">
             <Link>SharedScripts\ComponentUtil.cs</Link>
         </Compile>
+        <Compile Update="..\ValheimRAFT.Unity\Assets\ValheimVehicles\SharedScripts\PowerConduitVariant.cs">
+            <Link>SharedScripts\PowerConduitVariant.cs</Link>
+        </Compile>
+        <Compile Update="..\ValheimRAFT.Unity\Assets\ValheimVehicles\SharedScripts\PowerConduitData.cs">
+            <Link>SharedScripts\PowerConduitData.cs</Link>
+        </Compile>
     </ItemGroup>
     <ItemGroup Label="Internal ValheimVehicles scripts">
         <!-- Includes all namespace folders -->

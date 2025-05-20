@@ -63,8 +63,9 @@ public class PowerPylonComponentIntegration : PowerPylon, Hoverable, Interactabl
     }
     return false;
   }
+
   public bool UseItem(Humanoid user, ItemDrop.ItemData item)
   {
-    throw new System.NotImplementedException();
+    return false;
   }
 }

@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using ValheimVehicles.SharedScripts.PowerSystem.Compute;
 using ValheimVehicles.Config;
 using ValheimVehicles.SharedScripts;
+using ValheimVehicles.SharedScripts.PowerSystem;
 using ValheimVehicles.Structs;
 
 namespace ValheimVehicles.Integrations.PowerSystem
@@ -25,7 +26,7 @@ namespace ValheimVehicles.Integrations.PowerSystem
 
     public static bool TryCreateConduit(ZDO zdo, int prefab, out PowerConduitData result)
     {
-      result = CreateConduit(zdo, prefab, false);
+      result = CreateConduit(zdo, prefab);
       return true;
     }
 
@@ -62,7 +63,7 @@ namespace ValheimVehicles.Integrations.PowerSystem
       if (hash == PrefabNameHashes.Mechanism_Power_Consumer_Charge_Plate ||
           hash == PrefabNameHashes.Mechanism_Power_Consumer_Drain_Plate)
       {
-        computeModel = CreateConduit(zdo, hash, hash == PrefabNameHashes.Mechanism_Power_Consumer_Charge_Plate);
+        computeModel = CreateConduit(zdo, hash);
         return true;
       }
 
@@ -101,13 +102,13 @@ namespace ValheimVehicles.Integrations.PowerSystem
       };
     }
 
-    private static PowerConduitData CreateConduit(ZDO zdo, int prefabHash, bool isCharging)
+    private static PowerConduitData CreateConduit(ZDO zdo, int prefabHash)
     {
       return new PowerConduitData
       {
         PrefabHash = prefabHash,
         NetworkId = zdo.GetString(VehicleZdoVars.Power_NetworkId),
-        IsCharging = isCharging
+        Mode = PowerConduitData.GetConduitVariant(prefabHash)
       };
     }
   }

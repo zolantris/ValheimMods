@@ -15,20 +15,8 @@ public class PowerConduitHover : MonoBehaviour, Hoverable
 
   public string GetHoverText()
   {
-    var baseString = $"{ModTranslations.PowerConduit_DrainPlate_Name}";
-
-    if (PowerNetworkController.CanShowNetworkData || PrefabConfig.PowerNetwork_ShowAdditionalPowerInformationByDefault.Value)
-    {
-      var isActive = _plateComponent.Logic.IsActive;
-      var hasPlayersWithEitr = _plateComponent.Logic.HasPlayerInRange;
-      var stateText = PowerNetworkController.GetDrainMechanismActivationStatus(isActive, hasPlayersWithEitr);
-      baseString += "\n";
-      baseString += $"[{stateText}]";
-    }
-
-    return baseString;
+    return _plateComponent.Data.GetHoverText();
   }
-
   public string GetHoverName()
   {
     return ModTranslations.PowerConduit_DrainPlate_Name;

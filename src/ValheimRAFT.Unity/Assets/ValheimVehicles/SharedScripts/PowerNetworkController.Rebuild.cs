@@ -20,47 +20,69 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
     private const float MaxNetworkJoinDistance = 16f;
     private const float MaxNetworkJoinDistanceSqr = MaxNetworkJoinDistance * MaxNetworkJoinDistance;
 
-    private static readonly List<IPowerNode> _allNodes = new();
+    public static readonly List<IPowerNode> AllPowerNodes = new();
     private static readonly HashSet<IPowerNode> _unvisited = new();
     private static readonly Queue<IPowerNode> _pending = new();
 
     private readonly Stopwatch rebuildTimer = new();
 
+    public static void RequestRebuildNetwork()
+    {
+      if (Instance == null || Instance._rebuildPylonNetworkRoutine != null) { return; }
+
+      // do not run on dedicated servers.
+      if (ZNet.instance.IsDedicated())
+      {
+        return;
+      }
+
+      Instance._rebuildPylonNetworkRoutine = Instance.StartCoroutine(Instance.RequestRebuildPowerNetworkCoroutine());
+    }
+
+    public static void UpdateAllPowerNodes()
+    {
+      AllPowerNodes.Clear();
+
+      for (var i = 0; i < Conduits.Count; i++)
+        if (Conduits.TryGetValidElement(ref i, out var conduit))
+          AllPowerNodes.Add(conduit);
+
+      for (var i = 0; i < Pylons.Count; i++)
+        if (Pylons.TryGetValidElement(ref i, out var pylon))
+          AllPowerNodes.Add(pylon);
+
+      for (var i = 0; i < Sources.Count; i++)
+        if (Sources.TryGetValidElement(ref i, out var source))
+          AllPowerNodes.Add(source);
+
+      for (var i = 0; i < Consumers.Count; i++)
+        if (Consumers.TryGetValidElement(ref i, out var consumer))
+          AllPowerNodes.Add(consumer);
+
+      for (var i = 0; i < Storages.Count; i++)
+        if (Storages.TryGetValidElement(ref i, out var storage))
+          AllPowerNodes.Add(storage);
+    }
+
+    /// <summary>
+    /// This likely will be overriden in integration layer or not called. Instead we would iterate off the game data objects (ZDOS) similar to server.
+    /// </summary>
+    /// <returns></returns>
     public virtual IEnumerator RequestRebuildPowerNetworkCoroutine()
     {
       LoggerProvider.LogInfoDebounced("Called RebuildPowerNetworkCoroutine");
       yield return new WaitForSeconds(1f);
 
       // Step 1: Aggregate all valid power nodes
-      _allNodes.Clear();
       PowerNetworkDataInstances.Clear();
-
-      for (var i = 0; i < Conduits.Count; i++)
-        if (Conduits.TryGetValidElement(ref i, out var conduit))
-          _allNodes.Add(conduit);
-
-      for (var i = 0; i < Pylons.Count; i++)
-        if (Pylons.TryGetValidElement(ref i, out var pylon))
-          _allNodes.Add(pylon);
-
-      for (var i = 0; i < Sources.Count; i++)
-        if (Sources.TryGetValidElement(ref i, out var source))
-          _allNodes.Add(source);
-
-      for (var i = 0; i < Consumers.Count; i++)
-        if (Consumers.TryGetValidElement(ref i, out var consumer))
-          _allNodes.Add(consumer);
-
-      for (var i = 0; i < Storages.Count; i++)
-        if (Storages.TryGetValidElement(ref i, out var storage))
-          _allNodes.Add(storage);
+      UpdateAllPowerNodes();
 
       // Step 2: Build networks by proximity
       _unvisited.Clear();
-      foreach (var node in _allNodes)
+      foreach (var node in AllPowerNodes)
         _unvisited.Add(node);
 
-      _networks.Clear();
+      powerNodeNetworks.Clear();
       rebuildTimer.Restart();
 
       while (_unvisited.Count > 0)
@@ -101,9 +123,9 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
           }
         }
 
-        _networks[networkId] = cluster;
+        powerNodeNetworks[networkId] = cluster;
       }
-      LoggerProvider.LogInfoDebounced($"Rebuild with {_networks.Count}, scanned through {_allNodes.Count} nodes in {rebuildTimer.ElapsedMilliseconds}ms");
+      LoggerProvider.LogInfoDebounced($"Rebuild with {powerNodeNetworks.Count}, scanned through {AllPowerNodes.Count} nodes in {rebuildTimer.ElapsedMilliseconds}ms");
 
       rebuildTimer.Reset();
       _rebuildPylonNetworkRoutine = null;
@@ -112,7 +134,7 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
       yield return new WaitForSeconds(1f);
       LoggerProvider.LogInfoDebounced("At the end of rebuild");
 
-      LoggerProvider.LogInfoDebounced($"_networks, {_networks.Count}, Consumers, {Consumers.Count}, Conduits, {Conduits.Count}, Storages, {Storages.Count}, Sources, {Sources.Count}");
+      LoggerProvider.LogInfoDebounced($"_networks, {powerNodeNetworks.Count}, Consumers, {Consumers.Count}, Conduits, {Conduits.Count}, Storages, {Storages.Count}, Sources, {Sources.Count}");
     }
   }
 }

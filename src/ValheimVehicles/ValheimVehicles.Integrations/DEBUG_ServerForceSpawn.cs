@@ -1,3 +1,12 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
+using UnityEngine;
+using ValheimVehicles.Interfaces;
+using ValheimVehicles.SharedScripts;
+using ValheimVehicles.SharedScripts.PowerSystem;
+using ValheimVehicles.SharedScripts.PowerSystem.Interfaces;
 namespace ValheimVehicles.Integrations;
 
 #if DEBUG
@@ -96,31 +105,31 @@ public class DEBUG_ServerForceSpawn
         if (powerSource != null)
         {
           LoggerProvider.LogDebug("Has powerSource");
-          RegisterPowerComponent(powerSource);
+          PowerNetworkController.RegisterPowerComponent(powerSource);
           successCount++;
         }
         if (powerStorage != null)
         {
           LoggerProvider.LogDebug("Has powerStorage");
-          RegisterPowerComponent(powerStorage);
+          PowerNetworkController.RegisterPowerComponent(powerStorage);
           successCount++;
         }
         if (powerConsumer != null)
         {
           LoggerProvider.LogDebug("Has powerConsumer");
-          RegisterPowerComponent(powerConsumer);
+          PowerNetworkController.RegisterPowerComponent(powerConsumer);
           successCount++;
         }
         if (powerPylon != null)
         {
           LoggerProvider.LogDebug("Has powerPylon");
-          RegisterPowerComponent(powerPylon);
+          PowerNetworkController.RegisterPowerComponent(powerPylon);
           successCount++;
         }
         if (powerConduit != null)
         {
           LoggerProvider.LogDebug("Has powerConduit");
-          RegisterPowerComponent(powerConduit);
+          PowerNetworkController.RegisterPowerComponent(powerConduit);
           successCount++;
         }
       }
@@ -153,12 +162,10 @@ public class DEBUG_ServerForceSpawn
     yield return null;
 
     LoggerProvider.LogDebug("Continuing on and manual regenerating networks");
-    yield return RequestRebuildPowerNetworkCoroutine();
+    yield return PowerNetworkControllerIntegration.Instance?.RequestRebuildPowerNetworkCoroutine();
 
     LoggerProvider.LogDebug("Finished RebuildPowerNetworkCoroutine triggered by ForceSpawnIfItDoesNotExist");
     yield return null;
-
-    LoggerProvider.LogInfo($"[ZDORebuild] Processed ZDO claim/instantiate for zdos: {zdos.Count} items. \nNew count of all elements Consumers: {Consumers.Count} Conduits: {Conduits.Count} Storages: {Storages.Count} Sources {Sources.Count}, Pylons count: {Pylons.Count}, network(s) {_networks.Count}");
   }
 }
 #endif

@@ -1,64 +1,66 @@
-using System;
+// ReSharper disable ArrangeNamespaceBody
+// ReSharper disable NamespaceStyle
+
 using System.Collections.Generic;
 using UnityEngine;
-using ValheimVehicles.Components;
 using ValheimVehicles.Helpers;
 using ValheimVehicles.Integrations;
+using ValheimVehicles.Integrations.PowerSystem;
 using ValheimVehicles.SharedScripts;
-using ValheimVehicles.SharedScripts.Helpers;
 using ValheimVehicles.SharedScripts.PowerSystem;
 using ValheimVehicles.SharedScripts.PowerSystem.Interfaces;
+using ValheimVehicles.Structs;
 
 public class PowerConduitPlateComponentIntegration :
   NetworkedComponentIntegration<PowerConduitPlateComponentIntegration, PowerConduitPlateComponent, NoZDOConfig<PowerConduitPlateComponentIntegration>>,
   IPowerConduit
 {
-  private const float MinEitrDrainThreshold = 0.01f;
-  private const float MaxEitrCapMargin = 0.1f; // If within 0.1 of max, skip charging
   public string NetworkId => Logic.NetworkId;
   public Vector3 Position => transform.position;
   public Vector3 ConnectorPoint => Position;
 
-  public bool IsActive => true;
+  public bool IsActive => Data.IsActive;
   public bool IsDemanding => Logic.IsDemanding;
 
-  private readonly List<Player> _playersWithinZone = new();
+  public float RequestPower(float deltaTime)
+  {
+    LoggerProvider.LogWarning("Deprecated RequestPower");
+    return 0f;
+  }
+  public float SupplyPower(float deltaTime)
+  {
+    LoggerProvider.LogWarning("Deprecated SupplyPower");
+    return 0f;
+  }
 
-
+  public PowerConduitData Data = new();
   public bool MustSync = false;
   public Rigidbody m_body;
   public FixedJoint m_joint;
   private Transform? _lastParent;
 
-
-  // Missing method for Players. There is no syncing method for Eitr additions only removals.
   private const string RPC_AddEitr_Name = nameof(RPC_AddEitr);
-  private const string RPC_TriggerEnter_Name = nameof(RPC_TriggerEnter);
-  private const string RPC_TriggerExit_Name = nameof(RPC_TriggerExit);
 
   protected override void RegisterDefaultRPCs()
   {
     RpcHandler.Register<float>(RPC_AddEitr_Name, RPC_AddEitr);
-    RpcHandler.Register<long>(RPC_TriggerEnter_Name, RPC_TriggerEnter);
-    RpcHandler.Register<long>(RPC_TriggerExit_Name, RPC_TriggerExit);
   }
 
   public static void Request_AddEitr(Player player, float amount)
   {
     if (player == null || amount <= 0f)
     {
-      LoggerProvider.LogWarning($"Player is null or amount is <= 0");
+      LoggerProvider.LogWarning("Player is null or amount is <= 0");
       return;
     }
 
     var netView = player.GetComponent<ZNetView>();
     if (!netView || !netView.IsValid())
     {
-      LoggerProvider.LogWarning($"Player has no ZNetView or is invalid");
+      LoggerProvider.LogWarning("Player has no ZNetView or is invalid");
       return;
     }
 
-    // Only send to the owner of this player
     if (!netView.IsOwner())
     {
       var zdoOwner = netView.GetZDO().GetOwner();
@@ -72,30 +74,22 @@ public class PowerConduitPlateComponentIntegration :
 
   private void HandlePlayerEnterActiveZone(Player player)
   {
-    if (player != null && !_playersWithinZone.Contains(player))
+    if (player == null) return;
+    var id = player.GetPlayerID();
+    if (!Data.PlayerIds.Contains(id))
     {
-      _playersWithinZone.Add(player);
+      Data.PlayerIds.Add(id);
+      Data.ResolvePlayersFromIds();
     }
-    _playersWithinZone.RemoveAll(x => !x);
-
-    Logic.SetHasPlayerInRange(GetAverageEitr() > 0f);
+    Logic.SetHasPlayerInRange(Data.HasPlayersWithEitr);
   }
 
   private void HandlePlayerExitActiveZone(Player player)
   {
-    if (player != null)
-    {
-      _playersWithinZone.Remove(player);
-    }
-    _playersWithinZone.RemoveAll(x => !x);
-
-    if (_playersWithinZone.Count == 0)
-    {
-      Logic.SetHasPlayerInRange(false);
-      return;
-    }
-
-    Logic.SetHasPlayerInRange(GetAverageEitr() > 0f);
+    if (player == null) return;
+    Data.PlayerIds.Remove(player.GetPlayerID());
+    Data.ResolvePlayersFromIds();
+    Logic.SetHasPlayerInRange(Data.HasPlayersWithEitr);
   }
 
 #region RPCS
@@ -108,25 +102,10 @@ public class PowerConduitPlateComponentIntegration :
     }
   }
 
-
-  private void RPC_TriggerEnter(long sender, long playerId)
-  {
-    var player = Player.GetPlayer(playerId);
-    HandlePlayerEnterActiveZone(player);
-  }
-
-  private void RPC_TriggerExit(long sender, long playerId)
-  {
-    var player = Player.GetPlayer(playerId);
-    HandlePlayerExitActiveZone(player);
-  }
-
 #endregion
-
 
 #region Events
 
-  // Events
   private void OnTriggerEnter(Collider other)
   {
     var player = other.GetComponentInParent<Player>();
@@ -140,7 +119,7 @@ public class PowerConduitPlateComponentIntegration :
 
     if (this.IsNetViewValid(out var netView))
     {
-      netView.InvokeRPC(nameof(RPC_TriggerEnter_Name), player.GetPlayerID());
+      PowerSystemRPC.SendPlayerEnteredConduit(netView.GetZDO().m_uid, player.GetPlayerID());
     }
   }
 
@@ -152,7 +131,7 @@ public class PowerConduitPlateComponentIntegration :
 
     if (this.IsNetViewValid(out var netView))
     {
-      netView.InvokeRPC(nameof(RPC_TriggerExit_Name), player.GetPlayerID());
+      PowerSystemRPC.SendPlayerExitedConduit(netView.GetZDO().m_uid, player.GetPlayerID());
     }
   }
 
@@ -160,24 +139,29 @@ public class PowerConduitPlateComponentIntegration :
 
   protected override void Start()
   {
-    this.WaitForZNetView(() =>
+    this.WaitForZNetView((netView) =>
     {
+      var zdo = netView.GetZDO();
+      if (!PowerZDONetworkManager.TryGetData(zdo, out PowerConduitData data))
+      {
+        LoggerProvider.LogWarning("[PowerConduitPlateComponentIntegration] Failed to get PowerConduitData from PowerZDONetworkManager.");
+        return;
+      }
+      Data = data;
       PowerNetworkController.RegisterPowerComponent(this);
+
+      Logic.GetPlayerEitr = () => PowerConduitData.GetAverageEitr(Data.Players);
+      Logic.AddPlayerEitr = (float val) => Data.AddEitrToPlayers(val);
+      Logic.SubtractPlayerEitr = (float val) => Data.SubtractEitrFromPlayers(val);
+
+      _lastParent = transform.parent;
+
+      AddRigidbodyIfParentIsRigidbody();
     });
 
-    if (!this.IsNetViewValid(out var netView)) return;
     base.Start();
-
-    Logic.GetPlayerEitr = GetAverageEitr;
-    Logic.AddPlayerEitr = AddEitrToPlayers;
-    Logic.SubtractPlayerEitr = SubtractEitrFromPlayers;
-
-    _lastParent = transform.parent;
-
-    AddRigidbodyIfParentIsRigidbody();
   }
 
-  // Very important. Let's us detect if this component gets moved into another parent like a vehicle.
   public void OnTransformParentChanged()
   {
     var newParent = transform.parent;
@@ -201,10 +185,9 @@ public class PowerConduitPlateComponentIntegration :
       return;
     }
 
-    // joint allows us to sync the rigidbody without running a FixedUpdate having to sync both rotation and position relative to parent and a frozen local position.
     var joint = gameObject.AddComponent<FixedJoint>();
     joint.connectedBody = parentRigidbody;
-    joint.enableCollision = false; // usually what you want
+    joint.enableCollision = false;
   }
 
   protected override void OnDestroy()
@@ -215,99 +198,8 @@ public class PowerConduitPlateComponentIntegration :
 
   public void SetNetworkId(string id)
   {
-    Logic.SetNetworkId(id);
-  }
-
-  public float RequestPower(float deltaTime)
-  {
-    return Logic.RequestPower(deltaTime);
-  }
-  public float SupplyPower(float deltaTime)
-  {
-    return Logic.SupplyPower(deltaTime);
-  }
-
-  public static float GetAverageEitr(List<Player> playersWithinZone)
-  {
-    playersWithinZone.RemoveAll(x => !x);
-
-    var count = 0;
-    var total = 0f;
-
-    foreach (var player in playersWithinZone)
-    {
-      total += player.m_eitr;
-      count++;
-    }
-
-    return count > 0 ? total / count : 0f;
-  }
-
-  private float GetAverageEitr()
-  {
-    return GetAverageEitr(_playersWithinZone);
-  }
-
-  private void AddEitrToPlayers(float amount)
-  {
-    _playersWithinZone.RemoveAll(x => !x);
-    if (_playersWithinZone.Count == 0 || amount <= 0f) return;
-
-    // Filter out players near Eitr cap
-    List<Player> validReceivers = new(_playersWithinZone.Count);
-    foreach (var player in _playersWithinZone)
-    {
-      if (player.m_eitr < player.m_maxEitr - MaxEitrCapMargin)
-      {
-        validReceivers.Add(player);
-      }
-    }
-
-    if (validReceivers.Count == 0) return;
-
-    var perPlayer = amount / validReceivers.Count;
-    foreach (var player in validReceivers)
-    {
-      Request_AddEitr(player, perPlayer);
-    }
-  }
-
-  private void SubtractEitrFromPlayers(float amount)
-  {
-    _playersWithinZone.RemoveAll(x => !x);
-    if (_playersWithinZone.Count == 0 || amount <= 0f) return;
-
-    List<Player> validPlayers = new(_playersWithinZone.Count);
-    foreach (var player in _playersWithinZone)
-    {
-      if (player.HaveEitr(0.01f)) // Must have *some* Eitr
-      {
-        validPlayers.Add(player);
-      }
-    }
-
-    if (validPlayers.Count == 0) return;
-
-    var remaining = amount;
-    var attempts = 0;
-
-    while (remaining > 0f && attempts++ < 5)
-    {
-      var perPlayer = remaining / validPlayers.Count;
-      List<Player> stillValid = new(validPlayers.Count);
-
-      foreach (var player in validPlayers)
-      {
-        if (player.HaveEitr(perPlayer))
-        {
-          player.UseEitr(perPlayer);
-          remaining -= perPlayer;
-          stillValid.Add(player);
-        }
-      }
-
-      if (stillValid.Count == 0) break;
-      validPlayers = stillValid;
-    }
+    if (!this.IsNetViewValid(out var netView)) return;
+    var idFromZdo = netView.GetZDO().GetString(VehicleZdoVars.Power_NetworkId);
+    Logic.SetNetworkId(idFromZdo);
   }
 }

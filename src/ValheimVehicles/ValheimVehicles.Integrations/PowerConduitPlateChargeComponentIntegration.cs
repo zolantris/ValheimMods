@@ -1,10 +1,10 @@
-using ValheimVehicles.SharedScripts.PowerSystem;
+using ValheimVehicles.SharedScripts;
 
 public class PowerConduitPlateChargeComponentIntegration : PowerConduitPlateComponentIntegration
 {
   protected override void Start()
   {
     base.Start();
-    Logic.mode = PowerConduitPlateComponent.EnergyPlateMode.Charging;
+    Logic.mode = PowerConduitMode.Charge;
   }
 }

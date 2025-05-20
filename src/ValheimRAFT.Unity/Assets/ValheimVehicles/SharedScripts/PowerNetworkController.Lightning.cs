@@ -34,14 +34,14 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
 
     private bool HasPoweredNetworks()
     {
-      return _networks.Values.Any(group => group.OfType<PowerConsumerComponent>().Any(c => c.IsActive));
+      return powerNodeNetworks.Values.Any(group => group.OfType<PowerConsumerComponent>().Any(c => c.IsActive));
     }
 
     private IEnumerator ActivateLightningBursts()
     {
       _lightningActive = true;
 
-      foreach (var kvp in _networks)
+      foreach (var kvp in powerNodeNetworks)
       {
         var network = kvp.Value;
         var pylons = network.OfType<PowerPylon>().ToList();

@@ -3,6 +3,7 @@
 
 using System.Collections.Generic;
 using ValheimVehicles.SharedScripts;
+using ValheimVehicles.SharedScripts.PowerSystem;
 using ValheimVehicles.SharedScripts.PowerSystem.Compute;
 
 namespace ValheimVehicles.Integrations.PowerSystem
@@ -97,36 +98,72 @@ namespace ValheimVehicles.Integrations.PowerSystem
     }
 
 
+  #region RPCS
+
     private static void RPC_PlayerEnteredConduit(long sender, ZPackage pkg)
     {
       var conduitId = pkg.ReadZDOID();
       var playerId = pkg.ReadLong();
 
-      if (PowerConduitStateTracker.TryGet(conduitId, out var conduit))
+      var zdo = ZDOMan.instance.GetZDO(conduitId);
+      if (zdo == null)
       {
-        var player = conduit.AddPlayer(playerId);
-        if (player != null)
-        {
-          PowerConduitStateTracker.Set(conduitId, conduit);
-        }
-        else
-        {
-          LoggerProvider.LogWarning($"[PowerSystemRPC] Failed to resolve Player({playerId}) for conduit: {conduitId}");
-        }
+        LoggerProvider.LogWarning($"[RPC_PlayerEnteredConduit] ZDO not found for {conduitId}");
+        return;
+      }
+
+      if (!PowerZDONetworkManager.TryGetData<PowerConduitData>(zdo, out var data))
+      {
+        LoggerProvider.LogWarning($"[PowerSystemRPC] No PowerConduitData found for {conduitId}");
+        return;
+      }
+
+      if (!data.PlayerIds.Contains(playerId))
+      {
+        data.PlayerIds.Add(playerId);
+        data.ResolvePlayersFromIds();
       }
     }
 
     private static void RPC_PlayerExitedConduit(long sender, ZPackage pkg)
     {
-      pkg.SetPos(0);
       var conduitId = pkg.ReadZDOID();
       var playerId = pkg.ReadLong();
 
-      if (PowerConduitStateTracker.TryGet(conduitId, out var conduit))
+      var zdo = ZDOMan.instance.GetZDO(conduitId);
+      if (zdo == null)
       {
-        conduit.RemovePlayer(playerId);
-        PowerConduitStateTracker.Set(conduitId, conduit);
+        LoggerProvider.LogWarning($"[RPC_PlayerEnteredConduit] ZDO not found for {conduitId}");
+        return;
       }
+
+      if (!PowerZDONetworkManager.TryGetData<PowerConduitData>(zdo, out var data))
+      {
+        LoggerProvider.LogWarning($"[PowerSystemRPC] No PowerConduitData found for {conduitId}");
+        return;
+      }
+
+      data.PlayerIds.Remove(playerId);
+      data.ResolvePlayersFromIds();
+    }
+
+  #endregion
+
+
+    public static void SendPlayerEnteredConduit(ZDOID conduitId, long playerId)
+    {
+      var pkg = new ZPackage();
+      pkg.Write(conduitId);
+      pkg.Write(playerId);
+      ZRoutedRpc.instance.InvokeRoutedRPC(RPC_PlayerEnteredConduit_Name, pkg);
+    }
+
+    public static void SendPlayerExitedConduit(ZDOID conduitId, long playerId)
+    {
+      var pkg = new ZPackage();
+      pkg.Write(conduitId);
+      pkg.Write(playerId);
+      ZRoutedRpc.instance.InvokeRoutedRPC(RPC_PlayerExitedConduit_Name, pkg);
     }
 
     private static void Client_NotifyZDOsChanged(long sender, ZPackage pkg)

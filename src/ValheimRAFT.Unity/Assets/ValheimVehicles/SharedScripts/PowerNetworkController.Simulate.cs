@@ -127,7 +127,7 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
     public void ClearAllSimulatedNetworkData()
     {
       ClearLocalListData();
-      _networks.Clear();
+      powerNodeNetworks.Clear();
     }
 
     public void UpdateListData(List<IPowerNode> nodes)
