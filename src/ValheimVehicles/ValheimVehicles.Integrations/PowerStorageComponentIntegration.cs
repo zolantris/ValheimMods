@@ -6,6 +6,9 @@ using ValheimVehicles.Helpers;
 using ValheimVehicles.Interfaces;
 using ValheimVehicles.SharedScripts.PowerSystem;
 using ValheimVehicles.Integrations.ZDOConfigs;
+using ValheimVehicles.SharedScripts;
+using ValheimVehicles.SharedScripts.PowerSystem.Compute;
+using ValheimVehicles.Structs;
 
 namespace ValheimVehicles.Integrations
 {
@@ -14,21 +17,29 @@ namespace ValheimVehicles.Integrations
     IPowerStorage
   {
     public Coroutine? registerCoroutine = null;
+    public PowerStorageData Data = new();
 
     protected override void Awake()
     {
       // don't do anything when we aren't initialized.
       registerCoroutine = this.WaitForZNetView((nv) =>
       {
-        if (ZNet.instance.IsDedicated())
+        var zdo = nv.GetZDO();
+        if (!PowerZDONetworkManager.TryGetData(zdo, out PowerStorageData data, true))
         {
-          nv.m_zdo.SetOwner(ZDOMan.GetSessionID());
+          LoggerProvider.LogWarning("[PowerStorageComponentIntegration] Failed to get PowerConduitData from PowerZDONetworkManager.");
+          return;
         }
+        Data = data;
+
         base.Awake();
         PowerNetworkController.RegisterPowerComponent(this);
       });
     }
-
+    public void FixedUpdate()
+    {
+      Data?.Load();
+    }
     protected override void OnDestroy()
     {
       base.OnDestroy();
@@ -93,16 +104,24 @@ namespace ValheimVehicles.Integrations
       });
     }
 
-    public string NetworkId => Logic.NetworkId;
+    public string NetworkId => Data.NetworkId;
     public Vector3 Position => Logic.Position;
     public bool IsActive => Logic.IsActive;
     public Vector3 ConnectorPoint => Logic.ConnectorPoint;
 
-    public float CapacityRemaining => Logic.CapacityRemaining;
+    public float CapacityRemaining
+    {
+      get
+      {
+        if (Data != null) return Data.MaxCapacity - Data.StoredEnergy;
+        return 0;
+      }
+    }
+
     public bool IsCharging => Logic.IsCharging;
     public void SetCapacity(float val)
     {
-      Logic.SetCapacity(val);
+      // Logic.SetCapacity(val);
     }
     public void SetActive(bool val)
     {
@@ -111,7 +130,9 @@ namespace ValheimVehicles.Integrations
 
     public float PeekDischarge(float amount)
     {
-      return Logic.PeekDischarge(amount);
+      // todo might want this in Data.
+      return 0f;
+      // return Logic.PeekDischarge(amount);
     }
 
     public void CommitDischarge(float amount)
@@ -119,8 +140,8 @@ namespace ValheimVehicles.Integrations
       Logic.CommitDischarge(amount);
     }
 
-    public float ChargeLevel => Logic.ChargeLevel;
-    public float Capacity => Logic.Capacity;
+    public float ChargeLevel => Data.StoredEnergy;
+    public float Capacity => Data.MaxCapacity;
 
     public float Charge(float amount)
     {
@@ -133,7 +154,9 @@ namespace ValheimVehicles.Integrations
 
     public void SetNetworkId(string id)
     {
-      Logic.SetNetworkId(id);
+      if (!this.IsNetViewValid(out var netView)) return;
+      var idFromZdo = netView.GetZDO().GetString(VehicleZdoVars.Power_NetworkId);
+      Logic.SetNetworkId(idFromZdo);
     }
   }
 }

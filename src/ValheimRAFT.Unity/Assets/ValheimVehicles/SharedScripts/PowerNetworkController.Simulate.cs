@@ -5,16 +5,9 @@
 
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
-using System.Linq;
 using UnityEngine;
-using ValheimVehicles.Config;
-using ValheimVehicles.Integrations;
-using ValheimVehicles.Integrations.PowerSystem;
 using ValheimVehicles.Interfaces;
-using ValheimVehicles.SharedScripts.PowerSystem;
-using ValheimVehicles.SharedScripts.PowerSystem.Compute;
 using ValheimVehicles.SharedScripts.PowerSystem.Interfaces;
-using ValheimVehicles.Structs;
 
 #endregion
 
@@ -34,6 +27,13 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
 
     public static bool TryNetworkPowerData(string networkId, [NotNullWhen(true)] out PowerNetworkData? _data)
     {
+      if (networkId == null)
+      {
+        LoggerProvider.LogInfoDebounced("NetworkId is null");
+        _data = null;
+        return false;
+      }
+
       if (PowerNetworkDataInstances.TryGetValue(networkId, out _data))
       {
         // if (_data.Cached_NetworkDataString == string.Empty)

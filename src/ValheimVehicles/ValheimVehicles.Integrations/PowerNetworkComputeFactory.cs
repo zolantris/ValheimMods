@@ -12,27 +12,33 @@ namespace ValheimVehicles.Integrations.PowerSystem
 {
   public static class PowerComputeFactory
   {
-    public static bool TryCreateSource(ZDO zdo, int prefab, out PowerSourceData result)
+    public static bool TryCreateSource(ZDO zdo, out PowerSourceData result)
     {
-      result = CreateSource(zdo, prefab);
+      result = CreateSource(zdo);
       return true;
     }
 
-    public static bool TryCreateStorage(ZDO zdo, int prefab, out PowerStorageData result)
+    public static bool TryCreateStorage(ZDO zdo, out PowerStorageData result)
     {
-      result = CreateStorage(zdo, prefab);
+      result = CreateStorage(zdo);
       return true;
     }
 
-    public static bool TryCreateConduit(ZDO zdo, int prefab, out PowerConduitData result)
+    public static bool TryCreateConduit(ZDO zdo, out PowerConduitData result)
     {
-      result = CreateConduit(zdo, prefab);
+      result = CreateConduit(zdo);
+      return true;
+    }
+
+    public static bool TryCreateConsumer(ZDO zdo, out PowerConsumerData result)
+    {
+      result = CreateConsumer(zdo);
       return true;
     }
 
     public static bool TryCreatePylon(ZDO zdo, int prefab, out PowerPylonData result)
     {
-      result = CreatePylon(zdo, prefab);
+      result = CreatePylon(zdo);
       return true;
     }
 
@@ -43,73 +49,57 @@ namespace ValheimVehicles.Integrations.PowerSystem
 
       if (hash == PrefabNameHashes.Mechanism_Power_Pylon)
       {
-        computeModel = CreatePylon(zdo, hash);
+        computeModel = CreatePylon(zdo);
         return true;
       }
 
       if (hash == PrefabNameHashes.Mechanism_Power_Source_Coal ||
           hash == PrefabNameHashes.Mechanism_Power_Source_Eitr)
       {
-        computeModel = CreateSource(zdo, hash);
+        computeModel = CreateSource(zdo);
         return true;
       }
 
       if (hash == PrefabNameHashes.Mechanism_Power_Storage_Eitr)
       {
-        computeModel = CreateStorage(zdo, hash);
+        computeModel = CreateStorage(zdo);
         return true;
       }
 
       if (hash == PrefabNameHashes.Mechanism_Power_Consumer_Charge_Plate ||
           hash == PrefabNameHashes.Mechanism_Power_Consumer_Drain_Plate)
       {
-        computeModel = CreateConduit(zdo, hash);
+        computeModel = CreateConduit(zdo);
         return true;
       }
 
       return false;
     }
 
-    private static PowerPylonData CreatePylon(ZDO zdo, int prefabHash)
+
+    private static PowerPylonData CreatePylon(ZDO zdo)
     {
-      return new PowerPylonData(
-        zdo.GetString(VehicleZdoVars.Power_NetworkId),
-        PowerSystemConfig.PowerPylonRange.Value,
-        prefabHash
-      );
+      return new PowerPylonData(zdo);
     }
 
-    private static PowerSourceData CreateSource(ZDO zdo, int prefabHash)
+    private static PowerConsumerData CreateConsumer(ZDO zdo)
     {
-      return new PowerSourceData
-      {
-        PrefabHash = prefabHash,
-        NetworkId = zdo.GetString(VehicleZdoVars.Power_NetworkId),
-        Fuel = zdo.GetFloat(VehicleZdoVars.Power_StoredFuel),
-        MaxFuel = zdo.GetFloat(VehicleZdoVars.Power_StoredFuelCapacity),
-        OutputRate = zdo.GetFloat(VehicleZdoVars.Power_FuelOutputRate)
-      };
+      return new PowerConsumerData(zdo);
     }
 
-    private static PowerStorageData CreateStorage(ZDO zdo, int prefabHash)
+    private static PowerSourceData CreateSource(ZDO zdo)
     {
-      return new PowerStorageData
-      {
-        PrefabHash = prefabHash,
-        NetworkId = zdo.GetString(VehicleZdoVars.Power_NetworkId),
-        StoredEnergy = zdo.GetFloat(VehicleZdoVars.Power_StoredEnergy),
-        MaxCapacity = zdo.GetFloat(VehicleZdoVars.Power_StoredEnergyCapacity)
-      };
+      return new PowerSourceData(zdo);
     }
 
-    private static PowerConduitData CreateConduit(ZDO zdo, int prefabHash)
+    private static PowerStorageData CreateStorage(ZDO zdo)
     {
-      return new PowerConduitData
-      {
-        PrefabHash = prefabHash,
-        NetworkId = zdo.GetString(VehicleZdoVars.Power_NetworkId),
-        Mode = PowerConduitData.GetConduitVariant(prefabHash)
-      };
+      return new PowerStorageData(zdo);
+    }
+
+    private static PowerConduitData CreateConduit(ZDO zdo)
+    {
+      return new PowerConduitData(zdo);
     }
   }
 }

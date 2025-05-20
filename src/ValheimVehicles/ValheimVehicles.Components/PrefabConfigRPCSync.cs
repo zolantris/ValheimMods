@@ -36,7 +36,10 @@ public class PrefabConfigRPCSync<T, TComponentInterface> : MonoBehaviour, IPrefa
     retryGuard = new RetryGuard(this);
     m_nview = GetComponent<ZNetView>();
     controller = GetComponent<TComponentInterface>();
-    InitRPCHandler();
+    this.WaitForZNetView(() =>
+    {
+      InitRPCHandler();
+    });
   }
 
   public virtual void OnEnable()

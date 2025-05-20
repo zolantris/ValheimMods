@@ -7,7 +7,7 @@ namespace ValheimVehicles.Integrations;
 
 public partial class PowerNetworkControllerIntegration
 {
-  private readonly Dictionary<string, PowerNetworkSimData> CachedSimulateData = new();
+  public readonly Dictionary<string, PowerNetworkSimData> CachedSimulateData = new();
 
   public bool TryBuildPowerNetworkSimData(string networkId, out PowerNetworkSimData simData)
   {
@@ -26,24 +26,48 @@ public partial class PowerNetworkControllerIntegration
   {
     var simData = new PowerNetworkSimData();
 
+    LoggerProvider.LogDev($"[SIM] Rebuilding {networkId} with {zdos.Count} ZDOs");
+
+    foreach (var (source, zdo) in simData.Sources)
+    {
+      LoggerProvider.LogDev($"[SIM] Source: {zdo.m_uid}, output = {source.OutputRate}");
+    }
+
+    foreach (var (storage, zdo) in simData.Storages)
+    {
+      LoggerProvider.LogDev($"[SIM] Storage: {zdo.m_uid}, stored = {storage.StoredEnergy}");
+    }
+
+    foreach (var (conduit, zdo) in simData.Conduits)
+    {
+      LoggerProvider.LogDev($"[SIM] Conduit: {zdo.m_uid}, players = {conduit.Players.Count}");
+    }
+
     foreach (var zdo in zdos)
     {
       var prefab = zdo.GetPrefab();
       if (prefab == PrefabNameHashes.Mechanism_Power_Source_Coal ||
           prefab == PrefabNameHashes.Mechanism_Power_Source_Eitr)
       {
-        if (PowerComputeFactory.TryCreateSource(zdo, prefab, out var source))
+        if (PowerComputeFactory.TryCreateSource(zdo, out var source))
           simData.Sources.Add((source, zdo));
       }
       else if (prefab == PrefabNameHashes.Mechanism_Power_Storage_Eitr)
       {
-        if (PowerComputeFactory.TryCreateStorage(zdo, prefab, out var storage))
+        if (PowerComputeFactory.TryCreateStorage(zdo, out var storage))
           simData.Storages.Add((storage, zdo));
+      }
+      else if (prefab == PrefabNameHashes.Mechanism_Power_Consumer_Swivel)
+      {
+        if (PowerComputeFactory.TryCreateConsumer(zdo, out var consumer))
+        {
+          simData.Consumers.Add((consumer, zdo));
+        }
       }
       else if (prefab == PrefabNameHashes.Mechanism_Power_Consumer_Charge_Plate ||
                prefab == PrefabNameHashes.Mechanism_Power_Consumer_Drain_Plate)
       {
-        if (PowerComputeFactory.TryCreateConduit(zdo, prefab, out var conduit))
+        if (PowerComputeFactory.TryCreateConduit(zdo, out var conduit))
         {
           var zdoid = zdo.m_uid;
           conduit.PlayerIds.Clear();

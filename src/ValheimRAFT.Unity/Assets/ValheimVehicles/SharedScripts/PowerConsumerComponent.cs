@@ -5,6 +5,7 @@
 
 using System;
 using UnityEngine;
+using ValheimVehicles.SharedScripts.PowerSystem.Compute;
 
 #endregion
 
@@ -12,12 +13,8 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
 {
   public class PowerConsumerComponent : PowerNodeComponentBase
   {
-    public enum ConsumerType
-    {
-      Engine
-    }
 
-    [SerializeField] private PowerConsumptionLevel consumptionLevel = PowerConsumptionLevel.Medium;
+    [SerializeField] private PowerIntensityLevel intensityLevel = PowerIntensityLevel.Medium;
     [SerializeField] private bool isActive;
 
     [Header("Power Consumption Settings")]
@@ -27,8 +24,6 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
     private float powerLow = 10f;
     private float powerMedium = 20f;
     private float powerHigh = 30f;
-
-    public ConsumerType m_consumerType = ConsumerType.Engine;
 
     public float BasePowerConsumption
     {
@@ -89,16 +84,16 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
     public float RequestedPower(float deltaTime)
     {
       if (!IsDemanding) return 0f;
-      return GetWattsForLevel(consumptionLevel) * deltaTime;
+      return GetWattsForLevel(intensityLevel) * deltaTime;
     }
 
     public void SetActive(bool value)
     {
       isActive = value;
     }
-    public void SetConsumptionLevel(PowerConsumptionLevel level)
+    public void SetConsumptionLevel(PowerIntensityLevel level)
     {
-      consumptionLevel = level;
+      intensityLevel = level;
     }
 
     public void ApplyPower(float grantedJoules, float deltaTime)
@@ -119,33 +114,33 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
     {
       if (!isActive || grantedJoules <= 0f)
       {
-        consumptionLevel = PowerConsumptionLevel.None;
+        intensityLevel = PowerIntensityLevel.None;
         OnPowerDenied?.Invoke();
         return;
       }
 
-      foreach (PowerConsumptionLevel level in Enum.GetValues(typeof(PowerConsumptionLevel)))
+      foreach (PowerIntensityLevel level in Enum.GetValues(typeof(PowerIntensityLevel)))
       {
         var required = GetWattsForLevel(level) * deltaTime;
         if (grantedJoules >= required)
         {
-          consumptionLevel = level;
+          intensityLevel = level;
           OnPowerSupplied?.Invoke(grantedJoules);
           return;
         }
       }
 
-      consumptionLevel = PowerConsumptionLevel.None;
+      intensityLevel = PowerIntensityLevel.None;
       OnPowerDenied?.Invoke();
     }
 
-    private float GetWattsForLevel(PowerConsumptionLevel level)
+    private float GetWattsForLevel(PowerIntensityLevel level)
     {
       return level switch
       {
-        PowerConsumptionLevel.Low => powerLow,
-        PowerConsumptionLevel.Medium => powerMedium,
-        PowerConsumptionLevel.High => powerHigh,
+        PowerIntensityLevel.Low => powerLow,
+        PowerIntensityLevel.Medium => powerMedium,
+        PowerIntensityLevel.High => powerHigh,
         _ => powerNone
       };
     }

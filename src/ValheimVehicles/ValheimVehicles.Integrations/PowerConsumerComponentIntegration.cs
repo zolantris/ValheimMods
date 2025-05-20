@@ -48,10 +48,6 @@ namespace ValheimVehicles.Integrations
     {
       this.WaitForZNetView((nv) =>
       {
-        if (ZNet.instance.IsDedicated())
-        {
-          nv.m_zdo.SetOwner(ZDOMan.GetSessionID());
-        }
         base.Start();
         PowerNetworkController.RegisterPowerComponent(this);
       });

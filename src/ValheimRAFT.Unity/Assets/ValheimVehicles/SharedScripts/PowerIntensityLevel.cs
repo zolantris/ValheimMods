@@ -3,7 +3,7 @@
 
 namespace ValheimVehicles.SharedScripts.PowerSystem
 {
-  public enum PowerConsumptionLevel
+  public enum PowerIntensityLevel
   {
     None = 0,
     Low = 1,

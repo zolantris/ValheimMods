@@ -28,6 +28,10 @@
 
       public static readonly int Mechanism_Power_Storage_Eitr =
         PrefabNames.Mechanism_Power_Storage_Eitr.GetStableHashCode();
+
+      public static readonly int Mechanism_Power_Consumer_Swivel = PrefabNames.SwivelPrefabName.GetStableHashCode();
+      public static readonly int Mechanism_Power_Consumer_LandVehicle = PrefabNames.LandVehicle.GetStableHashCode();
+      public static readonly int Mechanism_Power_Consumer_WaterVehicle = PrefabNames.WaterVehicleShip.GetStableHashCode();
     }
 
     /**

@@ -33,7 +33,7 @@ public class PowerConduitPlateComponentIntegration :
     return 0f;
   }
 
-  public PowerConduitData Data = new();
+  public PowerConduitData? Data;
   public bool MustSync = false;
   public Rigidbody m_body;
   public FixedJoint m_joint;
@@ -142,12 +142,13 @@ public class PowerConduitPlateComponentIntegration :
     this.WaitForZNetView((netView) =>
     {
       var zdo = netView.GetZDO();
-      if (!PowerZDONetworkManager.TryGetData(zdo, out PowerConduitData data))
+      if (!PowerZDONetworkManager.TryGetData(zdo, out PowerConduitData data, true))
       {
         LoggerProvider.LogWarning("[PowerConduitPlateComponentIntegration] Failed to get PowerConduitData from PowerZDONetworkManager.");
         return;
       }
       Data = data;
+      Data.Load();
       PowerNetworkController.RegisterPowerComponent(this);
 
       Logic.GetPlayerEitr = () => PowerConduitData.GetAverageEitr(Data.Players);

@@ -63,10 +63,6 @@ namespace ValheimVehicles.Integrations
       // don't do anything when we aren't initialized.
       this.WaitForZNetView((nv) =>
       {
-        if (ZNet.instance.IsDedicated())
-        {
-          nv.m_zdo.SetOwner(ZDOMan.GetSessionID());
-        }
         LoadInitialData();
         RpcHandler.Register(instanced_RpcNotifyStateUpdate, RPC_NotifyStateUpdated);
         RegisterDefaultRPCs();

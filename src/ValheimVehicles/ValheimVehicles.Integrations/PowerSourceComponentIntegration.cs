@@ -2,7 +2,9 @@ using System;
 using UnityEngine;
 using ValheimVehicles.Helpers;
 using ValheimVehicles.Integrations.ZDOConfigs;
+using ValheimVehicles.SharedScripts;
 using ValheimVehicles.SharedScripts.PowerSystem;
+using ValheimVehicles.SharedScripts.PowerSystem.Compute;
 using ValheimVehicles.Structs;
 
 namespace ValheimVehicles.Integrations;
@@ -10,16 +12,30 @@ namespace ValheimVehicles.Integrations;
 public class PowerSourceComponentIntegration :
   NetworkedComponentIntegration<PowerSourceComponentIntegration, PowerSourceComponent, PowerSourceZDOConfig>, IPowerSource
 {
+  public PowerSourceData? Data;
   protected override void Awake()
   {
     base.Awake();
     // don't do anything when we aren't initialized.
   }
 
+  public void FixedUpdate()
+  {
+    Data?.Load();
+  }
+
   protected override void Start()
   {
     this.WaitForZNetView((netView) =>
     {
+      var zdo = netView.GetZDO();
+      if (!PowerZDONetworkManager.TryGetData(zdo, out PowerSourceData data, true))
+      {
+        LoggerProvider.LogWarning("[PowerSourceComponentIntegration] Failed to get PowerConduitData from PowerZDONetworkManager.");
+        return;
+      }
+      Data = data;
+
       if (ZNet.instance.IsDedicated())
       {
         netView.m_zdo.SetOwner(ZDOMan.GetSessionID());
@@ -82,6 +98,7 @@ public class PowerSourceComponentIntegration :
     }
   }
 
+  // keep for data model.
   public void AddFuel(float amount)
   {
     AddFuelOrRPC(amount);
@@ -127,14 +144,15 @@ public class PowerSourceComponentIntegration :
     return Logic.GetFuelCapacity();
   }
   public bool IsRunning => Logic.isRunning;
-
-  public string NetworkId => Logic.NetworkId;
-  public Vector3 Position => Logic.Position;
   public bool IsActive => Logic.IsActive;
+  public string NetworkId => Data.NetworkId;
+  public Vector3 Position => Logic.Position;
   public Vector3 ConnectorPoint => Logic.ConnectorPoint;
 
   public void SetNetworkId(string id)
   {
-    Logic.SetNetworkId(id);
+    if (!this.IsNetViewValid(out var netView)) return;
+    var idFromZdo = netView.GetZDO().GetString(VehicleZdoVars.Power_NetworkId);
+    Logic.SetNetworkId(idFromZdo);
   }
 }

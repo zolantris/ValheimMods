@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using ValheimVehicles.Config;
 using ValheimVehicles.SharedScripts.PowerSystem.Compute;
+using ValheimVehicles.Structs;
 
 namespace ValheimVehicles.SharedScripts.PowerSystem
 {
@@ -20,6 +21,20 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
 
     private const float MaxEitrCapMargin = 0.1f;
     private const float EitrToEnergyRatio = 40f;
+
+    public PowerConduitData() {}
+    public PowerConduitData(ZDO zdo)
+    {
+      this.zdo = zdo;
+      PrefabHash = zdo.m_prefab;
+      Mode = GetConduitVariant(PrefabHash);
+      Load();
+    }
+
+    public override sealed void Load()
+    {
+      NetworkId = zdo.GetString(VehicleZdoVars.Power_NetworkId, NetworkIdUnassigned);
+    }
 
     public bool IsActive => Players.Count > 0;
     public bool HasPlayersWithEitr => GetAverageEitr(Players) > 0f;

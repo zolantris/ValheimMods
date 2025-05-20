@@ -35,6 +35,7 @@ public partial class PowerNetworkControllerIntegration : PowerNetworkController
     {
       yield return null;
     }
+
     ZDOClaimUtility.RegisterClaimZdoRpc();
     PowerSystemRPC.Register();
     StartDirtyNetworkCoroutine();
@@ -51,6 +52,7 @@ public partial class PowerNetworkControllerIntegration : PowerNetworkController
   public void SimulateAllNetworks(List<IPowerNode> allNodes)
   {
     var groupedByNetwork = new Dictionary<string, List<IPowerNode>>();
+    CachedSimulateData.Clear();
 
     foreach (var node in allNodes)
     {
@@ -79,6 +81,7 @@ public partial class PowerNetworkControllerIntegration : PowerNetworkController
       var networkId = kvp.Key;
       var nodes = kvp.Value;
 
+      MarkNetworkDirty(networkId);
       Client_SimulateNetwork(nodes, networkId, false);
     }
   }
@@ -229,9 +232,7 @@ public partial class PowerNetworkControllerIntegration : PowerNetworkController
     {
       if (remainingDemand <= 0f && !NeedsCharging(simData.Storages)) break;
 
-      var burnable = Mathf.Min(source.Fuel, maxFuelRate * deltaTime);
-      var potentialEnergy = burnable * fuelToEnergy;
-      var clamped = Mathf.Min(potentialEnergy, source.OutputRate * deltaTime);
+      var clamped = source.GetMaxPotentialOutput(deltaTime);
 
       if (clamped > 0f)
       {
@@ -297,10 +298,8 @@ public partial class PowerNetworkControllerIntegration : PowerNetworkController
     var toBurn = usedFromSources / fuelToEnergy;
     foreach (var kvp in sourceOfferMap)
     {
-      var maxFuel = kvp.Value / fuelToEnergy;
-      var burn = Mathf.Min(toBurn, maxFuel);
-      kvp.Key.Fuel -= burn;
-      toBurn -= burn;
+      var burntEnergy = kvp.Key.ProducePower(kvp.Value);
+      toBurn -= kvp.Key.EstimateFuelCost(burntEnergy);
       if (toBurn <= 0f) break;
     }
 
@@ -354,10 +353,17 @@ public partial class PowerNetworkControllerIntegration : PowerNetworkController
 
     LoggerProvider.LogInfoDebounced($"_networks, {powerNodeNetworks.Count}, Consumers, {Consumers.Count}, Conduits, {Conduits.Count}, Storages, {Storages.Count}, Sources, {Sources.Count}");
 
+    // todo remove this, for testing right now.
+    CachedSimulateData.Clear();
 
     foreach (var pair in PowerZDONetworkManager.Networks)
     {
       var nodes = pair.Value;
+      var networkId = pair.Key;
+
+
+      // todo remove this, for testing right now.
+      MarkNetworkDirty(networkId);
 
       LoggerProvider.LogInfoDebounced($"Pair Key: {pair.Key}, nodes: {nodes.Count}");
 

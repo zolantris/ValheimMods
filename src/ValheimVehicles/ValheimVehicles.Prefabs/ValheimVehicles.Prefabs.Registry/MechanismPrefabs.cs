@@ -82,11 +82,11 @@ public class MechanismPrefabs : RegisterPrefab<MechanismPrefabs>
 
     // todo set values based on a config for these prefabs.
     var powerSource = prefab.AddComponent<PowerSourceComponentIntegration>();
-    var powerStorage = prefab.AddComponent<PowerStorageComponentIntegration>();
+    // var powerStorage = prefab.AddComponent<PowerStorageComponentIntegration>();
     prefab.AddComponent<PowerHoverComponent>();
 
-    powerSource.Logic.IsStorage = true;
-    powerStorage.Logic.IsSource = true;
+    // powerSource.Logic.IsStorage = true;
+    // powerStorage.Logic.IsSource = true;
 
     PieceManager.Instance.AddPiece(new CustomPiece(prefab, true, new PieceConfig
     {

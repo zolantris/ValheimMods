@@ -46,7 +46,7 @@ namespace ValheimVehicles.Integrations
       _powerHashes.Add(PrefabNameHashes.Mechanism_Power_Storage_Eitr);
     }
 
-    private static void TryAdd(ZDO zdo)
+    public static void TryAdd(ZDO zdo)
     {
       if (zdo == null || _zdoMap.ContainsKey(zdo.m_uid) || !_powerHashes.Contains(zdo.m_prefab)) return;
       _trackedZDOs.Add(zdo);
@@ -58,7 +58,7 @@ namespace ValheimVehicles.Integrations
       PowerNetworkRebuildScheduler.Trigger();
     }
 
-    private static void TryRemove(ZDO zdo)
+    public static void TryRemove(ZDO zdo)
     {
       if (zdo == null || !_zdoMap.ContainsKey(zdo.m_uid)) return;
       _trackedZDOs.Remove(zdo);
@@ -122,12 +122,22 @@ namespace ValheimVehicles.Integrations
     }
 
     // New API for retrieving data
-    public static bool TryGetData<T>(ZDO zdo, [NotNullWhen(true)] out T data) where T : PowerDataBase
+    public static bool TryGetData<T>(ZDO zdo, [NotNullWhen(true)] out T data, bool CanAdd = false) where T : PowerDataBase
     {
       if (_powerDataMap.TryGetValue(zdo.m_uid, out var baseData) && baseData is T typedData)
       {
         data = typedData;
         return true;
+      }
+
+      if (CanAdd)
+      {
+        TryAdd(zdo);
+        if (_powerDataMap.TryGetValue(zdo.m_uid, out baseData) && baseData is T newTypedData)
+        {
+          data = newTypedData;
+          return true;
+        }
       }
 
       data = null;
@@ -144,13 +154,33 @@ namespace ValheimVehicles.Integrations
       {
         case var p when p == PrefabNameHashes.Mechanism_Power_Consumer_Charge_Plate:
         case var p2 when p2 == PrefabNameHashes.Mechanism_Power_Consumer_Drain_Plate:
-          data = new PowerConduitData
+          data = new PowerConduitData(zdo)
           {
             Mode = PowerConduitData.GetConduitVariant(zdo)
           };
           break;
 
-        // Future: Add cases for storage, source, pylons, etc.
+        // 🔋 Power Storage
+        case var p when p == PrefabNameHashes.Mechanism_Power_Storage_Eitr:
+          data = new PowerStorageData(zdo);
+          break;
+
+        case var p when p == PrefabNameHashes.Mechanism_Power_Consumer_Swivel:
+          // case var p1 when p1 == PrefabNameHashes.Mechanism_Power_Consumer_LandVehicle:
+          // case var p2 when p2 == PrefabNameHashes.Mechanism_Power_Consumer_WaterVehicle:
+          data = new PowerConsumerData(zdo);
+          break;
+
+        // ⚡ Power Source
+        case var p when p == PrefabNameHashes.Mechanism_Power_Source_Eitr:
+        case var p2 when p2 == PrefabNameHashes.Mechanism_Power_Source_Coal:
+          data = new PowerSourceData(zdo);
+          break;
+
+        // 🗼 Power Pylon
+        case var p when p == PrefabNameHashes.Mechanism_Power_Pylon:
+          data = new PowerPylonData(zdo);
+          break;
 
         default:
           return;
