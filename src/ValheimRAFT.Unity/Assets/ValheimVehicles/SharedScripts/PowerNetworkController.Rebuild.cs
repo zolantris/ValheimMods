@@ -10,7 +10,6 @@ using System.Diagnostics;
 using System.Linq;
 using UnityEngine;
 using ValheimVehicles.SharedScripts.Helpers;
-using ValheimVehicles.SharedScripts.PowerSystem.Interfaces;
 
 #endregion
 
@@ -29,6 +28,7 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
 
     public IEnumerator RebuildPowerNetworkCoroutine()
     {
+      LoggerProvider.LogInfoDebounced("Called RebuildPowerNetworkCoroutine");
       yield return new WaitForSeconds(1f);
 
       // Step 1: Aggregate all valid power nodes
@@ -55,6 +55,16 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
         if (Storages.TryGetValidElement(ref i, out var storage))
           _allNodes.Add(storage);
 
+
+      if (!ZNet.instance.IsServer())
+      {
+        var zdos = _allNodes.Where(x => x != null && x.transform != null).Select(x => x.transform.GetComponent<ZNetView>().m_zdo.m_uid).ToList();
+        if (zdos.Count > 0)
+        {
+          RequestRebuildNetworkWithZDOs(zdos);
+        }
+      }
+
       // Step 2: Build networks by proximity
       _unvisited.Clear();
       foreach (var node in _allNodes)
@@ -65,7 +75,7 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
 
       while (_unvisited.Count > 0)
       {
-        if (rebuildTimer.ElapsedMilliseconds > 10)
+        if (rebuildTimer.ElapsedMilliseconds > 10 && !ZNet.instance.IsDedicated())
         {
           rebuildTimer.Restart();
           yield return null;
@@ -81,7 +91,7 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
 
         while (_pending.Count > 0)
         {
-          if (rebuildTimer.ElapsedMilliseconds > 10)
+          if (rebuildTimer.ElapsedMilliseconds > 100 && !ZNet.instance.IsDedicated())
           {
             rebuildTimer.Restart();
             yield return null;
@@ -103,10 +113,16 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
 
         _networks[networkId] = cluster;
       }
+      LoggerProvider.LogInfoDebounced($"Rebuild with {_networks.Count}, scanned through {_allNodes.Count} nodes in {rebuildTimer.ElapsedMilliseconds}ms");
 
       rebuildTimer.Reset();
       _rebuildPylonNetworkRoutine = null;
+      LoggerProvider.LogInfoDebounced("At the near end of rebuild");
+
       yield return new WaitForSeconds(1f);
+      LoggerProvider.LogInfoDebounced("At the end of rebuild");
+
+      LoggerProvider.LogInfoDebounced($"_networks, {_networks.Count}, Consumers, {Consumers.Count}, Conduits, {Conduits.Count}, Storages, {Storages.Count}, Sources, {Sources.Count}");
     }
   }
 }

@@ -17,7 +17,7 @@
    ```
     - To wait for debugger connection add `wait-for-managed-debugger=1`
 
-## Alternatively using the doorstop 4.x.x
+## Alternatively, using the doorstop 4.x.x
 
 - Install everything like above but skip step 4.
 - Turn on debugging in doorstop.config

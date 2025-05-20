@@ -76,6 +76,7 @@ public class PowerConduitPlateComponentIntegration :
     {
       _playersWithinZone.Add(player);
     }
+    _playersWithinZone.RemoveAll(x => !x);
 
     Logic.SetHasPlayerInRange(GetAverageEitr() > 0f);
   }
@@ -86,6 +87,7 @@ public class PowerConduitPlateComponentIntegration :
     {
       _playersWithinZone.Remove(player);
     }
+    _playersWithinZone.RemoveAll(x => !x);
 
     if (_playersWithinZone.Count == 0)
     {
@@ -110,14 +112,12 @@ public class PowerConduitPlateComponentIntegration :
   private void RPC_TriggerEnter(long sender, long playerId)
   {
     var player = Player.GetPlayer(playerId);
-    if (!player) return;
     HandlePlayerEnterActiveZone(player);
   }
 
   private void RPC_TriggerExit(long sender, long playerId)
   {
     var player = Player.GetPlayer(playerId);
-    if (!player) return;
     HandlePlayerExitActiveZone(player);
   }
 
@@ -130,7 +130,11 @@ public class PowerConduitPlateComponentIntegration :
   private void OnTriggerEnter(Collider other)
   {
     var player = other.GetComponentInParent<Player>();
-    if (!player) return;
+    if (!player)
+    {
+      Physics.IgnoreCollision(other, Logic.m_triggerCollider, true);
+      return;
+    }
 
     HandlePlayerEnterActiveZone(player);
 
@@ -143,6 +147,7 @@ public class PowerConduitPlateComponentIntegration :
   private void OnTriggerExit(Collider other)
   {
     var player = other.GetComponentInParent<Player>();
+    if (!player) return;
     HandlePlayerExitActiveZone(player);
 
     if (this.IsNetViewValid(out var netView))
@@ -155,9 +160,13 @@ public class PowerConduitPlateComponentIntegration :
 
   protected override void Start()
   {
+    this.WaitForZNetView(() =>
+    {
+      PowerNetworkController.RegisterPowerComponent(this);
+    });
+
     if (!this.IsNetViewValid(out var netView)) return;
     base.Start();
-    PowerNetworkController.RegisterPowerComponent(this);
 
     Logic.GetPlayerEitr = GetAverageEitr;
     Logic.AddPlayerEitr = AddEitrToPlayers;

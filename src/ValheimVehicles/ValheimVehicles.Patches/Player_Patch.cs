@@ -84,6 +84,10 @@
 
     public static GameObject WrapInstantiateWithPlacedPiece(Object original, Vector3 pos, Quaternion rot)
     {
+      if (ZNet.instance && ZNet.instance.IsServer())
+      {
+        Logger.LogWarning("[WrapInstantiateWithPlacedPiece] WARNING: This should not run on server!");
+      }
       var obj = Object.Instantiate(original, pos, rot) as GameObject;
       return PlacedPiece(obj); // your side-effect logic
     }

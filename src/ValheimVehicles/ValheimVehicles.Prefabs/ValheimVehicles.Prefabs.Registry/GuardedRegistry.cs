@@ -24,7 +24,8 @@ public abstract class GuardedRegistry<T> : IGuardedRegistry, IGuardedRegistryInt
 {
   public static bool IsValid()
   {
-    return PrefabManager.Instance != null && PieceManager.Instance != null;
+    // return PrefabManager.Instance != null && PieceManager.Instance != null;
+    return PieceManager.Instance != null;
   }
 
   // Internal methods only.

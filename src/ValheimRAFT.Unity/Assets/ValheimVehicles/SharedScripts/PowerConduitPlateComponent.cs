@@ -23,11 +23,17 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
     public Func<float> GetPlayerEitr = () => 0f;
     public Action<float> AddPlayerEitr = _ => {};
     public Action<float> SubtractPlayerEitr = _ => {};
+    public Collider m_triggerCollider;
 
     private bool m_hasPlayerInRange;
     public bool HasPlayerInRange => m_hasPlayerInRange;
 
     public bool IsDemanding => mode == EnergyPlateMode.Charging && HasPlayerInRange;
+
+    protected override void Awake()
+    {
+      m_triggerCollider = transform.GetComponentInChildren<Collider>();
+    }
 
     public float RequestPower(float deltaTime)
     {

@@ -52,7 +52,6 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
 
     public void Client_SimulateNetwork(List<IPowerNode> nodes, string networkId, bool canSkip = false)
     {
-
       if (!canSkip)
       {
         UpdateListData(nodes);
@@ -91,6 +90,11 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
       };
       newData.Cached_NetworkDataString = GenerateNetworkDataString(networkId, newData);
       UpdateNetworkPowerData(networkId, newData);
+
+      if (ZNet.instance.IsServer())
+      {
+        LoggerProvider.LogInfoDebounced($"Host Server updated network data with Fuel: {newData.NetworkFuelSupply} PowerSupply: {newData.NetworkPowerSupply}");
+      }
     }
 
     public float GetTotalConsumerDemand(float deltaTime)

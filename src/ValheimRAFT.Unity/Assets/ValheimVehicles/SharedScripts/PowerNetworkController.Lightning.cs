@@ -19,7 +19,7 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
     private bool _lightningActive;
     private Coroutine? lightningBurstCoroutine;
 
-    private void Update()
+    protected virtual void Update()
     {
       if (!enableLightning || _lightningActive) return;
 

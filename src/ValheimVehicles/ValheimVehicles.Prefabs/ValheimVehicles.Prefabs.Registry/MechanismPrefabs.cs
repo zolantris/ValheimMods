@@ -1,6 +1,7 @@
 using Jotunn.Configs;
 using Jotunn.Entities;
 using Jotunn.Managers;
+using UnityEngine;
 using ValheimVehicles.Components;
 using ValheimVehicles.Integrations;
 using ValheimVehicles.SharedScripts;
@@ -59,6 +60,8 @@ public class MechanismPrefabs : RegisterPrefab<MechanismPrefabs>
         }
       ]
     }));
+    RegisterModifiedPrefab(prefab);
+
   }
 
   private void RegisterPowerSourceEitr()
@@ -112,6 +115,7 @@ public class MechanismPrefabs : RegisterPrefab<MechanismPrefabs>
         }
       ]
     }));
+    RegisterModifiedPrefab(prefab);
   }
 
   private void RegisterPowerChargePlate()
@@ -153,6 +157,7 @@ public class MechanismPrefabs : RegisterPrefab<MechanismPrefabs>
         }
       ]
     }));
+    RegisterModifiedPrefab(prefab);
   }
 
   private void RegisterPowerDrainPlate()
@@ -195,6 +200,7 @@ public class MechanismPrefabs : RegisterPrefab<MechanismPrefabs>
         }
       ]
     }));
+    RegisterModifiedPrefab(prefab);
   }
 
   // private void RegisterCoalEngine()
@@ -293,6 +299,7 @@ public class MechanismPrefabs : RegisterPrefab<MechanismPrefabs>
         }
       ]
     }));
+    RegisterModifiedPrefab(prefab);
   }
 
 
@@ -335,6 +342,19 @@ public class MechanismPrefabs : RegisterPrefab<MechanismPrefabs>
         }
       ]
     }));
+    RegisterModifiedPrefab(prefab);
+  }
+
+  public static void RegisterModifiedPrefab(GameObject prefab)
+  {
+    if (ZNetScene.instance != null)
+    {
+      ZNetScene.instance.m_namedPrefabs[prefab.name.GetStableHashCode()] = prefab;
+    }
+    else
+    {
+      Jotunn.Logger.LogWarning($"ZNetScene is not initialized. Could not register {prefab.name}.");
+    }
   }
 
   public override void OnRegister()
@@ -349,5 +369,7 @@ public class MechanismPrefabs : RegisterPrefab<MechanismPrefabs>
 #if DEBUG
     RegisterPowerChargePlate();
 #endif
+
+    LoggerProvider.LogInfo($"Registering PowerStorageComponentIntegration prefab at: {Time.time}");
   }
 }

@@ -7,6 +7,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using UnityEngine;
 using Debug = UnityEngine.Debug; // Minimal UnityEngine pull
 
 namespace ValheimVehicles.SharedScripts;
@@ -20,6 +21,13 @@ public static class LoggerProvider
 
   private static bool _hasInitialized = false;
   private static readonly Dictionary<string, string> _callerCache = new();
+  private static readonly Dictionary<string, float> _lastLogTimestamps = new();
+  private static float GetTime()
+  {
+    return Time.realtimeSinceStartup;
+    // Works in both client/server Unity
+  }
+
 
   public static void Setup(ManualLogSource? logger)
   {
@@ -177,6 +185,35 @@ public static class LoggerProvider
     return $"{logType}:{callerInfo} {message}";
   }
 
+  public static void LogInfoDebounced(string val, float debounceSeconds = 5f,
+    [CallerFilePath] string file = "", [CallerLineNumber] int line = 0)
+  {
+    if (!IsLevelEnabled(LogLevel.Info)) return;
+    var key = $"INFO:{file}:{line}:{val.GetHashCode()}";
+    if (ShouldDebounce(key, debounceSeconds)) return;
+    SafeLog(LogLevel.Info, Format("Info", val, file, line));
+  }
+
+  public static void LogInfoDebounced(string key, string message, float debounceSeconds = 5f,
+    [CallerFilePath] string file = "", [CallerLineNumber] int line = 0)
+  {
+    var compositeKey = $"INFO:{file}:{line}:{key}";
+    if (ShouldDebounce(compositeKey, debounceSeconds)) return;
+    SafeLog(LogLevel.Info, Format("Info", message, file, line));
+  }
+
+  private static bool ShouldDebounce(string key, float debounceSeconds)
+  {
+    var now = GetTime();
+    if (_lastLogTimestamps.TryGetValue(key, out var lastTime))
+    {
+      if (now - lastTime < debounceSeconds)
+        return true;
+    }
+
+    _lastLogTimestamps[key] = now;
+    return false;
+  }
 
   private static LogLevel ReadBepInExConsoleLogLevel()
   {

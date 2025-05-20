@@ -76,6 +76,8 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
 
     protected override void Awake()
     {
+      LoggerProvider.LogInfo($"[PowerStorageComponent] Awake on {name} ({gameObject.GetInstanceID()})");
+
       base.Awake();
       m_visualEnergyLevel = transform.Find("energy_level");
       powerRotatorTransform = transform.Find("meshes/power_rotator");

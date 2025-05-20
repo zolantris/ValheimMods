@@ -189,6 +189,7 @@
   "valheim_vehicles_mechanism_power_state_has_power": "Powered",
   "valheim_vehicles_mechanism_power_state_no_power": "Power Required",
   "valheim_vehicles_mechanism_power_state_active": "Active",
+  "valheim_vehicles_mechanism_power_state_no_eitr_detected": "No Eitr on player(s)",
   "valheim_vehicles_mechanism_power_state_inactive": "Inactive",
   "valheim_vehicles_mechanism_network_data": "Power Network Data",
   "valheim_vehicles_mechanism_network_status": "Status",

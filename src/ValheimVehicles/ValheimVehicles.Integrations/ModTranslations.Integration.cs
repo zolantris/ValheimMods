@@ -188,7 +188,7 @@ public partial class ModTranslations
 
     PowerState_Active = SafeLocalize("$valheim_vehicles_mechanism_power_state_active");
     PowerState_Inactive = SafeLocalize("$valheim_vehicles_mechanism_power_state_inactive");
-    PowerState_NoEitrOnPlayers = SafeLocalize("$valheim_vehicles_mechanism_power_state_no_eitr_detected");
+    PowerState_Inactive_NoEitrOnPlayers = SafeLocalize("$valheim_vehicles_mechanism_power_state_no_eitr_detected");
 
     Power_NetworkInfo_NetworkData = SafeLocalize("$valheim_vehicles_mechanism_network_data");
     Power_NetworkInfo_NetworkPower = SafeLocalize("$valheim_vehicles_mechanism_network_power");
@@ -216,7 +216,7 @@ public partial class ModTranslations
 
     PowerSource_Message_AddedFromContainer = SafeLocalize("$valheim_vehicles_mechanism_added_from_container");
 
-    PowerSource_Message_AddedFromPlayer = SafeLocalize("$valheim_vehicles_mechanism_added_from_container");
+    PowerSource_Message_AddedFromPlayer = SafeLocalize("$valheim_vehicles_mechanism_added_from_player");
     Power_NetworkInfo_NetworkStatus = SafeLocalize("$valheim_vehicles_mechanism_network_status");
   }
 

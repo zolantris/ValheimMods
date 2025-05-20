@@ -18,6 +18,7 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
 
     protected virtual void Awake()
     {
+      LoggerProvider.LogInfo($"[PowerNodeComponentBase] Awake on {name} ({gameObject.GetInstanceID()})");
       AssignConnectorPoint();
     }
 

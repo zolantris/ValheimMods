@@ -1,7 +1,11 @@
 using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using UnityEngine;
 using ValheimVehicles.Interfaces;
+using ValheimVehicles.SharedScripts;
+using ValheimVehicles.SharedScripts.PowerSystem;
 namespace ValheimVehicles.Helpers;
 
 public static class ValheimExtensions
@@ -56,6 +60,50 @@ public static class ValheimExtensions
     validNetView = instance.m_nview;
     return true;
   }
+
+  public static Coroutine WaitForZNetView(this MonoBehaviour instance, Action action)
+  {
+    return instance.StartCoroutine(WaitForZNetViewCoroutine(instance, _ => action()));
+  }
+
+  public static Coroutine WaitForZNetView(this MonoBehaviour instance, Action<ZNetView> action)
+  {
+    return instance.StartCoroutine(WaitForZNetViewCoroutine(instance, action));
+  }
+
+  private static IEnumerator WaitForZNetViewCoroutine(MonoBehaviour instance, Action<ZNetView> action, float timeout = 10f)
+  {
+    var startTime = Time.realtimeSinceStartup;
+    var netView = instance.GetComponent<ZNetView>();
+
+    while (instance && instance.isActiveAndEnabled && (!netView || !netView.IsValid()))
+    {
+      if (Time.realtimeSinceStartup - startTime > timeout)
+      {
+        LoggerProvider.LogInfoDebounced(
+          $"znet_timeout_{instance.GetType().Name}",
+          $"[ZNetViewUtil] ZNetView not valid on {instance.GetType().Name} after {timeout}s at {instance.transform.position}"
+        );
+        yield break;
+      }
+
+      yield return null;
+      netView = instance.GetComponent<ZNetView>();
+    }
+
+    if (!instance)
+    {
+      LoggerProvider.LogInfoDebounced("Bailed due to instance becoming invalid.");
+      yield break;
+    }
+    LoggerProvider.LogInfoDebounced(
+      $"znet_register_{instance.GetType().Name}",
+      $"ZNetView ready, registering {instance.GetType().Name} on '{instance.name}' at {instance.transform.position}"
+    );
+
+    action.Invoke(netView);
+  }
+
 
   public static bool IsNetViewValid(this INetView instance)
   {

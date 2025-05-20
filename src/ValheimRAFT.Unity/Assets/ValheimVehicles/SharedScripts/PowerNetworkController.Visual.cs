@@ -20,6 +20,25 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
     [SerializeField] private bool enableVisualWires = true;
     private readonly List<LineRenderer> _activeLines = new();
 
+    public static string GetDrainMechanismActivationStatus(bool isActive, bool hasPlayersWithEitr)
+    {
+      var text = "";
+      if (!isActive)
+      {
+        text = ModTranslations.PowerState_Inactive;
+      }
+      else if (isActive && !hasPlayersWithEitr)
+      {
+        text = ModTranslations.PowerState_Inactive_NoEitrOnPlayers;
+      }
+      else
+      {
+        text = ModTranslations.PowerState_Active;
+      }
+
+      return ModTranslations.WithBoldText(text, isActive && hasPlayersWithEitr ? "yellow" : "red");
+    }
+
     /// <summary>
     /// For showing activator power items. Either active or inactive status.
     /// </summary>

@@ -13,15 +13,32 @@ namespace ValheimVehicles.Integrations
     NetworkedComponentIntegration<PowerStorageComponentIntegration, PowerStorageComponent, PowerStorageZDOConfig>,
     IPowerStorage
   {
+    public Coroutine? registerCoroutine = null;
+
     protected override void Awake()
     {
-      base.Awake();
       // don't do anything when we aren't initialized.
-      if (!this.IsNetViewValid()) return;
-      PowerNetworkController.RegisterPowerComponent(this);
+      registerCoroutine = this.WaitForZNetView((nv) =>
+      {
+        if (ZNet.instance.IsDedicated())
+        {
+          nv.m_zdo.SetOwner(ZDOMan.GetSessionID());
+        }
+        base.Awake();
+        PowerNetworkController.RegisterPowerComponent(this);
+      });
     }
-    protected void OnDestroy()
+
+    protected override void OnDestroy()
     {
+      base.OnDestroy();
+
+      if (registerCoroutine != null)
+      {
+        StopCoroutine(registerCoroutine);
+        registerCoroutine = null;
+      }
+
       PowerNetworkController.UnregisterPowerComponent(this);
     }
     protected override void RegisterDefaultRPCs()

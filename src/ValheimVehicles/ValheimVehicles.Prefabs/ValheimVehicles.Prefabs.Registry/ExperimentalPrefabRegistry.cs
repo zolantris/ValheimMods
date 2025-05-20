@@ -17,8 +17,11 @@ public class ExperimentalPrefabRegistry : RegisterPrefab<ExperimentalPrefabRegis
     RegisterNautilus();
   }
 
+  public static bool HasRegisteredNautilus;
+
   private static void RegisterNautilusVehicleShipPrefab()
   {
+    if (HasRegisteredNautilus) return;
     var prefab = PrefabManager.Instance.CreateClonedPrefab(PrefabNames.Nautilus,
       LoadValheimVehicleAssets.ShipNautilus);
     PrefabRegistryHelpers.AddNetViewWithPersistence(prefab);
@@ -55,6 +58,8 @@ public class ExperimentalPrefabRegistry : RegisterPrefab<ExperimentalPrefabRegis
         }
       ]
     }));
+
+    HasRegisteredNautilus = true;
   }
 
   public static void RegisterNautilus()

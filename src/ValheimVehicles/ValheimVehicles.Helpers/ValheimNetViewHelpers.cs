@@ -7,7 +7,8 @@ public class ValheimNetViewHelpers
   {
     if (nview == null || !nview.IsValid()) return;
 
-    if (nview.IsOwner() || ZNet.instance.IsServer())
+    //nview.IsOwner() || 
+    if (ZNet.instance.IsServer())
     {
       if (!nview.IsOwner())
         nview.ClaimOwnership();

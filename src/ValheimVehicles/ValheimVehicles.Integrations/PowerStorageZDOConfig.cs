@@ -12,10 +12,10 @@ public class PowerStorageZDOConfig : INetworkedZDOConfig<PowerStorageComponentIn
   {
     var stored = zdo.GetFloat(VehicleZdoVars.Power_StoredEnergy, component.Logic.ChargeLevel);
 
-    if (Mathf.Approximately(stored, 0f))
-    {
-      LoggerProvider.LogWarning("Stored energy is set to Zero somehow");
-    }
+    // if (Mathf.Approximately(stored, 0f))
+    // {
+    //   LoggerProvider.LogWarning("Stored energy is set to Zero somehow");
+    // }
 
     component.Logic.SetStoredEnergy(stored);
   }

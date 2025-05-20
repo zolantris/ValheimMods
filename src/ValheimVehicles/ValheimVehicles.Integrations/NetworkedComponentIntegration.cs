@@ -61,10 +61,16 @@ namespace ValheimVehicles.Integrations
     protected virtual void Start()
     {
       // don't do anything when we aren't initialized.
-      if (!this.IsNetViewValid()) return;
-      LoadInitialData();
-      RpcHandler.Register(instanced_RpcNotifyStateUpdate, RPC_NotifyStateUpdated);
-      RegisterDefaultRPCs();
+      this.WaitForZNetView((nv) =>
+      {
+        if (ZNet.instance.IsDedicated())
+        {
+          nv.m_zdo.SetOwner(ZDOMan.GetSessionID());
+        }
+        LoadInitialData();
+        RpcHandler.Register(instanced_RpcNotifyStateUpdate, RPC_NotifyStateUpdated);
+        RegisterDefaultRPCs();
+      });
     }
 
     protected virtual void OnDestroy()

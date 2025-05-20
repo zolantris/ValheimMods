@@ -13,6 +13,22 @@ public class PowerPylonComponentIntegration : PowerPylon, Hoverable, Interactabl
     // don't do anything when we aren't initialized.
     base.Awake();
   }
+
+  /// <summary>
+  /// Do not call base method until we are initialized.
+  /// </summary>
+  protected override void Start()
+  {
+    this.WaitForZNetView((nv) =>
+    {
+      if (ZNet.instance.IsDedicated())
+      {
+        nv.m_zdo.SetOwner(ZDOMan.GetSessionID());
+      }
+      base.Start();
+    });
+  }
+
   public string GetHoverText()
   {
     var baseString = "";

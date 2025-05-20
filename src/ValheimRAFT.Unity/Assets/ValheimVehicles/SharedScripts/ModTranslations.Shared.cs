@@ -64,7 +64,7 @@ namespace ValheimVehicles.SharedScripts
     public static string PowerState_ConnectToGrid = null!;
     public static string PowerState_Active = null!;
     public static string PowerState_Inactive = null!;
-    public static string PowerState_NoEitrOnPlayers = null!;
+    public static string PowerState_Inactive_NoEitrOnPlayers = null!;
     public static string Power_NetworkInfo_NetworkData = null!;
     public static string Power_NetworkInfo_NetworkId = null!;
     public static string Power_NetworkInfo_NetworkPower = null!;

@@ -18,9 +18,15 @@ public class PowerSourceComponentIntegration :
 
   protected override void Start()
   {
-    if (!this.IsNetViewValid()) return;
-    base.Start();
-    PowerNetworkController.RegisterPowerComponent(this);
+    this.WaitForZNetView((netView) =>
+    {
+      if (ZNet.instance.IsDedicated())
+      {
+        netView.m_zdo.SetOwner(ZDOMan.GetSessionID());
+      }
+      PowerNetworkController.RegisterPowerComponent(this);
+      base.Start();
+    });
   }
 
   protected override void OnDestroy()
