@@ -1,18 +1,23 @@
 // ReSharper disable ArrangeNamespaceBody
 // ReSharper disable NamespaceStyle
 
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using ValheimVehicles.Config;
 using ValheimVehicles.Integrations;
 using ValheimVehicles.SharedScripts;
 using ValheimVehicles.SharedScripts.PowerSystem;
 
 namespace ValheimVehicles.Integrations;
 
-public class PowerNetworkControllerIntegration : PowerNetworkController
+public partial class PowerNetworkControllerIntegration : PowerNetworkController
 {
   private readonly List<string> _networksToRemove = new();
+
+  // prefabHash to Related component
+  public static Dictionary<int, List<object>> PowerPrefabDataControllers = new();
 
   public override void Awake()
   {
@@ -22,6 +27,12 @@ public class PowerNetworkControllerIntegration : PowerNetworkController
     LoggerProvider.LogMessage("Called post awake with message");
     StartCoroutine(DelayedRegister());
   }
+
+  // public static void RegisterPowerComponentByZdo(ZDO zdo)
+  // {
+  //   RegisterControllerForPrefab(zdo.GetPrefab());
+  //   RequestRebuildNetwork();
+  // }
 
   public IEnumerator DelayedRegister()
   {
@@ -33,16 +44,6 @@ public class PowerNetworkControllerIntegration : PowerNetworkController
     RegisterRebuildRpc();
   }
 
-  private static bool _registeredRpc = false;
-  public void EnsureZDOClaimRPCRegistered()
-  {
-    if (!_registeredRpc)
-    {
-      ZRoutedRpc.instance.Register<ZDOID>(nameof(ValheimVehicles_Server_ClaimZDO), ValheimVehicles_Server_ClaimZDO);
-      _registeredRpc = true;
-    }
-  }
-
   // DO nothing for fixed update. Hosts cannot run FixedUpdate on server I think...
   protected override void FixedUpdate() {}
   protected override void Update()
@@ -51,115 +52,96 @@ public class PowerNetworkControllerIntegration : PowerNetworkController
     SimulateOnClientAndServer();
   }
 
-  public static List<ZDO> GetAllZDOsWithPrefab(string prefabName)
+  /// <summary>
+  /// Data-only updates are applied to ZDOs.
+  /// </summary>
+  /// <param name="zdos"></param>
+  public static void RequestRebuildNetworkWithZDOs(List<ZDOID> zdos)
   {
-    var results = new List<ZDO>();
-    var index = 0;
-    while (!ZDOMan.instance.GetAllZDOsWithPrefabIterative(prefabName, results, ref index)) ;
-    return results;
-  }
-
-  // Client-side: call this after spawning the prefab
-  public static void RequestServerToClaimZDO(ZDOID id)
-  {
-    ZRoutedRpc.instance.InvokeRoutedRPC("ValheimVehicles_ClaimZDO", id);
-  }
-
-  public void ValheimVehicles_Server_ClaimZDO(long sender, ZDOID id)
-  {
-    if (!ZNet.instance || !ZNet.instance.IsServer())
+    var pkg = new ZPackage();
+    pkg.Write(zdos.Count);
+    foreach (var zdo in zdos)
     {
-      ZLog.LogWarning("[ZDOClaim] Attempted to handle ClaimZDO on a non-server instance.");
+      pkg.Write(zdo); // ZDOID has a Write(ZPackage) overload
+    }
+
+    ZRoutedRpc.instance.InvokeRoutedRPC(
+      ZRoutedRpc.instance.GetServerPeerID(),
+      nameof(RequestRebuildNetworkWithZDOs),
+      pkg
+    );
+  }
+
+  private static bool _rebuildRegistered;
+  public void RegisterRebuildRpc()
+  {
+    if (_rebuildRegistered || ZRoutedRpc.instance == null)
       return;
-    }
 
-    var zdo = ZDOMan.instance.GetZDO(id);
-    if (zdo == null || !zdo.Persistent)
+    if (ZNet.instance.IsServer())
     {
-      ZLog.LogWarning($"[ZDOClaim] Invalid or non-persistent ZDO {id} from peer {sender}");
-      return;
+      ZRoutedRpc.instance.Register<ZPackage>(nameof(RequestRebuildNetworkWithZDOs), Server_HandleRebuildRequest);
     }
-
-    // Take ownership
-    if (zdo.GetOwner() != ZDOMan.GetSessionID())
+    else
     {
-      zdo.SetOwner(ZDOMan.GetSessionID());
+      ZRoutedRpc.instance.Register<ZPackage>(nameof(RequestRebuildNetworkWithZDOs), (_, __) => {});
     }
 
-    // Instantiate if not already present
-    if (ZNetScene.instance.FindInstance(id) == null)
-    {
-      var prefab = ZNetScene.instance.GetPrefab(zdo.GetPrefab());
-      if (prefab == null)
-      {
-        ZLog.LogError($"[ZDOClaim] Missing prefab for hash {zdo.GetPrefab()}");
-        return;
-      }
-
-      Instantiate(prefab, zdo.GetPosition(), Quaternion.identity);
-      ZLog.Log($"[ZDOClaim] Server claimed and instantiated {prefab.name} at {zdo.GetPosition()}");
-    }
+    _rebuildRegistered = true;
   }
 
-
-  public void ValidateServerProblems()
+  public void Server_HandleRebuildRequest(long sender, ZPackage pkg)
   {
-    foreach (var player in Player.s_players)
+    if (!ZNet.instance.IsServer())
+      return;
+
+    pkg.SetPos(0);
+    var count = pkg.ReadInt();
+    var ids = new List<ZDOID>(count);
+
+    for (var i = 0; i < count; i++)
     {
-      if (!player) continue;
-
-      var pos = player.transform.position;
-
-      var prefabName = PrefabNames.Mechanism_Power_Storage_Eitr;
-      var list = GetAllZDOsWithPrefab(prefabName);
-
-      if (list.Count > 0)
+      try
       {
-        var totalCount = 0;
-        foreach (var zdo in list)
-        {
-          if (Vector3.Distance(zdo.GetPosition(), pos) < 50f)
-          {
-            totalCount++;
-            var comp = ZNetScene.instance.FindInstance(zdo.m_uid);
-            if (comp)
-            {
-              var powerStorageComponent = comp.GetComponent<PowerStorageComponentIntegration>();
-              if (powerStorageComponent)
-              {
-                LoggerProvider.LogInfoDebounced("Found copy of powerStorageComponentIntegration...force registering");
-                RegisterPowerComponent(powerStorageComponent);
-              }
-            }
-          }
-        }
-        LoggerProvider.LogInfoDebounced($"Found ({totalCount}) counts of  ZDO for prefab {prefabName}");
+
+        ids.Add(pkg.ReadZDOID());
       }
-      else
+      catch (Exception e)
       {
-        LoggerProvider.LogInfoDebounced($"Found no ZDO for prefab {prefabName}");
+        LoggerProvider.LogError($"Error while reading zdoid {e}");
       }
     }
-  }
 
-  // foreach (var pieceTable in Resources.FindObjectsOfTypeAll<PieceTable>())
-  // {
-  //   foreach (var pieceTableMPiece in pieceTable.m_pieces)
-  //   {
-  //     if (pieceTableMPiece.name.Contains(PrefabNames.Mechanism_Power_Source_Eitr))
-  //     {
-  //       var powerSourceComponent = pieceTableMPiece.GetComponent<PowerSourceComponentIntegration>();
-  //       LoggerProvider.LogInfoDebounced("Found in prefab powerSourceComponent");
-  //     }
-  //     if (pieceTableMPiece.name.Contains(PrefabNames.Mechanism_Power_Storage_Eitr))
-  //     {
-  //       var powerStorageComponent = pieceTableMPiece.GetComponent<PowerStorageComponentIntegration>();
-  //       LoggerProvider.LogInfoDebounced("Found in prefab powerStorageComponent");
-  //     }
-  //   }
-  //   LoggerProvider.LogInfo($" - {pieceTable.name}, has {pieceTable.m_pieces.Count} pieces");
-  // }
-  // ValidateServerProblems();
+    try
+    {
+      LoggerProvider.LogInfo($"[ZDORebuild] Received rebuild request with {ids.Count} ZDOIDs");
+    }
+    catch (Exception e)
+    {
+      LoggerProvider.LogError($"{e}");
+    }
+
+    // var registerInstances = new List<GameObject>();
+    List<ZDO> zdos = new();
+    foreach (var id in ids)
+    {
+      var zdo = ZDOMan.instance.GetZDO(id);
+      if (zdo == null || !zdo.Persistent)
+      {
+        ZLog.LogWarning($"[ZDORebuild] Skipping invalid ZDO {id}");
+        continue;
+      }
+
+      if (zdo.GetOwner() != ZDOMan.GetSessionID())
+      {
+        LoggerProvider.LogDebug($"[ZDORebuild] was not owner calling setowner");
+        zdo.SetOwner(ZDOMan.GetSessionID());
+      }
+
+      zdos.Add(zdo);
+    }
+    StartCoroutine(ForceSpawnOnServerIfItDoesNotExist(zdos));
+  }
 
   public void SimulateOnClientAndServer()
   {
@@ -167,13 +149,6 @@ public class PowerNetworkControllerIntegration : PowerNetworkController
     if (Time.time < _nextUpdate) return;
     _nextUpdate = Time.time + _updateInterval;
 
-    // if (ZNet.instance.IsServer())
-    // {
-    //   if (_networks.Count == 0 && (Consumers.Count > 0 || Conduits.Count > 0 || Storages.Count > 0 || Sources.Count > 0))
-    //   {
-    //     RequestRebuildNetwork();
-    //   }
-    // }
     LoggerProvider.LogInfoDebounced($"_networks, {_networks.Count}, Consumers, {Consumers.Count}, Conduits, {Conduits.Count}, Storages, {Storages.Count}, Sources, {Sources.Count}");
 
     foreach (var pair in _networks)

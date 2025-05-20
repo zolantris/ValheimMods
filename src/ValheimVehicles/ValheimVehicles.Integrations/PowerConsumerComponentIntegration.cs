@@ -16,7 +16,7 @@ namespace ValheimVehicles.Integrations
   {
     public string NetworkId => Logic.NetworkId;
     public Vector3 Position => transform.position;
-    public Transform ConnectorPoint => transform;
+    public Vector3 ConnectorPoint => transform.position;
     public bool IsActive => Logic.IsActive;
     public bool IsDemanding => Logic.IsDemanding;
     public bool IsPowerDenied => Logic.IsPowerDenied;

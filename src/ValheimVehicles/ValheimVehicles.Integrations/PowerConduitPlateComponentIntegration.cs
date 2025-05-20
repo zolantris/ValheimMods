@@ -17,7 +17,7 @@ public class PowerConduitPlateComponentIntegration :
   private const float MaxEitrCapMargin = 0.1f; // If within 0.1 of max, skip charging
   public string NetworkId => Logic.NetworkId;
   public Vector3 Position => transform.position;
-  public Transform ConnectorPoint => transform;
+  public Vector3 ConnectorPoint => Position;
 
   public bool IsActive => true;
   public bool IsDemanding => Logic.IsDemanding;
@@ -227,26 +227,14 @@ public class PowerConduitPlateComponentIntegration :
     return Logic.SupplyPower(deltaTime);
   }
 
-  private void CleanupPlayerList()
+  public static float GetAverageEitr(List<Player> playersWithinZone)
   {
-    for (var i = 0; i < _playersWithinZone.Count; i++)
-    {
-      if (_playersWithinZone[i] == null)
-      {
-        _playersWithinZone.FastRemoveAt(ref i);
-        i--;
-      }
-    }
-  }
-
-  private float GetAverageEitr()
-  {
-    CleanupPlayerList();
+    playersWithinZone.RemoveAll(x => !x);
 
     var count = 0;
     var total = 0f;
 
-    foreach (var player in _playersWithinZone)
+    foreach (var player in playersWithinZone)
     {
       total += player.m_eitr;
       count++;
@@ -255,10 +243,14 @@ public class PowerConduitPlateComponentIntegration :
     return count > 0 ? total / count : 0f;
   }
 
+  private float GetAverageEitr()
+  {
+    return GetAverageEitr(_playersWithinZone);
+  }
+
   private void AddEitrToPlayers(float amount)
   {
-    CleanupPlayerList();
-
+    _playersWithinZone.RemoveAll(x => !x);
     if (_playersWithinZone.Count == 0 || amount <= 0f) return;
 
     // Filter out players near Eitr cap
@@ -282,8 +274,7 @@ public class PowerConduitPlateComponentIntegration :
 
   private void SubtractEitrFromPlayers(float amount)
   {
-    CleanupPlayerList();
-
+    _playersWithinZone.RemoveAll(x => !x);
     if (_playersWithinZone.Count == 0 || amount <= 0f) return;
 
     List<Player> validPlayers = new(_playersWithinZone.Count);

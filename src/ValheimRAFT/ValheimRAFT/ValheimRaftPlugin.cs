@@ -18,6 +18,7 @@ using ValheimVehicles.Prefabs;
 using ValheimVehicles.SharedScripts;
 using ValheimVehicles.Providers;
 using ValheimVehicles.Controllers;
+using ValheimVehicles.Integrations;
 using ZdoWatcher;
 using Zolantris.Shared.BepInExAutoDoc;
 namespace ValheimRAFT;
@@ -141,7 +142,12 @@ public class ValheimRaftPlugin : BaseUnityPlugin
       AddCustomItemsAndPieces();
     };
 
-    ZdoWatcherDelegate.RegisterToZdoManager();
+    // generic vehicle/swivel
+    VehicleZDOWatcherDelegate.RegisterToZdoManager();
+
+    // power network mod
+    PowerZDOWatcherDelegate.RegisterToZdoManager();
+
     AddModSupport();
 
     var renderPipeline = GraphicsSettings.defaultRenderPipeline;

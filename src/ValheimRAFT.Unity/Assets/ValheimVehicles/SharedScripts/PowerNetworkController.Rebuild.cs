@@ -26,7 +26,7 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
 
     private readonly Stopwatch rebuildTimer = new();
 
-    public IEnumerator RebuildPowerNetworkCoroutine()
+    public virtual IEnumerator RequestRebuildPowerNetworkCoroutine()
     {
       LoggerProvider.LogInfoDebounced("Called RebuildPowerNetworkCoroutine");
       yield return new WaitForSeconds(1f);
@@ -54,16 +54,6 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
       for (var i = 0; i < Storages.Count; i++)
         if (Storages.TryGetValidElement(ref i, out var storage))
           _allNodes.Add(storage);
-
-
-      if (!ZNet.instance.IsServer())
-      {
-        var zdos = _allNodes.Where(x => x != null && x.transform != null).Select(x => x.transform.GetComponent<ZNetView>().m_zdo.m_uid).ToList();
-        if (zdos.Count > 0)
-        {
-          RequestRebuildNetworkWithZDOs(zdos);
-        }
-      }
 
       // Step 2: Build networks by proximity
       _unvisited.Clear();

@@ -90,8 +90,13 @@ public static class VehicleZdoVars
   public const string SwivelSyncAngularVelocity = "SwivelSync_AngularVelocity";
 
   // for power systems
+  public const string Power_NetworkId = "PowerSystem_NetworkId";
   public const string Power_StoredEnergy = "PowerSystem_StoredEnergy";
   public const string Power_StoredFuel = "PowerSystem_StoredFuel";
+  public const string Power_FuelOutputRate = "PowerSystem_FuelOutputRate";
+  public const string Power_FuelType = "PowerSystem_FuelType";
+  public const string Power_StoredEnergyCapacity = "PowerSystem_StoredEnergyCapacity";
+  public const string Power_StoredFuelCapacity = "PowerSystem_StoredFuelCapacity";
 
   // power system booleans
   public const string Power_IsForceDeactivated = "PowerSystem_ForceDeactivated"; // generators/storage

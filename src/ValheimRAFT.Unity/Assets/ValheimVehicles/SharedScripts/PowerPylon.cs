@@ -67,7 +67,7 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
     public Vector3 Position => transform.position;
     public bool IsActive => true;
 
-    public Transform ConnectorPoint => wireConnector;
+    public Vector3 ConnectorPoint => wireConnector.position;
 
     public void SetNetworkId(string id)
     {

@@ -12,7 +12,7 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
 {
   public abstract class PowerNodeComponentBase : MonoBehaviour, IPowerNode
   {
-    [SerializeField] public Transform connectorPoint;
+    [SerializeField] public Transform connectorPointTransform;
     protected string networkId = string.Empty;
     [SerializeField] public bool canSelfRegisterToNetwork = false;
 
@@ -22,7 +22,7 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
       AssignConnectorPoint();
     }
 
-    public Transform ConnectorPoint => connectorPoint;
+    public Vector3 ConnectorPoint => connectorPointTransform.position;
 
     public string NetworkId
     {
@@ -30,17 +30,17 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
       set => networkId = value;
     }
 
-    public virtual Vector3 Position => connectorPoint ? connectorPoint.position : transform.position;
+    public virtual Vector3 Position => connectorPointTransform ? ConnectorPoint : transform.position;
     public abstract bool IsActive { get; }
 
     public virtual void AssignConnectorPoint()
     {
-      if (!connectorPoint)
+      if (!connectorPointTransform)
       {
-        connectorPoint = transform.Find("power_connector");
+        connectorPointTransform = transform.Find("power_connector");
       }
-      if (!connectorPoint)
-        connectorPoint = transform;
+      if (!connectorPointTransform)
+        connectorPointTransform = transform;
     }
 
     public virtual void SetNetworkId(string id)

@@ -11,6 +11,25 @@
   namespace ValheimVehicles.SharedScripts
   {
 
+    public static class PrefabNameHashes
+    {
+      public static readonly int Mechanism_Power_Pylon = PrefabNames.Mechanism_Power_Pylon.GetStableHashCode();
+
+      public static readonly int Mechanism_Power_Source_Coal =
+        PrefabNames.Mechanism_Power_Source_Coal.GetStableHashCode();
+
+      public static readonly int Mechanism_Power_Source_Eitr =
+        PrefabNames.Mechanism_Power_Source_Eitr.GetStableHashCode();
+
+      public static readonly int Mechanism_Power_Consumer_Charge_Plate =
+        PrefabNames.Mechanism_Power_Consumer_Charge_Plate.GetStableHashCode();
+      public static readonly int Mechanism_Power_Consumer_Drain_Plate =
+        PrefabNames.Mechanism_Power_Consumer_Drain_Plate.GetStableHashCode();
+
+      public static readonly int Mechanism_Power_Storage_Eitr =
+        PrefabNames.Mechanism_Power_Storage_Eitr.GetStableHashCode();
+    }
+
     /**
      * @todo register translatable pieceName and pieceDescription based on these names for easy lookups
      *

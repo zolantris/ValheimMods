@@ -136,26 +136,6 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
       }
       RequestRebuildNetwork();
     }
-    private const string RPC_RequestRebuildName = "ValheimVehicles_RequestRebuildNetwork";
-    private static bool _rebuildRegistered;
-    public void RegisterRebuildRpc()
-    {
-      if (_rebuildRegistered || ZRoutedRpc.instance == null)
-        return;
-
-      if (ZNet.instance.IsServer())
-      {
-        ZRoutedRpc.instance.Register<ZPackage>(RPC_RequestRebuildName, Server_HandleRebuildRequest);
-        LoggerProvider.LogDebug($"[ZDORebuild] Registered rebuild handler on server.");
-      }
-      else
-      {
-        ZRoutedRpc.instance.Register<ZPackage>(RPC_RequestRebuildName, (_, __) => {});
-        LoggerProvider.LogDebug($"[ZDORebuild] Registered rebuild stub on client.");
-      }
-
-      _rebuildRegistered = true;
-    }
 
     /// <summary>
     /// This is super silly we have to call to force valheim server to render all the missing ZDOs.
@@ -306,7 +286,7 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
       yield return null;
 
       LoggerProvider.LogDebug("Continuing on and manual regenerating networks");
-      yield return RebuildPowerNetworkCoroutine();
+      yield return RequestRebuildPowerNetworkCoroutine();
 
       LoggerProvider.LogDebug("Finished RebuildPowerNetworkCoroutine triggered by ForceSpawnIfItDoesNotExist");
       yield return null;
@@ -314,215 +294,8 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
       LoggerProvider.LogInfo($"[ZDORebuild] Processed ZDO claim/instantiate for zdos: {zdos.Count} items. \nNew count of all elements Consumers: {Consumers.Count} Conduits: {Conduits.Count} Storages: {Storages.Count} Sources {Sources.Count}, Pylons count: {Pylons.Count}, network(s) {_networks.Count}");
     }
 
-    private void Server_HandleRebuildRequest(long sender, ZPackage pkg)
-    {
-      if (!ZNet.instance.IsServer())
-        return;
+    public virtual void Server_HandleRebuildRequest(long sender, ZPackage pkg) {}
 
-      pkg.SetPos(0);
-
-      var count = pkg.ReadInt();
-      var ids = new List<ZDOID>(count);
-
-      for (var i = 0; i < count; i++)
-      {
-        try
-        {
-
-          ids.Add(pkg.ReadZDOID());
-        }
-        catch (Exception e)
-        {
-          LoggerProvider.LogError($"Error while reading zdoid {e}");
-        }
-      }
-
-      try
-      {
-        LoggerProvider.LogInfo($"[ZDORebuild] Received rebuild request with {ids.Count} ZDOIDs");
-      }
-      catch (Exception e)
-      {
-        LoggerProvider.LogError($"{e}");
-      }
-
-      // var registerInstances = new List<GameObject>();
-      List<ZDO> zdos = new();
-      foreach (var id in ids)
-      {
-        var zdo = ZDOMan.instance.GetZDO(id);
-        if (zdo == null || !zdo.Persistent)
-        {
-          ZLog.LogWarning($"[ZDORebuild] Skipping invalid ZDO {id}");
-          continue;
-        }
-
-        if (zdo.GetOwner() != ZDOMan.GetSessionID())
-        {
-          LoggerProvider.LogDebug($"[ZDORebuild] was not owner calling setowner");
-          zdo.SetOwner(ZDOMan.GetSessionID());
-        }
-
-        zdos.Add(zdo);
-      }
-      StartCoroutine(ForceSpawnOnServerIfItDoesNotExist(zdos));
-    }
-
-    // private static void Server_HandleRebuildRequest(long sender, ZPackage pkg)
-    // {
-    //   if (!ZNet.instance.IsServer())
-    //     return;
-    //
-    //   pkg.SetPos(0);
-    //
-    //   var count = pkg.ReadInt();
-    //   var ids = new List<ZDOID>(count);
-    //
-    //   for (var i = 0; i < count; i++)
-    //   {
-    //     try
-    //     {
-    //
-    //       ids.Add(pkg.ReadZDOID());
-    //     }
-    //     catch (Exception e)
-    //     {
-    //       LoggerProvider.LogError($"Error while reading zdoid {e}");
-    //     }
-    //   }
-    //
-    //   try
-    //   {
-    //     LoggerProvider.LogInfo($"[ZDORebuild] Received rebuild request with {ids.Count} ZDOIDs");
-    //   }
-    //   catch (Exception e)
-    //   {
-    //     LoggerProvider.LogError($"{e}");
-    //   }
-    //
-    //   var registerInstances = new List<GameObject>();
-    //
-    //   foreach (var id in ids)
-    //   {
-    //     var zdo = ZDOMan.instance.GetZDO(id);
-    //     if (zdo == null || !zdo.Persistent)
-    //     {
-    //       ZLog.LogWarning($"[ZDORebuild] Skipping invalid ZDO {id}");
-    //       continue;
-    //     }
-    //
-    //     if (zdo.GetOwner() != ZDOMan.GetSessionID())
-    //     {
-    //       LoggerProvider.LogDebug($"[ZDORebuild] was not owner calling setowner");
-    //       zdo.SetOwner(ZDOMan.GetSessionID());
-    //     }
-    //
-    //     var instance = ZNetScene.instance.FindInstance(id);
-    //
-    //     if (instance == null)
-    //     {
-    //       LoggerProvider.LogDebug($"[ZDORebuild] found nothing so will instantiate from ZDO id:<{id}>");
-    //
-    //       var zdoPrefab = zdo.GetPrefab();
-    //       LoggerProvider.LogDebug($"[ZDORebuild] Got zdoPrefab {zdoPrefab}");
-    //       var prefab = ZNetScene.instance.GetPrefab(zdoPrefab);
-    //       if (prefab == null)
-    //       {
-    //         LoggerProvider.LogDebug($"[ZDORebuild] found a null prefab for zdo.GetPrefab()");
-    //       }
-    //       if (prefab != null)
-    //       {
-    //         Instantiate(prefab, zdo.GetPosition(), Quaternion.identity);
-    //         LoggerProvider.LogDebug($"[ZDORebuild] Instantiated {prefab.name} from ZDO {id}");
-    //       }
-    //     }
-    //
-    //     if (instance != null)
-    //     {
-    //       registerInstances.Add(instance);
-    //     }
-    //   }
-    //
-    //   var successCount = 0;
-    //
-    //   foreach (var ri in registerInstances)
-    //   {
-    //     var powerSource = ri.GetComponent<IPowerSource>();
-    //     var powerStorage = ri.GetComponent<IPowerStorage>();
-    //     var powerConsumer = ri.GetComponent<IPowerConsumer>();
-    //     var powerPylon = ri.GetComponent<PowerPylon>();
-    //     var powerConduit = ri.GetComponent<IPowerConduit>();
-    //
-    //     if (powerSource != null)
-    //     {
-    //       LoggerProvider.LogDebug("Has powerSource");
-    //       RegisterPowerComponent(powerSource);
-    //       successCount++;
-    //     }
-    //     if (powerStorage != null)
-    //     {
-    //       LoggerProvider.LogDebug("Has powerStorage");
-    //       RegisterPowerComponent(powerStorage);
-    //       successCount++;
-    //     }
-    //     if (powerConsumer != null)
-    //     {
-    //       LoggerProvider.LogDebug("Has powerConsumer");
-    //       RegisterPowerComponent(powerConsumer);
-    //       successCount++;
-    //     }
-    //     if (powerPylon != null)
-    //     {
-    //       LoggerProvider.LogDebug("Has powerPylon");
-    //       RegisterPowerComponent(powerPylon);
-    //       successCount++;
-    //     }
-    //     if (powerConduit != null)
-    //     {
-    //       LoggerProvider.LogDebug("Has powerConduit");
-    //       RegisterPowerComponent(powerConduit);
-    //       successCount++;
-    //     }
-    //   }
-    //
-    //   RequestRebuildNetwork();
-    //
-    //   LoggerProvider.LogInfo($"[ZDORebuild] Processed ZDO claim/instantiate for {ids.Count} items. And {successCount} components were detected and fired RegisterPowerComponents. \nNew count of all elements Consumers: {Consumers.Count} Conduits: {Conduits.Count} Storages: {Storages.Count} Sources {Sources.Count}");
-    //   LoggerProvider.LogInfo($"[ZDORebuild] Got New registerInstances <{registerInstances.Count}>");
-    // }
-
-    public static void RequestRebuildNetworkWithZDOs(List<ZDOID> zdos)
-    {
-      var pkg = new ZPackage();
-      pkg.Write(zdos.Count);
-      foreach (var zdo in zdos)
-      {
-        pkg.Write(zdo); // ZDOID has a Write(ZPackage) overload
-      }
-
-      ZRoutedRpc.instance.InvokeRoutedRPC(
-        ZRoutedRpc.instance.GetServerPeerID(),
-        RPC_RequestRebuildName,
-        pkg
-      );
-    }
-
-    // public void RequestRebuildNetworkFromClient(IEnumerable<ZDO> zdos)
-    // {
-    //   if (!ZNet.instance || ZNet.instance.IsServer()) return;
-    //
-    //   var ids = zdos
-    //     .Where(zdo => zdo != null && zdo.IsValid())
-    //     .Select(zdo => zdo.m_uid)
-    //     .ToList();
-    //
-    //   LoggerProvider.LogInfo($"[ZDORebuild] Sending rebuild request with {ids.Count} ZDOs");
-    //   ZRoutedRpc.instance.InvokeRoutedRPC(
-    //     ZRoutedRpc.instance.GetServerPeerID(),
-    //     RPC_RequestRebuild,
-    //     ids
-    //   );
-    // }
 
 #if UNITY_EDITOR
     [InitializeOnLoadMethod]
@@ -535,12 +308,8 @@ private static void ClearPowerListsOnReload()
 #endif
     public static void RequestRebuildNetwork()
     {
-      LoggerProvider.LogInfoDebounced($"Called RequestRebuildNetwork instanceIsNotNull: <{Instance != null}>");
-      if (Instance == null) return;
-      LoggerProvider.LogInfoDebounced($"Called RequestRebuildNetwork Instance._rebuildPylonNetworkRoutine: <{Instance._rebuildPylonNetworkRoutine != null}>");
-      if (Instance._rebuildPylonNetworkRoutine != null) { return; }
-      LoggerProvider.LogInfoDebounced("Called RequestRebuildNetwork Made it past instance check.");
-      Instance._rebuildPylonNetworkRoutine = Instance.StartCoroutine(Instance.RebuildPowerNetworkCoroutine());
+      if (Instance == null || Instance._rebuildPylonNetworkRoutine != null) { return; }
+      Instance._rebuildPylonNetworkRoutine = Instance.StartCoroutine(Instance.RequestRebuildPowerNetworkCoroutine());
     }
   }
 }

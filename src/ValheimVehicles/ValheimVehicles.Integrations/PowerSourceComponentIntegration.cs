@@ -131,7 +131,7 @@ public class PowerSourceComponentIntegration :
   public string NetworkId => Logic.NetworkId;
   public Vector3 Position => Logic.Position;
   public bool IsActive => Logic.IsActive;
-  public Transform ConnectorPoint => Logic.ConnectorPoint;
+  public Vector3 ConnectorPoint => Logic.ConnectorPoint;
 
   public void SetNetworkId(string id)
   {

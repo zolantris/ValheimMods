@@ -92,6 +92,12 @@
         <Compile Update="..\ValheimRAFT.Unity\Assets\ValheimVehicles\SharedScripts\EnumDisplay.cs">
             <Link>SharedScripts\EnumDisplay.cs</Link>
         </Compile>
+        <Compile Update="..\ValheimRAFT.Unity\Assets\ValheimVehicles\SharedScripts\PowerPylonData.cs">
+            <Link>SharedScripts\PowerPylonData.cs</Link>
+        </Compile>
+        <Compile Update="..\ValheimRAFT.Unity\Assets\ValheimVehicles\SharedScripts\NetworkSimData.cs">
+            <Link>SharedScripts\NetworkSimData.cs</Link>
+        </Compile>
     </ItemGroup>
     <ItemGroup Label="Internal ValheimVehicles scripts">
         <!-- Includes all namespace folders -->

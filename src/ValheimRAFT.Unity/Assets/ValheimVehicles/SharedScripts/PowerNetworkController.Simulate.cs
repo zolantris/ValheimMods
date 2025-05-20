@@ -5,9 +5,15 @@
 
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 using UnityEngine;
+using ValheimVehicles.Config;
+using ValheimVehicles.Integrations.PowerSystem;
 using ValheimVehicles.Interfaces;
+using ValheimVehicles.SharedScripts.PowerSystem;
+using ValheimVehicles.SharedScripts.PowerSystem.Compute;
 using ValheimVehicles.SharedScripts.PowerSystem.Interfaces;
+using ValheimVehicles.Structs;
 
 #endregion
 
@@ -177,6 +183,229 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
       // }
     }
 
+    private readonly Dictionary<string, PowerNetworkSimData> _netSimDataCache = new();
+
+    public void BuildPowerNetworkSimData(string networkId, List<ZDO> zdos)
+    {
+      var simData = new PowerNetworkSimData();
+
+      foreach (var zdo in zdos)
+      {
+        var prefab = zdo.GetPrefab();
+        if (prefab == PrefabNameHashes.Mechanism_Power_Source_Coal ||
+            prefab == PrefabNameHashes.Mechanism_Power_Source_Eitr)
+        {
+          if (PowerComputeFactory.TryCreateSource(zdo, prefab, out var source))
+            simData.Sources.Add((source, zdo));
+        }
+        else if (prefab == PrefabNameHashes.Mechanism_Power_Storage_Eitr)
+        {
+          if (PowerComputeFactory.TryCreateStorage(zdo, prefab, out var storage))
+            simData.Storages.Add((storage, zdo));
+        }
+        else if (prefab == PrefabNameHashes.Mechanism_Power_Consumer_Charge_Plate ||
+                 prefab == PrefabNameHashes.Mechanism_Power_Consumer_Drain_Plate)
+        {
+          if (PowerComputeFactory.TryCreateConduit(zdo, prefab, out var conduit))
+          {
+            var zdoid = zdo.m_uid;
+            conduit.PlayerIds.Clear();
+            conduit.Players.Clear();
+
+            if (PowerConduitStateTracker.TryGet(zdoid, out var state))
+            {
+              foreach (var pid in state.PlayerIds)
+              {
+                conduit.PlayerIds.Add(pid);
+                var player = Player.GetPlayer(pid);
+                if (player != null)
+                {
+                  conduit.Players.Add(player);
+                }
+              }
+            }
+
+            simData.Conduits.Add((conduit, zdo));
+          }
+        }
+      }
+
+      _netSimDataCache[networkId] = simData;
+    }
+
+
+    public void Host_SimulateNetworkZDOFull(string networkId)
+    {
+      if (!_netSimDataCache.TryGetValue(networkId, out var simData))
+        return;
+
+      var deltaTime = Time.fixedDeltaTime;
+      var changedZDOs = new HashSet<ZDOID>();
+
+      var totalDemand = 0f;
+
+      // Step 1: Total demand
+      foreach (var (storage, _) in simData.Storages)
+      {
+        totalDemand += Mathf.Max(0f, storage.MaxCapacity - storage.StoredEnergy);
+      }
+
+      var conduitDemand = 0f;
+      foreach (var (conduit, _) in simData.Conduits)
+      {
+        conduit.SanitizePlayers();
+        conduitDemand += PowerConduitPlateComponentIntegration.GetAverageEitr(conduit.Players);
+      }
+
+      totalDemand += conduitDemand;
+      var isDemanding = totalDemand > 0f;
+
+      // Step 2: Peek storage discharge
+      var suppliedFromStorage = 0f;
+      var storageDischargeMap = new Dictionary<PowerStorageData, float>();
+
+      var remainingDemand = totalDemand;
+      foreach (var (storage, _) in simData.Storages)
+      {
+        if (remainingDemand <= 0f) break;
+
+        var dischargeAmount = Mathf.Min(storage.StoredEnergy, remainingDemand);
+        if (dischargeAmount > 0f)
+        {
+          storageDischargeMap[storage] = dischargeAmount;
+          suppliedFromStorage += dischargeAmount;
+          remainingDemand -= dischargeAmount;
+        }
+      }
+
+      // Step 3: Offer from sources
+      var offeredFromSources = 0f;
+      var sourceOfferMap = new Dictionary<PowerSourceData, float>();
+
+      const float fuelToEnergy = 10f;
+      const float maxFuelRate = 0.1f;
+
+      foreach (var (source, _) in simData.Sources)
+      {
+        if (remainingDemand <= 0f && !NeedsCharging(simData.Storages)) break;
+
+        var burnable = Mathf.Min(source.Fuel, maxFuelRate * deltaTime);
+        var potentialEnergy = burnable * fuelToEnergy;
+        var clamped = Mathf.Min(potentialEnergy, source.OutputRate * deltaTime);
+
+        if (clamped > 0f)
+        {
+          sourceOfferMap[source] = clamped;
+          offeredFromSources += clamped;
+          remainingDemand -= clamped;
+        }
+      }
+
+      var totalAvailable = offeredFromSources + suppliedFromStorage;
+
+      // Step 4: Apply to conduits (players needing Eitr)
+      foreach (var (conduit, zdo) in simData.Conduits)
+      {
+        if (totalAvailable <= 0f || conduit.Players.Count == 0) continue;
+
+        var perPlayer = totalAvailable / conduit.Players.Count;
+        var used = 0f;
+
+        foreach (var player in conduit.Players)
+        {
+          if (player.m_eitr < player.m_maxEitr - 0.1f)
+          {
+            PowerConduitPlateComponentIntegration.Request_AddEitr(player, perPlayer);
+            used += perPlayer;
+          }
+        }
+
+        totalAvailable -= used;
+        changedZDOs.Add(zdo.m_uid);
+      }
+
+      // Step 5: Feed true surplus into storage
+      foreach (var (storage, zdo) in simData.Storages)
+      {
+        if (totalAvailable <= 0f) break;
+
+        var remainingCap = Mathf.Max(0f, storage.MaxCapacity - storage.StoredEnergy);
+        var accepted = Mathf.Min(remainingCap, totalAvailable);
+
+        storage.StoredEnergy += accepted;
+        totalAvailable -= accepted;
+
+        changedZDOs.Add(zdo.m_uid);
+      }
+
+      // Step 6: Final fuel/discharge commit
+      var totalUsed = offeredFromSources + suppliedFromStorage - totalAvailable;
+      var usedFromStorage = Mathf.Clamp(totalUsed - offeredFromSources, 0f, suppliedFromStorage);
+      var usedFromSources = Mathf.Clamp(totalUsed - usedFromStorage, 0f, offeredFromSources);
+
+      // Discharge
+      var toDischarge = usedFromStorage;
+      foreach (var kvp in storageDischargeMap)
+      {
+        var commit = Mathf.Min(kvp.Value, toDischarge);
+        kvp.Key.StoredEnergy -= commit;
+        toDischarge -= commit;
+        if (toDischarge <= 0f) break;
+      }
+
+      // Fuel burn
+      var toBurn = usedFromSources / fuelToEnergy;
+      foreach (var kvp in sourceOfferMap)
+      {
+        var maxFuel = kvp.Value / fuelToEnergy;
+        var burn = Mathf.Min(toBurn, maxFuel);
+        kvp.Key.Fuel -= burn;
+        toBurn -= burn;
+        if (toBurn <= 0f) break;
+      }
+
+      // Step 7: ZDO Set
+      foreach (var (source, zdo) in simData.Sources)
+      {
+        zdo.Set(VehicleZdoVars.Power_StoredFuel, source.Fuel);
+        changedZDOs.Add(zdo.m_uid);
+      }
+
+      foreach (var (storage, zdo) in simData.Storages)
+      {
+        zdo.Set(VehicleZdoVars.Power_StoredEnergy, storage.StoredEnergy);
+        changedZDOs.Add(zdo.m_uid);
+      }
+
+      // Step 8: Fire one RPC
+      if (changedZDOs.Count > 0)
+      {
+        var pos = GetNetworkFallbackPosition(simData);
+        PowerSystemRPC.SendPowerZDOsChangedToNearbyPlayers(networkId, changedZDOs.ToList(), simData);
+      }
+    }
+
+
+    private static bool NeedsCharging(List<(PowerStorageData storage, ZDO zdo)> storages)
+    {
+      foreach (var (storage, _) in storages)
+      {
+        if (storage.StoredEnergy < storage.MaxCapacity)
+          return true;
+      }
+      return false;
+    }
+
+    private static Vector3 GetNetworkFallbackPosition(PowerNetworkSimData simData)
+    {
+      if (simData.Conduits.Count > 0)
+        return simData.Conduits[0].Item2.GetPosition();
+      if (simData.Storages.Count > 0)
+        return simData.Storages[0].Item2.GetPosition();
+      if (simData.Sources.Count > 0)
+        return simData.Sources[0].Item2.GetPosition();
+      return Vector3.zero;
+    }
     /// <summary>
     /// Should only be run by the owner.
     /// </summary>
