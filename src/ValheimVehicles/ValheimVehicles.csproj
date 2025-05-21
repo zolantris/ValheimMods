@@ -107,6 +107,21 @@
         <Compile Update="..\ValheimRAFT.Unity\Assets\ValheimVehicles\SharedScripts\PowerConduitData.cs">
             <Link>SharedScripts\PowerConduitData.cs</Link>
         </Compile>
+        <Compile Update="..\ValheimRAFT.Unity\Assets\ValheimVehicles\SharedScripts\PowerConsumerData.cs">
+            <Link>SharedScripts\PowerConsumerData.cs</Link>
+        </Compile>
+        <Compile Update="..\ValheimRAFT.Unity\Assets\ValheimVehicles\SharedScripts\PowerSystemComputeData.cs">
+            <Link>SharedScripts\PowerSystemComputeData.cs</Link>
+        </Compile>
+        <Compile Update="..\ValheimRAFT.Unity\Assets\ValheimVehicles\SharedScripts\PowerSourceData.cs">
+            <Link>SharedScripts\PowerSourceData.cs</Link>
+        </Compile>
+        <Compile Update="..\ValheimRAFT.Unity\Assets\ValheimVehicles\SharedScripts\PowerStorageData.cs">
+            <Link>SharedScripts\PowerStorageData.cs</Link>
+        </Compile>
+        <Compile Update="..\ValheimRAFT.Unity\Assets\ValheimVehicles\SharedScripts\PowerPylonData.cs">
+            <Link>SharedScripts\PowerPylonData.cs</Link>
+        </Compile>
     </ItemGroup>
     <ItemGroup Label="Internal ValheimVehicles scripts">
         <!-- Includes all namespace folders -->

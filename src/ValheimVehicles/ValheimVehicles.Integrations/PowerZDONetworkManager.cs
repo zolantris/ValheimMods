@@ -25,7 +25,7 @@ namespace ValheimVehicles.Integrations
     public static IReadOnlyDictionary<string, List<ZDO>> Networks => _networks;
 
     // New: Map of ZDOID to their associated PowerDataBase
-    private static readonly Dictionary<ZDOID, PowerDataBase> _powerDataMap = new();
+    private static readonly Dictionary<ZDOID, PowerSystemComputeData> _powerDataMap = new();
 
     public static void Init()
     {
@@ -122,7 +122,7 @@ namespace ValheimVehicles.Integrations
     }
 
     // New API for retrieving data
-    public static bool TryGetData<T>(ZDO zdo, [NotNullWhen(true)] out T data, bool CanAdd = false) where T : PowerDataBase
+    public static bool TryGetData<T>(ZDO zdo, [NotNullWhen(true)] out T data, bool CanAdd = false) where T : PowerSystemComputeData
     {
       if (_powerDataMap.TryGetValue(zdo.m_uid, out var baseData) && baseData is T typedData)
       {
@@ -148,7 +148,7 @@ namespace ValheimVehicles.Integrations
     {
       if (_powerDataMap.ContainsKey(zdo.m_uid)) return;
 
-      PowerDataBase data = null;
+      PowerSystemComputeData data = null;
 
       switch (zdo.m_prefab)
       {

@@ -7,12 +7,12 @@ using ValheimVehicles.Config;
 using ValheimVehicles.SharedScripts.PowerSystem.Compute;
 using ValheimVehicles.Structs;
 
-namespace ValheimVehicles.SharedScripts.PowerSystem
+namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
 {
   /// <summary>
   /// Simulates behavior of Eitr charging/draining for a power conduit.
   /// </summary>
-  public class PowerConduitData : PowerDataBase
+  public partial class PowerConduitData : PowerSystemComputeData
   {
     public readonly List<long> PlayerIds = new();
     public readonly List<Player> Players = new();
@@ -23,18 +23,6 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
     private const float EitrToEnergyRatio = 40f;
 
     public PowerConduitData() {}
-    public PowerConduitData(ZDO zdo)
-    {
-      this.zdo = zdo;
-      PrefabHash = zdo.m_prefab;
-      Mode = GetConduitVariant(PrefabHash);
-      Load();
-    }
-
-    public override sealed void Load()
-    {
-      NetworkId = zdo.GetString(VehicleZdoVars.Power_NetworkId, NetworkIdUnassigned);
-    }
 
     public bool IsActive => Players.Count > 0;
     public bool HasPlayersWithEitr => GetAverageEitr(Players) > 0f;

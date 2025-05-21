@@ -31,14 +31,11 @@ namespace ValheimVehicles.Integrations
           return;
         }
         Data = data;
+        Data.Load();
 
         base.Awake();
         PowerNetworkController.RegisterPowerComponent(this);
       });
-    }
-    public void FixedUpdate()
-    {
-      Data?.Load();
     }
     protected override void OnDestroy()
     {

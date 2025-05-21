@@ -19,11 +19,6 @@ public class PowerSourceComponentIntegration :
     // don't do anything when we aren't initialized.
   }
 
-  public void FixedUpdate()
-  {
-    Data?.Load();
-  }
-
   protected override void Start()
   {
     this.WaitForZNetView((netView) =>
@@ -35,6 +30,7 @@ public class PowerSourceComponentIntegration :
         return;
       }
       Data = data;
+      Data.Load();
 
       if (ZNet.instance.IsDedicated())
       {

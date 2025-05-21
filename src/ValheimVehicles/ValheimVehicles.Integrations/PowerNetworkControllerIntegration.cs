@@ -42,11 +42,14 @@ public partial class PowerNetworkControllerIntegration : PowerNetworkController
   }
 
   // Do nothing for fixed update. Hosts can run for it. But a host/client could freeze and not run this causing massive desyncs for non-hosts. 
-  protected override void FixedUpdate() {}
+  protected override void FixedUpdate()
+  {
+    SimulateOnClientAndServer();
+  }
+
   protected override void Update()
   {
     base.Update();
-    SimulateOnClientAndServer();
   }
 
   public void SimulateAllNetworks(List<IPowerNode> allNodes)
@@ -180,7 +183,11 @@ public partial class PowerNetworkControllerIntegration : PowerNetworkController
 
   public override void Host_SimulateNetwork(string networkId)
   {
-    if (!TryBuildPowerNetworkSimData(networkId, out var simData)) return;
+    if (!TryBuildPowerNetworkSimData(networkId, out var simData))
+    {
+      LoggerProvider.LogError($"Failed to build sim data for network {networkId}");
+      return;
+    }
 
     var deltaTime = Time.fixedDeltaTime;
     var changedZDOs = new HashSet<ZDOID>();
@@ -345,6 +352,59 @@ public partial class PowerNetworkControllerIntegration : PowerNetworkController
     return Vector3.zero;
   }
 
+  public void Client_SyncNetwork(string networkId)
+  {
+    if (!TryBuildPowerNetworkSimData(networkId, out var simData))
+    {
+      LoggerProvider.LogError($"Failed to build sim data for network {networkId}");
+      return;
+    }
+
+    var deltaTime = Time.fixedDeltaTime;
+
+    var totalDemand = 0f;
+
+    // pure power units
+    var totalConduitDemand = 0f;
+
+    // pure power units
+    var totalConduitSupply = 0f;
+
+    var totalSupply = 0f;
+    var totalFuel = 0f;
+
+    var chargeConduits = new List<PowerConduitData>();
+    var drainConduits = new List<PowerConduitData>();
+
+    foreach (var (data, zdo) in simData.Conduits)
+    {
+      data.Load();
+      if (data.Mode == PowerConduitMode.Drain)
+      {
+        drainConduits.Add(data);
+      }
+      if (data.Mode == PowerConduitMode.Charge)
+      {
+        chargeConduits.Add(data);
+      }
+    }
+
+    foreach (var (data, zdo) in simData.Consumers)
+    {
+      data.Load();
+    }
+
+    foreach (var (data, zdo) in simData.Storages)
+    {
+      data.Load();
+    }
+
+    foreach (var (data, zdo) in simData.Sources)
+    {
+      data.Load();
+    }
+  }
+
   public void SimulateOnClientAndServer()
   {
     if (!isActiveAndEnabled || !ZNet.instance || !ZoneSystem.instance) return;
@@ -365,11 +425,11 @@ public partial class PowerNetworkControllerIntegration : PowerNetworkController
       // todo remove this, for testing right now.
       MarkNetworkDirty(networkId);
 
-      LoggerProvider.LogInfoDebounced($"Pair Key: {pair.Key}, nodes: {nodes.Count}");
+      LoggerProvider.LogInfoDebounced($"Pair Key: {networkId}, nodes: {nodes.Count}");
 
       if (nodes == null || nodes.Count == 0)
       {
-        _networksToRemove.Add(pair.Key);
+        _networksToRemove.Add(networkId);
         continue;
       }
 
@@ -377,38 +437,43 @@ public partial class PowerNetworkControllerIntegration : PowerNetworkController
 
       if (nodes.Count == 0)
       {
-        _networksToRemove.Add(pair.Key);
+        _networksToRemove.Add(networkId);
         continue;
       }
 
-      var currentZone = ZoneSystem.GetZone(nodes[0].GetPosition());
-      if (!ZoneSystem.instance.IsZoneLoaded(currentZone))
+      var isLoadedInZone = nodes.Any((x) => ZoneSystem.instance.IsZoneLoaded(x.GetPosition()));
+      if (isLoadedInZone)
         continue;
 
       if (ZNet.instance.IsServer())
       {
-        Host_SimulateNetwork(pair.Key);
+        Host_SimulateNetwork(networkId);
+      }
+      else
+      {
+        Client_SyncNetwork(networkId);
       }
     }
 
-    // todo clean this up or keep it but its for client only code. Components do nothing on server since most of them would have to be rendered.
-    foreach (var pair in powerNodeNetworks)
-    {
-      var nodes = pair.Value;
-      if (!ZNet.instance.IsDedicated())
-      {
-        Client_SimulateNetwork(nodes, pair.Key);
-      }
-      //
-      // if (ZNet.instance.IsServer())
-      // {
-      //   SyncNetworkState(nodes);
-      // }
-      // else
-      // {
-      //   SyncNetworkStateClient(nodes);
-      // }
-    }
+    // // todo clean this up or keep it but its for client only code. Components do nothing on server since most of them would have to be rendered.
+    // foreach (var pair in powerNodeNetworks)
+    // {
+    //   var nodes = pair.Value;
+    //   var networkId = pair.Key;
+    //   if (!ZNet.instance.IsDedicated())
+    //   {
+    //     Client_SimulateNetwork(nodes, networkId);
+    //   }
+    //   //
+    //   if (ZNet.instance.IsServer())
+    //   {
+    //     SyncNetworkState(nodes);
+    //   }
+    //   else
+    //   {
+    //     SyncNetworkStateClient(nodes);
+    //   }
+    // }
 
     foreach (var key in _networksToRemove)
     {

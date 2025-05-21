@@ -7,6 +7,7 @@
   using System.Linq;
   using System.Text.RegularExpressions;
   using HarmonyLib;
+  using Jotunn;
   using UnityEngine;
   using UnityEngine.Serialization;
   using ValheimVehicles.Components;
@@ -110,7 +111,8 @@
     // for adding additional multiplier within lower ranges so angle gets to expected value quicker.
     public static float rotationLeanMultiplier = 1.5f;
 
-    public static bool CanUseActualPiecePosition = true;
+    public static bool CanUseActualPiecePosition = RenderingConfig.UNSTABLE_VehiclePositionSync_AllowVehiclePiecesToUseWorldPosition.Value;
+    public static bool CanBedsUseActualWorldPosition = RenderingConfig.VehiclePositionSync_AllowBedsToSyncToWorldPosition.Value;
 
     public static float floatColliderSizeMultiplier = 1.5f;
     public static float minColliderSize = 1f;
@@ -522,8 +524,6 @@
 
       var isRam = RamPrefabs.IsRam(netView.name);
       if (isRam) m_ramPieces.Remove(netView);
-
-
     }
 
     public void AddPieceDataForComponents(ZNetView netView)
@@ -1257,9 +1257,8 @@
     private void UpdateBedPiece(Bed mBedPiece)
     {
       var bedNetView = mBedPiece.m_nview;
-      if (bedNetView == null) return;
-      if (bedNetView.m_zdo == null) return;
-      bedNetView.m_zdo.SetPosition(mBedPiece.m_nview.transform.position);
+      if (!bedNetView) return;
+      bedNetView.GetZDO()?.SetPosition(mBedPiece.m_nview.transform.position);
     }
 
     /// <summary>
@@ -1267,6 +1266,7 @@
     /// </summary>
     public void UpdateBedPieces()
     {
+      if (!CanBedsUseActualWorldPosition) return;
       foreach (var mBedPiece in m_bedPieces) UpdateBedPiece(mBedPiece);
     }
 
@@ -1287,14 +1287,14 @@
 
       Physics.SyncTransforms();
 
-      if (!isActiveAndEnabled || m_nview == null || m_nview.GetZDO() == null) return;
+      if (!isActiveAndEnabled || !this.IsNetViewValid(out var netView)) return;
       // use center of rigidbody to set position.
-      m_nview.GetZDO().SetPosition(vehiclePosition);
+      netView.GetZDO().SetPosition(vehiclePosition);
 
       for (var index = 0; index < m_pieces.Count; index++)
       {
         var nv = m_pieces[index];
-        if (!nv)
+        if (!nv || !nv.IsValid())
         {
           Logger.LogError(
             $"Error found with m_pieces: netview {nv}, save removing the piece");
@@ -1308,26 +1308,23 @@
         {
           if (prefabPieceData.IsBed)
           {
-            var bedComponent = nv.GetComponent<Bed>();
-            if (bedComponent)
-            {
-              UpdateBedPiece(bedComponent);
-              continue;
-            }
+            UpdatePieceZdoPosition(nv.GetZDO(), vehiclePosition, prefabPieceData.IsBed);
+            continue;
           }
           if (prefabPieceData.IsSwivelChild)
           {
             var swivel = nv.GetComponentInParent<SwivelComponentIntegration>();
             if (swivel != null)
             {
-              nv.m_zdo?.SetPosition(CanUseActualPiecePosition ? swivel.transform.position : vehiclePosition);
+              // todo might have to make an exception for this.
+              UpdatePieceZdoPosition(nv.GetZDO(), vehiclePosition);
               continue;
             }
           }
         }
 
         // updates the zdo for the current location of the piece.
-        nv.m_zdo?.SetPosition(CanUseActualPiecePosition ? nv.transform.position : vehiclePosition);
+        nv.GetZDO()?.SetPosition(CanUseActualPiecePosition ? nv.transform.position : vehiclePosition);
       }
       var convexHullBounds = convexHullComponent.GetConvexHullBounds(false);
 
@@ -1335,7 +1332,7 @@
       for (var index = 0; index < m_tempPieces.Count; index++)
       {
         var nv = m_tempPieces[index];
-        if (nv == null)
+        if (!nv)
         {
           m_tempPieces.FastRemoveAt(ref index);
           continue;
@@ -1389,10 +1386,16 @@
     /// <summary>
     /// Ran locally in singleplayer or on the machine that owns the netview or on the server.
     /// </summary>
-    public void ServerSyncAllPieces()
+    public void Server_SyncAllPieces()
     {
-      var isDedicated = ZNet.instance?.IsDedicated();
-      if (isDedicated != true) return;
+      if (!ZNet.instance) return;
+
+      // jotunn extension for Server + Dedicated check. May not be required as IsDedicated may not be true on clients.
+      var isDedicatedServer = ZNet.instance.IsServerInstance();
+
+      LoggerProvider.LogDev($"IsDedicatedServer : {isDedicatedServer}, isServer: {ZNet.instance.IsServer()} isDedicated {ZNet.instance.IsDedicated()}");
+
+      if (!isDedicatedServer) return;
 
       if (_serverUpdatePiecesCoroutine != null) return;
 
@@ -1425,16 +1428,26 @@
           continue;
         }
 
-        // this is experimental might cause problems here, but it aligns with other piece setting values.
-        if (CanUseActualPiecePosition)
-        {
-          var pieceOffset = zdo.GetVec3(VehicleZdoVars.MBPositionHash, Vector3.zero);
-          zdo.SetPosition(pos + pieceOffset);
-        }
-        else
-        {
-          zdo.SetPosition(pos);
-        }
+        UpdatePieceZdoPosition(zdo, pos);
+      }
+    }
+
+    /// <summary>
+    /// Sets position based on a few flags.
+    /// - CanUseActualPiecePosition is experimental will likely cause problems, but it aligns with other piece setting values. Allows for compatibility with mods like Planbuild https://github.com/sirskunkalot/PlanBuild
+    /// </summary>
+    /// <param name="zdo"></param>
+    /// <param name="vehiclePosition"></param>
+    private void UpdatePieceZdoPosition(ZDO zdo, Vector3 vehiclePosition, bool isBed = false)
+    {
+      if (isBed && CanBedsUseActualWorldPosition || CanUseActualPiecePosition)
+      {
+        var pieceOffset = zdo.GetVec3(VehicleZdoVars.MBPositionHash, Vector3.zero);
+        zdo.SetPosition(vehiclePosition + pieceOffset);
+      }
+      else
+      {
+        zdo.SetPosition(vehiclePosition);
       }
     }
 
@@ -1483,7 +1496,7 @@
         if (list == null || !output)
         {
           yield return new WaitForSeconds(Math.Max(
-            ModEnvironment.IsDebug ? 0.05f : 2f,
+            ModEnvironment.IsDebug ? 0.05f : 0.1f,
             VehicleGlobalConfig.ServerRaftUpdateZoneInterval
               .Value));
           continue;
@@ -1512,7 +1525,7 @@
     {
       if (ActiveInstances.TryGetValue(activationPieceData.vehicleId, out var activeInstance))
       {
-        if (activeInstance != null && !activeInstance.IsInvalid())
+        if (activeInstance && !activeInstance.IsInvalid())
         {
           activeInstance.AddTemporaryPiece(activationPieceData);
         }
@@ -3198,36 +3211,6 @@
     {
       IgnoreNetViewCollidersForList(netView, m_ramPieces);
     }
-
-    // public void IgnoreShipColliderForCollider(Collider collider, bool skipWheelIgnore = false)
-    // {
-    //   if (collider == null) return;
-    //   foreach (var triggerCollider in convexHullTriggerColliders)
-    //     Physics.IgnoreCollision(collider, triggerCollider, true);
-    //   foreach (var triggerMeshCollider in convexHullMeshColliders)
-    //   {
-    //     Physics.IgnoreCollision(collider, triggerMeshCollider, true);
-    //   }
-    //   foreach (var convexHullMesh in convexHullMeshes)
-    //     Physics.IgnoreCollision(collider,
-    //       convexHullMesh.GetComponent<MeshCollider>(),
-    //       true);
-    //
-    //   if (!skipWheelIgnore)
-    //   {
-    //     IgnoreColliderForWheelColliders(collider);
-    //   }
-    //
-    //   if (FloatCollider)
-    //     Physics.IgnoreCollision(collider, FloatCollider, true);
-    //   if (OnboardCollider)
-    //     Physics.IgnoreCollision(collider, OnboardCollider, true);
-    // }
-
-    // public void IgnoreShipColliders(List<Collider> colliders)
-    // {
-    //   foreach (var t in colliders) IgnoreShipColliderForCollider(t);
-    // }
 
     public void IgnoreCameraCollision(List<Collider> colliders)
     {
