@@ -295,17 +295,6 @@ public partial class PowerNetworkControllerIntegration : PowerNetworkController
       changedZDOs.Add(zdo.m_uid);
     }
 
-    // Discharge (before feeding back into storage)
-    var toDischarge = usedFromStorage;
-    foreach (var (storage, amount) in storageDischargeList)
-    {
-      if (toDischarge <= 0f) break;
-
-      storage.CommitDischarge();
-      storagesToUpdate.Add(storage);
-      toDischarge -= amount;
-    }
-
     // Step 5: Feed true surplus into storage
     foreach (var (storage, zdo) in simData.Storages)
     {
@@ -329,6 +318,17 @@ public partial class PowerNetworkControllerIntegration : PowerNetworkController
     var totalUsed = offeredFromSources + suppliedFromStorage - totalAvailable;
     var usedFromStorage = Mathf.Clamp(totalUsed - offeredFromSources, 0f, suppliedFromStorage);
     var usedFromSources = Mathf.Clamp(totalUsed - usedFromStorage, 0f, offeredFromSources);
+
+    // Discharge
+    var toDischarge = usedFromStorage;
+    foreach (var (storage, amount) in storageDischargeList)
+    {
+      if (toDischarge <= 0f) break;
+
+      storage.CommitDischarge(amount);
+      storagesToUpdate.Add(storage);
+      toDischarge -= amount;
+    }
 
     // Fuel burn
     var toBurn = usedFromSources;

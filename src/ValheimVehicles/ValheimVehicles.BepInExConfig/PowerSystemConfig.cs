@@ -1,7 +1,9 @@
 using BepInEx.Configuration;
 using ValheimVehicles.Helpers;
+using ValheimVehicles.Integrations;
 using ValheimVehicles.SharedScripts;
 using ValheimVehicles.SharedScripts.PowerSystem;
+using ValheimVehicles.SharedScripts.PowerSystem.Compute;
 using Zolantris.Shared;
 namespace ValheimVehicles.BepInExConfig;
 
@@ -48,8 +50,17 @@ public class PowerSystemConfig : BepInExBaseConfig<PowerSystemConfig>
 
   public void UpdatePowerSources()
   {
-    PowerSourceComponent.EitrFuelEfficiency = PowerSource_EitrEfficiency.Value;
-    PowerSourceComponent.BaseFuelEfficiency = PowerSource_BaseFuelEfficiency.Value;
+    PowerSourceData.FuelEfficiencyDefault = PowerSource_BaseFuelEfficiency.Value;
+    PowerSourceData.BaseFuelEfficiency = PowerSource_BaseFuelEfficiency.Value;
+
+    foreach (var powerNetworkSimData in PowerZDONetworkManager._cachedSimulateData)
+    {
+      for (var i = 0; i < powerNetworkSimData.Value.Sources.Count; i++)
+      {
+        var (source, zdo) = powerNetworkSimData.Value.Sources[i];
+        source.OnPropertiesUpdate();
+      }
+    }
 
     foreach (var powerSource in PowerNetworkController.Sources)
     {

@@ -36,13 +36,9 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
 
       if (PowerNetworkDataInstances.TryGetValue(networkId, out _data))
       {
-        // if (_data.Cached_NetworkDataString == string.Empty)
-        // {
-        //   _data.Cached_NetworkDataString = GenerateNetworkDataString(networkId);
-        //   PowerNetworkDataInstances[networkId] = _data;
-        // }
         return true;
       }
+
       _data = null;
       return false;
     }

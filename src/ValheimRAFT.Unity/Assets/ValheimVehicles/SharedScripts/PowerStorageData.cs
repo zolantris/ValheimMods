@@ -41,7 +41,7 @@ namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
       return accepted;
     }
 
-    public void CommitDischarge()
+    public void CommitDischarge(float amount)
     {
       var commit = MathUtils.RoundToHundredth(Mathf.Min(_peekedDischargeAmount, amount));
 

@@ -1,11 +1,20 @@
 // ReSharper disable ArrangeNamespaceBody
 // ReSharper disable NamespaceStyle
 
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 using ValheimVehicles.Structs;
 
 namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
 {
+  public enum FuelType
+  {
+    Coal,
+    SurtlingCore,
+    Eitr
+  }
+
   public partial class PowerSourceData : PowerSystemComputeData
   {
     public static float OutputRateDefault = 10f;
@@ -22,13 +31,28 @@ namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
 
     public float FuelConsumptionRate = FuelConsumptionRateDefault;
     public float FuelEnergyYield = FuelEnergyYieldDefault;
-    public float FuelEfficiency = FuelEfficiencyDefault;
+    public float FuelEfficiency = GetFuelEfficiency(FuelType.Eitr);
+    public FuelType fuelType = FuelType.Eitr;
+
+    public static float BaseFuelEfficiency = 1f;
+    public static float CoalFuelEfficiency = 1f;
+    public static float SurtlingCoreFuelEfficiency = 3f;
+    public static float EitrFuelEfficiency = 12f;
 
     public float LastProducedEnergy;
 
-    public float _peekedDischargeAmount = 0f;
-
     public PowerSourceData() {}
+
+    /// <summary>
+    /// For refreshing properties when config changes.
+    /// </summary>
+    public void OnPropertiesUpdate()
+    {
+      FuelEfficiency = GetFuelEfficiency(fuelType);
+      FuelConsumptionRate = Mathf.Max(0f, FuelConsumptionRate);
+      OutputRate = Mathf.Max(0f, OutputRateDefault);
+      MaxFuel = MaxFuelDefault;
+    }
 
     public bool CanProducePower(float deltaTime, float remainingDemand)
     {
@@ -39,17 +63,6 @@ namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
       var maxEnergyFromFuel = maxFuelUsable * FuelEnergyYield * FuelEfficiency;
 
       return maxEnergyFromFuel > 0f;
-    }
-
-    public float PeekDischarge(float amount)
-    {
-      if (_peekedDischargeAmount > 0f)
-      {
-        _peekedDischargeAmount = 0f;
-      }
-
-      _peekedDischargeAmount = MathUtils.RoundToHundredth(Mathf.Min(storedEnergy, amount));
-      return _peekedDischargeAmount;
     }
 
     public float GetMaxPotentialOutput(float deltaTime)
@@ -90,6 +103,17 @@ namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
     public float EstimateFuelCost(float energy)
     {
       return energy / (FuelEnergyYield * FuelEfficiency);
+    }
+
+    public static float GetFuelEfficiency(FuelType val)
+    {
+      return val switch
+      {
+        FuelType.Coal => BaseFuelEfficiency * CoalFuelEfficiency,
+        FuelType.SurtlingCore => BaseFuelEfficiency * SurtlingCoreFuelEfficiency,
+        FuelType.Eitr => BaseFuelEfficiency * EitrFuelEfficiency,
+        _ => throw new ArgumentOutOfRangeException()
+      };
     }
 
     public void AddFuel(float amount)
