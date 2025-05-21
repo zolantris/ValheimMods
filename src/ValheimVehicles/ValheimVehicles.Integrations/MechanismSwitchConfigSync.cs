@@ -3,7 +3,7 @@
 
 using System;
 using ValheimVehicles.Components;
-using ValheimVehicles.Config;
+using ValheimVehicles.BepInExConfig;
 using ValheimVehicles.Helpers;
 using ValheimVehicles.SharedScripts;
 using ValheimVehicles.SharedScripts.Interfaces;

@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 using UnityEngine.UI;
-using ValheimVehicles.Config;
+using ValheimVehicles.BepInExConfig;
 using ValheimVehicles.Constants;
 using ValheimVehicles.Helpers;
 using ValheimVehicles.Integrations;

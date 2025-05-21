@@ -6,7 +6,7 @@ using Jotunn.Managers;
 using UnityEngine;
 using UnityEngine.Rendering;
 using ValheimVehicles.Components;
-using ValheimVehicles.Config;
+using ValheimVehicles.BepInExConfig;
 using ValheimVehicles.SharedScripts;
 using Logger = Jotunn.Logger;
 

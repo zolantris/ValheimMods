@@ -6,7 +6,7 @@
   using UnityEngine;
   using UnityEngine.Serialization;
   using ValheimVehicles.Components;
-  using ValheimVehicles.Config;
+  using ValheimVehicles.BepInExConfig;
   using ValheimVehicles.Constants;
   using ValheimVehicles.Controllers;
   using ValheimVehicles.Helpers;

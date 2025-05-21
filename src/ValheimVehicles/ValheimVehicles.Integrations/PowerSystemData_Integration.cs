@@ -1,6 +1,6 @@
 using System;
 using System.Diagnostics.CodeAnalysis;
-using ValheimVehicles.Config;
+using ValheimVehicles.BepInExConfig;
 using ValheimVehicles.Interfaces;
 using ValheimVehicles.Structs;
 

@@ -4,7 +4,7 @@ using ValheimVehicles.Controllers;
 using ValheimVehicles.Helpers;
 using Zolantris.Shared;
 
-namespace ValheimVehicles.Config;
+namespace ValheimVehicles.BepInExConfig;
 
 public class HudConfig : BepInExBaseConfig<HudConfig>
 {

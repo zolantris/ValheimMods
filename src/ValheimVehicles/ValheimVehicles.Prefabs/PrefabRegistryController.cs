@@ -9,7 +9,7 @@ using Registry;
 using UnityEngine;
 using UnityEngine.U2D;
 using ValheimVehicles.Components;
-using ValheimVehicles.Config;
+using ValheimVehicles.BepInExConfig;
 using ValheimVehicles.Prefabs.Registry;
 using ValheimVehicles.Prefabs.ValheimVehicles.Prefabs.Registry;
 using ValheimVehicles.SharedScripts;

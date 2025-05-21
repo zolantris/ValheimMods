@@ -12,7 +12,7 @@ using ValheimVehicles.Integrations;
 using ValheimVehicles.SharedScripts;
 using Zolantris.Shared;
 
-namespace ValheimVehicles.Config;
+namespace ValheimVehicles.BepInExConfig;
 
 public class PhysicsConfig : BepInExBaseConfig<PhysicsConfig>
 {

@@ -6,7 +6,7 @@ using ValheimVehicles.Helpers;
 using ValheimVehicles.UI;
 using Zolantris.Shared;
 
-namespace ValheimVehicles.Config;
+namespace ValheimVehicles.BepInExConfig;
 
 public class VehicleDebugConfig : BepInExBaseConfig<VehicleDebugConfig>
 {

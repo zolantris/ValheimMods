@@ -9,7 +9,7 @@ using Jotunn.Managers;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Serialization;
-using ValheimVehicles.Config;
+using ValheimVehicles.BepInExConfig;
 using ValheimVehicles.ConsoleCommands;
 using ValheimVehicles.Controllers;
 using ValheimVehicles.Prefabs;

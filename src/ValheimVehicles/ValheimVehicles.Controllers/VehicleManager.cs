@@ -7,7 +7,7 @@
   using Jotunn.Managers;
   using Registry;
   using UnityEngine;
-  using ValheimVehicles.Config;
+  using ValheimVehicles.BepInExConfig;
   using ValheimVehicles.Controllers;
   using ValheimVehicles.Enums;
   using ValheimVehicles.Helpers;
@@ -16,7 +16,7 @@
   using ValheimVehicles.SharedScripts;
   using ValheimVehicles.SharedScripts.Enums;
   using ValheimVehicles.Structs;
-  using static ValheimVehicles.Config.PrefabConfig;
+  using static ValheimVehicles.BepInExConfig.PrefabConfig;
   using Logger = Jotunn.Logger;
 
 #endregion

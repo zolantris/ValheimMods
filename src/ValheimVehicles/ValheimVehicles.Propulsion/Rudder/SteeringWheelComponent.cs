@@ -7,7 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using ValheimVehicles.Compat;
-using ValheimVehicles.Config;
+using ValheimVehicles.BepInExConfig;
 using ValheimVehicles.Constants;
 using ValheimVehicles.Controllers;
 using ValheimVehicles.Interfaces;

@@ -5,7 +5,7 @@ using System.Diagnostics;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.Serialization;
-using ValheimVehicles.Config;
+using ValheimVehicles.BepInExConfig;
 using ValheimVehicles.ConsoleCommands;
 using ValheimVehicles.Constants;
 using ValheimVehicles.Helpers;

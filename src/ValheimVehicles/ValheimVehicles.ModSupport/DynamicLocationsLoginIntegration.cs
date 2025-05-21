@@ -13,7 +13,7 @@ using JetBrains.Annotations;
 using Jotunn;
 using UnityEngine;
 using UnityEngine.UI;
-using ValheimVehicles.Config;
+using ValheimVehicles.BepInExConfig;
 using ValheimVehicles.Controllers;
 using Zolantris.Shared.Debug;
 using Logger = Jotunn.Logger;

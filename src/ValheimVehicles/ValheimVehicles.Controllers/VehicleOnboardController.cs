@@ -7,7 +7,7 @@
   using JetBrains.Annotations;
   using UnityEngine;
   using ValheimVehicles.Components;
-  using ValheimVehicles.Config;
+  using ValheimVehicles.BepInExConfig;
   using ValheimVehicles.Helpers;
   using ValheimVehicles.Interfaces;
   using ValheimVehicles.Patches;

@@ -11,7 +11,7 @@ using ValheimVehicles.SharedScripts.Interfaces;
 using ValheimVehicles.Structs;
 using ZdoWatcher;
 
-namespace ValheimVehicles.Config
+namespace ValheimVehicles.BepInExConfig
 {
   public class MechanismSwitchCustomConfig : ISerializableConfig<MechanismSwitchCustomConfig, IMechanismSwitchConfig>, IPrefabConfig<MechanismSwitchCustomConfig>, IMechanismSwitchConfig
   {

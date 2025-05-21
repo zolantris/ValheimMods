@@ -3,7 +3,7 @@ using BepInEx;
 using BepInEx.Bootstrap;
 using HarmonyLib;
 using Jotunn;
-using ValheimVehicles.Config;
+using ValheimVehicles.BepInExConfig;
 using ValheimVehicles.Patches;
 using ValheimVehicles.QuickStartWorld.Patches;
 using Zolantris.Shared;

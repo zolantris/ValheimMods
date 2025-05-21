@@ -1,5 +1,5 @@
 using BepInEx.Configuration;
-using ValheimVehicles.Config;
+using ValheimVehicles.BepInExConfig;
 using ValheimVehicles.Helpers;
 using ValheimVehicles.QuickStartWorld.Patches;
 using Zolantris.Shared;

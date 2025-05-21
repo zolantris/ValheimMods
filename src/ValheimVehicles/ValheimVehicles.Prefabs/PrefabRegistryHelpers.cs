@@ -6,7 +6,7 @@ using HarmonyLib;
 using Jotunn.Extensions;
 using Jotunn.Managers;
 using UnityEngine;
-using ValheimVehicles.Config;
+using ValheimVehicles.BepInExConfig;
 using ValheimVehicles.Controllers;
 using ValheimVehicles.Prefabs.Registry;
 using ValheimVehicles.SharedScripts;

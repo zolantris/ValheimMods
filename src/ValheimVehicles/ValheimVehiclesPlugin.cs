@@ -6,7 +6,7 @@ using ServerSync;
 using UnityEngine;
 using ValheimVehicles.Compat;
 using ValheimVehicles.Components;
-using ValheimVehicles.Config;
+using ValheimVehicles.BepInExConfig;
 using ValheimVehicles.Constants;
 using ValheimVehicles.Controllers;
 using ValheimVehicles.Integrations;
@@ -175,6 +175,7 @@ public class ValheimVehiclesPlugin : MonoBehaviour
     RenderingConfig.BindConfig(config);
     VehicleGlobalConfig.BindConfig(config);
     GuiConfig.BindConfig(config);
+    PowerSystemConfig.BindConfig(config);
 
     LoggerProvider.LogInfo("Plugin ValheimVehicles started on server.");
 

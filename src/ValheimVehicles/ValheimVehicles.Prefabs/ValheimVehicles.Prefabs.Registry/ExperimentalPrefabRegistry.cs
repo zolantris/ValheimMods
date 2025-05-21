@@ -2,7 +2,7 @@ using System;
 using Jotunn.Configs;
 using Jotunn.Entities;
 using Jotunn.Managers;
-using ValheimVehicles.Config;
+using ValheimVehicles.BepInExConfig;
 using ValheimVehicles.Prefabs.Registry;
 using ValheimVehicles.SharedScripts;
 namespace ValheimVehicles.Prefabs.ValheimVehicles.Prefabs.Registry;

@@ -5,7 +5,8 @@ using UnityEngine;
 using ValheimVehicles.Interfaces;
 namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
 {
-  public partial class PowerStorageData : PowerSystemComputeData, IPowerStorage
+  // Todo extend IPowerStorage
+  public partial class PowerStorageData : PowerSystemComputeData
   {
     public static float MaxCapacityDefault = 800f;
     public float StoredEnergy;

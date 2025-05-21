@@ -6,7 +6,7 @@
   using HarmonyLib;
   using UnityEngine;
   using ValheimVehicles.Components;
-  using ValheimVehicles.Config;
+  using ValheimVehicles.BepInExConfig;
   using ValheimVehicles.Controllers;
   using ValheimVehicles.Interfaces;
   using ValheimVehicles.Prefabs;

@@ -3,7 +3,7 @@
 
 using System.Collections.Generic;
 using UnityEngine;
-using ValheimVehicles.Config;
+using ValheimVehicles.BepInExConfig;
 using ValheimVehicles.SharedScripts.PowerSystem.Compute;
 using ValheimVehicles.Structs;
 

@@ -7,7 +7,7 @@
   using UnityEngine;
   using UnityEngine.Serialization;
   using ValheimVehicles.Components;
-  using ValheimVehicles.Config;
+  using ValheimVehicles.BepInExConfig;
   using ValheimVehicles.ConsoleCommands;
   using ValheimVehicles.Constants;
   using ValheimVehicles.Enums;

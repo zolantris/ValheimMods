@@ -11,7 +11,7 @@ using ValheimVehicles.SharedScripts;
 using ValheimVehicles.SharedScripts.PowerSystem;
 using Zolantris.Shared;
 
-namespace ValheimVehicles.Config;
+namespace ValheimVehicles.BepInExConfig;
 
 public class PrefabConfig : BepInExBaseConfig<PrefabConfig>
 {

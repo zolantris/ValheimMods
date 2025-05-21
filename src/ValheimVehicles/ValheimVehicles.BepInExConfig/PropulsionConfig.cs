@@ -6,7 +6,7 @@ using ValheimVehicles.Enums;
 using ValheimVehicles.Helpers;
 using Zolantris.Shared;
 
-namespace ValheimVehicles.Config;
+namespace ValheimVehicles.BepInExConfig;
 
 public class PropulsionConfig : BepInExBaseConfig<PropulsionConfig>
 {

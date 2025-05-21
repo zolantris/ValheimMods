@@ -3,7 +3,7 @@ using BepInEx.Configuration;
 using ValheimVehicles.Helpers;
 using Zolantris.Shared;
 
-namespace ValheimVehicles.Config;
+namespace ValheimVehicles.BepInExConfig;
 
 public class PatchConfig : BepInExBaseConfig<PatchConfig>
 {

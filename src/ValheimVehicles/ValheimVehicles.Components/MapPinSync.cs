@@ -7,7 +7,7 @@ using DynamicLocations.Constants;
 using DynamicLocations.Controllers;
 using Jotunn.Managers;
 using UnityEngine;
-using ValheimVehicles.Config;
+using ValheimVehicles.BepInExConfig;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.SharedScripts;
 using ZdoWatcher;

@@ -3,7 +3,7 @@ using ValheimVehicles.Components;
 using ValheimVehicles.Helpers;
 using ValheimVehicles.SharedScripts.Validation;
 using Zolantris.Shared;
-namespace ValheimVehicles.Config;
+namespace ValheimVehicles.BepInExConfig;
 
 public class VehicleGlobalConfig : BepInExBaseConfig<VehicleGlobalConfig>
 {

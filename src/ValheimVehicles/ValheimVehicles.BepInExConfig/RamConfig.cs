@@ -3,7 +3,7 @@ using ValheimVehicles.Constants;
 using ValheimVehicles.Helpers;
 using Zolantris.Shared;
 
-namespace ValheimVehicles.Config;
+namespace ValheimVehicles.BepInExConfig;
 
 /// <summary>
 /// Aggregation of all Ram and vehicle impact damages. These are all AOE impacts.

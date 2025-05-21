@@ -6,7 +6,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using ValheimVehicles.Config;
+using ValheimVehicles.BepInExConfig;
 using ValheimVehicles.Integrations;
 using ValheimVehicles.Integrations.PowerSystem;
 using ValheimVehicles.SharedScripts;
@@ -352,6 +352,45 @@ public partial class PowerNetworkControllerIntegration : PowerNetworkController
     return Vector3.zero;
   }
 
+  /// <summary>
+  /// For nesting in a loop so O(n) can be reached.
+  /// </summary>
+  /// <param name="consumer"></param>
+  /// <param name="status"></param>
+  /// <param name="poweredOrInactiveConsumers"></param>
+  /// <param name="inactiveDemandingConsumers"></param>
+  public static void GetNetworkHealthStatusEnumeration(PowerConsumerData? consumer, ref string status, ref int poweredOrInactiveConsumers, ref int inactiveDemandingConsumers)
+  {
+    if (consumer == null && poweredOrInactiveConsumers == 0 && inactiveDemandingConsumers == 0)
+    {
+      status = ModTranslations.Power_NetworkInfo_NetworkFullPower;
+      return;
+    }
+
+    if (!consumer.IsActive && consumer.IsDemanding)
+    {
+      poweredOrInactiveConsumers++;
+    }
+    else
+    {
+      inactiveDemandingConsumers++;
+    }
+
+    if (inactiveDemandingConsumers == 0)
+    {
+      status = ModTranslations.Power_NetworkInfo_NetworkFullPower;
+      return;
+    }
+
+    if (inactiveDemandingConsumers > 0 && poweredOrInactiveConsumers > 0)
+    {
+      status = ModTranslations.Power_NetworkInfo_NetworkPartialPower;
+      return;
+    }
+
+    status = ModTranslations.Power_NetworkInfo_NetworkLowPower;
+  }
+
   public void Client_SyncNetwork(string networkId)
   {
     if (!TryBuildPowerNetworkSimData(networkId, out var simData))
@@ -363,6 +402,7 @@ public partial class PowerNetworkControllerIntegration : PowerNetworkController
     var deltaTime = Time.fixedDeltaTime;
 
     var totalDemand = 0f;
+    var totalCapacity = 0f;
 
     // pure power units
     var totalConduitDemand = 0f;
@@ -372,6 +412,7 @@ public partial class PowerNetworkControllerIntegration : PowerNetworkController
 
     var totalSupply = 0f;
     var totalFuel = 0f;
+    var totalFuelCapacity = 0f;
 
     var chargeConduits = new List<PowerConduitData>();
     var drainConduits = new List<PowerConduitData>();
@@ -389,20 +430,45 @@ public partial class PowerNetworkControllerIntegration : PowerNetworkController
       }
     }
 
-    foreach (var (data, zdo) in simData.Consumers)
+    var poweredOrInactiveConsumers = 0;
+    var inactiveDemandingConsumers = 0;
+    var NetworkConsumerPowerStatus = "";
+
+    // Default Needed if there are no consumers.
+    GetNetworkHealthStatusEnumeration(null, ref NetworkConsumerPowerStatus, ref poweredOrInactiveConsumers, ref inactiveDemandingConsumers);
+
+    foreach (var (data, _) in simData.Consumers)
     {
       data.Load();
+      totalDemand += data.RequestedPower(deltaTime);
+      GetNetworkHealthStatusEnumeration(data, ref NetworkConsumerPowerStatus, ref poweredOrInactiveConsumers, ref inactiveDemandingConsumers);
     }
 
-    foreach (var (data, zdo) in simData.Storages)
+    foreach (var (data, _) in simData.Storages)
     {
       data.Load();
+      totalSupply += data.StoredEnergy;
+      totalCapacity += data.MaxCapacity;
     }
 
-    foreach (var (data, zdo) in simData.Sources)
+    foreach (var (data, _) in simData.Sources)
     {
       data.Load();
+      totalFuel += data.Fuel;
+      totalFuelCapacity += data.MaxFuel;
     }
+
+    var newData = new PowerNetworkData
+    {
+      NetworkConsumerPowerStatus = NetworkConsumerPowerStatus,
+      NetworkPowerSupply = MathUtils.RoundToHundredth(totalSupply),
+      NetworkPowerCapacity = MathUtils.RoundToHundredth(totalCapacity),
+      NetworkPowerDemand = MathUtils.RoundToHundredth(totalDemand),
+      NetworkFuelSupply = MathUtils.RoundToHundredth(totalFuel),
+      NetworkFuelCapacity = MathUtils.RoundToHundredth(totalFuelCapacity)
+    };
+    newData.Cached_NetworkDataString = GenerateNetworkDataString(networkId, newData);
+    UpdateNetworkPowerData(networkId, newData);
   }
 
   public void SimulateOnClientAndServer()

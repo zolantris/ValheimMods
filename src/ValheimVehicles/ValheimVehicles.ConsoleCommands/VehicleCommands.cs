@@ -12,7 +12,7 @@ using Jotunn.Entities;
 using Jotunn.Managers;
 using UnityEngine;
 using UnityEngine.Assertions.Must;
-using ValheimVehicles.Config;
+using ValheimVehicles.BepInExConfig;
 using ValheimVehicles.Helpers;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.SharedScripts;

@@ -4,7 +4,7 @@ using ValheimVehicles.Components;
 using ValheimVehicles.Interfaces;
 using ValheimVehicles.SharedScripts;
 
-namespace ValheimVehicles.Config;
+namespace ValheimVehicles.BepInExConfig;
 
 /// <summary>
 /// A config syncing component for per-vehicle configs.

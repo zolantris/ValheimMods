@@ -102,7 +102,7 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
       return TryNetworkPowerData(networkId, out var networkData) ? networkData.Cached_NetworkDataString : string.Empty;
     }
 
-    private static string GenerateNetworkDataString(string networkId, PowerNetworkData data)
+    public static string GenerateNetworkDataString(string networkId, PowerNetworkData data)
     {
       var baseString = "";
       baseString += "\n";

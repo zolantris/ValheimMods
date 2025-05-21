@@ -5,7 +5,7 @@ using ValheimVehicles.SharedScripts.Validation;
 using ValheimVehicles.UI;
 using Zolantris.Shared;
 
-namespace ValheimVehicles.Config;
+namespace ValheimVehicles.BepInExConfig;
 
 public class GuiConfig : BepInExBaseConfig<GuiConfig>
 {

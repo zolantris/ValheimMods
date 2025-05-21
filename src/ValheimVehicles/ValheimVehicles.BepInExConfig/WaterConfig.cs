@@ -5,7 +5,7 @@ using ValheimVehicles.Helpers;
 using ValheimVehicles.Components;
 using Zolantris.Shared;
 
-namespace ValheimVehicles.Config;
+namespace ValheimVehicles.BepInExConfig;
 
 public class WaterConfig : BepInExBaseConfig<WaterConfig>
 {

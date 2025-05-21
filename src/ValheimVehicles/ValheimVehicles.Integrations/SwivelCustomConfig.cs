@@ -11,7 +11,7 @@ using ValheimVehicles.SharedScripts.UI;
 
 #endregion
 
-namespace ValheimVehicles.Config
+namespace ValheimVehicles.BepInExConfig
 {
   public class SwivelCustomConfig : ISerializableConfig<SwivelCustomConfig, ISwivelConfig>, ISwivelConfig
   {

@@ -1,5 +1,5 @@
 ﻿using HarmonyLib;
-using ValheimVehicles.Config;
+using ValheimVehicles.BepInExConfig;
 using ValheimVehicles.Components;
 
 namespace ValheimVehicles.Patches;

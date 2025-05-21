@@ -3,7 +3,7 @@ using UnityEngine;
 using ValheimVehicles.Helpers;
 using ValheimVehicles.SharedScripts.UI;
 using Zolantris.Shared;
-namespace ValheimVehicles.Config;
+namespace ValheimVehicles.BepInExConfig;
 
 public class InputsConfig : BepInExBaseConfig<InputsConfig>
 {

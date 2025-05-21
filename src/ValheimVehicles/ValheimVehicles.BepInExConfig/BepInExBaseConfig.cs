@@ -4,7 +4,7 @@ using BepInEx.Configuration;
 using ValheimVehicles.SharedScripts;
 using ValheimVehicles.SharedScripts.Validation;
 using ValheimVehicles.ValheimVehicles.Plugins;
-namespace ValheimVehicles.Config;
+namespace ValheimVehicles.BepInExConfig;
 
 public interface IBepInExBaseConfig
 {

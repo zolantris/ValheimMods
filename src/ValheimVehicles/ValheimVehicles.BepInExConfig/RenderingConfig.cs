@@ -4,7 +4,7 @@ using ValheimVehicles.Helpers;
 using ValheimVehicles.SharedScripts;
 using Zolantris.Shared;
 
-namespace ValheimVehicles.Config;
+namespace ValheimVehicles.BepInExConfig;
 
 public class RenderingConfig : BepInExBaseConfig<RenderingConfig>
 {

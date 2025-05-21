@@ -1,6 +1,6 @@
 using System;
 using System.Linq;
-using ValheimVehicles.Config;
+using ValheimVehicles.BepInExConfig;
 using ValheimVehicles.Controllers;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.SharedScripts;

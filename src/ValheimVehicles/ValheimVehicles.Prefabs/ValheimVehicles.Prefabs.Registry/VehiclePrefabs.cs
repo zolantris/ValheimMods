@@ -5,7 +5,7 @@
   using Jotunn.Managers;
   using UnityEngine;
   using ValheimVehicles.Components;
-  using ValheimVehicles.Config;
+  using ValheimVehicles.BepInExConfig;
   using ValheimVehicles.Enums;
   using ValheimVehicles.SharedScripts;
   using Object = UnityEngine.Object;

@@ -10,7 +10,7 @@
   using UnityEngine;
   using UnityEngine.UI;
   using ValheimVehicles.Components;
-  using ValheimVehicles.Config;
+  using ValheimVehicles.BepInExConfig;
   using ValheimVehicles.ConsoleCommands;
   using ValheimVehicles.Constants;
   using ValheimVehicles.Controllers;

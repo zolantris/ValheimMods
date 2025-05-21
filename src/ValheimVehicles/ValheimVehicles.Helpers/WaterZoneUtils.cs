@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using UnityEngine;
 using ValheimVehicles.Attributes;
-using ValheimVehicles.Config;
+using ValheimVehicles.BepInExConfig;
 using ValheimVehicles.Patches;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.Components;

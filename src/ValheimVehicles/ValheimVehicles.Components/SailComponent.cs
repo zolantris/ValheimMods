@@ -5,7 +5,7 @@ using System.IO;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.Serialization;
-using ValheimVehicles.Config;
+using ValheimVehicles.BepInExConfig;
 using ValheimVehicles.Controllers;
 using ValheimVehicles.Helpers;
 using ValheimVehicles.Injections;
@@ -26,7 +26,7 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
     None = 0,
     AllowSailShrinking = 1,
     DisableCloth = 2,
-    AllowSailRotation = 4,
+    AllowSailRotation = 4
   }
 
   [Flags]
@@ -249,7 +249,7 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
     if (DebugBoxCollider)
     {
       Gizmos.color = Color.green;
-      Gizmos.matrix = this.transform.localToWorldMatrix;
+      Gizmos.matrix = transform.localToWorldMatrix;
       Gizmos.DrawWireCube(Vector3.zero, Vector3.one);
     }
 
@@ -675,7 +675,7 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
     var vertices = new List<Vector3>();
     var uvs = new List<Vector2>();
     var triangles = new List<int>();
-    
+
     if (m_sailCorners.Count == 3)
     {
       vertices.Add(m_sailCorners[0]);
@@ -721,7 +721,7 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
           y = (float)y2 / dys
         });
       }
-      
+
       dxs += 1f;
       dys += 1f;
       for (var x = 0; (float)x < dxs - 1f; x++)
@@ -740,7 +740,7 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
     mesh.SetVertices(vertices);
     mesh.SetTriangles(triangles, 0);
     mesh.SetUVs(0, uvs);
-    
+
     mesh.Optimize();
     mesh.RecalculateNormals();
     mesh.RecalculateTangents();
@@ -1090,7 +1090,7 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
     else
     {
       CancelInvoke(nameof(TryEdit));
-      if (m_editPanel == null) return; 
+      if (m_editPanel == null) return;
       m_editPanel.ShowPanel(this);
     }
   }
