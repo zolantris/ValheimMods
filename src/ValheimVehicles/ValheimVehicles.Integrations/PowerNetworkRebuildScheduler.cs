@@ -49,7 +49,12 @@ public static class PowerNetworkRebuildScheduler
 
         LoggerProvider.LogInfo("[PowerNetworkRebuildScheduler] Executing network rebuild.");
         PowerZDONetworkManager.RebuildClusters();
-        // PowerNetworkControllerIntegration.BuildSimDataForCluster(PowerZDONetworkManager.GetAllTrackedZDOs()); // Your existing rebuild logic
+
+        // Updates the power nodes with the latest simulation. This is for all rendered nodes and will only be accurate on clients.
+        PowerNetworkController.UpdateAllPowerNodes();
+
+        // for creating a network of IPowerNodes using our new logic
+        PowerNetworkControllerIntegration.SimulateAllNetworks(PowerNetworkController.AllPowerNodes);
         yield break;
       }
     }

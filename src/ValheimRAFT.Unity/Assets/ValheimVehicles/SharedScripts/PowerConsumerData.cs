@@ -21,7 +21,7 @@ namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
     public PowerIntensityLevel PowerIntensityLevel => powerIntensityLevel;
     public bool IsDemanding;
     public bool _isActive = false;
-    public bool IsActive => _isActive;
+    public override bool IsActive => _isActive;
     public bool IsPowerDenied => !IsActive && IsDemanding;
     public PowerConsumerData() {}
     public void UpdatePowerConsumptionValues(float val)

@@ -21,10 +21,10 @@
       public static readonly int Mechanism_Power_Source_Eitr =
         PrefabNames.Mechanism_Power_Source_Eitr.GetStableHashCode();
 
-      public static readonly int Mechanism_Power_Consumer_Charge_Plate =
-        PrefabNames.Mechanism_Power_Consumer_Charge_Plate.GetStableHashCode();
-      public static readonly int Mechanism_Power_Consumer_Drain_Plate =
-        PrefabNames.Mechanism_Power_Consumer_Drain_Plate.GetStableHashCode();
+      public static readonly int Mechanism_Power_Conduit_Charge_Plate =
+        PrefabNames.Mechanism_Power_Conduit_Charge_Plate.GetStableHashCode();
+      public static readonly int Mechanism_Power_Conduit_Drain_Plate =
+        PrefabNames.Mechanism_Power_Conduit_Drain_Plate.GetStableHashCode();
 
       public static readonly int Mechanism_Power_Storage_Eitr =
         PrefabNames.Mechanism_Power_Storage_Eitr.GetStableHashCode();
@@ -231,10 +231,10 @@
       public static readonly string Mechanism_Power_Source_Eitr =
         $"{ValheimVehiclesPrefix}_Power_Source_Eitr";
 
-      public static readonly string Mechanism_Power_Consumer_Charge_Plate =
-        $"{ValheimVehiclesPrefix}_Power_Consumer_Charge_Plate";
-      public static readonly string Mechanism_Power_Consumer_Drain_Plate =
-        $"{ValheimVehiclesPrefix}_Power_Consumer_Drain_Plate";
+      public static readonly string Mechanism_Power_Conduit_Charge_Plate =
+        $"{ValheimVehiclesPrefix}_Power_Conduit_Charge_Plate";
+      public static readonly string Mechanism_Power_Conduit_Drain_Plate =
+        $"{ValheimVehiclesPrefix}_Power_Conduit_Drain_Plate";
 
       public static readonly string Mechanism_Power_Storage_Eitr =
         $"{ValheimVehiclesPrefix}_Power_Storage_Eitr";

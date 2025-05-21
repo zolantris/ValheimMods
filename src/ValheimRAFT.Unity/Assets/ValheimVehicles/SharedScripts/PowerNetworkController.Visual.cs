@@ -7,6 +7,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using ValheimVehicles.BepInExConfig;
 using ValheimVehicles.SharedScripts.PowerSystem.Interfaces;
 
 #endregion
@@ -58,6 +59,7 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
     /// <returns></returns>
     public static string GetMechanismRequiredPowerStatus(bool isActive)
     {
+      if (PowerSystemConfig.Swivels_DoNotRequirePower.Value) return "";
       var activationText = isActive ? ModTranslations.PowerState_HasPower : ModTranslations.PowerState_NoPower;
       var activationColor = isActive ? "yellow" : "red";
       return ModTranslations.WithBoldText(activationText, activationColor);

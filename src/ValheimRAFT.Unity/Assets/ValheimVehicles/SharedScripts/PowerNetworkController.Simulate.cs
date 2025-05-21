@@ -19,11 +19,11 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
 
     // todo add cut-off logic where batteries do not request above 0.75f for fuel sources only. But they can from drain plates and other renewable resources.
     public static float FuelSourcePercentageCap = 0.75f;
-    private readonly List<IPowerConduit> _conduits = new();
-    private readonly List<IPowerConsumer> _consumers = new();
+    private static readonly List<IPowerConduit> _conduits = new();
+    private static readonly List<IPowerConsumer> _consumers = new();
 
-    private readonly List<IPowerSource> _sources = new();
-    private readonly List<IPowerStorage> _storage = new();
+    private static readonly List<IPowerSource> _sources = new();
+    private static readonly List<IPowerStorage> _storage = new();
 
     public static bool TryNetworkPowerData(string networkId, [NotNullWhen(true)] out PowerNetworkData? _data)
     {
@@ -57,54 +57,54 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
       PowerNetworkDataInstances.Clear();
     }
 
-    public void Client_SimulateNetwork(List<IPowerNode> nodes, string networkId, bool canSkip = false)
-    {
-      if (!canSkip)
-      {
-        UpdateListData(nodes);
-      }
+    // public static void Client_SimulateNetwork(List<IPowerNode> nodes, string networkId, bool canSkip = false)
+    // {
+    //   if (!canSkip)
+    //   {
+    //     UpdateListData(nodes);
+    //   }
+    //
+    //   var totalConsumerDemand = GetTotalConsumerDemand(Time.fixedDeltaTime);
+    //
+    //   var remainingStorage = 0f;
+    //   var totalPowerCapacity = 0f;
+    //   var totalFuel = 0f;
+    //   var totalFuelCapacity = 0f;
+    //
+    //   _storage.ForEach(x =>
+    //   {
+    //     if (x != null)
+    //     {
+    //       remainingStorage += x.ChargeLevel;
+    //       totalPowerCapacity += x.Capacity;
+    //     }
+    //   });
+    //
+    //   _sources.ForEach(x =>
+    //   {
+    //     totalFuel += x.GetFuelLevel();
+    //     totalFuelCapacity += x.GetFuelCapacity();
+    //   });
+    //
+    //   var newData = new PowerNetworkData
+    //   {
+    //     NetworkConsumerPowerStatus = GetNetworkHealthStatus(_consumers),
+    //     NetworkPowerSupply = MathUtils.RoundToHundredth(remainingStorage),
+    //     NetworkPowerCapacity = MathUtils.RoundToHundredth(totalPowerCapacity),
+    //     NetworkPowerDemand = MathUtils.RoundToHundredth(totalConsumerDemand),
+    //     NetworkFuelSupply = MathUtils.RoundToHundredth(totalFuel),
+    //     NetworkFuelCapacity = MathUtils.RoundToHundredth(totalFuelCapacity)
+    //   };
+    //   newData.Cached_NetworkDataString = GenerateNetworkDataString(networkId, newData);
+    //   UpdateNetworkPowerData(networkId, newData);
+    //
+    //   if (ZNet.instance.IsServer())
+    //   {
+    //     LoggerProvider.LogInfoDebounced($"Host Server updated network data with Fuel: {newData.NetworkFuelSupply} PowerSupply: {newData.NetworkPowerSupply}");
+    //   }
+    // }
 
-      var totalConsumerDemand = GetTotalConsumerDemand(Time.fixedDeltaTime);
-
-      var remainingStorage = 0f;
-      var totalPowerCapacity = 0f;
-      var totalFuel = 0f;
-      var totalFuelCapacity = 0f;
-
-      _storage.ForEach(x =>
-      {
-        if (x != null)
-        {
-          remainingStorage += x.ChargeLevel;
-          totalPowerCapacity += x.Capacity;
-        }
-      });
-
-      _sources.ForEach(x =>
-      {
-        totalFuel += x.GetFuelLevel();
-        totalFuelCapacity += x.GetFuelCapacity();
-      });
-
-      var newData = new PowerNetworkData
-      {
-        NetworkConsumerPowerStatus = GetNetworkHealthStatus(_consumers),
-        NetworkPowerSupply = MathUtils.RoundToHundredth(remainingStorage),
-        NetworkPowerCapacity = MathUtils.RoundToHundredth(totalPowerCapacity),
-        NetworkPowerDemand = MathUtils.RoundToHundredth(totalConsumerDemand),
-        NetworkFuelSupply = MathUtils.RoundToHundredth(totalFuel),
-        NetworkFuelCapacity = MathUtils.RoundToHundredth(totalFuelCapacity)
-      };
-      newData.Cached_NetworkDataString = GenerateNetworkDataString(networkId, newData);
-      UpdateNetworkPowerData(networkId, newData);
-
-      if (ZNet.instance.IsServer())
-      {
-        LoggerProvider.LogInfoDebounced($"Host Server updated network data with Fuel: {newData.NetworkFuelSupply} PowerSupply: {newData.NetworkPowerSupply}");
-      }
-    }
-
-    public float GetTotalConsumerDemand(float deltaTime)
+    public static float GetTotalConsumerDemand(float deltaTime)
     {
       var totalDemand = 0f;
 
@@ -116,7 +116,7 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
       return totalDemand;
     }
 
-    public void ClearLocalListData()
+    public static void ClearLocalListData()
     {
       _sources.Clear();
       _storage.Clear();
@@ -124,13 +124,13 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
       _conduits.Clear();
     }
 
-    public void ClearAllSimulatedNetworkData()
+    public static void ClearAllSimulatedNetworkData()
     {
       ClearLocalListData();
       powerNodeNetworks.Clear();
     }
 
-    public void UpdateListData(List<IPowerNode> nodes)
+    public static void UpdateListData(List<IPowerNode> nodes)
     {
       ClearLocalListData();
 

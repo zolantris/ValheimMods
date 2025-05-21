@@ -23,6 +23,23 @@ public class PowerConduitPlateComponentIntegration :
   public bool IsActive => Data.IsActive;
   public bool IsDemanding => Logic.IsDemanding;
 
+  public static List<PowerConduitPlateComponentIntegration> Instances = new();
+  public static ZDOID? Zdoid = null;
+
+  public void OnEnable()
+  {
+    if (!Instances.Contains(this))
+    {
+      Instances.Add(this);
+    }
+  }
+
+  public void OnDisable()
+  {
+    Instances.Remove(this);
+    Instances.RemoveAll(x => !x);
+  }
+
   public float RequestPower(float deltaTime)
   {
     LoggerProvider.LogWarning("Deprecated RequestPower");
@@ -34,7 +51,7 @@ public class PowerConduitPlateComponentIntegration :
     return 0f;
   }
 
-  public PowerConduitData? Data;
+  public PowerConduitData Data = new();
   public bool MustSync = false;
   public Rigidbody m_body;
   public FixedJoint m_joint;
@@ -148,10 +165,11 @@ public class PowerConduitPlateComponentIntegration :
         LoggerProvider.LogWarning("[PowerConduitPlateComponentIntegration] Failed to get PowerConduitData from PowerZDONetworkManager.");
         return;
       }
+      Zdoid = zdo.m_uid;
       Data = data;
       Data.Load();
       PowerNetworkController.RegisterPowerComponent(this);
-
+      PowerZDONetworkManager.RegisterPowerComponentUpdater(zdo.m_uid, data);
       Logic.GetPlayerEitr = () => PowerConduitData.GetAverageEitr(Data.Players);
       Logic.AddPlayerEitr = (float val) => Data.AddEitrToPlayers(val);
       Logic.SubtractPlayerEitr = (float val) => Data.SubtractEitrFromPlayers(val);
@@ -194,6 +212,10 @@ public class PowerConduitPlateComponentIntegration :
 
   protected override void OnDestroy()
   {
+    if (Zdoid.HasValue)
+    {
+      PowerZDONetworkManager.RemovePowerComponentUpdater(Zdoid.Value);
+    }
     PowerNetworkController.UnregisterPowerComponent(this);
     base.OnDestroy();
   }

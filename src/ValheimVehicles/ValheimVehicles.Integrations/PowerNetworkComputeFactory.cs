@@ -66,8 +66,8 @@ namespace ValheimVehicles.Integrations.PowerSystem
         return true;
       }
 
-      if (hash == PrefabNameHashes.Mechanism_Power_Consumer_Charge_Plate ||
-          hash == PrefabNameHashes.Mechanism_Power_Consumer_Drain_Plate)
+      if (hash == PrefabNameHashes.Mechanism_Power_Conduit_Charge_Plate ||
+          hash == PrefabNameHashes.Mechanism_Power_Conduit_Drain_Plate)
       {
         computeModel = CreateConduit(zdo);
         return true;

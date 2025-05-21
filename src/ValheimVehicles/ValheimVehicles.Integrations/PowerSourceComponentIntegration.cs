@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using ValheimVehicles.Helpers;
 using ValheimVehicles.Integrations.ZDOConfigs;
@@ -12,7 +13,30 @@ namespace ValheimVehicles.Integrations;
 public class PowerSourceComponentIntegration :
   NetworkedComponentIntegration<PowerSourceComponentIntegration, PowerSourceComponent, PowerSourceZDOConfig>, IPowerSource
 {
-  public PowerSourceData? Data;
+  public PowerSourceData Data = new();
+
+  public static List<PowerSourceComponentIntegration> Instances = new();
+  public static ZDOID? Zdoid = null;
+
+  public void OnEnable()
+  {
+    if (!Instances.Contains(this))
+    {
+      Instances.Add(this);
+    }
+  }
+
+  public void OnDisable()
+  {
+    if (Zdoid.HasValue)
+    {
+      PowerZDONetworkManager.RemovePowerComponentUpdater(Zdoid.Value);
+    }
+    Instances.Remove(this);
+    Instances.RemoveAll(x => !x);
+    PowerNetworkController.UnregisterPowerComponent(this);
+  }
+
   protected override void Awake()
   {
     base.Awake();
@@ -26,9 +50,10 @@ public class PowerSourceComponentIntegration :
       var zdo = netView.GetZDO();
       if (!PowerZDONetworkManager.TryGetData(zdo, out PowerSourceData data, true))
       {
-        LoggerProvider.LogWarning("[PowerSourceComponentIntegration] Failed to get PowerConduitData from PowerZDONetworkManager.");
+        LoggerProvider.LogWarning("[PowerSourceComponentIntegration] Failed to get PowerSourceData from PowerZDONetworkManager.");
         return;
       }
+      Zdoid = zdo.m_uid;
       Data = data;
       Data.Load();
 
@@ -37,14 +62,11 @@ public class PowerSourceComponentIntegration :
         netView.m_zdo.SetOwner(ZDOMan.GetSessionID());
       }
       PowerNetworkController.RegisterPowerComponent(this);
+      PowerZDONetworkManager.RegisterPowerComponentUpdater(zdo.m_uid, data);
       base.Start();
     });
   }
 
-  protected override void OnDestroy()
-  {
-    PowerNetworkController.UnregisterPowerComponent(this);
-  }
 
   protected override void RegisterDefaultRPCs()
   {
@@ -54,13 +76,13 @@ public class PowerSourceComponentIntegration :
 
   private void RPC_AddFuel(long sender, float amount)
   {
-    Logic.AddFuel(amount);
+    Data.AddFuel(amount);
     UpdateNetworkedData();
   }
 
   private void RPC_SetFuel(long sender, float amount)
   {
-    Logic.SetFuelLevel(amount);
+    Data.SetFuel(amount);
     UpdateNetworkedData();
   }
 
@@ -70,7 +92,7 @@ public class PowerSourceComponentIntegration :
 
     if (netView.IsOwner() || ZNet.instance.IsServer())
     {
-      Logic.SetFuelLevel(amount);
+      Data.SetFuel(amount);
       UpdateNetworkedData();
     }
     else
@@ -85,7 +107,7 @@ public class PowerSourceComponentIntegration :
 
     if (netView.IsOwner() || ZNet.instance.IsServer())
     {
-      Logic.AddFuel(amount);
+      Data.AddFuel(amount);
       UpdateNetworkedData();
     }
     else
@@ -101,11 +123,12 @@ public class PowerSourceComponentIntegration :
   }
   public float RequestAvailablePower(float deltaTime, float supplyFromSources, float totalDemand, bool isDemanding)
   {
-    return Logic.RequestAvailablePower(deltaTime, supplyFromSources, totalDemand, isDemanding);
+    return Data.GetMaxPotentialOutput(deltaTime);
+    // return Logic.RequestAvailablePower(deltaTime, supplyFromSources, totalDemand, isDemanding);
   }
   public void CommitEnergyUsed(float energyUsed)
   {
-    Logic.CommitEnergyUsed(energyUsed);
+    Data.CommitEnergyUsed(energyUsed);
   }
   public void SetRunning(bool state)
   {
@@ -117,15 +140,20 @@ public class PowerSourceComponentIntegration :
   }
   public void SetFuelCapacity(float val)
   {
-    Logic.SetFuelCapacity(val);
+    LoggerProvider.LogWarning("Method not implemented");
+    // Logic.SetFuelCapacity(val);
   }
   public void SetFuelConsumptionRate(float val)
   {
-    Logic.SetFuelConsumptionRate(val);
+    LoggerProvider.LogWarning("Method not implemented");
+
+    // Logic.SetFuelConsumptionRate(val);
   }
   public void UpdateFuelEfficiency()
   {
-    Logic.UpdateFuelEfficiency();
+    LoggerProvider.LogWarning("Method not implemented");
+
+    // Logic.UpdateFuelEfficiency();
   }
   public void SetFuelLevel(float amount)
   {
@@ -133,11 +161,11 @@ public class PowerSourceComponentIntegration :
   }
   public float GetFuelLevel()
   {
-    return Logic.GetFuelLevel();
+    return Data.Fuel;
   }
   public float GetFuelCapacity()
   {
-    return Logic.GetFuelCapacity();
+    return Data.MaxFuel;
   }
   public bool IsRunning => Logic.isRunning;
   public bool IsActive => Logic.IsActive;

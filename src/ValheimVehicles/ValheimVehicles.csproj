@@ -139,5 +139,8 @@
             <Link>SharedScripts\VehicleUISectionItem.cs.meta</Link>
         </Content>
     </ItemGroup>
+    <ItemGroup>
+        <Folder Include="ValheimVehicles.Integrations.PowerSystem\"/>
+    </ItemGroup>
     <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets"/>
 </Project>

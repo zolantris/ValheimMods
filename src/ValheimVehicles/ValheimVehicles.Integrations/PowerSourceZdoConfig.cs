@@ -2,6 +2,7 @@
 // ReSharper disable NamespaceStyle
 
 using ValheimVehicles.Integrations.Interfaces;
+using ValheimVehicles.SharedScripts.PowerSystem.Compute;
 using ValheimVehicles.Structs;
 
 namespace ValheimVehicles.Integrations.ZDOConfigs
@@ -21,6 +22,11 @@ namespace ValheimVehicles.Integrations.ZDOConfigs
 
     public void Save(ZDO zdo, PowerSourceComponentIntegration component)
     {
+      if (PowerZDONetworkManager.TryGetData<PowerSourceData>(zdo, out var powerSourceData))
+      {
+        powerSourceData.SetFuel(component.GetFuelLevel());
+        // powerSourceData.IsActive = component.GetFuelLevel() > 0f && component.IsRunning;
+      }
       zdo.Set(VehicleZdoVars.Power_StoredFuel, component.GetFuelLevel());
       zdo.Set(VehicleZdoVars.Power_IsRunning, component.IsRunning);
     }

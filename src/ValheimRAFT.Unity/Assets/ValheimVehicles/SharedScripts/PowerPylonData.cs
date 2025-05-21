@@ -10,5 +10,9 @@ namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
     {
       Range = PowerRangeDefault;
     }
+    public override bool IsActive
+    {
+      get;
+    }
   }
 }

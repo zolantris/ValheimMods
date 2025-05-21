@@ -4,8 +4,6 @@
 using System.Collections.Generic;
 using UnityEngine;
 using ValheimVehicles.BepInExConfig;
-using ValheimVehicles.SharedScripts.PowerSystem.Compute;
-using ValheimVehicles.Structs;
 
 namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
 {
@@ -24,7 +22,7 @@ namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
 
     public PowerConduitData() {}
 
-    public bool IsActive => Players.Count > 0;
+    public override bool IsActive => Players.Count > 0;
     public bool HasPlayersWithEitr => GetAverageEitr(Players) > 0f;
     // ----------------------------------------
     // Static Helpers
@@ -37,10 +35,10 @@ namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
 
     public static PowerConduitMode GetConduitVariant(int prefabHash)
     {
-      if (prefabHash == PrefabNameHashes.Mechanism_Power_Consumer_Charge_Plate)
+      if (prefabHash == PrefabNameHashes.Mechanism_Power_Conduit_Charge_Plate)
         return PowerConduitMode.Charge;
 
-      if (prefabHash == PrefabNameHashes.Mechanism_Power_Consumer_Drain_Plate)
+      if (prefabHash == PrefabNameHashes.Mechanism_Power_Conduit_Drain_Plate)
         return PowerConduitMode.Drain;
 
       LoggerProvider.LogWarning($"[PowerConduitData] Unexpected prefabHash: {prefabHash}");
@@ -199,20 +197,6 @@ namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
 
       var fuelGained = totalDrainedEitr / PowerConduitPlateComponent.eitrToFuelRatio;
       return fuelGained * PowerConduitPlateComponent.chargeRate;
-    }
-
-    public string GetHoverText()
-    {
-      var baseString = $"{ModTranslations.PowerConduit_DrainPlate_Name}";
-
-      if (PowerNetworkController.CanShowNetworkData || PrefabConfig.PowerNetwork_ShowAdditionalPowerInformationByDefault.Value)
-      {
-        var stateText = PowerNetworkController.GetDrainMechanismActivationStatus(IsActive, HasPlayersWithEitr);
-        baseString += "\n";
-        baseString += $"[{stateText}]";
-      }
-
-      return baseString;
     }
   }
 }

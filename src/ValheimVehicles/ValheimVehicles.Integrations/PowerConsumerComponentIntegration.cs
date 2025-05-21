@@ -4,7 +4,9 @@
 using System.Collections.Generic;
 using UnityEngine;
 using ValheimVehicles.Helpers;
+using ValheimVehicles.SharedScripts;
 using ValheimVehicles.SharedScripts.PowerSystem;
+using ValheimVehicles.SharedScripts.PowerSystem.Compute;
 using ValheimVehicles.SharedScripts.PowerSystem.Interfaces;
 using ValheimVehicles.SharedScripts.ZDOConfigs;
 
@@ -21,6 +23,9 @@ namespace ValheimVehicles.Integrations
     public bool IsDemanding => Logic.IsDemanding;
     public bool IsPowerDenied => Logic.IsPowerDenied;
 
+    public PowerConsumerData Data = new();
+    public static ZDOID? Zdoid = null;
+
     public float RequestedPower(float deltaTime)
     {
       return Logic.RequestedPower(deltaTime);
@@ -32,6 +37,22 @@ namespace ValheimVehicles.Integrations
     public void SetActive(bool val)
     {
       Logic.SetActive(val);
+    }
+
+    public static List<PowerConsumerComponentIntegration> Instances = new();
+
+    public void OnEnable()
+    {
+      if (!Instances.Contains(this))
+      {
+        Instances.Add(this);
+      }
+    }
+
+    public void OnDisable()
+    {
+      Instances.Remove(this);
+      Instances.RemoveAll(x => !x);
     }
 
     protected override void Awake()
@@ -49,12 +70,27 @@ namespace ValheimVehicles.Integrations
       this.WaitForZNetView((nv) =>
       {
         base.Start();
+        var zdo = nv.GetZDO();
+        if (!PowerZDONetworkManager.TryGetData(zdo, out PowerConsumerData data, true))
+        {
+          LoggerProvider.LogWarning("[PowerConsumerComponentIntegration] Failed to get PowerConsumerData from PowerZDONetworkManager.");
+          return;
+        }
+        Zdoid = zdo.m_uid;
+        Data = data;
+        Data.Load();
+
         PowerNetworkController.RegisterPowerComponent(this);
+        PowerZDONetworkManager.RegisterPowerComponentUpdater(zdo.m_uid, data);
       });
     }
 
     protected override void OnDestroy()
     {
+      if (Zdoid.HasValue)
+      {
+        PowerZDONetworkManager.RemovePowerComponentUpdater(Zdoid.Value);
+      }
       PowerNetworkController.UnregisterPowerComponent(this);
       base.OnDestroy();
     }

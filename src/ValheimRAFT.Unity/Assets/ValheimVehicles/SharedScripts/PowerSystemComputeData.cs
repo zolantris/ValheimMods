@@ -4,12 +4,17 @@
 using System;
 namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
 {
-  internal interface IPowerComputeIntegration
+  public interface IPowerComputeBase
   {
-    public void OnLoadZDO();
+    float Range { get; set; }
+    string NetworkId { get; set; }
+    int PrefabHash { get; set; }
+    Action? OnLoad { get; set; }
+    public void Load();
+    public bool IsActive { get; }
   }
 
-  public abstract partial class PowerSystemComputeData
+  public abstract partial class PowerSystemComputeData : IPowerComputeBase
   {
     // constants
     protected const string NetworkIdUnassigned = "UNASSIGNED";
@@ -19,16 +24,36 @@ namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
     public static float PowerRangePylonDefault = 10f;
 
     // local
-    public float Range = PowerRangeDefault;
-    public string NetworkId = NetworkIdUnassigned;
-    protected int PrefabHash;
+
+    public float Range
+    {
+      get;
+      set;
+    } = PowerRangeDefault;
+    public string NetworkId
+    {
+      get;
+      set;
+    } = NetworkIdUnassigned;
+    public int PrefabHash
+    {
+      get;
+      set;
+    }
 
     // actions
-    protected Action? OnLoad;
+    public Action? OnLoad
+    {
+      get;
+      set;
+    }
 
+    // methods
     public void Load()
     {
       OnLoad?.Invoke();
     }
+
+    public abstract bool IsActive { get; }
   }
 }

@@ -14,6 +14,8 @@ namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
     public static float FuelConsumptionRateDefault = 1f;
     public static float FuelEnergyYieldDefault = 10f;
 
+    public override bool IsActive => true;
+
     public float Fuel = 0;
     public float MaxFuel = MaxFuelDefault;
     public float OutputRate = OutputRateDefault;
@@ -23,6 +25,8 @@ namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
     public float FuelEfficiency = FuelEfficiencyDefault;
 
     public float LastProducedEnergy;
+
+    public float _peekedDischargeAmount = 0f;
 
     public PowerSourceData() {}
 
@@ -37,11 +41,38 @@ namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
       return maxEnergyFromFuel > 0f;
     }
 
+    public float PeekDischarge(float amount)
+    {
+      if (_peekedDischargeAmount > 0f)
+      {
+        _peekedDischargeAmount = 0f;
+      }
+
+      _peekedDischargeAmount = MathUtils.RoundToHundredth(Mathf.Min(storedEnergy, amount));
+      return _peekedDischargeAmount;
+    }
+
     public float GetMaxPotentialOutput(float deltaTime)
     {
-      var maxFuelUsable = FuelConsumptionRate * deltaTime;
+      if (Fuel <= 0f) return 0f;
+
+      // clamp to never exceed fuel-amount
+      var maxFuelUsable = Mathf.Min(FuelConsumptionRate * deltaTime, Fuel);
+
+      // max amount of energy produce per amount burned.
       var maxEnergyFromFuel = maxFuelUsable * FuelEnergyYield * FuelEfficiency;
+
       return Mathf.Min(OutputRate * deltaTime, maxEnergyFromFuel);
+    }
+
+    /// <summary>
+    /// This assumes we already ran a request for fuel.
+    /// </summary>
+    /// <param name="energyUsed"></param>
+    public void CommitEnergyUsed(float energyUsed)
+    {
+      var requiredFuel = energyUsed / (FuelEnergyYield * FuelEfficiency);
+      Fuel = Mathf.Max(0f, Fuel - requiredFuel);
     }
 
     public float ProducePower(float requestedEnergy)
@@ -59,6 +90,13 @@ namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
     public float EstimateFuelCost(float energy)
     {
       return energy / (FuelEnergyYield * FuelEfficiency);
+    }
+
+    public void AddFuel(float amount)
+    {
+      var space = MaxFuel - Fuel;
+      var toAdd = Mathf.Min(space, amount);
+      Fuel += toAdd;
     }
 
     public void SetFuel(float val)

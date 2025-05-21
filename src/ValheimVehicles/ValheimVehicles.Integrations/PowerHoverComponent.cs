@@ -4,6 +4,8 @@ using UnityEngine;
 using ValheimVehicles.BepInExConfig;
 using ValheimVehicles.SharedScripts;
 using ValheimVehicles.SharedScripts.PowerSystem;
+using ValheimVehicles.SharedScripts.PowerSystem.Compute;
+using ValheimVehicles.SharedScripts.PowerSystem.Interfaces;
 namespace ValheimVehicles.Integrations;
 
 public class PowerHoverComponent : MonoBehaviour, Hoverable, Interactable
@@ -55,7 +57,7 @@ public class PowerHoverComponent : MonoBehaviour, Hoverable, Interactable
 
   public bool TryAddFuel(Humanoid user, int amountToAdd)
   {
-    if (PrefabConfig.PowerSource_AllowNearbyFuelingWithEitr.Value && Time.fixedTime > _lastSearchTime + _NearbyChestSearchDebounce)
+    if (PowerSystemConfig.PowerSource_AllowNearbyFuelingWithEitr.Value && Time.fixedTime > _lastSearchTime + _NearbyChestSearchDebounce)
     {
       _lastSearchTime = Time.fixedTime;
       UpdateNearbyChests();
@@ -69,7 +71,7 @@ public class PowerHoverComponent : MonoBehaviour, Hoverable, Interactable
     var playerFuelItems = playerInventory.CountItemsByName([EitrInventoryItem_TokenId]);
     if (playerFuelItems < amountToAdd)
     {
-      if (PrefabConfig.PowerSource_AllowNearbyFuelingWithEitr.Value && _NearByContainers.Count > 0)
+      if (PowerSystemConfig.PowerSource_AllowNearbyFuelingWithEitr.Value && _NearByContainers.Count > 0)
       {
         var originalAmountForContainers = amountToAdd;
         foreach (var nearByContainer in _NearByContainers)
@@ -154,6 +156,25 @@ public class PowerHoverComponent : MonoBehaviour, Hoverable, Interactable
   public void GetHoldText()
   {
 
+  }
+
+  /// <summary>
+  /// Todo consider moving this to a static helper elsewhere.
+  /// </summary>
+  /// <param name="PowerConduit"></param>
+  /// <returns></returns>
+  public static string GetPowerConduitHoverText(PowerConduitData PowerConduit)
+  {
+    var baseString = $"{ModTranslations.PowerConduit_DrainPlate_Name}";
+
+    if (PowerNetworkController.CanShowNetworkData || PowerSystemConfig.PowerNetwork_ShowAdditionalPowerInformationByDefault.Value)
+    {
+      var stateText = PowerNetworkController.GetDrainMechanismActivationStatus(PowerConduit.IsActive, PowerConduit.HasPlayersWithEitr);
+      baseString += "\n";
+      baseString += $"[{stateText}]";
+    }
+
+    return baseString;
   }
 
 

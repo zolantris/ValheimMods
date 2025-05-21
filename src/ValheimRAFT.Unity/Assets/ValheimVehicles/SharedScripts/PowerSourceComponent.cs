@@ -5,6 +5,7 @@
 
 using System;
 using UnityEngine;
+using ValheimVehicles.SharedScripts.PowerSystem.Compute;
 
 #endregion
 
@@ -146,6 +147,15 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
     }
 
     private float _lastProducedEnergy = 0f;
+
+    /// <summary>
+    /// TODO Update the fuel states base on Data property changes
+    /// </summary>
+    /// <returns></returns>
+    public void UpdateFuelStates(PowerSourceData powerSourceData)
+    {
+
+    }
 
     public float RequestAvailablePower(float deltaTime, float supplyFromSources, float totalDemand, bool isDemanding)
     {

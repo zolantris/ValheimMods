@@ -15,7 +15,8 @@ public class PowerConduitHover : MonoBehaviour, Hoverable
 
   public string GetHoverText()
   {
-    return _plateComponent.Data.GetHoverText();
+    if (!_plateComponent || _plateComponent.Data == null) return string.Empty;
+    return PowerHoverComponent.GetPowerConduitHoverText(_plateComponent.Data);
   }
   public string GetHoverName()
   {

@@ -11,12 +11,20 @@ namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
     public static float MaxCapacityDefault = 800f;
     public float StoredEnergy;
     public float MaxCapacity = MaxCapacityDefault;
+    public float _peekedDischargeAmount = 0f;
 
     public PowerStorageData() {}
     public float EstimateAvailableEnergy()
     {
       return Mathf.Clamp(StoredEnergy, 0f, MaxCapacity);
     }
+
+    public float PeekDischarge(float amount)
+    {
+      _peekedDischargeAmount = MathUtils.RoundToHundredth(Mathf.Min(StoredEnergy, amount));
+      return _peekedDischargeAmount;
+    }
+
 
     public float DrainEnergy(float requested)
     {
@@ -33,6 +41,16 @@ namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
       return accepted;
     }
 
+    public void CommitDischarge()
+    {
+      var commit = MathUtils.RoundToHundredth(Mathf.Min(_peekedDischargeAmount, amount));
+
+      var localEnergy = StoredEnergy - commit;
+      SetStoredEnergy(localEnergy);
+
+      _peekedDischargeAmount = 0f;
+    }
+
     public bool NeedsCharging()
     {
       return StoredEnergy < MaxCapacity;
@@ -41,6 +59,10 @@ namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
     public void SetStoredEnergy(float val)
     {
       StoredEnergy = Mathf.Clamp(val, 0f, MaxCapacity);
+    }
+    public override bool IsActive
+    {
+      get;
     }
   }
 }

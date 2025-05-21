@@ -32,7 +32,7 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
 
     [SerializeField] private int curvedLinePoints = 50;
     [SerializeField] private Material fallbackWireMaterial;
-    protected readonly Dictionary<string, List<IPowerNode>> powerNodeNetworks = new();
+    protected static readonly Dictionary<string, List<IPowerNode>> powerNodeNetworks = new();
 
     internal readonly float _updateInterval = 0.25f;
     internal float _nextUpdate;

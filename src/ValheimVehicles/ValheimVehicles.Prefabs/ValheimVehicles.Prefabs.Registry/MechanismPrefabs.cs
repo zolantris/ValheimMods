@@ -121,18 +121,18 @@ public class MechanismPrefabs : RegisterPrefab<MechanismPrefabs>
   private void RegisterPowerChargePlate()
   {
     var prefab = PrefabManager.Instance.CreateClonedPrefab(
-      PrefabNames.Mechanism_Power_Consumer_Charge_Plate,
+      PrefabNames.Mechanism_Power_Conduit_Charge_Plate,
       LoadValheimVehicleAssets.Mechanism_Power_Activator_Plate);
 
     PrefabRegistryHelpers.AddNetViewWithPersistence(prefab);
-    PrefabRegistryHelpers.PieceDataDictionary.Add(PrefabNames.Mechanism_Power_Consumer_Charge_Plate, new PrefabRegistryHelpers.PieceData
+    PrefabRegistryHelpers.PieceDataDictionary.Add(PrefabNames.Mechanism_Power_Conduit_Charge_Plate, new PrefabRegistryHelpers.PieceData
     {
       Name = "$valheim_vehicles_mechanism_power_charge_plate",
       Description = "$valheim_vehicles_mechanism_power_charge_plate_desc",
       Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
         .MechanismActivatorPlate)
     });
-    PrefabRegistryHelpers.AddPieceForPrefab(PrefabNames.Mechanism_Power_Consumer_Charge_Plate, prefab);
+    PrefabRegistryHelpers.AddPieceForPrefab(PrefabNames.Mechanism_Power_Conduit_Charge_Plate, prefab);
     prefab.AddComponent<PowerConduitPlateChargeComponentIntegration>();
     prefab.AddComponent<PowerConduitHover>();
 
@@ -163,18 +163,18 @@ public class MechanismPrefabs : RegisterPrefab<MechanismPrefabs>
   private void RegisterPowerDrainPlate()
   {
     var prefab = PrefabManager.Instance.CreateClonedPrefab(
-      PrefabNames.Mechanism_Power_Consumer_Drain_Plate,
+      PrefabNames.Mechanism_Power_Conduit_Drain_Plate,
       LoadValheimVehicleAssets.Mechanism_Power_Activator_Plate);
 
     PrefabRegistryHelpers.AddNetViewWithPersistence(prefab);
-    PrefabRegistryHelpers.PieceDataDictionary.Add(PrefabNames.Mechanism_Power_Consumer_Drain_Plate, new PrefabRegistryHelpers.PieceData
+    PrefabRegistryHelpers.PieceDataDictionary.Add(PrefabNames.Mechanism_Power_Conduit_Drain_Plate, new PrefabRegistryHelpers.PieceData
     {
       Name = "$valheim_vehicles_mechanism_power_drain_plate",
       Description = "$valheim_vehicles_mechanism_power_drain_plate_desc",
       Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
         .MechanismActivatorPlate)
     });
-    PrefabRegistryHelpers.AddPieceForPrefab(PrefabNames.Mechanism_Power_Consumer_Drain_Plate, prefab);
+    PrefabRegistryHelpers.AddPieceForPrefab(PrefabNames.Mechanism_Power_Conduit_Drain_Plate, prefab);
 
     prefab.AddComponent<PowerConduitPlateDrainComponentIntegration>();
     prefab.AddComponent<PowerConduitHover>();

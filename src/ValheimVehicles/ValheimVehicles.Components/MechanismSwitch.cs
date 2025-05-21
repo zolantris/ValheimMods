@@ -198,7 +198,7 @@ public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interac
       }
     }
 
-    SetMechanismAction(PrefabConfig.Mechanism_Switch_DefaultAction.Value);
+    SetMechanismAction(PowerSystemConfig.Mechanism_Switch_DefaultAction.Value);
   }
 
   public void OnEnable()

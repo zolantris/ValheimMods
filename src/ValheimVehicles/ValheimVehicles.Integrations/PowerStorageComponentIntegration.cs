@@ -1,6 +1,8 @@
 // ReSharper disable ArrangeNamespaceBody
 // ReSharper disable NamespaceStyle
 
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 using ValheimVehicles.Helpers;
 using ValheimVehicles.Interfaces;
@@ -19,6 +21,30 @@ namespace ValheimVehicles.Integrations
     public Coroutine? registerCoroutine = null;
     public PowerStorageData Data = new();
 
+    public static List<PowerStorageComponentIntegration> Instances = new();
+    public static ZDOID? Zdoid = null;
+
+    public void OnEnable()
+    {
+      if (!Instances.Contains(this))
+      {
+        Instances.Add(this);
+      }
+    }
+
+    public void OnDisable()
+    {
+      Instances.Remove(this);
+      Instances.RemoveAll(x => !x);
+
+
+      if (Zdoid.HasValue)
+      {
+        PowerZDONetworkManager.RemovePowerComponentUpdater(Zdoid.Value);
+      }
+      PowerNetworkController.UnregisterPowerComponent(this);
+    }
+
     protected override void Awake()
     {
       // don't do anything when we aren't initialized.
@@ -27,16 +53,19 @@ namespace ValheimVehicles.Integrations
         var zdo = nv.GetZDO();
         if (!PowerZDONetworkManager.TryGetData(zdo, out PowerStorageData data, true))
         {
-          LoggerProvider.LogWarning("[PowerStorageComponentIntegration] Failed to get PowerConduitData from PowerZDONetworkManager.");
+          LoggerProvider.LogWarning("[PowerStorageComponentIntegration] Failed to get PowerStorageData from PowerZDONetworkManager.");
           return;
         }
+        Zdoid = zdo.m_uid;
         Data = data;
         Data.Load();
 
         base.Awake();
         PowerNetworkController.RegisterPowerComponent(this);
+        PowerZDONetworkManager.RegisterPowerComponentUpdater(zdo.m_uid, data);
       });
     }
+
     protected override void OnDestroy()
     {
       base.OnDestroy();
@@ -46,8 +75,6 @@ namespace ValheimVehicles.Integrations
         StopCoroutine(registerCoroutine);
         registerCoroutine = null;
       }
-
-      PowerNetworkController.UnregisterPowerComponent(this);
     }
     protected override void RegisterDefaultRPCs()
     {
@@ -106,14 +133,7 @@ namespace ValheimVehicles.Integrations
     public bool IsActive => Logic.IsActive;
     public Vector3 ConnectorPoint => Logic.ConnectorPoint;
 
-    public float CapacityRemaining
-    {
-      get
-      {
-        if (Data != null) return Data.MaxCapacity - Data.StoredEnergy;
-        return 0;
-      }
-    }
+    public float CapacityRemaining => Data.MaxCapacity - Data.StoredEnergy;
 
     public bool IsCharging => Logic.IsCharging;
     public void SetCapacity(float val)
