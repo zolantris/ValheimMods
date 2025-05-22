@@ -19,12 +19,19 @@ namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
       return Mathf.Clamp(StoredEnergy, 0f, MaxCapacity);
     }
 
+    // deprecated
     public float PeekDischarge(float amount)
     {
       _peekedDischargeAmount = MathUtils.RoundToHundredth(Mathf.Min(StoredEnergy, amount));
       return _peekedDischargeAmount;
     }
 
+
+    public float PeekDischarge(float amount, float snapshotValue)
+    {
+      _peekedDischargeAmount = MathUtils.RoundToHundredth(Mathf.Min(snapshotValue, amount));
+      return _peekedDischargeAmount;
+    }
 
     public float DrainEnergy(float requested)
     {

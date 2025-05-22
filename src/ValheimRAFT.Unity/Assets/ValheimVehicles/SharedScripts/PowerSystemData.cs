@@ -12,5 +12,9 @@ namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
     public readonly List<(PowerConsumerData consumer, ZDO zdo)> Consumers = new();
     public readonly List<(PowerConduitData conduit, ZDO zdo)> Conduits = new();
     public readonly List<(PowerPylonData pylon, ZDO zdo)> Pylons = new();
+
+    // Add contextual simulation state here
+    public float DeltaTime { get; set; } = UnityEngine.Time.fixedDeltaTime;
+    public string NetworkId { get; set; } = string.Empty;
   }
 }

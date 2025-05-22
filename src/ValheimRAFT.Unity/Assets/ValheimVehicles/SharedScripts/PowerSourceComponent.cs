@@ -13,13 +13,6 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
 {
   public class PowerSourceComponent : PowerNodeComponentBase, IPowerSource
   {
-    public enum FuelType
-    {
-      Coal,
-      SurtlingCore,
-      Eitr
-    }
-
     // if it shares a storage on same gameobject/prefab
     [SerializeField] public bool IsStorage = false;
 

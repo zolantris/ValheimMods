@@ -38,6 +38,9 @@ namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
     public static float CoalFuelEfficiency = 1f;
     public static float SurtlingCoreFuelEfficiency = 3f;
     public static float EitrFuelEfficiency = 12f;
+    public bool isRunning = false;
+    private float maxOutputWatts = 100f;
+    private static float MinimumFuelToBurn = 0.1f; // or whatever you prefer
 
     public float LastProducedEnergy;
 
@@ -104,6 +107,11 @@ namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
     {
       return energy / (FuelEnergyYield * FuelEfficiency);
     }
+    public void SetRunning(bool state)
+    {
+      isRunning = state;
+    }
+    private float _lastProducedEnergy = 0f;
 
     public static float GetFuelEfficiency(FuelType val)
     {
@@ -114,6 +122,65 @@ namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
         FuelType.Eitr => BaseFuelEfficiency * EitrFuelEfficiency,
         _ => throw new ArgumentOutOfRangeException()
       };
+    }
+
+    public float GetOfferEstimate(float deltaTime, float supplied, float totalDemand, bool isDemanding, float snapshotFuel)
+    {
+      if (!IsActive || !isDemanding) return 0f;
+
+      var remainingDemand = totalDemand - supplied;
+      if (remainingDemand <= 0f || snapshotFuel <= 0f)
+        return 0f;
+
+      var energyPerFuel = FuelEnergyYield * FuelEfficiency;
+      if (energyPerFuel <= 0f) return 0f;
+
+      var maxFuelBurn = Mathf.Min(FuelConsumptionRate * deltaTime, snapshotFuel);
+      var maxEnergy = maxFuelBurn * energyPerFuel;
+      return Mathf.Min(OutputRate * deltaTime, Mathf.Min(remainingDemand, maxEnergy));
+    }
+
+
+    public float RequestAvailablePower(float deltaTime, float supplyFromSources, float totalDemand, bool isDemanding)
+    {
+      if (!IsActive)
+      {
+        SetRunning(false);
+        _lastProducedEnergy = 0f;
+        return 0f;
+      }
+
+      var remainingDemand = totalDemand - supplyFromSources;
+      if (!isDemanding || remainingDemand <= 0f)
+      {
+        SetRunning(false);
+        _lastProducedEnergy = 0f;
+        return 0f;
+      }
+
+      if (!isRunning)
+        SetRunning(true);
+
+      var maxEnergy = maxOutputWatts * deltaTime;
+      var energyToProduce = Mathf.Min(remainingDemand, maxEnergy);
+
+      // Limit based on fuel consumption rate
+      var maxFuelUsable = FuelConsumptionRate * deltaTime;
+      var maxEnergyFromFuel = maxFuelUsable * FuelEnergyYield * FuelEfficiency;
+
+      // Cap energy to available fuel and consumption rate
+      energyToProduce = Mathf.Min(energyToProduce, maxEnergyFromFuel);
+
+      var requiredFuel = energyToProduce / (FuelEnergyYield * FuelEfficiency);
+      if (Fuel < requiredFuel)
+      {
+        SetRunning(false);
+        _lastProducedEnergy = 0f;
+        return 0f;
+      }
+
+      _lastProducedEnergy = energyToProduce;
+      return energyToProduce;
     }
 
     public void AddFuel(float amount)

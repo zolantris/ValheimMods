@@ -201,6 +201,9 @@ public partial class PowerNetworkControllerIntegration : PowerNetworkController
   public static List<PowerStorageData> storagesToUpdate = new();
   public static List<PowerSourceData> sourcesToUpdate = new();
 
+  // ReSharper disable ArrangeNamespaceBody
+// ReSharper disable NamespaceStyle
+
   public override void Host_SimulateNetwork(string networkId)
   {
     if (!PowerZDONetworkManager.TryBuildPowerNetworkSimData(networkId, out var simData))
@@ -216,15 +219,15 @@ public partial class PowerNetworkControllerIntegration : PowerNetworkController
     var changedZDOs = new HashSet<ZDOID>();
 
     var totalConsumerDemand = GetTotalConsumerDemand(simData.Consumers, deltaTime);
-
     var totalDemand = totalConsumerDemand;
 
-    // Step 1: Total demand
+    // Step 1: Include storage charging demand
     foreach (var (storage, _) in simData.Storages)
     {
       totalDemand += Mathf.Max(0f, storage.MaxCapacity - storage.StoredEnergy);
     }
 
+    // Step 2: Include conduit (Eitr) demand
     var conduitDemand = 0f;
     foreach (var (conduit, _) in simData.Conduits)
     {
@@ -235,17 +238,17 @@ public partial class PowerNetworkControllerIntegration : PowerNetworkController
     totalDemand += conduitDemand;
     var isDemanding = totalDemand > 0f;
 
-    // Step 2: Peek storage discharge
-    var suppliedFromStorage = 0f;
-    var storageDischargeList = new List<(PowerStorageData storage, float amount)>();
-
+    // Step 3: Peek discharge from storage
     var remainingDemand = totalDemand;
+    var suppliedFromStorage = 0f;
+    var storageDischargeList = new List<(PowerStorageData, float)>();
 
     foreach (var (storage, _) in simData.Storages)
     {
       if (remainingDemand <= 0f) break;
 
-      var peek = storage.PeekDischarge(remainingDemand);
+      // var peek = storage.PeekDischarge(remainingDemand);
+      var peek = 0f;
       if (peek > 0f)
       {
         storageDischargeList.Add((storage, peek));
@@ -254,27 +257,24 @@ public partial class PowerNetworkControllerIntegration : PowerNetworkController
       }
     }
 
-    // Step 3: Offer from sources
+    // Step 4: Produce from sources
     var offeredFromSources = 0f;
-    var sourceOfferMap = new Dictionary<PowerSourceData, float>();
-
     foreach (var (source, _) in simData.Sources)
     {
-      if (remainingDemand <= 0f && !NeedsCharging(simData.Storages)) break;
+      if (remainingDemand <= 0f && !simData.Storages.Any(s => s.Item1.NeedsCharging())) break;
 
-      var clamped = source.GetMaxPotentialOutput(deltaTime);
-
-      if (clamped > 0f)
+      var produced = source.ProducePower(remainingDemand);
+      if (produced > 0f)
       {
-        sourceOfferMap[source] = clamped;
-        offeredFromSources += clamped;
-        remainingDemand -= clamped;
+        offeredFromSources += produced;
+        sourcesToUpdate.Add(source);
+        remainingDemand -= produced;
       }
     }
 
     var totalAvailable = offeredFromSources + suppliedFromStorage;
 
-    // Step 4: Apply to conduits (players needing Eitr)
+    // Step 5: Apply to conduits (players)
     foreach (var (conduit, zdo) in simData.Conduits)
     {
       if (totalAvailable <= 0f || conduit.Players.Count == 0) continue;
@@ -295,76 +295,47 @@ public partial class PowerNetworkControllerIntegration : PowerNetworkController
       changedZDOs.Add(zdo.m_uid);
     }
 
-    // Step 5: Feed true surplus into storage
+    // Step 6: Feed surplus into storage
     foreach (var (storage, zdo) in simData.Storages)
     {
       if (totalAvailable <= 0f) break;
 
-      var previousStoredEnergy = storage.StoredEnergy;
-
-      var remainingCap = Mathf.Max(0f, storage.MaxCapacity - storage.StoredEnergy);
-      var accepted = Mathf.Min(remainingCap, totalAvailable);
-
-      storage.StoredEnergy += accepted;
+      var accepted = storage.AddEnergy(totalAvailable);
       totalAvailable -= accepted;
 
-      if (!Mathf.Approximately(previousStoredEnergy, storage.StoredEnergy))
+      if (accepted > 0f)
       {
         storagesToUpdate.Add(storage);
       }
     }
 
-    // Step 6: Final fuel/discharge commit
-    var totalUsed = offeredFromSources + suppliedFromStorage - totalAvailable;
-    var usedFromStorage = Mathf.Clamp(totalUsed - offeredFromSources, 0f, suppliedFromStorage);
-    var usedFromSources = Mathf.Clamp(totalUsed - usedFromStorage, 0f, offeredFromSources);
-
-    // Discharge
-    var toDischarge = usedFromStorage;
+    // Step 7: Commit storage discharge
     foreach (var (storage, amount) in storageDischargeList)
     {
-      if (toDischarge <= 0f) break;
-
       storage.CommitDischarge(amount);
       storagesToUpdate.Add(storage);
-      toDischarge -= amount;
     }
 
-    // Fuel burn
-    var toBurn = usedFromSources;
-    foreach (var kvp in sourceOfferMap)
-    {
-      var sourceData = kvp.Key;
-      var amountToBurn = kvp.Value;
-
-      var burntEnergy = sourceData.ProducePower(amountToBurn);
-      toBurn -= sourceData.EstimateFuelCost(burntEnergy);
-
-      if (burntEnergy > 0f && sourceData.zdo != null)
-      {
-        sourceData.CommitEnergyUsed(burntEnergy);
-        sourcesToUpdate.Add(sourceData);
-      }
-
-      if (toBurn <= 0f) break;
-    }
-
-    // Step 7: Save mutated data only.
+    // Step 8: Save mutated data
     foreach (var source in sourcesToUpdate)
     {
-      if (source == null || source.zdo == null) continue;
-      source.zdo.Set(VehicleZdoVars.Power_StoredFuel, source.Fuel);
-      changedZDOs.Add(source.zdo.m_uid);
+      if (source.zdo != null)
+      {
+        source.zdo.Set(VehicleZdoVars.Power_StoredFuel, source.Fuel);
+        changedZDOs.Add(source.zdo.m_uid);
+      }
     }
 
-    foreach (var powerStorageData in storagesToUpdate)
+    foreach (var storage in storagesToUpdate)
     {
-      if (powerStorageData == null || powerStorageData.zdo == null) continue;
-      powerStorageData.zdo.Set(VehicleZdoVars.Power_StoredEnergy, powerStorageData.StoredEnergy);
-      changedZDOs.Add(powerStorageData.zdo.m_uid);
+      if (storage.zdo != null)
+      {
+        storage.zdo.Set(VehicleZdoVars.Power_StoredEnergy, storage.StoredEnergy);
+        changedZDOs.Add(storage.zdo.m_uid);
+      }
     }
 
-    // Step 8: Fire one RPC
+    // Step 9: Fire one RPC
     if (changedZDOs.Count > 0)
     {
       var pos = GetNetworkFallbackPosition(simData);
@@ -567,7 +538,17 @@ public partial class PowerNetworkControllerIntegration : PowerNetworkController
 
       if (ZNet.instance.IsServer())
       {
-        Host_SimulateNetwork(networkId);
+        if (PowerZDONetworkManager.TryBuildPowerNetworkSimData(networkId, out var simData))
+        {
+          simData.NetworkId = networkId;
+          simData.DeltaTime = Time.fixedDeltaTime;
+          PowerNetworkSimulator.Simulate(simData);
+        }
+        else
+        {
+          LoggerProvider.LogError($"Failed to build sim data for network {networkId}");
+        }
+        // Host_SimulateNetwork(networkId);
       }
 
       // only dedicated server.
