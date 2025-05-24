@@ -29,7 +29,9 @@ namespace ValheimVehicles.Integrations
     {
       RegisterHashes();
       ZdoWatchController.OnDeserialize += zdo => RegisterPowerData(zdo);
+      ZdoWatchController.OnInit += zdo => RegisterPowerData(zdo);
       ZdoWatchController.OnLoad += zdo => RegisterPowerData(zdo);
+
       ZdoWatchController.OnReset += zdo => RemovePowerData(zdo);
       LoggerProvider.LogInfo("[PowerZDONetworkManager] Init complete.");
     }
@@ -69,7 +71,7 @@ namespace ValheimVehicles.Integrations
 
     // --- Registration/Removal, all handled by PowerNetworkDataManager ---
 
-    private static void RegisterPowerData(ZDO zdo)
+    public static void RegisterPowerData(ZDO zdo)
     {
       if (zdo == null || !_powerHashes.Contains(zdo.m_prefab)) return;
       if (PowerSystemRegistry.ContainsZDO(zdo)) return; // already registered
@@ -108,9 +110,10 @@ namespace ValheimVehicles.Integrations
       }
     }
 
-    private static void RemovePowerData(ZDO zdo)
+    private static void RemovePowerData(ZDO? zdo)
     {
       if (zdo == null) return;
+      if (!_powerHashes.Contains(zdo.m_prefab) || !PowerSystemRegistry.ContainsZDO(zdo)) return;
       PowerSystemRegistry.Unregister(zdo);
     }
 
@@ -119,7 +122,7 @@ namespace ValheimVehicles.Integrations
     public static void RebuildClusters()
     {
       _networks.Clear();
-      // ResetPowerNetworkSimDataCache();
+      ResetPowerNetworkSimDataCache();
 
       var zdos = PowerSystemRegistry.GetAllZDOs();
       var unvisited = new HashSet<ZDO>(zdos);
@@ -221,28 +224,28 @@ namespace ValheimVehicles.Integrations
       foreach (var zdo in zdos)
       {
         var prefab = zdo.GetPrefab();
+
         if (prefab == PrefabNameHashes.Mechanism_Power_Source_Coal ||
             prefab == PrefabNameHashes.Mechanism_Power_Source_Eitr)
         {
-          if (PowerComputeFactory.TryCreateSource(zdo, out var source))
+          if (PowerSystemRegistry.TryGetData<PowerSourceData>(zdo, out var source))
             simData.Sources.Add(source);
         }
         else if (prefab == PrefabNameHashes.Mechanism_Power_Storage_Eitr)
         {
-          if (PowerComputeFactory.TryCreateStorage(zdo, out var storage))
+          if (PowerSystemRegistry.TryGetData<PowerStorageData>(zdo, out var storage))
             simData.Storages.Add(storage);
         }
         else if (prefab == PrefabNameHashes.Mechanism_Power_Consumer_Swivel || prefab == PrefabNameHashes.Mechanism_Power_Consumer_LandVehicle)
         {
-          if (PowerComputeFactory.TryCreateConsumer(zdo, out var consumer))
+          if (PowerSystemRegistry.TryGetData<PowerConsumerData>(zdo, out var consumer))
             simData.Consumers.Add(consumer);
         }
         else if (prefab == PrefabNameHashes.Mechanism_Power_Conduit_Charge_Plate ||
                  prefab == PrefabNameHashes.Mechanism_Power_Conduit_Drain_Plate)
         {
-          if (PowerComputeFactory.TryCreateConduit(zdo, out var conduit))
+          if (PowerSystemRegistry.TryGetData<PowerConduitData>(zdo, out var conduit))
           {
-            conduit.PlayerDataById.Clear();
             simData.Conduits.Add(conduit);
           }
         }

@@ -149,7 +149,7 @@ public static class PowerSystemRegistry
 
   // for component Integrations to avoid desyncs and gross per-component logic to wait for data.
 
-  public static float MaxPowerSystemCoroutineWaitTime = 10f;
+  public static float MaxPowerSystemCoroutineWaitTime = 10000f;
 
   /// <summary>
   /// Waits for the PowerStorageData for this ZNetView to be available, then invokes the callback.
@@ -190,6 +190,9 @@ public static class PowerSystemRegistry
       yield break;
     }
 
+    // attempt to self-register the node. If it is not present this is critical.
+    PowerSystemClusterManager.RegisterPowerData(netView.GetZDO());
+
     var timer = Stopwatch.StartNew();
 
     T data = null;
@@ -206,10 +209,12 @@ public static class PowerSystemRegistry
     }
     if (data == null || data is not T)
     {
+      timer.Stop();
       LoggerProvider.LogWarning($"Current node type: <{data?.GetType()}> does not match requested type {typeof(T)}");
       yield break;
     }
 
     onAvailable.Invoke(data, netView);
+    timer.Stop();
   }
 }

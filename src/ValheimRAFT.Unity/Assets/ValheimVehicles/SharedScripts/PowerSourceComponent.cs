@@ -121,7 +121,7 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
 
     public void UpdatePowerCoreSize()
     {
-      powerCoreTransform.localScale = Vector3.Lerp(powerCoreMinScale, powerCoreMaxScale, currentFuel / fuelCapacity);
+      powerCoreTransform.localScale = Vector3.Lerp(powerCoreMinScale, powerCoreMaxScale, GetFuelLevel() / GetFuelCapacity());
     }
 
     public void UpdatePowerCoreAnimations(AnimatedMaterialController animatedPowerCore)
@@ -159,44 +159,45 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
 
     public float RequestAvailablePower(float deltaTime, float supplyFromSources, float totalDemand, bool isDemanding)
     {
-      if (!IsActive)
-      {
-        SetRunning(false);
-        _lastProducedEnergy = 0f;
-        return 0f;
-      }
-
-      var remainingDemand = totalDemand - supplyFromSources;
-      if (!isDemanding || remainingDemand <= 0f)
-      {
-        SetRunning(false);
-        _lastProducedEnergy = 0f;
-        return 0f;
-      }
-
-      if (!isRunning)
-        SetRunning(true);
-
-      var maxEnergy = maxOutputWatts * deltaTime;
-      var energyToProduce = Mathf.Min(remainingDemand, maxEnergy);
-
-      // Limit based on fuel consumption rate
-      var maxFuelUsable = fuelConsumptionRate * deltaTime;
-      var maxEnergyFromFuel = maxFuelUsable * fuelEnergyYield * fuelEfficiency;
-
-      // Cap energy to available fuel and consumption rate
-      energyToProduce = Mathf.Min(energyToProduce, maxEnergyFromFuel);
-
-      var requiredFuel = energyToProduce / (fuelEnergyYield * fuelEfficiency);
-      if (currentFuel < requiredFuel)
-      {
-        SetRunning(false);
-        _lastProducedEnergy = 0f;
-        return 0f;
-      }
-
-      _lastProducedEnergy = energyToProduce;
-      return energyToProduce;
+      return 0f;
+      // if (!IsActive)
+      // {
+      //   SetRunning(false);
+      //   _lastProducedEnergy = 0f;
+      //   return 0f;
+      // }
+      //
+      // var remainingDemand = totalDemand - supplyFromSources;
+      // if (!isDemanding || remainingDemand <= 0f)
+      // {
+      //   SetRunning(false);
+      //   _lastProducedEnergy = 0f;
+      //   return 0f;
+      // }
+      //
+      // if (!isRunning)
+      //   SetRunning(true);
+      //
+      // var maxEnergy = maxOutputWatts * deltaTime;
+      // var energyToProduce = Mathf.Min(remainingDemand, maxEnergy);
+      //
+      // // Limit based on fuel consumption rate
+      // var maxFuelUsable = fuelConsumptionRate * deltaTime;
+      // var maxEnergyFromFuel = maxFuelUsable * fuelEnergyYield * fuelEfficiency;
+      //
+      // // Cap energy to available fuel and consumption rate
+      // energyToProduce = Mathf.Min(energyToProduce, maxEnergyFromFuel);
+      //
+      // var requiredFuel = energyToProduce / (fuelEnergyYield * fuelEfficiency);
+      // if (GetFuelLevel() < requiredFuel)
+      // {
+      //   SetRunning(false);
+      //   _lastProducedEnergy = 0f;
+      //   return 0f;
+      // }
+      //
+      // _lastProducedEnergy = energyToProduce;
+      // return energyToProduce;
     }
 
     public void CommitEnergyUsed(float energyUsed)

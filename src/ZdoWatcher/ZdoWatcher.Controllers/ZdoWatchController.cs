@@ -17,6 +17,7 @@ public class ZdoWatchController : MonoBehaviour
   public static Action<ZDO>? OnDeserialize = null;
   public static Action<ZDO>? OnLoad = null;
   public static Action<ZDO>? OnReset = null;
+  public static Action<ZDO>? OnInit = null;
 
   public static ZdoWatchController Instance;
   private readonly Dictionary<int, ZDO> _zdoGuidLookup = new();
@@ -263,6 +264,20 @@ public class ZdoWatchController : MonoBehaviour
     catch
     {
       Logger.LogError("OnDeserialize had an error");
+    }
+  }
+
+  public void Init(ZDO zdo)
+  {
+    HandleRegisterPersistentId(zdo);
+    if (OnInit == null) return;
+    try
+    {
+      OnInit(zdo);
+    }
+    catch
+    {
+      Logger.LogError("OnCreated had an error");
     }
   }
 
