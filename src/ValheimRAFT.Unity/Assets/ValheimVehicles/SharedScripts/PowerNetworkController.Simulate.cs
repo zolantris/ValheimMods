@@ -15,7 +15,7 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
 {
   public partial class PowerNetworkController
   {
-    public static Dictionary<string, PowerNetworkData> PowerNetworkDataInstances = new();
+    public static Dictionary<string, PowerSystemSimulator.PowerSystemDisplayData> PowerNetworkDataInstances = new();
 
     // todo add cut-off logic where batteries do not request above 0.75f for fuel sources only. But they can from drain plates and other renewable resources.
     public static float FuelSourcePercentageCap = 0.75f;
@@ -25,7 +25,7 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
     private static readonly List<IPowerSource> _sources = new();
     private static readonly List<IPowerStorage> _storage = new();
 
-    public static bool TryNetworkPowerData(string networkId, [NotNullWhen(true)] out PowerNetworkData? _data)
+    public static bool TryNetworkPowerData(string networkId, [NotNullWhen(true)] out PowerSystemSimulator.PowerSystemDisplayData? _data)
     {
       if (networkId == null)
       {
@@ -43,7 +43,7 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
       return false;
     }
 
-    public static void UpdateNetworkPowerData(string networkId, PowerNetworkData data)
+    public static void UpdateNetworkPowerData(string networkId, PowerSystemSimulator.PowerSystemDisplayData data)
     {
       PowerNetworkDataInstances[networkId] = data;
     }
@@ -320,22 +320,6 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
         toCommitSources -= commitAmount;
         if (toCommitSources <= 0f) break;
       }
-    }
-
-
-    public class PowerNetworkData
-    {
-
-      // Power status of the entire network. This is only computed 1 time per request.
-      public string Cached_NetworkDataString = "";
-      public string NetworkConsumerPowerStatus = "";
-      public float NetworkFuelCapacity;
-
-      public float NetworkFuelSupply;
-      public float NetworkPowerCapacity;
-
-      public float NetworkPowerDemand;
-      public float NetworkPowerSupply;
     }
   }
 }

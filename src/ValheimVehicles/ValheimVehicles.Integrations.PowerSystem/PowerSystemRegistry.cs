@@ -42,12 +42,19 @@ public static class PowerSystemRegistry
     else if (data is PowerConduitData conduit) _conduits.Add(conduit);
     else if (data is PowerConsumerData consumer) _consumers.Add(consumer);
 
+    PowerNetworkRebuildScheduler.Trigger();
+
     return d;
   }
 
   public static void Unregister(ZDO zdo)
   {
-    if (!_byZdo.TryGetValue(zdo, out var d)) return;
+    if (!_byZdo.TryGetValue(zdo, out var d))
+    {
+      PowerNetworkRebuildScheduler.Trigger();
+      return;
+    }
+
     _byZdoid.Remove(d.Zdoid);
     _byZdo.Remove(d.Zdo);
     _byData.Remove(d.Data);
@@ -57,6 +64,8 @@ public static class PowerSystemRegistry
     else if (d.Data is PowerSourceData source) _sources.Remove(source);
     else if (d.Data is PowerConduitData conduit) _conduits.Remove(conduit);
     else if (d.Data is PowerConsumerData consumer) _consumers.Remove(consumer);
+
+    PowerNetworkRebuildScheduler.Trigger();
   }
 
   public static IReadOnlyList<PowerStorageData> GetAllStorages()

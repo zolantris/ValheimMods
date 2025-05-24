@@ -2,8 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using UnityEngine;
 using ValheimVehicles.SharedScripts.Modules;
 using ValheimVehicles.BepInExConfig;
+using ValheimVehicles.Helpers;
 using ValheimVehicles.Integrations.PowerSystem;
 using ValheimVehicles.Integrations.PowerSystem.Interfaces;
 using ValheimVehicles.SharedScripts.Helpers;
@@ -61,9 +63,16 @@ public abstract partial class PowerSystemComputeData
   /// <param name="isPylon"></param>
   public void OnSharedConfigSync(bool isPylon = false)
   {
-    NetworkId = zdo!.GetString(VehicleZdoVars.PowerSystem_NetworkId, "");
+    _isActive = zdo.GetBool(VehicleZdoVars.PowerSystem_IsActive, true);
+    NetworkId = zdo.GetString(VehicleZdoVars.PowerSystem_NetworkId, "");
     // config sync.
     ConnectionRange = isPylon ? PowerSystemConfig.PowerPylonRange.Value : PowerSystemConfig.PowerMechanismRange.Value;
+  }
+
+  public void OnSharedConfigSave()
+  {
+    ValheimExtensions.TrySetZDOStringOnChange(zdo, VehicleZdoVars.PowerSystem_NetworkId, NetworkId);
+    ValheimExtensions.TrySetZDOBoolOnChange(zdo, VehicleZdoVars.PowerSystem_IsActive, IsActive);
   }
 }
 
@@ -379,7 +388,21 @@ public partial class PowerConsumerData : IPowerComputeZdoSync
     PrefabHash = zdo.m_prefab;
 
     OnLoad += OnLoadZDOSync;
+    OnSave += OnSaveZDOSync;
+
     Load();
+  }
+
+  public void OnSaveZDOSync()
+  {
+    WithIsValidCheck((validZdo) =>
+    {
+      // shared config
+      OnSharedConfigSave();
+
+      ValheimExtensions.TrySetZDOBoolOnChange(validZdo, VehicleZdoVars.PowerSystem_IsDemanding, IsDemanding);
+      ValheimExtensions.TrySetZDOIntOnChange(validZdo, VehicleZdoVars.PowerSystem_Intensity_Level, (int)powerIntensityLevel);
+    });
   }
 
   public void OnLoadZDOSync()
@@ -388,6 +411,7 @@ public partial class PowerConsumerData : IPowerComputeZdoSync
     {
       // shared config
       OnSharedConfigSync();
+
       IsDemanding = validZdo.GetBool(VehicleZdoVars.PowerSystem_IsDemanding, true);
       var intensityInt = validZdo.GetInt(VehicleZdoVars.PowerSystem_Intensity_Level, 0);
       powerIntensityLevel = (PowerIntensityLevel)intensityInt;
@@ -403,8 +427,29 @@ public partial class PowerSourceData : IPowerComputeZdoSync
     PrefabHash = zdo.m_prefab;
 
     OnLoad += OnLoadZDOSync;
+    OnSave += OnSaveZDOSync;
     Load();
+
+    OnPropertiesUpdate();
   }
+
+  public void OnSaveZDOSync()
+  {
+    WithIsValidCheck(validZdo =>
+    {
+      // shared config
+      OnSharedConfigSave();
+
+      // syncs the pending fuel from an update.
+      ConsolidateFuel();
+      ValheimExtensions.TrySetZDOFloatOnChange(validZdo, VehicleZdoVars.PowerSystem_StoredFuel, Fuel);
+
+      ValheimExtensions.TrySetZDOFloatOnChange(validZdo, VehicleZdoVars.PowerSystem_StoredFuelCapacity, FuelCapacity);
+
+      ValheimExtensions.TrySetZDOFloatOnChange(validZdo, VehicleZdoVars.PowerSystem_FuelOutputRate, OutputRate);
+    });
+  }
+
   public void OnLoadZDOSync()
   {
     WithIsValidCheck(validZdo =>
@@ -413,7 +458,7 @@ public partial class PowerSourceData : IPowerComputeZdoSync
       OnSharedConfigSync();
 
       Fuel = validZdo.GetFloat(VehicleZdoVars.PowerSystem_StoredFuel);
-      FuelCapacity = validZdo.GetFloat(VehicleZdoVars.PowerSystem_StoredFuelCapacity, MaxFuelCapacityDefault);
+      FuelCapacity = validZdo.GetFloat(VehicleZdoVars.PowerSystem_StoredFuelCapacity, FuelCapacityDefault);
       OutputRate = validZdo.GetFloat(VehicleZdoVars.PowerSystem_FuelOutputRate, OutputRateDefault);
     });
   }
@@ -430,7 +475,21 @@ public partial class PowerStorageData : IPowerComputeZdoSync
     PrefabHash = zdo.m_prefab;
 
     OnLoad += OnLoadZDOSync;
+    OnSave += OnSaveZDOSync;
     Load();
+  }
+
+  public void OnSaveZDOSync()
+  {
+    WithIsValidCheck(validZdo =>
+    {
+      // shared config
+      OnSharedConfigSave();
+
+      ValheimExtensions.TrySetZDOFloatOnChange(validZdo, VehicleZdoVars.PowerSystem_Energy, Energy);
+
+      ValheimExtensions.TrySetZDOFloatOnChange(validZdo, VehicleZdoVars.PowerSystem_EnergyCapacity, EnergyCapacity);
+    });
   }
 
   // This is meant for integration
@@ -440,7 +499,6 @@ public partial class PowerStorageData : IPowerComputeZdoSync
     {
       // shared config
       OnSharedConfigSync();
-      NetworkId = validZdo.GetString(VehicleZdoVars.PowerSystem_NetworkId, "");
       Energy = validZdo.GetFloat(VehicleZdoVars.PowerSystem_Energy, 0);
       EnergyCapacity = validZdo.GetFloat(VehicleZdoVars.PowerSystem_EnergyCapacity, EnergyCapacityDefault);
     });

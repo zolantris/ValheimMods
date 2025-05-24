@@ -19,9 +19,8 @@ public class PowerSystemConfig : BepInExBaseConfig<PowerSystemConfig>
 
   // plates/conduits
   public static ConfigEntry<bool> PowerPlate_ShowStatus = null!;
-  public static ConfigEntry<float> PowerPlate_DrainRate = null!;
+  public static ConfigEntry<float> PowerPlate_TransferRate = null!;
   public static ConfigEntry<float> PowerPlate_EitrToEnergyRatio = null!;
-  public static ConfigEntry<float> PowerPlate_ChargeRate = null!;
 
   // sources
   public static ConfigEntry<bool> PowerSource_AllowNearbyFuelingWithEitr = null!;
@@ -43,21 +42,27 @@ public class PowerSystemConfig : BepInExBaseConfig<PowerSystemConfig>
 
   public static void UpdatePowerConduits()
   {
-    PowerConduitPlateComponent.drainRate = PowerPlate_DrainRate.Value;
+    PowerConduitPlateComponent.drainRate = PowerPlate_TransferRate.Value;
     PowerConduitPlateComponent.eitrToFuelRatio = PowerPlate_EitrToEnergyRatio.Value;
-    PowerConduitPlateComponent.chargeRate = PowerPlate_ChargeRate.Value;
+
+    PowerConduitData.RechargeRate = PowerPlate_TransferRate.Value;
+    PowerConduitData.EitrVaporToEnergyRatio = PowerPlate_EitrToEnergyRatio.Value;
   }
 
   public void UpdatePowerSources()
   {
+    PowerSourceData.FuelConsumptionRateDefault = PowerSource_FuelConsumptionRate.Value;
+    PowerSourceData.FuelCapacityDefault = PowerSource_FuelCapacity.Value;
+
     PowerSourceData.FuelEfficiencyDefault = PowerSource_BaseFuelEfficiency.Value;
-    PowerSourceData.BaseFuelEfficiency = PowerSource_BaseFuelEfficiency.Value;
+    PowerSourceData.EitrFuelEfficiency = PowerSource_EitrEfficiency.Value;
 
     foreach (var powerNetworkSimData in PowerSystemClusterManager._cachedSimulateData)
     {
       for (var i = 0; i < powerNetworkSimData.Value.Sources.Count; i++)
       {
         var source = powerNetworkSimData.Value.Sources[i];
+        source.BaseFuelEfficiency = PowerSource_BaseFuelEfficiency.Value;
         source.OnPropertiesUpdate();
       }
     }
@@ -101,10 +106,10 @@ public class PowerSystemConfig : BepInExBaseConfig<PowerSystemConfig>
 
     PowerNetwork_ShowAdditionalPowerInformationByDefault = config.BindUnique(SectionKey, "PowerNetwork_ShowAdditionalPowerInformationByDefault", false, ConfigHelpers.CreateConfigDescription("This will show the power network information by default per prefab. This acts as a tutorial. Most power items will have a visual indicator but it may not be clear to players immediately.", false, false));
 
-    PowerPlate_DrainRate = config.BindUnique(SectionKey,
-      "PowerPlate_DrainRate", 100f,
+    PowerPlate_TransferRate = config.BindUnique(SectionKey,
+      "PowerPlate_TransferRate", 100f,
       ConfigHelpers.CreateConfigDescription(
-        "How much eitr energy is drained to convert to power system energy units. Eitr energy is renewable but should be considered less refined. To maintain balance keep this at a higher number.",
+        "How much eitr energy is charged/drained per time to convert to power system energy units. Eitr energy is renewable but should be considered less refined. To maintain balance keep this at a higher number.",
         true, false,
         new AcceptableValueRange<float>(0.001f, 10000f)));
     PowerPlate_EitrToEnergyRatio = config.BindUnique(SectionKey,
@@ -155,13 +160,6 @@ public class PowerSystemConfig : BepInExBaseConfig<PowerSystemConfig>
         true, false,
         new AcceptableValueRange<float>(0f, 100f)));
 
-    PowerPlate_ChargeRate = config.BindUnique(SectionKey,
-      "PowerPlate_ChargeRate", 1f,
-      ConfigHelpers.CreateConfigDescription(
-        "Converted rate when transfering from the power conduit. This rate should be 1 by default. Use drain rate to make player mana power balanced. Charge rate will eventually be applyed to eitr chargers which can transfer eitr to the player.",
-        true, false,
-        new AcceptableValueRange<float>(0.001f, 100f)));
-
     Mechanism_Switch_DefaultAction = config.BindUnique(SectionKey,
       "Mechanism_Switch_DefaultAction", MechanismAction.CommandsHud,
       ConfigHelpers.CreateConfigDescription("Default action of the mechanism switch. This will be overridden by UpdateIntendedAction if a closer matching action is detected nearby."));
@@ -203,8 +201,7 @@ public class PowerSystemConfig : BepInExBaseConfig<PowerSystemConfig>
 
 // conduits
     PowerPlate_EitrToEnergyRatio.SettingChanged += (sender, args) => UpdatePowerConduits();
-    PowerPlate_DrainRate.SettingChanged += (sender, args) => UpdatePowerConduits();
-    PowerPlate_ChargeRate.SettingChanged += (sender, args) => UpdatePowerConduits();
+    PowerPlate_TransferRate.SettingChanged += (sender, args) => UpdatePowerConduits();
 
     SwivelComponent.SwivelEnergyDrain = SwivelPowerDrain.Value;
 

@@ -11,6 +11,55 @@ namespace ValheimVehicles.Helpers;
 public static class ValheimExtensions
 {
 
+  public static void TrySetZDOOnChange<T>(this ZDO zdo, string key, T currentValue)
+  {
+    if (typeof(T) == typeof(float))
+    {
+      var storedValue = zdo.GetFloat(key);
+      var currentValueAsFloat = (float)((object)currentValue ?? storedValue);
+      if (!Mathf.Approximately(storedValue, currentValueAsFloat))
+      {
+        zdo.Set(key, currentValueAsFloat);
+      }
+    }
+  }
+
+  public static void TrySetZDOBoolOnChange(this ZDO zdo, string key, bool currentValue)
+  {
+    var storedValue = zdo.GetBool(key);
+    if (currentValue != storedValue)
+    {
+      zdo.Set(key, currentValue);
+    }
+  }
+
+  public static void TrySetZDOStringOnChange(this ZDO zdo, string key, string currentValue)
+  {
+    var storedValue = zdo.GetString(key);
+    if (storedValue != currentValue)
+    {
+      zdo.Set(key, currentValue);
+    }
+  }
+
+  public static void TrySetZDOIntOnChange(this ZDO zdo, string key, int currentValue)
+  {
+    var storedValue = zdo.GetInt(key);
+    if (storedValue != currentValue)
+    {
+      zdo.Set(key, currentValue);
+    }
+  }
+
+  public static void TrySetZDOFloatOnChange(this ZDO zdo, string key, float currentValue)
+  {
+    var storedValue = zdo.GetFloat(key);
+    if (!Mathf.Approximately(storedValue, currentValue))
+    {
+      zdo.Set(key, currentValue);
+    }
+  }
+
   // non-extension method
   public static bool IsNetViewValid(ZNetView? netView, [NotNullWhen(true)] out ZNetView? validNetView)
   {

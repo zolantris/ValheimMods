@@ -199,7 +199,7 @@ public partial class ModTranslations
     Power_NetworkInfo_NetworkId = SafeLocalize("$valheim_vehicles_mechanism_network_network_id");
 
     // States for determining if the power system is healthy.
-    Power_NetworkInfo_NetworkLowPower = SafeLocalize("valheim_vehicles_mechanism_network_low_power");
+    Power_NetworkInfo_NetworkLowPower = SafeLocalize("$valheim_vehicles_mechanism_network_low_power");
     Power_NetworkInfo_NetworkPartialPower = SafeLocalize("$valheim_vehicles_mechanism_network_partial_power");
     Power_NetworkInfo_NetworkFullPower = SafeLocalize("$valheim_vehicles_mechanism_network_full_power");
 

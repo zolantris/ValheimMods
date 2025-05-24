@@ -22,7 +22,7 @@ namespace ValheimVehicles.Integrations.PowerSystem
       ZRoutedRpc.instance.Register<ZPackage>(RPC_NotifyZDOsChanged_Name, Client_NotifyZDOsChanged);
     }
 
-    public static void SendPowerZDOsChangedToNearbyPlayers(string networkId, List<ZDOID> zdos, PowerSimulationData simData, float range = 40f)
+    public static void Request_PowerZDOsChangedToNearbyPlayers(string networkId, List<ZDOID> zdos, PowerSimulationData simData, float range = 40f)
     {
       var pkg = new ZPackage();
       pkg.Write(networkId);

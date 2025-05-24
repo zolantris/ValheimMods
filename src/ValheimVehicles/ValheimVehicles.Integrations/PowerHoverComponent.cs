@@ -184,7 +184,7 @@ public class PowerHoverComponent : MonoBehaviour, Hoverable, Interactable
     if (HasPowerSource)
     {
       outString += $"{ModTranslations.PowerSource_Interact_AddOne}\n{ModTranslations.PowerSource_Interact_AddMany}\n";
-      outString += $"{ModTranslations.Power_NetworkInfo_NetworkFuel}: {MathUtils.RoundToHundredth(_powerSourceComponent.GetFuelLevel())}/{_powerSourceComponent.GetFuelCapacity()}";
+      outString += $"{ModTranslations.Power_NetworkInfo_NetworkFuel}: {MathUtils.RoundToHundredth(_powerSourceComponent.Data.Fuel)}/{_powerSourceComponent.Data.FuelCapacity}";
     }
     if (HasPowerStorage)
     {
@@ -192,7 +192,7 @@ public class PowerHoverComponent : MonoBehaviour, Hoverable, Interactable
       {
         outString += "\n";
       }
-      outString += $"{ModTranslations.Power_NetworkInfo_NetworkPowerCapacity}: {MathUtils.RoundToHundredth(_powerStorageComponent.ChargeLevel)}/{_powerStorageComponent.Energy}";
+      outString += $"{ModTranslations.Power_NetworkInfo_NetworkPowerCapacity}: {MathUtils.RoundToHundredth(_powerStorageComponent.Data.Energy)}/{_powerStorageComponent.Data.EnergyCapacity}";
     }
 
     // Only need networkId from either of these.

@@ -311,7 +311,7 @@ public partial class PowerNetworkControllerIntegration : PowerNetworkController
     if (changedZDOs.Count > 0)
     {
       var pos = GetNetworkFallbackPosition(simData);
-      PowerSystemRPC.SendPowerZDOsChangedToNearbyPlayers(networkId, changedZDOs.ToList(), simData);
+      PowerSystemRPC.Request_PowerZDOsChangedToNearbyPlayers(networkId, changedZDOs.ToList(), simData);
     }
   }
 
@@ -400,18 +400,9 @@ public partial class PowerNetworkControllerIntegration : PowerNetworkController
     var totalDemand = 0f;
     var totalCapacity = 0f;
 
-    // pure power units
-    var totalConduitDemand = 0f;
-
-    // pure power units
-    var totalConduitSupply = 0f;
-
     var totalSupply = 0f;
     var totalFuel = 0f;
     var totalFuelCapacity = 0f;
-
-    var chargeConduits = new List<PowerConduitData>();
-    var drainConduits = new List<PowerConduitData>();
 
 
     var poweredOrInactiveConsumers = 0;
@@ -420,19 +411,6 @@ public partial class PowerNetworkControllerIntegration : PowerNetworkController
 
     // Default Needed if there are no consumers.
     GetNetworkHealthStatusEnumeration(null, ref NetworkConsumerPowerStatus, ref poweredOrInactiveConsumers, ref inactiveDemandingConsumers);
-
-
-    foreach (var data in simData.Conduits)
-    {
-      if (data.Mode == PowerConduitMode.Drain)
-      {
-        drainConduits.Add(data);
-      }
-      if (data.Mode == PowerConduitMode.Charge)
-      {
-        chargeConduits.Add(data);
-      }
-    }
 
     foreach (var data in simData.Consumers)
     {
@@ -452,7 +430,7 @@ public partial class PowerNetworkControllerIntegration : PowerNetworkController
       totalFuelCapacity += data.FuelCapacity;
     }
 
-    var newData = new PowerNetworkData
+    var newData = new PowerSystemSimulator.PowerSystemDisplayData
     {
       NetworkConsumerPowerStatus = NetworkConsumerPowerStatus,
       NetworkPowerSupply = MathUtils.RoundToHundredth(totalSupply),
@@ -516,6 +494,7 @@ public partial class PowerNetworkControllerIntegration : PowerNetworkController
         continue;
       }
 
+      // simulates entire network if there is a network item loaded in the loaded zonesystem.
       var isLoadedInZone = nodes.Any((x) => ZoneSystem.instance.IsZoneLoaded(x.GetPosition()));
       if (!isLoadedInZone)
         continue;
@@ -527,6 +506,8 @@ public partial class PowerNetworkControllerIntegration : PowerNetworkController
           simData.NetworkId = networkId;
           simData.DeltaTime = Time.fixedDeltaTime;
           PowerSystemSimulator.Simulate(simData);
+          var zdoidNodes = nodes.Select(x => x.m_uid).ToList();
+          PowerSystemRPC.Request_PowerZDOsChangedToNearbyPlayers(networkId, zdoidNodes, simData);
         }
         else
         {

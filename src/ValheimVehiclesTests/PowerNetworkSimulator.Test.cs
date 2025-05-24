@@ -143,11 +143,12 @@ public class PowerSimulationTests
     var simulationData = new PowerSimulationData { DeltaTime = 1f };
 
     var storage1 = new PowerStorageData { Energy = 75f, EnergyCapacity = 100f };
-    var storage2 = new PowerStorageData { Energy = 25f, EnergyCapacity = 50f };
+    var storage2 = new PowerStorageData { Energy = 50f, EnergyCapacity = 100f };
     simulationData.Storages.Add(storage1);
     simulationData.Storages.Add(storage2);
 
     GeneratePlayerDataForConduit(out var conduit, out var playerData);
+    playerData.GetEitr = () => 0f;
     simulationData.Conduits.Add(conduit);
 
     var consumer = new PowerConsumerData { BasePowerConsumption = 0f };
@@ -163,8 +164,10 @@ public class PowerSimulationTests
 
     PowerSystemSimulator.Simulate(simulationData);
 
-    Assert.That(storage1.Energy, Is.EqualTo(initialStorage1), "Storage 1 should remain unchanged.");
-    Assert.That(storage2.Energy, Is.EqualTo(initialStorage2), "Storage 2 should remain unchanged.");
+    Assert.That(storage1.Energy + storage2.Energy, Is.EqualTo(initialStorage1 + initialStorage2), "Energy is conserved");
+    Assert.That(storage1.Energy, Is.EqualTo(100f), "Storage 1 gets energy from storage 2.");
+    Assert.That(storage2.Energy, Is.EqualTo(25f), "Storage 2 has 25f remaining.");
+
     Assert.That(source.Fuel, Is.EqualTo(initialSourceFuel), "Source fuel should remain unchanged.");
     Assert.That(consumer.GetRequestedEnergy(simulationData.DeltaTime), Is.EqualTo(initialConsumerDemand), "Consumer demand should remain unchanged.");
   }
@@ -201,6 +204,86 @@ public class PowerSimulationTests
     // After loop: storage increased, fuel is zero or almost zero
     Assert.That(storage.Energy, Is.GreaterThanOrEqualTo(100f), "Storage should have gained energy from fuel.");
     Assert.That(source.Fuel, Is.EqualTo(0f).Within(0.0001), "Fuel should be zero after simulation completes.");
+  }
+
+  [Test]
+  public void Simulate_CanFillEnergyStoragesToMaxAndNotDecreaseFuelFurther()
+  {
+    var simulationData = new PowerSimulationData { DeltaTime = 1f };
+
+    var storage1 = new PowerStorageData { Energy = 75f, EnergyCapacity = 100f };
+    var storage2 = new PowerStorageData { Energy = 25f, EnergyCapacity = 100f };
+    simulationData.Storages.Add(storage1);
+    simulationData.Storages.Add(storage2);
+
+    GeneratePlayerDataForConduit(out var conduit, out var playerData);
+    simulationData.Conduits.Add(conduit);
+
+    var consumer = new PowerConsumerData { BasePowerConsumption = 0f };
+    simulationData.Consumers.Add(consumer);
+
+    var source = new PowerSourceData { Fuel = 50f, FuelEnergyYield = 10f, FuelEfficiency = 1f };
+    simulationData.Sources.Add(source);
+
+    // Bail after a reasonable number of ticks
+    var maxTicks = 30;
+    var increment = 0;
+
+    while (source.Fuel > 0f && increment < maxTicks)
+    {
+      PowerSystemSimulator.Simulate(simulationData);
+      increment++;
+    }
+
+    PowerSystemSimulator.Simulate(simulationData);
+
+    Assert.That(storage1.Energy, Is.EqualTo(storage1.EnergyCapacity), "Storage 1 should be full.");
+    Assert.That(storage2.Energy, Is.EqualTo(storage2.EnergyCapacity), "Storage 2 should be full.");
+
+    Assert.That(increment, Is.EqualTo(30));
+    Assert.That(source.Fuel, Is.EqualTo(43f));
+  }
+
+  [Test]
+  public void Simulate_CanKeepConsumersActive_While_Net_DrainingEnergy()
+  {
+    var simulationData = new PowerSimulationData { DeltaTime = 1f };
+
+    var storage1 = new PowerStorageData { Energy = 100f, EnergyCapacity = 1000f };
+    var storage2 = new PowerStorageData { Energy = 1000f, EnergyCapacity = 1000f };
+    simulationData.Storages.Add(storage1);
+    simulationData.Storages.Add(storage2);
+
+    GeneratePlayerDataForConduit(out var conduit, out var playerData);
+    simulationData.Conduits.Add(conduit);
+
+    var consumer = new PowerConsumerData { BasePowerConsumption = 100f, _isActive = true, IsDemanding = true };
+    simulationData.Consumers.Add(consumer);
+
+    var source = new PowerSourceData { Fuel = 1f, FuelEnergyYield = 1f, FuelEfficiency = 1f };
+    simulationData.Sources.Add(source);
+
+    // Bail after a reasonable number of ticks
+    var maxTicks = 4;
+    var increment = 0;
+
+    while (increment < maxTicks)
+    {
+      PowerSystemSimulator.Simulate(simulationData);
+      increment++;
+      Assert.That(consumer.IsActive, Is.True, "Consumer should always be active while power is in storage.");
+    }
+
+    PowerSystemSimulator.Simulate(simulationData);
+
+    Assert.That(storage1.Energy, Is.EqualTo(0), "Storage 1 should be empty. Lowest storage size is recharged last.");
+    Assert.That(storage2.Energy, Is.EqualTo(826f), "Storage 2 should be near full");
+
+    Assert.That(consumer.IsActive, Is.True, "Consumer should always be active while power is in storage.");
+
+
+    Assert.That(increment, Is.EqualTo(4));
+    Assert.That(source.Fuel, Is.EqualTo(0f));
   }
 
   [Test]
@@ -243,134 +326,11 @@ public class PowerSimulationTests
       GetEitrCapacity = () => 100f
     };
     rechargeConduit.PlayerDataById.Add(player.PlayerId, player);
-
-
     simulationData.Conduits.Add(rechargeConduit);
 
-    // Bail after a reasonable number of ticks
-    var maxTicks = 20;
-    var tick = 0;
-    var previousStorage = storage.Energy;
-    var previousFuel = source.Fuel;
-
-    // while (source.Fuel > 0f && tick < maxTicks)
-    // {
-    //   PowerSystemSimulator.Simulate(simulationData);
-    //
-    //   // Assert that storage increases and fuel decreases each tick (unless full)
-    //   Assert.That(storage.Energy, Is.GreaterThanOrEqualTo(previousStorage), "Storage should never decrease.");
-    //   Assert.That(source.Fuel, Is.LessThanOrEqualTo(previousFuel), "Fuel should never increase.");
-    //
-    //   previousStorage = storage.Energy;
-    //   previousFuel = source.Fuel;
-    //   tick++;
-    // }
     PowerSystemSimulator.Simulate(simulationData);
 
     Assert.That(hasCalledRemovePlayerEitr, Is.True, "RemovePlayerEitr method should have been called.");
     Assert.That(hasCalledAddPlayerEitr, Is.False, "AddPlayerEitr method should not have been called.");
   }
-
-  // [Test]
-  // public void Simulate_ShouldAllocateEnergyCorrectly_WhenSufficientSupply()
-  // {
-  //   var simulationData = new PowerSimulationData { DeltaTime = DeltaTime };
-  //
-  //   simulationData.Sources.Add(new PowerSourceData { Fuel = 100f, FuelEnergyYield = 10f, FuelEfficiency = 1f });
-  //   simulationData.Storages.Add(new PowerStorageData { StoredEnergy = 100f, MaxEnergy = 200f });
-  //   var consumerData = new PowerConsumerData
-  //   {
-  //     BasePowerConsumption = 50f
-  //   };
-  //
-  //   simulationData.Consumers.Add(consumerData);
-  //
-  //   PowerSystemSimulator.Simulate(simulationData);
-  //
-  //   Assert.AreEqual(150f, simulationData.Storages[0].StoredEnergy, "Storage should receive correct energy.");
-  //   Assert.AreEqual(0f, simulationData.Consumers[0].GetRequestedEnergy(simulationData.DeltaTime), "Consumer energy request should be fulfilled.");
-  //   Assert.Less(simulationData.Sources[0].Fuel, 100f, "Fuel should be consumed.");
-  // }
-  //
-  // [Test]
-  // public void Simulate_ShouldHandleInsufficientSupplyCorrectly()
-  // {
-  //   var simulationData = new PowerSimulationData { DeltaTime = DeltaTime };
-  //
-  //   simulationData.Sources.Add(new PowerSourceData { Fuel = 1f, FuelEnergyYield = 1f, FuelEfficiency = 1f });
-  //   simulationData.Storages.Add(new PowerStorageData { StoredEnergy = 100f, MaxEnergy = 200f });
-  //   var consumerData = new PowerConsumerData
-  //   {
-  //     BasePowerConsumption = 150f
-  //   };
-  //
-  //   simulationData.Consumers.Add(consumerData);
-  //
-  //   PowerSystemSimulator.Simulate(simulationData);
-  //
-  //   Assert.Less(simulationData.Storages[0].StoredEnergy, 200f, "Storage should not fully recharge due to limited supply.");
-  //   Assert.Greater(simulationData.Consumers[0].GetRequestedEnergy(simulationData.DeltaTime), 0f, "Consumer should not have full demand met.");
-  // }
-  //
-  // [Test]
-  // public void Simulate_ShouldNotRechargeFromOwnDischarge()
-  // {
-  //   var simulationData = new PowerSimulationData { DeltaTime = DeltaTime };
-  //
-  //   var storage = new PowerStorageData { StoredEnergy = 100f, MaxEnergy = 200f };
-  //   simulationData.Storages.Add(storage);
-  //   var consumerData = new PowerConsumerData
-  //   {
-  //     BasePowerConsumption = 80f
-  //   };
-  //
-  //   simulationData.Consumers.Add(consumerData);
-  //
-  //   PowerSystemSimulator.Simulate(simulationData);
-  //
-  //   Assert.AreEqual(20f, storage.StoredEnergy, "Storage should correctly discharge and not recharge itself.");
-  //   Assert.AreEqual(0f, simulationData.Consumers[0].GetRequestedEnergy(simulationData.DeltaTime), "Consumer should receive requested energy.");
-  // }
-  //
-  // [Test]
-  // public void Simulate_ShouldCommitFuelCorrectly_AfterSimulation()
-  // {
-  //   var simulationData = new PowerSimulationData { DeltaTime = DeltaTime };
-  //
-  //   var source = new PowerSourceData { Fuel = 10f, FuelEnergyYield = 10f, FuelEfficiency = 1f };
-  //   simulationData.Sources.Add(source);
-  //   var consumerData = new PowerConsumerData
-  //   {
-  //     BasePowerConsumption = 50f
-  //   };
-  //   simulationData.Consumers.Add(consumerData);
-  //
-  //   PowerSystemSimulator.Simulate(simulationData);
-  //
-  //   Assert.Less(source.Fuel, 10f, "Fuel should be committed correctly after providing energy.");
-  //   Assert.AreEqual(0f, simulationData.Consumers[0].GetRequestedEnergy(simulationData.DeltaTime), "Consumer should have fully received requested energy.");
-  // }
-  //
-  // [Test]
-  // public void Simulate_ShouldCorrectlyHandleMultipleSourcesAndStorages()
-  // {
-  //   var simulationData = new PowerSimulationData { DeltaTime = DeltaTime };
-  //
-  //   simulationData.Sources.Add(new PowerSourceData { Fuel = 50f, FuelEnergyYield = 10f, FuelEfficiency = 1f });
-  //   simulationData.Sources.Add(new PowerSourceData { Fuel = 30f, FuelEnergyYield = 5f, FuelEfficiency = 1f });
-  //   simulationData.Storages.Add(new PowerStorageData { StoredEnergy = 20f, MaxEnergy = 100f });
-  //   simulationData.Storages.Add(new PowerStorageData { StoredEnergy = 50f, MaxEnergy = 100f });
-  //   var consumerData = new PowerConsumerData
-  //   {
-  //     BasePowerConsumption = 80f
-  //   };
-  //   simulationData.Consumers.Add(consumerData);
-  //
-  //
-  //   PowerSystemSimulator.Simulate(simulationData);
-  //
-  //   var totalStorageEnergy = simulationData.Storages.Sum(s => s.StoredEnergy);
-  //   Assert.Greater(totalStorageEnergy, 70f, "Storages should have correctly recharged.");
-  //   Assert.AreEqual(0f, simulationData.Consumers[0].GetRequestedEnergy(simulationData.DeltaTime), "Consumer should have received requested energy.");
-  // }
 }

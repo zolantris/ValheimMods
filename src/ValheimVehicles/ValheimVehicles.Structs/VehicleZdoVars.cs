@@ -92,6 +92,7 @@ public static class VehicleZdoVars
   public const string SwivelSyncAngularVelocity = "SwivelSync_AngularVelocity";
 
   // for power systems
+  public const string PowerSystem_IsActive = "PowerSystem_IsActive";
   public const string PowerSystem_NetworkId = "PowerSystem_NetworkId";
   public const string PowerSystem_Energy = "PowerSystem_StoredEnergy";
   public const string PowerSystem_StoredFuel = "PowerSystem_StoredFuel";

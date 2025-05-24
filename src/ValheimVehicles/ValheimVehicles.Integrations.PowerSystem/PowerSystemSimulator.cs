@@ -3,148 +3,179 @@
 
 using System.Collections.Generic;
 using System.Linq;
-using UnityEngine;
+using ValheimVehicles.SharedScripts.Modules;
 using ValheimVehicles.SharedScripts.PowerSystem.Compute;
 
 namespace ValheimVehicles.SharedScripts.PowerSystem
 {
+  /// <summary>
+  /// Meant to be run on a single thread.
+  ///
+  /// Todo consider running these computes on background task thread.
+  /// </summary>
   public static class PowerSystemSimulator
   {
+    // re-usable variables.
+
+    public static float GetTotalCapacityFromStorages(List<PowerStorageData> storages)
+    {
+      return storages.Sum(s => s.EnergyCapacity);
+    }
+
+    public class PowerSystemDisplayData
+    {
+
+      // Power status of the entire network. This is only computed 1 time per request.
+      public string Cached_NetworkDataString = "";
+      public string NetworkConsumerPowerStatus = "";
+      public float NetworkFuelCapacity;
+
+      public float NetworkFuelSupply;
+      public float NetworkPowerCapacity;
+
+      public float NetworkPowerDemand;
+      public float NetworkPowerSupply;
+    }
+
+    /// <summary>
+    /// Demand Conduits consume the system energy by charging player eitr-diffused energy.
+    /// </summary>
+    public static void RunDemandConduitUpdate(PowerConduitData conduit, float deltaTime, ref float totalSupply, ref float totalDemand)
+    {
+      var energyUsed = conduit.SimulateConduit(totalSupply, deltaTime);
+
+      // removes supply adds demand
+      totalSupply -= energyUsed;
+      totalDemand += energyUsed;
+    }
+
+    /// <summary>
+    /// Supply Conduits supply the system by draining player eitr energy.
+    /// </summary>
+    public static void RunSupplyConduitUpdate(PowerConduitData conduit, float deltaTime, ref float totalSupply, ref float totalDemand)
+    {
+      var energyUsed = conduit.SimulateConduit(totalDemand, deltaTime);
+
+      // adds supply removes demand
+      totalSupply += energyUsed;
+      totalDemand -= energyUsed;
+    }
+
+    public static void RunConsumerUpdate(PowerConsumerData consumer, float deltaTime, ref float totalSupply, ref float totalDemand)
+    {
+      var energyRequired = consumer.GetRequestedEnergy(deltaTime);
+      var canRun = totalSupply >= energyRequired;
+      consumer.SetActive(canRun);
+      if (!canRun)
+      {
+        return;
+      }
+
+      totalSupply -= energyRequired;
+    }
+
+    public static void RunPowerDischarge(PowerStorageData storage, float deltaTime, ref float totalSupply, ref float totalDemand)
+    {
+
+    }
+
+    public static void SortStoragesByEnergy(List<PowerStorageData> storages)
+    {
+      storages.Sort((x, y) => x.Energy > y.Energy ? -1 : 1);
+    }
+
+    /// <summary>
+    /// This allows for lossless fuel additions while the simulation is running.
+    /// </summary>
+    /// <param name="sources"></param>
+    public static void ConsolidateAllPendingFuel(List<PowerSourceData> sources)
+    {
+      foreach (var x in sources)
+      {
+        x.ConsolidateFuel();
+      }
+    }
+
     public static void Simulate(PowerSimulationData SimulationData)
     {
       var deltaTime = SimulationData.DeltaTime;
+      SortStoragesByEnergy(SimulationData.Storages);
+      ConsolidateAllPendingFuel(SimulationData.Sources);
 
-      // Step 1: Calculate total consumer and conduit demand
-      var totalDemand = SimulationData.Consumers.Sum(c => c.GetRequestedEnergy(deltaTime)) +
-                        SimulationData.Conduits.Sum(c => c.EstimateTotalDemand(deltaTime));
-      var originalTotalDemand = totalDemand;
+      // Step 1: Calculate Supply and Demand
+      var consumerDemand = SimulationData.Consumers.Sum(c => c.GetRequestedEnergy(deltaTime));
+      var conduitDemand = SimulationData.Conduits.Sum(c => c.EstimateTotalDemand(deltaTime));
+      var storageDemand = SimulationData.Storages.Sum(s => s.EnergyCapacityRemaining);
 
-      // Step 1.5: Calculate additional demand from storages
-      var storageDemand = SimulationData.Storages.Sum(s => Mathf.Clamp(s.EnergyCapacity - s.Energy, 0f, s.EnergyCapacity));
-      totalDemand += storageDemand;
+      var conduitSupply = SimulationData.Conduits.Sum(c => c.EstimateTotalSupply(deltaTime));
+      var storageSupply = SimulationData.Storages.Sum(s => s.Energy);
 
-      // Step 2: Peek supply from conduits
-      var suppliedFromConduits = 0f;
+      var demandConduits = SimulationData.Conduits.Where(c => c.Mode == PowerConduitMode.Charge).ToList();
+      var supplyConduits = SimulationData.Conduits.Where(c => c.Mode == PowerConduitMode.Drain).ToList();
 
-      foreach (var conduit in SimulationData.Conduits)
+      // maximum amount of energy that can be stored. Total supply must not exceed this.
+      var totalEnergyCapacity = GetTotalCapacityFromStorages(SimulationData.Storages);
+
+      // demand must be zero before bailing on energy generation
+      var totalDemand = consumerDemand + conduitDemand + storageDemand;
+
+      // supply must be at max storage and fulfill demand before bailing on energy generation
+      var totalSupply = conduitSupply + storageSupply;
+
+
+
+      // Step 2: Supply power to players if there is supply.
+      foreach (var conduit in demandConduits)
       {
-        if (totalDemand <= 0f) break;
-        var energyUsed = conduit.SimulateConduit(totalDemand, deltaTime);
-        totalDemand -= energyUsed;
+        if (totalSupply <= 0f) break;
+        RunDemandConduitUpdate(conduit, deltaTime, ref totalSupply, ref totalDemand);
       }
 
-      // Step 2.5: Peek discharge from storage
-      var storageDischargeMap = new List<(PowerStorageData, float)>();
-      var suppliedFromStorage = 0f;
-      var remainingDemand = totalDemand;
-
-      foreach (var storage in SimulationData.Storages)
+      // step 2.5: Supply power from conduits if there is demand.
+      if (totalDemand > totalSupply)
       {
-        if (remainingDemand <= 0f) break;
-
-        var peekedAmount = storage.PeekDischarge(remainingDemand);
-        if (peekedAmount > 0f)
+        // simulate every conduit. This will fulfill the demand / supply contracts of these conduits.
+        foreach (var conduit in supplyConduits)
         {
-          storageDischargeMap.Add((storage, peekedAmount));
-          suppliedFromStorage += peekedAmount;
-          remainingDemand -= peekedAmount;
+          RunSupplyConduitUpdate(conduit, deltaTime, ref totalSupply, ref totalDemand);
         }
       }
-
-      // Step 3: Peek supply from sources
-      var sourceOfferMap = new List<(PowerSourceData, float)>();
-      var offeredFromSources = 0f;
-      var hasChargeableStorage = SimulationData.Storages.Any(s => s.NeedsCharging());
-
-      if (remainingDemand > 0f || hasChargeableStorage)
-      {
-        foreach (var source in SimulationData.Sources)
-        {
-          var offered = source.RequestAvailablePower(deltaTime, offeredFromSources, totalDemand, totalDemand > 0f);
-          if (offered <= 0f) continue;
-
-          sourceOfferMap.Add((source, offered));
-          offeredFromSources += offered;
-
-          if (offeredFromSources + suppliedFromStorage + suppliedFromConduits >= totalDemand && !hasChargeableStorage)
-            break;
-        }
-      }
-
-      var totalAvailable = offeredFromSources + suppliedFromStorage + suppliedFromConduits;
 
       // Step 4: Apply power to consumers
       foreach (var consumer in SimulationData.Consumers)
       {
-        var needed = consumer.GetRequestedEnergy(deltaTime);
-        if (needed > totalAvailable)
-          break;
-        totalAvailable -= needed;
+        RunConsumerUpdate(consumer, deltaTime, ref totalSupply, ref totalDemand);
       }
 
-      // Step 4.5: Commit discharge from storage
-      var totalUsedPower = offeredFromSources + suppliedFromStorage + suppliedFromConduits - totalAvailable;
-      var usedFromDischarge = Mathf.Clamp(totalUsedPower - offeredFromSources - suppliedFromConduits, 0f, suppliedFromStorage);
 
-      foreach (var storageDischargeOffer in storageDischargeMap)
+      // generate power to fulfill demand and target maximum storage capacity. 
+      var hasChargeableStorageCapacity = totalEnergyCapacity > storageSupply;
+
+      if (hasChargeableStorageCapacity)
       {
-        var (storageData, offered) = storageDischargeOffer;
+        foreach (var source in SimulationData.Sources)
+        {
+          if (totalSupply >= totalEnergyCapacity) break;
+          var offered = source.RequestAvailablePower(deltaTime, totalDemand, totalDemand > 0f);
+          if (offered <= 0f) continue;
 
-        var commitAmount = Mathf.Min(offered, usedFromDischarge);
-        storageData.CommitDischarge(commitAmount);
-        usedFromDischarge -= commitAmount;
-        if (usedFromDischarge <= 0f) break;
+          source.CommitEnergyUsed(offered);
+          totalSupply += offered;
+        }
       }
 
-      // Avoid recharging from own discharge
-      totalAvailable -= suppliedFromStorage;
-      totalAvailable = Mathf.Max(0f, totalAvailable);
-
-      var storageDemandAfterConduitRecharge = 0f;
-
-      // Step 5: Recharge storages with surplus
       foreach (var storage in SimulationData.Storages)
       {
-        if (totalAvailable <= 0f) break;
-        if (storage.EnergyCapacityRemaining <= 0f) continue;
-
-        var accepted = storage.AddEnergy(totalAvailable);
-        totalAvailable -= accepted;
-        storageDemandAfterConduitRecharge += storage.EnergyCapacityRemaining;
+        var energyToUse = MathX.Min(totalSupply, storage.EnergyCapacity);
+        storage.SetStoredEnergy(energyToUse);
+        totalSupply -= energyToUse;
+        totalSupply = MathX.Max(totalSupply, 0f);
       }
 
-      // Step 6: Commit fuel burn from sources
-      var usedFromSources = Mathf.Clamp(storageDemandAfterConduitRecharge + totalUsedPower - suppliedFromStorage - suppliedFromConduits, 0f, offeredFromSources);
-
-      // this will be used to send power into the batteries. It is generated
-      var powerGeneratedFromSources = 0f;
-
-      foreach (var sourceOffer in sourceOfferMap)
-      {
-        var (sourceData, offered) = sourceOffer;
-        var commitAmount = Mathf.Min(offered, usedFromSources);
-        sourceData.CommitEnergyUsed(commitAmount);
-
-#if TEST
-        TestContext.Progress.WriteLine($"SourceOffered {offered}");
-#endif
-
-        usedFromSources -= commitAmount;
-        powerGeneratedFromSources += commitAmount;
-        if (usedFromSources <= 0f) break;
-      }
-
-
-
-      // Step 7: Recharge storages with fuel burnt.
-      foreach (var storage in SimulationData.Storages)
-      {
-        if (powerGeneratedFromSources <= 0f) break;
-        if (storage.EnergyCapacityRemaining <= 0f) continue;
-
-        var accepted = storage.AddEnergy(totalAvailable);
-        usedFromSources -= accepted;
-      }
+      SimulationData.Sources.ForEach(x => x.Save());
+      SimulationData.Storages.ForEach(x => x.Save());
+      SimulationData.Conduits.ForEach(x => x.Save());
+      SimulationData.Consumers.ForEach(x => x.Save());
     }
   }
 }

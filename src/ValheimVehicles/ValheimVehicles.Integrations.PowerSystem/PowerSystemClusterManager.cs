@@ -119,7 +119,7 @@ namespace ValheimVehicles.Integrations
     public static void RebuildClusters()
     {
       _networks.Clear();
-      ResetPowerNetworkSimDataCache();
+      // ResetPowerNetworkSimDataCache();
 
       var zdos = PowerSystemRegistry.GetAllZDOs();
       var unvisited = new HashSet<ZDO>(zdos);

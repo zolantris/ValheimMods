@@ -23,7 +23,7 @@ namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
     // deprecated
     public float PeekDischarge(float amount)
     {
-      _peekedDischargeAmount = MathUtils.RoundToHundredth(MathX.Min(Energy, amount));
+      _peekedDischargeAmount = MathX.Min(Energy, amount);
       return _peekedDischargeAmount;
     }
 

@@ -55,7 +55,7 @@ namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
       public long PlayerId;
       public float Eitr => GetEitr();
       public float EitrCapacity => GetEitrCapacity();
-      public float EitrCapacityRemaining => GetEitr() - GetEitrCapacity();
+      public float EitrCapacityRemaining => GetEitrCapacity() - GetEitr();
 
       // methods that fire RPC_For Integration. But can be used to test via the stub.
       public Action<long, float> Request_AddEitr = (_, _) => {};
@@ -102,13 +102,13 @@ namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
     /// </summary>
     public bool TryGetNeededEitr(float remainingEnergy, float eitrVaporAvailable, out float deltaEitr, out float deltaEnergy)
     {
-      var eitrProcessable = eitrVaporAvailable * DeltaTimeRechargeRate;
+      var eitrProcessable = eitrVaporAvailable * EitrVaporToEnergyRatio * DeltaTimeRechargeRate;
       var energyProduced = eitrProcessable / EitrVaporToEnergyRatio;
       if (remainingEnergy < energyProduced)
       {
         // Clamp to remainingEnergy
-        deltaEnergy = remainingEnergy;
         deltaEitr = remainingEnergy * EitrVaporToEnergyRatio;
+        deltaEnergy = remainingEnergy;
         return true;
       }
       deltaEnergy = energyProduced;
@@ -130,10 +130,7 @@ namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
         var playerEitr = playerData.Eitr;
         // do not fire eitr drain when low on eitr.
         if (playerEitr <= 2f) continue;
-        if (!TryGetNeededEitr(maxEnergyDrainable - totalEnergy, playerEitr, out var deltaEitrVapor, out var deltaEnergy))
-        {
-          break;
-        }
+        TryGetNeededEitr(maxEnergyDrainable - totalEnergy, playerEitr, out var deltaEitrVapor, out var deltaEnergy);
 
         playerData.Request_UseEitr(deltaEitrVapor);
         totalEnergy += deltaEnergy;
