@@ -202,14 +202,13 @@ public partial class PowerNetworkControllerIntegration : PowerNetworkController
     // Step 1: Include storage charging demand
     foreach (var storage in simData.Storages)
     {
-      totalDemand += Mathf.Max(0f, storage.MaxEnergy - storage.StoredEnergy);
+      totalDemand += Mathf.Max(0f, storage.Energy - storage.EnergyCapacity);
     }
 
     // Step 2: Include conduit (Eitr) demand
     var conduitDemand = 0f;
     foreach (var conduit in simData.Conduits)
     {
-      conduit.ResolvePlayersFromIds();
       conduitDemand += PowerConduitData.GetAverageEitr(conduit.Players);
     }
 
@@ -264,7 +263,7 @@ public partial class PowerNetworkControllerIntegration : PowerNetworkController
       {
         if (player.m_eitr < player.m_maxEitr - 0.1f)
         {
-          PowerConduitPlateBridge.Request_AddEitr(player, perPlayer);
+          PlayerEitrRPC.Request_AddEitr(player, perPlayer);
           used += perPlayer;
         }
       }
@@ -298,13 +297,13 @@ public partial class PowerNetworkControllerIntegration : PowerNetworkController
     // Step 8: Save mutated data
     foreach (var source in sourcesToUpdate)
     {
-      source.zdo.Set(VehicleZdoVars.Power_StoredFuel, source.Fuel);
+      source.zdo.Set(VehicleZdoVars.PowerSystem_StoredFuel, source.Fuel);
       changedZDOs.Add(source.zdo.m_uid);
     }
 
     foreach (var storage in storagesToUpdate)
     {
-      storage.zdo.Set(VehicleZdoVars.PowerSystem_Energy, storage.StoredEnergy);
+      storage.zdo.Set(VehicleZdoVars.PowerSystem_Energy, storage.Energy);
       changedZDOs.Add(storage.zdo.m_uid);
     }
 
@@ -320,7 +319,7 @@ public partial class PowerNetworkControllerIntegration : PowerNetworkController
   {
     foreach (var (storage, _) in storages)
     {
-      if (storage.StoredEnergy < storage.MaxEnergy)
+      if (storage.Energy < storage.EnergyCapacity)
         return true;
     }
     return false;
@@ -443,14 +442,14 @@ public partial class PowerNetworkControllerIntegration : PowerNetworkController
 
     foreach (var data in simData.Storages)
     {
-      totalSupply += data.StoredEnergy;
-      totalCapacity += data.MaxEnergy;
+      totalSupply += data.Energy;
+      totalCapacity += data.EnergyCapacity;
     }
 
     foreach (var data in simData.Sources)
     {
       totalFuel += data.Fuel;
-      totalFuelCapacity += data.MaxFuel;
+      totalFuelCapacity += data.FuelCapacity;
     }
 
     var newData = new PowerNetworkData

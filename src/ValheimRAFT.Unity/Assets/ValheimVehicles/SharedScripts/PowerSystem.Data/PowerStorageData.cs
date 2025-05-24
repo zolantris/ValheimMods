@@ -7,18 +7,18 @@ namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
   // Todo extend IPowerStorage
   public partial class PowerStorageData : PowerSystemComputeData
   {
-    public static float MaxCapacityDefault = 800f;
+    public static float EnergyCapacityDefault = 800f;
     public float Energy;
-    public float EnergyCapacity = MaxCapacityDefault;
+    public float EnergyCapacity = EnergyCapacityDefault;
     public float _peekedDischargeAmount = 0f;
+
+    public float EnergyCapacityRemaining => MathX.Clamp(EnergyCapacity - Energy, 0f, EnergyCapacity);
 
     public PowerStorageData() {}
     public float EstimateAvailableEnergy()
     {
       return MathX.Clamp(Energy, 0f, EnergyCapacity);
     }
-
-    public float CapacityRemaining => MathX.Clamp(EnergyCapacity - Energy, 0, EnergyCapacity);
 
     // deprecated
     public float PeekDischarge(float amount)

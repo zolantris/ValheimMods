@@ -8,12 +8,12 @@ public class PowerConsumerZDOConfig : INetworkedZDOConfig<PowerConsumerBridge>
 {
   public void Load(ZDO zdo, PowerConsumerBridge component)
   {
-    var isDemanding = zdo.GetBool(VehicleZdoVars.Power_IsDemanding, component.IsDemanding);
+    var isDemanding = zdo.GetBool(VehicleZdoVars.PowerSystem_IsDemanding, component.IsDemanding);
     component.Logic.SetDemandState(isDemanding);
   }
 
   public void Save(ZDO zdo, PowerConsumerBridge component)
   {
-    zdo.Set(VehicleZdoVars.Power_IsDemanding, component.IsDemanding);
+    zdo.Set(VehicleZdoVars.PowerSystem_IsDemanding, component.IsDemanding);
   }
 }

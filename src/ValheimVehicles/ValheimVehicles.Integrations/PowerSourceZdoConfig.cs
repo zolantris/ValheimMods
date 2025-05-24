@@ -13,8 +13,8 @@ namespace ValheimVehicles.Integrations.ZDOConfigs
 
     public void Load(ZDO zdo, PowerSourceBridge component)
     {
-      var fuel = zdo.GetFloat(VehicleZdoVars.Power_StoredFuel, component.GetFuelLevel());
-      var running = zdo.GetBool(VehicleZdoVars.Power_IsRunning, component.IsRunning);
+      var fuel = zdo.GetFloat(VehicleZdoVars.PowerSystem_StoredFuel, component.GetFuelLevel());
+      var running = zdo.GetBool(VehicleZdoVars.PowerSystem_IsRunning, component.IsRunning);
 
       // do not call SetFuelLevel directly from integration otherwise infinite loop will occur as it will trigger an RPC
       component.Logic.SetFuelLevel(fuel);
@@ -28,8 +28,8 @@ namespace ValheimVehicles.Integrations.ZDOConfigs
         powerSourceData.SetFuel(component.GetFuelLevel());
         // powerSourceData.IsActive = component.GetFuelLevel() > 0f && component.IsRunning;
       }
-      zdo.Set(VehicleZdoVars.Power_StoredFuel, component.GetFuelLevel());
-      zdo.Set(VehicleZdoVars.Power_IsRunning, component.IsRunning);
+      zdo.Set(VehicleZdoVars.PowerSystem_StoredFuel, component.GetFuelLevel());
+      zdo.Set(VehicleZdoVars.PowerSystem_IsRunning, component.IsRunning);
     }
   }
 }

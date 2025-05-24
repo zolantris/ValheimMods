@@ -119,11 +119,7 @@ namespace ValheimVehicles.Integrations.PowerSystem
         return;
       }
 
-      if (!data.PlayerIds.Contains(playerId))
-      {
-        data.PlayerIds.Add(playerId);
-        data.ResolvePlayersFromIds();
-      }
+      data.AddPlayer(playerId);
     }
 
     private static void RPC_PlayerExitedConduit(long sender, ZPackage pkg)

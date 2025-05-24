@@ -98,18 +98,14 @@ public partial class PowerConduitData : IPowerComputeZdoSync
     PrefabHash = zdo.m_prefab;
     Mode = GetConduitVariant(PrefabHash);
     Load();
-    OnChargeSimulate = ChargeSimulate;
-    OnDrainSimulate = DrainSimulate;
   }
 
   public class PlayerEitrDataBridge : PlayerEitrData
   {
     private Player player;
-    private PowerConduitData conduitData;
 
-    public PlayerEitrDataBridge(Player player, PowerConduitData conduitData)
+    public PlayerEitrDataBridge(Player player, PowerConduitData conduitData) : base(conduitData)
     {
-      this.conduitData = conduitData;
       this.player = player;
       PlayerId = player.GetPlayerID();
 
@@ -150,7 +146,7 @@ public partial class PowerConduitData : IPowerComputeZdoSync
     var keysToRemove = new List<long>();
     foreach (var playerEitrData in PlayerDataById)
     {
-      if (PlayerIds.Contains(playerEitrData.Key))
+      if (PlayerDataById.ContainsKey(playerEitrData.Key))
       {
         keysToRemove.Add(playerEitrData.Key);
       }
@@ -158,6 +154,16 @@ public partial class PowerConduitData : IPowerComputeZdoSync
     keysToRemove.ForEach(x => PlayerDataById.Remove(x));
   }
 
+  public bool AddPlayer(long playerId)
+  {
+    var player = Player.GetPlayer(playerId);
+    if (!player)
+    {
+      SanitizePlayerDataDictionary();
+      return false;
+    }
+    return AddPlayer(player);
+  }
   public bool AddPlayer(Player player)
   {
     SanitizePlayerDataDictionary();
@@ -195,10 +201,10 @@ public partial class PowerConduitData : IPowerComputeZdoSync
     if (!player)
     {
       LoggerProvider.LogWarning("Player could not be found or is null. This means the conduits could have null values");
+      SanitizePlayerDataDictionary();
       return;
     }
     Players.Remove(player);
-    PlayerIds.Remove(player.GetPlayerID());
     PlayerDataById.Remove(player.GetPlayerID());
 
     SanitizePlayerDataDictionary();
@@ -362,32 +368,6 @@ public partial class PowerConduitData : IPowerComputeZdoSync
   //   var totalEnergyGained = (maxDrainEitr - remainingEitrToDrain) * EitrVaporToEnergyRatio;
   //   return totalEnergyGained;
   // }
-
-  public float TryRemoveEitrFromPlayers(float maxEnergyDrainable)
-  {
-    if (Mode != PowerConduitMode.Drain || Players.Count == 0) return 0f;
-
-    var totalEnergy = 0f;
-
-    foreach (var playerData in PlayerDataById.Values)
-    {
-      if (totalEnergy >= maxEnergyDrainable)
-        break;
-
-      var playerEitr = playerData.Eitr;
-      // do not fire eitr drain when low on eitr.
-      if (playerEitr <= 2f) continue;
-      if (!TryGetNeededEitr(maxEnergyDrainable - totalEnergy, playerEitr, out var deltaEitrVapor, out var deltaEnergy))
-      {
-        break;
-      }
-
-      playerData.Request_UseEitr(deltaEitrVapor);
-      totalEnergy += deltaEnergy;
-    }
-
-    return totalEnergy;
-  }
 }
 
 public partial class PowerConsumerData : IPowerComputeZdoSync
@@ -408,8 +388,8 @@ public partial class PowerConsumerData : IPowerComputeZdoSync
     {
       // shared config
       OnSharedConfigSync();
-      IsDemanding = validZdo.GetBool(VehicleZdoVars.Power_IsDemanding, true);
-      var intensityInt = validZdo.GetInt(VehicleZdoVars.Power_Intensity_Level, 0);
+      IsDemanding = validZdo.GetBool(VehicleZdoVars.PowerSystem_IsDemanding, true);
+      var intensityInt = validZdo.GetInt(VehicleZdoVars.PowerSystem_Intensity_Level, 0);
       powerIntensityLevel = (PowerIntensityLevel)intensityInt;
     });
   }
@@ -432,9 +412,9 @@ public partial class PowerSourceData : IPowerComputeZdoSync
       // shared config
       OnSharedConfigSync();
 
-      Fuel = validZdo.GetFloat(VehicleZdoVars.Power_StoredFuel);
-      FuelCapacity = validZdo.GetFloat(VehicleZdoVars.Power_StoredFuelCapacity, MaxFuelCapacityDefault);
-      OutputRate = validZdo.GetFloat(VehicleZdoVars.Power_FuelOutputRate, OutputRateDefault);
+      Fuel = validZdo.GetFloat(VehicleZdoVars.PowerSystem_StoredFuel);
+      FuelCapacity = validZdo.GetFloat(VehicleZdoVars.PowerSystem_StoredFuelCapacity, MaxFuelCapacityDefault);
+      OutputRate = validZdo.GetFloat(VehicleZdoVars.PowerSystem_FuelOutputRate, OutputRateDefault);
     });
   }
 }

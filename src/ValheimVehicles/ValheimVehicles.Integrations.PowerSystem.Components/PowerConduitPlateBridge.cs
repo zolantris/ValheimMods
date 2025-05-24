@@ -151,11 +151,12 @@ public class PowerConduitPlateBridge :
   {
     base.OnDestroy();
   }
+  protected override void RegisterDefaultRPCs() {}
 
   public void SetNetworkId(string id)
   {
     if (!this.IsNetViewValid(out var netView)) return;
-    var idFromZdo = netView.GetZDO().GetString(VehicleZdoVars.Power_NetworkId);
+    var idFromZdo = netView.GetZDO().GetString(VehicleZdoVars.PowerSystem_NetworkId);
     Logic.SetNetworkId(idFromZdo);
   }
 }

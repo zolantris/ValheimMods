@@ -242,26 +242,7 @@ namespace ValheimVehicles.Integrations
         {
           if (PowerComputeFactory.TryCreateConduit(zdo, out var conduit))
           {
-            var zdoid = zdo.m_uid;
-            conduit.PlayerIds.Clear();
-            conduit.Players.Clear();
-
-            if (PowerSystemRegistry.TryGetData<PowerConduitData>(zdo, out var data))
-            {
-              conduit.PlayerIds.Clear();
-              conduit.Players.Clear();
-
-              foreach (var pid in data.PlayerIds)
-              {
-                conduit.PlayerIds.Add(pid);
-                var player = Player.GetPlayer(pid);
-                if (player != null)
-                {
-                  conduit.Players.Add(player);
-                }
-              }
-            }
-
+            conduit.PlayerDataById.Clear();
             simData.Conduits.Add(conduit);
           }
         }

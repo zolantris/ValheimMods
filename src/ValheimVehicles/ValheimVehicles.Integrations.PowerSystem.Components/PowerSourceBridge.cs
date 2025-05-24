@@ -125,7 +125,7 @@ public class PowerSourceBridge :
   }
   public float GetFuelCapacity()
   {
-    return Data.MaxFuel;
+    return Data.FuelCapacity;
   }
   public bool IsRunning => Logic.isRunning;
   public bool IsActive => Logic.IsActive;

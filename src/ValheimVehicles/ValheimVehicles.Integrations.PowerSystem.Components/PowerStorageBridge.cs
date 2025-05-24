@@ -91,9 +91,6 @@ namespace ValheimVehicles.Integrations
     public Vector3 Position => Logic.Position;
     public bool IsActive => Logic.IsActive;
     public Vector3 ConnectorPoint => Logic.ConnectorPoint;
-
-    public float CapacityRemaining => Data.MaxEnergy - Data.StoredEnergy;
-
     public bool IsCharging => Logic.IsCharging;
     public void SetCapacity(float val)
     {
@@ -116,8 +113,9 @@ namespace ValheimVehicles.Integrations
       Logic.CommitDischarge(amount);
     }
 
-    public float ChargeLevel => Data.StoredEnergy;
-    public float Energy => Data.MaxEnergy;
+    public float ChargeLevel => Data.Energy;
+    public float Energy => Data.Energy;
+    public float CapacityRemaining => Data.EnergyCapacityRemaining;
 
     public float Charge(float amount)
     {

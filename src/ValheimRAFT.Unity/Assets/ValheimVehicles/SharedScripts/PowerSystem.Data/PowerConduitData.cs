@@ -3,7 +3,6 @@
 
 using System;
 using System.Collections.Generic;
-using JetBrains.Annotations;
 using ValheimVehicles.SharedScripts.Modules;
 
 namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
@@ -13,28 +12,24 @@ namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
   /// </summary>
   public partial class PowerConduitData : PowerSystemComputeData
   {
-    public readonly List<long> PlayerIds = new();
-
+    public PowerConduitData() {}
     public PowerConduitMode Mode = PowerConduitMode.Drain;
 
     public static float MaxEitrCapMargin = 0.1f;
+    public readonly Dictionary<long, PlayerEitrData> PlayerDataById = new();
 
     // eitr vapor is the player eitr. This is different from Eitr fuel.
-    public static float EitrVaporToEnergyRatio = 0.01f; // default is 100 eitr vapor = 1 unit of energy.
+    public static float EitrVaporToEnergyRatio = 0.1f; // default is 100 eitr vapor = 1 unit of energy.
     public static float RechargeRate = 10f;
 
-    public PowerConduitData() {}
-
     // overrides (in partial method for integrations)
-    public Func<float, float> OnChargeSimulate = _ => 0f;
-    public Func<float, float> OnDrainSimulate = _ => 0f;
 
     public float DeltaTime { get; set; } = 0.01f;
     public float DeltaTimeRechargeRate => DeltaTime * RechargeRate;
 
     public void UpdateActiveStatus()
     {
-      if (PlayerIds.Count > 0)
+      if (PlayerDataById.Count > 0)
       {
         _isActive = true;
       }
@@ -54,12 +49,13 @@ namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
     /// </summary>
     public class PlayerEitrData
     {
-      private PowerConduitData conduitData;
+      public readonly PowerConduitData conduitData;
       public Func<float> GetEitr = () => 0f;
       public Func<float> GetEitrCapacity = () => 0f;
       public long PlayerId;
       public float Eitr => GetEitr();
-      public float EitrCapacity => GetEitr() - GetEitrCapacity();
+      public float EitrCapacity => GetEitrCapacity();
+      public float EitrCapacityRemaining => GetEitr() - GetEitrCapacity();
 
       // methods that fire RPC_For Integration. But can be used to test via the stub.
       public Action<long, float> Request_AddEitr = (_, _) => {};
@@ -71,9 +67,6 @@ namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
       }
     }
 
-    public Dictionary<long, PlayerEitrData> PlayerDataById;
-
-
     // <summary>
     /// Returns the total eitr of all players in the zone.
     /// </summary>
@@ -84,7 +77,7 @@ namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
       var total = 0f;
       foreach (var playerEitrData in PlayerDataById.Values)
       {
-        total += playerEitrData.EitrCapacity * threshold - playerEitrData.Eitr;
+        total += MathX.Min(playerEitrData.EitrCapacity, playerEitrData.Eitr);
       }
       return total;
     }
@@ -94,12 +87,12 @@ namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
     /// </summary>
     /// <param name="threshold"></param>
     /// <returns></returns>
-    public float GetAllPlayerRemainingEitr(float threshold = 0.9f)
+    public float GetAllPlayerRemainingEitrCapacity(float threshold = 0.9f)
     {
       var total = 0f;
       foreach (var playerEitrData in PlayerDataById.Values)
       {
-        total += playerEitrData.EitrCapacity * threshold - playerEitrData.Eitr;
+        total += MathX.Clamp(playerEitrData.EitrCapacity * threshold - playerEitrData.Eitr, 0, playerEitrData.EitrCapacity);
       }
       return total;
     }
@@ -107,48 +100,93 @@ namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
     /// <summary>
     /// Get the next deltaTime Eitr to remove.
     /// </summary>
-    [UsedImplicitly]
     public bool TryGetNeededEitr(float remainingEnergy, float eitrVaporAvailable, out float deltaEitr, out float deltaEnergy)
     {
-      deltaEitr = 0f;
-      deltaEnergy = 0f;
-      if (remainingEnergy < 0.01f) return false;
-
-      var eitrVaporToEnergy = eitrVaporAvailable * EitrVaporToEnergyRatio * DeltaTimeRechargeRate;
-      if (remainingEnergy < eitrVaporToEnergy)
+      var eitrProcessable = eitrVaporAvailable * DeltaTimeRechargeRate;
+      var energyProduced = eitrProcessable / EitrVaporToEnergyRatio;
+      if (remainingEnergy < energyProduced)
       {
-        deltaEitr = remainingEnergy / eitrVaporToEnergy;
+        // Clamp to remainingEnergy
         deltaEnergy = remainingEnergy;
+        deltaEitr = remainingEnergy * EitrVaporToEnergyRatio;
         return true;
       }
-      deltaEnergy = MathX.Min(remainingEnergy, eitrVaporToEnergy);
-
+      deltaEnergy = energyProduced;
+      deltaEitr = eitrProcessable;
       return true;
+    }
+
+    public float TryRemoveEitrFromPlayers(float maxEnergyDrainable)
+    {
+      if (Mode != PowerConduitMode.Drain || PlayerDataById.Count == 0) return 0f;
+
+      var totalEnergy = 0f;
+
+      foreach (var playerData in PlayerDataById.Values)
+      {
+        if (totalEnergy >= maxEnergyDrainable)
+          break;
+
+        var playerEitr = playerData.Eitr;
+        // do not fire eitr drain when low on eitr.
+        if (playerEitr <= 2f) continue;
+        if (!TryGetNeededEitr(maxEnergyDrainable - totalEnergy, playerEitr, out var deltaEitrVapor, out var deltaEnergy))
+        {
+          break;
+        }
+
+        playerData.Request_UseEitr(deltaEitrVapor);
+        totalEnergy += deltaEnergy;
+      }
+
+      return totalEnergy;
     }
 
     public float SimulateConduit(float energyAvailableOrDrainable, float deltaTime)
     {
       DeltaTime = deltaTime;
-      if (PlayerIds.Count == 0 || energyAvailableOrDrainable <= 0f)
+      if (PlayerDataById.Count == 0 || energyAvailableOrDrainable <= 0f)
         return 0f;
 
-      // var allPlayerEitr = GetAllPlayerEitr();
-      // var potentialEitrConvertedEnergy = ConvertPlayerEitrToEnergy(allPlayerEitr);
 
+      var deltaEnergy = 0f;
 
-
-      var deltaEnergy = Mode switch
+      if (Mode == PowerConduitMode.Charge)
       {
-        PowerConduitMode.Charge => OnChargeSimulate(energyAvailableOrDrainable),
-        PowerConduitMode.Drain => OnDrainSimulate(energyAvailableOrDrainable),
-        _ => 0f
-      };
+        return 0f;
+      }
+
+      if (Mode == PowerConduitMode.Drain)
+      {
+        deltaEnergy = TryRemoveEitrFromPlayers(energyAvailableOrDrainable);
+      }
 
       return deltaEnergy;
     }
-    public float EstimateTotalDemand()
+
+
+    /// <summary>
+    /// Mode Charge will remove/Demand from the PowerSystem.
+    /// </summary>
+    /// <param name="dt"></param>
+    /// <returns></returns>
+    public float EstimateTotalDemand(float dt)
     {
-      return GetAllPlayerEitr() * DeltaTimeRechargeRate;
+      DeltaTime = dt;
+      if (Mode == PowerConduitMode.Drain) return 0f;
+      return GetAllPlayerRemainingEitrCapacity() * EitrVaporToEnergyRatio * DeltaTimeRechargeRate;
+    }
+
+    /// <summary>
+    /// Drain will Add/Supply to the PowerSystem
+    /// </summary>
+    /// <param name="dt"></param>
+    /// <returns></returns>
+    public float EstimateTotalSupply(float dt)
+    {
+      DeltaTime = dt;
+      if (Mode == PowerConduitMode.Charge) return 0f;
+      return GetAllPlayerEitr() * EitrVaporToEnergyRatio * DeltaTimeRechargeRate;
     }
 
     private bool _isActive = true;

@@ -94,16 +94,16 @@ public static class VehicleZdoVars
   // for power systems
   public const string PowerSystem_NetworkId = "PowerSystem_NetworkId";
   public const string PowerSystem_Energy = "PowerSystem_StoredEnergy";
-  public const string Power_StoredFuel = "PowerSystem_StoredFuel";
-  public const string Power_FuelOutputRate = "PowerSystem_FuelOutputRate";
-  public const string Power_FuelType = "PowerSystem_FuelType";
+  public const string PowerSystem_StoredFuel = "PowerSystem_StoredFuel";
+  public const string PowerSystem_FuelOutputRate = "PowerSystem_FuelOutputRate";
+  public const string PowerSystem_FuelType = "PowerSystem_FuelType";
   public const string PowerSystem_EnergyCapacity = "PowerSystem_StoredEnergyCapacity";
-  public const string Power_StoredFuelCapacity = "PowerSystem_StoredFuelCapacity";
+  public const string PowerSystem_StoredFuelCapacity = "PowerSystem_StoredFuelCapacity";
 
   // power system booleans
-  public const string Power_IsForceDeactivated = "PowerSystem_ForceDeactivated"; // generators/storage
-  public const string Power_IsRunning = "PowerSystem_IsRunning"; // generators
+  public const string PowerSystem_IsForceDeactivated = "PowerSystem_ForceDeactivated"; // generators/storage
+  public const string PowerSystem_IsRunning = "PowerSystem_IsRunning"; // generators
 
-  public const string Power_IsDemanding = "PowerSystem_IsDemanding"; // consumers and storage
-  public const string Power_Intensity_Level = "PowerSystem_ConsumerLevel"; // levels of power set for the consumer IE engine speed etc.
+  public const string PowerSystem_IsDemanding = "PowerSystem_IsDemanding"; // consumers and storage
+  public const string PowerSystem_Intensity_Level = "PowerSystem_ConsumerLevel"; // levels of power set for the consumer IE engine speed etc.
 }

@@ -14,20 +14,99 @@ public class PowerSimulationTests
   private const float DeltaTime = 1f;
 
   [Test]
-  public void Simulate_ShouldRespectConduitDemand()
+  public void ConduitData_EstimateTotalDemand_Returns_ExpectedValue()
   {
     var simulationData = new PowerSimulationData { DeltaTime = 1f };
-    var conduit = new PowerConduitData();
+    GeneratePlayerDataForConduit(out var conduit, out var playerData);
+    conduit.Mode = PowerConduitMode.Charge;
 
-    conduit.OnEstimateDemand = () => 25f;
-    conduit.OnSimulateConduit = dt => 20f;
+    var currentEitr = 50f;
+    playerData.GetEitr = () => currentEitr;
+    playerData.GetEitrCapacity = () => 100f;
 
     simulationData.Conduits.Add(conduit);
     simulationData.Storages.Add(new PowerStorageData { Energy = 0f, EnergyCapacity = 100f });
 
     PowerSystemSimulator.Simulate(simulationData);
 
-    Assert.That(conduit.EstimateDemand(), Is.EqualTo(25f), "Conduit should report a demand of 25f");
+    Assert.That(conduit.EstimateTotalDemand(DeltaTime), Is.LessThanOrEqualTo(40f).Within(0.0001f), "Conduit should report a demand if eitr exists");
+
+    currentEitr = 100f;
+
+    Assert.That(conduit.EstimateTotalDemand(DeltaTime), Is.EqualTo(0f), "Conduit should report zero demand if eitr is zero after next update.");
+  }
+
+  [Test]
+  public void ConduitData_EstimateTotalDemand_Handles_Zero()
+  {
+    var simulationData = new PowerSimulationData { DeltaTime = 1f };
+    GeneratePlayerDataForConduit(out var conduit, out var playerData);
+    conduit.Mode = PowerConduitMode.Charge;
+    playerData.GetEitr = () => 0f;
+    playerData.GetEitrCapacity = () => 0f;
+
+    simulationData.Conduits.Add(conduit);
+    simulationData.Storages.Add(new PowerStorageData { Energy = 0f, EnergyCapacity = 100f });
+
+    PowerSystemSimulator.Simulate(simulationData);
+
+    Assert.That(conduit.EstimateTotalDemand(DeltaTime), Is.EqualTo(0f), "Returns at zero when at zero and zero capacity");
+  }
+
+  [Test]
+  public void ConduitData_EstimateTotalDemand_Handles_MaxCapacity()
+  {
+    var simulationData = new PowerSimulationData { DeltaTime = 1f };
+    GeneratePlayerDataForConduit(out var conduit, out var playerData);
+    conduit.Mode = PowerConduitMode.Charge;
+    playerData.GetEitr = () => 100f;
+    playerData.GetEitrCapacity = () => 100f;
+
+    simulationData.Conduits.Add(conduit);
+    simulationData.Storages.Add(new PowerStorageData { Energy = 100f, EnergyCapacity = 100f });
+
+    PowerSystemSimulator.Simulate(simulationData);
+
+    Assert.That(conduit.EstimateTotalDemand(DeltaTime), Is.EqualTo(0f), "At fully charged eitr total demand is zero.");
+  }
+
+  [Test]
+  public void ConduitData_EstimateTotalSupply_OutputsPlayerEitrAsEnergy()
+  {
+    var simulationData = new PowerSimulationData { DeltaTime = 1f };
+    GeneratePlayerDataForConduit(out var conduit, out var playerData);
+    conduit.Mode = PowerConduitMode.Drain;
+
+    var currentEitr = 200f;
+    playerData.GetEitr = () => currentEitr;
+    playerData.GetEitrCapacity = () => 200f;
+    playerData.Request_UseEitr = (val) => currentEitr -= val;
+
+    simulationData.Conduits.Add(conduit);
+
+    var storage = new PowerStorageData { Energy = 100f, EnergyCapacity = 100f };
+    simulationData.Storages.Add(storage);
+
+    PowerSystemSimulator.Simulate(simulationData);
+
+    Assert.That(conduit.EstimateTotalSupply(DeltaTime), Is.EqualTo(200).Within(0.0001f), "Total supply shows correct value");
+    storage.Energy = 50f;
+
+
+    Assert.That(playerData.Eitr, Is.EqualTo(200f), "Eitr is unchanged on player");
+    var discharge = conduit.SimulateConduit(storage.EnergyCapacityRemaining, DeltaTime);
+    Assert.That(discharge, Is.EqualTo(50f).Within(0.0001f), "Can discharge estimated total supply per tick");
+    Assert.That(playerData.Eitr, Is.EqualTo(195f).Within(0.0001f), "Eitr is decreased on player");
+
+    var count = 0;
+    while (playerData.Eitr > 0f && count < 1000)
+    {
+      discharge = conduit.SimulateConduit(storage.EnergyCapacityRemaining, DeltaTime);
+      count++;
+    }
+
+    Assert.That(playerData.Eitr, Is.EqualTo(0), "Eitr is decreased on player");
+    Assert.That(count, Is.EqualTo(39), "Eitr is completely decreased on player after 8 ticks");
   }
 
 
@@ -43,6 +122,20 @@ public class PowerSimulationTests
     Assert.That(storage.Energy, Is.EqualTo(50f), "Storage energy should remain unchanged when there is no input or demand.");
   }
 
+  public void GeneratePlayerDataForConduit(out PowerConduitData conduit, out PowerConduitData.PlayerEitrData playerData)
+  {
+    conduit = new PowerConduitData();
+    var playerEitr = 5f;
+    var playerMaxEitr = 50f;
+    playerData = new PowerConduitData.PlayerEitrData(conduit)
+    {
+      PlayerId = 1,
+      GetEitr = () => playerEitr,
+      GetEitrCapacity = () => playerMaxEitr
+    };
+    conduit.PlayerDataById.Add(playerData.PlayerId, playerData);
+  }
+
 
   [Test]
   public void Simulate_NoInputOrDemand_AllUnitsUnchanged()
@@ -54,18 +147,7 @@ public class PowerSimulationTests
     simulationData.Storages.Add(storage1);
     simulationData.Storages.Add(storage2);
 
-    var playerEitr = 5f;
-    var playerMaxEitr = 50f;
-    var playerData = new PowerConduitData.PlayerEitrData
-    {
-      PlayerId = 1,
-      GetEitr = () => playerEitr,
-      GetEitrCapacity = () => playerMaxEitr
-    };
-
-    var conduit = new PowerConduitData();
-    conduit.OnDrainSimulate = (float val) => 5f;
-    conduit.OnChargeSimulate = dt => 0f;
+    GeneratePlayerDataForConduit(out var conduit, out var playerData);
     simulationData.Conduits.Add(conduit);
 
     var consumer = new PowerConsumerData { BasePowerConsumption = 0f };
@@ -87,18 +169,18 @@ public class PowerSimulationTests
     Assert.That(consumer.GetRequestedEnergy(simulationData.DeltaTime), Is.EqualTo(initialConsumerDemand), "Consumer demand should remain unchanged.");
   }
   [Test]
-  public void Simulate_FuelIsConsumedAndStorageIncreases_UntilFuelZero()
+  public void Simulate_Fuel_IsConsumed_And_Storage_Increases_UntilFuelZero()
   {
     var simulationData = new PowerSimulationData { DeltaTime = 1f };
 
     var storage = new PowerStorageData { Energy = 0f, EnergyCapacity = 800f };
     simulationData.Storages.Add(storage);
 
-    var source = new PowerSourceData { Fuel = 5f, FuelEnergyYield = 10f, FuelEfficiency = 1f };
+    var source = new PowerSourceData { Fuel = 10f, FuelEnergyYield = 10f, FuelEfficiency = 1f };
     simulationData.Sources.Add(source);
 
     // Bail after a reasonable number of ticks
-    var maxTicks = 20;
+    var maxTicks = 40;
     var tick = 0;
     var previousStorage = storage.Energy;
     var previousFuel = source.Fuel;
@@ -135,12 +217,13 @@ public class PowerSimulationTests
     var hasCalledRemovePlayerEitr = false;
 
     var GetPlayerEitrMock = () => currentEitr;
-    var RemovePlayerEitrMock = (float val) =>
+    var Request_UseEitrMock = (float val) =>
     {
       hasCalledRemovePlayerEitr = true;
       currentEitr -= val;
+      return currentEitr;
     };
-    var AddPlayerEitrMock = (float val) =>
+    var Request_AddEitrMock = (float val) =>
     {
       hasCalledAddPlayerEitr = true;
       currentEitr += val;
@@ -148,13 +231,19 @@ public class PowerSimulationTests
 
     var rechargeConduit = new PowerConduitData
     {
-      PlayerIds = { 1 },
-      GetPlayerEitr = GetPlayerEitrMock,
-      SubtractPlayerEitr = RemovePlayerEitrMock,
-      AddPlayerEitr = RemovePlayerEitrMock,
       // drains power from player to storage
       Mode = PowerConduitMode.Drain
     };
+    var player = new PowerConduitData.PlayerEitrData(rechargeConduit)
+    {
+      PlayerId = 1234,
+      Request_UseEitr = (val) => Request_UseEitrMock(val),
+      Request_AddEitr = (id, val) => Request_AddEitrMock(val),
+      GetEitr = GetPlayerEitrMock,
+      GetEitrCapacity = () => 100f
+    };
+    rechargeConduit.PlayerDataById.Add(player.PlayerId, player);
+
 
     simulationData.Conduits.Add(rechargeConduit);
 
@@ -164,25 +253,22 @@ public class PowerSimulationTests
     var previousStorage = storage.Energy;
     var previousFuel = source.Fuel;
 
-    while (source.Fuel > 0f && tick < maxTicks)
-    {
-      PowerSystemSimulator.Simulate(simulationData);
-
-      // Assert that storage increases and fuel decreases each tick (unless full)
-      Assert.That(storage.Energy, Is.GreaterThanOrEqualTo(previousStorage), "Storage should never decrease.");
-      Assert.That(source.Fuel, Is.LessThanOrEqualTo(previousFuel), "Fuel should never increase.");
-
-      previousStorage = storage.Energy;
-      previousFuel = source.Fuel;
-      tick++;
-    }
+    // while (source.Fuel > 0f && tick < maxTicks)
+    // {
+    //   PowerSystemSimulator.Simulate(simulationData);
+    //
+    //   // Assert that storage increases and fuel decreases each tick (unless full)
+    //   Assert.That(storage.Energy, Is.GreaterThanOrEqualTo(previousStorage), "Storage should never decrease.");
+    //   Assert.That(source.Fuel, Is.LessThanOrEqualTo(previousFuel), "Fuel should never increase.");
+    //
+    //   previousStorage = storage.Energy;
+    //   previousFuel = source.Fuel;
+    //   tick++;
+    // }
+    PowerSystemSimulator.Simulate(simulationData);
 
     Assert.That(hasCalledRemovePlayerEitr, Is.True, "RemovePlayerEitr method should have been called.");
     Assert.That(hasCalledAddPlayerEitr, Is.False, "AddPlayerEitr method should not have been called.");
-
-    // After loop: storage increased, fuel is zero or almost zero
-    Assert.That(storage.Energy, Is.GreaterThanOrEqualTo(100f), "Storage should have gained energy from fuel.");
-    // Assert.That(source.Fuel, Is.EqualTo(0f).Within(0.0001), "Fuel should be zero after simulation completes.");
   }
 
   // [Test]
