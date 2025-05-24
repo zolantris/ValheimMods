@@ -2,9 +2,7 @@
 // ReSharper disable NamespaceStyle
 
 using System;
-using System.Collections.Generic;
-using UnityEngine;
-using ValheimVehicles.Structs;
+using ValheimVehicles.SharedScripts.Modules;
 
 namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
 {
@@ -18,7 +16,7 @@ namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
   public partial class PowerSourceData : PowerSystemComputeData
   {
     public static float OutputRateDefault = 10f;
-    public static float MaxFuelDefault = 100f;
+    public static float MaxFuelCapacityDefault = 100f;
     public static float FuelEfficiencyDefault = 10f;
     public static float FuelConsumptionRateDefault = 1f;
     public static float FuelEnergyYieldDefault = 10f;
@@ -26,7 +24,7 @@ namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
     public override bool IsActive => true;
 
     public float Fuel = 0;
-    public float MaxFuel = MaxFuelDefault;
+    public float FuelCapacity = MaxFuelCapacityDefault;
     public float OutputRate = OutputRateDefault;
 
     public float FuelConsumptionRate = FuelConsumptionRateDefault;
@@ -52,9 +50,9 @@ namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
     public void OnPropertiesUpdate()
     {
       FuelEfficiency = GetFuelEfficiency(fuelType);
-      FuelConsumptionRate = Mathf.Max(0f, FuelConsumptionRate);
-      OutputRate = Mathf.Max(0f, OutputRateDefault);
-      MaxFuel = MaxFuelDefault;
+      FuelConsumptionRate = MathX.Max(0f, FuelConsumptionRate);
+      OutputRate = MathX.Max(0f, OutputRateDefault);
+      FuelCapacity = MaxFuelCapacityDefault;
     }
 
     public bool CanProducePower(float deltaTime, float remainingDemand)
@@ -73,12 +71,12 @@ namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
       if (Fuel <= 0f) return 0f;
 
       // clamp to never exceed fuel-amount
-      var maxFuelUsable = Mathf.Min(FuelConsumptionRate * deltaTime, Fuel);
+      var maxFuelUsable = MathX.Min(FuelConsumptionRate * deltaTime, Fuel);
 
       // max amount of energy produce per amount burned.
       var maxEnergyFromFuel = maxFuelUsable * FuelEnergyYield * FuelEfficiency;
 
-      return Mathf.Min(OutputRate * deltaTime, maxEnergyFromFuel);
+      return MathX.Min(OutputRate * deltaTime, maxEnergyFromFuel);
     }
 
     /// <summary>
@@ -88,16 +86,16 @@ namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
     public void CommitEnergyUsed(float energyUsed)
     {
       var requiredFuel = energyUsed / (FuelEnergyYield * FuelEfficiency);
-      Fuel = Mathf.Max(0f, Fuel - requiredFuel);
+      Fuel = MathX.Max(0f, Fuel - requiredFuel);
     }
 
     public float ProducePower(float requestedEnergy)
     {
       var maxDeliverable = Fuel * FuelEnergyYield * FuelEfficiency;
-      var actual = Mathf.Min(requestedEnergy, maxDeliverable);
+      var actual = MathX.Min(requestedEnergy, maxDeliverable);
 
       var requiredFuel = actual / (FuelEnergyYield * FuelEfficiency);
-      Fuel = Mathf.Max(0f, Fuel - requiredFuel);
+      Fuel = MathX.Max(0f, Fuel - requiredFuel);
 
       LastProducedEnergy = actual;
       return actual;
@@ -135,9 +133,9 @@ namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
       var energyPerFuel = FuelEnergyYield * FuelEfficiency;
       if (energyPerFuel <= 0f) return 0f;
 
-      var maxFuelBurn = Mathf.Min(FuelConsumptionRate * deltaTime, snapshotFuel);
+      var maxFuelBurn = MathX.Min(FuelConsumptionRate * deltaTime, snapshotFuel);
       var maxEnergy = maxFuelBurn * energyPerFuel;
-      return Mathf.Min(OutputRate * deltaTime, Mathf.Min(remainingDemand, maxEnergy));
+      return MathX.Min(OutputRate * deltaTime, MathX.Min(remainingDemand, maxEnergy));
     }
 
 
@@ -162,14 +160,14 @@ namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
         SetRunning(true);
 
       var maxEnergy = maxOutputWatts * deltaTime;
-      var energyToProduce = Mathf.Min(remainingDemand, maxEnergy);
+      var energyToProduce = MathX.Min(remainingDemand, maxEnergy);
 
       // Limit based on fuel consumption rate
       var maxFuelUsable = FuelConsumptionRate * deltaTime;
       var maxEnergyFromFuel = maxFuelUsable * FuelEnergyYield * FuelEfficiency;
 
       // Cap energy to available fuel and consumption rate
-      energyToProduce = Mathf.Min(energyToProduce, maxEnergyFromFuel);
+      energyToProduce = MathX.Min(energyToProduce, maxEnergyFromFuel);
 
       var requiredFuel = energyToProduce / (FuelEnergyYield * FuelEfficiency);
       if (Fuel < requiredFuel)
@@ -185,14 +183,14 @@ namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
 
     public void AddFuel(float amount)
     {
-      var space = MaxFuel - Fuel;
-      var toAdd = Mathf.Min(space, amount);
+      var space = FuelCapacity - Fuel;
+      var toAdd = MathX.Min(space, amount);
       Fuel += toAdd;
     }
 
     public void SetFuel(float val)
     {
-      Fuel = Mathf.Clamp(val, 0f, MaxFuel);
+      Fuel = MathX.Clamp(val, 0f, FuelCapacity);
     }
   }
 }

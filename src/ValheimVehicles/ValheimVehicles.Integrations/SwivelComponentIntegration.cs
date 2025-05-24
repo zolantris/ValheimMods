@@ -424,7 +424,7 @@
 
     public override void InitPowerConsumer()
     {
-      var powerConsumerIntegration = gameObject.AddComponent<PowerConsumerComponentIntegration>();
+      var powerConsumerIntegration = gameObject.AddComponent<PowerConsumerBridge>();
       swivelPowerConsumer = powerConsumerIntegration.Logic;
       UpdatePowerConsumer();
       UpdateBasePowerConsumption();

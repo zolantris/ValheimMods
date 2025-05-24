@@ -146,7 +146,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
     VehicleZDOWatcherDelegate.RegisterToZdoManager();
 
     // power network mod
-    PowerZDONetworkManager.Init();
+    PowerSystemClusterManager.Init();
 
     AddModSupport();
 

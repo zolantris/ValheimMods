@@ -6,6 +6,7 @@ using System.Linq;
 using Jotunn.Entities;
 using Jotunn.Managers;
 using UnityEngine;
+using ZdoWatcher.ZdoWatcher.Utils;
 using Zolantris.Shared.Debug;
 using Logger = Jotunn.Logger;
 
@@ -208,11 +209,6 @@ public class ZdoWatchController : MonoBehaviour
     return id != 0;
   }
 
-  public static int ZdoIdToId(ZDOID zdoid)
-  {
-    return (int)zdoid.UserID + (int)zdoid.ID;
-  }
-
   public int GetOrCreatePersistentID(ZDO? zdo)
   {
     if (zdo == null)
@@ -225,7 +221,7 @@ public class ZdoWatchController : MonoBehaviour
 
     var id = zdo.GetInt(ZdoVarController.PersistentUidHash, 0);
     if (id != 0) return id;
-    id = ZdoIdToId(zdo.m_uid);
+    id = ZdoUtils.ZdoIdToId(zdo.m_uid);
 
     // If the ZDO is not unique/exists in the dictionary, this number must be incremented to prevent a collision
     while (_zdoGuidLookup.ContainsKey(id))

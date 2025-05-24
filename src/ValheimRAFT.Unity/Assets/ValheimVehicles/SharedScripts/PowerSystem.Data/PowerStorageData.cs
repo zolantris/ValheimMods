@@ -1,58 +1,59 @@
 // ReSharper disable ArrangeNamespaceBody
 // ReSharper disable NamespaceStyle
 
-using UnityEngine;
-using ValheimVehicles.Interfaces;
+using ValheimVehicles.SharedScripts.Modules;
 namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
 {
   // Todo extend IPowerStorage
   public partial class PowerStorageData : PowerSystemComputeData
   {
     public static float MaxCapacityDefault = 800f;
-    public float StoredEnergy;
-    public float MaxCapacity = MaxCapacityDefault;
+    public float Energy;
+    public float EnergyCapacity = MaxCapacityDefault;
     public float _peekedDischargeAmount = 0f;
 
     public PowerStorageData() {}
     public float EstimateAvailableEnergy()
     {
-      return Mathf.Clamp(StoredEnergy, 0f, MaxCapacity);
+      return MathX.Clamp(Energy, 0f, EnergyCapacity);
     }
+
+    public float CapacityRemaining => MathX.Clamp(EnergyCapacity - Energy, 0, EnergyCapacity);
 
     // deprecated
     public float PeekDischarge(float amount)
     {
-      _peekedDischargeAmount = MathUtils.RoundToHundredth(Mathf.Min(StoredEnergy, amount));
+      _peekedDischargeAmount = MathUtils.RoundToHundredth(MathX.Min(Energy, amount));
       return _peekedDischargeAmount;
     }
 
 
     public float PeekDischarge(float amount, float snapshotValue)
     {
-      _peekedDischargeAmount = MathUtils.RoundToHundredth(Mathf.Min(snapshotValue, amount));
+      _peekedDischargeAmount = MathUtils.RoundToHundredth(MathX.Min(snapshotValue, amount));
       return _peekedDischargeAmount;
     }
 
     public float DrainEnergy(float requested)
     {
-      var used = Mathf.Min(requested, StoredEnergy);
-      StoredEnergy -= used;
+      var used = MathX.Min(requested, Energy);
+      Energy -= used;
       return used;
     }
 
     public float AddEnergy(float amount)
     {
-      var availableSpace = Mathf.Max(0f, MaxCapacity - StoredEnergy);
-      var accepted = Mathf.Min(availableSpace, amount);
-      StoredEnergy += accepted;
+      var availableSpace = MathX.Max(0f, EnergyCapacity - Energy);
+      var accepted = MathX.Min(availableSpace, amount);
+      Energy += accepted;
       return accepted;
     }
 
     public void CommitDischarge(float amount)
     {
-      var commit = MathUtils.RoundToHundredth(Mathf.Min(_peekedDischargeAmount, amount));
+      var commit = MathUtils.RoundToHundredth(MathX.Min(_peekedDischargeAmount, amount));
 
-      var localEnergy = StoredEnergy - commit;
+      var localEnergy = Energy - commit;
       SetStoredEnergy(localEnergy);
 
       _peekedDischargeAmount = 0f;
@@ -60,12 +61,12 @@ namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
 
     public bool NeedsCharging()
     {
-      return StoredEnergy < MaxCapacity;
+      return Energy < EnergyCapacity;
     }
 
     public void SetStoredEnergy(float val)
     {
-      StoredEnergy = Mathf.Clamp(val, 0f, MaxCapacity);
+      Energy = MathX.Clamp(val, 0f, EnergyCapacity);
     }
     public override bool IsActive
     {

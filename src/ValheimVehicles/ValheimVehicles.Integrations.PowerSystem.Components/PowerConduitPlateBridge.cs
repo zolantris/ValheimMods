@@ -12,8 +12,8 @@ using ValheimVehicles.SharedScripts.PowerSystem.Compute;
 using ValheimVehicles.SharedScripts.PowerSystem.Interfaces;
 using ValheimVehicles.Structs;
 
-public class PowerConduitPlateComponentIntegration :
-  NetworkedComponentIntegration<PowerConduitPlateComponentIntegration, PowerConduitPlateComponent, NoZDOConfig<PowerConduitPlateComponentIntegration>>,
+public class PowerConduitPlateBridge :
+  PowerNetworkDataEntity<PowerConduitPlateBridge, PowerConduitPlateComponent, PowerConduitData>,
   IPowerConduit
 {
   public string NetworkId => Logic.NetworkId;
@@ -23,8 +23,7 @@ public class PowerConduitPlateComponentIntegration :
   public bool IsActive => Data.IsActive;
   public bool IsDemanding => Logic.IsDemanding;
 
-  public static List<PowerConduitPlateComponentIntegration> Instances = new();
-  public static ZDOID? Zdoid = null;
+  public static List<PowerConduitPlateBridge> Instances = new();
 
   public void OnEnable()
   {
@@ -57,70 +56,19 @@ public class PowerConduitPlateComponentIntegration :
   public FixedJoint m_joint;
   private Transform? _lastParent;
 
-  private const string RPC_AddEitr_Name = nameof(RPC_AddEitr);
-
-  protected override void RegisterDefaultRPCs()
-  {
-    RpcHandler.Register<float>(RPC_AddEitr_Name, RPC_AddEitr);
-  }
-
-  public static void Request_AddEitr(Player player, float amount)
-  {
-    if (player == null || amount <= 0f)
-    {
-      LoggerProvider.LogWarning("Player is null or amount is <= 0");
-      return;
-    }
-
-    var netView = player.GetComponent<ZNetView>();
-    if (!netView || !netView.IsValid())
-    {
-      LoggerProvider.LogWarning("Player has no ZNetView or is invalid");
-      return;
-    }
-
-    if (!netView.IsOwner())
-    {
-      var zdoOwner = netView.GetZDO().GetOwner();
-      netView.InvokeRPC(zdoOwner, RPC_AddEitr_Name, amount);
-    }
-    else
-    {
-      player.AddEitr(amount);
-    }
-  }
-
   private void HandlePlayerEnterActiveZone(Player player)
   {
-    if (player == null) return;
-    var id = player.GetPlayerID();
-    if (!Data.PlayerIds.Contains(id))
-    {
-      Data.PlayerIds.Add(id);
-      Data.ResolvePlayersFromIds();
-    }
+    if (!player) return;
+    Data.AddPlayer(player);
     Logic.SetHasPlayerInRange(Data.HasPlayersWithEitr);
   }
 
   private void HandlePlayerExitActiveZone(Player player)
   {
-    if (player == null) return;
-    Data.PlayerIds.Remove(player.GetPlayerID());
-    Data.ResolvePlayersFromIds();
+    if (!player) return;
+    Data.RemovePlayer(player);
     Logic.SetHasPlayerInRange(Data.HasPlayersWithEitr);
   }
-
-#region RPCS
-
-  private void RPC_AddEitr(long sender, float amount)
-  {
-    if (Player.m_localPlayer != null)
-    {
-      Player.m_localPlayer.AddEitr(amount);
-    }
-  }
-
-#endregion
 
 #region Events
 
@@ -137,7 +85,7 @@ public class PowerConduitPlateComponentIntegration :
 
     if (this.IsNetViewValid(out var netView))
     {
-      PowerSystemRPC.SendPlayerEnteredConduit(netView.GetZDO().m_uid, player.GetPlayerID());
+      PowerSystemRPC.Request_PlayerEnteredConduit(netView.GetZDO().m_uid, player.GetPlayerID());
     }
   }
 
@@ -149,7 +97,7 @@ public class PowerConduitPlateComponentIntegration :
 
     if (this.IsNetViewValid(out var netView))
     {
-      PowerSystemRPC.SendPlayerExitedConduit(netView.GetZDO().m_uid, player.GetPlayerID());
+      PowerSystemRPC.Request_PlayerExitedConduit(netView.GetZDO().m_uid, player.GetPlayerID());
     }
   }
 
@@ -157,25 +105,14 @@ public class PowerConduitPlateComponentIntegration :
 
   protected override void Start()
   {
-    this.WaitForZNetView((netView) =>
+    this.WaitForPowerSystemNodeData<PowerConduitData>((data) =>
     {
-      var zdo = netView.GetZDO();
-      if (!PowerZDONetworkManager.TryGetData(zdo, out PowerConduitData data, true))
-      {
-        LoggerProvider.LogWarning("[PowerConduitPlateComponentIntegration] Failed to get PowerConduitData from PowerZDONetworkManager.");
-        return;
-      }
-      Zdoid = zdo.m_uid;
       Data = data;
       Data.Load();
-      PowerNetworkController.RegisterPowerComponent(this);
-      PowerZDONetworkManager.RegisterPowerComponentUpdater(zdo.m_uid, data);
       Logic.GetPlayerEitr = () => PowerConduitData.GetAverageEitr(Data.Players);
-      Logic.AddPlayerEitr = (float val) => Data.AddEitrToPlayers(val);
-      Logic.SubtractPlayerEitr = (float val) => Data.SubtractEitrFromPlayers(val);
-
+      Logic.AddPlayerEitr = val => Data.AddEitrToPlayers(val);
+      Logic.SubtractPlayerEitr = val => Data.TryRemoveEitrFromPlayers(val);
       _lastParent = transform.parent;
-
       AddRigidbodyIfParentIsRigidbody();
     });
 
@@ -212,11 +149,6 @@ public class PowerConduitPlateComponentIntegration :
 
   protected override void OnDestroy()
   {
-    if (Zdoid.HasValue)
-    {
-      PowerZDONetworkManager.RemovePowerComponentUpdater(Zdoid.Value);
-    }
-    PowerNetworkController.UnregisterPowerComponent(this);
     base.OnDestroy();
   }
 

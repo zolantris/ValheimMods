@@ -7,10 +7,10 @@ namespace ValheimVehicles.Integrations;
 
 public class PowerConduitHover : MonoBehaviour, Hoverable
 {
-  private PowerConduitPlateComponentIntegration _plateComponent;
+  private PowerConduitPlateBridge _plateComponent;
   public void Awake()
   {
-    _plateComponent = GetComponent<PowerConduitPlateComponentIntegration>();
+    _plateComponent = GetComponent<PowerConduitPlateBridge>();
   }
 
   public string GetHoverText()

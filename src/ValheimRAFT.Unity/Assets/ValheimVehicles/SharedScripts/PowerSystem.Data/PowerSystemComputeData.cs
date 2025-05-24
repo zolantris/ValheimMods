@@ -4,19 +4,10 @@
 using System;
 namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
 {
-  public interface IPowerComputeBase
-  {
-    float Range { get; set; }
-    string NetworkId { get; set; }
-    int PrefabHash { get; set; }
-    Action? OnLoad { get; set; }
-    public void Load();
-    public bool IsActive { get; }
-  }
-
-  public abstract partial class PowerSystemComputeData : IPowerComputeBase
+  public abstract partial class PowerSystemComputeData : IPowerSystemEntityData
   {
     // constants
+    private bool _isActive = true;
     protected const string NetworkIdUnassigned = "UNASSIGNED";
 
     // static
@@ -25,7 +16,7 @@ namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
 
     // local
 
-    public float Range
+    public float ConnectionRange
     {
       get;
       set;
@@ -48,12 +39,35 @@ namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
       set;
     }
 
+    public Action? OnSave
+    {
+      get;
+      set;
+    }
+
+    public Action? OnActive
+    {
+      get;
+      set;
+    }
+
     // methods
     public void Load()
     {
       OnLoad?.Invoke();
     }
 
-    public abstract bool IsActive { get; }
+    public void Save()
+    {
+      OnSave?.Invoke();
+    }
+
+    public void SetActive(bool val)
+    {
+      OnActive?.Invoke();
+      _isActive = val;
+    }
+
+    public virtual bool IsActive => _isActive;
   }
 }

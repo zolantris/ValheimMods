@@ -207,8 +207,8 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
       var storageDemand = 0f;
       foreach (var storage in _storage)
       {
-        if (storage.ChargeLevel < storage.Capacity)
-          storageDemand += Mathf.Clamp(storage.Capacity - storage.ChargeLevel, 0f, storage.Capacity);
+        if (storage.ChargeLevel < storage.Energy)
+          storageDemand += Mathf.Clamp(storage.Energy - storage.ChargeLevel, 0f, storage.Energy);
       }
 
       totalDemand += storageDemand;
@@ -245,7 +245,7 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
       var offeredFromSources = 0f;
       var sourceOfferMap = new Dictionary<IPowerSource, float>();
 
-      var hasChargeableStorage = _storage.Exists(s => s.ChargeLevel < s.Capacity);
+      var hasChargeableStorage = _storage.Exists(s => s.ChargeLevel < s.Energy);
 
       if (remainingDemand > 0f || hasChargeableStorage)
       {
@@ -301,7 +301,7 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
       {
         if (totalAvailable <= 0f) break;
 
-        var remainingCapacity = Mathf.Clamp(storage.Capacity - storage.ChargeLevel, 0f, storage.Capacity);
+        var remainingCapacity = Mathf.Clamp(storage.Energy - storage.ChargeLevel, 0f, storage.Energy);
         if (remainingCapacity <= 0f) continue;
 
         var accepted = storage.Charge(totalAvailable);

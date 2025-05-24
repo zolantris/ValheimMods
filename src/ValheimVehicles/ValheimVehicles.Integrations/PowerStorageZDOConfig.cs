@@ -6,11 +6,11 @@ using ValheimVehicles.Structs;
 
 namespace ValheimVehicles.Integrations.ZDOConfigs;
 
-public class PowerStorageZDOConfig : INetworkedZDOConfig<PowerStorageComponentIntegration>
+public class PowerStorageZDOConfig : INetworkedZDOConfig<PowerStorageBridge>
 {
-  public void Load(ZDO zdo, PowerStorageComponentIntegration component)
+  public void Load(ZDO zdo, PowerStorageBridge component)
   {
-    var stored = zdo.GetFloat(VehicleZdoVars.Power_StoredEnergy, component.Logic.ChargeLevel);
+    var stored = zdo.GetFloat(VehicleZdoVars.PowerSystem_Energy, component.Logic.ChargeLevel);
 
     // if (Mathf.Approximately(stored, 0f))
     // {
@@ -20,8 +20,8 @@ public class PowerStorageZDOConfig : INetworkedZDOConfig<PowerStorageComponentIn
     component.Logic.SetStoredEnergy(stored);
   }
 
-  public void Save(ZDO zdo, PowerStorageComponentIntegration component)
+  public void Save(ZDO zdo, PowerStorageBridge component)
   {
-    zdo.Set(VehicleZdoVars.Power_StoredEnergy, component.Logic.ChargeLevel);
+    zdo.Set(VehicleZdoVars.PowerSystem_Energy, component.Logic.ChargeLevel);
   }
 }

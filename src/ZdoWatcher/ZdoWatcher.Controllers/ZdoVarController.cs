@@ -29,7 +29,7 @@ public static class ZdoVarController
     string value)
   {
     var keyId = NameToVar(unityPlugin, key);
-    ZdoVariables.Add(key, value);
+    ZdoVariables.Add(keyId, value);
   }
 
   public static void ListPublicVar(bool shouldLog = true)

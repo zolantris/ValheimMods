@@ -90,9 +90,9 @@ public class DEBUG_ServerForceSpawn
         var powerConsumer = ri.GetComponent<IPowerConsumer>();
         var powerPylon = ri.GetComponent<PowerPylon>();
         var powerConduit = ri.GetComponent<IPowerConduit>();
-        var powerConduitIntegration = ri.GetComponent<PowerConduitPlateDrainComponentIntegration>();
+        var powerConduitIntegration = ri.GetComponent<PowerConduitPlateDrainBridge>();
 
-        var powerStorageIntegration = ri.GetComponent<PowerStorageComponentIntegration>();
+        var powerStorageIntegration = ri.GetComponent<PowerStorageBridge>();
         if (powerStorageIntegration)
         {
           LoggerProvider.LogDebug("Has powerStorageIntegration");
@@ -102,36 +102,36 @@ public class DEBUG_ServerForceSpawn
           LoggerProvider.LogDebug("Has powerConduitIntegration");
         }
 
-        if (powerSource != null)
-        {
-          LoggerProvider.LogDebug("Has powerSource");
-          PowerNetworkController.RegisterPowerComponent(powerSource);
-          successCount++;
-        }
-        if (powerStorage != null)
-        {
-          LoggerProvider.LogDebug("Has powerStorage");
-          PowerNetworkController.RegisterPowerComponent(powerStorage);
-          successCount++;
-        }
-        if (powerConsumer != null)
-        {
-          LoggerProvider.LogDebug("Has powerConsumer");
-          PowerNetworkController.RegisterPowerComponent(powerConsumer);
-          successCount++;
-        }
-        if (powerPylon != null)
-        {
-          LoggerProvider.LogDebug("Has powerPylon");
-          PowerNetworkController.RegisterPowerComponent(powerPylon);
-          successCount++;
-        }
-        if (powerConduit != null)
-        {
-          LoggerProvider.LogDebug("Has powerConduit");
-          PowerNetworkController.RegisterPowerComponent(powerConduit);
-          successCount++;
-        }
+        // if (powerSource != null)
+        // {
+        //   LoggerProvider.LogDebug("Has powerSource");
+        //   PowerNetworkController.RegisterPowerComponent(powerSource);
+        //   successCount++;
+        // }
+        // if (powerStorage != null)
+        // {
+        //   LoggerProvider.LogDebug("Has powerStorage");
+        //   PowerNetworkController.RegisterPowerComponent(powerStorage);
+        //   successCount++;
+        // }
+        // if (powerConsumer != null)
+        // {
+        //   LoggerProvider.LogDebug("Has powerConsumer");
+        //   PowerNetworkController.RegisterPowerComponent(powerConsumer);
+        //   successCount++;
+        // }
+        // if (powerPylon != null)
+        // {
+        //   LoggerProvider.LogDebug("Has powerPylon");
+        //   PowerNetworkController.RegisterPowerComponent(powerPylon);
+        //   successCount++;
+        // }
+        // if (powerConduit != null)
+        // {
+        //   LoggerProvider.LogDebug("Has powerConduit");
+        //   PowerNetworkController.RegisterPowerComponent(powerConduit);
+        //   successCount++;
+        // }
       }
       catch (Exception e)
       {

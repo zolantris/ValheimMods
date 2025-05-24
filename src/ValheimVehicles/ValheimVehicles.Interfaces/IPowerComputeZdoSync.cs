@@ -1,4 +1,4 @@
-namespace ValheimVehicles.Interfaces;
+namespace ValheimVehicles.Integrations.PowerSystem.Interfaces;
 
 public interface IPowerComputeZdoSync
 {

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using ValheimVehicles.Structs;
 using ZdoWatcher;
+using ZdoWatcher.ZdoWatcher.Utils;
 using Logger = Jotunn.Logger;
 
 namespace ValheimVehicles.Components;
@@ -48,7 +49,7 @@ public class CultivatableComponent : MonoBehaviour
     uvrotation /= 360f;
     var uvscale = new Vector2(transform.localScale.x, transform.localScale.z);
     uvscale /= textureScale;
-    MeshRenderer[] renderers = GetComponentsInChildren<MeshRenderer>();
+    var renderers = GetComponentsInChildren<MeshRenderer>();
     for (var i = 0; i < renderers.Length; i++)
     {
       var mat = renderers[i].material;
@@ -143,7 +144,7 @@ public class CultivatableComponent : MonoBehaviour
       {
         var zdoparent = ZDOMan.instance.GetZDO(zdoid);
         id = zdoparent == null
-          ? ZdoWatchController.ZdoIdToId(zdoid)
+          ? ZdoUtils.ZdoIdToId(zdoid)
           : ZdoWatchController.Instance.GetOrCreatePersistentID(zdoparent);
         netview.m_zdo.Set(VehicleZdoVars.MBCultivatableParentIdHash, id);
       }

@@ -2,6 +2,7 @@
 // ReSharper disable NamespaceStyle
 
 using System.Collections.Generic;
+using ValheimVehicles.Helpers;
 using ValheimVehicles.SharedScripts;
 using ValheimVehicles.SharedScripts.PowerSystem;
 using ValheimVehicles.SharedScripts.PowerSystem.Compute;
@@ -21,7 +22,7 @@ namespace ValheimVehicles.Integrations.PowerSystem
       ZRoutedRpc.instance.Register<ZPackage>(RPC_NotifyZDOsChanged_Name, Client_NotifyZDOsChanged);
     }
 
-    public static void SendPowerZDOsChangedToNearbyPlayers(string networkId, List<ZDOID> zdos, PowerNetworkSimData simData, float range = 40f)
+    public static void SendPowerZDOsChangedToNearbyPlayers(string networkId, List<ZDOID> zdos, PowerSimulationData simData, float range = 40f)
     {
       var pkg = new ZPackage();
       pkg.Write(networkId);
@@ -45,9 +46,9 @@ namespace ValheimVehicles.Integrations.PowerSystem
         // Check if near any power node
         var isNearAny = false;
 
-        foreach (var (source, zdo) in simData.Sources)
+        foreach (var source in simData.Sources)
         {
-          if ((zdo.GetPosition() - playerPos).sqrMagnitude <= rangeSqr)
+          if ((source.zdo.GetPosition() - playerPos).sqrMagnitude <= rangeSqr)
           {
             isNearAny = true;
             break;
@@ -56,9 +57,9 @@ namespace ValheimVehicles.Integrations.PowerSystem
 
         if (!isNearAny)
         {
-          foreach (var (storage, zdo) in simData.Storages)
+          foreach (var storage in simData.Storages)
           {
-            if ((zdo.GetPosition() - playerPos).sqrMagnitude <= rangeSqr)
+            if ((storage.zdo.GetPosition() - playerPos).sqrMagnitude <= rangeSqr)
             {
               isNearAny = true;
               break;
@@ -68,9 +69,9 @@ namespace ValheimVehicles.Integrations.PowerSystem
 
         if (!isNearAny)
         {
-          foreach (var (conduit, zdo) in simData.Conduits)
+          foreach (var conduit in simData.Conduits)
           {
-            if ((zdo.GetPosition() - playerPos).sqrMagnitude <= rangeSqr)
+            if ((conduit.zdo.GetPosition() - playerPos).sqrMagnitude <= rangeSqr)
             {
               isNearAny = true;
               break;
@@ -80,9 +81,9 @@ namespace ValheimVehicles.Integrations.PowerSystem
 
         if (!isNearAny)
         {
-          foreach (var (pylon, zdo) in simData.Pylons)
+          foreach (var pylon in simData.Pylons)
           {
-            if ((zdo.GetPosition() - playerPos).sqrMagnitude <= rangeSqr)
+            if ((pylon.zdo.GetPosition() - playerPos).sqrMagnitude <= rangeSqr)
             {
               isNearAny = true;
               break;
@@ -112,7 +113,7 @@ namespace ValheimVehicles.Integrations.PowerSystem
         return;
       }
 
-      if (!PowerZDONetworkManager.TryGetData<PowerConduitData>(zdo, out var data))
+      if (!PowerSystemRegistry.TryGetData<PowerConduitData>(zdo, out var data))
       {
         LoggerProvider.LogWarning($"[PowerSystemRPC] No PowerConduitData found for {conduitId}");
         return;
@@ -137,20 +138,19 @@ namespace ValheimVehicles.Integrations.PowerSystem
         return;
       }
 
-      if (!PowerZDONetworkManager.TryGetData<PowerConduitData>(zdo, out var data))
+      if (!PowerSystemRegistry.TryGetData<PowerConduitData>(zdo, out var data))
       {
         LoggerProvider.LogWarning($"[PowerSystemRPC] No PowerConduitData found for {conduitId}");
         return;
       }
 
-      data.PlayerIds.Remove(playerId);
-      data.ResolvePlayersFromIds();
+      data.RemovePlayer(playerId);
     }
 
   #endregion
 
 
-    public static void SendPlayerEnteredConduit(ZDOID conduitId, long playerId)
+    public static void Request_PlayerEnteredConduit(ZDOID conduitId, long playerId)
     {
       var pkg = new ZPackage();
       pkg.Write(conduitId);
@@ -158,7 +158,7 @@ namespace ValheimVehicles.Integrations.PowerSystem
       ZRoutedRpc.instance.InvokeRoutedRPC(RPC_PlayerEnteredConduit_Name, pkg);
     }
 
-    public static void SendPlayerExitedConduit(ZDOID conduitId, long playerId)
+    public static void Request_PlayerExitedConduit(ZDOID conduitId, long playerId)
     {
       var pkg = new ZPackage();
       pkg.Write(conduitId);
@@ -180,18 +180,6 @@ namespace ValheimVehicles.Integrations.PowerSystem
         LoggerProvider.LogDebug($"[RPC] Client received update for ZDO: {zdoid} networkId: {networkId}");
         // Hook: Client should refresh visuals or cached logic here.
       }
-    }
-
-    public static void FirePowerZDOsChanged(List<ZDOID> changedZDOs)
-    {
-      if (changedZDOs == null || changedZDOs.Count == 0) return;
-
-      var pkg = new ZPackage();
-      pkg.Write(changedZDOs.Count);
-      foreach (var id in changedZDOs)
-        pkg.Write(id);
-
-      ZRoutedRpc.instance.InvokeRoutedRPC(ZRoutedRpc.Everybody, RPC_NotifyZDOsChanged_Name, pkg);
     }
   }
 }

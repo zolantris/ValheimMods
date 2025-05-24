@@ -1,6 +1,6 @@
 using ValheimVehicles.SharedScripts;
 
-public class PowerConduitPlateChargeComponentIntegration : PowerConduitPlateComponentIntegration
+public class PowerConduitPlateChargeBridge : PowerConduitPlateBridge
 {
   protected override void Start()
   {

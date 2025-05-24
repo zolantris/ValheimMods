@@ -1,8 +1,7 @@
-using System;
 using System.Collections.Generic;
 using UnityEngine;
 using ValheimVehicles.Helpers;
-using ValheimVehicles.Integrations.ZDOConfigs;
+using ValheimVehicles.Integrations.PowerSystem;
 using ValheimVehicles.SharedScripts;
 using ValheimVehicles.SharedScripts.PowerSystem;
 using ValheimVehicles.SharedScripts.PowerSystem.Compute;
@@ -10,13 +9,10 @@ using ValheimVehicles.Structs;
 
 namespace ValheimVehicles.Integrations;
 
-public class PowerSourceComponentIntegration :
-  NetworkedComponentIntegration<PowerSourceComponentIntegration, PowerSourceComponent, PowerSourceZDOConfig>, IPowerSource
+public class PowerSourceBridge :
+  PowerNetworkDataEntity<PowerSourceBridge, PowerSourceComponent, PowerSourceData>, IPowerSource
 {
-  public PowerSourceData Data = new();
-
-  public static List<PowerSourceComponentIntegration> Instances = new();
-  public static ZDOID? Zdoid = null;
+  public static List<PowerSourceBridge> Instances = new();
 
   public void OnEnable()
   {
@@ -28,45 +24,9 @@ public class PowerSourceComponentIntegration :
 
   public void OnDisable()
   {
-    if (Zdoid.HasValue)
-    {
-      PowerZDONetworkManager.RemovePowerComponentUpdater(Zdoid.Value);
-    }
     Instances.Remove(this);
     Instances.RemoveAll(x => !x);
-    PowerNetworkController.UnregisterPowerComponent(this);
   }
-
-  protected override void Awake()
-  {
-    base.Awake();
-    // don't do anything when we aren't initialized.
-  }
-
-  protected override void Start()
-  {
-    this.WaitForZNetView((netView) =>
-    {
-      var zdo = netView.GetZDO();
-      if (!PowerZDONetworkManager.TryGetData(zdo, out PowerSourceData data, true))
-      {
-        LoggerProvider.LogWarning("[PowerSourceComponentIntegration] Failed to get PowerSourceData from PowerZDONetworkManager.");
-        return;
-      }
-      Zdoid = zdo.m_uid;
-      Data = data;
-      Data.Load();
-
-      if (ZNet.instance.IsDedicated())
-      {
-        netView.m_zdo.SetOwner(ZDOMan.GetSessionID());
-      }
-      PowerNetworkController.RegisterPowerComponent(this);
-      PowerZDONetworkManager.RegisterPowerComponentUpdater(zdo.m_uid, data);
-      base.Start();
-    });
-  }
-
 
   protected override void RegisterDefaultRPCs()
   {
@@ -176,7 +136,7 @@ public class PowerSourceComponentIntegration :
   public void SetNetworkId(string id)
   {
     if (!this.IsNetViewValid(out var netView)) return;
-    var idFromZdo = netView.GetZDO().GetString(VehicleZdoVars.Power_NetworkId);
+    var idFromZdo = netView.GetZDO().GetString(VehicleZdoVars.PowerSystem_NetworkId);
     Logic.SetNetworkId(idFromZdo);
   }
 }

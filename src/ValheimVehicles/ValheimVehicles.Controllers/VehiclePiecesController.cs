@@ -25,6 +25,7 @@
   using ValheimVehicles.SharedScripts.Helpers;
   using ValheimVehicles.Structs;
   using ZdoWatcher;
+  using ZdoWatcher.ZdoWatcher.Utils;
   using static ValheimVehicles.Propulsion.Sail.SailAreaForce;
   using Component = UnityEngine.Component;
   using Logger = Jotunn.Logger;
@@ -2290,7 +2291,7 @@
         {
           var zdoparent = ZDOMan.instance.GetZDO(zdoid);
           id = zdoparent == null
-            ? ZdoWatchController.ZdoIdToId(zdoid)
+            ? ZdoUtils.ZdoIdToId(zdoid)
             : ZdoWatchController.Instance.GetOrCreatePersistentID(zdoparent);
           zdo.Set(VehicleZdoVars.MBParentId, id);
           zdo.Set(VehicleZdoVars.MBRotationVecHash,

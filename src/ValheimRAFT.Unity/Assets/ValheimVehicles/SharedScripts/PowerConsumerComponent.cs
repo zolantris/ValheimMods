@@ -49,20 +49,27 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
     {
       base.Awake();
 
-      if (canSelfRegisterToNetwork)
-      {
-        PowerNetworkController.RegisterPowerComponent(this); // or RegisterNode(this)
-      }
+#if UNITY_EDITOR
+      // todo make a simplified unity method for registering and testing these consumers with our PowerManager.
+      //
+      // if (canSelfRegisterToNetwork)
+      // {
+      //   PowerNetworkController.RegisterPowerComponent(this); // or RegisterNode(this)
+      // }
+#endif
       // syncs computed values so they are not evalutated per fixedupdate.
       UpdatePowerConsumptionValues(_basePowerConsumption);
     }
 
     protected virtual void OnDestroy()
     {
-      if (canSelfRegisterToNetwork)
-      {
-        PowerNetworkController.UnregisterPowerComponent(this);
-      }
+#if UNITY_EDITOR
+      //
+      // if (canSelfRegisterToNetwork)
+      // {
+      //   PowerNetworkController.UnregisterPowerComponent(this);
+      // }
+#endif
     }
 
     public virtual void OnCollisionEnter(Collision other) {}

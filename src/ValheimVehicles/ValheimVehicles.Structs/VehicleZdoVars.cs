@@ -15,7 +15,9 @@ public static class VehicleZdoVars
   public const string VehicleFloatationHeight = "ValheimVehicles_VehicleFloatationHeight";
   public const string VehicleFloatationCustomModeEnabled = "ValheimVehicles_VehicleFloatationCustomModeEnabled";
 
-  public static string ToggleSwitchAction = "ValheimVehicles_ToggleSwitchAction";
+  public const string ToggleSwitchAction = "ValheimVehicles_ToggleSwitchAction";
+
+  public const string RopeConnections = "MBRopeAnchor_Ropes"; // connection points for the rope prefabs
 
   public static string CustomMeshId =
     "ValheimVehicles_CustomMesh";
@@ -90,12 +92,12 @@ public static class VehicleZdoVars
   public const string SwivelSyncAngularVelocity = "SwivelSync_AngularVelocity";
 
   // for power systems
-  public const string Power_NetworkId = "PowerSystem_NetworkId";
-  public const string Power_StoredEnergy = "PowerSystem_StoredEnergy";
+  public const string PowerSystem_NetworkId = "PowerSystem_NetworkId";
+  public const string PowerSystem_Energy = "PowerSystem_StoredEnergy";
   public const string Power_StoredFuel = "PowerSystem_StoredFuel";
   public const string Power_FuelOutputRate = "PowerSystem_FuelOutputRate";
   public const string Power_FuelType = "PowerSystem_FuelType";
-  public const string Power_StoredEnergyCapacity = "PowerSystem_StoredEnergyCapacity";
+  public const string PowerSystem_EnergyCapacity = "PowerSystem_StoredEnergyCapacity";
   public const string Power_StoredFuelCapacity = "PowerSystem_StoredFuelCapacity";
 
   // power system booleans

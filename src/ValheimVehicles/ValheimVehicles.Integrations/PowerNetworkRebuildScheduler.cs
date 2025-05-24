@@ -48,7 +48,7 @@ public static class PowerNetworkRebuildScheduler
         _rebuildCoroutine = null;
 
         LoggerProvider.LogInfo("[PowerNetworkRebuildScheduler] Executing network rebuild.");
-        PowerZDONetworkManager.RebuildClusters();
+        PowerSystemClusterManager.RebuildClusters();
 
         // Updates the power nodes with the latest simulation. This is for all rendered nodes and will only be accurate on clients.
         PowerNetworkController.UpdateAllPowerNodes();

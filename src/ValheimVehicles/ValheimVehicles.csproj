@@ -29,99 +29,6 @@
     <ItemGroup Label="ValheimVehicle.SharedScripts Unity testable scripts">
         <!--  Allows for both sharing and testing these scripts within unity. Best of both worlds.      -->
         <Compile Include="..\ValheimRAFT.Unity\Assets\ValheimVehicles\SharedScripts\**\*.cs"/>
-        <Compile Update="..\ValheimRAFT.Unity\Assets\ValheimVehicles\SharedScripts\PrefabNames.cs">
-            <Link>SharedScripts\PrefabNames.cs</Link>
-        </Compile>
-        <Compile Update="..\ValheimRAFT.Unity\Assets\ValheimVehicles\SharedScripts\DragWindowCntrlExtension.cs">
-            <Link>SharedScripts\DragWindowCntrlExtension.cs</Link>
-        </Compile>
-        <Compile Update="..\ValheimRAFT.Unity\Assets\ValheimVehicles\SharedScripts\IControllerValidator.cs">
-            <Link>SharedScripts\IControllerValidator.cs</Link>
-        </Compile>
-        <Compile Update="..\ValheimRAFT.Unity\Assets\ValheimVehicles\SharedScripts\SwivelPlatformController.cs">
-            <Link>SharedScripts\SwivelPlatformController.cs</Link>
-        </Compile>
-        <Compile Update="..\ValheimRAFT.Unity\Assets\ValheimVehicles\SharedScripts\ISwivelConfig.cs">
-            <Link>SharedScripts\ISwivelConfig.cs</Link>
-        </Compile>
-        <Compile Update="..\ValheimRAFT.Unity\Assets\ValheimVehicles\SharedScripts\PowerNetworkController.Rebuild.cs">
-            <Link>SharedScripts\PowerNetworkController.Rebuild.cs</Link>
-        </Compile>
-        <Compile Update="..\ValheimRAFT.Unity\Assets\ValheimVehicles\SharedScripts\PowerNetworkController.Simulate.cs">
-            <Link>SharedScripts\PowerNetworkController.Simulate.cs</Link>
-        </Compile>
-        <Compile Update="..\ValheimRAFT.Unity\Assets\ValheimVehicles\SharedScripts\IPowerStorage.cs">
-            <Link>SharedScripts\IPowerStorage.cs</Link>
-        </Compile>
-        <Compile Update="..\ValheimRAFT.Unity\Assets\ValheimVehicles\SharedScripts\IPowerSource.cs">
-            <Link>SharedScripts\IPowerSource.cs</Link>
-        </Compile>
-        <Compile Update="..\ValheimRAFT.Unity\Assets\ValheimVehicles\SharedScripts\IPowerConsumer.cs">
-            <Link>SharedScripts\IPowerConsumer.cs</Link>
-        </Compile>
-        <Compile Update="..\ValheimRAFT.Unity\Assets\ValheimVehicles\SharedScripts\PowerNetworkController.Sync.cs">
-            <Link>SharedScripts\PowerNetworkController.Sync.cs</Link>
-        </Compile>
-        <Compile Update="..\ValheimRAFT.Unity\Assets\ValheimVehicles\SharedScripts\PowerNetworkController.Sync.cs">
-            <Link>SharedScripts\PowerNetworkController.Sync.cs</Link>
-        </Compile>
-        <Compile Update="..\ValheimRAFT.Unity\Assets\ValheimVehicles\SharedScripts\INetworkedComponent.cs">
-            <Link>SharedScripts\INetworkedComponent.cs</Link>
-        </Compile>
-        <Compile Update="..\ValheimRAFT.Unity\Assets\ValheimVehicles\SharedScripts\PowerNetworkController.Visual.cs">
-            <Link>SharedScripts\PowerNetworkController.Visual.cs</Link>
-        </Compile>
-        <Compile Update="..\ValheimRAFT.Unity\Assets\ValheimVehicles\SharedScripts\PowerNetworkController.Lightning.cs">
-            <Link>SharedScripts\PowerNetworkController.Lightning.cs</Link>
-        </Compile>
-        <Compile Update="..\ValheimRAFT.Unity\Assets\ValheimVehicles\SharedScripts\IPowerConduit.cs">
-            <Link>SharedScripts\IPowerConduit.cs</Link>
-        </Compile>
-        <Compile Update="..\ValheimRAFT.Unity\Assets\ValheimVehicles\SharedScripts\EnergyPlateComponent.cs">
-            <Link>SharedScripts\EnergyPlateComponent.cs</Link>
-        </Compile>
-        <Compile Update="..\ValheimRAFT.Unity\Assets\ValheimVehicles\SharedScripts\MathUtils.cs">
-            <Link>SharedScripts\MathUtils.cs</Link>
-        </Compile>
-        <Compile Update="..\ValheimRAFT.Unity\Assets\ValheimVehicles\SharedScripts\DictionaryExtensions.cs">
-            <Link>SharedScripts\DictionaryExtensions.cs</Link>
-        </Compile>
-        <Compile Update="..\ValheimRAFT.Unity\Assets\ValheimVehicles\SharedScripts\Interfaces\IMechanismSwitchConfig.cs">
-            <Link>SharedScripts\Interfaces\IMechanismSwitchConfig.cs</Link>
-        </Compile>
-        <Compile Update="..\ValheimRAFT.Unity\Assets\ValheimVehicles\SharedScripts\EnumDisplay.cs">
-            <Link>SharedScripts\EnumDisplay.cs</Link>
-        </Compile>
-        <Compile Update="..\ValheimRAFT.Unity\Assets\ValheimVehicles\SharedScripts\PowerPylonData.cs">
-            <Link>SharedScripts\PowerPylonData.cs</Link>
-        </Compile>
-        <Compile Update="..\ValheimRAFT.Unity\Assets\ValheimVehicles\SharedScripts\NetworkSimData.cs">
-            <Link>SharedScripts\NetworkSimData.cs</Link>
-        </Compile>
-        <Compile Update="..\ValheimRAFT.Unity\Assets\ValheimVehicles\SharedScripts\ComponentUtil.cs">
-            <Link>SharedScripts\ComponentUtil.cs</Link>
-        </Compile>
-        <Compile Update="..\ValheimRAFT.Unity\Assets\ValheimVehicles\SharedScripts\PowerConduitVariant.cs">
-            <Link>SharedScripts\PowerConduitVariant.cs</Link>
-        </Compile>
-        <Compile Update="..\ValheimRAFT.Unity\Assets\ValheimVehicles\SharedScripts\PowerConduitData.cs">
-            <Link>SharedScripts\PowerConduitData.cs</Link>
-        </Compile>
-        <Compile Update="..\ValheimRAFT.Unity\Assets\ValheimVehicles\SharedScripts\PowerConsumerData.cs">
-            <Link>SharedScripts\PowerConsumerData.cs</Link>
-        </Compile>
-        <Compile Update="..\ValheimRAFT.Unity\Assets\ValheimVehicles\SharedScripts\PowerSystemComputeData.cs">
-            <Link>SharedScripts\PowerSystemComputeData.cs</Link>
-        </Compile>
-        <Compile Update="..\ValheimRAFT.Unity\Assets\ValheimVehicles\SharedScripts\PowerSourceData.cs">
-            <Link>SharedScripts\PowerSourceData.cs</Link>
-        </Compile>
-        <Compile Update="..\ValheimRAFT.Unity\Assets\ValheimVehicles\SharedScripts\PowerStorageData.cs">
-            <Link>SharedScripts\PowerStorageData.cs</Link>
-        </Compile>
-        <Compile Update="..\ValheimRAFT.Unity\Assets\ValheimVehicles\SharedScripts\PowerPylonData.cs">
-            <Link>SharedScripts\PowerPylonData.cs</Link>
-        </Compile>
     </ItemGroup>
     <ItemGroup Label="Internal ValheimVehicles scripts">
         <!-- Includes all namespace folders -->
@@ -133,11 +40,6 @@
         <ProjectReference Include="..\Shared\Shared.csproj"/>
         <ProjectReference Include="..\DynamicLocations\DynamicLocations.csproj"/>
         <ProjectReference Include="..\ZdoWatcher\ZdoWatcher.csproj"/>
-    </ItemGroup>
-    <ItemGroup>
-        <Content Include="..\ValheimRAFT.Unity\Assets\ValheimVehicles\SharedScripts\VehicleUISectionItem.cs.meta">
-            <Link>SharedScripts\VehicleUISectionItem.cs.meta</Link>
-        </Content>
     </ItemGroup>
     <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets"/>
 </Project>

@@ -8,11 +8,7 @@ namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
   {
     public PowerPylonData()
     {
-      Range = PowerRangeDefault;
-    }
-    public override bool IsActive
-    {
-      get;
+      ConnectionRange = PowerRangeDefault;
     }
   }
 }

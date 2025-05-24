@@ -2,15 +2,16 @@
 // ReSharper disable NamespaceStyle
 
 using ValheimVehicles.Integrations.Interfaces;
+using ValheimVehicles.Integrations.PowerSystem;
 using ValheimVehicles.SharedScripts.PowerSystem.Compute;
 using ValheimVehicles.Structs;
 
 namespace ValheimVehicles.Integrations.ZDOConfigs
 {
-  public class PowerSourceZDOConfig : INetworkedZDOConfig<PowerSourceComponentIntegration>
+  public class PowerSourceZDOConfig : INetworkedZDOConfig<PowerSourceBridge>
   {
 
-    public void Load(ZDO zdo, PowerSourceComponentIntegration component)
+    public void Load(ZDO zdo, PowerSourceBridge component)
     {
       var fuel = zdo.GetFloat(VehicleZdoVars.Power_StoredFuel, component.GetFuelLevel());
       var running = zdo.GetBool(VehicleZdoVars.Power_IsRunning, component.IsRunning);
@@ -20,9 +21,9 @@ namespace ValheimVehicles.Integrations.ZDOConfigs
       component.Logic.SetRunning(running);
     }
 
-    public void Save(ZDO zdo, PowerSourceComponentIntegration component)
+    public void Save(ZDO zdo, PowerSourceBridge component)
     {
-      if (PowerZDONetworkManager.TryGetData<PowerSourceData>(zdo, out var powerSourceData))
+      if (PowerSystemRegistry.TryGetData<PowerSourceData>(zdo, out var powerSourceData))
       {
         powerSourceData.SetFuel(component.GetFuelLevel());
         // powerSourceData.IsActive = component.GetFuelLevel() > 0f && component.IsRunning;

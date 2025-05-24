@@ -3,17 +3,14 @@
 
 using System.Collections.Generic;
 using UnityEngine;
-using ValheimVehicles.Helpers;
-using ValheimVehicles.SharedScripts;
 using ValheimVehicles.SharedScripts.PowerSystem;
 using ValheimVehicles.SharedScripts.PowerSystem.Compute;
 using ValheimVehicles.SharedScripts.PowerSystem.Interfaces;
-using ValheimVehicles.SharedScripts.ZDOConfigs;
 
 namespace ValheimVehicles.Integrations
 {
-  public class PowerConsumerComponentIntegration :
-    NetworkedComponentIntegration<PowerConsumerComponentIntegration, PowerConsumerComponent, PowerConsumerZDOConfig>,
+  public class PowerConsumerBridge :
+    PowerNetworkDataEntity<PowerConsumerBridge, PowerConsumerComponent, PowerConsumerData>,
     IPowerConsumer
   {
     public string NetworkId => Logic.NetworkId;
@@ -22,9 +19,6 @@ namespace ValheimVehicles.Integrations
     public bool IsActive => Logic.IsActive;
     public bool IsDemanding => Logic.IsDemanding;
     public bool IsPowerDenied => Logic.IsPowerDenied;
-
-    public PowerConsumerData Data = new();
-    public static ZDOID? Zdoid = null;
 
     public float RequestedPower(float deltaTime)
     {
@@ -39,7 +33,7 @@ namespace ValheimVehicles.Integrations
       Logic.SetActive(val);
     }
 
-    public static List<PowerConsumerComponentIntegration> Instances = new();
+    public static List<PowerConsumerBridge> Instances = new();
 
     public void OnEnable()
     {
@@ -60,40 +54,20 @@ namespace ValheimVehicles.Integrations
       base.Awake();
     }
 
-    public List<Character> charactersWithinActivatorZone = new();
-
+#if DEBUG
     public virtual void OnCollisionEnter(Collision other) {}
     public virtual void OnCollisionExit(Collision other) {}
 
     protected override void Start()
     {
-      this.WaitForZNetView((nv) =>
-      {
-        base.Start();
-        var zdo = nv.GetZDO();
-        if (!PowerZDONetworkManager.TryGetData(zdo, out PowerConsumerData data, true))
-        {
-          LoggerProvider.LogWarning("[PowerConsumerComponentIntegration] Failed to get PowerConsumerData from PowerZDONetworkManager.");
-          return;
-        }
-        Zdoid = zdo.m_uid;
-        Data = data;
-        Data.Load();
-
-        PowerNetworkController.RegisterPowerComponent(this);
-        PowerZDONetworkManager.RegisterPowerComponentUpdater(zdo.m_uid, data);
-      });
+      base.Start();
     }
 
     protected override void OnDestroy()
     {
-      if (Zdoid.HasValue)
-      {
-        PowerZDONetworkManager.RemovePowerComponentUpdater(Zdoid.Value);
-      }
-      PowerNetworkController.UnregisterPowerComponent(this);
       base.OnDestroy();
     }
+#endif
 
     protected override void RegisterDefaultRPCs()
     {

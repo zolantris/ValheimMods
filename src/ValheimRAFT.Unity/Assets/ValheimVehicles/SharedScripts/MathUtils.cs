@@ -3,6 +3,7 @@
 
 using System;
 using UnityEngine;
+using ValheimVehicles.SharedScripts.Modules;
 
 namespace ValheimVehicles.SharedScripts
 {
@@ -13,7 +14,7 @@ namespace ValheimVehicles.SharedScripts
     /// </summary>
     public static float RoundToHundredth(float value)
     {
-      return Mathf.Round(value * 100f) / 100f;
+      return MathX.Round(value * 100f) / 100f;
     }
 
     /// <summary>

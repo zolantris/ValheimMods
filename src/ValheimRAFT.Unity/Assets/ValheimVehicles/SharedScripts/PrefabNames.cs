@@ -64,7 +64,7 @@
       public static readonly string AirVehicle = $"{ValheimVehiclesPrefix}_VehicleAir";
       public static readonly string WheelSet = $"{ValheimVehiclesPrefix}_WheelSet";
 
-      public static readonly string MBRopeAnchor = "MBRopeAnchor";
+      public const string MBRopeAnchor = "MBRopeAnchor";
 
       public static readonly string CustomWaterFloatation =
         $"{ValheimVehiclesPrefix}_CustomWaterFloatation";

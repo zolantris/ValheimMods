@@ -53,11 +53,11 @@ public class PowerSystemConfig : BepInExBaseConfig<PowerSystemConfig>
     PowerSourceData.FuelEfficiencyDefault = PowerSource_BaseFuelEfficiency.Value;
     PowerSourceData.BaseFuelEfficiency = PowerSource_BaseFuelEfficiency.Value;
 
-    foreach (var powerNetworkSimData in PowerZDONetworkManager._cachedSimulateData)
+    foreach (var powerNetworkSimData in PowerSystemClusterManager._cachedSimulateData)
     {
       for (var i = 0; i < powerNetworkSimData.Value.Sources.Count; i++)
       {
-        var (source, zdo) = powerNetworkSimData.Value.Sources[i];
+        var source = powerNetworkSimData.Value.Sources[i];
         source.OnPropertiesUpdate();
       }
     }

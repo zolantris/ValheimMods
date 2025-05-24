@@ -8,7 +8,7 @@ using ValheimVehicles.SharedScripts.Helpers;
 using ValheimVehicles.SharedScripts.PowerSystem;
 using ValheimVehicles.SharedScripts.PowerSystem.Interfaces;
 
-public class PowerConduitPlateDrainComponentIntegration : PowerConduitPlateComponentIntegration
+public class PowerConduitPlateDrainBridge : PowerConduitPlateBridge
 {
   protected override void Start()
   {

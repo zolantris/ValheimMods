@@ -85,58 +85,58 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
       }
     }
 
-    public static void RegisterPowerComponent<T>(T component)
-    {
-      switch (component)
-      {
-        case IPowerSource s:
-          if (!Sources.Contains(s)) Sources.Add(s);
-          break;
-        case IPowerStorage b:
-          if (!Storages.Contains(b)) Storages.Add(b);
-          break;
-        case IPowerConsumer c:
-          if (!Consumers.Contains(c)) Consumers.Add(c);
-          break;
-        case PowerPylon p:
-          if (!Pylons.Contains(p)) Pylons.Add(p);
-          break;
-        case IPowerConduit conduit:
-          if (!Conduits.Contains(conduit)) Conduits.Add(conduit);
-          break;
-        default:
-          LoggerProvider.LogWarning($"[Power] Unrecognized component type: {typeof(T).Name}");
-          break;
-      }
-      RequestRebuildNetwork();
-    }
+    // public static void RegisterPowerComponent<T>(T component)
+    // {
+    //   switch (component)
+    //   {
+    //     case IPowerSource s:
+    //       if (!Sources.Contains(s)) Sources.Add(s);
+    //       break;
+    //     case IPowerStorage b:
+    //       if (!Storages.Contains(b)) Storages.Add(b);
+    //       break;
+    //     case IPowerConsumer c:
+    //       if (!Consumers.Contains(c)) Consumers.Add(c);
+    //       break;
+    //     case PowerPylon p:
+    //       if (!Pylons.Contains(p)) Pylons.Add(p);
+    //       break;
+    //     case IPowerConduit conduit:
+    //       if (!Conduits.Contains(conduit)) Conduits.Add(conduit);
+    //       break;
+    //     default:
+    //       LoggerProvider.LogWarning($"[Power] Unrecognized component type: {typeof(T).Name}");
+    //       break;
+    //   }
+    //   RequestRebuildNetwork();
+    // }
 
-    public static void UnregisterPowerComponent<T>(T component)
-    {
-      switch (component)
-      {
-        case IPowerSource s:
-          Sources.FastRemove(s);
-          break;
-        case IPowerStorage b:
-          Storages.FastRemove(b);
-          break;
-        case IPowerConsumer c:
-          Consumers.FastRemove(c);
-          break;
-        case PowerPylon p:
-          Pylons.FastRemove(p);
-          break;
-        case IPowerConduit conduit:
-          Conduits.FastRemove(conduit);
-          break;
-        default:
-          LoggerProvider.LogWarning($"[Power] Unrecognized component type: {typeof(T).Name}");
-          break;
-      }
-      RequestRebuildNetwork();
-
-    }
+    // public static void UnregisterPowerComponent<T>(T component)
+    // {
+    //   switch (component)
+    //   {
+    //     case IPowerSource s:
+    //       Sources.FastRemove(s);
+    //       break;
+    //     case IPowerStorage b:
+    //       Storages.FastRemove(b);
+    //       break;
+    //     case IPowerConsumer c:
+    //       Consumers.FastRemove(c);
+    //       break;
+    //     case PowerPylon p:
+    //       Pylons.FastRemove(p);
+    //       break;
+    //     case IPowerConduit conduit:
+    //       Conduits.FastRemove(conduit);
+    //       break;
+    //     default:
+    //       LoggerProvider.LogWarning($"[Power] Unrecognized component type: {typeof(T).Name}");
+    //       break;
+    //   }
+    //   RequestRebuildNetwork();
+    //
+    // }
 
 #if UNITY_EDITOR
     [InitializeOnLoadMethod]

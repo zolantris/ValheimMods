@@ -10,8 +10,8 @@ namespace ValheimVehicles.Integrations;
 
 public class PowerHoverComponent : MonoBehaviour, Hoverable, Interactable
 {
-  private PowerSourceComponentIntegration _powerSourceComponent;
-  private PowerStorageComponentIntegration _powerStorageComponent;
+  private PowerSourceBridge _powerSourceComponent;
+  private PowerStorageBridge _powerStorageComponent;
   private bool HasPowerStorage = false;
   private bool HasPowerSource = false;
   public static int AddManyCount = 10;
@@ -19,8 +19,8 @@ public class PowerHoverComponent : MonoBehaviour, Hoverable, Interactable
 
   public void Start()
   {
-    _powerSourceComponent = GetComponent<PowerSourceComponentIntegration>();
-    _powerStorageComponent = GetComponent<PowerStorageComponentIntegration>();
+    _powerSourceComponent = GetComponent<PowerSourceBridge>();
+    _powerStorageComponent = GetComponent<PowerStorageBridge>();
 
     HasPowerStorage = _powerStorageComponent != null;
     HasPowerSource = _powerSourceComponent != null;
@@ -192,7 +192,7 @@ public class PowerHoverComponent : MonoBehaviour, Hoverable, Interactable
       {
         outString += "\n";
       }
-      outString += $"{ModTranslations.Power_NetworkInfo_NetworkPowerCapacity}: {MathUtils.RoundToHundredth(_powerStorageComponent.ChargeLevel)}/{_powerStorageComponent.Capacity}";
+      outString += $"{ModTranslations.Power_NetworkInfo_NetworkPowerCapacity}: {MathUtils.RoundToHundredth(_powerStorageComponent.ChargeLevel)}/{_powerStorageComponent.Energy}";
     }
 
     // Only need networkId from either of these.

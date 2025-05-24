@@ -53,10 +53,14 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
     {
       base.Awake();
 
-      if (canSelfRegisterToNetwork)
-      {
-        PowerNetworkController.RegisterPowerComponent(this); // or RegisterNode(this)
-      }
+#if UNITY_EDITOR
+      // todo make a simplified unity method for registering and testing these consumers with our PowerManager.
+      //
+      // if (canSelfRegisterToNetwork)
+      // {
+      //   PowerNetworkController.RegisterPowerComponent(this); // or RegisterNode(this)
+      // }
+#endif
 
       powerCoreTransform = transform.Find("meshes/power_core");
 
@@ -88,10 +92,13 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
 
     protected virtual void OnDestroy()
     {
-      if (canSelfRegisterToNetwork)
-      {
-        PowerNetworkController.UnregisterPowerComponent(this);
-      }
+#if UNITY_EDITOR
+      //
+      // if (canSelfRegisterToNetwork)
+      // {
+      //   PowerNetworkController.UnregisterPowerComponent(this);
+      // }
+#endif
     }
 
 

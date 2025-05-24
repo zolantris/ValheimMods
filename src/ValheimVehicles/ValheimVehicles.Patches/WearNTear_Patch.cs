@@ -14,6 +14,7 @@
   using ValheimVehicles.SharedScripts;
   using ValheimVehicles.Structs;
   using ZdoWatcher;
+  using ZdoWatcher.ZdoWatcher.Utils;
 
 #endregion
 
@@ -68,7 +69,7 @@
       var hasParentVehicleHash = parentVehicleHash != 0;
       if (!hasParentVehicleHash) return false;
 
-      var id = ZdoWatchController.ZdoIdToId(__instance.m_nview.GetZDO().m_uid);
+      var id = ZdoUtils.ZdoIdToId(__instance.m_nview.GetZDO().m_uid);
       var zdoExists = ZdoWatchController.Instance.GetZdo(id);
       if (zdoExists == null) return false;
 

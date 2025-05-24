@@ -2,19 +2,18 @@
 // ReSharper disable NamespaceStyle
 
 using System;
-using System.Diagnostics.CodeAnalysis;
-using JetBrains.Annotations;
 using UnityEngine;
 using ValheimVehicles.Helpers;
-using ValheimVehicles.Integrations.Interfaces;
+using ValheimVehicles.Integrations.PowerSystem;
 using ValheimVehicles.Interfaces;
+using ValheimVehicles.SharedScripts.PowerSystem.Compute;
 using ValheimVehicles.SharedScripts.PowerSystem.Interfaces;
 
 namespace ValheimVehicles.Integrations
 {
-  public abstract class NetworkedComponentIntegration<TComponent, TDelegateComponent, TConfig> : MonoBehaviour, INetView, INetworkedComponent
+  public abstract class PowerNetworkDataEntity<TComponent, TDelegateComponent, TData> : MonoBehaviour, INetView, INetworkedComponent
     where TComponent : MonoBehaviour
-    where TConfig : INetworkedZDOConfig<TComponent>, new()
+    where TData : PowerSystemComputeData, new()
     where TDelegateComponent : Component
   {
     private TDelegateComponent _logic;
@@ -33,10 +32,11 @@ namespace ValheimVehicles.Integrations
     protected SafeRPCHandler RpcHandler { get; private set; }
 
     protected TComponent Component => (TComponent)(object)this!;
-    protected TConfig Config = new();
+    public TData Data = new();
 
     public string instanced_RpcNotifyStateUpdate = null!;
     private bool _isInitialized;
+    private Coroutine? registerCoroutine;
 
     protected virtual void Awake()
     {
@@ -60,18 +60,25 @@ namespace ValheimVehicles.Integrations
 
     protected virtual void Start()
     {
-      // don't do anything when we aren't initialized.
-      this.WaitForZNetView((nv) =>
+      registerCoroutine = this.WaitForPowerSystemNodeData<TData>((data) =>
       {
         LoadInitialData();
         RpcHandler.Register(instanced_RpcNotifyStateUpdate, RPC_NotifyStateUpdated);
         RegisterDefaultRPCs();
+        Data = data;
+        Data.Load();
+        registerCoroutine = null;
       });
     }
 
     protected virtual void OnDestroy()
     {
       RpcHandler.UnregisterAll();
+      if (registerCoroutine != null)
+      {
+        StopCoroutine(registerCoroutine);
+        registerCoroutine = null;
+      }
     }
 
     protected abstract void RegisterDefaultRPCs();
@@ -79,7 +86,7 @@ namespace ValheimVehicles.Integrations
     protected void LoadInitialData()
     {
       if (hasLoadedInitialData || !this.IsNetViewValid(out var netView)) return;
-      Config.Load(netView.GetZDO(), Component);
+      Data.Load();
       hasLoadedInitialData = true;
     }
 
@@ -87,7 +94,7 @@ namespace ValheimVehicles.Integrations
     {
       this.RunIfOwnerOrServerOrNoOwner((nv) =>
       {
-        Config.Save(nv.GetZDO(), Component);
+        Data.Save();
         nv.InvokeRPC(ZNetView.Everybody, instanced_RpcNotifyStateUpdate);
       });
     }
@@ -111,7 +118,7 @@ namespace ValheimVehicles.Integrations
     {
       if (this.IsNetViewValid(out var netView))
       {
-        Config.Load(netView.GetZDO(), Component);
+        Data.Load();
       }
     }
 
@@ -119,7 +126,7 @@ namespace ValheimVehicles.Integrations
     {
       if (this.IsNetViewValid(out var netView))
       {
-        Config.Load(netView.GetZDO(), Component);
+        Data.Load();
       }
     }
   }

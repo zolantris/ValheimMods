@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using ValheimVehicles.Helpers;
+using ValheimVehicles.Integrations.PowerSystem;
 using ValheimVehicles.Interfaces;
 using ValheimVehicles.SharedScripts.PowerSystem;
 using ValheimVehicles.Integrations.ZDOConfigs;
@@ -14,15 +15,11 @@ using ValheimVehicles.Structs;
 
 namespace ValheimVehicles.Integrations
 {
-  public class PowerStorageComponentIntegration :
-    NetworkedComponentIntegration<PowerStorageComponentIntegration, PowerStorageComponent, PowerStorageZDOConfig>,
+  public class PowerStorageBridge :
+    PowerNetworkDataEntity<PowerStorageBridge, PowerStorageComponent, PowerStorageData>,
     IPowerStorage
   {
-    public Coroutine? registerCoroutine = null;
-    public PowerStorageData Data = new();
-
-    public static List<PowerStorageComponentIntegration> Instances = new();
-    public static ZDOID? Zdoid = null;
+    public static List<PowerStorageBridge> Instances = new();
 
     public void OnEnable()
     {
@@ -36,46 +33,8 @@ namespace ValheimVehicles.Integrations
     {
       Instances.Remove(this);
       Instances.RemoveAll(x => !x);
-
-
-      if (Zdoid.HasValue)
-      {
-        PowerZDONetworkManager.RemovePowerComponentUpdater(Zdoid.Value);
-      }
-      PowerNetworkController.UnregisterPowerComponent(this);
     }
 
-    protected override void Awake()
-    {
-      // don't do anything when we aren't initialized.
-      registerCoroutine = this.WaitForZNetView((nv) =>
-      {
-        var zdo = nv.GetZDO();
-        if (!PowerZDONetworkManager.TryGetData(zdo, out PowerStorageData data, true))
-        {
-          LoggerProvider.LogWarning("[PowerStorageComponentIntegration] Failed to get PowerStorageData from PowerZDONetworkManager.");
-          return;
-        }
-        Zdoid = zdo.m_uid;
-        Data = data;
-        Data.Load();
-
-        base.Awake();
-        PowerNetworkController.RegisterPowerComponent(this);
-        PowerZDONetworkManager.RegisterPowerComponentUpdater(zdo.m_uid, data);
-      });
-    }
-
-    protected override void OnDestroy()
-    {
-      base.OnDestroy();
-
-      if (registerCoroutine != null)
-      {
-        StopCoroutine(registerCoroutine);
-        registerCoroutine = null;
-      }
-    }
     protected override void RegisterDefaultRPCs()
     {
       RegisterRPC<float>(nameof(RPC_Discharge), RPC_Discharge);
@@ -133,7 +92,7 @@ namespace ValheimVehicles.Integrations
     public bool IsActive => Logic.IsActive;
     public Vector3 ConnectorPoint => Logic.ConnectorPoint;
 
-    public float CapacityRemaining => Data.MaxCapacity - Data.StoredEnergy;
+    public float CapacityRemaining => Data.MaxEnergy - Data.StoredEnergy;
 
     public bool IsCharging => Logic.IsCharging;
     public void SetCapacity(float val)
@@ -158,7 +117,7 @@ namespace ValheimVehicles.Integrations
     }
 
     public float ChargeLevel => Data.StoredEnergy;
-    public float Capacity => Data.MaxCapacity;
+    public float Energy => Data.MaxEnergy;
 
     public float Charge(float amount)
     {
@@ -172,7 +131,7 @@ namespace ValheimVehicles.Integrations
     public void SetNetworkId(string id)
     {
       if (!this.IsNetViewValid(out var netView)) return;
-      var idFromZdo = netView.GetZDO().GetString(VehicleZdoVars.Power_NetworkId);
+      var idFromZdo = netView.GetZDO().GetString(VehicleZdoVars.PowerSystem_NetworkId);
       Logic.SetNetworkId(idFromZdo);
     }
   }

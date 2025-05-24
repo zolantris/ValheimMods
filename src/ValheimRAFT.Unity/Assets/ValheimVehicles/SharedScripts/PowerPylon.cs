@@ -40,7 +40,14 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
 
     protected virtual void Start()
     {
-      PowerNetworkController.RegisterPowerComponent(this);
+#if UNITY_EDITOR
+      // todo make a simplified unity method for registering and testing these consumers with our PowerManager.
+      //
+      // if (canSelfRegisterToNetwork)
+      // {
+      //   PowerNetworkController.RegisterPowerComponent(this); // or RegisterNode(this)
+      // }
+#endif
     }
 
     private void OnEnable()
@@ -54,8 +61,13 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
 
     private void OnDestroy()
     {
-      if (!Application.isPlaying) return;
-      PowerNetworkController.UnregisterPowerComponent(this);
+#if UNITY_EDITOR
+      // if (!Application.isPlaying) return;
+      // if (canSelfRegisterToNetwork)
+      // {
+      //   PowerNetworkController.UnregisterPowerComponent(this);
+      // }
+#endif
     }
 
     public string NetworkId

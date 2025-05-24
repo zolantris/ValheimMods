@@ -12,7 +12,7 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
   {
     [Description("Energy levels in Watts")]
     [SerializeField] public float baseEnergyCapacity = 800f;
-    [SerializeField] private float energyCapacity = 800f;
+    [SerializeField] private float maxEnergy = 800f;
     [SerializeField] private float storedEnergy;
 
     [Description("Visual representation of energy level")]
@@ -30,15 +30,15 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
     public override bool IsActive => isActive;
     public float ChargeLevel => storedEnergy;
 
-    public float Capacity => energyCapacity;
-    public float CapacityRemaining => energyCapacity - storedEnergy;
+    public float Energy => maxEnergy;
+    public float CapacityRemaining => maxEnergy - storedEnergy;
     private float _peekedDischargeAmount = 0f;
     public bool IsCharging { get; set; }
 
     public void SetStoredEnergy(float val)
     {
       // pre-calculation to get Charging/Active State.
-      var nextEnergyVal = Mathf.Clamp(val, 0f, energyCapacity);
+      var nextEnergyVal = Mathf.Clamp(val, 0f, maxEnergy);
       UpdatePowerStates(storedEnergy, nextEnergyVal);
 
       // main setter.
@@ -56,7 +56,7 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
     public void UpdatePowerStates(float current, float next)
     {
       var shouldCheckIfStayingInPlace = _lastChargeTime + chargeCheckInterval < Time.time;
-      if (Mathf.Approximately(_lastCharge, next) || Mathf.Approximately(next, 0f) || Mathf.Approximately(next, energyCapacity))
+      if (Mathf.Approximately(_lastCharge, next) || Mathf.Approximately(next, 0f) || Mathf.Approximately(next, maxEnergy))
       {
         isActive = false;
       }
@@ -131,7 +131,7 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
 
     public float Charge(float amount)
     {
-      var space = energyCapacity - storedEnergy;
+      var space = maxEnergy - storedEnergy;
       var toCharge = MathUtils.RoundToHundredth(Mathf.Min(space, amount));
 
       var localEnergy = storedEnergy + toCharge;
@@ -153,7 +153,7 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
     public void SetCapacity(float val)
     {
       baseEnergyCapacity = val;
-      energyCapacity = IsSource ? Mathf.Round(val * 0.5f) : val;
+      maxEnergy = IsSource ? Mathf.Round(val * 0.5f) : val;
     }
     public void SetActive(bool value)
     {
@@ -165,8 +165,8 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
     /// </summary>
     private void UpdateChargeScale()
     {
-      if (!m_visualEnergyLevel || energyCapacity <= 0f) return;
-      var percent = Mathf.Clamp01(storedEnergy / energyCapacity);
+      if (!m_visualEnergyLevel || maxEnergy <= 0f) return;
+      var percent = Mathf.Clamp01(storedEnergy / maxEnergy);
       var scale = m_visualEnergyLevel.localScale;
       scale.y = percent;
       m_visualEnergyLevel.localScale = scale;

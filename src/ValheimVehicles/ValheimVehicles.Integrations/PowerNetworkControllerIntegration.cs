@@ -19,6 +19,9 @@ namespace ValheimVehicles.Integrations;
 public partial class PowerNetworkControllerIntegration : PowerNetworkController
 {
   private readonly List<string> _networksToRemove = new();
+  public static List<PowerStorageData> storagesToUpdate = new();
+  public static List<PowerSourceData> sourcesToUpdate = new();
+
 
   public override void Awake()
   {
@@ -38,6 +41,7 @@ public partial class PowerNetworkControllerIntegration : PowerNetworkController
 
     ZDOClaimUtility.RegisterClaimZdoRpc();
     PowerSystemRPC.Register();
+    PlayerEitrRPC.Register();
     StartDirtyNetworkCoroutine();
   }
 
@@ -65,7 +69,7 @@ public partial class PowerNetworkControllerIntegration : PowerNetworkController
       var zdo = netView.GetZDO();
       if (zdo == null) continue;
 
-      var networkId = zdo.GetString(VehicleZdoVars.Power_NetworkId);
+      var networkId = zdo.GetString(VehicleZdoVars.PowerSystem_NetworkId);
       if (string.IsNullOrEmpty(networkId)) continue;
 
       if (!groupedByNetwork.TryGetValue(networkId, out var list))
@@ -134,13 +138,13 @@ public partial class PowerNetworkControllerIntegration : PowerNetworkController
       {
         foreach (var networkId in _dirtyNetworkIds.ToList())
         {
-          if (!PowerZDONetworkManager.Networks.TryGetValue(networkId, out var zdos)) continue;
+          if (!PowerSystemClusterManager.Networks.TryGetValue(networkId, out var zdos)) continue;
 
           // reloads only the zdos that have updated.
           foreach (var zdo in zdos)
           {
-            if (!PowerZDONetworkManager.TryGetActiveComponentUpdater(zdo.m_uid, out var updater)) continue;
-            updater.Load();
+            if (!PowerSystemRegistry.TryGetByZdoid(zdo.m_uid, out var updater)) continue;
+            updater.Data.Load();
           }
         }
 
@@ -152,7 +156,7 @@ public partial class PowerNetworkControllerIntegration : PowerNetworkController
 
   public override IEnumerator RequestRebuildPowerNetworkCoroutine()
   {
-    PowerZDONetworkManager.RebuildClusters();
+    PowerSystemClusterManager.RebuildClusters();
     // Skip this as it does too much now. Only need to reference our ZDOS then match them to powernodes
     // yield return base.RequestRebuildPowerNetworkCoroutine();
 
@@ -166,47 +170,21 @@ public partial class PowerNetworkControllerIntegration : PowerNetworkController
     yield return null;
   }
 
-  private static List<IPowerNode> GetNodesFromZDOs(List<ZDO> zdos)
-  {
-    var nodes = new List<IPowerNode>();
-    foreach (var zdo in zdos)
-    {
-      if (ZNetScene.instance == null) continue;
-
-      var go = ZNetScene.instance.FindInstance(zdo.m_uid);
-      if (go == null) continue;
-
-      var components = go.GetComponents<MonoBehaviour>();
-      foreach (var comp in components)
-      {
-        if (comp is IPowerNode node)
-        {
-          nodes.Add(node);
-          break;
-        }
-      }
-    }
-    return nodes;
-  }
-
-  public float GetTotalConsumerDemand(List<(PowerConsumerData consumer, ZDO zdo)> powerConsumers, float deltaTime)
+  public float GetTotalConsumerDemand(List<PowerConsumerData> powerConsumers, float deltaTime)
   {
     var totalDemand = 0f;
-    foreach (var (consumer, _) in powerConsumers)
-      totalDemand += consumer.RequestedPower(deltaTime);
+    foreach (var consumer in powerConsumers)
+      totalDemand += consumer.GetRequestedEnergy(deltaTime);
 
     return totalDemand;
   }
-
-  public static List<PowerStorageData> storagesToUpdate = new();
-  public static List<PowerSourceData> sourcesToUpdate = new();
 
   // ReSharper disable ArrangeNamespaceBody
 // ReSharper disable NamespaceStyle
 
   public override void Host_SimulateNetwork(string networkId)
   {
-    if (!PowerZDONetworkManager.TryBuildPowerNetworkSimData(networkId, out var simData))
+    if (!PowerSystemClusterManager.TryBuildPowerNetworkSimData(networkId, out var simData))
     {
       LoggerProvider.LogError($"Failed to build sim data for network {networkId}");
       return;
@@ -222,14 +200,14 @@ public partial class PowerNetworkControllerIntegration : PowerNetworkController
     var totalDemand = totalConsumerDemand;
 
     // Step 1: Include storage charging demand
-    foreach (var (storage, _) in simData.Storages)
+    foreach (var storage in simData.Storages)
     {
-      totalDemand += Mathf.Max(0f, storage.MaxCapacity - storage.StoredEnergy);
+      totalDemand += Mathf.Max(0f, storage.MaxEnergy - storage.StoredEnergy);
     }
 
     // Step 2: Include conduit (Eitr) demand
     var conduitDemand = 0f;
-    foreach (var (conduit, _) in simData.Conduits)
+    foreach (var conduit in simData.Conduits)
     {
       conduit.ResolvePlayersFromIds();
       conduitDemand += PowerConduitData.GetAverageEitr(conduit.Players);
@@ -243,7 +221,7 @@ public partial class PowerNetworkControllerIntegration : PowerNetworkController
     var suppliedFromStorage = 0f;
     var storageDischargeList = new List<(PowerStorageData, float)>();
 
-    foreach (var (storage, _) in simData.Storages)
+    foreach (var storage in simData.Storages)
     {
       if (remainingDemand <= 0f) break;
 
@@ -259,9 +237,9 @@ public partial class PowerNetworkControllerIntegration : PowerNetworkController
 
     // Step 4: Produce from sources
     var offeredFromSources = 0f;
-    foreach (var (source, _) in simData.Sources)
+    foreach (var source in simData.Sources)
     {
-      if (remainingDemand <= 0f && !simData.Storages.Any(s => s.Item1.NeedsCharging())) break;
+      if (remainingDemand <= 0f && !simData.Storages.Any(s => s.NeedsCharging())) break;
 
       var produced = source.ProducePower(remainingDemand);
       if (produced > 0f)
@@ -275,7 +253,7 @@ public partial class PowerNetworkControllerIntegration : PowerNetworkController
     var totalAvailable = offeredFromSources + suppliedFromStorage;
 
     // Step 5: Apply to conduits (players)
-    foreach (var (conduit, zdo) in simData.Conduits)
+    foreach (var conduit in simData.Conduits)
     {
       if (totalAvailable <= 0f || conduit.Players.Count == 0) continue;
 
@@ -286,17 +264,18 @@ public partial class PowerNetworkControllerIntegration : PowerNetworkController
       {
         if (player.m_eitr < player.m_maxEitr - 0.1f)
         {
-          PowerConduitPlateComponentIntegration.Request_AddEitr(player, perPlayer);
+          PowerConduitPlateBridge.Request_AddEitr(player, perPlayer);
           used += perPlayer;
         }
       }
 
       totalAvailable -= used;
-      changedZDOs.Add(zdo.m_uid);
+
+      changedZDOs.Add(conduit.zdo.m_uid);
     }
 
     // Step 6: Feed surplus into storage
-    foreach (var (storage, zdo) in simData.Storages)
+    foreach (var storage in simData.Storages)
     {
       if (totalAvailable <= 0f) break;
 
@@ -319,20 +298,14 @@ public partial class PowerNetworkControllerIntegration : PowerNetworkController
     // Step 8: Save mutated data
     foreach (var source in sourcesToUpdate)
     {
-      if (source.zdo != null)
-      {
-        source.zdo.Set(VehicleZdoVars.Power_StoredFuel, source.Fuel);
-        changedZDOs.Add(source.zdo.m_uid);
-      }
+      source.zdo.Set(VehicleZdoVars.Power_StoredFuel, source.Fuel);
+      changedZDOs.Add(source.zdo.m_uid);
     }
 
     foreach (var storage in storagesToUpdate)
     {
-      if (storage.zdo != null)
-      {
-        storage.zdo.Set(VehicleZdoVars.Power_StoredEnergy, storage.StoredEnergy);
-        changedZDOs.Add(storage.zdo.m_uid);
-      }
+      storage.zdo.Set(VehicleZdoVars.PowerSystem_Energy, storage.StoredEnergy);
+      changedZDOs.Add(storage.zdo.m_uid);
     }
 
     // Step 9: Fire one RPC
@@ -347,20 +320,32 @@ public partial class PowerNetworkControllerIntegration : PowerNetworkController
   {
     foreach (var (storage, _) in storages)
     {
-      if (storage.StoredEnergy < storage.MaxCapacity)
+      if (storage.StoredEnergy < storage.MaxEnergy)
         return true;
     }
     return false;
   }
 
-  private static Vector3 GetNetworkFallbackPosition(PowerNetworkSimData simData)
+  private static Vector3 GetNetworkFallbackPosition(PowerSimulationData simData)
   {
     if (simData.Conduits.Count > 0)
-      return simData.Conduits[0].Item2.GetPosition();
+    {
+      var zdo = simData.Conduits[0].zdo;
+      if (zdo != null)
+        return zdo.GetPosition();
+    }
     if (simData.Storages.Count > 0)
-      return simData.Storages[0].Item2.GetPosition();
+    {
+      var zdo = simData.Storages[0].zdo;
+      if (zdo != null)
+        return zdo.GetPosition();
+    }
     if (simData.Sources.Count > 0)
-      return simData.Sources[0].Item2.GetPosition();
+    {
+      var zdo = simData.Sources[0].zdo;
+      if (zdo != null)
+        return zdo.GetPosition();
+    }
     return Vector3.zero;
   }
 
@@ -405,7 +390,7 @@ public partial class PowerNetworkControllerIntegration : PowerNetworkController
 
   public static void Client_SyncNetworkStats(string networkId)
   {
-    if (!PowerZDONetworkManager.TryBuildPowerNetworkSimData(networkId, out var simData))
+    if (!PowerSystemClusterManager.TryBuildPowerNetworkSimData(networkId, out var simData))
     {
       LoggerProvider.LogError($"Failed to build sim data for network {networkId}");
       return;
@@ -438,7 +423,7 @@ public partial class PowerNetworkControllerIntegration : PowerNetworkController
     GetNetworkHealthStatusEnumeration(null, ref NetworkConsumerPowerStatus, ref poweredOrInactiveConsumers, ref inactiveDemandingConsumers);
 
 
-    foreach (var (data, zdo) in simData.Conduits)
+    foreach (var data in simData.Conduits)
     {
       if (data.Mode == PowerConduitMode.Drain)
       {
@@ -450,19 +435,19 @@ public partial class PowerNetworkControllerIntegration : PowerNetworkController
       }
     }
 
-    foreach (var (data, _) in simData.Consumers)
+    foreach (var data in simData.Consumers)
     {
-      totalDemand += data.RequestedPower(deltaTime);
+      totalDemand += data.GetRequestedEnergy(deltaTime);
       GetNetworkHealthStatusEnumeration(data, ref NetworkConsumerPowerStatus, ref poweredOrInactiveConsumers, ref inactiveDemandingConsumers);
     }
 
-    foreach (var (data, _) in simData.Storages)
+    foreach (var data in simData.Storages)
     {
       totalSupply += data.StoredEnergy;
-      totalCapacity += data.MaxCapacity;
+      totalCapacity += data.MaxEnergy;
     }
 
-    foreach (var (data, _) in simData.Sources)
+    foreach (var data in simData.Sources)
     {
       totalFuel += data.Fuel;
       totalFuelCapacity += data.MaxFuel;
@@ -484,20 +469,20 @@ public partial class PowerNetworkControllerIntegration : PowerNetworkController
   public static void Client_SyncActiveInstances()
   {
 
-    foreach (var powerStorageComponentIntegration in PowerStorageComponentIntegration.Instances)
+    foreach (var powerStorageComponentIntegration in PowerStorageBridge.Instances)
     {
       powerStorageComponentIntegration.Data.Load();
     }
 
-    foreach (var powerStorageComponentIntegration in PowerConduitPlateComponentIntegration.Instances)
+    foreach (var powerStorageComponentIntegration in PowerConduitPlateBridge.Instances)
     {
       powerStorageComponentIntegration.Data.Load();
     }
-    foreach (var powerStorageComponentIntegration in PowerSourceComponentIntegration.Instances)
+    foreach (var powerStorageComponentIntegration in PowerSourceBridge.Instances)
     {
       powerStorageComponentIntegration.Data.Load();
     }
-    foreach (var powerStorageComponentIntegration in PowerConsumerComponentIntegration.Instances)
+    foreach (var powerStorageComponentIntegration in PowerConsumerBridge.Instances)
     {
       powerStorageComponentIntegration.Data.Load();
     }
@@ -511,7 +496,7 @@ public partial class PowerNetworkControllerIntegration : PowerNetworkController
 
     LoggerProvider.LogInfoDebounced($"_networks, {powerNodeNetworks.Count}, Consumers, {Consumers.Count}, Conduits, {Conduits.Count}, Storages, {Storages.Count}, Sources, {Sources.Count}");
 
-    foreach (var pair in PowerZDONetworkManager.Networks)
+    foreach (var pair in PowerSystemClusterManager.Networks)
     {
       var nodes = pair.Value;
       var networkId = pair.Key;
@@ -538,17 +523,16 @@ public partial class PowerNetworkControllerIntegration : PowerNetworkController
 
       if (ZNet.instance.IsServer())
       {
-        if (PowerZDONetworkManager.TryBuildPowerNetworkSimData(networkId, out var simData))
+        if (PowerSystemClusterManager.TryBuildPowerNetworkSimData(networkId, out var simData))
         {
           simData.NetworkId = networkId;
           simData.DeltaTime = Time.fixedDeltaTime;
-          PowerNetworkSimulator.Simulate(simData);
+          PowerSystemSimulator.Simulate(simData);
         }
         else
         {
           LoggerProvider.LogError($"Failed to build sim data for network {networkId}");
         }
-        // Host_SimulateNetwork(networkId);
       }
 
       // only dedicated server.
