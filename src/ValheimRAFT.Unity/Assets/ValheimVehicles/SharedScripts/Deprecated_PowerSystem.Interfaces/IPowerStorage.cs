@@ -6,7 +6,7 @@ namespace ValheimVehicles.Interfaces
 {
   public interface IPowerStorage : IPowerNode
   {
-    float ChargeLevel { get; }
+    float EnergyCapacity { get; }
     float Energy { get; }
     float CapacityRemaining { get; }
     float Charge(float amount);

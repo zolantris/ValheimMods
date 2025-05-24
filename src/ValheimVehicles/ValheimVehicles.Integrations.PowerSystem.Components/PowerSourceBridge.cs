@@ -10,7 +10,7 @@ using ValheimVehicles.Structs;
 namespace ValheimVehicles.Integrations;
 
 public class PowerSourceBridge :
-  PowerNetworkDataEntity<PowerSourceBridge, PowerSourceComponent, PowerSourceData>, IPowerSource
+  PowerNetworkDataEntity<PowerSourceBridge, PowerSourceComponent, PowerSourceData>
 {
   public static List<PowerSourceBridge> Instances = new();
 
@@ -20,6 +20,8 @@ public class PowerSourceBridge :
     {
       Instances.Add(this);
     }
+
+    this.WaitForPowerSystemNodeData<PowerSourceData>(SetData);
   }
 
   public void OnDisable()
@@ -81,52 +83,12 @@ public class PowerSourceBridge :
   {
     AddFuelOrRPC(amount);
   }
-  public float RequestAvailablePower(float deltaTime, float supplyFromSources, float totalDemand, bool isDemanding)
-  {
-    return Data.GetMaxPotentialOutput(deltaTime);
-    // return Logic.RequestAvailablePower(deltaTime, supplyFromSources, totalDemand, isDemanding);
-  }
-  public void CommitEnergyUsed(float energyUsed)
-  {
-    Data.CommitEnergyUsed(energyUsed);
-  }
-  public void SetRunning(bool state)
-  {
-    if (!this.IsNetViewValid(out var netView))
-    {
-      return;
-    }
-    Logic.SetRunning(state);
-  }
-  public void SetFuelCapacity(float val)
-  {
-    LoggerProvider.LogWarning("Method not implemented");
-    // Logic.SetFuelCapacity(val);
-  }
-  public void SetFuelConsumptionRate(float val)
-  {
-    LoggerProvider.LogWarning("Method not implemented");
 
-    // Logic.SetFuelConsumptionRate(val);
-  }
-  public void UpdateFuelEfficiency()
+  public void SetData(PowerSourceData data)
   {
-    LoggerProvider.LogWarning("Method not implemented");
+    Logic.SetData(data);
+  }
 
-    // Logic.UpdateFuelEfficiency();
-  }
-  public void SetFuelLevel(float amount)
-  {
-    SetFuelOrRPC(amount);
-  }
-  public float GetFuelLevel()
-  {
-    return Data.Fuel;
-  }
-  public float GetFuelCapacity()
-  {
-    return Data.FuelCapacity;
-  }
   public bool IsRunning => Logic.isRunning;
   public bool IsActive => Logic.IsActive;
   public string NetworkId => Data.NetworkId;

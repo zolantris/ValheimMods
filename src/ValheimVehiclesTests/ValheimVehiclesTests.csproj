@@ -27,10 +27,7 @@
         <Compile Include="../ValheimRAFT.Unity/Assets/ValheimVehicles/SharedScripts/PowerSystem/*.cs"/>
         <Compile Include="../ValheimRAFT.Unity/Assets/ValheimVehicles/SharedScripts/PowerSystem.Enums/*.cs"/>
         <Compile Include="../ValheimRAFT.Unity/Assets/ValheimVehicles/SharedScripts/MathUtils.cs"/>
-    </ItemGroup>
-
-    <ItemGroup Label="Direct Tested files">
-        <Compile Include="../ValheimVehicles/ValheimVehicles.Integrations.PowerSystem/PowerSystemSimulator.cs"/>
+        <Compile Include="../ValheimRAFT.Unity/Assets/ValheimVehicles/SharedScripts/PowerSystemSimulator.cs"/>
     </ItemGroup>
     <!--    <ItemGroup>-->
     <!--        <ProjectReference Include="..\ValheimVehicles\ValheimVehicles.csproj"/>-->

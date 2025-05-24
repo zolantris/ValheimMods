@@ -170,6 +170,35 @@ namespace ValheimVehicles.SharedScripts
         : Quaternion.identity;
     }
 
+    public void FrozenRBUpdate()
+    {
+      // only called if the swivel is not a base state like Returned or AtTarget
+      // if (IsPoweredSwivel && swivelPowerConsumer && !swivelPowerConsumer.IsActive)
+      // {
+      //   if (!isFrozen)
+      //   {
+      //     frozenLocalPos = animatedTransform.localPosition;
+      //     frozenLocalRot = animatedTransform.localRotation;
+      //     isFrozen = true;
+      //   }
+      //
+      //   var parent = animatedTransform.parent;
+      //   if (parent != null)
+      //   {
+      //     var worldPos = parent.TransformPoint(frozenLocalPos);
+      //     var worldRot = parent.rotation * frozenLocalRot;
+      //
+      //     animatedRigidbody.Move(worldPos, worldRot);
+      //   }
+      //
+      //   return;
+      // }
+      // else
+      // {
+      //   isFrozen = false;
+      // }
+    }
+
     public virtual void FixedUpdate()
     {
       if (!CanUpdate || !animatedRigidbody || !animatedTransform.parent || !piecesContainer) return;
@@ -205,31 +234,9 @@ namespace ValheimVehicles.SharedScripts
         return;
       }
 
-      // only called if the swivel is not a base state like Returned or AtTarget
-      if (IsPoweredSwivel && swivelPowerConsumer && !swivelPowerConsumer.IsActive)
-      {
-        if (!isFrozen)
-        {
-          frozenLocalPos = animatedTransform.localPosition;
-          frozenLocalRot = animatedTransform.localRotation;
-          isFrozen = true;
-        }
 
-        var parent = animatedTransform.parent;
-        if (parent != null)
-        {
-          var worldPos = parent.TransformPoint(frozenLocalPos);
-          var worldRot = parent.rotation * frozenLocalRot;
-
-          animatedRigidbody.Move(worldPos, worldRot);
-        }
-
-        return;
-      }
-      else
-      {
-        isFrozen = false;
-      }
+      // This was disabled as IsActive updates could desync a client when instead it should be handled on the toggle to prevent pressing the button after power is consumed.
+      // FrozenRBUpdate()
 
       switch (mode)
       {
@@ -394,17 +401,17 @@ namespace ValheimVehicles.SharedScripts
       return Quaternion.Euler(0f, clampedY, 0f);
     }
 
-    public void UpdateBasePowerConsumption()
+    public virtual void UpdateBasePowerConsumption()
     {
       if (!IsPoweredSwivel || !swivelPowerConsumer) return;
-      swivelPowerConsumer.BasePowerConsumption = SwivelEnergyDrain * computedInterpolationSpeed;
+      swivelPowerConsumer.Data.BasePowerConsumption = SwivelEnergyDrain * computedInterpolationSpeed;
     }
 
     public void DeactivatePowerConsumer()
     {
       if (IsPoweredSwivel && swivelPowerConsumer)
       {
-        swivelPowerConsumer.SetDemandState(false);
+        swivelPowerConsumer.Data.SetDemandState(false);
       }
     }
 
@@ -412,11 +419,11 @@ namespace ValheimVehicles.SharedScripts
     {
       if (IsPoweredSwivel && swivelPowerConsumer)
       {
-        swivelPowerConsumer.SetDemandState(true);
+        swivelPowerConsumer.Data.SetDemandState(true);
       }
     }
 
-    public void UpdatePowerConsumer()
+    public virtual void UpdatePowerConsumer()
     {
       if (!IsPoweredSwivel) return;
       if (!swivelPowerConsumer)

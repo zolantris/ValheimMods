@@ -338,7 +338,7 @@ public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interac
     }
   }
 
-  public void OnPressHandler(MechanismSwitch toggleSwitch, Humanoid humanoid)
+  public bool OnPressHandler(MechanismSwitch toggleSwitch, Humanoid humanoid)
   {
     ToggleVisualActivationState();
     AddPlayerToPullSwitchAnimations(humanoid);
@@ -361,11 +361,19 @@ public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interac
         TriggerSwivelPanel();
         break;
       case MechanismAction.SwivelActivateMode:
+      {
+        if (!TargetSwivel || TargetSwivel?.swivelPowerConsumer && TargetSwivel.swivelPowerConsumer.IsPowerDenied)
+        {
+          return false;
+        }
         TriggerSwivelAction();
+      }
         break;
       default:
         throw new ArgumentOutOfRangeException();
     }
+
+    return true;
   }
 
   public void TriggerSwivelPanel()
@@ -452,14 +460,16 @@ public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interac
     }
   }
 
-  public void OnAltPressHandler()
+  public bool OnAltPressHandler()
   {
     if (!MechanismSelectorPanelIntegration.Instance)
     {
       MechanismSelectorPanelIntegration.Init();
     }
-    if (!MechanismSelectorPanelIntegration.Instance) return;
+    if (!MechanismSelectorPanelIntegration.Instance) return false;
     MechanismSelectorPanelIntegration.Instance.BindTo(this, true);
+
+    return true;
   }
 
   public bool Interact(Humanoid character, bool hold, bool alt)
@@ -468,13 +478,12 @@ public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interac
       return false;
     if (!alt)
     {
-      OnPressHandler(this, character);
+      return OnPressHandler(this, character);
     }
     else
     {
-      OnAltPressHandler();
+      return OnAltPressHandler();
     }
-    return true;
   }
 
   public string GetLocalizedActionText(MechanismAction action)

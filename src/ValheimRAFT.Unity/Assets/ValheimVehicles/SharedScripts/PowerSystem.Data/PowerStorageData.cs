@@ -68,9 +68,5 @@ namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
     {
       Energy = MathX.Clamp(val, 0f, EnergyCapacity);
     }
-    public override bool IsActive
-    {
-      get;
-    }
   }
 }

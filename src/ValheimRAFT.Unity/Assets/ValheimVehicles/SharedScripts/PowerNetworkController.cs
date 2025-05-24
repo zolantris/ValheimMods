@@ -70,7 +70,6 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
 
     protected void OnDestroy()
     {
-      ClearAllSimulatedNetworkData();
       StopAllCoroutines();
     }
 
@@ -79,10 +78,10 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
       if (Time.time < _nextUpdate) return;
       _nextUpdate = Time.time + _updateInterval;
 
-      foreach (var pair in powerNodeNetworks)
-      {
-        Host_SimulateNetwork(pair.Value, pair.Key);
-      }
+      // foreach (var pair in powerNodeNetworks)
+      // {
+      //   
+      // }
     }
 
     // public static void RegisterPowerComponent<T>(T component)

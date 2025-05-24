@@ -19,7 +19,8 @@ namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
     public readonly Dictionary<long, PlayerEitrData> PlayerDataById = new();
 
     // eitr vapor is the player eitr. This is different from Eitr fuel.
-    public static float EitrVaporToEnergyRatio = 0.1f; // default is 100 eitr vapor = 1 unit of energy.
+    public static float EitrVaporCostPerTick = 10f;
+    public static float EnergyChargePerTick = 1f;
     public static float RechargeRate = 10f;
 
     // overrides (in partial method for integrations)
@@ -41,7 +42,7 @@ namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
 
     public float ConvertPlayerEitrToEnergy(float playerEitr)
     {
-      return playerEitr * EitrVaporToEnergyRatio;
+      return playerEitr * EitrVaporCostPerTick / EnergyChargePerTick;
     }
 
     /// <summary>
@@ -66,6 +67,9 @@ namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
         conduitData = conduit;
       }
     }
+
+    public static float EitrVaporToEnergyRatio = EitrVaporCostPerTick / EnergyChargePerTick;
+
 
     // <summary>
     /// Returns the total eitr of all players in the zone.
@@ -102,8 +106,8 @@ namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
     /// </summary>
     public bool TryGetNeededEitr(float remainingEnergy, float eitrVaporAvailable, out float deltaEitr, out float deltaEnergy)
     {
-      var eitrProcessable = eitrVaporAvailable * EitrVaporToEnergyRatio * DeltaTimeRechargeRate;
-      var energyProduced = eitrProcessable / EitrVaporToEnergyRatio;
+      var eitrProcessable = MathX.Min(eitrVaporAvailable, EitrVaporCostPerTick) * DeltaTimeRechargeRate;
+      var energyProduced = EnergyChargePerTick * DeltaTimeRechargeRate;
       if (remainingEnergy < energyProduced)
       {
         // Clamp to remainingEnergy

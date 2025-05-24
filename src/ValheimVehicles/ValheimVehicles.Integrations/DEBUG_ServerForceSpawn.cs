@@ -162,7 +162,6 @@ public class DEBUG_ServerForceSpawn
     yield return null;
 
     LoggerProvider.LogDebug("Continuing on and manual regenerating networks");
-    yield return PowerNetworkControllerIntegration.Instance?.RequestRebuildPowerNetworkCoroutine();
 
     LoggerProvider.LogDebug("Finished RebuildPowerNetworkCoroutine triggered by ForceSpawnIfItDoesNotExist");
     yield return null;

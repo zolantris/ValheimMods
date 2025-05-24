@@ -1,41 +1,38 @@
 ﻿// ReSharper disable ArrangeNamespaceBody
 // ReSharper disable NamespaceStyle
 
-#region
-
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using TMPro;
 using UnityEngine;
-using ValheimVehicles.BepInExConfig;
 using ValheimVehicles.SharedScripts.Interfaces;
-
-#endregion
-
 namespace ValheimVehicles.SharedScripts.UI
 {
   public class MechanismSelectorPanel : SingletonBehaviour<MechanismSelectorPanel>
   {
+#if !UNITY_EDITOR
     [Header("UI Settings")]
     [SerializeField] public float MaxUIWidth = 400f;
 
     public GameObject panelRoot;
     public GameObject panelContent;
-    public IMechanismActionSetter? mechanismAction;
+    public bool IsEditing;
+
+    public List<SwivelComponent> nearestSwivels = new();
+
+    internal MechanismSwitchCustomConfig _currentPanelConfig = new();
+    private TextMeshProUGUI _saveStatus;
     internal TMP_Dropdown actionDropdown;
+    public IMechanismActionSetter? mechanismAction;
+
+    public Action<MechanismAction>? OnSelectedActionChanged;
+    public Action<SwivelComponent>? OnSwivelSelectedChanged;
     internal TMP_Dropdown swivelSelectorDropdown;
 
     [SerializeField] public SwivelUISharedStyles viewStyles = new();
 
     public SwivelComponent? SelectedSwivel { get; set; }
-
-    public Action<MechanismAction>? OnSelectedActionChanged;
-    public Action<SwivelComponent>? OnSwivelSelectedChanged;
-    public bool IsEditing = false;
-    private TextMeshProUGUI _saveStatus;
-
-    internal MechanismSwitchCustomConfig _currentPanelConfig = new();
 
     public virtual void BindTo(IMechanismActionSetter mechanismActionSetter, bool isToggle = false)
     {
@@ -89,8 +86,6 @@ namespace ValheimVehicles.SharedScripts.UI
       swivelSelectorDropdown.gameObject.SetActive(show);
     }
 
-    public List<SwivelComponent> nearestSwivels = new();
-
     public void OnMechanismSwivelSelected(int index)
     {
       if (index < 0 || index >= nearestSwivels.Count) return;
@@ -116,7 +111,7 @@ namespace ValheimVehicles.SharedScripts.UI
       if (mechanismAction == null)
       {
         swivelSelectorDropdown = SwivelUIHelpers.AddDropdownRow(panelContent.transform, viewStyles, ModTranslations.Mechanism_Switch_Swivel_SelectedSwivel,
-          ["N/A"],
+          new[] { "N/A" },
           "N/A",
           OnMechanismSwivelSelected);
         return;
@@ -218,5 +213,6 @@ namespace ValheimVehicles.SharedScripts.UI
 
       HideShowSwivelFinder();
     }
+#endif
   }
 }

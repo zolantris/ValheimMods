@@ -8,12 +8,6 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
   public class PowerConduitPlateComponent : PowerNodeComponentBase
   {
     public PowerConduitMode mode;
-    public static float chargeRate = 1f;
-    public static float drainRate = 10f;
-    public static float eitrToFuelRatio = 40f;
-    public float fuelStored = 0f;
-    public float maxFuelCapacity = 100f;
-
     public Func<float> GetPlayerEitr = () => 0f;
     public Action<float> AddPlayerEitr = _ => {};
     public Action<float> SubtractPlayerEitr = _ => {};

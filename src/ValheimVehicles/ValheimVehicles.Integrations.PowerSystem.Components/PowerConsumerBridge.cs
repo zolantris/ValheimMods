@@ -3,6 +3,7 @@
 
 using System.Collections.Generic;
 using UnityEngine;
+using ValheimVehicles.Integrations.PowerSystem;
 using ValheimVehicles.SharedScripts.PowerSystem;
 using ValheimVehicles.SharedScripts.PowerSystem.Compute;
 using ValheimVehicles.SharedScripts.PowerSystem.Interfaces;
@@ -10,8 +11,7 @@ using ValheimVehicles.SharedScripts.PowerSystem.Interfaces;
 namespace ValheimVehicles.Integrations
 {
   public class PowerConsumerBridge :
-    PowerNetworkDataEntity<PowerConsumerBridge, PowerConsumerComponent, PowerConsumerData>,
-    IPowerConsumer
+    PowerNetworkDataEntity<PowerConsumerBridge, PowerConsumerComponent, PowerConsumerData>
   {
     public string NetworkId => Logic.NetworkId;
     public Vector3 Position => transform.position;
@@ -20,19 +20,10 @@ namespace ValheimVehicles.Integrations
     public bool IsDemanding => Logic.IsDemanding;
     public bool IsPowerDenied => Logic.IsPowerDenied;
 
-    public float RequestedPower(float deltaTime)
+    public void SetData(PowerConsumerData data)
     {
-      return Logic.RequestedPower(deltaTime);
+      Logic.SetData(data);
     }
-    public void ApplyPower(float joules, float deltaTime)
-    {
-      Logic.ApplyPower(joules, deltaTime);
-    }
-    public void SetActive(bool val)
-    {
-      Logic.SetActive(val);
-    }
-
     public static List<PowerConsumerBridge> Instances = new();
 
     public void OnEnable()
@@ -41,6 +32,7 @@ namespace ValheimVehicles.Integrations
       {
         Instances.Add(this);
       }
+      this.WaitForPowerSystemNodeData<PowerConsumerData>(SetData);
     }
 
     public void OnDisable()
@@ -49,33 +41,8 @@ namespace ValheimVehicles.Integrations
       Instances.RemoveAll(x => !x);
     }
 
-    protected override void Awake()
-    {
-      base.Awake();
-    }
-
-#if DEBUG
-    public virtual void OnCollisionEnter(Collision other) {}
-    public virtual void OnCollisionExit(Collision other) {}
-
-    protected override void Start()
-    {
-      base.Start();
-    }
-
-    protected override void OnDestroy()
-    {
-      base.OnDestroy();
-    }
-#endif
-
     protected override void RegisterDefaultRPCs()
     {
-    }
-
-    private void FixedUpdate()
-    {
-      // Let logic handle demand evaluation and power state
     }
 
     public void SetNetworkId(string id)

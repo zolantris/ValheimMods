@@ -167,12 +167,9 @@ public class PowerHoverComponent : MonoBehaviour, Hoverable, Interactable
   {
     var baseString = $"{ModTranslations.PowerConduit_DrainPlate_Name}";
 
-    if (PowerNetworkController.CanShowNetworkData || PowerSystemConfig.PowerNetwork_ShowAdditionalPowerInformationByDefault.Value)
-    {
-      var stateText = PowerNetworkController.GetDrainMechanismActivationStatus(PowerConduit.IsActive, PowerConduit.HasPlayersWithEitr);
-      baseString += "\n";
-      baseString += $"[{stateText}]";
-    }
+    var stateText = PowerNetworkController.GetDrainMechanismActivationStatus(PowerConduit.IsActive, PowerConduit.HasPlayersWithEitr);
+    baseString += "\n";
+    baseString += $"[{stateText}]";
 
     return baseString;
   }

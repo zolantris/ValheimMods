@@ -1,6 +1,7 @@
 // ReSharper disable ArrangeNamespaceBody
 // ReSharper disable NamespaceStyle
 
+using ValheimVehicles.SharedScripts.PowerSystem.Compute;
 namespace ValheimVehicles.SharedScripts.PowerSystem
 {
   public interface IPowerSource : IPowerNode
@@ -10,7 +11,7 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
     bool IsRunning { get; }
 
     void AddFuel(float amount);
-    float RequestAvailablePower(float deltaTimee, float supplyFromSources, float totalDemand, bool isDemanding);
+    float RequestAvailablePower(float deltaTime, float totalDemand, bool isDemanding);
     void CommitEnergyUsed(float energyUsed);
     void SetRunning(bool val);
     void SetFuelCapacity(float val);

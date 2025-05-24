@@ -10,10 +10,12 @@
   using ValheimVehicles.Constants;
   using ValheimVehicles.Controllers;
   using ValheimVehicles.Helpers;
+  using ValheimVehicles.Integrations.PowerSystem;
   using ValheimVehicles.Interfaces;
   using ValheimVehicles.Prefabs;
   using ValheimVehicles.SharedScripts;
   using ValheimVehicles.SharedScripts.Helpers;
+  using ValheimVehicles.SharedScripts.PowerSystem.Compute;
   using ValheimVehicles.SharedScripts.UI;
   using ValheimVehicles.Structs;
 
@@ -59,6 +61,7 @@
     public static bool CanAllClientsSync = true;
     private bool _hasInitPrefabSync = false;
     private int swivelId = 0;
+    private PowerConsumerBridge powerConsumerIntegration;
 
     public override int SwivelPersistentId
     {
@@ -424,10 +427,38 @@
 
     public override void InitPowerConsumer()
     {
-      var powerConsumerIntegration = gameObject.AddComponent<PowerConsumerBridge>();
+      powerConsumerIntegration = gameObject.AddComponent<PowerConsumerBridge>();
       swivelPowerConsumer = powerConsumerIntegration.Logic;
       UpdatePowerConsumer();
       UpdateBasePowerConsumption();
+    }
+
+    public override void UpdatePowerConsumer()
+    {
+      base.UpdatePowerConsumer();
+      OnPowerConsumerUpdate();
+    }
+
+    /// <summary>
+    /// For all logic to sync updates to server or local user.
+    /// </summary>
+    public void OnPowerConsumerUpdate()
+    {
+      if (!swivelPowerConsumer) return;
+      if (!this.IsNetViewValid(out var netView))
+      {
+        return;
+      }
+
+      var isOwner = netView.IsOwner();
+      if (!isOwner || !powerConsumerIntegration)
+      {
+        PowerSystemRPC.Request_UpdatePowerConsumer(netView.GetZDO().m_uid, swivelPowerConsumer.Data);
+      }
+      else
+      {
+        powerConsumerIntegration.UpdateNetworkedData();
+      }
     }
 
     public void OnInitComplete()

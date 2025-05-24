@@ -4,10 +4,9 @@
 
 #region
 
-using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using UnityEngine;
-using ValheimVehicles.BepInExConfig;
 using ValheimVehicles.SharedScripts.PowerSystem.Interfaces;
 
 #endregion
@@ -18,8 +17,38 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
   {
 
     public static bool CanShowNetworkData = true;
+    public static Dictionary<string, PowerSystemSimulator.PowerSystemDisplayData> PowerNetworkDataInstances = new();
     [SerializeField] private bool enableVisualWires = true;
     private readonly List<LineRenderer> _activeLines = new();
+
+    public void Client_SimulateNetworkPowerAnimations()
+    {
+
+      // foreach (var powerNetworkDataInstance in PowerNetworkDataInstances)
+      // {
+      //   if (powerNetworkDataInstance.Value.NetworkConsumerPowerStatus == "Normal")
+      //   {
+      //     // run lightning burst for this network.
+      //   }
+      // }
+      // 7. Lightning burst effect (visual only)
+      // if (lightningBurstCoroutine != null && !isDemanding)
+      // {
+      //   StopCoroutine(lightningBurstCoroutine);
+      //   lightningBurstCoroutine = null;
+      // }
+
+      // if (isDemanding)
+      // {
+      // if (lightningBurstCoroutine != null)
+      // {
+      //   StopCoroutine(lightningBurstCoroutine);
+      //   lightningBurstCoroutine = null;
+      // }
+      // if (lightningBurstCoroutine != null) return;
+      // lightningBurstCoroutine = StartCoroutine(ActivateLightningBursts());
+      // }
+    }
 
     public static string GetDrainMechanismActivationStatus(bool isActive, bool hasPlayersWithEitr)
     {
@@ -59,7 +88,8 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
     /// <returns></returns>
     public static string GetMechanismRequiredPowerStatus(bool isActive)
     {
-      if (PowerSystemConfig.Swivels_DoNotRequirePower.Value) return "";
+      // infinity text. aka "\u221E"
+      if (!SwivelComponent.IsPoweredSwivel) return ModTranslations.WithBoldText("∞");
       var activationText = isActive ? ModTranslations.PowerState_HasPower : ModTranslations.PowerState_NoPower;
       var activationColor = isActive ? "yellow" : "red";
       return ModTranslations.WithBoldText(activationText, activationColor);
@@ -95,6 +125,28 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
       return ModTranslations.Power_NetworkInfo_NetworkLowPower;
     }
 
+    public static bool TryNetworkPowerData(string networkId, [NotNullWhen(true)] out PowerSystemSimulator.PowerSystemDisplayData? _data)
+    {
+      if (networkId == null)
+      {
+        LoggerProvider.LogInfoDebounced("NetworkId is null");
+        _data = null;
+        return false;
+      }
+
+      if (PowerNetworkDataInstances.TryGetValue(networkId, out _data))
+      {
+        return true;
+      }
+
+      _data = null;
+      return false;
+    }
+
+    public static void UpdateNetworkPowerData(string networkId, PowerSystemSimulator.PowerSystemDisplayData data)
+    {
+      PowerNetworkDataInstances[networkId] = data;
+    }
     /// <summary>
     /// Meant for inline integration within Hoverable interfaces.
     /// </summary>

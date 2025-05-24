@@ -42,10 +42,9 @@ public class PowerSystemConfig : BepInExBaseConfig<PowerSystemConfig>
 
   public static void UpdatePowerConduits()
   {
-    PowerConduitPlateComponent.drainRate = PowerPlate_TransferRate.Value;
-    PowerConduitPlateComponent.eitrToFuelRatio = PowerPlate_EitrToEnergyRatio.Value;
-
     PowerConduitData.RechargeRate = PowerPlate_TransferRate.Value;
+    PowerConduitData.EitrVaporCostPerTick = PowerPlate_EitrToEnergyRatio.Value;
+    PowerConduitData.EnergyChargePerTick = 1 / PowerPlate_EitrToEnergyRatio.Value;
     PowerConduitData.EitrVaporToEnergyRatio = PowerPlate_EitrToEnergyRatio.Value;
   }
 
@@ -107,17 +106,17 @@ public class PowerSystemConfig : BepInExBaseConfig<PowerSystemConfig>
     PowerNetwork_ShowAdditionalPowerInformationByDefault = config.BindUnique(SectionKey, "PowerNetwork_ShowAdditionalPowerInformationByDefault", false, ConfigHelpers.CreateConfigDescription("This will show the power network information by default per prefab. This acts as a tutorial. Most power items will have a visual indicator but it may not be clear to players immediately.", false, false));
 
     PowerPlate_TransferRate = config.BindUnique(SectionKey,
-      "PowerPlate_TransferRate", 100f,
+      "PowerPlate_TransferRate", 0.05f,
       ConfigHelpers.CreateConfigDescription(
         "How much eitr energy is charged/drained per time to convert to power system energy units. Eitr energy is renewable but should be considered less refined. To maintain balance keep this at a higher number.",
         true, false,
-        new AcceptableValueRange<float>(0.001f, 10000f)));
+        new AcceptableValueRange<float>(0.001f, 1f)));
     PowerPlate_EitrToEnergyRatio = config.BindUnique(SectionKey,
       "PowerPlate_EitrToEnergyRatio", 10f,
       ConfigHelpers.CreateConfigDescription(
         "The amount of player eitr that is required to get 1 unit of eitr energy in the system.",
         true, false,
-        new AcceptableValueRange<float>(0.001f, 100f)));
+        new AcceptableValueRange<float>(0.001f, 10f)));
 
     // sources
     PowerSource_FuelCapacity = config.BindUnique(SectionKey,

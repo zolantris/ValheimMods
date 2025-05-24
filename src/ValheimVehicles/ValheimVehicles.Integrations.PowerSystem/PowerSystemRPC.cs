@@ -2,7 +2,6 @@
 // ReSharper disable NamespaceStyle
 
 using System.Collections.Generic;
-using ValheimVehicles.Helpers;
 using ValheimVehicles.SharedScripts;
 using ValheimVehicles.SharedScripts.PowerSystem;
 using ValheimVehicles.SharedScripts.PowerSystem.Compute;
@@ -14,12 +13,14 @@ namespace ValheimVehicles.Integrations.PowerSystem
     private const string RPC_PlayerEnteredConduit_Name = "PowerSystem_PlayerEnteredConduit";
     private const string RPC_PlayerExitedConduit_Name = "PowerSystem_PlayerExitedConduit";
     private const string RPC_NotifyZDOsChanged_Name = "PowerSystem_NotifyZDOsChanged";
+    private const string RPC_UpdatePowerConsumer_Name = "PowerSystem_PlayerEnteredConduit";
 
     public static void Register()
     {
       ZRoutedRpc.instance.Register<ZPackage>(RPC_PlayerEnteredConduit_Name, RPC_PlayerEnteredConduit);
       ZRoutedRpc.instance.Register<ZPackage>(RPC_PlayerExitedConduit_Name, RPC_PlayerExitedConduit);
       ZRoutedRpc.instance.Register<ZPackage>(RPC_NotifyZDOsChanged_Name, Client_NotifyZDOsChanged);
+      ZRoutedRpc.instance.Register<ZPackage>(RPC_UpdatePowerConsumer_Name, RPC_UpdatePowerConsumer);
     }
 
     public static void Request_PowerZDOsChangedToNearbyPlayers(string networkId, List<ZDOID> zdos, PowerSimulationData simData, float range = 40f)
@@ -143,7 +144,59 @@ namespace ValheimVehicles.Integrations.PowerSystem
       data.RemovePlayer(playerId);
     }
 
+    private static void RPC_UpdatePowerConsumer(long sender, ZPackage pkg)
+    {
+      pkg.SetPos(0);
+
+      var id = pkg.ReadZDOID();
+      var isDemanding = pkg.ReadBool();
+      var baseConsumption = pkg.ReadSingle();
+      var powerIntensityLevel = (PowerIntensityLevel)pkg.ReadInt();
+
+      var zdo = ZDOMan.instance.GetZDO(id);
+      if (zdo == null)
+      {
+        LoggerProvider.LogWarning($"[RPC_UpdatePowerConsumer] ZDO not found for {id}");
+        return;
+      }
+
+      if (!PowerSystemRegistry.TryGetData<PowerConsumerData>(zdo, out var data))
+      {
+        LoggerProvider.LogWarning($"[PowerSystemRPC] No PowerConduitData found for {id}");
+        return;
+      }
+
+      data.IsDemanding = isDemanding;
+      data.BasePowerConsumption = baseConsumption;
+      data.SetPowerMode(powerIntensityLevel);
+
+      if (zdo.IsOwner() || ZNet.instance.IsServer())
+      {
+        if (!zdo.IsOwner())
+        {
+          zdo.SetOwner(ZDOMan.GetSessionID());
+        }
+        data.Save();
+      }
+      else
+      {
+#if DEBUG
+        LoggerProvider.LogWarning("Sent a update to power consumer but not owner.");
+#endif
+      }
+    }
+
   #endregion
+
+    public static void Request_UpdatePowerConsumer(ZDOID consumerId, PowerConsumerData data)
+    {
+      var pkg = new ZPackage();
+      pkg.Write(consumerId);
+      pkg.Write(data.IsDemanding);
+      pkg.Write(data.BasePowerConsumption);
+      pkg.Write((int)data.PowerIntensityLevel);
+      ZRoutedRpc.instance.InvokeRoutedRPC(RPC_UpdatePowerConsumer_Name, pkg);
+    }
 
 
     public static void Request_PlayerEnteredConduit(ZDOID conduitId, long playerId)
@@ -168,12 +221,10 @@ namespace ValheimVehicles.Integrations.PowerSystem
       var networkId = pkg.ReadString(); // Ensure this is read first
       var count = pkg.ReadInt();
 
-      PowerNetworkControllerIntegration.MarkNetworkDirty(networkId);
-
       for (var i = 0; i < count; i++)
       {
         var zdoid = pkg.ReadZDOID();
-        LoggerProvider.LogDebug($"[RPC] Client received update for ZDO: {zdoid} networkId: {networkId}");
+        // LoggerProvider.LogDebug($"[RPC] Client received update for ZDO: {zdoid} networkId: {networkId}");
         // Hook: Client should refresh visuals or cached logic here.
       }
     }

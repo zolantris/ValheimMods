@@ -29,12 +29,6 @@ namespace ValheimVehicles.SharedScripts
         SpawnPylons(GeneratePositions(5, 10f));
       if (spawnFifty)
         SpawnPylons(GeneratePositions(50, 5f));
-
-    }
-
-    private void Start()
-    {
-      PowerNetworkController.RequestRebuildNetwork();
     }
 
     private List<Vector3> GeneratePositions(int count, float spacing)
@@ -60,8 +54,6 @@ namespace ValheimVehicles.SharedScripts
         var obj = Instantiate(PylonPrefab, pos, Quaternion.identity);
         obj.name = $"Pylon_{pos.x:F1}_{pos.z:F1}";
       }
-
-      PowerNetworkController.RequestRebuildNetwork();
     }
   }
 }

@@ -2,16 +2,12 @@
 // ReSharper disable NamespaceStyle
 
 using System;
-using UnityEngine;
-using ValheimVehicles.Components;
-using ValheimVehicles.Helpers;
 using ValheimVehicles.Interfaces;
-using ValheimVehicles.SharedScripts;
 using ValheimVehicles.SharedScripts.Interfaces;
 using ValheimVehicles.Structs;
 using ZdoWatcher;
 
-namespace ValheimVehicles.BepInExConfig
+namespace ValheimVehicles.SharedScripts
 {
   public class MechanismSwitchCustomConfig : ISerializableConfig<MechanismSwitchCustomConfig, IMechanismSwitchConfig>, IPrefabConfig<MechanismSwitchCustomConfig>, IMechanismSwitchConfig
   {
