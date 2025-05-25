@@ -89,7 +89,7 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
     public static string GetMechanismRequiredPowerStatus(bool isActive)
     {
       // infinity text. aka "\u221E"
-      if (!SwivelComponent.IsPoweredSwivel) return ModTranslations.WithBoldText("∞");
+      if (!SwivelComponent.IsPoweredSwivel) return ModTranslations.WithBoldText("∞", "yellow");
       var activationText = isActive ? ModTranslations.PowerState_HasPower : ModTranslations.PowerState_NoPower;
       var activationColor = isActive ? "yellow" : "red";
       return ModTranslations.WithBoldText(activationText, activationColor);

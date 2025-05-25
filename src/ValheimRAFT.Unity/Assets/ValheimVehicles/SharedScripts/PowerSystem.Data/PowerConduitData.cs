@@ -101,6 +101,21 @@ namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
       return total;
     }
 
+    public float lastUpdateTime = 0f;
+    public float updateIncrements = 60f;
+
+    public bool CanRunSimulation()
+    {
+      lastUpdateTime += DeltaTime;
+      if (lastUpdateTime < 1f) // 1 second interval
+      {
+        return false;
+      }
+
+      lastUpdateTime -= 0f;
+      return true;
+    }
+
     /// <summary>
     /// Get the next deltaTime Eitr to remove.
     /// </summary>
@@ -146,9 +161,9 @@ namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
     public float SimulateConduit(float energyAvailableOrDrainable, float deltaTime)
     {
       DeltaTime = deltaTime;
+      if (!CanRunSimulation()) return 0f;
       if (PlayerDataById.Count == 0 || energyAvailableOrDrainable <= 0f)
         return 0f;
-
 
       var deltaEnergy = 0f;
 

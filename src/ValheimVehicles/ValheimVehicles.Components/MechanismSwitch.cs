@@ -118,19 +118,18 @@ public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interac
   public IEnumerator ScheduleIntendedAction()
   {
     _timer.Restart();
-    while (_timer.ElapsedMilliseconds < 10000 && !isActiveAndEnabled || !prefabConfigSync || !prefabConfigSync.HasInitLoaded || !this.IsNetViewValid())
+    while (_timer.ElapsedMilliseconds < 10000f && (!isActiveAndEnabled || !prefabConfigSync || !prefabConfigSync.HasInitLoaded || !this.IsNetViewValid()))
     {
       _timer.Reset();
       yield return new WaitForFixedUpdate();
     }
 
-    if (_timer.ElapsedMilliseconds >= 10000)
+    if (_timer.ElapsedMilliseconds >= 10000f && (!isActiveAndEnabled || !prefabConfigSync || !prefabConfigSync.HasInitLoaded || !this.IsNetViewValid()))
     {
       _timer.Reset();
       yield break;
     }
 
-    prefabConfigSync.Load();
     UpdateIntendedAction();
 
     // further delayed load in case we did not get the data
@@ -142,7 +141,6 @@ public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interac
       yield break;
     }
 
-    prefabConfigSync.Load();
     UpdateIntendedAction();
     _timer.Reset();
   }
@@ -152,11 +150,7 @@ public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interac
   /// </summary>
   public void UpdateIntendedAction()
   {
-    if (TargetSwivelId == 0)
-    {
-      prefabConfigSync.Load();
-    }
-
+    prefabConfigSync.Load();
     // Already set and stored a SelectedAction and Swivel.
     if (targetSwivelId != 0 || SelectedAction is not MechanismAction.None)
     {
@@ -340,9 +334,6 @@ public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interac
 
   public bool OnPressHandler(MechanismSwitch toggleSwitch, Humanoid humanoid)
   {
-    ToggleVisualActivationState();
-    AddPlayerToPullSwitchAnimations(humanoid);
-
     switch (SelectedAction)
     {
       // do nothing for this
@@ -372,6 +363,10 @@ public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interac
       default:
         throw new ArgumentOutOfRangeException();
     }
+
+    ToggleVisualActivationState();
+    AddPlayerToPullSwitchAnimations(humanoid);
+
 
     return true;
   }

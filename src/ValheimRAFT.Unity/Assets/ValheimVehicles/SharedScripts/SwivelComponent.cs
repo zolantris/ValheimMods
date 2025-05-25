@@ -132,10 +132,7 @@ namespace ValheimVehicles.SharedScripts
       animatedRigidbody.isKinematic = true;
       animatedRigidbody.interpolation = RigidbodyInterpolation.Interpolate;
 
-      if (IsPoweredSwivel)
-      {
-        InitPowerConsumer();
-      }
+      InitPowerConsumer();
 
       if (!Instances.Contains(this))
       {

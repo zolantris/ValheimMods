@@ -7,7 +7,7 @@ public interface IPrefabCustomConfigRPCSync<T> : IPrefabConfig<T>, IPrefabConfig
 
 
   void CommitConfigChange(T newConfig);
-  void RequestCommitConfigChange(T newConfig);
+  void Request_CommitConfigChange(T newConfig);
 
   // request methods to be invoked by the parent.
   internal void Request_Load();

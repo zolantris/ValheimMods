@@ -169,7 +169,7 @@ public class PrefabConfigRPCSync<T, TComponentInterface> : MonoBehaviour, IPrefa
 
   public virtual void OnLoad() {}
 
-  public void RequestCommitConfigChange(T newConfig)
+  public void Request_CommitConfigChange(T newConfig)
   {
     if (!this.IsNetViewValid(out var netView)) return;
     if (netView.IsOwner())
@@ -187,7 +187,12 @@ public class PrefabConfigRPCSync<T, TComponentInterface> : MonoBehaviour, IPrefa
   private void RPC_CommitConfigChange(long sender, ZPackage pkg)
   {
     if (!this.IsNetViewValid(out var netView)) return;
-    if (!netView.IsOwner()) return;
+    if (!netView.IsOwner() || !ZNet.instance.IsServer()) return;
+    if (!netView.IsOwner())
+    {
+      netView.ClaimOwnership();
+    }
+
     var newConfig = new T();
     newConfig.Deserialize(pkg);
     CommitConfigChange(newConfig);

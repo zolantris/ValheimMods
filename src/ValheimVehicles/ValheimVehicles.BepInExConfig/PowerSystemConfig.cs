@@ -20,7 +20,8 @@ public class PowerSystemConfig : BepInExBaseConfig<PowerSystemConfig>
   // plates/conduits
   public static ConfigEntry<bool> PowerPlate_ShowStatus = null!;
   public static ConfigEntry<float> PowerPlate_TransferRate = null!;
-  public static ConfigEntry<float> PowerPlate_EitrToEnergyRatio = null!;
+  public static ConfigEntry<float> PowerPlate_EitrDrainCostPerSecond = null!;
+  public static ConfigEntry<float> PowerPlate_EnergyGainPerSecond = null!;
 
   // sources
   public static ConfigEntry<bool> PowerSource_AllowNearbyFuelingWithEitr = null!;
@@ -43,9 +44,9 @@ public class PowerSystemConfig : BepInExBaseConfig<PowerSystemConfig>
   public static void UpdatePowerConduits()
   {
     PowerConduitData.RechargeRate = PowerPlate_TransferRate.Value;
-    PowerConduitData.EitrVaporCostPerTick = PowerPlate_EitrToEnergyRatio.Value;
-    PowerConduitData.EnergyChargePerTick = 1 / PowerPlate_EitrToEnergyRatio.Value;
-    PowerConduitData.EitrVaporToEnergyRatio = PowerPlate_EitrToEnergyRatio.Value;
+    PowerConduitData.EitrVaporCostPerTick = PowerPlate_EitrDrainCostPerSecond.Value;
+    PowerConduitData.EnergyChargePerTick = PowerPlate_EnergyGainPerSecond.Value;
+    PowerConduitData.EitrVaporToEnergyRatio = PowerPlate_EitrDrainCostPerSecond.Value;
   }
 
   public void UpdatePowerSources()
@@ -111,12 +112,24 @@ public class PowerSystemConfig : BepInExBaseConfig<PowerSystemConfig>
         "How much eitr energy is charged/drained per time to convert to power system energy units. Eitr energy is renewable but should be considered less refined. To maintain balance keep this at a higher number.",
         true, false,
         new AcceptableValueRange<float>(0.001f, 1f)));
-    PowerPlate_EitrToEnergyRatio = config.BindUnique(SectionKey,
-      "PowerPlate_EitrToEnergyRatio", 10f,
+
+#if DEBUG
+    var acceptableRange = new AcceptableValueRange<float>(0.000001f, 10000f);
+#else
+    var acceptableRange = new AcceptableValueRange<float>(0.000001f,10f);
+#endif
+    PowerPlate_EitrDrainCostPerSecond = config.BindUnique(SectionKey,
+      nameof(PowerPlate_EitrDrainCostPerSecond), 100f,
       ConfigHelpers.CreateConfigDescription(
-        "The amount of player eitr that is required to get 1 unit of eitr energy in the system.",
+        "The amount of player eitr that is required per second to power a system.",
         true, false,
-        new AcceptableValueRange<float>(0.001f, 10f)));
+        acceptableRange));
+    PowerPlate_EnergyGainPerSecond = config.BindUnique(SectionKey,
+      nameof(PowerPlate_EnergyGainPerSecond), 0.0001f,
+      ConfigHelpers.CreateConfigDescription(
+        "The amount of energy gained when draining player eitr per second.",
+        true, false,
+        acceptableRange));
 
     // sources
     PowerSource_FuelCapacity = config.BindUnique(SectionKey,
@@ -199,7 +212,7 @@ public class PowerSystemConfig : BepInExBaseConfig<PowerSystemConfig>
 
 
 // conduits
-    PowerPlate_EitrToEnergyRatio.SettingChanged += (sender, args) => UpdatePowerConduits();
+    PowerPlate_EitrDrainCostPerSecond.SettingChanged += (sender, args) => UpdatePowerConduits();
     PowerPlate_TransferRate.SettingChanged += (sender, args) => UpdatePowerConduits();
 
     SwivelComponent.SwivelEnergyDrain = SwivelPowerDrain.Value;

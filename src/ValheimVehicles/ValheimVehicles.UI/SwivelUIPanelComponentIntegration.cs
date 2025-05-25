@@ -52,7 +52,7 @@ public class SwivelUIPanelComponentIntegration : SwivelUIPanelComponent
   {
     if (!_currentSwivel && Player.m_localPlayer)
     {
-      SwivelHelpers.FindAllSwivelsWithinRange(transform.position, out _, out _currentSwivel);
+      SwivelHelpers.FindAllSwivelsWithinRange(Player.m_localPlayer.transform.position, out _, out _currentSwivel);
     }
   }
 
@@ -151,7 +151,7 @@ public class SwivelUIPanelComponentIntegration : SwivelUIPanelComponent
       return;
     }
 
-    swivelComponentIntegration.prefabConfigSync.RequestCommitConfigChange(saveConfig);
+    swivelComponentIntegration.prefabConfigSync.Request_CommitConfigChange(saveConfig);
   }
 
   private const string PanelName = "ValheimVehicles_SwivelPanel";

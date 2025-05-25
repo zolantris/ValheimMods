@@ -38,7 +38,7 @@ public class MechanismSelectorPanelIntegration : MechanismSelectorPanel
     // We do not let local overrides of this readonly value.
     var saveConfig = new MechanismSwitchCustomConfig();
     saveConfig.ApplyFrom(_currentPanelConfig);
-    mechanismSwitch.prefabConfigSync.RequestCommitConfigChange(saveConfig);
+    mechanismSwitch.prefabConfigSync.Request_CommitConfigChange(saveConfig);
   }
 
   public void SyncUIFromPartialConfig(MechanismSwitch updated)
