@@ -67,7 +67,7 @@ public class SwivelUIPanelComponentIntegration : SwivelUIPanelComponent
 
     if (_currentSwivel)
     {
-      var swivelComponentIntegration = _currentSwivel as SwivelComponentIntegration;
+      var swivelComponentIntegration = _currentSwivel as SwivelComponentBridge;
       if (swivelComponentIntegration != null)
       {
         swivelComponentIntegration.prefabConfigSync.Load();
@@ -135,7 +135,7 @@ public class SwivelUIPanelComponentIntegration : SwivelUIPanelComponent
   protected override void OnPanelSave()
   {
     TryGetCurrentSwivelIntegration();
-    var swivelComponentIntegration = _currentSwivel as SwivelComponentIntegration;
+    var swivelComponentIntegration = _currentSwivel as SwivelComponentBridge;
     if (!swivelComponentIntegration || !swivelComponentIntegration.IsNetViewValid()) return;
 
     // We do not let local overrides of this readonly value.

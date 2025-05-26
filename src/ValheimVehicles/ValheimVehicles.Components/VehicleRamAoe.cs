@@ -576,7 +576,7 @@ public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
       return true;
     }
 
-    if (!LayerHelpers.IsContainedWithinLayerMask(colliderObj.layer, LayerHelpers.PhysicalLayers))
+    if (!LayerHelpers.IsContainedWithinLayerMask(colliderObj.layer, LayerHelpers.PhysicalLayerMask))
     {
 #if DEBUG
       // LoggerProvider.LogDebug($"Ignoring layer {colliderObj.layer} for gameobject {colliderObj.name} because it is not within PhysicalLayer mask.");

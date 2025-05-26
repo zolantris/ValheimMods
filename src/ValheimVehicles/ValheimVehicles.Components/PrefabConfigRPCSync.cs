@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Diagnostics;
 using UnityEngine;
 using ValheimVehicles.Controllers;
@@ -30,6 +31,8 @@ public class PrefabConfigRPCSync<T, TComponentInterface> : MonoBehaviour, IPrefa
   private Coroutine? _prefabSyncRoutine;
   public Stopwatch timer = new();
 
+  public static Dictionary<ZDO, ISerializableConfig<T, TComponentInterface>> s_zdoToConfig = new();
+
   public virtual void Awake()
   {
     if (ZNetView.m_forceDisableInit) return;
@@ -40,6 +43,65 @@ public class PrefabConfigRPCSync<T, TComponentInterface> : MonoBehaviour, IPrefa
     {
       InitRPCHandler();
     });
+  }
+
+  public static string GetRPCPrefix(string name)
+  {
+    return $"{ValheimVehiclesPlugin.ModName}_{name}";
+  }
+  public static string GetRPCPrefix(Action method)
+  {
+    return $"{ValheimVehiclesPlugin.ModName}_{nameof(method)}";
+  }
+
+  public static string RPC_SyncConfigKeys_Name = GetRPCPrefix(RPC_SyncConfigKeys);
+
+  public static void Register()
+  {
+    ZRoutedRpc.instance.Register<ZPackage>(RPC_SyncConfigKeys_Name, RPC_SyncConfigKeys);
+  }
+
+  public static void Request_SyncConfig_Keys(ZDOID zdoId, string[] zdoPropertyKeys)
+  {
+    var pkg = new ZPackage();
+    pkg.Write(zdoId);
+    pkg.Write(zdoPropertyKeys.Length);
+    foreach (var key in zdoPropertyKeys)
+      pkg.Write(key);
+  }
+
+  public static void RPC_SyncConfigKeys(long sender, ZPackage pkg)
+  {
+    pkg.SetPos(0);
+    var zdoId = pkg.ReadZDOID();
+    var zdo = ZDOMan.instance.GetZDO(zdoId);
+
+    if (zdo == null)
+    {
+      LoggerProvider.LogError($"Could not find ZDO related to \n {zdoId}");
+      return;
+    }
+    if (!s_zdoToConfig.TryGetValue(zdo, out var config))
+    {
+      LoggerProvider.LogError($"Could not find config for ZDO \n {zdoId}");
+      return;
+    }
+
+    // read the rest of the data if valid
+    var length = pkg.ReadInt();
+    List<string> zdoPropertyKeys = new();
+
+    try
+    {
+      for (var i = 0; i < length; i++)
+        zdoPropertyKeys.Add(pkg.ReadString());
+    }
+    catch (Exception e)
+    {
+      LoggerProvider.LogError($"Error while reading pkg strings \n {e}");
+    }
+
+    config.LoadByKeys(zdo, zdoPropertyKeys);
   }
 
   public virtual void OnEnable()
@@ -131,6 +193,23 @@ public class PrefabConfigRPCSync<T, TComponentInterface> : MonoBehaviour, IPrefa
     _prefabSyncRoutine = null;
     Load();
   }
+
+  public void LoadByKey(string zdoPropertyKey)
+  {
+    switch (zdoPropertyKey)
+    {
+
+    }
+  }
+
+  public void LoadByKeys(List<string> zdoPropertyKeys)
+  {
+    foreach (var zdoPropertyKey in zdoPropertyKeys)
+    {
+      LoadByKey(zdoPropertyKey);
+    }
+  }
+
   /// <summary>
   /// Syncs RPC data from ZDO to local values. If it's not ready it queues up the sync.
   /// </summary>
@@ -203,6 +282,7 @@ public class PrefabConfigRPCSync<T, TComponentInterface> : MonoBehaviour, IPrefa
     rpcHandler?.Register(nameof(RPC_Load), RPC_Load);
     rpcHandler?.Register<ZPackage>(nameof(RPC_CommitConfigChange), RPC_CommitConfigChange);
   }
+
 
   public virtual void UnregisterRPCListeners()
   {

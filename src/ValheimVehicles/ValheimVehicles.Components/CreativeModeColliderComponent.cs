@@ -48,7 +48,7 @@ public class CreativeModeColliderComponent : MonoBehaviour
   public void SetMode(bool val)
   {
     if (collider == null) return;
-    collider.excludeLayers = LayerHelpers.PhysicalLayers;
+    collider.excludeLayers = LayerHelpers.PhysicalLayerMask;
   }
 
   public virtual void OnToggleEditMode()

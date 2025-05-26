@@ -1,31 +1,62 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using UnityEngine;
 using ValheimVehicles.Interfaces;
 using ValheimVehicles.SharedScripts;
-using ValheimVehicles.SharedScripts.PowerSystem;
-using Logger = HarmonyLib.Tools.Logger;
 namespace ValheimVehicles.Helpers;
 
 public static class ValheimExtensions
 {
-
-  public static void TrySetZDOOnChange<T>(this ZDO zdo, string key, T currentValue)
+  /// <summary>
+  /// For debugging. These values/stats are not accurate if connecting TO a server. Meaning if you are not a server you will not know if you are connecting to a dedicated server without additional RPC values (I think). Jotunn api for checking does the same thing and seems inaccurate...with latest valheim reported values.
+  /// </summary>
+  [Conditional("DEBUG")]
+  public static void LogValheimServerStats()
   {
-    if (typeof(T) == typeof(float))
+    if (!ZNet.instance || !ZNetScene.instance) return;
+    var znet = ZNet.instance;
+
+    LoggerProvider.LogDebugDebounced($"IsDedicated: {znet.IsDedicated()}\n IsServer: {znet.IsServer()}, IsClient: {!znet.IsServer() && !znet.IsDedicated()}, IsLocalServer: {!znet.IsServer() && !znet.IsDedicated()}");
+  }
+
+  public static void SetDelta<T>(this ZDO zdo, string key, T currentValue)
+  {
+    var type = typeof(T);
+    if (type == typeof(float))
     {
-      var storedValue = zdo.GetFloat(key);
-      var currentValueAsFloat = (float)((object)currentValue ?? storedValue);
-      if (!Mathf.Approximately(storedValue, currentValueAsFloat))
-      {
-        zdo.Set(key, currentValueAsFloat);
-      }
+      SetDeltaFloat(zdo, key, (float)(object)currentValue);
+    }
+    else
+    {
+      LoggerProvider.LogError($"TrySetZDOOnChange generic only supports float for now. Got: {type}");
     }
   }
 
-  public static void TrySetZDOBoolOnChange(this ZDO zdo, string key, bool currentValue)
+  public static void SetDelta(this ZDO zdo, string key, string currentValue)
+  {
+    SetDeltaString(zdo, key, currentValue);
+  }
+
+  public static void SetDelta(this ZDO zdo, string key, float currentValue)
+  {
+    SetDeltaFloat(zdo, key, currentValue);
+  }
+
+  public static void SetDelta(this ZDO zdo, string key, int currentValue)
+  {
+    SetDeltaInt(zdo, key, currentValue);
+  }
+
+  public static void SetDelta(this ZDO zdo, string key, bool currentValue)
+  {
+    SetDeltaBool(zdo, key, currentValue);
+  }
+
+
+  public static void SetDeltaBool(this ZDO zdo, string key, bool currentValue)
   {
     var storedValue = zdo.GetBool(key);
     if (currentValue != storedValue)
@@ -34,7 +65,7 @@ public static class ValheimExtensions
     }
   }
 
-  public static void TrySetZDOStringOnChange(this ZDO zdo, string key, string currentValue)
+  public static void SetDeltaString(this ZDO zdo, string key, string currentValue)
   {
     var storedValue = zdo.GetString(key);
     if (storedValue != currentValue)
@@ -43,7 +74,7 @@ public static class ValheimExtensions
     }
   }
 
-  public static void TrySetZDOIntOnChange(this ZDO zdo, string key, int currentValue)
+  public static void SetDeltaInt(this ZDO zdo, string key, int currentValue)
   {
     var storedValue = zdo.GetInt(key);
     if (storedValue != currentValue)
@@ -52,7 +83,7 @@ public static class ValheimExtensions
     }
   }
 
-  public static void TrySetZDOFloatOnChange(this ZDO zdo, string key, float currentValue)
+  public static void SetDeltaFloat(this ZDO zdo, string key, float currentValue)
   {
     var storedValue = zdo.GetFloat(key);
     if (!Mathf.Approximately(storedValue, currentValue))

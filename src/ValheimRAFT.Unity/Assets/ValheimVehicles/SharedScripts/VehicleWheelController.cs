@@ -364,7 +364,7 @@
       }
       private void OnCollisionStay(Collision collision)
       {
-        if (LayerHelpers.IsContainedWithinLayerMask(collision.gameObject.layer, LayerHelpers.PhysicalLayers))
+        if (LayerHelpers.IsContainedWithinLayerMask(collision.gameObject.layer, LayerHelpers.PhysicalLayerMask))
         {
           _lastTerrainTouchDeltaTime = 0f;
         }

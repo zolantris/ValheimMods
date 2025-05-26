@@ -10,7 +10,7 @@ namespace ValheimVehicles.Components;
 /// <typeparam name="TSelf"></typeparam>
 public class SwivelPieceActivator : BasePieceActivatorComponent
 {
-  [SerializeField] private SwivelComponentIntegration _host;
+  [SerializeField] private SwivelComponentBridge _host;
   public override IPieceActivatorHost Host => _host;
 
   protected override void TrySetPieceToParent(ZNetView netView)
@@ -24,7 +24,7 @@ public class SwivelPieceActivator : BasePieceActivatorComponent
     _host.AddPiece(netView, isNewPiece);
   }
 
-  public void Init(SwivelComponentIntegration host)
+  public void Init(SwivelComponentBridge host)
   {
     _host = host;
   }

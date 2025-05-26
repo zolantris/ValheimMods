@@ -191,7 +191,7 @@
         list.Add(netView);
       }
 
-      if (SwivelComponentIntegration.ActiveInstances.TryGetValue(swivelParentId, out var swivel))
+      if (SwivelComponentBridge.ActiveInstances.TryGetValue(swivelParentId, out var swivel))
       {
         swivel.StartActivatePendingSwivelPieces();
       }

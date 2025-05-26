@@ -34,13 +34,13 @@
   ///
   /// Notes
   /// IRaycastPieceActivator is used for simplicity. It will easily match any component extending this in unity.
-  public sealed class SwivelComponentIntegration : SwivelComponent, IPieceActivatorHost, IPieceController, IRaycastPieceActivator, INetView, IPrefabConfig<SwivelCustomConfig>
+  public sealed class SwivelComponentBridge : SwivelComponent, IPieceActivatorHost, IPieceController, IRaycastPieceActivator, INetView, IPrefabConfig<SwivelCustomConfig>
   {
     public VehiclePiecesController? m_vehiclePiecesController;
     public VehicleManager? m_vehicle => m_vehiclePiecesController == null ? null : m_vehiclePiecesController.Manager;
 
     private int _persistentZdoId;
-    public static readonly Dictionary<int, SwivelComponentIntegration> ActiveInstances = [];
+    public static readonly Dictionary<int, SwivelComponentBridge> ActiveInstances = [];
     public List<ZNetView> m_pieces = [];
     public List<ZNetView> m_tempPieces = [];
 
@@ -53,10 +53,16 @@
     public ChildZSyncTransform childZsyncTransform;
     public readonly SwivelMotionStateTracker motionTracker = new();
 
-    public static bool CanAllClientsSync = true;
     private bool _hasInitPrefabSync = false;
     private int swivelId = 0;
     private PowerConsumerBridge powerConsumerIntegration;
+    public static HashSet<ZDO> SwivelZDOs = new();
+    public ZDO? _currentZdo;
+
+    // sync values
+    public static bool CanAllClientsSync = true;
+    public static bool ShouldSkipClientOnlyUpdate = true;
+    public static bool ShouldSyncClientOnlyUpdate = false;
 
     public override int SwivelPersistentId
     {
@@ -93,9 +99,6 @@
       SetupPieceActivator();
     }
 
-    public static bool ShouldSkipClientOnlyUpdate = true;
-    public static bool ShouldSyncClientOnlyUpdate = true;
-
     public override void SetMotionState(MotionState state)
     {
       if (!prefabConfigSync) return;
@@ -121,6 +124,8 @@
         {
           Request_SetMotionState(state);
         }
+
+        // this is likely unstable
         if (ShouldSyncClientOnlyUpdate)
         {
           prefabConfigSync.Load();
@@ -149,32 +154,12 @@
       }
     }
 
-
-    public MotionState GetNextMotionState()
-    {
-      var previousState = MotionState;
-      prefabConfigSync.Load();
-      LoggerProvider.LogDebug("MotionState -> Previous: " + previousState.ToString() + " | Current: " + MotionState.ToString() + " |");
-      switch (MotionState)
-      {
-        case MotionState.ToTarget:
-        case MotionState.AtTarget:
-          return MotionState.ToStart;
-        case MotionState.ToStart:
-        case MotionState.AtStart:
-          return MotionState.ToTarget;
-        default:
-          LoggerProvider.LogError("Somehow got unhandled motionState force setting user to ToStart");
-          return MotionState.ToStart;
-      }
-    }
-
     public override void Request_NextMotionState()
     {
       if (!this.IsNetViewValid(out var netView)) return;
+      // must load otherwise we could be desynced near guaranteed in any action called.
       if (!netView.IsOwner())
       {
-        // must load otherwise we could be desynced in any action called.
         prefabConfigSync.Load();
       }
       prefabConfigSync.Request_NextMotion();
@@ -195,13 +180,10 @@
     public void OnEnable()
     {
       var persistentId = GetPersistentId();
-      if (persistentId == 0) return;
-
-      if (ActiveInstances.TryGetValue(persistentId, out var swivelComponentIntegration))
+      if (persistentId != 0 && !ActiveInstances.ContainsKey(persistentId))
       {
-        return;
+        ActiveInstances.Add(persistentId, this);
       }
-      ActiveInstances.Add(persistentId, this);
     }
 
     public void SetupPieceActivator()
@@ -214,17 +196,23 @@
 
     public void OnDisable()
     {
-      var persistentId = GetPersistentId();
-      if (persistentId == 0) return;
-      if (!ActiveInstances.TryGetValue(persistentId, out var swivelComponentIntegration))
+      if (_currentZdo != null)
       {
-        return;
+        SwivelZDOs.Remove(_currentZdo);
       }
-      ActiveInstances.Remove(persistentId);
+
+      var persistentId = GetPersistentId();
+      if (persistentId != 0 && ActiveInstances.TryGetValue(persistentId, out _))
+      {
+        ActiveInstances.Remove(persistentId);
+      }
     }
 
     public override void FixedUpdate()
     {
+      // no server only running of this update.
+      if (!ZNet.instance || !ZNet.instance.IsDedicated()) return;
+
       if (!CanAllClientsSync)
       {
         if (!this.IsNetViewValid(out var netView))
@@ -253,21 +241,6 @@
       }
     }
 
-#if DEBUG
-    public void AddNearestPiece()
-    {
-      var hits = Physics.SphereCastAll(transform.position, 30f, Vector3.up, 30f, LayerHelpers.PhysicalLayers);
-      if (hits == null || hits.Length == 0) return;
-      var listHits = hits.ToList().Select(x => x.transform.transform.GetComponentInParent<Piece>()).Where(x => x != null && x.transform.root != transform.root).ToList();
-      listHits.Sort((x, y) =>
-        Vector3.Distance(transform.position, x.transform.position)
-          .CompareTo(Vector3.Distance(transform.position, y.transform.position)));
-
-      var firstHit = listHits.First();
-      TryAddPieceToSwivelContainer(GetPersistentId(), firstHit.transform.GetComponentInParent<ZNetView>());
-    }
-#endif
-
     public static bool TryAddPieceToSwivelContainer(int persistentId, ZNetView netViewPrefab)
     {
       if (!ActiveInstances.TryGetValue(persistentId, out var swivelComponentIntegration))
@@ -290,31 +263,8 @@
       _pieceActivator.StartActivatePendingPieces();
     }
 
-    // public void ActivatePiece(ZNetView netView)
-    // {
-    //   if (netView == null) return;
-    //   var zdo = netView.GetZDO();
-    //   if (netView.m_zdo == null) return;
-    //
-    //   AddPieceToParent(netView.transform);
-    //
-    //   // This should work just like finalize transform...so not needed technically. Need to see where the break in the logic is.
-    //   netView.transform.localPosition =
-    //     netView.m_zdo.GetVec3(VehicleZdoVars.MBPositionHash, Vector3.zero);
-    //   netView.transform.localRotation =
-    //     Quaternion.Euler(netView.m_zdo.GetVec3(VehicleZdoVars.MBRotationVecHash,
-    //       Vector3.zero));
-    //
-    //   var wnt = netView.GetComponent<WearNTear>();
-    //   if ((bool)wnt) wnt.enabled = true;
-    //
-    //   AddPiece(netView);
-    // }
-
     public void OnActivationComplete()
     {
-      // SetInitialLocalRotation();
-      // prefabConfigSync.SyncPrefabConfig();
       CanUpdate = true;
     }
 
@@ -536,7 +486,7 @@
       try
       {
         if (netView == null) return false;
-        var swivelController = netView.GetComponent<SwivelComponentIntegration>();
+        var swivelController = netView.GetComponent<SwivelComponentBridge>();
         if (swivelController == null)
         {
           LoggerProvider.LogDebug("Bailing vehicle deletion attempt: Valheim Attempted to delete a vehicle that matched the ValheimVehicle prefab instance but there was no VehicleBaseController or VehiclePiecesController found. This could mean there is a mod breaking the vehicle registration of ValheimRAFT.");

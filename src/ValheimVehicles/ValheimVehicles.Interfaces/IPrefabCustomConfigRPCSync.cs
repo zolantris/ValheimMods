@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 namespace ValheimVehicles.Interfaces;
 
 public interface IPrefabCustomConfigRPCSync<T> : IPrefabConfig<T>, IPrefabConfigActions, INetView, ISuppressableConfigReceiver
@@ -13,6 +14,8 @@ public interface IPrefabCustomConfigRPCSync<T> : IPrefabConfig<T>, IPrefabConfig
   internal void Request_Load();
   // booleans
   internal bool hasRegisteredRPCListeners { get; set; }
+
+  public void TryUpdateSyncKeys(List<string> keys);
 
   // registration methods
   internal void UnregisterRPCListeners();

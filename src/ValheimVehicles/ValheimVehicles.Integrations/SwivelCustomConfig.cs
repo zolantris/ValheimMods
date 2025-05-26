@@ -4,6 +4,7 @@
 #region
 
 using UnityEngine;
+using ValheimVehicles.Helpers;
 using ValheimVehicles.Integrations;
 using ValheimVehicles.Interfaces;
 using ValheimVehicles.SharedScripts;
@@ -80,18 +81,18 @@ namespace ValheimVehicles.BepInExConfig
 
     public void Save(ZDO zdo, SwivelCustomConfig config)
     {
-      zdo.Set(Key_Mode, (int)config.Mode);
-      zdo.Set(Key_LerpSpeed, config.InterpolationSpeed);
-      zdo.Set(Key_TrackMin, config.MinTrackingRange);
-      zdo.Set(Key_TrackMax, config.MaxTrackingRange);
-      zdo.Set(Key_HingeAxes, (int)config.HingeAxes);
-      zdo.Set(Key_MaxX, config.MaxEuler.x);
-      zdo.Set(Key_MaxY, config.MaxEuler.y);
-      zdo.Set(Key_MaxZ, config.MaxEuler.z);
-      zdo.Set(Key_OffsetX, config.MovementOffset.x);
-      zdo.Set(Key_OffsetY, config.MovementOffset.y);
-      zdo.Set(Key_OffsetZ, config.MovementOffset.z);
-      zdo.Set(Key_MotionState, (int)config.MotionState);
+      zdo.SetDelta(Key_Mode, (int)config.Mode);
+      zdo.SetDelta(Key_LerpSpeed, config.InterpolationSpeed);
+      zdo.SetDelta(Key_TrackMin, config.MinTrackingRange);
+      zdo.SetDelta(Key_TrackMax, config.MaxTrackingRange);
+      zdo.SetDelta(Key_HingeAxes, (int)config.HingeAxes);
+      zdo.SetDelta(Key_MaxX, config.MaxEuler.x);
+      zdo.SetDelta(Key_MaxY, config.MaxEuler.y);
+      zdo.SetDelta(Key_MaxZ, config.MaxEuler.z);
+      zdo.SetDelta(Key_OffsetX, config.MovementOffset.x);
+      zdo.SetDelta(Key_OffsetY, config.MovementOffset.y);
+      zdo.SetDelta(Key_OffsetZ, config.MovementOffset.z);
+      zdo.SetDelta(Key_MotionState, (int)config.MotionState);
     }
 
     public SwivelCustomConfig Load(ZDO zdo, ISwivelConfig configFromComponent)

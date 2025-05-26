@@ -30,7 +30,8 @@
       public static LayerMask CustomRaftLayerMask =
         LayerMask.GetMask(LayerMask.LayerToName(CustomRaftLayer));
 
-      public static LayerMask PhysicalLayers = LayerMask.GetMask("Default",
+      public static LayerMask PieceLayerMask = LayerMask.GetMask("piece");
+      public static LayerMask PhysicalLayerMask = LayerMask.GetMask("Default",
         "character", "piece",
         "terrain",
         "static_solid", "Default_small",

@@ -507,10 +507,10 @@
       m_vehicleBurningEffectAreas.Remove(netView.m_zdo.m_uid);
     }
 
-    public void InitSwivelController(SwivelComponentIntegration swivelComponentIntegration)
+    public void InitSwivelController(SwivelComponentBridge swivelComponentBridge)
     {
-      swivelComponentIntegration.m_vehiclePiecesController = this;
-      swivelComponentIntegration.StartActivatePendingSwivelPieces();
+      swivelComponentBridge.m_vehiclePiecesController = this;
+      swivelComponentBridge.StartActivatePendingSwivelPieces();
     }
 
     public void RemovePiece(ZNetView netView)
@@ -534,7 +534,7 @@
       foreach (var component in components)
         switch (component)
         {
-          case SwivelComponentIntegration swivelController:
+          case SwivelComponentBridge swivelController:
             InitSwivelController(swivelController);
             break;
           case WearNTear wnt when PrefabConfig.MakeAllPiecesWaterProof.Value:
@@ -1315,7 +1315,7 @@
           }
           if (prefabPieceData.IsSwivelChild)
           {
-            var swivel = nv.GetComponentInParent<SwivelComponentIntegration>();
+            var swivel = nv.GetComponentInParent<SwivelComponentBridge>();
             if (swivel != null)
             {
               // todo might have to make an exception for this.
@@ -2398,7 +2398,7 @@
       var zdo = netView.GetZDO();
       if (zdo == null) return;
 
-      var isSwivelParent = SwivelComponentIntegration.IsSwivelParent(zdo);
+      var isSwivelParent = SwivelComponentBridge.IsSwivelParent(zdo);
 
       var character = netView.GetComponent<Character>();
       var shouldSkipAddingProperties = !isSwivelParent && character != null && character.IsPlayer();

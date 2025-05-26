@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 namespace ValheimVehicles.Interfaces;
 
 /// <summary>
@@ -8,6 +9,8 @@ public interface ISerializableConfig<T, TComponent>
   void ApplyFrom(TComponent component);
   void ApplyTo(TComponent component);
   T Load(ZDO zdo, TComponent component);
+  T LoadByKeys(ZDO zdo, List<string> keys);
+  T LoadByKey(string key);
   void Save(ZDO zdo, T config);
   void Serialize(ZPackage pkg);
   T Deserialize(ZPackage pkg);

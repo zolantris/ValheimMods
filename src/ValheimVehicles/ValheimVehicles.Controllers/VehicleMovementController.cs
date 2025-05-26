@@ -401,7 +401,7 @@
 #endif
         vehicleRam.OnCollisionEnterHandler(collision);
       }
-      else if (LayerHelpers.IsContainedWithinLayerMask(collision.collider.gameObject.layer, LayerHelpers.PhysicalLayers))
+      else if (LayerHelpers.IsContainedWithinLayerMask(collision.collider.gameObject.layer, LayerHelpers.PhysicalLayerMask))
       {
         vehicleRam.OnCollisionEnterHandler(collision);
       }
@@ -433,7 +433,7 @@
       }
 #endif
 
-      if (vehicleRam != null && LayerHelpers.IsContainedWithinLayerMask(collision.collider.gameObject.layer, LayerHelpers.PhysicalLayers))
+      if (vehicleRam != null && LayerHelpers.IsContainedWithinLayerMask(collision.collider.gameObject.layer, LayerHelpers.PhysicalLayerMask))
       {
         vehicleRam.OnCollisionEnterHandler(collision);
       }
@@ -1004,7 +1004,7 @@
       if (!_impactEffect)
       {
         _impactEffect = gameObject.AddComponent<ImpactEffect>();
-        _impactEffect.m_triggerMask = LayerHelpers.PhysicalLayers;
+        _impactEffect.m_triggerMask = LayerHelpers.PhysicalLayerMask;
         _impactEffect.m_toolTier = 1000;
       }
 
@@ -1199,7 +1199,7 @@
 
       if (m_body)
       {
-        m_body.includeLayers = LayerHelpers.PhysicalLayers;
+        m_body.includeLayers = LayerHelpers.PhysicalLayerMask;
         m_body.excludeLayers = excludedLayers;
       }
     }
