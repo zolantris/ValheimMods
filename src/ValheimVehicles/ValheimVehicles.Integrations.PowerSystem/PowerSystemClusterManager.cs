@@ -176,7 +176,7 @@ namespace ValheimVehicles.Integrations
         // 3. Assign the chosen network ID to every ZDO in the cluster
         foreach (var zdo in cluster)
         {
-          ValheimExtensions.TrySetZDOStringOnChange(zdo, VehicleZdoVars.PowerSystem_NetworkId, networkId);
+          ValheimExtensions.SetDelta(zdo, VehicleZdoVars.PowerSystem_NetworkId, networkId);
         }
 
         // 4. Register the cluster

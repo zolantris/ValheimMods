@@ -6,10 +6,12 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using ValheimVehicles.BepInExConfig;
 using ValheimVehicles.Integrations.PowerSystem;
 using ValheimVehicles.SharedScripts;
 using ValheimVehicles.SharedScripts.PowerSystem;
 using ValheimVehicles.SharedScripts.PowerSystem.Compute;
+using ValheimVehicles.ValheimVehicles.RPC;
 using Logger = HarmonyLib.Tools.Logger;
 
 namespace ValheimVehicles.Integrations;
@@ -177,42 +179,6 @@ public partial class PowerNetworkControllerIntegration : PowerNetworkController
     }
   }
 
-  public bool HasNearbyPlayersOrPeers(List<ZDO> nodes)
-  {
-    var shouldSimulate = false;
-
-    if (Player.m_localPlayer != null)
-    {
-      foreach (var node in nodes)
-      {
-        var pos = node.GetPosition();
-        if (Vector3.Distance(pos, Player.m_localPlayer.transform.position) < 25f)
-        {
-          shouldSimulate = true;
-          break;
-        }
-      }
-    }
-
-    if (shouldSimulate) return true;
-
-    // Step 2: Iterate through peers and match them with nodes.
-    var peers = ZNet.instance.GetPeers();
-    if (peers.Count == 0) return false;
-    // iterate through each node first as this may be a quicker match.
-    foreach (var node in nodes)
-    foreach (var instanceMPeer in peers)
-    {
-      var pos = node.GetPosition();
-      if (Vector3.Distance(pos, instanceMPeer.m_refPos) < 25f)
-      {
-        shouldSimulate = true;
-        break;
-      }
-    }
-
-    return shouldSimulate;
-  }
 
   public void Server_Simulate()
   {
@@ -238,22 +204,20 @@ public partial class PowerNetworkControllerIntegration : PowerNetworkController
       }
 
       // simulates entire network if there is a network item loaded in each peer's area.
+      if (!RPCUtils.HasNearbyPlayersOrPeers(nodes, PowerSystemConfig.PowerSimulationDistanceThreshold.Value)) return;
 
 
-      if (ZNet.instance.IsServer())
+      if (PowerSystemClusterManager.TryBuildPowerNetworkSimData(networkId, out var simData))
       {
-        if (PowerSystemClusterManager.TryBuildPowerNetworkSimData(networkId, out var simData))
-        {
-          simData.NetworkId = networkId;
-          simData.DeltaTime = lastDeltaTime;
-          PowerSystemSimulator.Simulate(simData);
-          var zdoidNodes = nodes.Select(x => x.m_uid).ToList();
-          PowerSystemRPC.Request_PowerZDOsChangedToNearbyPlayers(networkId, zdoidNodes, simData);
-        }
-        else
-        {
-          LoggerProvider.LogError($"Failed to build sim data for network {networkId}");
-        }
+        simData.NetworkId = networkId;
+        simData.DeltaTime = lastDeltaTime;
+        PowerSystemSimulator.Simulate(simData);
+        var zdoidNodes = nodes.Select(x => x.m_uid).ToList();
+        PowerSystemRPC.Request_PowerZDOsChangedToNearbyPlayers(networkId, zdoidNodes, simData);
+      }
+      else
+      {
+        LoggerProvider.LogError($"Failed to build sim data for network {networkId}");
       }
     }
 

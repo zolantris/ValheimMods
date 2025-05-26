@@ -110,7 +110,7 @@ public class VehicleCustomConfig : ISerializableConfig<VehicleCustomConfig, IVeh
     pkg.Write(_treadScaleX);
   }
 
-  public void Save(ZDO zdo, VehicleCustomConfig customConfig)
+  public void Save(ZDO zdo, VehicleCustomConfig customConfig, string[]? filterKeys)
   {
     LoggerProvider.LogDebug("Saving vehicle config");
 
@@ -137,7 +137,7 @@ public class VehicleCustomConfig : ISerializableConfig<VehicleCustomConfig, IVeh
   }
 
 
-  public VehicleCustomConfig Load(ZDO zdo, IVehicleConfig configFromComponent)
+  public VehicleCustomConfig Load(ZDO zdo, IVehicleConfig configFromComponent, string[]? filterKeys = null)
   {
     return new VehicleCustomConfig
     {

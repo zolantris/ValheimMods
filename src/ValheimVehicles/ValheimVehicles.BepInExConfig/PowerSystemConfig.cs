@@ -31,6 +31,8 @@ public class PowerSystemConfig : BepInExBaseConfig<PowerSystemConfig>
   public static ConfigEntry<float> PowerSource_BaseFuelEfficiency = null!;
   public static ConfigEntry<float> PowerSource_FuelConsumptionRate = null!;
 
+  public static ConfigEntry<float> PowerSimulationDistanceThreshold = null!;
+
   // storage
   public static ConfigEntry<float> PowerStorage_Capacity = null!;
 
@@ -87,6 +89,8 @@ public class PowerSystemConfig : BepInExBaseConfig<PowerSystemConfig>
   public override void OnBindConfig(ConfigFile config)
   {
     PowerPylonRange = config.BindUnique(SectionKey, "PowerRangePerPowerItem", 10f, ConfigHelpers.CreateConfigDescription("The power range per power pylon prefab. Large values will make huge networks. Max range is 50. But this could span entire continents as ZDOs are not limited to render distance.", true, false, new AcceptableValueRange<float>(0, 50f)));
+
+    PowerPylonRange = config.BindUnique(SectionKey, "PowerSimulationDistanceThreshold", 50f, ConfigHelpers.CreateConfigDescription("The maximum threshold in which to simulate networks. This means if a player or client/peer is nearby the power system will continue to simulate. Keeping this value lower will make running powersystems much faster at the cost of power not running while away from an area.", true, false, new AcceptableValueRange<float>(25f, 10000f)));
 
     PowerMechanismRange = config.BindUnique(SectionKey, "PowerMechanismRange", 4f, ConfigHelpers.CreateConfigDescription("The power range per mechanism power item. This excludes pylons and is capped at a lower number. These items are meant to be connected to pylons but at higher values could connect together.", true, false, new AcceptableValueRange<float>(0, 20f)));
 

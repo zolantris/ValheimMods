@@ -42,7 +42,7 @@ namespace ValheimVehicles.SharedScripts
       component.TargetSwivel = ResolveSwivel(TargetSwivelId);
     }
 
-    public MechanismSwitchCustomConfig Load(ZDO zdo, IMechanismSwitchConfig component)
+    public MechanismSwitchCustomConfig Load(ZDO zdo, IMechanismSwitchConfig component, string[]? filterKeys)
     {
       return new MechanismSwitchCustomConfig
       {
@@ -51,7 +51,7 @@ namespace ValheimVehicles.SharedScripts
       };
     }
 
-    public void Save(ZDO zdo, MechanismSwitchCustomConfig config)
+    public void Save(ZDO zdo, MechanismSwitchCustomConfig config, string[]? filterKeys)
     {
       zdo.Set(VehicleZdoVars.ToggleSwitchAction, config.SelectedAction.ToString());
       zdo.Set(VehicleZdoVars.Mechanism_Swivel_TargetId, config.TargetSwivelId);

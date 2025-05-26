@@ -13,6 +13,7 @@
   using ValheimVehicles.Shared.Constants;
   using ValheimVehicles.SharedScripts;
   using ValheimVehicles.SharedScripts.Helpers;
+  using ValheimVehicles.ValheimVehicles.RPC;
 
 #endregion
 
@@ -162,12 +163,13 @@
       {
         prefabConfigSync.Load();
       }
-      prefabConfigSync.Request_NextMotion();
+      SwivelPrefabConfigRPC.Request_NextMotion(netView.GetZDO(), prefabConfigSync.Config.MotionState);
     }
 
     public void Request_SetMotionState(MotionState state)
     {
-      prefabConfigSync.Request_SetMotionState(state);
+      if (!this.IsNetViewValid(out var netView)) return;
+      SwivelPrefabConfigRPC.Request_SetMotionState(netView.GetZDO(), state);
     }
 
     public void SetupHoverFadeText()

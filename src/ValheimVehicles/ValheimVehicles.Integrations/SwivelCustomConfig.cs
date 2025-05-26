@@ -3,6 +3,7 @@
 
 #region
 
+using System.Collections.Generic;
 using UnityEngine;
 using ValheimVehicles.Helpers;
 using ValheimVehicles.Integrations;
@@ -79,7 +80,75 @@ namespace ValheimVehicles.BepInExConfig
       };
     }
 
-    public void Save(ZDO zdo, SwivelCustomConfig config)
+    public Vector3 CreateVector3(float x, float y, float z)
+    {
+      return new Vector3(
+        x,
+        y,
+        x
+      );
+    }
+
+    public void LoadByKey(ZDO zdo, ref ISwivelConfig config, string key)
+    {
+      switch (key)
+      {
+        case Key_Mode:
+          config.Mode = (SwivelMode)zdo.GetInt(Key_Mode, (int)config.Mode);
+          break;
+        case Key_LerpSpeed:
+          config.InterpolationSpeed = zdo.GetFloat(Key_LerpSpeed, config.InterpolationSpeed);
+          break;
+        case Key_TrackMin:
+          config.MinTrackingRange = zdo.GetFloat(Key_TrackMin, config.MinTrackingRange);
+          break;
+        case Key_TrackMax:
+          config.MaxTrackingRange = zdo.GetFloat(Key_TrackMax, config.MaxTrackingRange);
+          break;
+        case Key_HingeAxes:
+          config.HingeAxes = (HingeAxis)zdo.GetInt(Key_HingeAxes, (int)config.HingeAxes);
+          break;
+        case Key_MaxX:
+          config.MaxEuler = CreateVector3(zdo.GetFloat(Key_MaxX, config.MaxEuler.x), config.MaxEuler.y, config.MaxEuler.z);
+          break;
+        case Key_MaxY:
+          config.MaxEuler = CreateVector3(config.MaxEuler.z, zdo.GetFloat(Key_MaxY, config.MaxEuler.y), config.MaxEuler.z);
+          break;
+        case Key_MaxZ:
+          config.MaxEuler = CreateVector3(config.MaxEuler.z, config.MaxEuler.y, zdo.GetFloat(Key_MaxZ, config.MaxEuler.z));
+          break;
+        case Key_OffsetX:
+          config.MovementOffset = CreateVector3(zdo.GetFloat(Key_OffsetX, config.MovementOffset.x), config.MovementOffset.y, config.MovementOffset.z);
+          break;
+        case Key_OffsetY:
+          config.MovementOffset = CreateVector3(config.MovementOffset.z, zdo.GetFloat(Key_OffsetY, config.MovementOffset.y), config.MovementOffset.z);
+          break;
+        case Key_OffsetZ:
+          config.MovementOffset = CreateVector3(config.MovementOffset.z, config.MovementOffset.y, zdo.GetFloat(Key_OffsetZ, config.MovementOffset.z));
+          break;
+        case Key_MotionState:
+          config.MotionState = (MotionState)zdo.GetInt(Key_MotionState, (int)config.MotionState);
+          break;
+        default:
+          LoggerProvider.LogDebug($"SwivelConfig: Unknown key: {key}");
+          break;
+      }
+    }
+    public void Save(ZDO zdo, SwivelCustomConfig config, string[]? filterKeys)
+    {
+      if (filterKeys == null || filterKeys.Length == 0)
+      {
+        SaveAll(zdo, config);
+        return;
+      }
+
+      foreach (var filterKey in filterKeys)
+      {
+        SaveByKey(zdo, config, filterKey);
+      }
+    }
+
+    public void SaveAll(ZDO zdo, SwivelCustomConfig config)
     {
       zdo.SetDelta(Key_Mode, (int)config.Mode);
       zdo.SetDelta(Key_LerpSpeed, config.InterpolationSpeed);
@@ -95,7 +164,53 @@ namespace ValheimVehicles.BepInExConfig
       zdo.SetDelta(Key_MotionState, (int)config.MotionState);
     }
 
-    public SwivelCustomConfig Load(ZDO zdo, ISwivelConfig configFromComponent)
+    public void SaveByKey(ZDO zdo, ISwivelConfig config, string key)
+    {
+      switch (key)
+      {
+        case Key_Mode:
+          zdo.Set(Key_Mode, (int)config.Mode);
+          break;
+        case Key_LerpSpeed:
+          zdo.Set(Key_LerpSpeed, config.InterpolationSpeed);
+          break;
+        case Key_TrackMin:
+          zdo.Set(Key_TrackMin, config.MinTrackingRange);
+          break;
+        case Key_TrackMax:
+          zdo.Set(Key_TrackMax, config.MaxTrackingRange);
+          break;
+        case Key_HingeAxes:
+          zdo.Set(Key_HingeAxes, (int)config.HingeAxes);
+          break;
+        case Key_MaxX:
+          zdo.Set(Key_MaxX, config.MaxEuler.x);
+          break;
+        case Key_MaxY:
+          zdo.Set(Key_MaxY, config.MaxEuler.y);
+          break;
+        case Key_MaxZ:
+          zdo.Set(Key_MaxZ, config.MaxEuler.z);
+          break;
+        case Key_OffsetX:
+          zdo.Set(Key_OffsetX, config.MovementOffset.x);
+          break;
+        case Key_OffsetY:
+          zdo.Set(Key_OffsetY, config.MovementOffset.y);
+          break;
+        case Key_OffsetZ:
+          zdo.Set(Key_OffsetZ, config.MovementOffset.z);
+          break;
+        case Key_MotionState:
+          zdo.Set(Key_MotionState, (int)config.MotionState);
+          break;
+        default:
+          LoggerProvider.LogDebug($"SwivelConfig: Unknown key: {key}");
+          break;
+      }
+    }
+
+    public SwivelCustomConfig LoadAll(ZDO zdo, ISwivelConfig configFromComponent)
     {
       var newConfig = new SwivelCustomConfig
       {
@@ -116,10 +231,29 @@ namespace ValheimVehicles.BepInExConfig
         ),
         MotionState = (MotionState)zdo.GetInt(Key_MotionState, (int)configFromComponent.MotionState)
       };
-
-      LoggerProvider.LogDebug($"Loaded new config: Mode: {newConfig.Mode} MotionState: {newConfig.MotionState}");
-
       return newConfig;
+    }
+
+    public SwivelCustomConfig Load(ZDO zdo, ISwivelConfig configFromComponent, string[]? filterKeys)
+    {
+      if (filterKeys == null || filterKeys.Length == 0)
+      {
+        return LoadAll(zdo, configFromComponent);
+      }
+      return LoadByKeys(zdo, configFromComponent, filterKeys);
+    }
+
+    public SwivelCustomConfig LoadByKeys(ZDO zdo, ISwivelConfig configFromComponent, string[] filterKeys)
+    {
+      var swivelConfig = new SwivelCustomConfig();
+      swivelConfig.ApplyFrom(configFromComponent);
+
+      foreach (var key in filterKeys)
+      {
+        LoadByKey(zdo, ref configFromComponent, key);
+      }
+
+      return swivelConfig;
     }
 
     public void ApplyTo(ISwivelConfig component)
@@ -188,6 +322,18 @@ namespace ValheimVehicles.BepInExConfig
     {
       get;
       set;
+    }
+
+    public static MotionState GetNextMotionState(MotionState current)
+    {
+      return current switch
+      {
+        MotionState.AtStart => MotionState.ToTarget,
+        MotionState.ToStart => MotionState.ToTarget,
+        MotionState.AtTarget => MotionState.ToStart,
+        MotionState.ToTarget => MotionState.ToStart,
+        _ => MotionState.AtStart
+      };
     }
   }
 }

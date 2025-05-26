@@ -64,7 +64,7 @@ public abstract partial class PowerSystemComputeData
     {
       zdo.SetOwner(ZDOMan.GetSessionID());
     }
-    ValheimExtensions.TrySetZDOStringOnChange(zdo, VehicleZdoVars.PowerSystem_NetworkId, val);
+    ValheimExtensions.SetDelta(zdo, VehicleZdoVars.PowerSystem_NetworkId, val);
   }
 
   /// <summary>
@@ -89,12 +89,12 @@ public abstract partial class PowerSystemComputeData
       switch (dirtyField)
       {
         case VehicleZdoVars.PowerSystem_IsActive:
-          ValheimExtensions.TrySetZDOBoolOnChange(zdo, VehicleZdoVars.PowerSystem_IsActive, IsActive);
+          ValheimExtensions.SetDelta(zdo, VehicleZdoVars.PowerSystem_IsActive, IsActive);
           break;
         case VehicleZdoVars.PowerSystem_NetworkId:
           if (!IsTempNetworkId)
           {
-            ValheimExtensions.TrySetZDOStringOnChange(zdo, VehicleZdoVars.PowerSystem_NetworkId, NetworkId);
+            ValheimExtensions.SetDelta(zdo, VehicleZdoVars.PowerSystem_NetworkId, NetworkId);
           }
           break;
       }
@@ -449,13 +449,13 @@ public partial class PowerConsumerData : IPowerComputeZdoSync
         switch (key)
         {
           case VehicleZdoVars.PowerSystem_BasePowerConsumption:
-            ValheimExtensions.TrySetZDOFloatOnChange(validZdo, key, BasePowerConsumption);
+            ValheimExtensions.SetDelta(validZdo, key, BasePowerConsumption);
             break;
           case VehicleZdoVars.PowerSystem_Intensity_Level:
-            ValheimExtensions.TrySetZDOIntOnChange(validZdo, key, (int)powerIntensityLevel);
+            ValheimExtensions.SetDelta(validZdo, key, (int)powerIntensityLevel);
             break;
           case VehicleZdoVars.PowerSystem_IsDemanding:
-            ValheimExtensions.TrySetZDOBoolOnChange(validZdo, key, IsDemanding);
+            ValheimExtensions.SetDelta(validZdo, key, IsDemanding);
             break;
         }
       }
@@ -502,14 +502,14 @@ public partial class PowerSourceData : IPowerComputeZdoSync
         switch (key)
         {
           case VehicleZdoVars.PowerSystem_IsRunning:
-            ValheimExtensions.TrySetZDOBoolOnChange(validZdo, key, IsRunning);
+            ValheimExtensions.SetDelta(validZdo, key, IsRunning);
             break;
           case VehicleZdoVars.PowerSystem_Fuel:
             ConsolidateFuel();
-            ValheimExtensions.TrySetZDOFloatOnChange(validZdo, key, Fuel);
+            ValheimExtensions.SetDelta(validZdo, key, Fuel);
             break;
           case VehicleZdoVars.PowerSystem_FuelOutputRate:
-            ValheimExtensions.TrySetZDOFloatOnChange(validZdo, key, OutputRate);
+            ValheimExtensions.SetDelta(validZdo, key, OutputRate);
             break;
         }
       }
@@ -556,10 +556,10 @@ public partial class PowerStorageData : IPowerComputeZdoSync
         switch (key)
         {
           case VehicleZdoVars.PowerSystem_Energy:
-            ValheimExtensions.TrySetZDOFloatOnChange(validZdo, key, Energy);
+            ValheimExtensions.SetDelta(validZdo, key, Energy);
             break;
           case VehicleZdoVars.PowerSystem_EnergyCapacity:
-            ValheimExtensions.TrySetZDOFloatOnChange(validZdo, key, EnergyCapacity);
+            ValheimExtensions.SetDelta(validZdo, key, EnergyCapacity);
             break;
         }
       }

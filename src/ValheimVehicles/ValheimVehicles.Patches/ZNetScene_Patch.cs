@@ -1,10 +1,12 @@
 using System.Collections.Generic;
 using HarmonyLib;
 using UnityEngine;
+using ValheimVehicles.Components;
 using ValheimVehicles.Integrations;
 using ValheimVehicles.Integrations.PowerSystem;
 using ValheimVehicles.Patches;
 using ValheimVehicles.SharedScripts;
+using ValheimVehicles.ValheimVehicles.RPC;
 
 namespace ValheimVehicles.Patches;
 
@@ -23,6 +25,9 @@ public class ZNetScene_Patch
   {
     LoggerProvider.LogDev("called ZNetScene.Awake.");
     PowerSystemRPC.RegisterCustom();
+    SwivelPrefabConfigRPC.Register();
+    PrefabConfigRPC.Register();
+    PrefabConfigRPC.Register();
   }
 
 #if DEBUG

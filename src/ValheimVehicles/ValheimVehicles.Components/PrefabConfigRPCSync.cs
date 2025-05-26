@@ -2,11 +2,14 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using UnityEngine;
+using ValheimVehicles.Constants;
 using ValheimVehicles.Controllers;
 using ValheimVehicles.Helpers;
 using ValheimVehicles.Interfaces;
 using ValheimVehicles.SharedScripts;
+using ValheimVehicles.ValheimVehicles.RPC;
 
 namespace ValheimVehicles.Components;
 
@@ -39,26 +42,6 @@ public class PrefabConfigRPCSync<T, TComponentInterface> : MonoBehaviour, IPrefa
     retryGuard = new RetryGuard(this);
     m_nview = GetComponent<ZNetView>();
     controller = GetComponent<TComponentInterface>();
-    this.WaitForZNetView(() =>
-    {
-      InitRPCHandler();
-    });
-  }
-
-  public static string GetRPCPrefix(string name)
-  {
-    return $"{ValheimVehiclesPlugin.ModName}_{name}";
-  }
-  public static string GetRPCPrefix(Action method)
-  {
-    return $"{ValheimVehiclesPlugin.ModName}_{nameof(method)}";
-  }
-
-  public static string RPC_SyncConfigKeys_Name = GetRPCPrefix(RPC_SyncConfigKeys);
-
-  public static void Register()
-  {
-    ZRoutedRpc.instance.Register<ZPackage>(RPC_SyncConfigKeys_Name, RPC_SyncConfigKeys);
   }
 
   public static void Request_SyncConfig_Keys(ZDOID zdoId, string[] zdoPropertyKeys)
@@ -68,40 +51,8 @@ public class PrefabConfigRPCSync<T, TComponentInterface> : MonoBehaviour, IPrefa
     pkg.Write(zdoPropertyKeys.Length);
     foreach (var key in zdoPropertyKeys)
       pkg.Write(key);
-  }
 
-  public static void RPC_SyncConfigKeys(long sender, ZPackage pkg)
-  {
-    pkg.SetPos(0);
-    var zdoId = pkg.ReadZDOID();
-    var zdo = ZDOMan.instance.GetZDO(zdoId);
-
-    if (zdo == null)
-    {
-      LoggerProvider.LogError($"Could not find ZDO related to \n {zdoId}");
-      return;
-    }
-    if (!s_zdoToConfig.TryGetValue(zdo, out var config))
-    {
-      LoggerProvider.LogError($"Could not find config for ZDO \n {zdoId}");
-      return;
-    }
-
-    // read the rest of the data if valid
-    var length = pkg.ReadInt();
-    List<string> zdoPropertyKeys = new();
-
-    try
-    {
-      for (var i = 0; i < length; i++)
-        zdoPropertyKeys.Add(pkg.ReadString());
-    }
-    catch (Exception e)
-    {
-      LoggerProvider.LogError($"Error while reading pkg strings \n {e}");
-    }
-
-    config.LoadByKeys(zdo, zdoPropertyKeys);
+    ZRoutedRpc.instance.InvokeRoutedRPC(ModRPCNames.SyncConfigKeys);
   }
 
   public virtual void OnEnable()
@@ -109,12 +60,23 @@ public class PrefabConfigRPCSync<T, TComponentInterface> : MonoBehaviour, IPrefa
     if (ZNetView.m_forceDisableInit) return;
     RegisterRPCListeners();
     Load();
+
+    this.WaitForZNetView((nv) =>
+    {
+      PrefabConfigRPC.AddSubscription(nv.m_zdo, this);
+      InitRPCHandler();
+    });
   }
 
   public virtual void OnDisable()
   {
     if (ZNetView.m_forceDisableInit) return;
     UnregisterRPCListeners();
+
+    if (m_nview != null && m_nview.m_zdo != null)
+    {
+      PrefabConfigRPC.RemoveSubscription(m_nview.m_zdo, this);
+    }
 
     // cancel all Invoke calls from retryGuard.
     CancelInvoke();
@@ -192,22 +154,6 @@ public class PrefabConfigRPCSync<T, TComponentInterface> : MonoBehaviour, IPrefa
     timer.Reset();
     _prefabSyncRoutine = null;
     Load();
-  }
-
-  public void LoadByKey(string zdoPropertyKey)
-  {
-    switch (zdoPropertyKey)
-    {
-
-    }
-  }
-
-  public void LoadByKeys(List<string> zdoPropertyKeys)
-  {
-    foreach (var zdoPropertyKey in zdoPropertyKeys)
-    {
-      LoadByKey(zdoPropertyKey);
-    }
   }
 
   /// <summary>
@@ -294,5 +240,14 @@ public class PrefabConfigRPCSync<T, TComponentInterface> : MonoBehaviour, IPrefa
     _suppressMotionStateBroadcast = true;
     try { apply(); }
     finally { _suppressMotionStateBroadcast = false; }
+  }
+  public void Load(ZDO zdo, string[]? filterKeys)
+  {
+    if (controller == null) return;
+    CustomConfig = Config.Load(zdo, controller, filterKeys);
+  }
+  public void Save(ZDO zdo, string[]? filterKeys)
+  {
+    CustomConfig.Save(zdo, Config, filterKeys);
   }
 }

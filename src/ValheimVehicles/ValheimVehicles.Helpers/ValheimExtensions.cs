@@ -209,6 +209,15 @@ public static class ValheimExtensions
     return true;
   }
 
+  public static bool TryClaimOwnership(this ZDO zdo)
+  {
+    if (zdo == null) return false;
+    if (!zdo.IsOwner())
+    {
+      zdo.SetOwner(ZDOMan.GetSessionID());
+    }
+    return true;
+  }
 
   /// <summary>
   /// Similar to 

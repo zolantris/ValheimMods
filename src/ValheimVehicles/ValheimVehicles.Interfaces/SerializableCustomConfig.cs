@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 namespace ValheimVehicles.Interfaces;
 
 /// <summary>
@@ -8,13 +7,10 @@ public interface ISerializableConfig<T, TComponent>
 {
   void ApplyFrom(TComponent component);
   void ApplyTo(TComponent component);
-  T Load(ZDO zdo, TComponent component);
-  T LoadByKeys(ZDO zdo, List<string> keys);
-  T LoadByKey(string key);
-  void Save(ZDO zdo, T config);
+  T Load(ZDO zdo, TComponent component, string[]? filterKeys = null);
+  void Save(ZDO zdo, T config, string[]? filterKeys = null);
   void Serialize(ZPackage pkg);
   T Deserialize(ZPackage pkg);
-
   /// <summary>
   /// Returns a deterministic hash for comparing config equality.
   /// Should be stable across machines.
