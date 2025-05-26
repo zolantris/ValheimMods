@@ -1,10 +1,43 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using ValheimVehicles.Integrations.PowerSystem;
+using ValheimVehicles.SharedScripts;
+using Zolantris.Shared.Debug;
 namespace ValheimVehicles.ValheimVehicles.RPC;
 
-public class RPCUtils
+public static class RPCUtils
 {
+  public static string GetRPCPrefix(string name)
+  {
+    return $"{ValheimVehiclesPlugin.ModName}_{name}";
+  }
+  public static string GetRPCPrefix(Action method)
+  {
+    return $"{ValheimVehiclesPlugin.ModName}_{nameof(method)}";
+  }
+
+  public static Coroutine WithSafeRPCRegister(this MonoBehaviour mb, Action action)
+  {
+    return mb.StartCoroutine(SafeRPCRegister(action));
+  }
+  public static IEnumerator SafeRPCRegister(Action action)
+  {
+    var debugSafeTimer = DebugSafeTimer.StartNew();
+    while (debugSafeTimer.ElapsedMilliseconds < 10000f && (!ZNet.instance || ZRoutedRpc.instance != null || !ZNetScene.instance))
+    {
+      yield return null;
+    }
+
+    if (debugSafeTimer.ElapsedMilliseconds >= 10000f)
+    {
+      LoggerProvider.LogError("Bailed on rpc method");
+      yield break;
+    }
+
+    action?.Invoke();
+  }
 
   /// <summary>
   /// A method to check if there is a nearby peer so we do not spam peers across the map. Or run methods on ZDOs that will not be loaded for a long while.

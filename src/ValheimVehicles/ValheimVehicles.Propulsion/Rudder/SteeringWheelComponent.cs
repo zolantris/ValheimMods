@@ -302,13 +302,6 @@ public class SteeringWheelComponent : MonoBehaviour, IAnimatorHandler, Hoverable
     return this;
   }
 
-  // Run anchor controls here only if the deprecatedMbShip is used
-  // Otherwise updates for anchor are handled in MovementController
-  public void FixedUpdate()
-  {
-    steeringWheelHoverText.FixedUpdate_UpdateText();
-  }
-
   public void InitializeControls(ZNetView netView, IVehicleControllers? vehicleShip)
   {
     if (vehicleShip == null)

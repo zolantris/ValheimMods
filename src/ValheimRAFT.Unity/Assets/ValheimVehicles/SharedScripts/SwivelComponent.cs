@@ -35,7 +35,7 @@ namespace ValheimVehicles.SharedScripts
     public const string AnimatedContainerName = "animated";
 
     private const float positionThreshold = 0.01f;
-    private const float angleThreshold = 0.1f;
+    private const float angleThreshold = 0.01f;
 
     public static Vector3 cachedWindDirection = Vector3.zero;
 
@@ -78,8 +78,6 @@ namespace ValheimVehicles.SharedScripts
 
     public Transform directionDebuggerArrow;
 
-    public bool CanUpdate = true;
-
     public PowerConsumerComponent swivelPowerConsumer;
     private Rigidbody animatedRigidbody;
 
@@ -108,6 +106,17 @@ namespace ValheimVehicles.SharedScripts
     private Quaternion frozenLocalRot;
     private bool isFrozen;
     public virtual int SwivelPersistentId { get; set; }
+
+
+    // Update debouncing logic
+    public float _lastUpdatedMotionTime = 0f;
+    public float _lastUpdateTime = 0f;
+    public float lastDeltaTime = 0f;
+    internal float _nextUpdate;
+    internal static float _updateInterval = 0.25f;
+    public static bool CanRunSwivelDuringFixedUpdate = false;
+    public static bool CanRunSwivelDuringUpdate = true;
+    public bool _IsReady = true;
 
     public virtual void Awake()
     {
@@ -195,14 +204,37 @@ namespace ValheimVehicles.SharedScripts
       // }
     }
 
+    public bool CanUpdate()
+    {
+      if (!_IsReady) return false;
+      if (Mathf.Approximately(_lastUpdateTime, Time.time)) return true;
+      if (Time.time < _nextUpdate) return false;
+      _lastUpdateTime = _nextUpdate;
+      _nextUpdate = Time.time + _updateInterval;
+      _lastUpdateTime = Time.time; // for comparison, if we run a check that hits this during same update.
+      lastDeltaTime = _nextUpdate - _lastUpdateTime;
+      return true;
+    }
+
+    public virtual void Update()
+    {
+      if (CanRunSwivelDuringUpdate)
+      {
+        SwivelUpdate();
+      }
+    }
+
     public virtual void FixedUpdate()
     {
-      SwivelUpdate();
+      if (CanRunSwivelDuringFixedUpdate)
+      {
+        SwivelUpdate();
+      }
     }
 
     public void SwivelUpdate()
     {
-      if (!CanUpdate || !animatedRigidbody || !animatedTransform.parent || !piecesContainer) return;
+      if (!CanUpdate() || !animatedRigidbody || !animatedTransform.parent || !piecesContainer) return;
 #if UNITY_EDITOR
       // for updating demand state on the fly due to toggling with serializer
       if (Mode == SwivelMode.Rotate || Mode == SwivelMode.Move)
@@ -250,15 +282,19 @@ namespace ValheimVehicles.SharedScripts
           didMove = true;
 
           var angleToTarget = Quaternion.Angle(currentRot, targetRotation);
-          if (currentMotionState == MotionState.ToTarget && angleToTarget < angleThreshold)
+
+          if (CanUpdateMotionState())
           {
-            SetMotionState(MotionState.AtTarget);
-            SetRotationReachedTarget();
-          }
-          else if (currentMotionState == MotionState.ToStart && angleToTarget < angleThreshold)
-          {
-            SetMotionState(MotionState.AtStart);
-            SetRotationReturned();
+            if (currentMotionState == MotionState.ToTarget && angleToTarget < angleThreshold)
+            {
+              SetMotionState(MotionState.AtTarget);
+              SetRotationReachedTarget();
+            }
+            else if (currentMotionState == MotionState.ToStart && angleToTarget < angleThreshold)
+            {
+              SetMotionState(MotionState.AtStart);
+              SetRotationReturned();
+            }
           }
           break;
 
@@ -275,15 +311,19 @@ namespace ValheimVehicles.SharedScripts
           didMove = true;
 
           var distance = Vector3.Distance(currentLocal, targetMovementPosition);
-          if (currentMotionState == MotionState.ToTarget && distance < positionThreshold)
+
+          if (CanUpdateMotionState())
           {
-            SetMotionState(MotionState.AtTarget);
-            SetMoveReachedTarget();
-          }
-          else if (currentMotionState == MotionState.ToStart && distance < positionThreshold)
-          {
-            SetMotionState(MotionState.AtStart);
-            SetMoveReturned();
+            if (currentMotionState == MotionState.ToTarget && distance < positionThreshold)
+            {
+              SetMotionState(MotionState.AtTarget);
+              SetMoveReachedTarget();
+            }
+            else if (currentMotionState == MotionState.ToStart && distance < positionThreshold)
+            {
+              SetMotionState(MotionState.AtStart);
+              SetMoveReturned();
+            }
           }
           break;
 
@@ -498,11 +538,21 @@ namespace ValheimVehicles.SharedScripts
     }
 
     /// <summary>
+    /// Must always be above this value otherwise the swivel could repeatedly fire the previous motion state as it is near that point..
+    /// </summary>
+    /// <returns></returns>
+    public bool CanUpdateMotionState()
+    {
+      return Mathf.Abs(_lastUpdateTime - _lastUpdatedMotionTime) > 0.5f;
+    }
+
+    /// <summary>
     /// Integration will override this to prevent it from being called directly if not the owner.
     /// </summary>
     /// <param name="state"></param>
     public virtual void SetMotionState(MotionState state)
     {
+      _lastUpdatedMotionTime = Time.time;
       currentMotionState = state;
       UpdatePowerConsumer();
     }

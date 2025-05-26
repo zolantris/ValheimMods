@@ -89,7 +89,7 @@ namespace ValheimVehicles.BepInExConfig
       );
     }
 
-    public void LoadByKey(ZDO zdo, ref ISwivelConfig config, string key)
+    public void LoadByKey(ZDO zdo, ISwivelConfig config, string key)
     {
       switch (key)
       {
@@ -250,7 +250,7 @@ namespace ValheimVehicles.BepInExConfig
 
       foreach (var key in filterKeys)
       {
-        LoadByKey(zdo, ref configFromComponent, key);
+        LoadByKey(zdo, swivelConfig, key);
       }
 
       return swivelConfig;

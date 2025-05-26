@@ -118,7 +118,13 @@ public static class ValheimExtensions
   /// </summary>
   public static void RunIfServer(this INetView instance, Action<ZNetView> action)
   {
-    if (!ZNet.instance || !ZNet.instance.IsServer()) LoggerProvider.LogWarning("Not running action as we are not a server");
+    if (!ZNet.instance || !ZNet.instance.IsServer())
+    {
+#if VERBOSE
+      LoggerProvider.LogDev("Not running action as we are not a server");
+#endif
+      return;
+    }
     if (!instance.IsNetViewValid(out var netView)) return;
     if (!netView.IsOwner())
       netView.ClaimOwnership();

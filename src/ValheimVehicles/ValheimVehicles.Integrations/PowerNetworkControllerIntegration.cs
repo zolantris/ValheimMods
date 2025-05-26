@@ -28,21 +28,14 @@ public partial class PowerNetworkControllerIntegration : PowerNetworkController
   public override void Awake()
   {
     base.Awake();
-    StartCoroutine(DelayedRegister());
-  }
 
-  public IEnumerator DelayedRegister()
-  {
-    while (ZNet.instance == null || ZRoutedRpc.instance == null || ZNetScene.instance == null)
+    this.WithSafeRPCRegister(() =>
     {
-      yield return null;
-    }
-
-    LoggerProvider.LogDebugDebounced("Calling register for From DelayedRegister.");
-
-    PowerSystemRPC.Register();
-    PlayerEitrRPC.Register();
+      PowerSystemRPC.Register();
+      PlayerEitrRPC.Register();
+    });
   }
+
 
   protected override void Update()
   {

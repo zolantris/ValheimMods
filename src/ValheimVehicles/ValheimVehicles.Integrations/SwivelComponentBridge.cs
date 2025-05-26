@@ -49,7 +49,7 @@
     public static float turnTime = 50f;
 
     private HoverFadeText m_hoverFadeText;
-    public SwivelConfigRPCSync prefabConfigSync;
+    public SwivelConfigSync prefabConfigSync;
     public SwivelCustomConfig Config => this.GetOrCache(ref prefabConfigSync, ref _hasInitPrefabSync).Config;
     public ChildZSyncTransform childZsyncTransform;
     public readonly SwivelMotionStateTracker motionTracker = new();
@@ -86,7 +86,7 @@
         this.GetOrCache(ref prefabConfigSync, ref _hasInitPrefabSync);
       }
 
-      CanUpdate = false;
+      _IsReady = false;
 
       m_nview = GetComponent<ZNetView>();
       // required for syncing the animated component across clients.
@@ -158,11 +158,7 @@
     public override void Request_NextMotionState()
     {
       if (!this.IsNetViewValid(out var netView)) return;
-      // must load otherwise we could be desynced near guaranteed in any action called.
-      if (!netView.IsOwner())
-      {
-        prefabConfigSync.Load();
-      }
+      prefabConfigSync.Load(false, [SwivelCustomConfig.Key_MotionState]);
       SwivelPrefabConfigRPC.Request_NextMotion(netView.GetZDO(), prefabConfigSync.Config.MotionState);
     }
 
@@ -210,38 +206,56 @@
       }
     }
 
+    public override void Update()
+    {
+      if (!CanRunSwivelDuringUpdate) return;
+      if (!CanRunBaseUpdate()) return;
+      base.Update();
+      GuardedMotionCheck();
+    }
+
+
     public override void FixedUpdate()
     {
-      // no server only running of this update.
-      if (!ZNet.instance || !ZNet.instance.IsDedicated()) return;
-
-      if (!CanAllClientsSync)
-      {
-        if (!this.IsNetViewValid(out var netView))
-        {
-          return;
-        }
-        // non-owners do not update. All logic is done via RPC Child sync.
-        if (!netView.IsOwner())
-        {
-          return;
-        }
-      }
+      if (!CanRunSwivelDuringFixedUpdate) return;
+      if (!CanRunBaseUpdate()) return;
 
       base.FixedUpdate();
+      GuardedMotionCheck();
+    }
 
+    public void GuardedMotionCheck()
+    {
       // guarded update on DemandState which can desync.
       if (MotionState is MotionState.AtStart or MotionState.AtTarget && powerConsumerIntegration && powerConsumerIntegration.IsDemanding && powerConsumerIntegration.Data.zdo != null && powerConsumerIntegration.Data.zdo.IsValid())
       {
         powerConsumerIntegration.Data.SetDemandState(false);
         PowerSystemRPC.Request_UpdatePowerConsumer(powerConsumerIntegration.Data.zdo.m_uid, powerConsumerIntegration.Data);
       }
-
-      if (m_pieces.Count > 0)
-      {
-        m_hoverFadeText.FixedUpdate_UpdateText();
-      }
     }
+
+    public bool CanRunBaseUpdate()
+    {
+      if (!CanUpdate()) return false;
+      // no server only running of this update.
+      if (!ZNet.instance || ZNet.instance.IsDedicated()) return false;
+
+      if (!CanAllClientsSync)
+      {
+        if (!this.IsNetViewValid(out var netView))
+        {
+          return false;
+        }
+        // non-owners do not update. All logic is done via RPC Child sync.
+        if (!netView.IsOwner())
+        {
+          return false;
+        }
+      }
+
+      return true;
+    }
+
 
     public static bool TryAddPieceToSwivelContainer(int persistentId, ZNetView netViewPrefab)
     {
@@ -267,7 +281,7 @@
 
     public void OnActivationComplete()
     {
-      CanUpdate = true;
+      _IsReady = true;
     }
 
     public void Register() {}
@@ -389,8 +403,13 @@
 
     public override void UpdatePowerConsumer()
     {
-      base.UpdatePowerConsumer();
-      OnPowerConsumerUpdate();
+      if (!ZNet.instance) return;
+      if (!this.IsNetViewValid(out var netView)) return;
+      if (ZNet.instance.IsServer())
+      {
+        base.UpdatePowerConsumer();
+        OnPowerConsumerUpdate();
+      }
     }
 
     /// <summary>
@@ -404,9 +423,12 @@
         return;
       }
 
+      powerConsumerIntegration.Data.Load();
+
       var isOwner = netView.IsOwner();
       if (!isOwner || !powerConsumerIntegration)
       {
+        // possible infinity update here...
         PowerSystemRPC.Request_UpdatePowerConsumer(netView.GetZDO().m_uid, swivelPowerConsumer.Data);
       }
       else

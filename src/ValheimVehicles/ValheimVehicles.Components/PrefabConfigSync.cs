@@ -14,7 +14,7 @@ using ValheimVehicles.ValheimVehicles.RPC;
 namespace ValheimVehicles.Components;
 
 [RequireComponent(typeof(ZNetView))]
-public class PrefabConfigRPCSync<T, TComponentInterface> : MonoBehaviour, IPrefabCustomConfigRPCSync<T> where T : ISerializableConfig<T, TComponentInterface>, new()
+public class PrefabConfigSync<T, TComponentInterface> : MonoBehaviour, IPrefabCustomConfigRPCSync<T> where T : ISerializableConfig<T, TComponentInterface>, new()
 {
   public ZNetView? m_nview { get; set; }
   private T? m_configCache = default;
@@ -42,17 +42,6 @@ public class PrefabConfigRPCSync<T, TComponentInterface> : MonoBehaviour, IPrefa
     retryGuard = new RetryGuard(this);
     m_nview = GetComponent<ZNetView>();
     controller = GetComponent<TComponentInterface>();
-  }
-
-  public static void Request_SyncConfig_Keys(ZDOID zdoId, string[] zdoPropertyKeys)
-  {
-    var pkg = new ZPackage();
-    pkg.Write(zdoId);
-    pkg.Write(zdoPropertyKeys.Length);
-    foreach (var key in zdoPropertyKeys)
-      pkg.Write(key);
-
-    ZRoutedRpc.instance.InvokeRoutedRPC(ModRPCNames.SyncConfigKeys);
   }
 
   public virtual void OnEnable()
@@ -159,8 +148,7 @@ public class PrefabConfigRPCSync<T, TComponentInterface> : MonoBehaviour, IPrefa
   /// <summary>
   /// Syncs RPC data from ZDO to local values. If it's not ready it queues up the sync.
   /// </summary>
-  /// <param name="forceUpdate"></param>
-  public void Load(bool forceUpdate = false)
+  public void Load(bool forceUpdate = false, string[]? filterKeys = null)
   {
     if (HasLoadedInitialCache && !forceUpdate) return;
     if (controller == null || !this.IsNetViewValid(out var netView))
@@ -168,7 +156,7 @@ public class PrefabConfigRPCSync<T, TComponentInterface> : MonoBehaviour, IPrefa
       _prefabSyncRoutine ??= StartCoroutine(SyncPrefabConfigRoutine());
       return;
     }
-    CustomConfig = CustomConfig.Load(netView.GetZDO(), controller);
+    CustomConfig = CustomConfig.Load(netView.GetZDO(), controller, filterKeys);
 
     // very important. This sets the values from Config to the actual component.
     SuppressConfigSync(() =>
@@ -190,6 +178,15 @@ public class PrefabConfigRPCSync<T, TComponentInterface> : MonoBehaviour, IPrefa
     }
 
     OnLoad();
+  }
+  public void Load(ZDO zdo, string[]? filterKeys)
+  {
+    if (controller == null) return;
+    CustomConfig = Config.Load(zdo, controller, filterKeys);
+  }
+  public void Save(ZDO zdo, string[]? filterKeys)
+  {
+    CustomConfig.Save(zdo, Config, filterKeys);
   }
 
   public virtual void OnLoad() {}
@@ -240,14 +237,5 @@ public class PrefabConfigRPCSync<T, TComponentInterface> : MonoBehaviour, IPrefa
     _suppressMotionStateBroadcast = true;
     try { apply(); }
     finally { _suppressMotionStateBroadcast = false; }
-  }
-  public void Load(ZDO zdo, string[]? filterKeys)
-  {
-    if (controller == null) return;
-    CustomConfig = Config.Load(zdo, controller, filterKeys);
-  }
-  public void Save(ZDO zdo, string[]? filterKeys)
-  {
-    CustomConfig.Save(zdo, Config, filterKeys);
   }
 }

@@ -8,14 +8,17 @@ namespace ValheimVehicles.ValheimVehicles.RPC;
 
 public static class PrefabConfigRPC
 {
-  public static Dictionary<ZDO, IPrefabSyncRPCSubscribers> ZdoToPrefabConfigListeners = new();
+  public static Dictionary<ZDO, IPrefabSyncRPCSubscribeActions> ZdoToPrefabConfigListeners = new();
+  public static bool hasRegistered = false;
 
   public static void Register()
   {
+    if (hasRegistered) return;
     ZRoutedRpc.instance.Register<ZPackage>(ModRPCNames.SyncConfigKeys, RPC_SyncConfigKeys);
+    hasRegistered = true;
   }
 
-  public static void AddSubscription(ZDO zdo, IPrefabSyncRPCSubscribers config)
+  public static void AddSubscription(ZDO zdo, IPrefabSyncRPCSubscribeActions config)
   {
     if (!ZdoToPrefabConfigListeners.ContainsKey(zdo))
     {
@@ -23,7 +26,7 @@ public static class PrefabConfigRPC
     }
   }
 
-  public static void RemoveSubscription(ZDO? zdo, IPrefabSyncRPCSubscribers config)
+  public static void RemoveSubscription(ZDO? zdo, IPrefabSyncRPCSubscribeActions config)
   {
     if (zdo != null && ZdoToPrefabConfigListeners.ContainsKey(zdo))
     {
@@ -31,18 +34,33 @@ public static class PrefabConfigRPC
     }
   }
 
-  public static void Request_SyncConfigKeys(ZDO zdo, List<string> zdoPropertyKeys)
+  public static void Request_SyncConfigKeys(ZDO zdo, string[] zdoPropertyKeys, long? sender = null)
   {
-    if (zdoPropertyKeys.Count == 0)
+    if (zdoPropertyKeys.Length == 0)
     {
       LoggerProvider.LogError($"No keys to sync. {zdoPropertyKeys}");
       return;
     }
+    var zdoId = zdo.m_uid;
 
-    RPCUtils.RunIfNearby(zdo, PowerSystemConfig.PowerSimulationDistanceThreshold.Value, peerId =>
+    var pkg = new ZPackage();
+
+    pkg.Write(zdoId);
+    pkg.Write(zdoPropertyKeys.Length);
+    foreach (var key in zdoPropertyKeys)
+      pkg.Write(key);
+
+    if (!sender.HasValue)
     {
-      ZRoutedRpc.instance.InvokeRoutedRPC(peerId, ModRPCNames.SyncConfigKeys, zdoPropertyKeys);
-    });
+      RPCUtils.RunIfNearby(zdo, PowerSystemConfig.PowerSimulationDistanceThreshold.Value, peerId =>
+      {
+        ZRoutedRpc.instance.InvokeRoutedRPC(peerId, ModRPCNames.SyncConfigKeys, pkg);
+      });
+    }
+    else
+    {
+      ZRoutedRpc.instance.InvokeRoutedRPC(sender.Value, ModRPCNames.SyncConfigKeys, pkg);
+    }
   }
 
   public static void RPC_SyncConfigKeys(long sender, ZPackage pkg)

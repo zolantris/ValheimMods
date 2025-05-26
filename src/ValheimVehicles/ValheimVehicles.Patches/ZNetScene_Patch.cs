@@ -21,13 +21,16 @@ public class ZNetScene_Patch
   }
   [HarmonyPatch(typeof(ZNetScene), nameof(ZNetScene.Awake))]
   [HarmonyPostfix]
-  private static void ZNetScene_Awake_Subscribe()
+  private static void ZNetScene_Awake_Subscribe(ZNetScene __instance)
   {
     LoggerProvider.LogDev("called ZNetScene.Awake.");
     PowerSystemRPC.RegisterCustom();
-    SwivelPrefabConfigRPC.Register();
-    PrefabConfigRPC.Register();
-    PrefabConfigRPC.Register();
+    SwivelPrefabConfigRPC.RegisterCustom();
+
+    __instance.WithSafeRPCRegister(() =>
+    {
+      PrefabConfigRPC.Register();
+    });
   }
 
 #if DEBUG

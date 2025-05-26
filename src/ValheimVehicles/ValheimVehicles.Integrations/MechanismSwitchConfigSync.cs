@@ -12,7 +12,7 @@ using ZdoWatcher;
 
 namespace ValheimVehicles.Integrations;
 
-public class MechanismSwitchConfigSync : PrefabConfigRPCSync<MechanismSwitchCustomConfig, IMechanismSwitchConfig>
+public class MechanismSwitchConfigSync : PrefabConfigSync<MechanismSwitchCustomConfig, IMechanismSwitchConfig>
 {
   private void HandleSetSelectedAction(MechanismAction action)
   {

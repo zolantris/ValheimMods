@@ -1,5 +1,6 @@
 ﻿#region
 
+  using System.Collections;
   using TMPro;
   using UnityEngine;
   using static System.String;
@@ -22,6 +23,7 @@
       private static readonly Color messageColor = new(249f, 224f, 0f, 255f);
       public string currentText = "";
       public bool canUpdate = true;
+      public Coroutine UpdateTextCoroutine;
 
       public static HoverFadeText CreateHoverFadeText(Transform? parent = null)
       {
@@ -58,6 +60,12 @@
         {
           gameObject.SetActive(false);
         }
+
+        if (UpdateTextCoroutine != null)
+        {
+          StopCoroutine(UpdateTextCoroutine);
+          UpdateTextCoroutine = null;
+        }
       }
 
       /// <summary>
@@ -65,10 +73,11 @@
       /// </summary>
       public void Show()
       {
-        if (!gameObject.activeSelf)
+        if (UpdateTextCoroutine == null)
         {
           ResetHoverTimer();
           gameObject.SetActive(true);
+          UpdateTextCoroutine = StartCoroutine(UpdateText());
         }
       }
 
@@ -77,57 +86,114 @@
         timePassedSinceStateUpdate = 0f;
       }
 
-      /// <summary>
-      /// Method meant to be called by integrated component during a FixedUpdate
-      /// </summary>
-      ///
-      /// TODO switch this to a coroutine. The FixedUpdate approach is not efficient when running this long term.
-      public void FixedUpdate_UpdateText()
+      public IEnumerator UpdateText()
       {
-        if (!canUpdate) return;
-        if (Camera.main == null) return;
-        if (!hasHudEnabled || currentText == Empty || ShouldHideAfterLastStateUpdate() || textMeshPro == null)
+        while (true)
         {
-          Hide();
-          return;
+          if (!canUpdate) yield return new WaitForFixedUpdate();
+          if (!Camera.main) yield return new WaitForFixedUpdate();
+
+          if (!hasHudEnabled || currentText == Empty || ShouldHideAfterLastStateUpdate() || textMeshPro == null)
+          {
+            Hide();
+            UpdateTextCoroutine = null;
+            yield break;
+          }
+
+          Show();
+
+          if (hideTextTimer != 0f)
+            timePassedSinceStateUpdate += Time.fixedDeltaTime;
+
+          // Calculate the point at which the fade should start (last 25% of the timer)
+          var fadeStartTime = hideTextTimer * 0.1f;
+
+          // Only start fading when we're in the last 25% of the timer
+          if (timePassedSinceStateUpdate > fadeStartTime)
+          {
+            // Calculate the normalized time for the fading effect (approaches 0 as time passes)
+            var fadeProgress = Mathf.InverseLerp(fadeStartTime, hideTextTimer,
+              timePassedSinceStateUpdate);
+
+            // Use this progress value to lerp the alpha value
+            messageFadeValue =
+              Mathf.Lerp(1f, 0f,
+                fadeProgress); // Fade from 1 to 0 over the last 25%
+
+            // Apply the new alpha value to the color
+            textMeshPro.color = new Color(messageColor.r, messageColor.g,
+              messageColor.b, messageFadeValue);
+          }
+          else
+          {
+            textMeshPro.color = messageColor;
+          }
+
+          if (Camera.main)
+          {
+            transform.LookAt(Camera.main.transform);
+          }
+
+          textMeshPro.text = currentText;
+          transform.rotation =
+            Quaternion.LookRotation(transform.forward *
+                                    -1); // Flip to face correctly
+          // anchorStateTextMesh.fontSize = anchorTextSize;
+          yield return new WaitForFixedUpdate();
         }
-
-        Show();
-
-        if (hideTextTimer != 0f)
-          timePassedSinceStateUpdate += Time.fixedDeltaTime;
-
-        // Calculate the point at which the fade should start (last 25% of the timer)
-        var fadeStartTime = hideTextTimer * 0.1f;
-
-        // Only start fading when we're in the last 25% of the timer
-        if (timePassedSinceStateUpdate > fadeStartTime)
-        {
-          // Calculate the normalized time for the fading effect (approaches 0 as time passes)
-          var fadeProgress = Mathf.InverseLerp(fadeStartTime, hideTextTimer,
-            timePassedSinceStateUpdate);
-
-          // Use this progress value to lerp the alpha value
-          messageFadeValue =
-            Mathf.Lerp(1f, 0f,
-              fadeProgress); // Fade from 1 to 0 over the last 25%
-
-          // Apply the new alpha value to the color
-          textMeshPro.color = new Color(messageColor.r, messageColor.g,
-            messageColor.b, messageFadeValue);
-        }
-        else
-        {
-          textMeshPro.color = messageColor;
-        }
-
-        transform.LookAt(Camera.main.transform);
-        textMeshPro.text = currentText;
-        transform.rotation =
-          Quaternion.LookRotation(transform.forward *
-                                  -1); // Flip to face correctly
-        // anchorStateTextMesh.fontSize = anchorTextSize;
-
       }
+
+      // /// <summary>
+      // /// Method meant to be called by integrated component during a FixedUpdate
+      // /// </summary>
+      // ///
+      // /// TODO switch this to a coroutine. The FixedUpdate approach is not efficient when running this long term.
+      // public void FixedUpdate_UpdateText()
+      // {
+      //   if (!canUpdate) return;
+      //   if (Camera.main == null) return;
+      //   if (!hasHudEnabled || currentText == Empty || ShouldHideAfterLastStateUpdate() || textMeshPro == null)
+      //   {
+      //     Hide();
+      //     return;
+      //   }
+      //
+      //   Show();
+      //
+      //   if (hideTextTimer != 0f)
+      //     timePassedSinceStateUpdate += Time.fixedDeltaTime;
+      //
+      //   // Calculate the point at which the fade should start (last 25% of the timer)
+      //   var fadeStartTime = hideTextTimer * 0.1f;
+      //
+      //   // Only start fading when we're in the last 25% of the timer
+      //   if (timePassedSinceStateUpdate > fadeStartTime)
+      //   {
+      //     // Calculate the normalized time for the fading effect (approaches 0 as time passes)
+      //     var fadeProgress = Mathf.InverseLerp(fadeStartTime, hideTextTimer,
+      //       timePassedSinceStateUpdate);
+      //
+      //     // Use this progress value to lerp the alpha value
+      //     messageFadeValue =
+      //       Mathf.Lerp(1f, 0f,
+      //         fadeProgress); // Fade from 1 to 0 over the last 25%
+      //
+      //     // Apply the new alpha value to the color
+      //     textMeshPro.color = new Color(messageColor.r, messageColor.g,
+      //       messageColor.b, messageFadeValue);
+      //   }
+      //   else
+      //   {
+      //     textMeshPro.color = messageColor;
+      //   }
+      //
+      //   transform.LookAt(Camera.main.transform);
+      //   textMeshPro.text = currentText;
+      //   transform.rotation =
+      //     Quaternion.LookRotation(transform.forward *
+      //                             -1); // Flip to face correctly
+      //   // anchorStateTextMesh.fontSize = anchorTextSize;
+      //
+      // }
     }
   };

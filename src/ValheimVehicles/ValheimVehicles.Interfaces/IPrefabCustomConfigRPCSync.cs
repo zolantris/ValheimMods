@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 namespace ValheimVehicles.Interfaces;
 
-public interface IPrefabCustomConfigRPCSync<T> : IPrefabConfig<T>, IPrefabConfigActions, INetView, ISuppressableConfigReceiver, IPrefabSyncRPCSubscribers
+public interface IPrefabCustomConfigRPCSync<T> : IPrefabConfig<T>, INetView, ISuppressableConfigReceiver, IPrefabSyncRPCSubscribeActions
 {
   // SyncPrefabConfig is called after the SetPrefabConfig RPC is called.
   internal void RPC_Load(long sender);

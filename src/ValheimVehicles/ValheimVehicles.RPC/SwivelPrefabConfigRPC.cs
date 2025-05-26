@@ -10,16 +10,19 @@ namespace ValheimVehicles.ValheimVehicles.RPC;
 
 public class SwivelPrefabConfigRPC
 {
-  public static CustomRPC RPCInstance_Swivel_NextMotionState;
-  public static CustomRPC RPCInstance_Swivel_SetMotionState;
+  public static CustomRPC? RPCInstance_Swivel_NextMotionState;
+  public static CustomRPC? RPCInstance_Swivel_SetMotionState;
+  public static bool hasRegistered = false;
 
   /// <summary>
   /// Global RPCs that must be synced authoritatively on the server.
   /// </summary>
-  public static void Register()
+  public static void RegisterCustom()
   {
-    RPCInstance_Swivel_NextMotionState = NetworkManager.Instance.AddRPC(nameof(RPC_NextMotionState), RPC_NextMotionState, RPC_NextMotionState);
-    RPCInstance_Swivel_SetMotionState = NetworkManager.Instance.AddRPC(nameof(RPC_SetMotionState), RPC_SetMotionState, RPC_SetMotionState);
+    if (hasRegistered) return;
+    RPCInstance_Swivel_NextMotionState = NetworkManager.Instance.AddRPC(RPCUtils.GetRPCPrefix(nameof(RPC_NextMotionState)), RPC_NextMotionState, RPC_NextMotionState);
+    RPCInstance_Swivel_SetMotionState = NetworkManager.Instance.AddRPC(RPCUtils.GetRPCPrefix(nameof(RPC_SetMotionState)), RPC_SetMotionState, RPC_SetMotionState);
+    hasRegistered = true;
   }
 
   public static void Request_SetMotionState(ZDO zdo, MotionState motionState)
@@ -28,7 +31,7 @@ public class SwivelPrefabConfigRPC
     pkg.Write(zdo.m_uid);
     pkg.Write((int)motionState);
     // ZRoutedRpc.instance.InvokeRoutedRPC(ZRoutedRpc.instance.GetServerPeerID(), nameof(RPC_SetMotionState), pkg);
-    RPCInstance_Swivel_SetMotionState.SendPackage(ZRoutedRpc.instance.GetServerPeerID(), pkg);
+    RPCInstance_Swivel_SetMotionState?.SendPackage(ZRoutedRpc.instance.GetServerPeerID(), pkg);
   }
 
   public static void Request_NextMotion(ZDO zdo, MotionState motionState)
@@ -39,7 +42,7 @@ public class SwivelPrefabConfigRPC
     pkg.Write(zdoid);
     pkg.Write((int)motionState);
 
-    RPCInstance_Swivel_NextMotionState.SendPackage(ZRoutedRpc.instance.GetServerPeerID(), pkg);
+    RPCInstance_Swivel_NextMotionState?.SendPackage(ZRoutedRpc.instance.GetServerPeerID(), pkg);
   }
 
   public static IEnumerator RPC_NextMotionState(long sender, ZPackage pkg)
@@ -70,7 +73,7 @@ public class SwivelPrefabConfigRPC
     if (clientMotionState != currentMotionState)
     {
       LoggerProvider.LogDev($"[Swivel] MotionState desync. Got <{clientMotionState}> but expected <{nextMotionState}> Re-sending config.");
-      ZRoutedRpc.instance.InvokeRoutedRPC(sender, ModRPCNames.SyncConfigKeys, [SwivelCustomConfig.Key_MotionState]);
+      PrefabConfigRPC.Request_SyncConfigKeys(zdo, [SwivelCustomConfig.Key_MotionState], sender);
       yield break;
     }
 

@@ -16,7 +16,7 @@
 
   namespace ValheimVehicles.Controllers;
 
-  public class VehicleConfigSyncComponent : PrefabConfigRPCSync<VehicleCustomConfig, IVehicleConfig>, IVehicleSharedProperties
+  public class VehicleConfigSyncComponent : PrefabConfigSync<VehicleCustomConfig, IVehicleConfig>, IVehicleSharedProperties
   {
     private VehicleManager? _vehicle;
     private BoxCollider? FloatCollider => _vehicle != null ? _vehicle.FloatCollider : null;

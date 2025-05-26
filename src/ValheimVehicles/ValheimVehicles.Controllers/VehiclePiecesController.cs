@@ -176,7 +176,6 @@
     public GameObject vehicleCenter;
 
     public HoverFadeText m_hoverFadeText;
-    public bool CanUpdateHoverFadeText;
 
     public VehiclePhysicsMode localVehiclePhysicsMode =
       VehiclePhysicsMode.ForceSyncedRigidbody;
@@ -472,10 +471,6 @@
     public override void CustomFixedUpdate(float deltaTime)
     {
       if (m_nview == null) return;
-      if (CanUpdateHoverFadeText)
-      {
-        m_hoverFadeText.FixedUpdate_UpdateText();
-      }
       Sync();
     }
 
@@ -2538,7 +2533,7 @@
       m_hoverFadeText.currentText = $"{ModTranslations.VehicleConfig_CustomFloatationHeight} ({stateText})";
       m_hoverFadeText.transform.position = prefab.transform.position;
       m_hoverFadeText.ResetHoverTimer();
-      CanUpdateHoverFadeText = true;
+      m_hoverFadeText.Show();
       IgnoreAllVehicleCollidersForGameObjectChildren(prefab);
 
       // destroy the prefab. It has no use after this call.
