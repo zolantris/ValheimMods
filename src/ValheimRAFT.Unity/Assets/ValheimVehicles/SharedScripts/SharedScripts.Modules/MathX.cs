@@ -30,6 +30,18 @@ public static class MathX // or MathMock, MathUtil, etc.
   {
     return Math.Min(a, b);
   }
+
+  public static float Min(params float[] values)
+  {
+    if (values == null || values.Length == 0)
+      throw new ArgumentException("No values supplied to MathX.Min");
+
+    var min = values[0];
+    for (var i = 1; i < values.Length; i++)
+      min = Min(min, values[i]);
+    return min;
+  }
+
   public static float Max(float a, float b)
   {
     return Math.Max(a, b);

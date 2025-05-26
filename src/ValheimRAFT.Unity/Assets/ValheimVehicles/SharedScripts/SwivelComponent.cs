@@ -44,8 +44,6 @@ namespace ValheimVehicles.SharedScripts
 
     [Description("Swivel Energy Settings")]
     public static float SwivelEnergyDrain = 0.01f;
-    public static float SwivelPowerConsumptionBaseMultiplier = 0.1f; // base multiplier so it's easier to get real numbers to input.
-
     public static bool IsPoweredSwivel = true;
 
     [Header("Swivel General Settings")]
@@ -408,7 +406,8 @@ namespace ValheimVehicles.SharedScripts
     public virtual void UpdateBasePowerConsumption()
     {
       if (!IsPoweredSwivel || !swivelPowerConsumer) return;
-      swivelPowerConsumer.Data.BasePowerConsumption = SwivelEnergyDrain * computedInterpolationSpeed * SwivelPowerConsumptionBaseMultiplier;
+      // maximum 0.01x minimum and 100x times rate of swivel drain.
+      swivelPowerConsumer.Data.BasePowerConsumption = SwivelEnergyDrain * Mathf.Lerp(0.01f, 1, Mathf.Clamp01(interpolationSpeed / 100f));
     }
 
     public void DeactivatePowerConsumer()

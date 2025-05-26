@@ -64,10 +64,10 @@ namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
     public void SetBasePowerConsumption(float value)
     {
       _basePowerConsumption = value;
-      UpdatePowerConsumptionValues(value);
       if (!Mathf.Approximately(_basePowerConsumption, value))
       {
         MarkDirty(VehicleZdoVars.PowerSystem_BasePowerConsumption);
+        UpdatePowerConsumptionValues(value);
       }
     }
 

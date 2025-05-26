@@ -215,8 +215,15 @@ namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
       if (Fuel < requiredFuel)
       {
         SetRunning(false);
-        _lastProducedEnergy = 0f;
-        return 0f;
+        // Not enough fuel for full energyToProduce.
+        // Instead, use up all remaining fuel:
+        var possibleEnergy = Fuel * FuelEnergyYield * FuelEfficiency;
+
+        // Only produce up to what's demanded and allowed by system
+        possibleEnergy = MathX.Min(possibleEnergy, energyToProduce, remainingDemand);
+
+        _lastProducedEnergy = possibleEnergy;
+        return possibleEnergy;
       }
 
       _lastProducedEnergy = energyToProduce;
