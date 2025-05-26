@@ -1,6 +1,7 @@
 #region
 
   using System;
+  using System.Collections;
   using System.Collections.Generic;
   using System.Linq;
   using UnityEngine;
@@ -57,7 +58,7 @@
     private bool _hasInitPrefabSync = false;
     private int swivelId = 0;
     private PowerConsumerBridge powerConsumerIntegration;
-    public static HashSet<ZDO> SwivelZDOs = new();
+    public static Dictionary<ZDO, SwivelComponentBridge> ZdoToComponent = new();
     public ZDO? _currentZdo;
 
     // sync values
@@ -158,10 +159,41 @@
     public override void Request_NextMotionState()
     {
       if (!this.IsNetViewValid(out var netView)) return;
+      if (prefabConfigSync.Config.MotionState != MotionState)
+      {
+        LoggerProvider.LogWarning("SwivelComponentBridge.Request_NextMotionState called but the motion state is not the same as the current state. This is likely a bug.");
+      }
+
       prefabConfigSync.Load(false, [SwivelCustomConfig.Key_MotionState]);
-      SwivelPrefabConfigRPC.Request_NextMotion(netView.GetZDO(), prefabConfigSync.Config.MotionState);
+      LastMotionState = MotionState;
+      SwivelPrefabConfigRPC.Request_NextMotion(netView.GetZDO(), MotionState);
+
+      // if (_nextMotionCoroutine != null)
+      // {
+      //   StopCoroutine(_nextMotionCoroutine);
+      //   _nextMotionCoroutine = null;
+      // }
+      // else
+      // {
+      //   // _nextMotionCoroutine = StartCoroutine(NextMotionStateAwaiter());
+      // }
     }
 
+    public Coroutine? _nextMotionCoroutine;
+    public MotionState LastMotionState = MotionState.AtStart;
+
+    /// <summary>
+    /// Workaround to fix the problem with a client requiring two presses to get the button to update.
+    /// </summary>
+    // public IEnumerator NextMotionStateAwaiter()
+    // {
+    //   yield return new WaitForFixedUpdate();
+    //   if (LastMotionState == MotionState)
+    //   {
+    //     Request_NextMotionState();
+    //   }
+    //   _nextMotionCoroutine = null;
+    // }
     public void Request_SetMotionState(MotionState state)
     {
       if (!this.IsNetViewValid(out var netView)) return;
@@ -196,7 +228,7 @@
     {
       if (_currentZdo != null)
       {
-        SwivelZDOs.Remove(_currentZdo);
+        ZdoToComponent.Remove(_currentZdo);
       }
 
       var persistentId = GetPersistentId();
@@ -227,11 +259,11 @@
     public void GuardedMotionCheck()
     {
       // guarded update on DemandState which can desync.
-      if (MotionState is MotionState.AtStart or MotionState.AtTarget && powerConsumerIntegration && powerConsumerIntegration.IsDemanding && powerConsumerIntegration.Data.zdo != null && powerConsumerIntegration.Data.zdo.IsValid())
-      {
-        powerConsumerIntegration.Data.SetDemandState(false);
-        PowerSystemRPC.Request_UpdatePowerConsumer(powerConsumerIntegration.Data.zdo.m_uid, powerConsumerIntegration.Data);
-      }
+      // if (MotionState is MotionState.AtStart or MotionState.AtTarget && powerConsumerIntegration && powerConsumerIntegration.IsDemanding && powerConsumerIntegration.Data.zdo != null && powerConsumerIntegration.Data.zdo.IsValid())
+      // {
+      //   powerConsumerIntegration.Data.SetDemandState(false);
+      //   PowerSystemRPC.Request_UpdatePowerConsumer(powerConsumerIntegration.Data.zdo.m_uid, powerConsumerIntegration.Data);
+      // }
     }
 
     public bool CanRunBaseUpdate()
@@ -410,6 +442,128 @@
         base.UpdatePowerConsumer();
         OnPowerConsumerUpdate();
       }
+    }
+
+    private bool _isAuthoritativeMotionActive;
+    private MotionState _motionState;
+    private double _motionStartTime;
+    private float _motionDuration;
+    /// <summary>
+    /// For interpolated eventing.
+    /// </summary>
+    /// <param name="motionUpdate"></param>
+    public void SetMotionUpdate(SwivelMotionUpdate motionUpdate)
+    {
+      _isAuthoritativeMotionActive = true;
+      _motionState = motionUpdate.MotionState;
+      _motionStartTime = motionUpdate.StartTime;
+      _motionDuration = motionUpdate.Duration;
+    }
+
+    public override void SwivelUpdate()
+    {
+      if (_isAuthoritativeMotionActive)
+      {
+        var now = ZNet.instance != null ? ZNet.instance.GetTimeSeconds() : Time.time;
+        var t = Mathf.Clamp01((float)((now - _motionStartTime) / _motionDuration));
+
+        // Move
+        if (mode == SwivelMode.Move)
+        {
+          Vector3 from, to;
+          if (_motionState == MotionState.ToTarget)
+          {
+            from = startLocalPosition;
+            to = startLocalPosition + movementOffset;
+          }
+          else
+          {
+            from = startLocalPosition + movementOffset;
+            to = startLocalPosition;
+          }
+          animatedTransform.localPosition = Vector3.Lerp(from, to, t);
+        }
+        // Rotate
+        if (mode == SwivelMode.Rotate)
+        {
+          Quaternion from, to;
+          if (_motionState == MotionState.ToTarget)
+          {
+            from = Quaternion.identity;
+            to = CalculateRotationTarget();
+          }
+          else
+          {
+            from = CalculateRotationTarget();
+            to = Quaternion.identity;
+          }
+          animatedTransform.localRotation = Quaternion.Slerp(from, to, t);
+        }
+        // No MotionState update! Wait for server.
+        return;
+      }
+
+      base.SwivelUpdate();
+    }
+
+    public static float ComputeMotionDuration(SwivelCustomConfig config, MotionState direction)
+    {
+      // Match your speed multipliers—if you want to make these data-driven, add to config/ZDO!
+      const float MoveMultiplier = 0.2f;
+      const float RotateMultiplier = 3f;
+
+      // Safety clamp, never divide by zero
+      var speed = Mathf.Max(
+        config.InterpolationSpeed *
+        (config.Mode == SwivelMode.Move ? MoveMultiplier : RotateMultiplier),
+        0.001f
+      );
+
+      if (config.Mode == SwivelMode.Move)
+      {
+        // Always use start as base, plus MovementOffset
+        Vector3 from, to;
+        if (direction == MotionState.ToTarget)
+        {
+          from = Vector3.zero; // startLocalPosition is always zero in pure data configs
+          to = config.MovementOffset;
+        }
+        else
+        {
+          from = config.MovementOffset;
+          to = Vector3.zero;
+        }
+
+        var distance = Vector3.Distance(from, to);
+        return Mathf.Max(distance / speed, 0.01f); // Never less than 10ms
+      }
+      if (config.Mode == SwivelMode.Rotate)
+      {
+        // Calculate hingeEndEuler as your SwivelComponent does
+        var hingeEndEuler = Vector3.zero;
+        if ((config.HingeAxes & HingeAxis.X) != 0)
+          hingeEndEuler.x = config.MaxEuler.x;
+        if ((config.HingeAxes & HingeAxis.Y) != 0)
+          hingeEndEuler.y = config.MaxEuler.y;
+        if ((config.HingeAxes & HingeAxis.Z) != 0)
+          hingeEndEuler.z = config.MaxEuler.z;
+
+        Quaternion from, to;
+        if (direction == MotionState.ToTarget)
+        {
+          from = Quaternion.identity;
+          to = Quaternion.Euler(hingeEndEuler);
+        }
+        else
+        {
+          from = Quaternion.Euler(hingeEndEuler);
+          to = Quaternion.identity;
+        }
+        var angle = Quaternion.Angle(from, to); // in degrees
+        return Mathf.Max(angle / speed, 0.01f);
+      }
+      // fallback
+      return 0.01f;
     }
 
     /// <summary>

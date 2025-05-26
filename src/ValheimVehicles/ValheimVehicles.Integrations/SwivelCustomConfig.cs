@@ -234,7 +234,7 @@ namespace ValheimVehicles.BepInExConfig
       return newConfig;
     }
 
-    public SwivelCustomConfig Load(ZDO zdo, ISwivelConfig configFromComponent, string[]? filterKeys)
+    public SwivelCustomConfig Load(ZDO zdo, ISwivelConfig configFromComponent, string[]? filterKeys = null)
     {
       if (filterKeys == null || filterKeys.Length == 0)
       {

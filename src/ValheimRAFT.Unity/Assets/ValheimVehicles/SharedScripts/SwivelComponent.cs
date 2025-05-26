@@ -9,6 +9,7 @@ using System.ComponentModel;
 using UnityEngine;
 using ValheimVehicles.SharedScripts.PowerSystem;
 using ValheimVehicles.SharedScripts.UI;
+using ValheimVehicles.ValheimVehicles.RPC;
 
 #endregion
 
@@ -47,7 +48,7 @@ namespace ValheimVehicles.SharedScripts
     public static bool IsPoweredSwivel = true;
 
     [Header("Swivel General Settings")]
-    [SerializeField] private SwivelMode mode = SwivelMode.Rotate;
+    [SerializeField] public SwivelMode mode = SwivelMode.Rotate;
 
 
     [SerializeField] private float interpolationSpeed = 10f;
@@ -92,10 +93,10 @@ namespace ValheimVehicles.SharedScripts
     public Action? onRotationReturned;
     private Transform snappoint;
 
-    private Vector3 startLocalPosition;
-    private Quaternion startRotation;
-    private Vector3 targetMovementPosition;
-    private Quaternion targetRotation;
+    public Vector3 startLocalPosition;
+    public Quaternion startRotation;
+    public Vector3 targetMovementPosition;
+    public Quaternion targetRotation;
 
     public MotionState CurrentMotionState => currentMotionState;
     public HingeAxis HingeAxes => hingeAxes;
@@ -113,7 +114,7 @@ namespace ValheimVehicles.SharedScripts
     public float _lastUpdateTime = 0f;
     public float lastDeltaTime = 0f;
     internal float _nextUpdate;
-    internal static float _updateInterval = 0.25f;
+    public static float UpdateInterval = 0.01f;
     public static bool CanRunSwivelDuringFixedUpdate = false;
     public static bool CanRunSwivelDuringUpdate = true;
     public bool _IsReady = true;
@@ -210,7 +211,7 @@ namespace ValheimVehicles.SharedScripts
       if (Mathf.Approximately(_lastUpdateTime, Time.time)) return true;
       if (Time.time < _nextUpdate) return false;
       _lastUpdateTime = _nextUpdate;
-      _nextUpdate = Time.time + _updateInterval;
+      _nextUpdate = Time.time + UpdateInterval;
       _lastUpdateTime = Time.time; // for comparison, if we run a check that hits this during same update.
       lastDeltaTime = _nextUpdate - _lastUpdateTime;
       return true;
@@ -232,7 +233,7 @@ namespace ValheimVehicles.SharedScripts
       }
     }
 
-    public void SwivelUpdate()
+    public virtual void SwivelUpdate()
     {
       if (!CanUpdate() || !animatedRigidbody || !animatedTransform.parent || !piecesContainer) return;
 #if UNITY_EDITOR
@@ -385,7 +386,7 @@ namespace ValheimVehicles.SharedScripts
         snappoint.position = connectorContainer.position;
     }
 
-    private Quaternion CalculateRotationTarget()
+    public Quaternion CalculateRotationTarget()
     {
       hingeEndEuler = Vector3.zero;
 

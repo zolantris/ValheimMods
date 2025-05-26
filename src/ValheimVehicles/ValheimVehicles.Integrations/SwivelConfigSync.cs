@@ -1,15 +1,5 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using Jotunn;
-using Jotunn.Entities;
-using Jotunn.Managers;
 using ValheimVehicles.Components;
 using ValheimVehicles.BepInExConfig;
-using ValheimVehicles.Constants;
-using ValheimVehicles.Helpers;
-using ValheimVehicles.Interfaces;
-using ValheimVehicles.Shared.Constants;
 using ValheimVehicles.SharedScripts;
 using ValheimVehicles.SharedScripts.UI;
 using ValheimVehicles.UI;
@@ -34,5 +24,10 @@ public class SwivelConfigSync : PrefabConfigSync<SwivelCustomConfig, ISwivelConf
     {
       panel.SyncUIFromPartialConfig(Config);
     }
+
+    swivel.mode = Config.Mode;
+    swivel.InterpolationSpeed = Config.InterpolationSpeed;
+    swivel.hingeAxes = Config.HingeAxes;
+    swivel.currentMotionState = Config.MotionState;
   }
 }
