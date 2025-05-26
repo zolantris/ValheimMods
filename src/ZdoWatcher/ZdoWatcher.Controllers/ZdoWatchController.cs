@@ -17,7 +17,6 @@ public class ZdoWatchController : MonoBehaviour
   public static Action<ZDO>? OnDeserialize = null;
   public static Action<ZDO>? OnLoad = null;
   public static Action<ZDO>? OnReset = null;
-  public static Action<ZDO>? OnInit = null;
 
   public static ZdoWatchController Instance;
   private readonly Dictionary<int, ZDO> _zdoGuidLookup = new();
@@ -25,12 +24,14 @@ public class ZdoWatchController : MonoBehaviour
 
   private CustomRPC RPC_RequestPersistentIdInstance;
 
+  public static string RPC_RequestPersistentId_Name = "ZdoWatcherController_RPC_RequestSync";
+
   // In theory, we only need to hit the server then iterate and force send the zdos directly to the peer instead of the other way around.
   // We call SyncToPeer when which does this.
   public void Awake()
   {
     RPC_RequestPersistentIdInstance = NetworkManager.Instance.AddRPC(
-      "RPC_RequestSync",
+      RPC_RequestPersistentId_Name,
       RequestPersistentIdRPCServerReceive, null);
   }
 
@@ -67,7 +68,7 @@ public class ZdoWatchController : MonoBehaviour
   {
     var persistentId = package.ReadInt();
     var zdoPeer = ZDOMan.instance.GetPeer(sender);
-    Logger.LogMessage($"Sending first id across to peer {persistentId}");
+    Logger.LogDebug($"Sending first id across to peer {persistentId}");
     var zdoId = GetZdo(persistentId);
     if (zdoId != null && zdoPeer != null)
     {
@@ -75,7 +76,7 @@ public class ZdoWatchController : MonoBehaviour
     }
     else
     {
-      Logger.LogMessage(
+      Logger.LogDebug(
         "RequestPersistentIdRPCServerReceive called but zdoid not found, attempting to sync all ids to peer");
       SyncToPeer(zdoPeer);
     }
@@ -157,7 +158,6 @@ public class ZdoWatchController : MonoBehaviour
 
     RequestZdoFromServer(persistentId);
     yield return WaitForZdo(persistentId, onComplete);
-    Logger.LogDebug("GetZdoFromServerAsync finished");
   }
 
   private IEnumerator WaitForZdo(int persistentId, Action<ZDO?> onComplete,
@@ -264,20 +264,6 @@ public class ZdoWatchController : MonoBehaviour
     catch
     {
       Logger.LogError("OnDeserialize had an error");
-    }
-  }
-
-  public void Init(ZDO zdo)
-  {
-    HandleRegisterPersistentId(zdo);
-    if (OnInit == null) return;
-    try
-    {
-      OnInit(zdo);
-    }
-    catch
-    {
-      Logger.LogError("OnCreated had an error");
     }
   }
 

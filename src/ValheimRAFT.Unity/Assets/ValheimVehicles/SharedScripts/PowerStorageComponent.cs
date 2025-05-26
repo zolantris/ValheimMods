@@ -85,7 +85,7 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
         IsCharging = next > current;
       }
 
-      UpdatePowerAnimations();
+      UpdatePowerRotationAnimations();
       UpdateChargeScale();
     }
 
@@ -139,7 +139,7 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
     /// <summary>
     /// To be run in a network manager or directly in the setter as a mutation
     /// </summary>
-    public void UpdatePowerAnimations()
+    public void UpdatePowerRotationAnimations()
     {
       // disable when at 0 or at capacity
       if (!IsActive && powerRotator.enabled)

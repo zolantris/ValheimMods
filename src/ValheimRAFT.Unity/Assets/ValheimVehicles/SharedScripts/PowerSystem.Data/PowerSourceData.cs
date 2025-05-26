@@ -3,6 +3,7 @@
 
 using System;
 using UnityEngine;
+using ValheimVehicles.Shared.Constants;
 using ValheimVehicles.SharedScripts.Modules;
 
 namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
@@ -27,6 +28,7 @@ namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
     public static float CoalFuelEfficiency = 1f;
     public static float SurtlingCoreFuelEfficiency = 3f;
     public static float EitrFuelEfficiency = 12f;
+    private float _lastProducedEnergy = 0f;
 
     public override bool IsActive => true;
 
@@ -44,9 +46,7 @@ namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
 
 
     public float BaseFuelEfficiency = FuelEfficiencyDefault;
-    public bool isRunning = false;
-
-    public float LastProducedEnergy;
+    public bool IsRunning = false;
 
     public PowerSourceData()
     {
@@ -78,8 +78,9 @@ namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
     public void ConsolidateFuel()
     {
       if (PendingFuel <= 0f) return;
-      Fuel += MathX.Clamp(PendingFuel, 0f, FuelCapacity - Fuel);
+      Fuel = MathX.Clamp(Fuel + PendingFuel, 0f, FuelCapacity);
       PendingFuel = 0f;
+      MarkDirty(VehicleZdoVars.PowerSystem_Fuel);
     }
 
     public float GetMaxPotentialOutput(float deltaTime)
@@ -104,13 +105,21 @@ namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
       ConsolidateFuel();
 
       var requiredFuel = energyUsed / (FuelEnergyYield * FuelEfficiency);
-      Fuel = MathX.Max(0f, Fuel - requiredFuel);
-      if (Fuel <= 0.0001f)
+      var nextFuel = MathX.Max(0f, Fuel - requiredFuel);
+
+      if (!Mathf.Approximately(Fuel, nextFuel))
+      {
+        Fuel = nextFuel;
+        MarkDirty(VehicleZdoVars.PowerSystem_Fuel);
+      }
+
+      if (Fuel != 0f && Fuel <= 0.01f)
       {
         Fuel = 0f;
+        MarkDirty(VehicleZdoVars.PowerSystem_Fuel);
       }
     }
-
+#if DEBUG
     public float ProducePower(float requestedEnergy)
     {
       var maxDeliverable = Fuel * FuelEnergyYield * FuelEfficiency;
@@ -119,29 +128,13 @@ namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
       var requiredFuel = actual / (FuelEnergyYield * FuelEfficiency);
       Fuel = MathX.Max(0f, Fuel - requiredFuel);
 
-      LastProducedEnergy = actual;
+      _lastProducedEnergy = actual;
       return actual;
     }
 
     public float EstimateFuelCost(float energy)
     {
       return energy / (FuelEnergyYield * FuelEfficiency);
-    }
-    public void SetRunning(bool state)
-    {
-      isRunning = state;
-    }
-    private float _lastProducedEnergy = 0f;
-
-    public float GetFuelEfficiency(FuelType val)
-    {
-      return val switch
-      {
-        FuelType.Coal => BaseFuelEfficiency * CoalFuelEfficiency,
-        FuelType.SurtlingCore => BaseFuelEfficiency * SurtlingCoreFuelEfficiency,
-        FuelType.Eitr => BaseFuelEfficiency * EitrFuelEfficiency,
-        _ => throw new ArgumentOutOfRangeException()
-      };
     }
 
     public float GetOfferEstimate(float deltaTime, float supplied, float totalDemand, bool isDemanding, float snapshotFuel)
@@ -159,26 +152,48 @@ namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
       var maxEnergy = maxFuelBurn * energyPerFuel;
       return MathX.Min(OutputRate * deltaTime, MathX.Min(remainingDemand, maxEnergy));
     }
+#endif
+    public void SetRunning(bool state)
+    {
+      IsRunning = state;
+      MarkDirty(VehicleZdoVars.PowerSystem_IsRunning);
+    }
+
+    public float GetFuelEfficiency(FuelType val)
+    {
+      return val switch
+      {
+        FuelType.Coal => BaseFuelEfficiency * CoalFuelEfficiency,
+        FuelType.SurtlingCore => BaseFuelEfficiency * SurtlingCoreFuelEfficiency,
+        FuelType.Eitr => BaseFuelEfficiency * EitrFuelEfficiency,
+        _ => throw new ArgumentOutOfRangeException()
+      };
+    }
 
 
     public float RequestAvailablePower(float deltaTime, float remainingDemand, bool isDemanding)
     {
-      if (!IsActive)
+      // if (!IsActive)
+      // {
+      //   SetRunning(false);
+      //   _lastProducedEnergy = 0f;
+      //   return 0f;
+      // }
+
+      var isVeryLowFuel = Fuel <= 0.0001f;
+
+      if (!isDemanding || remainingDemand <= 0f || isVeryLowFuel)
       {
+        if (isVeryLowFuel)
+        {
+          SetFuel(0f);
+        }
         SetRunning(false);
         _lastProducedEnergy = 0f;
         return 0f;
       }
 
-      if (!isDemanding || remainingDemand <= 0f || Fuel <= 0.0001f)
-      {
-        Fuel = 0f;
-        SetRunning(false);
-        _lastProducedEnergy = 0f;
-        return 0f;
-      }
-
-      if (!isRunning)
+      if (!IsRunning)
         SetRunning(true);
 
       var maxEnergy = MaxOutputEnergy * deltaTime;
@@ -205,14 +220,23 @@ namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
 
     public void AddFuel(float amount)
     {
+      var before = Fuel;
+
       var space = FuelCapacity - Fuel;
       var toAdd = MathX.Min(space, amount);
       PendingFuel += toAdd;
+
+      if (!Mathf.Approximately(before, before + PendingFuel))
+      {
+        MarkDirty(VehicleZdoVars.PowerSystem_Fuel);
+      }
     }
 
     public void SetFuel(float val)
     {
+      if (Mathf.Approximately(val, Fuel)) return;
       Fuel = MathX.Clamp(val, 0f, FuelCapacity);
+      MarkDirty(VehicleZdoVars.PowerSystem_Fuel);
     }
   }
 }

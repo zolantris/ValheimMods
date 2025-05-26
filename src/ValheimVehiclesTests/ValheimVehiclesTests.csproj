@@ -4,7 +4,7 @@
         <TargetFramework>net8.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
-
+        <DefineConstants>TEST</DefineConstants>
         <IsPackable>false</IsPackable>
         <IsTestProject>true</IsTestProject>
     </PropertyGroup>
@@ -28,6 +28,7 @@
         <Compile Include="../ValheimRAFT.Unity/Assets/ValheimVehicles/SharedScripts/PowerSystem.Enums/*.cs"/>
         <Compile Include="../ValheimRAFT.Unity/Assets/ValheimVehicles/SharedScripts/MathUtils.cs"/>
         <Compile Include="../ValheimRAFT.Unity/Assets/ValheimVehicles/SharedScripts/PowerSystemSimulator.cs"/>
+        <Compile Include="../ValheimRAFT.Unity/Assets/ValheimVehicles/SharedScripts/Shared.Constants/VehicleZdoVars.cs"/>
     </ItemGroup>
     <!--    <ItemGroup>-->
     <!--        <ProjectReference Include="..\ValheimVehicles\ValheimVehicles.csproj"/>-->

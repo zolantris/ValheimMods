@@ -2,6 +2,7 @@
 // ReSharper disable NamespaceStyle
 
 using UnityEngine;
+using ValheimVehicles.Shared.Constants;
 using ValheimVehicles.Structs;
 
 namespace ValheimVehicles.Controllers

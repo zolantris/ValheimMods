@@ -6,45 +6,60 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using ValheimVehicles.BepInExConfig;
-using ValheimVehicles.Integrations;
 using ValheimVehicles.Integrations.PowerSystem;
 using ValheimVehicles.SharedScripts;
 using ValheimVehicles.SharedScripts.PowerSystem;
 using ValheimVehicles.SharedScripts.PowerSystem.Compute;
-using ValheimVehicles.Structs;
+using Logger = HarmonyLib.Tools.Logger;
 
 namespace ValheimVehicles.Integrations;
 
 public partial class PowerNetworkControllerIntegration : PowerNetworkController
 {
   private readonly List<string> _networksToRemove = new();
+  public static bool CanRunClientOnDedicated = false;
+
+  public float lastUpdate = 0f;
+  public float lastDeltaTime = 0f;
+  public bool canLateUpdate = false;
 
   public override void Awake()
   {
-    LoggerProvider.LogDebug("Called Awake with debug");
-    LoggerProvider.LogMessage("Called Awake with Message");
     base.Awake();
-    LoggerProvider.LogMessage("Called post awake with message");
     StartCoroutine(DelayedRegister());
   }
 
   public IEnumerator DelayedRegister()
   {
-    while (ZNet.instance == null || ZRoutedRpc.instance == null)
+    while (ZNet.instance == null || ZRoutedRpc.instance == null || ZNetScene.instance == null)
     {
       yield return null;
     }
 
-    ZDOClaimUtility.RegisterClaimZdoRpc();
+    LoggerProvider.LogDebugDebounced("Calling register for From DelayedRegister.");
+
     PowerSystemRPC.Register();
     PlayerEitrRPC.Register();
+  }
+
+  protected override void Update()
+  {
+    base.Update();
+
+    if (Time.time < _nextUpdate) return;
+    lastUpdate = _nextUpdate;
+    _nextUpdate = Time.time + _updateInterval;
+    canLateUpdate = true;
+    lastDeltaTime = _nextUpdate - lastUpdate;
+
+    // doing this outside physics update is better otherwise host will pause power simulation when pausing.
+    Server_Simulate();
   }
 
   // Do nothing for fixed update. Hosts can run for it. But a host/client could freeze and not run this causing massive desyncs for non-hosts. 
   protected override void FixedUpdate()
   {
-    SimulateOnClientAndServer();
+    // SimulateOnClientAndServer();
   }
 
   /// <summary>
@@ -86,15 +101,13 @@ public partial class PowerNetworkControllerIntegration : PowerNetworkController
     status = ModTranslations.Power_NetworkInfo_NetworkLowPower;
   }
 
-  public static void Client_SyncNetworkStats(string networkId)
+  public static void Client_SyncNetworkStats(string networkId, float dt)
   {
     if (!PowerSystemClusterManager.TryBuildPowerNetworkSimData(networkId, out var simData))
     {
       LoggerProvider.LogError($"Failed to build sim data for network {networkId}");
       return;
     }
-
-    var deltaTime = Time.fixedDeltaTime;
 
     var totalDemand = 0f;
     var totalCapacity = 0f;
@@ -113,7 +126,7 @@ public partial class PowerNetworkControllerIntegration : PowerNetworkController
 
     foreach (var data in simData.Consumers)
     {
-      totalDemand += data.GetRequestedEnergy(deltaTime);
+      totalDemand += data.GetRequestedEnergy(dt);
       GetNetworkHealthStatusEnumeration(data, ref NetworkConsumerPowerStatus, ref poweredOrInactiveConsumers, ref inactiveDemandingConsumers);
     }
 
@@ -164,20 +177,51 @@ public partial class PowerNetworkControllerIntegration : PowerNetworkController
     }
   }
 
-  public void SimulateOnClientAndServer()
+  public bool HasNearbyPlayersOrPeers(List<ZDO> nodes)
   {
-    if (!isActiveAndEnabled || !ZNet.instance || !ZoneSystem.instance) return;
-    if (Time.time < _nextUpdate) return;
-    _nextUpdate = Time.time + _updateInterval;
+    var shouldSimulate = false;
 
-    LoggerProvider.LogInfoDebounced($"_networks, {powerNodeNetworks.Count}, Consumers, {Consumers.Count}, Conduits, {Conduits.Count}, Storages, {Storages.Count}, Sources, {Sources.Count}");
+    if (Player.m_localPlayer != null)
+    {
+      foreach (var node in nodes)
+      {
+        var pos = node.GetPosition();
+        if (Vector3.Distance(pos, Player.m_localPlayer.transform.position) < 25f)
+        {
+          shouldSimulate = true;
+          break;
+        }
+      }
+    }
+
+    if (shouldSimulate) return true;
+
+    // Step 2: Iterate through peers and match them with nodes.
+    var peers = ZNet.instance.GetPeers();
+    if (peers.Count == 0) return false;
+    // iterate through each node first as this may be a quicker match.
+    foreach (var node in nodes)
+    foreach (var instanceMPeer in peers)
+    {
+      var pos = node.GetPosition();
+      if (Vector3.Distance(pos, instanceMPeer.m_refPos) < 25f)
+      {
+        shouldSimulate = true;
+        break;
+      }
+    }
+
+    return shouldSimulate;
+  }
+
+  public void Server_Simulate()
+  {
+    if (!isActiveAndEnabled || !ZNet.instance || !ZoneSystem.instance || !ZNet.instance.IsServer()) return;
 
     foreach (var pair in PowerSystemClusterManager.Networks)
     {
       var nodes = pair.Value;
       var networkId = pair.Key;
-
-      LoggerProvider.LogInfoDebounced($"Pair Key: {networkId}, nodes: {nodes.Count}");
 
       if (nodes.Count == 0)
       {
@@ -193,17 +237,15 @@ public partial class PowerNetworkControllerIntegration : PowerNetworkController
         continue;
       }
 
-      // simulates entire network if there is a network item loaded in the loaded zonesystem.
-      var isLoadedInZone = nodes.Any((x) => ZoneSystem.instance.IsZoneLoaded(x.GetPosition()));
-      if (!isLoadedInZone)
-        continue;
+      // simulates entire network if there is a network item loaded in each peer's area.
+
 
       if (ZNet.instance.IsServer())
       {
         if (PowerSystemClusterManager.TryBuildPowerNetworkSimData(networkId, out var simData))
         {
           simData.NetworkId = networkId;
-          simData.DeltaTime = Time.fixedDeltaTime;
+          simData.DeltaTime = lastDeltaTime;
           PowerSystemSimulator.Simulate(simData);
           var zdoidNodes = nodes.Select(x => x.m_uid).ToList();
           PowerSystemRPC.Request_PowerZDOsChangedToNearbyPlayers(networkId, zdoidNodes, simData);
@@ -213,13 +255,6 @@ public partial class PowerNetworkControllerIntegration : PowerNetworkController
           LoggerProvider.LogError($"Failed to build sim data for network {networkId}");
         }
       }
-
-      // only dedicated server.
-      if (!ZNet.instance.IsDedicated())
-      {
-        Client_SyncActiveInstances();
-        Client_SyncNetworkStats(networkId);
-      }
     }
 
     foreach (var key in _networksToRemove)
@@ -228,5 +263,20 @@ public partial class PowerNetworkControllerIntegration : PowerNetworkController
     }
 
     _networksToRemove.Clear();
+  }
+
+
+  public void LateUpdate()
+  {
+    if (!canLateUpdate || !ZNet.instance) return;
+    if (ZNet.instance.IsDedicated() && !CanRunClientOnDedicated) return;
+
+    canLateUpdate = false;
+    foreach (var pair in PowerSystemClusterManager.Networks)
+    {
+      var networkId = pair.Key;
+      Client_SyncActiveInstances();
+      Client_SyncNetworkStats(networkId, lastDeltaTime);
+    }
   }
 }

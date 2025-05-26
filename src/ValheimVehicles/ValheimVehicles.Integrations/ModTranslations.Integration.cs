@@ -215,6 +215,7 @@ public partial class ModTranslations
     PowerSource_FuelNameEitr = SafeLocalize("$valheim_vehicles_mechanism_fuel_name_eitr");
 
     PowerSource_Message_AddedFromContainer = SafeLocalize("$valheim_vehicles_mechanism_added_from_container");
+    PowerSource_Message_FailedToAdd = SafeLocalize("$valheim_vehicles_mechanism_failed_to_add");
 
     PowerSource_Message_AddedFromPlayer = SafeLocalize("$valheim_vehicles_mechanism_added_from_player");
     Power_NetworkInfo_NetworkStatus = SafeLocalize("$valheim_vehicles_mechanism_network_status");

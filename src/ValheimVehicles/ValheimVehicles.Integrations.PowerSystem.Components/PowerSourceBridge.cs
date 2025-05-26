@@ -1,11 +1,14 @@
 using System.Collections.Generic;
+using Jotunn;
 using UnityEngine;
 using ValheimVehicles.Helpers;
 using ValheimVehicles.Integrations.PowerSystem;
+using ValheimVehicles.Shared.Constants;
 using ValheimVehicles.SharedScripts;
 using ValheimVehicles.SharedScripts.PowerSystem;
 using ValheimVehicles.SharedScripts.PowerSystem.Compute;
 using ValheimVehicles.Structs;
+using Logger = HarmonyLib.Tools.Logger;
 
 namespace ValheimVehicles.Integrations;
 
@@ -32,56 +35,48 @@ public class PowerSourceBridge :
 
   protected override void RegisterDefaultRPCs()
   {
-    RegisterRPC<float>(nameof(RPC_AddFuel), RPC_AddFuel);
-    RegisterRPC<float>(nameof(RPC_SetFuel), RPC_SetFuel);
   }
 
-  private void RPC_AddFuel(long sender, float amount)
-  {
-    Data.AddFuel(amount);
-    UpdateNetworkedData();
-  }
+  // public void SetFuelOrRPC(float amount)
+  // {
+  //   if (!this.IsNetViewValid(out var netView)) return;
+  //
+  //   if (ZNet.instance.IsServer())
+  //   {
+  //     Data.SetFuel(amount);
+  //     UpdateNetworkedData();
+  //   }
+  //   else
+  //   {
+  //     RpcHandler.InvokeRPC(ZRoutedRpc.instance.GetServerPeerID(), nameof(RPC_SetFuel), amount);
+  //   }
+  // }
 
-  private void RPC_SetFuel(long sender, float amount)
-  {
-    Data.SetFuel(amount);
-    UpdateNetworkedData();
-  }
-
-  public void SetFuelOrRPC(float amount)
-  {
-    if (!this.IsNetViewValid(out var netView)) return;
-
-    if (netView.IsOwner() || ZNet.instance.IsServer())
-    {
-      Data.SetFuel(amount);
-      UpdateNetworkedData();
-    }
-    else
-    {
-      InvokeRPC(nameof(RPC_SetFuel), amount);
-    }
-  }
-
-  public void AddFuelOrRPC(float amount)
-  {
-    if (!this.IsNetViewValid(out var netView)) return;
-
-    if (netView.IsOwner() || ZNet.instance.IsServer())
-    {
-      Data.AddFuel(amount);
-      UpdateNetworkedData();
-    }
-    else
-    {
-      InvokeRPC(nameof(RPC_AddFuel), amount);
-    }
-  }
+  // public void AddFuelOrRPC(float amount)
+  // {
+  //   if (!this.IsNetViewValid(out var netView)) return;
+  //
+  //   var isClientInstance = ZNet.m_instance.IsClientInstance();
+  //   var isServerInstance = ZNet.m_instance.IsServerInstance();
+  //   var isLocalInstance = ZNet.m_instance.IsLocalInstance();
+  //
+  //   LoggerProvider.LogInfoDebounced($"isClientInstance {isClientInstance} , isServerInstance {isServerInstance}, isLocalInstance {isLocalInstance}");
+  //
+  //   if (ZNet.instance.IsServer())
+  //   {
+  //     Data.AddFuel(amount);
+  //     UpdateNetworkedData();
+  //   }
+  //   else
+  //   {
+  //     RpcHandler.InvokeRPC(ZRoutedRpc.instance.GetServerPeerID(), nameof(RPC_AddFuel), amount);
+  //   }
+  // }
 
   // keep for data model.
   public void AddFuel(float amount)
   {
-    AddFuelOrRPC(amount);
+    // AddFuelOrRPC(amount);
   }
 
   public void SetData(PowerSourceData data)

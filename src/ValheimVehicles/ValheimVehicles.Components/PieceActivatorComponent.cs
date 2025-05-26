@@ -11,6 +11,7 @@
   using ValheimVehicles.Helpers;
   using ValheimVehicles.Integrations;
   using ValheimVehicles.Interfaces;
+  using ValheimVehicles.Shared.Constants;
   using ValheimVehicles.SharedScripts;
   using ValheimVehicles.Structs;
   using ZdoWatcher;

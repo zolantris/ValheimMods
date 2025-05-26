@@ -1,11 +1,13 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using ValheimVehicles.BepInExConfig;
+using ValheimVehicles.Integrations.PowerSystem;
 using ValheimVehicles.SharedScripts;
 using ValheimVehicles.SharedScripts.PowerSystem;
 using ValheimVehicles.SharedScripts.PowerSystem.Compute;
-using ValheimVehicles.SharedScripts.PowerSystem.Interfaces;
+using Zolantris.Shared.Debug;
 namespace ValheimVehicles.Integrations;
 
 public class PowerHoverComponent : MonoBehaviour, Hoverable, Interactable
@@ -55,7 +57,117 @@ public class PowerHoverComponent : MonoBehaviour, Hoverable, Interactable
     LoggerProvider.LogDebug($"Found {eitrNearby} items in {_NearByContainers.Count} containers");
   }
 
-  public bool TryAddFuel(Humanoid user, int amountToAdd)
+  public struct FuelToCommit
+  {
+    public Container? container;
+    public Player? player;
+    public int pendingPlayerAmount;
+    public int pendingContainerAmount;
+  }
+
+  public static readonly Dictionary<string, Coroutine> PendingFuelPromises = new();
+  public static readonly Dictionary<string, bool> PendingFuelPromisesResolutions = new();
+
+
+  public void ClearPendingFuelPromises(string pendingPromiseId)
+  {
+    PendingFuelPromisesResolutions.Remove(pendingPromiseId);
+    PendingFuelPromisesResolutions.Remove(pendingPromiseId);
+  }
+
+  public IEnumerator WaitForFuelToCommit(List<FuelToCommit> fuelPromise, string pendingPromiseId, string addedMessage, PowerSourceData sourceData)
+  {
+    var timer = DebugSafeTimer.StartNew();
+    while (timer.ElapsedMilliseconds < 10000f && PendingFuelPromisesResolutions.TryGetValue(pendingPromiseId, out var isPending) && isPending)
+      yield return null;
+    if (timer.ElapsedMilliseconds >= 10000f && PendingFuelPromisesResolutions[pendingPromiseId])
+    {
+      ClearPendingFuelPromises(pendingPromiseId);
+
+      Player.m_localPlayer.Message(MessageHud.MessageType.TopLeft, ModTranslations.PowerSource_Message_FailedToAdd);
+      yield break;
+    }
+
+    foreach (var fuelToCommit in fuelPromise)
+    {
+      var container = fuelToCommit.container;
+      var player = fuelToCommit.player;
+      var pendingContainerAmount = fuelToCommit.pendingContainerAmount;
+      var pendingPlayerAmount = fuelToCommit.pendingPlayerAmount;
+      if (container != null)
+      {
+        container.m_inventory.RemoveItem(EitrInventoryItem_TokenId, pendingContainerAmount);
+      }
+      if (player != null && player.GetInventory() != null)
+      {
+        player.m_inventory.RemoveItem(player.m_inventory.GetItem(EitrInventoryItem_TokenId), pendingPlayerAmount);
+      }
+    }
+
+    Player.m_localPlayer.Message(MessageHud.MessageType.TopLeft, addedMessage);
+    ClearPendingFuelPromises(pendingPromiseId);
+
+    sourceData?.Load();
+  }
+
+  public bool GetFuelFromContainers(int playerFuelItems, ref int amountToAdd, out List<FuelToCommit> fuelCommits)
+  {
+    fuelCommits = new List<FuelToCommit>();
+
+    if (playerFuelItems >= amountToAdd || !PowerSystemConfig.PowerSource_AllowNearbyFuelingWithEitr.Value || _NearByContainers.Count <= 0) return false;
+
+    foreach (var nearByContainer in _NearByContainers)
+    {
+      if (amountToAdd <= 0) break;
+      var inventory = nearByContainer.GetInventory();
+      if (inventory == null) continue;
+      var quantity = inventory.CountItems(EitrInventoryItem_TokenId);
+      if (quantity > 0)
+      {
+        var itemsToUse = Mathf.Min(quantity, amountToAdd);
+        amountToAdd -= itemsToUse;
+
+        fuelCommits.Add(new FuelToCommit
+        {
+          pendingContainerAmount = itemsToUse,
+          container = nearByContainer
+        });
+      }
+    }
+
+    if (amountToAdd > 0)
+    {
+      fuelCommits.Clear();
+      return false;
+    }
+
+    return true;
+  }
+
+  public string GetMessageAboutFuel(int addedFromPlayer, int addedFromContainer)
+  {
+    var message = "";
+    if (addedFromContainer > 0)
+    {
+      message += $"{ModTranslations.PowerSource_Message_AddedFromContainer} ({addedFromContainer}) ({ModTranslations.PowerSource_FuelNameEitr})";
+    }
+
+    if (addedFromPlayer > 0)
+    {
+      message += $"{ModTranslations.PowerSource_Message_AddedFromPlayer} ({addedFromPlayer}) \n({ModTranslations.PowerSource_FuelNameEitr})";
+    }
+
+    return message;
+  }
+
+  /// <summary>
+  /// We have to sync with server in order to not get a mismatch in data. This ensures the removal can happen after the server returns a response.
+  /// </summary>
+  /// <param name="user"></param>
+  /// <param name="amountToAdd"></param>
+  /// <param name="canRemove"></param>
+  /// <returns></returns>
+  public bool TryAddFuel(Humanoid user, int amountToAdd, bool canRemove = false)
   {
     if (PowerSystemConfig.PowerSource_AllowNearbyFuelingWithEitr.Value && Time.fixedTime > _lastSearchTime + _NearbyChestSearchDebounce)
     {
@@ -67,57 +179,39 @@ public class PowerHoverComponent : MonoBehaviour, Hoverable, Interactable
     if (!user.IsPlayer()) return false;
     var player = user.GetComponent<Player>();
 
+    List<FuelToCommit> fuelCommits = new();
+    var fuelCommitId = Guid.NewGuid().ToString();
+
     var playerInventory = player.GetInventory();
     var playerFuelItems = playerInventory.CountItemsByName([EitrInventoryItem_TokenId]);
-    if (playerFuelItems < amountToAdd)
-    {
-      if (PowerSystemConfig.PowerSource_AllowNearbyFuelingWithEitr.Value && _NearByContainers.Count > 0)
-      {
-        var originalAmountForContainers = amountToAdd;
-        foreach (var nearByContainer in _NearByContainers)
-        {
-          if (amountToAdd <= 0) break;
-          var inventory = nearByContainer.GetInventory();
-          if (inventory == null) continue;
-          var quantity = inventory.CountItems(EitrInventoryItem_TokenId);
-          if (quantity > 0)
-          {
-            var itemsToUse = Mathf.Min(quantity, amountToAdd);
-            amountToAdd -= itemsToUse;
-            inventory.RemoveItem(EitrInventoryItem_TokenId, itemsToUse);
-            _powerSourceComponent.AddFuelOrRPC(itemsToUse);
-          }
-        }
-        if (amountToAdd != originalAmountForContainers)
-        {
-          message += $"{ModTranslations.PowerSource_Message_AddedFromContainer} ({originalAmountForContainers - amountToAdd}) ({ModTranslations.PowerSource_FuelNameEitr})";
-        }
-        if (amountToAdd < 0)
-        {
-          player.Message(MessageHud.MessageType.TopLeft, message);
-          return true;
-        }
-      }
 
-      if (amountToAdd > 0 && playerFuelItems < amountToAdd)
-      {
-        player.Message(MessageHud.MessageType.Center, $"{ModTranslations.PowerSource_NotEnoughFuel} \n({ModTranslations.PowerSource_FuelNameEitr})");
-        return false;
-      }
+    var currentRemainingAmount = amountToAdd - playerFuelItems;
+    var containerCommitAmount = currentRemainingAmount;
+
+    var containerFuelItems = GetFuelFromContainers(playerFuelItems, ref currentRemainingAmount, out var containerFuelToCommit);
+
+    if (!containerFuelItems && currentRemainingAmount > 0)
+    {
+      return false;
     }
 
-    try
-    {
-      message += $"{ModTranslations.PowerSource_Message_AddedFromPlayer} ({originalAmountToAddForPlayer}) \n({ModTranslations.PowerSource_FuelNameEitr})";
+    var addedMessage = GetMessageAboutFuel(Mathf.Min(playerFuelItems, originalAmountToAddForPlayer), containerCommitAmount);
+    // todo translate this.
 
-      playerInventory.RemoveItem(EitrInventoryItem_TokenId, amountToAdd);
-      _powerSourceComponent.AddFuelOrRPC(amountToAdd);
-      player.Message(MessageHud.MessageType.TopLeft, message);
-    }
-    catch (Exception e)
+    fuelCommits.AddRange(containerFuelToCommit);
+    fuelCommits.Add(new FuelToCommit
     {
-      LoggerProvider.LogError($"Error when removing {EitrInventoryItem_TokenId} from inventory, \n {e.Message} \n {e.StackTrace}");
-    }
+      pendingPlayerAmount = Mathf.Min(playerFuelItems, amountToAdd),
+      player = player
+    });
+
+    var netView = GetComponent<ZNetView>();
+    if (!netView) return false;
+
+    // fuel promise in-order to update fuel without causing upstream desync which deletes the fuel.
+    PendingFuelPromisesResolutions[fuelCommitId] = true;
+    PendingFuelPromises[fuelCommitId] = StartCoroutine(WaitForFuelToCommit(fuelCommits, fuelCommitId, addedMessage, _powerSourceComponent.Data));
+    PowerSystemRPC.Request_AddFuelToSource(netView.GetZDO().m_uid, amountToAdd, fuelCommitId);
 
     return true;
   }

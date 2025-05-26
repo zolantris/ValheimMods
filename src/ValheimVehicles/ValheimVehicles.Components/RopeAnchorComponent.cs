@@ -4,6 +4,7 @@ using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
 using ValheimVehicles.Controllers;
+using ValheimVehicles.Shared.Constants;
 using ValheimVehicles.Structs;
 using ZdoWatcher;
 using ZdoWatcher.ZdoWatcher.Utils;

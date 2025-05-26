@@ -80,7 +80,7 @@ public class PowerSimulationTests
     var currentEitr = 200f;
     playerData.GetEitr = () => currentEitr;
     playerData.GetEitrCapacity = () => 200f;
-    playerData.Request_UseEitr = (val) => currentEitr -= val;
+    playerData.Request_UseEitr = (id, val) => currentEitr -= val;
 
     simulationData.Conduits.Add(conduit);
 
@@ -320,7 +320,7 @@ public class PowerSimulationTests
     var player = new PowerConduitData.PlayerEitrData(rechargeConduit)
     {
       PlayerId = 1234,
-      Request_UseEitr = (val) => Request_UseEitrMock(val),
+      Request_UseEitr = (id, val) => Request_UseEitrMock(val),
       Request_AddEitr = (id, val) => Request_AddEitrMock(val),
       GetEitr = GetPlayerEitrMock,
       GetEitrCapacity = () => 100f

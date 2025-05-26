@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace ValheimVehicles.Structs;
+namespace ValheimVehicles.Shared.Constants;
 
 /// <summary>
 /// ZdoVars do not need to be a hashcode. Using a Hashcode makes it harder to see what the ZDO value relates to as well. So for any future ZDOVars they should be strings.
@@ -37,9 +37,15 @@ public static class VehicleZdoVars
   public static readonly int MBCultivatableParentIdHash =
     "MBCultivatableParentId".GetStableHashCode();
 
+
+#if !TEST
   // todo ZDO.GetHashZDOID is likely deprecated.
   public static readonly KeyValuePair<int, int> MBCultivatableParentHash =
     ZDO.GetHashZDOID("MBCultivatableParent");
+  // todo ZDO.GetHashZDOID is likely deprecated.
+  public static readonly KeyValuePair<int, int> MBParentHash =
+    ZDO.GetHashZDOID("MBParent");
+#endif
 
   public static readonly int TempPieceParentId =
     "VehicleTempPieceParentId".GetStableHashCode();
@@ -58,11 +64,6 @@ public static class VehicleZdoVars
 
   public static readonly int VehicleTreadWidth =
     "VehicleTreadWidth".GetStableHashCode();
-
-
-  // todo ZDO.GetHashZDOID is likely deprecated.
-  public static readonly KeyValuePair<int, int> MBParentHash =
-    ZDO.GetHashZDOID("MBParent");
 
   public static readonly int MBParentId = "MBParentId".GetStableHashCode();
 
@@ -95,7 +96,7 @@ public static class VehicleZdoVars
   public const string PowerSystem_IsActive = "PowerSystem_IsActive";
   public const string PowerSystem_NetworkId = "PowerSystem_NetworkId";
   public const string PowerSystem_Energy = "PowerSystem_StoredEnergy";
-  public const string PowerSystem_StoredFuel = "PowerSystem_StoredFuel";
+  public const string PowerSystem_Fuel = "PowerSystem_StoredFuel";
   public const string PowerSystem_FuelOutputRate = "PowerSystem_FuelOutputRate";
   public const string PowerSystem_FuelType = "PowerSystem_FuelType";
   public const string PowerSystem_EnergyCapacity = "PowerSystem_StoredEnergyCapacity";

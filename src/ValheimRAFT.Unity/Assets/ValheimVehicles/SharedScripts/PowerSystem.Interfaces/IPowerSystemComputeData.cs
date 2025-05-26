@@ -13,8 +13,11 @@ namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
 
     // actions
     Action? OnLoad { get; set; }
-    Action? OnSave { get; set; }
+    Action OnSave { get; set; }
     Action? OnActive { get; set; }
+
+    public void MarkDirty(string zdoKey);
+    public void ClearDirty();
 
     // internal methods that call actions for ZDOs
     public void Load();

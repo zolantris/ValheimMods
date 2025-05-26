@@ -99,6 +99,12 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
     public static void Simulate(PowerSimulationData SimulationData)
     {
       var deltaTime = SimulationData.DeltaTime;
+
+      SimulationData.Consumers.ForEach(x => x.Load());
+      SimulationData.Conduits.ForEach(x => x.Load());
+      SimulationData.Storages.ForEach(x => x.Load());
+      SimulationData.Sources.ForEach(x => x.Load());
+
       SortStoragesByEnergy(SimulationData.Storages);
       ConsolidateAllPendingFuel(SimulationData.Sources);
 
@@ -122,23 +128,16 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
       // supply must be at max storage and fulfill demand before bailing on energy generation
       var totalSupply = conduitSupply + storageSupply;
 
-
-
       // Step 2: Supply power to players if there is supply.
+      // simulate every conduit. This will fulfill the demand / supply contracts of these conduits.
       foreach (var conduit in demandConduits)
       {
         if (totalSupply <= 0f) break;
         RunDemandConduitUpdate(conduit, deltaTime, ref totalSupply, ref totalDemand);
       }
-
-      // step 2.5: Supply power from conduits if there is demand.
-      if (totalDemand > totalSupply)
+      foreach (var conduit in supplyConduits)
       {
-        // simulate every conduit. This will fulfill the demand / supply contracts of these conduits.
-        foreach (var conduit in supplyConduits)
-        {
-          RunSupplyConduitUpdate(conduit, deltaTime, ref totalSupply, ref totalDemand);
-        }
+        RunSupplyConduitUpdate(conduit, deltaTime, ref totalSupply, ref totalDemand);
       }
 
       // Step 4: Apply power to consumers
@@ -147,27 +146,28 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
         RunConsumerUpdate(consumer, deltaTime, ref totalSupply, ref totalDemand);
       }
 
-
       // generate power to fulfill demand and target maximum storage capacity. 
       var hasChargeableStorageCapacity = totalEnergyCapacity > storageSupply;
 
-      if (hasChargeableStorageCapacity)
-      {
-        foreach (var source in SimulationData.Sources)
-        {
-          if (totalSupply >= totalEnergyCapacity) break;
-          var offered = source.RequestAvailablePower(deltaTime, totalDemand, totalDemand > 0f);
-          if (offered <= 0f) continue;
 
-          source.CommitEnergyUsed(offered);
-          totalSupply += offered;
+      foreach (var source in SimulationData.Sources)
+      {
+        if (!hasChargeableStorageCapacity || totalSupply >= totalEnergyCapacity)
+        {
+          source.SetRunning(false);
+          continue;
         }
+        var offered = source.RequestAvailablePower(deltaTime, totalDemand, totalDemand > 0f);
+        if (offered <= 0f) continue;
+
+        source.CommitEnergyUsed(offered);
+        totalSupply += offered;
       }
 
       foreach (var storage in SimulationData.Storages)
       {
         var energyToUse = MathX.Min(totalSupply, storage.EnergyCapacity);
-        storage.SetStoredEnergy(energyToUse);
+        storage.SetEnergy(energyToUse);
         totalSupply -= energyToUse;
         totalSupply = MathX.Max(totalSupply, 0f);
       }

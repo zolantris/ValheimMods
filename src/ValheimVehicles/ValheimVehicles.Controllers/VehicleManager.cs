@@ -13,6 +13,7 @@
   using ValheimVehicles.Helpers;
   using ValheimVehicles.Interfaces;
   using ValheimVehicles.Prefabs;
+  using ValheimVehicles.Shared.Constants;
   using ValheimVehicles.SharedScripts;
   using ValheimVehicles.SharedScripts.Enums;
   using ValheimVehicles.Structs;
@@ -687,7 +688,8 @@
       if (PiecesController == null) return;
       if (!CanInitHullPiece)
       {
-        m_nview.GetZDO().Set(VehicleZdoVars.ZdoKeyBaseVehicleInitState, true);
+        m_nview.GetZDO().Set(
+          VehicleZdoVars.ZdoKeyBaseVehicleInitState, true);
         return;
       }
 

@@ -5,7 +5,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using ValheimVehicles.Helpers;
 using ValheimVehicles.Integrations.PowerSystem;
+using ValheimVehicles.Shared.Constants;
 using ValheimVehicles.SharedScripts;
 using ValheimVehicles.SharedScripts.PowerSystem.Compute;
 using ValheimVehicles.Structs;
@@ -29,7 +31,6 @@ namespace ValheimVehicles.Integrations
     {
       RegisterHashes();
       ZdoWatchController.OnDeserialize += zdo => RegisterPowerData(zdo);
-      ZdoWatchController.OnInit += zdo => RegisterPowerData(zdo);
       ZdoWatchController.OnLoad += zdo => RegisterPowerData(zdo);
 
       ZdoWatchController.OnReset += zdo => RemovePowerData(zdo);
@@ -138,14 +139,36 @@ namespace ValheimVehicles.Integrations
         pending.Clear();
         pending.Enqueue(root);
 
+        var hasCheckedForPreviousNetworkId = false;
+
         while (pending.Count > 0)
         {
           var current = pending.Dequeue();
+          if (!hasCheckedForPreviousNetworkId)
+          {
+            var currentNetworkId = current.GetString(VehicleZdoVars.PowerSystem_NetworkId, string.Empty);
+            if (!PowerSystemComputeData.IsTempNetworkIdStatic(currentNetworkId))
+            {
+              networkId = currentNetworkId;
+            }
+            else
+            {
+              ValheimExtensions.TrySetZDOStringOnChange(current, VehicleZdoVars.PowerSystem_NetworkId, networkId);
+            }
+            hasCheckedForPreviousNetworkId = true;
+          }
+          else
+          {
+            ValheimExtensions.TrySetZDOStringOnChange(current, VehicleZdoVars.PowerSystem_NetworkId, networkId);
+          }
           cluster.Add(current);
-          current.Set(VehicleZdoVars.PowerSystem_NetworkId, networkId);
 
           foreach (var other in unvisited.ToList())
           {
+            if (other.GetString(VehicleZdoVars.PowerSystem_NetworkId, string.Empty) != networkId)
+            {
+              ValheimExtensions.TrySetZDOStringOnChange(other, VehicleZdoVars.PowerSystem_NetworkId, networkId);
+            }
             if ((current.GetPosition() - other.GetPosition()).sqrMagnitude <= MaxJoinSqr)
             {
               pending.Enqueue(other);
@@ -197,16 +220,22 @@ namespace ValheimVehicles.Integrations
 
     // --- Simulation Data Caching/Rebuild ---
 
-    public static bool TryBuildPowerNetworkSimData(string networkId, out PowerSimulationData simData)
+    public static bool TryBuildPowerNetworkSimData(string networkId, out PowerSimulationData simData, bool forceUpdate = false)
     {
-      if (!_cachedSimulateData.TryGetValue(networkId, out simData))
+      if (!_cachedSimulateData.TryGetValue(networkId, out simData) || forceUpdate)
       {
         if (!Networks.TryGetValue(networkId, out var zdos) || zdos == null)
+        {
+#if DEBUG
+          LoggerProvider.LogDebugDebounced($"networkId: {networkId}, Network not found for zdos");
+#endif
           return false;
+        }
 
         BuildPowerNetworkSimData(networkId, zdos);
         simData = _cachedSimulateData[networkId]; // safe: just built
       }
+
       return simData != null;
     }
 
@@ -219,7 +248,7 @@ namespace ValheimVehicles.Integrations
     {
       var simData = new PowerSimulationData();
 
-      LoggerProvider.LogDev($"[SIM] Rebuilding {networkId} with {zdos.Count} ZDOs");
+      // LoggerProvider.LogDev($"[SIM] Rebuilding {networkId} with {zdos.Count} ZDOs");
 
       foreach (var zdo in zdos)
       {

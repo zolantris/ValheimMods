@@ -4,20 +4,15 @@
   using System.Collections.Generic;
   using System.Linq;
   using UnityEngine;
-  using UnityEngine.Serialization;
   using ValheimVehicles.Components;
   using ValheimVehicles.BepInExConfig;
-  using ValheimVehicles.Constants;
   using ValheimVehicles.Controllers;
   using ValheimVehicles.Helpers;
   using ValheimVehicles.Integrations.PowerSystem;
   using ValheimVehicles.Interfaces;
-  using ValheimVehicles.Prefabs;
+  using ValheimVehicles.Shared.Constants;
   using ValheimVehicles.SharedScripts;
   using ValheimVehicles.SharedScripts.Helpers;
-  using ValheimVehicles.SharedScripts.PowerSystem.Compute;
-  using ValheimVehicles.SharedScripts.UI;
-  using ValheimVehicles.Structs;
 
 #endregion
 
@@ -244,6 +239,13 @@
       }
 
       base.FixedUpdate();
+
+      // guarded update on DemandState which can desync.
+      if (MotionState is MotionState.AtStart or MotionState.AtTarget && powerConsumerIntegration && powerConsumerIntegration.IsDemanding && powerConsumerIntegration.Data.zdo != null && powerConsumerIntegration.Data.zdo.IsValid())
+      {
+        powerConsumerIntegration.Data.SetDemandState(false);
+        PowerSystemRPC.Request_UpdatePowerConsumer(powerConsumerIntegration.Data.zdo.m_uid, powerConsumerIntegration.Data);
+      }
 
       if (m_pieces.Count > 0)
       {

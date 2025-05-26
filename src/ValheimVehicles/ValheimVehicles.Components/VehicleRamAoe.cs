@@ -12,6 +12,7 @@ using ValheimVehicles.Prefabs.Registry;
 using ValheimVehicles.SharedScripts;
 using ValheimVehicles.Structs;
 using ValheimVehicles.Components;
+using ValheimVehicles.Shared.Constants;
 using Logger = Jotunn.Logger;
 
 namespace ValheimVehicles.Helpers;

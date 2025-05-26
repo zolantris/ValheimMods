@@ -19,8 +19,8 @@ namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
     public readonly Dictionary<long, PlayerEitrData> PlayerDataById = new();
 
     // eitr vapor is the player eitr. This is different from Eitr fuel.
-    public static float EitrVaporCostPerTick = 10f;
-    public static float EnergyChargePerTick = 1f;
+    public static float EitrVaporCostPerInterval = 10f;
+    public static float EnergyChargePerInterval = 1f;
     public static float RechargeRate = 10f;
 
     // overrides (in partial method for integrations)
@@ -42,7 +42,7 @@ namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
 
     public float ConvertPlayerEitrToEnergy(float playerEitr)
     {
-      return playerEitr * EitrVaporCostPerTick / EnergyChargePerTick;
+      return playerEitr * EitrVaporCostPerInterval / EnergyChargePerInterval;
     }
 
     /// <summary>
@@ -60,15 +60,13 @@ namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
 
       // methods that fire RPC_For Integration. But can be used to test via the stub.
       public Action<long, float> Request_AddEitr = (_, _) => {};
-      public Action<float> Request_UseEitr = (_) => {};
+      public Action<long, float> Request_UseEitr = (_, _) => {};
 
       public PlayerEitrData(PowerConduitData conduit)
       {
         conduitData = conduit;
       }
     }
-
-    public static float EitrVaporToEnergyRatio = EitrVaporCostPerTick / EnergyChargePerTick;
 
 
     // <summary>
@@ -101,19 +99,32 @@ namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
       return total;
     }
 
-    public float lastUpdateTime = 0f;
-    public float updateIncrements = 60f;
+    private float lastUpdateTime = 0f;
+    private static float nextUpdateInterval = 1f;
 
-    public bool CanRunSimulation()
+    private bool UpdateSimulationTime(float dt)
     {
+      DeltaTime = dt;
       lastUpdateTime += DeltaTime;
-      if (lastUpdateTime < 1f) // 1 second interval
+
+      // 1 second interval will allow other methods to run.
+      if (lastUpdateTime >= nextUpdateInterval)
       {
-        return false;
+        lastUpdateTime = 0f;
+        return true;
       }
 
-      lastUpdateTime -= 0f;
-      return true;
+      return false;
+    }
+
+    /// <summary>
+    /// Peeks at delta time to see if the next update will allow a full simulation.
+    /// </summary>
+    /// <param name="dt"></param>
+    /// <returns></returns>
+    public bool CanRunSimulation(float dt)
+    {
+      return lastUpdateTime + dt >= nextUpdateInterval;
     }
 
     /// <summary>
@@ -121,12 +132,12 @@ namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
     /// </summary>
     public bool TryGetNeededEitr(float remainingEnergy, float eitrVaporAvailable, out float deltaEitr, out float deltaEnergy)
     {
-      var eitrProcessable = MathX.Min(eitrVaporAvailable, EitrVaporCostPerTick) * DeltaTimeRechargeRate;
-      var energyProduced = EnergyChargePerTick * DeltaTimeRechargeRate;
+      var eitrProcessable = MathX.Min(eitrVaporAvailable, EitrVaporCostPerInterval);
+      var energyProduced = EnergyChargePerInterval;
       if (remainingEnergy < energyProduced)
       {
         // Clamp to remainingEnergy
-        deltaEitr = remainingEnergy * EitrVaporToEnergyRatio;
+        deltaEitr = remainingEnergy / EnergyChargePerInterval * EitrVaporCostPerInterval;
         deltaEnergy = remainingEnergy;
         return true;
       }
@@ -151,7 +162,7 @@ namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
         if (playerEitr <= 2f) continue;
         TryGetNeededEitr(maxEnergyDrainable - totalEnergy, playerEitr, out var deltaEitrVapor, out var deltaEnergy);
 
-        playerData.Request_UseEitr(deltaEitrVapor);
+        playerData.Request_UseEitr(playerData.PlayerId, deltaEitrVapor);
         totalEnergy += deltaEnergy;
       }
 
@@ -160,8 +171,8 @@ namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
 
     public float SimulateConduit(float energyAvailableOrDrainable, float deltaTime)
     {
-      DeltaTime = deltaTime;
-      if (!CanRunSimulation()) return 0f;
+      if (!UpdateSimulationTime(deltaTime)) return 0f;
+
       if (PlayerDataById.Count == 0 || energyAvailableOrDrainable <= 0f)
         return 0f;
 
@@ -183,26 +194,26 @@ namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
 
     /// <summary>
     /// Mode Charge will remove/Demand from the PowerSystem.
+    /// - this is per tick we will demand maximum of N players * Energy conversion of eitr. Cannot exceed our update tick.
     /// </summary>
-    /// <param name="dt"></param>
-    /// <returns></returns>
     public float EstimateTotalDemand(float dt)
     {
-      DeltaTime = dt;
+      if (!CanRunSimulation(dt)) return 0f;
       if (Mode == PowerConduitMode.Drain) return 0f;
-      return GetAllPlayerRemainingEitrCapacity() * EitrVaporToEnergyRatio * DeltaTimeRechargeRate;
+      var totalRemainingCapacity = MathX.Min(GetAllPlayerRemainingEitrCapacity() / EitrVaporCostPerInterval, PlayerDataById.Count * EnergyChargePerInterval);
+      return totalRemainingCapacity;
     }
 
     /// <summary>
-    /// Drain will Add/Supply to the PowerSystem
+    /// Drain will Add/Supply to the PowerSystem.
+    /// - this is per tick we will supply maximum of N players * Energy conversion of eitr. Cannot exceed our update tick.
     /// </summary>
-    /// <param name="dt"></param>
-    /// <returns></returns>
     public float EstimateTotalSupply(float dt)
     {
-      DeltaTime = dt;
+      if (!CanRunSimulation(dt)) return 0f;
       if (Mode == PowerConduitMode.Charge) return 0f;
-      return GetAllPlayerEitr() * EitrVaporToEnergyRatio * DeltaTimeRechargeRate;
+      var totalRemainingCapacity = MathX.Min(GetAllPlayerRemainingEitrCapacity(), PlayerDataById.Count * EnergyChargePerInterval);
+      return totalRemainingCapacity;
     }
 
     private bool _isActive = true;

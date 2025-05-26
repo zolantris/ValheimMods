@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using ValheimVehicles.Shared.Constants;
 using ValheimVehicles.Structs;
 using ZdoWatcher;
 using ZdoWatcher.ZdoWatcher.Utils;

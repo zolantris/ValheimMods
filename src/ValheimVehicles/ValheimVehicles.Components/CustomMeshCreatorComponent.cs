@@ -7,6 +7,7 @@ using UnityEngine.Serialization;
 using ValheimVehicles.BepInExConfig;
 using ValheimVehicles.Controllers;
 using ValheimVehicles.Prefabs;
+using ValheimVehicles.Shared.Constants;
 using ValheimVehicles.SharedScripts;
 using ValheimVehicles.Structs;
 using Logger = Jotunn.Logger;

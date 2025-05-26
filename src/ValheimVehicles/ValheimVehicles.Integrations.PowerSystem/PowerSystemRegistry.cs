@@ -15,15 +15,15 @@ namespace ValheimVehicles.Integrations.PowerSystem;
 public static class PowerSystemRegistry
 {
   // Backing sets/maps (all use reference or value equality)
-  private static readonly Dictionary<ZDOID, PowerNetworkData> _byZdoid = new();
-  private static readonly Dictionary<ZDO, PowerNetworkData> _byZdo = new();
-  private static readonly Dictionary<PowerSystemComputeData, PowerNetworkData> _byData = new();
+  internal static readonly Dictionary<ZDOID, PowerNetworkData> _byZdoid = new();
+  internal static readonly Dictionary<ZDO, PowerNetworkData> _byZdo = new();
+  internal static readonly Dictionary<PowerSystemComputeData, PowerNetworkData> _byData = new();
 
   // precomputed lists for quick lookups
-  private static readonly List<PowerStorageData> _storages = new();
-  private static readonly List<PowerSourceData> _sources = new();
-  private static readonly List<PowerConduitData> _conduits = new();
-  private static readonly List<PowerConsumerData> _consumers = new();
+  internal static readonly List<PowerStorageData> _storages = new();
+  internal static readonly List<PowerSourceData> _sources = new();
+  internal static readonly List<PowerConduitData> _conduits = new();
+  internal static readonly List<PowerConsumerData> _consumers = new();
 
   // linq batches for common types, for faster lookups
   private static readonly Dictionary<Type, IList> _typeBatches = new();

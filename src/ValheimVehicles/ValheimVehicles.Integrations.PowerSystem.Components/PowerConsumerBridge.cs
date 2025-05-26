@@ -1,6 +1,7 @@
 // ReSharper disable ArrangeNamespaceBody
 // ReSharper disable NamespaceStyle
 
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using ValheimVehicles.Integrations.PowerSystem;
@@ -43,11 +44,6 @@ namespace ValheimVehicles.Integrations
 
     protected override void RegisterDefaultRPCs()
     {
-    }
-
-    public void SetNetworkId(string id)
-    {
-      Logic.SetNetworkId(id);
     }
   }
 }

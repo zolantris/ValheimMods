@@ -1,6 +1,7 @@
 using BepInEx.Configuration;
 using ValheimVehicles.Helpers;
 using ValheimVehicles.Integrations;
+using ValheimVehicles.Integrations.PowerSystem;
 using ValheimVehicles.SharedScripts;
 using ValheimVehicles.SharedScripts.PowerSystem;
 using ValheimVehicles.SharedScripts.PowerSystem.Compute;
@@ -44,9 +45,8 @@ public class PowerSystemConfig : BepInExBaseConfig<PowerSystemConfig>
   public static void UpdatePowerConduits()
   {
     PowerConduitData.RechargeRate = PowerPlate_TransferRate.Value;
-    PowerConduitData.EitrVaporCostPerTick = PowerPlate_EitrDrainCostPerSecond.Value;
-    PowerConduitData.EnergyChargePerTick = PowerPlate_EnergyGainPerSecond.Value;
-    PowerConduitData.EitrVaporToEnergyRatio = PowerPlate_EitrDrainCostPerSecond.Value;
+    PowerConduitData.EitrVaporCostPerInterval = PowerPlate_EitrDrainCostPerSecond.Value;
+    PowerConduitData.EnergyChargePerInterval = PowerPlate_EnergyGainPerSecond.Value;
   }
 
   public void UpdatePowerSources()
@@ -57,29 +57,18 @@ public class PowerSystemConfig : BepInExBaseConfig<PowerSystemConfig>
     PowerSourceData.FuelEfficiencyDefault = PowerSource_BaseFuelEfficiency.Value;
     PowerSourceData.EitrFuelEfficiency = PowerSource_EitrEfficiency.Value;
 
-    foreach (var powerNetworkSimData in PowerSystemClusterManager._cachedSimulateData)
+    foreach (var powerSource in PowerSystemRegistry._sources)
     {
-      for (var i = 0; i < powerNetworkSimData.Value.Sources.Count; i++)
-      {
-        var source = powerNetworkSimData.Value.Sources[i];
-        source.BaseFuelEfficiency = PowerSource_BaseFuelEfficiency.Value;
-        source.OnPropertiesUpdate();
-      }
-    }
-
-    foreach (var powerSource in PowerNetworkController.Sources)
-    {
-      powerSource.SetFuelConsumptionRate(PowerSource_FuelConsumptionRate.Value);
-      powerSource.SetFuelCapacity(PowerSource_FuelCapacity.Value);
-      powerSource.UpdateFuelEfficiency();
+      powerSource.BaseFuelEfficiency = PowerSource_BaseFuelEfficiency.Value;
+      powerSource.OnPropertiesUpdate();
     }
   }
 
   public static void UpdatePowerStorages()
   {
-    foreach (var powerStorage in PowerNetworkController.Storages)
+    foreach (var powerStorage in PowerSystemRegistry._storages)
     {
-      powerStorage.SetCapacity(PowerStorage_Capacity.Value);
+      powerStorage.SetEnergy(PowerStorage_Capacity.Value);
     }
   }
 

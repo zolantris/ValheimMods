@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using HarmonyLib;
 using UnityEngine;
 using ValheimVehicles.Integrations;
+using ValheimVehicles.Integrations.PowerSystem;
 using ValheimVehicles.Patches;
 using ValheimVehicles.SharedScripts;
 
@@ -16,18 +17,26 @@ public class ZNetScene_Patch
   {
     return !PatchSharedData.m_disableCreateDestroy;
   }
-#if DEBUG
   [HarmonyPatch(typeof(ZNetScene), nameof(ZNetScene.Awake))]
-  [HarmonyPrefix]
+  [HarmonyPostfix]
   private static void ZNetScene_Awake_Subscribe()
   {
-    LoggerProvider.LogDebug("called ZNetScene.Awake.");
+    LoggerProvider.LogDev("called ZNetScene.Awake.");
+    PowerSystemRPC.RegisterCustom();
   }
+
+#if DEBUG
+  // [HarmonyPatch(typeof(ZNetScene), nameof(ZNetScene.Awake))]
+  // [HarmonyPostfix]
+  // private static void ZNetScene_Awake_Subscribe()
+  // {
+  //   LoggerProvider.LogDev("called ZNetScene.Awake.");
+  // }
   [HarmonyPatch(typeof(ZNetScene), nameof(ZNetScene.OnDestroy))]
   [HarmonyPrefix]
   private static void ZNetScene_OnDestroy_Subscribe()
   {
-    LoggerProvider.LogDebug("called ZNetScene_OnDestroy");
+    LoggerProvider.LogDev("called ZNetScene_OnDestroy");
   }
 #endif
 }

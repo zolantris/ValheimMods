@@ -6,6 +6,7 @@ using UnityEngine;
 using ValheimVehicles.Interfaces;
 using ValheimVehicles.SharedScripts;
 using ValheimVehicles.SharedScripts.PowerSystem;
+using Logger = HarmonyLib.Tools.Logger;
 namespace ValheimVehicles.Helpers;
 
 public static class ValheimExtensions
@@ -84,16 +85,13 @@ public static class ValheimExtensions
   /// <summary>
   /// For running on server or owner. This works much better for dedicated servers.
   /// </summary>
-  public static void RunIfOwnerOrServerOrNoOwner(this INetView instance, Action<ZNetView> action)
+  public static void RunIfServer(this INetView instance, Action<ZNetView> action)
   {
+    if (!ZNet.instance || !ZNet.instance.IsServer()) LoggerProvider.LogWarning("Not running action as we are not a server");
     if (!instance.IsNetViewValid(out var netView)) return;
-    if (netView.IsOwner() || ZNet.instance.IsServer() || !netView.HasOwner())
-    {
-      if (!netView.IsOwner())
-        netView.ClaimOwnership();
-
-      action.Invoke(netView);
-    }
+    if (!netView.IsOwner())
+      netView.ClaimOwnership();
+    action.Invoke(netView);
   }
 
   /// <summary>
@@ -130,10 +128,12 @@ public static class ValheimExtensions
       if (!instance) yield break;
       if (Time.realtimeSinceStartup - startTime > timeout)
       {
+#if DEBUG
         LoggerProvider.LogInfoDebounced(
           $"znet_timeout_{instance.GetType().Name}",
           $"[ZNetViewUtil] ZNetView not valid on {instance.GetType().Name} after {timeout}s at {instance.transform.position}"
         );
+#endif
         yield break;
       }
 
@@ -143,13 +143,18 @@ public static class ValheimExtensions
 
     if (!instance)
     {
+#if DEBUG
       LoggerProvider.LogInfoDebounced("Bailed due to instance becoming invalid.");
+#endif
       yield break;
     }
+
+#if DEBUG
     LoggerProvider.LogInfoDebounced(
       $"znet_register_{instance.GetType().Name}",
       $"ZNetView ready, registering {instance.GetType().Name} on '{instance.name}' at {instance.transform.position}"
     );
+#endif
 
     action.Invoke(netView);
   }

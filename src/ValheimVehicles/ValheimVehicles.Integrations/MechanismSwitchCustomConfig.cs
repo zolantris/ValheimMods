@@ -3,6 +3,7 @@
 
 using System;
 using ValheimVehicles.Interfaces;
+using ValheimVehicles.Shared.Constants;
 using ValheimVehicles.SharedScripts.Interfaces;
 using ValheimVehicles.Structs;
 using ZdoWatcher;

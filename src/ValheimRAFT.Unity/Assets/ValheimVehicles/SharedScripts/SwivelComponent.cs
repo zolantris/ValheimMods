@@ -44,6 +44,7 @@ namespace ValheimVehicles.SharedScripts
 
     [Description("Swivel Energy Settings")]
     public static float SwivelEnergyDrain = 0.01f;
+    public static float SwivelPowerConsumptionBaseMultiplier = 0.1f; // base multiplier so it's easier to get real numbers to input.
 
     public static bool IsPoweredSwivel = true;
 
@@ -197,6 +198,11 @@ namespace ValheimVehicles.SharedScripts
     }
 
     public virtual void FixedUpdate()
+    {
+      SwivelUpdate();
+    }
+
+    public void SwivelUpdate()
     {
       if (!CanUpdate || !animatedRigidbody || !animatedTransform.parent || !piecesContainer) return;
 #if UNITY_EDITOR
@@ -398,10 +404,11 @@ namespace ValheimVehicles.SharedScripts
       return Quaternion.Euler(0f, clampedY, 0f);
     }
 
+
     public virtual void UpdateBasePowerConsumption()
     {
       if (!IsPoweredSwivel || !swivelPowerConsumer) return;
-      swivelPowerConsumer.Data.BasePowerConsumption = SwivelEnergyDrain * computedInterpolationSpeed;
+      swivelPowerConsumer.Data.BasePowerConsumption = SwivelEnergyDrain * computedInterpolationSpeed * SwivelPowerConsumptionBaseMultiplier;
     }
 
     public void DeactivatePowerConsumer()

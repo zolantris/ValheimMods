@@ -19,7 +19,7 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
     public PowerConsumerData Data => m_data;
     public bool IsDemanding => Data.IsDemanding;
     public override bool IsActive => Data.IsActive;
-    public bool IsPowerDenied => !IsActive && IsDemanding;
+    public bool IsPowerDenied => !Data.CanRunConsumerForDeltaTime.Invoke(1f);
     public event Action<float>? OnPowerSupplied;
     public event Action? OnPowerDenied;
     public void SetData(PowerConsumerData data)

@@ -22,11 +22,13 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
     [SerializeField] public Transform animatedOuterCoreTransform;
     [SerializeField] public AnimatedMaterialController animatedOuterCore;
     [SerializeField] public AnimatedMaterialController animatedInnerCore;
-
+    [SerializeField] public AnimatedMachineComponent powerRotator;
+    [SerializeField] public Transform powerRotatorTransform;
+    public Vector3 powerRotatorDischargeDirection = Vector3.down;
     public float Fuel => Data.Fuel;
     public float FuelCapacity => Data.FuelCapacity;
     public FuelType fuelType => Data.fuelType;
-    public bool isRunning => Data.isRunning;
+    public bool isRunning => Data.IsRunning;
 
     public bool hasLoadedInitialData = false;
 
@@ -55,6 +57,21 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
       // }
 #endif
 
+      powerRotatorTransform = transform.Find("meshes/power_rotator");
+      if (!powerRotatorTransform)
+      {
+        throw new Exception("PowerStorageComponent: PowerRotatorTransform not found");
+      }
+      var rotator = powerRotatorTransform.GetComponent<AnimatedMachineComponent>();
+      if (!rotator)
+      {
+        rotator = powerRotatorTransform.gameObject.AddComponent<AnimatedMachineComponent>();
+      }
+      rotator.HasRotation = true;
+      powerRotator = rotator;
+
+
+      //power core
       powerCoreTransform = transform.Find("meshes/power_core");
       powerCoreEnergyCoreInnerTransform = transform.Find("meshes/power_core/energy_core_inner");
       animatedInnerCoreTransform = transform.Find("meshes/power_core/animated_inner_core");
@@ -96,6 +113,7 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
     {
       if (!Data.IsValid) return;
       UpdatePowerCoreSize();
+      UpdatePowerRotationAnimations();
     }
 
     public AnimatedMaterialController CreateAnimatedMaterialController(Transform objTransform)
@@ -129,5 +147,28 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
       }
     }
 
+    /// <summary>
+    /// To be run in a network manager or directly in the setter as a mutation
+    /// </summary>
+    public void UpdatePowerRotationAnimations()
+    {
+      if (!Data.IsValid) return;
+      // disable when at 0 or at capacity
+      if ((!IsActive || !isRunning) && powerRotator.enabled)
+      {
+        powerRotator.enabled = false;
+        return;
+      }
+
+      if (isRunning && !powerRotator.enabled)
+      {
+        powerRotator.enabled = true;
+      }
+
+      if (powerRotator.enabled && isRunning)
+      {
+        powerRotator.RotationalVector = powerRotatorDischargeDirection;
+      }
+    }
   }
 }

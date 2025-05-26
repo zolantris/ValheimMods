@@ -34,7 +34,7 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
     [SerializeField] private Material fallbackWireMaterial;
     protected static readonly Dictionary<string, List<IPowerNode>> powerNodeNetworks = new();
 
-    internal readonly float _updateInterval = 0.25f;
+    internal readonly float _updateInterval = 1f;
     internal float _nextUpdate;
 
     public Coroutine? _rebuildPylonNetworkRoutine;

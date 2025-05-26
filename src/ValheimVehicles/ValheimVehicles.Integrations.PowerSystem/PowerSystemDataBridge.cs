@@ -8,6 +8,7 @@ using ValheimVehicles.BepInExConfig;
 using ValheimVehicles.Helpers;
 using ValheimVehicles.Integrations.PowerSystem;
 using ValheimVehicles.Integrations.PowerSystem.Interfaces;
+using ValheimVehicles.Shared.Constants;
 using ValheimVehicles.SharedScripts.Helpers;
 using ValheimVehicles.Structs;
 
@@ -19,7 +20,7 @@ namespace ValheimVehicles.SharedScripts.PowerSystem.Compute;
 /// </summary>
 public abstract partial class PowerSystemComputeData
 {
-  public ZDO zdo;
+  public ZDO? zdo;
 
   public bool IsValid = false;
 
@@ -57,6 +58,15 @@ public abstract partial class PowerSystemComputeData
     }
   }
 
+  public void HandleNetworkIdUpdate(string val)
+  {
+    if (!zdo.IsOwner())
+    {
+      zdo.SetOwner(ZDOMan.GetSessionID());
+    }
+    ValheimExtensions.TrySetZDOStringOnChange(zdo, VehicleZdoVars.PowerSystem_NetworkId, val);
+  }
+
   /// <summary>
   /// Should be run inside the validator.
   /// </summary>
@@ -69,10 +79,29 @@ public abstract partial class PowerSystemComputeData
     ConnectionRange = isPylon ? PowerSystemConfig.PowerPylonRange.Value : PowerSystemConfig.PowerMechanismRange.Value;
   }
 
+  /// <summary>
+  /// Must be run last in Save method.
+  /// </summary>
   public void OnSharedConfigSave()
   {
-    ValheimExtensions.TrySetZDOStringOnChange(zdo, VehicleZdoVars.PowerSystem_NetworkId, NetworkId);
-    ValheimExtensions.TrySetZDOBoolOnChange(zdo, VehicleZdoVars.PowerSystem_IsActive, IsActive);
+    foreach (var dirtyField in _dirtyFields)
+    {
+      switch (dirtyField)
+      {
+        case VehicleZdoVars.PowerSystem_IsActive:
+          ValheimExtensions.TrySetZDOBoolOnChange(zdo, VehicleZdoVars.PowerSystem_IsActive, IsActive);
+          break;
+        case VehicleZdoVars.PowerSystem_NetworkId:
+          if (!IsTempNetworkId)
+          {
+            ValheimExtensions.TrySetZDOStringOnChange(zdo, VehicleZdoVars.PowerSystem_NetworkId, NetworkId);
+          }
+          break;
+      }
+    }
+
+    // always clears. Must be run last otherwise it will clear other config checks.
+    ClearDirty();
   }
 }
 
@@ -85,6 +114,7 @@ public partial class PowerPylonData : IPowerComputeZdoSync
     ConnectionRange = PowerSystemConfig.PowerPylonRange.Value;
     PrefabHash = zdo.m_prefab;
 
+    OnNetworkIdChange += HandleNetworkIdUpdate;
     OnLoad += OnLoadZDOSync;
     Load();
   }
@@ -105,10 +135,14 @@ public partial class PowerConduitData : IPowerComputeZdoSync
   {
     this.zdo = zdo;
     PrefabHash = zdo.m_prefab;
+    OnNetworkIdChange += HandleNetworkIdUpdate;
     Mode = GetConduitVariant(PrefabHash);
     Load();
   }
 
+  /// <summary>
+  /// Todo might have to abstract this to a peer system if the player is accessible via server and just send the increment from the player.
+  /// </summary>
   public class PlayerEitrDataBridge : PlayerEitrData
   {
     private Player player;
@@ -123,7 +157,8 @@ public partial class PowerConduitData : IPowerComputeZdoSync
       GetEitrCapacity = () => WithAutoRemove(player.GetMaxEitr);
 
       // player updaters
-      Request_UseEitr = player.UseEitr;
+      // Request_UseEitr = player.UseEitr;
+      Request_UseEitr = PlayerEitrRPC.Request_UseEitr;
       Request_AddEitr = PlayerEitrRPC.Request_AddEitr;
     }
 
@@ -387,21 +422,45 @@ public partial class PowerConsumerData : IPowerComputeZdoSync
     this.zdo = zdo;
     PrefabHash = zdo.m_prefab;
 
+    OnNetworkIdChange += HandleNetworkIdUpdate;
     OnLoad += OnLoadZDOSync;
     OnSave += OnSaveZDOSync;
+    CanRunConsumerForDeltaTime = HandleCanRunConsumerForDeltaTime;
 
     Load();
+  }
+
+  public bool HandleCanRunConsumerForDeltaTime(float deltaTime)
+  {
+    var nextRequiredEnergyAllotment = GetWattsForLevel(powerIntensityLevel) * deltaTime;
+    if (!PowerNetworkController.TryNetworkPowerData(NetworkId, out var powerSystemDisplayData))
+    {
+      return true;
+    }
+    return nextRequiredEnergyAllotment <= powerSystemDisplayData.NetworkPowerSupply;
   }
 
   public void OnSaveZDOSync()
   {
     WithIsValidCheck((validZdo) =>
     {
+      foreach (var key in _dirtyFields)
+      {
+        switch (key)
+        {
+          case VehicleZdoVars.PowerSystem_BasePowerConsumption:
+            ValheimExtensions.TrySetZDOFloatOnChange(validZdo, key, BasePowerConsumption);
+            break;
+          case VehicleZdoVars.PowerSystem_Intensity_Level:
+            ValheimExtensions.TrySetZDOIntOnChange(validZdo, key, (int)powerIntensityLevel);
+            break;
+          case VehicleZdoVars.PowerSystem_IsDemanding:
+            ValheimExtensions.TrySetZDOBoolOnChange(validZdo, key, IsDemanding);
+            break;
+        }
+      }
       // shared config
       OnSharedConfigSave();
-
-      ValheimExtensions.TrySetZDOBoolOnChange(validZdo, VehicleZdoVars.PowerSystem_IsDemanding, IsDemanding);
-      ValheimExtensions.TrySetZDOIntOnChange(validZdo, VehicleZdoVars.PowerSystem_Intensity_Level, (int)powerIntensityLevel);
     });
   }
 
@@ -426,6 +485,7 @@ public partial class PowerSourceData : IPowerComputeZdoSync
     this.zdo = zdo;
     PrefabHash = zdo.m_prefab;
 
+    OnNetworkIdChange += HandleNetworkIdUpdate;
     OnLoad += OnLoadZDOSync;
     OnSave += OnSaveZDOSync;
     Load();
@@ -437,16 +497,23 @@ public partial class PowerSourceData : IPowerComputeZdoSync
   {
     WithIsValidCheck(validZdo =>
     {
-      // shared config
+      foreach (var key in _dirtyFields)
+      {
+        switch (key)
+        {
+          case VehicleZdoVars.PowerSystem_IsRunning:
+            ValheimExtensions.TrySetZDOBoolOnChange(validZdo, key, IsRunning);
+            break;
+          case VehicleZdoVars.PowerSystem_Fuel:
+            ConsolidateFuel();
+            ValheimExtensions.TrySetZDOFloatOnChange(validZdo, key, Fuel);
+            break;
+          case VehicleZdoVars.PowerSystem_FuelOutputRate:
+            ValheimExtensions.TrySetZDOFloatOnChange(validZdo, key, OutputRate);
+            break;
+        }
+      }
       OnSharedConfigSave();
-
-      // syncs the pending fuel from an update.
-      ConsolidateFuel();
-      ValheimExtensions.TrySetZDOFloatOnChange(validZdo, VehicleZdoVars.PowerSystem_StoredFuel, Fuel);
-
-      ValheimExtensions.TrySetZDOFloatOnChange(validZdo, VehicleZdoVars.PowerSystem_StoredFuelCapacity, FuelCapacity);
-
-      ValheimExtensions.TrySetZDOFloatOnChange(validZdo, VehicleZdoVars.PowerSystem_FuelOutputRate, OutputRate);
     });
   }
 
@@ -457,7 +524,7 @@ public partial class PowerSourceData : IPowerComputeZdoSync
       // shared config
       OnSharedConfigSync();
 
-      Fuel = validZdo.GetFloat(VehicleZdoVars.PowerSystem_StoredFuel);
+      Fuel = validZdo.GetFloat(VehicleZdoVars.PowerSystem_Fuel);
       FuelCapacity = validZdo.GetFloat(VehicleZdoVars.PowerSystem_StoredFuelCapacity, FuelCapacityDefault);
       OutputRate = validZdo.GetFloat(VehicleZdoVars.PowerSystem_FuelOutputRate, OutputRateDefault);
     });
@@ -474,6 +541,7 @@ public partial class PowerStorageData : IPowerComputeZdoSync
     this.zdo = zdo;
     PrefabHash = zdo.m_prefab;
 
+    OnNetworkIdChange += HandleNetworkIdUpdate;
     OnLoad += OnLoadZDOSync;
     OnSave += OnSaveZDOSync;
     Load();
@@ -483,12 +551,20 @@ public partial class PowerStorageData : IPowerComputeZdoSync
   {
     WithIsValidCheck(validZdo =>
     {
+      foreach (var key in _dirtyFields)
+      {
+        switch (key)
+        {
+          case VehicleZdoVars.PowerSystem_Energy:
+            ValheimExtensions.TrySetZDOFloatOnChange(validZdo, key, Energy);
+            break;
+          case VehicleZdoVars.PowerSystem_EnergyCapacity:
+            ValheimExtensions.TrySetZDOFloatOnChange(validZdo, key, EnergyCapacity);
+            break;
+        }
+      }
       // shared config
       OnSharedConfigSave();
-
-      ValheimExtensions.TrySetZDOFloatOnChange(validZdo, VehicleZdoVars.PowerSystem_Energy, Energy);
-
-      ValheimExtensions.TrySetZDOFloatOnChange(validZdo, VehicleZdoVars.PowerSystem_EnergyCapacity, EnergyCapacity);
     });
   }
 

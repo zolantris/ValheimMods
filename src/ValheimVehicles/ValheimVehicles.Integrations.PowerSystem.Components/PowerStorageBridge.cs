@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using ValheimVehicles.Helpers;
 using ValheimVehicles.Integrations.PowerSystem;
+using ValheimVehicles.Shared.Constants;
 using ValheimVehicles.SharedScripts.PowerSystem;
 using ValheimVehicles.SharedScripts.PowerSystem.Compute;
 using ValheimVehicles.Structs;

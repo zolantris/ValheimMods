@@ -16,6 +16,7 @@
   using ValheimVehicles.Patches;
   using ValheimVehicles.Prefabs.Registry;
   using ValheimVehicles.Propulsion.Rudder;
+  using ValheimVehicles.Shared.Constants;
   using ValheimVehicles.SharedScripts;
   using ValheimVehicles.Structs;
   using Logger = Jotunn.Logger;

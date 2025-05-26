@@ -1,6 +1,8 @@
 // ReSharper disable ArrangeNamespaceBody
 // ReSharper disable NamespaceStyle
 
+using UnityEngine;
+using ValheimVehicles.Shared.Constants;
 using ValheimVehicles.SharedScripts.Modules;
 namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
 {
@@ -54,7 +56,7 @@ namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
       var commit = MathUtils.RoundToHundredth(MathX.Min(_peekedDischargeAmount, amount));
 
       var localEnergy = Energy - commit;
-      SetStoredEnergy(localEnergy);
+      SetEnergy(localEnergy);
 
       _peekedDischargeAmount = 0f;
     }
@@ -64,9 +66,29 @@ namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
       return Energy < EnergyCapacity;
     }
 
-    public void SetStoredEnergy(float val)
+    public void SetCapacity(float val)
     {
-      Energy = MathX.Clamp(val, 0f, EnergyCapacity);
+      if (Mathf.Approximately(EnergyCapacity, val)) return;
+      EnergyCapacity = val;
+
+      if (EnergyCapacity > Energy)
+      {
+        Energy = Mathf.Max(Energy, EnergyCapacity);
+        MarkDirty(VehicleZdoVars.PowerSystem_Energy);
+      }
+
+      MarkDirty(VehicleZdoVars.PowerSystem_EnergyCapacity);
+    }
+
+    public void SetEnergy(float val)
+    {
+      var nextEnergy = MathX.Clamp(val, 0f, EnergyCapacity);
+
+      if (!Mathf.Approximately(nextEnergy, EnergyCapacity))
+      {
+        Energy = nextEnergy;
+        MarkDirty(VehicleZdoVars.PowerSystem_Energy);
+      }
     }
   }
 }

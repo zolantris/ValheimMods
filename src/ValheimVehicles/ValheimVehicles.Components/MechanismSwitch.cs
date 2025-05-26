@@ -36,7 +36,7 @@ public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interac
     set;
   }
   public List<SwivelComponent> nearbySwivelComponents = new();
-  public MechanismSwitchConfigSync prefabConfigSync;
+  public MechanismSwitchConfigSync prefabConfigSync = new();
   public MechanismSwitchCustomConfig Config => prefabConfigSync.Config;
   public static Vector3 detachOffset = new(0f, 0.5f, 0f);
 
@@ -353,7 +353,7 @@ public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interac
         break;
       case MechanismAction.SwivelActivateMode:
       {
-        if (!TargetSwivel || TargetSwivel?.swivelPowerConsumer && TargetSwivel.swivelPowerConsumer.IsPowerDenied)
+        if (!TargetSwivel || TargetSwivel.swivelPowerConsumer && TargetSwivel.swivelPowerConsumer.IsPowerDenied)
         {
           return false;
         }

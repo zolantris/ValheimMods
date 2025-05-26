@@ -11,6 +11,7 @@ using ValheimVehicles.Helpers;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.SharedScripts;
 using ValheimVehicles.Controllers;
+using ValheimVehicles.Shared.Constants;
 using ValheimVehicles.Structs;
 using Logger = Jotunn.Logger;
 

@@ -171,6 +171,8 @@ public static class PrefabRegistryController
     var tier4 = pieceManager.GetPiece(PrefabNames.Tier4RaftMastName);
     tier4.Piece.m_description = SailPrefabs.GetTieredSailAreaText(4);
   }
+
+#if DEBUG
   public static void LogRegisteredPieces()
   {
     LoggerProvider.LogInfo($"Piece table registered? VehicleHammerTable is null: {VehicleHammerTableRegistry.VehicleHammerTable == null}");
@@ -202,6 +204,7 @@ public static class PrefabRegistryController
       LoggerProvider.LogInfo($" - {piece.name}");
     }
   }
+#endif
 
   /**
    * initializes the bundle for ValheimVehicles
@@ -246,8 +249,13 @@ public static class PrefabRegistryController
       SetupComponents();
 
 
-      LogRegisteredPieces();
-
+#if DEBUG
+      var canLog = false;
+      if (canLog)
+      {
+        LogRegisteredPieces();
+      }
+#endif
     }
     catch (Exception e)
     {

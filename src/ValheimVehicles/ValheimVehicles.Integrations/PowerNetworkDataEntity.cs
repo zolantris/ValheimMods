@@ -92,26 +92,11 @@ namespace ValheimVehicles.Integrations
 
     public virtual void UpdateNetworkedData()
     {
-      this.RunIfOwnerOrServerOrNoOwner((nv) =>
+      this.RunIfServer((nv) =>
       {
         Data.Save();
         nv.InvokeRPC(ZNetView.Everybody, instanced_RpcNotifyStateUpdate);
       });
-    }
-
-    protected void RegisterRPC<T>(string name, Action<long, T> method)
-    {
-      RpcHandler.Register(name, method);
-    }
-
-    protected void RegisterRPC(string name, Action<long> method)
-    {
-      RpcHandler.Register(name, method);
-    }
-
-    protected void InvokeRPC(string name, params object[] args)
-    {
-      RpcHandler.InvokeRPC(name, args);
     }
 
     public void RPC_NotifyStateUpdated(long sender)

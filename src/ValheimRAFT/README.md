@@ -539,3 +539,103 @@ This logging has yet to be implemented.
 [unity-explorer-link]: https://thunderstore.io/c/valheim/p/sinai-dev/UnityExplorer/
 
 [hull-mechanics-link]: https://github.com/zolantris/ValheimMods/blob/main/src/ValheimRAFT/README.md#hull-mechanics
+
+
+<!--
+  ValheimRAFT Power System Guide
+  Compatible with ValheimRAFT >=4.0.0
+-->
+
+<h1 align="center">🔋 ValheimRAFT Power System Guide (4.0.0+)</h1>
+<p align="center">
+  <b>Automate, connect, and power up your world!</b><br>
+  <i>ValheimRAFT now features a robust, modular Power System to connect engines, batteries, pylons, and more.</i>
+</p>
+<hr>
+
+## ⚡ Overview
+
+> The Power System in ValheimRAFT (since v4.0.0) lets you generate, store,
+> transfer, and consume energy to automate your vehicles and contraptions.
+>
+> Use engines to produce power, **batteries** to store it, and **power pylons**
+> or **cables** to link components together!
+
+---
+
+## 🏗️ Core Components
+
+<table>
+  <tr>
+    <th>Component</th>
+    <th>Description</th>
+  </tr>
+  <tr>
+    <td><b>Power Engine</b></td>
+    <td>Burns fuel to produce power. Configurable fuel types and outputs.</td>
+  </tr>
+  <tr>
+    <td><b>Power Storage (Battery)</b></td>
+    <td>Stores excess power for later use. Can supply connected devices when engines are offline.</td>
+  </tr>
+  <tr>
+    <td><b>Power Pylon</b></td>
+    <td>Connects power networks across distance. Automatically links nearby sources and storage.</td>
+  </tr>
+  <tr>
+    <td><b>Conduit Plate</b></td>
+    <td>Transfers energy to/from the player (e.g., Eitr), or bridges different networks.</td>
+  </tr>
+  <tr>
+    <td><b>Consumers</b></td>
+    <td>Anything that uses power (motors, machines, advanced modules).</td>
+  </tr>
+</table>
+
+---
+
+## 🔌 How Power Flows
+
+<ol>
+  <li>Engines <b>burn fuel</b> (wood, coal, etc) and output <b>Power</b>.</li>
+  <li>Power flows into <b>Batteries</b> or directly to <b>Consumers</b> (e.g. engines, lights, automation).</li>
+  <li><b>Pylons</b> relay power between distant nodes—just build them close enough to link!</li>
+  <li>If power is needed but no engine is running, <b>Batteries</b> automatically discharge.</li>
+</ol>
+
+---
+
+## 🚀 Getting Started
+
+### 1. Build an Engine
+
+- Place a **Power Engine** on your raft or base.
+- Add valid fuel (check the tooltip).
+- Start the engine to generate power.
+
+### 2. Add Power Storage
+
+- Place a **Battery** nearby or connected via pylons.
+- Batteries store excess energy and help during low-fuel periods.
+
+### 3. Link With Pylons
+
+- Place **Power Pylons** to extend your network.
+- Pylons will auto-link if within range—no cables required!
+
+### 4. Power Consumers
+
+- Attach devices (motors, winches, automation modules) to your power network.
+- They will draw power automatically when the network is supplied.
+
+---
+
+## 🧪 Example: Basic Power Network
+
+```mermaid
+graph LR
+  Engine["Engine 🔥"] -- Power --> Battery["Battery 🔋"]
+  Battery -- Power --> Consumer["Winch ⚙️"]
+  Engine -- Power --> Consumer
+  Battery -- Power --> Pylon["Pylon 🔗"]
+  Pylon -- Power --> Consumer2["Lamp 💡"]

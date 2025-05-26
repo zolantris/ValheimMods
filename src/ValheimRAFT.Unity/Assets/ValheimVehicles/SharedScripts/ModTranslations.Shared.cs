@@ -84,6 +84,7 @@ namespace ValheimVehicles.SharedScripts
 
 
     public static string PowerSource_Message_AddedFromPlayer = null!;
+    public static string PowerSource_Message_FailedToAdd = null!;
     public static string PowerSource_Message_AddedFromContainer = null!;
 
     public static string PowerSource_Interact_AddOne = null!;
