@@ -96,6 +96,11 @@ namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
       return MathX.Min(OutputRate * deltaTime, maxEnergyFromFuel);
     }
 
+    public static bool IsNearlyZero(float value, float epsilon = 0.01f)
+    {
+      return Mathf.Abs(value) <= epsilon;
+    }
+
     /// <summary>
     /// This assumes we already ran a request for fuel.
     /// </summary>
@@ -105,20 +110,20 @@ namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
       ConsolidateFuel();
 
       var requiredFuel = energyUsed / (FuelEnergyYield * FuelEfficiency);
-      var nextFuel = MathX.Max(0f, Fuel - requiredFuel);
+      var nextFuel = MathX.Max(0f, Fuel - MathX.Max(0, requiredFuel));
 
       if (!Mathf.Approximately(Fuel, nextFuel))
-      {
-        Fuel = nextFuel;
         MarkDirty(VehicleZdoVars.PowerSystem_Fuel);
-      }
 
-      if (Fuel != 0f && Fuel <= 0.01f)
+      Fuel = nextFuel;
+
+      if (IsNearlyZero(Fuel))
       {
         Fuel = 0f;
         MarkDirty(VehicleZdoVars.PowerSystem_Fuel);
       }
     }
+
 #if DEBUG
     public float ProducePower(float requestedEnergy)
     {

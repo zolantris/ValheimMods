@@ -127,48 +127,32 @@ namespace ValheimVehicles.Integrations
 
       var zdos = PowerSystemRegistry.GetAllZDOs();
       var unvisited = new HashSet<ZDO>(zdos);
-      var pending = new Queue<ZDO>();
 
       while (unvisited.Count > 0)
       {
+        // Pick any unvisited ZDO as the root for a new cluster
         var root = unvisited.First();
-        unvisited.Remove(root);
         var cluster = new List<ZDO>();
-        var networkId = Guid.NewGuid().ToString();
+        var foundNetworkIds = new HashSet<string>();
+        var pending = new Queue<ZDO>();
 
-        pending.Clear();
         pending.Enqueue(root);
+        unvisited.Remove(root);
 
-        var hasCheckedForPreviousNetworkId = false;
-
+        // 1. Gather all ZDOs in the cluster and any persisted network IDs
         while (pending.Count > 0)
         {
           var current = pending.Dequeue();
-          if (!hasCheckedForPreviousNetworkId)
-          {
-            var currentNetworkId = current.GetString(VehicleZdoVars.PowerSystem_NetworkId, string.Empty);
-            if (!PowerSystemComputeData.IsTempNetworkIdStatic(currentNetworkId))
-            {
-              networkId = currentNetworkId;
-            }
-            else
-            {
-              ValheimExtensions.TrySetZDOStringOnChange(current, VehicleZdoVars.PowerSystem_NetworkId, networkId);
-            }
-            hasCheckedForPreviousNetworkId = true;
-          }
-          else
-          {
-            ValheimExtensions.TrySetZDOStringOnChange(current, VehicleZdoVars.PowerSystem_NetworkId, networkId);
-          }
           cluster.Add(current);
 
+          // Gather all valid network IDs
+          var netId = current.GetString(VehicleZdoVars.PowerSystem_NetworkId, "");
+          if (!string.IsNullOrEmpty(netId) && netId != PowerSystemComputeData.NetworkIdUnassigned)
+            foundNetworkIds.Add(netId);
+
+          // Check all remaining unvisited for connectivity (by position)
           foreach (var other in unvisited.ToList())
           {
-            if (other.GetString(VehicleZdoVars.PowerSystem_NetworkId, string.Empty) != networkId)
-            {
-              ValheimExtensions.TrySetZDOStringOnChange(other, VehicleZdoVars.PowerSystem_NetworkId, networkId);
-            }
             if ((current.GetPosition() - other.GetPosition()).sqrMagnitude <= MaxJoinSqr)
             {
               pending.Enqueue(other);
@@ -177,18 +161,39 @@ namespace ValheimVehicles.Integrations
           }
         }
 
+        // 2. Determine which network ID to use for this cluster
+        string networkId;
+        if (foundNetworkIds.Count > 0)
+        {
+          // If multiple, you might prefer deterministic selection
+          networkId = foundNetworkIds.OrderBy(x => x).First();
+        }
+        else
+        {
+          networkId = Guid.NewGuid().ToString();
+        }
+
+        // 3. Assign the chosen network ID to every ZDO in the cluster
+        foreach (var zdo in cluster)
+        {
+          ValheimExtensions.TrySetZDOStringOnChange(zdo, VehicleZdoVars.PowerSystem_NetworkId, networkId);
+        }
+
+        // 4. Register the cluster
+        _networks[networkId] = cluster;
+
+        // 5. (Optional) Warn if cluster is unusually large
         if (cluster.Count > 0)
         {
           var maxDist = cluster.Max(z => Vector3.Distance(z.GetPosition(), cluster[0].GetPosition()));
           if (maxDist > 250f)
             LoggerProvider.LogWarning($"[PowerZDONetworkManager] Large network {networkId} spans {maxDist:F1} units");
-
-          _networks[networkId] = cluster;
         }
       }
 
       NetworkRebuildLogger();
     }
+
 
     public static void NetworkRebuildLogger()
     {

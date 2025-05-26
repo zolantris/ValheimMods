@@ -75,6 +75,28 @@ public class PowerHoverComponent : MonoBehaviour, Hoverable, Interactable
     PendingFuelPromisesResolutions.Remove(pendingPromiseId);
   }
 
+  public static int RemoveItemsByName(Inventory inventory, string tokenId, int amount)
+  {
+    var removed = 0;
+    while (amount > 0)
+    {
+      var item = inventory.GetItem(tokenId);
+      if (item == null) break; // No more items to remove
+      var take = Mathf.Min(item.m_stack, amount);
+      if (take <= 0) break;
+      if (inventory.RemoveItem(item, take))
+      {
+        removed += take;
+        amount -= take;
+      }
+      else
+      {
+        break; // Defensive, should never fail here, but...
+      }
+    }
+    return removed;
+  }
+
   public IEnumerator WaitForFuelToCommit(List<FuelToCommit> fuelPromise, string pendingPromiseId, string addedMessage, PowerSourceData sourceData)
   {
     var timer = DebugSafeTimer.StartNew();
@@ -96,11 +118,11 @@ public class PowerHoverComponent : MonoBehaviour, Hoverable, Interactable
       var pendingPlayerAmount = fuelToCommit.pendingPlayerAmount;
       if (container != null)
       {
-        container.m_inventory.RemoveItem(EitrInventoryItem_TokenId, pendingContainerAmount);
+        RemoveItemsByName(container.m_inventory, EitrInventoryItem_TokenId, pendingContainerAmount);
       }
       if (player != null && player.GetInventory() != null)
       {
-        player.m_inventory.RemoveItem(player.m_inventory.GetItem(EitrInventoryItem_TokenId), pendingPlayerAmount);
+        RemoveItemsByName(player.m_inventory, EitrInventoryItem_TokenId, pendingPlayerAmount);
       }
     }
 
