@@ -37,6 +37,10 @@
 
 ## Ram: Vehicles
 
+### CanHitSwivels 
+- Description: Allows the vehicle to smash into swivels and destroy their contents.
+- Default Value: False
+
 ### CanHitWhileHauling 
 - Description: Allows the vehicle to continue hitting objects while it's being hauled/moved.
 - Default Value: True
@@ -229,38 +233,6 @@
 
 ## PrefabConfig
 
-### SwivelPowerDrain 
-- Description: How much power (watts) is consumed by a Swivel per second. Applies only if Swivels_DoNotRequirePower is false.
-- Default Value: 1
-
-### PowerSourceFuelCapacity 
-- Description: The maximum amount of fuel a power source can hold.
-- Default Value: 100
-
-### PowerSource_BaseEfficiency 
-- Description: The base efficiency of all fuel. This can be used to tweak all fuels and keep them scaling.
-- Default Value: 1
-
-### PowerSource_EitrEfficiency 
-- Description: The efficiency of Eitr as fuel. IE 1 eitr turns into X fuel. This will be used for balancing with other fuel types if more fuel types are added.
-- Default Value: 1
-
-### PowerSource_FuelConsumptionRate 
-- Description: The amount of fuel consumed per physics update tick at full power output by a power source.
-- Default Value: 0.1
-
-### PowerStorageCapacity 
-- Description: The maximum amount of energy a power storage unit can hold.
-- Default Value: 800
-
-### Mechanism_Switch_DefaultAction 
-- Description: Default action of the mechanism switch. This will be overridden by UpdateIntendedAction if a closer matching action is detected nearby.
-- Default Value: CommandsHud
-
-### Swivels_DoNotRequirePower 
-- Description: Allows you to use swivels without the vehicle power system.
-- Default Value: False
-
 ### AllowTieredMastToRotateInWind 
 - Description: allows the tiered mast to rotate in wind
 - Default Value: True
@@ -335,6 +307,10 @@
 - Description: Will will allow all debug commands for non-admins. Turning this to false will only allow debug (cheat) commands if the user is an admin.
 - Default Value: True
 
+### AllowEditCommandsForNonAdmins 
+- Description: This will allow non-admins the ability to use vehicle creative to edit their vehicle. Non-admins can still use vehicle sway and config commands to edit their ship. This config is provided to improve realism at the cost of convenience.
+- Default Value: True
+
 ## Config
 
 ### VehicleCreativeHeight 
@@ -377,10 +353,6 @@
 - Description: The delay time that is added per piece the vehicle has on it for recalculating vehicle bounds. Example 2000 * 0.02 = 40seconds delay.  Values are clamped at 0.1 and max value: 60 so even smaller vehicles rebuild at the min value and large >2k piece vehicles build at the max value.
 - Default Value: 0.02
 
-### DisableVehicleCube 
-- Description: The raft will no longer be a cube. It will place pieces in world position. This will allow for teleporting and other rapid location / login fixes to work better. It might cause large vehicles to clip/break if they are rendered out of a zone.
-- Default Value: False
-
 ## Debug
 
 ### HasDebugSails 
@@ -394,27 +366,27 @@
 ## Vehicle Debugging
 
 ### CommandsWindowPosX 
-- Description: 
+- Description: For vehicle commands window position
 - Default Value: 0
 
 ### CommandsWindowPosY 
-- Description: 
+- Description: For vehicle commands window position
 - Default Value: 0
 
 ### ConfigWindowPosX 
-- Description: 
+- Description: For vehicle commands window position
 - Default Value: 0
 
 ### ConfigWindowPosY 
-- Description: 
+- Description: For vehicle commands window position
 - Default Value: 0
 
-### ButtonFontSize 
-- Description: 
+### Debug_ButtonFontSize 
+- Description: For vehicle commands window button font
 - Default Value: 18
 
-### LabelFontSize 
-- Description: 
+### Debug_LabelFontSize 
+- Description: For vehicle commands window font
 - Default Value: 22
 
 ## Propulsion
@@ -510,8 +482,8 @@ Other methods removed after 2.5.0
 
 ## Debug
 
-### ShowShipState 
-- Description: 
+### ShowShipStats 
+- Description: Shows the vehicle stats.
 - Default Value: True
 
 ## Propulsion
@@ -682,6 +654,10 @@ Other methods removed after 2.5.0
 - Description: Max width the treads can expand to. Lower values will let you make motor bikes. This affects all vehicles. In future version there will be an individual config setting.
 - Default Value: 8
 
+### SwivelsCanSyncOnAllClients 
+- Description: Allow swivels to sync on all clients. Instead of using ChildSync properties which can be a bit laggy.
+- Default Value: True
+
 ### LandVehicle Max Tread Length 
 - Description: Max length the treads can expand to. In future version there will be an individual config setting.
 - Default Value: 20
@@ -713,11 +689,11 @@ Other methods removed after 2.5.0
 - Default Value: 0.075
 
 ### flightDrag 
-- Description: 
+- Description: Flight Drag value controls how much the vehicle will slow down when moving. Higher values will make the vehicle slower. Lower values will make the vehicle faster.
 - Default Value: 1.2
 
 ### flightAngularDrag 
-- Description: 
+- Description: Flight angular drag controls how much the vehicle slows down when turning.
 - Default Value: 1.2
 
 ### force_3.4.1 
@@ -733,7 +709,7 @@ Other methods removed after 2.5.0
 - Default Value: 1
 
 ### waterSteerForce 
-- Description: 
+- Description: Steer force controls how much the vehicle will resist steering when turning due to water pushing against it
 - Default Value: 1
 
 ### waterDamping_3.4.1 
@@ -753,11 +729,11 @@ Other methods removed after 2.5.0
 - Default Value: 0.05
 
 ### waterDrag 
-- Description: 
+- Description: directional drag controls how much the vehicle slows down when moving.
 - Default Value: 0.8
 
 ### waterAngularDrag 
-- Description: 
+- Description: rotation drag controls how much the vehicle slows down when turning.
 - Default Value: 0.8
 
 ### submersibleDamping_3.4.1 
@@ -773,7 +749,7 @@ Other methods removed after 2.5.0
 - Default Value: 1
 
 ### submersibleSteerForce 
-- Description: 
+- Description: Controls the push back of water. Higher values will make the vehicle push back more. Lower values will make the vehicle push back less.
 - Default Value: 1
 
 ### UNSTABLE_submersibleSailForceFactor 
@@ -781,30 +757,30 @@ Other methods removed after 2.5.0
 - Default Value: 0.05
 
 ### submersibleDrag 
-- Description: 
+- Description: Drag value controls how much the vehicle will slow down when moving. Higher values will make the vehicle slower. Lower values will make the vehicle faster.
 - Default Value: 1.5
 
 ### submersibleAngularDrag 
-- Description: 
+- Description: angular drag controls rotation drag. Higher values will make turning slower. Lower values will make turning faster and could lead to out of control spinning.
 - Default Value: 1.5
 
 ### landDrag 
-- Description: 
+- Description: Drag value controls how much the vehicle will slow down when moving. Higher values will make the vehicle slower. Lower values will make the vehicle faster.
 - Default Value: 0.05
 
 ### landAngularDrag 
-- Description: 
+- Description: Land angular drag controls rotation drag. Higher values will make turning slower. Lower values will make turning faster and could lead to out of control spinning.
 - Default Value: 1.2
 
 ### LandVehicle Tread Vertical Offset 
 - Description: Wheel offset for Y position. Allowing for raising the treads higher. May require increasing suspension distance so the treads spawn then push the vehicle upwards. Negative lowers the wheels. Positive raises the treads. This value will not override custom config vehicles.
 - Default Value: -1
 
-### MaxVehicleLinearVelocity_1.0.x 
+### MaxVehicleLinearVelocity_3.4.x 
 - Description: Sets the absolute max speed a vehicle can ever move in. This is X Y Z directions. This will prevent the ship from rapidly flying away. Try staying between 5 and 100. Higher values will increase potential of vehicle flying off to space or rapidly accelerating through objects before physics can apply to an unloaded zone.
 - Default Value: 100
 
-### MaxVehicleLinearYVelocity_1.0.x 
+### MaxVehicleLinearYVelocity_3.4.x 
 - Description: Sets the absolute max speed a vehicle can ever move in vertical direction. This will limit the ship capability to launch into space. Lower values are safer. Too low and the vehicle will not use gravity well
 - Default Value: 50
 
@@ -934,7 +910,15 @@ Other methods removed after 2.5.0
 - Description: Allows the camera to zoom out between 8 and 64 meters. Percentage based zoom.
 - Default Value: 0.5
 
-## Hud
+## Rendering
+
+### UNSTABLE_AllowVehiclePiecesToUseWorldPosition 
+- Description: WARNING UNSTABLE CONFIG do NOT set this to true unless you need to. All vehicles will no longer sync pieces in one position then offset them. It will sync pieces by their actual position. This means the vehicle could de-sync and lose pieces. Only use this for mods like <Planbuild> and want to copy the vehicle with position/rotation properly set.
+- Default Value: False
+
+### VehiclePositionSync_AllowBedsToSyncToWorldPosition 
+- Description: Allows beds to sync to their relative position in the world. Makes it useful when respawning as the player will be place on their bed which will not move when the raft is still activating. This can cause beds to disappear if the bed position relative to vehicle is outside of render distance. Disable this if your bed disappears a lot.
+- Default Value: True
 
 ### EnableVehicleClusterRendering 
 - Description: Cluster rendering efficiently improves how the raft renders. It will offer 50% boost in FPS for larger ships. You can reach upwards of 90 FPS on a 3000 piece ship vs 40-45fps. It does this by combining meshes so editing and damaging these components is a bit more abrupt. WearNTear animations go away, but the items can still be broken. Updates require re-building the meshes affected so this can be a bit heavy, but not as heavy as bounds collider rebuild.
@@ -984,10 +968,80 @@ Other methods removed after 2.5.0
 - Description: VehicleCommands panel screen location. This is a protected value and will not allow panels off screen.
 - Default Value: (0.50, 0.50)
 
+## PowerSystem
+
+### PowerRangePerPowerItem 
+- Description: The power range per power pylon prefab. Large values will make huge networks. Max range is 50. But this could span entire continents as ZDOs are not limited to render distance.
+- Default Value: 10
+
+### PowerSimulationDistanceThreshold 
+- Description: The maximum threshold in which to simulate networks. This means if a player or client/peer is nearby the power system will continue to simulate. Keeping this value lower will make running powersystems much faster at the cost of power not running while away from an area.
+- Default Value: 50
+
+### PowerMechanismRange 
+- Description: The power range per mechanism power item. This excludes pylons and is capped at a lower number. These items are meant to be connected to pylons but at higher values could connect together.
+- Default Value: 4
+
+### PowerDrainPlate_ShowStatus 
+- Description: Shows the power drain activity and tells you what type of plate is being used when hovering over it. This flag will be ignored if the PowerNetwork inspector is enabled which allows viewing all power values.
+- Default Value: False
+
+### PowerSource_AllowNearbyFuelingWithEitr 
+- Description: This will allow for the player to fuel from chests when interacting with Vehicle sources. This may not be needed with chest mods.
+- Default Value: False
+
+### PowerNetwork_ShowAdditionalPowerInformationByDefault 
+- Description: This will show the power network information by default per prefab. This acts as a tutorial. Most power items will have a visual indicator but it may not be clear to players immediately.
+- Default Value: False
+
+### PowerPlate_TransferRate 
+- Description: How much eitr energy is charged/drained per time to convert to power system energy units. Eitr energy is renewable but should be considered less refined. To maintain balance keep this at a higher number.
+- Default Value: 0.05
+
+### PowerPlate_EitrDrainCostPerSecond 
+- Description: The amount of player eitr that is required per second to power a system.
+- Default Value: 100
+
+### PowerPlate_EnergyGainPerSecond 
+- Description: The amount of energy gained when draining player eitr per second.
+- Default Value: 0.0001
+
+### PowerSourceFuelCapacity 
+- Description: The maximum amount of fuel a power source can hold.
+- Default Value: 100
+
+### PowerSource_BaseEfficiency 
+- Description: The base efficiency of all fuel. This can be used to tweak all fuels and keep them scaling.
+- Default Value: 1
+
+### PowerSource_EitrEfficiency 
+- Description: The efficiency of Eitr as fuel. IE 1 eitr turns into X fuel. This will be used for balancing with other fuel types if more fuel types are added.
+- Default Value: 10
+
+### PowerSource_FuelConsumptionRate 
+- Description: The amount of fuel consumed per physics update tick at full power output by a power source.
+- Default Value: 0.1
+
+### PowerStorageCapacity 
+- Description: The maximum amount of energy a power storage unit can hold.
+- Default Value: 800
+
+### SwivelPowerDrain 
+- Description: How much power (watts) is consumed by a Swivel per second. Applies only if Swivels_DoNotRequirePower is false.
+- Default Value: 1
+
+### Mechanism_Switch_DefaultAction 
+- Description: Default action of the mechanism switch. This will be overridden by UpdateIntendedAction if a closer matching action is detected nearby.
+- Default Value: CommandsHud
+
+### Swivels_DoNotRequirePower 
+- Description: Allows you to use swivels without the vehicle power system.
+- Default Value: False
+
 ## QuickStartWorld
 
 ### ServerOnlineBackendType 
-- Description: 
+- Description: For setting the server type.
 - Default Value: Steamworks
 
 ### QuickStartWorldName 
