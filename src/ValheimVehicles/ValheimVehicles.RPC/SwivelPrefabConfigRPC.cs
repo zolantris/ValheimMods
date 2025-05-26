@@ -34,13 +34,13 @@ public class SwivelPrefabConfigRPC
     RPCInstance_Swivel_SetMotionState?.SendPackage(ZRoutedRpc.instance.GetServerPeerID(), pkg);
   }
 
-  public static void Request_NextMotion(ZDO zdo, MotionState motionState)
+  public static void Request_NextMotion(ZDO zdo, MotionState currentMotionState)
   {
     var pkg = new ZPackage();
     var zdoid = zdo.m_uid;
 
     pkg.Write(zdoid);
-    pkg.Write((int)motionState);
+    pkg.Write((int)currentMotionState);
 
     RPCInstance_Swivel_NextMotionState?.SendPackage(ZRoutedRpc.instance.GetServerPeerID(), pkg);
   }
@@ -88,15 +88,17 @@ public class SwivelPrefabConfigRPC
     // set the ZDO
     zdo.Set(SwivelCustomConfig.Key_MotionState, (int)state);
 
+    PrefabConfigRPC.Request_SyncConfigKeys(zdo, [SwivelCustomConfig.Key_MotionState]);
+
     // only run subscriber update for side-effect/reload callback.
-    if (PrefabConfigRPC.ZdoToPrefabConfigListeners.TryGetValue(zdo, out var subscriber))
+    // Dedicated server will not have any of these components so skip it.
+    if (!ZNet.instance.IsDedicated())
     {
-      if (subscriber == null) return;
-      PrefabConfigRPC.Request_SyncConfigKeys(zdo, [SwivelCustomConfig.Key_MotionState]);
-    }
-    else
-    {
-      LoggerProvider.LogError($"Could not find config for ZDO \n {zdo}");
+      if (PrefabConfigRPC.ZdoToPrefabConfigListeners.TryGetValue(zdo, out var subscriber))
+      {
+        if (subscriber == null) return;
+        subscriber.Load(zdo, [SwivelCustomConfig.Key_MotionState]);
+      }
     }
   }
 
