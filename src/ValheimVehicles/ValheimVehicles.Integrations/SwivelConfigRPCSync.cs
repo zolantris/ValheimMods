@@ -29,6 +29,9 @@ public class SwivelConfigRPCSync : PrefabConfigRPCSync<SwivelCustomConfig, ISwiv
     netView.InvokeRPC(netView.GetZDO().GetOwner(), nameof(RPC_SetMotionState), pkg);
   }
 
+  /// <summary>
+  /// TODO might have to use Networkmanager from jotunns for this.
+  /// </summary>
   public void Request_NextMotion()
   {
     if (!this.IsNetViewValid(out var netView)) return;
@@ -37,7 +40,7 @@ public class SwivelConfigRPCSync : PrefabConfigRPCSync<SwivelCustomConfig, ISwiv
     pkg.Write((int)next);
 
     // Send to the server/owner for validation and potential action
-    netView.InvokeRPC(netView.GetZDO().GetOwner(), nameof(RPC_NextMotionState), pkg);
+    netView.InvokeRPC(ZRoutedRpc.instance.GetServerPeerID(), nameof(RPC_NextMotionState), pkg);
   }
 
   public void RPC_SetMotionState(long sender, ZPackage pkg)
@@ -79,7 +82,6 @@ public class SwivelConfigRPCSync : PrefabConfigRPCSync<SwivelCustomConfig, ISwiv
   public void RPC_NextMotionState(long sender, ZPackage pkg)
   {
     if (!this.IsNetViewValid(out var netView) || !netView.IsOwner()) return;
-
     // Read client-reported MotionState
     var clientMotionState = (MotionState)pkg.ReadInt();
 
