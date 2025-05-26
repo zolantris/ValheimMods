@@ -2,8 +2,7 @@ using System.Collections.Generic;
 using System.Configuration;
 using HarmonyLib;
 using UnityEngine;
-
-using ValheimVehicles.Config;
+using ValheimVehicles.BepInExConfig;
 using ValheimVehicles.Controllers;
 
 namespace ValheimVehicles.Patches;

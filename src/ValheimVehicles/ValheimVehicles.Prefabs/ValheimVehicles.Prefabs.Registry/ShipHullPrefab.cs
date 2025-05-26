@@ -186,12 +186,14 @@ public class ShipHullPrefab : IRegisterPrefab
     wnt.m_supports = true;
     wnt.m_support = 2000f;
     wnt.m_noSupportWear = true;
+    wnt.m_roof = wnt.gameObject;
     wnt.m_noRoofWear = true;
     wnt.m_hitEffect = LoadValheimAssets.woodFloorPieceWearNTear.m_hitEffect;
     wnt.m_switchEffect =
       LoadValheimAssets.woodFloorPieceWearNTear.m_switchEffect;
     wnt.m_hitNoise = LoadValheimAssets.woodFloorPieceWearNTear.m_hitNoise;
     wnt.m_burnable = hullMaterial != HullMaterial.Iron;
+    wnt.m_ashDamageImmune = hullMaterial == HullMaterial.Iron;
   }
 
   /// <summary>
@@ -305,13 +307,22 @@ public class ShipHullPrefab : IRegisterPrefab
       PrefabRegistryHelpers.SetWearNTearSupport(wnt,
         WearNTear.MaterialType.Iron);
 
+
+      if (hullMaterial == HullMaterial.Iron)
+      {
+        wnt.m_ashDamageImmune = true;
+      }
+
       SetHullWnt(wnt, hullMaterial);
 
       ShipHulls.SetMaterialHealthValues(hullMaterial, wnt, materialCount);
       PrefabRegistryHelpers.AddNewOldPiecesToWearNTear(prefab, wnt);
 
       PrefabRegistryHelpers.AddNetViewWithPersistence(prefab);
-      PrefabRegistryHelpers.AddPieceForPrefab(prefabName, prefab);
+      var piece = PrefabRegistryHelpers.AddPieceForPrefab(prefabName, prefab);
+      piece.m_clipGround = true;
+      piece.m_allowRotatedOverlap = true;
+      piece.m_noClipping = false;
 
       PieceManager.Instance.AddPiece(new CustomPiece(prefab, false,
         new PieceConfig

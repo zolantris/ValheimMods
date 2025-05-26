@@ -1,9 +1,11 @@
 using Jotunn.Configs;
 using Jotunn.Entities;
 using Jotunn.Managers;
+using UnityEngine;
 using ValheimVehicles.Components;
 using ValheimVehicles.Integrations;
 using ValheimVehicles.SharedScripts;
+using ValheimVehicles.SharedScripts.PowerSystem;
 
 namespace ValheimVehicles.Prefabs.Registry;
 
@@ -12,47 +14,237 @@ namespace ValheimVehicles.Prefabs.Registry;
  */
 public class MechanismPrefabs : RegisterPrefab<MechanismPrefabs>
 {
-  private void RegisterCoalEngine()
+  private void RegisterPowerStorageEitr()
   {
     var prefab = PrefabManager.Instance.CreateClonedPrefab(
-      PrefabNames.Mechanism_CoalEngine,
-      LoadValheimVehicleAssets.Mechanism_Engine_Coal);
+      PrefabNames.Mechanism_Power_Storage_Eitr,
+      LoadValheimVehicleAssets.Mechanism_Power_Storage_Eitr);
 
     PrefabRegistryHelpers.AddNetViewWithPersistence(prefab);
-    PrefabRegistryHelpers.PieceDataDictionary.Add(PrefabNames.Mechanism_CoalEngine, new PrefabRegistryHelpers.PieceData
+    PrefabRegistryHelpers.PieceDataDictionary.Add(PrefabNames.Mechanism_Power_Storage_Eitr, new PrefabRegistryHelpers.PieceData
     {
-      Name = "$valheim_vehicles_mechanism_engine_coal",
-      Description = "$valheim_vehicles_mechanism_engine_coal_desc",
+      Name = "$valheim_vehicles_mechanism_power_storage_eitr",
+      Description = "$valheim_vehicles_mechanism_power_storage_eitr_desc",
       Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
-        .CoalEngine)
+        .Power_Storage_Icon)
     });
-    PrefabRegistryHelpers.AddPieceForPrefab(PrefabNames.Mechanism_CoalEngine, prefab);
+    PrefabRegistryHelpers.AddPieceForPrefab(PrefabNames.Mechanism_Power_Storage_Eitr, prefab);
 
     // main toggle switch.
-    prefab.AddComponent<VehicleEngineIntegration>();
+    prefab.AddComponent<PowerStorageBridge>();
+    prefab.AddComponent<PowerHoverComponent>();
 
     PieceManager.Instance.AddPiece(new CustomPiece(prefab, true, new PieceConfig
     {
       PieceTable = PrefabRegistryController.GetPieceTableName(),
-      Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Propulsion),
+      Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Power),
       Enabled = true,
       Requirements =
       [
         new RequirementConfig
         {
-          Amount = 2,
-          Item = "Iron",
+          Amount = 6,
+          Item = "BlackMetal",
           Recover = true
         },
         new RequirementConfig
         {
-          Amount = 4,
-          Item = "Wood",
+          Amount = 1,
+          Item = "Eitr"
+        },
+        new RequirementConfig
+        {
+          Amount = 6,
+          Item = "BlackMarble",
           Recover = true
         }
       ]
     }));
+    RegisterModifiedPrefab(prefab);
+
   }
+
+  private void RegisterPowerSourceEitr()
+  {
+    var prefab = PrefabManager.Instance.CreateClonedPrefab(
+      PrefabNames.Mechanism_Power_Source_Eitr,
+      LoadValheimVehicleAssets.Mechanism_Power_Source_Eitr);
+
+    PrefabRegistryHelpers.AddNetViewWithPersistence(prefab);
+    PrefabRegistryHelpers.PieceDataDictionary.Add(PrefabNames.Mechanism_Power_Source_Eitr, new PrefabRegistryHelpers.PieceData
+    {
+      Name = "$valheim_vehicles_mechanism_power_source_eitr",
+      Description = "$valheim_vehicles_mechanism_power_source_eitr_desc",
+      Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
+        .Power_Source_Icon)
+    });
+    PrefabRegistryHelpers.AddPieceForPrefab(PrefabNames.Mechanism_Power_Source_Eitr, prefab);
+
+    // todo set values based on a config for these prefabs.
+    var powerSource = prefab.AddComponent<PowerSourceBridge>();
+    // var powerStorage = prefab.AddComponent<PowerStorageComponentIntegration>();
+    prefab.AddComponent<PowerHoverComponent>();
+
+    // powerSource.Logic.IsStorage = true;
+    // powerStorage.Logic.IsSource = true;
+
+    PieceManager.Instance.AddPiece(new CustomPiece(prefab, true, new PieceConfig
+    {
+      PieceTable = PrefabRegistryController.GetPieceTableName(),
+      Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Power),
+      Enabled = true,
+      Requirements =
+      [
+        new RequirementConfig
+        {
+          Amount = 12,
+          Item = "BlackMetal",
+          Recover = true
+        },
+        new RequirementConfig
+        {
+          Amount = 6,
+          Item = "Eitr",
+          Recover = true
+        },
+        new RequirementConfig
+        {
+          Amount = 6,
+          Item = "BlackMarble",
+          Recover = true
+        }
+      ]
+    }));
+    RegisterModifiedPrefab(prefab);
+  }
+
+  private void RegisterPowerChargePlate()
+  {
+    var prefab = PrefabManager.Instance.CreateClonedPrefab(
+      PrefabNames.Mechanism_Power_Conduit_Charge_Plate,
+      LoadValheimVehicleAssets.Mechanism_Power_Activator_Plate);
+
+    PrefabRegistryHelpers.AddNetViewWithPersistence(prefab);
+    PrefabRegistryHelpers.PieceDataDictionary.Add(PrefabNames.Mechanism_Power_Conduit_Charge_Plate, new PrefabRegistryHelpers.PieceData
+    {
+      Name = "$valheim_vehicles_mechanism_power_charge_plate",
+      Description = "$valheim_vehicles_mechanism_power_charge_plate_desc",
+      Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
+        .MechanismActivatorPlate)
+    });
+    PrefabRegistryHelpers.AddPieceForPrefab(PrefabNames.Mechanism_Power_Conduit_Charge_Plate, prefab);
+    prefab.AddComponent<PowerConduitPlateChargeBridge>();
+    prefab.AddComponent<PowerConduitHover>();
+
+    PieceManager.Instance.AddPiece(new CustomPiece(prefab, true, new PieceConfig
+    {
+      PieceTable = PrefabRegistryController.GetPieceTableName(),
+      Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Power),
+      Enabled = true,
+      Requirements =
+      [
+        new RequirementConfig
+        {
+          Amount = 6,
+          Item = "BlackMetal",
+          Recover = true
+        },
+        new RequirementConfig
+        {
+          Amount = 1,
+          Item = "Eitr",
+          Recover = true
+        }
+      ]
+    }));
+    RegisterModifiedPrefab(prefab);
+  }
+
+  private void RegisterPowerDrainPlate()
+  {
+    var prefab = PrefabManager.Instance.CreateClonedPrefab(
+      PrefabNames.Mechanism_Power_Conduit_Drain_Plate,
+      LoadValheimVehicleAssets.Mechanism_Power_Activator_Plate);
+
+    PrefabRegistryHelpers.AddNetViewWithPersistence(prefab);
+    PrefabRegistryHelpers.PieceDataDictionary.Add(PrefabNames.Mechanism_Power_Conduit_Drain_Plate, new PrefabRegistryHelpers.PieceData
+    {
+      Name = "$valheim_vehicles_mechanism_power_drain_plate",
+      Description = "$valheim_vehicles_mechanism_power_drain_plate_desc",
+      Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
+        .MechanismActivatorPlate)
+    });
+    PrefabRegistryHelpers.AddPieceForPrefab(PrefabNames.Mechanism_Power_Conduit_Drain_Plate, prefab);
+
+    prefab.AddComponent<PowerConduitPlateDrainBridge>();
+    prefab.AddComponent<PowerConduitHover>();
+
+    PieceManager.Instance.AddPiece(new CustomPiece(prefab, true, new PieceConfig
+    {
+      PieceTable = PrefabRegistryController.GetPieceTableName(),
+      Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Power),
+      Enabled = true,
+      Requirements =
+      [
+        new RequirementConfig
+        {
+          Amount = 6,
+          Item = "BlackMetal",
+          Recover = true
+        },
+        new RequirementConfig
+        {
+          Amount = 1,
+          Item = "Eitr",
+          Recover = true
+        }
+      ]
+    }));
+    RegisterModifiedPrefab(prefab);
+  }
+
+  // private void RegisterCoalEngine()
+  // {
+  //   var prefab = PrefabManager.Instance.CreateClonedPrefab(
+  //     PrefabNames.Mechanism_Power_Source_Coal,
+  //     LoadValheimVehicleAssets.Mechanism_Power_Source_Eitr);
+  //
+  //   PrefabRegistryHelpers.AddNetViewWithPersistence(prefab);
+  //   PrefabRegistryHelpers.PieceDataDictionary.Add(PrefabNames.Mechanism_Power_Source_Coal, new PrefabRegistryHelpers.PieceData
+  //   {
+  //     Name = "$valheim_vehicles_mechanism_engine_coal",
+  //     Description = "$valheim_vehicles_mechanism_engine_coal_desc",
+  //     Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
+  //       .PowerSourceCoal)
+  //   });
+  //   PrefabRegistryHelpers.AddPieceForPrefab(PrefabNames.Mechanism_Power_Source_Coal, prefab);
+  //
+  //   // main toggle switch.
+  //   prefab.AddComponent<VehicleEngineIntegration>();
+  //
+  //   PieceManager.Instance.AddPiece(new CustomPiece(prefab, true, new PieceConfig
+  //   {
+  //     PieceTable = PrefabRegistryController.GetPieceTableName(),
+  //     Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Propulsion),
+  //     Enabled = true,
+  //     Requirements =
+  //     [
+  //       new RequirementConfig
+  //       {
+  //         Amount = 2,
+  //         Item = "Iron",
+  //         Recover = true
+  //       },
+  //       new RequirementConfig
+  //       {
+  //         Amount = 4,
+  //         Item = "Wood",
+  //         Recover = true
+  //       }
+  //     ]
+  //   }));
+  // }
+
 
   /// <summary>
   /// Todo an alternative way to add any command via placement. The item must not have a ZDO and must be a Temp netview.
@@ -63,50 +255,51 @@ public class MechanismPrefabs : RegisterPrefab<MechanismPrefabs>
       "ValheimVehicles_CommandsMenuToggleOnPlace", false);
 
     PrefabRegistryHelpers.AddTempNetView(prefab);
-    PrefabRegistryHelpers.AddPieceForPrefab(PrefabNames.Mechanism_ElectricPylon, prefab);
+    PrefabRegistryHelpers.AddPieceForPrefab(PrefabNames.Mechanism_Power_Pylon, prefab);
   }
 
-  private void RegisterElectricPylonPrefab()
+  private void RegisterPowerPylonPrefab()
   {
     var prefab = PrefabManager.Instance.CreateClonedPrefab(
-      PrefabNames.Mechanism_ElectricPylon,
-      LoadValheimVehicleAssets.Mechanism_ElectricPylon);
+      PrefabNames.Mechanism_Power_Pylon,
+      LoadValheimVehicleAssets.Mechanism_PowerPylon);
 
     PrefabRegistryHelpers.HoistSnapPointsToPrefab(prefab);
     PrefabRegistryHelpers.AddNetViewWithPersistence(prefab);
-    PrefabRegistryHelpers.PieceDataDictionary.Add(PrefabNames.Mechanism_ElectricPylon, new PrefabRegistryHelpers.PieceData
+    PrefabRegistryHelpers.PieceDataDictionary.Add(PrefabNames.Mechanism_Power_Pylon, new PrefabRegistryHelpers.PieceData
     {
-      Name = "$valheim_vehicles_mechanism_electric_pylon",
-      Description = "$valheim_vehicles_mechanism_electric_pylon_desc",
+      Name = "$valheim_vehicles_mechanism_power_pylon",
+      Description = "$valheim_vehicles_mechanism_power_pylon_desc",
       Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
-        .ElectricPylon)
+        .PowerPylon)
     });
-    PrefabRegistryHelpers.AddPieceForPrefab(PrefabNames.Mechanism_ElectricPylon, prefab);
+    PrefabRegistryHelpers.AddPieceForPrefab(PrefabNames.Mechanism_Power_Pylon, prefab);
 
     // main toggle switch.
-    prefab.AddComponent<ElectricityPylonIntegration>();
+    prefab.AddComponent<PowerPylonComponentIntegration>();
 
     PieceManager.Instance.AddPiece(new CustomPiece(prefab, true, new PieceConfig
     {
       PieceTable = PrefabRegistryController.GetPieceTableName(),
-      Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Propulsion),
+      Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Power),
       Enabled = true,
       Requirements =
       [
         new RequirementConfig
         {
           Amount = 2,
-          Item = "Iron",
+          Item = "BlackMetal",
           Recover = true
         },
         new RequirementConfig
         {
-          Amount = 4,
-          Item = "Wood",
+          Amount = 6,
+          Item = "BlackMarble",
           Recover = true
         }
       ]
     }));
+    RegisterModifiedPrefab(prefab);
   }
 
 
@@ -137,7 +330,7 @@ public class MechanismPrefabs : RegisterPrefab<MechanismPrefabs>
     PieceManager.Instance.AddPiece(new CustomPiece(prefab, true, new PieceConfig
     {
       PieceTable = PrefabRegistryController.GetPieceTableName(),
-      Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Tools),
+      Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Power),
       Enabled = true,
       Requirements =
       [
@@ -149,12 +342,34 @@ public class MechanismPrefabs : RegisterPrefab<MechanismPrefabs>
         }
       ]
     }));
+    RegisterModifiedPrefab(prefab);
+  }
+
+  public static void RegisterModifiedPrefab(GameObject prefab)
+  {
+    if (ZNetScene.instance != null)
+    {
+      ZNetScene.instance.m_namedPrefabs[prefab.name.GetStableHashCode()] = prefab;
+    }
+    else
+    {
+      Jotunn.Logger.LogWarning($"ZNetScene is not initialized. Could not register {prefab.name}.");
+    }
   }
 
   public override void OnRegister()
   {
     RegisterToggleSwitch();
-    RegisterElectricPylonPrefab();
-    RegisterCoalEngine();
+    RegisterPowerPylonPrefab();
+    // RegisterCoalEngine();
+    RegisterPowerSourceEitr();
+    RegisterPowerStorageEitr();
+
+    RegisterPowerDrainPlate();
+#if DEBUG
+    RegisterPowerChargePlate();
+#endif
+
+    LoggerProvider.LogInfo($"Registering PowerStorageComponentIntegration prefab at: {Time.time}");
   }
 }

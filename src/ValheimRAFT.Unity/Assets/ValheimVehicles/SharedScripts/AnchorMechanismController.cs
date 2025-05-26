@@ -140,7 +140,6 @@ namespace ValheimVehicles.SharedScripts
       }
 
       UpdateRopeVisual();
-      anchorStateFadeText.FixedUpdate_UpdateText();
     }
 
     internal void OnEnable()

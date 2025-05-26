@@ -31,7 +31,10 @@
     <!--    Windows Terminal  https://learn.microsoft.com/en-us/windows/terminal/  -->
     <Target Name="Run_Valheim_Server" AfterTargets="copy_to_valheim_server"
             Condition="'$(IsRunnableClientServer)' == 'true' or '$(IsRunnableServer)' == 'true'">
-        <Exec Command="wt.exe -w 2 -d &quot;$(ValheimServerPath)&quot; --title ValheimServer powershell &quot;Start-Process -NoNewWindow -FilePath 'start_headless_server.bat' -ArgumentList '--doorstop-enable', 'true', '--doorstop-target', '$(ValheimServerPath)\BepInEx\core\BepInEx.Preloader.dll'&quot;;wt.exe -w 2 --title &quot;ValheimServer [Logger]&quot; powershell -NoProfile -NoExit -File &quot;$(SolutionDir)logValheim.ps1&quot; --LogPath &quot;$(ValheimServerPath)\BepInEx\LogOutput.log&quot;"/>
+        <!--  This is doorstop 3.x.x      -->
+        <!--        <Exec Command="wt.exe -w 2 -d &quot;$(ValheimServerPath)&quot; &#45;&#45;title ValheimServer powershell &quot;Start-Process -NoNewWindow -FilePath 'start_headless_server.bat' -ArgumentList '&#45;&#45;doorstop-enable', 'true', '&#45;&#45;doorstop-target', '$(ValheimServerPath)\BepInEx\core\BepInEx.Preloader.dll'&quot;;wt.exe -w 2 &#45;&#45;title &quot;ValheimServer [Logger]&quot; powershell -NoProfile -NoExit -File &quot;$(SolutionDir)logValheim.ps1&quot; &#45;&#45;LogPath &quot;$(ValheimServerPath)\BepInEx\LogOutput.log&quot;"/>-->
+        <!--  doorstop 4.x.x    -->
+        <Exec Command="wt.exe -w 2 -d &quot;$(ValheimServerPath)&quot; --title ValheimServer powershell &quot;Start-Process -NoNewWindow -FilePath 'start_headless_server.bat' -ArgumentList '--doorstop-enable', 'true', '--doorstop-target-assembly', '$(ValheimServerPath)\BepInEx\core\BepInEx.Preloader.dll'&quot;;wt.exe -w 2 --title &quot;ValheimServer [Logger]&quot; powershell -NoProfile -NoExit -File &quot;$(SolutionDir)logValheim.ps1&quot; --LogPath &quot;$(ValheimServerPath)\BepInEx\LogOutput.log&quot;"/>
     </Target>
     <Target Name="Run_Valheim" AfterTargets="Copy_To_R2ModMan"
             Condition="'$(IsRunnableClientServer)' == 'true' or '$(IsRunnableClient)' == 'true'">

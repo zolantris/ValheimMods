@@ -517,7 +517,7 @@
         if (!collider.enabled) return points;
         // filters out layer that should not be considered physical during generation
         if (!LayerHelpers.IsContainedWithinLayerMask(collider.gameObject.layer,
-              LayerHelpers.PhysicalLayers) ||
+              LayerHelpers.PhysicalLayerMask) ||
             !collider.gameObject.activeInHierarchy) return points;
 
 
@@ -744,7 +744,7 @@
         if (colliders is { Count: > 0 })
           colliders = colliders.Where(x =>
               LayerHelpers.IsContainedWithinLayerMask(x.gameObject.layer,
-                LayerHelpers.PhysicalLayers) && x.gameObject.activeInHierarchy)
+                LayerHelpers.PhysicalLayerMask) && x.gameObject.activeInHierarchy)
             .ToList();
 
         return colliders;
@@ -1109,7 +1109,7 @@
 
         if (rbComponent != null)
         {
-          rbComponent.includeLayers = LayerHelpers.PhysicalLayers;
+          rbComponent.includeLayers = LayerHelpers.PhysicalLayerMask;
           rbComponent.excludeLayers =
             LayerHelpers.RamColliderExcludeLayers;
         }
@@ -1142,7 +1142,7 @@
             var triggerMeshCollider =
               triggerInstance.GetComponent<MeshCollider>();
             triggerMeshCollider.isTrigger = true;
-            triggerMeshCollider.includeLayers = LayerHelpers.PhysicalLayers;
+            triggerMeshCollider.includeLayers = LayerHelpers.PhysicalLayerMask;
             triggerMeshCollider.excludeLayers =
               LayerHelpers.RamColliderExcludeLayers;
           }
@@ -1364,7 +1364,7 @@
         meshCollider.sharedMesh = mesh;
         meshCollider.convex = true;
         meshCollider.excludeLayers = LayerHelpers.BlockingColliderExcludeLayers;
-        meshCollider.includeLayers = LayerHelpers.PhysicalLayers;
+        meshCollider.includeLayers = LayerHelpers.PhysicalLayerMask;
         meshCollider.transform.localRotation = Quaternion.identity;
       }
 

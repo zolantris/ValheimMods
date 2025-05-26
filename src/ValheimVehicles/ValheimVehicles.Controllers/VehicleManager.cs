@@ -7,16 +7,17 @@
   using Jotunn.Managers;
   using Registry;
   using UnityEngine;
-  using ValheimVehicles.Config;
+  using ValheimVehicles.BepInExConfig;
   using ValheimVehicles.Controllers;
   using ValheimVehicles.Enums;
   using ValheimVehicles.Helpers;
   using ValheimVehicles.Interfaces;
   using ValheimVehicles.Prefabs;
+  using ValheimVehicles.Shared.Constants;
   using ValheimVehicles.SharedScripts;
   using ValheimVehicles.SharedScripts.Enums;
   using ValheimVehicles.Structs;
-  using static ValheimVehicles.Config.PrefabConfig;
+  using static ValheimVehicles.BepInExConfig.PrefabConfig;
   using Logger = Jotunn.Logger;
 
 #endregion
@@ -687,7 +688,8 @@
       if (PiecesController == null) return;
       if (!CanInitHullPiece)
       {
-        m_nview.GetZDO().Set(VehicleZdoVars.ZdoKeyBaseVehicleInitState, true);
+        m_nview.GetZDO().Set(
+          VehicleZdoVars.ZdoKeyBaseVehicleInitState, true);
         return;
       }
 

@@ -3,7 +3,7 @@ using System.Dynamic;
 using HarmonyLib;
 using UnityEngine;
 using UnityEngine.Rendering;
-using ValheimVehicles.Config;
+using ValheimVehicles.BepInExConfig;
 using ValheimVehicles.Controllers;
 
 namespace ValheimVehicles.Patches;
@@ -190,12 +190,12 @@ public class WaterVolume_WaterPatches
       waterSurfaceTransform.rotation.eulerAngles.y.Equals(180f);
 
     // will flip the surface if camera is below it.
-    if ((IsCameraAboveWater && isCurrentlyFlipped) ||
-        (IsCameraBelowWater && !isCurrentlyFlipped))
+    if (IsCameraAboveWater && isCurrentlyFlipped ||
+        IsCameraBelowWater && !isCurrentlyFlipped)
     {
-      if (!isCurrentlyFlipped && (CanFlipEverywhere || (CanFlipOnlyOffboard &&
-                                                        !VehicleOnboardController.IsCharacterOnboard(
-              Player.m_localPlayer))))
+      if (!isCurrentlyFlipped && (CanFlipEverywhere || CanFlipOnlyOffboard &&
+            !VehicleOnboardController.IsCharacterOnboard(
+              Player.m_localPlayer)))
       {
         FlipWaterSurface(__instance, normalizedDepth);
         SetWaterSurfacePosition(waterSurfaceTransform, WaterLevelCamera);

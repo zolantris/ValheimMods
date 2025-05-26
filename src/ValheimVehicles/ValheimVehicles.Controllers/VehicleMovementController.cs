@@ -7,7 +7,7 @@
   using UnityEngine;
   using UnityEngine.Serialization;
   using ValheimVehicles.Components;
-  using ValheimVehicles.Config;
+  using ValheimVehicles.BepInExConfig;
   using ValheimVehicles.ConsoleCommands;
   using ValheimVehicles.Constants;
   using ValheimVehicles.Enums;
@@ -16,6 +16,7 @@
   using ValheimVehicles.Patches;
   using ValheimVehicles.Prefabs.Registry;
   using ValheimVehicles.Propulsion.Rudder;
+  using ValheimVehicles.Shared.Constants;
   using ValheimVehicles.SharedScripts;
   using ValheimVehicles.Structs;
   using Logger = Jotunn.Logger;
@@ -400,7 +401,7 @@
 #endif
         vehicleRam.OnCollisionEnterHandler(collision);
       }
-      else if (LayerHelpers.IsContainedWithinLayerMask(collision.collider.gameObject.layer, LayerHelpers.PhysicalLayers))
+      else if (LayerHelpers.IsContainedWithinLayerMask(collision.collider.gameObject.layer, LayerHelpers.PhysicalLayerMask))
       {
         vehicleRam.OnCollisionEnterHandler(collision);
       }
@@ -432,7 +433,7 @@
       }
 #endif
 
-      if (vehicleRam != null && LayerHelpers.IsContainedWithinLayerMask(collision.collider.gameObject.layer, LayerHelpers.PhysicalLayers))
+      if (vehicleRam != null && LayerHelpers.IsContainedWithinLayerMask(collision.collider.gameObject.layer, LayerHelpers.PhysicalLayerMask))
       {
         vehicleRam.OnCollisionEnterHandler(collision);
       }
@@ -1003,7 +1004,7 @@
       if (!_impactEffect)
       {
         _impactEffect = gameObject.AddComponent<ImpactEffect>();
-        _impactEffect.m_triggerMask = LayerHelpers.PhysicalLayers;
+        _impactEffect.m_triggerMask = LayerHelpers.PhysicalLayerMask;
         _impactEffect.m_toolTier = 1000;
       }
 
@@ -1198,7 +1199,7 @@
 
       if (m_body)
       {
-        m_body.includeLayers = LayerHelpers.PhysicalLayers;
+        m_body.includeLayers = LayerHelpers.PhysicalLayerMask;
         m_body.excludeLayers = excludedLayers;
       }
     }
@@ -2751,22 +2752,33 @@
             PropulsionConfig.AllowBaseGameSailRotation.Value)
         {
           var newRotation = m_mastObject.transform.localRotation;
-          mast.transform.localRotation = newRotation;
+          if (mast.m_rotationTransform != null)
+          {
+            mast.m_rotationTransform.localRotation = newRotation;
+          }
+          else
+          {
+            mast.transform.localRotation = newRotation;
+          }
         }
 
-        if (mast.m_allowSailShrinking)
+        // custom masts do not have sailcloth or sail objects yet.
+        if (mast.m_sailCloth)
         {
-          if (mast.m_sailObject.transform.localScale !=
-              m_sailObject.transform.localScale)
-            mast.m_sailCloth.enabled = false;
-          mast.m_sailObject.transform.localScale =
-            m_sailObject.transform.localScale;
-          mast.m_sailCloth.enabled = true;
-        }
-        else
-        {
-          mast.m_sailObject.transform.localScale = Vector3.one;
-          mast.m_sailCloth.enabled = !mast.m_disableCloth;
+          if (mast.m_allowSailShrinking)
+          {
+            if (mast.m_sailObject.transform.localScale !=
+                m_sailObject.transform.localScale)
+              mast.m_sailCloth.enabled = false;
+            mast.m_sailObject.transform.localScale =
+              m_sailObject.transform.localScale;
+            mast.m_sailCloth.enabled = true;
+          }
+          else
+          {
+            mast.m_sailObject.transform.localScale = Vector3.one;
+            mast.m_sailCloth.enabled = !mast.m_disableCloth;
+          }
         }
       }
 

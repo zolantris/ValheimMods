@@ -5,6 +5,7 @@
   using System.Linq;
   using System.Reflection;
   using System.Reflection.Emit;
+  using DynamicLocations.Interfaces;
   using HarmonyLib;
   using UnityEngine;
   using Valheim.UI;
@@ -83,6 +84,10 @@
 
     public static GameObject WrapInstantiateWithPlacedPiece(Object original, Vector3 pos, Quaternion rot)
     {
+      if (ZNet.instance && ZNet.instance.IsDedicated())
+      {
+        Logger.LogWarning("[WrapInstantiateWithPlacedPiece] WARNING: This should not run on server!");
+      }
       var obj = Object.Instantiate(original, pos, rot) as GameObject;
       return PlacedPiece(obj); // your side-effect logic
     }
@@ -203,16 +208,23 @@
     /// <returns></returns>
     public static bool CanHitPiece(Collider collider)
     {
-      if (collider.gameObject.name.StartsWith(PrefabNames.SwivelPrefabName))
-      {
-        return true;
-      }
       var genericPieceController = collider.GetComponentInParent<IPieceController>();
-      if (genericPieceController != null && genericPieceController.CanRaycastHitPiece())
+
+      if (genericPieceController == null) return false;
+      var colliderRoot = collider.transform.root;
+      var canHitPiece = genericPieceController.CanRaycastHitPiece();
+      var isSwivel = genericPieceController.ComponentName == PrefabNames.SwivelPrefabName;
+
+      // swivel nesting might not be necessary.
+      if (canHitPiece)
       {
+        // do not allow nested swivel item placement.
+        if (isSwivel && colliderRoot != genericPieceController.transform && colliderRoot.transform.name.StartsWith(PrefabNames.SwivelPrefabName))
+        {
+          return false;
+        }
         return true;
       }
-
       return false;
     }
 
@@ -278,12 +290,6 @@
       ref Collider waterSurface,
       bool water)
     {
-      // var isRigidbodyAllowed = hasAttachedRigidbody;
-      //
-      // if (hasAttachedRigidbody&& hitInfo.collider.attachedRigidbody.transform.parent != null && hitInfo.collider.attachedRigidbody.transform.parent.name.StartsWith(PrefabNames.SwivelPrefabName))
-      // {
-      //   isRigidbodyAllowed = true;
-      // }
       var layerMask = __instance.m_placeRayMask;
 
       var raycastPieceActivator = PieceActivatorHelpers.GetRaycastPieceActivator(__instance.transform);
@@ -328,8 +334,18 @@
     {
       hover = null;
       hoverCreature = null;
-      var array = Physics.RaycastAll(GameCamera.instance.transform.position,
-        GameCamera.instance.transform.forward, 50f, __instance.m_interactMask);
+      // var eyePos = Player.m_localPlayer.m_eye.position;
+      var cameraTransform = GameCamera.instance.transform;
+      var eyePos = cameraTransform.position;
+      // var cam = GameCamera.instance;
+      //
+      // var targetPoint = cam.transform.position + cam.transform.forward * 100f; // Far enough to avoid near plane error
+      // var rayDir = (targetPoint - eyePos).normalized;
+
+      var rayDir = cameraTransform.forward;
+
+      var array = Physics.RaycastAll(eyePos,
+        rayDir, 50f, __instance.m_interactMask);
       Array.Sort(array,
         (RaycastHit x, RaycastHit y) => x.distance.CompareTo(y.distance));
       var array2 = array;
@@ -357,9 +373,9 @@
           {
             hover = leverHoverableParent;
           }
-          else if ((bool)raycastHit.collider.attachedRigidbody && !raycastHit
+          else if ((bool)raycastHit.collider.attachedRigidbody && raycastHit
                      .collider
-                     .attachedRigidbody.GetComponent<VehiclePiecesController>())
+                     .attachedRigidbody.GetComponent<IPieceActivatorHost>() == null)
             hover = raycastHit.collider.attachedRigidbody.gameObject;
           else
             hover = raycastHit.collider.gameObject;

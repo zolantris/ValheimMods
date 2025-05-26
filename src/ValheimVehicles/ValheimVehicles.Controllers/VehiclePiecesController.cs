@@ -7,10 +7,11 @@
   using System.Linq;
   using System.Text.RegularExpressions;
   using HarmonyLib;
+  using Jotunn;
   using UnityEngine;
   using UnityEngine.Serialization;
   using ValheimVehicles.Components;
-  using ValheimVehicles.Config;
+  using ValheimVehicles.BepInExConfig;
   using ValheimVehicles.Constants;
   using ValheimVehicles.Enums;
   using ValheimVehicles.Helpers;
@@ -19,10 +20,13 @@
   using ValheimVehicles.Prefabs;
   using ValheimVehicles.Prefabs.Registry;
   using ValheimVehicles.Propulsion.Rudder;
+  using ValheimVehicles.Shared.Constants;
   using ValheimVehicles.SharedScripts;
   using ValheimVehicles.SharedScripts.Enums;
+  using ValheimVehicles.SharedScripts.Helpers;
   using ValheimVehicles.Structs;
   using ZdoWatcher;
+  using ZdoWatcher.ZdoWatcher.Utils;
   using static ValheimVehicles.Propulsion.Sail.SailAreaForce;
   using Component = UnityEngine.Component;
   using Logger = Jotunn.Logger;
@@ -109,7 +113,8 @@
     // for adding additional multiplier within lower ranges so angle gets to expected value quicker.
     public static float rotationLeanMultiplier = 1.5f;
 
-    public static bool CanUseActualPiecePosition = true;
+    public static bool CanUseActualPiecePosition = RenderingConfig.UNSTABLE_VehiclePositionSync_AllowVehiclePiecesToUseWorldPosition.Value;
+    public static bool CanBedsUseActualWorldPosition = RenderingConfig.VehiclePositionSync_AllowBedsToSyncToWorldPosition.Value;
 
     public static float floatColliderSizeMultiplier = 1.5f;
     public static float minColliderSize = 1f;
@@ -171,7 +176,6 @@
     public GameObject vehicleCenter;
 
     public HoverFadeText m_hoverFadeText;
-    public bool CanUpdateHoverFadeText;
 
     public VehiclePhysicsMode localVehiclePhysicsMode =
       VehiclePhysicsMode.ForceSyncedRigidbody;
@@ -467,10 +471,6 @@
     public override void CustomFixedUpdate(float deltaTime)
     {
       if (m_nview == null) return;
-      if (CanUpdateHoverFadeText)
-      {
-        m_hoverFadeText.FixedUpdate_UpdateText();
-      }
       Sync();
     }
 
@@ -502,10 +502,10 @@
       m_vehicleBurningEffectAreas.Remove(netView.m_zdo.m_uid);
     }
 
-    public void InitSwivelController(SwivelComponentIntegration swivelComponentIntegration)
+    public void InitSwivelController(SwivelComponentBridge swivelComponentBridge)
     {
-      swivelComponentIntegration.m_vehiclePiecesController = this;
-      swivelComponentIntegration.StartActivatePendingSwivelPieces();
+      swivelComponentBridge.m_vehiclePiecesController = this;
+      swivelComponentBridge.StartActivatePendingSwivelPieces();
     }
 
     public void RemovePiece(ZNetView netView)
@@ -521,8 +521,6 @@
 
       var isRam = RamPrefabs.IsRam(netView.name);
       if (isRam) m_ramPieces.Remove(netView);
-
-
     }
 
     public void AddPieceDataForComponents(ZNetView netView)
@@ -531,7 +529,7 @@
       foreach (var component in components)
         switch (component)
         {
-          case SwivelComponentIntegration swivelController:
+          case SwivelComponentBridge swivelController:
             InitSwivelController(swivelController);
             break;
           case WearNTear wnt when PrefabConfig.MakeAllPiecesWaterProof.Value:
@@ -1256,9 +1254,8 @@
     private void UpdateBedPiece(Bed mBedPiece)
     {
       var bedNetView = mBedPiece.m_nview;
-      if (bedNetView == null) return;
-      if (bedNetView.m_zdo == null) return;
-      bedNetView.m_zdo.SetPosition(mBedPiece.m_nview.transform.position);
+      if (!bedNetView) return;
+      bedNetView.GetZDO()?.SetPosition(mBedPiece.m_nview.transform.position);
     }
 
     /// <summary>
@@ -1266,6 +1263,7 @@
     /// </summary>
     public void UpdateBedPieces()
     {
+      if (!CanBedsUseActualWorldPosition) return;
       foreach (var mBedPiece in m_bedPieces) UpdateBedPiece(mBedPiece);
     }
 
@@ -1286,14 +1284,14 @@
 
       Physics.SyncTransforms();
 
-      if (!isActiveAndEnabled || m_nview == null || m_nview.GetZDO() == null) return;
+      if (!isActiveAndEnabled || !this.IsNetViewValid(out var netView)) return;
       // use center of rigidbody to set position.
-      m_nview.GetZDO().SetPosition(vehiclePosition);
+      netView.GetZDO().SetPosition(vehiclePosition);
 
       for (var index = 0; index < m_pieces.Count; index++)
       {
         var nv = m_pieces[index];
-        if (!nv)
+        if (!nv || !nv.IsValid())
         {
           Logger.LogError(
             $"Error found with m_pieces: netview {nv}, save removing the piece");
@@ -1307,26 +1305,23 @@
         {
           if (prefabPieceData.IsBed)
           {
-            var bedComponent = nv.GetComponent<Bed>();
-            if (bedComponent)
-            {
-              UpdateBedPiece(bedComponent);
-              continue;
-            }
+            UpdatePieceZdoPosition(nv.GetZDO(), vehiclePosition, prefabPieceData.IsBed);
+            continue;
           }
           if (prefabPieceData.IsSwivelChild)
           {
-            var swivel = nv.GetComponentInParent<SwivelComponentIntegration>();
+            var swivel = nv.GetComponentInParent<SwivelComponentBridge>();
             if (swivel != null)
             {
-              nv.m_zdo?.SetPosition(CanUseActualPiecePosition ? swivel.transform.position : vehiclePosition);
+              // todo might have to make an exception for this.
+              UpdatePieceZdoPosition(nv.GetZDO(), vehiclePosition);
               continue;
             }
           }
         }
 
         // updates the zdo for the current location of the piece.
-        nv.m_zdo?.SetPosition(CanUseActualPiecePosition ? nv.transform.position : vehiclePosition);
+        nv.GetZDO()?.SetPosition(CanUseActualPiecePosition ? nv.transform.position : vehiclePosition);
       }
       var convexHullBounds = convexHullComponent.GetConvexHullBounds(false);
 
@@ -1334,7 +1329,7 @@
       for (var index = 0; index < m_tempPieces.Count; index++)
       {
         var nv = m_tempPieces[index];
-        if (nv == null)
+        if (!nv)
         {
           m_tempPieces.FastRemoveAt(ref index);
           continue;
@@ -1388,10 +1383,16 @@
     /// <summary>
     /// Ran locally in singleplayer or on the machine that owns the netview or on the server.
     /// </summary>
-    public void ServerSyncAllPieces()
+    public void Server_SyncAllPieces()
     {
-      var isDedicated = ZNet.instance?.IsDedicated();
-      if (isDedicated != true) return;
+      if (!ZNet.instance) return;
+
+      // jotunn extension for Server + Dedicated check. May not be required as IsDedicated may not be true on clients.
+      var isDedicatedServer = ZNet.instance.IsServerInstance();
+
+      LoggerProvider.LogDev($"IsDedicatedServer : {isDedicatedServer}, isServer: {ZNet.instance.IsServer()} isDedicated {ZNet.instance.IsDedicated()}");
+
+      if (!isDedicatedServer) return;
 
       if (_serverUpdatePiecesCoroutine != null) return;
 
@@ -1424,16 +1425,26 @@
           continue;
         }
 
-        // this is experimental might cause problems here, but it aligns with other piece setting values.
-        if (CanUseActualPiecePosition)
-        {
-          var pieceOffset = zdo.GetVec3(VehicleZdoVars.MBPositionHash, Vector3.zero);
-          zdo.SetPosition(pos + pieceOffset);
-        }
-        else
-        {
-          zdo.SetPosition(pos);
-        }
+        UpdatePieceZdoPosition(zdo, pos);
+      }
+    }
+
+    /// <summary>
+    /// Sets position based on a few flags.
+    /// - CanUseActualPiecePosition is experimental will likely cause problems, but it aligns with other piece setting values. Allows for compatibility with mods like Planbuild https://github.com/sirskunkalot/PlanBuild
+    /// </summary>
+    /// <param name="zdo"></param>
+    /// <param name="vehiclePosition"></param>
+    private void UpdatePieceZdoPosition(ZDO zdo, Vector3 vehiclePosition, bool isBed = false)
+    {
+      if (isBed && CanBedsUseActualWorldPosition || CanUseActualPiecePosition)
+      {
+        var pieceOffset = zdo.GetVec3(VehicleZdoVars.MBPositionHash, Vector3.zero);
+        zdo.SetPosition(vehiclePosition + pieceOffset);
+      }
+      else
+      {
+        zdo.SetPosition(vehiclePosition);
       }
     }
 
@@ -1482,7 +1493,7 @@
         if (list == null || !output)
         {
           yield return new WaitForSeconds(Math.Max(
-            ModEnvironment.IsDebug ? 0.05f : 2f,
+            ModEnvironment.IsDebug ? 0.05f : 0.1f,
             VehicleGlobalConfig.ServerRaftUpdateZoneInterval
               .Value));
           continue;
@@ -1511,7 +1522,7 @@
     {
       if (ActiveInstances.TryGetValue(activationPieceData.vehicleId, out var activeInstance))
       {
-        if (activeInstance != null && !activeInstance.IsInvalid())
+        if (activeInstance && !activeInstance.IsInvalid())
         {
           activeInstance.AddTemporaryPiece(activationPieceData);
         }
@@ -2276,7 +2287,7 @@
         {
           var zdoparent = ZDOMan.instance.GetZDO(zdoid);
           id = zdoparent == null
-            ? ZdoWatchController.ZdoIdToId(zdoid)
+            ? ZdoUtils.ZdoIdToId(zdoid)
             : ZdoWatchController.Instance.GetOrCreatePersistentID(zdoparent);
           zdo.Set(VehicleZdoVars.MBParentId, id);
           zdo.Set(VehicleZdoVars.MBRotationVecHash,
@@ -2382,7 +2393,7 @@
       var zdo = netView.GetZDO();
       if (zdo == null) return;
 
-      var isSwivelParent = SwivelComponentIntegration.IsSwivelParent(zdo);
+      var isSwivelParent = SwivelComponentBridge.IsSwivelParent(zdo);
 
       var character = netView.GetComponent<Character>();
       var shouldSkipAddingProperties = !isSwivelParent && character != null && character.IsPlayer();
@@ -2515,14 +2526,14 @@
       var isVehicleUsingCustomFloatation = Manager.VehicleConfigSync.GetWaterFloatationHeightMode() == VehicleFloatationMode.Custom;
       var nextState = !isVehicleUsingCustomFloatation;
 
-      Manager.VehicleConfigSync.SendSyncFloatationMode(nextState, prefab.transform.localPosition.y);
+      Manager.VehicleConfigSync.Request_SyncFloatationMode(nextState, prefab.transform.localPosition.y);
 
       var stateText = nextState ? ModTranslations.EnabledText : ModTranslations.DisabledText;
 
       m_hoverFadeText.currentText = $"{ModTranslations.VehicleConfig_CustomFloatationHeight} ({stateText})";
       m_hoverFadeText.transform.position = prefab.transform.position;
       m_hoverFadeText.ResetHoverTimer();
-      CanUpdateHoverFadeText = true;
+      m_hoverFadeText.Show();
       IgnoreAllVehicleCollidersForGameObjectChildren(prefab);
 
       // destroy the prefab. It has no use after this call.
@@ -2720,7 +2731,7 @@
 
       var totalHeight = 0f;
 
-      Manager.VehicleConfigSync.SyncPrefabConfig();
+      Manager.VehicleConfigSync.Load();
       var hullFloatationMode = Manager.VehicleConfigSync.GetWaterFloatationHeightMode();
 
       var isAverageOfPieces = hullFloatationMode ==
@@ -2761,7 +2772,7 @@
         case VehicleFloatationMode.Fixed:
           return HullFloatationColliderAlignmentOffset;
         case VehicleFloatationMode.Custom:
-          return Manager.VehicleConfigSync.CustomConfig.CustomFloatationHeight;
+          return Manager.VehicleConfigSync.Config.CustomFloatationHeight;
         case VehicleFloatationMode.Center:
         default:
           return BaseControllerHullBounds.center.y;
@@ -3197,36 +3208,6 @@
     {
       IgnoreNetViewCollidersForList(netView, m_ramPieces);
     }
-
-    // public void IgnoreShipColliderForCollider(Collider collider, bool skipWheelIgnore = false)
-    // {
-    //   if (collider == null) return;
-    //   foreach (var triggerCollider in convexHullTriggerColliders)
-    //     Physics.IgnoreCollision(collider, triggerCollider, true);
-    //   foreach (var triggerMeshCollider in convexHullMeshColliders)
-    //   {
-    //     Physics.IgnoreCollision(collider, triggerMeshCollider, true);
-    //   }
-    //   foreach (var convexHullMesh in convexHullMeshes)
-    //     Physics.IgnoreCollision(collider,
-    //       convexHullMesh.GetComponent<MeshCollider>(),
-    //       true);
-    //
-    //   if (!skipWheelIgnore)
-    //   {
-    //     IgnoreColliderForWheelColliders(collider);
-    //   }
-    //
-    //   if (FloatCollider)
-    //     Physics.IgnoreCollision(collider, FloatCollider, true);
-    //   if (OnboardCollider)
-    //     Physics.IgnoreCollision(collider, OnboardCollider, true);
-    // }
-
-    // public void IgnoreShipColliders(List<Collider> colliders)
-    // {
-    //   foreach (var t in colliders) IgnoreShipColliderForCollider(t);
-    // }
 
     public void IgnoreCameraCollision(List<Collider> colliders)
     {

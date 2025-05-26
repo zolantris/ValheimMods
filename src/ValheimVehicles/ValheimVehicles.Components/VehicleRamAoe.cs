@@ -5,13 +5,14 @@ using System.Text.RegularExpressions;
 using UnityEngine;
 using UnityEngine.Serialization;
 using ValheimVehicles.Components;
-using ValheimVehicles.Config;
+using ValheimVehicles.BepInExConfig;
 using ValheimVehicles.Controllers;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.Prefabs.Registry;
 using ValheimVehicles.SharedScripts;
 using ValheimVehicles.Structs;
 using ValheimVehicles.Components;
+using ValheimVehicles.Shared.Constants;
 using Logger = Jotunn.Logger;
 
 namespace ValheimVehicles.Helpers;
@@ -287,7 +288,7 @@ public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
     var relativeVelocity = GetRelativeVelocity(collider);
     // reset damage to base damage if one of these is not available, will still recalculate later
     // exit to apply damage that has no velocity
-    if (m_vehicle == null &&
+    if (IsVehicleRamType && m_vehicle == null &&
         collider.attachedRigidbody == null)
     {
       m_damage = baseDamage;
@@ -549,6 +550,11 @@ public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
 
     VehiclePiecesController? vehiclePiecesController = null;
 
+    if (!RamConfig.CanHitSwivels.Value && collider.GetComponentInParent<SwivelComponent>())
+    {
+      return true;
+    }
+
     var colliderObj = collider.gameObject;
 
     if (colliderObj.layer == LayerHelpers.ItemLayer)
@@ -570,7 +576,7 @@ public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
       return true;
     }
 
-    if (!LayerHelpers.IsContainedWithinLayerMask(colliderObj.layer, LayerHelpers.PhysicalLayers))
+    if (!LayerHelpers.IsContainedWithinLayerMask(colliderObj.layer, LayerHelpers.PhysicalLayerMask))
     {
 #if DEBUG
       // LoggerProvider.LogDebug($"Ignoring layer {colliderObj.layer} for gameobject {colliderObj.name} because it is not within PhysicalLayer mask.");
@@ -648,7 +654,7 @@ public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
   /// <returns></returns>
   public bool IsWaitingForOnboardCollider()
   {
-    if (m_vehicle == null) return false;
+    if (!IsVehicleRamType) return false;
     return m_vehicle.OnboardController != null && (!m_vehicle.OnboardController.isReadyForCollisions || m_vehicle.OnboardController.isRebuildingCollisions);
   }
   /// <summary>
@@ -663,12 +669,13 @@ public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
     {
       UpdateReloadingTime();
     }
-    if (m_vehicle == null) return false;
-
-    if (m_vehicle.isCreative) return false;
-    if (!CanHitWhileHauling && m_vehicle.MovementController != null && m_vehicle.MovementController.isPlayerHaulingVehicle)
+    if (IsVehicleRamType)
     {
-      return false;
+      if (m_vehicle == null || m_vehicle.isCreative) return false;
+      if (!CanHitWhileHauling && m_vehicle.MovementController != null && m_vehicle.MovementController.isPlayerHaulingVehicle)
+      {
+        return false;
+      }
     }
 
     if (IsWaitingForOnboardCollider())

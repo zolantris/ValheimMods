@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using ValheimVehicles.Components;
 using ValheimVehicles.ConsoleCommands;
 using ValheimVehicles.Controllers;
+using ValheimVehicles.SharedScripts;
 using ValheimVehicles.Structs;
 namespace ValheimVehicles.UI;
 
@@ -26,32 +27,22 @@ public static class VehicleGUIItems
   ];
 
 
+  // todo translate all of this.
   public static readonly List<GenericInputAction> commandButtonActions =
   [
     new()
     {
-      title = "Hull debugger",
-      OnButtonPress = VehicleGui.ToggleConvexHullDebugger
-    },
-    new()
-    {
-      title = "Physics Debugger",
-      OnButtonPress = VehicleGui.ToggleColliderDebugger
-    },
-    new()
-    {
-      title = "Raft Creative",
+      title = ModTranslations.VehicleCommand_RaftCreative ?? "Raft Creative",
       OnButtonPress = VehicleCommands.ToggleCreativeMode
     },
     new()
     {
-      title = "Save Vehicle",
+      title = ModTranslations.VehicleCommand_SaveVehicle ?? "Save Vehicle",
       OnButtonPress = VehicleStorageController.SaveClosestVehicle
     },
     new()
     {
-      title = "Open Save Vehicle Selector",
-      // action = VehicleGui.OpenVehicleSelectorGUi,
+      title = ModTranslations.VehicleCommand_OpenSelector ?? "Open Save Vehicle Selector",
       inputType = InputType.Dropdown,
       OnCreateDropdown = (dropdown) =>
       {
@@ -59,17 +50,16 @@ public static class VehicleGUIItems
         VehicleStorageController.RefreshVehicleSelectionGui(dropdown);
       },
       OnDropdownChanged = VehicleGui.VehicleSelectOnDropdownChanged
-      // OnPointerEnterAction = VehicleStorageAPI.RefreshVehicleSelectionGui
     },
     new()
     {
-      title = "[Admin] Spawn Selected Vehicle",
+      title = ModTranslations.VehicleCommand_SpawnSelected ?? "[Admin] Spawn Selected Vehicle",
       OnButtonPress = VehicleStorageController.SpawnSelectedVehicle,
       IsAdminOnly = true
     },
     new()
     {
-      title = "Zero Ship Rotation X/Z",
+      title = ModTranslations.VehicleCommand_ZeroRotation ?? "Zero Ship Rotation X/Z",
       OnButtonPress = () =>
       {
         var onboardHelpers = VehicleDebugHelpers.GetOnboardVehicleDebugHelper();
@@ -78,12 +68,17 @@ public static class VehicleGUIItems
     },
     new()
     {
-      title = "Toggle Ocean Sway",
+      title = ModTranslations.VehicleCommand_ToggleMaskEditor ?? "Toggle WaterMask Editor",
+      OnButtonPress = VehicleCommands.ToggleColliderEditMode
+    },
+    new()
+    {
+      title = ModTranslations.VehicleCommand_ToggleOceanSway ?? "Toggle Ocean Sway",
       OnButtonPress = VehicleCommands.VehicleToggleOceanSway
     },
     new()
     {
-      title = "Rebuild Bounds",
+      title = ModTranslations.VehicleCommand_RebuildBounds ?? "Rebuild Bounds",
       IsAdminOnly = true,
       OnButtonPress = () =>
       {
@@ -93,15 +88,25 @@ public static class VehicleGUIItems
         vpc.ForceRebuildBounds();
       }
     },
+    new()
+    {
+      title = ModTranslations.VehicleCommand_HullDebugger ?? "Hull debugger",
+      OnButtonPress = VehicleGui.ToggleConvexHullDebugger
+    },
+    new()
+    {
+      title = ModTranslations.VehicleCommand_PhysicsDebugger ?? "Physics Debugger",
+      OnButtonPress = VehicleGui.ToggleColliderDebugger
+    },
 #if DEBUG
     new()
     {
-      title = "Destroy Current Vehicle",
+      title = ModTranslations.VehicleCommand_DestroyVehicle ?? "Destroy Current Vehicle",
       OnButtonPress = VehicleCommands.DestroyCurrentVehicle
     },
     new()
     {
-      title = "Config",
+      title = ModTranslations.VehicleCommand_ConfigPanel ?? "Config",
       OnButtonPress = () =>
       {
         VehicleGui.ToggleConfigPanelState(true);

@@ -4,7 +4,10 @@ using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
 using ValheimVehicles.Controllers;
+using ValheimVehicles.Shared.Constants;
+using ValheimVehicles.Structs;
 using ZdoWatcher;
+using ZdoWatcher.ZdoWatcher.Utils;
 using Logger = Jotunn.Logger;
 
 namespace ValheimVehicles.Components;
@@ -45,7 +48,7 @@ public class RopeAnchorComponent : MonoBehaviour, Interactable, Hoverable
 
     public override int GetHashCode()
     {
-      return (Id << 1) & Index;
+      return Id << 1 & Index;
     }
 
     public override bool Equals(object obj)
@@ -91,8 +94,8 @@ public class RopeAnchorComponent : MonoBehaviour, Interactable, Hoverable
   private static string AttachToText = "";
   private static string StartAttachText = "";
   private static string HaulingStartText = "";
-  private static string HaulingStopText = ""; 
-  
+  private static string HaulingStopText = "";
+
 
   private static readonly Dictionary<string, string[]> m_attachmentPoints =
     GetAttachmentPoints();
@@ -164,7 +167,7 @@ public class RopeAnchorComponent : MonoBehaviour, Interactable, Hoverable
   {
     return "";
   }
-  
+
 
   public string GetHoverText()
   {
@@ -172,7 +175,7 @@ public class RopeAnchorComponent : MonoBehaviour, Interactable, Hoverable
     {
       return HaulingStopText;
     }
-    
+
     if (m_draggingRopeTo != this)
       return $"{StartAttachText}\n{HaulingStartText}";
 
@@ -405,7 +408,7 @@ public class RopeAnchorComponent : MonoBehaviour, Interactable, Hoverable
         pkg.Write(m_ropes[i].m_ropeAnchorTarget.Index);
       }
 
-      m_nview.m_zdo.Set("MBRopeAnchor_Ropes", pkg.GetArray());
+      m_nview.m_zdo.Set(VehicleZdoVars.RopeConnections, pkg.GetArray());
     }
   }
 
@@ -529,7 +532,7 @@ public class RopeAnchorComponent : MonoBehaviour, Interactable, Hoverable
           rb.transform.InverseTransformPoint(targetTransform.position);
       }
 
-      if ((!rb && rope.m_ropeTarget.transform.parent == transform.parent) ||
+      if (!rb && rope.m_ropeTarget.transform.parent == transform.parent ||
           rb == m_rigidbody)
       {
         rope.m_rope.useWorldSpace = false;
@@ -566,20 +569,27 @@ public class RopeAnchorComponent : MonoBehaviour, Interactable, Hoverable
         CreateNewRope(ropeId);
   }
 
+  /// <summary>
+  /// Gets the rope target from the ZDO.
+  /// </summary>
+  ///
+  /// WARNING (TODO)
+  /// - this might not be persisting rope targets that do not have a persistentID
+  /// 
   public static int GetRopeTarget(ZDOID zdoid)
   {
     var zdoparent = ZDOMan.instance.GetZDO(zdoid);
     if (zdoparent != null)
       return ZdoWatchController.Instance.GetOrCreatePersistentID(zdoparent);
 
-    return ZdoWatchController.ZdoIdToId(zdoid);
+    return ZdoUtils.ZdoIdToId(zdoid);
   }
 
   private void GetRopesFromZDO(ICollection<RopeAttachmentTarget> ropeIds)
   {
     try
     {
-      var bytesPkg = m_nview.m_zdo.GetByteArray("MBRopeAnchor_Ropes");
+      var bytesPkg = m_nview.m_zdo.GetByteArray(VehicleZdoVars.RopeConnections);
       if (bytesPkg != null && bytesPkg.Length != 0)
       {
         var pkg = new ZPackage(bytesPkg);

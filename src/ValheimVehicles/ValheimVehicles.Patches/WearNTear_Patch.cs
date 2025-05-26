@@ -6,14 +6,16 @@
   using HarmonyLib;
   using UnityEngine;
   using ValheimVehicles.Components;
-  using ValheimVehicles.Config;
+  using ValheimVehicles.BepInExConfig;
   using ValheimVehicles.Controllers;
   using ValheimVehicles.Interfaces;
   using ValheimVehicles.Prefabs;
   using ValheimVehicles.Prefabs.Registry;
+  using ValheimVehicles.Shared.Constants;
   using ValheimVehicles.SharedScripts;
   using ValheimVehicles.Structs;
   using ZdoWatcher;
+  using ZdoWatcher.ZdoWatcher.Utils;
 
 #endregion
 
@@ -68,7 +70,7 @@
       var hasParentVehicleHash = parentVehicleHash != 0;
       if (!hasParentVehicleHash) return false;
 
-      var id = ZdoWatchController.ZdoIdToId(__instance.m_nview.GetZDO().m_uid);
+      var id = ZdoUtils.ZdoIdToId(__instance.m_nview.GetZDO().m_uid);
       var zdoExists = ZdoWatchController.Instance.GetZdo(id);
       if (zdoExists == null) return false;
 
@@ -98,7 +100,7 @@
       if (pieceController == null && RamPrefabs.IsRam(__instance.name))
       {
         var vehicle = __instance.GetComponentInParent<VehicleManager>();
-        if (vehicle.PiecesController != null)
+        if (vehicle != null && vehicle.PiecesController != null)
         {
           vehicle.PiecesController?.DestroyPiece(__instance);
         }
@@ -213,7 +215,7 @@
         __instance.GetComponentInParent<IPieceActivatorHost>();
       if (baseVehicle == null) return true;
 
-      // makes all support values below 1f very high
+      // makes all support values below 1f very high for anything within a vehicle/swivel/activator
       if (!Mathf.Approximately(__instance.m_support, 1500f) && __instance.m_nview != null && __instance.m_nview.GetZDO() != null)
       {
         __instance.m_nview.GetZDO().Set(ZDOVars.s_support, 1500f);

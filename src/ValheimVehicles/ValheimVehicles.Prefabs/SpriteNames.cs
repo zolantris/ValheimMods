@@ -10,6 +10,11 @@ public abstract class SpriteNames
   public const string ShipSteeringWheel = "steering_wheel";
   public const string DirtFloor = "dirtfloor_icon";
   public const string BoardingRamp = "boarding_ramp";
+
+  // Material icons for power source/storage
+  public const string Power_Source_Icon = "power_source";
+  public const string Power_Storage_Icon = "power_storage";
+
   public const string WaterOpacityBucket = "water_opacity_bucket";
   public const string WaterFloatationHeight = "sailing_boat_float";
   public const string TankTreadIcon = "tank_tread_icon";
@@ -69,9 +74,13 @@ public abstract class SpriteNames
 
   // Mechanisms
   public const string MechanismSwitch = "mechanism_switch";
-  public const string ElectricPylon = "mechanism_electric_pylon";
-  public const string CoalEngine = "mechanism_engine_coal";
+  public const string PowerPylon = "mechanism_power_pylon";
+  public const string PowerSourceCoal = "mechanism_power_source_coal";
+  public const string PowerSourceEitr = "mechanism_power_source_eitr";
+  public const string PowerStorageEitr = "mechanism_power_storage_eitr";
   public const string MechanismSwivel = "swivel";
+
+  public const string MechanismActivatorPlate = "mechanism_activator_plate";
 
 
   /// <summary>

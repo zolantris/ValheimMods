@@ -11,6 +11,7 @@
   using ValheimVehicles.Helpers;
   using ValheimVehicles.Integrations;
   using ValheimVehicles.Interfaces;
+  using ValheimVehicles.Shared.Constants;
   using ValheimVehicles.SharedScripts;
   using ValheimVehicles.Structs;
   using ZdoWatcher;
@@ -190,7 +191,7 @@
         list.Add(netView);
       }
 
-      if (SwivelComponentIntegration.ActiveInstances.TryGetValue(swivelParentId, out var swivel))
+      if (SwivelComponentBridge.ActiveInstances.TryGetValue(swivelParentId, out var swivel))
       {
         swivel.StartActivatePendingSwivelPieces();
       }

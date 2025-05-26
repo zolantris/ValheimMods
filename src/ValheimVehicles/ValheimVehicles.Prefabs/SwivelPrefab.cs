@@ -27,14 +27,14 @@ public class SwivelPrefab : RegisterPrefab<SwivelPrefab>
     var prefab = PrefabManager.Instance.CreateClonedPrefab(PrefabNames.SwivelPrefabName, LoadValheimVehicleAssets.Mechanism_Swivel);
     PrefabRegistryHelpers.AddNetViewWithPersistence(prefab);
 
-    prefab.AddComponent<SwivelComponentIntegration>();
+    prefab.AddComponent<SwivelComponentBridge>();
     PrefabRegistryHelpers.AddPieceForPrefab(PrefabNames.SwivelPrefabName, prefab);
 
     PieceManager.Instance.AddPiece(new CustomPiece(prefab, true,
       new PieceConfig
       {
         PieceTable = PrefabRegistryController.GetPieceTableName(),
-        Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Tools),
+        Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Power),
         Enabled = true,
         Requirements =
         [

@@ -6,6 +6,7 @@ using System.Linq;
 using Jotunn.Entities;
 using Jotunn.Managers;
 using UnityEngine;
+using ZdoWatcher.ZdoWatcher.Utils;
 using Zolantris.Shared.Debug;
 using Logger = Jotunn.Logger;
 
@@ -23,12 +24,14 @@ public class ZdoWatchController : MonoBehaviour
 
   private CustomRPC RPC_RequestPersistentIdInstance;
 
+  public static string RPC_RequestPersistentId_Name = "ZdoWatcherController_RPC_RequestSync";
+
   // In theory, we only need to hit the server then iterate and force send the zdos directly to the peer instead of the other way around.
   // We call SyncToPeer when which does this.
   public void Awake()
   {
     RPC_RequestPersistentIdInstance = NetworkManager.Instance.AddRPC(
-      "RPC_RequestSync",
+      RPC_RequestPersistentId_Name,
       RequestPersistentIdRPCServerReceive, null);
   }
 
@@ -65,7 +68,7 @@ public class ZdoWatchController : MonoBehaviour
   {
     var persistentId = package.ReadInt();
     var zdoPeer = ZDOMan.instance.GetPeer(sender);
-    Logger.LogMessage($"Sending first id across to peer {persistentId}");
+    Logger.LogDebug($"Sending first id across to peer {persistentId}");
     var zdoId = GetZdo(persistentId);
     if (zdoId != null && zdoPeer != null)
     {
@@ -73,7 +76,7 @@ public class ZdoWatchController : MonoBehaviour
     }
     else
     {
-      Logger.LogMessage(
+      Logger.LogDebug(
         "RequestPersistentIdRPCServerReceive called but zdoid not found, attempting to sync all ids to peer");
       SyncToPeer(zdoPeer);
     }
@@ -129,7 +132,7 @@ public class ZdoWatchController : MonoBehaviour
   public IEnumerator GetZdoFromServerAsync(int persistentId,
     Action<ZDO?> onComplete)
   {
-    if (ZNet.instance.IsServer())
+    if (ZNet.instance.IsServer() && ZNet.instance.IsDedicated())
     {
       var zdo = GetZdo(persistentId);
       Logger.LogWarning(
@@ -155,7 +158,6 @@ public class ZdoWatchController : MonoBehaviour
 
     RequestZdoFromServer(persistentId);
     yield return WaitForZdo(persistentId, onComplete);
-    Logger.LogDebug("GetZdoFromServerAsync finished");
   }
 
   private IEnumerator WaitForZdo(int persistentId, Action<ZDO?> onComplete,
@@ -197,16 +199,16 @@ public class ZdoWatchController : MonoBehaviour
   }
 
 
-  public void Reset() => _zdoGuidLookup.Clear();
+  public void Reset()
+  {
+    _zdoGuidLookup.Clear();
+  }
 
   public static bool GetPersistentID(ZDO zdo, out int id)
   {
     id = zdo.GetInt(ZdoVarController.PersistentUidHash, 0);
     return id != 0;
   }
-
-  public static int ZdoIdToId(ZDOID zdoid) =>
-    (int)zdoid.UserID + (int)zdoid.ID;
 
   public int GetOrCreatePersistentID(ZDO? zdo)
   {
@@ -220,7 +222,7 @@ public class ZdoWatchController : MonoBehaviour
 
     var id = zdo.GetInt(ZdoVarController.PersistentUidHash, 0);
     if (id != 0) return id;
-    id = ZdoIdToId(zdo.m_uid);
+    id = ZdoUtils.ZdoIdToId(zdo.m_uid);
 
     // If the ZDO is not unique/exists in the dictionary, this number must be incremented to prevent a collision
     while (_zdoGuidLookup.ContainsKey(id))

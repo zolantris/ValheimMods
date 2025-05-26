@@ -59,36 +59,36 @@ public static class YggdrasilConfig
         $"The default collision layer {DefaultCollisionLayer} call of LayerMask.NameToLayer failed to return a valid result, due to this issue it will default the layer to 0. Please consider overriding the layer or contacting the mod owner to fix this. This error should not happen and likely something has destructively re-named a fundamental layer value.");
     }
 
-    AllowCollisionsOnYggdrasilBranch = config.Bind(ConfigSection,
+    AllowCollisionsOnYggdrasilBranch = config.BindUnique(ConfigSection,
       "AllowCollisionsOnYggdrasilBranch", true,
       ConfigHelpers.CreateConfigDescription(
         "Allows collisions on the Yggdrasil branch. Toggling will add/remove this behavior.",
         true, false));
 
-    Debug = config.Bind(ConfigSection,
+    Debug = config.BindUnique(ConfigSection,
       "Debug", false,
       ConfigHelpers.CreateConfigDescription(
         "Enables debug logging and features, useful for debugging the mod, does NOT allow exploits.",
         true, true));
 
-    OverridesSectionEnabled = config.Bind(LayersSection,
+    OverridesSectionEnabled = config.BindUnique(LayersSection,
       LayerOverridesName, false,
       ConfigHelpers.CreateConfigDescription(
         "Enables allows overrides for collisions and other values for mod compatibility. Do not enable this unless you need to otherwise values set within overrides will require a reset of the config.",
         true, true));
 
 
-    BranchCollisionLayerMask = config.Bind(LayersSection,
+    BranchCollisionLayerMask = config.BindUnique(LayersSection,
       "BranchCollisionLayerMask", DefaultCollisionMask,
       ConfigHelpers.CreateConfigDescription(
         $"Controls what game layers can be set as collisions. {LayersSectionSharedDescription}",
         true, true));
-    BranchLayer = config.Bind(LayersSection,
+    BranchLayer = config.BindUnique(LayersSection,
       "BranchLayer", LayerMask.NameToLayer(DefaultCollisionLayer),
       new ConfigDescription(
         $"Controls what layer the branch is on. This will affect building, do not change this unless you know what you are doing. Default should be {DefaultCollisionLayer}. {LayersSectionSharedDescription}",
         new AcceptableValueRange<int>(0, 31),
-        new ConfigurationManagerAttributes()
+        new ConfigurationManagerAttributes
           { IsAdminOnly = true, IsAdvanced = true }));
 
     if (!OverridesSectionEnabled.Value)

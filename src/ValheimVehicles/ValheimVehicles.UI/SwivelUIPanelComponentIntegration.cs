@@ -1,16 +1,17 @@
 using System;
 using UnityEngine;
 using UnityEngine.UI;
-using ValheimVehicles.Config;
+using ValheimVehicles.BepInExConfig;
 using ValheimVehicles.Constants;
+using ValheimVehicles.Helpers;
 using ValheimVehicles.Integrations;
+using ValheimVehicles.SharedScripts;
 using ValheimVehicles.SharedScripts.UI;
 namespace ValheimVehicles.UI;
 
 public class SwivelUIPanelComponentIntegration : SwivelUIPanelComponent
 {
   public Action<Text>? OnPanelToggleAction;
-  private SwivelComponentIntegration m_swivelComponentIntegration;
 
   public Unity2dViewStyles buttonStyles = new()
   {
@@ -31,12 +32,12 @@ public class SwivelUIPanelComponentIntegration : SwivelUIPanelComponent
 
   public void OnEnable()
   {
-    OnPanelToggleAction += OnPanelToggle;
+    // OnPanelToggleAction += OnPanelToggle;
   }
 
   public void OnDisable()
   {
-    OnPanelToggleAction -= OnPanelToggle;
+    // OnPanelToggleAction -= OnPanelToggle;
   }
 
   public static void Init()
@@ -47,26 +48,110 @@ public class SwivelUIPanelComponentIntegration : SwivelUIPanelComponent
     }
   }
 
-  public override void OnBindTo()
+  public void TryGetCurrentSwivelIntegration()
   {
-    if (CurrentSwivel == null) return;
-    m_swivelComponentIntegration = CurrentSwivel.gameObject.GetComponent<SwivelComponentIntegration>();
+    if (!_currentSwivel && Player.m_localPlayer)
+    {
+      SwivelHelpers.FindAllSwivelsWithinRange(Player.m_localPlayer.transform.position, out _, out _currentSwivel);
+    }
   }
 
-  // todo hide/show the panel from here if we want to keep hide show buttons otherwise do not use this method.
-  public void OnPanelToggle(Text text)
+  public override void BindTo(SwivelComponent target, bool isToggle = false)
   {
-    if (text == null) return;
-    var nextState = !panelRoot.activeSelf;
-    text.text = "X";
+    if (!target)
+    {
+      LoggerProvider.LogDebug("No swivel to open this panel");
+      Destroy(panelRoot);
+      return;
+    }
+
+    if (_currentSwivel)
+    {
+      var swivelComponentIntegration = _currentSwivel as SwivelComponentBridge;
+      if (swivelComponentIntegration != null)
+      {
+        swivelComponentIntegration.prefabConfigSync.Load();
+      }
+    }
+
+    base.BindTo(target, isToggle);
   }
 
-  protected override void OnPanelUpdate()
+  public void SyncUIFromPartialConfig(SwivelCustomConfig updated)
   {
-    if (!m_swivelComponentIntegration || !m_swivelComponentIntegration.m_nview || !m_swivelComponentIntegration.m_nview.IsValid()) return;
-    m_swivelComponentIntegration.m_config.ApplyFrom(m_swivelComponentIntegration);
-    m_swivelComponentIntegration.m_config.Save(m_swivelComponentIntegration.m_nview.m_zdo, m_swivelComponentIntegration.m_config);
-    m_swivelComponentIntegration.prefabConfigSync.SendPrefabConfig();
+    if (_currentSwivel == null) return;
+    if (IsEditing) return;
+
+    // Ignore MotionState (readonly)
+    var old = _currentPanelConfig;
+
+    if (updated.Mode != old.Mode)
+    {
+      modeDropdown.value = (int)updated.Mode;
+      _currentPanelConfig.Mode = updated.Mode;
+      RefreshUI();
+    }
+
+    if (!Mathf.Approximately(updated.InterpolationSpeed, old.InterpolationSpeed))
+    {
+      movementLerpRow.GetComponentInChildren<Slider>().SetValueWithoutNotify(updated.InterpolationSpeed);
+      _currentPanelConfig.InterpolationSpeed = updated.InterpolationSpeed;
+    }
+
+    if (updated.HingeAxes != old.HingeAxes)
+    {
+      var toggles = hingeAxisRow.GetComponentsInChildren<Toggle>();
+      if (toggles.Length == 3)
+      {
+        toggles[0].isOn = updated.HingeAxes.HasFlag(HingeAxis.X);
+        toggles[1].isOn = updated.HingeAxes.HasFlag(HingeAxis.Y);
+        toggles[2].isOn = updated.HingeAxes.HasFlag(HingeAxis.Z);
+      }
+      _currentPanelConfig.HingeAxes = updated.HingeAxes;
+    }
+
+    if (updated.MaxEuler != old.MaxEuler)
+    {
+      maxXRow.GetComponentInChildren<Slider>().value = updated.MaxEuler.x;
+      maxYRow.GetComponentInChildren<Slider>().value = updated.MaxEuler.y;
+      maxZRow.GetComponentInChildren<Slider>().value = updated.MaxEuler.z;
+      _currentPanelConfig.MaxEuler = updated.MaxEuler;
+    }
+
+    if (updated.MovementOffset != old.MovementOffset)
+    {
+      targetDistanceXRow.GetComponentInChildren<Slider>().value = updated.MovementOffset.x;
+      targetDistanceYRow.GetComponentInChildren<Slider>().value = updated.MovementOffset.y;
+      targetDistanceZRow.GetComponentInChildren<Slider>().value = updated.MovementOffset.z;
+      _currentPanelConfig.MovementOffset = updated.MovementOffset;
+    }
+
+    // Optional: update MotionState label visually if needed
+    motionStateDropdown.value = (int)updated.MotionState;
+    IsEditing = false;
+  }
+
+
+  protected override void OnPanelSave()
+  {
+    TryGetCurrentSwivelIntegration();
+    var swivelComponentIntegration = _currentSwivel as SwivelComponentBridge;
+    if (!swivelComponentIntegration || !swivelComponentIntegration.IsNetViewValid()) return;
+
+    // We do not let local overrides of this readonly value.
+    var saveConfig = new SwivelCustomConfig();
+    saveConfig.ApplyFrom(_currentPanelConfig);
+
+    // overrides/guards for config
+    saveConfig.MotionState = swivelComponentIntegration.MotionState;
+
+    if (saveConfig.Mode == SwivelMode.None && modeDropdown.value != (int)SwivelMode.None)
+    {
+      LoggerProvider.LogWarning("Swivel is in None mode, but the UI does not match. Not saving. This is a bug.");
+      return;
+    }
+
+    swivelComponentIntegration.prefabConfigSync.Request_CommitConfigChange(saveConfig);
   }
 
   private const string PanelName = "ValheimVehicles_SwivelPanel";

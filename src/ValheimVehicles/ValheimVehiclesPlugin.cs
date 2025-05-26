@@ -2,15 +2,20 @@
 using System.Collections;
 using BepInEx.Configuration;
 using JetBrains.Annotations;
+using ServerSync;
 using UnityEngine;
+using ValheimVehicles.Compat;
 using ValheimVehicles.Components;
-using ValheimVehicles.Config;
+using ValheimVehicles.BepInExConfig;
 using ValheimVehicles.Constants;
 using ValheimVehicles.Controllers;
+using ValheimVehicles.Integrations;
 using ValheimVehicles.QuickStartWorld.Config;
 using ValheimVehicles.SharedScripts;
+using ValheimVehicles.SharedScripts.PowerSystem;
 using ValheimVehicles.SharedScripts.UI;
 using ValheimVehicles.UI;
+using ValheimVehicles.ValheimVehicles.Plugins;
 using Zolantris.Shared.Debug;
 
 namespace ValheimVehicles;
@@ -35,13 +40,14 @@ public class ValheimVehiclesPlugin : MonoBehaviour
   private MapPinSync _mapPinSync;
   private SwivelUIPanelComponentIntegration _swivelUIPanel;
   private ScreenSizeWatcher _screenSizeWatcher;
-  private ElectricityController _electricityController;
+  private PowerNetworkControllerIntegration _powerNetworkController;
 
   public static ValheimVehiclesPlugin Instance { get; private set; }
   private Coroutine? translationRoutine = null;
 
   private void Awake()
   {
+    LoggerProvider.LogInfo("Plugin ValheimVehicles (AWAKE) called on server.");
     Instance = this;
     _languageRetry = new RetryGuard(Instance);
   }
@@ -55,16 +61,18 @@ public class ValheimVehiclesPlugin : MonoBehaviour
       yield return null;
     }
     Localization.OnLanguageChange += OnLanguageChanged;
+    OnLanguageChanged();
 
+    ModTranslations.ForceUpdateTranslations();
     // must wait for next-frame otherwise Awake and other lifecycles might not have fired for translations api.
     yield return new WaitForFixedUpdate();
-    OnLanguageChanged();
+    ModTranslations.ForceUpdateTranslations();
     yield return new WaitForSeconds(3f);
     ModTranslations.ForceUpdateTranslations();
 
 
     // wait a bit then fire next update. ModTranslations API is flaky on init.
-    yield return new WaitForSeconds(20f);
+    yield return new WaitForSeconds(10f);
     _languageRetry.Reset();
     OnLanguageChanged();
 
@@ -120,7 +128,7 @@ public class ValheimVehiclesPlugin : MonoBehaviour
     _mapPinSync = gameObject.AddComponent<MapPinSync>();
     _swivelUIPanel = gameObject.AddComponent<SwivelUIPanelComponentIntegration>();
     _screenSizeWatcher = gameObject.AddComponent<ScreenSizeWatcher>();
-    _electricityController = gameObject.AddComponent<ElectricityController>();
+    _powerNetworkController = gameObject.AddComponent<PowerNetworkControllerIntegration>();
   }
 
   private void OnLanguageChanged()
@@ -136,19 +144,21 @@ public class ValheimVehiclesPlugin : MonoBehaviour
     }
   }
 
+  internal static ConfigSync ModConfigSync = null!;
 
   /// <summary>
   /// This should only be called from the ValheimRAFT mod.
   /// </summary>
   /// <param name="config"></param>
   [UsedImplicitly]
-  public static void CreateConfigFromValheimRAFTPluginConfig(ConfigFile config)
+  public static void CreateConfigFromValheimRAFTPluginConfig(ConfigSync configSync, ConfigFile config)
   {
     if (HasCreatedConfig)
     {
       return;
     }
 
+    ModConfigSync = configSync;
 
     PatchConfig.BindConfig(config);
     RamConfig.BindConfig(config);
@@ -165,7 +175,9 @@ public class ValheimVehiclesPlugin : MonoBehaviour
     RenderingConfig.BindConfig(config);
     VehicleGlobalConfig.BindConfig(config);
     GuiConfig.BindConfig(config);
+    PowerSystemConfig.BindConfig(config);
 
+    LoggerProvider.LogInfo("Plugin ValheimVehicles started on server.");
 
 #if DEBUG
     // Meant for only being run in debug builds for testing quickly

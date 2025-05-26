@@ -7,7 +7,7 @@
   using JetBrains.Annotations;
   using UnityEngine;
   using ValheimVehicles.Components;
-  using ValheimVehicles.Config;
+  using ValheimVehicles.BepInExConfig;
   using ValheimVehicles.Helpers;
   using ValheimVehicles.Interfaces;
   using ValheimVehicles.Patches;
@@ -538,7 +538,7 @@
     public static void RemovePlayerBlockingCameraWhileOnboard(Player player)
     {
       if (!PhysicsConfig.removeCameraCollisionWithObjectsOnBoat.Value) return;
-      if (Player.m_localPlayer == player &&
+      if (Player.m_localPlayer == player && GameCamera.instance != null &&
           GameCamera.instance.m_blockCameraMask != 0)
         GameCamera.instance.m_blockCameraMask = 0;
     }

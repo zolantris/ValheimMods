@@ -4,9 +4,10 @@ using System.Linq;
 using Jotunn.Managers;
 using UnityEngine;
 using UnityEngine.Serialization;
-using ValheimVehicles.Config;
+using ValheimVehicles.BepInExConfig;
 using ValheimVehicles.Controllers;
 using ValheimVehicles.Prefabs;
+using ValheimVehicles.Shared.Constants;
 using ValheimVehicles.SharedScripts;
 using ValheimVehicles.Structs;
 using Logger = Jotunn.Logger;
@@ -22,7 +23,7 @@ public class CustomMeshCreatorComponent : MonoBehaviour
     WaterMask
   }
 
-  MeshRenderer meshRenderer;
+  private MeshRenderer meshRenderer;
 
   private static readonly Dictionary<MeshCreatorTypeEnum,
       List<CustomMeshCreatorComponent>>
@@ -37,19 +38,25 @@ public class CustomMeshCreatorComponent : MonoBehaviour
     selectedCreatorType = mCreatorType;
   }
 
-  public GameObject GetMeshPrefab() => selectedCreatorType switch
+  public GameObject GetMeshPrefab()
   {
-    MeshCreatorTypeEnum.WaterMask => PrefabManager.Instance.GetPrefab(
-      PrefabNames.CustomWaterMask),
-    _ => throw new ArgumentOutOfRangeException(nameof(selectedCreatorType),
-      selectedCreatorType, null)
-  };
+    return selectedCreatorType switch
+    {
+      MeshCreatorTypeEnum.WaterMask => PrefabManager.Instance.GetPrefab(
+        PrefabNames.CustomWaterMask),
+      _ => throw new ArgumentOutOfRangeException(nameof(selectedCreatorType),
+        selectedCreatorType, null)
+    };
+  }
 
-  public int GetRequiredNumber() => selectedCreatorType switch
+  public int GetRequiredNumber()
   {
-    MeshCreatorTypeEnum.WaterMask => 8,
-    _ => throw new ArgumentOutOfRangeException()
-  };
+    return selectedCreatorType switch
+    {
+      MeshCreatorTypeEnum.WaterMask => 8,
+      _ => throw new ArgumentOutOfRangeException()
+    };
+  }
 
   public static void DestroyAll(MeshCreatorTypeEnum cType)
   {

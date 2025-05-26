@@ -17,6 +17,15 @@
         <IsRunnableServer Condition="'$(Configuration)' == 'Release Run Server' or '$(Configuration)' == 'Debug Run Server'">true</IsRunnableServer>
         <IsRunnableClient Condition="'$(IsRunnableRelease)' == 'true' or '$(IsRunnableDebug)' == 'true'">true</IsRunnableClient>
         <IsRunnable Condition="'$(IsRunnableRelease)' == 'true' or '$(IsRunnableDebug)' == 'true'">true</IsRunnable>
+        <!--        <IsRunnable Condition="'$(Configuration)' == 'Debug Run Client' or-->
+        <!--                          '$(Configuration)' == 'Debug Run Server' or-->
+        <!--                          '$(Configuration)' == 'Debug Run ClientServer' or-->
+        <!--                          '$(Configuration)' == 'Release Run Client' or-->
+        <!--                          '$(Configuration)' == 'Release Run Server' or-->
+        <!--                          '$(Configuration)' == 'Release Run ClientServer'">true-->
+        <!--        </IsRunnable>-->
+        <IsRunnable>true</IsRunnable>
+        <!--        <IsRunnable Condition="'$(IsRunnable)' != 'true'">false</IsRunnable>-->
         <IsDebug Condition="'$(Configuration)' == 'Debug' or '$(IsRunnableDebug)' == 'true'">true</IsDebug>
         <IsRelease Condition="'$(Configuration)' == 'Release' or '$(IsRunnableRelease)' == 'true'">true</IsRelease>
         <IsNotArchive Condition="'$(Configuration)' != 'Release Archive' and '$(Configuration)' != 'ReleaseBETA Archive'">true</IsNotArchive>
@@ -64,6 +73,13 @@
     <ItemGroup>
         <Reference Include="Newtonsoft.Json" Version="13.0.3">
             <HintPath>$(SolutionDir)\plugins\Newtonsoft.Json.dll</HintPath>
+        </Reference>
+    </ItemGroup>
+
+    <!-- Required for vehicle syncing (lots of players not using bepinex config manager)   -->
+    <ItemGroup>
+        <Reference Include="ServerSync" Version="1.19.0">
+            <HintPath>$(SolutionDir)\plugins\ServerSync.dll</HintPath>
         </Reference>
     </ItemGroup>
 
@@ -378,14 +394,15 @@
     </Target>
 
     <!--     and $(IsRunnableClientServer) == 'true' or '$(IsRunnableServer)' == 'true'-->
-    <Target Name="copy_to_valheim_server" AfterTargets="convert_pdb_to_mdb" KeepDuplicateOutputs="false" Condition="$(AssemblyName) != 'SentryUnityWrapper' and '$(ServerFileExitCode)' == '0'">
+    <Target Name="copy_to_valheim_server" AfterTargets="convert_pdb_to_mdb" KeepDuplicateOutputs="false" Condition="'$(IsRunnable)' == 'true' and $(AssemblyName) != 'SentryUnityWrapper' and '$(ServerFileExitCode)' == '0'">
         <ItemGroup>
             <CheckValheimServerPath Include="$(ValheimServerPath)"/>
         </ItemGroup>
         <Error Condition="!Exists('@(CheckValheimServerPath)')"/>
 
         <MakeDir Directories="$(ValheimServerPath)\$(PluginDeployTarget)"/>
-        <Exec Command="copy &quot;$(SolutionDir)plugins\Newtonsoft.Json.dll&quot; &quot;$(PluginDeployPath)\Newtonsoft.Json.dll&quot;"/>
+        <Exec Command="copy &quot;$(SolutionDir)plugins\Newtonsoft.Json.dll&quot; &quot;$(ValheimServerPath)\$(PluginDeployTarget)\Newtonsoft.Json.dll&quot;"/>
+        <Exec Command="copy &quot;$(SolutionDir)plugins\ServerSync.dll&quot; &quot;$(ValheimServerPath)\$(PluginDeployTarget)\ServerSync.dll&quot;"/>
 
         <Exec Command="copy &quot;$(OutDir)$(AssemblyName).dll&quot; &quot;$(ValheimServerPath)\$(PluginDeployTarget)\$(AssemblyName).dll&quot;"/>
         <Exec Command="copy &quot;$(OutDir)$(AssemblyName).pdb&quot; &quot;$(ValheimServerPath)\$(PluginDeployTarget)\$(AssemblyName).pdb&quot;"/>
@@ -396,12 +413,14 @@
         <!--        <Exec Condition="Exists('$(AssetsDir)')" Command="xcopy /d &quot;$(AssetsDir)&quot; &quot;$(ValheimServerPath)\$(PluginDeployTarget)\Assets\&quot; /E/H/Y"/>-->
         <!--        <Exec Condition="Exists('$(AssetsDir)Translations\English\')" Command="xcopy /d &quot;$(AssetsDir)Translations\English\&quot; &quot;$(ValheimServerPath)\$(PluginDeployTarget)\Assets\Translations\English\&quot; /E/H/Y"/>-->
     </Target>
-    <Target Name="Copy_To_R2ModMan" AfterTargets="convert_pdb_to_mdb" Condition="'$(IsNotArchive)' == 'true' and '$(IsRunnableServer)' != 'true' and '$(ClientFileExitCode)' == '0'">
+    <Target Name="Copy_To_R2ModMan" AfterTargets="convert_pdb_to_mdb" Condition="'$(IsRunnable)' == 'true' and '$(IsNotArchive)' == 'true' and '$(IsRunnableServer)' != 'true' and '$(ClientFileExitCode)' == '0'">
         <!--  Eventually we need to copy and test this lib over in unity     -->
         <!--        <Exec Condition="'$(IsRelease)' == 'true'" Command="copy &quot;$(OutDir)$(AssemblyName).dll&quot; &quot;$(SolutionDir)src\ValheimRAFT\ValheimRAFT.Unity\Assets\Assemblies\$(AssemblyName).dll&quot;"/>-->
 
         <!--    required plugins  -->
         <Exec Command="copy &quot;$(SolutionDir)plugins\Newtonsoft.Json.dll&quot; &quot;$(PluginDeployPath)\Newtonsoft.Json.dll&quot;"/>
+        <Exec Command="copy &quot;$(SolutionDir)plugins\ServerSync.dll&quot; &quot;$(PluginDeployPath)\ServerSync.dll&quot;"/>
+
 
         <Exec Command="copy &quot;$(OutDir)$(AssemblyName).dll&quot; &quot;$(PluginDeployPath)\$(AssemblyName).dll&quot;"/>
         <Exec Command="copy &quot;$(OutDir)$(AssemblyName).pdb&quot; &quot;$(PluginDeployPath)\$(AssemblyName).pdb&quot;"/>
@@ -416,7 +435,9 @@
     <!--     Condition=" $(AssemblyName) == 'ValheimRAFT' And Exists('$(SandboxiePluginDeployPath)') And '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' "-->
     <Target Name="Copy_To_R2ModMan_vm" AfterTargets="Copy_To_R2ModMan" Condition="'$(IsRunnable)' == 'true' and '$(SandBoxieFileExitCode)' == '0'">
         <!--   Will only run if the above passes     -->
-        <Exec Command="copy &quot;$(SolutionDir)plugins\Newtonsoft.Json.dll&quot; &quot;$(PluginDeployPath)\Newtonsoft.Json.dll&quot;"/>
+        <Exec Command="copy &quot;$(SolutionDir)plugins\Newtonsoft.Json.dll&quot; &quot;$(SandboxiePluginDeployPath)\Newtonsoft.Json.dll&quot;"/>
+        <Exec Command="copy &quot;$(SolutionDir)plugins\ServerSync.dll&quot; &quot;$(SandboxiePluginDeployPath)\ServerSync.dll&quot;"/>
+
         <Exec Condition="Exists('$(OutDir)$(AssemblyName).dll')" Command="copy &quot;$(OutDir)$(AssemblyName).dll&quot; &quot;$(SandboxiePluginDeployPath)\$(AssemblyName).dll&quot;"/>
         <Exec Condition="Exists('$(OutDir)$(AssemblyName).pdb')" Command="copy &quot;$(OutDir)$(AssemblyName).pdb&quot; &quot;$(SandboxiePluginDeployPath)\$(AssemblyName).pdb&quot;"/>
         <Exec Condition="Exists('$(OutDir)$(AssemblyName).mdb')" Command="copy &quot;$(OutDir)$(AssemblyName).mdb&quot; &quot;$(SandboxiePluginDeployPath)\$(AssemblyName).mdb&quot;"/>
@@ -449,6 +470,8 @@
         <Exec Command="if not exist &quot;$(TmpDir)$(AssemblyName)&quot; mkdir &quot;$(TmpDir)$(AssemblyName)&quot;"/>
 
         <Exec Command="copy &quot;$(SolutionDir)plugins\Newtonsoft.Json.dll&quot; &quot;$(TmpDir)plugins\Newtonsoft.Json.dll&quot;"/>
+        <Exec Command="copy &quot;$(SolutionDir)plugins\ServerSync.dll&quot; &quot;$(TmpDir)\plugins\ServerSync.dll&quot;"/>
+
         <Exec Command="copy &quot;$(OutDir)$(AssemblyName).dll&quot; &quot;$(TmpDir)plugins\$(AssemblyName).dll&quot;"/>
         <Exec Command="copy &quot;$(OutDir)$(AssemblyName).pdb&quot; &quot;$(TmpDir)plugins\$(AssemblyName).pdb&quot;"/>
         <Exec Command="copy &quot;$(RepoDir)README.md&quot; &quot;$(TmpDir)README.md&quot;"/>
@@ -498,6 +521,8 @@
         <Exec Command="if not exist &quot;$(TmpDir)$(AssemblyName)&quot; mkdir &quot;$(TmpDir)$(AssemblyName)&quot;"/>
 
         <Exec Command="copy &quot;$(SolutionDir)plugins\Newtonsoft.Json.dll&quot; &quot;$(TmpDir)plugins\Newtonsoft.Json.dll&quot;"/>
+        <Exec Command="copy &quot;$(SolutionDir)plugins\ServerSync.dll&quot; &quot;$(TmpDir)\plugins\ServerSync.dll&quot;"/>
+
         <Exec Command="copy &quot;$(OutDir)$(AssemblyName).dll&quot; &quot;$(TmpDir)plugins\$(AssemblyName).dll&quot;"/>
         <Exec Command="copy &quot;$(OutDir)$(AssemblyName).pdb&quot; &quot;$(TmpDir)plugins\$(AssemblyName).pdb&quot;"/>
         <Exec Command="copy &quot;$(SolutionDir)src\ValheimRAFT\README.md&quot; &quot;$(TmpDir)README.md&quot;"/>

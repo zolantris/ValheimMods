@@ -1,11 +1,11 @@
 ﻿#region
 
-  using System;
-  using System.Collections;
-  using System.Collections.Generic;
-  using System.Linq;
-  using Unity.Collections;
-  using UnityEngine;
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
+using Unity.Collections;
+using UnityEngine;
 
 #endregion
 
@@ -52,6 +52,8 @@
 
       public HullGenerationMode selectedHullGenerationMode = HullGenerationMode.ConvexHullForeground;
 
+      private readonly ConvexHullCalculator m_convexHullCalculator = new();
+
       public readonly Dictionary<GameObject, PrefabPieceData> m_prefabPieceDataItems = new();
       internal int _lastPieceRevision = 1;
 
@@ -68,8 +70,6 @@
       internal bool _shouldUpdateVehicleColliders;
 
       internal bool isInitialPieceActivationComplete;
-
-      private readonly ConvexHullCalculator m_convexHullCalculator = new();
       private List<Vector3> normals = new();
       private List<int> tris = new();
 
@@ -80,6 +80,11 @@
         m_convexHullAPI.convexHullMeshes;
       public List<GameObject> convexHullTriggerMeshes =>
         m_convexHullAPI.convexHullTriggerMeshes;
+
+      public bool IsActivationComplete
+      {
+        get;
+      }
 
       public virtual void Awake()
       {
@@ -187,6 +192,12 @@
         //   }
         // }
 
+        // will only update if there is a subscription for this texture.
+        if (isInitialPieceActivationComplete)
+        {
+          m_meshClusterComponent.ScheduleRebuildCombinedMeshes(piece);
+        }
+
         if (shouldRebuild)
         {
           RequestBoundsRebuild();
@@ -260,7 +271,6 @@
           WheelController.Initialize(bounds);
         }
       }
-
       public virtual int GetPieceCount()
       {
         return m_prefabPieceDataItems.Count;
@@ -273,14 +283,14 @@
       /// <returns></returns>
       internal virtual IEnumerator RebuildBoundsThrottleRoutine(Action onRebuildReadyCallback)
       {
-        var hasMinimumWait = _lastRebuildTime + 40 < Time.fixedTime && Mathf.Abs(m_prefabPieceDataItems.Count - _lastRebuildItemCount) > 20f;
-        if (hasMinimumWait)
-        {
-          yield return new WaitForSeconds(RebuildPieceMinDelay);
-          _rebuildBoundsRoutineInstance = null;
-          onRebuildReadyCallback.Invoke();
-          yield break;
-        }
+        // var hasMinimumWait = _lastRebuildTime + 40 < Time.fixedTime && Mathf.Abs(m_prefabPieceDataItems.Count - _lastRebuildItemCount) > 20f;
+        // if (hasMinimumWait)
+        // {
+        //   yield return new WaitForSeconds(RebuildPieceMinDelay);
+        //   _rebuildBoundsRoutineInstance = null;
+        //   onRebuildReadyCallback.Invoke();
+        //   yield break;
+        // }
 
         var pieceCount = GetPieceCount();
         if (pieceCount <= 0)

@@ -9,7 +9,7 @@ using Registry;
 using UnityEngine;
 using UnityEngine.U2D;
 using ValheimVehicles.Components;
-using ValheimVehicles.Config;
+using ValheimVehicles.BepInExConfig;
 using ValheimVehicles.Prefabs.Registry;
 using ValheimVehicles.Prefabs.ValheimVehicles.Prefabs.Registry;
 using ValheimVehicles.SharedScripts;
@@ -172,6 +172,39 @@ public static class PrefabRegistryController
     tier4.Piece.m_description = SailPrefabs.GetTieredSailAreaText(4);
   }
 
+#if DEBUG
+  public static void LogRegisteredPieces()
+  {
+    LoggerProvider.LogInfo($"Piece table registered? VehicleHammerTable is null: {VehicleHammerTableRegistry.VehicleHammerTable == null}");
+
+    foreach (var table in Resources.FindObjectsOfTypeAll<PieceTable>())
+    {
+      var pieces = table.m_pieces;
+      var name = table.name;
+
+      LoggerProvider.LogInfo($"Piece table: {name}, has {pieces.Count} pieces");
+
+      foreach (var piece in pieces)
+      {
+        LoggerProvider.LogInfo($" - Piece: {piece?.name}");
+      }
+    }
+
+    if (VehicleHammerTableRegistry.VehicleHammerTable?.PieceTable == null)
+    {
+      LoggerProvider.LogError("VehicleHammerTable or its PieceTable is null.");
+      return;
+    }
+
+    LoggerProvider.LogInfo($"VehicleHammerTable real name: {VehicleHammerTableRegistry.VehicleHammerTable.PieceTable.name}");
+    LoggerProvider.LogInfo($"Registered pieces in VehicleHammerTable:");
+
+    foreach (var piece in VehicleHammerTableRegistry.VehicleHammerTable.PieceTable.m_pieces)
+    {
+      LoggerProvider.LogInfo($" - {piece.name}");
+    }
+  }
+#endif
 
   /**
    * initializes the bundle for ValheimVehicles
@@ -188,7 +221,7 @@ public static class PrefabRegistryController
 
     try
     {
-// todo call Assembly.GetExecutingAssembly if we move the asset bundle into ValheimVehicles mod.
+      // Assembly.GetExecutingAssembly if this mod is migrated to a BepInExPlugin
       vehicleAssetBundle =
         AssetUtils.LoadAssetBundleFromResources("valheim-vehicles",
           Assembly.GetCallingAssembly());
@@ -214,6 +247,15 @@ public static class PrefabRegistryController
 
       // must be called after RegisterAllPrefabs and AssetBundle assignment to be safe.
       SetupComponents();
+
+
+#if DEBUG
+      var canLog = false;
+      if (canLog)
+      {
+        LogRegisteredPieces();
+      }
+#endif
     }
     catch (Exception e)
     {

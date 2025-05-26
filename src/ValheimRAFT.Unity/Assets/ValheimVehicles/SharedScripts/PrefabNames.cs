@@ -11,6 +11,29 @@
   namespace ValheimVehicles.SharedScripts
   {
 
+    public static class PrefabNameHashes
+    {
+      public static readonly int Mechanism_Power_Pylon = PrefabNames.Mechanism_Power_Pylon.GetStableHashCode();
+
+      public static readonly int Mechanism_Power_Source_Coal =
+        PrefabNames.Mechanism_Power_Source_Coal.GetStableHashCode();
+
+      public static readonly int Mechanism_Power_Source_Eitr =
+        PrefabNames.Mechanism_Power_Source_Eitr.GetStableHashCode();
+
+      public static readonly int Mechanism_Power_Conduit_Charge_Plate =
+        PrefabNames.Mechanism_Power_Conduit_Charge_Plate.GetStableHashCode();
+      public static readonly int Mechanism_Power_Conduit_Drain_Plate =
+        PrefabNames.Mechanism_Power_Conduit_Drain_Plate.GetStableHashCode();
+
+      public static readonly int Mechanism_Power_Storage_Eitr =
+        PrefabNames.Mechanism_Power_Storage_Eitr.GetStableHashCode();
+
+      public static readonly int Mechanism_Power_Consumer_Swivel = PrefabNames.SwivelPrefabName.GetStableHashCode();
+      public static readonly int Mechanism_Power_Consumer_LandVehicle = PrefabNames.LandVehicle.GetStableHashCode();
+      public static readonly int Mechanism_Power_Consumer_WaterVehicle = PrefabNames.WaterVehicleShip.GetStableHashCode();
+    }
+
     /**
      * @todo register translatable pieceName and pieceDescription based on these names for easy lookups
      *
@@ -35,13 +58,13 @@
         FourByEight
       }
 
-      private static readonly string ValheimVehiclesPrefix = "ValheimVehicles";
+      public static readonly string ValheimVehiclesPrefix = "ValheimVehicles";
 
       public static readonly string LandVehicle = $"{ValheimVehiclesPrefix}_VehicleLand";
       public static readonly string AirVehicle = $"{ValheimVehiclesPrefix}_VehicleAir";
       public static readonly string WheelSet = $"{ValheimVehiclesPrefix}_WheelSet";
 
-      public static readonly string MBRopeAnchor = "MBRopeAnchor";
+      public const string MBRopeAnchor = "MBRopeAnchor";
 
       public static readonly string CustomWaterFloatation =
         $"{ValheimVehiclesPrefix}_CustomWaterFloatation";
@@ -199,11 +222,22 @@
       public static readonly string Mechanism_ToggleSwitch =
         $"{ValheimVehiclesPrefix}_ToggleSwitch";
 
-      public static readonly string Mechanism_ElectricPylon =
-        $"{ValheimVehiclesPrefix}_ElectricityPylon";
+      public static readonly string Mechanism_Power_Pylon =
+        $"{ValheimVehiclesPrefix}_Power_Pylon";
 
-      public static readonly string Mechanism_CoalEngine =
-        $"{ValheimVehiclesPrefix}_CoalEngine";
+      public static readonly string Mechanism_Power_Source_Coal =
+        $"{ValheimVehiclesPrefix}_Power_Source_Coal";
+
+      public static readonly string Mechanism_Power_Source_Eitr =
+        $"{ValheimVehiclesPrefix}_Power_Source_Eitr";
+
+      public static readonly string Mechanism_Power_Conduit_Charge_Plate =
+        $"{ValheimVehiclesPrefix}_Power_Conduit_Charge_Plate";
+      public static readonly string Mechanism_Power_Conduit_Drain_Plate =
+        $"{ValheimVehiclesPrefix}_Power_Conduit_Drain_Plate";
+
+      public static readonly string Mechanism_Power_Storage_Eitr =
+        $"{ValheimVehiclesPrefix}_Power_Storage_Eitr";
 
       public static readonly string VehicleShipMovementOrientation =
         "VehicleShip_MovementOrientation";

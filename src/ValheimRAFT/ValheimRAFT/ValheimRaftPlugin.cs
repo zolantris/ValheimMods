@@ -6,6 +6,7 @@ using DynamicLocations;
 using DynamicLocations.API;
 using DynamicLocations.Controllers;
 using JetBrains.Annotations;
+using ServerSync;
 using UnityEngine;
 using UnityEngine.Rendering;
 using ValheimVehicles;
@@ -17,6 +18,7 @@ using ValheimVehicles.Prefabs;
 using ValheimVehicles.SharedScripts;
 using ValheimVehicles.Providers;
 using ValheimVehicles.Controllers;
+using ValheimVehicles.Integrations;
 using ZdoWatcher;
 using Zolantris.Shared.BepInExAutoDoc;
 namespace ValheimRAFT;
@@ -41,7 +43,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
 {
   // ReSharper disable MemberCanBePrivate.Global
   public const string Author = "zolantris";
-  public const string Version = "3.4.0";
+  public const string Version = "3.4.2";
   public const string ModName = "ValheimRAFT";
   public const string ModNameBeta = "ValheimRAFTBETA";
   public const string ModGuid = $"{Author}.{ModName}";
@@ -70,34 +72,26 @@ public class ValheimRaftPlugin : BaseUnityPlugin
     );
   }
 
+  public static ConfigSync ModConfigSync = new(ModName)
+  {
+    DisplayName = ModName,
+    CurrentVersion = GetPluginVersion(),
+    ModRequired = true,
+    IsLocked = true
+  };
+
   [UsedImplicitly]
-  public static string GetVersion()
+  public static string GetPluginVersion()
   {
     return Version;
   }
 
+  [UsedImplicitly]
+  public static string GetPluginName()
+  {
+    return ModName;
+  }
 
-  // private void CreateBaseConfig()
-  // {
-  //   EnableMetrics = Config.Bind("Debug",
-  //     "Enable Sentry Metrics (requires sentryUnityPlugin)", true,
-  //     CreateConfigDescription(
-  //       "Enable sentry debug logging. Requires sentry logging plugin installed to work. Sentry Logging plugin will make it easier to troubleshoot raft errors and detect performance bottlenecks. The bare minimum is collected, and only data related to ValheimRaft. See https://github.com/zolantris/ValheimMods/tree/main/src/ValheimRAFT#logging-metrics for more details about what is collected"));
-  // }
-
-  // /*
-  //  * aggregates all config creators.
-  //  *
-  //  * Future plans:
-  //  * - Abstract specific config directly into related files and call init here to set those values in the associated classes.
-  //  * - Most likely those items will need to be "static" values.
-  //  * - Add a watcher so those items can take the new config and process it as things update.
-  //  */
-  //
-  // private void CreateConfig()
-  // {
-  //   CreateBaseConfig();
-  // }
 
 #if DEBUG
   internal void ApplyMetricIfAvailable()
@@ -128,7 +122,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
     // must be done before any other services that require LoggerProvider otherwise it will not work.
     ProviderInitializers.InitProviders(Logger, gameObject);
     ValheimVehicles.Compat.ValheimRAFT_API.RegisterHost(Instance);
-    ValheimVehiclesPlugin.CreateConfigFromValheimRAFTPluginConfig(Config);
+    ValheimVehiclesPlugin.CreateConfigFromValheimRAFTPluginConfig(ModConfigSync, Config);
 
     // @warning patch controller must be called after CreateConfig.
     PatchController.Apply(HarmonyGuid);
@@ -148,7 +142,12 @@ public class ValheimRaftPlugin : BaseUnityPlugin
       AddCustomItemsAndPieces();
     };
 
-    ZdoWatcherDelegate.RegisterToZdoManager();
+    // generic vehicle/swivel
+    VehicleZDOWatcherDelegate.RegisterToZdoManager();
+
+    // power network mod
+    PowerSystemClusterManager.Init();
+
     AddModSupport();
 
     var renderPipeline = GraphicsSettings.defaultRenderPipeline;

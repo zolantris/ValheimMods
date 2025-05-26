@@ -5,7 +5,7 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
 using UnityEngine.Rendering;
-using ValheimVehicles.Config;
+using ValheimVehicles.BepInExConfig;
 using ValheimVehicles.SharedScripts;
 using ValheimVehicles.Components;
 using Logger = Jotunn.Logger;
@@ -116,7 +116,7 @@ public class CustomMeshPrefabs : IRegisterPrefab
     collider.excludeLayers = LayerHelpers.CustomRaftLayerMask;
     meshRenderer.material = material;
     prefab.transform.localScale = new Vector3(0.4f, 0.1f, 0.4f);
-    
+
     // No special-effects, etc. Should be completely empty area invisible.
     meshRenderer.lightProbeUsage = LightProbeUsage.Off;
     meshRenderer.receiveShadows = false;
@@ -171,7 +171,7 @@ public class CustomMeshPrefabs : IRegisterPrefab
       {
         PieceTable = PrefabRegistryController.GetPieceTableName(),
         Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Tools),
-        Enabled = true,
+        Enabled = true
       }));
   }
 
@@ -229,7 +229,7 @@ public class CustomMeshPrefabs : IRegisterPrefab
         Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
           .WaterOpacityBucket),
         Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Tools),
-        Enabled = true,
+        Enabled = true
       }));
   }
 
@@ -279,7 +279,7 @@ public class CustomMeshPrefabs : IRegisterPrefab
         Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
           .WaterOpacityBucket),
         Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Tools),
-        Enabled = true,
+        Enabled = true
       }));
   }
 }

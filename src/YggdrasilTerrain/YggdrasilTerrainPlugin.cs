@@ -28,7 +28,7 @@ public class YggdrasilTerrainPlugin : BaseUnityPlugin
 
   private void Awake()
   {
-    YggdrasilConfig.BindConfig(Config);
+    Yggdrasilconfig.BindUniqueConfig(Config);
     _harmony = new Harmony(HarmonyGuid);
     _harmony.PatchAll(typeof(ZNetScene_Patch));
     RegisterCommands();

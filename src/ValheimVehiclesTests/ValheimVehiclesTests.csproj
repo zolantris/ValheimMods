@@ -1,0 +1,36 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <DefineConstants>TEST</DefineConstants>
+        <IsPackable>false</IsPackable>
+        <IsTestProject>true</IsTestProject>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.6.0"/>
+        <PackageReference Include="NUnit" Version="3.14.0"/>
+        <PackageReference Include="NUnit3TestAdapter" Version="5.0.0"/>
+        <PackageReference Include="NUnit.Analyzers" Version="3.6.1"/>
+        <PackageReference Include="coverlet.collector" Version="6.0.0"/>
+    </ItemGroup>
+
+    <ItemGroup Label="Mock APIs">
+        <Compile Include="../ValheimRAFT.Unity/Assets/ValheimVehicles/SharedScripts/SharedScripts.Modules/*.cs"/>
+    </ItemGroup>
+
+    <ItemGroup Label="PowerSystem Dep Tree">
+        <Compile Include="../ValheimRAFT.Unity/Assets/ValheimVehicles/SharedScripts/PowerSystem.Data/*.cs"/>
+        <Compile Include="../ValheimRAFT.Unity/Assets/ValheimVehicles/SharedScripts/PowerSystem.Interfaces/*.cs"/>
+        <Compile Include="../ValheimRAFT.Unity/Assets/ValheimVehicles/SharedScripts/PowerSystem/*.cs"/>
+        <Compile Include="../ValheimRAFT.Unity/Assets/ValheimVehicles/SharedScripts/PowerSystem.Enums/*.cs"/>
+        <Compile Include="../ValheimRAFT.Unity/Assets/ValheimVehicles/SharedScripts/MathUtils.cs"/>
+        <Compile Include="../ValheimRAFT.Unity/Assets/ValheimVehicles/SharedScripts/PowerSystemSimulator.cs"/>
+        <Compile Include="../ValheimRAFT.Unity/Assets/ValheimVehicles/SharedScripts/Shared.Constants/VehicleZdoVars.cs"/>
+    </ItemGroup>
+    <!--    <ItemGroup>-->
+    <!--        <ProjectReference Include="..\ValheimVehicles\ValheimVehicles.csproj"/>-->
+    <!--    </ItemGroup>-->
+</Project>

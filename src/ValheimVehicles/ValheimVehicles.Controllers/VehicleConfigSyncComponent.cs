@@ -6,7 +6,7 @@
   using UnityEngine;
   using UnityEngine.Serialization;
   using ValheimVehicles.Components;
-  using ValheimVehicles.Config;
+  using ValheimVehicles.BepInExConfig;
   using ValheimVehicles.Enums;
   using ValheimVehicles.Helpers;
   using ValheimVehicles.Interfaces;
@@ -16,49 +16,12 @@
 
   namespace ValheimVehicles.Controllers;
 
-  public class VehicleConfigSyncComponent : PrefabConfigRPCSync<VehicleCustomConfig, IVehicleConfig>, IVehicleSharedProperties
+  public class VehicleConfigSyncComponent : PrefabConfigSync<VehicleCustomConfig, IVehicleConfig>, IVehicleSharedProperties
   {
     private VehicleManager? _vehicle;
     private BoxCollider? FloatCollider => _vehicle != null ? _vehicle.FloatCollider : null;
     private VehicleFloatationMode _cachedFloatationMode = VehicleFloatationMode.Average;
     private float _cachedFloatationHeight = 0;
-
-    // public string Version
-    // {
-    //   get => VehicleConfigSync.Version;
-    //   set => VehicleConfigSync.Version = value;
-    // }
-    //
-    // public float TreadDistance
-    // {
-    //   get;
-    //   set;
-    // }
-    // public float TreadHeight
-    // {
-    //   get;
-    //   set;
-    // }
-    // public float TreadScaleX
-    // {
-    //   get;
-    //   set;
-    // }
-    // public bool HasCustomFloatationHeight
-    // {
-    //   get;
-    //   set;
-    // }
-    // public float CustomFloatationHeight
-    // {
-    //   get;
-    //   set;
-    // }
-    // public float CenterOfMassOffset
-    // {
-    //   get;
-    //   set;
-    // }
 
     public override void Awake()
     {
@@ -80,7 +43,9 @@
       }
 
       base.RegisterRPCListeners();
-      rpcHandler?.Register(nameof(RPC_SyncBounds), RPC_SyncBounds);
+
+      netView.Register(nameof(RPC_SyncBounds), RPC_SyncBounds);
+      netView.Register<ZPackage>(nameof(RPC_SyncFloatationMode), RPC_SyncFloatationMode);
 
       hasRegisteredRPCListeners = true;
     }
@@ -89,20 +54,33 @@
 
     public VehicleFloatationMode GetWaterFloatationHeightMode()
     {
-      if (CustomConfig.HasCustomFloatationHeight) return VehicleFloatationMode.Custom;
+      if (Config.HasCustomFloatationHeight) return VehicleFloatationMode.Custom;
       return PhysicsConfig.HullFloatationColliderLocation.Value;
     }
 
-    public void SendSyncFloatationMode(bool isCustom, float relativeHeight)
+    public void Request_SyncFloatationMode(bool isCustom, float relativeHeight)
     {
-      // do nothing for land-vehicles.
-      if (!_vehicle || _vehicle.IsLandVehicle) return;
+      if (!this.IsNetViewValid(out var netView)) return;
+      var pkg = new ZPackage();
+      pkg.Write(isCustom);
+      pkg.Write(relativeHeight);
+      netView.InvokeRPC(netView.GetZDO().GetOwner(), nameof(RPC_SyncFloatationMode), pkg);
+    }
 
-      // set config immediately, but it might not be updated if the ranges are out of bounds
-      CustomConfig.HasCustomFloatationHeight = isCustom;
-      CustomConfig.CustomFloatationHeight = relativeHeight;
+    private void RPC_SyncFloatationMode(long sender, ZPackage pkg)
+    {
+      if (!this.IsNetViewValid(out var netView) || !netView.IsOwner()) return;
 
-      SendPrefabConfig();
+      var isCustom = pkg.ReadBool();
+      var relativeHeight = pkg.ReadSingle();
+
+      var updated = new VehicleCustomConfig();
+      updated.ApplyFrom(Config);
+
+      updated.HasCustomFloatationHeight = isCustom;
+      updated.CustomFloatationHeight = relativeHeight;
+
+      CommitConfigChange(updated); // saves + broadcasts
     }
 
     public void SendRPCToAllClients(List<long> clients, string methodName, bool skipLocal = false)

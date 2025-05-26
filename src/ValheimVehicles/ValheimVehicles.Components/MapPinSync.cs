@@ -7,7 +7,7 @@ using DynamicLocations.Constants;
 using DynamicLocations.Controllers;
 using Jotunn.Managers;
 using UnityEngine;
-using ValheimVehicles.Config;
+using ValheimVehicles.BepInExConfig;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.SharedScripts;
 using ZdoWatcher;
@@ -55,6 +55,8 @@ public class MapPinSync : MonoBehaviour
   {
     MinimapManager.OnVanillaMapDataLoaded -= OnMapReady;
     StopAllCoroutines();
+    ClearAllVehiclePins();
+    _vehiclePins.Clear();
     refreshVehiclePinsRoutine = null;
     hasInitialized = false;
   }
@@ -109,14 +111,32 @@ public class MapPinSync : MonoBehaviour
 
   private IEnumerator UpdatePlayerSpawnPin()
   {
+    // Defensive: Always check singletons before each access (coroutines can yield, and Unity objects can become null between frames)
     if (Minimap.instance == null) yield break;
     if (PlayerSpawnController.Instance == null) yield break;
+
+    // Attempt to get the player spawn ZDO if not cached
     if (cachedPlayerSpawnZdo == null)
       yield return PlayerSpawnController.Instance.FindDynamicZdo(
         LocationVariation.Spawn,
         data => { cachedPlayerSpawnZdo = data; });
 
+    // Re-check: Did we get a valid ZDO?
     if (cachedPlayerSpawnZdo == null)
+    {
+      ClearSpawnPin(cachedLastBedPinData);
+      yield break;
+    }
+
+    // Defensive: Ensure Minimap and m_pins are still valid
+    if (Minimap.instance == null || Minimap.instance.m_pins == null)
+    {
+      ClearSpawnPin(cachedLastBedPinData);
+      yield break;
+    }
+
+    // Defensive: Check if Player.m_localPlayer is valid
+    if (Player.m_localPlayer == null)
     {
       ClearSpawnPin(cachedLastBedPinData);
       yield break;
@@ -124,18 +144,32 @@ public class MapPinSync : MonoBehaviour
 
     var nextPosition = cachedPlayerSpawnZdo.GetPosition();
 
-    // if the previous key exists, it needs to be removed.
+    // Remove previous pin if moved
     if (cachedLastBedVector != nextPosition)
       ClearSpawnPin(cachedLastBedPinData);
 
-    // make sure the key does not already exist/not point to update it if so.
-    if (Minimap.instance.m_pins.Contains(cachedLastBedPinData)) yield break;
+    // Only add if pin does not exist
+    if (Minimap.instance.m_pins.Contains(cachedLastBedPinData))
+      yield break;
 
-    cachedLastBedPinData = Minimap.instance.AddPin(nextPosition,
+    // Add new pin, but check AddPin didn't return null
+    var newPin = Minimap.instance.AddPin(
+      nextPosition,
       Minimap.PinType.Bed,
-      "Spawn", false, false, Player.m_localPlayer.GetOwner());
+      "Spawn",
+      false, false,
+      Player.m_localPlayer.GetOwner());
+
+    if (newPin == null)
+    {
+      Debug.LogWarning("[MapPinSync] Failed to add spawn pin: AddPin returned null.");
+      yield break;
+    }
+
+    cachedLastBedPinData = newPin;
     cachedLastBedVector = nextPosition;
   }
+
 
   public IEnumerator RefreshDynamicSpawnPin()
   {
@@ -218,7 +252,9 @@ public class MapPinSync : MonoBehaviour
       UpdateVehiclePins();
     }
   }
-
+  /// <summary>
+  /// This will attempt to clean pins on a rapid reload so there are no null references.
+  /// </summary>
   private void ClearAllVehiclePins()
   {
     if (Minimap.instance == null) return;

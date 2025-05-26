@@ -4,7 +4,7 @@ using System.IO;
 using System.Linq;
 using Jotunn.Utils;
 using ValheimVehicles.Compat;
-using ValheimVehicles.Config;
+using ValheimVehicles.BepInExConfig;
 using Paths = BepInEx.Paths;
 using Logger = Jotunn.Logger;
 
@@ -62,7 +62,7 @@ public class CustomTextureGroup
       Logger.LogError(
         $"Invalid setup, Asset Directory missing within {assetDirectory}");
 
-    string[] files =
+    var files =
       Directory.GetFiles(Path.Combine(assetDirectory, groupName));
     return files;
   }
@@ -74,7 +74,7 @@ public class CustomTextureGroup
     group = new CustomTextureGroup();
     m_groups.Add(groupName, group);
 
-    var files = new string[] { };
+    var files = new string[] {};
 
     var modFolderName = ModSupportConfig.PluginFolderName.Value;
     /*

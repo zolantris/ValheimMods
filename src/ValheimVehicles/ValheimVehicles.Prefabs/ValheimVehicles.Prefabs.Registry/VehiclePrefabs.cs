@@ -5,7 +5,7 @@
   using Jotunn.Managers;
   using UnityEngine;
   using ValheimVehicles.Components;
-  using ValheimVehicles.Config;
+  using ValheimVehicles.BepInExConfig;
   using ValheimVehicles.Enums;
   using ValheimVehicles.SharedScripts;
   using Object = UnityEngine.Object;
@@ -110,9 +110,6 @@
       var piece =
         PrefabRegistryHelpers.AddPieceForPrefab(PrefabNames.WaterVehicleShip,
           prefab);
-      piece.m_primaryTarget = true;
-      piece.m_randomTarget = true;
-      piece.m_targetNonPlayerBuilt = true;
       piece.m_waterPiece = true;
       piece.m_noClipping = true;
       piece.m_canRotate = true;

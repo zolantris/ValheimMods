@@ -9,7 +9,7 @@ using Jotunn.Managers;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Serialization;
-using ValheimVehicles.Config;
+using ValheimVehicles.BepInExConfig;
 using ValheimVehicles.ConsoleCommands;
 using ValheimVehicles.Controllers;
 using ValheimVehicles.Prefabs;
@@ -47,7 +47,6 @@ public class VehicleDebugHelpers : MonoBehaviour
   public bool autoUpdateColliders = false;
   private List<DrawTargetColliders> targetColliders = [];
   public GameObject VehicleObj;
-  [FormerlySerializedAs("vehicleBaseControllerInstance")] [FormerlySerializedAs("vehicleBaseBaseControllerInstance")] [FormerlySerializedAs("vehicleMainControllerInstance")] [FormerlySerializedAs("vehicleControllersInstance")] [FormerlySerializedAs("VehicleShipInstance")]
   public VehicleManager vehicleManagerInstance;
   private Coroutine? _drawColliderCoroutine = null;
   private GameObject? worldCenterOfMassCube;

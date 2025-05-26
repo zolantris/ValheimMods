@@ -3,7 +3,7 @@
   using System.Collections.Generic;
   using UnityEngine;
   using UnityEngine.EventSystems;
-  using ValheimVehicles.Config;
+  using ValheimVehicles.BepInExConfig;
   using ValheimVehicles.Controllers;
   using ValheimVehicles.Interfaces;
   using ValheimVehicles.Prefabs;

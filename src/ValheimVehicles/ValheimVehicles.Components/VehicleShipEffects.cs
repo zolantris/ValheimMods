@@ -1,4 +1,4 @@
-using ValheimVehicles.Config;
+using ValheimVehicles.BepInExConfig;
 using ValheimVehicles.Prefabs;
 
 namespace ValheimVehicles.Components;

@@ -2,7 +2,7 @@ using System;
 using System.Linq;
 using UnityEngine;
 using ValheimVehicles.Components;
-using ValheimVehicles.Config;
+using ValheimVehicles.BepInExConfig;
 using ValheimVehicles.SharedScripts;
 using ValheimVehicles.Structs;
 using ZdoWatcher;

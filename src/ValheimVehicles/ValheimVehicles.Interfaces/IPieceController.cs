@@ -12,6 +12,7 @@
   /// Todo consider adding a few booleans and maybe a getter with an override to get the exact component. Like VehiclePiecesController and SwivelIntegrationComponent
   public interface IPieceController
   {
+    public Transform transform { get; }
     public string ComponentName { get; }
     public int GetPieceCount();
     public bool CanRaycastHitPiece(); // for raycast interactions with piece placement.

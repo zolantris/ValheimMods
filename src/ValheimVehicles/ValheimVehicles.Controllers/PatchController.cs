@@ -3,7 +3,7 @@ using BepInEx;
 using BepInEx.Bootstrap;
 using HarmonyLib;
 using Jotunn;
-using ValheimVehicles.Config;
+using ValheimVehicles.BepInExConfig;
 using ValheimVehicles.Patches;
 using ValheimVehicles.QuickStartWorld.Patches;
 using Zolantris.Shared;
@@ -52,6 +52,7 @@ public static class PatchController
 
 #if DEBUG
     HarmonyHelper.TryPatchAll(_harmonyInstance, typeof(QuickStartWorld_Patch));
+    // HarmonyHelper.TryPatchAll(_harmonyInstance, typeof(ZNetViewInvokeRPCHook));
 #endif
 
     if (PatchConfig.ShipPausePatch.Value)

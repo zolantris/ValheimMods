@@ -7,7 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using ValheimVehicles.Compat;
-using ValheimVehicles.Config;
+using ValheimVehicles.BepInExConfig;
 using ValheimVehicles.Constants;
 using ValheimVehicles.Controllers;
 using ValheimVehicles.Interfaces;
@@ -300,13 +300,6 @@ public class SteeringWheelComponent : MonoBehaviour, IAnimatorHandler, Hoverable
   public bool IsValid()
   {
     return this;
-  }
-
-  // Run anchor controls here only if the deprecatedMbShip is used
-  // Otherwise updates for anchor are handled in MovementController
-  public void FixedUpdate()
-  {
-    steeringWheelHoverText.FixedUpdate_UpdateText();
   }
 
   public void InitializeControls(ZNetView netView, IVehicleControllers? vehicleShip)
