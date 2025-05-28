@@ -65,6 +65,11 @@
       PrefabRegistryHelpers.SetWearNTearSupport(wnt,
         WearNTear.MaterialType.HardWood);
 
+      // no ash damage
+      wnt.m_ashDamageImmune = true;
+      wnt.m_ashDamageResist = true;
+      // no fire damage
+      wnt.m_burnable = false;
       wnt.m_onDestroyed += woodWnt.m_onDestroyed;
       // triggerPrivateArea will damage enemies/pieces when within it
       wnt.m_triggerPrivateArea = true;
@@ -96,7 +101,6 @@
       wnt.m_onDestroyed += woodWnt.m_onDestroyed;
       // triggerPrivateArea will damage enemies/pieces when within it
       wnt.m_triggerPrivateArea = true;
-
       wnt.m_supports = true;
       wnt.m_support = 2000f;
       wnt.m_noSupportWear = true;
@@ -147,7 +151,7 @@
       var piece =
         PrefabRegistryHelpers.AddPieceForPrefab(PrefabNames.LandVehicle,
           landVehiclePrefab);
-      piece.m_primaryTarget = true;
+      piece.m_primaryTarget = false;
       piece.m_randomTarget = true;
       piece.m_targetNonPlayerBuilt = true;
       piece.m_waterPiece = false;

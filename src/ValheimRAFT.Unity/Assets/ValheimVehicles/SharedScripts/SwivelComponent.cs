@@ -118,6 +118,11 @@ namespace ValheimVehicles.SharedScripts
     public static bool CanRunSwivelDuringFixedUpdate = false;
     public static bool CanRunSwivelDuringUpdate = true;
     public bool _IsReady = true;
+    internal float _motionLerp; // Always between 0 (AtStart) and 1 (AtTarget)
+    public Vector3 _motionFromLocalPos;
+    public Vector3 _motionToLocalPos;
+    public Quaternion _motionFromLocalRot;
+    public Quaternion _motionToLocalRot;
 
     public virtual void Awake()
     {
@@ -233,6 +238,27 @@ namespace ValheimVehicles.SharedScripts
       }
     }
 
+
+    // Interpolates between two states (can be called by both bridge and base logic)
+    protected void InterpolateAndMove(float t, Vector3 fromPos, Vector3 toPos, Quaternion fromRot, Quaternion toRot)
+    {
+      var pos = Vector3.Lerp(fromPos, toPos, t);
+      var rot = Quaternion.Slerp(fromRot, toRot, t);
+
+      // Always use Rigidbody moves
+      if (animatedRigidbody)
+      {
+        animatedRigidbody.Move(transform.TransformPoint(pos), transform.rotation * rot);
+      }
+      else
+      {
+        // fallback, but warn
+        LoggerProvider.LogWarning("[Swivel] animatedRigidbody missing, falling back to transform.");
+        animatedTransform.localPosition = pos;
+        animatedTransform.localRotation = rot;
+      }
+    }
+
     public virtual void SwivelUpdate()
     {
       if (!CanUpdate() || !animatedRigidbody || !animatedTransform.parent || !piecesContainer) return;
@@ -249,12 +275,12 @@ namespace ValheimVehicles.SharedScripts
       // Modes that bail early.
       if (mode == SwivelMode.Rotate && currentMotionState == MotionState.AtTarget)
       {
-        animatedTransform.localRotation = CalculateRotationTarget(1f);
+        animatedTransform.localRotation = CalculateRotationTarget(1);
         return;
       }
       if (mode == SwivelMode.Rotate && currentMotionState == MotionState.AtStart)
       {
-        animatedTransform.localRotation = CalculateRotationTarget(0f);
+        animatedTransform.localRotation = CalculateRotationTarget(0);
         return;
       }
 

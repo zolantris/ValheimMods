@@ -171,7 +171,7 @@ public class SwivelPrefabConfigRPC
       yield break;
     }
 
-    swivelComponentBridge.SetMotionUpdate(motionUpdate, true);
+    swivelComponentBridge.SetAuthoritativeMotion(motionUpdate, true);
     yield return false;
   }
 
@@ -190,7 +190,7 @@ public class SwivelPrefabConfigRPC
     var hasLocalInstance = SwivelComponentBridge.ZdoToComponent.TryGetValue(zdo, out var swivelComponentBridge);
     if (hasLocalInstance && swivelComponentBridge != null)
     {
-      swivelComponentBridge.SetMotionUpdate(new SwivelMotionUpdate
+      swivelComponentBridge.SetAuthoritativeMotion(new SwivelMotionUpdate
       {
         MotionState = completedMotionState,
         StartTime = 0f,

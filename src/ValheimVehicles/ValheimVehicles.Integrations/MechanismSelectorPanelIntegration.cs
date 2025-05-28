@@ -38,6 +38,10 @@ public class MechanismSelectorPanelIntegration : MechanismSelectorPanel
     // We do not let local overrides of this readonly value.
     var saveConfig = new MechanismSwitchCustomConfig();
     saveConfig.ApplyFrom(_currentPanelConfig);
+    mechanismSwitch.SelectedAction = _currentPanelConfig.SelectedAction;
+    mechanismSwitch.TargetSwivelId = _currentPanelConfig.TargetSwivelId;
+    mechanismSwitch.TargetSwivel = _currentPanelConfig.TargetSwivel ?? MechanismSwitchCustomConfig.ResolveSwivel(_currentPanelConfig.TargetSwivelId);
+
     mechanismSwitch.prefabConfigSync.Request_CommitConfigChange(saveConfig);
   }
 

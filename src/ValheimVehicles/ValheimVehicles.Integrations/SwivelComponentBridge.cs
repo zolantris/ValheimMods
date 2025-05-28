@@ -459,18 +459,42 @@
     // private MotionState _motionState;
     private double _motionStartTime;
     private float _motionDuration;
+    private Vector3 _motionFromPosition;
+    private Vector3 _motionToPosition;
+    private Quaternion _motionFromRotation;
+    private Quaternion _motionToRotation;
     /// <summary>
     /// For interpolated eventing.
     /// </summary>
-    /// <param name="motionUpdate"></param>
-    public void SetMotionUpdate(SwivelMotionUpdate motionUpdate, bool isAuthoritative)
+    public void SetAuthoritativeMotion(SwivelMotionUpdate motionUpdate, bool isAuthoritative)
     {
       _isAuthoritativeMotionActive = isAuthoritative;
       Config.MotionState = motionUpdate.MotionState;
-
       _motionStartTime = motionUpdate.StartTime;
       _motionDuration = motionUpdate.Duration;
+
+      // Always capture "from" state as current animatedTransform.local values
+      _motionFromLocalPos = animatedTransform.localPosition;
+      _motionFromLocalRot = animatedTransform.localRotation;
+
+      if (mode == SwivelMode.Move)
+      {
+        _motionToLocalPos = Config.MotionState == MotionState.ToTarget
+          ? startLocalPosition + movementOffset
+          : startLocalPosition;
+        _motionToLocalRot = animatedTransform.localRotation; // unused for Move
+      }
+      else if (mode == SwivelMode.Rotate)
+      {
+        _motionToLocalRot = Config.MotionState == MotionState.ToTarget
+          ? CalculateRotationTarget(1f)
+          : CalculateRotationTarget(0f);
+        _motionToLocalPos = animatedTransform.localPosition; // unused for Rotate
+      }
     }
+
+
+    protected bool _justFinishedAuthoritativeMotion = false;
 
     public override void SwivelUpdate()
     {
@@ -478,40 +502,25 @@
       {
         var now = ZNet.instance != null ? ZNet.instance.GetTimeSeconds() : Time.time;
         var t = Mathf.Clamp01((float)((now - _motionStartTime) / _motionDuration));
+        InterpolateAndMove(t, _motionFromLocalPos, _motionToLocalPos, _motionFromLocalRot, _motionToLocalRot);
 
-        // Move
-        if (mode == SwivelMode.Move)
+        if (t >= 1f)
         {
-          Vector3 from, to;
-          if (Config.MotionState == MotionState.ToTarget)
-          {
-            from = startLocalPosition;
-            to = startLocalPosition + movementOffset;
-          }
-          else
-          {
-            from = startLocalPosition + movementOffset;
-            to = startLocalPosition;
-          }
-          animatedTransform.localPosition = Vector3.Lerp(from, to, t);
+          // Clamp exactly to end state BEFORE disabling lerp
+          InterpolateAndMove(1f, _motionFromLocalPos, _motionToLocalPos, _motionFromLocalRot, _motionToLocalRot);
+          _isAuthoritativeMotionActive = false;
+          _justFinishedAuthoritativeMotion = true; // Flag so base logic knows to do nothing for 1 frame
+
+          // _onMotionComplete?.Invoke();
+          // _onMotionComplete = null;
         }
-        // Rotate
-        if (mode == SwivelMode.Rotate)
-        {
-          Quaternion from, to;
-          if (Config.MotionState == MotionState.ToTarget)
-          {
-            from = CalculateRotationTarget(0f);
-            to = CalculateRotationTarget(1f);
-          }
-          else
-          {
-            from = CalculateRotationTarget(1f);
-            to = CalculateRotationTarget(0f);
-          }
-          animatedTransform.localRotation = Quaternion.Slerp(from, to, t);
-        }
-        // No MotionState update! Wait for server.
+        return;
+      }
+
+      // Prevent the base snap for exactly 1 frame after lerp completes
+      if (_justFinishedAuthoritativeMotion)
+      {
+        _justFinishedAuthoritativeMotion = false;
         return;
       }
 

@@ -14,6 +14,7 @@ namespace ValheimVehicles.SharedScripts
   {
     public MechanismAction SelectedAction = MechanismAction.None;
     public int TargetSwivelId = 0;
+    public SwivelComponent? TargetSwivel;
     public MechanismSwitchCustomConfig Config => this;
 
     public void ApplyFrom(IMechanismSwitchConfig component)
@@ -22,6 +23,7 @@ namespace ValheimVehicles.SharedScripts
       TargetSwivelId = component.TargetSwivel != null && component.TargetSwivel.TryGetComponent(out ZNetView view) && view.GetZDO() != null
         ? ZdoWatchController.Instance.GetOrCreatePersistentID(view.GetZDO())
         : 0;
+      TargetSwivel = ResolveSwivel(component.TargetSwivelId);
     }
 
     public int GetStableHashCode()
