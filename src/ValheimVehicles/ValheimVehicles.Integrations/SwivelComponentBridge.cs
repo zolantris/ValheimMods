@@ -4,6 +4,7 @@
   using System.Collections;
   using System.Collections.Generic;
   using System.Linq;
+  using SentryUnityWrapper;
   using UnityEngine;
   using ValheimVehicles.Components;
   using ValheimVehicles.BepInExConfig;
@@ -66,6 +67,21 @@
     public static bool ShouldSkipClientOnlyUpdate = true;
     public static bool ShouldSyncClientOnlyUpdate = false;
 
+    public override MotionState MotionState
+    {
+      get
+      {
+        currentMotionState = Config.MotionState;
+        return Config.MotionState;
+      }
+      set
+      {
+        Config.MotionState = value;
+        currentMotionState = value;
+        SetMotionState(value);
+      }
+    }
+
     public override int SwivelPersistentId
     {
       get
@@ -122,11 +138,6 @@
 
       if (!netView.IsOwner())
       {
-        if (!ShouldSkipClientOnlyUpdate)
-        {
-          Request_SetMotionState(state);
-        }
-
         // this is likely unstable
         if (ShouldSyncClientOnlyUpdate)
         {
@@ -136,13 +147,7 @@
         return;
       }
 
-      if (prefabConfigSync != null && prefabConfigSync.Config != null)
-      {
-        prefabConfigSync.Config.MotionState = state;
-      }
       base.SetMotionState(state);
-
-      Request_SetMotionState(state);
 
       if (state is MotionState.ToTarget or MotionState.ToStart)
       {
@@ -209,6 +214,12 @@
 
     public void OnEnable()
     {
+      this.WaitForZNetView((nv) =>
+      {
+        _currentZdo = nv.GetZDO();
+        ZdoToComponent.Add(_currentZdo, this);
+      });
+
       var persistentId = GetPersistentId();
       if (persistentId != 0 && !ActiveInstances.ContainsKey(persistentId))
       {
@@ -445,17 +456,18 @@
     }
 
     private bool _isAuthoritativeMotionActive;
-    private MotionState _motionState;
+    // private MotionState _motionState;
     private double _motionStartTime;
     private float _motionDuration;
     /// <summary>
     /// For interpolated eventing.
     /// </summary>
     /// <param name="motionUpdate"></param>
-    public void SetMotionUpdate(SwivelMotionUpdate motionUpdate)
+    public void SetMotionUpdate(SwivelMotionUpdate motionUpdate, bool isAuthoritative)
     {
-      _isAuthoritativeMotionActive = true;
-      _motionState = motionUpdate.MotionState;
+      _isAuthoritativeMotionActive = isAuthoritative;
+      Config.MotionState = motionUpdate.MotionState;
+
       _motionStartTime = motionUpdate.StartTime;
       _motionDuration = motionUpdate.Duration;
     }
@@ -471,7 +483,7 @@
         if (mode == SwivelMode.Move)
         {
           Vector3 from, to;
-          if (_motionState == MotionState.ToTarget)
+          if (Config.MotionState == MotionState.ToTarget)
           {
             from = startLocalPosition;
             to = startLocalPosition + movementOffset;
@@ -487,15 +499,15 @@
         if (mode == SwivelMode.Rotate)
         {
           Quaternion from, to;
-          if (_motionState == MotionState.ToTarget)
+          if (Config.MotionState == MotionState.ToTarget)
           {
-            from = Quaternion.identity;
-            to = CalculateRotationTarget();
+            from = CalculateRotationTarget(0f);
+            to = CalculateRotationTarget(1f);
           }
           else
           {
-            from = CalculateRotationTarget();
-            to = Quaternion.identity;
+            from = CalculateRotationTarget(1f);
+            to = CalculateRotationTarget(0f);
           }
           animatedTransform.localRotation = Quaternion.Slerp(from, to, t);
         }

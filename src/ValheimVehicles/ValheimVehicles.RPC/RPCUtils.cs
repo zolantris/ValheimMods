@@ -109,10 +109,14 @@ public static class RPCUtils
 
 
   /// <summary>
-  /// Runs if nearby. Requires the callback method to fire RPC to the peer.
+  /// Runs if nearby. Requires the callback method to fire RPC to the peer or local player.
   /// </summary>
   public static void RunIfNearby(ZDO zdo, float threshold, Action<long> action)
   {
+    if (ZNet.instance && Player.m_localPlayer && Vector3.Distance(zdo.GetPosition(), ZNet.instance.m_referencePosition) < threshold)
+    {
+      action(Player.m_localPlayer.GetOwner());
+    }
     if (!TryGetNearbyPeers(zdo, threshold, out var matchingPeers)) return;
     matchingPeers.ForEach(x =>
     {

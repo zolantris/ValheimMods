@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Jotunn;
 using ValheimVehicles.BepInExConfig;
 using ValheimVehicles.Constants;
 using ValheimVehicles.Interfaces;
@@ -34,7 +35,7 @@ public static class PrefabConfigRPC
     }
   }
 
-  public static void Request_SyncConfigKeys(ZDO zdo, string[] zdoPropertyKeys, long? sender = null)
+  public static void Request_SyncConfigKeys(ZDO zdo, string[] zdoPropertyKeys, long? sender = null, bool skipSelf = false)
   {
     if (zdoPropertyKeys.Length == 0)
     {
@@ -50,11 +51,20 @@ public static class PrefabConfigRPC
     foreach (var key in zdoPropertyKeys)
       pkg.Write(key);
 
+    long? playerOwner = ZNet.instance && ZNet.instance.IsLocalInstance() && Player.m_localPlayer ? Player.m_localPlayer.GetOwner() : null;
     if (!sender.HasValue)
     {
       RPCUtils.RunIfNearby(zdo, PowerSystemConfig.PowerSimulationDistanceThreshold.Value, peerId =>
       {
-        ZRoutedRpc.instance.InvokeRoutedRPC(peerId, ModRPCNames.SyncConfigKeys, pkg);
+        if (playerOwner == peerId)
+        {
+          if (skipSelf) return;
+          ConfigLoadByKeys(zdo, zdoPropertyKeys);
+        }
+        else
+        {
+          ZRoutedRpc.instance.InvokeRoutedRPC(peerId, ModRPCNames.SyncConfigKeys, pkg);
+        }
       });
     }
     else

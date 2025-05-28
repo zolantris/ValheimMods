@@ -433,21 +433,21 @@
         <Exec Condition="Exists('$(AssetsDir)Translations\English\')" Command="xcopy /d &quot;$(AssetsDir)Translations\English\&quot; &quot;$(PluginDeployPath)\Assets\Translations\English\&quot; /E/H/Y"/>
     </Target>
     <!--     Condition=" $(AssemblyName) == 'ValheimRAFT' And Exists('$(SandboxiePluginDeployPath)') And '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' "-->
-    <Target Name="Copy_To_R2ModMan_vm" AfterTargets="Copy_To_R2ModMan" Condition="'$(IsRunnable)' == 'true' and '$(SandBoxieFileExitCode)' == '0'">
-        <!--   Will only run if the above passes     -->
-        <Exec Command="copy &quot;$(SolutionDir)plugins\Newtonsoft.Json.dll&quot; &quot;$(SandboxiePluginDeployPath)\Newtonsoft.Json.dll&quot;"/>
-        <Exec Command="copy &quot;$(SolutionDir)plugins\ServerSync.dll&quot; &quot;$(SandboxiePluginDeployPath)\ServerSync.dll&quot;"/>
+<!--    <Target Name="Copy_To_R2ModMan_vm" AfterTargets="Copy_To_R2ModMan" Condition="'$(IsRunnable)' == 'true' and '$(SandBoxieFileExitCode)' == '0'">-->
+<!--        &lt;!&ndash;   Will only run if the above passes     &ndash;&gt;-->
+<!--        <Exec Command="copy &quot;$(SolutionDir)plugins\Newtonsoft.Json.dll&quot; &quot;$(SandboxiePluginDeployPath)\Newtonsoft.Json.dll&quot;"/>-->
+<!--        <Exec Command="copy &quot;$(SolutionDir)plugins\ServerSync.dll&quot; &quot;$(SandboxiePluginDeployPath)\ServerSync.dll&quot;"/>-->
 
-        <Exec Condition="Exists('$(OutDir)$(AssemblyName).dll')" Command="copy &quot;$(OutDir)$(AssemblyName).dll&quot; &quot;$(SandboxiePluginDeployPath)\$(AssemblyName).dll&quot;"/>
-        <Exec Condition="Exists('$(OutDir)$(AssemblyName).pdb')" Command="copy &quot;$(OutDir)$(AssemblyName).pdb&quot; &quot;$(SandboxiePluginDeployPath)\$(AssemblyName).pdb&quot;"/>
-        <Exec Condition="Exists('$(OutDir)$(AssemblyName).mdb')" Command="copy &quot;$(OutDir)$(AssemblyName).mdb&quot; &quot;$(SandboxiePluginDeployPath)\$(AssemblyName).mdb&quot;"/>
+<!--        <Exec Condition="Exists('$(OutDir)$(AssemblyName).dll')" Command="copy &quot;$(OutDir)$(AssemblyName).dll&quot; &quot;$(SandboxiePluginDeployPath)\$(AssemblyName).dll&quot;"/>-->
+<!--        <Exec Condition="Exists('$(OutDir)$(AssemblyName).pdb')" Command="copy &quot;$(OutDir)$(AssemblyName).pdb&quot; &quot;$(SandboxiePluginDeployPath)\$(AssemblyName).pdb&quot;"/>-->
+<!--        <Exec Condition="Exists('$(OutDir)$(AssemblyName).mdb')" Command="copy &quot;$(OutDir)$(AssemblyName).mdb&quot; &quot;$(SandboxiePluginDeployPath)\$(AssemblyName).mdb&quot;"/>-->
 
-        <Exec Condition="$(AssemblyName) == 'SentryUnityWrapper'" Command="xcopy &quot;$(SolutionDir)\SentryUnity\1.8.0\runtime&quot; &quot;$(SandboxiePluginDeployPath)\&quot; /q /s /y /i"/>
-        <!--        <Exec Condition="'$(FilesCheckExitCode)' == '0'" Command="xcopy &quot;$(TargetDir)&quot; &quot;$(SandboxiePluginDeployPath)\&quot; /q /s /y /i"/>-->
+<!--        <Exec Condition="$(AssemblyName) == 'SentryUnityWrapper'" Command="xcopy &quot;$(SolutionDir)\SentryUnity\1.8.0\runtime&quot; &quot;$(SandboxiePluginDeployPath)\&quot; /q /s /y /i"/>-->
+<!--        &lt;!&ndash;        <Exec Condition="'$(FilesCheckExitCode)' == '0'" Command="xcopy &quot;$(TargetDir)&quot; &quot;$(SandboxiePluginDeployPath)\&quot; /q /s /y /i"/>&ndash;&gt;-->
 
-        <Exec Condition="Exists('$(AssetsDir)')" Command="xcopy /d &quot;$(AssetsDir)&quot; &quot;$(SandboxiePluginDeployPath)\Assets\&quot; /E/H/Y"/>
-        <Exec Condition="Exists('$(AssetsDir)Translations\English\')" Command="xcopy /d &quot;$(AssetsDir)Translations\English\&quot; &quot;$(SandboxiePluginDeployPath)\Assets\Translations\English\&quot; /E/H/Y"/>
-    </Target>
+<!--        <Exec Condition="Exists('$(AssetsDir)')" Command="xcopy /d &quot;$(AssetsDir)&quot; &quot;$(SandboxiePluginDeployPath)\Assets\&quot; /E/H/Y"/>-->
+<!--        <Exec Condition="Exists('$(AssetsDir)Translations\English\')" Command="xcopy /d &quot;$(AssetsDir)Translations\English\&quot; &quot;$(SandboxiePluginDeployPath)\Assets\Translations\English\&quot; /E/H/Y"/>-->
+<!--    </Target>-->
     <Target Name="Generate_Mod_Archive" AfterTargets="PostBuildEvent" Condition=" '$(Configuration)|$(Platform)' == 'Release Archive|AnyCPU' ">
         <PropertyGroup>
             <RepoDir>$(SolutionDir)src\ValheimRAFT\</RepoDir>

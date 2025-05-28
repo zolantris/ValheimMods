@@ -2,63 +2,21 @@
 
 <img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/Thunderstore/icon.png" alt="ValheimRAFT Community Made Boat Hjalmere">
 
+
 This mod aims to continue support for Water based features of the original
 ValheimRAFT mod and incorporate more vehicle types, items, and mechanics within
 the mod
 and further extends its capabilities.
 
-## V3.0.0 Changes
-
-### Land Vehicles can now be built.
-
-They will be absolutely fun to use. But are unbalanced in energy and power and
-really should require rams to be enabled (but you can toggle them off).
-
-- vehicles have a bit of trouble going up mountains. But you can turn and slowly
-  move up the mountain.
-- Losing momentum can cause the vehicle to go the opposite way. Use the break or
-  keep energy going on inclines
-- There is no balance for energy / propulsion. This will be coming in another
-  update.
-- Land Vehicles can wreck forests and mine rocks. Their damage is configurable
-  through `Ram Vehicles` sections. Highly recommended to keep damage high for
-  vehicles to allow them to move.
-    - Later we can consider adding balance to damage breaking parts of the
-      vehicles and costing energy to demolish areas.
-
-### Adds hauling/towing - vikings can now lift their rafts and move them
-
-- Costs stamina and then health until it snaps.
-- Configurable to only cost stamina then snap.
-- Stamina cost is configurable.
-- Dragging vehicles will trigger ram damage. You can turn this off.
-
-### Breaking Changes
-
-- Many ValheimRAFT prefabs have been moved. Break the misplaced prefabs and
-  replace them correctly.
-
-### Other fixes
-
-- **Carts can be added on vehicles**
-- **Stability of vehicles drastically improved**. See "CenterOfMass" percentage
-  allowing you to move the center up to 50% lower than the vehicle's lowest
-  point. Or at 50% exactly at it's lowest Y point.
-- Bounds and rendering are exact. No issues with bound ever again (unless a mod
-  adds a massive collider).
-- Improved ram collisions. There is now a filter for repeated hits to ensure
-  that velocity is over a threshold other to not do a hit.
-- Improved logic to protect player when teleporting. There is a collision check
-  when the ram attempt to hit a player so it does not hit the player if they are
-  currently teleporting.
-- MapSync should have 0 Null reference errors. But this logic will continue to
-  be improved/optimize.
-
-------
-
 This mod has both a beta and a non-beta on Thunderstore. Please make sure you
 are using non-beta if you want a stable experience. If you want to test
 previews, swap to the beta variant.
+
+## Tutorial
+
+This document contains tutorials on configuring the mod.
+
+## Mod Info
 
 :warning: Warning. If you are reading this readme on the
 [ValheimMods/ValheimRAFT](https://github.com/zolantris/ValheimMods/tree/main/src/ValheimRAFT)
@@ -563,7 +521,7 @@ This logging has yet to be implemented.
 
 ---
 
-## 🏗️ Core Components
+## Core Components
 
 <table>
   <tr>
@@ -607,35 +565,60 @@ This logging has yet to be implemented.
 
 ## 🚀 Getting Started
 
-### 1. Build an Engine
+### 1. Build a power source
+
+Current prefabs: `Eitr Source`
 
 - Place a **Power Engine** on your raft or base.
 - Add valid fuel (check the tooltip).
-- Start the engine to generate power.
+- Power sources
 
 ### 2. Add Power Storage
 
-- Place a **Battery** nearby or connected via pylons.
+Current prefabs `Eitr Storage`
+
+- Place a **Battery** nearby or connected via pylons for longer distances.
 - Batteries store excess energy and help during low-fuel periods.
+- Batteries will visually fill. Each can be inspected for energy and capacity.
+- Batteries will charge a single battery before charging other batteries in
+  order amount of charge. Highest charge will always charge first.
 
 ### 3. Link With Pylons
 
-- Place **Power Pylons** to extend your network.
+- Place **Power Pylons** to extend your network. Pylons are only needed when
+  linking devices across long distances.
 - Pylons will auto-link if within range—no cables required!
+- Pylons will show electricity and connections.
 
 ### 4. Power Consumers
 
-- Attach devices (motors, winches, automation modules) to your power network.
-- They will draw power automatically when the network is supplied.
+Current prefabs: `swivel`
+
+- Place a swivel.
+- Configure a switch to target the swivel. (see mechanism switch section).
+- Provided there is power network and power charge. Clicking activate should
+  rotate or move the swivel.
+
+### Mechanism Switch
+
+The main controller for all mechanisms. Allows for configuring all mechanisms
+available in this mod.
+
+- Can open vehicle debug menu by default without any commands.
+- Can open up a swivel toggle menu
+- Can be configured to activate any single swivel within a reasonable distance (
+  50 meters). The swivel must be in a powered area.
+- Does not directly require power but swivels by default will require power to
+  activate.
 
 ---
 
-## 🧪 Example: Basic Power Network
+## Power Network Diagrams
 
 ```mermaid
 graph LR
   Engine["Engine 🔥"] -- Power --> Battery["Battery 🔋"]
-  Battery -- Power --> Consumer["Winch ⚙️"]
-  Engine -- Power --> Consumer
-  Battery -- Power --> Pylon["Pylon 🔗"]
-  Pylon -- Power --> Consumer2["Lamp 💡"]
+  Battery -- Power --> Consumer["Swivel ⚙️"]
+  ConduitInput["Conduit (Drain)"] -- Eitr/To Power --> Battery["Battery 🔋"]
+  Battery["Battery 🔋"] --> ConduitOutput["Conduit (Charge)"] -- Eitr --> Player
+```
