@@ -23,7 +23,7 @@
       private static readonly Color messageColor = new(249f, 224f, 0f, 255f);
       public string currentText = "";
       public bool canUpdate = true;
-      public Coroutine UpdateTextCoroutine;
+      private Coroutine? UpdateTextCoroutine;
 
       public static HoverFadeText CreateHoverFadeText(Transform? parent = null)
       {
@@ -99,8 +99,6 @@
             UpdateTextCoroutine = null;
             yield break;
           }
-
-          Show();
 
           if (hideTextTimer != 0f)
             timePassedSinceStateUpdate += Time.fixedDeltaTime;

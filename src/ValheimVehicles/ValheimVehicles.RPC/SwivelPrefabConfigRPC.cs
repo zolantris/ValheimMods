@@ -128,19 +128,19 @@ public class SwivelPrefabConfigRPC
   /// Motion should always be from a "ToStart" or "ToTarget" state.
   /// </summary>
   /// <param name="zdo"></param>
-  /// <param name="nextState"></param>
-  public static void Server_StartMotion(ZDO zdo, MotionState nextState)
+  /// <param name="currentState"></param>
+  public static void Server_StartMotion(ZDO zdo, MotionState currentState)
   {
     if (RPCInstance_Swivel_BroadcastMotionAnimation == null) return;
     var swivelConfig = new SwivelCustomConfig();
     swivelConfig.Load(zdo, swivelConfig);
-    var duration = SwivelComponentBridge.ComputeMotionDuration(swivelConfig, nextState);
+    var duration = SwivelComponentBridge.ComputeMotionDuration(swivelConfig, currentState);
 
     var update = new SwivelMotionUpdate
     {
       StartTime = ZNet.instance.GetTimeSeconds(), // Use the game/server clock, not Time.time!
       Duration = duration,
-      MotionState = nextState
+      MotionState = currentState
     };
 
     var pkg = new ZPackage();
@@ -154,7 +154,7 @@ public class SwivelPrefabConfigRPC
 
     if (PowerNetworkController.Instance == null) return;
     if (_pendingMotionCoroutine != null) PowerNetworkController.Instance.StopCoroutine(_pendingMotionCoroutine);
-    _pendingMotionCoroutine = PowerNetworkController.Instance.StartCoroutine(WaitAndFinishMotion(zdo, nextState, duration));
+    _pendingMotionCoroutine = PowerNetworkController.Instance.StartCoroutine(WaitAndFinishMotion(zdo, currentState, duration));
   }
 
   public static IEnumerator RPC_Swivel_BroadCastMotionUpdate(long sender, ZPackage pkg)
@@ -204,7 +204,15 @@ public class SwivelPrefabConfigRPC
     zdo.Set(SwivelCustomConfig.Key_MotionState, (int)state);
 
     PrefabConfigRPC.Request_SyncConfigKeys(zdo, [SwivelCustomConfig.Key_MotionState]);
-    Server_StartMotion(zdo, state);
+
+    if (_pendingMotionCoroutine != null && PowerNetworkController.Instance != null)
+    {
+      PowerNetworkController.Instance.StopCoroutine(_pendingMotionCoroutine);
+    }
+    if (state == MotionState.ToStart || state == MotionState.ToTarget)
+    {
+      Server_StartMotion(zdo, state);
+    }
 
     // only run subscriber update for side-effect/reload callback.
     // Dedicated server will not have any of these components so skip it.

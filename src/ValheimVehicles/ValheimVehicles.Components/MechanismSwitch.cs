@@ -37,7 +37,8 @@ public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interac
   }
   public List<SwivelComponent> nearbySwivelComponents = new();
   public MechanismSwitchConfigSync prefabConfigSync = new();
-  public MechanismSwitchCustomConfig Config => prefabConfigSync.Config;
+  public bool hasInitPrefabConfigSync = false;
+  public MechanismSwitchCustomConfig Config => this.GetOrCache<MechanismSwitchConfigSync>(ref prefabConfigSync, ref hasInitPrefabConfigSync).Config;
   public static Vector3 detachOffset = new(0f, 0.5f, 0f);
 
   public SwivelComponent? TargetSwivel
@@ -77,12 +78,8 @@ public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interac
 
   public MechanismAction SelectedAction
   {
-    get => _selectedMechanismAction;
-    set
-    {
-      _selectedMechanismAction = value;
-      OnMechanismActionUpdate(_selectedMechanismAction);
-    }
+    get => Config.SelectedAction;
+    set => Config.SelectedAction = value;
   }
 
   public List<SwivelComponent> GetNearestSwivels()
@@ -237,24 +234,6 @@ public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interac
   public void SetMechanismAction(MechanismAction action)
   {
     prefabConfigSync.Request_SetSelectedAction(action);
-  }
-
-  /// <summary>
-  /// for side-effects and hooks
-  /// </summary>
-  /// todo we may not want to keep this
-  public void OnMechanismActionUpdate(MechanismAction action)
-  {
-    if (!CanFireMechanismActionSideEffects) return;
-
-    try
-    {
-      // do stuff.
-    }
-    catch (Exception e)
-    {
-      CanFireMechanismActionSideEffects = false;
-    }
   }
 
   /// <summary>

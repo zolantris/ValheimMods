@@ -114,6 +114,10 @@ public static class RPCUtils
   public static void RunIfNearby(ZDO zdo, float threshold, Action<long> action)
   {
     if (!TryGetNearbyPeers(zdo, threshold, out var matchingPeers)) return;
-    matchingPeers.ForEach(x => action(x.m_uid));
+    matchingPeers.ForEach(x =>
+    {
+      if (x == null) return;
+      action(x.m_uid);
+    });
   }
 }

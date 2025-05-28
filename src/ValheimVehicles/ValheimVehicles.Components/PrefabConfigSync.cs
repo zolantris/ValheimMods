@@ -11,7 +11,6 @@ using ValheimVehicles.ValheimVehicles.RPC;
 
 namespace ValheimVehicles.Components;
 
-[RequireComponent(typeof(ZNetView))]
 public class PrefabConfigSync<T, TComponentInterface> : MonoBehaviour, IPrefabCustomConfigRPCSync<T> where T : ISerializableConfig<T, TComponentInterface>, new()
 {
   public ZNetView? m_nview { get; set; }

@@ -365,7 +365,7 @@
       zdo.Set(VehicleZdoVars.SwivelParentId, persistentId);
 
       m_hoverFadeText.Show();
-      m_hoverFadeText.transform.position = transform.position + Vector3.up;
+      m_hoverFadeText.transform.position = transform.position + Vector3.up * 2f;
       m_hoverFadeText.currentText = ModTranslations.Swivel_Connected;
 
       // must call this otherwise everything is in world position. 
@@ -577,18 +577,18 @@
         return;
       }
 
-      powerConsumerIntegration.Data.Load();
-
-      var isOwner = netView.IsOwner();
-      if (!isOwner || !powerConsumerIntegration)
-      {
-        // possible infinity update here...
-        PowerSystemRPC.Request_UpdatePowerConsumer(netView.GetZDO().m_uid, swivelPowerConsumer.Data);
-      }
-      else
-      {
-        powerConsumerIntegration.UpdateNetworkedData();
-      }
+      // powerConsumerIntegration.Data.Load();
+      //
+      // var isOwner = netView.IsOwner();
+      // if (!isOwner || !powerConsumerIntegration)
+      // {
+      //   // possible infinity update here...
+      //   PowerSystemRPC.Request_UpdatePowerConsumer(netView.GetZDO().m_uid, swivelPowerConsumer.Data);
+      // }
+      // else
+      // {
+      //   powerConsumerIntegration.UpdateNetworkedData();
+      // }
     }
 
     public void OnInitComplete()
