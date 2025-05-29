@@ -16,7 +16,7 @@ namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
     public PowerConduitMode Mode = PowerConduitMode.Drain;
 
     public static float MaxEitrCapMargin = 0.1f;
-    public readonly Dictionary<long, PlayerEitrData> PlayerDataById = new();
+    public readonly Dictionary<long, PlayerEitrData> PlayerPeerToData = new();
 
     // eitr vapor is the player eitr. This is different from Eitr fuel.
     public static float EitrVaporCostPerInterval = 10f;
@@ -30,7 +30,7 @@ namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
 
     public void UpdateActiveStatus()
     {
-      if (PlayerDataById.Count > 0)
+      if (PlayerPeerToData.Count > 0)
       {
         _isActive = true;
       }
@@ -81,7 +81,7 @@ namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
     public float GetAllPlayerEitr(float threshold = 0.9f)
     {
       var total = 0f;
-      foreach (var playerEitrData in PlayerDataById.Values)
+      foreach (var playerEitrData in PlayerPeerToData.Values)
       {
         total += MathX.Min(playerEitrData.EitrCapacity, playerEitrData.Eitr);
       }
@@ -96,7 +96,7 @@ namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
     public float GetAllPlayerRemainingEitrCapacity(float threshold = 0.9f)
     {
       var total = 0f;
-      foreach (var playerEitrData in PlayerDataById.Values)
+      foreach (var playerEitrData in PlayerPeerToData.Values)
       {
         total += MathX.Clamp(playerEitrData.EitrCapacity * threshold - playerEitrData.Eitr, 0, playerEitrData.EitrCapacity);
       }
@@ -152,11 +152,11 @@ namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
 
     public float TryRemoveEitrFromPlayers(float maxEnergyDrainable)
     {
-      if (Mode != PowerConduitMode.Drain || PlayerDataById.Count == 0) return 0f;
+      if (Mode != PowerConduitMode.Drain || PlayerPeerToData.Count == 0) return 0f;
 
       var totalEnergy = 0f;
 
-      foreach (var playerData in PlayerDataById.Values)
+      foreach (var playerData in PlayerPeerToData.Values)
       {
         if (totalEnergy >= maxEnergyDrainable)
           break;
@@ -177,7 +177,7 @@ namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
     {
       if (!UpdateSimulationTime(deltaTime)) return 0f;
 
-      if (PlayerDataById.Count == 0 || energyAvailableOrDrainable <= 0f)
+      if (PlayerPeerToData.Count == 0 || energyAvailableOrDrainable <= 0f)
         return 0f;
 
       var deltaEnergy = 0f;
@@ -204,7 +204,7 @@ namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
     {
       if (!CanRunSimulation(dt)) return 0f;
       if (Mode == PowerConduitMode.Drain) return 0f;
-      var totalRemainingCapacity = MathX.Min(GetAllPlayerRemainingEitrCapacity() / EitrVaporCostPerInterval, PlayerDataById.Count * EnergyChargePerInterval);
+      var totalRemainingCapacity = MathX.Min(GetAllPlayerRemainingEitrCapacity() / EitrVaporCostPerInterval, PlayerPeerToData.Count * EnergyChargePerInterval);
       return totalRemainingCapacity;
     }
 
@@ -216,7 +216,7 @@ namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
     {
       if (!CanRunSimulation(dt)) return 0f;
       if (Mode == PowerConduitMode.Charge) return 0f;
-      var totalRemainingCapacity = MathX.Min(GetAllPlayerRemainingEitrCapacity(), PlayerDataById.Count * EnergyChargePerInterval);
+      var totalRemainingCapacity = MathX.Min(GetAllPlayerRemainingEitrCapacity(), PlayerPeerToData.Count * EnergyChargePerInterval);
       return totalRemainingCapacity;
     }
 

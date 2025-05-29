@@ -44,7 +44,7 @@ public static class PlayerEitrRPC
   public static void Request_UseEitr(long playerPeerId, float amount)
   {
     // skip invoking on self.
-    if (Player.m_localPlayer && Player.m_localPlayer.GetPlayerID() == playerPeerId)
+    if (Player.m_localPlayer && Player.m_localPlayer.GetOwner() == playerPeerId)
     {
       // if the player is local player, we can just use the local player's eitr.
       Player.m_localPlayer.UseEitr(amount);
@@ -64,7 +64,7 @@ public static class PlayerEitrRPC
 #if DEBUG
     LoggerProvider.LogDebug($"Added Eitr for player {Player.m_localPlayer.GetPlayerName()}");
 #endif
-    Player.m_localPlayer.AddEitr(amount);
+    Player.m_localPlayer.UseEitr(amount);
   }
 
   private static void RPC_AddEitr(long sender, ZPackage pkg)

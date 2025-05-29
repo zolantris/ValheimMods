@@ -133,7 +133,7 @@ public class PowerSimulationTests
       Eitr = 5f,
       EitrCapacity = playerMaxEitr
     };
-    conduit.PlayerDataById.Add(playerData.PlayerId, playerData);
+    conduit.PlayerPeerToData.Add(playerData.PlayerId, playerData);
   }
 
 
@@ -325,7 +325,7 @@ public class PowerSimulationTests
       Eitr = GetPlayerEitrMock(),
       EitrCapacity = 100f
     };
-    rechargeConduit.PlayerDataById.Add(player.PlayerId, player);
+    rechargeConduit.PlayerPeerToData.Add(player.PlayerId, player);
     simulationData.Conduits.Add(rechargeConduit);
 
     PowerSystemSimulator.Simulate(simulationData);

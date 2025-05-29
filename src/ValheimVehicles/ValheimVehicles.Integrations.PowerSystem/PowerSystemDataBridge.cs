@@ -151,14 +151,14 @@ public partial class PowerConduitData : IPowerComputeZdoSync
   public void SanitizePlayerDataDictionary()
   {
     var keysToRemove = new List<long>();
-    foreach (var playerEitrData in PlayerDataById)
+    foreach (var playerEitrData in PlayerPeerToData)
     {
-      if (PlayerDataById.ContainsKey(playerEitrData.Key))
+      if (PlayerPeerToData.ContainsKey(playerEitrData.Key))
       {
         keysToRemove.Add(playerEitrData.Key);
       }
     }
-    keysToRemove.ForEach(x => PlayerDataById.Remove(x));
+    keysToRemove.ForEach(x => PlayerPeerToData.Remove(x));
   }
 
   public bool AddOrUpdate(long playerId, float currentEitr, float maxEitr)
@@ -167,41 +167,24 @@ public partial class PowerConduitData : IPowerComputeZdoSync
 
     var playerData = new PlayerEitrDataBridge(playerId, currentEitr, maxEitr, this);
 
-    if (PlayerDataById.ContainsKey(playerId))
+    if (PlayerPeerToData.ContainsKey(playerId))
     {
-      PlayerDataById[playerData.PlayerId] = playerData;
+      PlayerPeerToData[playerData.PlayerId] = playerData;
     }
     else
     {
-      PlayerDataById.Add(playerData.PlayerId, playerData);
+      PlayerPeerToData.Add(playerData.PlayerId, playerData);
     }
 
     return true;
   }
 
-  public void RemovePlayer(long playerId)
+  public void RemovePlayer(long playerPeerId)
   {
-    var player = Player.GetPlayer(playerId);
-    if (!player)
+    if (!PlayerPeerToData.Remove(playerPeerId))
     {
       SanitizePlayerDataDictionary();
     }
-
-    RemovePlayer(player);
-
-  }
-
-  public void RemovePlayer(Player player)
-  {
-    if (!player)
-    {
-      LoggerProvider.LogWarning("Player could not be found or is null. This means the conduits could have null values");
-      SanitizePlayerDataDictionary();
-      return;
-    }
-    PlayerDataById.Remove(player.GetPlayerID());
-
-    SanitizePlayerDataDictionary();
   }
 
   /// <summary>
@@ -268,7 +251,7 @@ public partial class PowerConduitData : IPowerComputeZdoSync
     return PowerConduitMode.Drain;
   }
 
-  public bool HasPlayersWithEitr => GetAllPlayerEitr() > 0f;
+  public bool HasPlayersWithEitr => GetAllPlayerEitr() > 1f;
 
   // ----------------------------------------
   // Lifecycle
@@ -301,10 +284,10 @@ public partial class PowerConduitData : IPowerComputeZdoSync
 
   public float AddEitrToPlayers(float energyBudget)
   {
-    if (PlayerDataById.Count == 0 || energyBudget <= 0f) return 0f;
+    if (PlayerPeerToData.Count == 0 || energyBudget <= 0f) return 0f;
 
-    List<PlayerEitrData> validReceivers = new(PlayerDataById.Count);
-    foreach (var playerEitrData in PlayerDataById.Values)
+    List<PlayerEitrData> validReceivers = new(PlayerPeerToData.Count);
+    foreach (var playerEitrData in PlayerPeerToData.Values)
     {
       if (playerEitrData.Eitr > 0.1f)
         validReceivers.Add(playerEitrData);

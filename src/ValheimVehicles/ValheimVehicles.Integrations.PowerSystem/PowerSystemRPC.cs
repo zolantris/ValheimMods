@@ -15,8 +15,8 @@ namespace ValheimVehicles.Integrations.PowerSystem
 {
   public static class PowerSystemRPC
   {
-    private const string RPC_PlayerEnteredConduit_Name = "PowerSystem_PlayerEnteredConduit";
-    private const string RPC_PlayerExitedConduit_Name = "PowerSystem_PlayerExitedConduit";
+    private const string RPC_Conduit_PlayerExitedConduit_Name = "PowerSystem_Conduit_PlayerExitedConduit";
+    private const string RPC_Conduit_OfferAllEitr_Name = "PowerSystem_ConduitOfferAllEitr";
     private const string RPC_NotifyZDOsChanged_Name = "PowerSystem_NotifyZDOsChanged";
     private const string RPC_UpdatePowerConsumer_Name = "PowerSystem_UpdatePowerConsumer";
     public static bool hasRegistered = false;
@@ -24,7 +24,6 @@ namespace ValheimVehicles.Integrations.PowerSystem
     // fuel
     private const string RPC_AddFuelToSource_Name = "PowerSystem_AddFuelToSource";
     private const string RPC_CommitFuelUsed_Name = "PowerSystem_CommitFuelUsed";
-    private const string RPC_ConduitOfferAllEitr_Name = "PowerSystem_ConduitOfferAllEitr";
 
     private static CustomRPC? RPC_CommitFuelUsedInstance;
     private static CustomRPC? RPC_NotifyZDOsChanged;
@@ -44,9 +43,9 @@ namespace ValheimVehicles.Integrations.PowerSystem
       if (hasRegistered) return;
       try
       {
-        ZRoutedRpc.instance.Register<ZPackage>(RPC_PlayerExitedConduit_Name, RPC_PlayerExitedConduit);
+        ZRoutedRpc.instance.Register<ZPackage>(RPC_Conduit_PlayerExitedConduit_Name, RPC_Conduit_PlayerExitedConduit);
+        ZRoutedRpc.instance.Register<ZPackage>(RPC_Conduit_OfferAllEitr_Name, RPC_Conduit_OfferAllEitr);
         ZRoutedRpc.instance.Register<ZPackage>(RPC_UpdatePowerConsumer_Name, RPC_UpdatePowerConsumer);
-        ZRoutedRpc.instance.Register<ZPackage>(RPC_ConduitOfferAllEitr_Name, RPC_ConduitOfferAllEitr);
       }
       catch (Exception e)
       {
@@ -178,7 +177,7 @@ namespace ValheimVehicles.Integrations.PowerSystem
       }
     }
 
-    private static void RPC_PlayerExitedConduit(long sender, ZPackage pkg)
+    private static void RPC_Conduit_PlayerExitedConduit(long sender, ZPackage pkg)
     {
       var conduitId = pkg.ReadZDOID();
       var playerId = pkg.ReadLong();
@@ -199,10 +198,10 @@ namespace ValheimVehicles.Integrations.PowerSystem
       data.RemovePlayer(playerId);
     }
 
-    public static void Server_UpdatePowerConsumer(ZDO zdo)
+    public static void Server_UpdatePowerConsumer(ZDO zdo, bool isDemanding)
     {
       if (!PowerSystemRegistry.TryGetData<PowerConsumerData>(zdo, out var powerData)) return;
-      powerData.SetDemandState(true);
+      powerData.SetDemandState(isDemanding);
       powerData.SetActive(true);
       powerData.SetPowerIntensity(PowerIntensityLevel.Low);
       powerData.Save();
@@ -221,22 +220,15 @@ namespace ValheimVehicles.Integrations.PowerSystem
 
       foreach (var player in players)
       {
-        pkg.Write(player.GetPlayerID());
+        pkg.Write(player.GetOwner());
         pkg.Write(player.GetEitr());
         pkg.Write(player.GetMaxEitr());
       }
 
-      ZRoutedRpc.instance.InvokeRoutedRPC(ZRoutedRpc.instance.GetServerPeerID(), RPC_ConduitOfferAllEitr_Name, pkg);
+      ZRoutedRpc.instance.InvokeRoutedRPC(ZRoutedRpc.instance.GetServerPeerID(), RPC_Conduit_OfferAllEitr_Name, pkg);
     }
 
-    public static void RPC_ConduitCommitEitrOffer(long sender, ZPackage pkg)
-    {
-      pkg.SetPos(0);
-      var amountToCommit = pkg.ReadInt();
-      Player.m_localPlayer.UseEitr(amountToCommit);
-    }
-
-    public static void RPC_ConduitOfferAllEitr(long sender, ZPackage pkg)
+    public static void RPC_Conduit_OfferAllEitr(long sender, ZPackage pkg)
     {
       pkg.SetPos(0);
       var conduitZDOID = pkg.ReadZDOID();
@@ -252,10 +244,10 @@ namespace ValheimVehicles.Integrations.PowerSystem
       var playerCount = pkg.ReadInt();
       for (var i = 0; i < playerCount; i++)
       {
-        var playerId = pkg.ReadLong();
+        var playerPeerId = pkg.ReadLong();
         var eitrAmount = pkg.ReadSingle();
         var eitrMaxAmount = pkg.ReadSingle();
-        conduitData.AddOrUpdate(playerId, eitrAmount, eitrMaxAmount);
+        conduitData.AddOrUpdate(playerPeerId, eitrAmount, eitrMaxAmount);
       }
     }
 
@@ -347,7 +339,7 @@ namespace ValheimVehicles.Integrations.PowerSystem
       var pkg = new ZPackage();
       pkg.Write(conduitId);
       pkg.Write(playerId);
-      ZRoutedRpc.instance.InvokeRoutedRPC(RPC_PlayerExitedConduit_Name, pkg);
+      ZRoutedRpc.instance.InvokeRoutedRPC(RPC_Conduit_PlayerExitedConduit_Name, pkg);
     }
 
     public static bool shouldForceUpdateClusterOnZDOChange = false;

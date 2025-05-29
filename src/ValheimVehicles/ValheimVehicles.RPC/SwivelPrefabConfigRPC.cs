@@ -247,6 +247,9 @@ public class SwivelPrefabConfigRPC
       }, false);
     }
     _pendingMotionUpdateLerps.Remove(zdo.m_uid);
+
+    PowerSystemRPC.Server_UpdatePowerConsumer(zdo, false);
+
     // should always sync otherwise there is a desync on clients that are servers.
     PrefabConfigRPC.Request_SyncConfigKeys(zdo, [SwivelCustomConfig.Key_MotionState]);
 
@@ -270,15 +273,16 @@ public class SwivelPrefabConfigRPC
     // set the ZDO
     zdo.Set(SwivelCustomConfig.Key_MotionState, (int)state);
 
-    PowerSystemRPC.Server_UpdatePowerConsumer(zdo);
 
     StopSwivelUpdate(zdo.m_uid);
     if (canStartMotion && (state == MotionState.ToStart || state == MotionState.ToTarget))
     {
+      PowerSystemRPC.Server_UpdatePowerConsumer(zdo, true);
       Server_StartMotion(zdo, state);
     }
     else
     {
+      PowerSystemRPC.Server_UpdatePowerConsumer(zdo, false);
       _pendingMotionUpdateLerps.Remove(zdo.m_uid);
     }
 

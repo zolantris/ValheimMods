@@ -35,10 +35,6 @@ namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
     public float GetRequestedEnergy(float deltaTime)
     {
       if (!IsDemanding) return 0f;
-      if (PowerIntensityLevel.None == powerIntensityLevel && !IsActive)
-      {
-        SetActive(true);
-      }
       return GetWattsForLevel(powerIntensityLevel) * deltaTime;
     }
 

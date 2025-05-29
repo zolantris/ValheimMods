@@ -54,7 +54,7 @@ public static class RPCUtils
       foreach (var node in nodes)
       {
         var pos = node.GetPosition();
-        if (Vector3.Distance(pos, Player.m_localPlayer.transform.position) < 25f)
+        if (Vector3.Distance(pos, Player.m_localPlayer.transform.position) < maxDistance)
         {
           canRun = true;
           break;
@@ -72,7 +72,7 @@ public static class RPCUtils
     foreach (var instanceMPeer in peers)
     {
       var pos = node.GetPosition();
-      if (Vector3.Distance(pos, instanceMPeer.m_refPos) < 25f)
+      if (Vector3.Distance(pos, instanceMPeer.m_refPos) < maxDistance)
       {
         canRun = true;
         break;

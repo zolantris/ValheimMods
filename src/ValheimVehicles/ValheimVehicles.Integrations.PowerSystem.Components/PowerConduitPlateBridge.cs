@@ -65,13 +65,15 @@ public class PowerConduitPlateBridge :
   {
     if (!player) return;
     Data.AddOrUpdate(player.GetPlayerID(), player.GetEitr(), player.GetMaxEitr());
+    if (!m_localPlayers.Contains(player)) m_localPlayers.Add(player);
     Logic.SetHasPlayerInRange(Data.HasPlayersWithEitr);
   }
 
   private void HandlePlayerExitActiveZone(Player player)
   {
     if (!player) return;
-    Data.RemovePlayer(player);
+    Data.RemovePlayer(player.GetOwner());
+    if (m_localPlayers.Contains(player)) m_localPlayers.Remove(player);
     Logic.SetHasPlayerInRange(Data.HasPlayersWithEitr);
   }
 
@@ -141,7 +143,7 @@ public class PowerConduitPlateBridge :
     {
       Data = data;
       Data.Load();
-      Logic.GetPlayerEitr = () => PowerConduitData.GetAverageEitr(Data.PlayerDataById.Values.ToList(), Data.PlayerDataById);
+      Logic.GetPlayerEitr = () => PowerConduitData.GetAverageEitr(Data.PlayerPeerToData.Values.ToList(), Data.PlayerPeerToData);
       Logic.AddPlayerEitr = val => Data.AddEitrToPlayers(val);
       Logic.SubtractPlayerEitr = val => Data.TryRemoveEitrFromPlayers(val);
       _lastParent = transform.parent;

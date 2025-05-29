@@ -27,10 +27,21 @@ public class ZNetScene_Patch
     PowerSystemRPC.RegisterCustom();
     SwivelPrefabConfigRPC.RegisterCustom();
 
-    __instance.WithSafeRPCRegister(() =>
-    {
-      PrefabConfigRPC.Register();
-    });
+    LoggerProvider.LogDev($"ZRouteRPC instance, {ZRoutedRpc.instance}");
+    // __instance.WithSafeRPCRegister(() =>
+    // {
+    //  
+    // });
+  }
+
+  [HarmonyPatch(typeof(Game), nameof(Game.Start))]
+  [HarmonyPostfix]
+  private static void Game_Start_InjectRPC(ZNetScene __instance)
+  {
+    LoggerProvider.LogDev($"ZRouteRPC instance, {ZRoutedRpc.instance}");
+    PrefabConfigRPC.Register();
+    PowerSystemRPC.Register();
+    PlayerEitrRPC.Register();
   }
 
 #if DEBUG

@@ -93,9 +93,9 @@ namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
 
     public void SetActive(bool val)
     {
+      if (_isActive == val) return;
       OnActive?.Invoke();
       _isActive = val;
-
       MarkDirty(VehicleZdoVars.PowerSystem_IsActive);
     }
 
