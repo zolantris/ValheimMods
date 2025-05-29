@@ -109,16 +109,16 @@ public class PowerSystemConfig : BepInExBaseConfig<PowerSystemConfig>
 #if DEBUG
     var acceptableRange = new AcceptableValueRange<float>(0.000001f, 10000f);
 #else
-    var acceptableRange = new AcceptableValueRange<float>(0.000001f,10f);
+    var acceptableRange = new AcceptableValueRange<float>(1f, 100f);
 #endif
     PowerPlate_EitrDrainCostPerSecond = config.BindUnique(SectionKey,
-      nameof(PowerPlate_EitrDrainCostPerSecond), 100f,
+      nameof(PowerPlate_EitrDrainCostPerSecond), 10f,
       ConfigHelpers.CreateConfigDescription(
         "The amount of player eitr that is required per second to power a system.",
         true, false,
         acceptableRange));
     PowerPlate_EnergyGainPerSecond = config.BindUnique(SectionKey,
-      nameof(PowerPlate_EnergyGainPerSecond), 0.0001f,
+      nameof(PowerPlate_EnergyGainPerSecond), 1f,
       ConfigHelpers.CreateConfigDescription(
         "The amount of energy gained when draining player eitr per second.",
         true, false,
@@ -176,21 +176,16 @@ public class PowerSystemConfig : BepInExBaseConfig<PowerSystemConfig>
         "Allows you to use swivels without the vehicle power system.",
         true, false));
 
-//sources
+    //sources
     PowerSource_FuelCapacity.SettingChanged += (sender, args) => UpdatePowerSources();
     PowerSource_BaseFuelEfficiency.SettingChanged += (sender, args) => UpdatePowerSources();
     PowerSource_EitrEfficiency.SettingChanged += (sender, args) => UpdatePowerSources();
     PowerSource_FuelConsumptionRate.SettingChanged += (sender, args) => UpdatePowerSources();
-// storages
+    // storages
     SwivelPowerDrain.SettingChanged += (sender, args) =>
       PowerStorage_Capacity.SettingChanged += (sender, args) => UpdatePowerStorages();
     PowerStorage_Capacity.SettingChanged += (sender, args) => UpdatePowerSources();
 
-    // trigger synchronous updates
-    UpdateSwivelPower();
-    UpdatePowerSources();
-    UpdatePowerStorages();
-    UpdatePowerConduits();
 
     SwivelComponent.IsPoweredSwivel = !Swivels_DoNotRequirePower.Value;
     Swivels_DoNotRequirePower.SettingChanged += (sender, args) => SwivelComponent.IsPoweredSwivel = !Swivels_DoNotRequirePower.Value;
@@ -204,11 +199,17 @@ public class PowerSystemConfig : BepInExBaseConfig<PowerSystemConfig>
     PowerNetworkController.CanShowNetworkData = PowerNetwork_ShowAdditionalPowerInformationByDefault.Value;
 
 
-// conduits
+    // conduits
+    PowerPlate_EnergyGainPerSecond.SettingChanged += (sender, args) => UpdatePowerConduits();
     PowerPlate_EitrDrainCostPerSecond.SettingChanged += (sender, args) => UpdatePowerConduits();
     PowerPlate_TransferRate.SettingChanged += (sender, args) => UpdatePowerConduits();
 
     SwivelComponent.SwivelEnergyDrain = SwivelPowerDrain.Value;
 
+    // trigger synchronous updates
+    UpdateSwivelPower();
+    UpdatePowerSources();
+    UpdatePowerStorages();
+    UpdatePowerConduits();
   }
 }

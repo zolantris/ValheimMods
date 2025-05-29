@@ -4,6 +4,7 @@
   using System.Collections;
   using System.Collections.Generic;
   using System.Linq;
+  using SentryUnityWrapper;
   using UnityEngine;
   using ValheimVehicles.Components;
   using ValheimVehicles.BepInExConfig;
@@ -65,6 +66,30 @@
     public static bool CanAllClientsSync = true;
     public static bool ShouldSkipClientOnlyUpdate = true;
     public static bool ShouldSyncClientOnlyUpdate = false;
+    private bool _isAuthoritativeMotionActive;
+    // private MotionState _motionState;
+    private double _motionStartTime;
+    private float _motionDuration;
+    private Vector3 _motionFromPosition;
+    private Vector3 _motionToPosition;
+    private Quaternion _motionFromRotation;
+    private Quaternion _motionToRotation;
+    protected bool _hasArrivedAtDestination = false;
+
+    public override MotionState MotionState
+    {
+      get
+      {
+        currentMotionState = Config.MotionState;
+        return Config.MotionState;
+      }
+      set
+      {
+        Config.MotionState = value;
+        currentMotionState = value;
+        SetMotionState(value);
+      }
+    }
 
     public override int SwivelPersistentId
     {
@@ -122,11 +147,6 @@
 
       if (!netView.IsOwner())
       {
-        if (!ShouldSkipClientOnlyUpdate)
-        {
-          Request_SetMotionState(state);
-        }
-
         // this is likely unstable
         if (ShouldSyncClientOnlyUpdate)
         {
@@ -136,13 +156,7 @@
         return;
       }
 
-      if (prefabConfigSync != null && prefabConfigSync.Config != null)
-      {
-        prefabConfigSync.Config.MotionState = state;
-      }
       base.SetMotionState(state);
-
-      Request_SetMotionState(state);
 
       if (state is MotionState.ToTarget or MotionState.ToStart)
       {
@@ -209,6 +223,12 @@
 
     public void OnEnable()
     {
+      this.WaitForZNetView((nv) =>
+      {
+        _currentZdo = nv.GetZDO();
+        ZdoToComponent.Add(_currentZdo, this);
+      });
+
       var persistentId = GetPersistentId();
       if (persistentId != 0 && !ActiveInstances.ContainsKey(persistentId))
       {
@@ -365,7 +385,7 @@
       zdo.Set(VehicleZdoVars.SwivelParentId, persistentId);
 
       m_hoverFadeText.Show();
-      m_hoverFadeText.transform.position = transform.position + Vector3.up;
+      m_hoverFadeText.transform.position = transform.position + Vector3.up * 2f;
       m_hoverFadeText.currentText = ModTranslations.Swivel_Connected;
 
       // must call this otherwise everything is in world position. 
@@ -443,22 +463,38 @@
         OnPowerConsumerUpdate();
       }
     }
-
-    private bool _isAuthoritativeMotionActive;
-    private MotionState _motionState;
-    private double _motionStartTime;
-    private float _motionDuration;
     /// <summary>
     /// For interpolated eventing.
     /// </summary>
-    /// <param name="motionUpdate"></param>
-    public void SetMotionUpdate(SwivelMotionUpdate motionUpdate)
+    public void SetAuthoritativeMotion(SwivelMotionUpdate motionUpdate, bool isAuthoritative)
     {
-      _isAuthoritativeMotionActive = true;
-      _motionState = motionUpdate.MotionState;
+      _isAuthoritativeMotionActive = isAuthoritative;
+      Config.MotionState = motionUpdate.MotionState;
       _motionStartTime = motionUpdate.StartTime;
       _motionDuration = motionUpdate.Duration;
+
+      // Always interpolate from the CURRENT transform state!
+      _motionFromLocalPos = animatedTransform.localPosition;
+      _motionFromLocalRot = animatedTransform.localRotation;
+
+      if (mode == SwivelMode.Move)
+        _motionToLocalPos = Config.MotionState == MotionState.ToTarget
+          ? startLocalPosition + movementOffset
+          : startLocalPosition;
+      else if (mode == SwivelMode.Rotate)
+        _motionToLocalRot = Config.MotionState == MotionState.ToTarget
+          ? CalculateRotationTarget(1f)
+          : CalculateRotationTarget(0f);
+
+      // Reset completion guard
+      _hasArrivedAtDestination = false;
+
+      if (!isAuthoritative)
+      {
+        prefabConfigSync.Load();
+      }
     }
+
 
     public override void SwivelUpdate()
     {
@@ -467,43 +503,38 @@
         var now = ZNet.instance != null ? ZNet.instance.GetTimeSeconds() : Time.time;
         var t = Mathf.Clamp01((float)((now - _motionStartTime) / _motionDuration));
 
-        // Move
+        // Interpolate using Rigidbody moves (no snap!)
         if (mode == SwivelMode.Move)
-        {
-          Vector3 from, to;
-          if (_motionState == MotionState.ToTarget)
-          {
-            from = startLocalPosition;
-            to = startLocalPosition + movementOffset;
-          }
-          else
-          {
-            from = startLocalPosition + movementOffset;
-            to = startLocalPosition;
-          }
-          animatedTransform.localPosition = Vector3.Lerp(from, to, t);
-        }
-        // Rotate
-        if (mode == SwivelMode.Rotate)
-        {
-          Quaternion from, to;
-          if (_motionState == MotionState.ToTarget)
-          {
-            from = Quaternion.identity;
-            to = CalculateRotationTarget();
-          }
-          else
-          {
-            from = CalculateRotationTarget();
-            to = Quaternion.identity;
-          }
-          animatedTransform.localRotation = Quaternion.Slerp(from, to, t);
-        }
-        // No MotionState update! Wait for server.
+          InterpolateAndMove(t, _motionFromLocalPos, _motionToLocalPos, _motionFromLocalRot, _motionFromLocalRot);
+        else if (mode == SwivelMode.Rotate)
+          InterpolateAndMove(t, _motionFromLocalPos, _motionFromLocalPos, _motionFromLocalRot, _motionToLocalRot);
+
+        return; // ***CRITICAL: do NOT run base.SwivelUpdate() during authority lerp!***
+      }
+
+      // Modes that bail early.
+      if (mode == SwivelMode.Rotate && currentMotionState == MotionState.AtTarget)
+      {
+        animatedTransform.localRotation = CalculateRotationTarget(1);
+        return;
+      }
+      if (mode == SwivelMode.Rotate && currentMotionState == MotionState.AtStart)
+      {
+        animatedTransform.localRotation = CalculateRotationTarget(0);
         return;
       }
 
-      base.SwivelUpdate();
+      if (mode == SwivelMode.Move && currentMotionState == MotionState.AtTarget)
+      {
+        animatedTransform.localPosition = startLocalPosition + movementOffset;
+        return;
+      }
+      if (mode == SwivelMode.Move && currentMotionState == MotionState.AtStart)
+      {
+        animatedTransform.localPosition = startLocalPosition;
+        return;
+      }
+      // base.SwivelUpdate();
     }
 
     public static float ComputeMotionDuration(SwivelCustomConfig config, MotionState direction)
@@ -577,22 +608,28 @@
         return;
       }
 
-      powerConsumerIntegration.Data.Load();
+      // powerConsumerIntegration.Data.Load();
 
-      var isOwner = netView.IsOwner();
-      if (!isOwner || !powerConsumerIntegration)
+      if (powerConsumerIntegration)
       {
-        // possible infinity update here...
-        PowerSystemRPC.Request_UpdatePowerConsumer(netView.GetZDO().m_uid, swivelPowerConsumer.Data);
-      }
-      else
-      {
-        powerConsumerIntegration.UpdateNetworkedData();
+        var isOwner = netView.IsOwner();
+        if (!isOwner)
+        {
+          // possible infinity update here...
+          PowerSystemRPC.Request_UpdatePowerConsumer(netView.GetZDO().m_uid, swivelPowerConsumer.Data);
+        }
+        else
+        {
+          powerConsumerIntegration.UpdateNetworkedData();
+        }
       }
     }
 
     public void OnInitComplete()
     {
+      // load config late in case something is misaligned.
+      prefabConfigSync.Load();
+
       StartActivatePendingSwivelPieces();
     }
 

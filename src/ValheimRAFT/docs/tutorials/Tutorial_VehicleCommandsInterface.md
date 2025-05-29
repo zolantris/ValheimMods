@@ -21,9 +21,7 @@ The vehicle-commands-interface can do the following
 
 ### How Do I Toggle It?
 
-1. Using the vehicle hammer: pressing secondary attack (Middle mouse) will
-   trigger this menu.
-2. Use the **Toggle/Switch Prefab**. Each toggle prefab can switch it's toggle
+1. Use the **Toggle/Switch Prefab**. Each toggle prefab can switch it's toggle
    mode by
    pressing `RUN_CMD + E` Aka. `SHIFT+E`.
 

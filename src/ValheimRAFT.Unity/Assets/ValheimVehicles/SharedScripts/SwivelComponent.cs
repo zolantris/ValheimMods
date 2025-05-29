@@ -98,7 +98,6 @@ namespace ValheimVehicles.SharedScripts
     public Vector3 targetMovementPosition;
     public Quaternion targetRotation;
 
-    public MotionState CurrentMotionState => currentMotionState;
     public HingeAxis HingeAxes => hingeAxes;
     public Vector3 MaxEuler => maxRotationEuler;
 
@@ -108,6 +107,7 @@ namespace ValheimVehicles.SharedScripts
     private bool isFrozen;
     public virtual int SwivelPersistentId { get; set; }
 
+    public float currentMovementLerp = 0f;
 
     // Update debouncing logic
     public float _lastUpdatedMotionTime = 0f;
@@ -118,6 +118,11 @@ namespace ValheimVehicles.SharedScripts
     public static bool CanRunSwivelDuringFixedUpdate = false;
     public static bool CanRunSwivelDuringUpdate = true;
     public bool _IsReady = true;
+    internal float _motionLerp; // Always between 0 (AtStart) and 1 (AtTarget)
+    public Vector3 _motionFromLocalPos;
+    public Vector3 _motionToLocalPos;
+    public Quaternion _motionFromLocalRot;
+    public Quaternion _motionToLocalRot;
 
     public virtual void Awake()
     {
@@ -172,7 +177,7 @@ namespace ValheimVehicles.SharedScripts
     protected virtual Quaternion GetCurrentTargetRotation()
     {
       return mode == SwivelMode.Rotate
-        ? CalculateRotationTarget()
+        ? CalculateRotationTarget(1)
         : Quaternion.identity;
     }
 
@@ -233,6 +238,27 @@ namespace ValheimVehicles.SharedScripts
       }
     }
 
+
+    // Interpolates between two states (can be called by both bridge and base logic)
+    protected void InterpolateAndMove(float t, Vector3 fromPos, Vector3 toPos, Quaternion fromRot, Quaternion toRot)
+    {
+      var pos = Vector3.Lerp(fromPos, toPos, t);
+      var rot = Quaternion.Slerp(fromRot, toRot, t);
+
+      // Always use Rigidbody moves
+      if (animatedRigidbody)
+      {
+        animatedRigidbody.Move(transform.TransformPoint(pos), transform.rotation * rot);
+      }
+      else
+      {
+        // fallback, but warn
+        LoggerProvider.LogWarning("[Swivel] animatedRigidbody missing, falling back to transform.");
+        animatedTransform.localPosition = pos;
+        animatedTransform.localRotation = rot;
+      }
+    }
+
     public virtual void SwivelUpdate()
     {
       if (!CanUpdate() || !animatedRigidbody || !animatedTransform.parent || !piecesContainer) return;
@@ -249,17 +275,18 @@ namespace ValheimVehicles.SharedScripts
       // Modes that bail early.
       if (mode == SwivelMode.Rotate && currentMotionState == MotionState.AtTarget)
       {
-        animatedTransform.localRotation = CalculateRotationTarget();
-        return;
-      }
-      if (mode == SwivelMode.Move && currentMotionState == MotionState.AtTarget)
-      {
-        animatedTransform.localPosition = startLocalPosition + movementOffset;
+        animatedTransform.localRotation = CalculateRotationTarget(1);
         return;
       }
       if (mode == SwivelMode.Rotate && currentMotionState == MotionState.AtStart)
       {
-        animatedTransform.localRotation = Quaternion.identity;
+        animatedTransform.localRotation = CalculateRotationTarget(0);
+        return;
+      }
+
+      if (mode == SwivelMode.Move && currentMotionState == MotionState.AtTarget)
+      {
+        animatedTransform.localPosition = startLocalPosition + movementOffset;
         return;
       }
       if (mode == SwivelMode.Move && currentMotionState == MotionState.AtStart)
@@ -275,7 +302,7 @@ namespace ValheimVehicles.SharedScripts
       switch (mode)
       {
         case SwivelMode.Rotate:
-          targetRotation = CalculateRotationTarget();
+          targetRotation = CalculateRotationTarget(MotionState == MotionState.ToTarget ? 1 : 0);
           var currentRot = animatedTransform.localRotation;
           var maxAnglePerStep = computedInterpolationSpeed * Time.fixedDeltaTime;
           var interpolatedRot = Quaternion.RotateTowards(currentRot, targetRotation, maxAnglePerStep);
@@ -386,20 +413,16 @@ namespace ValheimVehicles.SharedScripts
         snappoint.position = connectorContainer.position;
     }
 
-    public Quaternion CalculateRotationTarget()
+    public Quaternion CalculateRotationTarget(float lerp)
     {
-      hingeEndEuler = Vector3.zero;
-
+      var hingeEndEuler = Vector3.zero;
       if ((hingeAxes & HingeAxis.X) != 0)
         hingeEndEuler.x = (xHingeDirection == HingeDirection.Forward ? 1f : -1f) * maxRotationEuler.x;
       if ((hingeAxes & HingeAxis.Y) != 0)
         hingeEndEuler.y = (yHingeDirection == HingeDirection.Forward ? 1f : -1f) * maxRotationEuler.y;
       if ((hingeAxes & HingeAxis.Z) != 0)
         hingeEndEuler.z = (zHingeDirection == HingeDirection.Forward ? 1f : -1f) * maxRotationEuler.z;
-
-      var target = currentMotionState == MotionState.ToStart ? 0f : 1f;
-      hingeLerpProgress = Mathf.MoveTowards(hingeLerpProgress, target, computedInterpolationSpeed * Time.fixedDeltaTime);
-      return Quaternion.Euler(Vector3.Lerp(Vector3.zero, hingeEndEuler, hingeLerpProgress));
+      return Quaternion.Euler(Vector3.Lerp(Vector3.zero, hingeEndEuler, lerp));
     }
 
     private Quaternion CalculateTargetNearestEnemyRotation()
@@ -596,7 +619,7 @@ namespace ValheimVehicles.SharedScripts
       set => SetMovementOffset(value);
     }
 
-    public MotionState MotionState
+    public virtual MotionState MotionState
     {
       get => currentMotionState;
       set => SetMotionState(value);

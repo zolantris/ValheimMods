@@ -9,8 +9,6 @@ using ValheimVehicles.Helpers;
 using ValheimVehicles.Integrations.PowerSystem;
 using ValheimVehicles.Integrations.PowerSystem.Interfaces;
 using ValheimVehicles.Shared.Constants;
-using ValheimVehicles.SharedScripts.Helpers;
-using ValheimVehicles.Structs;
 
 // must be same namespace to override.
 namespace ValheimVehicles.SharedScripts.PowerSystem.Compute;
@@ -129,8 +127,6 @@ public partial class PowerPylonData : IPowerComputeZdoSync
 public partial class PowerConduitData : IPowerComputeZdoSync
 {
   // for integration
-  public readonly List<Player> Players = new();
-
   public PowerConduitData(ZDO zdo)
   {
     this.zdo = zdo;
@@ -145,43 +141,10 @@ public partial class PowerConduitData : IPowerComputeZdoSync
   /// </summary>
   public class PlayerEitrDataBridge : PlayerEitrData
   {
-    private Player player;
-
-    public PlayerEitrDataBridge(Player player, PowerConduitData conduitData) : base(conduitData)
+    public PlayerEitrDataBridge(long playerId, float eitr, float eitrCapacity, PowerConduitData conduitData) : base(playerId, eitr, eitrCapacity, conduitData)
     {
-      this.player = player;
-      PlayerId = player.GetPlayerID();
-
-      // getters.
-      GetEitr = () => WithAutoRemove(player.GetEitr);
-      GetEitrCapacity = () => WithAutoRemove(player.GetMaxEitr);
-
-      // player updaters
-      // Request_UseEitr = player.UseEitr;
       Request_UseEitr = PlayerEitrRPC.Request_UseEitr;
       Request_AddEitr = PlayerEitrRPC.Request_AddEitr;
-    }
-
-    private void OnErrorPlayerRemoveById()
-    {
-      if (!player)
-      {
-        conduitData.PlayerDataById.Remove(PlayerId);
-      }
-    }
-
-    private float WithAutoRemove(Func<float> action)
-    {
-      try
-      {
-        return action();
-      }
-      catch (Exception e)
-      {
-        LoggerProvider.LogWarning($"Player errored. Removing them from Conduit. {e}");
-        OnErrorPlayerRemoveById();
-      }
-      return 0f;
     }
   }
 
@@ -198,24 +161,13 @@ public partial class PowerConduitData : IPowerComputeZdoSync
     keysToRemove.ForEach(x => PlayerDataById.Remove(x));
   }
 
-  public bool AddPlayer(long playerId)
-  {
-    var player = Player.GetPlayer(playerId);
-    if (!player)
-    {
-      SanitizePlayerDataDictionary();
-      return false;
-    }
-    return AddPlayer(player);
-  }
-  public bool AddPlayer(Player player)
+  public bool AddOrUpdate(long playerId, float currentEitr, float maxEitr)
   {
     SanitizePlayerDataDictionary();
 
-    var playerData = new PlayerEitrDataBridge(player, this);
-    Players.Add(player);
+    var playerData = new PlayerEitrDataBridge(playerId, currentEitr, maxEitr, this);
 
-    if (PlayerDataById.ContainsKey(player.GetPlayerID()))
+    if (PlayerDataById.ContainsKey(playerId))
     {
       PlayerDataById[playerData.PlayerId] = playerData;
     }
@@ -234,10 +186,9 @@ public partial class PowerConduitData : IPowerComputeZdoSync
     {
       SanitizePlayerDataDictionary();
     }
-    else
-    {
-      RemovePlayer(player);
-    }
+
+    RemovePlayer(player);
+
   }
 
   public void RemovePlayer(Player player)
@@ -248,7 +199,6 @@ public partial class PowerConduitData : IPowerComputeZdoSync
       SanitizePlayerDataDictionary();
       return;
     }
-    Players.Remove(player);
     PlayerDataById.Remove(player.GetPlayerID());
 
     SanitizePlayerDataDictionary();
@@ -282,16 +232,19 @@ public partial class PowerConduitData : IPowerComputeZdoSync
     });
   }
 
-  public static float GetAverageEitr(List<Player> playersWithinZone)
+  public static float GetAverageEitr(List<PlayerEitrData> playersWithinZone, Dictionary<long, PlayerEitrData> playerDataById)
   {
-    playersWithinZone.RemoveAll(x => !x);
-
     var total = 0f;
     var count = 0;
 
     foreach (var player in playersWithinZone)
     {
-      total += player.m_eitr;
+      if (player.Eitr < 0.5f)
+      {
+        playerDataById.Remove(player.PlayerId);
+        continue;
+      }
+      total += player.Eitr;
       count++;
     }
 
@@ -348,14 +301,13 @@ public partial class PowerConduitData : IPowerComputeZdoSync
 
   public float AddEitrToPlayers(float energyBudget)
   {
-    Players.RemoveAll(x => !x);
-    if (Players.Count == 0 || energyBudget <= 0f) return 0f;
+    if (PlayerDataById.Count == 0 || energyBudget <= 0f) return 0f;
 
-    List<Player> validReceivers = new(Players.Count);
-    foreach (var player in Players)
+    List<PlayerEitrData> validReceivers = new(PlayerDataById.Count);
+    foreach (var playerEitrData in PlayerDataById.Values)
     {
-      if (player.m_eitr < player.m_maxEitr - MaxEitrCapMargin)
-        validReceivers.Add(player);
+      if (playerEitrData.Eitr > 0.1f)
+        validReceivers.Add(playerEitrData);
     }
 
     if (validReceivers.Count == 0) return 0f;
@@ -363,9 +315,9 @@ public partial class PowerConduitData : IPowerComputeZdoSync
     var perPlayer = energyBudget / validReceivers.Count;
     var totalUsed = 0f;
 
-    foreach (var player in validReceivers)
+    foreach (var playerEitrData in validReceivers)
     {
-      PlayerEitrRPC.Request_AddEitr(player, perPlayer);
+      PlayerEitrRPC.Request_AddEitr(playerEitrData.PlayerId, perPlayer);
       totalUsed += perPlayer;
     }
 
@@ -472,7 +424,7 @@ public partial class PowerConsumerData : IPowerComputeZdoSync
       OnSharedConfigSync();
 
       IsDemanding = validZdo.GetBool(VehicleZdoVars.PowerSystem_IsDemanding, true);
-      var intensityInt = validZdo.GetInt(VehicleZdoVars.PowerSystem_Intensity_Level, 0);
+      var intensityInt = validZdo.GetInt(VehicleZdoVars.PowerSystem_Intensity_Level, (int)PowerIntensityLevel.Low);
       powerIntensityLevel = (PowerIntensityLevel)intensityInt;
     });
   }

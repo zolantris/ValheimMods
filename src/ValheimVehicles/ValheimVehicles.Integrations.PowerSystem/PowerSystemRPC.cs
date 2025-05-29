@@ -9,6 +9,7 @@ using Jotunn.Managers;
 using ValheimVehicles.SharedScripts;
 using ValheimVehicles.SharedScripts.PowerSystem;
 using ValheimVehicles.SharedScripts.PowerSystem.Compute;
+using ValheimVehicles.ValheimVehicles.RPC;
 
 namespace ValheimVehicles.Integrations.PowerSystem
 {
@@ -23,6 +24,7 @@ namespace ValheimVehicles.Integrations.PowerSystem
     // fuel
     private const string RPC_AddFuelToSource_Name = "PowerSystem_AddFuelToSource";
     private const string RPC_CommitFuelUsed_Name = "PowerSystem_CommitFuelUsed";
+    private const string RPC_ConduitOfferAllEitr_Name = "PowerSystem_ConduitOfferAllEitr";
 
     private static CustomRPC? RPC_CommitFuelUsedInstance;
     private static CustomRPC? RPC_NotifyZDOsChanged;
@@ -42,10 +44,9 @@ namespace ValheimVehicles.Integrations.PowerSystem
       if (hasRegistered) return;
       try
       {
-        ZRoutedRpc.instance.Register<ZPackage>(RPC_PlayerEnteredConduit_Name, RPC_PlayerEnteredConduit);
         ZRoutedRpc.instance.Register<ZPackage>(RPC_PlayerExitedConduit_Name, RPC_PlayerExitedConduit);
         ZRoutedRpc.instance.Register<ZPackage>(RPC_UpdatePowerConsumer_Name, RPC_UpdatePowerConsumer);
-
+        ZRoutedRpc.instance.Register<ZPackage>(RPC_ConduitOfferAllEitr_Name, RPC_ConduitOfferAllEitr);
       }
       catch (Exception e)
       {
@@ -175,8 +176,6 @@ namespace ValheimVehicles.Integrations.PowerSystem
 #endif
         return;
       }
-
-      data.AddPlayer(playerId);
     }
 
     private static void RPC_PlayerExitedConduit(long sender, ZPackage pkg)
@@ -200,14 +199,74 @@ namespace ValheimVehicles.Integrations.PowerSystem
       data.RemovePlayer(playerId);
     }
 
-    private static void RPC_UpdatePowerConsumer(long sender, ZPackage pkg)
+    public static void Server_UpdatePowerConsumer(ZDO zdo)
+    {
+      if (!PowerSystemRegistry.TryGetData<PowerConsumerData>(zdo, out var powerData)) return;
+      powerData.SetDemandState(true);
+      powerData.SetActive(true);
+      powerData.SetPowerIntensity(PowerIntensityLevel.Low);
+      powerData.Save();
+    }
+
+    /// <summary>
+    /// A request called when players are within a conduit it is polled.
+    /// </summary>
+    /// <param name="conduitZdo"></param>
+    /// <param name="players"></param>
+    public static void Request_OfferAllPlayerEitr(ZDO conduitZdo, List<Player> players)
+    {
+      var pkg = new ZPackage();
+      pkg.Write(conduitZdo.m_uid);
+      pkg.Write(players.Count);
+
+      foreach (var player in players)
+      {
+        pkg.Write(player.GetPlayerID());
+        pkg.Write(player.GetEitr());
+        pkg.Write(player.GetMaxEitr());
+      }
+
+      ZRoutedRpc.instance.InvokeRoutedRPC(ZRoutedRpc.instance.GetServerPeerID(), RPC_ConduitOfferAllEitr_Name, pkg);
+    }
+
+    public static void RPC_ConduitCommitEitrOffer(long sender, ZPackage pkg)
+    {
+      pkg.SetPos(0);
+      var amountToCommit = pkg.ReadInt();
+      Player.m_localPlayer.UseEitr(amountToCommit);
+    }
+
+    public static void RPC_ConduitOfferAllEitr(long sender, ZPackage pkg)
+    {
+      pkg.SetPos(0);
+      var conduitZDOID = pkg.ReadZDOID();
+
+      var zdo = ZDOMan.instance.GetZDO(conduitZDOID);
+      if (zdo == null)
+      {
+        LoggerProvider.LogWarning($"[RPC_ConduitOfferEitr] ZDO not found for {conduitZDOID}");
+        return;
+      }
+      if (!PowerSystemRegistry.TryGetData<PowerConduitData>(zdo, out var conduitData)) return;
+
+      var playerCount = pkg.ReadInt();
+      for (var i = 0; i < playerCount; i++)
+      {
+        var playerId = pkg.ReadLong();
+        var eitrAmount = pkg.ReadSingle();
+        var eitrMaxAmount = pkg.ReadSingle();
+        conduitData.AddOrUpdate(playerId, eitrAmount, eitrMaxAmount);
+      }
+    }
+
+    public static void RPC_UpdatePowerConsumer(long sender, ZPackage pkg)
     {
       pkg.SetPos(0);
 
       var id = pkg.ReadZDOID();
       var isDemanding = pkg.ReadBool();
       var basePowerConsumption = pkg.ReadSingle();
-      var powerMode = (PowerIntensityLevel)pkg.ReadInt();
+      var powerMode = PowerConsumerData.GetPowerIntensityFromPrefab(pkg.ReadInt());
 
       var zdo = ZDOMan.instance.GetZDO(id);
       if (zdo == null)
@@ -224,7 +283,7 @@ namespace ValheimVehicles.Integrations.PowerSystem
 
       data.SetDemandState(isDemanding);
       data.SetBasePowerConsumption(basePowerConsumption);
-      data.SetPowerMode(powerMode);
+      data.SetPowerIntensity(powerMode);
 
       if (zdo.IsOwner() || ZNet.instance.IsServer())
       {
@@ -237,7 +296,7 @@ namespace ValheimVehicles.Integrations.PowerSystem
       else
       {
 #if DEBUG
-        LoggerProvider.LogWarning("Sent a update to power consumer but not owner.");
+        LoggerProvider.LogWarning("Sent a update to power consumer but not owner or server.");
 #endif
       }
     }
@@ -281,15 +340,6 @@ namespace ValheimVehicles.Integrations.PowerSystem
       pkg.Write(data.BasePowerConsumption);
       pkg.Write((int)data.PowerIntensityLevel);
       ZRoutedRpc.instance.InvokeRoutedRPC(RPC_UpdatePowerConsumer_Name, pkg);
-    }
-
-
-    public static void Request_PlayerEnteredConduit(ZDOID conduitId, long playerId)
-    {
-      var pkg = new ZPackage();
-      pkg.Write(conduitId);
-      pkg.Write(playerId);
-      ZRoutedRpc.instance.InvokeRoutedRPC(RPC_PlayerEnteredConduit_Name, pkg);
     }
 
     public static void Request_PlayerExitedConduit(ZDOID conduitId, long playerId)

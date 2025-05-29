@@ -36,6 +36,12 @@ public struct SwivelMotionUpdate
   }
 }
 
+public class SwivelMotionUpdateLerp
+{
+  public SwivelMotionUpdate update;
+  public float lerp = 0f;
+}
+
 public class SwivelPrefabConfigRPC
 {
   public static CustomRPC? RPCInstance_Swivel_NextMotionState;
@@ -51,7 +57,7 @@ public class SwivelPrefabConfigRPC
     if (hasRegistered) return;
     RPCInstance_Swivel_NextMotionState = NetworkManager.Instance.AddRPC(RPCUtils.GetRPCPrefix(nameof(RPC_Swivel_NextMotionState)), RPC_Swivel_NextMotionState, RPC_Swivel_NextMotionState);
     RPCInstance_Swivel_SetMotionState = NetworkManager.Instance.AddRPC(RPCUtils.GetRPCPrefix(nameof(RPC_Swivel_SetMotionState)), RPC_Swivel_SetMotionState, RPC_Swivel_SetMotionState);
-    RPCInstance_Swivel_BroadcastMotionAnimation = NetworkManager.Instance.AddRPC(RPCUtils.GetRPCPrefix(nameof(RPC_Swivel_BroadCastMotionUpdate)), null, RPC_Swivel_BroadCastMotionUpdate);
+    RPCInstance_Swivel_BroadcastMotionAnimation = NetworkManager.Instance.AddRPC(RPCUtils.GetRPCPrefix(nameof(RPC_Swivel_BroadCastMotionUpdate)), RPC_Swivel_BroadCastMotionUpdate, RPC_Swivel_BroadCastMotionUpdate);
     hasRegistered = true;
   }
 
@@ -119,29 +125,67 @@ public class SwivelPrefabConfigRPC
       }
     }
 
-    Internal_SetAndNotifyMotionState(zdo, nextMotionState);
+    Internal_SetAndNotifyMotionState(zdo, nextMotionState, true);
   }
 
-  public static Coroutine? _pendingMotionCoroutine;
+  private static Dictionary<ZDOID, Coroutine?> _pendingMotionCoroutines = new();
+  private static Dictionary<ZDOID, SwivelMotionUpdateLerp> _pendingMotionUpdateLerps = new();
+
+  public static void StopSwivelUpdate(ZDOID zdoid)
+  {
+    if (PowerNetworkController.Instance == null || !_pendingMotionCoroutines.TryGetValue(zdoid, out var coroutine)) return;
+    if (coroutine != null)
+    {
+      PowerNetworkController.Instance.StopCoroutine(coroutine);
+    }
+    _pendingMotionCoroutines.Remove(zdoid);
+  }
+
+  public static void StartSwivelUpdate(ZDOID zdoid, ZDO zdo, MotionState currentState, float duration, SwivelMotionUpdateLerp motionUpdateLerp)
+  {
+    if (PowerNetworkController.Instance == null) return;
+    if (_pendingMotionCoroutines.TryGetValue(zdoid, out var coroutine) && coroutine != null)
+    {
+      PowerNetworkController.Instance.StopCoroutine(coroutine);
+    }
+    _pendingMotionCoroutines[zdoid] = PowerNetworkController.Instance.StartCoroutine(WaitAndFinishMotion(PowerNetworkController.Instance, zdo, currentState, duration, motionUpdateLerp));
+  }
 
   /// <summary>
   /// Motion should always be from a "ToStart" or "ToTarget" state.
   /// </summary>
   /// <param name="zdo"></param>
-  /// <param name="nextState"></param>
-  public static void Server_StartMotion(ZDO zdo, MotionState nextState)
+  /// <param name="currentState"></param>
+  public static void Server_StartMotion(ZDO zdo, MotionState currentState)
   {
+    if (PowerNetworkController.Instance == null) return;
     if (RPCInstance_Swivel_BroadcastMotionAnimation == null) return;
     var swivelConfig = new SwivelCustomConfig();
-    swivelConfig.Load(zdo, swivelConfig);
-    var duration = SwivelComponentBridge.ComputeMotionDuration(swivelConfig, nextState);
+    swivelConfig = swivelConfig.Load(zdo, swivelConfig);
+
+    var duration = SwivelComponentBridge.ComputeMotionDuration(swivelConfig, currentState);
+
+    var remainingLerpMultiplier = 1f;
+    if (_pendingMotionUpdateLerps.TryGetValue(zdo.m_uid, out var lastUpdateLerp))
+    {
+      // At zero we have no decrease in time. At near 1 we immediately resolve as we near multiply by zero. 
+      remainingLerpMultiplier = Mathf.Clamp01(1 - lastUpdateLerp.lerp);
+      _pendingMotionUpdateLerps.Remove(zdo.m_uid);
+    }
 
     var update = new SwivelMotionUpdate
     {
       StartTime = ZNet.instance.GetTimeSeconds(), // Use the game/server clock, not Time.time!
-      Duration = duration,
-      MotionState = nextState
+      Duration = duration * remainingLerpMultiplier,
+      MotionState = currentState
     };
+
+    var nextMotionUpdateLerp = new SwivelMotionUpdateLerp
+    {
+      update = update,
+      lerp = 0f
+    };
+    _pendingMotionUpdateLerps[zdo.m_uid] = nextMotionUpdateLerp;
 
     var pkg = new ZPackage();
     pkg.Write(zdo.m_uid);
@@ -152,9 +196,8 @@ public class SwivelPrefabConfigRPC
       RPCInstance_Swivel_BroadcastMotionAnimation.SendPackage(sender, pkg);
     });
 
-    if (PowerNetworkController.Instance == null) return;
-    if (_pendingMotionCoroutine != null) PowerNetworkController.Instance.StopCoroutine(_pendingMotionCoroutine);
-    _pendingMotionCoroutine = PowerNetworkController.Instance.StartCoroutine(WaitAndFinishMotion(zdo, nextState, duration));
+    StopSwivelUpdate(zdo.m_uid);
+    StartSwivelUpdate(zdo.m_uid, zdo, currentState, duration, nextMotionUpdateLerp);
   }
 
   public static IEnumerator RPC_Swivel_BroadCastMotionUpdate(long sender, ZPackage pkg)
@@ -171,17 +214,40 @@ public class SwivelPrefabConfigRPC
       yield break;
     }
 
-    swivelComponentBridge.SetMotionUpdate(motionUpdate);
+    swivelComponentBridge.SetAuthoritativeMotion(motionUpdate, true);
     yield return false;
   }
 
-  public static IEnumerator WaitAndFinishMotion(ZDO zdo, MotionState currentMotion, float duration)
+  public static IEnumerator WaitAndFinishMotion(MonoBehaviour behavior, ZDO zdo, MotionState currentMotion, float duration, SwivelMotionUpdateLerp swivelMotionUpdateLerp)
   {
-    yield return new WaitForSeconds(duration);
-    // Only finish if state not canceled
-    zdo.TryClaimOwnership();
-    zdo.Set(SwivelCustomConfig.Key_MotionState, (int)SwivelCustomConfig.GetNextMotionState(currentMotion));
+    var currentDuration = 0f;
 
+    // we lerp track motion updates per frame so we accurately match things.
+    while (behavior.isActiveAndEnabled && currentDuration < duration)
+    {
+      currentDuration += Time.deltaTime;
+      swivelMotionUpdateLerp.lerp = Mathf.Clamp01(currentDuration / duration);
+      yield return null;
+    }
+    if (!ZNet.instance || !behavior || !behavior.isActiveAndEnabled) yield break;
+    // Only finish if state not canceled
+    var completedMotionState = SwivelCustomConfig.GetCompleteMotionState(currentMotion);
+    zdo.TryClaimOwnership();
+    zdo.Set(SwivelCustomConfig.Key_MotionState, (int)completedMotionState);
+    yield return null;
+
+    var hasLocalInstance = SwivelComponentBridge.ZdoToComponent.TryGetValue(zdo, out var swivelComponentBridge);
+    if (hasLocalInstance && swivelComponentBridge != null)
+    {
+      swivelComponentBridge.SetAuthoritativeMotion(new SwivelMotionUpdate
+      {
+        MotionState = completedMotionState,
+        StartTime = 0f,
+        Duration = 0f
+      }, false);
+    }
+    _pendingMotionUpdateLerps.Remove(zdo.m_uid);
+    // should always sync otherwise there is a desync on clients that are servers.
     PrefabConfigRPC.Request_SyncConfigKeys(zdo, [SwivelCustomConfig.Key_MotionState]);
 
     if (PowerSystemRegistry.TryGetData<PowerConsumerData>(zdo, out var powerData))
@@ -195,27 +261,40 @@ public class SwivelPrefabConfigRPC
     }
   }
 
-  private static void Internal_SetAndNotifyMotionState(ZDO zdo, MotionState state)
+  private static void Internal_SetAndNotifyMotionState(ZDO zdo, MotionState state, bool canStartMotion)
   {
+    if (zdo == null) return;
     // take ownership if not owner
     zdo.TryClaimOwnership();
 
     // set the ZDO
     zdo.Set(SwivelCustomConfig.Key_MotionState, (int)state);
 
-    PrefabConfigRPC.Request_SyncConfigKeys(zdo, [SwivelCustomConfig.Key_MotionState]);
-    Server_StartMotion(zdo, state);
+    PowerSystemRPC.Server_UpdatePowerConsumer(zdo);
+
+    StopSwivelUpdate(zdo.m_uid);
+    if (canStartMotion && (state == MotionState.ToStart || state == MotionState.ToTarget))
+    {
+      Server_StartMotion(zdo, state);
+    }
+    else
+    {
+      _pendingMotionUpdateLerps.Remove(zdo.m_uid);
+    }
+
+    // PrefabConfigRPC.Request_SyncConfigKeys(zdo, [SwivelCustomConfig.Key_MotionState]);
+
 
     // only run subscriber update for side-effect/reload callback.
     // Dedicated server will not have any of these components so skip it.
-    if (!ZNet.instance.IsDedicated())
-    {
-      if (PrefabConfigRPC.ZdoToPrefabConfigListeners.TryGetValue(zdo, out var subscriber))
-      {
-        if (subscriber == null) return;
-        subscriber.Load(zdo, [SwivelCustomConfig.Key_MotionState]);
-      }
-    }
+    // if (!ZNet.instance.IsDedicated())
+    // {
+    //   if (PrefabConfigRPC.ZdoToPrefabConfigListeners.TryGetValue(zdo, out var subscriber))
+    //   {
+    //     if (subscriber == null) return;
+    //     subscriber.Load(zdo, [SwivelCustomConfig.Key_MotionState]);
+    //   }
+    // }
 
     if (PowerSystemRegistry.TryGetData<PowerConsumerData>(zdo, out var powerData))
     {
@@ -247,6 +326,7 @@ public class SwivelPrefabConfigRPC
       yield break;
     }
 
-    Internal_SetAndNotifyMotionState(zdo, clientMotionState);
+    // do not start motion sync. This call should be for force syncing a motion state.
+    Internal_SetAndNotifyMotionState(zdo, clientMotionState, false);
   }
 }

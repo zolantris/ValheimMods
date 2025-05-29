@@ -889,12 +889,6 @@
     /// <returns></returns>
     private float GetRudderForcePerSpeed()
     {
-      if (!PropulsionConfig.AllowCustomRudderSpeeds.Value)
-      {
-        _rudderForce = 1f;
-        return _rudderForce;
-      }
-
       switch (VehicleSpeed)
       {
         case Ship.Speed.Stop:
@@ -2920,8 +2914,8 @@
                                    (m_stearForce * (0f - m_rudderValue) *
                                     directionMultiplier);
 
-      if (PropulsionConfig.AllowCustomRudderSpeeds.Value)
-        shipAdditiveSteerForce *= Mathf.Clamp(_rudderForce, 1f, 10f);
+      // additional speeded to the vehicle.
+      shipAdditiveSteerForce *= Mathf.Clamp(_rudderForce, 1f, 10f);
 
       // Adds additional speeds to turning
       if (PiecesController?.m_rudderPieces.Count > 0)
@@ -3028,12 +3022,8 @@
         VehicleSpeed != Ship.Speed.Back ? 1 : -1;
       steerForce *= directionMultiplier;
 
-      // todo see if this is necessary. This logic is from the Base game Ship
-
-      if (PropulsionConfig.AllowCustomRudderSpeeds.Value)
-        steerForce += GetAdditiveSteerForce(directionMultiplier);
-      else if (VehicleSpeed is Ship.Speed.Back or Ship.Speed.Slow)
-        steerForce += GetAdditiveSteerForce(directionMultiplier);
+      // additional speed added to the vehicle
+      steerForce += GetAdditiveSteerForce(directionMultiplier);
 
       switch (flying)
       {

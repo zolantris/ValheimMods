@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using UnityEngine;
 using ValheimVehicles.Helpers;
@@ -119,25 +120,34 @@ public static class PowerSystemRegistry
 
   public static bool ContainsZDO(ZDO zdo)
   {
+    if (zdo == null) return false;
     return _byZdo.ContainsKey(zdo);
   }
 
-  public static bool TryGetByZdo(ZDO zdo, out PowerNetworkData data)
+  public static bool TryGetByZdo(ZDO? zdo, [NotNullWhen(true)] out PowerNetworkData? data)
   {
+    data = null;
+    if (zdo == null) return false;
     return _byZdo.TryGetValue(zdo, out data);
   }
-  public static bool TryGetByZdoid(ZDOID zdoid, out PowerNetworkData data)
+  public static bool TryGetByZdoid(ZDOID? zdoid, [NotNullWhen(true)] out PowerNetworkData? data)
   {
-    return _byZdoid.TryGetValue(zdoid, out data);
+    data = null;
+    if (zdoid == null) return false;
+    return _byZdoid.TryGetValue(zdoid.Value, out data);
   }
-  public static bool TryGetByData(PowerSystemComputeData data, out PowerNetworkData pnd)
+  public static bool TryGetByData(PowerSystemComputeData? data, [NotNullWhen(true)] out PowerNetworkData? pnd)
   {
+    pnd = null;
+    if (data == null) return false;
     return _byData.TryGetValue(data, out pnd);
   }
 
   // (Optional) TryGet with type constraint for Data
-  public static bool TryGetData<T>(ZDO zdo, out T typedData) where T : PowerSystemComputeData
+  public static bool TryGetData<T>(ZDO? zdo, [NotNullWhen(true)] out T? typedData) where T : PowerSystemComputeData
   {
+    typedData = null;
+    if (zdo == null) return false;
     if (TryGetByZdo(zdo, out var pnd) && pnd.Data is T t)
     {
       typedData = t;

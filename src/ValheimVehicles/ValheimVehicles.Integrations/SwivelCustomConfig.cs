@@ -324,13 +324,25 @@ namespace ValheimVehicles.BepInExConfig
       set;
     }
 
+    public static MotionState GetCompleteMotionState(MotionState current)
+    {
+      return current switch
+      {
+        MotionState.AtStart => MotionState.AtStart,
+        MotionState.AtTarget => MotionState.AtTarget,
+        MotionState.ToStart => MotionState.AtStart,
+        MotionState.ToTarget => MotionState.AtTarget,
+        _ => MotionState.AtStart
+      };
+    }
+
     public static MotionState GetNextMotionState(MotionState current)
     {
       return current switch
       {
         MotionState.AtStart => MotionState.ToTarget,
-        MotionState.ToStart => MotionState.ToTarget,
         MotionState.AtTarget => MotionState.ToStart,
+        MotionState.ToStart => MotionState.ToTarget,
         MotionState.ToTarget => MotionState.ToStart,
         _ => MotionState.AtStart
       };

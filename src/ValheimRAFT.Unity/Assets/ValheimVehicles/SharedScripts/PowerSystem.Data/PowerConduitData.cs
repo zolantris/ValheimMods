@@ -51,20 +51,24 @@ namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
     public class PlayerEitrData
     {
       public readonly PowerConduitData conduitData;
-      public Func<float> GetEitr = () => 0f;
-      public Func<float> GetEitrCapacity = () => 0f;
+      public float Eitr = 0f;
+      public float EitrCapacity = 0f;
       public long PlayerId;
-      public float Eitr => GetEitr();
-      public float EitrCapacity => GetEitrCapacity();
-      public float EitrCapacityRemaining => GetEitrCapacity() - GetEitr();
-
       // methods that fire RPC_For Integration. But can be used to test via the stub.
       public Action<long, float> Request_AddEitr = (_, _) => {};
       public Action<long, float> Request_UseEitr = (_, _) => {};
 
-      public PlayerEitrData(PowerConduitData conduit)
+      public PlayerEitrData(PowerConduitData conduitData)
       {
-        conduitData = conduit;
+        this.conduitData = conduitData;
+      }
+
+      public PlayerEitrData(long playerId, float eitr, float eitrCapacity, PowerConduitData conduitData)
+      {
+        PlayerId = playerId;
+        Eitr = eitr;
+        EitrCapacity = eitrCapacity;
+        this.conduitData = conduitData;
       }
     }
 
