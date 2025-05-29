@@ -392,19 +392,19 @@
 ## Propulsion
 
 ### Rudder Back Speed 
-- Description: Set the Back speed of rudder, this will apply with sails
-- Default Value: 1
+- Description: Set the Back speed of rudder, this will not apply sail speed.
+- Default Value: 5
 
 ### Rudder Slow Speed 
-- Description: Set the Slow speed of rudder, this will apply with sails
-- Default Value: 1
+- Description: Set the Slow speed of rudder, this will not apply sail speed.
+- Default Value: 5
 
 ### Rudder Half Speed 
-- Description: Set the Half speed of rudder, this will apply with sails
+- Description: Set the Half speed of rudder, this will apply additively with sails
 - Default Value: 0
 
 ### Rudder Full Speed 
-- Description: Set the Full speed of rudder, this will apply with sails
+- Description: Set the Full speed of rudder, this will apply additively with sails
 - Default Value: 0
 
 ### LandVehicle Back Speed 
@@ -496,10 +496,6 @@ Other methods removed after 2.5.0
 - Description: Sets the speed at which it becomes significantly harder to gain speed per sail area
 - Default Value: 1
 
-### EnableCustomPropulsionConfig 
-- Description: Enables all custom propulsion values
-- Default Value: False
-
 ### SailCustomAreaTier1Multiplier 
 - Description: Manual sets the sail wind area multiplier the custom tier1 sail. Currently there is only 1 tier
 - Default Value: 0.5
@@ -527,10 +523,6 @@ Other methods removed after 2.5.0
 ### FlightHasRudderOnly 
 - Description: Flight allows for different rudder speeds. Use rudder speed only. Do not use sail speed.
 - Default Value: False
-
-### AllowCustomRudderSpeeds 
-- Description: Allow the raft to use custom rudder speeds set by the player, these speeds are applied alongside sails at half and full speed. See advanced section for the actual speed settings.
-- Default Value: True
 
 ### WheelDeadZone 
 - Description: Plus or minus deadzone of the wheel when turning. Setting this to 0 will disable this feature. This will zero out the rudder if the user attempts to navigate with a value lower than this threshold range
@@ -668,15 +660,15 @@ Other methods removed after 2.5.0
 50% will be the very bottom of the vehicle's collider. In future version there will be an individual config setting.
 - Default Value: 0.65
 
-### flightDamping_3.4.1 
+### flightDamping_3.4.2 
 - Description: Controls how much the water pushes the boat upwards directly. This value may affect angular damping too. Recommended to keep the original value. But tweaking can remove or add additional jitter. Higher values likely will add more jitter.
 - Default Value: 1
 
-### flightSidewaysDamping_3.4.1 
+### flightSidewaysDamping_3.4.2 
 - Description: Controls how much the water pushes the boat sideways based on wind direction and velocity.
 - Default Value: 2
 
-### flightAngularDamping_3.4.1 
+### flightAngularDamping_3.4.2 
 - Description: Controls how much the water pushes the boat from a vertical angle based on water and velocity. Lower values will cause more rocking and allow better turn rates. Higher values will make the vehicle more stable, but less turning angle and possibly less realistic. If you get motion-sickness this can allow tweaking sway without disabling it all and also prevent rapid turning.
 - Default Value: 1
 
@@ -696,15 +688,15 @@ Other methods removed after 2.5.0
 - Description: Flight angular drag controls how much the vehicle slows down when turning.
 - Default Value: 1.2
 
-### force_3.4.1 
+### force_3.4.2 
 - Description: EXPERIMENTAL_FORCE. Lower values will not allow the vehicle to balance fast when tilted. Lower values can reduce bobbing, but must be below the forceDistance value.
 - Default Value: 2
 
-### forceDistance_3.4.1 
+### forceDistance_3.4.2 
 - Description: EXPERIMENTAL_FORCE_DISTANCE should always be above the value of force. Otherwise bobbing will occur. Lower values will not allow the vehicle to balance fast when tilted
 - Default Value: 10
 
-### backwardForce_3.4.1 
+### backwardForce_3.4.2 
 - Description: EXPERIMENTAL_BackwardFORCE
 - Default Value: 1
 
@@ -712,15 +704,15 @@ Other methods removed after 2.5.0
 - Description: Steer force controls how much the vehicle will resist steering when turning due to water pushing against it
 - Default Value: 1
 
-### waterDamping_3.4.1 
+### waterDamping_3.4.2 
 - Description: Controls how much the water pushes the boat upwards directly. This value may affect angular damping too. Recommended to keep the original value. But tweaking can remove or add additional jitter. Higher values likely will add more jitter.
 - Default Value: 1
 
-### waterSidewaysDamping_3.4.1 
+### waterSidewaysDamping_3.4.2 
 - Description: Controls how much the water pushes the boat sideways based on wind direction and velocity.
 - Default Value: 2
 
-### waterAngularDamping_3.4.1 
+### waterAngularDamping_3.4.2 
 - Description: Controls how much the water pushes the boat from a vertical angle based on water and velocity. Lower values will cause more rocking and allow better turn rates. Higher values will make the vehicle more stable, but less turning angle and possibly less realistic. If you get motion-sickness this can allow tweaking sway without disabling it all and also prevent rapid turning.
 - Default Value: 1
 
@@ -736,15 +728,15 @@ Other methods removed after 2.5.0
 - Description: rotation drag controls how much the vehicle slows down when turning.
 - Default Value: 0.8
 
-### submersibleDamping_3.4.1 
+### submersibleDamping_3.4.2 
 - Description: Controls how much the water pushes the boat upwards directly. This value may affect angular damping too. Recommended to keep the original value. But tweaking can remove or add additional jitter. Higher values likely will add more jitter.
 - Default Value: 1
 
-### submersibleSidewaysDamping_3.4.1 
+### submersibleSidewaysDamping_3.4.2 
 - Description: Controls how much the water pushes the boat sideways based on wind direction and velocity.
 - Default Value: 2
 
-### submersibleAngularDamping_3.4.1 
+### submersibleAngularDamping_3.4.2 
 - Description: Controls how much the water pushes the boat from a vertical angle based on water and velocity. Lower values will cause more rocking and allow better turn rates. Higher values will make the vehicle more stable, but less turning angle and possibly less realistic. If you get motion-sickness this can allow tweaking sway without disabling it all and also prevent rapid turning.
 - Default Value: 1
 
@@ -1000,11 +992,11 @@ Other methods removed after 2.5.0
 
 ### PowerPlate_EitrDrainCostPerSecond 
 - Description: The amount of player eitr that is required per second to power a system.
-- Default Value: 100
+- Default Value: 10
 
 ### PowerPlate_EnergyGainPerSecond 
 - Description: The amount of energy gained when draining player eitr per second.
-- Default Value: 0.0001
+- Default Value: 1
 
 ### PowerSourceFuelCapacity 
 - Description: The maximum amount of fuel a power source can hold.
