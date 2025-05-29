@@ -1,6 +1,5 @@
 using ValheimVehicles.SharedScripts;
-using ValheimVehicles.SharedScripts.PowerSystem.Compute;
-namespace ValheimVehicles.Integrations.PowerSystem;
+namespace ValheimVehicles.RPC;
 
 public static class PlayerEitrRPC
 {

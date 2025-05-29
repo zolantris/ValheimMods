@@ -5,7 +5,7 @@ using ValheimVehicles.BepInExConfig;
 using ValheimVehicles.Constants;
 using ValheimVehicles.Interfaces;
 using ValheimVehicles.SharedScripts;
-namespace ValheimVehicles.ValheimVehicles.RPC;
+namespace ValheimVehicles.RPC;
 
 public static class PrefabConfigRPC
 {

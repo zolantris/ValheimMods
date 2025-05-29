@@ -1,18 +1,14 @@
 using System.Collections;
 using System.Collections.Generic;
-using Jotunn.Entities;
-using Jotunn.Managers;
 using UnityEngine;
 using ValheimVehicles.BepInExConfig;
-using ValheimVehicles.Constants;
 using ValheimVehicles.Helpers;
 using ValheimVehicles.Integrations;
 using ValheimVehicles.Integrations.PowerSystem;
 using ValheimVehicles.SharedScripts;
 using ValheimVehicles.SharedScripts.PowerSystem;
 using ValheimVehicles.SharedScripts.PowerSystem.Compute;
-using ValheimVehicles.SharedScripts.UI;
-namespace ValheimVehicles.ValheimVehicles.RPC;
+namespace ValheimVehicles.RPC;
 
 public struct SwivelMotionUpdate
 {
@@ -48,7 +44,7 @@ public class SwivelPrefabConfigRPC
 
   public static string SetMotionRPC_Name = RPCUtils.GetRPCPrefix(nameof(RPC_Swivel_SetMotionState));
   public static string NextMotionRPC_Name = RPCUtils.GetRPCPrefix(nameof(RPC_Swivel_NextMotionState));
-  public static string BroadCastMotionRPC_Name = RPCUtils.GetRPCPrefix(nameof(BroadCastMotionRPC_Name));
+  public static string BroadCastMotionRPC_Name = RPCUtils.GetRPCPrefix(nameof(RPC_Swivel_BroadCastMotionUpdate));
   /// <summary>
   /// Global RPCs that must be synced authoritatively on the server.
   /// </summary>
@@ -56,20 +52,14 @@ public class SwivelPrefabConfigRPC
   {
     if (hasRegistered) return;
     ZRoutedRpc.instance.Register<ZPackage>(NextMotionRPC_Name, RPC_Swivel_NextMotionState);
-
-
     ZRoutedRpc.instance.Register<ZPackage>(SetMotionRPC_Name, RPC_Swivel_SetMotionState);
-
-    ZRoutedRpc.instance.Register<ZPackage>(RPCUtils.GetRPCPrefix(nameof(RPC_Swivel_BroadCastMotionUpdate)), RPC_Swivel_BroadCastMotionUpdate);
-
-    // RPCInstance_Swivel_NextMotionState = NetworkManager.Instance.AddRPC(, RPC_Swivel_NextMotionState, RPC_Swivel_NextMotionState);
-    // RPCInstance_Swivel_SetMotionState = NetworkManager.Instance.AddRPC(RPCUtils.GetRPCPrefix(nameof(RPC_Swivel_SetMotionState)), RPC_Swivel_SetMotionState, RPC_Swivel_SetMotionState);
-    // RPCInstance_Swivel_BroadcastMotionAnimation = NetworkManager.Instance.AddRPC(RPCUtils.GetRPCPrefix(nameof(RPC_Swivel_BroadCastMotionUpdate)), RPC_Swivel_BroadCastMotionUpdate, RPC_Swivel_BroadCastMotionUpdate);
+    ZRoutedRpc.instance.Register<ZPackage>(BroadCastMotionRPC_Name, RPC_Swivel_BroadCastMotionUpdate);
     hasRegistered = true;
   }
 
   public static void Request_SetMotionState(ZDO zdo, MotionState motionState)
   {
+    if (ZRoutedRpc.instance == null) return;
     var pkg = new ZPackage();
     pkg.Write(zdo.m_uid);
     pkg.Write((int)motionState);
@@ -78,17 +68,24 @@ public class SwivelPrefabConfigRPC
 
   public static void Request_NextMotion(ZDO zdo, MotionState currentMotionState)
   {
+    if (ZRoutedRpc.instance == null) return;
     var pkg = new ZPackage();
     var zdoid = zdo.m_uid;
 
     pkg.Write(zdoid);
     pkg.Write((int)currentMotionState);
 
+    if (ZNet.IsSinglePlayer || ZNet.instance.IsServer())
+    {
+      RPC_Swivel_NextMotionState(zdo.GetOwner(), pkg);
+      return;
+    }
     ZRoutedRpc.instance.InvokeRoutedRPC(ZRoutedRpc.instance.GetServerPeerID(), NextMotionRPC_Name, pkg);
   }
 
   public static void RPC_Swivel_NextMotionState(long sender, ZPackage pkg)
   {
+    if (ZRoutedRpc.instance == null) return;
     pkg.SetPos(0);
 
     var zdoId = pkg.ReadZDOID();

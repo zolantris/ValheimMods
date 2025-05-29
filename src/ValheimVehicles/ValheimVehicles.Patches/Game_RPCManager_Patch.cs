@@ -1,6 +1,5 @@
 using HarmonyLib;
-using ValheimVehicles.Integrations.PowerSystem;
-using ValheimVehicles.ValheimVehicles.RPC;
+using ValheimVehicles.RPC;
 namespace ValheimVehicles.Patches;
 
 /// <summary>
@@ -13,9 +12,9 @@ public static class Game_RPCManager_Patch
   [HarmonyPostfix]
   private static void Game_Start_InjectRPC(ZNetScene __instance)
   {
-    SwivelPrefabConfigRPC.Register();
-    PrefabConfigRPC.Register();
     PowerSystemRPC.Register();
+    PrefabConfigRPC.Register();
+    SwivelPrefabConfigRPC.Register();
     PlayerEitrRPC.Register();
   }
 }

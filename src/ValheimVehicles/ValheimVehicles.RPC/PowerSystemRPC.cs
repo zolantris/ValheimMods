@@ -2,16 +2,14 @@
 // ReSharper disable NamespaceStyle
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using Jotunn.Entities;
-using Jotunn.Managers;
+using ValheimVehicles.Integrations;
+using ValheimVehicles.Integrations.PowerSystem;
 using ValheimVehicles.SharedScripts;
 using ValheimVehicles.SharedScripts.PowerSystem;
 using ValheimVehicles.SharedScripts.PowerSystem.Compute;
-using ValheimVehicles.ValheimVehicles.RPC;
 
-namespace ValheimVehicles.Integrations.PowerSystem
+namespace ValheimVehicles.RPC
 {
   public static class PowerSystemRPC
   {
@@ -358,7 +356,6 @@ namespace ValheimVehicles.Integrations.PowerSystem
         var zdoid = pkg.ReadZDOID();
         if (!PowerSystemRegistry.TryGetByZdoid(zdoid, out var data)) return;
         data.Data.Load();
-        // LoggerProvider.LogDebug($"[RPC] Client received update for ZDO: {zdoid} networkId: {networkId}");
       }
     }
   }

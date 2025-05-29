@@ -5,7 +5,7 @@ using UnityEngine;
 using ValheimVehicles.Integrations.PowerSystem;
 using ValheimVehicles.SharedScripts;
 using Zolantris.Shared.Debug;
-namespace ValheimVehicles.ValheimVehicles.RPC;
+namespace ValheimVehicles.RPC;
 
 public static class RPCUtils
 {

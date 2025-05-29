@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using ValheimVehicles.BepInExConfig;
 using ValheimVehicles.Integrations.PowerSystem;
+using ValheimVehicles.RPC;
 using ValheimVehicles.SharedScripts;
 using ValheimVehicles.SharedScripts.PowerSystem;
 using ValheimVehicles.SharedScripts.PowerSystem.Compute;

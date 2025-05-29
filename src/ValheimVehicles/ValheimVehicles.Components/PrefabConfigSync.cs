@@ -6,8 +6,8 @@ using UnityEngine;
 using ValheimVehicles.Controllers;
 using ValheimVehicles.Helpers;
 using ValheimVehicles.Interfaces;
+using ValheimVehicles.RPC;
 using ValheimVehicles.SharedScripts;
-using ValheimVehicles.ValheimVehicles.RPC;
 
 namespace ValheimVehicles.Components;
 
@@ -101,7 +101,9 @@ public class PrefabConfigSync<T, TComponentInterface> : MonoBehaviour, IPrefabCu
 
     CustomConfig = newConfig;
     CustomConfig.Save(netView.GetZDO(), CustomConfig);
+
     netView.InvokeRPC(ZRoutedRpc.Everybody, nameof(RPC_Load));
+    Load();
   }
 
   public void Request_Load()

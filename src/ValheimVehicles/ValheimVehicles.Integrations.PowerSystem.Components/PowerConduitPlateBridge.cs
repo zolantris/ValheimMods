@@ -8,12 +8,12 @@ using UnityEngine;
 using ValheimVehicles.Helpers;
 using ValheimVehicles.Integrations;
 using ValheimVehicles.Integrations.PowerSystem;
+using ValheimVehicles.RPC;
 using ValheimVehicles.Shared.Constants;
 using ValheimVehicles.SharedScripts;
 using ValheimVehicles.SharedScripts.PowerSystem;
 using ValheimVehicles.SharedScripts.PowerSystem.Compute;
 using ValheimVehicles.SharedScripts.PowerSystem.Interfaces;
-using ValheimVehicles.Structs;
 
 public class PowerConduitPlateBridge :
   PowerNetworkDataEntity<PowerConduitPlateBridge, PowerConduitPlateComponent, PowerConduitData>,
