@@ -2144,9 +2144,6 @@
       numberOfTier3Sails = 0;
       numberOfTier4Sails = 0;
 
-      var hasConfigOverride =
-        PropulsionConfig.EnableCustomPropulsionConfig.Value;
-
       foreach (var mMastPiece in m_mastPieces.ToList())
       {
         // prevent NRE from occuring if destroying the mastPiece but it still exists
@@ -2159,36 +2156,26 @@
         if (mMastPiece.name.StartsWith(PrefabNames.Tier1RaftMastName))
         {
           ++numberOfTier1Sails;
-          var multiplier = hasConfigOverride
-            ? PropulsionConfig.SailTier1Area.Value
-            : Tier1;
+          var multiplier = PropulsionConfig.SailTier1Area.Value;
           cachedTotalSailArea += numberOfTier1Sails * multiplier;
         }
         else if (mMastPiece.name.StartsWith(PrefabNames.Tier2RaftMastName))
         {
           ++numberOfTier2Sails;
-          var multiplier = hasConfigOverride
-            ? PropulsionConfig.SailTier2Area.Value
-            : Tier2;
+          var multiplier = PropulsionConfig.SailTier2Area.Value;
           cachedTotalSailArea += numberOfTier2Sails * multiplier;
         }
         else if (mMastPiece.name.StartsWith(PrefabNames.Tier3RaftMastName))
         {
           ++numberOfTier3Sails;
-          var multiplier = hasConfigOverride
-            ? PropulsionConfig.SailTier3Area.Value
-            : Tier3;
+          var multiplier = PropulsionConfig.SailTier3Area.Value;
           cachedTotalSailArea += numberOfTier3Sails * multiplier;
-          ;
         }
         else if (mMastPiece.name.StartsWith(PrefabNames.Tier4RaftMastName))
         {
           ++numberOfTier4Sails;
-          var multiplier = hasConfigOverride
-            ? PropulsionConfig.SailTier4Area.Value
-            : Tier4;
+          var multiplier = PropulsionConfig.SailTier4Area.Value;
           cachedTotalSailArea += numberOfTier4Sails * multiplier;
-          ;
         }
       }
 
@@ -2200,10 +2187,7 @@
             customSailsArea += sailComponent.GetSailArea();
 
         if (hasDebug) Logger.LogDebug($"CustomSailsArea {customSailsArea}");
-        var multiplier = hasConfigOverride
-          ? PropulsionConfig.SailCustomAreaTier1Multiplier.Value
-          : CustomTier1AreaForceMultiplier;
-
+        var multiplier = PropulsionConfig.SailCustomAreaTier1Multiplier.Value;
         cachedTotalSailArea +=
           customSailsArea * Mathf.Max(0.1f,
             multiplier);
