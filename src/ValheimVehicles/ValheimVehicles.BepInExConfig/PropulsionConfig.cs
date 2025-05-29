@@ -30,17 +30,12 @@ public class PropulsionConfig : BepInExBaseConfig<PropulsionConfig>
   // landvehicle turning
   public static ConfigEntry<float> VehicleLandTurnSpeed = null!;
 
-  public static ConfigEntry<bool> AllowCustomRudderSpeeds { get; private set; } =
-    null!;
-
   public static ConfigEntry<float> BallastClimbingOffset { get; private set; } =
     null!;
   public static ConfigEntry<float> SailingMassPercentageFactor { get; set; }
   public static ConfigEntry<bool> AllowFlight { get; set; }
 
   // Propulsion Configs
-  public static ConfigEntry<bool> EnableCustomPropulsionConfig { get; set; }
-
   public static ConfigEntry<float> MaxSailSpeed { get; set; }
   public static ConfigEntry<float> SpeedCapMultiplier { get; set; }
 
@@ -209,11 +204,6 @@ public class PropulsionConfig : BepInExBaseConfig<PropulsionConfig>
 
     // rudder
 
-    EnableCustomPropulsionConfig = config.BindUnique(GenericSectionName,
-      "EnableCustomPropulsionConfig", SailAreaForce.HasPropulsionConfigOverride,
-      ConfigHelpers.CreateConfigDescription("Enables all custom propulsion values", true,
-        true));
-
     SailCustomAreaTier1Multiplier = config.BindUnique(GenericSectionName,
       "SailCustomAreaTier1Multiplier",
       SailAreaForce.CustomTier1AreaForceMultiplier,
@@ -252,12 +242,6 @@ public class PropulsionConfig : BepInExBaseConfig<PropulsionConfig>
       false,
       ConfigHelpers.CreateConfigDescription("Flight allows for different rudder speeds. Use rudder speed only. Do not use sail speed."));
 
-    AllowCustomRudderSpeeds = config.BindUnique(GenericSectionName,
-      "AllowCustomRudderSpeeds", true,
-      ConfigHelpers.CreateConfigDescription(
-        "Allow the raft to use custom rudder speeds set by the player, these speeds are applied alongside sails at half and full speed. See advanced section for the actual speed settings.",
-        true));
-
     WheelDeadZone = config.BindUnique(GenericSectionName,
       "WheelDeadZone",
       0.02f,
@@ -279,21 +263,21 @@ public class PropulsionConfig : BepInExBaseConfig<PropulsionConfig>
   public static void CreateSpeedConfig(ConfigFile config)
   {
     VehicleRudderSpeedBack = config.BindUnique(PropulsionSpeedSection, "Rudder Back Speed",
-      1f,
+      5f,
       ConfigHelpers.CreateConfigDescription(
-        "Set the Back speed of rudder, this will apply with sails", true));
+        "Set the Back speed of rudder, this will not apply sail speed.", true, false, new AcceptableValueRange<float>(2f, 20f)));
     VehicleRudderSpeedSlow = config.BindUnique(PropulsionSpeedSection, "Rudder Slow Speed",
-      1f,
+      5f,
       ConfigHelpers.CreateConfigDescription(
-        "Set the Slow speed of rudder, this will apply with sails", true));
+        "Set the Slow speed of rudder, this will not apply sail speed.", true, false, new AcceptableValueRange<float>(2f, 20f)));
     VehicleRudderSpeedHalf = config.BindUnique(PropulsionSpeedSection, "Rudder Half Speed",
       0f,
       ConfigHelpers.CreateConfigDescription(
-        "Set the Half speed of rudder, this will apply with sails", true));
+        "Set the Half speed of rudder, this will apply additively with sails", true, false, new AcceptableValueRange<float>(0f, 100f)));
     VehicleRudderSpeedFull = config.BindUnique(PropulsionSpeedSection, "Rudder Full Speed",
       0f,
       ConfigHelpers.CreateConfigDescription(
-        "Set the Full speed of rudder, this will apply with sails", true));
+        "Set the Full speed of rudder, this will apply additively with sails", true, false, new AcceptableValueRange<float>(0f, 100f)));
 
     VehicleLandSpeedBack = config.BindUnique(PropulsionSpeedSection, "LandVehicle Back Speed", 1f,
       ConfigHelpers.CreateConfigDescription(
