@@ -21,8 +21,8 @@ public class PowerSimulationTests
     conduit.Mode = PowerConduitMode.Charge;
 
     var currentEitr = 50f;
-    playerData.GetEitr = () => currentEitr;
-    playerData.GetEitrCapacity = () => 100f;
+    playerData.Eitr = currentEitr;
+    playerData.EitrCapacity = 100f;
 
     simulationData.Conduits.Add(conduit);
     simulationData.Storages.Add(new PowerStorageData { Energy = 0f, EnergyCapacity = 100f });
@@ -42,8 +42,8 @@ public class PowerSimulationTests
     var simulationData = new PowerSimulationData { DeltaTime = 1f };
     GeneratePlayerDataForConduit(out var conduit, out var playerData);
     conduit.Mode = PowerConduitMode.Charge;
-    playerData.GetEitr = () => 0f;
-    playerData.GetEitrCapacity = () => 0f;
+    playerData.Eitr = 0f;
+    playerData.EitrCapacity = 0f;
 
     simulationData.Conduits.Add(conduit);
     simulationData.Storages.Add(new PowerStorageData { Energy = 0f, EnergyCapacity = 100f });
@@ -59,8 +59,8 @@ public class PowerSimulationTests
     var simulationData = new PowerSimulationData { DeltaTime = 1f };
     GeneratePlayerDataForConduit(out var conduit, out var playerData);
     conduit.Mode = PowerConduitMode.Charge;
-    playerData.GetEitr = () => 100f;
-    playerData.GetEitrCapacity = () => 100f;
+    playerData.Eitr = 100f;
+    playerData.EitrCapacity = 100f;
 
     simulationData.Conduits.Add(conduit);
     simulationData.Storages.Add(new PowerStorageData { Energy = 100f, EnergyCapacity = 100f });
@@ -78,8 +78,8 @@ public class PowerSimulationTests
     conduit.Mode = PowerConduitMode.Drain;
 
     var currentEitr = 200f;
-    playerData.GetEitr = () => currentEitr;
-    playerData.GetEitrCapacity = () => 200f;
+    playerData.Eitr = currentEitr;
+    playerData.EitrCapacity = 200f;
     playerData.Request_UseEitr = (id, val) => currentEitr -= val;
 
     simulationData.Conduits.Add(conduit);
@@ -127,11 +127,11 @@ public class PowerSimulationTests
     conduit = new PowerConduitData();
     var playerEitr = 5f;
     var playerMaxEitr = 50f;
-    playerData = new PowerConduitData.PlayerEitrData(conduit)
+    playerData = new PowerConduitData.PlayerEitrData(1L, playerEitr, playerMaxEitr, conduit)
     {
       PlayerId = 1,
-      GetEitr = () => playerEitr,
-      GetEitrCapacity = () => playerMaxEitr
+      Eitr = 5f,
+      EitrCapacity = playerMaxEitr
     };
     conduit.PlayerDataById.Add(playerData.PlayerId, playerData);
   }
@@ -148,7 +148,7 @@ public class PowerSimulationTests
     simulationData.Storages.Add(storage2);
 
     GeneratePlayerDataForConduit(out var conduit, out var playerData);
-    playerData.GetEitr = () => 0f;
+    playerData.Eitr = 0f;
     simulationData.Conduits.Add(conduit);
 
     var consumer = new PowerConsumerData { BasePowerConsumption = 0f };
@@ -322,8 +322,8 @@ public class PowerSimulationTests
       PlayerId = 1234,
       Request_UseEitr = (id, val) => Request_UseEitrMock(val),
       Request_AddEitr = (id, val) => Request_AddEitrMock(val),
-      GetEitr = GetPlayerEitrMock,
-      GetEitrCapacity = () => 100f
+      Eitr = GetPlayerEitrMock(),
+      EitrCapacity = 100f
     };
     rechargeConduit.PlayerDataById.Add(player.PlayerId, player);
     simulationData.Conduits.Add(rechargeConduit);

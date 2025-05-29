@@ -1,4 +1,5 @@
 using ValheimVehicles.SharedScripts;
+using ValheimVehicles.SharedScripts.PowerSystem.Compute;
 namespace ValheimVehicles.Integrations.PowerSystem;
 
 public static class PlayerEitrRPC
@@ -17,73 +18,48 @@ public static class PlayerEitrRPC
   public static void Register()
   {
     if (hasRegistered) return;
-    ZRoutedRpc.instance.Register<float>(RPC_AddEitr_Name, RPC_AddEitr);
-    ZRoutedRpc.instance.Register<float>(RPC_UseEitr_Name, RPC_UseEitr);
+    ZRoutedRpc.instance.Register<ZPackage>(RPC_AddEitr_Name, RPC_AddEitr);
+    ZRoutedRpc.instance.Register<ZPackage>(RPC_UseEitr_Name, RPC_UseEitr);
     hasRegistered = true;
   }
 
   public static void Request_AddEitr(long playerId, float amount)
   {
-    var player = Player.GetPlayer(playerId);
-    if (!player) return;
-    Request_AddEitr(player, amount);
-  }
-
-  public static void Request_AddEitr(Player player, float amount)
-  {
-    if (!player || amount <= 0f)
+    if (playerId == 0 || amount <= 0f)
     {
       LoggerProvider.LogWarning("Player is null or amount is <= 0");
       return;
     }
-
-    var netView = player.m_nview;
-    if (!netView || !netView.IsValid()) return;
-    if (netView.IsOwner())
+    if (Player.m_localPlayer && Player.m_localPlayer.GetPlayerID() == playerId)
     {
-      var zdoOwner = netView.GetZDO().GetOwner();
-      netView.InvokeRPC(zdoOwner, RPC_AddEitr_Name, amount);
+      // if the player is local player, we can just use the local player's eitr.
+      Player.m_localPlayer.AddEitr(amount);
+      return;
     }
-    else
-    {
-      player.AddEitr(amount);
-    }
+    var pkg = new ZPackage();
+    pkg.Write(amount);
+    ZRoutedRpc.instance.InvokeRoutedRPC(playerId, RPC_AddEitr_Name, pkg);
   }
 
-  public static void Request_UseEitr(long playerId, float amount)
+  public static void Request_UseEitr(long playerPeerId, float amount)
   {
-    var player = Player.GetPlayer(playerId);
-    if (!player) return;
-    Request_UseEitr(player, amount);
-  }
-
-  /// <summary>
-  /// For some reason this is not working with native method so adding direct RPC to manipulate Eitr.
-  /// </summary>
-  /// <param name="player"></param>
-  /// <param name="amount"></param>
-  public static void Request_UseEitr(Player player, float amount)
-  {
-    if (!player || amount <= 0f)
+    // skip invoking on self.
+    if (Player.m_localPlayer && Player.m_localPlayer.GetPlayerID() == playerPeerId)
     {
-      LoggerProvider.LogWarning("Player is null or amount is <= 0");
+      // if the player is local player, we can just use the local player's eitr.
+      Player.m_localPlayer.UseEitr(amount);
       return;
     }
 
-    var netView = player.m_nview;
-    if (!netView || !netView.IsValid()) return;
-    if (netView.IsOwner())
-    {
-      player.UseEitr(amount);
-    }
-    else
-    {
-      netView.InvokeRPC(RPC_UseEitr_Name, amount);
-    }
+    var pkg = new ZPackage();
+    pkg.Write(amount);
+    ZRoutedRpc.instance.InvokeRoutedRPC(playerPeerId, RPC_UseEitr_Name, pkg);
   }
 
-  private static void RPC_UseEitr(long sender, float amount)
+  private static void RPC_UseEitr(long sender, ZPackage pkg)
   {
+    pkg.SetPos(0);
+    var amount = pkg.ReadSingle();
     if (!Player.m_localPlayer) return;
 #if DEBUG
     LoggerProvider.LogDebug($"Added Eitr for player {Player.m_localPlayer.GetPlayerName()}");
@@ -91,8 +67,10 @@ public static class PlayerEitrRPC
     Player.m_localPlayer.AddEitr(amount);
   }
 
-  private static void RPC_AddEitr(long sender, float amount)
+  private static void RPC_AddEitr(long sender, ZPackage pkg)
   {
+    pkg.SetPos(0);
+    var amount = pkg.ReadSingle();
     if (!Player.m_localPlayer) return;
 #if DEBUG
     LoggerProvider.LogDebug($"Added Eitr for player {Player.m_localPlayer.GetPlayerName()}");

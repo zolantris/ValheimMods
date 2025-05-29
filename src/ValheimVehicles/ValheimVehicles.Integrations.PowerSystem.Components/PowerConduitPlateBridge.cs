@@ -1,7 +1,9 @@
 // ReSharper disable ArrangeNamespaceBody
 // ReSharper disable NamespaceStyle
 
+using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using ValheimVehicles.Helpers;
 using ValheimVehicles.Integrations;
@@ -25,6 +27,9 @@ public class PowerConduitPlateBridge :
   public bool IsDemanding => Logic.IsDemanding;
 
   public static List<PowerConduitPlateBridge> Instances = new();
+  public List<Player> m_localPlayers = new();
+  public Coroutine? _triggerCoroutine;
+  public float interval = 2f;
 
   public void OnEnable()
   {
@@ -51,7 +56,6 @@ public class PowerConduitPlateBridge :
     return 0f;
   }
 
-  public PowerConduitData Data = new();
   public bool MustSync = false;
   public Rigidbody m_body;
   public FixedJoint m_joint;
@@ -60,7 +64,7 @@ public class PowerConduitPlateBridge :
   private void HandlePlayerEnterActiveZone(Player player)
   {
     if (!player) return;
-    Data.AddPlayer(player);
+    Data.AddOrUpdate(player.GetPlayerID(), player.GetEitr(), player.GetMaxEitr());
     Logic.SetHasPlayerInRange(Data.HasPlayersWithEitr);
   }
 
@@ -84,10 +88,31 @@ public class PowerConduitPlateBridge :
 
     HandlePlayerEnterActiveZone(player);
 
-    if (this.IsNetViewValid(out var netView))
+    // start the coroutine if it has not been started yet.
+    if (m_localPlayers.Count > 0 && _triggerCoroutine == null)
     {
-      PowerSystemRPC.Request_PlayerEnteredConduit(netView.GetZDO().m_uid, player.GetPlayerID());
+      _triggerCoroutine = StartCoroutine(HandleTriggerRoutine());
     }
+  }
+
+  /// <summary>
+  /// A polling system to update eitr across active conduits. Will only call from active client components.
+  /// </summary>
+  /// <param name="collider"></param>
+  /// <returns></returns>
+  private IEnumerator HandleTriggerRoutine()
+  {
+    if (!this.IsNetViewValid(out var netview))
+    {
+      _triggerCoroutine = null;
+      yield break;
+    }
+    while (isActiveAndEnabled && m_localPlayers.Count > 0 && netview != null && netview.m_zdo != null)
+    {
+      PowerSystemRPC.Request_OfferAllPlayerEitr(netview.m_zdo, m_localPlayers);
+      yield return new WaitForSeconds(interval);
+    }
+    _triggerCoroutine = null;
   }
 
   private void OnTriggerExit(Collider other)
@@ -95,6 +120,12 @@ public class PowerConduitPlateBridge :
     var player = other.GetComponentInParent<Player>();
     if (!player) return;
     HandlePlayerExitActiveZone(player);
+
+    if (m_localPlayers.Count <= 0 && _triggerCoroutine != null)
+    {
+      StopCoroutine(_triggerCoroutine);
+      _triggerCoroutine = null;
+    }
 
     if (this.IsNetViewValid(out var netView))
     {
@@ -110,7 +141,7 @@ public class PowerConduitPlateBridge :
     {
       Data = data;
       Data.Load();
-      Logic.GetPlayerEitr = () => PowerConduitData.GetAverageEitr(Data.Players);
+      Logic.GetPlayerEitr = () => PowerConduitData.GetAverageEitr(Data.PlayerDataById.Values.ToList(), Data.PlayerDataById);
       Logic.AddPlayerEitr = val => Data.AddEitrToPlayers(val);
       Logic.SubtractPlayerEitr = val => Data.TryRemoveEitrFromPlayers(val);
       _lastParent = transform.parent;

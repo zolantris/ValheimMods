@@ -2,6 +2,7 @@
 // ReSharper disable NamespaceStyle
 
 using System;
+using Microsoft.Win32;
 using UnityEngine;
 using ValheimVehicles.Shared.Constants;
 namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
@@ -19,8 +20,6 @@ namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
     public bool IsDemanding = true;
     public bool _isActive = false;
     public override bool IsActive => _isActive;
-    public bool IsPowerDenied => !IsActive && IsDemanding;
-
     // method meant for client when pressing activators to prevent activation
     public Func<float, bool> CanRunConsumerForDeltaTime = (_) => true;
 
@@ -48,11 +47,21 @@ namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
     {
     }
 
-    public void SetPowerMode(PowerIntensityLevel level)
+    public void SetPowerIntensity(PowerIntensityLevel level)
     {
       if (powerIntensityLevel == level) return;
       MarkDirty(VehicleZdoVars.PowerSystem_Intensity_Level);
       powerIntensityLevel = level;
+    }
+
+    public static PowerIntensityLevel GetPowerIntensityFromPrefab(int powerIntensity)
+    {
+      return GetPowerIntensityFromPrefab((PowerIntensityLevel)powerIntensity);
+    }
+    public static PowerIntensityLevel GetPowerIntensityFromPrefab(PowerIntensityLevel powerIntensity)
+    {
+      if (powerIntensity == PowerIntensityLevel.None) return PowerIntensityLevel.Low;
+      return powerIntensity;
     }
 
     public float BasePowerConsumption

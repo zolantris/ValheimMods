@@ -66,6 +66,15 @@
     public static bool CanAllClientsSync = true;
     public static bool ShouldSkipClientOnlyUpdate = true;
     public static bool ShouldSyncClientOnlyUpdate = false;
+    private bool _isAuthoritativeMotionActive;
+    // private MotionState _motionState;
+    private double _motionStartTime;
+    private float _motionDuration;
+    private Vector3 _motionFromPosition;
+    private Vector3 _motionToPosition;
+    private Quaternion _motionFromRotation;
+    private Quaternion _motionToRotation;
+    protected bool _hasArrivedAtDestination = false;
 
     public override MotionState MotionState
     {
@@ -454,15 +463,6 @@
         OnPowerConsumerUpdate();
       }
     }
-
-    private bool _isAuthoritativeMotionActive;
-    // private MotionState _motionState;
-    private double _motionStartTime;
-    private float _motionDuration;
-    private Vector3 _motionFromPosition;
-    private Vector3 _motionToPosition;
-    private Quaternion _motionFromRotation;
-    private Quaternion _motionToRotation;
     /// <summary>
     /// For interpolated eventing.
     /// </summary>
@@ -473,28 +473,28 @@
       _motionStartTime = motionUpdate.StartTime;
       _motionDuration = motionUpdate.Duration;
 
-      // Always capture "from" state as current animatedTransform.local values
+      // Always interpolate from the CURRENT transform state!
       _motionFromLocalPos = animatedTransform.localPosition;
       _motionFromLocalRot = animatedTransform.localRotation;
 
       if (mode == SwivelMode.Move)
-      {
         _motionToLocalPos = Config.MotionState == MotionState.ToTarget
           ? startLocalPosition + movementOffset
           : startLocalPosition;
-        _motionToLocalRot = animatedTransform.localRotation; // unused for Move
-      }
       else if (mode == SwivelMode.Rotate)
-      {
         _motionToLocalRot = Config.MotionState == MotionState.ToTarget
           ? CalculateRotationTarget(1f)
           : CalculateRotationTarget(0f);
-        _motionToLocalPos = animatedTransform.localPosition; // unused for Rotate
+
+      // Reset completion guard
+      _hasArrivedAtDestination = false;
+
+      if (!isAuthoritative)
+      {
+        prefabConfigSync.Load();
       }
     }
 
-
-    protected bool _justFinishedAuthoritativeMotion = false;
 
     public override void SwivelUpdate()
     {
@@ -502,29 +502,39 @@
       {
         var now = ZNet.instance != null ? ZNet.instance.GetTimeSeconds() : Time.time;
         var t = Mathf.Clamp01((float)((now - _motionStartTime) / _motionDuration));
-        InterpolateAndMove(t, _motionFromLocalPos, _motionToLocalPos, _motionFromLocalRot, _motionToLocalRot);
 
-        if (t >= 1f)
-        {
-          // Clamp exactly to end state BEFORE disabling lerp
-          InterpolateAndMove(1f, _motionFromLocalPos, _motionToLocalPos, _motionFromLocalRot, _motionToLocalRot);
-          _isAuthoritativeMotionActive = false;
-          _justFinishedAuthoritativeMotion = true; // Flag so base logic knows to do nothing for 1 frame
+        // Interpolate using Rigidbody moves (no snap!)
+        if (mode == SwivelMode.Move)
+          InterpolateAndMove(t, _motionFromLocalPos, _motionToLocalPos, _motionFromLocalRot, _motionFromLocalRot);
+        else if (mode == SwivelMode.Rotate)
+          InterpolateAndMove(t, _motionFromLocalPos, _motionFromLocalPos, _motionFromLocalRot, _motionToLocalRot);
 
-          // _onMotionComplete?.Invoke();
-          // _onMotionComplete = null;
-        }
-        return;
+        return; // ***CRITICAL: do NOT run base.SwivelUpdate() during authority lerp!***
       }
 
-      // Prevent the base snap for exactly 1 frame after lerp completes
-      if (_justFinishedAuthoritativeMotion)
+      // Modes that bail early.
+      if (mode == SwivelMode.Rotate && currentMotionState == MotionState.AtTarget)
       {
-        _justFinishedAuthoritativeMotion = false;
+        animatedTransform.localRotation = CalculateRotationTarget(1);
+        return;
+      }
+      if (mode == SwivelMode.Rotate && currentMotionState == MotionState.AtStart)
+      {
+        animatedTransform.localRotation = CalculateRotationTarget(0);
         return;
       }
 
-      base.SwivelUpdate();
+      if (mode == SwivelMode.Move && currentMotionState == MotionState.AtTarget)
+      {
+        animatedTransform.localPosition = startLocalPosition + movementOffset;
+        return;
+      }
+      if (mode == SwivelMode.Move && currentMotionState == MotionState.AtStart)
+      {
+        animatedTransform.localPosition = startLocalPosition;
+        return;
+      }
+      // base.SwivelUpdate();
     }
 
     public static float ComputeMotionDuration(SwivelCustomConfig config, MotionState direction)
@@ -599,21 +609,27 @@
       }
 
       // powerConsumerIntegration.Data.Load();
-      //
-      // var isOwner = netView.IsOwner();
-      // if (!isOwner || !powerConsumerIntegration)
-      // {
-      //   // possible infinity update here...
-      //   PowerSystemRPC.Request_UpdatePowerConsumer(netView.GetZDO().m_uid, swivelPowerConsumer.Data);
-      // }
-      // else
-      // {
-      //   powerConsumerIntegration.UpdateNetworkedData();
-      // }
+
+      if (powerConsumerIntegration)
+      {
+        var isOwner = netView.IsOwner();
+        if (!isOwner)
+        {
+          // possible infinity update here...
+          PowerSystemRPC.Request_UpdatePowerConsumer(netView.GetZDO().m_uid, swivelPowerConsumer.Data);
+        }
+        else
+        {
+          powerConsumerIntegration.UpdateNetworkedData();
+        }
+      }
     }
 
     public void OnInitComplete()
     {
+      // load config late in case something is misaligned.
+      prefabConfigSync.Load();
+
       StartActivatePendingSwivelPieces();
     }
 
