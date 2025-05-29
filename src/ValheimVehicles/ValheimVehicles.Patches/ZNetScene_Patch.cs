@@ -19,30 +19,6 @@ public class ZNetScene_Patch
   {
     return !PatchSharedData.m_disableCreateDestroy;
   }
-  [HarmonyPatch(typeof(ZNetScene), nameof(ZNetScene.Awake))]
-  [HarmonyPostfix]
-  private static void ZNetScene_Awake_Subscribe(ZNetScene __instance)
-  {
-    LoggerProvider.LogDev("called ZNetScene.Awake.");
-    PowerSystemRPC.RegisterCustom();
-    SwivelPrefabConfigRPC.RegisterCustom();
-
-    LoggerProvider.LogDev($"ZRouteRPC instance, {ZRoutedRpc.instance}");
-    // __instance.WithSafeRPCRegister(() =>
-    // {
-    //  
-    // });
-  }
-
-  [HarmonyPatch(typeof(Game), nameof(Game.Start))]
-  [HarmonyPostfix]
-  private static void Game_Start_InjectRPC(ZNetScene __instance)
-  {
-    LoggerProvider.LogDev($"ZRouteRPC instance, {ZRoutedRpc.instance}");
-    PrefabConfigRPC.Register();
-    PowerSystemRPC.Register();
-    PlayerEitrRPC.Register();
-  }
 
 #if DEBUG
   // [HarmonyPatch(typeof(ZNetScene), nameof(ZNetScene.Awake))]

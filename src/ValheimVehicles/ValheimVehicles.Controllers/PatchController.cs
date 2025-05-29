@@ -6,6 +6,7 @@ using Jotunn;
 using ValheimVehicles.BepInExConfig;
 using ValheimVehicles.Patches;
 using ValheimVehicles.QuickStartWorld.Patches;
+using ValheimVehicles.ValheimVehicles.RPC;
 using Zolantris.Shared;
 
 namespace ValheimVehicles.Controllers;
@@ -39,7 +40,8 @@ public static class PatchController
       typeof(GameCamera_CullingPatches),
       typeof(Character_WaterPatches),
       typeof(Fireplace_WaterPatches),
-      typeof(Minimap_VehicleIcons)
+      typeof(Minimap_VehicleIcons),
+      typeof(PrefabConfigRPC),
     );
 
     if (PatchConfig.MineRockPatch.Value)
