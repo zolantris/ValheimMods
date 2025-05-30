@@ -16,6 +16,7 @@
   using ValheimVehicles.Shared.Constants;
   using ValheimVehicles.SharedScripts;
   using ValheimVehicles.SharedScripts.Enums;
+  using ValheimVehicles.SharedScripts.PowerSystem.Compute;
   using ValheimVehicles.Structs;
   using static ValheimVehicles.BepInExConfig.PrefabConfig;
   using Logger = Jotunn.Logger;
@@ -37,6 +38,8 @@
 
     private int _persistentZdoId;
     public int PersistentZdoId => GetPersistentID();
+
+    public PowerConsumerData PowerConsumerData { get; set; } = new();
 
     // The rudder force multiplier applied to the ship speed
     private float _rudderForce = 1f;
@@ -398,6 +401,7 @@
       InitializeOnboardController();
       InitializeShipEffects();
       InitializeWheelController();
+      InitializePowerConsumerData();
 
       if (!TryGetControllersToBind(out var controllersToBind))
       {
@@ -521,6 +525,15 @@
       WheelController.maxTreadWidth = PhysicsConfig.VehicleLandMaxTreadWidth.Value;
       WheelController.forwardDirection = MovementController.ShipDirection;
       WheelController.wheelBottomOffset = PhysicsConfig.VehicleLandTreadVerticalOffset.Value;
+    }
+
+    public void InitializePowerConsumerData()
+    {
+      if (!IsLandVehicle) return;
+      this.WaitForZNetView(netView =>
+      {
+        PowerConsumerData = new PowerConsumerData(netView.GetZDO());
+      });
     }
 
     /// <summary>

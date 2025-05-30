@@ -62,6 +62,7 @@ public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
 
   private float _disableTime = 0f;
   private const float _disableTimeMax = 0.5f;
+  public static bool CanHitOwners = true;
 
   public bool isReadyForCollisions { get; set; }
   public bool isRebuildingCollisions
@@ -133,6 +134,11 @@ public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
         m_hitFriendly = RamConfig.VehicleRamCanHitFriendly.Value;
         m_hitEnemy = RamConfig.VehicleRamCanHitEnemies.Value;
         m_hitParent = RamConfig.VehicleRamCanDamageSelf.Value;
+
+#if DEBUG
+        // experimental
+        m_hitOwner = CanHitOwners;
+#endif
         break;
       case RamPrefabs.RamType.Stake:
       case RamPrefabs.RamType.Blade:
@@ -502,10 +508,21 @@ public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
     }
   }
 
+  /// <summary>
+  /// For Skipping a hit but not ignoring physics.
+  /// </summary>
+  /// <param name="collider"></param>
+  /// <returns></returns>
   public override bool ShouldHit(Collider collider)
   {
     if (!IsReady()) return false;
     var colliderObj = collider.gameObject;
+
+    // don't hit terrain or items with vehicles.
+    if (colliderObj.layer == LayerHelpers.ItemLayer || colliderObj.layer == LayerHelpers.TerrainLayer)
+    {
+      return false;
+    }
 
     var character = collider.GetComponentInParent<Character>();
     if (WaterZoneUtils.IsOnboard(character))

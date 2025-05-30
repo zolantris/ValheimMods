@@ -43,6 +43,10 @@ public class PowerSystemConfig : BepInExBaseConfig<PowerSystemConfig>
   public static ConfigEntry<bool> Swivels_DoNotRequirePower { get; set; }
   public static ConfigEntry<float> SwivelPowerDrain = null!;
 
+  // vehicles
+  public static ConfigEntry<bool> LandVehicle_DoNotRequirePower { get; set; }
+  public static ConfigEntry<float> LandVehicle_PowerDrain = null!;
+
 
   public static void UpdatePowerConduits()
   {
@@ -74,7 +78,25 @@ public class PowerSystemConfig : BepInExBaseConfig<PowerSystemConfig>
     }
   }
 
-  public static void UpdateSwivelPower()
+  public static void UpdateAllPowerConsumers()
+  {
+    PowerConsumerData.PowerConsumerBaseValues.Swivel = SwivelPowerDrain.Value;
+    PowerConsumerData.PowerConsumerBaseValues.LandVehicleEngine = LandVehicle_PowerDrain.Value;
+
+    foreach (var powerConsumerData in PowerSystemRegistry._consumers)
+    {
+      powerConsumerData.UpdatePowerConsumptionValues();
+    }
+    // SwivelComponent.SwivelEnergyDrain = SwivelPowerDrain.Value;
+    foreach (var swivelComponent in SwivelComponent.Instances)
+    {
+      swivelComponent.UpdatePowerConsumer();
+      swivelComponent.UpdateBasePowerConsumption();
+      swivelComponent.swivelPowerConsumer.Data.Save();
+    }
+  }
+
+  public static void UpdateVehiclePower()
   {
     SwivelComponent.SwivelEnergyDrain = SwivelPowerDrain.Value;
     foreach (var swivelComponent in SwivelComponent.Instances)
@@ -158,10 +180,17 @@ public class PowerSystemConfig : BepInExBaseConfig<PowerSystemConfig>
         true, false,
         new AcceptableValueRange<float>(10f, 2000f)));
 
+    LandVehicle_PowerDrain = config.BindUnique(SectionKey,
+      "LandVehicle_PowerDrain", 1f,
+      ConfigHelpers.CreateConfigDescription(
+        $"How much power (watts) is consumed by a LandVehicle per second. This is a base value. Each additional mode will ramp up power. Applies only if {LandVehicle_DoNotRequirePower.Definition.Key} is false.",
+        true, false,
+        new AcceptableValueRange<float>(0f, 100f)));
+
     SwivelPowerDrain = config.BindUnique(SectionKey,
       "SwivelPowerDrain", 1f,
       ConfigHelpers.CreateConfigDescription(
-        "How much power (watts) is consumed by a Swivel per second. Applies only if Swivels_DoNotRequirePower is false.",
+        $"How much power (watts) is consumed by a Swivel per second. Swivels have 1 power mode but swivel lerp speed will affect power cost. Applies only if {Swivels_DoNotRequirePower.Definition.Key} is false.",
         true, false,
         new AcceptableValueRange<float>(0f, 100f)));
 
@@ -182,10 +211,13 @@ public class PowerSystemConfig : BepInExBaseConfig<PowerSystemConfig>
     PowerSource_EitrEfficiency.SettingChanged += (sender, args) => UpdatePowerSources();
     PowerSource_FuelConsumptionRate.SettingChanged += (sender, args) => UpdatePowerSources();
     // storages
-    SwivelPowerDrain.SettingChanged += (sender, args) =>
-      PowerStorage_Capacity.SettingChanged += (sender, args) => UpdatePowerStorages();
     PowerStorage_Capacity.SettingChanged += (sender, args) => UpdatePowerSources();
 
+    // consumers (swivels, vehicles)
+    SwivelPowerDrain.SettingChanged += (sender, args) => UpdateSwivelPower();
+
+
+    LandVehicle_PowerDrain.SettingChanged += (sender, args) => UpdateSwivelPower();
 
     SwivelComponent.IsPoweredSwivel = !Swivels_DoNotRequirePower.Value;
     Swivels_DoNotRequirePower.SettingChanged += (sender, args) => SwivelComponent.IsPoweredSwivel = !Swivels_DoNotRequirePower.Value;
