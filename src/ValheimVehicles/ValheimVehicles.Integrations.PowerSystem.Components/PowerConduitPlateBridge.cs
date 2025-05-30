@@ -8,12 +8,12 @@ using UnityEngine;
 using ValheimVehicles.Helpers;
 using ValheimVehicles.Integrations;
 using ValheimVehicles.Integrations.PowerSystem;
+using ValheimVehicles.RPC;
 using ValheimVehicles.Shared.Constants;
 using ValheimVehicles.SharedScripts;
 using ValheimVehicles.SharedScripts.PowerSystem;
 using ValheimVehicles.SharedScripts.PowerSystem.Compute;
 using ValheimVehicles.SharedScripts.PowerSystem.Interfaces;
-using ValheimVehicles.Structs;
 
 public class PowerConduitPlateBridge :
   PowerNetworkDataEntity<PowerConduitPlateBridge, PowerConduitPlateComponent, PowerConduitData>,
@@ -65,13 +65,15 @@ public class PowerConduitPlateBridge :
   {
     if (!player) return;
     Data.AddOrUpdate(player.GetPlayerID(), player.GetEitr(), player.GetMaxEitr());
+    if (!m_localPlayers.Contains(player)) m_localPlayers.Add(player);
     Logic.SetHasPlayerInRange(Data.HasPlayersWithEitr);
   }
 
   private void HandlePlayerExitActiveZone(Player player)
   {
     if (!player) return;
-    Data.RemovePlayer(player);
+    Data.RemovePlayer(player.GetOwner());
+    if (m_localPlayers.Contains(player)) m_localPlayers.Remove(player);
     Logic.SetHasPlayerInRange(Data.HasPlayersWithEitr);
   }
 
@@ -135,17 +137,21 @@ public class PowerConduitPlateBridge :
 
 #endregion
 
+
   protected override void Start()
   {
     this.WaitForPowerSystemNodeData<PowerConduitData>((data) =>
     {
       Data = data;
       Data.Load();
-      Logic.GetPlayerEitr = () => PowerConduitData.GetAverageEitr(Data.PlayerDataById.Values.ToList(), Data.PlayerDataById);
+      Logic.GetPlayerEitr = () => PowerConduitData.GetAverageEitr(Data.PlayerPeerToData.Values.ToList(), Data.PlayerPeerToData);
       Logic.AddPlayerEitr = val => Data.AddEitrToPlayers(val);
       Logic.SubtractPlayerEitr = val => Data.TryRemoveEitrFromPlayers(val);
       _lastParent = transform.parent;
+
+
       AddRigidbodyIfParentIsRigidbody();
+
     });
 
     base.Start();
@@ -157,6 +163,7 @@ public class PowerConduitPlateBridge :
     if (newParent && newParent == _lastParent) return;
     LoggerProvider.LogDev($"Parent changed from {_lastParent?.name ?? "null"} to {newParent?.name ?? "null"}");
     _lastParent = newParent;
+
     AddRigidbodyIfParentIsRigidbody();
   }
 
@@ -176,6 +183,7 @@ public class PowerConduitPlateBridge :
 
     var joint = gameObject.AddComponent<FixedJoint>();
     joint.connectedBody = parentRigidbody;
+    joint.axis = Vector3.one;
     joint.enableCollision = false;
   }
 

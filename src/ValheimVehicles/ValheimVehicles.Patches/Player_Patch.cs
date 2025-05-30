@@ -375,13 +375,13 @@
           }
           else if ((bool)raycastHit.collider.attachedRigidbody && raycastHit
                      .collider
-                     .attachedRigidbody.GetComponent<IPieceActivatorHost>() == null)
+                     .attachedRigidbody.GetComponentInParent<IPieceActivatorHost>() == null)
             hover = raycastHit.collider.attachedRigidbody.gameObject;
           else
             hover = raycastHit.collider.gameObject;
         }
 
-        break;
+        if (hover != null) break;
       }
 
       RopeAnchorComponent.m_draggingRopeTo = null;

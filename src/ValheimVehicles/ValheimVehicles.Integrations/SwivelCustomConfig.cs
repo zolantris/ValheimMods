@@ -259,7 +259,7 @@ namespace ValheimVehicles.BepInExConfig
     public void ApplyTo(ISwivelConfig component)
     {
       component.Mode = Mode;
-      component.InterpolationSpeed = InterpolationSpeed;
+      component.InterpolationSpeed = Mathf.Clamp(InterpolationSpeed, 1f, 100f);
       component.MinTrackingRange = MinTrackingRange;
       component.MaxTrackingRange = MaxTrackingRange;
       component.HingeAxes = HingeAxes;
@@ -292,7 +292,7 @@ namespace ValheimVehicles.BepInExConfig
     {
       get;
       set;
-    }
+    } = 10f;
     public float MinTrackingRange
     {
       get;

@@ -8,10 +8,10 @@ using System.Linq;
 using UnityEngine;
 using ValheimVehicles.BepInExConfig;
 using ValheimVehicles.Integrations.PowerSystem;
+using ValheimVehicles.RPC;
 using ValheimVehicles.SharedScripts;
 using ValheimVehicles.SharedScripts.PowerSystem;
 using ValheimVehicles.SharedScripts.PowerSystem.Compute;
-using ValheimVehicles.ValheimVehicles.RPC;
 using Logger = HarmonyLib.Tools.Logger;
 
 namespace ValheimVehicles.Integrations;
@@ -24,17 +24,6 @@ public partial class PowerNetworkControllerIntegration : PowerNetworkController
   public float lastUpdate = 0f;
   public float lastDeltaTime = 0f;
   public bool canLateUpdate = false;
-
-  public override void Awake()
-  {
-    base.Awake();
-
-    this.WithSafeRPCRegister(() =>
-    {
-      PowerSystemRPC.Register();
-      PlayerEitrRPC.Register();
-    });
-  }
 
 
   protected override void Update()
@@ -197,8 +186,7 @@ public partial class PowerNetworkControllerIntegration : PowerNetworkController
       }
 
       // simulates entire network if there is a network item loaded in each peer's area.
-      if (!RPCUtils.HasNearbyPlayersOrPeers(nodes, PowerSystemConfig.PowerSimulationDistanceThreshold.Value)) return;
-
+      if (!RPCUtils.HasNearbyPlayersOrPeers(nodes, PowerSystemConfig.PowerSimulationDistanceThreshold.Value)) continue;
 
       if (PowerSystemClusterManager.TryBuildPowerNetworkSimData(networkId, out var simData))
       {

@@ -6,6 +6,7 @@ using UnityEngine;
 using ValheimVehicles.Helpers;
 using ValheimVehicles.Integrations.PowerSystem;
 using ValheimVehicles.Interfaces;
+using ValheimVehicles.SharedScripts.Helpers;
 using ValheimVehicles.SharedScripts.PowerSystem.Compute;
 using ValheimVehicles.SharedScripts.PowerSystem.Interfaces;
 
@@ -51,7 +52,7 @@ namespace ValheimVehicles.Integrations
 
       if (!_logic)
       {
-        _logic = gameObject.AddComponent<TDelegateComponent>();
+        _logic = gameObject.GetOrAddComponent<TDelegateComponent>();
       }
 
       instanced_RpcNotifyStateUpdate = $"{GetType().Name}_{nameof(RPC_NotifyStateUpdated)}";

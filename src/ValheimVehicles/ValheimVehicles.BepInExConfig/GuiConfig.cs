@@ -87,9 +87,9 @@ public class GuiConfig : BepInExBaseConfig<GuiConfig>
 
   public override void OnBindConfig(ConfigFile config)
   {
+    ShouldSkipSyncOnBind = true;
     CreatePanelLocationConfig(config, "SwivelPanelLocation", $"SwivelPanel screen location. {ProtectedScreenValue}", out SwivelPanelLocation);
     CreatePanelLocationConfig(config, "VehicleCommandsPanelLocation", $"VehicleCommands panel screen location. {ProtectedScreenValue}", out VehicleCommandsPanelLocation);
-
 #if DEBUG
     // CreatePanelLocationConfig(config, "SailPanelLocation", $"SailPanel screen location. {ProtectedScreenValue}", out SailPanelLocation);
     // CreatePanelLocationConfig(config, "VehicleConfigPanelLocation", $"VehicleConfig panel screen location. {ProtectedScreenValue}", out VehicleConfigPanelLocation);

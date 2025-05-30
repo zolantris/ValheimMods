@@ -17,7 +17,7 @@ namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
     private PowerIntensityLevel powerIntensityLevel = PowerIntensityLevel.Low;
 
     public PowerIntensityLevel PowerIntensityLevel => powerIntensityLevel;
-    public bool IsDemanding = true;
+    public bool IsDemanding = false;
     public bool _isActive = false;
     public override bool IsActive => _isActive;
     // method meant for client when pressing activators to prevent activation
@@ -35,10 +35,6 @@ namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
     public float GetRequestedEnergy(float deltaTime)
     {
       if (!IsDemanding) return 0f;
-      if (PowerIntensityLevel.None == powerIntensityLevel && !IsActive)
-      {
-        SetActive(true);
-      }
       return GetWattsForLevel(powerIntensityLevel) * deltaTime;
     }
 

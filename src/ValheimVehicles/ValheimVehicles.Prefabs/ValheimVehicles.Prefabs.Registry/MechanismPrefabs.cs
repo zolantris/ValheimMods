@@ -5,7 +5,6 @@ using UnityEngine;
 using ValheimVehicles.Components;
 using ValheimVehicles.Integrations;
 using ValheimVehicles.SharedScripts;
-using ValheimVehicles.SharedScripts.PowerSystem;
 
 namespace ValheimVehicles.Prefabs.Registry;
 
@@ -330,7 +329,7 @@ public class MechanismPrefabs : RegisterPrefab<MechanismPrefabs>
       [
         new RequirementConfig
         {
-          Amount = 10,
+          Amount = 2,
           Item = "Wood",
           Recover = true
         }
@@ -341,15 +340,17 @@ public class MechanismPrefabs : RegisterPrefab<MechanismPrefabs>
   public override void OnRegister()
   {
     RegisterToggleSwitch();
+
+#if DEBUG
+    // power pylons are not ready. And do nothing for now.
     RegisterPowerPylonPrefab();
+#endif
     // RegisterCoalEngine();
     RegisterPowerSourceEitr();
     RegisterPowerStorageEitr();
 
     RegisterPowerDrainPlate();
-#if DEBUG
     RegisterPowerChargePlate();
-#endif
 
     LoggerProvider.LogInfo($"Registering PowerStorageComponentIntegration prefab at: {Time.time}");
   }

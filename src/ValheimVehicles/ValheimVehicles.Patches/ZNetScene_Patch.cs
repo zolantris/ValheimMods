@@ -1,12 +1,5 @@
-using System.Collections.Generic;
 using HarmonyLib;
-using UnityEngine;
-using ValheimVehicles.Components;
-using ValheimVehicles.Integrations;
-using ValheimVehicles.Integrations.PowerSystem;
-using ValheimVehicles.Patches;
 using ValheimVehicles.SharedScripts;
-using ValheimVehicles.ValheimVehicles.RPC;
 
 namespace ValheimVehicles.Patches;
 
@@ -18,19 +11,6 @@ public class ZNetScene_Patch
   private static bool CreateDestroyObjects()
   {
     return !PatchSharedData.m_disableCreateDestroy;
-  }
-  [HarmonyPatch(typeof(ZNetScene), nameof(ZNetScene.Awake))]
-  [HarmonyPostfix]
-  private static void ZNetScene_Awake_Subscribe(ZNetScene __instance)
-  {
-    LoggerProvider.LogDev("called ZNetScene.Awake.");
-    PowerSystemRPC.RegisterCustom();
-    SwivelPrefabConfigRPC.RegisterCustom();
-
-    __instance.WithSafeRPCRegister(() =>
-    {
-      PrefabConfigRPC.Register();
-    });
   }
 
 #if DEBUG

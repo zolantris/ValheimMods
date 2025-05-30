@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using ValheimVehicles.BepInExConfig;
 using ValheimVehicles.Integrations.PowerSystem;
+using ValheimVehicles.RPC;
 using ValheimVehicles.SharedScripts;
 using ValheimVehicles.SharedScripts.PowerSystem;
 using ValheimVehicles.SharedScripts.PowerSystem.Compute;
@@ -281,7 +282,7 @@ public class PowerHoverComponent : MonoBehaviour, Hoverable, Interactable
   /// <returns></returns>
   public static string GetPowerConduitHoverText(PowerConduitData PowerConduit)
   {
-    var baseString = $"{ModTranslations.PowerConduit_DrainPlate_Name}";
+    var baseString = PowerConduit.Mode == PowerConduitMode.Charge ? ModTranslations.PowerConduit_ChargePlate_Name : ModTranslations.PowerConduit_DrainPlate_Name;
 
     var stateText = PowerNetworkController.GetDrainMechanismActivationStatus(PowerConduit.IsActive, PowerConduit.HasPlayersWithEitr);
     baseString += "\n";

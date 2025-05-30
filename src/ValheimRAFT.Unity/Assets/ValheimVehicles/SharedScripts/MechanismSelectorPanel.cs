@@ -152,11 +152,10 @@ namespace ValheimVehicles.SharedScripts.UI
 
       if (!swivelSelectorDropdown)
       {
-        var selectedOption =
-          swivelSelectorDropdown = SwivelUIHelpers.AddDropdownRow(panelContent.transform, viewStyles, ModTranslations.Mechanism_Switch_Swivel_SelectedSwivel,
-            options.ToArray(),
-            options.FirstOrDefault() ?? unsetSwivelId,
-            OnMechanismSwivelSelected);
+        swivelSelectorDropdown = SwivelUIHelpers.AddDropdownRow(panelContent.transform, viewStyles, ModTranslations.Mechanism_Switch_Swivel_SelectedSwivel,
+          options.ToArray(),
+          options.FirstOrDefault() ?? unsetSwivelId,
+          OnMechanismSwivelSelected);
       }
       else
       {

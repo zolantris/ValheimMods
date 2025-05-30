@@ -1,21 +1,17 @@
 #region
 
   using System;
-  using System.Collections;
   using System.Collections.Generic;
-  using System.Linq;
-  using SentryUnityWrapper;
   using UnityEngine;
   using ValheimVehicles.Components;
   using ValheimVehicles.BepInExConfig;
   using ValheimVehicles.Controllers;
   using ValheimVehicles.Helpers;
-  using ValheimVehicles.Integrations.PowerSystem;
   using ValheimVehicles.Interfaces;
+  using ValheimVehicles.RPC;
   using ValheimVehicles.Shared.Constants;
   using ValheimVehicles.SharedScripts;
   using ValheimVehicles.SharedScripts.Helpers;
-  using ValheimVehicles.ValheimVehicles.RPC;
 
 #endregion
 
@@ -226,14 +222,14 @@
       this.WaitForZNetView((nv) =>
       {
         _currentZdo = nv.GetZDO();
+        var persistentId = GetPersistentId();
         ZdoToComponent.Add(_currentZdo, this);
-      });
 
-      var persistentId = GetPersistentId();
-      if (persistentId != 0 && !ActiveInstances.ContainsKey(persistentId))
-      {
-        ActiveInstances.Add(persistentId, this);
-      }
+        if (persistentId != 0 && !ActiveInstances.ContainsKey(persistentId))
+        {
+          ActiveInstances.Add(persistentId, this);
+        }
+      });
     }
 
     public void SetupPieceActivator()

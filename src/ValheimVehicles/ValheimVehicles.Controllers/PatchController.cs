@@ -39,7 +39,8 @@ public static class PatchController
       typeof(GameCamera_CullingPatches),
       typeof(Character_WaterPatches),
       typeof(Fireplace_WaterPatches),
-      typeof(Minimap_VehicleIcons)
+      typeof(Minimap_VehicleIcons),
+      typeof(RPCManager_Patches)
     );
 
     if (PatchConfig.MineRockPatch.Value)
