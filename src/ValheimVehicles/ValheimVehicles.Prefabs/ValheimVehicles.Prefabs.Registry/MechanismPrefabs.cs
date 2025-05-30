@@ -5,7 +5,6 @@ using UnityEngine;
 using ValheimVehicles.Components;
 using ValheimVehicles.Integrations;
 using ValheimVehicles.SharedScripts;
-using ValheimVehicles.SharedScripts.PowerSystem;
 
 namespace ValheimVehicles.Prefabs.Registry;
 
@@ -341,7 +340,11 @@ public class MechanismPrefabs : RegisterPrefab<MechanismPrefabs>
   public override void OnRegister()
   {
     RegisterToggleSwitch();
+
+#if DEBUG
+    // power pylons are not ready. And do nothing for now.
     RegisterPowerPylonPrefab();
+#endif
     // RegisterCoalEngine();
     RegisterPowerSourceEitr();
     RegisterPowerStorageEitr();
