@@ -40,52 +40,37 @@ public class SwivelMotionUpdateLerp
 
 public class SwivelPrefabConfigRPC
 {
-  public static bool hasRegistered = false;
-
-  public static string SetMotionRPC_Name = RPCUtils.GetRPCPrefix(nameof(RPC_Swivel_SetMotionState));
-  public static string NextMotionRPC_Name = RPCUtils.GetRPCPrefix(nameof(RPC_Swivel_NextMotionState));
-  public static string BroadCastMotionRPC_Name = RPCUtils.GetRPCPrefix(nameof(RPC_Swivel_BroadCastMotionUpdate));
-  /// <summary>
-  /// Global RPCs that must be synced authoritatively on the server.
-  /// </summary>
-  public static void Register()
-  {
-    if (hasRegistered) return;
-    ZRoutedRpc.instance.Register<ZPackage>(NextMotionRPC_Name, RPC_Swivel_NextMotionState);
-    ZRoutedRpc.instance.Register<ZPackage>(SetMotionRPC_Name, RPC_Swivel_SetMotionState);
-    ZRoutedRpc.instance.Register<ZPackage>(BroadCastMotionRPC_Name, RPC_Swivel_BroadCastMotionUpdate);
-    hasRegistered = true;
-  }
+  public static readonly RPCEntity BroadCastMotionRPC = RPCManager.RegisterRPC(nameof(RPC_Swivel_BroadCastMotionUpdate), RPC_Swivel_BroadCastMotionUpdate);
+  public static readonly RPCEntity NextMotionRPC = RPCManager.RegisterRPC(nameof(RPC_Swivel_NextMotionState), RPC_Swivel_NextMotionState);
+  public static readonly RPCEntity SetMotionRPC = RPCManager.RegisterRPC(nameof(RPC_Swivel_SetMotionState), RPC_Swivel_SetMotionState);
 
   public static void Request_SetMotionState(ZDO zdo, MotionState motionState)
   {
-    if (ZRoutedRpc.instance == null) return;
     var pkg = new ZPackage();
     pkg.Write(zdo.m_uid);
     pkg.Write((int)motionState);
-    ZRoutedRpc.instance.InvokeRoutedRPC(ZRoutedRpc.instance.GetServerPeerID(), SetMotionRPC_Name, pkg);
+
+    SetMotionRPC.Send(ZRoutedRpc.instance.GetServerPeerID(), pkg);
   }
 
   public static void Request_NextMotion(ZDO zdo, MotionState currentMotionState)
   {
-    if (ZRoutedRpc.instance == null) return;
     var pkg = new ZPackage();
     var zdoid = zdo.m_uid;
 
     pkg.Write(zdoid);
     pkg.Write((int)currentMotionState);
 
-    if (ZNet.IsSinglePlayer || ZNet.instance.IsServer())
-    {
-      RPC_Swivel_NextMotionState(zdo.GetOwner(), pkg);
-      return;
-    }
-    ZRoutedRpc.instance.InvokeRoutedRPC(ZRoutedRpc.instance.GetServerPeerID(), NextMotionRPC_Name, pkg);
+    // if (ZNet.IsSinglePlayer || ZNet.instance.IsServer())
+    // {
+    //   ZNet.instance.StartCoroutine(RPC_Swivel_NextMotionState(zdo.GetOwner(), pkg));
+    //   return;
+    // }
+    NextMotionRPC.Send(ZRoutedRpc.instance.GetServerPeerID(), pkg);
   }
 
-  public static void RPC_Swivel_NextMotionState(long sender, ZPackage pkg)
+  public static IEnumerator RPC_Swivel_NextMotionState(long sender, ZPackage pkg)
   {
-    if (ZRoutedRpc.instance == null) return;
     pkg.SetPos(0);
 
     var zdoId = pkg.ReadZDOID();
@@ -96,7 +81,7 @@ public class SwivelPrefabConfigRPC
     if (zdo == null)
     {
       LoggerProvider.LogError("No ZDO found for RPC_NextMotionState. Bailing...");
-      return;
+      yield break;
     }
 
     // server motion state is used to determine the next motion state. client only used for comparison if desynced.
@@ -194,25 +179,25 @@ public class SwivelPrefabConfigRPC
 
     RPCUtils.RunIfNearby(zdo, 100f, (sender) =>
     {
-      ZRoutedRpc.instance.InvokeRoutedRPC(sender, BroadCastMotionRPC_Name, pkg);
+      BroadCastMotionRPC.Send(sender, pkg);
     });
 
     StopSwivelUpdate(zdo.m_uid);
     StartSwivelUpdate(zdo.m_uid, zdo, currentState, duration, nextMotionUpdateLerp);
   }
 
-  public static void RPC_Swivel_BroadCastMotionUpdate(long sender, ZPackage pkg)
+  public static IEnumerator RPC_Swivel_BroadCastMotionUpdate(long sender, ZPackage pkg)
   {
     pkg.SetPos(0);
     var zdoid = pkg.ReadZDOID();
     var motionUpdate = SwivelMotionUpdate.ReadFrom(pkg);
     var zdo = ZDOMan.instance.GetZDO(zdoid);
 
-    if (zdo == null) return;
+    if (zdo == null) yield break;
 
     if (!SwivelComponentBridge.ZdoToComponent.TryGetValue(zdo, out var swivelComponentBridge))
     {
-      return;
+      yield break;
     }
 
     swivelComponentBridge.SetAuthoritativeMotion(motionUpdate, true);
@@ -314,21 +299,21 @@ public class SwivelPrefabConfigRPC
     }
   }
 
-  public static void RPC_Swivel_SetMotionState(long sender, ZPackage pkg)
+  public static IEnumerator RPC_Swivel_SetMotionState(long sender, ZPackage pkg)
   {
     pkg.SetPos(0);
     var zdoId = pkg.ReadZDOID();
     var clientMotionState = (MotionState)pkg.ReadInt();
 
     var zdo = ZDOMan.instance.GetZDO(zdoId);
-    if (zdo == null) return;
+    if (zdo == null) yield break;
 
     // Read client-reported MotionState
     var serverMotionState = (MotionState)zdo.GetInt(SwivelCustomConfig.Key_MotionState);
 
     if (clientMotionState == serverMotionState)
     {
-      return;
+      yield break;
     }
 
     // do not start motion sync. This call should be for force syncing a motion state.

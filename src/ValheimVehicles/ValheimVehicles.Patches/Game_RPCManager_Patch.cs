@@ -12,9 +12,6 @@ public static class Game_RPCManager_Patch
   [HarmonyPostfix]
   private static void Game_Start_InjectRPC(ZNetScene __instance)
   {
-    PowerSystemRPC.Register();
-    PrefabConfigRPC.Register();
-    SwivelPrefabConfigRPC.Register();
-    PlayerEitrRPC.Register();
+    RPCManager.RegisterAllRPCs();
   }
 }

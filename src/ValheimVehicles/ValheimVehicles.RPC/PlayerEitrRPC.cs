@@ -1,3 +1,4 @@
+using System.Collections;
 using ValheimVehicles.SharedScripts;
 namespace ValheimVehicles.RPC;
 
@@ -11,16 +12,8 @@ public static class PlayerEitrRPC
   //   hasRegistered = false;
   // }
 
-  private const string RPC_AddEitr_Name = "ValheimVehicles_PowerSystem_RPC_AddEitr";
-  private const string RPC_UseEitr_Name = "ValheimVehicles_PowerSystem_RPC_UseEitr";
-
-  public static void Register()
-  {
-    if (hasRegistered) return;
-    ZRoutedRpc.instance.Register<ZPackage>(RPC_AddEitr_Name, RPC_AddEitr);
-    ZRoutedRpc.instance.Register<ZPackage>(RPC_UseEitr_Name, RPC_UseEitr);
-    hasRegistered = true;
-  }
+  public static readonly RPCEntity AddEitr_RPCInstance = RPCManager.RegisterRPC(nameof(RPC_UseEitr), RPC_UseEitr);
+  public static readonly RPCEntity UseEitr_RPCInstance = RPCManager.RegisterRPC(nameof(RPC_AddEitr), RPC_AddEitr);
 
   public static void Request_AddEitr(long playerId, float amount)
   {
@@ -37,7 +30,8 @@ public static class PlayerEitrRPC
     }
     var pkg = new ZPackage();
     pkg.Write(amount);
-    ZRoutedRpc.instance.InvokeRoutedRPC(playerId, RPC_AddEitr_Name, pkg);
+
+    AddEitr_RPCInstance.Send(playerId, pkg);
   }
 
   public static void Request_UseEitr(long playerPeerId, float amount)
@@ -52,25 +46,26 @@ public static class PlayerEitrRPC
 
     var pkg = new ZPackage();
     pkg.Write(amount);
-    ZRoutedRpc.instance.InvokeRoutedRPC(playerPeerId, RPC_UseEitr_Name, pkg);
+
+    UseEitr_RPCInstance.Send(playerPeerId, pkg);
   }
 
-  private static void RPC_UseEitr(long sender, ZPackage pkg)
+  private static IEnumerator RPC_UseEitr(long sender, ZPackage pkg)
   {
     pkg.SetPos(0);
     var amount = pkg.ReadSingle();
-    if (!Player.m_localPlayer) return;
+    if (!Player.m_localPlayer) yield break;
 #if DEBUG
     LoggerProvider.LogDebug($"Added Eitr for player {Player.m_localPlayer.GetPlayerName()}");
 #endif
     Player.m_localPlayer.UseEitr(amount);
   }
 
-  private static void RPC_AddEitr(long sender, ZPackage pkg)
+  private static IEnumerator RPC_AddEitr(long sender, ZPackage pkg)
   {
     pkg.SetPos(0);
     var amount = pkg.ReadSingle();
-    if (!Player.m_localPlayer) return;
+    if (!Player.m_localPlayer) yield break;
 #if DEBUG
     LoggerProvider.LogDebug($"Added Eitr for player {Player.m_localPlayer.GetPlayerName()}");
 #endif

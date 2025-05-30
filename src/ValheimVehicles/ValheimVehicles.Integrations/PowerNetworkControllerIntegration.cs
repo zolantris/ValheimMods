@@ -186,8 +186,7 @@ public partial class PowerNetworkControllerIntegration : PowerNetworkController
       }
 
       // simulates entire network if there is a network item loaded in each peer's area.
-      if (!RPCUtils.HasNearbyPlayersOrPeers(nodes, PowerSystemConfig.PowerSimulationDistanceThreshold.Value)) return;
-
+      if (!RPCUtils.HasNearbyPlayersOrPeers(nodes, PowerSystemConfig.PowerSimulationDistanceThreshold.Value)) continue;
 
       if (PowerSystemClusterManager.TryBuildPowerNetworkSimData(networkId, out var simData))
       {

@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using Jotunn;
 using ValheimVehicles.BepInExConfig;
@@ -10,14 +11,7 @@ namespace ValheimVehicles.RPC;
 public static class PrefabConfigRPC
 {
   public static Dictionary<ZDO, IPrefabSyncRPCSubscribeActions> ZdoToPrefabConfigListeners = new();
-  public static bool hasRegistered = false;
-
-  public static void Register()
-  {
-    if (hasRegistered) return;
-    ZRoutedRpc.instance.Register<ZPackage>(ModRPCNames.SyncConfigKeys, RPC_SyncConfigKeys);
-    hasRegistered = true;
-  }
+  public static RPCEntity SyncConfigKeysRPC = RPCManager.RegisterRPC(nameof(RPC_SyncConfigKeys), RPC_SyncConfigKeys);
 
   public static void AddSubscription(ZDO zdo, IPrefabSyncRPCSubscribeActions config)
   {
@@ -63,17 +57,17 @@ public static class PrefabConfigRPC
         }
         else
         {
-          ZRoutedRpc.instance.InvokeRoutedRPC(peerId, ModRPCNames.SyncConfigKeys, pkg);
+          SyncConfigKeysRPC.Send(peerId, pkg);
         }
       });
     }
     else
     {
-      ZRoutedRpc.instance.InvokeRoutedRPC(sender.Value, ModRPCNames.SyncConfigKeys, pkg);
+      SyncConfigKeysRPC.Send(sender.Value, pkg);
     }
   }
 
-  public static void RPC_SyncConfigKeys(long sender, ZPackage pkg)
+  public static IEnumerator RPC_SyncConfigKeys(long sender, ZPackage pkg)
   {
     pkg.SetPos(0);
     var zdoId = pkg.ReadZDOID();
@@ -82,7 +76,7 @@ public static class PrefabConfigRPC
     if (zdo == null)
     {
       LoggerProvider.LogError($"Could not find ZDO related to \n {zdoId}");
-      return;
+      yield break;
     }
     // read the rest of the data if valid
     var length = pkg.ReadInt();
