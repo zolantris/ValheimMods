@@ -292,7 +292,7 @@ namespace ValheimVehicles.BepInExConfig
     {
       get;
       set;
-    }
+    } = 10f;
     public float MinTrackingRange
     {
       get;

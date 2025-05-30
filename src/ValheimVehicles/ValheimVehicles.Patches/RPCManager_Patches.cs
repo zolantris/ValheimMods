@@ -8,13 +8,9 @@ namespace ValheimVehicles.Patches;
 /// </summary>
 public static class RPCManager_Patches
 {
-  // [HarmonyPatch(typeof(Game), "Start")]
-  // [HarmonyPostfix]
-  // private static void Game_Start_InjectRPC()
-  // {
-  //   RPCManager.RegisterAllRPCs();
-  // }
-
+  /// <summary>
+  /// This must be invoked in both Game and ZNet in case there is a dsync or client rapidly re-connects and breaks Game.
+  /// </summary>
   public static void RegisterAllRPCs()
   {
     // registers the methods so RPCManager can reference them.
@@ -23,7 +19,7 @@ public static class RPCManager_Patches
     PowerSystemRPC.RegisterAll();
     PlayerEitrRPC.RegisterAll();
 
-    // finally call the network registry.
+    // finally, call the network registry.
     RPCManager.RegisterAllRPCs();
   }
 

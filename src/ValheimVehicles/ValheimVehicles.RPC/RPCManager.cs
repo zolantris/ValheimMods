@@ -9,24 +9,38 @@ public static class RPCManager
 {
   public static readonly Dictionary<string, RPCEntity> rpcEntities = new();
   public static bool HasRegistered = false;
+  private static ZRoutedRpc _lastRoutedRpcInstance;
+  public static readonly HashSet<string> registeredRpcNames = new();
+
 
   public static void RegisterAllRPCs()
   {
-    if (ZRoutedRpc.instance == null)
+    var currentInstance = ZRoutedRpc.instance;
+    if (currentInstance == null)
     {
       LoggerProvider.LogError("RegisterAllRPCs failed to run due to ZRoutedRpc.instance being null.");
       PowerNetworkControllerIntegration.Instance?.Invoke(nameof(RegisterAllRPCs), 1f);
       return;
     }
+
+    // If ZRoutedRpc.instance changed, clear registrations for safety.
+    if (_lastRoutedRpcInstance != null && _lastRoutedRpcInstance != currentInstance)
+    {
+      registeredRpcNames.Clear();
+      LoggerProvider.LogWarning("ZRoutedRpc.instance changed! Cleared previous registered RPCs.");
+    }
+    _lastRoutedRpcInstance = currentInstance;
+
     foreach (var rpcEntity in rpcEntities.Values)
     {
+      if (registeredRpcNames.Contains(rpcEntity.Name)) continue;
       ZRoutedRpc.instance.Register<ZPackage>(rpcEntity.Name, (long sender, ZPackage pkg) =>
       {
         if (!ZNet.instance) return;
-        // prevents silly mistakes. (will always start at 0)
         pkg.SetPos(0);
         ZNet.instance.StartCoroutine(rpcEntity.Action(sender, pkg));
       });
+      registeredRpcNames.Add(rpcEntity.Name);
       LoggerProvider.LogDebug($"Registered RPC {rpcEntity.Name}");
     }
 
@@ -36,7 +50,7 @@ public static class RPCManager
 
   public static RPCEntity RegisterRPC(string rpcName, RpcCoroutine action)
   {
-    if (!rpcEntities.TryGetValue(rpcName, out var rpc))
+    if (!rpcEntities.TryGetValue(RPCEntity.GetRPCName(rpcName), out var rpc))
     {
       var rpcEntity = new RPCEntity(rpcName, action);
       rpcEntities.Add(rpcEntity.Name, rpcEntity);
