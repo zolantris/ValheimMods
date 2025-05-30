@@ -15,18 +15,34 @@ namespace ValheimVehicles.RPC
   public static class PowerSystemRPC
   {
     // conduits
-    private static readonly RPCEntity Conduit_PlayerExitedConduit_RPC = RPCManager.RegisterRPC(nameof(RPC_Conduit_PlayerExitedConduit), RPC_Conduit_PlayerExitedConduit);
-    private static readonly RPCEntity Conduit_OfferAllEitr_RPC = RPCManager.RegisterRPC(nameof(RPC_Conduit_OfferAllEitr), RPC_Conduit_OfferAllEitr);
+    private static RPCEntity Conduit_PlayerExitedConduit_RPC;
+    private static RPCEntity Conduit_OfferAllEitr_RPC;
 
     // object config update
-    private static readonly RPCEntity NotifyZDOsChanged_RPC = RPCManager.RegisterRPC(nameof(RPC_Client_NotifyZDOsChanged), RPC_Client_NotifyZDOsChanged);
+    private static RPCEntity NotifyZDOsChanged_RPC;
 
     // consumers
-    private static readonly RPCEntity UpdatePowerConsumer_RPC = RPCManager.RegisterRPC(nameof(RPC_UpdatePowerConsumer), RPC_UpdatePowerConsumer);
+    private static RPCEntity UpdatePowerConsumer_RPC;
 
     // fuel
-    private static readonly RPCEntity AddFuelToSource_RPC = RPCManager.RegisterRPC(nameof(RPC_PowerSystem_AddFuel), RPC_PowerSystem_AddFuel);
-    private static readonly RPCEntity CommitFuelUsed_RPC = RPCManager.RegisterRPC(nameof(RPC_PowerSystem_CommitFuel), RPC_PowerSystem_CommitFuel);
+    private static RPCEntity AddFuelToSource_RPC;
+    private static RPCEntity CommitFuelUsed_RPC;
+
+    public static void RegisterAll()
+    {
+      Conduit_PlayerExitedConduit_RPC = RPCManager.RegisterRPC(nameof(RPC_Conduit_PlayerExitedConduit), RPC_Conduit_PlayerExitedConduit);
+      Conduit_OfferAllEitr_RPC = RPCManager.RegisterRPC(nameof(RPC_Conduit_OfferAllEitr), RPC_Conduit_OfferAllEitr);
+
+      // object config update
+      NotifyZDOsChanged_RPC = RPCManager.RegisterRPC(nameof(RPC_Client_NotifyZDOsChanged), RPC_Client_NotifyZDOsChanged);
+
+      // consumers
+      UpdatePowerConsumer_RPC = RPCManager.RegisterRPC(nameof(RPC_UpdatePowerConsumer), RPC_UpdatePowerConsumer);
+
+      // fuel
+      AddFuelToSource_RPC = RPCManager.RegisterRPC(nameof(RPC_PowerSystem_AddFuel), RPC_PowerSystem_AddFuel);
+      CommitFuelUsed_RPC = RPCManager.RegisterRPC(nameof(RPC_PowerSystem_CommitFuel), RPC_PowerSystem_CommitFuel);
+    }
 
     public static void Request_PowerZDOsChangedToNearbyPlayers(string networkId, List<ZDOID> zdos, PowerSimulationData simData, float range = 40f)
     {
@@ -195,6 +211,7 @@ namespace ValheimVehicles.RPC
       if (!PowerSystemRegistry.TryGetData<PowerConduitData>(zdo, out var conduitData)) yield break;
 
       var playerCount = pkg.ReadInt();
+      conduitData.ClearData();
       for (var i = 0; i < playerCount; i++)
       {
         var playerPeerId = pkg.ReadLong();

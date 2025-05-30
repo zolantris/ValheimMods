@@ -40,7 +40,7 @@ public static class PatchController
       typeof(Character_WaterPatches),
       typeof(Fireplace_WaterPatches),
       typeof(Minimap_VehicleIcons),
-      typeof(Game_RPCManager_Patch)
+      typeof(RPCManager_Patches)
     );
 
     if (PatchConfig.MineRockPatch.Value)

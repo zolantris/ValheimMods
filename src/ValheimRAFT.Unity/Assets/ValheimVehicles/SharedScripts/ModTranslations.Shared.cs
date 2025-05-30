@@ -79,6 +79,7 @@ namespace ValheimVehicles.SharedScripts
 
     public static string PowerPylon_Name = null!;
     public static string PowerConduit_DrainPlate_Name = null!;
+    public static string PowerConduit_ChargePlate_Name = null!;
     public static string PowerPylon_NetworkInformation_Show = null!;
     public static string PowerPylon_NetworkInformation_Hide = null!;
 

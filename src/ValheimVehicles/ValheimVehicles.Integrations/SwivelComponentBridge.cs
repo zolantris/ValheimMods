@@ -222,14 +222,14 @@
       this.WaitForZNetView((nv) =>
       {
         _currentZdo = nv.GetZDO();
+        var persistentId = GetPersistentId();
         ZdoToComponent.Add(_currentZdo, this);
-      });
 
-      var persistentId = GetPersistentId();
-      if (persistentId != 0 && !ActiveInstances.ContainsKey(persistentId))
-      {
-        ActiveInstances.Add(persistentId, this);
-      }
+        if (persistentId != 0 && !ActiveInstances.ContainsKey(persistentId))
+        {
+          ActiveInstances.Add(persistentId, this);
+        }
+      });
     }
 
     public void SetupPieceActivator()

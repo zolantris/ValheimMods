@@ -178,6 +178,7 @@ public partial class ModTranslations
     // For hud
     PowerPylon_Name = SafeLocalize("$valheim_vehicles_mechanism_power_pylon");
     PowerConduit_DrainPlate_Name = SafeLocalize("$valheim_vehicles_mechanism_power_drain_plate");
+    PowerConduit_ChargePlate_Name = SafeLocalize("$valheim_vehicles_mechanism_power_charge_plate");
 
     PowerState_HasPower = SafeLocalize("$valheim_vehicles_mechanism_power_state_has_power");
     PowerState_NoPower = SafeLocalize("$valheim_vehicles_mechanism_power_state_no_power");

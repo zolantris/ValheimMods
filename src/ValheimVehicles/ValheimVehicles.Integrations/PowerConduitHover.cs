@@ -20,6 +20,6 @@ public class PowerConduitHover : MonoBehaviour, Hoverable
   }
   public string GetHoverName()
   {
-    return ModTranslations.PowerConduit_DrainPlate_Name;
+    return _plateComponent.Data.Mode == PowerConduitMode.Charge ? ModTranslations.PowerConduit_ChargePlate_Name : ModTranslations.PowerConduit_DrainPlate_Name;
   }
 }

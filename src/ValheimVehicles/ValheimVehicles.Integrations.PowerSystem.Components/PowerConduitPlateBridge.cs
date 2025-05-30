@@ -137,6 +137,7 @@ public class PowerConduitPlateBridge :
 
 #endregion
 
+
   protected override void Start()
   {
     this.WaitForPowerSystemNodeData<PowerConduitData>((data) =>
@@ -147,7 +148,10 @@ public class PowerConduitPlateBridge :
       Logic.AddPlayerEitr = val => Data.AddEitrToPlayers(val);
       Logic.SubtractPlayerEitr = val => Data.TryRemoveEitrFromPlayers(val);
       _lastParent = transform.parent;
+
+
       AddRigidbodyIfParentIsRigidbody();
+
     });
 
     base.Start();
@@ -159,6 +163,7 @@ public class PowerConduitPlateBridge :
     if (newParent && newParent == _lastParent) return;
     LoggerProvider.LogDev($"Parent changed from {_lastParent?.name ?? "null"} to {newParent?.name ?? "null"}");
     _lastParent = newParent;
+
     AddRigidbodyIfParentIsRigidbody();
   }
 
@@ -178,6 +183,7 @@ public class PowerConduitPlateBridge :
 
     var joint = gameObject.AddComponent<FixedJoint>();
     joint.connectedBody = parentRigidbody;
+    joint.axis = Vector3.one;
     joint.enableCollision = false;
   }
 

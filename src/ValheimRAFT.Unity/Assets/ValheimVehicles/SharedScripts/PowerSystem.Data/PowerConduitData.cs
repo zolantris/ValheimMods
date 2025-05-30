@@ -150,6 +150,40 @@ namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
       return true;
     }
 
+    /// <summary>
+    /// Must convert from energy to eitr vapor. Then back to energy to see how much energy was consumed
+    /// </summary>
+    /// <param name="energyBudget"></param>
+    /// <returns></returns>
+    public float AddEitrToPlayers(float energyBudget)
+    {
+      if (PlayerPeerToData.Count == 0 || energyBudget <= 0f) return 0f;
+
+      var maxEitrRecharge = energyBudget * EitrVaporCostPerInterval / EnergyChargePerInterval;
+
+      List<PlayerEitrData> validReceivers = new(PlayerPeerToData.Count);
+      foreach (var playerEitrData in PlayerPeerToData.Values)
+      {
+        if (playerEitrData.Eitr > 0.1f && playerEitrData.Eitr < playerEitrData.EitrCapacity * 0.9f && playerEitrData.EitrCapacity > 10f && playerEitrData.EitrCapacity > EitrVaporCostPerInterval)
+          validReceivers.Add(playerEitrData);
+      }
+
+      if (validReceivers.Count == 0) return 0f;
+
+      var perPlayer = MathX.Clamp(maxEitrRecharge / validReceivers.Count, 0, EitrVaporCostPerInterval);
+      var totalEitrUsed = 0f;
+
+      foreach (var playerEitrData in validReceivers)
+      {
+        playerEitrData.Request_AddEitr(playerEitrData.PlayerId, perPlayer);
+        totalEitrUsed += perPlayer;
+      }
+
+      var totalEnergyUsed = totalEitrUsed / EitrVaporCostPerInterval * EnergyChargePerInterval;
+
+      return totalEnergyUsed;
+    }
+
     public float TryRemoveEitrFromPlayers(float maxEnergyDrainable)
     {
       if (Mode != PowerConduitMode.Drain || PlayerPeerToData.Count == 0) return 0f;
@@ -166,6 +200,7 @@ namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
         if (playerEitr <= 2f) continue;
         TryGetNeededEitr(maxEnergyDrainable - totalEnergy, playerEitr, out var deltaEitrVapor, out var deltaEnergy);
 
+        playerData.Eitr -= deltaEitrVapor;
         playerData.Request_UseEitr(playerData.PlayerId, deltaEitrVapor);
         totalEnergy += deltaEnergy;
       }
@@ -184,7 +219,7 @@ namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
 
       if (Mode == PowerConduitMode.Charge)
       {
-        return 0f;
+        deltaEnergy = AddEitrToPlayers(energyAvailableOrDrainable);
       }
 
       if (Mode == PowerConduitMode.Drain)

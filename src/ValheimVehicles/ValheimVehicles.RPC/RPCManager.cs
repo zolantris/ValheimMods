@@ -1,17 +1,21 @@
 using System.Collections.Generic;
+using ValheimVehicles.Integrations;
 using ValheimVehicles.SharedScripts;
+using ValheimVehicles.SharedScripts.PowerSystem;
 
 namespace ValheimVehicles.RPC;
 
 public static class RPCManager
 {
   public static readonly Dictionary<string, RPCEntity> rpcEntities = new();
+  public static bool HasRegistered = false;
 
   public static void RegisterAllRPCs()
   {
     if (ZRoutedRpc.instance == null)
     {
-      LoggerProvider.LogError("Register failed to run due to ZRoutedRpc.instance being null.");
+      LoggerProvider.LogError("RegisterAllRPCs failed to run due to ZRoutedRpc.instance being null.");
+      PowerNetworkControllerIntegration.Instance?.Invoke(nameof(RegisterAllRPCs), 1f);
       return;
     }
     foreach (var rpcEntity in rpcEntities.Values)
@@ -25,6 +29,9 @@ public static class RPCManager
       });
       LoggerProvider.LogDebug($"Registered RPC {rpcEntity.Name}");
     }
+
+    LoggerProvider.LogDebug($"Registered {rpcEntities.Count} RPCs");
+    HasRegistered = true;
   }
 
   public static RPCEntity RegisterRPC(string rpcName, RpcCoroutine action)

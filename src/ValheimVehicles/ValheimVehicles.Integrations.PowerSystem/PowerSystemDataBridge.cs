@@ -158,6 +158,11 @@ public partial class PowerConduitData : IPowerComputeZdoSync
     keysToRemove.ForEach(x => PlayerPeerToData.Remove(x));
   }
 
+  public void ClearData()
+  {
+    PlayerPeerToData.Clear();
+  }
+
   public bool AddOrUpdate(long playerId, float currentEitr, float maxEitr)
   {
     SanitizePlayerDataDictionary();
@@ -278,31 +283,6 @@ public partial class PowerConduitData : IPowerComputeZdoSync
   //
   //   return total / EitrVaporToEnergyRatio;
   // }
-
-  public float AddEitrToPlayers(float energyBudget)
-  {
-    if (PlayerPeerToData.Count == 0 || energyBudget <= 0f) return 0f;
-
-    List<PlayerEitrData> validReceivers = new(PlayerPeerToData.Count);
-    foreach (var playerEitrData in PlayerPeerToData.Values)
-    {
-      if (playerEitrData.Eitr > 0.1f)
-        validReceivers.Add(playerEitrData);
-    }
-
-    if (validReceivers.Count == 0) return 0f;
-
-    var perPlayer = energyBudget / validReceivers.Count;
-    var totalUsed = 0f;
-
-    foreach (var playerEitrData in validReceivers)
-    {
-      PlayerEitrRPC.Request_AddEitr(playerEitrData.PlayerId, perPlayer);
-      totalUsed += perPlayer;
-    }
-
-    return totalUsed;
-  }
 
   // public float SubtractEitrFromPlayers(float maxEnergyDrainable)
   // {

@@ -43,6 +43,7 @@ public class MechanismSelectorPanelIntegration : MechanismSelectorPanel
     mechanismSwitch.TargetSwivel = _currentPanelConfig.TargetSwivel ?? MechanismSwitchCustomConfig.ResolveSwivel(_currentPanelConfig.TargetSwivelId);
 
     mechanismSwitch.prefabConfigSync.Request_CommitConfigChange(saveConfig);
+    mechanismSwitch.prefabConfigSync.Load();
   }
 
   public void SyncUIFromPartialConfig(MechanismSwitch updated)

@@ -347,9 +347,7 @@ public class MechanismPrefabs : RegisterPrefab<MechanismPrefabs>
     RegisterPowerStorageEitr();
 
     RegisterPowerDrainPlate();
-#if DEBUG
     RegisterPowerChargePlate();
-#endif
 
     LoggerProvider.LogInfo($"Registering PowerStorageComponentIntegration prefab at: {Time.time}");
   }

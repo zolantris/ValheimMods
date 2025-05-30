@@ -4,16 +4,14 @@ namespace ValheimVehicles.RPC;
 
 public static class PlayerEitrRPC
 {
-  public static bool hasRegistered = false;
+  public static RPCEntity AddEitr_RPCInstance;
+  public static RPCEntity UseEitr_RPCInstance;
 
-
-  // public static void Unregister()
-  // {
-  //   hasRegistered = false;
-  // }
-
-  public static readonly RPCEntity AddEitr_RPCInstance = RPCManager.RegisterRPC(nameof(RPC_UseEitr), RPC_UseEitr);
-  public static readonly RPCEntity UseEitr_RPCInstance = RPCManager.RegisterRPC(nameof(RPC_AddEitr), RPC_AddEitr);
+  public static void RegisterAll()
+  {
+    AddEitr_RPCInstance = RPCManager.RegisterRPC(nameof(RPC_AddEitr), RPC_AddEitr);
+    UseEitr_RPCInstance = RPCManager.RegisterRPC(nameof(RPC_UseEitr), RPC_UseEitr);
+  }
 
   public static void Request_AddEitr(long playerId, float amount)
   {
@@ -56,7 +54,7 @@ public static class PlayerEitrRPC
     var amount = pkg.ReadSingle();
     if (!Player.m_localPlayer) yield break;
 #if DEBUG
-    LoggerProvider.LogDebug($"Added Eitr for player {Player.m_localPlayer.GetPlayerName()}");
+    LoggerProvider.LogDebug($"Used Eitr for player {Player.m_localPlayer.GetPlayerName()}");
 #endif
     Player.m_localPlayer.UseEitr(amount);
   }

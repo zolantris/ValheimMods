@@ -38,11 +38,18 @@ public class SwivelMotionUpdateLerp
   public float lerp = 0f;
 }
 
-public class SwivelPrefabConfigRPC
+public static class SwivelPrefabConfigRPC
 {
-  public static readonly RPCEntity BroadCastMotionRPC = RPCManager.RegisterRPC(nameof(RPC_Swivel_BroadCastMotionUpdate), RPC_Swivel_BroadCastMotionUpdate);
-  public static readonly RPCEntity NextMotionRPC = RPCManager.RegisterRPC(nameof(RPC_Swivel_NextMotionState), RPC_Swivel_NextMotionState);
-  public static readonly RPCEntity SetMotionRPC = RPCManager.RegisterRPC(nameof(RPC_Swivel_SetMotionState), RPC_Swivel_SetMotionState);
+  public static RPCEntity BroadCastMotionRPC;
+  public static RPCEntity NextMotionRPC;
+  public static RPCEntity SetMotionRPC;
+
+  public static void RegisterAll()
+  {
+    BroadCastMotionRPC = RPCManager.RegisterRPC(nameof(RPC_Swivel_BroadCastMotionUpdate), RPC_Swivel_BroadCastMotionUpdate);
+    NextMotionRPC = RPCManager.RegisterRPC(nameof(RPC_Swivel_NextMotionState), RPC_Swivel_NextMotionState);
+    SetMotionRPC = RPCManager.RegisterRPC(nameof(RPC_Swivel_SetMotionState), RPC_Swivel_SetMotionState);
+  }
 
   public static void Request_SetMotionState(ZDO zdo, MotionState motionState)
   {
@@ -205,16 +212,23 @@ public class SwivelPrefabConfigRPC
 
   public static IEnumerator WaitAndFinishMotion(MonoBehaviour behavior, ZDO zdo, MotionState currentMotion, float duration, SwivelMotionUpdateLerp swivelMotionUpdateLerp)
   {
+    if (zdo == null || !zdo.IsValid()) yield break;
+
     var currentDuration = 0f;
 
+    var zdoid = zdo.m_uid;
     // we lerp track motion updates per frame so we accurately match things.
-    while (behavior.isActiveAndEnabled && currentDuration < duration)
+    while (behavior != null && behavior.isActiveAndEnabled && currentDuration < duration)
     {
       currentDuration += Time.deltaTime;
       swivelMotionUpdateLerp.lerp = Mathf.Clamp01(currentDuration / duration);
       yield return null;
     }
-    if (!ZNet.instance || !behavior || !behavior.isActiveAndEnabled) yield break;
+    if (!ZNet.instance || zdo == null || !behavior || !behavior.isActiveAndEnabled)
+    {
+      _pendingMotionUpdateLerps.Remove(zdoid);
+      yield break;
+    }
     // Only finish if state not canceled
     var completedMotionState = SwivelCustomConfig.GetCompleteMotionState(currentMotion);
     zdo.TryClaimOwnership();
