@@ -12,7 +12,7 @@ This mod has both a beta and a non-beta on Thunderstore. Please make sure you
 are using non-beta if you want a stable experience. If you want to test
 previews, swap to the beta variant.
 
-## Tutorial
+## Tutorials
 
 This document contains generic tutorials and information on configuring the mod.
 
@@ -20,6 +20,8 @@ This document contains generic tutorials and information on configuring the mod.
 
 - [Vehicle Storage/Saving](./docs/tutorials/Tutorial_VehicleStorage.md)
 - [Vehicle Commands](./docs/tutorials/Tutorial_VehicleCommandsInterface.md)
+- Videos
+    - [Swivels Visual Tutorial](https://youtu.be/wtnUCGz2zek)
 
 ## Mod Info
 
@@ -472,6 +474,7 @@ Previously it only supported Direct3D11.
 
 - [2.4.0 ValheimRAFT Water overhaul nautilus](https://www.youtube.com/watch?v=qlB_sWbFfEA)
 - [2.4.0 ValheimRAFT Water overhaul demo](https://studio.youtube.com/video/yoPz0H5kZcc/edit)
+- [Swivel Demo](https://youtu.be/VFTrOWlIyp4)
 
 ## Logging Metrics
 
