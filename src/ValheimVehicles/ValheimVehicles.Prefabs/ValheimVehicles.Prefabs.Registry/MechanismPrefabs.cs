@@ -330,7 +330,7 @@ public class MechanismPrefabs : RegisterPrefab<MechanismPrefabs>
       [
         new RequirementConfig
         {
-          Amount = 10,
+          Amount = 2,
           Item = "Wood",
           Recover = true
         }
