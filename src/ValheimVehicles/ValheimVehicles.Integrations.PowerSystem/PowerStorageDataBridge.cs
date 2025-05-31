@@ -8,12 +8,10 @@ namespace ValheimVehicles.SharedScripts.PowerSystem.Compute;
 /// </summary>
 public partial class PowerStorageData : IPowerComputeZdoSync
 {
-  public PowerStorageData(ZDO zdo)
+  public PowerStorageData(ZDO zdo) : base(zdo)
   {
     this.zdo = zdo;
     PrefabHash = zdo.m_prefab;
-
-    OnNetworkIdChange += HandleNetworkIdUpdate;
     OnLoad += OnLoadZDOSync;
     OnSave += OnSaveZDOSync;
     Load();

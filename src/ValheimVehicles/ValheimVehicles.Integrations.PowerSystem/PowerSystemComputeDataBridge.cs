@@ -16,6 +16,11 @@ public abstract partial class PowerSystemComputeData
 
   public bool IsValid = false;
 
+  public PowerSystemComputeData(ZDO zdo)
+  {
+    OnNetworkIdChange += HandleNetworkIdUpdate;
+  }
+
   /// <summary>
   /// Guard for validation so we do not continue a bad sync without evaluating some values again.
   /// </summary>

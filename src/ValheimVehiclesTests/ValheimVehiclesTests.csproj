@@ -29,6 +29,9 @@
         <Compile Include="../ValheimRAFT.Unity/Assets/ValheimVehicles/SharedScripts/MathUtils.cs"/>
         <Compile Include="../ValheimRAFT.Unity/Assets/ValheimVehicles/SharedScripts/PowerSystemSimulator.cs"/>
         <Compile Include="../ValheimRAFT.Unity/Assets/ValheimVehicles/SharedScripts/Shared.Constants/VehicleZdoVars.cs"/>
+        <Compile Include="../ValheimRAFT.Unity/Assets/ValheimVehicles/SharedScripts/PrefabNames.cs"/>
+        <Compile Include="../ValheimRAFT.Unity/Assets/ValheimVehicles/SharedScripts/Enums/HullMaterial.cs"/>
+        <Compile Include="../ValheimRAFT.Unity/Assets/ValheimVehicles/SharedScripts/Enums/PrefabTiers.cs"/>
     </ItemGroup>
     <!--    <ItemGroup>-->
     <!--        <ProjectReference Include="..\ValheimVehicles\ValheimVehicles.csproj"/>-->

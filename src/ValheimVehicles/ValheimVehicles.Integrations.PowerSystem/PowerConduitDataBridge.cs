@@ -6,12 +6,11 @@ namespace ValheimVehicles.SharedScripts.PowerSystem.Compute;
 public partial class PowerConduitData : IPowerComputeZdoSync
 {
   // for integration
-  public PowerConduitData(ZDO zdo)
+  public PowerConduitData(ZDO zdo) : base(zdo)
   {
     this.zdo = zdo;
     PrefabHash = zdo.m_prefab;
-    OnNetworkIdChange += HandleNetworkIdUpdate;
-    Mode = GetConduitVariant(PrefabHash);
+    Mode = GetVariant(PrefabHash);
     Load();
   }
 
@@ -116,23 +115,6 @@ public partial class PowerConduitData : IPowerComputeZdoSync
     }
 
     return count > 0 ? total / count : 0f;
-  }
-
-  public static PowerConduitMode GetConduitVariant(ZDO zdo)
-  {
-    return GetConduitVariant(zdo.m_prefab);
-  }
-
-  public static PowerConduitMode GetConduitVariant(int prefabHash)
-  {
-    if (prefabHash == PrefabNameHashes.Mechanism_Power_Conduit_Charge_Plate)
-      return PowerConduitMode.Charge;
-
-    if (prefabHash == PrefabNameHashes.Mechanism_Power_Conduit_Drain_Plate)
-      return PowerConduitMode.Drain;
-
-    LoggerProvider.LogWarning($"[PowerConduitData] Unexpected prefabHash: {prefabHash}");
-    return PowerConduitMode.Drain;
   }
 
   public bool HasPlayersWithEitr => GetAllPlayerEitr() > 1f;

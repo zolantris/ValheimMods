@@ -465,12 +465,23 @@ namespace ValheimVehicles.SharedScripts
       return Quaternion.Euler(0f, clampedY, 0f);
     }
 
+    public static PowerIntensityLevel GetPowerIntensityLevelFromLerp(float lerp)
+    {
+      if (lerp <= 25f)
+      {
+        return PowerIntensityLevel.Low;
+      }
+      if (lerp > 25f && lerp < 50f)
+      {
+        return PowerIntensityLevel.Medium;
+      }
+      return PowerIntensityLevel.High;
+    }
 
     public virtual void UpdateBasePowerConsumption()
     {
       if (!IsPoweredSwivel || !swivelPowerConsumer) return;
-      // maximum 0.01x minimum and 100x times rate of swivel drain.
-      swivelPowerConsumer.Data.BasePowerConsumption = SwivelEnergyDrain * Mathf.Lerp(0.01f, 1, Mathf.Clamp01(interpolationSpeed / 100f));
+      swivelPowerConsumer.Data.SetPowerIntensity(GetPowerIntensityLevelFromLerp(_motionLerp));
     }
 
     public void DeactivatePowerConsumer()

@@ -39,7 +39,7 @@
     private int _persistentZdoId;
     public int PersistentZdoId => GetPersistentID();
 
-    public PowerConsumerData PowerConsumerData { get; set; } = new();
+    public PowerConsumerData? PowerConsumerData { get; set; }
 
     // The rudder force multiplier applied to the ship speed
     private float _rudderForce = 1f;

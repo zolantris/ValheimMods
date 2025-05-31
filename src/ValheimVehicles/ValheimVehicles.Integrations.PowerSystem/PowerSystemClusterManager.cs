@@ -83,10 +83,7 @@ namespace ValheimVehicles.Integrations
       {
         case var p when p == PrefabNameHashes.Mechanism_Power_Conduit_Charge_Plate:
         case var p2 when p2 == PrefabNameHashes.Mechanism_Power_Conduit_Drain_Plate:
-          data = new PowerConduitData(zdo)
-          {
-            Mode = PowerConduitData.GetConduitVariant(zdo)
-          };
+          data = new PowerConduitData(zdo);
           break;
         case var p when p == PrefabNameHashes.Mechanism_Power_Storage_Eitr:
           data = new PowerStorageData(zdo);

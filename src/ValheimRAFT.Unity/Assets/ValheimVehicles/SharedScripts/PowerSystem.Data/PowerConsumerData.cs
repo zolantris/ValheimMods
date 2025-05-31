@@ -31,7 +31,7 @@ namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
 
     public PowerConsumerData() {}
 
-    public static float GetPowerConsumerBaseValueFromPrefabHash(int prefabHash)
+    public static float GetVariant(int prefabHash)
     {
       if (prefabHash == PrefabNameHashes.Mechanism_Power_Consumer_Swivel)
       {
@@ -83,11 +83,7 @@ namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
       return powerIntensity;
     }
 
-    public float BasePowerConsumption
-    {
-      get => _basePowerConsumption;
-      set => SetBasePowerConsumption(value);
-    }
+    public float BasePowerConsumption => _basePowerConsumption;
 
     public void SetPowerIntensity(PowerIntensityLevel level)
     {
@@ -96,10 +92,11 @@ namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
       powerIntensityLevel = level;
     }
 
-    public void SetBasePowerConsumption(float value)
+    public void UpdateBasePowerConsumption()
     {
-      _basePowerConsumption = GetPowerConsumerBaseValueFromPrefabHash(prefabHash);
-      if (!Mathf.Approximately(_basePowerConsumption, value))
+      var previous = _basePowerConsumption;
+      _basePowerConsumption = GetVariant(PrefabHash);
+      if (!Mathf.Approximately(_basePowerConsumption, previous))
       {
         UpdatePowerConsumptionValues(_basePowerConsumption);
         MarkDirty(VehicleZdoVars.PowerSystem_BasePowerConsumption);

@@ -51,7 +51,7 @@ public class PowerSystemConfig : BepInExBaseConfig<PowerSystemConfig>
   public static void UpdatePowerConduits()
   {
     PowerConduitData.RechargeRate = PowerPlate_TransferRate.Value;
-    PowerConduitData.EitrVaporCostPerInterval = PowerPlate_EitrDrainCostPerSecond.Value;
+    PowerConduitData.EitrRegenCostPerInterval = PowerPlate_EitrDrainCostPerSecond.Value;
     PowerConduitData.EnergyChargePerInterval = PowerPlate_EnergyGainPerSecond.Value;
   }
 
@@ -78,21 +78,20 @@ public class PowerSystemConfig : BepInExBaseConfig<PowerSystemConfig>
     }
   }
 
-  public static void UpdateAllPowerConsumers()
+  public static void UpdatePowerConsumers()
   {
     PowerConsumerData.PowerConsumerBaseValues.Swivel = SwivelPowerDrain.Value;
     PowerConsumerData.PowerConsumerBaseValues.LandVehicleEngine = LandVehicle_PowerDrain.Value;
 
     foreach (var powerConsumerData in PowerSystemRegistry._consumers)
     {
-      powerConsumerData.UpdatePowerConsumptionValues();
+      powerConsumerData.UpdateBasePowerConsumption();
     }
-    // SwivelComponent.SwivelEnergyDrain = SwivelPowerDrain.Value;
-    foreach (var swivelComponent in SwivelComponent.Instances)
+
+    // base power intensity gets increased if above specific values of lerp per swivel.
+    foreach (var powerConsumerData in SwivelComponent.Instances)
     {
-      swivelComponent.UpdatePowerConsumer();
-      swivelComponent.UpdateBasePowerConsumption();
-      swivelComponent.swivelPowerConsumer.Data.Save();
+      powerConsumerData.UpdateBasePowerConsumption();
     }
   }
 
@@ -110,6 +109,13 @@ public class PowerSystemConfig : BepInExBaseConfig<PowerSystemConfig>
 
   public override void OnBindConfig(ConfigFile config)
   {
+
+#if DEBUG
+    var acceptableRange = new AcceptableValueRange<float>(0.000001f, 10000f);
+#else
+    var acceptableRange = new AcceptableValueRange<float>(1f, 100f);
+#endif
+
     PowerPylonRange = config.BindUnique(SectionKey, "PowerRangePerPowerItem", 10f, ConfigHelpers.CreateConfigDescription("The power range per power pylon prefab. Large values will make huge networks. Max range is 50. But this could span entire continents as ZDOs are not limited to render distance.", true, false, new AcceptableValueRange<float>(0, 50f)));
 
     PowerSimulationDistanceThreshold = config.BindUnique(SectionKey, nameof(PowerSimulationDistanceThreshold), 50f, ConfigHelpers.CreateConfigDescription("The maximum threshold in which to simulate networks. This means if a player or client/peer is nearby the power system will continue to simulate. Keeping this value lower will make running powersystems much faster at the cost of power not running while away from an area.", true, false, new AcceptableValueRange<float>(25f, 10000f)));
@@ -128,11 +134,6 @@ public class PowerSystemConfig : BepInExBaseConfig<PowerSystemConfig>
         true, false,
         new AcceptableValueRange<float>(0.001f, 1f)));
 
-#if DEBUG
-    var acceptableRange = new AcceptableValueRange<float>(0.000001f, 10000f);
-#else
-    var acceptableRange = new AcceptableValueRange<float>(1f, 100f);
-#endif
     PowerPlate_EitrDrainCostPerSecond = config.BindUnique(SectionKey,
       nameof(PowerPlate_EitrDrainCostPerSecond), 10f,
       ConfigHelpers.CreateConfigDescription(
@@ -180,6 +181,18 @@ public class PowerSystemConfig : BepInExBaseConfig<PowerSystemConfig>
         true, false,
         new AcceptableValueRange<float>(10f, 2000f)));
 
+    LandVehicle_DoNotRequirePower = config.BindUnique(SectionKey,
+      "LandVehicle_DoNotRequirePower", false,
+      ConfigHelpers.CreateConfigDescription(
+        $"Allows for free usage of land-vehicles without power system. Very unbalanced.",
+        true));
+
+    Swivels_DoNotRequirePower = config.BindUnique(SectionKey, "Swivels_DoNotRequirePower",
+      false,
+      ConfigHelpers.CreateConfigDescription(
+        "Allows you to use swivels without the vehicle power system.",
+        true));
+
     LandVehicle_PowerDrain = config.BindUnique(SectionKey,
       "LandVehicle_PowerDrain", 1f,
       ConfigHelpers.CreateConfigDescription(
@@ -199,11 +212,6 @@ public class PowerSystemConfig : BepInExBaseConfig<PowerSystemConfig>
       ConfigHelpers.CreateConfigDescription("Default action of the mechanism switch. This will be overridden by UpdateIntendedAction if a closer matching action is detected nearby."));
 
 
-    Swivels_DoNotRequirePower = config.BindUnique(SectionKey, "Swivels_DoNotRequirePower",
-      false,
-      ConfigHelpers.CreateConfigDescription(
-        "Allows you to use swivels without the vehicle power system.",
-        true, false));
 
     //sources
     PowerSource_FuelCapacity.SettingChanged += (sender, args) => UpdatePowerSources();
@@ -214,10 +222,8 @@ public class PowerSystemConfig : BepInExBaseConfig<PowerSystemConfig>
     PowerStorage_Capacity.SettingChanged += (sender, args) => UpdatePowerSources();
 
     // consumers (swivels, vehicles)
-    SwivelPowerDrain.SettingChanged += (sender, args) => UpdateSwivelPower();
-
-
-    LandVehicle_PowerDrain.SettingChanged += (sender, args) => UpdateSwivelPower();
+    SwivelPowerDrain.SettingChanged += (sender, args) => UpdatePowerConsumers();
+    LandVehicle_PowerDrain.SettingChanged += (sender, args) => UpdatePowerConsumers();
 
     SwivelComponent.IsPoweredSwivel = !Swivels_DoNotRequirePower.Value;
     Swivels_DoNotRequirePower.SettingChanged += (sender, args) => SwivelComponent.IsPoweredSwivel = !Swivels_DoNotRequirePower.Value;
@@ -239,9 +245,9 @@ public class PowerSystemConfig : BepInExBaseConfig<PowerSystemConfig>
     SwivelComponent.SwivelEnergyDrain = SwivelPowerDrain.Value;
 
     // trigger synchronous updates
-    UpdateSwivelPower();
     UpdatePowerSources();
     UpdatePowerStorages();
     UpdatePowerConduits();
+    UpdatePowerConsumers();
   }
 }

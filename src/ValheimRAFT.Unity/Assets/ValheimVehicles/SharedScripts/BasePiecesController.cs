@@ -1,11 +1,11 @@
 ﻿#region
 
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
-using Unity.Collections;
-using UnityEngine;
+  using System;
+  using System.Collections;
+  using System.Collections.Generic;
+  using System.Linq;
+  using Unity.Collections;
+  using UnityEngine;
 
 #endregion
 
@@ -451,7 +451,9 @@ using UnityEngine;
         // todo add a fallback that uses a simple box collider in this case. (IE THE BASIC RENDER)
         if (points.Count <= 4 || !m_convexHullCalculator.GenerateHull(points, false, ref verts, ref tris, ref normals, out var hasBailed))
         {
-          LoggerProvider.LogError("Points cannot be less than 4. This is likely an error with the mod or the vehicle only contains a piece without collider points.");
+#if DEBUG
+          LoggerProvider.LogDev("Points cannot be less than 4. This is likely an error with the mod or the vehicle only contains a piece without collider points.");
+#endif
           callback?.Invoke();
           return;
         }

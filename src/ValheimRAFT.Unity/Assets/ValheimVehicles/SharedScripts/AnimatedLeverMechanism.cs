@@ -77,7 +77,7 @@
 #if UNITY_EDITOR
         private void Start()
         {
-            InvokeRepeating(nameof(ToggleActivationState), 0f, 3f);
+            // InvokeRepeating(nameof(ToggleActivationState), 0f, 3f);
         }
 #endif
 

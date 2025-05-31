@@ -105,6 +105,8 @@ public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
     return RamConfig.RamDamageToolTier.Value;
   }
 
+  public static float VehicleHitForce = 1f;
+
   public void InitializeFromConfig()
   {
     // must set this first.
@@ -134,11 +136,7 @@ public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
         m_hitFriendly = RamConfig.VehicleRamCanHitFriendly.Value;
         m_hitEnemy = RamConfig.VehicleRamCanHitEnemies.Value;
         m_hitParent = RamConfig.VehicleRamCanDamageSelf.Value;
-
-#if DEBUG
-        // experimental
-        m_hitOwner = CanHitOwners;
-#endif
+        m_attackForce = VehicleHitForce;
         break;
       case RamPrefabs.RamType.Stake:
       case RamPrefabs.RamType.Blade:
@@ -156,6 +154,7 @@ public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
         m_hitFriendly = RamConfig.CanHitFriendly.Value;
         m_hitEnemy = RamConfig.CanHitEnemies.Value;
         m_hitParent = RamConfig.CanDamageSelf.Value;
+        m_attackForce = 0.1f;
         break;
       default:
         throw new ArgumentOutOfRangeException();
@@ -316,6 +315,8 @@ public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
 
     var multiplier = Mathf.Min(relativeVelocityMagnitude * 0.5f,
       MaxVelocityMultiplier) * RamDamageOverallMultiplier;
+
+    m_attackForce = relativeVelocityMagnitude;
 
     if (materialTier == PrefabTiers.Tier3)
       multiplier *= Mathf.Clamp(1 + DamageIncreasePercentagePerTier * 2, 1, 4);

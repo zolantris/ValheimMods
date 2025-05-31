@@ -446,6 +446,15 @@
       vehicleRam.OnTriggerEnterHandler(collider);
     }
 
+    private bool CanRunPoweredVehicle()
+    {
+      if (!Manager.IsLandVehicle || PowerSystemConfig.LandVehicle_DoNotRequirePower.Value) return true;
+      return Manager.PowerConsumerData?.CanRunConsumerForDeltaTime(1f) ?? false;
+    }
+
+    // allows messaging when power updates. It is unthrottled though.
+    private bool _hasPower = false;
+
     public void GuardedFixedUpdate(float deltaTime)
     {
       if (VehicleDebugConfig.AutoShowVehicleColliders.Value &&
@@ -456,6 +465,17 @@
             Vector3.up * TargetHeight);
         DebugTargetHeightObj.transform.localScale = FloatCollider!.size;
       }
+
+      if (!CanRunPoweredVehicle())
+      {
+        if (_hasPower && PiecesController && PiecesController._steeringWheelPieces.Count > 0 && PiecesController._steeringWheelPieces[0] != null)
+        {
+          PiecesController._steeringWheelPieces[0].UpdateSteeringHoverMessage(ModTranslations.Power_NetworkInfo_NetworkLowPower);
+        }
+        _hasPower = false;
+        return;
+      }
+      _hasPower = true;
 
       // invalid wheel controller should always reset physics to kinematic and skip current run.
       if (WheelController != null && !WheelController.IsVehicleReady)
@@ -662,11 +682,24 @@
     public void UpdateControls(float dt)
     {
       if (m_nview == null) return;
+      if (!m_nview.HasOwner())
+      {
+        m_nview.ClaimOwnership();
+      }
+
       if (m_nview.IsOwner())
       {
         m_nview.GetZDO().Set(ZDOVars.s_forward, (int)vehicleSpeed);
         m_nview.GetZDO().Set(ZDOVars.s_rudder, m_rudderValue);
         return;
+      }
+
+      if (OnboardController && vehicleRam && (vehicleRam.m_owner == null || vehicleRam.m_owner.m_nview.GetZDO().GetOwner() != m_nview.GetZDO().GetOwner()))
+      {
+        foreach (var onboardControllerMLocalPlayer in OnboardController.m_localPlayers)
+        {
+          vehicleRam.m_owner = onboardControllerMLocalPlayer;
+        }
       }
 
       if (Time.time - m_sendRudderTime > 1f)
@@ -3977,6 +4010,15 @@
       FixPlayerParent(player);
     }
 
+    public void UpdateVehicleRamOwner(Player owner)
+    {
+      // must set the ram owner otherwise it will not be able to damage enemies.
+      if (vehicleRam && vehicleRam.m_owner != owner)
+      {
+        vehicleRam.m_owner = owner;
+      }
+    }
+
     public void OnControlsHandOff(Player? targetPlayer, Player? previousPlayer)
 
     {
@@ -3999,6 +4041,8 @@
       m_nview.GetZDO().SetOwner(playerOwner);
       if (previousUserId != targetPlayer.GetPlayerID() || previousUserId == 0L)
         m_nview.GetZDO().Set(ZDOVars.s_user, targetPlayer.GetPlayerID());
+
+      UpdateVehicleRamOwner(targetPlayer);
 
       LoggerProvider.LogDebug("Changing ship owner to " + playerOwner +
                               $", name: {targetPlayer.GetPlayerName()}");

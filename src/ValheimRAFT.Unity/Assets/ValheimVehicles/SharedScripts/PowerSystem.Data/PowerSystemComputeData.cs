@@ -8,11 +8,10 @@ namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
 {
   public abstract partial class PowerSystemComputeData : IPowerSystemEntityData
   {
+    public PowerSystemComputeData() {}
     // constants
     private bool _isActive = true;
     public const string NetworkIdUnassigned = "UNASSIGNED";
-    public int prefabHash;
-
     // static
     public static float PowerRangeDefault = 4f;
     public static float PowerRangePylonDefault = 10f;

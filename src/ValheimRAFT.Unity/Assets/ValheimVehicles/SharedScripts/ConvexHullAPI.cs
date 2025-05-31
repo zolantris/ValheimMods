@@ -628,7 +628,7 @@
           dynamicFriction = PhysicMaterialDynamicFriction, // Low friction so it slides over objects
           staticFriction = PhysicMaterialStaticFriction, // Prevents excessive sticking
           bounciness = 0.0f, // No bounce effect
-          frictionCombine = PhysicMaterialCombine.Minimum // Ensures lowest friction is used
+          frictionCombine = PhysicMaterialCombine.Multiply // Ensures friction rapidly increases as we slow down.
         };
         return physicsMaterial;
       }

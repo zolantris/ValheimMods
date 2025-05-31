@@ -5,12 +5,10 @@ namespace ValheimVehicles.SharedScripts.PowerSystem.Compute;
 
 public partial class PowerConsumerData : IPowerComputeZdoSync
 {
-  public PowerConsumerData(ZDO zdo)
+  public PowerConsumerData(ZDO zdo) : base(zdo)
   {
     this.zdo = zdo;
-    PrefabHash = zdo.m_prefab;
-
-    OnNetworkIdChange += HandleNetworkIdUpdate;
+    PrefabHash = zdo.m_prefab; // allows for determining variants based on prefab hash.
     OnLoad += OnLoadZDOSync;
     OnSave += OnSaveZDOSync;
     CanRunConsumerForDeltaTime = HandleCanRunConsumerForDeltaTime;

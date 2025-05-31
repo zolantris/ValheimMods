@@ -191,7 +191,7 @@
       public bool ShouldHideWheelRender;
 
       public float dynamicFriction = 0.01f;
-      public float staticFriction = 0.02f;
+      public float staticFriction = 0.05f;
       public PhysicMaterial treadPhysicMaterial;
 
       public bool IsOnGround;
@@ -272,6 +272,8 @@
       internal List<GameObject> wheelInstances = new();
       public bool IsVehicleReady => _isWheelsInitialized && _isTreadsInitialized && vehicleRootBody; // important catchall for preventing fixedupdate physics from being applied until the vehicle is ready.
       public float wheelColliderRadius => Mathf.Clamp(wheelRadius, 0f, 5f);
+
+      public bool IsTurningInPlace => isTurningInPlace;
 
       [UsedImplicitly]
       public bool IsBraking
@@ -690,6 +692,25 @@
         // this removes sideways velocities quickly to prevent issues with vehicle at higher speeds turning.
         DampenSidewaysVelocity();
         DampenAngularYVelocity();
+
+        // Prevent translation during in-place turning
+        if (IsTurningInPlace && IsOnGround)
+        {
+          // Only preserve Y angular velocity (turning)
+          var vel = vehicleRootBody.velocity;
+          vehicleRootBody.velocity = new Vector3(0, vel.y, 0); // Optionally preserve Y if you want to allow jumps
+
+          // Optionally, you could clamp the velocity to zero instead of setting to 0 if you want to allow tiny drift
+          // vehicleRootBody.velocity = Vector3.zero;
+
+          // Make sure only Y angular velocity is kept (for yaw turn)
+          var angVel = vehicleRootBody.angularVelocity;
+          vehicleRootBody.angularVelocity = new Vector3(0, angVel.y, 0);
+
+          // Optionally, you can also limit the angular speed
+          // float maxYawSpeed = 2f;
+          // vehicleRootBody.angularVelocity = new Vector3(0, Mathf.Clamp(angVel.y, -maxYawSpeed, maxYawSpeed), 0);
+        }
       }
 
       private float GetSteeringForceLerp()
@@ -741,9 +762,9 @@
           // shared dynamic physicMaterial. This can be different per vehicle used.
           treadPhysicMaterial = new PhysicMaterial("TreadPhysicMaterial")
           {
-            dynamicFriction = IsBraking ? 0.5f : dynamicFriction,
+            dynamicFriction = IsBraking ? 1f : dynamicFriction,
             staticFriction = IsBraking ? 0.5f : staticFriction,
-            bounciness = 0f,
+            bounciness = 0.01f,
             bounceCombine = PhysicMaterialCombine.Minimum,
             frictionCombine = PhysicMaterialCombine.Minimum
           };
@@ -860,6 +881,26 @@
         leftRenderers.Clear();
       }
 
+      public void ApplyFrictionUpdates()
+      {
+        if (IsBraking) return;
+
+        var isTryingToMove = Mathf.Abs(inputMovement) > 0.01f || Mathf.Abs(inputTurnForce) > 0.01f;
+
+        if (isTryingToMove)
+        {
+          // Lower friction so tracks can slip and move from rest
+          treadPhysicMaterial.dynamicFriction = dynamicFriction;
+          treadPhysicMaterial.staticFriction = staticFriction;
+        }
+        else
+        {
+          // High friction, lock in place
+          treadPhysicMaterial.dynamicFriction = 1f;
+          treadPhysicMaterial.staticFriction = 1f;
+        }
+      }
+
       /// <summary>
       ///   To be called from VehicleMovementController
       /// </summary>
@@ -877,7 +918,10 @@
         if (!IsOnGround)
         {
           ApplyDownforce();
+          return;
         }
+
+        ApplyFrictionUpdates();
 
         HandleObstacleClimb();
 
