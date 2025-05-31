@@ -374,18 +374,47 @@
       RemovePlayersBeforeDestroyingBoat();
     }
 
+    // collision.relativeVelocity.magnitude < 3f && collision.collider.transform.root.name.StartsWith(PrefabNames.VehiclePiecesContainer) && collision.collider.transform.root != PiecesController.transform
+
+    public bool TryAddVehicleWithinBoat(Collision collision)
+    {
+      if (collision.collider.name.Contains("ValheimVehicles_ConvexHull") && collision.transform.name.Contains(PrefabNames.VehiclePiecesContainer))
+      {
+        foreach (var c in collision.contacts)
+        {
+          Physics.IgnoreCollision(c.otherCollider, c.thisCollider, true);
+        }
+        // collision.contacts.Where(x => x.thisCollider.name.Contains("ValheimVehicles_ConvexHull") || x.otherCollider.name.Contains("ValheimVehicles_ConvexHull")).ToList().ForEach(x => Physics.IgnoreCollision(x.otherCollider, x.thisCollider, true));
+      }
+
+      if (!Manager.IsLandVehicle && collision.transform.name.Contains(PrefabNames.LandVehicle))
+      {
+        foreach (var collisionContact in collision.contacts)
+        {
+          if (collisionContact.thisCollider.name.Contains("ValheimVehicles_ConvexHull") || collisionContact.otherCollider.name.Contains("ValheimVehicles_ConvexHull"))
+          {
+            Physics.IgnoreCollision(collisionContact.thisCollider, collisionContact.otherCollider, true);
+          }
+        }
+
+        var otherManager = collision.collider.GetComponentInParent<VehicleManager>();
+        if (!otherManager) return false;
+        var otherColliders = otherManager.PiecesController?.GetComponentsInChildren<Collider>(true);
+
+        foreach (var waterVehicleColliders in PiecesController.GetComponentsInChildren<Collider>())
+        foreach (var otherCollider in otherColliders)
+        {
+          Physics.IgnoreCollision(waterVehicleColliders, otherCollider, true);
+        }
+      }
+
+      return false;
+    }
+
     private void OnCollisionEnter(Collision collision)
     {
       if (PiecesController == null) return;
-      if (collision.relativeVelocity.magnitude < 3f && collision.collider.transform.root.name.StartsWith(PrefabNames.LandVehicle) && collision.collider.transform.root != transform)
-      {
-        var rootNv = collision.collider.transform.root.GetComponent<ZNetView>();
-        if (rootNv)
-        {
-          PiecesController.AddTemporaryPiece(rootNv);
-        }
-        return;
-      }
+      if (TryAddVehicleWithinBoat(collision)) return;
 
       if (collision.collider.gameObject.layer == LayerHelpers.TerrainLayer) return;
       if (collision.collider.name == "tread_mesh")
@@ -418,19 +447,19 @@
 
 #if DEBUG
       // allows landvehicles within the vehicle, requires a PiecesController reparent likely.
-      if (collision.relativeVelocity.magnitude < 2 && collision.transform.root.name.StartsWith(PrefabNames.LandVehicle) && collision.contactCount > 0)
-      {
-        // should only ignore for convexHull collider (not the damage trigger variant)
-        var thisCollider = collision.contacts[0].thisCollider;
-        if (thisCollider.name.StartsWith("ValheimVehicles_ConvexHull") || thisCollider.name.StartsWith("convex_tread_collider"))
-        {
-          Physics.IgnoreCollision(collision.collider, thisCollider, true);
-        }
-        if (transform.root.name.StartsWith(PrefabNames.LandVehicle))
-        {
-          PiecesController.AddTemporaryPiece(transform.root.GetComponent<ZNetView>());
-        }
-      }
+      // if (collision.relativeVelocity.magnitude < 2 && collision.transform.root.name.StartsWith(PrefabNames.LandVehicle) && collision.contactCount > 0)
+      // {
+      // should only ignore for convexHull collider (not the damage trigger variant)
+      // var thisCollider = collision.contacts[0].thisCollider;
+      //   if (this.Collider.name.StartsWith("ValheimVehicles_ConvexHull") || thisCollider.name.StartsWith("convex_tread_collider"))
+      //   {
+      //     Physics.IgnoreCollision(collision.collider, thisCollider, true);
+      //   }
+      //   if (transform.root.name.StartsWith(PrefabNames.LandVehicle))
+      //   {
+      //     PiecesController.AddTemporaryPiece(transform.root.GetComponent<ZNetView>());
+      //   }
+      // }
 #endif
 
       if (vehicleRam != null && LayerHelpers.IsContainedWithinLayerMask(collision.collider.gameObject.layer, LayerHelpers.PhysicalLayerMask))

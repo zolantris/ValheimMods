@@ -518,7 +518,7 @@
 
 
       // very important to add these. We always need a base of 30.
-      var additionalTurnRate = Mathf.Lerp(VehicleWheelController.defaultTurnAccelerationMultiplier / 2, VehicleWheelController.defaultTurnAccelerationMultiplier * 2, Mathf.Clamp01(PropulsionConfig.VehicleLandTurnSpeed.Value));
+      var additionalTurnRate = Mathf.Lerp(VehicleWheelController.defaultTurnAccelerationMultiplier / 10, VehicleWheelController.defaultTurnAccelerationMultiplier * 10, Mathf.Clamp01(PropulsionConfig.VehicleLandTurnSpeed.Value));
 
       VehicleWheelController.baseTurnAccelerationMultiplier = additionalTurnRate;
       WheelController.maxTreadLength = PhysicsConfig.VehicleLandMaxTreadLength.Value;

@@ -1,6 +1,7 @@
 // ReSharper disable ArrangeNamespaceBody
 // ReSharper disable NamespaceStyle
 
+using System.Collections.Generic;
 namespace ValheimVehicles.Shared.Constants
 {
   

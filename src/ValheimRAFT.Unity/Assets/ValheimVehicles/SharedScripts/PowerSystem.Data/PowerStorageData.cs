@@ -11,13 +11,16 @@ using ValheimVehicles.SharedScripts.Modules;
 
 namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
 {
-  // Todo extend IPowerStorage
-  public class PowerStorageData : PowerSystemComputeData
+  // ReSharper disable once PartialTypeWithSinglePart
+  public partial class PowerStorageData : PowerSystemComputeData
   {
     public static float EnergyCapacityDefault = 800f;
     public float _peekedDischargeAmount;
     public float Energy;
     public float EnergyCapacity = EnergyCapacityDefault;
+    public PowerStorageData()
+    {
+    }
 
     public bool IsValid { get; set; }
 

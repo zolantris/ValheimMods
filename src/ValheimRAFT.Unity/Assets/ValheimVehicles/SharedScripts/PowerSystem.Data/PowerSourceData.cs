@@ -19,7 +19,8 @@ namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
     Eitr
   }
 
-  public class PowerSourceData : PowerSystemComputeData
+  // ReSharper disable once PartialTypeWithSinglePart
+  public partial class PowerSourceData : PowerSystemComputeData
   {
     public static float OutputRateDefault = 10f;
     public static float FuelCapacityDefault = 100f;

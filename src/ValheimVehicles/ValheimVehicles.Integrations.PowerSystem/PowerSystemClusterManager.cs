@@ -20,7 +20,7 @@ namespace ValheimVehicles.Integrations
     internal static readonly HashSet<int> _powerHashes = new();
     internal static readonly Dictionary<int, string> _powerHashToName = new();
     internal static readonly Dictionary<string, int> _powerNameToHash = new();
-    internal static readonly float MaxJoinDistance = 16f;
+    internal static readonly float MaxJoinDistance = 8f;
     internal static readonly float MaxJoinSqr = MaxJoinDistance * MaxJoinDistance;
 
     internal static readonly Dictionary<string, List<ZDO>> _networks = new();
@@ -142,12 +142,6 @@ namespace ValheimVehicles.Integrations
           var current = pending.Dequeue();
           cluster.Add(current);
 
-          // Gather all valid network IDs
-          var netId = current.GetString(VehicleZdoVars.PowerSystem_NetworkId, "");
-          if (!string.IsNullOrEmpty(netId) && netId != PowerSystemComputeData.NetworkIdUnassigned)
-            foundNetworkIds.Add(netId);
-
-          // Check all remaining unvisited for connectivity (by position)
           foreach (var other in unvisited.ToList())
           {
             if ((current.GetPosition() - other.GetPosition()).sqrMagnitude <= MaxJoinSqr)

@@ -6,6 +6,7 @@ using UnityEngine;
 using ValheimVehicles.Shared.Constants;
 namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
 {
+  // ReSharper disable once PartialTypeWithSinglePart
   public partial class PowerConsumerData : PowerSystemComputeData
   {
     public static class PowerConsumerBaseValues
