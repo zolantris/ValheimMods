@@ -374,38 +374,62 @@
       RemovePlayersBeforeDestroyingBoat();
     }
 
-    // collision.relativeVelocity.magnitude < 3f && collision.collider.transform.root.name.StartsWith(PrefabNames.VehiclePiecesContainer) && collision.collider.transform.root != PiecesController.transform
-
+    /// <summary>
+    /// Heavy collider iterations but very accurate. Allows nesting vehicles.
+    /// </summary>
+    /// <param name="collision"></param>
+    /// <returns></returns>
     public bool TryAddVehicleWithinBoat(Collision collision)
     {
-      if (collision.collider.name.Contains("ValheimVehicles_ConvexHull") && collision.transform.name.Contains(PrefabNames.VehiclePiecesContainer))
+      if (collision.transform.name.Contains("animated")) return false;
+
+      if (collision.transform.name.Contains(PrefabNames.VehiclePiecesContainer))
       {
         foreach (var c in collision.contacts)
         {
-          Physics.IgnoreCollision(c.otherCollider, c.thisCollider, true);
+          if (c.thisCollider.GetComponentInParent<Character>() || c.thisCollider.GetComponentInParent<Character>())
+          {
+            continue;
+          }
+          if (c.thisCollider.name.Contains("ValheimVehicles_ConvexHull") || c.otherCollider.name.Contains("ValheimVehicles_ConvexHull"))
+          {
+
+            Physics.IgnoreCollision(c.otherCollider, c.thisCollider, true);
+          }
         }
         // collision.contacts.Where(x => x.thisCollider.name.Contains("ValheimVehicles_ConvexHull") || x.otherCollider.name.Contains("ValheimVehicles_ConvexHull")).ToList().ForEach(x => Physics.IgnoreCollision(x.otherCollider, x.thisCollider, true));
       }
 
       if (!Manager.IsLandVehicle && collision.transform.name.Contains(PrefabNames.LandVehicle))
       {
-        foreach (var collisionContact in collision.contacts)
+        foreach (var c in collision.contacts)
         {
-          if (collisionContact.thisCollider.name.Contains("ValheimVehicles_ConvexHull") || collisionContact.otherCollider.name.Contains("ValheimVehicles_ConvexHull"))
+          if (c.thisCollider.GetComponentInParent<Character>() || c.otherCollider.GetComponentInParent<Character>())
           {
-            Physics.IgnoreCollision(collisionContact.thisCollider, collisionContact.otherCollider, true);
+            continue;
+          }
+          if (c.thisCollider.name.Contains("ValheimVehicles_ConvexHull") || c.otherCollider.name.Contains("ValheimVehicles_ConvexHull"))
+          {
+            Physics.IgnoreCollision(c.thisCollider, c.otherCollider, true);
           }
         }
 
         var otherManager = collision.collider.GetComponentInParent<VehicleManager>();
         if (!otherManager) return false;
-        var otherColliders = otherManager.PiecesController?.GetComponentsInChildren<Collider>(true);
-
-        foreach (var waterVehicleColliders in PiecesController.GetComponentsInChildren<Collider>())
-        foreach (var otherCollider in otherColliders)
+        var otherPieceDataItems = otherManager.PiecesController.m_prefabPieceDataItems.Values;
+        foreach (var waterVehicleColliders in PiecesController.m_prefabPieceDataItems.Values)
+        foreach (var pieceData in otherPieceDataItems)
+        foreach (var thisPieceCollider in waterVehicleColliders.AllColliders)
+        foreach (var otherPieceCollider in pieceData.AllColliders)
         {
-          Physics.IgnoreCollision(waterVehicleColliders, otherCollider, true);
+          if (!thisPieceCollider || !otherPieceCollider) continue;
+          if (otherPieceCollider.GetComponentInParent<Character>() || thisPieceCollider.GetComponentInParent<Character>())
+          {
+            continue;
+          }
+          Physics.IgnoreCollision(thisPieceCollider, otherPieceCollider, true);
         }
+
       }
 
       return false;
