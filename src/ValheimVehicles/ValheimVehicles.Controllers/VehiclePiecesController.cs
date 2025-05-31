@@ -2431,7 +2431,7 @@
     public void TrySetPieceToParent(ZNetView? netView, ZDO? zdo)
     {
       if (IsInvalid()) return;
-      if (netView == null || PrefabNames.IsVehicle(netView.name)) return;
+      if (netView == null || PrefabNames.IsVehicle(netView.name) && netView.name.Contains(PrefabNames.LandVehicle)) return;
 
       if (RamPrefabs.IsRam(netView!.name))
       {

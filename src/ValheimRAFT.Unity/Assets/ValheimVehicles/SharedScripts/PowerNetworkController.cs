@@ -3,19 +3,12 @@
 
 #region
 
-using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
 using UnityEditor;
 using UnityEngine;
-using ValheimVehicles.Integrations;
 using ValheimVehicles.Interfaces;
-using ValheimVehicles.SharedScripts.Helpers;
 using ValheimVehicles.SharedScripts.PowerSystem.Interfaces;
 using Debug = UnityEngine.Debug;
-using Object = UnityEngine.Object;
 
 #endregion
 
@@ -29,10 +22,10 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
     public static List<IPowerConsumer> Consumers = new();
     public static List<PowerPylon> Pylons = new();
     public static List<IPowerConduit> Conduits = new();
+    protected static readonly Dictionary<string, List<IPowerNode>> powerNodeNetworks = new();
 
     [SerializeField] private int curvedLinePoints = 50;
     [SerializeField] private Material fallbackWireMaterial;
-    protected static readonly Dictionary<string, List<IPowerNode>> powerNodeNetworks = new();
 
     internal readonly float _updateInterval = 1f;
     internal float _nextUpdate;
@@ -68,11 +61,6 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
       base.Awake();
     }
 
-    protected void OnDestroy()
-    {
-      StopAllCoroutines();
-    }
-
     protected virtual void FixedUpdate()
     {
       if (Time.time < _nextUpdate) return;
@@ -82,6 +70,11 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
       // {
       //   
       // }
+    }
+
+    protected void OnDestroy()
+    {
+      StopAllCoroutines();
     }
 
     // public static void RegisterPowerComponent<T>(T component)

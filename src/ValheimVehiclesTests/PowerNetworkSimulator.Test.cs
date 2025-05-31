@@ -151,7 +151,7 @@ public class PowerSimulationTests
     playerData.Eitr = 0f;
     simulationData.Conduits.Add(conduit);
 
-    var consumer = new PowerConsumerData { BasePowerConsumption = 0f };
+    var consumer = new PowerConsumerData();
     simulationData.Consumers.Add(consumer);
 
     var source = new PowerSourceData { Fuel = 0f, FuelEnergyYield = 10f, FuelEfficiency = 1f };
@@ -219,7 +219,7 @@ public class PowerSimulationTests
     GeneratePlayerDataForConduit(out var conduit, out var playerData);
     simulationData.Conduits.Add(conduit);
 
-    var consumer = new PowerConsumerData { BasePowerConsumption = 0f };
+    var consumer = new PowerConsumerData();
     simulationData.Consumers.Add(consumer);
 
     var source = new PowerSourceData { Fuel = 50f, FuelEnergyYield = 10f, FuelEfficiency = 1f };
@@ -257,7 +257,12 @@ public class PowerSimulationTests
     GeneratePlayerDataForConduit(out var conduit, out var playerData);
     simulationData.Conduits.Add(conduit);
 
-    var consumer = new PowerConsumerData { BasePowerConsumption = 100f, _isActive = true, IsDemanding = true };
+    var consumer = new PowerConsumerData
+    {
+      IsDemanding = true,
+      PrefabHash = PrefabNameHashes.Mechanism_Power_Conduit_Drain_Plate
+    };
+    consumer.SetActive(true);
     simulationData.Consumers.Add(consumer);
 
     var source = new PowerSourceData { Fuel = 1f, FuelEnergyYield = 1f, FuelEfficiency = 1f };

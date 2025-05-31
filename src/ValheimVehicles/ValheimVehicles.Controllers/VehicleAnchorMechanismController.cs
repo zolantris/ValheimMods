@@ -80,13 +80,10 @@
 
     public override void OnAnchorStateChange(AnchorState newState)
     {
-      // No callbacks for anchor when flying. You can only Reel-in, or reel upwards.
+      // No callbacks for anchor when flying
       if (MovementController != null && MovementController.IsFlying())
       {
-        if (currentState != AnchorState.Recovered)
-          UpdateAnchorState(AnchorState.Reeling, GetCurrentStateText());
-        else
-          return;
+        return;
       }
 
       switch (newState)

@@ -227,7 +227,6 @@ namespace ValheimVehicles.RPC
 
       var id = pkg.ReadZDOID();
       var isDemanding = pkg.ReadBool();
-      var basePowerConsumption = pkg.ReadSingle();
       var powerMode = PowerConsumerData.GetPowerIntensityFromPrefab(pkg.ReadInt());
 
       var zdo = ZDOMan.instance.GetZDO(id);
@@ -244,7 +243,7 @@ namespace ValheimVehicles.RPC
       }
 
       data.SetDemandState(isDemanding);
-      data.SetBasePowerConsumption(basePowerConsumption);
+      // needed
       data.SetPowerIntensity(powerMode);
 
       if (zdo.IsOwner() || ZNet.instance.IsServer())
@@ -321,7 +320,6 @@ namespace ValheimVehicles.RPC
       var pkg = new ZPackage();
       pkg.Write(consumerId);
       pkg.Write(data.IsDemanding);
-      pkg.Write(data.BasePowerConsumption);
       pkg.Write((int)data.PowerIntensityLevel);
       UpdatePowerConsumer_RPC.Send(pkg);
     }

@@ -374,18 +374,71 @@
       RemovePlayersBeforeDestroyingBoat();
     }
 
+    /// <summary>
+    /// Heavy collider iterations but very accurate. Allows nesting vehicles.
+    /// </summary>
+    /// <param name="collision"></param>
+    /// <returns></returns>
+    public bool TryAddVehicleWithinBoat(Collision collision)
+    {
+      if (collision.transform.name.Contains("animated")) return false;
+
+      if (collision.transform.name.Contains(PrefabNames.VehiclePiecesContainer))
+      {
+        foreach (var c in collision.contacts)
+        {
+          if (c.thisCollider.GetComponentInParent<Character>() || c.thisCollider.GetComponentInParent<Character>())
+          {
+            continue;
+          }
+          if (c.thisCollider.name.Contains("ValheimVehicles_ConvexHull") || c.otherCollider.name.Contains("ValheimVehicles_ConvexHull"))
+          {
+
+            Physics.IgnoreCollision(c.otherCollider, c.thisCollider, true);
+          }
+        }
+        // collision.contacts.Where(x => x.thisCollider.name.Contains("ValheimVehicles_ConvexHull") || x.otherCollider.name.Contains("ValheimVehicles_ConvexHull")).ToList().ForEach(x => Physics.IgnoreCollision(x.otherCollider, x.thisCollider, true));
+      }
+
+      if (!Manager.IsLandVehicle && collision.transform.name.Contains(PrefabNames.LandVehicle))
+      {
+        foreach (var c in collision.contacts)
+        {
+          if (c.thisCollider.GetComponentInParent<Character>() || c.otherCollider.GetComponentInParent<Character>())
+          {
+            continue;
+          }
+          if (c.thisCollider.name.Contains("ValheimVehicles_ConvexHull") || c.otherCollider.name.Contains("ValheimVehicles_ConvexHull"))
+          {
+            Physics.IgnoreCollision(c.thisCollider, c.otherCollider, true);
+          }
+        }
+
+        var otherManager = collision.collider.GetComponentInParent<VehicleManager>();
+        if (!otherManager) return false;
+        var otherPieceDataItems = otherManager.PiecesController.m_prefabPieceDataItems.Values;
+        foreach (var waterVehicleColliders in PiecesController.m_prefabPieceDataItems.Values)
+        foreach (var pieceData in otherPieceDataItems)
+        foreach (var thisPieceCollider in waterVehicleColliders.AllColliders)
+        foreach (var otherPieceCollider in pieceData.AllColliders)
+        {
+          if (!thisPieceCollider || !otherPieceCollider) continue;
+          if (otherPieceCollider.GetComponentInParent<Character>() || thisPieceCollider.GetComponentInParent<Character>())
+          {
+            continue;
+          }
+          Physics.IgnoreCollision(thisPieceCollider, otherPieceCollider, true);
+        }
+
+      }
+
+      return false;
+    }
+
     private void OnCollisionEnter(Collision collision)
     {
       if (PiecesController == null) return;
-      if (collision.relativeVelocity.magnitude < 3f && collision.collider.transform.root.name.StartsWith(PrefabNames.LandVehicle) && collision.collider.transform.root != transform)
-      {
-        var rootNv = collision.collider.transform.root.GetComponent<ZNetView>();
-        if (rootNv)
-        {
-          PiecesController.AddTemporaryPiece(rootNv);
-        }
-        return;
-      }
+      if (TryAddVehicleWithinBoat(collision)) return;
 
       if (collision.collider.gameObject.layer == LayerHelpers.TerrainLayer) return;
       if (collision.collider.name == "tread_mesh")
@@ -418,19 +471,19 @@
 
 #if DEBUG
       // allows landvehicles within the vehicle, requires a PiecesController reparent likely.
-      if (collision.relativeVelocity.magnitude < 2 && collision.transform.root.name.StartsWith(PrefabNames.LandVehicle) && collision.contactCount > 0)
-      {
-        // should only ignore for convexHull collider (not the damage trigger variant)
-        var thisCollider = collision.contacts[0].thisCollider;
-        if (thisCollider.name.StartsWith("ValheimVehicles_ConvexHull") || thisCollider.name.StartsWith("convex_tread_collider"))
-        {
-          Physics.IgnoreCollision(collision.collider, thisCollider, true);
-        }
-        if (transform.root.name.StartsWith(PrefabNames.LandVehicle))
-        {
-          PiecesController.AddTemporaryPiece(transform.root.GetComponent<ZNetView>());
-        }
-      }
+      // if (collision.relativeVelocity.magnitude < 2 && collision.transform.root.name.StartsWith(PrefabNames.LandVehicle) && collision.contactCount > 0)
+      // {
+      // should only ignore for convexHull collider (not the damage trigger variant)
+      // var thisCollider = collision.contacts[0].thisCollider;
+      //   if (this.Collider.name.StartsWith("ValheimVehicles_ConvexHull") || thisCollider.name.StartsWith("convex_tread_collider"))
+      //   {
+      //     Physics.IgnoreCollision(collision.collider, thisCollider, true);
+      //   }
+      //   if (transform.root.name.StartsWith(PrefabNames.LandVehicle))
+      //   {
+      //     PiecesController.AddTemporaryPiece(transform.root.GetComponent<ZNetView>());
+      //   }
+      // }
 #endif
 
       if (vehicleRam != null && LayerHelpers.IsContainedWithinLayerMask(collision.collider.gameObject.layer, LayerHelpers.PhysicalLayerMask))
@@ -446,6 +499,15 @@
       vehicleRam.OnTriggerEnterHandler(collider);
     }
 
+    private bool CanRunPoweredVehicle()
+    {
+      if (!Manager.IsLandVehicle || PowerSystemConfig.LandVehicle_DoNotRequirePower.Value) return true;
+      return Manager.PowerConsumerData?.CanRunConsumerForDeltaTime(1f) ?? false;
+    }
+
+    // allows messaging when power updates. It is unthrottled though.
+    private bool _hasPower = false;
+
     public void GuardedFixedUpdate(float deltaTime)
     {
       if (VehicleDebugConfig.AutoShowVehicleColliders.Value &&
@@ -456,6 +518,17 @@
             Vector3.up * TargetHeight);
         DebugTargetHeightObj.transform.localScale = FloatCollider!.size;
       }
+
+      if (!CanRunPoweredVehicle())
+      {
+        if (_hasPower && PiecesController && PiecesController._steeringWheelPieces.Count > 0 && PiecesController._steeringWheelPieces[0] != null)
+        {
+          PiecesController._steeringWheelPieces[0].UpdateSteeringHoverMessage(ModTranslations.Power_NetworkInfo_NetworkLowPower);
+        }
+        _hasPower = false;
+        return;
+      }
+      _hasPower = true;
 
       // invalid wheel controller should always reset physics to kinematic and skip current run.
       if (WheelController != null && !WheelController.IsVehicleReady)
@@ -662,11 +735,24 @@
     public void UpdateControls(float dt)
     {
       if (m_nview == null) return;
+      if (!m_nview.HasOwner())
+      {
+        m_nview.ClaimOwnership();
+      }
+
       if (m_nview.IsOwner())
       {
         m_nview.GetZDO().Set(ZDOVars.s_forward, (int)vehicleSpeed);
         m_nview.GetZDO().Set(ZDOVars.s_rudder, m_rudderValue);
         return;
+      }
+
+      if (OnboardController && vehicleRam && (vehicleRam.m_owner == null || vehicleRam.m_owner.m_nview.GetZDO().GetOwner() != m_nview.GetZDO().GetOwner()))
+      {
+        foreach (var onboardControllerMLocalPlayer in OnboardController.m_localPlayers)
+        {
+          vehicleRam.m_owner = onboardControllerMLocalPlayer;
+        }
       }
 
       if (Time.time - m_sendRudderTime > 1f)
@@ -3977,6 +4063,15 @@
       FixPlayerParent(player);
     }
 
+    public void UpdateVehicleRamOwner(Player owner)
+    {
+      // must set the ram owner otherwise it will not be able to damage enemies.
+      if (vehicleRam && vehicleRam.m_owner != owner)
+      {
+        vehicleRam.m_owner = owner;
+      }
+    }
+
     public void OnControlsHandOff(Player? targetPlayer, Player? previousPlayer)
 
     {
@@ -3999,6 +4094,8 @@
       m_nview.GetZDO().SetOwner(playerOwner);
       if (previousUserId != targetPlayer.GetPlayerID() || previousUserId == 0L)
         m_nview.GetZDO().Set(ZDOVars.s_user, targetPlayer.GetPlayerID());
+
+      UpdateVehicleRamOwner(targetPlayer);
 
       LoggerProvider.LogDebug("Changing ship owner to " + playerOwner +
                               $", name: {targetPlayer.GetPlayerName()}");

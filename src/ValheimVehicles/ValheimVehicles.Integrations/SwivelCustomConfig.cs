@@ -3,19 +3,16 @@
 
 #region
 
-using System.Collections.Generic;
 using UnityEngine;
 using ValheimVehicles.Helpers;
-using ValheimVehicles.Integrations;
 using ValheimVehicles.Interfaces;
-using ValheimVehicles.SharedScripts;
 using ValheimVehicles.SharedScripts.UI;
 
 #endregion
 
-namespace ValheimVehicles.BepInExConfig
+namespace ValheimVehicles.SharedScripts
 {
-  public class SwivelCustomConfig : ISerializableConfig<SwivelCustomConfig, ISwivelConfig>, ISwivelConfig
+  public partial class SwivelCustomConfig : ISerializableConfig<SwivelCustomConfig, ISwivelConfig>, ISwivelConfig
   {
     public const string Key_Mode = "swivel_mode";
     public const string Key_LerpSpeed = "swivel_lerpSpeed";
@@ -254,98 +251,6 @@ namespace ValheimVehicles.BepInExConfig
       }
 
       return swivelConfig;
-    }
-
-    public void ApplyTo(ISwivelConfig component)
-    {
-      component.Mode = Mode;
-      component.InterpolationSpeed = Mathf.Clamp(InterpolationSpeed, 1f, 100f);
-      component.MinTrackingRange = MinTrackingRange;
-      component.MaxTrackingRange = MaxTrackingRange;
-      component.HingeAxes = HingeAxes;
-      component.MaxEuler = MaxEuler;
-      component.MovementOffset = MovementOffset;
-      component.MotionState = MotionState;
-      LoggerProvider.LogDebug("SwivelConfig: ApplyTo completed");
-    }
-
-    public void ApplyFrom(ISwivelConfig component)
-    {
-      Mode = component.Mode;
-      InterpolationSpeed = component.InterpolationSpeed;
-      MinTrackingRange = component.MinTrackingRange;
-      MaxTrackingRange = component.MaxTrackingRange;
-      HingeAxes = component.HingeAxes;
-      MaxEuler = component.MaxEuler;
-      MovementOffset = component.MovementOffset;
-      MotionState = component.MotionState;
-
-      LoggerProvider.LogDebug("SwivelConfig: ApplyingFrom config");
-    }
-
-    public SwivelMode Mode
-    {
-      get;
-      set;
-    }
-    public float InterpolationSpeed
-    {
-      get;
-      set;
-    } = 10f;
-    public float MinTrackingRange
-    {
-      get;
-      set;
-    }
-    public float MaxTrackingRange
-    {
-      get;
-      set;
-    }
-    public HingeAxis HingeAxes
-    {
-      get;
-      set;
-    }
-    public Vector3 MaxEuler
-    {
-      get;
-      set;
-    }
-    public Vector3 MovementOffset
-    {
-      get;
-      set;
-    }
-    public MotionState MotionState
-    {
-      get;
-      set;
-    }
-
-    public static MotionState GetCompleteMotionState(MotionState current)
-    {
-      return current switch
-      {
-        MotionState.AtStart => MotionState.AtStart,
-        MotionState.AtTarget => MotionState.AtTarget,
-        MotionState.ToStart => MotionState.AtStart,
-        MotionState.ToTarget => MotionState.AtTarget,
-        _ => MotionState.AtStart
-      };
-    }
-
-    public static MotionState GetNextMotionState(MotionState current)
-    {
-      return current switch
-      {
-        MotionState.AtStart => MotionState.ToTarget,
-        MotionState.AtTarget => MotionState.ToStart,
-        MotionState.ToStart => MotionState.ToTarget,
-        MotionState.ToTarget => MotionState.ToStart,
-        _ => MotionState.AtStart
-      };
     }
   }
 }
