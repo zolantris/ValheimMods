@@ -2715,7 +2715,7 @@
 
       var totalHeight = 0f;
 
-      Manager.VehicleConfigSync.Load();
+      Manager.VehicleConfigSync.Load([VehicleCustomConfig.Key_CustomFloatationHeight, VehicleCustomConfig.Key_HasCustomFloatationHeight]);
       var hullFloatationMode = Manager.VehicleConfigSync.GetWaterFloatationHeightMode();
 
       var isAverageOfPieces = hullFloatationMode ==

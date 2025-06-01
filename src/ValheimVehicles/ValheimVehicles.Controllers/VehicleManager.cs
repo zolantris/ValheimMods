@@ -17,6 +17,7 @@
   using ValheimVehicles.Shared.Constants;
   using ValheimVehicles.SharedScripts;
   using ValheimVehicles.SharedScripts.Enums;
+  using ValheimVehicles.SharedScripts.Helpers;
   using ValheimVehicles.SharedScripts.PowerSystem.Compute;
   using ValheimVehicles.Structs;
   using static ValheimVehicles.BepInExConfig.PrefabConfig;
@@ -30,7 +31,7 @@
   /// The main initializer for all vehicle components and a way to access all properties of the vehicle.
   /// </summary>
   ///
-  public class VehicleManager : MonoBehaviour, IVehicleBaseProperties, IVehicleSharedProperties
+  public class VehicleManager : MonoBehaviour, IVehicleBaseProperties, IVehicleSharedProperties, IVehicleConfig
   {
     public GameObject RudderObject { get; set; }
     public const float MinimumRigibodyMass = 1000;
@@ -46,7 +47,7 @@
     // The rudder force multiplier applied to the ship speed
     private float _rudderForce = 1f;
 
-    public VehicleCustomConfig VehicleCustomConfig { get; set; } = new();
+    public VehicleCustomConfig Config => VehicleConfigSync.Config;
 
     public GameObject GhostContainer()
     {
@@ -112,11 +113,15 @@
     public bool IsControllerValid { get; private set; }
 
     public VehicleMovementController? MovementController { get; set; }
+
+    private VehicleConfigSyncComponent _vehicleConfigSync = null!;
+    private bool _hasInitPrefabSync = false;
+
     public VehicleConfigSyncComponent VehicleConfigSync
     {
-      get;
-      set;
-    } = null!;
+      get => this.GetOrCache(ref _vehicleConfigSync, ref _hasInitPrefabSync);
+      set => _vehicleConfigSync = value;
+    }
 
     public VehicleOnboardController? OnboardController { get; set; }
     public VehicleLandMovementController? LandMovementController { get; set; }
@@ -307,17 +312,28 @@
 
     public void OnVehicleConfigChange()
     {
-      if (LandMovementController)
+      if (LandMovementController != null)
       {
-        LandMovementController.treadWidthXScale = VehicleCustomConfig.TreadScaleX;
-        LandMovementController.maxTreadLength = VehicleCustomConfig.TreadDistance;
+        if (MovementController != null)
+        {
+          LandMovementController.forwardDirection = MovementController.ShipDirection;
+        }
+        LandMovementController.wheelBottomOffset = PhysicsConfig.VehicleLandTreadVerticalOffset.Value;
+        LandMovementController.treadWidthXScale = Config.TreadScaleX;
+        LandMovementController.maxTreadLength = Config.TreadLength;
+        LandMovementController.maxTreadWidth = Config.TreadDistance;
       }
 
-      // LandMovementController.forwardDirection = MovementController.ShipDirection;
-      LandMovementController.wheelBottomOffset = PhysicsConfig.VehicleLandTreadVerticalOffset.Value;
-      LandMovementController.treadWidthXScale = VehicleCustomConfig.TreadScaleX;
-      LandMovementController.maxTreadLength = VehicleCustomConfig.TreadLength;
-      LandMovementController.maxTreadWidth = VehicleCustomConfig.TreadDistance;
+      // other config here.
+
+      if (Config.HasCustomFloatationHeight && FloatCollider != null)
+      {
+        var newPosition = FloatCollider.transform.localPosition;
+        newPosition.y = Config.CustomFloatationHeight;
+
+        // for updates floatcollider position.
+        FloatCollider.transform.localPosition = newPosition;
+      }
     }
 
     private void Awake()
@@ -404,7 +420,7 @@
     public bool InitializeData()
     {
       if (!this.IsNetViewValid()) return false;
-      VehicleCustomConfig.Load(m_nview.GetZDO(), VehicleCustomConfig);
+      Config.Load(m_nview.GetZDO(), Config);
       return true;
     }
 
@@ -543,13 +559,11 @@
       if (!shouldSkipLoad)
       {
         // config controlled. We must skip the load event otherwise this will infinity loop.
-        VehicleConfigSync.Load(false, null, true);
+        VehicleConfigSync.Load(null, true);
       }
-
 
       // todo move to config control
       LandMovementController.wheelBottomOffset = PhysicsConfig.VehicleLandTreadVerticalOffset.Value;
-
     }
 
     public void InitializePowerConsumerData()
@@ -852,4 +866,50 @@
       PiecesController = _vehiclePiecesContainerInstance
         .AddComponent<VehiclePiecesController>();
     }
+
+  #region IVehicleConfig
+
+    public string Version
+    {
+      get;
+      set;
+    }
+    public float TreadDistance
+    {
+      get;
+      set;
+    }
+    public float TreadLength
+    {
+      get;
+      set;
+    }
+    public float TreadHeight
+    {
+      get;
+      set;
+    }
+    public float TreadScaleX
+    {
+      get;
+      set;
+    }
+    public bool HasCustomFloatationHeight
+    {
+      get;
+      set;
+    }
+    public float CustomFloatationHeight
+    {
+      get;
+      set;
+    }
+    public float CenterOfMassOffset
+    {
+      get;
+      set;
+    }
+
+  #endregion
+
   }

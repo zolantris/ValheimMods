@@ -14,7 +14,6 @@ namespace ValheimVehicles.Components;
 public class PrefabConfigSync<T, TComponentInterface> : MonoBehaviour, IPrefabCustomConfigRPCSync<T> where T : ISerializableConfig<T, TComponentInterface>, new()
 {
   public ZNetView? m_nview { get; set; }
-  private T? m_configCache = default;
 
   public bool HasInitLoaded;
   public bool _suppressMotionStateBroadcast = false;
@@ -27,7 +26,6 @@ public class PrefabConfigSync<T, TComponentInterface> : MonoBehaviour, IPrefabCu
   internal RetryGuard retryGuard = null!;
   public TComponentInterface? controller;
 
-  public bool HasLoadedInitialCache => m_configCache != null;
   private Coroutine? _prefabSyncRoutine;
   public Stopwatch timer = new();
 
@@ -147,9 +145,8 @@ public class PrefabConfigSync<T, TComponentInterface> : MonoBehaviour, IPrefabCu
   /// <summary>
   /// Syncs RPC data from ZDO to local values. If it's not ready it queues up the sync.
   /// </summary>
-  public void Load(bool forceUpdate = false, string[]? filterKeys = null, bool shouldSkipEvent = false)
+  public void Load(string[]? filterKeys = null, bool shouldSkipEvent = false)
   {
-    if (HasLoadedInitialCache && !forceUpdate) return;
     if (controller == null || !this.IsNetViewValid(out var netView))
     {
       _prefabSyncRoutine ??= StartCoroutine(SyncPrefabConfigRoutine());
@@ -189,7 +186,6 @@ public class PrefabConfigSync<T, TComponentInterface> : MonoBehaviour, IPrefabCu
   public void Save(ZDO zdo, string[]? filterKeys = null)
   {
     CustomConfig.Save(zdo, Config, filterKeys);
-    Load(zdo, filterKeys);
   }
 
   public virtual void OnLoad() {}

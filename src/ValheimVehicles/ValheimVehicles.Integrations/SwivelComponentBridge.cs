@@ -174,7 +174,7 @@
         LoggerProvider.LogWarning("SwivelComponentBridge.Request_NextMotionState called but the motion state is not the same as the current state. This is likely a bug.");
       }
 
-      prefabConfigSync.Load(false, [SwivelCustomConfig.Key_MotionState]);
+      prefabConfigSync.Load([SwivelCustomConfig.Key_MotionState]);
       LastMotionState = MotionState;
       SwivelPrefabConfigRPC.Request_NextMotion(netView.GetZDO(), MotionState);
 

@@ -14,27 +14,27 @@ namespace ValheimVehicles.BepInExConfig;
 public class VehicleCustomConfig : ISerializableConfig<VehicleCustomConfig, IVehicleConfig>, IVehicleConfig
 {
   // Constants for ZDO keys
-  private const string Key_Version = "vehicle_version";
-  private const string Key_TreadDistance = "vehicle_treadDistance";
-  private const string Key_TreadLength = "vehicle_treadLength";
-  private const string Key_TreadHeight = "vehicle_treadHeight";
-  private const string Key_TreadScaleX = "vehicle_treadScaleX";
-  private const string Key_HasCustomFloatationHeight = "vehicle_hasCustomFloatationHeight";
-  private const string Key_CustomFloatationHeight = "vehicle_customFloatationHeight";
-  private const string Key_CenterOfMassOffset = "vehicle_centerOfMassOffset";
+  internal const string Key_Version = "vehicle_version";
+  internal const string Key_TreadDistance = "vehicle_treadDistance";
+  internal const string Key_TreadLength = "vehicle_treadLength";
+  internal const string Key_TreadHeight = "vehicle_treadHeight";
+  internal const string Key_TreadScaleX = "vehicle_treadScaleX";
+  internal const string Key_HasCustomFloatationHeight = "vehicle_hasCustomFloatationHeight";
+  internal const string Key_CustomFloatationHeight = "vehicle_customFloatationHeight";
+  internal const string Key_CenterOfMassOffset = "vehicle_centerOfMassOffset";
 
   // todo support custom variant
   // private const string Key_VehicleVariant = "vehicle_variant";
 
   // Backing fields
   private string _version = ValheimRAFT_API.GetPluginVersion();
-  private float _treadDistance;
-  private float _treadHeight;
-  private float _treadLength;
-  private float _treadScaleX;
-  private bool _hasCustomFloatationHeight;
-  private float _customFloatationHeight;
-  private float _centerOfMassOffset;
+  private float _treadDistance = 8f;
+  private float _treadHeight = 0f;
+  private float _treadLength = 16f;
+  private float _treadScaleX = 1f;
+  private bool _hasCustomFloatationHeight = false;
+  private float _customFloatationHeight = 0f;
+  private float _centerOfMassOffset = 0f;
 
   // todo support custom variant
   // private float _vehicleVariant;
@@ -85,7 +85,7 @@ public class VehicleCustomConfig : ISerializableConfig<VehicleCustomConfig, IVeh
   public float TreadScaleX
   {
     get => _treadScaleX;
-    set => _treadScaleX = Mathf.Clamp(value, 0.1f, 10f);
+    set => _treadScaleX = Mathf.Clamp(value, 1f, 10f);
   }
 
   public bool HasCustomFloatationHeight
@@ -141,8 +141,8 @@ public class VehicleCustomConfig : ISerializableConfig<VehicleCustomConfig, IVeh
     return new VehicleCustomConfig
     {
       Version = zdo.GetString(Key_Version, ValheimRAFT_API.GetPluginVersion()),
-      TreadDistance = Mathf.Clamp(zdo.GetFloat(Key_TreadDistance, 8f), -5f, 20f),
-      TreadLength = Mathf.Clamp(zdo.GetFloat(Key_TreadLength, 3f), 3f, 20f),
+      TreadDistance = zdo.GetFloat(Key_TreadDistance, configFromComponent.TreadDistance),
+      TreadLength = zdo.GetFloat(Key_TreadLength, configFromComponent.TreadLength),
       TreadHeight = zdo.GetFloat(Key_TreadHeight, PhysicsConfig.VehicleLandTreadVerticalOffset.Value),
       TreadScaleX = zdo.GetFloat(Key_TreadScaleX, PrefabConfig.ExperimentalTreadScaleX.Value),
       HasCustomFloatationHeight = zdo.GetBool(Key_HasCustomFloatationHeight, configFromComponent.HasCustomFloatationHeight),
@@ -165,12 +165,13 @@ public class VehicleCustomConfig : ISerializableConfig<VehicleCustomConfig, IVeh
   public void ApplyTo(IVehicleConfig config)
   {
     config.Version = Version;
-    config.TreadDistance = TreadDistance;
-    config.TreadLength = TreadLength;
-    config.TreadHeight = TreadHeight;
-    config.TreadScaleX = TreadScaleX;
+    config.TreadDistance = Mathf.Clamp(TreadDistance, 0.2f, 20f);
+    config.TreadLength = Mathf.Clamp(TreadLength, 3f, 50f);
+    config.TreadHeight = Mathf.Clamp(TreadHeight, -5f, 20f);
+    config.TreadScaleX = Mathf.Clamp(TreadScaleX, 1f, 10f);
+
     config.HasCustomFloatationHeight = HasCustomFloatationHeight;
-    config.CustomFloatationHeight = CustomFloatationHeight;
+    config.CustomFloatationHeight = Mathf.Clamp(CustomFloatationHeight, -50f, 50f);
     config.CenterOfMassOffset = CenterOfMassOffset;
   }
 

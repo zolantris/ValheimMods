@@ -41,7 +41,7 @@ namespace ValheimVehicles.SharedScripts.UI
 
     public static GameObject AddSliderRow(Transform parent, SwivelUISharedStyles viewStyles, string label, float min, float max, float initial, UnityAction<float> onChanged)
     {
-      var container = new GameObject("Slider Container", typeof(RectTransform), typeof(VerticalLayoutGroup), typeof(LayoutElement));
+      var container = new GameObject("Slider_Container", typeof(RectTransform), typeof(VerticalLayoutGroup), typeof(LayoutElement));
       container.transform.SetParent(parent, false);
 
       var topRow = CreateRow(container.transform, viewStyles, label, out _);

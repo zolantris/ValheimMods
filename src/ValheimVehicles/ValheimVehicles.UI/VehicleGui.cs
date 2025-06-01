@@ -446,8 +446,8 @@
     private void OnConfigCommandsPanelToggle(Text buttonText)
     {
       var nextState = !configWindow.activeSelf;
-      buttonText.text = nextState ? vehicleCommandsHide : vehicleCommandsShow;
-      HideOrShowCommandPanel(nextState, false);
+      buttonText.text = nextState ? vehicleConfigHide : vehicleConfigShow;
+      HideOrShowVehicleConfigPanel(nextState, false);
     }
 
     private void OnWindowCommandsPanelToggle(Text buttonText)
@@ -475,7 +475,7 @@
       var buttonStyles = new Unity2dViewStyles
       {
         anchorMin = new Vector2(0.5f, 0f),
-        anchorMax = new Vector2(0.5f, 0f),
+        anchorMax = new Vector2(0.5f, 1f),
         position = Vector2.zero,
         height = buttonHeight,
         width = buttonWidth
@@ -547,8 +547,13 @@
     public static void OnConfigSave()
     {
       if (!TryUpdateNearestVehicle(out var manager)) return;
-      _tempVehicleConfig.ApplyTo(manager.VehicleCustomConfig);
+      manager.VehicleConfigSync.Config.ApplyFrom(_tempVehicleConfig);
       manager.VehicleConfigSync.Save(manager.m_nview.GetZDO());
+
+      if (manager.LandMovementController)
+      {
+        manager.UpdateLandMovementControllerProperties();
+      }
     }
     public static void UnsetSavedState()
     {
@@ -585,7 +590,7 @@
       _tempVehicleConfig = new VehicleCustomConfig();
       if (TryUpdateNearestVehicle(out var manager))
       {
-        manager.VehicleCustomConfig.ApplyTo(_tempVehicleConfig);
+        manager.Config.ApplyTo(_tempVehicleConfig);
       }
 
       configToggleButtonWindow = CreateConfigTogglePanel();
@@ -627,21 +632,25 @@
       var viewStyles = new SwivelUISharedStyles();
       var svParent = scrollViewVerticalLayout.transform;
 
-      if (!manager)
+      if (manager == null)
       {
         SwivelUIHelpers.AddSectionLabel(svParent, viewStyles, ModTranslations.VehicleCommand_Message_VehicleNotFound);
         return;
       }
 
       SwivelUIHelpers.AddSectionLabel(svParent, viewStyles, ModTranslations.VehicleConfig_TreadsDistance);
-      LandVehicleTreadDistanceSlider = SwivelUIHelpers.AddSliderRow(svParent, viewStyles, SwivelUIPanelStrings.TargetZOffset, MinTargetOffset, MaxTargetOffset, CurrentSelectedVehicle?.VehicleCustomConfig.TreadDistance ?? 0, v =>
+      LandVehicleTreadDistanceSlider = SwivelUIHelpers.AddSliderRow(svParent, viewStyles, SwivelUIPanelStrings.TargetZOffset, MinTargetOffset, MaxTargetOffset, manager.Config.TreadDistance, v =>
       {
         _tempVehicleConfig.TreadDistance = v;
         UnsetSavedState();
       });
+      var sliderLayoutElement = LandVehicleTreadDistanceSlider.transform.Find("Slider Container/_Row/Slider").GetComponent<LayoutElement>();
+      sliderLayoutElement.minWidth = 300f;
+      sliderLayoutElement.flexibleWidth = 0f;
+
       var landVehicleDistanceLE = LandVehicleTreadDistanceSlider.AddComponent<LayoutElement>();
       landVehicleDistanceLE.flexibleWidth = 0f;
-      landVehicleDistanceLE.minWidth = 400f;
+      landVehicleDistanceLE.minWidth = 300f;
 
       SwivelUIHelpers.AddSectionLabel(svParent, viewStyles, ModTranslations.VehicleConfig_TreadsScale);
 
