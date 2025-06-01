@@ -1,6 +1,14 @@
 ﻿// ReSharper disable ArrangeNamespaceBody
 // ReSharper disable NamespaceStyle
 
+#if !UNITY_2022
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using TMPro;
+using UnityEngine;
+using ValheimVehicles.SharedScripts.Interfaces;
+#endif
 namespace ValheimVehicles.SharedScripts.UI
 {
   public class MechanismSelectorPanel : SingletonBehaviour<MechanismSelectorPanel>
