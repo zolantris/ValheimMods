@@ -296,10 +296,19 @@
       base.Awake();
     }
 
+    public bool isWaitingForParentVehicleToBeReady = false;
+    public bool HasInitializedParentVehicle => !isWaitingForParentVehicleToBeReady && Manager.VehicleParent != null;
+
     public void Start()
     {
       Setup();
       UpdateLandVehicleHeightIfBelowGround();
+
+      this.WaitForZNetView(nv =>
+      {
+        var parentZdoId = nv.GetZDO().GetInt(VehicleZdoVars.MBParentId);
+        isWaitingForParentVehicleToBeReady = parentZdoId != 0;
+      });
     }
 
     public void SetHaulingVehicle(Player? player, RopeAnchorComponent? ropeComponent, bool isHauling)
@@ -414,7 +423,12 @@
         }
 
         var otherManager = collision.collider.GetComponentInParent<VehicleManager>();
-        if (!otherManager) return false;
+
+        if (!otherManager || Manager.PiecesController == null) return false;
+
+        // nest the vehicle. This will not parent it, but it will bind the piece to the parent position, ensuring things are accurately synced.
+        Manager.PiecesController.AddNewPiece(otherManager.Manager.m_nview);
+
         var otherPieceDataItems = otherManager.PiecesController.m_prefabPieceDataItems.Values;
         var thisPiecesDataItems = PiecesController.m_prefabPieceDataItems.Values;
         foreach (var thisPieceData in thisPiecesDataItems)
@@ -510,6 +524,73 @@
     // allows messaging when power updates. It is unthrottled though.
     private bool _hasPower = false;
 
+    public void OnParentReady(VehicleManager vehicleParent)
+    {
+      StartCoroutine(SyncToParentPosition(vehicleParent));
+    }
+
+    /// <summary>
+    /// - raycast or check if still within a boundary of the parent. Maybe just by doing a manual box collider check.
+    /// - additionally we need to confirm that the vehicle is not just left and returned.
+    /// - WIP: We likely need a box collider dedicated to this.
+    /// </summary>
+    /// <returns></returns>
+    public IEnumerator CheckIfVehicleIsOnParent()
+    {
+      if (Manager.VehicleParent == null) yield break;
+    }
+
+    public IEnumerator SyncToParentPosition(VehicleManager vehicleParent)
+    {
+      if (vehicleParent == null)
+      {
+        LoggerProvider.LogMessage("The parent is null. This is likely a bug or the vehicle is detached. Skipping sync to prevent bad state.");
+        yield break;
+      }
+      isWaitingForParentVehicleToBeReady = true;
+      m_body.isKinematic = true;
+
+      Manager.VehicleParent = vehicleParent;
+      // do not immediately run. This lets unity run an update loop
+      yield return new WaitForFixedUpdate();
+
+      ZNetView? netView;
+      while (!this.IsNetViewValid(out netView)) yield return null;
+      // this is relative to parent. But our rigidbody is not within the parent, just synced in same world + local position.
+      var parentLocalPositionOffset = netView.GetZDO().GetVec3(VehicleZdoVars.MBPositionHash, Vector3.zero);
+      var nextTransform = Manager.VehicleParent.transform.position - parentLocalPositionOffset;
+      if (Vector3.Distance(transform.position, nextTransform) > 80f)
+      {
+        isWaitingForParentVehicleToBeReady = false;
+        Manager.VehicleParent = null;
+        netView.GetZDO().RemoveInt(VehicleZdoVars.MBParentId);
+        netView.GetZDO().RemoveInt(VehicleZdoVars.MBRotationHash);
+        netView.GetZDO().RemoveInt(VehicleZdoVars.MBPositionHash);
+        LoggerProvider.LogMessage("The parent is way further than expected. This is likely a bug or the vehicle is detached. Skipping sync to prevent bad state.");
+        yield break;
+      }
+      m_body.MovePosition(nextTransform);
+
+
+      while (!PiecesController.isInitialPieceActivationComplete || PiecesController.m_convexHullAPI.convexHullMeshColliders.Count < 1 || Manager.VehicleParent == null || !Manager.VehicleParent.PiecesController.isInitialPieceActivationComplete || Manager.VehicleParent.PiecesController.m_convexHullAPI.convexHullMeshColliders.Count < 1)
+      {
+        yield return new WaitForFixedUpdate();
+      }
+
+      nextTransform = Manager.VehicleParent.transform.position - parentLocalPositionOffset;
+      if (Vector3.Distance(transform.position, nextTransform) > 80f)
+      {
+        LoggerProvider.LogMessage("The parent is way further than expected. This is likely a bug or the vehicle is detached. Skipping sync to prevent bad state.");
+        yield break;
+      }
+
+      m_body.MovePosition(nextTransform);
+      // yield return null;
+      yield return new WaitForFixedUpdate();
+
+      isWaitingForParentVehicleToBeReady = false;
+    }
+
     public void GuardedFixedUpdate(float deltaTime)
     {
       if (VehicleDebugConfig.AutoShowVehicleColliders.Value &&
@@ -550,6 +631,13 @@
 
       // if the vehicle has not generated a convex hull collider. We do not want to use physics.
       if (Manager!.PiecesController!.convexHullComponent.convexHullMeshColliders.Count < 1)
+      {
+        m_body.isKinematic = true;
+        return;
+      }
+
+      // nested vehicles always must wait for parent.
+      if (isWaitingForParentVehicleToBeReady)
       {
         m_body.isKinematic = true;
         return;
@@ -883,7 +971,7 @@
 
     public void StartPlayerCollisionAfterTeleport(Collider collider, Character character)
     {
-      StartCoroutine(EnableCollisionAfterTeleport(PiecesController.convexHullMeshColliders, collider, character));
+      StartCoroutine(EnableCollisionAfterTeleport(PiecesController.m_convexHullAPI.convexHullMeshColliders, collider, character));
     }
 
     public IEnumerator EnableCollisionAfterTeleport(List<MeshCollider> IgnoredColliders, Collider collisionCollider, Character? character)

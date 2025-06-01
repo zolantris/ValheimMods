@@ -4,7 +4,6 @@
   using System.Collections;
   using System.Collections.Generic;
   using System.Diagnostics.CodeAnalysis;
-  using System.Runtime.CompilerServices;
   using Jotunn.Managers;
   using Registry;
   using UnityEngine;
@@ -19,7 +18,6 @@
   using ValheimVehicles.SharedScripts.Enums;
   using ValheimVehicles.SharedScripts.Helpers;
   using ValheimVehicles.SharedScripts.PowerSystem.Compute;
-  using ValheimVehicles.Structs;
   using static ValheimVehicles.BepInExConfig.PrefabConfig;
   using Logger = Jotunn.Logger;
 
@@ -111,6 +109,8 @@
     public bool IsInitialized { get; private set; }
     public bool IsDestroying { get; private set; }
     public bool IsControllerValid { get; private set; }
+
+    public VehicleManager VehicleParent;
 
     public VehicleMovementController? MovementController { get; set; }
 

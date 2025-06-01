@@ -49,7 +49,6 @@ namespace ValheimVehicles.Shared.Constants
     public const string PowerSystem_EnergyCapacity = "PowerSystem_StoredEnergyCapacity";
     public const string PowerSystem_StoredFuelCapacity = "PowerSystem_StoredFuelCapacity";
 
-
     // power system booleans
     public const string PowerSystem_IsForceDeactivated = "PowerSystem_ForceDeactivated"; // generators/storage
     public const string PowerSystem_IsRunning = "PowerSystem_IsRunning"; // generators

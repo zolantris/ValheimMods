@@ -48,7 +48,7 @@
 
     protected override void TrySetPieceToParent(ZNetView netView)
     {
-      // if (netView == null || PrefabNames.IsVehicle(netView.name)) return;
+      if (netView == null || PrefabNames.IsVehicle(netView.name)) return;
       // Classic vehicle-specific logic
       netView.transform.SetParent(_host.GetPiecesContainer(), false);
     }
@@ -529,6 +529,10 @@
       foreach (var component in components)
         switch (component)
         {
+          case VehicleManager vehicleManager:
+            LoggerProvider.LogDev("Detected VehicleManager, setting parent to PiecesController.Manager");
+            vehicleManager.MovementController.OnParentReady(PiecesController.Manager);
+            break;
           case SwivelComponentBridge swivelController:
             InitSwivelController(swivelController);
             break;
@@ -1437,7 +1441,13 @@
     /// <param name="vehiclePosition"></param>
     private void UpdatePieceZdoPosition(ZDO zdo, Vector3 vehiclePosition, bool isBed = false)
     {
-      if (isBed && CanBedsUseActualWorldPosition || CanUseActualPiecePosition)
+      if (zdo.m_prefab == PrefabNameHashes.LandVehicle)
+      {
+        // do not set position for vehicle. Instead keep in sync the relative position of it's parent.
+        var newOffset = vehiclePosition - zdo.GetPosition();
+        zdo.Set(VehicleZdoVars.MBPositionHash, newOffset);
+      }
+      else if (isBed && CanBedsUseActualWorldPosition || CanUseActualPiecePosition)
       {
         var pieceOffset = zdo.GetVec3(VehicleZdoVars.MBPositionHash, Vector3.zero);
         zdo.SetPosition(vehiclePosition + pieceOffset);
@@ -2420,8 +2430,8 @@
     public void TrySetPieceToParent(ZNetView? netView)
     {
       if (IsInvalid()) return;
-      if (netView) return;
-      TrySetPieceToParent(netView, netView!.GetZDO());
+      if (!this.IsNetViewValid() || !netView || !netView.IsValid()) return;
+      TrySetPieceToParent(netView, netView.GetZDO());
     }
 
     /// <summary>
@@ -2431,7 +2441,7 @@
     public void TrySetPieceToParent(ZNetView? netView, ZDO? zdo)
     {
       if (IsInvalid()) return;
-      if (netView == null || PrefabNames.IsVehicle(netView.name) && netView.name.Contains(PrefabNames.LandVehicle)) return;
+      if (netView == null || PrefabNames.IsVehicle(netView.name) && netView.name.Contains(PrefabNames.LandVehicle) || zdo == null) return;
 
       if (RamPrefabs.IsRam(netView!.name))
       {
@@ -2565,6 +2575,22 @@
         return;
       }
 
+      if (zdo.m_prefab == PrefabNameHashes.WaterVehicleShip)
+      {
+        LoggerProvider.LogWarning($"Attempted to add a piece to a water vehicle. This is not allowed. NetView <{netView.name}>");
+        return;
+      }
+
+      if (zdo.m_prefab == PrefabNameHashes.LandVehicle)
+      {
+        if (PiecesController.Manager.IsLandVehicle)
+        {
+          LoggerProvider.LogWarning($"Attempted to add a nested landvehicle to another land vehicle. This is not allowed. NetView <{netView.name}>");
+          return;
+        }
+        LoggerProvider.LogWarning("Detected a nested landvehicle within a WaterVehicle. This is supported but could be unstable.");
+      }
+
       if (m_pieces.Contains(netView))
       {
         Logger.LogWarning($"NetView already is added. name: {netView.name}");
@@ -2587,8 +2613,17 @@
 
         netView.m_zdo.Set(VehicleZdoVars.MBRotationVecHash,
           netView.transform.localRotation.eulerAngles);
-        netView.m_zdo.Set(VehicleZdoVars.MBPositionHash,
-          netView.transform.localPosition);
+
+        if (zdo.m_prefab == PrefabNames.LandVehicle.GetStableHashCode())
+        {
+          netView.m_zdo.Set(VehicleZdoVars.MBPositionHash,
+            transform.position - netView.transform.position);
+        }
+        else
+        {
+          netView.m_zdo.Set(VehicleZdoVars.MBPositionHash,
+            netView.transform.localPosition);
+        }
       }
 
       AddPiece(netView, true);

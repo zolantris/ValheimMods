@@ -1,9 +1,9 @@
 ﻿#region
 
-using System;
-using UnityEngine;
-using ValheimVehicles.Shared.Constants;
-using ValheimVehicles.SharedScripts.Enums;
+  using System;
+  using UnityEngine;
+  using ValheimVehicles.Shared.Constants;
+  using ValheimVehicles.SharedScripts.Enums;
 
 #endregion
 
@@ -33,6 +33,9 @@ using ValheimVehicles.SharedScripts.Enums;
       public static readonly int Mechanism_Power_Consumer_Swivel = PrefabNames.SwivelPrefabName.GetStableHashCode();
       public static readonly int Mechanism_Power_Consumer_LandVehicle = PrefabNames.LandVehicle.GetStableHashCode();
       public static readonly int Mechanism_Power_Consumer_WaterVehicle = PrefabNames.WaterVehicleShip.GetStableHashCode();
+
+      public static readonly int LandVehicle = PrefabNames.LandVehicle.GetStableHashCode();
+      public static readonly int WaterVehicleShip = PrefabNames.WaterVehicleShip.GetStableHashCode();
     }
 
     /**

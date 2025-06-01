@@ -1,13 +1,13 @@
 ﻿#region
 
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using Unity.Collections;
-using UnityEngine;
-using Debug = UnityEngine.Debug;
+  using System;
+  using System.Collections;
+  using System.Collections.Generic;
+  using System.Diagnostics;
+  using System.Linq;
+  using Unity.Collections;
+  using UnityEngine;
+  using Debug = UnityEngine.Debug;
 
 #endregion
 
@@ -43,8 +43,6 @@ using Debug = UnityEngine.Debug;
       public Vector3 convexAPIThresholdDistance = Vector3.one;
 
       public List<Collider> vehicleCollidersToIgnore = new();
-      public List<Collider> convexHullColliders = new();
-      public List<MeshCollider> convexHullMeshColliders = new();
       public ConvexHullAPI m_convexHullAPI;
       public MeshClusterController m_meshClusterComponent;
       public int pieceDataChangeIndex;

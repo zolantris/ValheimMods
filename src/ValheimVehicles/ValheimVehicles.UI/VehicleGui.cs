@@ -221,6 +221,12 @@
       hasCommandsWindowOpened = !hasCommandsWindowOpened;
       // this should not hide the actual commands panel button.
       HideOrShowCommandPanel(hasCommandsWindowOpened, canUpdateTogglePanel);
+
+      // also hide config panel. But do not show it.
+      if (!hasCommandsWindowOpened)
+      {
+        HideOrShowVehicleConfigPanel(hasCommandsWindowOpened, true);
+      }
     }
 
     public void InitPanel()
@@ -582,8 +588,11 @@
       configWindow.SetActive(hasConfigPanelOpened);
 
       var windowVerticalGroup = configWindow.AddComponent<VerticalLayoutGroup>();
+      windowVerticalGroup.padding = new RectOffset(16, 16, 16, 16);
       windowVerticalGroup.childForceExpandHeight = false;
       windowVerticalGroup.childForceExpandWidth = true;
+      windowVerticalGroup.childControlWidth = true;
+      windowVerticalGroup.childControlWidth = true;
 
       var scrollWidth = 500f;
       ConfigScrollView = GUIManager.Instance.CreateScrollView(configWindow.transform, false, true, 20, 10f, GUIManager.Instance.ValheimToggleColorBlock, new Color(0, 0, 0, 1), scrollWidth, height);
@@ -591,6 +600,7 @@
       //allow togglepanel to let children expand
       var viewport = ConfigScrollView.transform.Find("Scroll View/Viewport/Content");
       var viewportVerticalLayout = viewport.GetComponent<VerticalLayoutGroup>();
+      windowVerticalGroup.padding = new RectOffset(16, 16, 16, 16);
       viewportVerticalLayout.childForceExpandHeight = true;
       viewportVerticalLayout.childForceExpandWidth = true;
       viewportVerticalLayout.childControlWidth = true;

@@ -99,12 +99,6 @@ public static class VehicleGUIItems
       title = ModTranslations.VehicleCommand_PhysicsDebugger ?? "Physics Debugger",
       OnButtonPress = VehicleGui.ToggleColliderDebugger
     },
-#if DEBUG
-    new()
-    {
-      title = ModTranslations.VehicleCommand_DestroyVehicle ?? "Destroy Current Vehicle",
-      OnButtonPress = VehicleCommands.DestroyCurrentVehicle
-    },
     new()
     {
       title = ModTranslations.VehicleCommand_ConfigPanel ?? "Config",
@@ -112,7 +106,13 @@ public static class VehicleGUIItems
       {
         VehicleGui.ToggleConfigPanelState(true);
       }
-    }
+    },
+#if DEBUG
+    new()
+    {
+      title = ModTranslations.VehicleCommand_DestroyVehicle ?? "Destroy Current Vehicle",
+      OnButtonPress = VehicleCommands.DestroyCurrentVehicle
+    },
 #endif
   ];
 }

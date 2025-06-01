@@ -450,9 +450,9 @@
     public void RestoreCollisionDetection(Collider collider)
     {
       if (PiecesController != null &&
-          PiecesController.convexHullMeshColliders.Count > 0)
+          PiecesController.m_convexHullAPI.convexHullMeshColliders.Count > 0)
         foreach (var piecesControllerConvexHullMesh in
-                 PiecesController.convexHullMeshColliders)
+                 PiecesController.m_convexHullAPI.convexHullMeshColliders)
           Physics.IgnoreCollision(piecesControllerConvexHullMesh, collider,
             false);
 
