@@ -1,13 +1,13 @@
 ﻿#region
 
-  using System;
-  using System.Collections;
-  using System.Collections.Generic;
-  using System.Diagnostics;
-  using System.Linq;
-  using Unity.Collections;
-  using UnityEngine;
-  using Debug = UnityEngine.Debug;
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
+using Unity.Collections;
+using UnityEngine;
+using Debug = UnityEngine.Debug;
 
 #endregion
 
@@ -104,7 +104,7 @@
         TryAddConvexHullJobHandler();
       }
 
-#if UNITY_EDITOR
+#if UNITY_2022
       public void FixedUpdate()
     {
       CustomFixedUpdate(Time.fixedDeltaTime);
@@ -133,7 +133,7 @@
       /// </summary>
       public void TryAddConvexHullJobHandler()
       {
-#if UNITY_EDITOR
+#if UNITY_2022
       if (m_convexHullJobHandlerObj == null)
       {
         m_convexHullJobHandlerObj = gameObject;
@@ -150,7 +150,7 @@
 
       public void OnPieceAdded(GameObject piece)
       {
-#if UNITY_EDITOR
+#if UNITY_2022
       piece.transform.SetParent(transform, false);
 #endif
         var prefabPieceData = new PrefabPieceData(piece, Allocator.Persistent);
@@ -163,7 +163,7 @@
         pieceDataChangeIndex++;
 
 
-#if UNITY_EDITOR
+#if UNITY_2022
       if (!isInitialPieceActivationComplete)
       {
         isInitialPieceActivationComplete = true;
@@ -174,7 +174,7 @@
 
       public void OnPieceRemoved(GameObject piece)
       {
-#if UNITY_EDITOR
+#if UNITY_2022
       piece.transform.SetParent(null);
 #endif
         if (!m_prefabPieceDataItems.TryGetValue(piece, out var prefabPieceData)) return;

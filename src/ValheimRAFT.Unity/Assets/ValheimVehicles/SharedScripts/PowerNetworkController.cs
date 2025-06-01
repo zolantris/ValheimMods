@@ -4,7 +4,6 @@
 #region
 
 using System.Collections.Generic;
-using UnityEditor;
 using UnityEngine;
 using ValheimVehicles.Interfaces;
 using ValheimVehicles.SharedScripts.PowerSystem.Interfaces;
@@ -36,7 +35,7 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
 
     public override void Awake()
     {
-#if UNITY_EDITOR
+#if UNITY_2022
       if (WireMaterial == null)
       {
         Shader shader = Shader.Find("Sprites/Default");
@@ -130,14 +129,14 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
     //
     // }
 
-#if UNITY_EDITOR
-    [InitializeOnLoadMethod]
-private static void ClearPowerListsOnReload()
-{
-    Sources.Clear();
-    Consumers.Clear();
-    Storages.Clear();
-}
-#endif
+// #if UNITY_2022
+//     [InitializeOnLoadMethod]
+// private static void ClearPowerListsOnReload()
+// {
+//     Sources.Clear();
+//     Consumers.Clear();
+//     Storages.Clear();
+// }
+// #endif
   }
 }

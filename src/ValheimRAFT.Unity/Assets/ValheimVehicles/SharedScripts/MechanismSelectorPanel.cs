@@ -1,17 +1,11 @@
 ﻿// ReSharper disable ArrangeNamespaceBody
 // ReSharper disable NamespaceStyle
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using TMPro;
-using UnityEngine;
-using ValheimVehicles.SharedScripts.Interfaces;
 namespace ValheimVehicles.SharedScripts.UI
 {
   public class MechanismSelectorPanel : SingletonBehaviour<MechanismSelectorPanel>
   {
-#if !UNITY_EDITOR
+#if !UNITY_2022
     [Header("UI Settings")]
     [SerializeField] public float MaxUIWidth = 400f;
 

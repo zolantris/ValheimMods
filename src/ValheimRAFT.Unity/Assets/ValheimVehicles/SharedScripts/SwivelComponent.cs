@@ -46,6 +46,11 @@ namespace ValheimVehicles.SharedScripts
     public static float SwivelEnergyDrain = 0.01f;
     public static bool IsPoweredSwivel = true;
 
+    public static List<SwivelComponent> Instances = new();
+    public static float UpdateInterval = 0.01f;
+    public static bool CanRunSwivelDuringFixedUpdate = false;
+    public static bool CanRunSwivelDuringUpdate = true;
+
     [Header("Swivel General Settings")]
     [SerializeField] public SwivelMode mode = SwivelMode.Rotate;
 
@@ -79,49 +84,44 @@ namespace ValheimVehicles.SharedScripts
     public Transform directionDebuggerArrow;
 
     public PowerConsumerComponent swivelPowerConsumer;
-    private Rigidbody animatedRigidbody;
 
     [Description("This speed is computed with the base interpolation value to get a final interpolation.")]
     public float computedInterpolationSpeed = 10f;
-
-    private Vector3 hingeEndEuler;
-    private float hingeLerpProgress;
-    public Action? onMovementReachedTarget;
-    public Action? onMovementReturned;
-    public Action? onRotationReachedTarget;
-    public Action? onRotationReturned;
-    private Transform snappoint;
 
     public Vector3 startLocalPosition;
     public Quaternion startRotation;
     public Vector3 targetMovementPosition;
     public Quaternion targetRotation;
 
-    public HingeAxis HingeAxes => hingeAxes;
-    public Vector3 MaxEuler => maxRotationEuler;
-
-    public static List<SwivelComponent> Instances = new();
-    private Vector3 frozenLocalPos;
-    private Quaternion frozenLocalRot;
-    private bool isFrozen;
-    public virtual int SwivelPersistentId { get; set; }
-
-    public float currentMovementLerp = 0f;
+    public float currentMovementLerp;
 
     // Update debouncing logic
-    public float _lastUpdatedMotionTime = 0f;
-    public float _lastUpdateTime = 0f;
-    public float lastDeltaTime = 0f;
-    internal float _nextUpdate;
-    public static float UpdateInterval = 0.01f;
-    public static bool CanRunSwivelDuringFixedUpdate = false;
-    public static bool CanRunSwivelDuringUpdate = true;
+    public float _lastUpdatedMotionTime;
+    public float _lastUpdateTime;
+    public float lastDeltaTime;
     public bool _IsReady = true;
-    internal float _motionLerp; // Always between 0 (AtStart) and 1 (AtTarget)
     public Vector3 _motionFromLocalPos;
     public Vector3 _motionToLocalPos;
     public Quaternion _motionFromLocalRot;
     public Quaternion _motionToLocalRot;
+    internal float _motionLerp; // Always between 0 (AtStart) and 1 (AtTarget)
+    internal float _nextUpdate;
+    private Rigidbody animatedRigidbody;
+    private Vector3 frozenLocalPos;
+    private Quaternion frozenLocalRot;
+
+    private Vector3 hingeEndEuler;
+    private float hingeLerpProgress;
+    private bool isFrozen;
+    public Action? onMovementReachedTarget;
+    public Action? onMovementReturned;
+    public Action? onRotationReachedTarget;
+    public Action? onRotationReturned;
+    private Transform snappoint;
+
+    public HingeAxis HingeAxes => hingeAxes;
+    public Vector3 MaxEuler => maxRotationEuler;
+    public virtual int SwivelPersistentId { get; set; }
 
     public virtual void Awake()
     {
@@ -153,18 +153,34 @@ namespace ValheimVehicles.SharedScripts
       }
     }
 
-    public virtual void Request_NextMotionState() {}
-
     public virtual void Start()
     {
       SyncSnappoint();
       SetInterpolationSpeed(interpolationSpeed);
     }
 
+    public virtual void Update()
+    {
+      if (CanRunSwivelDuringUpdate)
+      {
+        SwivelUpdate();
+      }
+    }
+
+    public virtual void FixedUpdate()
+    {
+      if (CanRunSwivelDuringFixedUpdate)
+      {
+        SwivelUpdate();
+      }
+    }
+
     protected virtual void OnDestroy()
     {
       Instances.Remove(this);
     }
+
+    public virtual void Request_NextMotionState() {}
 
     protected virtual Vector3 GetCurrentTargetPosition()
     {
@@ -221,22 +237,6 @@ namespace ValheimVehicles.SharedScripts
       return true;
     }
 
-    public virtual void Update()
-    {
-      if (CanRunSwivelDuringUpdate)
-      {
-        SwivelUpdate();
-      }
-    }
-
-    public virtual void FixedUpdate()
-    {
-      if (CanRunSwivelDuringFixedUpdate)
-      {
-        SwivelUpdate();
-      }
-    }
-
 
     // Interpolates between two states (can be called by both bridge and base logic)
     protected void InterpolateAndMove(float t, Vector3 fromPos, Vector3 toPos, Quaternion fromRot, Quaternion toRot)
@@ -261,7 +261,7 @@ namespace ValheimVehicles.SharedScripts
     public virtual void SwivelUpdate()
     {
       if (!CanUpdate() || !animatedRigidbody || !animatedTransform.parent || !piecesContainer) return;
-#if UNITY_EDITOR
+#if UNITY_2022
       // for updating demand state on the fly due to toggling with serializer
       if (Mode == SwivelMode.Rotate || Mode == SwivelMode.Move)
       {
@@ -591,7 +591,7 @@ namespace ValheimVehicles.SharedScripts
       UpdatePowerConsumer();
     }
 
-  #region ISwivelConfig
+    #region ISwivelConfig
 
     public float InterpolationSpeed
     {
@@ -641,7 +641,7 @@ namespace ValheimVehicles.SharedScripts
       set => SetMode(value);
     }
 
-  #endregion
+    #endregion
 
   }
 }

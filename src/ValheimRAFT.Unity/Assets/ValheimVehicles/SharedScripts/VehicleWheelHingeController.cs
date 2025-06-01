@@ -1,7 +1,11 @@
-﻿using System;
+﻿#region
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+
+#endregion
 
 // ReSharper disable ArrangeNamespaceBody
 
@@ -86,6 +90,8 @@ namespace ValheimVehicles.SharedScripts
         new();
 
     private readonly List<GameObject> wheelSets = new();
+
+    private float deltaRunPoweredWheels;
 
     private bool hasInitialized;
 
@@ -380,8 +386,6 @@ namespace ValheimVehicles.SharedScripts
       }
     }
 
-    private float deltaRunPoweredWheels = 0f;
-
     /// <summary>
     ///   POWERED WHEELS
     ///   Sets the motor torque of the wheel based on forward input. This moves
@@ -531,7 +535,7 @@ namespace ValheimVehicles.SharedScripts
     }
 
     // We run this only in Unity Editor
-#if UNITY_EDITOR
+#if UNITY_2022
     private void Start()
     {
       if (!Application.isPlaying) return;

@@ -1,14 +1,14 @@
 ﻿#region
 
-  using System;
-  using System.Collections.Generic;
-  using System.Diagnostics;
-  using JetBrains.Annotations;
-  using UnityEngine;
-  using UnityEngine.Serialization;
-  using Debug = UnityEngine.Debug;
-  using Enumerable = System.Linq.Enumerable;
-  using Vector3 = UnityEngine.Vector3;
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using JetBrains.Annotations;
+using UnityEngine;
+using UnityEngine.Serialization;
+using Debug = UnityEngine.Debug;
+using Enumerable = System.Linq.Enumerable;
+using Vector3 = UnityEngine.Vector3;
 
 #endregion
 
@@ -54,6 +54,9 @@
       private static readonly float highAcceleration = 6 * baseAccelerationMultiplier;
       private static readonly float mediumAcceleration = 3 * baseAccelerationMultiplier;
       private static readonly float lowAcceleration = 1 * baseAccelerationMultiplier;
+
+      // for locking down rotational speed if already rotating. This will clamp velocity. (was originally 5f)
+      public static float MaxAngularLerpSpeed = 15f;
 
       public float minTreadDistances = 0.1f;
       public float treadWidthXScale = 1f;
@@ -245,15 +248,14 @@
       internal bool isInAir = true;
       private bool isLeftForward = true;
       private bool isRightForward = true;
-      private bool isTurningInPlace;
       private Vector3 lateralVelocitySmoothDamp = Vector3.zero; // For SmoothDamp velocity tracking
       // private float lerpedTurnFactor;
       private Vector3 m_angularVelocitySmoothSpeed = Vector3.zero;
 
       private Vector3 m_velocitySmoothSpeed = Vector3.zero;
 
-      private float maxRotationSpeed = 1f; // Default top speed
-      private float maxSpeed = 25f; // Default top speed
+      private readonly float maxRotationSpeed = 1f; // Default top speed
+      private readonly float maxSpeed = 25f; // Default top speed
 
       public Action OnWheelsInitialized = () => {};
 
@@ -273,7 +275,11 @@
       public bool IsVehicleReady => _isWheelsInitialized && _isTreadsInitialized && vehicleRootBody; // important catchall for preventing fixedupdate physics from being applied until the vehicle is ready.
       public float wheelColliderRadius => Mathf.Clamp(wheelRadius, 0f, 5f);
 
-      public bool IsTurningInPlace => isTurningInPlace;
+      public bool IsTurningInPlace
+      {
+        get;
+        private set;
+      }
 
       [UsedImplicitly]
       public bool IsBraking
@@ -292,7 +298,7 @@
 
       private void Awake()
       {
-#if UNITY_EDITOR
+#if UNITY_2022
       var ghostContainer = transform.Find("ghostContainer");
       if (ghostContainer) ghostContainer.gameObject.SetActive(false);
 #endif
@@ -594,9 +600,6 @@
 
         rb.AddForce(dampingForce, ForceMode.Acceleration);
       }
-
-      // for locking down rotational speed if already rotating. This will clamp velocity. (was originally 5f)
-      public static float MaxAngularLerpSpeed = 15f;
 
       // New method: apply forces directly at the treads to simulate continuous treads
       private void ApplyTreadForces()
@@ -917,7 +920,7 @@
 
         UpdateIsOnGround();
 
-        isTurningInPlace = Mathf.Approximately(inputMovement, 0f) && Mathf.Abs(inputTurnForce) > 0f;
+        IsTurningInPlace = Mathf.Approximately(inputMovement, 0f) && Mathf.Abs(inputTurnForce) > 0f;
         currentSpeed = GetTankSpeed();
 
         if (!IsOnGround)
@@ -1587,11 +1590,11 @@
 
         currentSidewaysFriction = new WheelFrictionCurve
         {
-          extremumSlip = (isTurningInPlace ? 0.5f : 0.4f) * frictionMultiplier,
-          extremumValue = (isTurningInPlace ? 0.7f : 0.8f) * frictionMultiplier,
-          asymptoteSlip = (isTurningInPlace ? 1.8f : 2.0f) * frictionMultiplier,
-          asymptoteValue = (isTurningInPlace ? 0.5f : 0.6f) * frictionMultiplier,
-          stiffness = isTurningInPlace ? 1.8f : Mathf.Lerp(2f, 2.5f, speed / topSpeed)
+          extremumSlip = (IsTurningInPlace ? 0.5f : 0.4f) * frictionMultiplier,
+          extremumValue = (IsTurningInPlace ? 0.7f : 0.8f) * frictionMultiplier,
+          asymptoteSlip = (IsTurningInPlace ? 1.8f : 2.0f) * frictionMultiplier,
+          asymptoteValue = (IsTurningInPlace ? 0.5f : 0.6f) * frictionMultiplier,
+          stiffness = IsTurningInPlace ? 1.8f : Mathf.Lerp(2f, 2.5f, speed / topSpeed)
         };
 
         wheel.forwardFriction = currentForwardFriction;
@@ -1836,7 +1839,7 @@
       {
         if (!UseInputControls) return;
 
-#if UNITY_EDITOR
+#if UNITY_2022
       var isBrakingPressed = Input.GetKeyDown(KeyCode.Space);
       if (!isBrakingPressed && isBrakePressedDown)
       {
@@ -1861,15 +1864,15 @@
       }
 
       // We run this only in Unity Editor
-#if UNITY_EDITOR
-    private void Update()
+#if UNITY_2022
+      private void Update()
     {
       if (!Application.isPlaying) return;
       UpdateControls();
       SetOverrides();
     }
 
-    private void FixedUpdate()
+      private void FixedUpdate()
     {
       if (!Application.isPlaying) return;
 

@@ -1,4 +1,8 @@
-﻿using UnityEngine;
+﻿#region
+
+using UnityEngine;
+
+#endregion
 
 namespace ValheimVehicles.SharedScripts
 {
@@ -6,7 +10,7 @@ namespace ValheimVehicles.SharedScripts
   {
     public static void AdaptiveDestroy(Object gameObject)
     {
-#if UNITY_EDITOR
+#if UNITY_2022
       Object.DestroyImmediate(gameObject);
 #else
       Object.Destroy(gameObject);
