@@ -313,6 +313,6 @@ public class PropulsionConfig : BepInExBaseConfig<PropulsionConfig>
       ConfigHelpers.CreateConfigDescription(
         "Turn speed for landvehicles. Zero is half the normal speed, 50% is normal speed, and 100% is double normal speed.", true, false, new AcceptableValueRange<float>(0f, 1f)));
 
-    VehicleLandTurnSpeed.SettingChanged += (sender, args) => VehicleManager.UpdateAllWheelControllers();
+    VehicleLandTurnSpeed.SettingChanged += (sender, args) => VehicleManager.UpdateAllLandMovementControllers();
   }
 }

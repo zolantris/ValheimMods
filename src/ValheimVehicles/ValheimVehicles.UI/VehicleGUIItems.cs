@@ -17,8 +17,9 @@ public static class VehicleGUIItems
     {
       title = "Treads Max Width"
       // description = "Set the max width of treads",
-      // saveAction = () =>
+      // saveAction = (string val) =>
       // {
+      //   CurrentSelectedVehicle?.VehicleCustomConfig.TreadDistance = val;
       // },
       // resetAction = () => {}
       // onSubmit: () => 
@@ -82,10 +83,10 @@ public static class VehicleGUIItems
       IsAdminOnly = true,
       OnButtonPress = () =>
       {
-        var vpc = VehicleDebugHelpers.GetVehiclePiecesController();
-        if (vpc == null)
+        var vehicleManager = VehicleCommands.GetNearestVehicleManager();
+        if (vehicleManager == null)
           return;
-        vpc.ForceRebuildBounds();
+        vehicleManager.PiecesController?.ForceRebuildBounds();
       }
     },
     new()

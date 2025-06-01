@@ -323,7 +323,7 @@ public class PhysicsConfig : BepInExBaseConfig<PhysicsConfig>
       -1f,
       ConfigHelpers.CreateConfigDescription(
         "Wheel offset for Y position. Allowing for raising the treads higher. May require increasing suspension distance so the treads spawn then push the vehicle upwards. Negative lowers the wheels. Positive raises the treads. This value will not override custom config vehicles.", true, false, new AcceptableValueRange<float>(-10f, 10f)));
-    VehicleLandTreadVerticalOffset.SettingChanged += (sender, args) => VehicleManager.UpdateAllWheelControllers();
+    VehicleLandTreadVerticalOffset.SettingChanged += (sender, args) => VehicleManager.UpdateAllLandMovementControllers();
 
     // guards for max values
     MaxLinearVelocity = config.BindUnique(SectionKey, $"MaxVehicleLinearVelocity_{VersionedConfigUtil.GetDynamicMinorVersionKey()}", 100f,
@@ -464,8 +464,8 @@ public class PhysicsConfig : BepInExBaseConfig<PhysicsConfig>
     };
 
 
-    VehicleLandMaxTreadWidth.SettingChanged += (sender, args) => VehicleManager.UpdateAllWheelControllers();
-    VehicleLandMaxTreadLength.SettingChanged += (sender, args) => VehicleManager.UpdateAllWheelControllers();
+    VehicleLandMaxTreadWidth.SettingChanged += (sender, args) => VehicleManager.UpdateAllLandMovementControllers();
+    VehicleLandMaxTreadLength.SettingChanged += (sender, args) => VehicleManager.UpdateAllLandMovementControllers();
 
     floatationVelocityMode.SettingChanged += (sender, args) =>
       ForceSetVehiclePhysics(floatationVelocityMode);

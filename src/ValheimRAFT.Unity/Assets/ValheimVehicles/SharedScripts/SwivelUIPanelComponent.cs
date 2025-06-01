@@ -200,7 +200,6 @@ namespace ValheimVehicles.SharedScripts.UI
       // viewPortRT.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, maxWidth);
 
       // var rootContent = SwivelUIHelpers.CreateContent("Content", panelRoot.transform, viewStyles, new Vector2(0f, 1f), new Vector2(0f, 1f));
-
       var scrollGo = SwivelUIHelpers.CreateScrollView(panelRoot.transform, viewStyles, out var scrollRect);
       var scrollViewport = SwivelUIHelpers.CreateViewport(scrollGo.transform, viewStyles, true);
       var scrollViewContent = SwivelUIHelpers.CreateContent("Content", scrollViewport.transform, viewStyles, null, null);

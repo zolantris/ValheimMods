@@ -250,5 +250,9 @@
   "valheim_vehicles_commands_destroy_vehicle": "Destroy Current Vehicle",
   "valheim_vehicles_commands_config_panel": "Config",
   "valheim_vehicles_mechanism_switch_swivel_target_swivel": "Target Swivel By Distance & ID",
-  "valheim_vehicles_shared_keys_mode": "Mode"
+  "valheim_vehicles_shared_keys_mode": "Mode",
+  "valheim_vehicles_commands_message_vehicle_not_found": "Vehicle Not Found.",
+  "valheim_vehicles_config_tread_distance": "Treads Distance (distance between treads) affects physics. Makes the vehicle more like a motor bike at lower values. Can be negative values to allow overlapping.",
+  "valheim_vehicles_config_treads_scale": "Treads Scale (makes them bigger/smaller)",
+  "valheim_vehicles_treads_max_length": "Treads Max Length (distance front to back)"
 }

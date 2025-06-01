@@ -102,6 +102,7 @@ namespace ValheimVehicles.SharedScripts.UI
       {
         SelectedSwivel = null;
         _currentPanelConfig.TargetSwivelId = 0;
+
         UnsetSavedState();
         OnSwivelSelectedChanged?.Invoke(SelectedSwivel);
         return;
@@ -116,6 +117,7 @@ namespace ValheimVehicles.SharedScripts.UI
         return;
       }
       _currentPanelConfig.TargetSwivelId = SelectedSwivel.SwivelPersistentId;
+
       UnsetSavedState();
       OnSwivelSelectedChanged?.Invoke(SelectedSwivel);
     }
@@ -226,6 +228,7 @@ namespace ValheimVehicles.SharedScripts.UI
       panelRoot = CreateUIRoot();
       var scrollContainer = SwivelUIHelpers.CreateScrollView(panelRoot.transform, viewStyles, out var scrollRect);
       var viewport = SwivelUIHelpers.CreateViewport(scrollContainer.transform, viewStyles);
+      // anchors new Vector2(0, 0), new Vector2(1, 1)
       panelContent = SwivelUIHelpers.CreateContent("Content", viewport.transform, viewStyles, null, null);
       scrollRect.content = panelContent.GetComponent<RectTransform>();
 

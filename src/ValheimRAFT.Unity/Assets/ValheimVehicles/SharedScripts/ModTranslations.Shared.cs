@@ -148,6 +148,12 @@ namespace ValheimVehicles.SharedScripts
     public static string VehicleCommand_PhysicsDebugger;
     public static string VehicleCommand_DestroyVehicle;
     public static string VehicleCommand_ConfigPanel;
+    public static string VehicleCommand_Message_VehicleNotFound;
+
+    // vehicle config
+    public static string VehicleConfig_TreadsDistance;
+    public static string VehicleConfig_TreadsScale;
+    public static string VehicleConfig_TreadsMaxLength;
 
     public static string WithBoldText(string text, string color = "white")
     {

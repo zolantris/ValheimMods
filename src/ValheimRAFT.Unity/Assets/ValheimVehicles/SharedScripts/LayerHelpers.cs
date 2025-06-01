@@ -31,6 +31,7 @@
         LayerMask.GetMask(LayerMask.LayerToName(CustomRaftLayer));
 
       public static LayerMask PieceLayerMask = LayerMask.GetMask("piece");
+      public static LayerMask PieceAndCustomVehicleMask = LayerMask.GetMask("piece", LayerMask.LayerToName(CustomRaftLayer));
       public static LayerMask PhysicalLayerMask = LayerMask.GetMask("Default",
         "character", "piece",
         "terrain",

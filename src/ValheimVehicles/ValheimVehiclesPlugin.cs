@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections;
+using System.Diagnostics;
 using BepInEx.Configuration;
 using JetBrains.Annotations;
 using ServerSync;
@@ -55,7 +56,7 @@ public class ValheimVehiclesPlugin : MonoBehaviour
   private IEnumerator UpdateTranslationsRoutine()
   {
     // bail at 10 seconds and add OnLanguageChanged regardless
-    var timer = DebugSafeTimer.StartNew();
+    var timer = Stopwatch.StartNew();
     while (timer.ElapsedMilliseconds < 10000 && !ModTranslations.CanRunLocalization())
     {
       yield return null;

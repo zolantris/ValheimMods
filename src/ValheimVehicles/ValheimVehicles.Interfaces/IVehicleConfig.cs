@@ -14,6 +14,12 @@ public interface IVehicleConfig
     set;
   }
 
+  public float TreadLength
+  {
+    get;
+    set;
+  }
+
   public float TreadHeight
   {
     get;

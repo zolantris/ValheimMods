@@ -87,7 +87,7 @@
       };
       private static readonly Quaternion flippedXRotation = Quaternion.Euler(180, 0, 0);
 
-      public VehicleWheelController vehicleWheelController;
+      public VehicleLandMovementController vehicleLandMovementController;
       public List<HingeJoint> _wheelRotators = new();
       public Transform rotatorParent;
       public GameObject treadPrefab;
@@ -191,7 +191,7 @@
       /// </summary>
       public void InitConvexHullComponent()
       {
-        if (!vehicleWheelController) return;
+        if (!vehicleLandMovementController) return;
         if (!convexHullComponent)
         {
           convexHullComponent = gameObject.AddComponent<ConvexHullAPI>();
@@ -200,7 +200,7 @@
         convexHullComponent.m_colliderParentTransform = treadParent;
         convexHullComponent.HasPreviewGeneration = false;
         convexHullComponent.IsAllowedAsHullOverride = AllowTreadsObject;
-        convexHullComponent.AddLocalPhysicMaterial(vehicleWheelController.treadPhysicMaterial);
+        convexHullComponent.AddLocalPhysicMaterial(vehicleLandMovementController.treadPhysicMaterial);
       }
 
       public bool IsOnGround()
@@ -353,7 +353,7 @@
 
 
         // scale the tread to the correct height.
-        treadGameObject.transform.localScale = Vector3.one * vehicleWheelController.GetWheelRadiusScalar();
+        treadGameObject.transform.localScale = Vector3.one * vehicleLandMovementController.GetWheelRadiusScalar();
 
         var localPoint = new LocalTransform(treadGameObject.transform);
         _treadTargetPoints.Add(localPoint);
@@ -373,12 +373,12 @@
       public void GenerateTreads(Bounds bounds)
       {
         if (!treadPrefab) return;
-        if (!vehicleWheelController) return;
+        if (!vehicleLandMovementController) return;
         vehicleLocalBounds = bounds;
         CleanUp();
 
         CreateCenteringObject();
-        var scalar = vehicleWheelController.GetWheelRadiusScalar();
+        var scalar = vehicleLandMovementController.GetWheelRadiusScalar();
         var horizontalTreads = Mathf.RoundToInt(bounds.size.z / treadPointDistanceZ / scalar);
 
         // scaled from radius of the first wheel.
@@ -529,7 +529,7 @@
 
       public void UpdateAllTreads()
       {
-        if (!vehicleWheelController) return;
+        if (!vehicleLandMovementController) return;
         if (_treadTargetPoints.Count != _movingTreads.Count)
         {
           Debug.LogError($"Tread TargetPoints {_treadTargetPoints.Count} larger than moving treads {_movingTreads.Count}. Exiting treads to prevent error");

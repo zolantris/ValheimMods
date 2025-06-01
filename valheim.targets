@@ -76,6 +76,13 @@
         </Reference>
     </ItemGroup>
 
+    <!-- Required for O(n) performant Linq like readable loops -->
+    <ItemGroup>
+        <Reference Include="StructLinq" Version="0.28.2">
+            <HintPath>$(SolutionDir)\plugins\StructLinq.dll</HintPath>
+        </Reference>
+    </ItemGroup>
+
     <!-- Required for vehicle syncing (lots of players not using bepinex config manager)   -->
     <ItemGroup>
         <Reference Include="ServerSync" Version="1.19.0">
@@ -401,8 +408,7 @@
         <Error Condition="!Exists('@(CheckValheimServerPath)')"/>
 
         <MakeDir Directories="$(ValheimServerPath)\$(PluginDeployTarget)"/>
-        <Exec Command="copy &quot;$(SolutionDir)plugins\Newtonsoft.Json.dll&quot; &quot;$(ValheimServerPath)\$(PluginDeployTarget)\Newtonsoft.Json.dll&quot;"/>
-        <Exec Command="copy &quot;$(SolutionDir)plugins\ServerSync.dll&quot; &quot;$(ValheimServerPath)\$(PluginDeployTarget)\ServerSync.dll&quot;"/>
+        <Exec Command="xcopy &quot;$(SolutionDir)plugins&quot; &quot;$(ValheimServerPath)\$(PluginDeployTarget)&quot; /q /s /y /i"/>
 
         <Exec Command="copy &quot;$(OutDir)$(AssemblyName).dll&quot; &quot;$(ValheimServerPath)\$(PluginDeployTarget)\$(AssemblyName).dll&quot;"/>
         <Exec Command="copy &quot;$(OutDir)$(AssemblyName).pdb&quot; &quot;$(ValheimServerPath)\$(PluginDeployTarget)\$(AssemblyName).pdb&quot;"/>
@@ -418,8 +424,7 @@
         <!--        <Exec Condition="'$(IsRelease)' == 'true'" Command="copy &quot;$(OutDir)$(AssemblyName).dll&quot; &quot;$(SolutionDir)src\ValheimRAFT\ValheimRAFT.Unity\Assets\Assemblies\$(AssemblyName).dll&quot;"/>-->
 
         <!--    required plugins  -->
-        <Exec Command="copy &quot;$(SolutionDir)plugins\Newtonsoft.Json.dll&quot; &quot;$(PluginDeployPath)\Newtonsoft.Json.dll&quot;"/>
-        <Exec Command="copy &quot;$(SolutionDir)plugins\ServerSync.dll&quot; &quot;$(PluginDeployPath)\ServerSync.dll&quot;"/>
+        <Exec Command="xcopy &quot;$(SolutionDir)plugins&quot; &quot;$(PluginDeployPath)\$(PluginDeployTarget)\&quot; /q /s /y /i"/>
 
 
         <Exec Command="copy &quot;$(OutDir)$(AssemblyName).dll&quot; &quot;$(PluginDeployPath)\$(AssemblyName).dll&quot;"/>
@@ -469,8 +474,7 @@
         <Exec Command="if not exist &quot;$(TmpDir)plugins&quot; mkdir &quot;$(TmpDir)plugins&quot;"/>
         <Exec Command="if not exist &quot;$(TmpDir)$(AssemblyName)&quot; mkdir &quot;$(TmpDir)$(AssemblyName)&quot;"/>
 
-        <Exec Command="copy &quot;$(SolutionDir)plugins\Newtonsoft.Json.dll&quot; &quot;$(TmpDir)plugins\Newtonsoft.Json.dll&quot;"/>
-        <Exec Command="copy &quot;$(SolutionDir)plugins\ServerSync.dll&quot; &quot;$(TmpDir)\plugins\ServerSync.dll&quot;"/>
+        <Exec Command="xcopy &quot;$(SolutionDir)plugins&quot; &quot;$(TmpDir)plugins&quot; /q /s /y /i"/>
 
         <Exec Command="copy &quot;$(OutDir)$(AssemblyName).dll&quot; &quot;$(TmpDir)plugins\$(AssemblyName).dll&quot;"/>
         <Exec Command="copy &quot;$(OutDir)$(AssemblyName).pdb&quot; &quot;$(TmpDir)plugins\$(AssemblyName).pdb&quot;"/>
@@ -520,8 +524,7 @@
         <Exec Command="if not exist &quot;$(TmpDir)plugins&quot; mkdir &quot;$(TmpDir)plugins&quot;"/>
         <Exec Command="if not exist &quot;$(TmpDir)$(AssemblyName)&quot; mkdir &quot;$(TmpDir)$(AssemblyName)&quot;"/>
 
-        <Exec Command="copy &quot;$(SolutionDir)plugins\Newtonsoft.Json.dll&quot; &quot;$(TmpDir)plugins\Newtonsoft.Json.dll&quot;"/>
-        <Exec Command="copy &quot;$(SolutionDir)plugins\ServerSync.dll&quot; &quot;$(TmpDir)\plugins\ServerSync.dll&quot;"/>
+        <Exec Command="xcopy &quot;$(SolutionDir)plugins&quot; &quot;$(TmpDir)plugins&quot; /q /s /y /i"/>
 
         <Exec Command="copy &quot;$(OutDir)$(AssemblyName).dll&quot; &quot;$(TmpDir)plugins\$(AssemblyName).dll&quot;"/>
         <Exec Command="copy &quot;$(OutDir)$(AssemblyName).pdb&quot; &quot;$(TmpDir)plugins\$(AssemblyName).pdb&quot;"/>

@@ -375,7 +375,7 @@
     }
 
     /// <summary>
-    /// Heavy collider iterations but very accurate. Allows nesting vehicles.
+    /// Heavy collider iterations but very accurate should happen 1 time per LandVehicle-WaterVehicle collision. Allows nesting vehicles.
     /// </summary>
     /// <param name="collision"></param>
     /// <returns></returns>
@@ -397,7 +397,6 @@
             Physics.IgnoreCollision(c.otherCollider, c.thisCollider, true);
           }
         }
-        // collision.contacts.Where(x => x.thisCollider.name.Contains("ValheimVehicles_ConvexHull") || x.otherCollider.name.Contains("ValheimVehicles_ConvexHull")).ToList().ForEach(x => Physics.IgnoreCollision(x.otherCollider, x.thisCollider, true));
       }
 
       if (!Manager.IsLandVehicle && collision.transform.name.Contains(PrefabNames.LandVehicle))
@@ -417,19 +416,22 @@
         var otherManager = collision.collider.GetComponentInParent<VehicleManager>();
         if (!otherManager) return false;
         var otherPieceDataItems = otherManager.PiecesController.m_prefabPieceDataItems.Values;
-        foreach (var waterVehicleColliders in PiecesController.m_prefabPieceDataItems.Values)
-        foreach (var pieceData in otherPieceDataItems)
-        foreach (var thisPieceCollider in waterVehicleColliders.AllColliders)
-        foreach (var otherPieceCollider in pieceData.AllColliders)
+        var thisPiecesDataItems = PiecesController.m_prefabPieceDataItems.Values;
+        foreach (var thisPieceData in thisPiecesDataItems)
+        foreach (var otherPieceData in otherPieceDataItems)
+        foreach (var thisPieceCollider in thisPieceData.AllColliders)
         {
-          if (!thisPieceCollider || !otherPieceCollider) continue;
-          if (otherPieceCollider.GetComponentInParent<Character>() || thisPieceCollider.GetComponentInParent<Character>())
+          if (thisPieceCollider == null) continue;
+          foreach (var otherPieceCollider in otherPieceData.AllColliders)
           {
-            continue;
+            if (!thisPieceCollider || !otherPieceCollider) continue;
+            if (otherPieceCollider.GetComponentInParent<Character>() || thisPieceCollider.GetComponentInParent<Character>())
+            {
+              continue;
+            }
+            Physics.IgnoreCollision(thisPieceCollider, otherPieceCollider, true);
           }
-          Physics.IgnoreCollision(thisPieceCollider, otherPieceCollider, true);
         }
-
       }
 
       return false;
@@ -531,7 +533,7 @@
       _hasPower = true;
 
       // invalid wheel controller should always reset physics to kinematic and skip current run.
-      if (WheelController != null && !WheelController.IsVehicleReady)
+      if (LandMovementController != null && !LandMovementController.IsVehicleReady)
       {
         m_body.isKinematic = true;
         InitLandVehicleWheels();
@@ -762,9 +764,9 @@
         m_rudderValue = m_nview.GetZDO().GetFloat(ZDOVars.s_rudder);
       }
 
-      if (WheelController != null)
+      if (LandMovementController != null)
       {
-        WheelController.SetTurnInput(m_rudderValue);
+        LandMovementController.SetTurnInput(m_rudderValue);
         UpdateLandVehicleStatsIfNecessary();
       }
     }
@@ -1623,7 +1625,7 @@
       };
     }
 
-    public VehicleWheelController.AccelerationType GetLandVehicleSpeed()
+    public VehicleLandMovementController.AccelerationType GetLandVehicleSpeed()
     {
       if (isAnchored)
       {
@@ -1632,30 +1634,30 @@
 
       if (isAnchored)
       {
-        return VehicleWheelController.AccelerationType.Stop;
+        return VehicleLandMovementController.AccelerationType.Stop;
       }
 
       return vehicleSpeed switch
       {
-        Ship.Speed.Stop => VehicleWheelController.AccelerationType.Stop,
-        Ship.Speed.Back => VehicleWheelController.AccelerationType.Low,
-        Ship.Speed.Slow => VehicleWheelController.AccelerationType.Low,
-        Ship.Speed.Half => VehicleWheelController.AccelerationType.Medium,
-        Ship.Speed.Full => VehicleWheelController.AccelerationType.High,
+        Ship.Speed.Stop => VehicleLandMovementController.AccelerationType.Stop,
+        Ship.Speed.Back => VehicleLandMovementController.AccelerationType.Low,
+        Ship.Speed.Slow => VehicleLandMovementController.AccelerationType.Low,
+        Ship.Speed.Half => VehicleLandMovementController.AccelerationType.Medium,
+        Ship.Speed.Full => VehicleLandMovementController.AccelerationType.High,
         _ => throw new ArgumentOutOfRangeException()
       };
     }
 
     public void InitLandVehicleWheels()
     {
-      if (WheelController == null || PiecesController == null) return;
-      if (WheelController.wheelColliders.Count == 0)
+      if (LandMovementController == null || PiecesController == null) return;
+      if (LandMovementController.wheelColliders.Count == 0)
       {
         m_body.Sleep();
         m_body.isKinematic = true;
         var bounds = PiecesController.convexHullComponent.GetConvexHullBounds(true);
 
-        WheelController.Initialize(bounds);
+        LandMovementController.Initialize(bounds);
       }
     }
     public void UpdateCenterOfMass()
@@ -1717,12 +1719,12 @@
     public void UpdateVehicleLandSpeed()
     {
       UpdateVehicleStats(VehiclePhysicsState.Land);
-      if (WheelController == null) return;
+      if (LandMovementController == null) return;
       if (UpdateAnchorVelocity())
       {
-        if (!WheelController.IsBraking)
+        if (!LandMovementController.IsBraking)
         {
-          WheelController.SetBrake(true);
+          LandMovementController.SetBrake(true);
         }
       }
 
@@ -1732,21 +1734,21 @@
       if (shouldUpdateLandInputs)
       {
         UpdateLandVehicleStatsIfNecessary();
-        WheelController.VehicleMovementFixedUpdateOwnerClient();
+        LandMovementController.VehicleMovementFixedUpdateOwnerClient();
       }
     }
 
     public void UpdateLandVehicleStatsIfNecessary()
     {
-      if (WheelController == null) return;
+      if (LandMovementController == null) return;
       var landSpeed = GetLandVehicleSpeed();
       var isForward = VehicleSpeed != Ship.Speed.Back;
       var landInputMovementMultiplier = GetLandVehicleSpeedInput();
-      WheelController!.inputMovement = landInputMovementMultiplier;
-      if (landSpeed != WheelController!.accelerationType || WheelController.isForward != isForward)
+      LandMovementController!.inputMovement = landInputMovementMultiplier;
+      if (landSpeed != LandMovementController!.accelerationType || LandMovementController.isForward != isForward)
       {
-        WheelController.forwardDirection = ShipDirection;
-        WheelController.UpdateAccelerationValues(landSpeed, isForward);
+        LandMovementController.forwardDirection = ShipDirection;
+        LandMovementController.UpdateAccelerationValues(landSpeed, isForward);
       }
     }
 
@@ -2408,7 +2410,7 @@
 
     // invalid component booleans to avoid checking component existence per frame.
     private bool _isInvalid = true;
-    private bool _isWheelControllerInvalid = true;
+    private bool _isLandMovementControllerInvalid = true;
 
     public bool IsInvalid()
     {
@@ -2426,9 +2428,9 @@
 
     public void UpdateValidComponentChecks()
     {
-      if (_isWheelControllerInvalid)
+      if (_isLandMovementControllerInvalid)
       {
-        _isWheelControllerInvalid = WheelController == null;
+        _isLandMovementControllerInvalid = LandMovementController == null;
       }
     }
 
@@ -2438,7 +2440,7 @@
       Logger.LogDebug($"Error occurred after isInvalid return false. This means validation will need to be re-run. \nErrorMessage:\n{e}");
 #endif
       _isInvalid = true;
-      _isWheelControllerInvalid = true;
+      _isLandMovementControllerInvalid = true;
     }
 
     /// <summary>
@@ -2469,9 +2471,9 @@
         // raft pieces transforms
         SyncVehicleRotationDependentItems();
 
-        if (!_isWheelControllerInvalid)
+        if (!_isLandMovementControllerInvalid)
         {
-          WheelController!.VehicleMovementFixedUpdateAllClients();
+          LandMovementController!.VehicleMovementFixedUpdateAllClients();
         }
       }
       catch (Exception e)
@@ -3867,9 +3869,9 @@
       if (IsFlying() || Manager.IsLandVehicle)
       {
         SendSetAnchor(!isAnchored ? AnchorState.Anchored : AnchorState.Recovered);
-        if (WheelController != null)
+        if (LandMovementController != null)
         {
-          WheelController.SetBrake(isAnchored);
+          LandMovementController.SetBrake(isAnchored);
         }
         return;
       }
@@ -3911,9 +3913,9 @@
     internal void RPC_Rudder(long sender, float value)
     {
       m_rudderValue = value;
-      if (WheelController != null)
+      if (LandMovementController != null)
       {
-        WheelController.SetTurnInput(Mathf.Clamp(m_rudderValue, -1, 1));
+        LandMovementController.SetTurnInput(Mathf.Clamp(m_rudderValue, -1, 1));
       }
     }
 
@@ -4330,7 +4332,7 @@
       get;
       set;
     }
-    public VehicleWheelController? WheelController
+    public VehicleLandMovementController? LandMovementController
     {
       get;
       set;

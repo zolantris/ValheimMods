@@ -131,7 +131,6 @@ public class PrefabConfig : BepInExBaseConfig<PrefabConfig>
       ConfigHelpers.CreateConfigDescription(
         "Set the tank per tread piece X scale (width). This will make the treads larger or smaller allowing more/less grip.", true, false, new AcceptableValueRange<float>(0.5f, 5f)));
 
-
     AdminsCanOnlyBuildRaft = config.BindUnique("Server config",
       "AdminsCanOnlyBuildRaft", false,
       ConfigHelpers.CreateConfigDescription(
@@ -163,7 +162,7 @@ public class PrefabConfig : BepInExBaseConfig<PrefabConfig>
     AllowExperimentalPrefabs.SettingChanged +=
       ExperimentalPrefabRegistry.OnExperimentalPrefabSettingsChange;
 
-    ExperimentalTreadScaleX.SettingChanged += (sender, args) => VehicleManager.UpdateAllWheelControllers();
+    ExperimentalTreadScaleX.SettingChanged += (sender, args) => VehicleManager.UpdateAllLandMovementControllers();
     VehicleStaminaHaulingCost.SettingChanged += (_, __) =>
     {
       VehicleMovementController.staminaHaulCost = VehicleStaminaHaulingCost.Value;

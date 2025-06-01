@@ -147,7 +147,7 @@ public class PrefabConfigSync<T, TComponentInterface> : MonoBehaviour, IPrefabCu
   /// <summary>
   /// Syncs RPC data from ZDO to local values. If it's not ready it queues up the sync.
   /// </summary>
-  public void Load(bool forceUpdate = false, string[]? filterKeys = null)
+  public void Load(bool forceUpdate = false, string[]? filterKeys = null, bool shouldSkipEvent = false)
   {
     if (HasLoadedInitialCache && !forceUpdate) return;
     if (controller == null || !this.IsNetViewValid(out var netView))
@@ -176,16 +176,20 @@ public class PrefabConfigSync<T, TComponentInterface> : MonoBehaviour, IPrefabCu
       HasInitLoaded = true;
     }
 
-    OnLoad();
+    if (!shouldSkipEvent)
+    {
+      OnLoad();
+    }
   }
-  public void Load(ZDO zdo, string[]? filterKeys)
+  public void Load(ZDO zdo, string[]? filterKeys = null)
   {
     if (controller == null) return;
     CustomConfig = Config.Load(zdo, controller, filterKeys);
   }
-  public void Save(ZDO zdo, string[]? filterKeys)
+  public void Save(ZDO zdo, string[]? filterKeys = null)
   {
     CustomConfig.Save(zdo, Config, filterKeys);
+    Load(zdo, filterKeys);
   }
 
   public virtual void OnLoad() {}

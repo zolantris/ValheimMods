@@ -1,5 +1,6 @@
 #region
 
+  using System;
   using System.Collections.Generic;
   using System.Diagnostics.CodeAnalysis;
   using System.Linq;
@@ -23,10 +24,17 @@
     private VehicleFloatationMode _cachedFloatationMode = VehicleFloatationMode.Average;
     private float _cachedFloatationHeight = 0;
 
+    public Action? OnLoadSubscriptions;
+
     public override void Awake()
     {
       _vehicle = GetComponent<VehicleManager>();
       base.Awake();
+    }
+
+    public override void OnLoad()
+    {
+      OnLoadSubscriptions?.Invoke();
     }
 
   #region IRPCSync
@@ -168,7 +176,7 @@
       get;
       set;
     } = null!;
-    public VehicleWheelController? WheelController
+    public VehicleLandMovementController? LandMovementController
     {
       get;
       set;

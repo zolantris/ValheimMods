@@ -3042,15 +3042,21 @@
     /// <summary>
     /// A complete override of OnConvexHullGenerated.
     /// </summary>
-    public override void OnConvexHullGenerated()
+    public override void OnConvexHullGenerated(bool hasSucceeded)
     {
+      if (!hasSucceeded)
+      {
+        RequestBoundsRebuild();
+        return;
+      }
+
       BaseControllerPieceBounds = convexHullComponent.GetConvexHullBounds(true);
 
       try
       {
-        if (WheelController != null)
+        if (LandMovementController != null)
         {
-          WheelController.Initialize(BaseControllerPieceBounds);
+          LandMovementController.Initialize(BaseControllerPieceBounds);
         }
       }
       catch (Exception e)

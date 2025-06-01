@@ -4,6 +4,7 @@
   using System.Collections;
   using System.Collections.Generic;
   using System.Diagnostics.CodeAnalysis;
+  using System.Runtime.CompilerServices;
   using Jotunn.Managers;
   using Registry;
   using UnityEngine;
@@ -28,6 +29,7 @@
   /// <summary>
   /// The main initializer for all vehicle components and a way to access all properties of the vehicle.
   /// </summary>
+  ///
   public class VehicleManager : MonoBehaviour, IVehicleBaseProperties, IVehicleSharedProperties
   {
     public GameObject RudderObject { get; set; }
@@ -117,7 +119,7 @@
     } = null!;
 
     public VehicleOnboardController? OnboardController { get; set; }
-    public VehicleWheelController? WheelController { get; set; }
+    public VehicleLandMovementController? LandMovementController { get; set; }
 
     public VehicleManager Manager
     {
@@ -187,7 +189,7 @@
                     OnboardController != null &&
                     VehicleConfigSync != null;
 
-      if (IsLandVehicle && WheelController == null)
+      if (IsLandVehicle && LandMovementController == null)
       {
         isValid = false;
       }
@@ -223,11 +225,11 @@
         UpdateShipSounds(vehicleShip.Value);
     }
 
-    public static void UpdateAllWheelControllers()
+    public static void UpdateAllLandMovementControllers()
     {
       foreach (var instance in VehicleInstances.Values)
       {
-        instance.UpdateWheelControllerProperties();
+        instance.UpdateLandMovementControllerProperties();
       }
     }
 
@@ -303,6 +305,21 @@
       return PersistentIdHelper.GetPersistentIdFrom(m_nview, ref _persistentZdoId);
     }
 
+    public void OnVehicleConfigChange()
+    {
+      if (LandMovementController)
+      {
+        LandMovementController.treadWidthXScale = VehicleCustomConfig.TreadScaleX;
+        LandMovementController.maxTreadLength = VehicleCustomConfig.TreadDistance;
+      }
+
+      // LandMovementController.forwardDirection = MovementController.ShipDirection;
+      LandMovementController.wheelBottomOffset = PhysicsConfig.VehicleLandTreadVerticalOffset.Value;
+      LandMovementController.treadWidthXScale = VehicleCustomConfig.TreadScaleX;
+      LandMovementController.maxTreadLength = VehicleCustomConfig.TreadLength;
+      LandMovementController.maxTreadWidth = VehicleCustomConfig.TreadDistance;
+    }
+
     private void Awake()
     {
       if (ZNetView.m_forceDisableInit) return;
@@ -314,6 +331,7 @@
       SetVehicleVariant(vehicleVariant);
 
       VehicleConfigSync = gameObject.AddComponent<VehicleConfigSyncComponent>();
+      VehicleConfigSync.OnLoadSubscriptions += OnVehicleConfigChange;
       // this flag can be updated manually via VehicleCommands.
       HasVehicleDebugger = VehicleDebugConfig.VehicleDebugMenuEnabled.Value;
 
@@ -400,7 +418,7 @@
       InitializeMovementController();
       InitializeOnboardController();
       InitializeShipEffects();
-      InitializeWheelController();
+      InitializeLandMovementController();
       InitializePowerConsumerData();
 
       if (!TryGetControllersToBind(out var controllersToBind))
@@ -501,30 +519,37 @@
       OnboardController.Manager = this;
     }
 
-    public void UpdateWheelControllerProperties()
+    public void UpdateLandMovementControllerProperties(bool shouldSkipLoad = false)
     {
-      if (!IsLandVehicle || MovementController == null || WheelController == null) return;
-      if (WheelController.treadsPrefab == null)
+      if (!IsLandVehicle || MovementController == null || LandMovementController == null) return;
+      if (LandMovementController.treadsPrefab == null)
       {
-        WheelController.treadsPrefab = LoadValheimVehicleAssets.TankTreadsSingle;
+        LandMovementController.treadsPrefab = LoadValheimVehicleAssets.TankTreadsSingle;
       }
 
-      if (WheelController.wheelPrefab == null)
+      if (LandMovementController.wheelPrefab == null)
       {
-        WheelController.wheelPrefab = LoadValheimVehicleAssets.WheelSingle;
+        LandMovementController.wheelPrefab = LoadValheimVehicleAssets.WheelSingle;
       }
-
-      WheelController.treadWidthXScale = ExperimentalTreadScaleX.Value;
-
 
       // very important to add these. We always need a base of 30.
-      var additionalTurnRate = Mathf.Lerp(VehicleWheelController.defaultTurnAccelerationMultiplier / 10, VehicleWheelController.defaultTurnAccelerationMultiplier * 10, Mathf.Clamp01(PropulsionConfig.VehicleLandTurnSpeed.Value));
+      var additionalTurnRate = Mathf.Lerp(VehicleLandMovementController.defaultTurnAccelerationMultiplier / 10, VehicleLandMovementController.defaultTurnAccelerationMultiplier * 10, Mathf.Clamp01(PropulsionConfig.VehicleLandTurnSpeed.Value));
+      VehicleLandMovementController.baseTurnAccelerationMultiplier = additionalTurnRate;
 
-      VehicleWheelController.baseTurnAccelerationMultiplier = additionalTurnRate;
-      WheelController.maxTreadLength = PhysicsConfig.VehicleLandMaxTreadLength.Value;
-      WheelController.maxTreadWidth = PhysicsConfig.VehicleLandMaxTreadWidth.Value;
-      WheelController.forwardDirection = MovementController.ShipDirection;
-      WheelController.wheelBottomOffset = PhysicsConfig.VehicleLandTreadVerticalOffset.Value;
+      // sync's forward dir.
+      LandMovementController.forwardDirection = MovementController.ShipDirection;
+
+      // protect against infinity loads.
+      if (!shouldSkipLoad)
+      {
+        // config controlled. We must skip the load event otherwise this will infinity loop.
+        VehicleConfigSync.Load(false, null, true);
+      }
+
+
+      // todo move to config control
+      LandMovementController.wheelBottomOffset = PhysicsConfig.VehicleLandTreadVerticalOffset.Value;
+
     }
 
     public void InitializePowerConsumerData()
@@ -539,21 +564,21 @@
     /// <summary>
     /// For land vehicles
     /// </summary>
-    public void InitializeWheelController()
+    public void InitializeLandMovementController()
     {
       if (!IsLandVehicle) return;
-      if (WheelController == null)
+      if (LandMovementController == null)
       {
-        WheelController = gameObject.GetComponent<VehicleWheelController>();
-        if (WheelController == null)
+        LandMovementController = gameObject.GetComponent<VehicleLandMovementController>();
+        if (LandMovementController == null)
         {
-          WheelController = gameObject.AddComponent<VehicleWheelController>();
+          LandMovementController = gameObject.AddComponent<VehicleLandMovementController>();
         }
       }
-      WheelController.inputTurnForce = 0;
-      WheelController.inputMovement = 0;
-      UpdateWheelControllerProperties();
-      if (WheelController == null)
+      LandMovementController.inputTurnForce = 0;
+      LandMovementController.inputMovement = 0;
+      UpdateLandMovementControllerProperties();
+      if (LandMovementController == null)
         Logger.LogError("Error initializing WheelController");
     }
 

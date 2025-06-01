@@ -20,7 +20,7 @@
     /// Controls all LandVehicle Wheel and Force Settings.
     /// </summary>
     [RequireComponent(typeof(Rigidbody))]
-    public class VehicleWheelController : MonoBehaviour
+    public class VehicleLandMovementController : MonoBehaviour
     {
 
       public enum AccelerationType
@@ -72,8 +72,8 @@
       public bool UseInputControls;
 
       [Header("Vehicle Generation Properties")]
-      public int maxTreadLength = 20;
-      public int maxTreadWidth = 8;
+      public float maxTreadLength = 20f;
+      public float maxTreadWidth = 8f;
 
       [Header("Overrides")]
       public float Override_WheelBottomOffset;
@@ -487,7 +487,7 @@
         }
         if (treadsLeftMovingComponent && treadsRightMovingComponent)
         {
-          if (!treadsLeftMovingComponent.vehicleWheelController || !treadsRightMovingComponent.vehicleWheelController)
+          if (!treadsLeftMovingComponent.vehicleLandMovementController || !treadsRightMovingComponent.vehicleLandMovementController)
           {
             InitTreads();
           }
@@ -595,6 +595,9 @@
         rb.AddForce(dampingForce, ForceMode.Acceleration);
       }
 
+      // for locking down rotational speed if already rotating. This will clamp velocity. (was originally 5f)
+      public static float MaxAngularLerpSpeed = 15f;
+
       // New method: apply forces directly at the treads to simulate continuous treads
       private void ApplyTreadForces()
       {
@@ -629,8 +632,10 @@
         // Get current angular speed (rotation speed around the Y-axis)
         var angularSpeed = Mathf.Abs(vehicleRootBody.angularVelocity.y);
 
+
         // Lerp turn force: Starts high at low speeds (20), drops to 0.01 at max angular speed.
-        var turnForceLerp = Mathf.Lerp(inputTurnForce * baseTurnAccelerationMultiplier, 0f, Mathf.Clamp01(angularSpeed / 5f));
+        // todo inspect this turn lerp. This likely drops all turning speed too much.
+        var turnForceLerp = Mathf.Lerp(inputTurnForce * baseTurnAccelerationMultiplier, 0f, Mathf.Clamp01(angularSpeed / MaxAngularLerpSpeed));
         var baseTorqueTurnLerp = Mathf.Lerp(1f, 0.25f, Mathf.Clamp01(baseAcceleration / highAcceleration));
         combinedTurnLerp = turnForceLerp * baseTorqueTurnLerp;
 
@@ -748,7 +753,7 @@
         {
           movingTreadComponent.treadPrefab = treadsPrefab;
         }
-        movingTreadComponent.vehicleWheelController = this;
+        movingTreadComponent.vehicleLandMovementController = this;
       }
       /// <summary>
       /// Init for both treads
