@@ -388,65 +388,19 @@
       var buttonStyles = new Unity2dViewStyles
       {
         anchorMin = new Vector2(0.5f, 0f),
-        anchorMax = new Vector2(0.5f, 0f),
+        anchorMax = new Vector2(0.5f, 1f),
         position = Vector2.zero,
         height = buttonHeight,
         width = buttonWidth
       };
 
-      var panel = PanelUtil.CreateDraggableHideShowPanel(ConfigPanelWindowName, panelStyles, buttonStyles, vehicleCommandsHide, vehicleCommandsShow, GuiConfig.VehicleCommandsPanelLocation, OnConfigCommandsPanelToggle);
+      var panel = PanelUtil.CreateDraggableHideShowPanel(ConfigPanelWindowName, panelStyles, buttonStyles, vehicleConfigHide, vehicleConfigShow, GuiConfig.VehicleCommandsPanelLocation, OnConfigCommandsPanelToggle);
       return panel;
-      // var panel = DefaultControls.CreatePanel(
-      //   GUIManager.Instance.ValheimControlResources
-      // );
-      // panel.name = "ValheimVehicles_configWindow";
-      // var dragWindowExtension = panel.AddComponent<DragWindowControllerExtension>();
-      // panel.transform.SetParent(GUIManager.CustomGUIFront.transform, false);
-      // panel.GetComponent<Image>().pixelsPerUnitMultiplier = 1f;
-      // var panelTransform = (RectTransform)panel.transform;
-      // panelTransform.anchoredPosition = new Vector2(VehicleDebugConfig.VehicleConfigWindowPosX.Value, VehicleDebugConfig.VehicleConfigWindowPosY.Value);
-      // panelTransform.anchorMin = anchorMin;
-      // panelTransform.anchorMax = anchorMax;
-      //
-      // panelTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, panelWidth);
-      // panelTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, buttonHeight);
-      //
-      // dragWindowExtension.OnDragCalled += (rectTransform) =>
-      // {
-      //   var anchoredPosition = rectTransform.anchoredPosition;
-      //   VehicleDebugConfig.VehicleConfigWindowPosX.Value = anchoredPosition.x;
-      //   VehicleDebugConfig.VehicleConfigWindowPosY.Value = anchoredPosition.y;
-      // };
-      //
-      // // Create the button object above the gui manager. So it can hide itself.
-      // var buttonObject = GUIManager.Instance.CreateButton(
-      //   vehicleConfigHide,
-      //   panel.transform,
-      //   new Vector2(0.5f, 0.5f),
-      //   new Vector2(0.5f, 0.5f),
-      //   new Vector2(0, 0),
-      //   buttonWidth,
-      //   buttonHeight);
-      // var buttonText = buttonObject.GetComponentInChildren<Text>();
-      //
-      // // Add a listener to the button to close the panel again
-      // var button = buttonObject.GetComponent<Button>();
-      // button.onClick.AddListener(() =>
-      // {
-      //   var nextState = !configWindow.activeSelf;
-      //   buttonText.text = nextState ? vehicleConfigHide : vehicleConfigShow;
-      //   HideOrShowVehicleConfigPanel(nextState, true);
-      // });
-      //
-      // panel.SetActive(hasConfigPanelOpened);
-      //
-      // return panel;
     }
 
     private void OnConfigCommandsPanelToggle(Text buttonText)
     {
       var nextState = !configWindow.activeSelf;
-      buttonText.text = nextState ? vehicleConfigHide : vehicleConfigShow;
       HideOrShowVehicleConfigPanel(nextState, false);
     }
 
@@ -529,12 +483,19 @@
 
     public static GameObject? ConfigScrollView;
 
-    public static GameObject? LandVehicleTreadDistanceSlider;
+    public static Slider? LandVehicleTreadDistance_Slider;
+    public static Slider? LandVehicleTreadScale_Slider;
+
+    public static Slider? WaterFloatation_Slider;
+    public static Toggle? WaterFloatation_Toggle;
+    public static GameObject? WaterFloatationSliderRow;
+
     public static VehicleManager? CurrentSelectedVehicle;
 
 
     public static bool IsEditing = false;
     private static TextMeshProUGUI _saveStatus;
+    private static Button _resetButton;
 
     public virtual void SetSavedState()
     {
@@ -544,15 +505,24 @@
 
     public static VehicleCustomConfig _tempVehicleConfig = new();
 
-    public static void OnConfigSave()
+    public static void OnConfigSave(bool isReset)
     {
       if (!TryUpdateNearestVehicle(out var manager)) return;
+      if (isReset)
+      {
+        _tempVehicleConfig = new VehicleCustomConfig();
+      }
       manager.VehicleConfigSync.Config.ApplyFrom(_tempVehicleConfig);
-      manager.VehicleConfigSync.Save(manager.m_nview.GetZDO());
+      manager.VehicleConfigSync.Save(manager.m_nview.GetZDO(), [VehicleCustomConfig.Key_TreadDistance, VehicleCustomConfig.Key_CustomFloatationHeight]);
 
       if (manager.LandMovementController)
       {
         manager.UpdateLandMovementControllerProperties();
+      }
+
+      if (manager.PiecesController)
+      {
+        manager.PiecesController.ForceRebuildBounds();
       }
     }
     public static void UnsetSavedState()
@@ -577,12 +547,10 @@
       if (configToggleButtonWindow != null)
       {
         Destroy(configToggleButtonWindow);
-        configToggleButtonWindow = null;
       }
       if (configWindow)
       {
         Destroy(configWindow);
-        configWindow = null;
       }
       if (configToggleButtonWindow != null && configWindow != null) return;
 
@@ -595,16 +563,20 @@
 
       configToggleButtonWindow = CreateConfigTogglePanel();
 
+
+      if (!configToggleButtonWindow) return;
+
       // var dynamicPanelHeight = VehicleGUIItems.configSections.Count * buttonHeight + VehicleGUIItems.configSections.Count * 5;
-      var height = Math.Min(1000f, Screen.height * 0.8f);
+      var height = Mathf.Min(1000f, Screen.height * 0.8f);
+      var width = Mathf.Min(700f, Screen.width * 0.8f);
 
       // insets the whole scrollpanel and center aligns it
       configWindow = GUIManager.Instance.CreateWoodpanel(
         configToggleButtonWindow.transform,
-        new Vector2(0f, 0f),
-        new Vector2(1f, 1f),
+        new Vector2(0.5f, 0f),
+        new Vector2(0.5f, 1f),
         new Vector2(0, 0f),
-        600f,
+        width,
         height,
         true);
       configWindow.SetActive(hasConfigPanelOpened);
@@ -613,13 +585,22 @@
       windowVerticalGroup.childForceExpandHeight = false;
       windowVerticalGroup.childForceExpandWidth = true;
 
-      ConfigScrollView = GUIManager.Instance.CreateScrollView(configWindow.transform, false, true, 20, 10f, GUIManager.Instance.ValheimToggleColorBlock, new Color(0, 0, 0, 1), 400f, height);
+      var scrollWidth = 500f;
+      ConfigScrollView = GUIManager.Instance.CreateScrollView(configWindow.transform, false, true, 20, 10f, GUIManager.Instance.ValheimToggleColorBlock, new Color(0, 0, 0, 1), scrollWidth, height);
+
+      //allow togglepanel to let children expand
+      var viewport = ConfigScrollView.transform.Find("Scroll View/Viewport/Content");
+      var viewportVerticalLayout = viewport.GetComponent<VerticalLayoutGroup>();
+      viewportVerticalLayout.childForceExpandHeight = true;
+      viewportVerticalLayout.childForceExpandWidth = true;
+      viewportVerticalLayout.childControlWidth = true;
+      viewportVerticalLayout.spacing = 16;
 
       // ensures the scrollview is able to work within a VerticalLayoutGroup.
       var scrollViewLayoutElement = ConfigScrollView.AddComponent<LayoutElement>();
       scrollViewLayoutElement.flexibleHeight = 600f;
       scrollViewLayoutElement.minHeight = 200f;
-      scrollViewLayoutElement.minWidth = 400f;
+      scrollViewLayoutElement.minWidth = scrollWidth;
 
       var scrollViewVerticalLayout = ConfigScrollView.GetComponentInChildren<VerticalLayoutGroup>();
 
@@ -638,28 +619,71 @@
         return;
       }
 
-      SwivelUIHelpers.AddSectionLabel(svParent, viewStyles, ModTranslations.VehicleConfig_TreadsDistance);
-      LandVehicleTreadDistanceSlider = SwivelUIHelpers.AddSliderRow(svParent, viewStyles, SwivelUIPanelStrings.TargetZOffset, MinTargetOffset, MaxTargetOffset, manager.Config.TreadDistance, v =>
+      var sliderWidth = scrollWidth * 0.8f;
+
+      if (!manager.IsLandVehicle)
       {
-        _tempVehicleConfig.TreadDistance = v;
-        UnsetSavedState();
-      });
-      var sliderLayoutElement = LandVehicleTreadDistanceSlider.transform.Find("Slider Container/_Row/Slider").GetComponent<LayoutElement>();
-      sliderLayoutElement.minWidth = 300f;
-      sliderLayoutElement.flexibleWidth = 0f;
+        // water vehicles
 
-      var landVehicleDistanceLE = LandVehicleTreadDistanceSlider.AddComponent<LayoutElement>();
-      landVehicleDistanceLE.flexibleWidth = 0f;
-      landVehicleDistanceLE.minWidth = 300f;
+        // water floatation height
+        SwivelUIHelpers.AddSectionLabel(svParent, viewStyles, ModTranslations.VehicleConfig_WaterVehicle_Section);
+        SwivelUIHelpers.AddToggleRow(svParent, viewStyles, ModTranslations.VehicleConfig_CustomFloatationHeight, _tempVehicleConfig.HasCustomFloatationHeight, v =>
+        {
+          _tempVehicleConfig.HasCustomFloatationHeight = v;
+          if (WaterFloatationSliderRow != null) WaterFloatationSliderRow.gameObject.SetActive(v);
+          UnsetSavedState();
+        }, out WaterFloatation_Toggle);
 
-      SwivelUIHelpers.AddSectionLabel(svParent, viewStyles, ModTranslations.VehicleConfig_TreadsScale);
+        WaterFloatationSliderRow = SwivelUIHelpers.AddSliderRow(svParent, viewStyles, ModTranslations.VehicleConfig_CustomFloatationHeight, -25f, 25f, manager.Config.CustomFloatationHeight, v =>
+        {
+          _tempVehicleConfig.HasCustomFloatationHeight = true;
+          _tempVehicleConfig.CustomFloatationHeight = v;
+          UnsetSavedState();
+        }, out WaterFloatation_Slider, sliderWidth);
+      }
 
-
-      var saveButton = SwivelUIHelpers.AddRowWithButton(configWindow.transform, viewStyles, null, SwivelUIPanelStrings.Save, 96f, 48f, out _saveStatus, () =>
+      if (manager.IsLandVehicle)
       {
-        OnConfigSave();
+        // land vehicles
+        SwivelUIHelpers.AddSectionLabel(svParent, viewStyles, ModTranslations.VehicleConfig_LandVehicle_Section);
+
+        // distance
+        SwivelUIHelpers.AddSliderRow(svParent, viewStyles, ModTranslations.VehicleConfig_TreadsDistance, MinTargetOffset, MaxTargetOffset, manager.Config.TreadDistance, v =>
+        {
+          _tempVehicleConfig.TreadDistance = v;
+          UnsetSavedState();
+        }, out LandVehicleTreadDistance_Slider, sliderWidth);
+        // scale
+        SwivelUIHelpers.AddSectionLabel(svParent, viewStyles, ModTranslations.VehicleConfig_TreadsScale);
+        SwivelUIHelpers.AddSliderRow(svParent, viewStyles, ModTranslations.VehicleConfig_TreadsScale, MinTargetOffset, MaxTargetOffset, manager.Config.TreadScaleX, v =>
+        {
+          _tempVehicleConfig.TreadScaleX = v;
+          UnsetSavedState();
+        }, out LandVehicleTreadScale_Slider, sliderWidth);
+      }
+
+      // action buttons
+      var actionButtonRow = SwivelUIHelpers.AddRowWithButton(configWindow.transform, viewStyles, null, SwivelUIPanelStrings.Save, 96f, 48f, out _saveStatus, () =>
+      {
+        OnConfigSave(false);
         SetSavedState();
       });
+
+      var buttonGO = SwivelUIHelpers.AddButton(actionButtonRow.transform, viewStyles, ModTranslations.SharedKeys_Reset, 96f, 48f, out _resetButton, out _, () =>
+      {
+        _tempVehicleConfig = new VehicleCustomConfig();
+
+        if (manager.IsLandVehicle && LandVehicleTreadDistance_Slider && LandVehicleTreadScale_Slider)
+        {
+          LandVehicleTreadDistance_Slider.SetValueWithoutNotify(_tempVehicleConfig.TreadDistance);
+          LandVehicleTreadScale_Slider.SetValueWithoutNotify(_tempVehicleConfig.TreadScaleX);
+        }
+        WaterFloatation_Slider.SetValueWithoutNotify(_tempVehicleConfig.CustomFloatationHeight);
+        WaterFloatation_Toggle.SetIsOnWithoutNotify(_tempVehicleConfig.HasCustomFloatationHeight);
+        WaterFloatationSliderRow.gameObject.SetActive(_tempVehicleConfig.HasCustomFloatationHeight);
+        UnsetSavedState();
+      });
+      buttonGO.transform.SetSiblingIndex(0);
     }
 
     private static bool CanAddAdminCommand()
@@ -679,14 +703,14 @@
       commandsWindow = GUIManager.Instance.CreateWoodpanel(
         commandsToggleButtonWindow.transform,
         new Vector2(0.5f, 0f),
-        new Vector2(0.5f, 0f),
-        new Vector2(0, -(dynamicPanelHeight / 2 + 15f)),
+        new Vector2(0.5f, 1f),
+        new Vector2(0, 0f),
         panelWidth,
         dynamicPanelHeight,
         false);
       commandsWindow.SetActive(hasCommandsWindowOpened);
 
-      var startHeight = dynamicPanelHeight / 2f - buttonHeight / 2;
+      var startHeight = 0f;
       for (var index = 0; index < VehicleGUIItems.commandButtonActions.Count; index++)
       {
         var genericActionElement = VehicleGUIItems.commandButtonActions[index];

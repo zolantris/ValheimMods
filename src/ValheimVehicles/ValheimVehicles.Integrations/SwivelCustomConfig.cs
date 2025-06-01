@@ -212,7 +212,7 @@ namespace ValheimVehicles.SharedScripts
       var newConfig = new SwivelCustomConfig
       {
         Mode = (SwivelMode)zdo.GetInt(Key_Mode, (int)configFromComponent.Mode),
-        InterpolationSpeed = zdo.GetFloat(Key_LerpSpeed, configFromComponent.InterpolationSpeed),
+        InterpolationSpeed = zdo.GetFloat(Key_LerpSpeed, Mathf.Clamp(configFromComponent.InterpolationSpeed, 1f, 100f)),
         MinTrackingRange = zdo.GetFloat(Key_TrackMin, configFromComponent.MinTrackingRange),
         MaxTrackingRange = zdo.GetFloat(Key_TrackMax, configFromComponent.MaxTrackingRange),
         HingeAxes = (HingeAxis)zdo.GetInt(Key_HingeAxes, (int)configFromComponent.HingeAxes),

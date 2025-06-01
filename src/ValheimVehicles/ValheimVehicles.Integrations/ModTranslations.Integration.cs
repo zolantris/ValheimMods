@@ -124,6 +124,13 @@ public partial class ModTranslations
     VehicleConfig_TreadsDistance = SafeLocalize("$valheim_vehicles_config_tread_distance");
     VehicleConfig_TreadsScale = SafeLocalize("$valheim_vehicles_config_treads_scale");
     VehicleConfig_TreadsMaxLength = SafeLocalize("$valheim_vehicles_treads_max_length");
+
+
+    // section titles
+    VehicleConfig_LandVehicle_Section = SafeLocalize("$valheim_vehicles_land_vehicle");
+
+    // water vehicle
+    VehicleConfig_WaterVehicle_Section = SafeLocalize("$valheim_vehicles_water_vehicle");
   }
 
   private static void UpdateVehicleWheelTranslations()
@@ -136,6 +143,7 @@ public partial class ModTranslations
   {
     SharedKeys_Owner = SafeLocalize("$valheim_vehicles_shared_keys_owner");
     SharedKeys_Hold = SafeLocalize("$valheim_vehicles_shared_keys_hold");
+    SharedKeys_Reset = SafeLocalize("$valheim_vehicles_shared_keys_reset");
   }
 
   private static void SetCurrentLocalizedLanguage()

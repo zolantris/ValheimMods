@@ -312,6 +312,7 @@
 
     public void OnVehicleConfigChange()
     {
+      var shouldForceRebuild = false;
       if (LandMovementController != null)
       {
         if (MovementController != null)
@@ -319,20 +320,34 @@
           LandMovementController.forwardDirection = MovementController.ShipDirection;
         }
         LandMovementController.wheelBottomOffset = PhysicsConfig.VehicleLandTreadVerticalOffset.Value;
-        LandMovementController.treadWidthXScale = Config.TreadScaleX;
-        LandMovementController.maxTreadLength = Config.TreadLength;
-        LandMovementController.maxTreadWidth = Config.TreadDistance;
+
+        if (!Mathf.Approximately(LandMovementController.treadWidthXScale, Config.TreadScaleX) || !Mathf.Approximately(LandMovementController.maxTreadLength, Config.TreadLength) || !Mathf.Approximately(LandMovementController.maxTreadWidth, Config.TreadDistance))
+        {
+          shouldForceRebuild = true;
+          LandMovementController.treadWidthXScale = Config.TreadScaleX;
+          LandMovementController.maxTreadLength = Config.TreadLength;
+          LandMovementController.maxTreadWidth = Config.TreadDistance;
+        }
       }
 
       // other config here.
 
       if (Config.HasCustomFloatationHeight && FloatCollider != null)
       {
-        var newPosition = FloatCollider.transform.localPosition;
-        newPosition.y = Config.CustomFloatationHeight;
+        if (FloatCollider.transform.localPosition.y != Config.CustomFloatationHeight)
+        {
+          shouldForceRebuild = true;
+          var newPosition = FloatCollider.transform.localPosition;
+          newPosition.y = Config.CustomFloatationHeight;
 
-        // for updates floatcollider position.
-        FloatCollider.transform.localPosition = newPosition;
+          // for updates floatcollider position.
+          FloatCollider.transform.localPosition = newPosition;
+        }
+      }
+
+      if (PiecesController != null && shouldForceRebuild)
+      {
+        PiecesController.ForceRebuildBounds();
       }
     }
 
@@ -871,43 +886,52 @@
 
     public string Version
     {
-      get;
-      set;
+      get => Config.Version;
+      set
+      {
+      }
     }
+
     public float TreadDistance
     {
-      get;
-      set;
+      get => Config.TreadDistance;
+      set {}
     }
+
     public float TreadLength
     {
-      get;
-      set;
+      get => Config.TreadLength;
+      set {}
     }
+
     public float TreadHeight
     {
-      get;
-      set;
+      get => Config.TreadHeight;
+      set {}
     }
+
     public float TreadScaleX
     {
-      get;
-      set;
+      get => Config.TreadScaleX;
+      set {}
     }
+
     public bool HasCustomFloatationHeight
     {
-      get;
-      set;
+      get => Config.HasCustomFloatationHeight;
+      set {}
     }
+
     public float CustomFloatationHeight
     {
-      get;
-      set;
+      get => Config.CustomFloatationHeight;
+      set {}
     }
+
     public float CenterOfMassOffset
     {
-      get;
-      set;
+      get => Config.CenterOfMassOffset;
+      set {}
     }
 
   #endregion

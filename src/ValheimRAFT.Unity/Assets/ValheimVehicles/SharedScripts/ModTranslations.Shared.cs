@@ -103,6 +103,7 @@ namespace ValheimVehicles.SharedScripts
     // generic/shared-keys
     public static string SharedKeys_Owner = null!;
     public static string SharedKeys_Hold = null!;
+    public static string SharedKeys_Reset = null!;
 
     // vehicle config
     public static string VehicleConfig_Beached = null!;
@@ -154,6 +155,9 @@ namespace ValheimVehicles.SharedScripts
     public static string VehicleConfig_TreadsDistance;
     public static string VehicleConfig_TreadsScale;
     public static string VehicleConfig_TreadsMaxLength;
+    // vehicle config sections
+    public static string VehicleConfig_LandVehicle_Section;
+    public static string VehicleConfig_WaterVehicle_Section;
 
     public static string WithBoldText(string text, string color = "white")
     {

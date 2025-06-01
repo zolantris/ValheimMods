@@ -7,7 +7,6 @@
   using System.Linq;
   using Unity.Collections;
   using UnityEngine;
-  using Zolantris.Shared.Debug;
   using Debug = UnityEngine.Debug;
 
 #endregion
@@ -289,7 +288,7 @@
       /// </summary>
       /// <param name="onRebuildReadyCallback"></param>
       /// <returns></returns>
-      internal virtual IEnumerator RebuildBoundsThrottleRoutine(Action onRebuildReadyCallback)
+      internal IEnumerator RebuildBoundsThrottleRoutine(Action onRebuildReadyCallback)
       {
 
         var pieceCount = GetPieceCount();

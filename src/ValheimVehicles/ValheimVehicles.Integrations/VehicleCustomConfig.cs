@@ -28,14 +28,33 @@ public class VehicleCustomConfig : ISerializableConfig<VehicleCustomConfig, IVeh
 
   // Backing fields
   private string _version = ValheimRAFT_API.GetPluginVersion();
-  private float _treadDistance = 8f;
+
+#if !UNITY_EDITOR
+  private float _treadDistance = PrefabConfig.VehicleLandMaxTreadWidth.Value;
+#else
+  private float _treadDistance = 18f;
+#endif
+
   private float _treadHeight = 0f;
-  private float _treadLength = 16f;
-  private float _treadScaleX = 1f;
+#if !UNITY_EDITOR
+  private float _treadLength = PrefabConfig.VehicleLandMaxTreadLength.Value;
+#else
+  private float _treadLength = 18f;
+#endif
+
+#if !UNITY_EDITOR
+  private float _treadScaleX = PrefabConfig.ExperimentalTreadScaleX.Value;
+#else
+  private float _treadScaleX = 1f
+#endif
+
   private bool _hasCustomFloatationHeight = false;
   private float _customFloatationHeight = 0f;
+#if !UNITY_EDITOR
+  private float _centerOfMassOffset = PhysicsConfig.VehicleCenterOfMassOffset.Value;
+#else
   private float _centerOfMassOffset = 0f;
-
+#endif
   // todo support custom variant
   // private float _vehicleVariant;
 
@@ -97,7 +116,7 @@ public class VehicleCustomConfig : ISerializableConfig<VehicleCustomConfig, IVeh
   public float CustomFloatationHeight
   {
     get => _customFloatationHeight;
-    set => _customFloatationHeight = Mathf.Max(0f, value);
+    set => _customFloatationHeight = Mathf.Clamp(value, -50f, 50f);
   }
 
   public float CenterOfMassOffset

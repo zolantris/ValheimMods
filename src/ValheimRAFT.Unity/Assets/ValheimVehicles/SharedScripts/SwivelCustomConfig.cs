@@ -56,51 +56,51 @@ namespace ValheimVehicles.SharedScripts
     }
 
     public void ApplyTo(ISwivelConfig component)
-      {
-        component.Mode = Mode;
-        component.InterpolationSpeed = Mathf.Clamp(InterpolationSpeed, 1f, 100f);
-        component.MinTrackingRange = MinTrackingRange;
-        component.MaxTrackingRange = MaxTrackingRange;
-        component.HingeAxes = HingeAxes;
-        component.MaxEuler = MaxEuler;
-        component.MovementOffset = MovementOffset;
-        component.MotionState = MotionState;
-      }
+    {
+      component.Mode = Mode;
+      component.InterpolationSpeed = Mathf.Clamp(InterpolationSpeed, 1f, 100f);
+      component.MinTrackingRange = MinTrackingRange;
+      component.MaxTrackingRange = MaxTrackingRange;
+      component.HingeAxes = HingeAxes;
+      component.MaxEuler = MaxEuler;
+      component.MovementOffset = MovementOffset;
+      component.MotionState = MotionState;
+    }
 
     public void ApplyFrom(ISwivelConfig component)
-      {
-        Mode = component.Mode;
-        InterpolationSpeed = component.InterpolationSpeed;
-        MinTrackingRange = component.MinTrackingRange;
-        MaxTrackingRange = component.MaxTrackingRange;
-        HingeAxes = component.HingeAxes;
-        MaxEuler = component.MaxEuler;
-        MovementOffset = component.MovementOffset;
-        MotionState = component.MotionState;
-      }
+    {
+      Mode = component.Mode;
+      InterpolationSpeed = Mathf.Clamp(component.InterpolationSpeed, 1f, 100f);
+      MinTrackingRange = component.MinTrackingRange;
+      MaxTrackingRange = component.MaxTrackingRange;
+      HingeAxes = component.HingeAxes;
+      MaxEuler = component.MaxEuler;
+      MovementOffset = component.MovementOffset;
+      MotionState = component.MotionState;
+    }
 
     public static MotionState GetCompleteMotionState(MotionState current)
+    {
+      return current switch
       {
-        return current switch
-        {
-          MotionState.AtStart => MotionState.AtStart,
-          MotionState.AtTarget => MotionState.AtTarget,
-          MotionState.ToStart => MotionState.AtStart,
-          MotionState.ToTarget => MotionState.AtTarget,
-          _ => MotionState.AtStart
-        };
-      }
+        MotionState.AtStart => MotionState.AtStart,
+        MotionState.AtTarget => MotionState.AtTarget,
+        MotionState.ToStart => MotionState.AtStart,
+        MotionState.ToTarget => MotionState.AtTarget,
+        _ => MotionState.AtStart
+      };
+    }
 
     public static MotionState GetNextMotionState(MotionState current)
+    {
+      return current switch
       {
-        return current switch
-        {
-          MotionState.AtStart => MotionState.ToTarget,
-          MotionState.AtTarget => MotionState.ToStart,
-          MotionState.ToStart => MotionState.ToTarget,
-          MotionState.ToTarget => MotionState.ToStart,
-          _ => MotionState.AtStart
-        };
-      }
+        MotionState.AtStart => MotionState.ToTarget,
+        MotionState.AtTarget => MotionState.ToStart,
+        MotionState.ToStart => MotionState.ToTarget,
+        MotionState.ToTarget => MotionState.ToStart,
+        _ => MotionState.AtStart
+      };
+    }
   }
 }

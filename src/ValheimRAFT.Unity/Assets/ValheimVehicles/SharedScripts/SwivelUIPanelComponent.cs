@@ -241,7 +241,7 @@ namespace ValheimVehicles.SharedScripts.UI
 
       movementLerpRow = SwivelUIHelpers.AddSliderRow(layoutParent, viewStyles, SwivelUIPanelStrings.InterpolationSpeed, 1f, 100f, _currentPanelConfig.InterpolationSpeed, v =>
       {
-        _currentPanelConfig.InterpolationSpeed = v;
+        _currentPanelConfig.InterpolationSpeed = Mathf.Clamp(v, 1, 100f);
         UnsetSavedState();
       });
 
