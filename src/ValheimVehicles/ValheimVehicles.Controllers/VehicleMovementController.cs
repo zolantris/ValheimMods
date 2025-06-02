@@ -3,6 +3,7 @@
   using System;
   using System.Collections;
   using System.Collections.Generic;
+  using System.Diagnostics;
   using System.Linq;
   using UnityEngine;
   using UnityEngine.Serialization;
@@ -394,7 +395,7 @@
           {
             continue;
           }
-          if (c.thisCollider.name.Contains("ValheimVehicles_ConvexHull") || c.otherCollider.name.Contains("ValheimVehicles_ConvexHull"))
+          if (PrefabNames.IsVehicleCollider(c.thisCollider.name) || PrefabNames.IsVehicleCollider(c.otherCollider.name))
           {
 
             Physics.IgnoreCollision(c.otherCollider, c.thisCollider, true);
@@ -410,18 +411,29 @@
           {
             continue;
           }
-          if (c.thisCollider.name.Contains("ValheimVehicles_ConvexHull") || c.otherCollider.name.Contains("ValheimVehicles_ConvexHull"))
+          if (PrefabNames.IsVehicleCollider(c.thisCollider.name) || PrefabNames.IsVehicleCollider(c.otherCollider.name))
           {
             Physics.IgnoreCollision(c.thisCollider, c.otherCollider, true);
           }
         }
 
         var otherManager = collision.collider.GetComponentInParent<VehicleManager>();
+        var colliders = otherManager.transform.GetComponentsInChildren<Collider>();
+        var disabledColliders = new List<Collider>();
+        foreach (var collider in colliders)
+        {
+          if (!collider.enabled) continue;
+          collider.enabled = false;
+          disabledColliders.Add(collider);
+        }
 
-        if (!otherManager || Manager.PiecesController == null) return false;
-
+        if (!otherManager || Manager.PiecesController == null || otherManager.MovementController == null) return false;
+        otherManager.MovementController.isWaitingForParentVehicleToBeReady = true;
+        otherManager.MovementController.m_body.isKinematic = true;
+        m_body.velocity = Vector3.zero;
+        m_body.angularVelocity = Vector3.zero;
         // nest the vehicle. This will not parent it, but it will bind the piece to the parent position, ensuring things are accurately synced.
-        Manager.PiecesController.AddTemporaryPiece(otherManager.Manager.m_nview);
+        Manager.PiecesController.AddNewPiece(otherManager.Manager.m_nview);
 
         var otherPieceDataItems = otherManager.PiecesController.m_prefabPieceDataItems.Values;
         var thisPiecesDataItems = PiecesController.m_prefabPieceDataItems.Values;
@@ -440,7 +452,20 @@
             Physics.IgnoreCollision(thisPieceCollider, otherPieceCollider, true);
           }
         }
+        m_body.velocity = Vector3.zero;
+        m_body.angularVelocity = Vector3.zero;
+        foreach (var disabledCollider in disabledColliders)
+        {
+          if (disabledCollider.enabled) continue;
+          disabledCollider.enabled = true;
+        }
+        otherManager.MovementController.OnParentReady(Manager);
       }
+
+      // if (collision.rigidbody != null && (PrefabNames.IsVehicle(collision.rigidbody.name) || collision.rigidbody.name == PrefabNames.VehiclePiecesContainer))
+      // {
+      //   return true;
+      // }
 
       return false;
     }
@@ -459,9 +484,6 @@
       var isCharacterLayer = collision.gameObject.layer == LayerHelpers.CharacterLayer;
       if (isCharacterLayer)
       {
-#if DEBUG
-        Logger.LogDebug("Hit character");
-#endif
         vehicleRam.OnCollisionEnterHandler(collision);
       }
       else if (LayerHelpers.IsContainedWithinLayerMask(collision.collider.gameObject.layer, LayerHelpers.PhysicalLayerMask))
@@ -523,6 +545,8 @@
       StartCoroutine(SyncToParentPosition(vehicleParent));
     }
 
+    public static float MaxTimeoutForSyncParent = 10000f;
+
     /// <summary>
     /// - raycast or check if still within a boundary of the parent. Maybe just by doing a manual box collider check.
     /// - additionally we need to confirm that the vehicle is not just left and returned.
@@ -563,11 +587,29 @@
         LoggerProvider.LogMessage("The parent is way further than expected. This is likely a bug or the vehicle is detached. Skipping sync to prevent bad state.");
         yield break;
       }
-      m_body.MovePosition(nextTransform);
+      if (MovementController == null || MovementController.LandMovementController == null) yield break;
+      while (LandMovementController != null && (LandMovementController.treadsLeftMovingComponent && LandMovementController.treadsLeftMovingComponent.convexHullComponent.convexHullMeshColliders.Count < 1 || LandMovementController.treadsRightMovingComponent && LandMovementController.treadsRightMovingComponent.convexHullComponent.convexHullMeshColliders.Count < 1))
+      {
+        yield return null;
+      }
 
+
+
+      if (LandMovementController == null)
+        yield break;
+
+      m_body.MovePosition(nextTransform + MovementController!.LandMovementController.wheelBottomOffset * Vector3.up);
+
+      var timer = Stopwatch.StartNew();
+      while (timer.ElapsedMilliseconds < MaxTimeoutForSyncParent)
+      {
+        m_body.MovePosition(nextTransform + MovementController!.LandMovementController.wheelBottomOffset * Vector3.up);
+        yield return new WaitForFixedUpdate();
+      }
 
       while (!PiecesController.isInitialPieceActivationComplete || PiecesController.m_convexHullAPI.convexHullMeshColliders.Count < 1 || Manager.VehicleParent == null || !Manager.VehicleParent.PiecesController.isInitialPieceActivationComplete || Manager.VehicleParent.PiecesController.m_convexHullAPI.convexHullMeshColliders.Count < 1)
       {
+        m_body.MovePosition(nextTransform + MovementController!.LandMovementController.wheelBottomOffset * Vector3.up);
         yield return new WaitForFixedUpdate();
       }
 
@@ -596,6 +638,8 @@
         DebugTargetHeightObj.transform.localScale = FloatCollider!.size;
       }
 
+      if (PiecesController == null || PiecesController.m_pieces.Count < 1) return;
+
       if (!CanRunPoweredVehicle())
       {
         if (_hasPower && PiecesController && PiecesController._steeringWheelPieces.Count > 0 && PiecesController._steeringWheelPieces[0] != null)
@@ -615,7 +659,7 @@
         return;
       }
 
-      // if the vehicle has not initialized pieces physics should never be run.
+      // if the vehicle has not initialized pieces, physics should never be run.
       if (!Manager!
             .PiecesController!.isInitialPieceActivationComplete)
       {
@@ -624,7 +668,7 @@
       }
 
       // if the vehicle has not generated a convex hull collider. We do not want to use physics.
-      if (Manager!.PiecesController!.convexHullComponent.convexHullMeshColliders.Count < 1)
+      if (Manager!.PiecesController!.convexHullComponent.convexHullMeshes.Count < 1 || Manager!.PiecesController!.convexHullComponent.convexHullMeshColliders.Count < 1)
       {
         m_body.isKinematic = true;
         return;
@@ -2727,6 +2771,8 @@
 
       _currentShipFloatation = GetShipFloatationObj();
 
+      UpdateAnchorCapabilities();
+
       if (isPlayerHaulingVehicle && HaulingPlayer != null && HaulingPlayer.transform.root != PiecesController.transform.root)
       {
         UpdateVehicleFromHaulPosition();
@@ -2744,10 +2790,6 @@
 
       var isFlying = IsFlying();
 
-      if (isFlying && !CanAnchor)
-      {
-        UpdateAnchorCapabilities();
-      }
 
       if (!ShipFloatationObj.IsAboveBuoyantLevel || !isFlying)
         if (m_body.constraints != RigidbodyConstraints.None)

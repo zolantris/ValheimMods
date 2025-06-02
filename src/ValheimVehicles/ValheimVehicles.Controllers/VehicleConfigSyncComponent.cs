@@ -44,6 +44,8 @@
     /// </summary>
     public override void RegisterRPCListeners()
     {
+      if (retryGuard == null) return;
+      if (hasRegisteredRPCListeners) return;
       if (!this.IsNetViewValid(out var netView))
       {
         retryGuard.Retry(RegisterRPCListeners, 1);

@@ -65,6 +65,11 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
       rotator.HasRotation = true;
       powerRotator = rotator;
 
+      var visualEnergy = transform.Find("energy_level");
+      if (visualEnergy)
+      {
+        visualEnergy.gameObject.SetActive(false);
+      }
 
       //power core
       powerCoreTransform = transform.Find("meshes/power_core");

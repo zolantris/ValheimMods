@@ -23,7 +23,7 @@ public class PrefabConfigSync<T, TComponentInterface> : MonoBehaviour, IPrefabCu
   private T CustomConfig { get; set; } = new();
   public T Config => CustomConfig;
   internal SafeRPCHandler? rpcHandler;
-  internal RetryGuard retryGuard = null!;
+  internal RetryGuard? retryGuard = null!;
   public TComponentInterface? controller;
 
   private Coroutine? _prefabSyncRoutine;

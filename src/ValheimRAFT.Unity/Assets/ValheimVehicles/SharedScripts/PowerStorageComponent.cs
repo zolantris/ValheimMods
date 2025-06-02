@@ -129,6 +129,7 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
       UpdatePowerVisualStates(_previousEnergy, Data.Energy);
     }
 
+    public float lastEnergyUpdate = 0f;
 
     /// <summary>
     /// To be run in a network manager or directly in the setter as a mutation
@@ -136,7 +137,21 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
     private void UpdateChargeScale()
     {
       if (!Data.IsValid) return;
-      if (!m_visualEnergyLevel || EnergyCapacity <= 0f) return;
+      if (!m_visualEnergyLevel) return;
+      lastEnergyUpdate = Energy;
+      if (Energy <= 0.01f)
+      {
+        if (m_visualEnergyLevel.gameObject.activeSelf)
+        {
+          m_visualEnergyLevel.gameObject.SetActive(false);
+        }
+        return;
+      }
+      if (Mathf.Approximately(Energy, lastEnergyUpdate)) return;
+      if (m_visualEnergyLevel.gameObject.activeSelf == false)
+      {
+        m_visualEnergyLevel.gameObject.SetActive(true);
+      }
       var percent = Mathf.Clamp01(Energy / EnergyCapacity);
       var scale = m_visualEnergyLevel.localScale;
       scale.y = percent;

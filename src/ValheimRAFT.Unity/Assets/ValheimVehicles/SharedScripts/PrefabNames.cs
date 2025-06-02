@@ -421,7 +421,7 @@
       {
         return objName.StartsWith(WaterVehicleBlockingCollider) ||
                objName.StartsWith(WaterVehicleFloatCollider) ||
-               objName.StartsWith(WaterVehicleOnboardCollider);
+               objName.StartsWith(WaterVehicleOnboardCollider) || objName.StartsWith("convex_tread_collider") || objName.StartsWith("ValheimVehicles_ConvexHull");
       }
 
       public static bool IsHull(string goName)
