@@ -100,6 +100,8 @@ public partial class ModTranslations
     MechanismSwitch_CurrentActionString = SafeLocalize(
       "[<color=yellow><b>$KEY_Use</b></color>] $valheim_vehicles_activate");
     MechanismSwitch_AltActionString = SafeLocalize($"[<color=yellow><b>{ValheimInput_KeyAltPlace}+{ValheimInput_KeyUse}</b></color>] $valheim_vehicles_mechanism_mode_configure");
+
+    MechanismSwitch_AltHoldActionString = SafeLocalize($"[<color=yellow><b>{SharedKeys_Hold}+{ValheimInput_KeyAltPlace}+{ValheimInput_KeyUse}</b></color>] $valheim_vehicles_mechanism_swivel_edit");
   }
 
   private static void UpdateGuiEditMenuTranslations()

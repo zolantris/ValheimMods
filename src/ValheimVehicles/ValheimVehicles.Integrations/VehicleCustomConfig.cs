@@ -23,6 +23,11 @@ public class VehicleCustomConfig : ISerializableConfig<VehicleCustomConfig, IVeh
   internal const string Key_CustomFloatationHeight = "vehicle_customFloatationHeight";
   internal const string Key_CenterOfMassOffset = "vehicle_centerOfMassOffset";
 
+  // todo integrate these keys.
+  // unused keys.
+  internal const string Key_AllowFlight = "vehicle_allowFlight";
+  internal const string Key_AllowBallast = "vehicle_allowBallast";
+
   // todo support custom variant
   // private const string Key_VehicleVariant = "vehicle_variant";
 

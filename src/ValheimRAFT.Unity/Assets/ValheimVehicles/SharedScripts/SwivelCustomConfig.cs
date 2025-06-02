@@ -28,7 +28,8 @@ namespace ValheimVehicles.SharedScripts
     {
       get;
       set;
-    }
+    } = SwivelMode.Move;
+
     public float InterpolationSpeed
     {
       get;

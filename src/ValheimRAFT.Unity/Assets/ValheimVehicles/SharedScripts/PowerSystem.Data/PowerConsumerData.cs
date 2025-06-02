@@ -26,7 +26,7 @@ namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
 
     public PowerIntensityLevel PowerIntensityLevel => powerIntensityLevel;
 
-    public bool IsDemanding; // a value set when the consumer is requesting for power
+    public bool IsDemanding = false; // a value set when the consumer is requesting for power
     // method meant for client when pressing activators to prevent activation
     public Func<float, bool> CanRunConsumerForDeltaTime = (_) => true;
 

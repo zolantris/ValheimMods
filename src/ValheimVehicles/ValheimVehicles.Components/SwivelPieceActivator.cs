@@ -27,15 +27,4 @@ public class SwivelPieceActivator : BasePieceActivatorComponent
   {
     _host = host;
   }
-
-  public static void AddPendingSwivelPiece(int swivelId, ZNetView netView)
-  {
-    if (!m_pendingPieces.TryGetValue(swivelId, out var list))
-    {
-      list = new List<ZNetView>();
-      m_pendingPieces[swivelId] = list;
-    }
-
-    list.Add(netView);
-  }
 }

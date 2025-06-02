@@ -57,7 +57,7 @@ public partial class PowerConsumerData : IPowerComputeZdoSync
       // shared config
       OnSharedConfigSync();
 
-      IsDemanding = validZdo.GetBool(VehicleZdoVars.PowerSystem_IsDemanding, true);
+      IsDemanding = validZdo.GetBool(VehicleZdoVars.PowerSystem_IsDemanding, false);
       var intensityInt = validZdo.GetInt(VehicleZdoVars.PowerSystem_Intensity_Level, (int)PowerIntensityLevel.Low);
       powerIntensityLevel = (PowerIntensityLevel)intensityInt;
     });

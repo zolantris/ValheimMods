@@ -10,12 +10,15 @@ namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
   {
     public PowerSystemComputeData() {}
     // constants
-    private bool _isActive = true;
+
     public const string NetworkIdUnassigned = "UNASSIGNED";
     // static
     public static float PowerRangeDefault = 4f;
     public static float PowerRangePylonDefault = 10f;
 
+    // states
+    public bool IsValid { get; set; } = true; // adds more checks when this fails.
+    private bool _isActive = true;
     protected HashSet<string> _dirtyFields = new();
 
     public bool IsTempNetworkId => IsTempNetworkIdStatic(NetworkId);

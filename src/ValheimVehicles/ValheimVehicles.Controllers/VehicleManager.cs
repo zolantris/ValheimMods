@@ -517,9 +517,9 @@
         MovementController = movementController;
       }
 
-      if (MovementController != null)
+      if (MovementController != null && PiecesController != null)
       {
-        MovementController.CanAnchor = IsLandVehicle;
+        MovementController.UpdateAnchorCapabilities();
       }
     }
 

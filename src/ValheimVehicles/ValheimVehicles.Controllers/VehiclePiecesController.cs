@@ -565,7 +565,7 @@
             m_anchorPieces.Add(netView);
             if (MovementController != null)
             {
-              MovementController.CanAnchor = m_anchorPieces.Count > 0 || Manager!.IsLandVehicle;
+              MovementController.UpdateAnchorCapabilities();
               anchorMechanismController.UpdateAnchorState(MovementController
                 .vehicleAnchorState, VehicleAnchorMechanismController.GetCurrentStateTextStatic(MovementController.vehicleAnchorState, Manager != null && Manager.IsLandVehicle));
             }
@@ -636,7 +636,9 @@
             m_anchorPieces.Remove(netView);
 
             if (MovementController != null)
-              MovementController.CanAnchor = m_anchorPieces.Count > 0 || Manager!.IsLandVehicle;
+            {
+              MovementController.UpdateAnchorCapabilities();
+            }
             break;
           }
           case BoardingRampComponent ramp:
@@ -716,14 +718,14 @@
 
       // Remove non-kinematic rigidbodies if not a ram
       if (!RamPrefabs.IsRam(netView.name) &&
-          !netView.name.Contains(PrefabNames.ShipAnchorWood) && !PrefabNames.IsVehicle(name) && !netView.name.StartsWith(PrefabNames.SwivelPrefabName))
+          !netView.name.Contains(PrefabNames.ShipAnchorWood) && !PrefabNames.IsVehicle(name) && netView.name != PrefabNames.VehiclePiecesContainer && !netView.name.StartsWith(PrefabNames.SwivelPrefabName))
       {
         var rbs = netView.GetComponentsInChildren<Rigidbody>();
         foreach (var rbsItem in rbs)
-          if (!rbsItem.isKinematic)
+          if (!rbsItem.isKinematic && rbsItem != m_localRigidbody || rbsItem != m_syncRigidbody)
           {
             Logger.LogWarning(
-              $"Destroying Rigidbody for root object {rbsItem.transform.root?.name ?? rbsItem.transform.name}");
+              $"Destroying Rigidbody on netview <{netView.name}> for root object <{rbsItem.transform.root?.name ?? rbsItem.transform.name}>");
             Destroy(rbsItem);
           }
       }

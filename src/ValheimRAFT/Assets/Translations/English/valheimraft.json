@@ -170,7 +170,7 @@
   "valheim_vehicles_mechanism_toggle_switch_desc": "Toggle Switch used for toggling vehicle features and showing additional menus. Place it near a swivel to confirm the swivel.",
   "valheim_vehicles_mechanism_swivel": "Swivel",
   "valheim_vehicles_mechanism_swivel_desc": "A mechanism that allows for rotating and moving items on a vehicle or anywhere independently.",
-  "valheim_vehicles_mechanism_swivel_edit": "to Edit",
+  "valheim_vehicles_mechanism_swivel_edit": "Edit Swivel",
   "valheim_vehicles_mechanism_swivel_connected": "Connected",
   "valheim_vehicles_mechanism_power_pylon": "Power Pylon",
   "valheim_vehicles_mechanism_power_pylon_desc": "Allows for sharing power within a specific radius. Collects unstable electricity.",

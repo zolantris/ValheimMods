@@ -398,12 +398,6 @@ public class ShipHullPrefab : IRegisterPrefab
       PrefabRegistryHelpers.SetWearNTearSupport(wnt,
         WearNTear.MaterialType.Iron);
 
-
-      if (hullMaterial == HullMaterial.Iron)
-      {
-        wnt.m_ashDamageImmune = true;
-      }
-
       SetHullWnt(wnt, hullMaterial);
 
       ShipHulls.SetMaterialHealthValues(hullMaterial, wnt, materialCount);

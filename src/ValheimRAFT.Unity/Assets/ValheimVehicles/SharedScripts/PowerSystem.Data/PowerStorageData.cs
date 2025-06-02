@@ -22,7 +22,6 @@ namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
     {
     }
 
-    public bool IsValid { get; set; }
 
     public float EnergyCapacityRemaining => MathX.Clamp(EnergyCapacity - Energy, 0f, EnergyCapacity);
     public float EstimateAvailableEnergy()

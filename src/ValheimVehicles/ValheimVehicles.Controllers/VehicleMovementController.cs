@@ -320,22 +320,16 @@
       HaulingRopeComponent = isHauling ? ropeComponent : null;
     }
 
-    // private void UpdateBreakingControls()
-    // {
-    //   if (WheelController == null) return;
-    //   var isBreakingPressed = Input.GetKeyDown(KeyCode.Space);
-    //   if (isBreakingPressed && !isHoldingBreak)
-    //   {
-    //     SendSetAnchor(WheelController.isBreaking ? AnchorState.Anchored : AnchorState.Recovered);
-    //     isHoldingBreak = true;
-    //   }
-    //
-    //   // we do not handle setting anchor state if it's still anchored and not breaking. This should only be handled if the break toggle is pressed.
-    //   if (!isBreakingPressed)
-    //   {
-    //     isHoldingBreak = false;
-    //   }
-    // }
+    public void UpdateAnchorCapabilities()
+    {
+      if (Manager == null || PiecesController == null) return;
+      var nextAnchorState = Manager.IsLandVehicle || IsFlying();
+      if (!nextAnchorState)
+      {
+        nextAnchorState = PiecesController.m_anchorPieces.Count > 0;
+      }
+      CanAnchor = nextAnchorState;
+    }
 
     private void Update()
     {
@@ -427,7 +421,7 @@
         if (!otherManager || Manager.PiecesController == null) return false;
 
         // nest the vehicle. This will not parent it, but it will bind the piece to the parent position, ensuring things are accurately synced.
-        Manager.PiecesController.AddNewPiece(otherManager.Manager.m_nview);
+        Manager.PiecesController.AddTemporaryPiece(otherManager.Manager.m_nview);
 
         var otherPieceDataItems = otherManager.PiecesController.m_prefabPieceDataItems.Values;
         var thisPiecesDataItems = PiecesController.m_prefabPieceDataItems.Values;
@@ -2750,6 +2744,11 @@
 
       var isFlying = IsFlying();
 
+      if (isFlying && !CanAnchor)
+      {
+        UpdateAnchorCapabilities();
+      }
+
       if (!ShipFloatationObj.IsAboveBuoyantLevel || !isFlying)
         if (m_body.constraints != RigidbodyConstraints.None)
           m_body.constraints = RigidbodyConstraints.None;
@@ -3011,6 +3010,8 @@
         lastFlyingDt += Time.fixedDeltaTime;
         return cachedFlyingValue;
       }
+
+      if (!ZoneSystem.m_instance) return false;
 
       lastFlyingDt = Time.fixedDeltaTime;
 

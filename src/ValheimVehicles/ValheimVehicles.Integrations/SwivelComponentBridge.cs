@@ -1,6 +1,7 @@
 #region
 
   using System;
+  using System.Collections;
   using System.Collections.Generic;
   using UnityEngine;
   using ValheimVehicles.Components;
@@ -12,6 +13,7 @@
   using ValheimVehicles.Shared.Constants;
   using ValheimVehicles.SharedScripts;
   using ValheimVehicles.SharedScripts.Helpers;
+  using ValheimVehicles.SharedScripts.PowerSystem.Compute;
 
 #endregion
 
@@ -57,7 +59,6 @@
     private PowerConsumerBridge powerConsumerIntegration;
     public static Dictionary<ZDO, SwivelComponentBridge> ZdoToComponent = new();
     public ZDO? _currentZdo;
-
     // sync values
     public static bool CanAllClientsSync = true;
     public static bool ShouldSkipClientOnlyUpdate = true;
@@ -173,37 +174,12 @@
       {
         LoggerProvider.LogWarning("SwivelComponentBridge.Request_NextMotionState called but the motion state is not the same as the current state. This is likely a bug.");
       }
-
       prefabConfigSync.Load([SwivelCustomConfig.Key_MotionState]);
-      LastMotionState = MotionState;
       SwivelPrefabConfigRPC.Request_NextMotion(netView.GetZDO(), MotionState);
-
-      // if (_nextMotionCoroutine != null)
-      // {
-      //   StopCoroutine(_nextMotionCoroutine);
-      //   _nextMotionCoroutine = null;
-      // }
-      // else
-      // {
-      //   // _nextMotionCoroutine = StartCoroutine(NextMotionStateAwaiter());
-      // }
     }
 
-    public Coroutine? _nextMotionCoroutine;
-    public MotionState LastMotionState = MotionState.AtStart;
+    public Coroutine? _guardedMotionCheck;
 
-    /// <summary>
-    /// Workaround to fix the problem with a client requiring two presses to get the button to update.
-    /// </summary>
-    // public IEnumerator NextMotionStateAwaiter()
-    // {
-    //   yield return new WaitForFixedUpdate();
-    //   if (LastMotionState == MotionState)
-    //   {
-    //     Request_NextMotionState();
-    //   }
-    //   _nextMotionCoroutine = null;
-    // }
     public void Request_SetMotionState(MotionState state)
     {
       if (!this.IsNetViewValid(out var netView)) return;
@@ -230,6 +206,12 @@
           ActiveInstances.Add(persistentId, this);
         }
       });
+
+      if (_guardedMotionCheck != null)
+      {
+        StopCoroutine(_guardedMotionCheck);
+      }
+      _guardedMotionCheck = StartCoroutine(GuardedMotionCheck());
     }
 
     public void SetupPieceActivator()
@@ -252,34 +234,46 @@
       {
         ActiveInstances.Remove(persistentId);
       }
+
+      if (_guardedMotionCheck != null)
+      {
+        StopCoroutine(_guardedMotionCheck);
+        _guardedMotionCheck = null;
+      }
     }
 
     public override void Update()
     {
-      if (!CanRunSwivelDuringUpdate) return;
       if (!CanRunBaseUpdate()) return;
       base.Update();
-      GuardedMotionCheck();
     }
 
 
     public override void FixedUpdate()
     {
-      if (!CanRunSwivelDuringFixedUpdate) return;
-      if (!CanRunBaseUpdate()) return;
-
+      // if (!CanRunBaseUpdate()) return;
       base.FixedUpdate();
-      GuardedMotionCheck();
     }
 
-    public void GuardedMotionCheck()
+    public IEnumerator GuardedMotionCheck()
     {
-      // guarded update on DemandState which can desync.
-      // if (MotionState is MotionState.AtStart or MotionState.AtTarget && powerConsumerIntegration && powerConsumerIntegration.IsDemanding && powerConsumerIntegration.Data.zdo != null && powerConsumerIntegration.Data.zdo.IsValid())
-      // {
-      //   powerConsumerIntegration.Data.SetDemandState(false);
-      //   PowerSystemRPC.Request_UpdatePowerConsumer(powerConsumerIntegration.Data.zdo.m_uid, powerConsumerIntegration.Data);
-      // }
+      while (isActiveAndEnabled)
+      {
+        yield return null;
+        if (!powerConsumerIntegration)
+        {
+          yield return null;
+          continue;
+        }
+        // guarded update on DemandState which can desync.
+        if (MotionState is MotionState.AtStart or MotionState.AtTarget && powerConsumerIntegration && powerConsumerIntegration.IsDemanding && powerConsumerIntegration.Data.zdo != null && powerConsumerIntegration.Data.zdo.IsValid())
+        {
+          powerConsumerIntegration.Data.SetDemandState(false);
+          PowerSystemRPC.Request_UpdatePowerConsumer(powerConsumerIntegration.Data.zdo.m_uid, powerConsumerIntegration.Data);
+        }
+
+        yield return new WaitForSeconds(30f);
+      }
     }
 
     public bool CanRunBaseUpdate()
@@ -446,17 +440,22 @@
       powerConsumerIntegration = gameObject.AddComponent<PowerConsumerBridge>();
       swivelPowerConsumer = powerConsumerIntegration.Logic;
       UpdatePowerConsumer();
-      UpdateBasePowerConsumption();
     }
 
     public override void UpdatePowerConsumer()
     {
+      if (!swivelPowerConsumer) return;
       if (!ZNet.instance) return;
       if (!this.IsNetViewValid(out var netView)) return;
-      if (ZNet.instance.IsServer())
+      if (ZNet.instance.IsServer() || ZNet.IsSinglePlayer)
       {
         base.UpdatePowerConsumer();
-        OnPowerConsumerUpdate();
+        UpdateBasePowerConsumption();
+        PowerSystemRPC.Request_UpdatePowerConsumer(netView.GetZDO().m_uid, swivelPowerConsumer.Data);
+      }
+      else
+      {
+        swivelPowerConsumer.Data.Load();
       }
     }
     /// <summary>
@@ -593,34 +592,6 @@
       return 0.01f;
     }
 
-    /// <summary>
-    /// For all logic to sync updates to server or local user.
-    /// </summary>
-    public void OnPowerConsumerUpdate()
-    {
-      if (!swivelPowerConsumer) return;
-      if (!this.IsNetViewValid(out var netView))
-      {
-        return;
-      }
-
-      // powerConsumerIntegration.Data.Load();
-
-      if (powerConsumerIntegration)
-      {
-        var isOwner = netView.IsOwner();
-        if (!isOwner)
-        {
-          // possible infinity update here...
-          PowerSystemRPC.Request_UpdatePowerConsumer(netView.GetZDO().m_uid, swivelPowerConsumer.Data);
-        }
-        else
-        {
-          powerConsumerIntegration.UpdateNetworkedData();
-        }
-      }
-    }
-
     public void OnInitComplete()
     {
       // load config late in case something is misaligned.
@@ -689,7 +660,7 @@
 
     public bool CanRaycastHitPiece()
     {
-      return GetPieceCount() > 0;
+      return GetPieceCount() <= 0;
     }
 
     public static bool CanDestroySwivel(ZNetView? netView)

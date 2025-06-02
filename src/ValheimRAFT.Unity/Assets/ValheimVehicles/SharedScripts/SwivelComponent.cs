@@ -48,7 +48,7 @@ namespace ValheimVehicles.SharedScripts
 
     public static List<SwivelComponent> Instances = new();
     public static float UpdateInterval = 0.01f;
-    public static bool CanRunSwivelDuringFixedUpdate = false;
+    public static bool CanRunSwivelDuringFixedUpdate = true;
     public static bool CanRunSwivelDuringUpdate = true;
 
     [Header("Swivel General Settings")]
@@ -107,6 +107,8 @@ namespace ValheimVehicles.SharedScripts
     internal float _motionLerp; // Always between 0 (AtStart) and 1 (AtTarget)
     internal float _nextUpdate;
     private Rigidbody animatedRigidbody;
+    private Rigidbody? parentRigidbody;
+    private bool hasParentRigidbody = false;
     private Vector3 frozenLocalPos;
     private Quaternion frozenLocalRot;
 
@@ -157,6 +159,20 @@ namespace ValheimVehicles.SharedScripts
     {
       SyncSnappoint();
       SetInterpolationSpeed(interpolationSpeed);
+    }
+
+    public void OnTransformParentChanged()
+    {
+      if (transform.root != transform)
+      {
+        parentRigidbody = transform.GetComponentInParent<Rigidbody>();
+        hasParentRigidbody = parentRigidbody != null;
+      }
+      else
+      {
+        parentRigidbody = null;
+        hasParentRigidbody = false;
+      }
     }
 
     public virtual void Update()
@@ -225,10 +241,33 @@ namespace ValheimVehicles.SharedScripts
       // }
     }
 
+    public static float ParentVelocityThreshold = 0.3f;
+
+    /// <summary>
+    /// - allow other checks to run if calling on the same frame.
+    /// - decreases frame sync time if parent rigidbody exists and is moving fast.
+    /// </summary>
     public bool CanUpdate()
     {
       if (!_IsReady) return false;
       if (Mathf.Approximately(_lastUpdateTime, Time.time)) return true;
+
+      try
+      {
+        if (parentRigidbody && parentRigidbody!.velocity.magnitude > ParentVelocityThreshold)
+        {
+          CanRunSwivelDuringUpdate = true;
+          return true;
+        }
+      }
+      catch (Exception e)
+      {
+        LoggerProvider.LogError($"Error while accessing rigidbody {e}");
+        hasParentRigidbody = false;
+        parentRigidbody = null;
+      }
+
+      CanRunSwivelDuringUpdate = false;
       if (Time.time < _nextUpdate) return false;
       _lastUpdateTime = _nextUpdate;
       _nextUpdate = Time.time + UpdateInterval;
@@ -260,7 +299,7 @@ namespace ValheimVehicles.SharedScripts
 
     public virtual void SwivelUpdate()
     {
-      if (!CanUpdate() || !animatedRigidbody || !animatedTransform.parent || !piecesContainer) return;
+      if (!animatedRigidbody || !animatedTransform.parent || !piecesContainer) return;
 #if UNITY_2022
       // for updating demand state on the fly due to toggling with serializer
       if (Mode == SwivelMode.Rotate || Mode == SwivelMode.Move)
@@ -506,11 +545,11 @@ namespace ValheimVehicles.SharedScripts
       if (!swivelPowerConsumer)
       {
         InitPowerConsumer();
+        return;
       }
 
       if (mode == SwivelMode.Rotate || mode == SwivelMode.Move)
       {
-
         if (currentMotionState == MotionState.ToStart || currentMotionState == MotionState.ToTarget)
         {
           ActivatePowerConsumer();
@@ -591,7 +630,7 @@ namespace ValheimVehicles.SharedScripts
       UpdatePowerConsumer();
     }
 
-    #region ISwivelConfig
+  #region ISwivelConfig
 
     public float InterpolationSpeed
     {
@@ -641,7 +680,7 @@ namespace ValheimVehicles.SharedScripts
       set => SetMode(value);
     }
 
-    #endregion
+  #endregion
 
   }
 }

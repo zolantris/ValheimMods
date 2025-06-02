@@ -89,7 +89,7 @@ namespace ValheimVehicles.Integrations
     protected abstract void RegisterDefaultRPCs();
     public virtual void UpdateNetworkedData()
     {
-      this.RunIfServer((nv) =>
+      this.RunIfServerOrSinglePlayer((nv) =>
       {
         Data.Save();
         nv.InvokeRPC(ZNetView.Everybody, instanced_RpcNotifyStateUpdate);

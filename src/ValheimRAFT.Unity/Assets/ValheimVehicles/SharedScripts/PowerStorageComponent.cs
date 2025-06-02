@@ -95,6 +95,13 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
 
       base.Awake();
       m_visualEnergyLevel = transform.Find("energy_level");
+
+      if (m_visualEnergyLevel)
+      {
+        m_visualEnergyLevel.transform.localScale = new Vector3(1, 0, 1);
+        m_visualEnergyLevel.gameObject.SetActive(true);
+      }
+
       powerRotatorTransform = transform.Find("meshes/power_rotator");
 
       if (!powerRotatorTransform)

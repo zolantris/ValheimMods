@@ -116,13 +116,10 @@ public static class ValheimExtensions
   /// <summary>
   /// For running on server or owner. This works much better for dedicated servers.
   /// </summary>
-  public static void RunIfServer(this INetView instance, Action<ZNetView> action)
+  public static void RunIfServerOrSinglePlayer(this INetView instance, Action<ZNetView> action)
   {
-    if (!ZNet.instance || !ZNet.instance.IsServer())
+    if (!ZNet.instance || !ZNet.instance.IsServer() && !ZNet.IsSinglePlayer)
     {
-#if VERBOSE
-      LoggerProvider.LogDev("Not running action as we are not a server");
-#endif
       return;
     }
     if (!instance.IsNetViewValid(out var netView)) return;

@@ -32,10 +32,12 @@ namespace ValheimVehicles.SharedScripts
     public static string MechanismSwitch_SwitchName = null!;
     public static string MechanismSwitch_CurrentActionString = null!;
     public static string MechanismSwitch_AltActionString = null!;
+    public static string MechanismSwitch_AltHoldActionString = null!;
 
     // modes
     public static string MechanismMode_None = null!;
     public static string MechanismMode_Swivel_Edit = null!;
+    public static string MechanismMode_Hold_To_Edit = null!;
 
     public static string VehicleConfig_CustomFloatationHeight = null!;
 

@@ -14,8 +14,6 @@ public abstract partial class PowerSystemComputeData
 {
   public ZDO? zdo;
 
-  public bool IsValid = false;
-
   public PowerSystemComputeData(ZDO zdo)
   {
     OnNetworkIdChange += HandleNetworkIdUpdate;
