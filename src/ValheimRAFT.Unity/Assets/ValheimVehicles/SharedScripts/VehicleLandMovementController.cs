@@ -1,14 +1,14 @@
 ﻿#region
 
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using JetBrains.Annotations;
-using UnityEngine;
-using UnityEngine.Serialization;
-using Debug = UnityEngine.Debug;
-using Enumerable = System.Linq.Enumerable;
-using Vector3 = UnityEngine.Vector3;
+  using System;
+  using System.Collections.Generic;
+  using System.Diagnostics;
+  using JetBrains.Annotations;
+  using UnityEngine;
+  using UnityEngine.Serialization;
+  using Debug = UnityEngine.Debug;
+  using Enumerable = System.Linq.Enumerable;
+  using Vector3 = UnityEngine.Vector3;
 
 #endregion
 
@@ -40,13 +40,13 @@ using Vector3 = UnityEngine.Vector3;
 
       public const float wheelBaseRadiusScale = 1.5f;
 
-      private const float Gravity = 9.81f; // Earth gravity constant
-      private const float uphillTorqueMultiplier = 1.5f; // Adjust for hill climbing power
-      private const float downhillResistance = 500f; // Torque to counteract rolling backward
-      private const float stabilityCorrectionFactor = 200f;
-      private const float baseAccelerationMultiplier = 30f;
-      public const float defaultTurnAccelerationMultiplier = 10f;
-      private const float _lastTerrainTouchTimeExpiration = 1f;
+      internal const float Gravity = 9.81f; // Earth gravity constant
+      internal const float uphillTorqueMultiplier = 1.5f; // Adjust for hill climbing power
+      internal const float downhillResistance = 500f; // Torque to counteract rolling backward
+      internal const float stabilityCorrectionFactor = 200f;
+      internal static float baseAccelerationMultiplier = 30f;
+      public static float defaultTurnAccelerationMultiplier = 10f;
+      private static float _lastTerrainTouchTimeExpiration = 1f;
       public static float baseTurnAccelerationMultiplier = defaultTurnAccelerationMultiplier;
 
       public static float defaultBreakForce = 500f;
@@ -55,8 +55,8 @@ using Vector3 = UnityEngine.Vector3;
       private static readonly float mediumAcceleration = 3 * baseAccelerationMultiplier;
       private static readonly float lowAcceleration = 1 * baseAccelerationMultiplier;
 
-      // for locking down rotational speed if already rotating. This will clamp velocity. (was originally 5f)
-      public static float MaxAngularLerpSpeed = 15f;
+      // for locking down rotational speed if already rotating. This will clamp velocity. Velocity above 2f is way to quick.
+      public static float MaxAngularLerpSpeed = 2f;
 
       public float minTreadDistances = 0.1f;
       public float treadWidthXScale = 1f;
@@ -601,6 +601,9 @@ using Vector3 = UnityEngine.Vector3;
         rb.AddForce(dampingForce, ForceMode.Acceleration);
       }
 
+      public static float rotatingInPlaceTimeMultiplierVelocity = 10f;
+      public static float rotatingInPlaceTimeMultiplierAngularVelocity = 10f;
+
       // New method: apply forces directly at the treads to simulate continuous treads
       private void ApplyTreadForces()
       {
@@ -706,18 +709,11 @@ using Vector3 = UnityEngine.Vector3;
         {
           // Only preserve Y angular velocity (turning)
           var vel = vehicleRootBody.velocity;
-          vehicleRootBody.velocity = new Vector3(0, vel.y, 0); // Optionally preserve Y if you want to allow jumps
-
-          // Optionally, you could clamp the velocity to zero instead of setting to 0 if you want to allow tiny drift
-          // vehicleRootBody.velocity = Vector3.zero;
-
+          // Optionally preserve Y to allow height
+          vehicleRootBody.velocity = Vector3.Slerp(vel, new Vector3(0, vel.y, 0), Time.fixedDeltaTime * rotatingInPlaceTimeMultiplierVelocity);
           // Make sure only Y angular velocity is kept (for yaw turn)
           var angVel = vehicleRootBody.angularVelocity;
-          vehicleRootBody.angularVelocity = new Vector3(0, angVel.y, 0);
-
-          // Optionally, you can also limit the angular speed
-          // float maxYawSpeed = 2f;
-          // vehicleRootBody.angularVelocity = new Vector3(0, Mathf.Clamp(angVel.y, -maxYawSpeed, maxYawSpeed), 0);
+          vehicleRootBody.angularVelocity = Vector3.Slerp(angVel, new Vector3(0, angVel.y, 0), Time.fixedDeltaTime * rotatingInPlaceTimeMultiplierAngularVelocity);
         }
       }
 

@@ -1122,16 +1122,7 @@
       if (!Manager) return;
       maxYLinearVelocity = PhysicsConfig.MaxLinearYVelocity.Value;
       m_body.maxLinearVelocity = PhysicsConfig.MaxLinearVelocity.Value;
-
-      if (Manager!.IsLandVehicle)
-      {
-        // heavily throttle turning to prevent infinite spin issues especially uphill.
-        m_body.maxAngularVelocity = Mathf.Min(PhysicsConfig.MaxAngularVelocity.Value, 0.3f);
-      }
-      else
-      {
-        m_body.maxAngularVelocity = PhysicsConfig.MaxAngularVelocity.Value;
-      }
+      m_body.maxAngularVelocity = Mathf.Clamp(PhysicsConfig.MaxAngularVelocity.Value, 0.3f, 2f);
     }
 
     /// <summary>
@@ -1782,8 +1773,8 @@
       m_body.drag = PhysicsConfig.landDrag.Value;
 
       // heavily throttle turning to prevent infinite spin issues especially uphill.
-      m_body.maxAngularVelocity = Mathf.Min(PhysicsConfig.MaxAngularVelocity.Value, 0.3f);
-      m_body.maxLinearVelocity = PhysicsConfig.MaxLinearVelocity.Value;
+      m_body.maxAngularVelocity = Mathf.Clamp(PhysicsConfig.MaxAngularVelocity.Value, 0.3f, 2f);
+      m_body.maxLinearVelocity = Mathf.Clamp(PhysicsConfig.MaxLinearVelocity.Value, 0.3f, 1000f);
     }
 
     /// <summary>

@@ -564,7 +564,7 @@
       }
 
       // very important to add these. We always need a base of 30.
-      var additionalTurnRate = Mathf.Lerp(VehicleLandMovementController.defaultTurnAccelerationMultiplier / 10, VehicleLandMovementController.defaultTurnAccelerationMultiplier * 10, Mathf.Clamp01(PropulsionConfig.VehicleLandTurnSpeed.Value));
+      var additionalTurnRate = Mathf.Lerp(VehicleLandMovementController.defaultTurnAccelerationMultiplier / 4, VehicleLandMovementController.defaultTurnAccelerationMultiplier * 4, Mathf.Clamp01(PropulsionConfig.VehicleLandTurnSpeed.Value));
       VehicleLandMovementController.baseTurnAccelerationMultiplier = additionalTurnRate;
 
       // sync's forward dir.

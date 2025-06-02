@@ -184,7 +184,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5940555617446921363}
   m_Layer: 10
-  m_Name: shared_hull_rib
+  m_Name: shared_hull_rib_wood
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

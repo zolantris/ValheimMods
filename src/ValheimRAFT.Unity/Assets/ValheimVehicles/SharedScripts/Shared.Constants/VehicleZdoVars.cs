@@ -66,13 +66,6 @@ namespace ValheimVehicles.Shared.Constants
     public static string CustomMeshPrimitiveType =
       "ValheimVehicles_CustomMeshPrimitiveType";
 
-    /// <summary>
-    ///  for vehicles that could be both submarines or watervehicles or airships this should be a required key to force flags.
-    /// </summary>
-    ///
-    /// TODO make custom vehicles which are flagged under the "All" variant.
-    public static string CustomVehicleVariant = "ValheimVehicles_CustomVehicleVariant";
-
     public static readonly int MBCultivatableParentIdHash =
       "MBCultivatableParentId".GetStableHashCode();
 
@@ -91,9 +84,6 @@ namespace ValheimVehicles.Shared.Constants
     public static readonly int VehicleOceanSway =
       "VehicleOceanSway".GetStableHashCode();
 
-    public static readonly int VehicleTreadWidth =
-      "VehicleTreadWidth".GetStableHashCode();
-
     public static readonly int MBParentId = "MBParentId".GetStableHashCode();
 
     /// <summary>
@@ -106,6 +96,7 @@ namespace ValheimVehicles.Shared.Constants
     /// </summary>
     public static readonly int MBRotationHash = "MBRotation".GetStableHashCode();
 
+    // todo DEPRECATED this probably can be removed
     public static readonly int MBRotationVecHash =
       "MBRotationVec".GetStableHashCode();
 

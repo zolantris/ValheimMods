@@ -251,6 +251,7 @@ public class PowerSystemConfig : BepInExBaseConfig<PowerSystemConfig>
     SwivelComponent.SwivelEnergyDrain = SwivelPowerDrain.Value;
 
     // trigger synchronous updates
+    UpdatePowerRanges();
     UpdatePowerSources();
     UpdatePowerStorages();
     UpdatePowerConduits();

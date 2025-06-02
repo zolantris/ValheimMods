@@ -512,18 +512,25 @@ public class VehicleCommands : ConsoleCommand
 
   public static bool CanRunCheatCommand()
   {
-    if (!VehicleDebugConfig.AllowDebugCommandsForNonAdmins.Value)
+    try
     {
-      if (Player.m_localPlayer == null || ZNet.instance == false) return false;
-      var playerId = Player.m_localPlayer.GetPlayerID();
-      if (!ZNet.instance.IsAdmin(playerId))
+      if (!VehicleDebugConfig.AllowDebugCommandsForNonAdmins.Value)
       {
-        Logger.LogMessage($"Player is not an admin. They cannot run this cheat command without setting configKeySection <{VehicleDebugConfig.AllowDebugCommandsForNonAdmins.Definition.Section}> ConfigKey: <{VehicleDebugConfig.AllowDebugCommandsForNonAdmins.Definition.Key}> to true in the raft config or being an Admin.");
-        return false;
+        if (Player.m_localPlayer == null || ZNet.instance == false) return false;
+        var playerId = Player.m_localPlayer.GetPlayerID();
+        if (!ZNet.instance.IsAdmin(playerId))
+        {
+          Logger.LogMessage($"Player is not an admin. They cannot run this cheat command without setting configKeySection <{VehicleDebugConfig.AllowDebugCommandsForNonAdmins.Definition.Section}> ConfigKey: <{VehicleDebugConfig.AllowDebugCommandsForNonAdmins.Definition.Key}> to true in the raft config or being an Admin.");
+          return false;
+        }
       }
-    }
 
-    return true;
+      return true;
+    }
+    catch (Exception e)
+    {
+      return false;
+    }
   }
 
   public static bool CanRunEditCommand()

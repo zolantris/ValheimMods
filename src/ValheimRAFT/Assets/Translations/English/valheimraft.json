@@ -247,7 +247,7 @@
   "valheim_vehicles_commands_rebuild_bounds": "Rebuild Bounds",
   "valheim_vehicles_commands_hull_debugger": "Hull debugger",
   "valheim_vehicles_commands_physics_debugger": "Physics Debugger",
-  "valheim_vehicles_commands_destroy_vehicle": "Destroy Current Vehicle",
+  "valheim_vehicles_commands_destroy_vehicle": "[Admin] Destroy Current Vehicle",
   "valheim_vehicles_commands_config_panel": "Config",
   "valheim_vehicles_mechanism_switch_swivel_target_swivel": "Target Swivel By Distance & ID",
   "valheim_vehicles_shared_keys_mode": "Mode",

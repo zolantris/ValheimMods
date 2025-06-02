@@ -107,12 +107,10 @@ public static class VehicleGUIItems
         VehicleGui.ToggleConfigPanelState(true);
       }
     },
-#if DEBUG
     new()
     {
       title = ModTranslations.VehicleCommand_DestroyVehicle ?? "Destroy Current Vehicle",
       OnButtonPress = VehicleCommands.DestroyCurrentVehicle
-    },
-#endif
+    }
   ];
 }

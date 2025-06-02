@@ -2284,11 +2284,6 @@
             ? ZdoUtils.ZdoIdToId(zdoid)
             : ZdoWatchController.Instance.GetOrCreatePersistentID(zdoparent);
           zdo.Set(VehicleZdoVars.MBParentId, id);
-          zdo.Set(VehicleZdoVars.MBRotationVecHash,
-            zdo.GetQuaternion(VehicleZdoVars.MBRotationHash, Quaternion.identity)
-              .eulerAngles);
-          zdo.RemoveZDOID(VehicleZdoVars.MBParentHash);
-          ZDOExtraData.s_quats.Remove(zdoid, VehicleZdoVars.MBRotationHash);
         }
       }
 
@@ -2348,11 +2343,30 @@
       pendingTempPiecesList.Clear();
     }
 
+    public static void RemoveVehicleDataFromZdo(ZDO zdo)
+    {
+      // main parenting logic.
+      zdo.RemoveInt(VehicleZdoVars.MBParentId);
+
+      // this is likely not being used
+      zdo.RemoveQuaternion(VehicleZdoVars.MBRotationHash);
+
+      // important for relative position.
+      zdo.RemoveVec3(VehicleZdoVars.MBPositionHash);
+      zdo.RemoveVec3(VehicleZdoVars.MBRotationVecHash);
+    }
+
     public void ActivatePiece(ZNetView netView)
     {
       if (netView == null) return;
       var zdo = netView.GetZDO();
       if (netView.m_zdo == null) return;
+
+      if (TryBailOnSameObject(netView.gameObject))
+      {
+        RemoveVehicleDataFromZdo(netView.m_zdo);
+        return;
+      }
 
       TrySetPieceToParent(netView, zdo);
 
@@ -2377,12 +2391,21 @@
       AddTemporaryPiece(activationPieceData.netView, shouldSkipIgnoreColliders);
     }
 
+    public bool TryBailOnSameObject(GameObject obj)
+    {
+      if (obj == gameObject || obj == Manager.gameObject) return true;
+      return false;
+    }
+
     /// <summary>
     /// For Carts and other rigidbody moveable objects.
     /// </summary>
     public void AddTemporaryPiece(ZNetView netView, bool shouldSkipIgnoreColliders = false)
     {
       if (netView == null) return;
+      if (TryBailOnSameObject(netView.gameObject)) return;
+      // do not allow adding a piece to itself
+      if (netView.transform == transform || netView.transform == Manager.transform) return;
 
       var zdo = netView.GetZDO();
       if (zdo == null) return;
@@ -2542,7 +2565,7 @@
         Logger.LogError("piece does not exist");
         return;
       }
-
+      if (TryBailOnSameObject(piece.gameObject)) return;
       if (!(bool)piece.m_nview)
       {
         Logger.LogError("m_nview does not exist on piece");
@@ -2555,6 +2578,7 @@
 
     public void AddNewPiece(GameObject obj)
     {
+      if (TryBailOnSameObject(obj)) return;
       var nv = obj.GetComponent<ZNetView>();
       if (nv == null) return;
       AddNewPiece(nv);
@@ -2567,7 +2591,7 @@
         Logger.LogError("netView does not exist");
         return;
       }
-
+      if (TryBailOnSameObject(netView.gameObject)) return;
       var zdo = netView.GetZDO();
       if (zdo == null)
       {

@@ -44,6 +44,13 @@ public class ShipHullPrefab : IRegisterPrefab
     RegisterWindowWallPorthole8x4Iron();
     RegisterWindowFloorPorthole4x4Iron();
 
+    RegisterCornerWindow("corner_windows");
+    RegisterCornerWindow("corner_windows_wide");
+    RegisterCornerWindow("corner_windows_narrow");
+
+    RegisterDoubleHullProw();
+    RegisterDoubleHullWall();
+
     foreach (var hullMaterialType in hullMaterialTypes)
       RegisterHull(PrefabNames.GetShipHullCenterName(hullMaterialType), hullMaterialType,
         16 + 16 + 4,
@@ -270,6 +277,90 @@ public class ShipHullPrefab : IRegisterPrefab
 
     SetupHullPrefab(prefab, prefabName,
       hullMaterial, 1, prefab.transform.FindDeepChild("mesh"), ["mesh"]);
+  }
+
+  public void RegisterCornerWindow(string assetName)
+  {
+    var prefabAsset = PrefabRegistryController.vehicleAssetBundle.LoadAsset<GameObject>($"{assetName}.prefab");
+    if (!prefabAsset)
+    {
+      LoggerProvider.LogError($"Failed to load {assetName}.prefab");
+      return;
+    }
+
+    var prefabName = $"{PrefabNames.ValheimVehiclesPrefix}_{assetName}";
+    var prefab =
+      PrefabManager.Instance.CreateClonedPrefab(
+        prefabName, prefabAsset);
+
+    var materialCount = PrefabNames.GetPrefabSizeArea(PrefabNames.PrefabSizeVariant.FourByEight);
+
+    // placeholder.
+    PrefabRegistryHelpers.PieceDataDictionary.Add(prefabName, new PrefabRegistryHelpers.PieceData
+    {
+      Name = $"Window {assetName}",
+      Description = "A premium window",
+      Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
+        .Power_Storage_Icon)
+    });
+
+    SetupHullPrefab(prefab, prefabName,
+      HullMaterial.Iron,
+      materialCount);
+
+    LoggerProvider.LogDebug("Successfully registered double hull prow");
+  }
+
+  public void RegisterDoubleHullWall()
+  {
+    var prefabName = $"{PrefabNames.GetHullWallName(HullMaterial.Iron, PrefabNames.PrefabSizeVariant.FourByEight)}_double_hull_wall";
+    var prefabAsset =
+      LoadValheimVehicleAssets.HullDoubleWall;
+    var prefab =
+      PrefabManager.Instance.CreateClonedPrefab(
+        prefabName, prefabAsset);
+    var materialCount = PrefabNames.GetPrefabSizeArea(PrefabNames.PrefabSizeVariant.FourByEight);
+    // placeholder.
+    PrefabRegistryHelpers.PieceDataDictionary.Add(prefabName, new PrefabRegistryHelpers.PieceData
+    {
+      Name = "double wall",
+      Description = "Flamemetal wall",
+      Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
+        .Power_Storage_Icon)
+    });
+
+    SetupHullPrefab(prefab, prefabName,
+      HullMaterial.Iron,
+      materialCount);
+
+    LoggerProvider.LogDebug("Successfully registered double hull prow");
+  }
+
+  public void RegisterDoubleHullProw()
+  {
+    var prefabName = $"{PrefabNames.GetHullProwVariants(HullMaterial.Iron, PrefabNames.PrefabSizeVariant.FourByEight)}_double";
+    var prefabAsset =
+      LoadValheimVehicleAssets.HullDoubleProw;
+    var prefab =
+      PrefabManager.Instance.CreateClonedPrefab(
+        prefabName, prefabAsset);
+
+    var materialCount = PrefabNames.GetPrefabSizeArea(PrefabNames.PrefabSizeVariant.FourByEight);
+
+    // placeholder.
+    PrefabRegistryHelpers.PieceDataDictionary.Add(prefabName, new PrefabRegistryHelpers.PieceData
+    {
+      Name = "$valheim_vehicles_mechanism_power_storage_eitr",
+      Description = "$valheim_vehicles_mechanism_power_storage_eitr_desc",
+      Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
+        .Power_Storage_Icon)
+    });
+
+    SetupHullPrefab(prefab, prefabName,
+      HullMaterial.Iron,
+      materialCount);
+
+    LoggerProvider.LogDebug("Successfully registered double hull prow");
   }
 
   public void RegisterHullRibProw(

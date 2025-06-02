@@ -7,7 +7,6 @@ namespace ValheimVehicles.Components;
 /// <summary>
 /// Todo move this to the base activator with Type passthrough or write a interface for Init so these Flavors of Base can use that.
 /// </summary>
-/// <typeparam name="TSelf"></typeparam>
 public class SwivelPieceActivator : BasePieceActivatorComponent
 {
   [SerializeField] private SwivelComponentBridge _host;
