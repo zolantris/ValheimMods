@@ -152,7 +152,7 @@ public static class ValheimExtensions
     return instance.StartCoroutine(WaitForZNetViewCoroutine(instance, action));
   }
 
-  public static IEnumerator WaitForZNetViewCoroutine(MonoBehaviour instance, Action<ZNetView> action, float timeout = 10f)
+  public static IEnumerator WaitForZNetViewCoroutine(this MonoBehaviour instance, Action<ZNetView> action, float timeout = 10f)
   {
     var startTime = Time.realtimeSinceStartup;
     var netView = instance.GetComponent<ZNetView>();

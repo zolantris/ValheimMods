@@ -54,8 +54,8 @@
 
       base.RegisterRPCListeners();
 
-      netView.Register(nameof(RPC_SyncBounds), RPC_SyncBounds);
-      netView.Register<ZPackage>(nameof(RPC_SyncFloatationMode), RPC_SyncFloatationMode);
+      rpcHandler?.Register(nameof(RPC_SyncBounds), RPC_SyncBounds);
+      rpcHandler?.Register<ZPackage>(nameof(RPC_SyncFloatationMode), RPC_SyncFloatationMode);
 
       hasRegisteredRPCListeners = true;
     }

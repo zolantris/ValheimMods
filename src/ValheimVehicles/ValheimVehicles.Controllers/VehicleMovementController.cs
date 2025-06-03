@@ -387,7 +387,11 @@
     {
       if (collision.transform.name.Contains("animated")) return false;
 
-      if (collision.transform.name.Contains(PrefabNames.VehiclePiecesContainer))
+      var handled = false;
+
+      var isVehicleCollider = PrefabNames.IsVehicleCollider(collision.transform.name);
+
+      if (isVehicleCollider || PrefabNames.IsVehiclePiecesCollider(collision.transform.name))
       {
         foreach (var c in collision.contacts)
         {
@@ -397,35 +401,26 @@
           }
           if (PrefabNames.IsVehicleCollider(c.thisCollider.name) || PrefabNames.IsVehicleCollider(c.otherCollider.name))
           {
-
             Physics.IgnoreCollision(c.otherCollider, c.thisCollider, true);
+            handled = true;
           }
         }
       }
 
       if (!Manager.IsLandVehicle && collision.transform.name.Contains(PrefabNames.LandVehicle))
       {
-        foreach (var c in collision.contacts)
-        {
-          if (c.thisCollider.GetComponentInParent<Character>() || c.otherCollider.GetComponentInParent<Character>())
-          {
-            continue;
-          }
-          if (PrefabNames.IsVehicleCollider(c.thisCollider.name) || PrefabNames.IsVehicleCollider(c.otherCollider.name))
-          {
-            Physics.IgnoreCollision(c.thisCollider, c.otherCollider, true);
-          }
-        }
-
         var otherManager = collision.collider.GetComponentInParent<VehicleManager>();
         var colliders = otherManager.transform.GetComponentsInChildren<Collider>();
         var disabledColliders = new List<Collider>();
+
         foreach (var collider in colliders)
         {
           if (!collider.enabled) continue;
           collider.enabled = false;
           disabledColliders.Add(collider);
         }
+
+        handled = true;
 
         if (!otherManager || Manager.PiecesController == null || otherManager.MovementController == null) return false;
         otherManager.MovementController.isWaitingForParentVehicleToBeReady = true;
@@ -462,67 +457,78 @@
         otherManager.MovementController.OnParentReady(Manager);
       }
 
-      // if (collision.rigidbody != null && (PrefabNames.IsVehicle(collision.rigidbody.name) || collision.rigidbody.name == PrefabNames.VehiclePiecesContainer))
-      // {
-      //   return true;
-      // }
+      return handled;
+    }
+
+    public bool TryBailOnCollisionOfDifferentVehicleType(Collision collision)
+    {
+      if (PrefabNames.IsVehiclePiecesCollider(collision.collider.name))
+      {
+        var otherVPC = collision.collider.GetComponentInParent<VehiclePiecesController>();
+        if (!otherVPC) return true;
+        if (otherVPC.Manager == Manager) return true;
+
+        // do not allow different ship types to collide.
+        if (otherVPC.Manager.IsLandVehicle != Manager.IsLandVehicle) return true;
+      }
 
       return false;
     }
 
     private void OnCollisionEnter(Collision collision)
     {
-      if (PiecesController == null) return;
-      if (TryAddVehicleWithinBoat(collision)) return;
-
+      if (PiecesController == null || vehicleRam == null) return;
       if (collision.collider.gameObject.layer == LayerHelpers.TerrainLayer) return;
-      if (collision.collider.name == "tread_mesh")
-      {
-        // Physics.IgnoreCollision(collision.collider, collision.collider, true);
-      }
-      if (vehicleRam == null) return;
-      var isCharacterLayer = collision.gameObject.layer == LayerHelpers.CharacterLayer;
-      if (isCharacterLayer)
-      {
-        vehicleRam.OnCollisionEnterHandler(collision);
-      }
-      else if (LayerHelpers.IsContainedWithinLayerMask(collision.collider.gameObject.layer, LayerHelpers.PhysicalLayerMask))
+
+      if (TryAddVehicleWithinBoat(collision)) return;
+      if (IsSwivelCollision(collision)) return;
+      if (TryBailOnCollisionOfDifferentVehicleType(collision)) return;
+
+      if (LayerHelpers.IsContainedWithinLayerMask(collision.collider.gameObject.layer, LayerHelpers.PhysicalLayerMask))
       {
         vehicleRam.OnCollisionEnterHandler(collision);
       }
     }
 
-    private void OnCollisionStay(Collision collision)
+    public bool IsSwivelCollision(Collision collision)
     {
-      if (PiecesController == null) return;
-      if (collision.transform.root == transform || collision.transform.root == PiecesController.transform)
-      {
-        // PiecesController.m_vehicleCollisionManager.AddColliderToVehicle(collision.collider, true);
-        return;
-      }
-
-#if DEBUG
-      // allows landvehicles within the vehicle, requires a PiecesController reparent likely.
-      // if (collision.relativeVelocity.magnitude < 2 && collision.transform.root.name.StartsWith(PrefabNames.LandVehicle) && collision.contactCount > 0)
-      // {
-      // should only ignore for convexHull collider (not the damage trigger variant)
-      // var thisCollider = collision.contacts[0].thisCollider;
-      //   if (this.Collider.name.StartsWith("ValheimVehicles_ConvexHull") || thisCollider.name.StartsWith("convex_tread_collider"))
-      //   {
-      //     Physics.IgnoreCollision(collision.collider, thisCollider, true);
-      //   }
-      //   if (transform.root.name.StartsWith(PrefabNames.LandVehicle))
-      //   {
-      //     PiecesController.AddTemporaryPiece(transform.root.GetComponent<ZNetView>());
-      //   }
-      // }
-#endif
-
-      if (vehicleRam != null && LayerHelpers.IsContainedWithinLayerMask(collision.collider.gameObject.layer, LayerHelpers.PhysicalLayerMask))
-      {
-        vehicleRam.OnCollisionEnterHandler(collision);
-      }
+      return collision.rigidbody && collision.rigidbody.name.StartsWith("animated") && collision.rigidbody.transform.parent.name.StartsWith(PrefabNames.SwivelPrefabName);
     }
+
+//     private void OnCollisionStay(Collision collision)
+//     {
+//       if (PiecesController == null) return;
+//       if (IsSwivelCollision(collision))
+//       {
+//         return;
+//       }
+//       if (collision.transform.root == transform || collision.transform.root == PiecesController.transform)
+//       {
+//         return;
+//       }
+//
+// #if DEBUG
+//       // allows landvehicles within the vehicle, requires a PiecesController reparent likely.
+//       // if (collision.relativeVelocity.magnitude < 2 && collision.transform.root.name.StartsWith(PrefabNames.LandVehicle) && collision.contactCount > 0)
+//       // {
+//       // should only ignore for convexHull collider (not the damage trigger variant)
+//       // var thisCollider = collision.contacts[0].thisCollider;
+//       //   if (this.Collider.name.StartsWith("ValheimVehicles_ConvexHull") || thisCollider.name.StartsWith("convex_tread_collider"))
+//       //   {
+//       //     Physics.IgnoreCollision(collision.collider, thisCollider, true);
+//       //   }
+//       //   if (transform.root.name.StartsWith(PrefabNames.LandVehicle))
+//       //   {
+//       //     PiecesController.AddTemporaryPiece(transform.root.GetComponent<ZNetView>());
+//       //   }
+//       // }
+// #endif
+//
+//       if (vehicleRam != null && LayerHelpers.IsContainedWithinLayerMask(collision.collider.gameObject.layer, LayerHelpers.PhysicalLayerMask))
+//       {
+//         vehicleRam.OnCollisionEnterHandler(collision);
+//       }
+//     }
 
     private void OnTriggerEnter(Collider collider)
     {
@@ -545,7 +551,7 @@
       StartCoroutine(SyncToParentPosition(vehicleParent));
     }
 
-    public static float MaxTimeoutForSyncParent = 10000f;
+    public static float ParentSyncMinimumDelayInMs = 5000f;
 
     /// <summary>
     /// - raycast or check if still within a boundary of the parent. Maybe just by doing a manual box collider check.
@@ -558,13 +564,45 @@
       if (Manager.VehicleParent == null) yield break;
     }
 
+    public bool TrySyncVehicleToParent(ZNetView netView)
+    {
+      if (!netView) return false;
+      try
+      {
+        if (Manager.VehicleParent == null) return false;
+        var parentLocalPositionOffset = netView.GetZDO().GetVec3(VehicleZdoVars.MBPositionHash, Vector3.zero);
+        var nextTransform = Manager.VehicleParent.transform.position - parentLocalPositionOffset;
+        var deltaDistance = Vector3.Distance(transform.position, nextTransform);
+        if (deltaDistance > 80f)
+        {
+          LoggerProvider.LogWarning("The parent is way further than expected {. This is likely a bug or the vehicle is not nearby. Removing vehicle from parent.");
+          isWaitingForParentVehicleToBeReady = false;
+          Manager.VehicleParent = null;
+          VehiclePiecesController.RemoveVehicleDataFromZdo(netView.GetZDO());
+          return false;
+        }
+        return true;
+      }
+      catch (Exception e)
+      {
+        LoggerProvider.LogError($"Error while syncing parent {e}");
+        return false;
+      }
+    }
+
     public IEnumerator SyncToParentPosition(VehicleManager vehicleParent)
     {
+      if (LandMovementController == null)
+        yield break;
+
       if (vehicleParent == null)
       {
         LoggerProvider.LogMessage("The parent is null. This is likely a bug or the vehicle is detached. Skipping sync to prevent bad state.");
+        isWaitingForParentVehicleToBeReady = false;
+        Manager.VehicleParent = null;
         yield break;
       }
+
       isWaitingForParentVehicleToBeReady = true;
       m_body.isKinematic = true;
 
@@ -572,56 +610,52 @@
       // do not immediately run. This lets unity run an update loop
       yield return new WaitForFixedUpdate();
 
-      ZNetView? netView;
-      while (!this.IsNetViewValid(out netView)) yield return null;
+      ZNetView? netView = null;
+      yield return this.WaitForZNetViewCoroutine(nv => netView = nv);
+      if (netView == null) yield break;
+
       // this is relative to parent. But our rigidbody is not within the parent, just synced in same world + local position.
-      var parentLocalPositionOffset = netView.GetZDO().GetVec3(VehicleZdoVars.MBPositionHash, Vector3.zero);
-      var nextTransform = Manager.VehicleParent.transform.position - parentLocalPositionOffset;
-      if (Vector3.Distance(transform.position, nextTransform) > 80f)
+      if (!TrySyncVehicleToParent(netView))
+      {
+        yield break;
+      }
+
+      if (!TrySyncVehicleToParent(netView)) yield break;
+
+      var timer = Stopwatch.StartNew();
+
+      // coroutine evaluation local methods
+
+      bool IsExpired()
+      {
+        return timer.ElapsedMilliseconds > ParentSyncMinimumDelayInMs;
+      }
+
+      bool IsActivatedThis()
+      {
+        return PiecesController != null && PiecesController.isInitialPieceActivationComplete && PiecesController.m_convexHullAPI.convexHullMeshColliders.Count > 0;
+      }
+
+      bool IsActivatedOther()
+      {
+        return Manager.VehicleParent != null && Manager.VehicleParent.PiecesController != null && Manager.VehicleParent.PiecesController.isInitialPieceActivationComplete && Manager.VehicleParent.PiecesController.m_convexHullAPI.convexHullMeshColliders.Count > 0;
+      }
+
+      while (!IsExpired())
+      {
+        if (!TrySyncVehicleToParent(netView)) yield break;
+        yield return new WaitForFixedUpdate();
+      }
+
+      if (!IsActivatedThis() || !IsActivatedOther())
       {
         isWaitingForParentVehicleToBeReady = false;
         Manager.VehicleParent = null;
-        netView.GetZDO().RemoveInt(VehicleZdoVars.MBParentId);
-        netView.GetZDO().RemoveInt(VehicleZdoVars.MBRotationHash);
-        netView.GetZDO().RemoveInt(VehicleZdoVars.MBPositionHash);
-        LoggerProvider.LogMessage("The parent is way further than expected. This is likely a bug or the vehicle is detached. Skipping sync to prevent bad state.");
-        yield break;
-      }
-      if (MovementController == null || MovementController.LandMovementController == null) yield break;
-      while (LandMovementController != null && (LandMovementController.treadsLeftMovingComponent && LandMovementController.treadsLeftMovingComponent.convexHullComponent.convexHullMeshColliders.Count < 1 || LandMovementController.treadsRightMovingComponent && LandMovementController.treadsRightMovingComponent.convexHullComponent.convexHullMeshColliders.Count < 1))
-      {
-        yield return null;
-      }
-
-
-
-      if (LandMovementController == null)
-        yield break;
-
-      m_body.MovePosition(nextTransform + MovementController!.LandMovementController.wheelBottomOffset * Vector3.up);
-
-      var timer = Stopwatch.StartNew();
-      while (timer.ElapsedMilliseconds < MaxTimeoutForSyncParent)
-      {
-        m_body.MovePosition(nextTransform + MovementController!.LandMovementController.wheelBottomOffset * Vector3.up);
-        yield return new WaitForFixedUpdate();
-      }
-
-      while (!PiecesController.isInitialPieceActivationComplete || PiecesController.m_convexHullAPI.convexHullMeshColliders.Count < 1 || Manager.VehicleParent == null || !Manager.VehicleParent.PiecesController.isInitialPieceActivationComplete || Manager.VehicleParent.PiecesController.m_convexHullAPI.convexHullMeshColliders.Count < 1)
-      {
-        m_body.MovePosition(nextTransform + MovementController!.LandMovementController.wheelBottomOffset * Vector3.up);
-        yield return new WaitForFixedUpdate();
-      }
-
-      nextTransform = Manager.VehicleParent.transform.position - parentLocalPositionOffset;
-      if (Vector3.Distance(transform.position, nextTransform) > 80f)
-      {
-        LoggerProvider.LogMessage("The parent is way further than expected. This is likely a bug or the vehicle is detached. Skipping sync to prevent bad state.");
+        VehiclePiecesController.RemoveVehicleDataFromZdo(netView.GetZDO());
         yield break;
       }
 
-      m_body.MovePosition(nextTransform);
-      // yield return null;
+      if (!TrySyncVehicleToParent(netView)) yield break;
       yield return new WaitForFixedUpdate();
 
       isWaitingForParentVehicleToBeReady = false;

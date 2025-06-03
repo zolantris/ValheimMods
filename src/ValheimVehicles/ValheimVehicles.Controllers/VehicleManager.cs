@@ -110,7 +110,7 @@
     public bool IsDestroying { get; private set; }
     public bool IsControllerValid { get; private set; }
 
-    public VehicleManager VehicleParent;
+    public VehicleManager? VehicleParent;
 
     public VehicleMovementController? MovementController { get; set; }
 

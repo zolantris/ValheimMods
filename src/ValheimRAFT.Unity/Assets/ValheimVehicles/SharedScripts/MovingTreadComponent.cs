@@ -467,7 +467,7 @@
             // set to piece layer allowing vehicle to hit this layer and land/board rafts.
             x.gameObject.layer = LayerHelpers.PieceLayer;
 
-            x.gameObject.name = "convex_tread_collider";
+            x.gameObject.name = PrefabNames.ConvexTreadCollider;
             x.includeLayers = LayerMask.GetMask("terrain", "piece", "Default", "static_solid");
             x.excludeLayers = LayerHelpers.RamColliderExcludeLayers;
             x.isTrigger = false;

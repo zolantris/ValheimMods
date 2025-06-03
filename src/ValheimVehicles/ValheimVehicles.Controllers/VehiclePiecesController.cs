@@ -685,6 +685,12 @@
       if ((bool)wntShip) wntShip.Destroy();
     }
 
+    public static bool CanRemoveRigidbodyFromChild(string name)
+    {
+      return !RamPrefabs.IsRam(name) &&
+             !name.Contains(PrefabNames.ShipAnchorWood) && !PrefabNames.IsVehicle(name) && !PrefabNames.IsVehiclePiecesCollider(name) && !name.StartsWith(PrefabNames.SwivelPrefabName);
+    }
+
     public void AddPiece(ZNetView netView, bool isNew = false)
     {
       if (IsInvalid()) return;
@@ -717,8 +723,7 @@
       }
 
       // Remove non-kinematic rigidbodies if not a ram
-      if (!RamPrefabs.IsRam(netView.name) &&
-          !netView.name.Contains(PrefabNames.ShipAnchorWood) && !PrefabNames.IsVehicle(name) && netView.name != PrefabNames.VehiclePiecesContainer && !netView.name.StartsWith(PrefabNames.SwivelPrefabName))
+      if (CanRemoveRigidbodyFromChild(netView.name))
       {
         var rbs = netView.GetComponentsInChildren<Rigidbody>();
         foreach (var rbsItem in rbs)

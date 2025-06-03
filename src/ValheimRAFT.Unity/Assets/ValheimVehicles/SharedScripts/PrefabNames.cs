@@ -256,6 +256,7 @@
       public static readonly string RamStakePrefix = $"{ValheimVehiclesPrefix}_ram_stake";
 
       public static readonly string ConvexHull = $"{ValheimVehiclesPrefix}_ConvexHull";
+      public static readonly string ConvexTreadCollider = $"{ValheimVehiclesPrefix}_convex_tread_collider";
 
       public static readonly string SwivelPrefabName = $"{ValheimVehiclesPrefix}_Swivel";
       public static readonly string SwivelAssetName = "swivel";
@@ -421,7 +422,17 @@
       {
         return objName.StartsWith(WaterVehicleBlockingCollider) ||
                objName.StartsWith(WaterVehicleFloatCollider) ||
-               objName.StartsWith(WaterVehicleOnboardCollider) || objName.StartsWith("convex_tread_collider") || objName.StartsWith("ValheimVehicles_ConvexHull");
+               objName.StartsWith(WaterVehicleOnboardCollider) || objName.StartsWith(ConvexHull);
+      }
+
+      public static bool IsVehiclePiecesCollider(string objName)
+      {
+        return objName.StartsWith(VehiclePiecesContainer);
+      }
+
+      public static bool IsVehicleTreadCollider(string objName)
+      {
+        return objName.StartsWith(ConvexTreadCollider);
       }
 
       public static bool IsHull(string goName)

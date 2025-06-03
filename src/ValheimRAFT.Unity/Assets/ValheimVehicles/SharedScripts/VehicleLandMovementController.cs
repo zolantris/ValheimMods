@@ -603,6 +603,11 @@
 
       public static float rotatingInPlaceTimeMultiplierVelocity = 10f;
       public static float rotatingInPlaceTimeMultiplierAngularVelocity = 10f;
+      public static Vector3 OVERRIDE_upwardsForce = new(0, 0.01f, 0);
+      public Vector3 GetUpwardsForce()
+      {
+        return OVERRIDE_upwardsForce;
+      }
 
       // New method: apply forces directly at the treads to simulate continuous treads
       private void ApplyTreadForces()
@@ -677,9 +682,7 @@
         }
 
         // var upwardsForce = transform.up * baseTorque * 0.01f;
-
-        // todo make this apply at front and back wheels depending on direction so the vehicle can ascend over terrain easily and not require wheels as much..
-        var upwardsForce = Vector3.zero;
+        var upwardsForce = GetUpwardsForce();
 
         var deltaTreads = Vector3.Distance(rightTreadPos, leftTreadPos);
 

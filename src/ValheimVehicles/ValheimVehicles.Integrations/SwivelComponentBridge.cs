@@ -59,19 +59,6 @@
     private PowerConsumerBridge powerConsumerIntegration;
     public static Dictionary<ZDO, SwivelComponentBridge> ZdoToComponent = new();
     public ZDO? _currentZdo;
-    // sync values
-    public static bool CanAllClientsSync = true;
-    public static bool ShouldSkipClientOnlyUpdate = true;
-    public static bool ShouldSyncClientOnlyUpdate = false;
-    private bool _isAuthoritativeMotionActive;
-    // private MotionState _motionState;
-    private double _motionStartTime;
-    private float _motionDuration;
-    private Vector3 _motionFromPosition;
-    private Vector3 _motionToPosition;
-    private Quaternion _motionFromRotation;
-    private Quaternion _motionToRotation;
-    protected bool _hasArrivedAtDestination = false;
 
     public override MotionState MotionState
     {
@@ -248,23 +235,26 @@
       base.Update();
     }
 
-
-    public override void FixedUpdate()
-    {
-      // if (!CanRunBaseUpdate()) return;
-      base.FixedUpdate();
-    }
-
     public IEnumerator GuardedMotionCheck()
     {
       while (isActiveAndEnabled)
       {
-        yield return null;
+        yield return new WaitForFixedUpdate();
         if (!powerConsumerIntegration)
         {
           yield return null;
           continue;
         }
+
+        // if we are mid motion. Wait for the motion to complete.
+        while (MotionState is MotionState.ToStart or MotionState.ToTarget)
+        {
+          yield return new WaitForFixedUpdate();
+        }
+
+        // wait for next fixed update so motion values can be set.
+        yield return new WaitForFixedUpdate();
+
         // guarded update on DemandState which can desync.
         if (MotionState is MotionState.AtStart or MotionState.AtTarget && powerConsumerIntegration && powerConsumerIntegration.IsDemanding && powerConsumerIntegration.Data.zdo != null && powerConsumerIntegration.Data.zdo.IsValid())
         {
@@ -411,6 +401,19 @@
       prefabConfigSync.Load();
     }
 
+    public override void OnTransformParentChanged()
+    {
+      if (transform.root != transform)
+      {
+        m_vehiclePiecesController = GetComponentInParent<VehiclePiecesController>();
+        if (m_vehiclePiecesController && m_vehicle != null && !m_vehicle.IsLandVehicle && m_vehicle.MovementController != null && m_vehicle.MovementController.m_mastObject != null)
+        {
+          windDirectionTransform = m_vehicle.MovementController.m_mastObject.transform;
+        }
+      }
+      base.OnTransformParentChanged();
+    }
+
     /// <summary>
     /// Inefficient no-cache way to update the debugger arrow. This is not meant to be called a bunch.
     /// </summary>
@@ -458,6 +461,7 @@
         swivelPowerConsumer.Data.Load();
       }
     }
+
     /// <summary>
     /// For interpolated eventing.
     /// </summary>
@@ -490,106 +494,10 @@
       }
     }
 
-
-    public override void SwivelUpdate()
+    public override double GetSyncedTime()
     {
-      if (_isAuthoritativeMotionActive)
-      {
-        var now = ZNet.instance != null ? ZNet.instance.GetTimeSeconds() : Time.time;
-        var t = Mathf.Clamp01((float)((now - _motionStartTime) / _motionDuration));
-
-        // Interpolate using Rigidbody moves (no snap!)
-        if (mode == SwivelMode.Move)
-          InterpolateAndMove(t, _motionFromLocalPos, _motionToLocalPos, _motionFromLocalRot, _motionFromLocalRot);
-        else if (mode == SwivelMode.Rotate)
-          InterpolateAndMove(t, _motionFromLocalPos, _motionFromLocalPos, _motionFromLocalRot, _motionToLocalRot);
-
-        return; // ***CRITICAL: do NOT run base.SwivelUpdate() during authority lerp!***
-      }
-
-      // Modes that bail early.
-      if (mode == SwivelMode.Rotate && currentMotionState == MotionState.AtTarget)
-      {
-        animatedTransform.localRotation = CalculateRotationTarget(1);
-        return;
-      }
-      if (mode == SwivelMode.Rotate && currentMotionState == MotionState.AtStart)
-      {
-        animatedTransform.localRotation = CalculateRotationTarget(0);
-        return;
-      }
-
-      if (mode == SwivelMode.Move && currentMotionState == MotionState.AtTarget)
-      {
-        animatedTransform.localPosition = startLocalPosition + movementOffset;
-        return;
-      }
-      if (mode == SwivelMode.Move && currentMotionState == MotionState.AtStart)
-      {
-        animatedTransform.localPosition = startLocalPosition;
-        return;
-      }
-      // base.SwivelUpdate();
-    }
-
-    public static float ComputeMotionDuration(SwivelCustomConfig config, MotionState direction)
-    {
-      // Match your speed multipliers—if you want to make these data-driven, add to config/ZDO!
-      const float MoveMultiplier = 0.2f;
-      const float RotateMultiplier = 3f;
-
-      // Safety clamp, never divide by zero
-      var speed = Mathf.Max(
-        config.InterpolationSpeed *
-        (config.Mode == SwivelMode.Move ? MoveMultiplier : RotateMultiplier),
-        0.001f
-      );
-
-      if (config.Mode == SwivelMode.Move)
-      {
-        // Always use start as base, plus MovementOffset
-        Vector3 from, to;
-        if (direction == MotionState.ToTarget)
-        {
-          from = Vector3.zero; // startLocalPosition is always zero in pure data configs
-          to = config.MovementOffset;
-        }
-        else
-        {
-          from = config.MovementOffset;
-          to = Vector3.zero;
-        }
-
-        var distance = Vector3.Distance(from, to);
-        return Mathf.Max(distance / speed, 0.01f); // Never less than 10ms
-      }
-      if (config.Mode == SwivelMode.Rotate)
-      {
-        // Calculate hingeEndEuler as your SwivelComponent does
-        var hingeEndEuler = Vector3.zero;
-        if ((config.HingeAxes & HingeAxis.X) != 0)
-          hingeEndEuler.x = config.MaxEuler.x;
-        if ((config.HingeAxes & HingeAxis.Y) != 0)
-          hingeEndEuler.y = config.MaxEuler.y;
-        if ((config.HingeAxes & HingeAxis.Z) != 0)
-          hingeEndEuler.z = config.MaxEuler.z;
-
-        Quaternion from, to;
-        if (direction == MotionState.ToTarget)
-        {
-          from = Quaternion.identity;
-          to = Quaternion.Euler(hingeEndEuler);
-        }
-        else
-        {
-          from = Quaternion.Euler(hingeEndEuler);
-          to = Quaternion.identity;
-        }
-        var angle = Quaternion.Angle(from, to); // in degrees
-        return Mathf.Max(angle / speed, 0.01f);
-      }
-      // fallback
-      return 0.01f;
+      var now = ZNet.instance != null ? ZNet.instance.GetTimeSeconds() : Time.time;
+      return now;
     }
 
     public void OnInitComplete()
@@ -660,7 +568,7 @@
 
     public bool CanRaycastHitPiece()
     {
-      return GetPieceCount() <= 0;
+      return GetPieceCount() > 0;
     }
 
     public static bool CanDestroySwivel(ZNetView? netView)

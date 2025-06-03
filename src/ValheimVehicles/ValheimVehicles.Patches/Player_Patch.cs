@@ -219,10 +219,12 @@
       if (canHitPiece)
       {
         // do not allow nested swivel item placement.
-        if (isSwivel && colliderRoot != genericPieceController.transform && colliderRoot.transform.name.StartsWith(PrefabNames.SwivelPrefabName))
-        {
-          return false;
-        }
+        // todo this might be okay. allowing it for now.
+
+        // if (isSwivel && colliderRoot != genericPieceController.transform && colliderRoot.transform.name.StartsWith(PrefabNames.SwivelPrefabName))
+        // {
+        //   return false;
+        // }
         return true;
       }
       return false;
