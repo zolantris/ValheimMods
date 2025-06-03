@@ -14,12 +14,12 @@ namespace ValheimVehicles.Integrations
   public class PowerConsumerBridge :
     PowerNetworkDataEntity<PowerConsumerBridge, PowerConsumerComponent, PowerConsumerData>
   {
-    public string NetworkId => Logic.NetworkId;
+    public string NetworkId => Data.NetworkId;
     public Vector3 Position => transform.position;
     public Vector3 ConnectorPoint => transform.position;
-    public bool IsActive => Logic.IsActive;
-    public bool IsDemanding => Logic.IsDemanding;
-    public bool IsPowerDenied => Logic.IsPowerDenied;
+    public bool IsActive => Data.IsActive;
+    public bool IsDemanding => Data.IsDemanding;
+    public bool IsPowerDenied => Data.CanRunConsumerForDeltaTime(1f);
 
     public void SetData(PowerConsumerData data)
     {

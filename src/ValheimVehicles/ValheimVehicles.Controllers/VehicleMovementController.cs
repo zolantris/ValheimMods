@@ -3416,6 +3416,11 @@
                                  !PropulsionConfig.SlowAndReverseWithoutControls
                                    .Value;
       if (isUncontrolledRowing) SendSpeedChange(DirectionChange.Stop);
+
+      if (vehicleRam != null)
+      {
+        vehicleRam.CanDamage = vehicleSpeed == Ship.Speed.Full;
+      }
     }
 
     private void SetTargetHeight(float val)
@@ -4383,6 +4388,11 @@
         default:
           Logger.LogWarning($"Recieved a unknown Ship.Speed, {vehicleSpeed}");
           break;
+      }
+
+      if (vehicleRam)
+      {
+        vehicleRam.CanDamage = vehicleSpeed == Ship.Speed.Full;
       }
     }
 

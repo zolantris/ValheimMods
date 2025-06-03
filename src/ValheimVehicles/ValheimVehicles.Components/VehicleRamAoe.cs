@@ -35,6 +35,9 @@ public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
   public bool IsVehicleRamType = false;
   private float RamDamageOverallMultiplier = 1f;
 
+  // a catch all to bail and not do damage. This can be set on vehicles to lock in damage at specific speeds and settings.
+  public bool CanDamage = true;
+
   // damages
   public int RamDamageToolTier;
   public float PercentageDamageToSelf = 0f;
@@ -682,6 +685,7 @@ public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
   /// <returns></returns>
   public bool IsReady()
   {
+    if (!CanDamage) return false;
     if (!isReadyForCollisions) return false;
     if (isRebuildingCollisions)
     {
