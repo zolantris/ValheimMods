@@ -4,6 +4,7 @@
   using System.Collections;
   using System.Collections.Generic;
   using System.Diagnostics;
+  using System.Diagnostics.CodeAnalysis;
   using System.Linq;
   using UnityEngine;
   using UnityEngine.Serialization;
@@ -20,6 +21,7 @@
   using ValheimVehicles.Shared.Constants;
   using ValheimVehicles.SharedScripts;
   using ValheimVehicles.Structs;
+  using ZdoWatcher;
   using Logger = Jotunn.Logger;
 
 #endregion
@@ -139,8 +141,6 @@
 
     private ShipFloatation? _currentShipFloatation;
 
-    private Coroutine? _debouncedForceTakeoverControlsInstance;
-
     // todo remove if unused or make this a getter. Might not be safe from null references though.
     // private GameObject _piecesContainer;
     private GameObject _ghostContainer;
@@ -207,6 +207,18 @@
     public static float maxHaulFollowDistance = 50f;
     public static float HaulingOffsetLowestPointBuffer = 1f;
     public float distanceMovedSinceHaulTick = 0f;
+
+
+    public float _lastParentPieceCollisionTimeExpiration = 5f;
+    public float _lastParentPieceCollisionTime = 0f;
+    public static float ParentSyncMinimumDelayInMs = 5000f;
+    // allows messaging when power updates. It is unthrottled though.
+    private bool _hasPower = false;
+
+    // routines
+    private CoroutineHandle _parentReadyRoutine;
+    private CoroutineHandle _isWithinParentRoutine;
+    private CoroutineHandle _debouncedForceTakeoverControlsInstance;
 
     public AnchorState vehicleAnchorState
     {
@@ -284,6 +296,10 @@
     internal override void Awake()
     {
       AwakeSetupShipComponents();
+      _parentReadyRoutine = new CoroutineHandle(this);
+      _isWithinParentRoutine = new CoroutineHandle(this);
+      _debouncedForceTakeoverControlsInstance = new CoroutineHandle(this);
+
       DamageColliders = VehicleManager.GetVehicleMovementDamageColliders(transform);
       m_nview = GetComponent<ZNetView>();
 
@@ -465,10 +481,18 @@
       if (PrefabNames.IsVehiclePiecesCollider(collision.collider.name))
       {
         var otherVPC = collision.collider.GetComponentInParent<VehiclePiecesController>();
-        if (!otherVPC) return true;
+        if (!otherVPC) return false;
+
+        // skip collisions on same manager
         if (otherVPC.Manager == Manager) return true;
 
-        // do not allow different ship types to collide.
+        // we must set this in order to detect if we are still colliding with the same vehicle
+        if (Manager.VehicleParent != null && otherVPC.Manager.PersistentZdoId == Manager.VehicleParent.PersistentZdoId)
+        {
+          _lastParentPieceCollisionTime = Time.time;
+        }
+
+        // skip collisions on different ship types. Only same type vehicles can collide.
         if (otherVPC.Manager.IsLandVehicle != Manager.IsLandVehicle) return true;
       }
 
@@ -481,8 +505,8 @@
       if (collision.collider.gameObject.layer == LayerHelpers.TerrainLayer) return;
 
       if (TryAddVehicleWithinBoat(collision)) return;
-      if (IsSwivelCollision(collision)) return;
       if (TryBailOnCollisionOfDifferentVehicleType(collision)) return;
+      if (IsSwivelCollision(collision)) return;
 
       if (LayerHelpers.IsContainedWithinLayerMask(collision.collider.gameObject.layer, LayerHelpers.PhysicalLayerMask))
       {
@@ -543,25 +567,79 @@
       return Manager.PowerConsumerData?.CanRunConsumerForDeltaTime(1f) ?? false;
     }
 
-    // allows messaging when power updates. It is unthrottled though.
-    private bool _hasPower = false;
 
     public void OnParentReady(VehicleManager vehicleParent)
     {
-      StartCoroutine(SyncToParentPosition(vehicleParent));
+      if (_parentReadyRoutine.IsRunning) return;
+      _parentReadyRoutine.Start(SyncToParentPosition(vehicleParent));
     }
 
-    public static float ParentSyncMinimumDelayInMs = 5000f;
-
-    /// <summary>
-    /// - raycast or check if still within a boundary of the parent. Maybe just by doing a manual box collider check.
-    /// - additionally we need to confirm that the vehicle is not just left and returned.
-    /// - WIP: We likely need a box collider dedicated to this.
-    /// </summary>
-    /// <returns></returns>
-    public IEnumerator CheckIfVehicleIsOnParent()
+    public void StartCheckIfWithinVehicleRoutine()
     {
-      if (Manager.VehicleParent == null) yield break;
+      if (_isWithinParentRoutine.IsRunning) return;
+      _isWithinParentRoutine.Start(CheckIfWithinVehicleRoutine());
+    }
+
+    public static bool TryGetVehicleParent(ZNetView? netView, [NotNullWhen(true)] out VehicleManager? _parentManager)
+    {
+      _parentManager = null;
+      if (netView == null || !netView.IsValid()) return false;
+
+      var parentId = netView.GetZDO().GetInt(VehicleZdoVars.MBParentId, 0);
+      if (parentId == 0 || ZdoWatchController.Instance == null) return false;
+
+      var parentInstance = ZdoWatchController.Instance.GetInstance(parentId);
+      if (parentInstance == null) return false;
+
+      var parentInstanceManager = parentInstance.GetComponent<VehicleManager>();
+      if (parentInstanceManager == null) return false;
+
+      _parentManager = parentInstanceManager;
+      return true;
+    }
+
+    public void UpdateVehicleParent()
+    {
+      if (_lastParentPieceCollisionTime < _lastParentPieceCollisionTime + _lastParentPieceCollisionTimeExpiration)
+      {
+        return;
+      }
+
+      RemoveParentManager();
+    }
+
+    public void RemoveParentManager()
+    {
+      isWaitingForParentVehicleToBeReady = false;
+      Manager.VehicleParent = null;
+      if (!this.IsNetViewValid(out var netView)) return;
+      VehiclePiecesController.RemoveVehicleDataFromZdo(netView.GetZDO());
+    }
+
+    public IEnumerator CheckIfWithinVehicleRoutine()
+    {
+      while (isWaitingForParentVehicleToBeReady || Manager.VehicleParent != null)
+      {
+        if (!Manager.VehicleParent)
+        {
+          if (!TryGetVehicleParent(Manager.m_nview, out var parentManager))
+          {
+            RemoveParentManager();
+            yield break;
+          }
+          isWaitingForParentVehicleToBeReady = true;
+          Manager.VehicleParent = parentManager;
+
+          if (_parentReadyRoutine.IsRunning) _parentReadyRoutine.Stop();
+          OnParentReady(Manager.VehicleParent);
+        }
+        else
+        {
+          UpdateVehicleParent();
+          if (!isWaitingForParentVehicleToBeReady && Manager.VehicleParent == null) yield break;
+        }
+        yield return new WaitForSeconds(1f);
+      }
     }
 
     public bool TrySyncVehicleToParent(ZNetView netView)
@@ -576,9 +654,7 @@
         if (deltaDistance > 80f)
         {
           LoggerProvider.LogWarning("The parent is way further than expected {. This is likely a bug or the vehicle is not nearby. Removing vehicle from parent.");
-          isWaitingForParentVehicleToBeReady = false;
-          Manager.VehicleParent = null;
-          VehiclePiecesController.RemoveVehicleDataFromZdo(netView.GetZDO());
+          RemoveParentManager();
           return false;
         }
         return true;
@@ -649,9 +725,7 @@
 
       if (!IsActivatedThis() || !IsActivatedOther())
       {
-        isWaitingForParentVehicleToBeReady = false;
-        Manager.VehicleParent = null;
-        VehiclePiecesController.RemoveVehicleDataFromZdo(netView.GetZDO());
+        RemoveParentManager();
         yield break;
       }
 
@@ -706,6 +780,12 @@
       {
         m_body.isKinematic = true;
         return;
+      }
+
+      // we need to ensure this routine is running if there is a vehicle parent.
+      if (isWaitingForParentVehicleToBeReady || HasInitializedParentVehicle)
+      {
+        StartCheckIfWithinVehicleRoutine();
       }
 
       // nested vehicles always must wait for parent.
@@ -3589,8 +3669,7 @@
     /// </summary>
     public void CancelDebounceTakeoverControls()
     {
-      if (_debouncedForceTakeoverControlsInstance != null)
-        StopCoroutine(_debouncedForceTakeoverControlsInstance);
+      _debouncedForceTakeoverControlsInstance.Stop();
     }
 
     public void SendRequestControl(long playerId)
@@ -3614,8 +3693,7 @@
       if (m_nview == null || ZNet.instance == null) return;
       CancelDebounceTakeoverControls();
 
-      _debouncedForceTakeoverControlsInstance =
-        StartCoroutine(DebouncedForceTakeoverControls(targetPlayerId));
+      _debouncedForceTakeoverControlsInstance.Start(DebouncedForceTakeoverControls(targetPlayerId));
 
       var previousUserId = GetUser();
       var isInBoat = WaterZoneUtils.IsOnboard(Player.GetPlayer(targetPlayerId));
