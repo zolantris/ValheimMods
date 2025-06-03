@@ -2400,6 +2400,8 @@
 
     public bool TryBailOnSameObject(GameObject obj)
     {
+      if (!obj) return true;
+      if (!Manager) return true;
       if (obj == gameObject || obj == Manager.gameObject) return true;
       return false;
     }

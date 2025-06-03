@@ -211,7 +211,8 @@
 
     public float _lastParentPieceCollisionTimeExpiration = 5f;
     public float _lastParentPieceCollisionTime = 0f;
-    public static float ParentSyncMinimumDelayInMs = 5000f;
+    public static float ParentSyncMinimumDelayInMs = 10f;
+    public static float ParentSyncMaxDelayInMs = 10000f;
     // allows messaging when power updates. It is unthrottled though.
     private bool _hasPower = false;
 
@@ -476,24 +477,38 @@
       return handled;
     }
 
-    public bool TryBailOnCollisionOfDifferentVehicleType(Collision collision)
+    public bool TryBailOnCollisionOfDifferentVehicleType(Collider collider)
     {
-      if (PrefabNames.IsVehiclePiecesCollider(collision.collider.name))
+      if (!collider || !collider.attachedRigidbody) return false;
+      VehicleManager? otherVehicleManager = null;
+
+      if (PrefabNames.IsVehiclePiecesCollider(collider.attachedRigidbody.name))
       {
-        var otherVPC = collision.collider.GetComponentInParent<VehiclePiecesController>();
-        if (!otherVPC) return false;
+        var otherVPC = collider.GetComponentInParent<VehiclePiecesController>();
+        if (otherVPC)
+        {
+          otherVehicleManager = otherVPC.Manager;
+        }
+      }
+      else if (PrefabNames.IsVehiclePiecesCollider(collider.attachedRigidbody.name) || PrefabNames.IsVehicleCollider(collider.attachedRigidbody.name) || PrefabNames.IsVehicleTreadCollider(collider.attachedRigidbody.name))
+      {
+        var manager = collider.GetComponentInParent<VehicleManager>();
+        if (manager)
+        {
+          otherVehicleManager = manager;
+        }
+      }
 
-        // skip collisions on same manager
-        if (otherVPC.Manager == Manager) return true;
-
+      if (otherVehicleManager != null)
+      {
         // we must set this in order to detect if we are still colliding with the same vehicle
-        if (Manager.VehicleParent != null && otherVPC.Manager.PersistentZdoId == Manager.VehicleParent.PersistentZdoId)
+        if (Manager.VehicleParent != null && otherVehicleManager.PersistentZdoId == Manager.VehicleParent.PersistentZdoId)
         {
           _lastParentPieceCollisionTime = Time.time;
         }
 
         // skip collisions on different ship types. Only same type vehicles can collide.
-        if (otherVPC.Manager.IsLandVehicle != Manager.IsLandVehicle) return true;
+        if (otherVehicleManager.IsLandVehicle != Manager.IsLandVehicle) return true;
       }
 
       return false;
@@ -505,7 +520,7 @@
       if (collision.collider.gameObject.layer == LayerHelpers.TerrainLayer) return;
 
       if (TryAddVehicleWithinBoat(collision)) return;
-      if (TryBailOnCollisionOfDifferentVehicleType(collision)) return;
+      if (TryBailOnCollisionOfDifferentVehicleType(collision.collider)) return;
       if (IsSwivelCollision(collision)) return;
 
       if (LayerHelpers.IsContainedWithinLayerMask(collision.collider.gameObject.layer, LayerHelpers.PhysicalLayerMask))
@@ -516,7 +531,13 @@
 
     public bool IsSwivelCollision(Collision collision)
     {
-      return collision.rigidbody && collision.rigidbody.name.StartsWith("animated") && collision.rigidbody.transform.parent.name.StartsWith(PrefabNames.SwivelPrefabName);
+      if (collision.rigidbody && collision.rigidbody.name.StartsWith(PrefabNames.SwivelPrefabName)) return true;
+      return false;
+    }
+
+    public bool IsSwivelCollision(Collider collider)
+    {
+      return collider.GetComponentInParent<SwivelComponent>() != null;
     }
 
 //     private void OnCollisionStay(Collision collision)
@@ -558,6 +579,8 @@
     {
       if (vehicleRam == null) return;
       if (collider.gameObject.layer == LayerHelpers.TerrainLayer) return;
+      if (TryBailOnCollisionOfDifferentVehicleType(collider)) return;
+      if (IsSwivelCollision(collider)) return;
       vehicleRam.OnTriggerEnterHandler(collider);
     }
 
@@ -600,7 +623,7 @@
 
     public void UpdateVehicleParent()
     {
-      if (_lastParentPieceCollisionTime < _lastParentPieceCollisionTime + _lastParentPieceCollisionTimeExpiration)
+      if (Time.time < _lastParentPieceCollisionTime + _lastParentPieceCollisionTimeExpiration)
       {
         return;
       }
@@ -702,9 +725,14 @@
 
       // coroutine evaluation local methods
 
-      bool IsExpired()
+      bool IsMinimumWaitComplete()
       {
         return timer.ElapsedMilliseconds > ParentSyncMinimumDelayInMs;
+      }
+
+      bool IsExpired()
+      {
+        return timer.ElapsedMilliseconds > ParentSyncMaxDelayInMs;
       }
 
       bool IsActivatedThis()
@@ -717,7 +745,8 @@
         return Manager.VehicleParent != null && Manager.VehicleParent.PiecesController != null && Manager.VehicleParent.PiecesController.isInitialPieceActivationComplete && Manager.VehicleParent.PiecesController.m_convexHullAPI.convexHullMeshColliders.Count > 0;
       }
 
-      while (!IsExpired())
+      // false || true
+      while (!IsMinimumWaitComplete() || !IsExpired() && (!IsActivatedThis() || !IsActivatedOther()))
       {
         if (!TrySyncVehicleToParent(netView)) yield break;
         yield return new WaitForFixedUpdate();

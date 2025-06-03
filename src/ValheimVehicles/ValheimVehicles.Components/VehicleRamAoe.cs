@@ -566,6 +566,7 @@ public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
   {
     if (!collider) return true;
 
+    var colliderObj = collider.gameObject;
     VehiclePiecesController? vehiclePiecesController = null;
 
     if (!RamConfig.CanHitSwivels.Value && collider.GetComponentInParent<SwivelComponent>())
@@ -573,7 +574,26 @@ public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
       return true;
     }
 
-    var colliderObj = collider.gameObject;
+    if (m_vehicle != null)
+    {
+      if (m_vehicle.MovementController != null && m_vehicle.MovementController.TryBailOnCollisionOfDifferentVehicleType(collider))
+      {
+        // do not ignore collisions. This would make the vehicle phase through when we want it to be able to board.
+        return true;
+      }
+    }
+
+    // do not ignore just skip terrain calcs.
+    if (collider.gameObject.layer == LayerHelpers.TerrainLayer) return false;
+
+    if (!LayerHelpers.IsContainedWithinLayerMask(colliderObj.layer, LayerHelpers.PhysicalLayerMask))
+    {
+#if DEBUG
+      // LoggerProvider.LogDebug($"Ignoring layer {colliderObj.layer} for gameobject {colliderObj.name} because it is not within PhysicalLayer mask.");
+#endif
+      IgnoreCollider(collider);
+      return false;
+    }
 
     if (colliderObj.layer == LayerHelpers.ItemLayer)
     {
@@ -592,15 +612,6 @@ public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
       }
       IgnoreCollider(collider);
       return true;
-    }
-
-    if (!LayerHelpers.IsContainedWithinLayerMask(colliderObj.layer, LayerHelpers.PhysicalLayerMask))
-    {
-#if DEBUG
-      // LoggerProvider.LogDebug($"Ignoring layer {colliderObj.layer} for gameobject {colliderObj.name} because it is not within PhysicalLayer mask.");
-#endif
-      IgnoreCollider(collider);
-      return false;
     }
 
     if (PrefabNames.IsVehicleCollider(collider.name))

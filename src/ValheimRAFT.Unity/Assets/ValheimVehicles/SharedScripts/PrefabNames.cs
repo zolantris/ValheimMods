@@ -422,7 +422,7 @@
       {
         return objName.StartsWith(WaterVehicleBlockingCollider) ||
                objName.StartsWith(WaterVehicleFloatCollider) ||
-               objName.StartsWith(WaterVehicleOnboardCollider) || objName.StartsWith(ConvexHull);
+               objName.StartsWith(WaterVehicleOnboardCollider) || objName.StartsWith(ConvexHull) || objName.StartsWith("ConvexHull_Preview_damage_trigger");
       }
 
       public static bool IsVehiclePiecesCollider(string objName)

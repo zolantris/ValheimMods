@@ -24,7 +24,7 @@ namespace ValheimVehicles.SharedScripts
 
     public void Start(IEnumerator routine)
     {
-      Stop(); // Only one at a time.
+      Stop();
       _coroutine = _owner.StartCoroutine(Wrap(routine));
     }
 
@@ -37,11 +37,16 @@ namespace ValheimVehicles.SharedScripts
       }
     }
 
-    // The magic: ensures _coroutine is null at the end, even on yield break.
     private IEnumerator Wrap(IEnumerator routine)
     {
-      yield return routine; // Whatever exit path, this runs after.
-      _coroutine = null;
+      try
+      {
+        yield return routine;
+      }
+      finally
+      {
+        _coroutine = null;
+      }
     }
   }
 }
