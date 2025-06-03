@@ -490,7 +490,7 @@
           otherVehicleManager = otherVPC.Manager;
         }
       }
-      else if (PrefabNames.IsVehiclePiecesCollider(collider.attachedRigidbody.name) || PrefabNames.IsVehicleCollider(collider.attachedRigidbody.name) || PrefabNames.IsVehicleTreadCollider(collider.attachedRigidbody.name))
+      else if (PrefabNames.IsVehicleCollider(collider.name) || PrefabNames.IsVehicleTreadCollider(collider.name) || PrefabNames.IsVehicleTreadCollider(collider.attachedRigidbody.name) || PrefabNames.IsVehicle(collider.attachedRigidbody.name))
       {
         var manager = collider.GetComponentInParent<VehicleManager>();
         if (manager)
