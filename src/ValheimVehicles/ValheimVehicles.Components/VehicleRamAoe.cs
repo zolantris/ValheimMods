@@ -521,15 +521,34 @@ public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
     }
   }
 
-  private void IgnoreCollider(Collider collider)
+  private void IgnoreCollider(Collider collider, bool IsRetry = false)
   {
-    if (m_collidersCache.Count == 0)
+    var shouldRetry = false;
+    if (m_collidersCache.Count == 0 || IsRetry)
     {
       UpdateColliderCache();
     }
 
     foreach (var childCollider in m_collidersCache)
+    {
+      if (childCollider == null)
+      {
+        shouldRetry = true;
+
+        // if retry do not break again if suddenly getting a null on the retry.
+        if (!IsRetry)
+        {
+          break;
+        }
+        continue;
+      }
       Physics.IgnoreCollision(childCollider, collider, true);
+    }
+
+    if (!IsRetry && shouldRetry)
+    {
+      IgnoreCollider(collider, true);
+    }
   }
 
   public void UpdateReloadingTime()
@@ -604,7 +623,7 @@ public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
     if (vehicleId == m_vehicle.PersistentZdoId) return true;
 
     // is a child collider hitting parent. These colliders should be ignored/never fire again.
-    if (m_vehicle.VehicleParent != null)
+    if (m_vehicle.VehicleParent != null && VehicleManager.VehicleChildToParentMap.ContainsKey(vehicleId))
     {
       if (vehicleId == m_vehicle.VehicleParent.PersistentZdoId)
       {
@@ -657,12 +676,12 @@ public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
       return false;
     }
 
-    if (!RamConfig.CanHitSwivels.Value && collider.GetComponentInParent<SwivelComponent>())
+    if (TryIgnoreVehicleCollider(collider))
     {
       return true;
     }
 
-    if (TryIgnoreVehicleCollider(collider))
+    if (!RamConfig.CanHitSwivels.Value && collider.GetComponentInParent<SwivelComponent>())
     {
       return true;
     }

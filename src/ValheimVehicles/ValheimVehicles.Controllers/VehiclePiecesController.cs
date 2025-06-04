@@ -1304,8 +1304,8 @@
         var nv = m_pieces[index];
         if (!nv || !nv.IsValid())
         {
-          Logger.LogError(
-            $"Error found with m_pieces: netview {nv}, save removing the piece");
+          LoggerProvider.LogDebugDebounced(
+            $"Null netview found with m_pieces: netview, safe removing the piece");
           m_pieces.FastRemoveAt(ref index);
           continue;
         }

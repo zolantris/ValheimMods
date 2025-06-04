@@ -112,6 +112,59 @@
 
     public VehicleManager? VehicleParent;
 
+    // 1:many
+    public static Dictionary<int, HashSet<int>> VehicleParentToChildrenMap = new();
+    // 1:1
+    public static Dictionary<int, int> VehicleChildToParentMap = new();
+
+    public static void AddVehicleChildToParentMap(int childManagerId, int parentManagerId)
+    {
+      if (!VehicleParentToChildrenMap.TryGetValue(parentManagerId, out var childrenIds))
+      {
+        VehicleParentToChildrenMap[childManagerId] = new HashSet<int> { childManagerId };
+      }
+      else
+      {
+        if (!childrenIds.Contains(childManagerId))
+        {
+          childrenIds.Add(childManagerId);
+        }
+      }
+
+      // 1:1 always.
+      VehicleChildToParentMap[childManagerId] = parentManagerId;
+    }
+
+    public static void RemoveVehicleChildToParentMap(int childManagerId, int parentManagerId)
+    {
+      if (VehicleParentToChildrenMap.TryGetValue(parentManagerId, out var childrenIds))
+      {
+        if (childrenIds.Contains(childManagerId))
+          childrenIds.Remove(childManagerId);
+      }
+      VehicleChildToParentMap.Remove(parentManagerId);
+    }
+
+    public static void AddVehicleParent(VehicleManager parentManager, VehicleManager childManager)
+    {
+      parentManager.PiecesController.AddNewPiece(childManager.Manager.m_nview);
+      var parentId = childManager.m_nview.GetZDO().GetInt(VehicleZdoVars.MBParentId, 0);
+      if (parentId == 0) return;
+      AddVehicleChildToParentMap(childManager.PersistentZdoId, parentId);
+    }
+
+    public static void RemoveVehicleParent(VehicleManager childManager)
+    {
+      if (childManager == null || childManager.MovementController == null) return;
+
+      var parentId = childManager.m_nview.GetZDO().GetInt(VehicleZdoVars.MBParentId, 0);
+      VehiclePiecesController.RemoveVehicleDataFromZdo(childManager.m_nview.GetZDO());
+      RemoveVehicleChildToParentMap(childManager.PersistentZdoId, parentId);
+
+      childManager.VehicleParent = null;
+      childManager.MovementController.isWaitingForParentVehicleToBeReady = false;
+    }
+
     public VehicleMovementController? MovementController { get; set; }
 
     private VehicleConfigSyncComponent _vehicleConfigSync = null!;
