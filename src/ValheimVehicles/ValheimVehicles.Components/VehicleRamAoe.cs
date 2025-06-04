@@ -13,6 +13,7 @@ using ValheimVehicles.SharedScripts;
 using ValheimVehicles.Structs;
 using ValheimVehicles.Components;
 using ValheimVehicles.Shared.Constants;
+using ValheimVehicles.SharedScripts.Helpers;
 using Logger = Jotunn.Logger;
 
 namespace ValheimVehicles.Helpers;
@@ -78,6 +79,23 @@ public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
 
   public static List<string> PiecesToMoveOnToVehicle = ["Cart", "Catapult", PrefabNames.LandVehicle];
   public static Regex ExclusionPattern;
+
+  public static readonly Dictionary<Collider, int> ColliderVehicleIdMap = new();
+  public static readonly List<Collider> m_collidersCache = new();
+
+  public static void RegisterVehicleColliders(VehicleManager vehicle)
+  {
+    var id = vehicle.PersistentZdoId;
+    foreach (var collider in vehicle.GetComponentsInChildren<Collider>(true))
+    {
+      if (!collider) continue;
+      // var colliderName = collider.name;
+
+      // todo possibly skip treads in this map. Or make a dictionary to skip on certain conditions. 
+      // if (PrefabNames.IsVehicleTreadCollider(colliderName)) continue;
+      ColliderVehicleIdMap[collider] = id;
+    }
+  }
 
   public float GetMinimumVelocityToTriggerRam()
   {
@@ -223,6 +241,11 @@ public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
     base.OnDisable();
   }
 
+  public void OnDestroy()
+  {
+    ColliderVehicleIdMap.RemoveNullKeys();
+  }
+
   public void Start()
   {
     // must initialize after Awake so we can set these values after AddComponent is called.
@@ -235,6 +258,8 @@ public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
   public override void OnEnable()
   {
     if (!RamInstances.Contains(this)) RamInstances.Add(this);
+
+    UpdateColliderCache();
 
     Invoke(nameof(UpdateReadyForCollisions), 1f);
     base.OnEnable();
@@ -498,8 +523,12 @@ public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
 
   private void IgnoreCollider(Collider collider)
   {
-    var childColliders = GetComponentsInChildren<Collider>();
-    foreach (var childCollider in childColliders)
+    if (m_collidersCache.Count == 0)
+    {
+      UpdateColliderCache();
+    }
+
+    foreach (var childCollider in m_collidersCache)
       Physics.IgnoreCollision(childCollider, collider, true);
   }
 
@@ -560,6 +589,33 @@ public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
     return false;
   }
 
+  public void UpdateColliderCache()
+  {
+    GetComponentsInChildren(true, m_collidersCache);
+  }
+
+  public bool TryIgnoreVehicleCollider(Collider collider)
+  {
+    if (m_vehicle == null || m_vehicle.PiecesController == null) return false;
+    if (!ColliderVehicleIdMap.TryGetValue(collider, out var vehicleId)) return false;
+    // add additional logic if necessary. (Might need more parent checks)
+
+    // same vehicle.
+    if (vehicleId == m_vehicle.PersistentZdoId) return true;
+
+    // is a child collider hitting parent. These colliders should be ignored/never fire again.
+    if (m_vehicle.VehicleParent != null)
+    {
+      if (vehicleId == m_vehicle.VehicleParent.PersistentZdoId)
+      {
+        IgnoreCollider(collider);
+        return true;
+      }
+    }
+
+    return false;
+  }
+
   /// <summary>
   /// Ignores anything within the current vehicle and other vehicle movement/float/onboard colliders 
   /// </summary>
@@ -570,11 +626,6 @@ public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
     if (!collider) return true;
 
     VehiclePiecesController? vehiclePiecesController = null;
-
-    if (!RamConfig.CanHitSwivels.Value && collider.GetComponentInParent<SwivelComponent>())
-    {
-      return true;
-    }
 
     var colliderObj = collider.gameObject;
 
@@ -606,9 +657,13 @@ public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
       return false;
     }
 
-    if (PrefabNames.IsVehicleCollider(collider.name))
+    if (!RamConfig.CanHitSwivels.Value && collider.GetComponentInParent<SwivelComponent>())
     {
-      IgnoreCollider(collider);
+      return true;
+    }
+
+    if (TryIgnoreVehicleCollider(collider))
+    {
       return true;
     }
 

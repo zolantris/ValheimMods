@@ -3153,6 +3153,13 @@
       }
 
       OnBoundsChangeUpdateShipColliders();
+
+      // ensures the ram colliders have up to data collision maps.
+      if (MovementController != null && MovementController.vehicleRam != null)
+      {
+        VehicleRamAoe.RegisterVehicleColliders(Manager);
+        MovementController.vehicleRam.UpdateColliderCache();
+      }
     }
 
     /// <summary>
