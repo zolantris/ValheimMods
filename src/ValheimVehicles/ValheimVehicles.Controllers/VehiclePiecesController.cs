@@ -77,6 +77,8 @@
     /// </summary>
     public static Dictionary<int, List<ZNetView>> m_pendingPieces = new();
     public static Dictionary<int, List<ActivationPieceData>> m_pendingTempPieces = new();
+    public static readonly Dictionary<Collider, int> m_prefabPieceColliderToIdMap = new();
+
 
     public static Dictionary<int, List<ZDO>> m_allPieces = new();
 
@@ -515,6 +517,18 @@
 
       IncrementPieceRevision();
       UpdateMass(netView, true);
+
+      if (m_prefabPieceDataItems.TryGetValue(netView.gameObject, out var pieceData))
+      {
+        foreach (var pieceDataAllCollider in pieceData.AllColliders)
+        {
+          m_prefabPieceColliderToIdMap.Remove(pieceDataAllCollider);
+        }
+      }
+
+      m_prefabPieceColliderToIdMap.RemoveNullKeys();
+      VehicleRamAoe.ColliderVehicleIdMap.RemoveNullKeys();
+
       OnPieceRemoved(netView.gameObject);
 
       if (PrefabNames.IsHull(netView.gameObject)) m_hullPieces.Remove(netView);
@@ -674,7 +688,6 @@
         UpdatePieceCount();
         cachedTotalSailArea = 0f;
       }
-
 
       var pieceCount = GetPieceCount();
 
@@ -3020,6 +3033,7 @@
     public void IgnoreAllVehicleCollidersForGameObjectChildren(GameObject gameObject)
     {
       var colliders = gameObject.GetComponentsInChildren<Collider>(true);
+
       // characters should not skip hitting treads. If this happens we would have to track them so they do not fall on the treads and go through them when exiting vehicle after first time on vehicle.
       var character = gameObject.GetComponentInParent<Character>();
       var isCharacter = character != null;
@@ -3029,6 +3043,7 @@
       Manager.GetComponentsInChildren<Collider>(true, allVehicleColliders);
       foreach (var collider in colliders)
       {
+        m_prefabPieceColliderToIdMap[collider] = PersistentZdoId;
         foreach (var allVehicleCollider in allVehicleColliders)
         {
           if (collider.name.StartsWith("tread") && isCharacter)

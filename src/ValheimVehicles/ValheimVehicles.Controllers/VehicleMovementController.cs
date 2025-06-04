@@ -281,9 +281,12 @@
     public bool CanDescend =>
       WaterConfig.WaterBallastEnabled.Value && IsNotFlying || IsFlying();
 
+    public FrozenRigidbodySync? _frozenSync;
+
     internal override void Awake()
     {
       AwakeSetupShipComponents();
+      _parentSyncRoutine = new CoroutineHandle(this);
       DamageColliders = VehicleManager.GetVehicleMovementDamageColliders(transform);
       m_nview = GetComponent<ZNetView>();
 
@@ -428,7 +431,9 @@
         m_body.velocity = Vector3.zero;
         m_body.angularVelocity = Vector3.zero;
         // nest the vehicle. This will not parent it, but it will bind the piece to the parent position, ensuring things are accurately synced.
-        Manager.PiecesController.AddNewPiece(otherManager.Manager.m_nview);
+        // Manager.PiecesController.AddNewPiece(otherManager.Manager.m_nview);
+
+        VehicleManager.AddVehicleParent(Manager, otherManager.Manager);
 
         var otherPieceDataItems = otherManager.PiecesController.m_prefabPieceDataItems.Values;
         var thisPiecesDataItems = PiecesController.m_prefabPieceDataItems.Values;
@@ -545,10 +550,12 @@
 
     // allows messaging when power updates. It is unthrottled though.
     private bool _hasPower = false;
+    private CoroutineHandle _parentSyncRoutine;
 
     public void OnParentReady(VehicleManager vehicleParent)
     {
-      StartCoroutine(SyncToParentPosition(vehicleParent));
+      if (_parentSyncRoutine.IsRunning) return;
+      _parentSyncRoutine.Start(SyncToParentPosition(vehicleParent));
     }
 
     public static float ParentSyncMinimumDelayInMs = 5000f;
@@ -605,8 +612,9 @@
 
       isWaitingForParentVehicleToBeReady = true;
       m_body.isKinematic = true;
-
       Manager.VehicleParent = vehicleParent;
+
+      TryAddOrRemoveFrozenSync();
       // do not immediately run. This lets unity run an update loop
       yield return new WaitForFixedUpdate();
 
@@ -661,6 +669,35 @@
       isWaitingForParentVehicleToBeReady = false;
     }
 
+    public static float velocityFreezeTarget = 2f;
+
+    public bool TryUpdateFrozenSyncFromVelocity()
+    {
+      if (_frozenSync == null) return false;
+      var isAboveNonKinematicVelocity = _frozenSync.m_targetBody.velocity.magnitude > velocityFreezeTarget;
+
+      if (!_frozenSync.isFrozen && isAboveNonKinematicVelocity)
+      {
+        m_body.isKinematic = true;
+        _frozenSync.SetFrozenState(true);
+        return true;
+      }
+
+      if (_frozenSync.isFrozen && !isAboveNonKinematicVelocity)
+      {
+        m_body.isKinematic = false;
+        _frozenSync.SetFrozenState(false);
+        return false;
+      }
+
+      if (_frozenSync.isFrozen)
+      {
+        _frozenSync?.FixedUpdate();
+      }
+
+      return false;
+    }
+
     public void GuardedFixedUpdate(float deltaTime)
     {
       if (VehicleDebugConfig.AutoShowVehicleColliders.Value &&
@@ -671,6 +708,8 @@
             Vector3.up * TargetHeight);
         DebugTargetHeightObj.transform.localScale = FloatCollider!.size;
       }
+
+      TryUpdateFrozenSyncFromVelocity();
 
       if (PiecesController == null || PiecesController.m_pieces.Count < 1) return;
 
@@ -712,6 +751,11 @@
       if (isWaitingForParentVehicleToBeReady)
       {
         m_body.isKinematic = true;
+        return;
+      }
+
+      if (_frozenSync != null && _frozenSync.isFrozen)
+      {
         return;
       }
 
@@ -1437,6 +1481,22 @@
       }
     }
 
+    public void TryAddOrRemoveFrozenSync()
+    {
+      if (Manager.VehicleParent && Manager.VehicleParent.MovementController && Manager.VehicleParent.MovementController.m_body)
+      {
+        if (_frozenSync == null)
+        {
+          _frozenSync = new FrozenRigidbodySync();
+        }
+        _frozenSync.Init(m_body, Manager.VehicleParent.MovementController.m_body);
+      }
+      else
+      {
+        _frozenSync = null;
+      }
+    }
+
     public void Setup()
     {
       // this delay is added to prevent added items from causing collisions in the brief moment they are not ignoring collisions.
@@ -1445,6 +1505,8 @@
       if (!m_nview) m_nview = GetComponent<ZNetView>();
 
       if (!m_body) m_body = GetComponent<Rigidbody>();
+
+      TryAddOrRemoveFrozenSync();
 
       var zdoAnchorState =
         (AnchorState)m_nview.GetZDO()

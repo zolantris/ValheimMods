@@ -24,9 +24,19 @@ namespace ValheimVehicles.SharedScripts
       _owner = owner;
     }
 
-    public void Start(IEnumerator routine)
+    /// <summary>
+    /// Only allow a single instance of the routine to run. By default it will restart the current routine.
+    /// </summary>
+    public void Start(IEnumerator routine, bool shouldStop = true)
     {
-      Stop();
+      if (shouldStop)
+      {
+        Stop();
+      }
+      if (IsRunning)
+      {
+        return;
+      }
       _coroutine = _owner.StartCoroutine(Wrap(routine));
     }
 

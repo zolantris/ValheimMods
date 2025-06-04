@@ -357,7 +357,8 @@
     {
 
       // do not add a swivel within a swivel. This could cause some really weird behaviors so it's not supported.
-      if (netView.name.StartsWith(PrefabNames.SwivelPrefabName)) return;
+      // if (netView.name.StartsWith(PrefabNames.SwivelPrefabName)) return;
+
       if (netView == null || netView.GetZDO() == null) return;
       var persistentId = GetPersistentId();
       if (persistentId == 0) return;
@@ -566,9 +567,10 @@
       return pieceCount;
     }
 
+    // all swivels allow hitting regardless of piece count.
     public bool CanRaycastHitPiece()
     {
-      return GetPieceCount() > 0;
+      return true;
     }
 
     public static bool CanDestroySwivel(ZNetView? netView)

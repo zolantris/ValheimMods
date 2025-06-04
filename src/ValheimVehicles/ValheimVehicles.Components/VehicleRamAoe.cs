@@ -616,14 +616,28 @@ public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
   public bool TryIgnoreVehicleCollider(Collider collider)
   {
     if (m_vehicle == null || m_vehicle.PiecesController == null) return false;
-    if (!ColliderVehicleIdMap.TryGetValue(collider, out var vehicleId)) return false;
+    var vehicleId = 0;
+
+    VehiclePiecesController.m_prefabPieceColliderToIdMap.TryGetValue(collider, out vehicleId);
+    if (vehicleId == 0)
+    {
+      ColliderVehicleIdMap.TryGetValue(collider, out vehicleId);
+    }
+
+    if (vehicleId == 0) return false;
     // add additional logic if necessary. (Might need more parent checks)
 
     // same vehicle.
     if (vehicleId == m_vehicle.PersistentZdoId) return true;
 
+    if (VehicleManager.VehicleChildToParentMap.ContainsKey(vehicleId) || VehicleManager.VehicleParentToChildrenMap.TryGetValue(vehicleId, out var childrenIds) && childrenIds != null && childrenIds.Contains(vehicleId))
+    {
+      IgnoreCollider(collider);
+      return true;
+    }
+
     // is a child collider hitting parent. These colliders should be ignored/never fire again.
-    if (m_vehicle.VehicleParent != null && VehicleManager.VehicleChildToParentMap.ContainsKey(vehicleId))
+    if (m_vehicle.VehicleParent != null && m_vehicle.VehicleParent.PersistentZdoId == vehicleId)
     {
       if (vehicleId == m_vehicle.VehicleParent.PersistentZdoId)
       {

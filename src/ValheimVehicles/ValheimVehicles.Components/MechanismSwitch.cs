@@ -345,7 +345,7 @@ public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interac
         break;
       case MechanismAction.SwivelActivateMode:
       {
-        if (!TargetSwivel || TargetSwivel.swivelPowerConsumer && TargetSwivel.swivelPowerConsumer.IsPowerDenied)
+        if (!TargetSwivel || TargetSwivel.swivelPowerConsumer && !PowerSystemConfig.Swivels_DoNotRequirePower.Value && TargetSwivel.swivelPowerConsumer.IsPowerDenied)
         {
           return false;
         }
