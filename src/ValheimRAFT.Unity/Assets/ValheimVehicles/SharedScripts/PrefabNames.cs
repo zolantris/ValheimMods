@@ -64,8 +64,10 @@
 
       public const string MBRopeAnchor = "MBRopeAnchor";
 
+
       public static readonly string ValheimVehiclesPrefix = "ValheimVehicles";
 
+      public static readonly string SailCreator = $"{ValheimVehiclesPrefix}_SailCreator";
       public static readonly string LandVehicle = $"{ValheimVehiclesPrefix}_VehicleLand";
       public static readonly string AirVehicle = $"{ValheimVehiclesPrefix}_VehicleAir";
       public static readonly string WheelSet = $"{ValheimVehiclesPrefix}_WheelSet";
@@ -412,10 +414,12 @@
         return $"mast_{mastLevel}";
       }
 
+      public static string CustomMast = $"{ValheimVehiclesPrefix}_custom_mast";
+
       public static string GetMastByLevelName(string mastLevel)
       {
         ValidateMastTypeName(mastLevel);
-        return $"{ValheimVehiclesPrefix}_{GetMastByLevelFromAssetBundle(mastLevel)}";
+        return $"{CustomMast}_{mastLevel}";
       }
 
       public static bool IsVehicleCollider(string objName)

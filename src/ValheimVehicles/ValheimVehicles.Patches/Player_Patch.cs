@@ -171,14 +171,16 @@
       }
 
       var pieceController = PatchSharedData.PlayerLastRayPiece.GetComponentInParent<IPieceController>();
+      if (pieceController == null) return gameObject;
 
-      if (pieceController != null && pieceController.ComponentName == PrefabNames.SwivelPrefabName && netView)
+      if (pieceController.ComponentName == PrefabNames.SwivelPrefabName && netView)
       {
         pieceController.AddNewPiece(netView);
         return gameObject;
       }
 
-      if (pieceController != null && pieceController.ComponentName == PrefabNames.VehiclePiecesContainer)
+
+      if (pieceController.ComponentName == PrefabNames.VehiclePiecesContainer)
       {
         if (gameObject.name.StartsWith(PrefabNames.CustomWaterFloatation))
         {
@@ -194,7 +196,14 @@
         else
         {
           Logger.LogDebug("BaseVehicleController: adding temp piece");
-          pieceController.TrySetPieceToParent(piece.m_nview);
+          if (piece.m_nview == null)
+          {
+            pieceController.TrySetPieceToParent(piece.gameObject);
+          }
+          else
+          {
+            pieceController.TrySetPieceToParent(piece.m_nview);
+          }
         }
       }
 

@@ -46,7 +46,6 @@ public class SailPrefabs : IRegisterPrefab
     var vikingShipMast = LoadValheimAssets.vikingShipPrefab.transform
       .Find("ship/visual/Mast")
       .gameObject;
-
     var vikingShipMastPrefab =
       prefabManager.CreateClonedPrefab(PrefabNames.Tier3RaftMastName,
         vikingShipMast);
@@ -227,7 +226,7 @@ public class SailPrefabs : IRegisterPrefab
     }
 
     var prefab =
-      prefabManager.CreateEmptyPrefab($"MBSailCreator_{sailCount}", false);
+      prefabManager.CreateEmptyPrefab($"{PrefabNames.SailCreator}_{sailCount}", false);
     prefab.layer = LayerMask.NameToLayer("piece_nonsolid");
 
     var piece = prefab.AddComponent<Piece>();

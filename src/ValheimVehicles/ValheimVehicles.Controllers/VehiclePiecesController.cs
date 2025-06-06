@@ -8,6 +8,7 @@
   using System.Text.RegularExpressions;
   using HarmonyLib;
   using Jotunn;
+  using StructLinq;
   using UnityEngine;
   using UnityEngine.Serialization;
   using ValheimVehicles.Components;
@@ -17,6 +18,7 @@
   using ValheimVehicles.Helpers;
   using ValheimVehicles.Integrations;
   using ValheimVehicles.Interfaces;
+  using ValheimVehicles.Patches;
   using ValheimVehicles.Prefabs;
   using ValheimVehicles.Prefabs.Registry;
   using ValheimVehicles.Propulsion.Rudder;
@@ -1269,7 +1271,7 @@
                       Manager == null ||
                       Manager.m_nview == null ||
                       MovementController == null ||
-                      MovementController.rigidbody == null;
+                      MovementController.rigidbody == null || !this.IsNetViewValid();
       _isInvalid = isInvalid;
 
       return _isInvalid;
@@ -2380,7 +2382,7 @@
     {
       if (netView == null) return;
       var zdo = netView.GetZDO();
-      if (netView.m_zdo == null) return;
+      if (zdo == null) return;
 
       if (TryBailOnSameObject(netView.gameObject))
       {
@@ -2388,7 +2390,7 @@
         return;
       }
 
-      TrySetPieceToParent(netView, zdo);
+      TrySetPieceToParent(netView);
 
       netView.transform.localPosition =
         netView.m_zdo.GetVec3(VehicleZdoVars.MBPositionHash, Vector3.zero);
@@ -2439,7 +2441,7 @@
       if (!shouldSkipAddingProperties)
       {
         AddTempPieceProperties(netView, this);
-        TrySetPieceToParent(netView, zdo);
+        TrySetPieceToParent(netView);
       }
 
       OnPieceAdded(netView.gameObject);
@@ -2470,31 +2472,56 @@
       }
     }
 
-    public void TrySetPieceToParent(ZNetView? netView)
+    public void TrySetPieceToParent(ZNetView? nv)
     {
+      // validate current parent
       if (IsInvalid()) return;
-      if (!this.IsNetViewValid() || !netView || !netView.IsValid()) return;
-      TrySetPieceToParent(netView, netView.GetZDO());
-    }
-
-    /// <summary>
-    /// Adds the piece depending on type to the correct container
-    /// - Rams are rigidbodies and thus must not be controlled by a RigidBody
-    /// </summary>
-    public void TrySetPieceToParent(ZNetView? netView, ZDO? zdo)
-    {
-      if (IsInvalid()) return;
-      if (netView == null || PrefabNames.IsVehicle(netView.name) && netView.name.Contains(PrefabNames.LandVehicle) || zdo == null) return;
-
-      if (RamPrefabs.IsRam(netView!.name))
+      // validate provided netview.
+      if (!ValheimExtensions.Internal_IsNetViewValid(nv, out var netView)) return;
+      var netViewName = netView.name;
+      if (PrefabNames.IsVehicle(netViewName) && netViewName.Contains(PrefabNames.LandVehicle)) return;
+      // no overriding parent if sail already has a custom parent EG a mast.
+      if (netViewName.StartsWith(PrefabNames.Tier1CustomSailName) && netView.GetZDO().GetInt(SailComponent.SailParentId) != 0)
       {
-        if (Manager != null && Manager != null)
+        if (netView.transform.parent == null)
         {
-          netView.transform.SetParent(Manager.transform);
+          var sailComponent = netView.GetComponent<SailComponent>();
+          if (!sailComponent) return;
+          sailComponent.UpdateSailParent();
         }
         return;
       }
-      netView.transform.SetParent(_piecesContainerTransform);
+      TrySetPieceToParent(netView.gameObject);
+    }
+
+    /// <summary>
+    /// Allows directly adding pieces but is by default guarded so only valheim vehicles prefixes are allowed. This is provided the piece has no valid netview otherwise TrySetPieceToParent can be used with a netview and Zdo.
+    /// </summary>
+    /// <param name="prefab"></param>
+    public void TrySetPieceToParent(GameObject prefab, bool isForced = false)
+    {
+      if (prefab.name.Contains(PrefabNames.ValheimVehiclesPrefix) || isForced)
+      {
+        prefab.transform.SetParent(_piecesContainerTransform);
+      }
+
+      if (prefab.name.StartsWith(PrefabNames.SailCreator) && PatchSharedData.PlayerLastRayPiece != null && PatchSharedData.PlayerLastRayPiece.name.StartsWith(PrefabNames.CustomMast))
+      {
+        var parentMaskComponent = PatchSharedData.PlayerLastRayPiece.GetComponent<MastComponent>();
+        if (!parentMaskComponent || !parentMaskComponent.m_rotationTransform) return;
+        prefab.transform.SetParent(parentMaskComponent.m_rotationTransform);
+        return;
+      }
+
+      if (RamPrefabs.IsRam(prefab.name))
+      {
+        if (Manager != null && Manager != null)
+        {
+          prefab.transform.SetParent(Manager.transform);
+        }
+        return;
+      }
+      prefab.transform.SetParent(_piecesContainerTransform);
     }
 
     /**
@@ -2643,7 +2670,7 @@
 
       var previousCount = GetPieceCount();
 
-      TrySetPieceToParent(netView, zdo);
+      TrySetPieceToParent(netView);
 
       if (netView.m_zdo != null && netView.m_persistent)
       {
@@ -2658,16 +2685,17 @@
         netView.m_zdo.Set(VehicleZdoVars.MBRotationVecHash,
           netView.transform.localRotation.eulerAngles);
 
-        if (zdo.m_prefab == PrefabNames.LandVehicle.GetStableHashCode())
-        {
-          netView.m_zdo.Set(VehicleZdoVars.MBPositionHash,
-            transform.position - netView.transform.position);
-        }
-        else
-        {
-          netView.m_zdo.Set(VehicleZdoVars.MBPositionHash,
-            netView.transform.localPosition);
-        }
+        // if (zdo.m_prefab == PrefabNames.LandVehicle.GetStableHashCode())
+        // {
+        //  
+        // }
+        // else
+        // {
+        //   netView.m_zdo.Set(VehicleZdoVars.MBPositionHash,
+        //     transform.InverseTransformPoint(netView.transform.position));
+        // }
+        netView.m_zdo.Set(VehicleZdoVars.MBPositionHash,
+          transform.InverseTransformPoint(netView.transform.position));
       }
 
       AddPiece(netView, true);
@@ -3025,7 +3053,6 @@
       //   }
       // }
     }
-
     public List<Collider> allVehicleColliders = new();
 
     // For when pieces are added
@@ -3079,7 +3106,6 @@
       cachedSailForce = -1;
       cachedTotalSailArea = -1;
     }
-
     /// <summary>
     /// A override of RebuildBounds scoped towards valheim integration instead of unity-only.
     /// - Must be wrapped in a delay/coroutine to prevent spamming on unmounting bounds
@@ -3119,7 +3145,6 @@
         Logger.LogError(e);
       }
     }
-
     /// <summary>
     /// A complete override of OnConvexHullGenerated.
     /// </summary>
@@ -3451,21 +3476,33 @@
       }
     }
 
-    public VehicleMovementController? MovementController { get; set; }
-    public VehicleConfigSyncComponent? VehicleConfigSync { get; set; }
-    public VehicleOnboardController? OnboardController { get; set; }
-    public VehicleManager Manager { get; set; } = null!;
-
+    public VehicleMovementController? MovementController
+    {
+      get;
+      set;
+    }
+    public VehicleConfigSyncComponent? VehicleConfigSync
+    {
+      get;
+      set;
+    }
+    public VehicleOnboardController? OnboardController
+    {
+      get;
+      set;
+    }
+    public VehicleManager Manager
+    {
+      get;
+      set;
+    } = null!;
     public ZNetView? m_nview
     {
       get;
       set;
     }
-
     public bool IsControllerValid => Manager.IsControllerValid;
-
     public bool IsInitialized => Manager.IsInitialized;
-
     public bool IsDestroying => Manager.IsDestroying;
 
   #endregion

@@ -768,7 +768,12 @@
       /*
        * creative mode should not allow movement, and applying force on an object will cause errors, when the object is kinematic
        */
-      if (isCreative) return;
+      if (isCreative)
+      {
+        SyncVehicleCreativeDependentItems();
+        return;
+      }
+
       if (!isPlayerHaulingVehicle && m_body.isKinematic || isPlayerHaulingVehicle && HaulingPlayer != null && HaulingPlayer.transform.root == PiecesController!.transform.root)
       {
         m_body.isKinematic = false;
@@ -3028,6 +3033,17 @@
       }
     }
 
+    private void SyncVehicleCreativeDependentItems()
+    {
+      if (!isCreative) return;
+      if (m_mastObject)
+      {
+        m_mastObject.transform.localRotation = Quaternion.identity;
+      }
+
+      SyncVehicleRotationDependentItems();
+    }
+
 
     /**
      * In theory, we can just make the sailComponent and mastComponent parents of the masts/sails of the ship. This will make any mutations to those parents in sync with the sail changes
@@ -3049,14 +3065,15 @@
         if (mast.m_allowSailRotation &&
             PropulsionConfig.AllowBaseGameSailRotation.Value)
         {
+          var isWindSync = vehicleSpeed == Ship.Speed.Full || vehicleSpeed == Ship.Speed.Half;
           var newRotation = m_mastObject.transform.localRotation;
           if (mast.m_rotationTransform != null)
           {
-            mast.m_rotationTransform.localRotation = newRotation;
+            mast.m_rotationTransform.localRotation = isWindSync ? newRotation : Quaternion.Lerp(mast.m_rotationTransform.localRotation, Quaternion.identity, Time.fixedDeltaTime);
           }
           else
           {
-            mast.transform.localRotation = newRotation;
+            mast.transform.localRotation = isWindSync ? newRotation : Quaternion.Lerp(mast.transform.localRotation, Quaternion.identity, Time.fixedDeltaTime);
           }
         }
 

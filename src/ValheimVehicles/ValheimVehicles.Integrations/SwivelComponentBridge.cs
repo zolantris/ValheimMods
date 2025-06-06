@@ -669,6 +669,18 @@
       AddPieceToParent(netView.transform);
     }
 
+    /// <summary>
+    /// Allows directly adding pieces but is by default guarded so only valheim vehicles prefixes are allowed. This is provided the piece has no valid netview otherwise TrySetPieceToParent can be used with a netview and Zdo.
+    /// </summary>
+    /// <param name="prefab"></param>
+    public void TrySetPieceToParent(GameObject prefab, bool isForced = false)
+    {
+      if (prefab.name.Contains(PrefabNames.ValheimVehiclesPrefix) || isForced)
+      {
+        AddPieceToParent(prefab.transform);
+      }
+    }
+
     ///
     /// <summary>
     ///   prevents ship destruction on m_nview null
