@@ -41,7 +41,6 @@ public class FrozenRigidbodySync
   {
     if (!mustSync || !m_body || !m_body.isKinematic || !m_targetBody) return;
     var worldPos = m_targetBody.position + m_targetBody.rotation * frozenLocalPos;
-    ;
     var worldRot = m_targetBody.rotation * frozenLocalRot;
 
     if (Vector3.Distance(worldPos + frozenLocalPos, m_body.position) > 150f)
