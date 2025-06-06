@@ -85,9 +85,14 @@ public class SailCreatorComponent : MonoBehaviour
         var persistentId = ZdoWatchController.Instance.GetOrCreatePersistentID(parentNetView.GetZDO());
         if (persistentId != 0)
         {
-          netView.GetZDO().Set(SailComponent.SailParentId, persistentId);
-          netView.GetZDO().Set(SailComponent.SailParentPosition, parentMastComponent.transform.InverseTransformPoint(sailComponent.transform.position));
-          sailComponent.UpdateSailParent();
+          var zdo = netView.GetZDO();
+          zdo.Set(SailComponent.SailParentId, persistentId);
+          zdo.Set(SailComponent.SailParentPosition, parentMastComponent.transform.InverseTransformPoint(sailComponent.transform.position));
+
+          // relative to parent rotation.
+          var relativeRotation = Quaternion.Inverse(parentMastComponent.transform.rotation) * sailComponent.transform.rotation;
+          zdo.Set(SailComponent.SailParentRotation, relativeRotation.eulerAngles);
+          sailPrefabInstance.transform.SetParent(parentMastComponent.m_rotationTransform);
         }
       }
     }

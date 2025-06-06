@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 3615894835
+CRC: 4188705319
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 7824dc4ff27787f0b812309711f8a38b
+    Hash: 9992fec6d030b16d45ccebf8d949a021
   TypeTreeHash:
     serializedVersion: 2
     Hash: 1805b3fad0defc6a0d873a2f742133bc
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 7824dc4ff27787f0b812309711f8a38b
+    Hash: 9992fec6d030b16d45ccebf8d949a021
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -165,12 +165,15 @@ Assets:
 - Assets/ValheimVehicles/Prefabs/mechanism_switch.prefab
 - Assets/ValheimVehicles/Prefabs/hull_corner_floor_left_wood.prefab
 - Assets/ValheimVehicles/Prefabs/shared_nautilus.prefab
+- Assets/ValheimVehicles/Texture/sail_normal.png
 - Assets/ValheimVehicles/Prefabs/anchor_full_chain.prefab
 - Assets/ValheimVehicles/Material/wood.mat
 - Assets/ValheimVehicles/Prefabs/shared_ram_stake.prefab
+- Assets/ValheimVehicles/Texture/sail_diffuse.png
 - Assets/ValheimVehicles/Prefabs/hull_wall_window_square_wood_2x2.prefab
 - Assets/shared_hull_rib_corner_prow_left.prefab
 - Assets/ValheimVehicles/Material/WaterHeightMaterial.mat
+- Assets/ValheimVehicles/Texture/sail_hide.png
 - Assets/ValheimVehicles/Prefabs/shared_tank_tread.prefab
 - Assets/ValheimVehicles/Prefabs/vehicle_ship_pieces.prefab
 - Assets/ValheimVehicles/Prefabs/nautilus_hatch.prefab
@@ -221,6 +224,7 @@ Assets:
 - Assets/ValheimVehicles/Prefabs/anchor_reel.prefab
 - Assets/ValheimVehicles/Material/glass_nautilus_notint.mat
 - Assets/ValheimVehicles/Prefabs/hull_corner_floor_prow_right_wood.prefab
+- Assets/ValheimVehicles/Texture/sail.png
 - Assets/ValheimVehicles/Prefabs/hull_light_wood_2x2.prefab
 - Assets/ValheimVehicles/Prefabs/anchor_full_wood_test_variant.prefab
 - Assets/ValheimVehicles/Material/iron_metal_custom_single.mat
@@ -287,6 +291,7 @@ Assets:
 - Assets/ValheimVehicles/Prefabs/hull_slab_wood_4x4.prefab
 - Assets/ValheimVehicles/Prefabs/mast_level_1.prefab
 - Assets/ValheimVehicles/Material/stake.mat
+- Assets/ValheimVehicles/Texture/sail_hide_normal.png
 - Assets/ValheimVehicles/Prefabs/anchor_chain_wheel.prefab
 - Assets/ValheimVehicles/Prefabs/ram_blade_top.prefab
 - Assets/ValheimVehicles/Prefabs/shared_hull_slab_iron_4x4_new.prefab

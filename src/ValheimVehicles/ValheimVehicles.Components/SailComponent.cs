@@ -12,6 +12,7 @@ using ValheimVehicles.Helpers;
 using ValheimVehicles.Injections;
 using ValheimVehicles.Interfaces;
 using ValheimVehicles.Prefabs;
+using ValheimVehicles.Shared.Constants;
 using ValheimVehicles.SharedScripts;
 using ValheimVehicles.Storage.Serialization;
 using ValheimVehicles.UI;
@@ -75,6 +76,7 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable, INetView
   public static int HasInitialized = "HasInitialized".GetStableHashCode();
   public static int SailParentId = "SailParentId".GetStableHashCode();
   public static int SailParentPosition = "SailParentPosition".GetStableHashCode();
+  public static int SailParentRotation = "SailParentRotation".GetStableHashCode();
 
   private MastComponent m_mastComponent;
 
@@ -226,7 +228,7 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable, INetView
   public static void OverrideMaterial_RaftShipSail(SailComponent sailComponent)
   {
     sailComponent.GetComponentInChildren<SkinnedMeshRenderer>().material = LoadValheimAssets.raftMast.transform
-      .Find("ship/visual/Mast/Sail").GetComponentInChildren<SkinnedMeshRenderer>().material;
+      .Find("Sail").GetComponentInChildren<SkinnedMeshRenderer>().material;
   }
 
   public void FixedUpdate()
@@ -365,6 +367,7 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable, INetView
     if (this.IsNetViewValid(out var netView))
     {
       transform.localPosition = netView.GetZDO().GetVec3(SailParentPosition, Vector3.zero);
+      transform.localRotation = Quaternion.Euler(netView.m_zdo.GetVec3(SailParentRotation, transform.localRotation.eulerAngles));
     }
     else
     {

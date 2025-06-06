@@ -114,6 +114,7 @@
         o.Normal = UnpackNormal(tex2D(_MainNormal, IN.uv_MainTex)) + tex2D(
             _PatternNormal, IN.uv_PatternTex) + tex2D(
             _LogoNormal, IN.uv_LogoTex);
+        
         o.Metallic = _Glossiness;
         o.Smoothness = _Wet;
 
@@ -134,7 +135,7 @@
         CGPROGRAM
         #pragma surface surf Standard alpha:fade
         #pragma vertex vert
-        #pragma target 5.0
+        #pragma target 3.0
         ENDCG
     }
     Fallback "Diffuse"

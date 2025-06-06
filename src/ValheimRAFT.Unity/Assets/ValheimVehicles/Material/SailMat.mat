@@ -47,7 +47,7 @@ Material:
         m_Scale: {x: 4, y: 4}
         m_Offset: {x: 0, y: 0}
     - _EmissiveTex:
-        m_Texture: {fileID: 2800000, guid: 7dec91e98b346c14ab046c96733bad28, type: 3}
+        m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _Logo:
@@ -63,7 +63,7 @@ Material:
         m_Scale: {x: 2, y: 2}
         m_Offset: {x: -1, y: -1}
     - _MainColorNormal:
-        m_Texture: {fileID: 0}
+        m_Texture: {fileID: 2800000, guid: 2c02d24348c9582469cc686fd59ff89c, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MainNormal:
@@ -156,7 +156,7 @@ Material:
     m_Colors:
     - _AmbientColor: {r: 1, g: 1, b: 1, a: 1}
     - _Color: {r: 1, g: 1, b: 1, a: 0}
-    - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
+    - _EmissionColor: {r: 0, g: 0, b: 0, a: 0}
     - _LogoColor: {r: 0.4575472, g: 0.4575472, b: 0.4575472, a: 1}
     - _MainColor: {r: 0.3820755, g: 0.012615708, b: 0.012615708, a: 1}
     - _PatternColor: {r: 0.6320754, g: 0.6320754, b: 0.6320754, a: 1}
