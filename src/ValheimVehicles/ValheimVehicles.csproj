@@ -35,6 +35,15 @@
         <Compile Update="..\ValheimRAFT.Unity\Assets\ValheimVehicles\SharedScripts\Shared.Constants\VehicleZdoVars.cs">
             <Link>SharedScripts\Shared.Constants\VehicleZdoVars.cs</Link>
         </Compile>
+        <Compile Update="..\ValheimRAFT.Unity\Assets\ValheimVehicles\SharedScripts\SharedScripts.Modules\CollectionIterators.cs">
+            <Link>SharedScripts\SharedScripts.Modules\CollectionIterators.cs</Link>
+        </Compile>
+        <Compile Update="..\ValheimRAFT.Unity\Assets\ValheimVehicles\SharedScripts\SharedScripts.Modules\FastQuery.cs">
+            <Link>SharedScripts\SharedScripts.Modules\FastQuery.cs</Link>
+        </Compile>
+        <Compile Update="..\ValheimRAFT.Unity\Assets\ValheimVehicles\SharedScripts\CoroutineHandler.cs">
+            <Link>SharedScripts\CoroutineHandler.cs</Link>
+        </Compile>
     </ItemGroup>
     <ItemGroup Label="Internal ValheimVehicles scripts">
         <!-- Includes all namespace folders -->
@@ -42,7 +51,7 @@
         <Compile Include="ValheimVehiclesPlugin.cs"/>
     </ItemGroup>
     <ItemGroup>
-        <ProjectReference Include="..\SentryUnityWrapper\SentryUnityWrapper.csproj"/>
+        <!--        <ProjectReference Include="..\SentryUnityWrapper\SentryUnityWrapper.csproj"/>-->
         <ProjectReference Include="..\Shared\Shared.csproj"/>
         <ProjectReference Include="..\DynamicLocations\DynamicLocations.csproj"/>
         <ProjectReference Include="..\ZdoWatcher\ZdoWatcher.csproj"/>

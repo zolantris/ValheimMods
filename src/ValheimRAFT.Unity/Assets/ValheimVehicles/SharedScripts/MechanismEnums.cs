@@ -10,6 +10,7 @@ namespace ValheimVehicles.SharedScripts
     ColliderEditMode,
     SwivelEditMode,
     SwivelActivateMode,
-    None
+    None,
+    VehicleConfig
   }
 }

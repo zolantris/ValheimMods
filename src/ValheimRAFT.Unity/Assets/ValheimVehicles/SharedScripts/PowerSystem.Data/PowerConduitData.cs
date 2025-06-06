@@ -18,8 +18,8 @@ namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
     public static float MaxEitrCapMargin = 0.1f;
     public readonly Dictionary<long, PlayerEitrData> PlayerPeerToData = new();
 
-    // eitr vapor is the player eitr. This is different from Eitr fuel.
-    public static float EitrVaporCostPerInterval = 10f;
+    // Eitr regen is the player Eitr that replenishes. This is much more diluted compared to Refined Eitr.
+    public static float EitrRegenCostPerInterval = 10f;
     public static float EnergyChargePerInterval = 1f;
     public static float RechargeRate = 10f;
 
@@ -40,9 +40,17 @@ namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
       }
     }
 
+    public static PowerConduitMode GetVariant(int prefabHash)
+    {
+      if (prefabHash == PrefabNameHashes.Mechanism_Power_Conduit_Charge_Plate) return PowerConduitMode.Charge;
+      if (prefabHash == PrefabNameHashes.Mechanism_Power_Conduit_Drain_Plate) return PowerConduitMode.Drain;
+      LoggerProvider.LogError("Unknown prefabHash. Returning <Charge> conduit as default mode");
+      return PowerConduitMode.Charge;
+    }
+
     public float ConvertPlayerEitrToEnergy(float playerEitr)
     {
-      return playerEitr * EitrVaporCostPerInterval / EnergyChargePerInterval;
+      return playerEitr * EitrRegenCostPerInterval / EnergyChargePerInterval;
     }
 
     /// <summary>
@@ -73,11 +81,9 @@ namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
     }
 
 
-    // <summary>
+    /// <summary>
     /// Returns the total eitr of all players in the zone.
     /// </summary>
-    /// <param name="threshold"></param>
-    /// <returns></returns>
     public float GetAllPlayerEitr(float threshold = 0.9f)
     {
       var total = 0f;
@@ -134,14 +140,14 @@ namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
     /// <summary>
     /// Get the next deltaTime Eitr to remove.
     /// </summary>
-    public bool TryGetNeededEitr(float remainingEnergy, float eitrVaporAvailable, out float deltaEitr, out float deltaEnergy)
+    public bool TryGetNeededEitr(float remainingEnergy, float eitrRegenAvailable, out float deltaEitr, out float deltaEnergy)
     {
-      var eitrProcessable = MathX.Min(eitrVaporAvailable, EitrVaporCostPerInterval);
+      var eitrProcessable = MathX.Min(eitrRegenAvailable, EitrRegenCostPerInterval);
       var energyProduced = EnergyChargePerInterval;
       if (remainingEnergy < energyProduced)
       {
         // Clamp to remainingEnergy
-        deltaEitr = remainingEnergy / EnergyChargePerInterval * EitrVaporCostPerInterval;
+        deltaEitr = remainingEnergy / EnergyChargePerInterval * EitrRegenCostPerInterval;
         deltaEnergy = remainingEnergy;
         return true;
       }
@@ -151,7 +157,7 @@ namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
     }
 
     /// <summary>
-    /// Must convert from energy to eitr vapor. Then back to energy to see how much energy was consumed
+    /// Must convert from energy to eitr regen. Then back to energy to see how much energy was consumed
     /// </summary>
     /// <param name="energyBudget"></param>
     /// <returns></returns>
@@ -159,18 +165,18 @@ namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
     {
       if (PlayerPeerToData.Count == 0 || energyBudget <= 0f) return 0f;
 
-      var maxEitrRecharge = energyBudget * EitrVaporCostPerInterval / EnergyChargePerInterval;
+      var maxEitrRecharge = energyBudget * EitrRegenCostPerInterval / EnergyChargePerInterval;
 
       List<PlayerEitrData> validReceivers = new(PlayerPeerToData.Count);
       foreach (var playerEitrData in PlayerPeerToData.Values)
       {
-        if (playerEitrData.Eitr > 0.1f && playerEitrData.Eitr < playerEitrData.EitrCapacity * 0.9f && playerEitrData.EitrCapacity > 10f && playerEitrData.EitrCapacity > EitrVaporCostPerInterval)
+        if (playerEitrData.Eitr > 0.1f && playerEitrData.Eitr < playerEitrData.EitrCapacity * 0.9f && playerEitrData.EitrCapacity > 10f && playerEitrData.EitrCapacity > EitrRegenCostPerInterval)
           validReceivers.Add(playerEitrData);
       }
 
       if (validReceivers.Count == 0) return 0f;
 
-      var perPlayer = MathX.Clamp(maxEitrRecharge / validReceivers.Count, 0, EitrVaporCostPerInterval);
+      var perPlayer = MathX.Clamp(maxEitrRecharge / validReceivers.Count, 0, EitrRegenCostPerInterval);
       var totalEitrUsed = 0f;
 
       foreach (var playerEitrData in validReceivers)
@@ -179,7 +185,7 @@ namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
         totalEitrUsed += perPlayer;
       }
 
-      var totalEnergyUsed = totalEitrUsed / EitrVaporCostPerInterval * EnergyChargePerInterval;
+      var totalEnergyUsed = totalEitrUsed / EitrRegenCostPerInterval * EnergyChargePerInterval;
 
       return totalEnergyUsed;
     }
@@ -198,10 +204,10 @@ namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
         var playerEitr = playerData.Eitr;
         // do not fire eitr drain when low on eitr.
         if (playerEitr <= 2f) continue;
-        TryGetNeededEitr(maxEnergyDrainable - totalEnergy, playerEitr, out var deltaEitrVapor, out var deltaEnergy);
+        TryGetNeededEitr(maxEnergyDrainable - totalEnergy, playerEitr, out var deltaEitrRegen, out var deltaEnergy);
 
-        playerData.Eitr -= deltaEitrVapor;
-        playerData.Request_UseEitr(playerData.PlayerId, deltaEitrVapor);
+        playerData.Eitr -= deltaEitrRegen;
+        playerData.Request_UseEitr(playerData.PlayerId, deltaEitrRegen);
         totalEnergy += deltaEnergy;
       }
 
@@ -239,7 +245,7 @@ namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
     {
       if (!CanRunSimulation(dt)) return 0f;
       if (Mode == PowerConduitMode.Drain) return 0f;
-      var totalRemainingCapacity = MathX.Min(GetAllPlayerRemainingEitrCapacity() / EitrVaporCostPerInterval, PlayerPeerToData.Count * EnergyChargePerInterval);
+      var totalRemainingCapacity = MathX.Min(GetAllPlayerRemainingEitrCapacity() / EitrRegenCostPerInterval, PlayerPeerToData.Count * EnergyChargePerInterval);
       return totalRemainingCapacity;
     }
 

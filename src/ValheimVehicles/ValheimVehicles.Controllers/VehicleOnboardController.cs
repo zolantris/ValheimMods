@@ -450,20 +450,20 @@
     public void RestoreCollisionDetection(Collider collider)
     {
       if (PiecesController != null &&
-          PiecesController.convexHullMeshColliders.Count > 0)
+          PiecesController.m_convexHullAPI.convexHullMeshColliders.Count > 0)
         foreach (var piecesControllerConvexHullMesh in
-                 PiecesController.convexHullMeshColliders)
+                 PiecesController.m_convexHullAPI.convexHullMeshColliders)
           Physics.IgnoreCollision(piecesControllerConvexHullMesh, collider,
             false);
 
-      if (MovementController != null && MovementController.WheelController != null)
+      if (MovementController != null && MovementController.LandMovementController != null)
       {
-        MovementController.WheelController.treadsLeftMovingComponent.convexHullComponent.convexHullMeshColliders.ForEach((x) =>
+        MovementController.LandMovementController.treadsLeftMovingComponent.convexHullComponent.convexHullMeshColliders.ForEach((x) =>
         {
           if (x == null) return;
           Physics.IgnoreCollision(collider, x, false);
         });
-        MovementController.WheelController.treadsRightMovingComponent.convexHullComponent.convexHullMeshColliders.ForEach((x) =>
+        MovementController.LandMovementController.treadsRightMovingComponent.convexHullComponent.convexHullMeshColliders.ForEach((x) =>
         {
           if (x == null) return;
           Physics.IgnoreCollision(collider, x, false);
@@ -760,7 +760,7 @@
       get;
       set;
     } = null!;
-    public VehicleWheelController? WheelController
+    public VehicleLandMovementController? LandMovementController
     {
       get;
       set;

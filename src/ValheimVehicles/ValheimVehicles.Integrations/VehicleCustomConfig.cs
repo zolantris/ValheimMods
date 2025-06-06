@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using ValheimVehicles.Compat;
 using ValheimVehicles.Components;
+using ValheimVehicles.Helpers;
 using ValheimVehicles.Interfaces;
 using ValheimVehicles.SharedScripts;
 
@@ -13,26 +14,52 @@ namespace ValheimVehicles.BepInExConfig;
 public class VehicleCustomConfig : ISerializableConfig<VehicleCustomConfig, IVehicleConfig>, IVehicleConfig
 {
   // Constants for ZDO keys
-  private const string Key_Version = "vehicle_version";
-  private const string Key_TreadDistance = "vehicle_treadDistance";
-  private const string Key_TreadHeight = "vehicle_treadHeight";
-  private const string Key_TreadScaleX = "vehicle_treadScaleX";
-  private const string Key_HasCustomFloatationHeight = "vehicle_hasCustomFloatationHeight";
-  private const string Key_CustomFloatationHeight = "vehicle_customFloatationHeight";
-  private const string Key_CenterOfMassOffset = "vehicle_centerOfMassOffset";
+  internal const string Key_Version = "vehicle_version";
+  internal const string Key_TreadDistance = "vehicle_treadDistance";
+  internal const string Key_TreadLength = "vehicle_treadLength";
+  internal const string Key_TreadHeight = "vehicle_treadHeight";
+  internal const string Key_TreadScaleX = "vehicle_treadScaleX";
+  internal const string Key_HasCustomFloatationHeight = "vehicle_hasCustomFloatationHeight";
+  internal const string Key_CustomFloatationHeight = "vehicle_customFloatationHeight";
+  internal const string Key_CenterOfMassOffset = "vehicle_centerOfMassOffset";
+
+  // todo integrate these keys.
+  // unused keys.
+  internal const string Key_AllowFlight = "vehicle_allowFlight";
+  internal const string Key_AllowBallast = "vehicle_allowBallast";
 
   // todo support custom variant
   // private const string Key_VehicleVariant = "vehicle_variant";
 
   // Backing fields
   private string _version = ValheimRAFT_API.GetPluginVersion();
-  private float _treadDistance;
-  private float _treadHeight;
-  private float _treadScaleX;
-  private bool _hasCustomFloatationHeight;
-  private float _customFloatationHeight;
-  private float _centerOfMassOffset;
 
+#if !UNITY_EDITOR
+  private float _treadDistance = PrefabConfig.VehicleLandMaxTreadWidth.Value;
+#else
+  private float _treadDistance = 18f;
+#endif
+
+  private float _treadHeight = 0f;
+#if !UNITY_EDITOR
+  private float _treadLength = PrefabConfig.VehicleLandMaxTreadLength.Value;
+#else
+  private float _treadLength = 18f;
+#endif
+
+#if !UNITY_EDITOR
+  private float _treadScaleX = PrefabConfig.ExperimentalTreadScaleX.Value;
+#else
+  private float _treadScaleX = 1f
+#endif
+
+  private bool _hasCustomFloatationHeight = false;
+  private float _customFloatationHeight = 0f;
+#if !UNITY_EDITOR
+  private float _centerOfMassOffset = PhysicsConfig.VehicleCenterOfMassOffset.Value;
+#else
+  private float _centerOfMassOffset = 0f;
+#endif
   // todo support custom variant
   // private float _vehicleVariant;
 
@@ -46,6 +73,7 @@ public class VehicleCustomConfig : ISerializableConfig<VehicleCustomConfig, IVeh
       hash = hash * 31 + TreadDistance.GetHashCode();
       hash = hash * 31 + TreadHeight.GetHashCode();
       hash = hash * 31 + TreadScaleX.GetHashCode();
+      hash = hash * 31 + TreadLength.GetHashCode();
       hash = hash * 31 + HasCustomFloatationHeight.GetHashCode();
       hash = hash * 31 + CustomFloatationHeight.GetHashCode();
       hash = hash * 31 + CenterOfMassOffset.GetHashCode();
@@ -63,7 +91,13 @@ public class VehicleCustomConfig : ISerializableConfig<VehicleCustomConfig, IVeh
   public float TreadDistance
   {
     get => _treadDistance;
-    set => _treadDistance = Mathf.Clamp(value, 0.5f, 5f);
+    set => _treadDistance = Mathf.Clamp(value, -5f, 20f);
+  }
+
+  public float TreadLength
+  {
+    get => _treadLength;
+    set => _treadLength = Mathf.Clamp(value, 3f, 50f);
   }
 
   public float TreadHeight
@@ -75,7 +109,7 @@ public class VehicleCustomConfig : ISerializableConfig<VehicleCustomConfig, IVeh
   public float TreadScaleX
   {
     get => _treadScaleX;
-    set => _treadScaleX = Mathf.Clamp(value, 0.1f, 10f);
+    set => _treadScaleX = Mathf.Clamp(value, 1f, 10f);
   }
 
   public bool HasCustomFloatationHeight
@@ -87,7 +121,7 @@ public class VehicleCustomConfig : ISerializableConfig<VehicleCustomConfig, IVeh
   public float CustomFloatationHeight
   {
     get => _customFloatationHeight;
-    set => _customFloatationHeight = Mathf.Max(0f, value);
+    set => _customFloatationHeight = Mathf.Clamp(value, -50f, 50f);
   }
 
   public float CenterOfMassOffset
@@ -106,43 +140,33 @@ public class VehicleCustomConfig : ISerializableConfig<VehicleCustomConfig, IVeh
     pkg.Write(_customFloatationHeight);
     pkg.Write(_hasCustomFloatationHeight);
     pkg.Write(_treadDistance);
+    pkg.Write(_treadLength);
     pkg.Write(_treadHeight);
     pkg.Write(_treadScaleX);
   }
 
   public void Save(ZDO zdo, VehicleCustomConfig customConfig, string[]? filterKeys)
   {
+#if DEBUG
     LoggerProvider.LogDebug("Saving vehicle config");
-
-    if (zdo.GetString(Key_Version) != customConfig.Version)
-      zdo.Set(Key_Version, customConfig.Version);
-
-    if (!Mathf.Approximately(zdo.GetFloat(Key_TreadDistance), customConfig.TreadDistance))
-      zdo.Set(Key_TreadDistance, customConfig.TreadDistance);
-
-    if (!Mathf.Approximately(zdo.GetFloat(Key_TreadHeight), customConfig.TreadHeight))
-      zdo.Set(Key_TreadHeight, customConfig.TreadHeight);
-
-    if (!Mathf.Approximately(zdo.GetFloat(Key_TreadScaleX), customConfig.TreadScaleX))
-      zdo.Set(Key_TreadScaleX, customConfig.TreadScaleX);
-
-    if (zdo.GetBool(Key_HasCustomFloatationHeight) != customConfig.HasCustomFloatationHeight)
-      zdo.Set(Key_HasCustomFloatationHeight, customConfig.HasCustomFloatationHeight);
-
-    if (!Mathf.Approximately(zdo.GetFloat(Key_CustomFloatationHeight), customConfig.CustomFloatationHeight))
-      zdo.Set(Key_CustomFloatationHeight, customConfig.CustomFloatationHeight);
-
-    if (!Mathf.Approximately(zdo.GetFloat(Key_CenterOfMassOffset), customConfig.CenterOfMassOffset))
-      zdo.Set(Key_CenterOfMassOffset, customConfig.CenterOfMassOffset);
+#endif
+    zdo.SetDelta(Key_Version, customConfig.Version);
+    zdo.SetDelta(Key_TreadDistance, customConfig.TreadDistance);
+    zdo.SetDelta(Key_TreadLength, customConfig.TreadLength);
+    zdo.SetDelta(Key_TreadHeight, customConfig.TreadHeight);
+    zdo.SetDelta(Key_TreadScaleX, customConfig.TreadScaleX);
+    zdo.SetDelta(Key_HasCustomFloatationHeight, customConfig.HasCustomFloatationHeight);
+    zdo.SetDelta(Key_CustomFloatationHeight, customConfig.CustomFloatationHeight);
+    zdo.SetDelta(Key_CenterOfMassOffset, customConfig.CenterOfMassOffset);
   }
-
 
   public VehicleCustomConfig Load(ZDO zdo, IVehicleConfig configFromComponent, string[]? filterKeys = null)
   {
     return new VehicleCustomConfig
     {
       Version = zdo.GetString(Key_Version, ValheimRAFT_API.GetPluginVersion()),
-      TreadDistance = Mathf.Clamp(zdo.GetFloat(Key_TreadDistance, 0.1f), 0.1f, 20f),
+      TreadDistance = zdo.GetFloat(Key_TreadDistance, configFromComponent.TreadDistance),
+      TreadLength = zdo.GetFloat(Key_TreadLength, configFromComponent.TreadLength),
       TreadHeight = zdo.GetFloat(Key_TreadHeight, PhysicsConfig.VehicleLandTreadVerticalOffset.Value),
       TreadScaleX = zdo.GetFloat(Key_TreadScaleX, PrefabConfig.ExperimentalTreadScaleX.Value),
       HasCustomFloatationHeight = zdo.GetBool(Key_HasCustomFloatationHeight, configFromComponent.HasCustomFloatationHeight),
@@ -153,16 +177,31 @@ public class VehicleCustomConfig : ISerializableConfig<VehicleCustomConfig, IVeh
 
   public void ApplyFrom(IVehicleConfig config)
   {
-    // throw new System.NotImplementedException();
+    Version = config.Version;
+    TreadDistance = config.TreadDistance;
+    TreadLength = config.TreadLength;
+    TreadHeight = config.TreadHeight;
+    TreadScaleX = config.TreadScaleX;
+    HasCustomFloatationHeight = config.HasCustomFloatationHeight;
+    CustomFloatationHeight = config.CustomFloatationHeight;
+    CenterOfMassOffset = config.CenterOfMassOffset;
   }
   public void ApplyTo(IVehicleConfig config)
   {
-    // throw new System.NotImplementedException();
+    config.Version = Version;
+    config.TreadDistance = Mathf.Clamp(TreadDistance, 0.2f, 20f);
+    config.TreadLength = Mathf.Clamp(TreadLength, 3f, 50f);
+    config.TreadHeight = Mathf.Clamp(TreadHeight, -5f, 20f);
+    config.TreadScaleX = Mathf.Clamp(TreadScaleX, 1f, 10f);
+
+    config.HasCustomFloatationHeight = HasCustomFloatationHeight;
+    config.CustomFloatationHeight = Mathf.Clamp(CustomFloatationHeight, -50f, 50f);
+    config.CenterOfMassOffset = CenterOfMassOffset;
   }
 
   public VehicleCustomConfig Deserialize(ZPackage pkg)
   {
-    pkg.SetPos(0); // Always reset read pointer otherwise we start at end and fail.
+    pkg.SetPos(0); // Always reset a read pointer, otherwise we start at end and fail.
     return new VehicleCustomConfig
     {
       Version = pkg.ReadString(),
@@ -170,6 +209,7 @@ public class VehicleCustomConfig : ISerializableConfig<VehicleCustomConfig, IVeh
       CustomFloatationHeight = pkg.ReadSingle(),
       HasCustomFloatationHeight = pkg.ReadBool(),
       TreadDistance = pkg.ReadSingle(),
+      TreadLength = pkg.ReadSingle(),
       TreadHeight = pkg.ReadSingle(),
       TreadScaleX = pkg.ReadSingle()
     };

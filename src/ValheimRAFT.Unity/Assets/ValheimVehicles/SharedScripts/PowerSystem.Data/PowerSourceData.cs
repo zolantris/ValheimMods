@@ -1,10 +1,14 @@
 // ReSharper disable ArrangeNamespaceBody
 // ReSharper disable NamespaceStyle
 
+#region
+
 using System;
 using UnityEngine;
 using ValheimVehicles.Shared.Constants;
 using ValheimVehicles.SharedScripts.Modules;
+
+#endregion
 
 namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
 {
@@ -15,6 +19,7 @@ namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
     Eitr
   }
 
+  // ReSharper disable once PartialTypeWithSinglePart
   public partial class PowerSourceData : PowerSystemComputeData
   {
     public static float OutputRateDefault = 10f;
@@ -22,36 +27,37 @@ namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
     public static float FuelEfficiencyDefault = 1f;
     public static float FuelConsumptionRateDefault = 1f;
     public static float FuelEnergyYieldDefault = 10f;
-    private static float MaxOutputEnergy = 100f;
+    private static readonly float MaxOutputEnergy = 100f;
 
     // efficiency variants
     public static float CoalFuelEfficiency = 1f;
     public static float SurtlingCoreFuelEfficiency = 3f;
     public static float EitrFuelEfficiency = 12f;
-    private float _lastProducedEnergy = 0f;
-
-    public override bool IsActive => true;
-
-    // when the player adds this it will not be added until next simulation is called, meaning the added fuel is conserved.
-    public float PendingFuel = 0f;
-
-    public float Fuel = 0;
-    public float FuelCapacity = FuelCapacityDefault;
-    public float OutputRate = OutputRateDefault;
-
-    public float FuelConsumptionRate = FuelConsumptionRateDefault;
-    public float FuelEnergyYield = FuelEnergyYieldDefault;
-    public float FuelEfficiency = 1f;
-    public FuelType fuelType = FuelType.Eitr;
+    private float _lastProducedEnergy;
 
 
     public float BaseFuelEfficiency = FuelEfficiencyDefault;
-    public bool IsRunning = false;
+
+    public float Fuel;
+    public float FuelCapacity = FuelCapacityDefault;
+
+    public float FuelConsumptionRate = FuelConsumptionRateDefault;
+    public float FuelEfficiency = 1f;
+    public float FuelEnergyYield = FuelEnergyYieldDefault;
+    public FuelType fuelType = FuelType.Eitr;
+    public bool IsRunning;
+    public float OutputRate = OutputRateDefault;
+
+    // when the player adds this it will not be added until next simulation is called, meaning the added fuel is conserved.
+    public float PendingFuel;
 
     public PowerSourceData()
     {
       OnPropertiesUpdate();
     }
+
+    public bool IsValid { get; set; }
+    public override bool IsActive => true;
 
     /// <summary>
     /// For refreshing properties when config changes.
@@ -123,41 +129,6 @@ namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
         MarkDirty(VehicleZdoVars.PowerSystem_Fuel);
       }
     }
-
-#if DEBUG
-    public float ProducePower(float requestedEnergy)
-    {
-      var maxDeliverable = Fuel * FuelEnergyYield * FuelEfficiency;
-      var actual = MathX.Min(requestedEnergy, maxDeliverable);
-
-      var requiredFuel = actual / (FuelEnergyYield * FuelEfficiency);
-      Fuel = MathX.Max(0f, Fuel - requiredFuel);
-
-      _lastProducedEnergy = actual;
-      return actual;
-    }
-
-    public float EstimateFuelCost(float energy)
-    {
-      return energy / (FuelEnergyYield * FuelEfficiency);
-    }
-
-    public float GetOfferEstimate(float deltaTime, float supplied, float totalDemand, bool isDemanding, float snapshotFuel)
-    {
-      if (!IsActive || !isDemanding) return 0f;
-
-      var remainingDemand = totalDemand - supplied;
-      if (remainingDemand <= 0f || snapshotFuel <= 0f)
-        return 0f;
-
-      var energyPerFuel = FuelEnergyYield * FuelEfficiency;
-      if (energyPerFuel <= 0f) return 0f;
-
-      var maxFuelBurn = MathX.Min(FuelConsumptionRate * deltaTime, snapshotFuel);
-      var maxEnergy = maxFuelBurn * energyPerFuel;
-      return MathX.Min(OutputRate * deltaTime, MathX.Min(remainingDemand, maxEnergy));
-    }
-#endif
     public void SetRunning(bool state)
     {
       IsRunning = state;
@@ -250,5 +221,40 @@ namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
       Fuel = MathX.Clamp(val, 0f, FuelCapacity);
       MarkDirty(VehicleZdoVars.PowerSystem_Fuel);
     }
+
+#if DEBUG
+    public float ProducePower(float requestedEnergy)
+    {
+      var maxDeliverable = Fuel * FuelEnergyYield * FuelEfficiency;
+      var actual = MathX.Min(requestedEnergy, maxDeliverable);
+
+      var requiredFuel = actual / (FuelEnergyYield * FuelEfficiency);
+      Fuel = MathX.Max(0f, Fuel - requiredFuel);
+
+      _lastProducedEnergy = actual;
+      return actual;
+    }
+
+    public float EstimateFuelCost(float energy)
+    {
+      return energy / (FuelEnergyYield * FuelEfficiency);
+    }
+
+    public float GetOfferEstimate(float deltaTime, float supplied, float totalDemand, bool isDemanding, float snapshotFuel)
+    {
+      if (!IsActive || !isDemanding) return 0f;
+
+      var remainingDemand = totalDemand - supplied;
+      if (remainingDemand <= 0f || snapshotFuel <= 0f)
+        return 0f;
+
+      var energyPerFuel = FuelEnergyYield * FuelEfficiency;
+      if (energyPerFuel <= 0f) return 0f;
+
+      var maxFuelBurn = MathX.Min(FuelConsumptionRate * deltaTime, snapshotFuel);
+      var maxEnergy = maxFuelBurn * energyPerFuel;
+      return MathX.Min(OutputRate * deltaTime, MathX.Min(remainingDemand, maxEnergy));
+    }
+#endif
   }
 }

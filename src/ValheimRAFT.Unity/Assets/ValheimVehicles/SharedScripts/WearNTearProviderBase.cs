@@ -1,8 +1,13 @@
 // ReSharper disable ArrangeNamespaceBody
 // ReSharper disable NamespaceStyle
 
+#region
+
 using System;
 using UnityEngine;
+
+#endregion
+
 namespace ValheimVehicles.SharedScripts
 {
 
@@ -12,10 +17,10 @@ namespace ValheimVehicles.SharedScripts
   public abstract class WearNTearProviderBase : MonoBehaviour
   {
     // The main resolver for WearNTearStub this will be updated by the integration layer. 
-    public static Func<GameObject?, IWearNTearStub?> GetWearNTearComponent = (gameObject) =>
+    public static Func<GameObject?, IWearNTearStub?> GetWearNTearComponent = gameObject =>
     {
       if (gameObject == null) return null;
-#if !UNITY_EDITOR
+#if !UNITY_2022
       Debug.Log("WearNTearProviderBase.Resolver default method called. This should never happen outside of unity Environment");
 #endif
 

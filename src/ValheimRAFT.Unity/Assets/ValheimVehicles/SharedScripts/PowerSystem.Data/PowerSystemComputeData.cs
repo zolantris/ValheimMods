@@ -8,14 +8,17 @@ namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
 {
   public abstract partial class PowerSystemComputeData : IPowerSystemEntityData
   {
+    public PowerSystemComputeData() {}
     // constants
-    private bool _isActive = true;
-    public const string NetworkIdUnassigned = "UNASSIGNED";
 
+    public const string NetworkIdUnassigned = "UNASSIGNED";
     // static
     public static float PowerRangeDefault = 4f;
     public static float PowerRangePylonDefault = 10f;
 
+    // states
+    public bool IsValid { get; set; } = true; // adds more checks when this fails.
+    private bool _isActive = true;
     protected HashSet<string> _dirtyFields = new();
 
     public bool IsTempNetworkId => IsTempNetworkIdStatic(NetworkId);
@@ -24,11 +27,18 @@ namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
       return val != "" && val != NetworkIdUnassigned;
     }
 
+    /// <summary>
+    /// Used for determining if a key is changed and must be synced.
+    /// </summary>
+    /// <param name="zdoKey"></param>
     public void MarkDirty(string zdoKey)
     {
       _dirtyFields.Add(zdoKey);
     }
 
+    /// <summary>
+    /// Used for unsetting dirty keys after a loop.
+    /// </summary>
     public void ClearDirty()
     {
       _dirtyFields.Clear();
@@ -99,6 +109,9 @@ namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
       MarkDirty(VehicleZdoVars.PowerSystem_IsActive);
     }
 
+    /// <summary>
+    /// A value set by the power simulation system. Can be overriden.
+    /// </summary>
     public virtual bool IsActive => _isActive;
   }
 }

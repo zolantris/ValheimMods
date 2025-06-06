@@ -8,10 +8,10 @@ namespace ValheimVehicles.SharedScripts
     None,
     Rotate,
     Move,
+    TargetWind,
 #if DEBUG
     // not ready for prod.
     TargetEnemy,
-    TargetWind,
 #endif
   }
 }

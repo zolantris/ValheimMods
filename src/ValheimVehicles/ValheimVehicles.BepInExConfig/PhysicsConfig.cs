@@ -23,15 +23,6 @@ public class PhysicsConfig : BepInExBaseConfig<PhysicsConfig>
 
   private static string VelocityModeSectionKey = $"{SectionKey}: Velocity Mode";
 
-  // Sync Logic (for performance and multiplayer)
-#if DEBUG
-  public static ConfigEntry<bool> SwivelsCanSyncOnAllClients = null!;
-#endif
-
-
-  public static ConfigEntry<int> VehicleLandMaxTreadWidth = null!;
-  public static ConfigEntry<int> VehicleLandMaxTreadLength = null!;
-
   // all vehicles
   public static ConfigEntry<float> VehicleCenterOfMassOffset = null!;
   public static ConfigEntry<float> VehicleLandTreadVerticalOffset = null!;
@@ -189,37 +180,12 @@ public class PhysicsConfig : BepInExBaseConfig<PhysicsConfig>
 
   public override void OnBindConfig(ConfigFile config)
   {
-    const string vehicleCustomSettingTodo = "In future version there will be an individual config setting.";
-
-    VehicleLandMaxTreadWidth = config.BindUnique(SectionKey,
-      "LandVehicle Max Tread Width",
-      8,
-      ConfigHelpers.CreateConfigDescription(
-        $"Max width the treads can expand to. Lower values will let you make motor bikes. This affects all vehicles. {vehicleCustomSettingTodo}", true, false, new AcceptableValueRange<int>(1, 20)));
-
-#if DEBUG
-    SwivelsCanSyncOnAllClients = config.BindUnique(SectionKey,
-      "SwivelsCanSyncOnAllClients",
-      true,
-      ConfigHelpers.CreateConfigDescription(
-        $"Allow swivels to sync on all clients. Instead of using ChildSync properties which can be a bit laggy.", true, false));
-    SwivelComponentBridge.CanAllClientsSync = SwivelsCanSyncOnAllClients.Value;
-    SwivelsCanSyncOnAllClients.SettingChanged += (sender, args) => SwivelComponentBridge.CanAllClientsSync = SwivelsCanSyncOnAllClients.Value;
-#endif
-
-    VehicleLandMaxTreadLength = config.BindUnique(SectionKey,
-      "LandVehicle Max Tread Length",
-      20,
-      ConfigHelpers.CreateConfigDescription(
-        $"Max length the treads can expand to. {vehicleCustomSettingTodo}", true, false, new AcceptableValueRange<int>(4, 100)));
-
+    const string vehicleCustomSettingTodo = "This is just a default. Any vehicle can be configured directly via config menu.";
     VehicleCenterOfMassOffset = config.BindUnique(SectionKey,
       "Vehicle CenterOfMassOffset",
       0.65f,
       ConfigHelpers.CreateConfigDescription(
         $"Offset the center of mass by a percentage of vehicle total height. Should always be a positive number. Higher values will make the vehicle more sturdy as it will pivot lower. Too high a value will make the ship behave weirdly possibly flipping. 0 will be the center of all colliders within the physics of the vehicle. \n100% will be 50% lower than the vehicle's collider. \n50% will be the very bottom of the vehicle's collider. {vehicleCustomSettingTodo}", true, true, new AcceptableValueRange<float>(0f, 1f)));
-
-
 
     var dampingSidewaysDescription = ConfigHelpers.CreateConfigDescription(
       SailSidewaysDampingExplaination,
@@ -323,7 +289,7 @@ public class PhysicsConfig : BepInExBaseConfig<PhysicsConfig>
       -1f,
       ConfigHelpers.CreateConfigDescription(
         "Wheel offset for Y position. Allowing for raising the treads higher. May require increasing suspension distance so the treads spawn then push the vehicle upwards. Negative lowers the wheels. Positive raises the treads. This value will not override custom config vehicles.", true, false, new AcceptableValueRange<float>(-10f, 10f)));
-    VehicleLandTreadVerticalOffset.SettingChanged += (sender, args) => VehicleManager.UpdateAllWheelControllers();
+    VehicleLandTreadVerticalOffset.SettingChanged += (sender, args) => VehicleManager.UpdateAllLandMovementControllers();
 
     // guards for max values
     MaxLinearVelocity = config.BindUnique(SectionKey, $"MaxVehicleLinearVelocity_{VersionedConfigUtil.GetDynamicMinorVersionKey()}", 100f,
@@ -464,8 +430,6 @@ public class PhysicsConfig : BepInExBaseConfig<PhysicsConfig>
     };
 
 
-    VehicleLandMaxTreadWidth.SettingChanged += (sender, args) => VehicleManager.UpdateAllWheelControllers();
-    VehicleLandMaxTreadLength.SettingChanged += (sender, args) => VehicleManager.UpdateAllWheelControllers();
 
     floatationVelocityMode.SettingChanged += (sender, args) =>
       ForceSetVehiclePhysics(floatationVelocityMode);

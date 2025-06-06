@@ -20,7 +20,7 @@
     /// Controls all LandVehicle Wheel and Force Settings.
     /// </summary>
     [RequireComponent(typeof(Rigidbody))]
-    public class VehicleWheelController : MonoBehaviour
+    public class VehicleLandMovementController : MonoBehaviour
     {
 
       public enum AccelerationType
@@ -40,13 +40,13 @@
 
       public const float wheelBaseRadiusScale = 1.5f;
 
-      private const float Gravity = 9.81f; // Earth gravity constant
-      private const float uphillTorqueMultiplier = 1.5f; // Adjust for hill climbing power
-      private const float downhillResistance = 500f; // Torque to counteract rolling backward
-      private const float stabilityCorrectionFactor = 200f;
-      private const float baseAccelerationMultiplier = 30f;
-      public const float defaultTurnAccelerationMultiplier = 10f;
-      private const float _lastTerrainTouchTimeExpiration = 1f;
+      internal const float Gravity = 9.81f; // Earth gravity constant
+      internal const float uphillTorqueMultiplier = 1.5f; // Adjust for hill climbing power
+      internal const float downhillResistance = 500f; // Torque to counteract rolling backward
+      internal const float stabilityCorrectionFactor = 200f;
+      internal static float baseAccelerationMultiplier = 30f;
+      public static float defaultTurnAccelerationMultiplier = 10f;
+      private static float _lastTerrainTouchTimeExpiration = 1f;
       public static float baseTurnAccelerationMultiplier = defaultTurnAccelerationMultiplier;
 
       public static float defaultBreakForce = 500f;
@@ -54,6 +54,9 @@
       private static readonly float highAcceleration = 6 * baseAccelerationMultiplier;
       private static readonly float mediumAcceleration = 3 * baseAccelerationMultiplier;
       private static readonly float lowAcceleration = 1 * baseAccelerationMultiplier;
+
+      // for locking down rotational speed if already rotating. This will clamp velocity. Velocity above 2f is way to quick.
+      public static float MaxAngularLerpSpeed = 2f;
 
       public float minTreadDistances = 0.1f;
       public float treadWidthXScale = 1f;
@@ -72,8 +75,8 @@
       public bool UseInputControls;
 
       [Header("Vehicle Generation Properties")]
-      public int maxTreadLength = 20;
-      public int maxTreadWidth = 8;
+      public float maxTreadLength = 20f;
+      public float maxTreadWidth = 8f;
 
       [Header("Overrides")]
       public float Override_WheelBottomOffset;
@@ -191,7 +194,7 @@
       public bool ShouldHideWheelRender;
 
       public float dynamicFriction = 0.01f;
-      public float staticFriction = 0.02f;
+      public float staticFriction = 0.05f;
       public PhysicMaterial treadPhysicMaterial;
 
       public bool IsOnGround;
@@ -245,15 +248,14 @@
       internal bool isInAir = true;
       private bool isLeftForward = true;
       private bool isRightForward = true;
-      private bool isTurningInPlace;
       private Vector3 lateralVelocitySmoothDamp = Vector3.zero; // For SmoothDamp velocity tracking
       // private float lerpedTurnFactor;
       private Vector3 m_angularVelocitySmoothSpeed = Vector3.zero;
 
       private Vector3 m_velocitySmoothSpeed = Vector3.zero;
 
-      private float maxRotationSpeed = 1f; // Default top speed
-      private float maxSpeed = 25f; // Default top speed
+      private readonly float maxRotationSpeed = 1f; // Default top speed
+      private readonly float maxSpeed = 25f; // Default top speed
 
       public Action OnWheelsInitialized = () => {};
 
@@ -273,6 +275,12 @@
       public bool IsVehicleReady => _isWheelsInitialized && _isTreadsInitialized && vehicleRootBody; // important catchall for preventing fixedupdate physics from being applied until the vehicle is ready.
       public float wheelColliderRadius => Mathf.Clamp(wheelRadius, 0f, 5f);
 
+      public bool IsTurningInPlace
+      {
+        get;
+        private set;
+      }
+
       [UsedImplicitly]
       public bool IsBraking
       {
@@ -290,7 +298,7 @@
 
       private void Awake()
       {
-#if UNITY_EDITOR
+#if UNITY_2022
       var ghostContainer = transform.Find("ghostContainer");
       if (ghostContainer) ghostContainer.gameObject.SetActive(false);
 #endif
@@ -485,7 +493,7 @@
         }
         if (treadsLeftMovingComponent && treadsRightMovingComponent)
         {
-          if (!treadsLeftMovingComponent.vehicleWheelController || !treadsRightMovingComponent.vehicleWheelController)
+          if (!treadsLeftMovingComponent.vehicleLandMovementController || !treadsRightMovingComponent.vehicleLandMovementController)
           {
             InitTreads();
           }
@@ -593,6 +601,14 @@
         rb.AddForce(dampingForce, ForceMode.Acceleration);
       }
 
+      public static float rotatingInPlaceTimeMultiplierVelocity = 10f;
+      public static float rotatingInPlaceTimeMultiplierAngularVelocity = 10f;
+      public static Vector3 OVERRIDE_upwardsForce = new(0, 0.01f, 0);
+      public Vector3 GetUpwardsForce()
+      {
+        return OVERRIDE_upwardsForce;
+      }
+
       // New method: apply forces directly at the treads to simulate continuous treads
       private void ApplyTreadForces()
       {
@@ -627,8 +643,10 @@
         // Get current angular speed (rotation speed around the Y-axis)
         var angularSpeed = Mathf.Abs(vehicleRootBody.angularVelocity.y);
 
+
         // Lerp turn force: Starts high at low speeds (20), drops to 0.01 at max angular speed.
-        var turnForceLerp = Mathf.Lerp(inputTurnForce * baseTurnAccelerationMultiplier, 0f, Mathf.Clamp01(angularSpeed / 5f));
+        // todo inspect this turn lerp. This likely drops all turning speed too much.
+        var turnForceLerp = Mathf.Lerp(inputTurnForce * baseTurnAccelerationMultiplier, 0f, Mathf.Clamp01(angularSpeed / MaxAngularLerpSpeed));
         var baseTorqueTurnLerp = Mathf.Lerp(1f, 0.25f, Mathf.Clamp01(baseAcceleration / highAcceleration));
         combinedTurnLerp = turnForceLerp * baseTorqueTurnLerp;
 
@@ -664,9 +682,7 @@
         }
 
         // var upwardsForce = transform.up * baseTorque * 0.01f;
-
-        // todo make this apply at front and back wheels depending on direction so the vehicle can ascend over terrain easily and not require wheels as much..
-        var upwardsForce = Vector3.zero;
+        var upwardsForce = GetUpwardsForce();
 
         var deltaTreads = Vector3.Distance(rightTreadPos, leftTreadPos);
 
@@ -690,6 +706,18 @@
         // this removes sideways velocities quickly to prevent issues with vehicle at higher speeds turning.
         DampenSidewaysVelocity();
         DampenAngularYVelocity();
+
+        // Prevent translation during in-place turning
+        if (IsTurningInPlace && IsOnGround)
+        {
+          // Only preserve Y angular velocity (turning)
+          var vel = vehicleRootBody.velocity;
+          // Optionally preserve Y to allow height
+          vehicleRootBody.velocity = Vector3.Slerp(vel, new Vector3(0, vel.y, 0), Time.fixedDeltaTime * rotatingInPlaceTimeMultiplierVelocity);
+          // Make sure only Y angular velocity is kept (for yaw turn)
+          var angVel = vehicleRootBody.angularVelocity;
+          vehicleRootBody.angularVelocity = Vector3.Slerp(angVel, new Vector3(0, angVel.y, 0), Time.fixedDeltaTime * rotatingInPlaceTimeMultiplierAngularVelocity);
+        }
       }
 
       private float GetSteeringForceLerp()
@@ -727,7 +755,7 @@
         {
           movingTreadComponent.treadPrefab = treadsPrefab;
         }
-        movingTreadComponent.vehicleWheelController = this;
+        movingTreadComponent.vehicleLandMovementController = this;
       }
       /// <summary>
       /// Init for both treads
@@ -741,9 +769,9 @@
           // shared dynamic physicMaterial. This can be different per vehicle used.
           treadPhysicMaterial = new PhysicMaterial("TreadPhysicMaterial")
           {
-            dynamicFriction = IsBraking ? 0.5f : dynamicFriction,
+            dynamicFriction = IsBraking ? 1f : dynamicFriction,
             staticFriction = IsBraking ? 0.5f : staticFriction,
-            bounciness = 0f,
+            bounciness = 0.01f,
             bounceCombine = PhysicMaterialCombine.Minimum,
             frictionCombine = PhysicMaterialCombine.Minimum
           };
@@ -860,6 +888,26 @@
         leftRenderers.Clear();
       }
 
+      public void ApplyFrictionUpdates()
+      {
+        if (IsBraking) return;
+
+        var isTryingToMove = Mathf.Abs(inputMovement) > 0.01f || Mathf.Abs(inputTurnForce) > 0.01f;
+
+        if (isTryingToMove)
+        {
+          // Lower friction so tracks can slip and move from rest
+          treadPhysicMaterial.dynamicFriction = dynamicFriction;
+          treadPhysicMaterial.staticFriction = staticFriction;
+        }
+        else
+        {
+          // High friction, lock in place
+          treadPhysicMaterial.dynamicFriction = 1f;
+          treadPhysicMaterial.staticFriction = 1f;
+        }
+      }
+
       /// <summary>
       ///   To be called from VehicleMovementController
       /// </summary>
@@ -871,13 +919,16 @@
 
         UpdateIsOnGround();
 
-        isTurningInPlace = Mathf.Approximately(inputMovement, 0f) && Mathf.Abs(inputTurnForce) > 0f;
+        IsTurningInPlace = Mathf.Approximately(inputMovement, 0f) && Mathf.Abs(inputTurnForce) > 0f;
         currentSpeed = GetTankSpeed();
 
         if (!IsOnGround)
         {
           ApplyDownforce();
+          return;
         }
+
+        ApplyFrictionUpdates();
 
         HandleObstacleClimb();
 
@@ -1538,11 +1589,11 @@
 
         currentSidewaysFriction = new WheelFrictionCurve
         {
-          extremumSlip = (isTurningInPlace ? 0.5f : 0.4f) * frictionMultiplier,
-          extremumValue = (isTurningInPlace ? 0.7f : 0.8f) * frictionMultiplier,
-          asymptoteSlip = (isTurningInPlace ? 1.8f : 2.0f) * frictionMultiplier,
-          asymptoteValue = (isTurningInPlace ? 0.5f : 0.6f) * frictionMultiplier,
-          stiffness = isTurningInPlace ? 1.8f : Mathf.Lerp(2f, 2.5f, speed / topSpeed)
+          extremumSlip = (IsTurningInPlace ? 0.5f : 0.4f) * frictionMultiplier,
+          extremumValue = (IsTurningInPlace ? 0.7f : 0.8f) * frictionMultiplier,
+          asymptoteSlip = (IsTurningInPlace ? 1.8f : 2.0f) * frictionMultiplier,
+          asymptoteValue = (IsTurningInPlace ? 0.5f : 0.6f) * frictionMultiplier,
+          stiffness = IsTurningInPlace ? 1.8f : Mathf.Lerp(2f, 2.5f, speed / topSpeed)
         };
 
         wheel.forwardFriction = currentForwardFriction;
@@ -1787,7 +1838,7 @@
       {
         if (!UseInputControls) return;
 
-#if UNITY_EDITOR
+#if UNITY_2022
       var isBrakingPressed = Input.GetKeyDown(KeyCode.Space);
       if (!isBrakingPressed && isBrakePressedDown)
       {
@@ -1812,15 +1863,15 @@
       }
 
       // We run this only in Unity Editor
-#if UNITY_EDITOR
-    private void Update()
+#if UNITY_2022
+      private void Update()
     {
       if (!Application.isPlaying) return;
       UpdateControls();
       SetOverrides();
     }
 
-    private void FixedUpdate()
+      private void FixedUpdate()
     {
       if (!Application.isPlaying) return;
 
