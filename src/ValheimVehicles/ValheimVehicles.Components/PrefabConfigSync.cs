@@ -42,13 +42,12 @@ public class PrefabConfigSync<T, TComponentInterface> : MonoBehaviour, IPrefabCu
   public virtual void OnEnable()
   {
     if (ZNetView.m_forceDisableInit) return;
-    RegisterRPCListeners();
-    Load();
-
     this.WaitForZNetView((nv) =>
     {
+      RegisterRPCListeners();
       PrefabConfigRPC.AddSubscription(nv.m_zdo, this);
       InitRPCHandler();
+      Load();
     });
   }
 

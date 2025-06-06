@@ -468,6 +468,8 @@
     /// </summary>
     public void SetAuthoritativeMotion(SwivelMotionUpdateData motionUpdateData, bool isAuthoritative)
     {
+      prefabConfigSync.Load();
+
       _isAuthoritativeMotionActive = isAuthoritative;
       Config.MotionState = motionUpdateData.MotionState;
       _motionStartTime = motionUpdateData.StartTime;
@@ -480,16 +482,17 @@
       _motionFromLocalRot = animatedTransform.localRotation;
 
       if (mode == SwivelMode.Move)
-        _motionToLocalPos = Config.MotionState == MotionState.ToTarget
+        _motionToLocalPos = Config.MotionState is MotionState.ToTarget or MotionState.AtTarget
           ? startLocalPosition + movementOffset
           : startLocalPosition;
       else if (mode == SwivelMode.Rotate)
-        _motionToLocalRot = Config.MotionState == MotionState.ToTarget
+        _motionToLocalRot = Config.MotionState is MotionState.ToTarget or MotionState.AtTarget
           ? CalculateRotationTarget(1f)
           : CalculateRotationTarget(0f);
 
       // Reset completion guard
       _hasArrivedAtDestination = false;
+
 
       if (!isAuthoritative)
       {

@@ -273,35 +273,6 @@ namespace ValheimVehicles.SharedScripts
         : Quaternion.identity;
     }
 
-    public void FrozenRBUpdate()
-    {
-      // only called if the swivel is not a base state like Returned or AtTarget
-      // if (IsPoweredSwivel && swivelPowerConsumer && !swivelPowerConsumer.IsActive)
-      // {
-      //   if (!isFrozen)
-      //   {
-      //     frozenLocalPos = animatedTransform.localPosition;
-      //     frozenLocalRot = animatedTransform.localRotation;
-      //     isFrozen = true;
-      //   }
-      //
-      //   var parent = animatedTransform.parent;
-      //   if (parent != null)
-      //   {
-      //     var worldPos = parent.TransformPoint(frozenLocalPos);
-      //     var worldRot = parent.rotation * frozenLocalRot;
-      //
-      //     animatedRigidbody.Move(worldPos, worldRot);
-      //   }
-      //
-      //   return;
-      // }
-      // else
-      // {
-      //   isFrozen = false;
-      // }
-    }
-
     public static float ParentVelocityThreshold = 0.3f;
 
     /// <summary>
@@ -347,7 +318,8 @@ namespace ValheimVehicles.SharedScripts
       // Always use Rigidbody moves
       if (animatedRigidbody)
       {
-        animatedRigidbody.Move(transform.TransformPoint(pos), transform.rotation * rot);
+        var newPosition = transform.TransformPoint(pos);
+        animatedRigidbody.Move(newPosition, transform.rotation * rot);
       }
       else
       {
@@ -429,6 +401,33 @@ namespace ValheimVehicles.SharedScripts
       return Mathf.Clamp01((float)((now - _motionStartTime) / _motionDuration));
     }
 
+    private const float angleEpsilon = 0.5f; // degrees
+    private const float positionEpsilon = 0.001f; // degrees
+
+    /// <summary>
+    /// Setting Transforms per update causes conflicts with children calls for Move. This will only update for a single frame to avoid nested rigidbody conflicts.
+    /// </summary>
+    public void SetPositionIfNotNear(ref Transform targetTransform, Vector3 expectedPosition)
+    {
+      if ((targetTransform.localPosition - expectedPosition).sqrMagnitude > positionEpsilon * positionEpsilon)
+      {
+        // may need to use .Move/MovePosition
+        targetTransform.localPosition = expectedPosition;
+      }
+    }
+
+    /// <summary>
+    /// Setting Transforms per update causes conflicts with children calls for Move. This will only update for a single frame to avoid nested rigidbody conflicts.
+    /// </summary>
+    public void SetRotationIfNotNear(ref Transform targetTransform, Quaternion expectedRotation)
+    {
+      if (Quaternion.Angle(targetTransform.localRotation, expectedRotation) > angleEpsilon)
+      {
+        // may need to use .Move/MoveRotation
+        targetTransform.localRotation = expectedRotation;
+      }
+    }
+
     public virtual void SwivelRotateUpdate()
     {
       var t = GetDeltaTime();
@@ -441,14 +440,12 @@ namespace ValheimVehicles.SharedScripts
 
       if (currentMotionState == MotionState.AtTarget)
       {
-        animatedTransform.localRotation = CalculateRotationTarget(1);
+        SetRotationIfNotNear(ref animatedTransform, CalculateRotationTarget(1f));
       }
-      if (currentMotionState == MotionState.AtStart)
+      else if (currentMotionState == MotionState.AtStart)
       {
-        animatedTransform.localRotation = CalculateRotationTarget(0);
+        SetRotationIfNotNear(ref animatedTransform, CalculateRotationTarget(0f));
       }
-
-      GuardSwivelValues();
     }
 
     public virtual void SwivelMoveUpdate()
@@ -463,13 +460,11 @@ namespace ValheimVehicles.SharedScripts
 
       if (currentMotionState == MotionState.AtTarget)
       {
-        animatedTransform.localPosition = startLocalPosition + movementOffset;
-        return;
+        SetPositionIfNotNear(ref animatedTransform, startLocalPosition + movementOffset);
       }
-      if (currentMotionState == MotionState.AtStart)
+      else if (currentMotionState == MotionState.AtStart)
       {
-        animatedTransform.localPosition = startLocalPosition;
-        return;
+        SetPositionIfNotNear(ref animatedTransform, startLocalPosition);
       }
     }
 
