@@ -62,7 +62,6 @@ public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
 
   private float _disableTime = 0f;
   private const float _disableTimeMax = 0.5f;
-  public static bool CanHitOwners = true;
 
   public bool isReadyForCollisions { get; set; }
   public bool isRebuildingCollisions
@@ -105,8 +104,6 @@ public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
     return RamConfig.RamDamageToolTier.Value;
   }
 
-  public static float VehicleHitForce = 1f;
-
   public void InitializeFromConfig()
   {
     // must set this first.
@@ -136,7 +133,6 @@ public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
         m_hitFriendly = RamConfig.VehicleRamCanHitFriendly.Value;
         m_hitEnemy = RamConfig.VehicleRamCanHitEnemies.Value;
         m_hitParent = RamConfig.VehicleRamCanDamageSelf.Value;
-        m_attackForce = VehicleHitForce;
         break;
       case RamPrefabs.RamType.Stake:
       case RamPrefabs.RamType.Blade:
@@ -154,7 +150,6 @@ public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
         m_hitFriendly = RamConfig.CanHitFriendly.Value;
         m_hitEnemy = RamConfig.CanHitEnemies.Value;
         m_hitParent = RamConfig.CanDamageSelf.Value;
-        m_attackForce = 0.1f;
         break;
       default:
         throw new ArgumentOutOfRangeException();
@@ -315,8 +310,6 @@ public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
 
     var multiplier = Mathf.Min(relativeVelocityMagnitude * 0.5f,
       MaxVelocityMultiplier) * RamDamageOverallMultiplier;
-
-    m_attackForce = relativeVelocityMagnitude;
 
     if (materialTier == PrefabTiers.Tier3)
       multiplier *= Mathf.Clamp(1 + DamageIncreasePercentagePerTier * 2, 1, 4);
@@ -509,21 +502,10 @@ public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
     }
   }
 
-  /// <summary>
-  /// For Skipping a hit but not ignoring physics.
-  /// </summary>
-  /// <param name="collider"></param>
-  /// <returns></returns>
   public override bool ShouldHit(Collider collider)
   {
     if (!IsReady()) return false;
     var colliderObj = collider.gameObject;
-
-    // don't hit terrain or items with vehicles.
-    if (colliderObj.layer == LayerHelpers.ItemLayer || colliderObj.layer == LayerHelpers.TerrainLayer)
-    {
-      return false;
-    }
 
     var character = collider.GetComponentInParent<Character>();
     if (WaterZoneUtils.IsOnboard(character))
@@ -566,7 +548,6 @@ public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
   {
     if (!collider) return true;
 
-    var colliderObj = collider.gameObject;
     VehiclePiecesController? vehiclePiecesController = null;
 
     if (!RamConfig.CanHitSwivels.Value && collider.GetComponentInParent<SwivelComponent>())
@@ -574,26 +555,7 @@ public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
       return true;
     }
 
-    if (m_vehicle != null)
-    {
-      if (m_vehicle.MovementController != null && m_vehicle.MovementController.TryBailOnCollisionOfDifferentVehicleType(collider))
-      {
-        // do not ignore collisions. This would make the vehicle phase through when we want it to be able to board.
-        return true;
-      }
-    }
-
-    // do not ignore just skip terrain calcs.
-    if (collider.gameObject.layer == LayerHelpers.TerrainLayer) return false;
-
-    if (!LayerHelpers.IsContainedWithinLayerMask(colliderObj.layer, LayerHelpers.PhysicalLayerMask))
-    {
-#if DEBUG
-      // LoggerProvider.LogDebug($"Ignoring layer {colliderObj.layer} for gameobject {colliderObj.name} because it is not within PhysicalLayer mask.");
-#endif
-      IgnoreCollider(collider);
-      return false;
-    }
+    var colliderObj = collider.gameObject;
 
     if (colliderObj.layer == LayerHelpers.ItemLayer)
     {
@@ -612,6 +574,15 @@ public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
       }
       IgnoreCollider(collider);
       return true;
+    }
+
+    if (!LayerHelpers.IsContainedWithinLayerMask(colliderObj.layer, LayerHelpers.PhysicalLayerMask))
+    {
+#if DEBUG
+      // LoggerProvider.LogDebug($"Ignoring layer {colliderObj.layer} for gameobject {colliderObj.name} because it is not within PhysicalLayer mask.");
+#endif
+      IgnoreCollider(collider);
+      return false;
     }
 
     if (PrefabNames.IsVehicleCollider(collider.name))

@@ -48,7 +48,7 @@
 
     protected override void TrySetPieceToParent(ZNetView netView)
     {
-      if (netView == null || PrefabNames.IsVehicle(netView.name)) return;
+      // if (netView == null || PrefabNames.IsVehicle(netView.name)) return;
       // Classic vehicle-specific logic
       netView.transform.SetParent(_host.GetPiecesContainer(), false);
     }
@@ -529,10 +529,6 @@
       foreach (var component in components)
         switch (component)
         {
-          case VehicleManager vehicleManager:
-            LoggerProvider.LogDev("Detected VehicleManager, setting parent to PiecesController.Manager");
-            vehicleManager.MovementController.OnParentReady(PiecesController.Manager);
-            break;
           case SwivelComponentBridge swivelController:
             InitSwivelController(swivelController);
             break;
@@ -565,7 +561,7 @@
             m_anchorPieces.Add(netView);
             if (MovementController != null)
             {
-              MovementController.UpdateAnchorCapabilities();
+              MovementController.CanAnchor = m_anchorPieces.Count > 0 || Manager!.IsLandVehicle;
               anchorMechanismController.UpdateAnchorState(MovementController
                 .vehicleAnchorState, VehicleAnchorMechanismController.GetCurrentStateTextStatic(MovementController.vehicleAnchorState, Manager != null && Manager.IsLandVehicle));
             }
@@ -636,9 +632,7 @@
             m_anchorPieces.Remove(netView);
 
             if (MovementController != null)
-            {
-              MovementController.UpdateAnchorCapabilities();
-            }
+              MovementController.CanAnchor = m_anchorPieces.Count > 0 || Manager!.IsLandVehicle;
             break;
           }
           case BoardingRampComponent ramp:
@@ -685,12 +679,6 @@
       if ((bool)wntShip) wntShip.Destroy();
     }
 
-    public static bool CanRemoveRigidbodyFromChild(string name)
-    {
-      return !RamPrefabs.IsRam(name) &&
-             !name.Contains(PrefabNames.ShipAnchorWood) && !PrefabNames.IsVehicle(name) && !PrefabNames.IsVehiclePiecesCollider(name) && !name.StartsWith(PrefabNames.SwivelPrefabName);
-    }
-
     public void AddPiece(ZNetView netView, bool isNew = false)
     {
       if (IsInvalid()) return;
@@ -723,14 +711,15 @@
       }
 
       // Remove non-kinematic rigidbodies if not a ram
-      if (CanRemoveRigidbodyFromChild(netView.name))
+      if (!RamPrefabs.IsRam(netView.name) &&
+          !netView.name.Contains(PrefabNames.ShipAnchorWood) && !PrefabNames.IsVehicle(name) && !netView.name.StartsWith(PrefabNames.SwivelPrefabName))
       {
         var rbs = netView.GetComponentsInChildren<Rigidbody>();
         foreach (var rbsItem in rbs)
-          if (!rbsItem.isKinematic && rbsItem != m_localRigidbody || rbsItem != m_syncRigidbody)
+          if (!rbsItem.isKinematic)
           {
             Logger.LogWarning(
-              $"Destroying Rigidbody on netview <{netView.name}> for root object <{rbsItem.transform.root?.name ?? rbsItem.transform.name}>");
+              $"Destroying Rigidbody for root object {rbsItem.transform.root?.name ?? rbsItem.transform.name}");
             Destroy(rbsItem);
           }
       }
@@ -1448,13 +1437,7 @@
     /// <param name="vehiclePosition"></param>
     private void UpdatePieceZdoPosition(ZDO zdo, Vector3 vehiclePosition, bool isBed = false)
     {
-      if (zdo.m_prefab == PrefabNameHashes.LandVehicle)
-      {
-        // do not set position for vehicle. Instead keep in sync the relative position of it's parent.
-        var newOffset = vehiclePosition - zdo.GetPosition();
-        zdo.Set(VehicleZdoVars.MBPositionHash, newOffset);
-      }
-      else if (isBed && CanBedsUseActualWorldPosition || CanUseActualPiecePosition)
+      if (isBed && CanBedsUseActualWorldPosition || CanUseActualPiecePosition)
       {
         var pieceOffset = zdo.GetVec3(VehicleZdoVars.MBPositionHash, Vector3.zero);
         zdo.SetPosition(vehiclePosition + pieceOffset);
@@ -2291,6 +2274,11 @@
             ? ZdoUtils.ZdoIdToId(zdoid)
             : ZdoWatchController.Instance.GetOrCreatePersistentID(zdoparent);
           zdo.Set(VehicleZdoVars.MBParentId, id);
+          zdo.Set(VehicleZdoVars.MBRotationVecHash,
+            zdo.GetQuaternion(VehicleZdoVars.MBRotationHash, Quaternion.identity)
+              .eulerAngles);
+          zdo.RemoveZDOID(VehicleZdoVars.MBParentHash);
+          ZDOExtraData.s_quats.Remove(zdoid, VehicleZdoVars.MBRotationHash);
         }
       }
 
@@ -2350,30 +2338,11 @@
       pendingTempPiecesList.Clear();
     }
 
-    public static void RemoveVehicleDataFromZdo(ZDO zdo)
-    {
-      // main parenting logic.
-      zdo.RemoveInt(VehicleZdoVars.MBParentId);
-
-      // this is likely not being used
-      zdo.RemoveQuaternion(VehicleZdoVars.MBRotationHash);
-
-      // important for relative position.
-      zdo.RemoveVec3(VehicleZdoVars.MBPositionHash);
-      zdo.RemoveVec3(VehicleZdoVars.MBRotationVecHash);
-    }
-
     public void ActivatePiece(ZNetView netView)
     {
       if (netView == null) return;
       var zdo = netView.GetZDO();
       if (netView.m_zdo == null) return;
-
-      if (TryBailOnSameObject(netView.gameObject))
-      {
-        RemoveVehicleDataFromZdo(netView.m_zdo);
-        return;
-      }
 
       TrySetPieceToParent(netView, zdo);
 
@@ -2398,23 +2367,12 @@
       AddTemporaryPiece(activationPieceData.netView, shouldSkipIgnoreColliders);
     }
 
-    public bool TryBailOnSameObject(GameObject obj)
-    {
-      if (!obj) return true;
-      if (!Manager) return true;
-      if (obj == gameObject || obj == Manager.gameObject) return true;
-      return false;
-    }
-
     /// <summary>
     /// For Carts and other rigidbody moveable objects.
     /// </summary>
     public void AddTemporaryPiece(ZNetView netView, bool shouldSkipIgnoreColliders = false)
     {
       if (netView == null) return;
-      if (TryBailOnSameObject(netView.gameObject)) return;
-      // do not allow adding a piece to itself
-      if (netView.transform == transform || netView.transform == Manager.transform) return;
 
       var zdo = netView.GetZDO();
       if (zdo == null) return;
@@ -2462,8 +2420,8 @@
     public void TrySetPieceToParent(ZNetView? netView)
     {
       if (IsInvalid()) return;
-      if (!this.IsNetViewValid() || !netView || !netView.IsValid()) return;
-      TrySetPieceToParent(netView, netView.GetZDO());
+      if (netView) return;
+      TrySetPieceToParent(netView, netView!.GetZDO());
     }
 
     /// <summary>
@@ -2473,7 +2431,7 @@
     public void TrySetPieceToParent(ZNetView? netView, ZDO? zdo)
     {
       if (IsInvalid()) return;
-      if (netView == null || PrefabNames.IsVehicle(netView.name) && netView.name.Contains(PrefabNames.LandVehicle) || zdo == null) return;
+      if (netView == null || PrefabNames.IsVehicle(netView.name)) return;
 
       if (RamPrefabs.IsRam(netView!.name))
       {
@@ -2574,7 +2532,7 @@
         Logger.LogError("piece does not exist");
         return;
       }
-      if (TryBailOnSameObject(piece.gameObject)) return;
+
       if (!(bool)piece.m_nview)
       {
         Logger.LogError("m_nview does not exist on piece");
@@ -2587,7 +2545,6 @@
 
     public void AddNewPiece(GameObject obj)
     {
-      if (TryBailOnSameObject(obj)) return;
       var nv = obj.GetComponent<ZNetView>();
       if (nv == null) return;
       AddNewPiece(nv);
@@ -2600,28 +2557,12 @@
         Logger.LogError("netView does not exist");
         return;
       }
-      if (TryBailOnSameObject(netView.gameObject)) return;
+
       var zdo = netView.GetZDO();
       if (zdo == null)
       {
         LoggerProvider.LogError($"NetView <{netView.name}> has no valid ZDO returning");
         return;
-      }
-
-      if (zdo.m_prefab == PrefabNameHashes.WaterVehicleShip)
-      {
-        LoggerProvider.LogWarning($"Attempted to add a piece to a water vehicle. This is not allowed. NetView <{netView.name}>");
-        return;
-      }
-
-      if (zdo.m_prefab == PrefabNameHashes.LandVehicle)
-      {
-        if (PiecesController.Manager.IsLandVehicle)
-        {
-          LoggerProvider.LogWarning($"Attempted to add a nested landvehicle to another land vehicle. This is not allowed. NetView <{netView.name}>");
-          return;
-        }
-        LoggerProvider.LogWarning("Detected a nested landvehicle within a WaterVehicle. This is supported but could be unstable.");
       }
 
       if (m_pieces.Contains(netView))
@@ -2646,17 +2587,8 @@
 
         netView.m_zdo.Set(VehicleZdoVars.MBRotationVecHash,
           netView.transform.localRotation.eulerAngles);
-
-        if (zdo.m_prefab == PrefabNames.LandVehicle.GetStableHashCode())
-        {
-          netView.m_zdo.Set(VehicleZdoVars.MBPositionHash,
-            transform.position - netView.transform.position);
-        }
-        else
-        {
-          netView.m_zdo.Set(VehicleZdoVars.MBPositionHash,
-            netView.transform.localPosition);
-        }
+        netView.m_zdo.Set(VehicleZdoVars.MBPositionHash,
+          netView.transform.localPosition);
       }
 
       AddPiece(netView, true);
@@ -2783,7 +2715,7 @@
 
       var totalHeight = 0f;
 
-      Manager.VehicleConfigSync.Load([VehicleCustomConfig.Key_CustomFloatationHeight, VehicleCustomConfig.Key_HasCustomFloatationHeight]);
+      Manager.VehicleConfigSync.Load();
       var hullFloatationMode = Manager.VehicleConfigSync.GetWaterFloatationHeightMode();
 
       var isAverageOfPieces = hullFloatationMode ==
@@ -3110,21 +3042,15 @@
     /// <summary>
     /// A complete override of OnConvexHullGenerated.
     /// </summary>
-    public override void OnConvexHullGenerated(bool hasSucceeded)
+    public override void OnConvexHullGenerated()
     {
-      if (!hasSucceeded)
-      {
-        RequestBoundsRebuild();
-        return;
-      }
-
       BaseControllerPieceBounds = convexHullComponent.GetConvexHullBounds(true);
 
       try
       {
-        if (LandMovementController != null)
+        if (WheelController != null)
         {
-          LandMovementController.Initialize(BaseControllerPieceBounds);
+          WheelController.Initialize(BaseControllerPieceBounds);
         }
       }
       catch (Exception e)

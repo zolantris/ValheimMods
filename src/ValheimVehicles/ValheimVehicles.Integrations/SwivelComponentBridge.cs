@@ -1,7 +1,6 @@
 #region
 
   using System;
-  using System.Collections;
   using System.Collections.Generic;
   using UnityEngine;
   using ValheimVehicles.Components;
@@ -13,7 +12,6 @@
   using ValheimVehicles.Shared.Constants;
   using ValheimVehicles.SharedScripts;
   using ValheimVehicles.SharedScripts.Helpers;
-  using ValheimVehicles.SharedScripts.PowerSystem.Compute;
 
 #endregion
 
@@ -59,6 +57,20 @@
     private PowerConsumerBridge powerConsumerIntegration;
     public static Dictionary<ZDO, SwivelComponentBridge> ZdoToComponent = new();
     public ZDO? _currentZdo;
+
+    // sync values
+    public static bool CanAllClientsSync = true;
+    public static bool ShouldSkipClientOnlyUpdate = true;
+    public static bool ShouldSyncClientOnlyUpdate = false;
+    private bool _isAuthoritativeMotionActive;
+    // private MotionState _motionState;
+    private double _motionStartTime;
+    private float _motionDuration;
+    private Vector3 _motionFromPosition;
+    private Vector3 _motionToPosition;
+    private Quaternion _motionFromRotation;
+    private Quaternion _motionToRotation;
+    protected bool _hasArrivedAtDestination = false;
 
     public override MotionState MotionState
     {
@@ -161,12 +173,37 @@
       {
         LoggerProvider.LogWarning("SwivelComponentBridge.Request_NextMotionState called but the motion state is not the same as the current state. This is likely a bug.");
       }
-      prefabConfigSync.Load([SwivelCustomConfig.Key_MotionState]);
+
+      prefabConfigSync.Load(false, [SwivelCustomConfig.Key_MotionState]);
+      LastMotionState = MotionState;
       SwivelPrefabConfigRPC.Request_NextMotion(netView.GetZDO(), MotionState);
+
+      // if (_nextMotionCoroutine != null)
+      // {
+      //   StopCoroutine(_nextMotionCoroutine);
+      //   _nextMotionCoroutine = null;
+      // }
+      // else
+      // {
+      //   // _nextMotionCoroutine = StartCoroutine(NextMotionStateAwaiter());
+      // }
     }
 
-    public Coroutine? _guardedMotionCheck;
+    public Coroutine? _nextMotionCoroutine;
+    public MotionState LastMotionState = MotionState.AtStart;
 
+    /// <summary>
+    /// Workaround to fix the problem with a client requiring two presses to get the button to update.
+    /// </summary>
+    // public IEnumerator NextMotionStateAwaiter()
+    // {
+    //   yield return new WaitForFixedUpdate();
+    //   if (LastMotionState == MotionState)
+    //   {
+    //     Request_NextMotionState();
+    //   }
+    //   _nextMotionCoroutine = null;
+    // }
     public void Request_SetMotionState(MotionState state)
     {
       if (!this.IsNetViewValid(out var netView)) return;
@@ -193,12 +230,6 @@
           ActiveInstances.Add(persistentId, this);
         }
       });
-
-      if (_guardedMotionCheck != null)
-      {
-        StopCoroutine(_guardedMotionCheck);
-      }
-      _guardedMotionCheck = StartCoroutine(GuardedMotionCheck());
     }
 
     public void SetupPieceActivator()
@@ -221,49 +252,34 @@
       {
         ActiveInstances.Remove(persistentId);
       }
-
-      if (_guardedMotionCheck != null)
-      {
-        StopCoroutine(_guardedMotionCheck);
-        _guardedMotionCheck = null;
-      }
     }
 
     public override void Update()
     {
+      if (!CanRunSwivelDuringUpdate) return;
       if (!CanRunBaseUpdate()) return;
       base.Update();
+      GuardedMotionCheck();
     }
 
-    public IEnumerator GuardedMotionCheck()
+
+    public override void FixedUpdate()
     {
-      while (isActiveAndEnabled)
-      {
-        yield return new WaitForFixedUpdate();
-        if (!powerConsumerIntegration)
-        {
-          yield return null;
-          continue;
-        }
+      if (!CanRunSwivelDuringFixedUpdate) return;
+      if (!CanRunBaseUpdate()) return;
 
-        // if we are mid motion. Wait for the motion to complete.
-        while (MotionState is MotionState.ToStart or MotionState.ToTarget)
-        {
-          yield return new WaitForFixedUpdate();
-        }
+      base.FixedUpdate();
+      GuardedMotionCheck();
+    }
 
-        // wait for next fixed update so motion values can be set.
-        yield return new WaitForFixedUpdate();
-
-        // guarded update on DemandState which can desync.
-        if (MotionState is MotionState.AtStart or MotionState.AtTarget && powerConsumerIntegration && powerConsumerIntegration.IsDemanding && powerConsumerIntegration.Data.zdo != null && powerConsumerIntegration.Data.zdo.IsValid())
-        {
-          powerConsumerIntegration.Data.SetDemandState(false);
-          PowerSystemRPC.Request_UpdatePowerConsumer(powerConsumerIntegration.Data.zdo.m_uid, powerConsumerIntegration.Data);
-        }
-
-        yield return new WaitForSeconds(30f);
-      }
+    public void GuardedMotionCheck()
+    {
+      // guarded update on DemandState which can desync.
+      // if (MotionState is MotionState.AtStart or MotionState.AtTarget && powerConsumerIntegration && powerConsumerIntegration.IsDemanding && powerConsumerIntegration.Data.zdo != null && powerConsumerIntegration.Data.zdo.IsValid())
+      // {
+      //   powerConsumerIntegration.Data.SetDemandState(false);
+      //   PowerSystemRPC.Request_UpdatePowerConsumer(powerConsumerIntegration.Data.zdo.m_uid, powerConsumerIntegration.Data);
+      // }
     }
 
     public bool CanRunBaseUpdate()
@@ -401,19 +417,6 @@
       prefabConfigSync.Load();
     }
 
-    public override void OnTransformParentChanged()
-    {
-      if (transform.root != transform)
-      {
-        m_vehiclePiecesController = GetComponentInParent<VehiclePiecesController>();
-        if (m_vehiclePiecesController && m_vehicle != null && !m_vehicle.IsLandVehicle && m_vehicle.MovementController != null && m_vehicle.MovementController.m_mastObject != null)
-        {
-          windDirectionTransform = m_vehicle.MovementController.m_mastObject.transform;
-        }
-      }
-      base.OnTransformParentChanged();
-    }
-
     /// <summary>
     /// Inefficient no-cache way to update the debugger arrow. This is not meant to be called a bunch.
     /// </summary>
@@ -443,25 +446,19 @@
       powerConsumerIntegration = gameObject.AddComponent<PowerConsumerBridge>();
       swivelPowerConsumer = powerConsumerIntegration.Logic;
       UpdatePowerConsumer();
+      UpdateBasePowerConsumption();
     }
 
     public override void UpdatePowerConsumer()
     {
-      if (!swivelPowerConsumer) return;
       if (!ZNet.instance) return;
       if (!this.IsNetViewValid(out var netView)) return;
-      if (ZNet.instance.IsServer() || ZNet.IsSinglePlayer)
+      if (ZNet.instance.IsServer())
       {
         base.UpdatePowerConsumer();
-        UpdateBasePowerConsumption();
-        PowerSystemRPC.Request_UpdatePowerConsumer(netView.GetZDO().m_uid, swivelPowerConsumer.Data);
-      }
-      else
-      {
-        swivelPowerConsumer.Data.Load();
+        OnPowerConsumerUpdate();
       }
     }
-
     /// <summary>
     /// For interpolated eventing.
     /// </summary>
@@ -494,10 +491,134 @@
       }
     }
 
-    public override double GetSyncedTime()
+
+    public override void SwivelUpdate()
     {
-      var now = ZNet.instance != null ? ZNet.instance.GetTimeSeconds() : Time.time;
-      return now;
+      if (_isAuthoritativeMotionActive)
+      {
+        var now = ZNet.instance != null ? ZNet.instance.GetTimeSeconds() : Time.time;
+        var t = Mathf.Clamp01((float)((now - _motionStartTime) / _motionDuration));
+
+        // Interpolate using Rigidbody moves (no snap!)
+        if (mode == SwivelMode.Move)
+          InterpolateAndMove(t, _motionFromLocalPos, _motionToLocalPos, _motionFromLocalRot, _motionFromLocalRot);
+        else if (mode == SwivelMode.Rotate)
+          InterpolateAndMove(t, _motionFromLocalPos, _motionFromLocalPos, _motionFromLocalRot, _motionToLocalRot);
+
+        return; // ***CRITICAL: do NOT run base.SwivelUpdate() during authority lerp!***
+      }
+
+      // Modes that bail early.
+      if (mode == SwivelMode.Rotate && currentMotionState == MotionState.AtTarget)
+      {
+        animatedTransform.localRotation = CalculateRotationTarget(1);
+        return;
+      }
+      if (mode == SwivelMode.Rotate && currentMotionState == MotionState.AtStart)
+      {
+        animatedTransform.localRotation = CalculateRotationTarget(0);
+        return;
+      }
+
+      if (mode == SwivelMode.Move && currentMotionState == MotionState.AtTarget)
+      {
+        animatedTransform.localPosition = startLocalPosition + movementOffset;
+        return;
+      }
+      if (mode == SwivelMode.Move && currentMotionState == MotionState.AtStart)
+      {
+        animatedTransform.localPosition = startLocalPosition;
+        return;
+      }
+      // base.SwivelUpdate();
+    }
+
+    public static float ComputeMotionDuration(SwivelCustomConfig config, MotionState direction)
+    {
+      // Match your speed multipliers—if you want to make these data-driven, add to config/ZDO!
+      const float MoveMultiplier = 0.2f;
+      const float RotateMultiplier = 3f;
+
+      // Safety clamp, never divide by zero
+      var speed = Mathf.Max(
+        config.InterpolationSpeed *
+        (config.Mode == SwivelMode.Move ? MoveMultiplier : RotateMultiplier),
+        0.001f
+      );
+
+      if (config.Mode == SwivelMode.Move)
+      {
+        // Always use start as base, plus MovementOffset
+        Vector3 from, to;
+        if (direction == MotionState.ToTarget)
+        {
+          from = Vector3.zero; // startLocalPosition is always zero in pure data configs
+          to = config.MovementOffset;
+        }
+        else
+        {
+          from = config.MovementOffset;
+          to = Vector3.zero;
+        }
+
+        var distance = Vector3.Distance(from, to);
+        return Mathf.Max(distance / speed, 0.01f); // Never less than 10ms
+      }
+      if (config.Mode == SwivelMode.Rotate)
+      {
+        // Calculate hingeEndEuler as your SwivelComponent does
+        var hingeEndEuler = Vector3.zero;
+        if ((config.HingeAxes & HingeAxis.X) != 0)
+          hingeEndEuler.x = config.MaxEuler.x;
+        if ((config.HingeAxes & HingeAxis.Y) != 0)
+          hingeEndEuler.y = config.MaxEuler.y;
+        if ((config.HingeAxes & HingeAxis.Z) != 0)
+          hingeEndEuler.z = config.MaxEuler.z;
+
+        Quaternion from, to;
+        if (direction == MotionState.ToTarget)
+        {
+          from = Quaternion.identity;
+          to = Quaternion.Euler(hingeEndEuler);
+        }
+        else
+        {
+          from = Quaternion.Euler(hingeEndEuler);
+          to = Quaternion.identity;
+        }
+        var angle = Quaternion.Angle(from, to); // in degrees
+        return Mathf.Max(angle / speed, 0.01f);
+      }
+      // fallback
+      return 0.01f;
+    }
+
+    /// <summary>
+    /// For all logic to sync updates to server or local user.
+    /// </summary>
+    public void OnPowerConsumerUpdate()
+    {
+      if (!swivelPowerConsumer) return;
+      if (!this.IsNetViewValid(out var netView))
+      {
+        return;
+      }
+
+      // powerConsumerIntegration.Data.Load();
+
+      if (powerConsumerIntegration)
+      {
+        var isOwner = netView.IsOwner();
+        if (!isOwner)
+        {
+          // possible infinity update here...
+          PowerSystemRPC.Request_UpdatePowerConsumer(netView.GetZDO().m_uid, swivelPowerConsumer.Data);
+        }
+        else
+        {
+          powerConsumerIntegration.UpdateNetworkedData();
+        }
+      }
     }
 
     public void OnInitComplete()

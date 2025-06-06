@@ -2,7 +2,6 @@
 
   using System;
   using UnityEngine;
-  using ValheimVehicles.Shared.Constants;
   using ValheimVehicles.SharedScripts.Enums;
 
 #endregion
@@ -33,9 +32,6 @@
       public static readonly int Mechanism_Power_Consumer_Swivel = PrefabNames.SwivelPrefabName.GetStableHashCode();
       public static readonly int Mechanism_Power_Consumer_LandVehicle = PrefabNames.LandVehicle.GetStableHashCode();
       public static readonly int Mechanism_Power_Consumer_WaterVehicle = PrefabNames.WaterVehicleShip.GetStableHashCode();
-
-      public static readonly int LandVehicle = PrefabNames.LandVehicle.GetStableHashCode();
-      public static readonly int WaterVehicleShip = PrefabNames.WaterVehicleShip.GetStableHashCode();
     }
 
     /**
@@ -62,13 +58,13 @@
         FourByEight
       }
 
-      public const string MBRopeAnchor = "MBRopeAnchor";
-
       public static readonly string ValheimVehiclesPrefix = "ValheimVehicles";
 
       public static readonly string LandVehicle = $"{ValheimVehiclesPrefix}_VehicleLand";
       public static readonly string AirVehicle = $"{ValheimVehiclesPrefix}_VehicleAir";
       public static readonly string WheelSet = $"{ValheimVehiclesPrefix}_WheelSet";
+
+      public const string MBRopeAnchor = "MBRopeAnchor";
 
       public static readonly string CustomWaterFloatation =
         $"{ValheimVehiclesPrefix}_CustomWaterFloatation";
@@ -256,7 +252,6 @@
       public static readonly string RamStakePrefix = $"{ValheimVehiclesPrefix}_ram_stake";
 
       public static readonly string ConvexHull = $"{ValheimVehiclesPrefix}_ConvexHull";
-      public static readonly string ConvexTreadCollider = $"{ValheimVehiclesPrefix}_convex_tread_collider";
 
       public static readonly string SwivelPrefabName = $"{ValheimVehiclesPrefix}_Swivel";
       public static readonly string SwivelAssetName = "swivel";
@@ -422,17 +417,7 @@
       {
         return objName.StartsWith(WaterVehicleBlockingCollider) ||
                objName.StartsWith(WaterVehicleFloatCollider) ||
-               objName.StartsWith(WaterVehicleOnboardCollider) || objName.StartsWith(ConvexHull) || objName.StartsWith("ConvexHull_Preview_damage_trigger");
-      }
-
-      public static bool IsVehiclePiecesCollider(string objName)
-      {
-        return objName.StartsWith(VehiclePiecesContainer);
-      }
-
-      public static bool IsVehicleTreadCollider(string objName)
-      {
-        return objName.StartsWith(ConvexTreadCollider);
+               objName.StartsWith(WaterVehicleOnboardCollider);
       }
 
       public static bool IsHull(string goName)
@@ -451,12 +436,10 @@
                goName.StartsWith(WindowWallSquareWoodPrefabName);
       }
 
-#if !TEST
       public static bool IsHull(GameObject go)
       {
         return IsHull(go.name);
       }
-#endif
 
       public static bool IsVehicle(string goName)
       {

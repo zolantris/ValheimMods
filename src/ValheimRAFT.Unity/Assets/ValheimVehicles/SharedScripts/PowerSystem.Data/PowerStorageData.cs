@@ -1,29 +1,22 @@
 // ReSharper disable ArrangeNamespaceBody
 // ReSharper disable NamespaceStyle
 
-#region
-
 using UnityEngine;
 using ValheimVehicles.Shared.Constants;
 using ValheimVehicles.SharedScripts.Modules;
-
-#endregion
-
 namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
 {
-  // ReSharper disable once PartialTypeWithSinglePart
+  // Todo extend IPowerStorage
   public partial class PowerStorageData : PowerSystemComputeData
   {
     public static float EnergyCapacityDefault = 800f;
-    public float _peekedDischargeAmount;
     public float Energy;
     public float EnergyCapacity = EnergyCapacityDefault;
-    public PowerStorageData()
-    {
-    }
-
+    public float _peekedDischargeAmount = 0f;
 
     public float EnergyCapacityRemaining => MathX.Clamp(EnergyCapacity - Energy, 0f, EnergyCapacity);
+
+    public PowerStorageData() {}
     public float EstimateAvailableEnergy()
     {
       return MathX.Clamp(Energy, 0f, EnergyCapacity);

@@ -7,6 +7,7 @@ namespace ValheimVehicles.Components;
 /// <summary>
 /// Todo move this to the base activator with Type passthrough or write a interface for Init so these Flavors of Base can use that.
 /// </summary>
+/// <typeparam name="TSelf"></typeparam>
 public class SwivelPieceActivator : BasePieceActivatorComponent
 {
   [SerializeField] private SwivelComponentBridge _host;
@@ -26,5 +27,16 @@ public class SwivelPieceActivator : BasePieceActivatorComponent
   public void Init(SwivelComponentBridge host)
   {
     _host = host;
+  }
+
+  public static void AddPendingSwivelPiece(int swivelId, ZNetView netView)
+  {
+    if (!m_pendingPieces.TryGetValue(swivelId, out var list))
+    {
+      list = new List<ZNetView>();
+      m_pendingPieces[swivelId] = list;
+    }
+
+    list.Add(netView);
   }
 }

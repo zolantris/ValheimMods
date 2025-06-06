@@ -100,8 +100,6 @@ public partial class ModTranslations
     MechanismSwitch_CurrentActionString = SafeLocalize(
       "[<color=yellow><b>$KEY_Use</b></color>] $valheim_vehicles_activate");
     MechanismSwitch_AltActionString = SafeLocalize($"[<color=yellow><b>{ValheimInput_KeyAltPlace}+{ValheimInput_KeyUse}</b></color>] $valheim_vehicles_mechanism_mode_configure");
-
-    MechanismSwitch_AltHoldActionString = SafeLocalize($"[<color=yellow><b>{SharedKeys_Hold}+{ValheimInput_KeyAltPlace}+{ValheimInput_KeyUse}</b></color>] $valheim_vehicles_mechanism_swivel_edit");
   }
 
   private static void UpdateGuiEditMenuTranslations()
@@ -121,18 +119,6 @@ public partial class ModTranslations
   {
     VehicleConfig_CustomFloatationHeight = SafeLocalize("$valheim_vehicles_custom_floatation_height");
     VehicleConfig_Beached = SafeLocalize("$valheim_vehicles_gui_vehicle_is_beached");
-
-    // treads
-    VehicleConfig_TreadsDistance = SafeLocalize("$valheim_vehicles_config_tread_distance");
-    VehicleConfig_TreadsScale = SafeLocalize("$valheim_vehicles_config_treads_scale");
-    VehicleConfig_TreadsMaxLength = SafeLocalize("$valheim_vehicles_treads_max_length");
-
-
-    // section titles
-    VehicleConfig_LandVehicle_Section = SafeLocalize("$valheim_vehicles_land_vehicle");
-
-    // water vehicle
-    VehicleConfig_WaterVehicle_Section = SafeLocalize("$valheim_vehicles_water_vehicle");
   }
 
   private static void UpdateVehicleWheelTranslations()
@@ -145,7 +131,6 @@ public partial class ModTranslations
   {
     SharedKeys_Owner = SafeLocalize("$valheim_vehicles_shared_keys_owner");
     SharedKeys_Hold = SafeLocalize("$valheim_vehicles_shared_keys_hold");
-    SharedKeys_Reset = SafeLocalize("$valheim_vehicles_shared_keys_reset");
   }
 
   private static void SetCurrentLocalizedLanguage()
@@ -280,9 +265,6 @@ public partial class ModTranslations
     VehicleCommand_PhysicsDebugger = SafeLocalize("$valheim_vehicles_commands_physics_debugger");
     VehicleCommand_DestroyVehicle = SafeLocalize("$valheim_vehicles_commands_destroy_vehicle");
     VehicleCommand_ConfigPanel = SafeLocalize("$valheim_vehicles_commands_config_panel");
-
-    // messages to player/console.
-    VehicleCommand_Message_VehicleNotFound = SafeLocalize("$valheim_vehicles_commands_message_vehicle_not_found");
   }
 
   public static void ForceUpdateTranslations()

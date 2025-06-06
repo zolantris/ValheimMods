@@ -214,7 +214,7 @@ public class RamConfig : BepInExBaseConfig<RamConfig>
     CanHitEnvironmentOrTerrain = config.BindUnique(RamSectionName,
       "CanHitEnvironmentOrTerrain", true,
       ConfigHelpers.CreateConfigDescription(
-        "allows rams to hit environment/terrain",
+        "allows rams to hit friendlies",
         true, true));
 
     HitRadius = config.BindUnique(RamSectionName, "HitRadius", 5f,

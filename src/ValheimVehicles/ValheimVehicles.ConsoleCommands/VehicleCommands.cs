@@ -2,7 +2,6 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using BepInEx.Logging;
@@ -11,7 +10,6 @@ using HarmonyLib;
 using Jotunn;
 using Jotunn.Entities;
 using Jotunn.Managers;
-using StructLinq;
 using UnityEngine;
 using UnityEngine.Assertions.Must;
 using ValheimVehicles.BepInExConfig;
@@ -20,20 +18,12 @@ using ValheimVehicles.Prefabs;
 using ValheimVehicles.SharedScripts;
 using ValheimVehicles.Components;
 using ValheimVehicles.Controllers;
-using ValheimVehicles.Interfaces;
 using ValheimVehicles.UI;
 using Zolantris.Shared.Debug;
 using Logger = Jotunn.Logger;
 using Object = UnityEngine.Object;
 
 namespace ValheimVehicles.ConsoleCommands;
-
-#if DEBUG
-public class VehicleDebugCommands : VehicleCommands
-{
-  public override string Name => "v";
-}
-#endif
 
 public class VehicleCommands : ConsoleCommand
 {
@@ -44,7 +34,6 @@ public class VehicleCommands : ConsoleCommand
     public const string destroy = "destroy";
     public const string reportInfo = "report-info";
     public const string debug = "debug";
-    public const string debugShort = "d";
     public const string config = "config";
     public const string creative = "creative";
     public const string colliderEditMode = "colliderEditMode";
@@ -121,11 +110,6 @@ public class VehicleCommands : ConsoleCommand
       case VehicleCommandArgs.creative:
         ToggleCreativeMode();
         break;
-#if DEBUG
-      case VehicleCommandArgs.debugShort:
-        ToggleVehicleCommandsHud();
-        break;
-#endif
       case VehicleCommandArgs.debug:
         ToggleVehicleCommandsHud();
         break;
@@ -160,7 +144,7 @@ public class VehicleCommands : ConsoleCommand
   public void VehicleOwnerReset()
   {
     var currentVehicle =
-      GetNearestVehicleManager();
+      GetNearestVehicleShip(Player.m_localPlayer.transform.position);
     if (currentVehicle?.MovementController == null)
     {
       Logger.LogMessage("No vehicle nearby");
@@ -205,7 +189,7 @@ public class VehicleCommands : ConsoleCommand
     }
 
     var vehicleInstance =
-      GetNearestVehicleManager();
+      GetNearestVehicleShip(Player.m_localPlayer.transform.position);
 
     if (vehicleInstance?.MovementController == null)
     {
@@ -512,25 +496,18 @@ public class VehicleCommands : ConsoleCommand
 
   public static bool CanRunCheatCommand()
   {
-    try
+    if (!VehicleDebugConfig.AllowDebugCommandsForNonAdmins.Value)
     {
-      if (!VehicleDebugConfig.AllowDebugCommandsForNonAdmins.Value)
+      if (Player.m_localPlayer == null || ZNet.instance == false) return false;
+      var playerId = Player.m_localPlayer.GetPlayerID();
+      if (!ZNet.instance.IsAdmin(playerId))
       {
-        if (Player.m_localPlayer == null || ZNet.instance == false) return false;
-        var playerId = Player.m_localPlayer.GetPlayerID();
-        if (!ZNet.instance.IsAdmin(playerId))
-        {
-          Logger.LogMessage($"Player is not an admin. They cannot run this cheat command without setting configKeySection <{VehicleDebugConfig.AllowDebugCommandsForNonAdmins.Definition.Section}> ConfigKey: <{VehicleDebugConfig.AllowDebugCommandsForNonAdmins.Definition.Key}> to true in the raft config or being an Admin.");
-          return false;
-        }
+        Logger.LogMessage($"Player is not an admin. They cannot run this cheat command without setting configKeySection <{VehicleDebugConfig.AllowDebugCommandsForNonAdmins.Definition.Section}> ConfigKey: <{VehicleDebugConfig.AllowDebugCommandsForNonAdmins.Definition.Key}> to true in the raft config or being an Admin.");
+        return false;
       }
+    }
 
-      return true;
-    }
-    catch (Exception e)
-    {
-      return false;
-    }
+    return true;
   }
 
   public static bool CanRunEditCommand()
@@ -556,7 +533,7 @@ public class VehicleCommands : ConsoleCommand
   public void VehicleMove(string[] args)
   {
     var shipInstance =
-      GetNearestVehicleManager();
+      GetNearestVehicleShip(Player.m_localPlayer.transform.position);
     if (shipInstance == null)
     {
       Logger.LogMessage("No VehicleController Detected");
@@ -587,7 +564,7 @@ public class VehicleCommands : ConsoleCommand
   /// </summary>
   public static void VehicleToggleOceanSway()
   {
-    var vehicleController = GetNearestVehicleManager();
+    var vehicleController = VehicleDebugHelpers.GetVehiclePiecesController();
     if (vehicleController == null)
     {
       Logger.LogMessage("No VehicleController Detected");
@@ -600,7 +577,7 @@ public class VehicleCommands : ConsoleCommand
 
   private static void VehicleRotate(string[] args)
   {
-    var vehicleController = GetNearestVehicleManager();
+    var vehicleController = VehicleDebugHelpers.GetVehiclePiecesController();
     if (vehicleController == null || vehicleController.MovementController == null)
     {
       Logger.LogMessage("No VehicleController Detected");
@@ -646,7 +623,7 @@ public class VehicleCommands : ConsoleCommand
     // must do this otherwise the commands panel will not cycle debug value if we need to enable it.
     VehicleGui.ToggleCommandsPanelState(true);
 
-    var closestVehicle = GetNearestVehicleManager();
+    var closestVehicle = GetNearestVehicleShip(Player.m_localPlayer.transform.position);
 
     if (closestVehicle != null)
     {
@@ -655,83 +632,43 @@ public class VehicleCommands : ConsoleCommand
     }
   }
 
-  public static void VehicleNotDetectedMessage()
+  public static void BoatNotDetectedMessage()
   {
-    if (Player.m_localPlayer == null) return;
-    var vehicleNotFoundMsg = ModTranslations.VehicleCommand_Message_VehicleNotFound;
-    Player.m_localPlayer.Message(MessageHud.MessageType.Center, vehicleNotFoundMsg);
     LoggerProvider.LogWarning(
-      $"{vehicleNotFoundMsg} \nMust be within <50f> (game meters). The player must be closer to the boat.");
+      $"boat not detected within 50f, get nearer to the boat and look directly at the boat");
   }
 
-  public static RaycastHit[] AllocatedRaycast = new RaycastHit[20];
-
-  public static bool TryGetVehicleManager(RaycastHit hitinfo, [NotNullWhen(true)] out VehicleManager? vehicleManager)
-  {
-    vehicleManager = null;
-    var collider = hitinfo.collider;
-    var vpc = collider.GetComponentInParent<VehiclePiecesController>();
-    if (vpc)
-    {
-      vehicleManager = vpc.Manager;
-    }
-
-    var vm = collider.GetComponentInParent<VehicleManager>();
-    if (vm)
-    {
-      vehicleManager = vm;
-    }
-
-    return vehicleManager;
-  }
-
-  /// <summary>
-  /// Distance based on player relative to camera looking direction intersection.
-  /// </summary>
-  /// <returns></returns>
-  public static VehicleManager? GetNearestVehicleManager()
+  public static VehicleManager? GetNearestVehicleShip(Vector3 position)
   {
     if (!GameCamera.instance || !GameCamera.instance) return null;
-    if (!Player.m_localPlayer) return null;
-
-    var playerDistanceToCamera = Mathf.Abs(Vector3.Distance(Player.m_localPlayer.transform.position, GameCamera.instance.transform.position));
-    var maxDistance = Mathf.Min(50f + playerDistanceToCamera, 200f);
-    var cameraTransform = GameCamera.instance.m_camera.transform;
-    var cameraPos = cameraTransform.position;
-    var cameraDir = cameraTransform.forward;
-
-    var localCast = Physics.Raycast(
-      cameraPos,
-      cameraDir,
-      out var hitinfo, maxDistance,
-      LayerHelpers.PieceAndCustomVehicleMask);
-    VehicleManager? vehicleManager = null;
-
-    if (localCast && TryGetVehicleManager(hitinfo, out vehicleManager))
+    if (!Physics.Raycast(
+          GameCamera.instance.transform.position,
+          GameCamera.instance.transform.forward,
+          out var hitinfo, 50f,
+          LayerMask.GetMask("piece") + LayerMask.GetMask("CustomVehicleLayer")))
     {
-      return vehicleManager;
-    }
-
-    // continue with heavier check if failed.
-    var hits = Physics.RaycastNonAlloc(cameraPos, cameraDir, AllocatedRaycast, maxDistance, LayerHelpers.PieceAndCustomVehicleMask);
-    if (hits == 0)
-    {
-      VehicleNotDetectedMessage();
+      BoatNotDetectedMessage();
       return null;
     }
 
-    for (var index = 0; index < hits; index++)
+    if (!hitinfo.collider)
     {
-      var raycastHit = AllocatedRaycast[index];
-      if (TryGetVehicleManager(raycastHit, out vehicleManager)) break;
-    }
-
-    if (!vehicleManager)
-    {
-      VehicleNotDetectedMessage();
+      BoatNotDetectedMessage();
       return null;
     }
 
+    var vehiclePiecesController =
+      hitinfo.collider.GetComponentInParent<VehiclePiecesController>();
+
+    if (!vehiclePiecesController) return null;
+
+    var vehicleManager =
+      vehiclePiecesController.Manager;
+    if (!vehiclePiecesController.Manager)
+    {
+      BoatNotDetectedMessage();
+      return null;
+    }
     return vehicleManager;
   }
 
@@ -766,7 +703,7 @@ public class VehicleCommands : ConsoleCommand
   private static void OnReportInfo()
   {
     var shipInstance =
-      GetNearestVehicleManager();
+      GetNearestVehicleShip(Player.m_localPlayer.transform.position);
     if (shipInstance == null)
       Logger.LogMessage(
         "No ship found, please run this command near the ship that needs to be reported.");
@@ -855,7 +792,7 @@ public class VehicleCommands : ConsoleCommand
       yield break;
     }
 
-    var vehicleInstance = GetNearestVehicleManager();
+    var vehicleInstance = GetNearestVehicleShip(Player.m_localPlayer.transform.position);
 
     if (vehicleInstance == null || vehicleInstance.OnboardController == null || vehicleInstance.MovementController == null)
     {
@@ -914,7 +851,7 @@ public class VehicleCommands : ConsoleCommand
   {
     if (!CanRunCheatCommand()) return;
     if (!Player.m_localPlayer) return;
-    var closestVehicle = GetNearestVehicleManager();
+    var closestVehicle = GetNearestVehicleShip(Player.m_localPlayer.transform.position);
     if (closestVehicle == null || closestVehicle.PiecesController == null) return;
 
     var nvPiecesClone = closestVehicle.PiecesController.m_pieces.ToList();

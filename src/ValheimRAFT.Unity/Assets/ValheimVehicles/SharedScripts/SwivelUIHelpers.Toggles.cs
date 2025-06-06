@@ -96,12 +96,7 @@
 
         return row;
       }
-
       public static GameObject AddToggleRow(Transform parent, SwivelUISharedStyles viewStyles, string label, bool initial, UnityAction<bool> onChanged)
-      {
-        return AddToggleRow(parent, viewStyles, label, initial, onChanged, out _);
-      }
-      public static GameObject AddToggleRow(Transform parent, SwivelUISharedStyles viewStyles, string label, bool initial, UnityAction<bool> onChanged, out Toggle toggle)
       {
         var row = CreateRow(parent, viewStyles, label, out _, false);
 
@@ -128,7 +123,7 @@
         toggleRT.offsetMin = Vector2.zero;
         toggleRT.offsetMax = Vector2.zero;
 
-        toggle = toggleGO.GetComponent<Toggle>();
+        var toggle = toggleGO.GetComponent<Toggle>();
         toggle.interactable = CanNavigatorInteractWithPanel;
         var toggleImage = toggleGO.GetComponent<Image>();
         toggleImage.color = SwivelUIColors.grayBg; // outer box

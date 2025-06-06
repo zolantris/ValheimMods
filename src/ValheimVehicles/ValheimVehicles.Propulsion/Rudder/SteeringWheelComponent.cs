@@ -325,13 +325,6 @@ public class SteeringWheelComponent : MonoBehaviour, IAnimatorHandler, Hoverable
   }
 
   private AnchorState lastAnchorState = AnchorState.Idle;
-
-  public void UpdateSteeringHoverMessage(string message)
-  {
-    steeringWheelHoverText.currentText = message;
-    steeringWheelHoverText.Show();
-  }
-
   /// <summary>
   /// To be invoked from VehiclePiecesController when anchor updates or breaks update.
   /// </summary>
@@ -340,8 +333,8 @@ public class SteeringWheelComponent : MonoBehaviour, IAnimatorHandler, Hoverable
   {
     if (anchorState == lastAnchorState) return;
     lastAnchorState = anchorState;
+    steeringWheelHoverText.ResetHoverTimer();
     steeringWheelHoverText.currentText = message;
-    steeringWheelHoverText.Show();
   }
 
   public void UpdateSpokes()

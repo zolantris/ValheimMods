@@ -24,6 +24,6 @@ public interface IVehicleControllers
   public VehicleMovementController? MovementController { get; set; }
   public VehicleConfigSyncComponent? VehicleConfigSync { get; set; }
   public VehicleOnboardController? OnboardController { get; set; }
-  public VehicleLandMovementController? LandMovementController { get; set; }
+  public VehicleWheelController? WheelController { get; set; }
   public VehicleManager Manager { get; set; }
 }

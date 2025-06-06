@@ -2,8 +2,8 @@
 
 #region
 
-using System;
-using UnityEngine;
+  using System;
+  using UnityEngine;
 
 #endregion
 
@@ -41,6 +41,7 @@ using UnityEngine;
       private float _gearElapsed;
       private bool _isGearRunning;
 
+      private bool _isToggleInProgress;
       private bool _mToggleState;
       private bool _pendingDelayedGearStart;
       private Quaternion _startRotation;
@@ -51,12 +52,6 @@ using UnityEngine;
 
       public Action<bool>? OnToggleCompleted;
       public Func<bool>? ShouldStopGearEarly;
-
-      public bool IsToggleInProgress
-      {
-        get;
-        private set;
-      }
 
       public virtual void Awake()
       {
@@ -77,16 +72,18 @@ using UnityEngine;
         }
       }
 
-#if UNITY_2022
-      private void Start()
+      public bool IsToggleInProgress => _isToggleInProgress;
+
+#if UNITY_EDITOR
+        private void Start()
         {
-            // InvokeRepeating(nameof(ToggleActivationState), 0f, 3f);
+            InvokeRepeating(nameof(ToggleActivationState), 0f, 3f);
         }
 #endif
 
       public virtual void FixedUpdate()
       {
-        if (IsToggleInProgress)
+        if (_isToggleInProgress)
         {
           _toggleElapsed += Time.fixedDeltaTime;
           var t = Mathf.Clamp01(_toggleElapsed / ToggleDuration);
@@ -95,7 +92,7 @@ using UnityEngine;
           if (t >= 1f)
           {
             leverHandle.localRotation = _targetRotation;
-            IsToggleInProgress = false;
+            _isToggleInProgress = false;
             _toggleElapsed = 0f;
             OnToggleCompleted?.Invoke(_mToggleState);
             _pendingDelayedGearStart = true;
@@ -136,10 +133,10 @@ using UnityEngine;
       {
         _gearElapsed = 0f;
         _pendingDelayedGearStart = true;
-        if (_mToggleState == newState && !IsToggleInProgress) return;
+        if (_mToggleState == newState && !_isToggleInProgress) return;
 
         _mToggleState = newState;
-        IsToggleInProgress = true;
+        _isToggleInProgress = true;
 
         _startRotation = leverHandle.localRotation;
         _targetRotation = _mToggleState ? LeverEnabledTargetRotation : LeverDisableTargetRotation;

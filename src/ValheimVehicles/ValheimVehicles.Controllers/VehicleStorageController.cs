@@ -97,7 +97,7 @@
     public static void SaveClosestVehicle()
     {
       if (!Player.m_localPlayer) return;
-      var closestShip = VehicleCommands.GetNearestVehicleManager();
+      var closestShip = VehicleCommands.GetNearestVehicleShip(Player.m_localPlayer.transform.position);
       if (closestShip == null || closestShip.PiecesController == null) return;
 
       var pieces = new List<StoredPieceData>();

@@ -1,6 +1,5 @@
 #region
 
-  using System;
   using System.Collections.Generic;
   using System.Diagnostics.CodeAnalysis;
   using System.Linq;
@@ -24,17 +23,10 @@
     private VehicleFloatationMode _cachedFloatationMode = VehicleFloatationMode.Average;
     private float _cachedFloatationHeight = 0;
 
-    public Action? OnLoadSubscriptions;
-
     public override void Awake()
     {
       _vehicle = GetComponent<VehicleManager>();
       base.Awake();
-    }
-
-    public override void OnLoad()
-    {
-      OnLoadSubscriptions?.Invoke();
     }
 
   #region IRPCSync
@@ -44,8 +36,6 @@
     /// </summary>
     public override void RegisterRPCListeners()
     {
-      if (retryGuard == null) return;
-      if (hasRegisteredRPCListeners) return;
       if (!this.IsNetViewValid(out var netView))
       {
         retryGuard.Retry(RegisterRPCListeners, 1);
@@ -54,8 +44,8 @@
 
       base.RegisterRPCListeners();
 
-      rpcHandler?.Register(nameof(RPC_SyncBounds), RPC_SyncBounds);
-      rpcHandler?.Register<ZPackage>(nameof(RPC_SyncFloatationMode), RPC_SyncFloatationMode);
+      netView.Register(nameof(RPC_SyncBounds), RPC_SyncBounds);
+      netView.Register<ZPackage>(nameof(RPC_SyncFloatationMode), RPC_SyncFloatationMode);
 
       hasRegisteredRPCListeners = true;
     }
@@ -178,7 +168,7 @@
       get;
       set;
     } = null!;
-    public VehicleLandMovementController? LandMovementController
+    public VehicleWheelController? WheelController
     {
       get;
       set;

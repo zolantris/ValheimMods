@@ -41,11 +41,7 @@ namespace ValheimVehicles.SharedScripts.UI
 
     public static GameObject AddSliderRow(Transform parent, SwivelUISharedStyles viewStyles, string label, float min, float max, float initial, UnityAction<float> onChanged)
     {
-      return AddSliderRow(parent, viewStyles, label, min, max, initial, onChanged, out _, null);
-    }
-    public static GameObject AddSliderRow(Transform parent, SwivelUISharedStyles viewStyles, string label, float min, float max, float initial, UnityAction<float> onChanged, out Slider slider, float? forceExpandWidth = null)
-    {
-      var container = new GameObject("Slider_Container", typeof(RectTransform), typeof(VerticalLayoutGroup), typeof(LayoutElement));
+      var container = new GameObject("Slider Container", typeof(RectTransform), typeof(VerticalLayoutGroup), typeof(LayoutElement));
       container.transform.SetParent(parent, false);
 
       var topRow = CreateRow(container.transform, viewStyles, label, out _);
@@ -57,14 +53,8 @@ namespace ValheimVehicles.SharedScripts.UI
       // === Slider GameObject ===
       var sliderGO = new GameObject("Slider", typeof(RectTransform), typeof(CustomSlider), typeof(LayoutElement));
 
-      var sliderLayoutElement = sliderGO.GetComponent<LayoutElement>();
-      sliderLayoutElement.minHeight = 24;
-
-      if (forceExpandWidth.HasValue)
-      {
-        sliderLayoutElement.minWidth = forceExpandWidth.Value;
-        sliderLayoutElement.flexibleWidth = 0f;
-      }
+      var layoutElement = sliderGO.GetComponent<LayoutElement>();
+      layoutElement.minHeight = 24;
 
       var maxOffsetRight = -70; // for label spacing
 
@@ -76,12 +66,12 @@ namespace ValheimVehicles.SharedScripts.UI
       sliderRT.offsetMax = new Vector2(maxOffsetRight, 0);
       sliderRT.pivot = new Vector2(0.5f, 0.5f);
 
-      var localSlider = sliderGO.GetComponent<Slider>();
-      localSlider.minValue = min;
-      localSlider.maxValue = max;
-      localSlider.value = initial;
-      localSlider.wholeNumbers = false;
-      localSlider.interactable = CanNavigatorInteractWithPanel;
+      var slider = sliderGO.GetComponent<Slider>();
+      slider.minValue = min;
+      slider.maxValue = max;
+      slider.value = initial;
+      slider.wholeNumbers = false;
+      slider.interactable = CanNavigatorInteractWithPanel;
 
       // === Background ===
       var backgroundGO = new GameObject("Background", typeof(RectTransform), typeof(Image));
@@ -96,7 +86,7 @@ namespace ValheimVehicles.SharedScripts.UI
       bgRT.offsetMin = Vector2.zero;
       bgRT.offsetMax = Vector2.zero;
 
-      localSlider.targetGraphic = bgImage;
+      slider.targetGraphic = bgImage;
 
       // === Fill Area ===
       var fillAreaGO = new GameObject("Fill Area", typeof(RectTransform));
@@ -120,7 +110,7 @@ namespace ValheimVehicles.SharedScripts.UI
       fillRT.offsetMin = Vector2.zero;
       fillRT.offsetMax = Vector2.zero;
 
-      localSlider.fillRect = fillRT;
+      slider.fillRect = fillRT;
 
       // === Handle Slide Area ===
       var handleSlideAreaGO = new GameObject("Handle Slide Area", typeof(RectTransform));
@@ -144,7 +134,7 @@ namespace ValheimVehicles.SharedScripts.UI
       handleRT.anchorMax = new Vector2(0, 0.5f);
       handleRT.anchoredPosition = Vector2.zero;
 
-      localSlider.handleRect = handleRT;
+      slider.handleRect = handleRT;
 
       // === Value Label ===
       var valueLabelGO = new GameObject("ValueLabel", typeof(RectTransform), typeof(TextMeshProUGUI));
@@ -164,16 +154,14 @@ namespace ValheimVehicles.SharedScripts.UI
       valueRT.offsetMax = new Vector2(0, 0);
 
       // === Update ===
-      localSlider.onValueChanged.AddListener(v =>
+      slider.onValueChanged.AddListener(v =>
       {
         // half-step IE 0.5f -> 1f -> 1.5f;
         var rounded = Mathf.Round(v * 2f) * 0.5f;
-        localSlider.SetValueWithoutNotify(rounded); // prevent infinite loop
+        slider.SetValueWithoutNotify(rounded); // prevent infinite loop
         valueLabel.text = rounded.ToString(CultureInfo.CurrentCulture);
         onChanged?.Invoke(rounded);
       });
-
-      slider = localSlider;
 
       return container;
     }

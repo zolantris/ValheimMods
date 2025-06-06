@@ -186,11 +186,6 @@ public class ValheimRaftPlugin : BaseUnityPlugin
   // this will be removed when vehicles becomes independent of valheim raft.
   public void RegisterVehicleConsoleCommands()
   {
-#if DEBUG
-    // shortens commands for to save dev time (requires knowledge of the command and could conflict with other mods. Not for release)
-    CommandManager.Instance.AddConsoleCommand(new VehicleDebugCommands());
-#endif
-
     CommandManager.Instance.AddConsoleCommand(new VehicleCommands());
   }
 

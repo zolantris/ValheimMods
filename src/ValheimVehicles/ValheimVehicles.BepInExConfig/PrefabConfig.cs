@@ -26,8 +26,6 @@ public class PrefabConfig : BepInExBaseConfig<PrefabConfig>
     get;
     set;
   }
-  public static ConfigEntry<int> VehicleLandMaxTreadWidth = null!;
-  public static ConfigEntry<int> VehicleLandMaxTreadLength = null!;
 
   public static ConfigEntry<bool> MakeAllPiecesWaterProof { get; set; }
   public static ConfigEntry<bool> AllowTieredMastToRotate { get; set; }
@@ -133,6 +131,7 @@ public class PrefabConfig : BepInExBaseConfig<PrefabConfig>
       ConfigHelpers.CreateConfigDescription(
         "Set the tank per tread piece X scale (width). This will make the treads larger or smaller allowing more/less grip.", true, false, new AcceptableValueRange<float>(0.5f, 5f)));
 
+
     AdminsCanOnlyBuildRaft = config.BindUnique("Server config",
       "AdminsCanOnlyBuildRaft", false,
       ConfigHelpers.CreateConfigDescription(
@@ -158,28 +157,13 @@ public class PrefabConfig : BepInExBaseConfig<PrefabConfig>
         true
       ));
 
-    const string customSettingMessage = "This is just a default. Any vehicle can be configured directly via config menu.";
 
 
-    VehicleLandMaxTreadWidth = config.BindUnique(SectionKey,
-      "LandVehicle Max Tread Width",
-      8,
-      ConfigHelpers.CreateConfigDescription(
-        $"Max width the treads can expand to. Lower values will let you make motor bikes. This affects all vehicles. {customSettingMessage}", true, false, new AcceptableValueRange<int>(1, 20)));
-
-    VehicleLandMaxTreadLength = config.BindUnique(SectionKey,
-      "LandVehicle Max Tread Length",
-      20,
-      ConfigHelpers.CreateConfigDescription(
-        $"Max length the treads can expand to. {customSettingMessage}", true, false, new AcceptableValueRange<int>(4, 100)));
-
-    VehicleLandMaxTreadWidth.SettingChanged += (sender, args) => VehicleManager.UpdateAllLandMovementControllers();
-    VehicleLandMaxTreadLength.SettingChanged += (sender, args) => VehicleManager.UpdateAllLandMovementControllers();
 
     AllowExperimentalPrefabs.SettingChanged +=
       ExperimentalPrefabRegistry.OnExperimentalPrefabSettingsChange;
 
-    ExperimentalTreadScaleX.SettingChanged += (sender, args) => VehicleManager.UpdateAllLandMovementControllers();
+    ExperimentalTreadScaleX.SettingChanged += (sender, args) => VehicleManager.UpdateAllWheelControllers();
     VehicleStaminaHaulingCost.SettingChanged += (_, __) =>
     {
       VehicleMovementController.staminaHaulCost = VehicleStaminaHaulingCost.Value;

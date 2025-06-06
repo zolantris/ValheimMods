@@ -40,7 +40,7 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
 
     protected virtual void Start()
     {
-#if UNITY_2022
+#if UNITY_EDITOR
       // todo make a simplified unity method for registering and testing these consumers with our PowerManager.
       //
       // if (canSelfRegisterToNetwork)
@@ -61,7 +61,7 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
 
     private void OnDestroy()
     {
-#if UNITY_2022
+#if UNITY_EDITOR
       // if (!Application.isPlaying) return;
       // if (canSelfRegisterToNetwork)
       // {
