@@ -35,7 +35,7 @@ namespace ValheimVehicles.SharedScripts
     public GameObject SliderPrefab;
     public List<SectionItemType> Sections;
 
-    private readonly List<VehicleUIMenuSectionItem> _sectionItems = new();
+    private List<VehicleUIMenuSectionItem> _sectionItems = new();
 
     private void Start()
     {
@@ -44,7 +44,7 @@ namespace ValheimVehicles.SharedScripts
 
     private void Update()
     {
-#if UNITY_2022
+#if UNITY_EDITOR
       HandleEditorInput();
 #endif
     }
@@ -75,7 +75,7 @@ namespace ValheimVehicles.SharedScripts
       };
     }
 
-#if UNITY_2022
+#if UNITY_EDITOR
     private void HandleEditorInput()
     {
       foreach (var sectionItem in _sectionItems)

@@ -20,12 +20,12 @@
       to.MovementController = from.MovementController;
       to.VehicleConfigSync = from.VehicleConfigSync;
       to.OnboardController = from.OnboardController;
-      to.LandMovementController = from.LandMovementController;
+      to.WheelController = from.WheelController;
       to.Manager = from.Manager;
       to.m_nview = from.m_nview;
     }
 
-    private static readonly Regex NonLandVehicleAllowedNullKeys = StringValidatorExtensions.GenerateRegexFromList([nameof(IVehicleSharedProperties.LandMovementController)]);
+    private static readonly Regex NonLandVehicleAllowedNullKeys = StringValidatorExtensions.GenerateRegexFromList([nameof(IVehicleSharedProperties.WheelController)]);
 
     private static Regex? GetSkipRegexpForVehicleType(VehicleVariant vehicleVariant)
     {

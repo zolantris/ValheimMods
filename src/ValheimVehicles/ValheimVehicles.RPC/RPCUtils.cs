@@ -1,7 +1,6 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics;
 using UnityEngine;
 using ValheimVehicles.Integrations.PowerSystem;
 using ValheimVehicles.SharedScripts;
@@ -25,7 +24,7 @@ public static class RPCUtils
   }
   public static IEnumerator SafeRPCRegister(Action action)
   {
-    var debugSafeTimer = Stopwatch.StartNew();
+    var debugSafeTimer = DebugSafeTimer.StartNew();
     while (debugSafeTimer.ElapsedMilliseconds < 10000f && (!ZNet.instance || ZRoutedRpc.instance != null || !ZNetScene.instance))
     {
       yield return null;

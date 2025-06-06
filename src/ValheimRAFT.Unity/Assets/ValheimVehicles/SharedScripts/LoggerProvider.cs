@@ -1,25 +1,17 @@
-// ReSharper disable NamespaceStyle
-
-#region
-
+using BepInEx;
+using BepInEx.Configuration;
+using BepInEx.Logging;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using BepInEx;
-using BepInEx.Configuration;
-using BepInEx.Logging;
 using UnityEngine;
-using Debug = UnityEngine.Debug;
+using Debug = UnityEngine.Debug; // Minimal UnityEngine pull
 
-#endregion
+namespace ValheimVehicles.SharedScripts;
 
-// Minimal UnityEngine pull
-
-namespace ValheimVehicles.SharedScripts
-{
 public static class LoggerProvider
 {
   public static LogLevel ActiveLogLevel = LogLevel.All;
@@ -27,7 +19,7 @@ public static class LoggerProvider
   private static ManualLogSource? Logger;
   private static LogLevel GlobalLogLevel = LogLevel.All;
 
-  private static bool _hasInitialized;
+  private static bool _hasInitialized = false;
   private static readonly Dictionary<string, string> _callerCache = new();
   private static readonly Dictionary<string, float> _lastLogTimestamps = new();
   private static float GetTime()
@@ -258,5 +250,4 @@ public static class LoggerProvider
 
     return LogLevel.All;
   }
-}
 }

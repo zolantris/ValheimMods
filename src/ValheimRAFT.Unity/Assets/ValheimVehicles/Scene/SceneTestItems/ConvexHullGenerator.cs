@@ -24,7 +24,7 @@ namespace ValheimVehicles.Scene
     public Material HullPreviewMaterial;
 
     // Convex hull calculator instance
-    private readonly ConvexHullCalculator
+    private ConvexHullCalculator
       convexHullCalculator = new();
 
     private void Start()
@@ -581,7 +581,7 @@ namespace ValheimVehicles.Scene
 
     private static void AdaptiveDestroy(GameObject gameObject)
     {
-#if UNITY_2022
+#if UNITY_EDITOR
       DestroyImmediate(gameObject);
 #else
             UnityEngine.Object.Destroy(gameObject);

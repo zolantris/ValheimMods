@@ -3,8 +3,6 @@
   using System;
   using System.Collections;
   using System.Collections.Generic;
-  using System.Diagnostics;
-  using System.Diagnostics.CodeAnalysis;
   using System.Linq;
   using UnityEngine;
   using UnityEngine.Serialization;
@@ -21,7 +19,6 @@
   using ValheimVehicles.Shared.Constants;
   using ValheimVehicles.SharedScripts;
   using ValheimVehicles.Structs;
-  using ZdoWatcher;
   using Logger = Jotunn.Logger;
 
 #endregion
@@ -141,6 +138,8 @@
 
     private ShipFloatation? _currentShipFloatation;
 
+    private Coroutine? _debouncedForceTakeoverControlsInstance;
+
     // todo remove if unused or make this a getter. Might not be safe from null references though.
     // private GameObject _piecesContainer;
     private GameObject _ghostContainer;
@@ -207,19 +206,6 @@
     public static float maxHaulFollowDistance = 50f;
     public static float HaulingOffsetLowestPointBuffer = 1f;
     public float distanceMovedSinceHaulTick = 0f;
-
-
-    public float _lastParentPieceCollisionTimeExpiration = 5f;
-    public float _lastParentPieceCollisionTime = 0f;
-    public static float ParentSyncMinimumDelayInMs = 10f;
-    public static float ParentSyncMaxDelayInMs = 10000f;
-    // allows messaging when power updates. It is unthrottled though.
-    private bool _hasPower = false;
-
-    // routines
-    private CoroutineHandle _parentReadyRoutine;
-    private CoroutineHandle _isWithinParentRoutine;
-    private CoroutineHandle _debouncedForceTakeoverControlsInstance;
 
     public AnchorState vehicleAnchorState
     {
@@ -297,10 +283,6 @@
     internal override void Awake()
     {
       AwakeSetupShipComponents();
-      _parentReadyRoutine = new CoroutineHandle(this);
-      _isWithinParentRoutine = new CoroutineHandle(this);
-      _debouncedForceTakeoverControlsInstance = new CoroutineHandle(this);
-
       DamageColliders = VehicleManager.GetVehicleMovementDamageColliders(transform);
       m_nview = GetComponent<ZNetView>();
 
@@ -314,19 +296,10 @@
       base.Awake();
     }
 
-    public bool isWaitingForParentVehicleToBeReady = false;
-    public bool HasInitializedParentVehicle => !isWaitingForParentVehicleToBeReady && Manager.VehicleParent != null;
-
     public void Start()
     {
       Setup();
       UpdateLandVehicleHeightIfBelowGround();
-
-      this.WaitForZNetView(nv =>
-      {
-        var parentZdoId = nv.GetZDO().GetInt(VehicleZdoVars.MBParentId);
-        isWaitingForParentVehicleToBeReady = parentZdoId != 0;
-      });
     }
 
     public void SetHaulingVehicle(Player? player, RopeAnchorComponent? ropeComponent, bool isHauling)
@@ -338,16 +311,22 @@
       HaulingRopeComponent = isHauling ? ropeComponent : null;
     }
 
-    public void UpdateAnchorCapabilities()
-    {
-      if (Manager == null || PiecesController == null) return;
-      var nextAnchorState = Manager.IsLandVehicle || IsFlying();
-      if (!nextAnchorState)
-      {
-        nextAnchorState = PiecesController.m_anchorPieces.Count > 0;
-      }
-      CanAnchor = nextAnchorState;
-    }
+    // private void UpdateBreakingControls()
+    // {
+    //   if (WheelController == null) return;
+    //   var isBreakingPressed = Input.GetKeyDown(KeyCode.Space);
+    //   if (isBreakingPressed && !isHoldingBreak)
+    //   {
+    //     SendSetAnchor(WheelController.isBreaking ? AnchorState.Anchored : AnchorState.Recovered);
+    //     isHoldingBreak = true;
+    //   }
+    //
+    //   // we do not handle setting anchor state if it's still anchored and not breaking. This should only be handled if the break toggle is pressed.
+    //   if (!isBreakingPressed)
+    //   {
+    //     isHoldingBreak = false;
+    //   }
+    // }
 
     private void Update()
     {
@@ -395,373 +374,76 @@
       RemovePlayersBeforeDestroyingBoat();
     }
 
-    /// <summary>
-    /// Heavy collider iterations but very accurate should happen 1 time per LandVehicle-WaterVehicle collision. Allows nesting vehicles.
-    /// </summary>
-    /// <param name="collision"></param>
-    /// <returns></returns>
-    public bool TryAddVehicleWithinBoat(Collision collision)
-    {
-      if (collision.transform.name.Contains("animated")) return false;
-
-      var handled = false;
-
-      var isVehicleCollider = PrefabNames.IsVehicleCollider(collision.transform.name);
-
-      if (isVehicleCollider || PrefabNames.IsVehiclePiecesCollider(collision.transform.name))
-      {
-        foreach (var c in collision.contacts)
-        {
-          if (c.thisCollider.GetComponentInParent<Character>() || c.thisCollider.GetComponentInParent<Character>())
-          {
-            continue;
-          }
-          if (PrefabNames.IsVehicleCollider(c.thisCollider.name) || PrefabNames.IsVehicleCollider(c.otherCollider.name))
-          {
-            Physics.IgnoreCollision(c.otherCollider, c.thisCollider, true);
-            handled = true;
-          }
-        }
-      }
-
-      if (!Manager.IsLandVehicle && collision.transform.name.Contains(PrefabNames.LandVehicle))
-      {
-        var otherManager = collision.collider.GetComponentInParent<VehicleManager>();
-        var colliders = otherManager.transform.GetComponentsInChildren<Collider>();
-        var disabledColliders = new List<Collider>();
-
-        foreach (var collider in colliders)
-        {
-          if (!collider.enabled) continue;
-          collider.enabled = false;
-          disabledColliders.Add(collider);
-        }
-
-        handled = true;
-
-        if (!otherManager || Manager.PiecesController == null || otherManager.MovementController == null) return false;
-        otherManager.MovementController.isWaitingForParentVehicleToBeReady = true;
-        otherManager.MovementController.m_body.isKinematic = true;
-        m_body.velocity = Vector3.zero;
-        m_body.angularVelocity = Vector3.zero;
-        // nest the vehicle. This will not parent it, but it will bind the piece to the parent position, ensuring things are accurately synced.
-        Manager.PiecesController.AddNewPiece(otherManager.Manager.m_nview);
-
-        var otherPieceDataItems = otherManager.PiecesController.m_prefabPieceDataItems.Values;
-        var thisPiecesDataItems = PiecesController.m_prefabPieceDataItems.Values;
-        foreach (var thisPieceData in thisPiecesDataItems)
-        foreach (var otherPieceData in otherPieceDataItems)
-        foreach (var thisPieceCollider in thisPieceData.AllColliders)
-        {
-          if (thisPieceCollider == null) continue;
-          foreach (var otherPieceCollider in otherPieceData.AllColliders)
-          {
-            if (!thisPieceCollider || !otherPieceCollider) continue;
-            if (otherPieceCollider.GetComponentInParent<Character>() || thisPieceCollider.GetComponentInParent<Character>())
-            {
-              continue;
-            }
-            Physics.IgnoreCollision(thisPieceCollider, otherPieceCollider, true);
-          }
-        }
-        m_body.velocity = Vector3.zero;
-        m_body.angularVelocity = Vector3.zero;
-        foreach (var disabledCollider in disabledColliders)
-        {
-          if (disabledCollider.enabled) continue;
-          disabledCollider.enabled = true;
-        }
-        otherManager.MovementController.OnParentReady(Manager);
-      }
-
-      return handled;
-    }
-
-    public bool TryBailOnCollisionOfDifferentVehicleType(Collider collider)
-    {
-      if (!collider || !collider.attachedRigidbody) return false;
-      VehicleManager? otherVehicleManager = null;
-
-      if (PrefabNames.IsVehiclePiecesCollider(collider.attachedRigidbody.name))
-      {
-        var otherVPC = collider.GetComponentInParent<VehiclePiecesController>();
-        if (otherVPC)
-        {
-          otherVehicleManager = otherVPC.Manager;
-        }
-      }
-      else if (PrefabNames.IsVehicleCollider(collider.name) || PrefabNames.IsVehicleTreadCollider(collider.name) || PrefabNames.IsVehicleTreadCollider(collider.attachedRigidbody.name) || PrefabNames.IsVehicle(collider.attachedRigidbody.name))
-      {
-        var manager = collider.GetComponentInParent<VehicleManager>();
-        if (manager)
-        {
-          otherVehicleManager = manager;
-        }
-      }
-
-      if (otherVehicleManager != null)
-      {
-        // we must set this in order to detect if we are still colliding with the same vehicle
-        if (Manager.VehicleParent != null && otherVehicleManager.PersistentZdoId == Manager.VehicleParent.PersistentZdoId)
-        {
-          _lastParentPieceCollisionTime = Time.time;
-        }
-
-        // skip collisions on different ship types. Only same type vehicles can collide.
-        if (otherVehicleManager.IsLandVehicle != Manager.IsLandVehicle) return true;
-      }
-
-      return false;
-    }
-
     private void OnCollisionEnter(Collision collision)
     {
-      if (PiecesController == null || vehicleRam == null) return;
+      if (PiecesController == null) return;
+      if (collision.relativeVelocity.magnitude < 3f && collision.collider.transform.root.name.StartsWith(PrefabNames.LandVehicle) && collision.collider.transform.root != transform)
+      {
+        var rootNv = collision.collider.transform.root.GetComponent<ZNetView>();
+        if (rootNv)
+        {
+          PiecesController.AddTemporaryPiece(rootNv);
+        }
+        return;
+      }
+
       if (collision.collider.gameObject.layer == LayerHelpers.TerrainLayer) return;
-
-      if (TryAddVehicleWithinBoat(collision)) return;
-      if (TryBailOnCollisionOfDifferentVehicleType(collision.collider)) return;
-      if (IsSwivelCollision(collision)) return;
-
-      if (LayerHelpers.IsContainedWithinLayerMask(collision.collider.gameObject.layer, LayerHelpers.PhysicalLayerMask))
+      if (collision.collider.name == "tread_mesh")
+      {
+        // Physics.IgnoreCollision(collision.collider, collision.collider, true);
+      }
+      if (vehicleRam == null) return;
+      var isCharacterLayer = collision.gameObject.layer == LayerHelpers.CharacterLayer;
+      if (isCharacterLayer)
+      {
+#if DEBUG
+        Logger.LogDebug("Hit character");
+#endif
+        vehicleRam.OnCollisionEnterHandler(collision);
+      }
+      else if (LayerHelpers.IsContainedWithinLayerMask(collision.collider.gameObject.layer, LayerHelpers.PhysicalLayerMask))
       {
         vehicleRam.OnCollisionEnterHandler(collision);
       }
     }
 
-    public bool IsSwivelCollision(Collision collision)
+    private void OnCollisionStay(Collision collision)
     {
-      if (collision.rigidbody && collision.rigidbody.name.StartsWith(PrefabNames.SwivelPrefabName)) return true;
-      return false;
-    }
+      if (PiecesController == null) return;
+      if (collision.transform.root == transform || collision.transform.root == PiecesController.transform)
+      {
+        // PiecesController.m_vehicleCollisionManager.AddColliderToVehicle(collision.collider, true);
+        return;
+      }
 
-    public bool IsSwivelCollision(Collider collider)
-    {
-      return collider.GetComponentInParent<SwivelComponent>() != null;
-    }
+#if DEBUG
+      // allows landvehicles within the vehicle, requires a PiecesController reparent likely.
+      if (collision.relativeVelocity.magnitude < 2 && collision.transform.root.name.StartsWith(PrefabNames.LandVehicle) && collision.contactCount > 0)
+      {
+        // should only ignore for convexHull collider (not the damage trigger variant)
+        var thisCollider = collision.contacts[0].thisCollider;
+        if (thisCollider.name.StartsWith("ValheimVehicles_ConvexHull") || thisCollider.name.StartsWith("convex_tread_collider"))
+        {
+          Physics.IgnoreCollision(collision.collider, thisCollider, true);
+        }
+        if (transform.root.name.StartsWith(PrefabNames.LandVehicle))
+        {
+          PiecesController.AddTemporaryPiece(transform.root.GetComponent<ZNetView>());
+        }
+      }
+#endif
 
-//     private void OnCollisionStay(Collision collision)
-//     {
-//       if (PiecesController == null) return;
-//       if (IsSwivelCollision(collision))
-//       {
-//         return;
-//       }
-//       if (collision.transform.root == transform || collision.transform.root == PiecesController.transform)
-//       {
-//         return;
-//       }
-//
-// #if DEBUG
-//       // allows landvehicles within the vehicle, requires a PiecesController reparent likely.
-//       // if (collision.relativeVelocity.magnitude < 2 && collision.transform.root.name.StartsWith(PrefabNames.LandVehicle) && collision.contactCount > 0)
-//       // {
-//       // should only ignore for convexHull collider (not the damage trigger variant)
-//       // var thisCollider = collision.contacts[0].thisCollider;
-//       //   if (this.Collider.name.StartsWith("ValheimVehicles_ConvexHull") || thisCollider.name.StartsWith("convex_tread_collider"))
-//       //   {
-//       //     Physics.IgnoreCollision(collision.collider, thisCollider, true);
-//       //   }
-//       //   if (transform.root.name.StartsWith(PrefabNames.LandVehicle))
-//       //   {
-//       //     PiecesController.AddTemporaryPiece(transform.root.GetComponent<ZNetView>());
-//       //   }
-//       // }
-// #endif
-//
-//       if (vehicleRam != null && LayerHelpers.IsContainedWithinLayerMask(collision.collider.gameObject.layer, LayerHelpers.PhysicalLayerMask))
-//       {
-//         vehicleRam.OnCollisionEnterHandler(collision);
-//       }
-//     }
+      if (vehicleRam != null && LayerHelpers.IsContainedWithinLayerMask(collision.collider.gameObject.layer, LayerHelpers.PhysicalLayerMask))
+      {
+        vehicleRam.OnCollisionEnterHandler(collision);
+      }
+    }
 
     private void OnTriggerEnter(Collider collider)
     {
       if (vehicleRam == null) return;
       if (collider.gameObject.layer == LayerHelpers.TerrainLayer) return;
-      if (TryBailOnCollisionOfDifferentVehicleType(collider)) return;
-      if (IsSwivelCollision(collider)) return;
       vehicleRam.OnTriggerEnterHandler(collider);
-    }
-
-    private bool CanRunPoweredVehicle()
-    {
-      if (!Manager.IsLandVehicle || PowerSystemConfig.LandVehicle_DoNotRequirePower.Value) return true;
-      return Manager.PowerConsumerData?.CanRunConsumerForDeltaTime(1f) ?? false;
-    }
-
-
-    public void OnParentReady(VehicleManager vehicleParent)
-    {
-      if (_parentReadyRoutine.IsRunning) return;
-      _parentReadyRoutine.Start(SyncToParentPosition(vehicleParent));
-    }
-
-    public void StartCheckIfWithinVehicleRoutine()
-    {
-      if (_isWithinParentRoutine.IsRunning) return;
-      _isWithinParentRoutine.Start(CheckIfWithinVehicleRoutine());
-    }
-
-    public static bool TryGetVehicleParent(ZNetView? netView, [NotNullWhen(true)] out VehicleManager? _parentManager)
-    {
-      _parentManager = null;
-      if (netView == null || !netView.IsValid()) return false;
-
-      var parentId = netView.GetZDO().GetInt(VehicleZdoVars.MBParentId, 0);
-      if (parentId == 0 || ZdoWatchController.Instance == null) return false;
-
-      var parentInstance = ZdoWatchController.Instance.GetInstance(parentId);
-      if (parentInstance == null) return false;
-
-      var parentInstanceManager = parentInstance.GetComponent<VehicleManager>();
-      if (parentInstanceManager == null) return false;
-
-      _parentManager = parentInstanceManager;
-      return true;
-    }
-
-    public void UpdateVehicleParent()
-    {
-      if (Time.time < _lastParentPieceCollisionTime + _lastParentPieceCollisionTimeExpiration)
-      {
-        return;
-      }
-
-      RemoveParentManager();
-    }
-
-    public void RemoveParentManager()
-    {
-      isWaitingForParentVehicleToBeReady = false;
-      Manager.VehicleParent = null;
-      if (!this.IsNetViewValid(out var netView)) return;
-      VehiclePiecesController.RemoveVehicleDataFromZdo(netView.GetZDO());
-    }
-
-    public IEnumerator CheckIfWithinVehicleRoutine()
-    {
-      while (isWaitingForParentVehicleToBeReady || Manager.VehicleParent != null)
-      {
-        if (!Manager.VehicleParent)
-        {
-          if (!TryGetVehicleParent(Manager.m_nview, out var parentManager))
-          {
-            RemoveParentManager();
-            yield break;
-          }
-          isWaitingForParentVehicleToBeReady = true;
-          Manager.VehicleParent = parentManager;
-
-          if (_parentReadyRoutine.IsRunning) _parentReadyRoutine.Stop();
-          OnParentReady(Manager.VehicleParent);
-        }
-        else
-        {
-          UpdateVehicleParent();
-          if (!isWaitingForParentVehicleToBeReady && Manager.VehicleParent == null) yield break;
-        }
-        yield return new WaitForSeconds(1f);
-      }
-    }
-
-    public bool TrySyncVehicleToParent(ZNetView netView)
-    {
-      if (!netView) return false;
-      try
-      {
-        if (Manager.VehicleParent == null) return false;
-        var parentLocalPositionOffset = netView.GetZDO().GetVec3(VehicleZdoVars.MBPositionHash, Vector3.zero);
-        var nextTransform = Manager.VehicleParent.transform.position - parentLocalPositionOffset;
-        var deltaDistance = Vector3.Distance(transform.position, nextTransform);
-        if (deltaDistance > 80f)
-        {
-          LoggerProvider.LogWarning("The parent is way further than expected {. This is likely a bug or the vehicle is not nearby. Removing vehicle from parent.");
-          RemoveParentManager();
-          return false;
-        }
-        return true;
-      }
-      catch (Exception e)
-      {
-        LoggerProvider.LogError($"Error while syncing parent {e}");
-        return false;
-      }
-    }
-
-    public IEnumerator SyncToParentPosition(VehicleManager vehicleParent)
-    {
-      if (LandMovementController == null)
-        yield break;
-
-      if (vehicleParent == null)
-      {
-        LoggerProvider.LogMessage("The parent is null. This is likely a bug or the vehicle is detached. Skipping sync to prevent bad state.");
-        isWaitingForParentVehicleToBeReady = false;
-        Manager.VehicleParent = null;
-        yield break;
-      }
-
-      isWaitingForParentVehicleToBeReady = true;
-      m_body.isKinematic = true;
-
-      Manager.VehicleParent = vehicleParent;
-      // do not immediately run. This lets unity run an update loop
-      yield return new WaitForFixedUpdate();
-
-      ZNetView? netView = null;
-      yield return this.WaitForZNetViewCoroutine(nv => netView = nv);
-      if (netView == null) yield break;
-
-      // this is relative to parent. But our rigidbody is not within the parent, just synced in same world + local position.
-      if (!TrySyncVehicleToParent(netView))
-      {
-        yield break;
-      }
-
-      if (!TrySyncVehicleToParent(netView)) yield break;
-
-      var timer = Stopwatch.StartNew();
-
-      // coroutine evaluation local methods
-
-      bool IsMinimumWaitComplete()
-      {
-        return timer.ElapsedMilliseconds > ParentSyncMinimumDelayInMs;
-      }
-
-      bool IsExpired()
-      {
-        return timer.ElapsedMilliseconds > ParentSyncMaxDelayInMs;
-      }
-
-      bool IsActivatedThis()
-      {
-        return PiecesController != null && PiecesController.isInitialPieceActivationComplete && PiecesController.m_convexHullAPI.convexHullMeshColliders.Count > 0;
-      }
-
-      bool IsActivatedOther()
-      {
-        return Manager.VehicleParent != null && Manager.VehicleParent.PiecesController != null && Manager.VehicleParent.PiecesController.isInitialPieceActivationComplete && Manager.VehicleParent.PiecesController.m_convexHullAPI.convexHullMeshColliders.Count > 0;
-      }
-
-      // false || true
-      while (!IsMinimumWaitComplete() || !IsExpired() && (!IsActivatedThis() || !IsActivatedOther()))
-      {
-        if (!TrySyncVehicleToParent(netView)) yield break;
-        yield return new WaitForFixedUpdate();
-      }
-
-      if (!IsActivatedThis() || !IsActivatedOther())
-      {
-        RemoveParentManager();
-        yield break;
-      }
-
-      if (!TrySyncVehicleToParent(netView)) yield break;
-      yield return new WaitForFixedUpdate();
-
-      isWaitingForParentVehicleToBeReady = false;
     }
 
     public void GuardedFixedUpdate(float deltaTime)
@@ -775,28 +457,15 @@
         DebugTargetHeightObj.transform.localScale = FloatCollider!.size;
       }
 
-      if (PiecesController == null || PiecesController.m_pieces.Count < 1) return;
-
-      if (!CanRunPoweredVehicle())
-      {
-        if (_hasPower && PiecesController && PiecesController._steeringWheelPieces.Count > 0 && PiecesController._steeringWheelPieces[0] != null)
-        {
-          PiecesController._steeringWheelPieces[0].UpdateSteeringHoverMessage(ModTranslations.Power_NetworkInfo_NetworkLowPower);
-        }
-        _hasPower = false;
-        return;
-      }
-      _hasPower = true;
-
       // invalid wheel controller should always reset physics to kinematic and skip current run.
-      if (LandMovementController != null && !LandMovementController.IsVehicleReady)
+      if (WheelController != null && !WheelController.IsVehicleReady)
       {
         m_body.isKinematic = true;
         InitLandVehicleWheels();
         return;
       }
 
-      // if the vehicle has not initialized pieces, physics should never be run.
+      // if the vehicle has not initialized pieces physics should never be run.
       if (!Manager!
             .PiecesController!.isInitialPieceActivationComplete)
       {
@@ -805,20 +474,7 @@
       }
 
       // if the vehicle has not generated a convex hull collider. We do not want to use physics.
-      if (Manager!.PiecesController!.convexHullComponent.convexHullMeshes.Count < 1 || Manager!.PiecesController!.convexHullComponent.convexHullMeshColliders.Count < 1)
-      {
-        m_body.isKinematic = true;
-        return;
-      }
-
-      // we need to ensure this routine is running if there is a vehicle parent.
-      if (isWaitingForParentVehicleToBeReady || HasInitializedParentVehicle)
-      {
-        StartCheckIfWithinVehicleRoutine();
-      }
-
-      // nested vehicles always must wait for parent.
-      if (isWaitingForParentVehicleToBeReady)
+      if (Manager!.PiecesController!.convexHullComponent.convexHullMeshColliders.Count < 1)
       {
         m_body.isKinematic = true;
         return;
@@ -1006,24 +662,11 @@
     public void UpdateControls(float dt)
     {
       if (m_nview == null) return;
-      if (!m_nview.HasOwner())
-      {
-        m_nview.ClaimOwnership();
-      }
-
       if (m_nview.IsOwner())
       {
         m_nview.GetZDO().Set(ZDOVars.s_forward, (int)vehicleSpeed);
         m_nview.GetZDO().Set(ZDOVars.s_rudder, m_rudderValue);
         return;
-      }
-
-      if (OnboardController && vehicleRam && (vehicleRam.m_owner == null || vehicleRam.m_owner.m_nview.GetZDO().GetOwner() != m_nview.GetZDO().GetOwner()))
-      {
-        foreach (var onboardControllerMLocalPlayer in OnboardController.m_localPlayers)
-        {
-          vehicleRam.m_owner = onboardControllerMLocalPlayer;
-        }
       }
 
       if (Time.time - m_sendRudderTime > 1f)
@@ -1033,9 +676,9 @@
         m_rudderValue = m_nview.GetZDO().GetFloat(ZDOVars.s_rudder);
       }
 
-      if (LandMovementController != null)
+      if (WheelController != null)
       {
-        LandMovementController.SetTurnInput(m_rudderValue);
+        WheelController.SetTurnInput(m_rudderValue);
         UpdateLandVehicleStatsIfNecessary();
       }
     }
@@ -1152,7 +795,7 @@
 
     public void StartPlayerCollisionAfterTeleport(Collider collider, Character character)
     {
-      StartCoroutine(EnableCollisionAfterTeleport(PiecesController.m_convexHullAPI.convexHullMeshColliders, collider, character));
+      StartCoroutine(EnableCollisionAfterTeleport(PiecesController.convexHullMeshColliders, collider, character));
     }
 
     public IEnumerator EnableCollisionAfterTeleport(List<MeshCollider> IgnoredColliders, Collider collisionCollider, Character? character)
@@ -1303,7 +946,16 @@
       if (!Manager) return;
       maxYLinearVelocity = PhysicsConfig.MaxLinearYVelocity.Value;
       m_body.maxLinearVelocity = PhysicsConfig.MaxLinearVelocity.Value;
-      m_body.maxAngularVelocity = Mathf.Clamp(PhysicsConfig.MaxAngularVelocity.Value, 0.3f, 2f);
+
+      if (Manager!.IsLandVehicle)
+      {
+        // heavily throttle turning to prevent infinite spin issues especially uphill.
+        m_body.maxAngularVelocity = Mathf.Min(PhysicsConfig.MaxAngularVelocity.Value, 0.3f);
+      }
+      else
+      {
+        m_body.maxAngularVelocity = PhysicsConfig.MaxAngularVelocity.Value;
+      }
     }
 
     /// <summary>
@@ -1885,7 +1537,7 @@
       };
     }
 
-    public VehicleLandMovementController.AccelerationType GetLandVehicleSpeed()
+    public VehicleWheelController.AccelerationType GetLandVehicleSpeed()
     {
       if (isAnchored)
       {
@@ -1894,30 +1546,30 @@
 
       if (isAnchored)
       {
-        return VehicleLandMovementController.AccelerationType.Stop;
+        return VehicleWheelController.AccelerationType.Stop;
       }
 
       return vehicleSpeed switch
       {
-        Ship.Speed.Stop => VehicleLandMovementController.AccelerationType.Stop,
-        Ship.Speed.Back => VehicleLandMovementController.AccelerationType.Low,
-        Ship.Speed.Slow => VehicleLandMovementController.AccelerationType.Low,
-        Ship.Speed.Half => VehicleLandMovementController.AccelerationType.Medium,
-        Ship.Speed.Full => VehicleLandMovementController.AccelerationType.High,
+        Ship.Speed.Stop => VehicleWheelController.AccelerationType.Stop,
+        Ship.Speed.Back => VehicleWheelController.AccelerationType.Low,
+        Ship.Speed.Slow => VehicleWheelController.AccelerationType.Low,
+        Ship.Speed.Half => VehicleWheelController.AccelerationType.Medium,
+        Ship.Speed.Full => VehicleWheelController.AccelerationType.High,
         _ => throw new ArgumentOutOfRangeException()
       };
     }
 
     public void InitLandVehicleWheels()
     {
-      if (LandMovementController == null || PiecesController == null) return;
-      if (LandMovementController.wheelColliders.Count == 0)
+      if (WheelController == null || PiecesController == null) return;
+      if (WheelController.wheelColliders.Count == 0)
       {
         m_body.Sleep();
         m_body.isKinematic = true;
         var bounds = PiecesController.convexHullComponent.GetConvexHullBounds(true);
 
-        LandMovementController.Initialize(bounds);
+        WheelController.Initialize(bounds);
       }
     }
     public void UpdateCenterOfMass()
@@ -1954,8 +1606,8 @@
       m_body.drag = PhysicsConfig.landDrag.Value;
 
       // heavily throttle turning to prevent infinite spin issues especially uphill.
-      m_body.maxAngularVelocity = Mathf.Clamp(PhysicsConfig.MaxAngularVelocity.Value, 0.3f, 2f);
-      m_body.maxLinearVelocity = Mathf.Clamp(PhysicsConfig.MaxLinearVelocity.Value, 0.3f, 1000f);
+      m_body.maxAngularVelocity = Mathf.Min(PhysicsConfig.MaxAngularVelocity.Value, 0.3f);
+      m_body.maxLinearVelocity = PhysicsConfig.MaxLinearVelocity.Value;
     }
 
     /// <summary>
@@ -1979,12 +1631,12 @@
     public void UpdateVehicleLandSpeed()
     {
       UpdateVehicleStats(VehiclePhysicsState.Land);
-      if (LandMovementController == null) return;
+      if (WheelController == null) return;
       if (UpdateAnchorVelocity())
       {
-        if (!LandMovementController.IsBraking)
+        if (!WheelController.IsBraking)
         {
-          LandMovementController.SetBrake(true);
+          WheelController.SetBrake(true);
         }
       }
 
@@ -1994,21 +1646,21 @@
       if (shouldUpdateLandInputs)
       {
         UpdateLandVehicleStatsIfNecessary();
-        LandMovementController.VehicleMovementFixedUpdateOwnerClient();
+        WheelController.VehicleMovementFixedUpdateOwnerClient();
       }
     }
 
     public void UpdateLandVehicleStatsIfNecessary()
     {
-      if (LandMovementController == null) return;
+      if (WheelController == null) return;
       var landSpeed = GetLandVehicleSpeed();
       var isForward = VehicleSpeed != Ship.Speed.Back;
       var landInputMovementMultiplier = GetLandVehicleSpeedInput();
-      LandMovementController!.inputMovement = landInputMovementMultiplier;
-      if (landSpeed != LandMovementController!.accelerationType || LandMovementController.isForward != isForward)
+      WheelController!.inputMovement = landInputMovementMultiplier;
+      if (landSpeed != WheelController!.accelerationType || WheelController.isForward != isForward)
       {
-        LandMovementController.forwardDirection = ShipDirection;
-        LandMovementController.UpdateAccelerationValues(landSpeed, isForward);
+        WheelController.forwardDirection = ShipDirection;
+        WheelController.UpdateAccelerationValues(landSpeed, isForward);
       }
     }
 
@@ -2670,7 +2322,7 @@
 
     // invalid component booleans to avoid checking component existence per frame.
     private bool _isInvalid = true;
-    private bool _isLandMovementControllerInvalid = true;
+    private bool _isWheelControllerInvalid = true;
 
     public bool IsInvalid()
     {
@@ -2688,9 +2340,9 @@
 
     public void UpdateValidComponentChecks()
     {
-      if (_isLandMovementControllerInvalid)
+      if (_isWheelControllerInvalid)
       {
-        _isLandMovementControllerInvalid = LandMovementController == null;
+        _isWheelControllerInvalid = WheelController == null;
       }
     }
 
@@ -2700,7 +2352,7 @@
       Logger.LogDebug($"Error occurred after isInvalid return false. This means validation will need to be re-run. \nErrorMessage:\n{e}");
 #endif
       _isInvalid = true;
-      _isLandMovementControllerInvalid = true;
+      _isWheelControllerInvalid = true;
     }
 
     /// <summary>
@@ -2731,9 +2383,9 @@
         // raft pieces transforms
         SyncVehicleRotationDependentItems();
 
-        if (!_isLandMovementControllerInvalid)
+        if (!_isWheelControllerInvalid)
         {
-          LandMovementController!.VehicleMovementFixedUpdateAllClients();
+          WheelController!.VehicleMovementFixedUpdateAllClients();
         }
       }
       catch (Exception e)
@@ -2914,8 +2566,6 @@
 
       _currentShipFloatation = GetShipFloatationObj();
 
-      UpdateAnchorCapabilities();
-
       if (isPlayerHaulingVehicle && HaulingPlayer != null && HaulingPlayer.transform.root != PiecesController.transform.root)
       {
         UpdateVehicleFromHaulPosition();
@@ -2932,7 +2582,6 @@
       UpdateColliderPositions();
 
       var isFlying = IsFlying();
-
 
       if (!ShipFloatationObj.IsAboveBuoyantLevel || !isFlying)
         if (m_body.constraints != RigidbodyConstraints.None)
@@ -3195,8 +2844,6 @@
         lastFlyingDt += Time.fixedDeltaTime;
         return cachedFlyingValue;
       }
-
-      if (!ZoneSystem.m_instance) return false;
 
       lastFlyingDt = Time.fixedDeltaTime;
 
@@ -3698,7 +3345,8 @@
     /// </summary>
     public void CancelDebounceTakeoverControls()
     {
-      _debouncedForceTakeoverControlsInstance.Stop();
+      if (_debouncedForceTakeoverControlsInstance != null)
+        StopCoroutine(_debouncedForceTakeoverControlsInstance);
     }
 
     public void SendRequestControl(long playerId)
@@ -3722,7 +3370,8 @@
       if (m_nview == null || ZNet.instance == null) return;
       CancelDebounceTakeoverControls();
 
-      _debouncedForceTakeoverControlsInstance.Start(DebouncedForceTakeoverControls(targetPlayerId));
+      _debouncedForceTakeoverControlsInstance =
+        StartCoroutine(DebouncedForceTakeoverControls(targetPlayerId));
 
       var previousUserId = GetUser();
       var isInBoat = WaterZoneUtils.IsOnboard(Player.GetPlayer(targetPlayerId));
@@ -4132,9 +3781,9 @@
       if (IsFlying() || Manager.IsLandVehicle)
       {
         SendSetAnchor(!isAnchored ? AnchorState.Anchored : AnchorState.Recovered);
-        if (LandMovementController != null)
+        if (WheelController != null)
         {
-          LandMovementController.SetBrake(isAnchored);
+          WheelController.SetBrake(isAnchored);
         }
         return;
       }
@@ -4176,9 +3825,9 @@
     internal void RPC_Rudder(long sender, float value)
     {
       m_rudderValue = value;
-      if (LandMovementController != null)
+      if (WheelController != null)
       {
-        LandMovementController.SetTurnInput(Mathf.Clamp(m_rudderValue, -1, 1));
+        WheelController.SetTurnInput(Mathf.Clamp(m_rudderValue, -1, 1));
       }
     }
 
@@ -4328,15 +3977,6 @@
       FixPlayerParent(player);
     }
 
-    public void UpdateVehicleRamOwner(Player owner)
-    {
-      // must set the ram owner otherwise it will not be able to damage enemies.
-      if (vehicleRam && vehicleRam.m_owner != owner)
-      {
-        vehicleRam.m_owner = owner;
-      }
-    }
-
     public void OnControlsHandOff(Player? targetPlayer, Player? previousPlayer)
 
     {
@@ -4359,8 +3999,6 @@
       m_nview.GetZDO().SetOwner(playerOwner);
       if (previousUserId != targetPlayer.GetPlayerID() || previousUserId == 0L)
         m_nview.GetZDO().Set(ZDOVars.s_user, targetPlayer.GetPlayerID());
-
-      UpdateVehicleRamOwner(targetPlayer);
 
       LoggerProvider.LogDebug("Changing ship owner to " + playerOwner +
                               $", name: {targetPlayer.GetPlayerName()}");
@@ -4595,7 +4233,7 @@
       get;
       set;
     }
-    public VehicleLandMovementController? LandMovementController
+    public VehicleWheelController? WheelController
     {
       get;
       set;

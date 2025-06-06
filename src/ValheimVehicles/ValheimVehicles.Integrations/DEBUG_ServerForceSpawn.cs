@@ -90,7 +90,7 @@ public class DEBUG_ServerForceSpawn
         var powerConsumer = ri.GetComponent<IPowerConsumer>();
         var powerPylon = ri.GetComponent<PowerPylon>();
         var powerConduit = ri.GetComponent<IPowerConduit>();
-        var powerConduitIntegration = ri.GetComponent<PowerConduitPlateComponent>();
+        var powerConduitIntegration = ri.GetComponent<PowerConduitPlateDrainBridge>();
 
         var powerStorageIntegration = ri.GetComponent<PowerStorageBridge>();
         if (powerStorageIntegration)

@@ -2,21 +2,13 @@
 // ReSharper disable NamespaceStyle
 
 using System;
+using Microsoft.Win32;
 using UnityEngine;
 using ValheimVehicles.Shared.Constants;
 namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
 {
-  // ReSharper disable once PartialTypeWithSinglePart
   public partial class PowerConsumerData : PowerSystemComputeData
   {
-    public static class PowerConsumerBaseValues
-    {
-      public static float LandVehicleEngine = 1f;
-      public static float WaterVehicleEngine = 1f;
-      public static float AirVehicleEngine = 1f;
-      public static float Swivel = 0.1f;
-    }
-
     private float _basePowerConsumption;
     private float powerNone = 0f;
     private float powerLow = 1f;
@@ -25,41 +17,13 @@ namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
     private PowerIntensityLevel powerIntensityLevel = PowerIntensityLevel.Low;
 
     public PowerIntensityLevel PowerIntensityLevel => powerIntensityLevel;
-
-    public bool IsDemanding = false; // a value set when the consumer is requesting for power
+    public bool IsDemanding = false;
+    public bool _isActive = false;
+    public override bool IsActive => _isActive;
     // method meant for client when pressing activators to prevent activation
     public Func<float, bool> CanRunConsumerForDeltaTime = (_) => true;
 
     public PowerConsumerData() {}
-
-    public static float GetVariant(int prefabHash)
-    {
-      if (prefabHash == PrefabNameHashes.Mechanism_Power_Consumer_Swivel)
-      {
-        return PowerConsumerBaseValues.Swivel;
-      }
-
-      if (prefabHash == PrefabNameHashes.Mechanism_Power_Consumer_LandVehicle)
-      {
-        return PowerConsumerBaseValues.LandVehicleEngine;
-      }
-
-      if (prefabHash == PrefabNameHashes.Mechanism_Power_Consumer_WaterVehicle)
-      {
-        return PowerConsumerBaseValues.WaterVehicleEngine;
-      }
-
-      // uninitialized. We do not want to provide a value.
-      if (prefabHash == 0)
-      {
-        return 0f;
-      }
-
-      // unexpected
-      LoggerProvider.LogError($"Unknown PowerConsumerBaseValue: for prefab hash <{prefabHash}>");
-      return 1f;
-    }
-
     public void UpdatePowerConsumptionValues(float val)
     {
       powerHigh = val * 4;
@@ -74,6 +38,18 @@ namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
       return GetWattsForLevel(powerIntensityLevel) * deltaTime;
     }
 
+    // todo this might need to control SetActive/Running states.
+    public void ApplyPower(float joules, float deltaTime)
+    {
+    }
+
+    public void SetPowerIntensity(PowerIntensityLevel level)
+    {
+      if (powerIntensityLevel == level) return;
+      MarkDirty(VehicleZdoVars.PowerSystem_Intensity_Level);
+      powerIntensityLevel = level;
+    }
+
     public static PowerIntensityLevel GetPowerIntensityFromPrefab(int powerIntensity)
     {
       return GetPowerIntensityFromPrefab((PowerIntensityLevel)powerIntensity);
@@ -84,23 +60,19 @@ namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
       return powerIntensity;
     }
 
-    public float BasePowerConsumption => _basePowerConsumption;
-
-    public void SetPowerIntensity(PowerIntensityLevel level)
+    public float BasePowerConsumption
     {
-      if (powerIntensityLevel == level) return;
-      MarkDirty(VehicleZdoVars.PowerSystem_Intensity_Level);
-      powerIntensityLevel = level;
+      get => _basePowerConsumption;
+      set => SetBasePowerConsumption(value);
     }
 
-    public void UpdateBasePowerConsumption()
+    public void SetBasePowerConsumption(float value)
     {
-      var previous = _basePowerConsumption;
-      _basePowerConsumption = GetVariant(PrefabHash);
-      if (!Mathf.Approximately(_basePowerConsumption, previous))
+      _basePowerConsumption = value;
+      if (!Mathf.Approximately(_basePowerConsumption, value))
       {
-        UpdatePowerConsumptionValues(_basePowerConsumption);
         MarkDirty(VehicleZdoVars.PowerSystem_BasePowerConsumption);
+        UpdatePowerConsumptionValues(value);
       }
     }
 

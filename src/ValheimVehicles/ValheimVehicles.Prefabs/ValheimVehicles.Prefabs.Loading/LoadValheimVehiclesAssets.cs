@@ -23,9 +23,6 @@ public class LoadValheimVehicleAssets : ILoadAssets
   public static Material WaterHeightMaterial = null!;
   public static Material GlassNautilusNoTint = null!;
 
-  public static GameObject HullDoubleProw = null!;
-  public static GameObject HullDoubleWall = null!;
-
   public static GameObject ShipAnchorWood = null!;
 
   // mechanisms/energy
@@ -313,8 +310,6 @@ public class LoadValheimVehicleAssets : ILoadAssets
     // from Plugin, todo rename the casing problematic asset.
     LightningMaterial = assetBundle.LoadAsset<Material>("lightning_bolt_material_animated_additive.mat");
 
-    HullDoubleProw = assetBundle.LoadAsset<GameObject>("hull_double_prow");
-    HullDoubleWall = assetBundle.LoadAsset<GameObject>("hull_rib_double");
 
     // Data rebinds done inline
     PowerNetworkController.WireMaterial = new Material(DoubleSidedTransparentMat)

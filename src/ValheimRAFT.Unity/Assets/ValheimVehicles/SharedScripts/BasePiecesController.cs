@@ -1,13 +1,11 @@
 ﻿#region
 
-  using System;
-  using System.Collections;
-  using System.Collections.Generic;
-  using System.Diagnostics;
-  using System.Linq;
-  using Unity.Collections;
-  using UnityEngine;
-  using Debug = UnityEngine.Debug;
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
+using Unity.Collections;
+using UnityEngine;
 
 #endregion
 
@@ -43,6 +41,8 @@
       public Vector3 convexAPIThresholdDistance = Vector3.one;
 
       public List<Collider> vehicleCollidersToIgnore = new();
+      public List<Collider> convexHullColliders = new();
+      public List<MeshCollider> convexHullMeshColliders = new();
       public ConvexHullAPI m_convexHullAPI;
       public MeshClusterController m_meshClusterComponent;
       public int pieceDataChangeIndex;
@@ -74,7 +74,7 @@
       private List<int> tris = new();
 
       private List<Vector3> verts = new();
-      public VehicleLandMovementController? LandMovementController { get; set; }
+      public VehicleWheelController? WheelController { get; set; }
 
       public List<GameObject> convexHullMeshes =>
         m_convexHullAPI.convexHullMeshes;
@@ -102,7 +102,7 @@
         TryAddConvexHullJobHandler();
       }
 
-#if UNITY_2022
+#if UNITY_EDITOR
       public void FixedUpdate()
     {
       CustomFixedUpdate(Time.fixedDeltaTime);
@@ -131,7 +131,7 @@
       /// </summary>
       public void TryAddConvexHullJobHandler()
       {
-#if UNITY_2022
+#if UNITY_EDITOR
       if (m_convexHullJobHandlerObj == null)
       {
         m_convexHullJobHandlerObj = gameObject;
@@ -148,7 +148,7 @@
 
       public void OnPieceAdded(GameObject piece)
       {
-#if UNITY_2022
+#if UNITY_EDITOR
       piece.transform.SetParent(transform, false);
 #endif
         var prefabPieceData = new PrefabPieceData(piece, Allocator.Persistent);
@@ -161,7 +161,7 @@
         pieceDataChangeIndex++;
 
 
-#if UNITY_2022
+#if UNITY_EDITOR
       if (!isInitialPieceActivationComplete)
       {
         isInitialPieceActivationComplete = true;
@@ -172,7 +172,7 @@
 
       public void OnPieceRemoved(GameObject piece)
       {
-#if UNITY_2022
+#if UNITY_EDITOR
       piece.transform.SetParent(null);
 #endif
         if (!m_prefabPieceDataItems.TryGetValue(piece, out var prefabPieceData)) return;
@@ -257,23 +257,18 @@
 
         _lastRebuildPieceRevision = _lastPieceRevision;
 
-        TryGenerateConvexHull(clusterThreshold, OnConvexHullGenerated);
+        GenerateConvexHull(clusterThreshold, OnConvexHullGenerated);
       }
 
-      public virtual void OnConvexHullGenerated(bool hasSucceeded)
+      public virtual void OnConvexHullGenerated()
       {
-        if (!hasSucceeded)
-        {
-          RequestBoundsRebuild();
-        }
-
         var items = m_prefabPieceDataItems.Keys.Where(x => x != null).ToArray();
         m_meshClusterComponent.GenerateCombinedMeshes(items);
 
-        if (LandMovementController != null)
+        if (WheelController != null)
         {
           var bounds = m_convexHullAPI.GetConvexHullBounds(true);
-          LandMovementController.Initialize(bounds);
+          WheelController.Initialize(bounds);
         }
       }
       public virtual int GetPieceCount()
@@ -286,22 +281,23 @@
       /// </summary>
       /// <param name="onRebuildReadyCallback"></param>
       /// <returns></returns>
-      internal IEnumerator RebuildBoundsThrottleRoutine(Action onRebuildReadyCallback)
+      internal virtual IEnumerator RebuildBoundsThrottleRoutine(Action onRebuildReadyCallback)
       {
+        // var hasMinimumWait = _lastRebuildTime + 40 < Time.fixedTime && Mathf.Abs(m_prefabPieceDataItems.Count - _lastRebuildItemCount) > 20f;
+        // if (hasMinimumWait)
+        // {
+        //   yield return new WaitForSeconds(RebuildPieceMinDelay);
+        //   _rebuildBoundsRoutineInstance = null;
+        //   onRebuildReadyCallback.Invoke();
+        //   yield break;
+        // }
 
         var pieceCount = GetPieceCount();
-        var timer = Stopwatch.StartNew();
-        while (timer.ElapsedMilliseconds < 2000f && !isInitialPieceActivationComplete)
-        {
-          if (!isActiveAndEnabled) yield break;
-        }
         if (pieceCount <= 0)
         {
           _rebuildBoundsRoutineInstance = null;
           yield break;
         }
-
-        timer.Reset();
 
         // in case the local m_nviewPieces are somehow larger we check.
         var allItems = Math.Max(m_prefabPieceDataItems.Count, pieceCount);
@@ -318,15 +314,12 @@
         }
         else
         {
-          var additionalWaitTimeFromItems = Mathf.Min(allItems * RebuildBoundsDelayPerPiece, 0.1f);
+          var additionalWaitTimeFromItems = allItems * RebuildBoundsDelayPerPiece;
           var timeToWait = Mathf.Clamp(additionalWaitTimeFromItems, RebuildPieceMinDelay, RebuildPieceMaxDelay);
           yield return new WaitForSeconds(timeToWait);
         }
 
         _rebuildBoundsRoutineInstance = null;
-
-        // wait for 1 more frame in-case WaitForSeconds was low.
-        yield return null;
         onRebuildReadyCallback.Invoke();
       }
 
@@ -358,6 +351,7 @@
       /// </summary>
       public void IgnoreAllCollisionsFromConvexColliders()
       {
+        // ✅ Precompute `AllColliders` to avoid reallocation
         var allColliders = new HashSet<Collider>();
         foreach (var prefabPieceData in m_prefabPieceDataItems.Values)
         {
@@ -382,20 +376,24 @@
         }
       }
 
-      public void TryGenerateConvexHull(float maxClusters, Action<bool>? callback)
+      public void GenerateConvexHull(float maxClusters, Action? callback)
       {
         switch (selectedHullGenerationMode)
         {
+
+          case HullGenerationMode.Basic:
+            break;
           case HullGenerationMode.ConvexHullForeground:
             GenerateConvexHullOnMainThread(clusterThreshold, callback);
             break;
           case HullGenerationMode.ConvexHullBackground:
             GenerateConvexHullOnBackgroundThread(clusterThreshold, callback);
             break;
-          case HullGenerationMode.Basic:
           default:
-            break;
+            throw new ArgumentOutOfRangeException();
         }
+        // todo get this background thread working
+        // GenerateConvexHullOnBackgroundThread(clusterThreshold, callback);
       }
       /// <summary>
       /// </summary>
@@ -403,7 +401,7 @@
       /// 
       /// <param name="maxClusters"></param>
       /// <param name="callback"></param>
-      public void GenerateConvexHullOnMainThread(float maxClusters, Action<bool> callback)
+      public void GenerateConvexHullOnMainThread(float maxClusters, Action? callback)
       {
         verts.Clear();
         tris.Clear();
@@ -449,13 +447,12 @@
           }
         }
 
-        // We cannot generate a convex collider with so view points. We must bail early. This task should can be rescheduled / handled by parent invoker.
+        // We cannot generate a convex collider with so view points. This is not a good situation to be in.
+        // todo add a fallback that uses a simple box collider in this case. (IE THE BASIC RENDER)
         if (points.Count <= 4 || !m_convexHullCalculator.GenerateHull(points, false, ref verts, ref tris, ref normals, out var hasBailed))
         {
-#if DEBUG
-          LoggerProvider.LogDev($"Points less than 4. Got {points.Count} points. Bailing early. This task will be rescheduled");
-#endif
-          callback?.Invoke(false);
+          LoggerProvider.LogError("Points cannot be less than 4. This is likely an error with the mod or the vehicle only contains a piece without collider points.");
+          callback?.Invoke();
           return;
         }
 
@@ -464,14 +461,14 @@
         Debug.Log("✅ Convex Hull Generation Complete!");
         m_convexHullAPI.PostGenerateConvexMeshes();
         IgnoreAllCollisionsFromConvexColliders();
-        callback?.Invoke(true);
+        callback?.Invoke();
       }
 
       /// <summary>
       /// Requests convex hull generation for a tracked prefab.
       /// TODO must be optimized so that native arrays are not nested and pass references to those native array points so we do not allocate
       /// </summary>
-      public void GenerateConvexHullOnBackgroundThread(float maxClusters, Action<bool>? callback)
+      public void GenerateConvexHullOnBackgroundThread(float maxClusters, Action? callback)
       {
         // ✅ Avoid extra allocations by passing `IEnumerable` instead of `.ToList()`
         var prefabDataItems = m_prefabPieceDataItems.Values.ToArray();
@@ -480,7 +477,7 @@
           m_convexHullAPI.PostGenerateConvexMeshes();
           Debug.Log("✅ Convex Hull Generation Complete!");
           IgnoreAllCollisionsFromConvexColliders();
-          callback?.Invoke(true);
+          callback?.Invoke();
         });
       }
     }

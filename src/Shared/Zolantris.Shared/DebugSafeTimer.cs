@@ -106,7 +106,7 @@ public class DebugSafeTimer
     Reset();
     if (_listRef == null)
     {
-      Logger.LogDebug("Called delete but listRef did not exist");
+      Logger.LogWarning("Called delete but listRef did not exist");
       return;
     }
 

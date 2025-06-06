@@ -129,8 +129,7 @@ public class MechanismPrefabs : RegisterPrefab<MechanismPrefabs>
         .MechanismActivatorPlate)
     });
     PrefabRegistryHelpers.AddPieceForPrefab(PrefabNames.Mechanism_Power_Conduit_Charge_Plate, prefab);
-    // conduit plate modes are determined by the prefab name.
-    prefab.AddComponent<PowerConduitPlateBridge>();
+    prefab.AddComponent<PowerConduitPlateChargeBridge>();
     prefab.AddComponent<PowerConduitHover>();
 
     PieceManager.Instance.AddPiece(new CustomPiece(prefab, true, new PieceConfig
@@ -172,8 +171,7 @@ public class MechanismPrefabs : RegisterPrefab<MechanismPrefabs>
     });
     PrefabRegistryHelpers.AddPieceForPrefab(PrefabNames.Mechanism_Power_Conduit_Drain_Plate, prefab);
 
-    // conduit plate modes are determined by the prefab name.
-    prefab.AddComponent<PowerConduitPlateBridge>();
+    prefab.AddComponent<PowerConduitPlateDrainBridge>();
     prefab.AddComponent<PowerConduitHover>();
 
     PieceManager.Instance.AddPiece(new CustomPiece(prefab, true, new PieceConfig

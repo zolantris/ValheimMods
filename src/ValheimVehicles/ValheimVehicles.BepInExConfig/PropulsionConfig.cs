@@ -262,12 +262,6 @@ public class PropulsionConfig : BepInExBaseConfig<PropulsionConfig>
 
   public static void CreateSpeedConfig(ConfigFile config)
   {
-#if DEBUG
-    var acceptableLandVehicleSpeedRange = new AcceptableValueRange<float>(0.0005f, 400f);
-#else
-    var acceptableLandVehicleSpeedRange = new AcceptableValueRange<float>(0.05f, 4f);
-#endif
-
     VehicleRudderSpeedBack = config.BindUnique(PropulsionSpeedSection, "Rudder Back Speed",
       5f,
       ConfigHelpers.CreateConfigDescription(
@@ -288,31 +282,30 @@ public class PropulsionConfig : BepInExBaseConfig<PropulsionConfig>
     VehicleLandSpeedBack = config.BindUnique(PropulsionSpeedSection, "LandVehicle Back Speed", 1f,
       ConfigHelpers.CreateConfigDescription(
         "Set the Back speed of land vehicle.",
-        true, false, acceptableLandVehicleSpeedRange));
+        true, false, new AcceptableValueRange<float>(0.0001f, 100f)));
     VehicleLandSpeedSlow = config.BindUnique(PropulsionSpeedSection, "LandVehicle Slow Speed",
       1f,
       ConfigHelpers.CreateConfigDescription(
         "Set the Slow speed of land vehicle.",
-        true, false, acceptableLandVehicleSpeedRange));
+        true, false, new AcceptableValueRange<float>(0.05f, 4f)));
     VehicleLandSpeedHalf = config.BindUnique(PropulsionSpeedSection, "LandVehicle Half Speed",
       1f,
       ConfigHelpers.CreateConfigDescription(
         "Set the Half speed of land vehicle.",
-        true, false, acceptableLandVehicleSpeedRange));
+        true, false, new AcceptableValueRange<float>(0.05f, 4f)));
     VehicleLandSpeedFull = config.BindUnique(PropulsionSpeedSection, "LandVehicle Full Speed",
       1f,
       ConfigHelpers.CreateConfigDescription(
         "Set the Full speed of land vehicle.",
-        true, false, acceptableLandVehicleSpeedRange));
-
+        true, false, new AcceptableValueRange<float>(0.05f, 4f)));
 
 
     VehicleLandTurnSpeed = config.BindUnique(PropulsionSpeedSection,
       "LandVehicle Turn Speed",
       0.5f,
       ConfigHelpers.CreateConfigDescription(
-        "Turn speed for landvehicles. Zero is half the normal speed, 50% is normal speed, and 100% is double normal speed.", true, false, new AcceptableValueRange<float>(0f, 1f)));
+        "Turn speed for landvehicles. Zero is half the normal speed, 50% is normal speed, and 100% is double normal speed.", true, false, new AcceptableValueRange<float>(0, 1f)));
 
-    VehicleLandTurnSpeed.SettingChanged += (sender, args) => VehicleManager.UpdateAllLandMovementControllers();
+    VehicleLandTurnSpeed.SettingChanged += (sender, args) => VehicleManager.UpdateAllWheelControllers();
   }
 }

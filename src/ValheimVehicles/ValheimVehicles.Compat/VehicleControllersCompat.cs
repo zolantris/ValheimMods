@@ -296,7 +296,7 @@ public class VehicleControllersCompat : IVehicleControllers, IValheimShip
     get;
     set;
   }
-  public VehicleLandMovementController? LandMovementController
+  public VehicleWheelController? WheelController
   {
     get;
     set;
