@@ -466,12 +466,14 @@
     /// <summary>
     /// For interpolated eventing.
     /// </summary>
-    public void SetAuthoritativeMotion(SwivelMotionUpdate motionUpdate, bool isAuthoritative)
+    public void SetAuthoritativeMotion(SwivelMotionUpdateData motionUpdateData, bool isAuthoritative)
     {
       _isAuthoritativeMotionActive = isAuthoritative;
-      Config.MotionState = motionUpdate.MotionState;
-      _motionStartTime = motionUpdate.StartTime;
-      _motionDuration = motionUpdate.Duration;
+      Config.MotionState = motionUpdateData.MotionState;
+      _motionStartTime = motionUpdateData.StartTime;
+
+      // use remaining duration as this includes the lerped duration.
+      _motionDuration = motionUpdateData.RemainingDuration;
 
       // Always interpolate from the CURRENT transform state!
       _motionFromLocalPos = animatedTransform.localPosition;

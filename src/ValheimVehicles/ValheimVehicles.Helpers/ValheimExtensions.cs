@@ -93,7 +93,7 @@ public static class ValheimExtensions
   }
 
   // non-extension method
-  public static bool IsNetViewValid(ZNetView? netView, [NotNullWhen(true)] out ZNetView? validNetView)
+  public static bool Internal_IsNetViewValid(ZNetView? netView, [NotNullWhen(true)] out ZNetView? validNetView)
   {
     validNetView = null;
     if (netView == null || netView.GetZDO() == null || !netView.IsValid()) return false;
@@ -154,25 +154,30 @@ public static class ValheimExtensions
 
   public static IEnumerator WaitForZNetViewCoroutine(this MonoBehaviour instance, Action<ZNetView> action, float timeout = 10f)
   {
-    var startTime = Time.realtimeSinceStartup;
     var netView = instance.GetComponent<ZNetView>();
 
-    while (instance && instance.isActiveAndEnabled && (!netView || !netView.IsValid()))
-    {
-      if (!instance) yield break;
-      if (Time.realtimeSinceStartup - startTime > timeout)
-      {
-#if DEBUG
-        LoggerProvider.LogInfoDebounced(
-          $"znet_timeout_{instance.GetType().Name}",
-          $"[ZNetViewUtil] ZNetView not valid on {instance.GetType().Name} after {timeout}s at {instance.transform.position}"
-        );
-#endif
-        yield break;
-      }
+    var timer = Stopwatch.StartNew();
 
+    while (timer.ElapsedMilliseconds < timeout && instance && instance.isActiveAndEnabled && (netView == null || !netView.IsValid()))
+    {
       yield return null;
-      netView = instance.GetComponent<ZNetView>();
+      if (!instance) yield break;
+      if (!netView)
+      {
+        netView = instance.GetComponent<ZNetView>();
+      }
+      if (netView == null || !netView.IsValid()) continue;
+    }
+
+    if (timer.ElapsedMilliseconds >= timeout)
+    {
+#if DEBUG
+      LoggerProvider.LogInfoDebounced(
+        $"znet_timeout_{instance.GetType().Name}",
+        $"[ZNetViewUtil] ZNetView not valid on {instance.GetType().Name} after {timeout}s at {instance.transform.position}"
+      );
+#endif
+      yield break;
     }
 
     if (!instance)
@@ -183,12 +188,10 @@ public static class ValheimExtensions
       yield break;
     }
 
-#if DEBUG
-    LoggerProvider.LogInfoDebounced(
-      $"znet_register_{instance.GetType().Name}",
-      $"ZNetView ready, registering {instance.GetType().Name} on '{instance.name}' at {instance.transform.position}"
-    );
-#endif
+    if (!Internal_IsNetViewValid(netView, out netView))
+    {
+      yield break;
+    }
 
     action.Invoke(netView);
   }

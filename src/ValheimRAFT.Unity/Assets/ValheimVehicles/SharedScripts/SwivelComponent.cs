@@ -151,7 +151,7 @@ namespace ValheimVehicles.SharedScripts
       directionDebuggerArrow = piecesContainer?.Find("direction_debugger_arrow");
       connectorContainer = transform.Find("connector_container");
 
-      SetLocalStartValues(Vector3.zero, Quaternion.identity);
+      SetLocalStartValues(animatedTransform.localPosition, animatedTransform.localRotation);
       GuardSwivelValues();
 
       animatedRigidbody = animatedTransform.GetComponent<Rigidbody>();
@@ -230,6 +230,10 @@ namespace ValheimVehicles.SharedScripts
         parentRigidbody = null;
         hasParentRigidbody = false;
       }
+
+      var localPos = Vector3.zero;
+      var localRot = Quaternion.identity;
+      SetLocalStartValues(localPos, localRot);
     }
 
     public virtual void Update()
@@ -515,7 +519,7 @@ namespace ValheimVehicles.SharedScripts
           break;
 
         case SwivelMode.Move:
-          SwivelRotateUpdate();
+          SwivelMoveUpdate();
           break;
         case SwivelMode.TargetWind:
           SwivelTargetWindUpdate();
