@@ -2,8 +2,8 @@
 
 #region
 
-  using System;
-  using UnityEngine;
+using System;
+using UnityEngine;
 
 #endregion
 
@@ -41,7 +41,6 @@
       private float _gearElapsed;
       private bool _isGearRunning;
 
-      private bool _isToggleInProgress;
       private bool _mToggleState;
       private bool _pendingDelayedGearStart;
       private Quaternion _startRotation;
@@ -52,6 +51,12 @@
 
       public Action<bool>? OnToggleCompleted;
       public Func<bool>? ShouldStopGearEarly;
+
+      public bool IsToggleInProgress
+      {
+        get;
+        private set;
+      }
 
       public virtual void Awake()
       {
@@ -72,18 +77,16 @@
         }
       }
 
-      public bool IsToggleInProgress => _isToggleInProgress;
-
-#if UNITY_EDITOR
-        private void Start()
+#if UNITY_2022
+      private void Start()
         {
-            InvokeRepeating(nameof(ToggleActivationState), 0f, 3f);
+            // InvokeRepeating(nameof(ToggleActivationState), 0f, 3f);
         }
 #endif
 
       public virtual void FixedUpdate()
       {
-        if (_isToggleInProgress)
+        if (IsToggleInProgress)
         {
           _toggleElapsed += Time.fixedDeltaTime;
           var t = Mathf.Clamp01(_toggleElapsed / ToggleDuration);
@@ -92,7 +95,7 @@
           if (t >= 1f)
           {
             leverHandle.localRotation = _targetRotation;
-            _isToggleInProgress = false;
+            IsToggleInProgress = false;
             _toggleElapsed = 0f;
             OnToggleCompleted?.Invoke(_mToggleState);
             _pendingDelayedGearStart = true;
@@ -133,10 +136,10 @@
       {
         _gearElapsed = 0f;
         _pendingDelayedGearStart = true;
-        if (_mToggleState == newState && !_isToggleInProgress) return;
+        if (_mToggleState == newState && !IsToggleInProgress) return;
 
         _mToggleState = newState;
-        _isToggleInProgress = true;
+        IsToggleInProgress = true;
 
         _startRotation = leverHandle.localRotation;
         _targetRotation = _mToggleState ? LeverEnabledTargetRotation : LeverDisableTargetRotation;

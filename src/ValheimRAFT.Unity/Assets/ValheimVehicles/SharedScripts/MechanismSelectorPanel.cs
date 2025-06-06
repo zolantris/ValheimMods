@@ -1,17 +1,19 @@
 ﻿// ReSharper disable ArrangeNamespaceBody
 // ReSharper disable NamespaceStyle
 
+#if !UNITY_2022
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using TMPro;
 using UnityEngine;
 using ValheimVehicles.SharedScripts.Interfaces;
+#endif
 namespace ValheimVehicles.SharedScripts.UI
 {
   public class MechanismSelectorPanel : SingletonBehaviour<MechanismSelectorPanel>
   {
-#if !UNITY_EDITOR
+#if !UNITY_2022
     [Header("UI Settings")]
     [SerializeField] public float MaxUIWidth = 400f;
 
@@ -44,12 +46,8 @@ namespace ValheimVehicles.SharedScripts.UI
       if (isFirstCreate)
         CreateUI();
 
-      if (_currentPanelConfig.SelectedAction == MechanismAction.SwivelActivateMode || _currentPanelConfig.SelectedAction == MechanismAction.SwivelEditMode)
-      {
-        AddOrUpdateSwivelDropdown();
-      }
-
       HideShowSwivelFinder();
+      AddOrUpdateSwivelDropdown();
 
       actionDropdown.SetValueWithoutNotify((int)_currentPanelConfig.SelectedAction);
 
@@ -102,6 +100,7 @@ namespace ValheimVehicles.SharedScripts.UI
       {
         SelectedSwivel = null;
         _currentPanelConfig.TargetSwivelId = 0;
+
         UnsetSavedState();
         OnSwivelSelectedChanged?.Invoke(SelectedSwivel);
         return;
@@ -111,11 +110,10 @@ namespace ValheimVehicles.SharedScripts.UI
       SelectedSwivel = nearestSwivels[index - 1];
       if (SelectedSwivel == null)
       {
-        // we need to update options.
-        AddOrUpdateSwivelDropdown();
         return;
       }
       _currentPanelConfig.TargetSwivelId = SelectedSwivel.SwivelPersistentId;
+
       UnsetSavedState();
       OnSwivelSelectedChanged?.Invoke(SelectedSwivel);
     }
@@ -152,9 +150,10 @@ namespace ValheimVehicles.SharedScripts.UI
 
       if (!swivelSelectorDropdown)
       {
+        var optionIndex = options.Count > 1 ? 1 : 0;
+        var selectedOption = options[optionIndex];
         swivelSelectorDropdown = SwivelUIHelpers.AddDropdownRow(panelContent.transform, viewStyles, ModTranslations.Mechanism_Switch_Swivel_SelectedSwivel,
-          options.ToArray(),
-          options.FirstOrDefault() ?? unsetSwivelId,
+          options.ToArray(), selectedOption,
           OnMechanismSwivelSelected);
       }
       else
@@ -178,7 +177,7 @@ namespace ValheimVehicles.SharedScripts.UI
             }
           }
         }
-        swivelSelectorDropdown.value = actionInt;
+        swivelSelectorDropdown.SetValueWithoutNotify(actionInt);
         OnMechanismSwivelSelected(actionInt);
       }
     }
@@ -202,8 +201,9 @@ namespace ValheimVehicles.SharedScripts.UI
     public void OnActionChanged(int index)
     {
       _currentPanelConfig.SelectedAction = (MechanismAction)index;
-      HideShowSwivelFinder();
       UnsetSavedState();
+      CreateUI();
+      HideShowSwivelFinder();
     }
 
 
@@ -217,29 +217,33 @@ namespace ValheimVehicles.SharedScripts.UI
       if (panelRoot) Destroy(panelRoot);
       if (panelContent) Destroy(panelContent);
       if (actionDropdown) Destroy(actionDropdown);
+      if (swivelSelectorDropdown) Destroy(swivelSelectorDropdown);
 
       panelRoot = null;
       panelContent = null;
       actionDropdown = null;
-
+      swivelSelectorDropdown = null;
 
       panelRoot = CreateUIRoot();
       var scrollContainer = SwivelUIHelpers.CreateScrollView(panelRoot.transform, viewStyles, out var scrollRect);
       var viewport = SwivelUIHelpers.CreateViewport(scrollContainer.transform, viewStyles);
+      // anchors new Vector2(0, 0), new Vector2(1, 1)
       panelContent = SwivelUIHelpers.CreateContent("Content", viewport.transform, viewStyles, null, null);
       scrollRect.content = panelContent.GetComponent<RectTransform>();
 
-      SwivelUIHelpers.AddRowWithButton(panelContent.transform, viewStyles, "Mechanism Mode", "X", 24, 24, out _, Hide);
+      SwivelUIHelpers.AddRowWithButton(panelContent.transform, viewStyles, ModTranslations.SharedKey_Mode, "X", 24, 24, out _, Hide);
 
-      actionDropdown = SwivelUIHelpers.AddDropdownRow(panelContent.transform, viewStyles, ModTranslations.SharedKey_Mode,
-        Enum.GetNames(typeof(MechanismAction)),
+      var options = Enum.GetNames(typeof(MechanismAction));
+      var selectedOptionIndex = options.ToList().IndexOf(_currentPanelConfig.SelectedAction.ToString());
+
+      actionDropdown = SwivelUIHelpers.AddDropdownRow(panelContent.transform, viewStyles, Localization.instance.Localize("$valheim_vehicles_mechanism_mode_configure"),
+        options,
         _currentPanelConfig.SelectedAction.ToString(),
         OnActionChanged
       );
 
-      // always set the initial value as it might not have been set yet.
-      OnActionChanged(actionDropdown.value);
-
+      // must always set this value as actionDropdown does not do this.
+      actionDropdown.SetValueWithoutNotify(selectedOptionIndex);
 
       AddOrUpdateSwivelDropdown();
 

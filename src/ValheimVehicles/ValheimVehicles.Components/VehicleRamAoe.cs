@@ -13,6 +13,7 @@ using ValheimVehicles.SharedScripts;
 using ValheimVehicles.Structs;
 using ValheimVehicles.Components;
 using ValheimVehicles.Shared.Constants;
+using ValheimVehicles.SharedScripts.Helpers;
 using Logger = Jotunn.Logger;
 
 namespace ValheimVehicles.Helpers;
@@ -34,6 +35,9 @@ public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
   [FormerlySerializedAs("m_isVehicleRam")]
   public bool IsVehicleRamType = false;
   private float RamDamageOverallMultiplier = 1f;
+
+  // a catch all to bail and not do damage. This can be set on vehicles to lock in damage at specific speeds and settings.
+  public bool CanDamage = true;
 
   // damages
   public int RamDamageToolTier;
@@ -62,6 +66,7 @@ public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
 
   private float _disableTime = 0f;
   private const float _disableTimeMax = 0.5f;
+  public static bool CanHitOwners = true;
 
   public bool isReadyForCollisions { get; set; }
   public bool isRebuildingCollisions
@@ -74,6 +79,23 @@ public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
 
   public static List<string> PiecesToMoveOnToVehicle = ["Cart", "Catapult", PrefabNames.LandVehicle];
   public static Regex ExclusionPattern;
+
+  public static readonly Dictionary<Collider, int> ColliderVehicleIdMap = new();
+  public static readonly List<Collider> m_collidersCache = new();
+
+  public static void RegisterVehicleColliders(VehicleManager vehicle)
+  {
+    var id = vehicle.PersistentZdoId;
+    foreach (var collider in vehicle.GetComponentsInChildren<Collider>(true))
+    {
+      if (!collider) continue;
+      // var colliderName = collider.name;
+
+      // todo possibly skip treads in this map. Or make a dictionary to skip on certain conditions. 
+      // if (PrefabNames.IsVehicleTreadCollider(colliderName)) continue;
+      ColliderVehicleIdMap[collider] = id;
+    }
+  }
 
   public float GetMinimumVelocityToTriggerRam()
   {
@@ -104,6 +126,8 @@ public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
     return RamConfig.RamDamageToolTier.Value;
   }
 
+  public static float VehicleHitForce = 1f;
+
   public void InitializeFromConfig()
   {
     // must set this first.
@@ -133,6 +157,7 @@ public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
         m_hitFriendly = RamConfig.VehicleRamCanHitFriendly.Value;
         m_hitEnemy = RamConfig.VehicleRamCanHitEnemies.Value;
         m_hitParent = RamConfig.VehicleRamCanDamageSelf.Value;
+        m_attackForce = VehicleHitForce;
         break;
       case RamPrefabs.RamType.Stake:
       case RamPrefabs.RamType.Blade:
@@ -150,6 +175,7 @@ public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
         m_hitFriendly = RamConfig.CanHitFriendly.Value;
         m_hitEnemy = RamConfig.CanHitEnemies.Value;
         m_hitParent = RamConfig.CanDamageSelf.Value;
+        m_attackForce = 0.1f;
         break;
       default:
         throw new ArgumentOutOfRangeException();
@@ -215,6 +241,11 @@ public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
     base.OnDisable();
   }
 
+  public void OnDestroy()
+  {
+    ColliderVehicleIdMap.RemoveNullKeys();
+  }
+
   public void Start()
   {
     // must initialize after Awake so we can set these values after AddComponent is called.
@@ -227,6 +258,8 @@ public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
   public override void OnEnable()
   {
     if (!RamInstances.Contains(this)) RamInstances.Add(this);
+
+    UpdateColliderCache();
 
     Invoke(nameof(UpdateReadyForCollisions), 1f);
     base.OnEnable();
@@ -310,6 +343,8 @@ public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
 
     var multiplier = Mathf.Min(relativeVelocityMagnitude * 0.5f,
       MaxVelocityMultiplier) * RamDamageOverallMultiplier;
+
+    m_attackForce = relativeVelocityMagnitude;
 
     if (materialTier == PrefabTiers.Tier3)
       multiplier *= Mathf.Clamp(1 + DamageIncreasePercentagePerTier * 2, 1, 4);
@@ -486,11 +521,34 @@ public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
     }
   }
 
-  private void IgnoreCollider(Collider collider)
+  private void IgnoreCollider(Collider collider, bool IsRetry = false)
   {
-    var childColliders = GetComponentsInChildren<Collider>();
-    foreach (var childCollider in childColliders)
+    var shouldRetry = false;
+    if (m_collidersCache.Count == 0 || IsRetry)
+    {
+      UpdateColliderCache();
+    }
+
+    foreach (var childCollider in m_collidersCache)
+    {
+      if (childCollider == null)
+      {
+        shouldRetry = true;
+
+        // if retry do not break again if suddenly getting a null on the retry.
+        if (!IsRetry)
+        {
+          break;
+        }
+        continue;
+      }
       Physics.IgnoreCollision(childCollider, collider, true);
+    }
+
+    if (!IsRetry && shouldRetry)
+    {
+      IgnoreCollider(collider, true);
+    }
   }
 
   public void UpdateReloadingTime()
@@ -502,10 +560,21 @@ public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
     }
   }
 
+  /// <summary>
+  /// For Skipping a hit but not ignoring physics.
+  /// </summary>
+  /// <param name="collider"></param>
+  /// <returns></returns>
   public override bool ShouldHit(Collider collider)
   {
     if (!IsReady()) return false;
     var colliderObj = collider.gameObject;
+
+    // don't hit terrain or items with vehicles.
+    if (colliderObj.layer == LayerHelpers.ItemLayer || colliderObj.layer == LayerHelpers.TerrainLayer)
+    {
+      return false;
+    }
 
     var character = collider.GetComponentInParent<Character>();
     if (WaterZoneUtils.IsOnboard(character))
@@ -539,6 +608,47 @@ public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
     return false;
   }
 
+  public void UpdateColliderCache()
+  {
+    GetComponentsInChildren(true, m_collidersCache);
+  }
+
+  public bool TryIgnoreVehicleCollider(Collider collider)
+  {
+    if (m_vehicle == null || m_vehicle.PiecesController == null) return false;
+    var vehicleId = 0;
+
+    VehiclePiecesController.m_prefabPieceColliderToIdMap.TryGetValue(collider, out vehicleId);
+    if (vehicleId == 0)
+    {
+      ColliderVehicleIdMap.TryGetValue(collider, out vehicleId);
+    }
+
+    if (vehicleId == 0) return false;
+    // add additional logic if necessary. (Might need more parent checks)
+
+    // same vehicle.
+    if (vehicleId == m_vehicle.PersistentZdoId) return true;
+
+    if (VehicleManager.VehicleChildToParentMap.ContainsKey(vehicleId) || VehicleManager.VehicleParentToChildrenMap.TryGetValue(vehicleId, out var childrenIds) && childrenIds != null && childrenIds.Contains(vehicleId))
+    {
+      IgnoreCollider(collider);
+      return true;
+    }
+
+    // is a child collider hitting parent. These colliders should be ignored/never fire again.
+    if (m_vehicle.VehicleParent != null && m_vehicle.VehicleParent.PersistentZdoId == vehicleId)
+    {
+      if (vehicleId == m_vehicle.VehicleParent.PersistentZdoId)
+      {
+        IgnoreCollider(collider);
+        return true;
+      }
+    }
+
+    return false;
+  }
+
   /// <summary>
   /// Ignores anything within the current vehicle and other vehicle movement/float/onboard colliders 
   /// </summary>
@@ -549,11 +659,6 @@ public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
     if (!collider) return true;
 
     VehiclePiecesController? vehiclePiecesController = null;
-
-    if (!RamConfig.CanHitSwivels.Value && collider.GetComponentInParent<SwivelComponent>())
-    {
-      return true;
-    }
 
     var colliderObj = collider.gameObject;
 
@@ -585,9 +690,13 @@ public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
       return false;
     }
 
-    if (PrefabNames.IsVehicleCollider(collider.name))
+    if (TryIgnoreVehicleCollider(collider))
     {
-      IgnoreCollider(collider);
+      return true;
+    }
+
+    if (!RamConfig.CanHitSwivels.Value && collider.GetComponentInParent<SwivelComponent>())
+    {
       return true;
     }
 
@@ -664,6 +773,7 @@ public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
   /// <returns></returns>
   public bool IsReady()
   {
+    if (!CanDamage) return false;
     if (!isReadyForCollisions) return false;
     if (isRebuildingCollisions)
     {

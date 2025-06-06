@@ -16,6 +16,53 @@
       // for all interactions
       public static bool CanNavigatorInteractWithPanel = true;
 
+      public static GameObject AddButton(Transform parent, SwivelUISharedStyles viewStyles, string buttonText, float buttonWidth, float buttonHeight, out Button button, out TextMeshProUGUI statusTextOut, UnityAction onClick)
+      {
+        var buttonGO = new GameObject("ActionButton", typeof(RectTransform), typeof(Button), typeof(Image), typeof(LayoutElement));
+        buttonGO.transform.SetParent(parent.transform, false);
+
+        var buttonRT = buttonGO.GetComponent<RectTransform>();
+        buttonRT.sizeDelta = new Vector2(buttonWidth, buttonHeight);
+        buttonRT.anchorMin = new Vector2(1f, 0.5f);
+        buttonRT.anchorMax = new Vector2(1f, 0.5f);
+        buttonRT.pivot = new Vector2(1f, 0.5f);
+        buttonRT.anchoredPosition = Vector2.zero;
+
+        var buttonInternal = buttonGO.GetComponent<Button>();
+        buttonInternal.interactable = CanNavigatorInteractWithPanel;
+
+        var buttonImage = buttonGO.GetComponent<Image>();
+        buttonImage.color = SwivelUIColors.grayBg;
+        buttonInternal.onClick.AddListener(onClick);
+
+        var layoutElement = buttonGO.GetComponent<LayoutElement>();
+        layoutElement.minWidth = buttonWidth;
+        layoutElement.minHeight = buttonHeight;
+        layoutElement.preferredWidth = buttonWidth;
+        layoutElement.preferredHeight = buttonHeight;
+        layoutElement.flexibleWidth = 0;
+
+        var textGO = new GameObject("ButtonText", typeof(TextMeshProUGUI));
+        textGO.transform.SetParent(buttonGO.transform, false);
+        var btnText = textGO.GetComponent<TextMeshProUGUI>();
+        btnText.text = buttonText;
+        btnText.fontSize = 24;
+        btnText.color = Color.white;
+        btnText.alignment = TextAlignmentOptions.Center;
+
+        statusTextOut = btnText;
+
+        var textRT = textGO.GetComponent<RectTransform>();
+        textRT.anchorMin = Vector2.zero;
+        textRT.anchorMax = Vector2.one;
+        textRT.offsetMin = Vector2.zero;
+        textRT.offsetMax = Vector2.zero;
+
+        button = buttonInternal;
+
+        return buttonGO;
+      }
+
       public static GameObject AddRowWithButton(Transform parent, SwivelUISharedStyles viewStyles, string? label, string buttonText, float buttonWidth, float buttonHeight, out TextMeshProUGUI statusTextOut, UnityAction onClick)
       {
         var row = new GameObject("RowWithButton", typeof(RectTransform), typeof(HorizontalLayoutGroup));
@@ -46,45 +93,7 @@
           labelLayout.preferredWidth = viewStyles.LabelPreferredWidth;
         }
 
-        var buttonGO = new GameObject("ActionButton", typeof(RectTransform), typeof(Button), typeof(Image), typeof(LayoutElement));
-        buttonGO.transform.SetParent(row.transform, false);
-
-        var buttonRT = buttonGO.GetComponent<RectTransform>();
-        buttonRT.sizeDelta = new Vector2(buttonWidth, buttonHeight);
-        buttonRT.anchorMin = new Vector2(1f, 0.5f);
-        buttonRT.anchorMax = new Vector2(1f, 0.5f);
-        buttonRT.pivot = new Vector2(1f, 0.5f);
-        buttonRT.anchoredPosition = Vector2.zero;
-
-        var button = buttonGO.GetComponent<Button>();
-        button.interactable = CanNavigatorInteractWithPanel;
-
-        var buttonImage = buttonGO.GetComponent<Image>();
-        buttonImage.color = SwivelUIColors.grayBg;
-        button.onClick.AddListener(onClick);
-
-        var layoutElement = buttonGO.GetComponent<LayoutElement>();
-        layoutElement.minWidth = buttonWidth;
-        layoutElement.minHeight = buttonHeight;
-        layoutElement.preferredWidth = buttonWidth;
-        layoutElement.preferredHeight = buttonHeight;
-        layoutElement.flexibleWidth = 0;
-
-        var textGO = new GameObject("ButtonText", typeof(TextMeshProUGUI));
-        textGO.transform.SetParent(buttonGO.transform, false);
-        var btnText = textGO.GetComponent<TextMeshProUGUI>();
-        btnText.text = buttonText;
-        btnText.fontSize = 24;
-        btnText.color = Color.white;
-        btnText.alignment = TextAlignmentOptions.Center;
-
-        statusTextOut = btnText;
-
-        var textRT = textGO.GetComponent<RectTransform>();
-        textRT.anchorMin = Vector2.zero;
-        textRT.anchorMax = Vector2.one;
-        textRT.offsetMin = Vector2.zero;
-        textRT.offsetMax = Vector2.zero;
+        AddButton(row.transform, viewStyles, buttonText, buttonWidth, buttonHeight, out var button, out statusTextOut, onClick);
 
         return row;
       }

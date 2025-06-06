@@ -246,23 +246,11 @@ public class VehicleDebugHelpers : MonoBehaviour
     }
   }
 
-  private static RaycastHit? RaycastToPiecesUnderPlayerCamera()
-  {
-    var player = Player.m_localPlayer;
-    if (player == null) return null;
-
-    if (!Physics.Raycast(
-          GameCamera.instance.transform.position,
-          GameCamera.instance.transform.forward,
-          out var rayCastHitInfo, 50f, LayerMask.GetMask("piece"))) return null;
-    return rayCastHitInfo;
-  }
-
   public static VehicleDebugHelpers? GetOnboardVehicleDebugHelper()
   {
     if (!Player.m_localPlayer) return null;
 
-    var vehicleInstance = VehicleCommands.GetNearestVehicleShip(Player.m_localPlayer.transform.position);
+    var vehicleInstance = VehicleCommands.GetNearestVehicleManager();
 
     if (vehicleInstance == null) return null;
 
@@ -270,13 +258,6 @@ public class VehicleDebugHelpers : MonoBehaviour
     var helper = vehicleInstance.Instance.VehicleDebugHelpersInstance;
 
     return helper;
-  }
-
-  public static VehiclePiecesController? GetVehiclePiecesController()
-  {
-    var rayCastHitInfo = RaycastToPiecesUnderPlayerCamera();
-    return rayCastHitInfo?.collider.transform.root
-      .GetComponent<VehiclePiecesController>();
   }
 
   public void FlipShip()

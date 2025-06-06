@@ -17,8 +17,9 @@ public static class VehicleGUIItems
     {
       title = "Treads Max Width"
       // description = "Set the max width of treads",
-      // saveAction = () =>
+      // saveAction = (string val) =>
       // {
+      //   CurrentSelectedVehicle?.VehicleCustomConfig.TreadDistance = val;
       // },
       // resetAction = () => {}
       // onSubmit: () => 
@@ -82,10 +83,10 @@ public static class VehicleGUIItems
       IsAdminOnly = true,
       OnButtonPress = () =>
       {
-        var vpc = VehicleDebugHelpers.GetVehiclePiecesController();
-        if (vpc == null)
+        var vehicleManager = VehicleCommands.GetNearestVehicleManager();
+        if (vehicleManager == null)
           return;
-        vpc.ForceRebuildBounds();
+        vehicleManager.PiecesController?.ForceRebuildBounds();
       }
     },
     new()
@@ -98,12 +99,6 @@ public static class VehicleGUIItems
       title = ModTranslations.VehicleCommand_PhysicsDebugger ?? "Physics Debugger",
       OnButtonPress = VehicleGui.ToggleColliderDebugger
     },
-#if DEBUG
-    new()
-    {
-      title = ModTranslations.VehicleCommand_DestroyVehicle ?? "Destroy Current Vehicle",
-      OnButtonPress = VehicleCommands.DestroyCurrentVehicle
-    },
     new()
     {
       title = ModTranslations.VehicleCommand_ConfigPanel ?? "Config",
@@ -111,7 +106,11 @@ public static class VehicleGUIItems
       {
         VehicleGui.ToggleConfigPanelState(true);
       }
+    },
+    new()
+    {
+      title = ModTranslations.VehicleCommand_DestroyVehicle ?? "Destroy Current Vehicle",
+      OnButtonPress = VehicleCommands.DestroyCurrentVehicle
     }
-#endif
   ];
 }

@@ -311,7 +311,20 @@ public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interac
     }
   }
 
-  public bool OnPressHandler(MechanismSwitch toggleSwitch, Humanoid humanoid)
+  public bool OnHoldActionHandler()
+  {
+    if (TargetSwivel == null) return false;
+
+    if (SelectedAction == MechanismAction.SwivelActivateMode)
+    {
+      TriggerSwivelPanel();
+      return true;
+    }
+
+    return false;
+  }
+
+  public bool OnPressHandler(Humanoid humanoid)
   {
     switch (SelectedAction)
     {
@@ -328,11 +341,11 @@ public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interac
         VehicleCommands.ToggleColliderEditMode();
         break;
       case MechanismAction.SwivelEditMode:
-        TriggerSwivelPanel();
+        return TriggerSwivelPanel();
         break;
       case MechanismAction.SwivelActivateMode:
       {
-        if (!TargetSwivel || TargetSwivel.swivelPowerConsumer && TargetSwivel.swivelPowerConsumer.IsPowerDenied)
+        if (!TargetSwivel || TargetSwivel.swivelPowerConsumer && !PowerSystemConfig.Swivels_DoNotRequirePower.Value && TargetSwivel.swivelPowerConsumer.IsPowerDenied)
         {
           return false;
         }
@@ -350,25 +363,34 @@ public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interac
     return true;
   }
 
-  public void TriggerSwivelPanel()
+  public bool TriggerSwivelPanel()
   {
-    if (!TargetSwivel && !SwivelHelpers.FindAllSwivelsWithinRange(transform.position, out nearbySwivelComponents, out var swivelComponent))
+    if (!TargetSwivel)
     {
+      if (!SwivelHelpers.FindAllSwivelsWithinRange(transform.position, out nearbySwivelComponents, out var swivelComponent))
+      {
+        TargetSwivel = null;
+        TargetSwivelId = 0;
+        return false;
+      }
+
       TargetSwivel = swivelComponent;
-      return;
+      TargetSwivelId = swivelComponent.SwivelPersistentId;
     }
+
     if (!SwivelUIPanelComponentIntegration.Instance)
     {
       SwivelUIPanelComponentIntegration.Init();
     }
+
     if (SwivelUIPanelComponentIntegration.Instance && TargetSwivel)
     {
       SwivelUIPanelComponentIntegration.Instance.BindTo(TargetSwivel, true);
+      return true;
     }
-    else
-    {
-      LoggerProvider.LogError("SwivelUIPanelComponentIntegration failed to initialize.");
-    }
+
+    LoggerProvider.LogError("SwivelUIPanelComponentIntegration failed to initialize.");
+    return false;
   }
 
   public void TriggerSwivelAction()
@@ -446,18 +468,36 @@ public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interac
     return true;
   }
 
+  private bool hasHoldDelay = false;
+  private Stopwatch holdTimer = new();
+
   public bool Interact(Humanoid character, bool hold, bool alt)
   {
-    if (hold)
+    if (holdTimer.ElapsedMilliseconds > 1000f)
+    {
+      CancelInvoke(nameof(OnHoldActionHandler));
+      holdTimer.Reset();
+    }
+
+    if (hold && !alt)
+    {
       return false;
+    }
+
+    if (hold && alt)
+    {
+      if (holdTimer.IsRunning) return false;
+      Invoke(nameof(OnHoldActionHandler), 1f);
+      holdTimer.Restart();
+      return false;
+    }
+
     if (!alt)
     {
-      return OnPressHandler(this, character);
+      return OnPressHandler(character);
     }
-    else
-    {
-      return OnAltPressHandler();
-    }
+
+    return OnAltPressHandler();
   }
 
   public string GetLocalizedActionText(MechanismAction action)
@@ -493,6 +533,11 @@ public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interac
     }
 
     var message = $"{ModTranslations.MechanismSwitch_CurrentActionString} {GetLocalizedActionText(SelectedAction)}\n{ModTranslations.MechanismSwitch_AltActionString}";
+
+    if (SelectedAction == MechanismAction.SwivelActivateMode)
+    {
+      message += $"\n{ModTranslations.MechanismSwitch_AltHoldActionString}";
+    }
 
     if (TargetSwivel && TargetSwivel.swivelPowerConsumer)
     {

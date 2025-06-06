@@ -16,7 +16,8 @@
   using ValheimVehicles.Shared.Constants;
   using ValheimVehicles.SharedScripts;
   using ValheimVehicles.SharedScripts.Enums;
-  using ValheimVehicles.Structs;
+  using ValheimVehicles.SharedScripts.Helpers;
+  using ValheimVehicles.SharedScripts.PowerSystem.Compute;
   using static ValheimVehicles.BepInExConfig.PrefabConfig;
   using Logger = Jotunn.Logger;
 
@@ -27,7 +28,8 @@
   /// <summary>
   /// The main initializer for all vehicle components and a way to access all properties of the vehicle.
   /// </summary>
-  public class VehicleManager : MonoBehaviour, IVehicleBaseProperties, IVehicleSharedProperties
+  ///
+  public class VehicleManager : MonoBehaviour, IVehicleBaseProperties, IVehicleSharedProperties, IVehicleConfig
   {
     public GameObject RudderObject { get; set; }
     public const float MinimumRigibodyMass = 1000;
@@ -38,10 +40,12 @@
     private int _persistentZdoId;
     public int PersistentZdoId => GetPersistentID();
 
+    public PowerConsumerData? PowerConsumerData { get; set; }
+
     // The rudder force multiplier applied to the ship speed
     private float _rudderForce = 1f;
 
-    public VehicleCustomConfig VehicleCustomConfig { get; set; } = new();
+    public VehicleCustomConfig Config => VehicleConfigSync.Config;
 
     public GameObject GhostContainer()
     {
@@ -106,15 +110,74 @@
     public bool IsDestroying { get; private set; }
     public bool IsControllerValid { get; private set; }
 
+    public VehicleManager? VehicleParent;
+
+    // 1:many
+    public static Dictionary<int, HashSet<int>> VehicleParentToChildrenMap = new();
+    // 1:1
+    public static Dictionary<int, int> VehicleChildToParentMap = new();
+
+    public static void AddVehicleChildToParentMap(int childManagerId, int parentManagerId)
+    {
+      if (!VehicleParentToChildrenMap.TryGetValue(parentManagerId, out var childrenIds))
+      {
+        VehicleParentToChildrenMap[childManagerId] = new HashSet<int> { childManagerId };
+      }
+      else
+      {
+        if (!childrenIds.Contains(childManagerId))
+        {
+          childrenIds.Add(childManagerId);
+        }
+      }
+
+      // 1:1 always.
+      VehicleChildToParentMap[childManagerId] = parentManagerId;
+    }
+
+    public static void RemoveVehicleChildToParentMap(int childManagerId, int parentManagerId)
+    {
+      if (VehicleParentToChildrenMap.TryGetValue(parentManagerId, out var childrenIds))
+      {
+        if (childrenIds.Contains(childManagerId))
+          childrenIds.Remove(childManagerId);
+      }
+      VehicleChildToParentMap.Remove(parentManagerId);
+    }
+
+    public static void AddVehicleParent(VehicleManager parentManager, VehicleManager childManager)
+    {
+      parentManager.PiecesController.AddNewPiece(childManager.Manager.m_nview);
+      var parentId = childManager.m_nview.GetZDO().GetInt(VehicleZdoVars.MBParentId, 0);
+      if (parentId == 0) return;
+      AddVehicleChildToParentMap(childManager.PersistentZdoId, parentId);
+    }
+
+    public static void RemoveVehicleParent(VehicleManager childManager)
+    {
+      if (childManager == null || childManager.MovementController == null) return;
+
+      var parentId = childManager.m_nview.GetZDO().GetInt(VehicleZdoVars.MBParentId, 0);
+      VehiclePiecesController.RemoveVehicleDataFromZdo(childManager.m_nview.GetZDO());
+      RemoveVehicleChildToParentMap(childManager.PersistentZdoId, parentId);
+
+      childManager.VehicleParent = null;
+      childManager.MovementController.isWaitingForParentVehicleToBeReady = false;
+    }
+
     public VehicleMovementController? MovementController { get; set; }
+
+    private VehicleConfigSyncComponent _vehicleConfigSync = null!;
+    private bool _hasInitPrefabSync = false;
+
     public VehicleConfigSyncComponent VehicleConfigSync
     {
-      get;
-      set;
-    } = null!;
+      get => this.GetOrCache(ref _vehicleConfigSync, ref _hasInitPrefabSync);
+      set => _vehicleConfigSync = value;
+    }
 
     public VehicleOnboardController? OnboardController { get; set; }
-    public VehicleWheelController? WheelController { get; set; }
+    public VehicleLandMovementController? LandMovementController { get; set; }
 
     public VehicleManager Manager
     {
@@ -184,7 +247,7 @@
                     OnboardController != null &&
                     VehicleConfigSync != null;
 
-      if (IsLandVehicle && WheelController == null)
+      if (IsLandVehicle && LandMovementController == null)
       {
         isValid = false;
       }
@@ -220,11 +283,11 @@
         UpdateShipSounds(vehicleShip.Value);
     }
 
-    public static void UpdateAllWheelControllers()
+    public static void UpdateAllLandMovementControllers()
     {
       foreach (var instance in VehicleInstances.Values)
       {
-        instance.UpdateWheelControllerProperties();
+        instance.UpdateLandMovementControllerProperties();
       }
     }
 
@@ -300,6 +363,47 @@
       return PersistentIdHelper.GetPersistentIdFrom(m_nview, ref _persistentZdoId);
     }
 
+    public void OnVehicleConfigChange()
+    {
+      var shouldForceRebuild = false;
+      if (LandMovementController != null)
+      {
+        if (MovementController != null)
+        {
+          LandMovementController.forwardDirection = MovementController.ShipDirection;
+        }
+        LandMovementController.wheelBottomOffset = PhysicsConfig.VehicleLandTreadVerticalOffset.Value;
+
+        if (!Mathf.Approximately(LandMovementController.treadWidthXScale, Config.TreadScaleX) || !Mathf.Approximately(LandMovementController.maxTreadLength, Config.TreadLength) || !Mathf.Approximately(LandMovementController.maxTreadWidth, Config.TreadDistance))
+        {
+          shouldForceRebuild = true;
+          LandMovementController.treadWidthXScale = Config.TreadScaleX;
+          LandMovementController.maxTreadLength = Config.TreadLength;
+          LandMovementController.maxTreadWidth = Config.TreadDistance;
+        }
+      }
+
+      // other config here.
+
+      if (Config.HasCustomFloatationHeight && FloatCollider != null)
+      {
+        if (FloatCollider.transform.localPosition.y != Config.CustomFloatationHeight)
+        {
+          shouldForceRebuild = true;
+          var newPosition = FloatCollider.transform.localPosition;
+          newPosition.y = Config.CustomFloatationHeight;
+
+          // for updates floatcollider position.
+          FloatCollider.transform.localPosition = newPosition;
+        }
+      }
+
+      if (PiecesController != null && shouldForceRebuild)
+      {
+        PiecesController.ForceRebuildBounds();
+      }
+    }
+
     private void Awake()
     {
       if (ZNetView.m_forceDisableInit) return;
@@ -311,6 +415,7 @@
       SetVehicleVariant(vehicleVariant);
 
       VehicleConfigSync = gameObject.AddComponent<VehicleConfigSyncComponent>();
+      VehicleConfigSync.OnLoadSubscriptions += OnVehicleConfigChange;
       // this flag can be updated manually via VehicleCommands.
       HasVehicleDebugger = VehicleDebugConfig.VehicleDebugMenuEnabled.Value;
 
@@ -383,7 +488,7 @@
     public bool InitializeData()
     {
       if (!this.IsNetViewValid()) return false;
-      VehicleCustomConfig.Load(m_nview.GetZDO(), VehicleCustomConfig);
+      Config.Load(m_nview.GetZDO(), Config);
       return true;
     }
 
@@ -397,7 +502,8 @@
       InitializeMovementController();
       InitializeOnboardController();
       InitializeShipEffects();
-      InitializeWheelController();
+      InitializeLandMovementController();
+      InitializePowerConsumerData();
 
       if (!TryGetControllersToBind(out var controllersToBind))
       {
@@ -464,9 +570,9 @@
         MovementController = movementController;
       }
 
-      if (MovementController != null)
+      if (MovementController != null && PiecesController != null)
       {
-        MovementController.CanAnchor = IsLandVehicle;
+        MovementController.UpdateAnchorCapabilities();
       }
     }
 
@@ -497,50 +603,64 @@
       OnboardController.Manager = this;
     }
 
-    public void UpdateWheelControllerProperties()
+    public void UpdateLandMovementControllerProperties(bool shouldSkipLoad = false)
     {
-      if (!IsLandVehicle || MovementController == null || WheelController == null) return;
-      if (WheelController.treadsPrefab == null)
+      if (!IsLandVehicle || MovementController == null || LandMovementController == null) return;
+      if (LandMovementController.treadsPrefab == null)
       {
-        WheelController.treadsPrefab = LoadValheimVehicleAssets.TankTreadsSingle;
+        LandMovementController.treadsPrefab = LoadValheimVehicleAssets.TankTreadsSingle;
       }
 
-      if (WheelController.wheelPrefab == null)
+      if (LandMovementController.wheelPrefab == null)
       {
-        WheelController.wheelPrefab = LoadValheimVehicleAssets.WheelSingle;
+        LandMovementController.wheelPrefab = LoadValheimVehicleAssets.WheelSingle;
       }
-
-      WheelController.treadWidthXScale = ExperimentalTreadScaleX.Value;
-
 
       // very important to add these. We always need a base of 30.
-      var additionalTurnRate = Mathf.Lerp(VehicleWheelController.defaultTurnAccelerationMultiplier / 2, VehicleWheelController.defaultTurnAccelerationMultiplier * 2, Mathf.Clamp01(PropulsionConfig.VehicleLandTurnSpeed.Value));
+      var additionalTurnRate = Mathf.Lerp(VehicleLandMovementController.defaultTurnAccelerationMultiplier / 4, VehicleLandMovementController.defaultTurnAccelerationMultiplier * 4, Mathf.Clamp01(PropulsionConfig.VehicleLandTurnSpeed.Value));
+      VehicleLandMovementController.baseTurnAccelerationMultiplier = additionalTurnRate;
 
-      VehicleWheelController.baseTurnAccelerationMultiplier = additionalTurnRate;
-      WheelController.maxTreadLength = PhysicsConfig.VehicleLandMaxTreadLength.Value;
-      WheelController.maxTreadWidth = PhysicsConfig.VehicleLandMaxTreadWidth.Value;
-      WheelController.forwardDirection = MovementController.ShipDirection;
-      WheelController.wheelBottomOffset = PhysicsConfig.VehicleLandTreadVerticalOffset.Value;
+      // sync's forward dir.
+      LandMovementController.forwardDirection = MovementController.ShipDirection;
+
+      // protect against infinity loads.
+      if (!shouldSkipLoad)
+      {
+        // config controlled. We must skip the load event otherwise this will infinity loop.
+        VehicleConfigSync.Load(null, true);
+      }
+
+      // todo move to config control
+      LandMovementController.wheelBottomOffset = PhysicsConfig.VehicleLandTreadVerticalOffset.Value;
+    }
+
+    public void InitializePowerConsumerData()
+    {
+      if (!IsLandVehicle) return;
+      this.WaitForZNetView(netView =>
+      {
+        PowerConsumerData = new PowerConsumerData(netView.GetZDO());
+      });
     }
 
     /// <summary>
     /// For land vehicles
     /// </summary>
-    public void InitializeWheelController()
+    public void InitializeLandMovementController()
     {
       if (!IsLandVehicle) return;
-      if (WheelController == null)
+      if (LandMovementController == null)
       {
-        WheelController = gameObject.GetComponent<VehicleWheelController>();
-        if (WheelController == null)
+        LandMovementController = gameObject.GetComponent<VehicleLandMovementController>();
+        if (LandMovementController == null)
         {
-          WheelController = gameObject.AddComponent<VehicleWheelController>();
+          LandMovementController = gameObject.AddComponent<VehicleLandMovementController>();
         }
       }
-      WheelController.inputTurnForce = 0;
-      WheelController.inputMovement = 0;
-      UpdateWheelControllerProperties();
-      if (WheelController == null)
+      LandMovementController.inputTurnForce = 0;
+      LandMovementController.inputMovement = 0;
+      UpdateLandMovementControllerProperties();
+      if (LandMovementController == null)
         Logger.LogError("Error initializing WheelController");
     }
 
@@ -814,4 +934,59 @@
       PiecesController = _vehiclePiecesContainerInstance
         .AddComponent<VehiclePiecesController>();
     }
+
+  #region IVehicleConfig
+
+    public string Version
+    {
+      get => Config.Version;
+      set
+      {
+      }
+    }
+
+    public float TreadDistance
+    {
+      get => Config.TreadDistance;
+      set {}
+    }
+
+    public float TreadLength
+    {
+      get => Config.TreadLength;
+      set {}
+    }
+
+    public float TreadHeight
+    {
+      get => Config.TreadHeight;
+      set {}
+    }
+
+    public float TreadScaleX
+    {
+      get => Config.TreadScaleX;
+      set {}
+    }
+
+    public bool HasCustomFloatationHeight
+    {
+      get => Config.HasCustomFloatationHeight;
+      set {}
+    }
+
+    public float CustomFloatationHeight
+    {
+      get => Config.CustomFloatationHeight;
+      set {}
+    }
+
+    public float CenterOfMassOffset
+    {
+      get => Config.CenterOfMassOffset;
+      set {}
+    }
+
+  #endregion
+
   }

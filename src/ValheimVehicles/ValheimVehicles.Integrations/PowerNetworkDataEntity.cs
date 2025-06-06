@@ -63,12 +63,16 @@ namespace ValheimVehicles.Integrations
     {
       registerCoroutine = this.WaitForPowerSystemNodeData<TData>((data) =>
       {
-        LoadInitialData();
-        RpcHandler.Register(instanced_RpcNotifyStateUpdate, RPC_NotifyStateUpdated);
-        RegisterDefaultRPCs();
-        Data = data;
-        Data.Load();
-        registerCoroutine = null;
+        this.WaitForZNetView((nv) =>
+        {
+          data.zdo = nv.GetZDO();
+          RpcHandler.Register(instanced_RpcNotifyStateUpdate, RPC_NotifyStateUpdated);
+          RegisterDefaultRPCs();
+          Data = data;
+          Data.Load();
+          hasLoadedInitialData = true;
+          registerCoroutine = null;
+        });
       });
     }
 
@@ -83,17 +87,9 @@ namespace ValheimVehicles.Integrations
     }
 
     protected abstract void RegisterDefaultRPCs();
-
-    protected void LoadInitialData()
-    {
-      if (hasLoadedInitialData || !this.IsNetViewValid(out var netView)) return;
-      Data.Load();
-      hasLoadedInitialData = true;
-    }
-
     public virtual void UpdateNetworkedData()
     {
-      this.RunIfServer((nv) =>
+      this.RunIfServerOrSinglePlayer((nv) =>
       {
         Data.Save();
         nv.InvokeRPC(ZNetView.Everybody, instanced_RpcNotifyStateUpdate);

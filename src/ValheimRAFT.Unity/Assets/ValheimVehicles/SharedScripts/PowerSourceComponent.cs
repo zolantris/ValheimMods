@@ -25,30 +25,25 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
     [SerializeField] public AnimatedMachineComponent powerRotator;
     [SerializeField] public Transform powerRotatorTransform;
     public Vector3 powerRotatorDischargeDirection = Vector3.down;
+
+    public bool hasLoadedInitialData;
+
+    private readonly bool _isActive = true;
+    private PowerSourceData m_data = new();
     public float Fuel => Data.Fuel;
     public float FuelCapacity => Data.FuelCapacity;
     public FuelType fuelType => Data.fuelType;
     public bool isRunning => Data.IsRunning;
-
-    public bool hasLoadedInitialData = false;
-
-    private bool _isActive = true;
     // todo may need to turn it off so having it point to another var is good.
     public override bool IsActive => _isActive;
     public bool IsRunning => isRunning;
-    private PowerSourceData m_data = new();
     public virtual PowerSourceData Data => m_data;
-
-    public void SetData(PowerSourceData data)
-    {
-      m_data = data;
-    }
 
     protected override void Awake()
     {
       base.Awake();
 
-#if UNITY_EDITOR
+#if UNITY_2022
       // todo make a simplified unity method for registering and testing these consumers with our PowerManager.
       //
       // if (canSelfRegisterToNetwork)
@@ -70,6 +65,11 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
       rotator.HasRotation = true;
       powerRotator = rotator;
 
+      var visualEnergy = transform.Find("energy_level");
+      if (visualEnergy)
+      {
+        visualEnergy.gameObject.SetActive(false);
+      }
 
       //power core
       powerCoreTransform = transform.Find("meshes/power_core");
@@ -104,16 +104,21 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
     {
     }
 
-    protected virtual void OnDestroy()
-    {
-    }
-
 
     public void FixedUpdate()
     {
       if (!Data.IsValid) return;
       UpdatePowerCoreSize();
       UpdatePowerRotationAnimations();
+    }
+
+    protected virtual void OnDestroy()
+    {
+    }
+
+    public void SetData(PowerSourceData data)
+    {
+      m_data = data;
     }
 
     public AnimatedMaterialController CreateAnimatedMaterialController(Transform objTransform)

@@ -9,7 +9,6 @@ using JetBrains.Annotations;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using ValheimVehicles.BepInExConfig;
 using ValheimVehicles.SharedScripts.Helpers;
 
 #endregion
@@ -21,19 +20,26 @@ namespace ValheimVehicles.SharedScripts.UI
     public static int MinTargetOffset = -50;
     public static int MaxTargetOffset = 50;
 
+    public static bool ShouldDestroyOnNewTarget = true;
+
     [Header("UI Settings")]
     [SerializeField] public float MaxUIWidth = 700f;
+    public GameObject hingeAxisRow;
+    public Transform layoutParent;
+    public GameObject maxXRow;
+    public GameObject maxYRow;
+    public GameObject maxZRow;
+    public bool IsEditing;
+
+    internal SwivelCustomConfig _currentPanelConfig = new();
+
+    internal SwivelComponent? _currentSwivel;
     private float _debounceThreshold = 0.2f; // 200ms debounce
 
     private bool _hasCreatedUI;
 
     private float _lastPanelUpdateTime = -999f;
     private TextMeshProUGUI _saveStatus;
-    public GameObject hingeAxisRow;
-    public Transform layoutParent;
-    public GameObject maxXRow;
-    public GameObject maxYRow;
-    public GameObject maxZRow;
 
     internal TMP_Dropdown modeDropdown;
     internal TMP_Dropdown motionStateDropdown;
@@ -47,18 +53,11 @@ namespace ValheimVehicles.SharedScripts.UI
     internal GameObject targetDistanceZRow;
     public SwivelUISharedStyles viewStyles = new();
 
-    internal SwivelComponent? _currentSwivel;
-    public bool IsEditing = false;
-
-    internal SwivelCustomConfig _currentPanelConfig = new();
-
     public SwivelComponent? CurrentSwivel
     {
       get => _currentSwivel;
       set => _currentSwivel = value;
     }
-
-    public static bool ShouldDestroyOnNewTarget = true;
 
     // for integrations
     [UsedImplicitly]
@@ -201,7 +200,6 @@ namespace ValheimVehicles.SharedScripts.UI
       // viewPortRT.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, maxWidth);
 
       // var rootContent = SwivelUIHelpers.CreateContent("Content", panelRoot.transform, viewStyles, new Vector2(0f, 1f), new Vector2(0f, 1f));
-
       var scrollGo = SwivelUIHelpers.CreateScrollView(panelRoot.transform, viewStyles, out var scrollRect);
       var scrollViewport = SwivelUIHelpers.CreateViewport(scrollGo.transform, viewStyles, true);
       var scrollViewContent = SwivelUIHelpers.CreateContent("Content", scrollViewport.transform, viewStyles, null, null);
@@ -243,7 +241,7 @@ namespace ValheimVehicles.SharedScripts.UI
 
       movementLerpRow = SwivelUIHelpers.AddSliderRow(layoutParent, viewStyles, SwivelUIPanelStrings.InterpolationSpeed, 1f, 100f, _currentPanelConfig.InterpolationSpeed, v =>
       {
-        _currentPanelConfig.InterpolationSpeed = v;
+        _currentPanelConfig.InterpolationSpeed = Mathf.Clamp(v, 1, 100f);
         UnsetSavedState();
       });
 

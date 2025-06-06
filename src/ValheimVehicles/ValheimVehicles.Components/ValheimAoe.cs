@@ -131,7 +131,7 @@ public class ValheimAoe : MonoBehaviour, IProjectile, IMonoUpdater
   public virtual void Awake()
   {
     ExcludeHitObjectNames.Clear();
-    ExcludeHitObjectNames.Add("convex_tread_collider");
+    ExcludeHitObjectNames.Add(PrefabNames.ConvexTreadCollider);
     ExclusionHitObjectNamesRegex = GenerateRegexFromList(ExcludeHitObjectNames);
     m_nview = GetComponentInParent<ZNetView>();
     m_body = GetComponent<Rigidbody>();
@@ -574,6 +574,9 @@ public class ValheimAoe : MonoBehaviour, IProjectile, IMonoUpdater
 
   public void CauseTriggerDamage(Collider collider, bool onTriggerEnter)
   {
+    if (!m_body) return;
+    if (!collider) return;
+
     if (m_triggerEnterOnly & onTriggerEnter || (double)m_activationTimer > 0.0)
       return;
     if (!m_useTriggers)
