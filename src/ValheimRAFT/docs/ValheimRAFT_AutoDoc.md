@@ -144,7 +144,7 @@
 - Default Value: True
 
 ### CanHitEnvironmentOrTerrain 
-- Description: allows rams to hit friendlies
+- Description: allows rams to hit environment/terrain
 - Default Value: True
 
 ### HitRadius 
@@ -300,6 +300,16 @@
 ### MakeAllPiecesWaterProof 
 - Description: Makes it so all building pieces (walls, floors, etc) on the ship don't take rain damage.
 - Default Value: True
+
+## PrefabConfig
+
+### LandVehicle Max Tread Width 
+- Description: Max width the treads can expand to. Lower values will let you make motor bikes. This affects all vehicles. This is just a default. Any vehicle can be configured directly via config menu.
+- Default Value: 8
+
+### LandVehicle Max Tread Length 
+- Description: Max length the treads can expand to. This is just a default. Any vehicle can be configured directly via config menu.
+- Default Value: 20
 
 ## Vehicle Debugging
 
@@ -642,22 +652,10 @@ Other methods removed after 2.5.0
 
 ## Vehicle Physics
 
-### LandVehicle Max Tread Width 
-- Description: Max width the treads can expand to. Lower values will let you make motor bikes. This affects all vehicles. In future version there will be an individual config setting.
-- Default Value: 8
-
-### SwivelsCanSyncOnAllClients 
-- Description: Allow swivels to sync on all clients. Instead of using ChildSync properties which can be a bit laggy.
-- Default Value: True
-
-### LandVehicle Max Tread Length 
-- Description: Max length the treads can expand to. In future version there will be an individual config setting.
-- Default Value: 20
-
 ### Vehicle CenterOfMassOffset 
 - Description: Offset the center of mass by a percentage of vehicle total height. Should always be a positive number. Higher values will make the vehicle more sturdy as it will pivot lower. Too high a value will make the ship behave weirdly possibly flipping. 0 will be the center of all colliders within the physics of the vehicle. 
 100% will be 50% lower than the vehicle's collider. 
-50% will be the very bottom of the vehicle's collider. In future version there will be an individual config setting.
+50% will be the very bottom of the vehicle's collider. This is just a default. Any vehicle can be configured directly via config menu.
 - Default Value: 0.65
 
 ### flightDamping_3.4.3 
@@ -962,7 +960,7 @@ Other methods removed after 2.5.0
 
 ## PowerSystem
 
-### PowerRangePerPowerItem 
+### PowerPylonRange 
 - Description: The power range per power pylon prefab. Large values will make huge networks. Max range is 50. But this could span entire continents as ZDOs are not limited to render distance.
 - Default Value: 10
 
@@ -1018,17 +1016,25 @@ Other methods removed after 2.5.0
 - Description: The maximum amount of energy a power storage unit can hold.
 - Default Value: 800
 
+### LandVehicle_DoNotRequirePower 
+- Description: Allows for free usage of land-vehicles without power system. Very unbalanced.
+- Default Value: False
+
+### Swivels_DoNotRequirePower 
+- Description: Allows you to use swivels without the vehicle power system.
+- Default Value: False
+
+### LandVehicle_PowerDrain 
+- Description: How much power (watts) is consumed by a LandVehicle per second. This is a base value. Each additional mode will ramp up power. Applies only if LandVehicle_DoNotRequirePower is false.
+- Default Value: 1
+
 ### SwivelPowerDrain 
-- Description: How much power (watts) is consumed by a Swivel per second. Applies only if Swivels_DoNotRequirePower is false.
+- Description: How much power (watts) is consumed by a Swivel per second. Swivels have 1 power mode but swivel lerp speed will affect power cost. Applies only if Swivels_DoNotRequirePower is false.
 - Default Value: 1
 
 ### Mechanism_Switch_DefaultAction 
 - Description: Default action of the mechanism switch. This will be overridden by UpdateIntendedAction if a closer matching action is detected nearby.
 - Default Value: CommandsHud
-
-### Swivels_DoNotRequirePower 
-- Description: Allows you to use swivels without the vehicle power system.
-- Default Value: False
 
 ## QuickStartWorld
 
