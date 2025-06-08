@@ -137,6 +137,14 @@ public class LoadValheimVehicleAssets : ILoadAssets
     return _bundle.LoadAsset<GameObject>(assetNameToLoad);
   }
 
+  public static GameObject GetShipHullRibCornerProw(string hullMaterial, PrefabNames.DirectionVariant directionVariant)
+  {
+    const string baseName = "hull_rib_corner_prow";
+    var directionString = directionVariant.ToString().ToLower();
+    var assetNameToLoad = $"{baseName}_{directionString}_{hullMaterial}.prefab";
+    return _bundle.LoadAsset<GameObject>(assetNameToLoad);
+  }
+
   public static GameObject GetShipHullRibCorner(string hullMaterial)
   {
     const string baseName = "hull_rib_corner";

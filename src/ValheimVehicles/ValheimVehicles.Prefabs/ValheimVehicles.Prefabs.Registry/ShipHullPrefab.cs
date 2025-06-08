@@ -61,11 +61,11 @@ public class ShipHullPrefab : IRegisterPrefab
     {
       RegisterHullRibProw(hullMaterialType, PrefabNames.PrefabSizeVariant.TwoByTwo);
       RegisterHullRib(PrefabNames.GetHullRibName(hullMaterialType), hullMaterialType);
-      RegisterHullRibCorner(
-        hullMaterialType);
+      RegisterHullRibCorner(hullMaterialType);
 
       foreach (var ribDirection in ribDirections)
       {
+        RegisterHullRibProwCorner(hullMaterialType, ribDirection);
         RegisterHullRibCornerFloor(hullMaterialType, ribDirection);
       }
     }
@@ -232,6 +232,21 @@ public class ShipHullPrefab : IRegisterPrefab
     //   hullMaterial, 1, prefabInverse.transform.FindDeepChild("mesh"),
     //   ["mesh"]);
   }
+
+  public void RegisterHullRibProwCorner(
+    string hullMaterial, PrefabNames.DirectionVariant directionVariant)
+  {
+    var prefabName = PrefabNames.GetHullRibCornerProwName(hullMaterial, directionVariant);
+    var prefabAsset =
+      LoadValheimVehicleAssets.GetShipHullRibCornerProw(hullMaterial, directionVariant);
+    var prefab =
+      PrefabManager.Instance.CreateClonedPrefab(
+        prefabName, prefabAsset);
+
+    SetupHullPrefab(prefab, prefabName,
+      hullMaterial, 4, prefab.transform.FindDeepChild("mesh"));
+  }
+
 
   public void RegisterHullRibCorner(
     string hullMaterial, bool hasInverse = true)

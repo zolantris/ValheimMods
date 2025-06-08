@@ -15,6 +15,7 @@ public static class StoredSailDataExtensions
       SailCorners = new List<SerializableVector3>(),
       LockedSides = zdo.GetInt(SailComponent.m_lockedSailSidesHash),
       LockedCorners = zdo.GetInt(SailComponent.m_lockedSailCornersHash),
+      MaterialVariant = zdo.GetInt(SailComponent.m_sailMaterialVariantHash),
       MainHash = zdo.GetInt(SailComponent.m_mainHashRefHash),
       MainScale = new SerializableVector2(zdo.GetVec3(SailComponent.m_mainScaleHash, Vector3.zero)),
       MainOffset = new SerializableVector2(zdo.GetVec3(SailComponent.m_mainOffsetHash, Vector3.zero)),
@@ -70,6 +71,10 @@ public static class StoredSailDataExtensions
 
     zdo.Set(SailComponent.m_lockedSailSidesHash, data.LockedSides);
     zdo.Set(SailComponent.m_lockedSailCornersHash, data.LockedCorners);
+
+    // for full overrides of materials using vanilla sails.
+    zdo.Set(SailComponent.m_sailMaterialVariantHash, data.MaterialVariant);
+
     zdo.Set(SailComponent.m_mainHashRefHash, data.MainHash);
     zdo.Set(SailComponent.m_mainScaleHash, data.MainScale.ToVector2());
     zdo.Set(SailComponent.m_mainOffsetHash, data.MainOffset.ToVector2());
@@ -88,7 +93,7 @@ public static class StoredSailDataExtensions
     zdo.Set(SailComponent.m_logoRotationHash, data.LogoRotation);
 
     zdo.Set(SailComponent.m_sailFlagsHash, data.SailFlags);
-    zdo.Set(SailComponent.HasInitialized, true);
+    zdo.Set(SailComponent.HasInitializedHash, true);
   }
 
 }

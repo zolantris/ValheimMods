@@ -153,7 +153,7 @@ public class PanelUtil
     Array.ForEach(editPanel.GetComponentsInChildren<Toggle>(true),
       delegate(Toggle b)
       {
-        Logger.LogInfo($"PANEL_UTIL CHILD {b.name}");
+        LoggerProvider.LogDev($"PANEL_UTIL CHILD {b.name}");
         if (b.name.EndsWith("Toggle")) GUIManager.Instance.ApplyToogleStyle(b);
       });
     var image = editPanel.GetComponent<Image>();

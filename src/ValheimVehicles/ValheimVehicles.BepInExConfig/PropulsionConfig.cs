@@ -206,10 +206,10 @@ public class PropulsionConfig : BepInExBaseConfig<PropulsionConfig>
 
     SailCustomAreaTier1Multiplier = config.BindUnique(GenericSectionName,
       "SailCustomAreaTier1Multiplier",
-      SailAreaForce.CustomTier1AreaForceMultiplier,
+      SailAreaForce.CustomSailAreaForceMultiplier,
       ConfigHelpers.CreateConfigDescription(
         "Manual sets the sail wind area multiplier the custom tier1 sail. Currently there is only 1 tier",
-        true, true)
+        true, true, new AcceptableValueRange<float>(5f, 50f))
     );
 
     SailTier1Area = config.BindUnique(GenericSectionName,

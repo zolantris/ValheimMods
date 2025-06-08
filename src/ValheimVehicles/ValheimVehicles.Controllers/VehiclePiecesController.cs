@@ -2481,7 +2481,7 @@
       var netViewName = netView.name;
       if (PrefabNames.IsVehicle(netViewName) && netViewName.Contains(PrefabNames.LandVehicle)) return;
       // no overriding parent if sail already has a custom parent EG a mast.
-      if (netViewName.StartsWith(PrefabNames.Tier1CustomSailName) && netView.GetZDO().GetInt(SailComponent.SailParentId) != 0)
+      if (netViewName.StartsWith(PrefabNames.Tier1CustomSailName) && netView.GetZDO().GetInt(SailComponent.SailParentIdHash) != 0)
       {
         if (netView.transform.parent == null)
         {

@@ -14,6 +14,8 @@ public class StoredSailData
   public int LockedSides;
   public int LockedCorners;
 
+  public int MaterialVariant;
+
   public int MainHash;
   public SerializableVector2 MainScale;
   public SerializableVector2 MainOffset;

@@ -1,5 +1,6 @@
 ﻿#region
 
+  using System;
   using System.Collections.Generic;
   using TMPro;
   using UnityEngine;
@@ -23,7 +24,7 @@
             ? options[0]
             : "";
       }
-      public static TMP_Dropdown AddDropdownRow(Transform parent, SwivelUISharedStyles viewStyles, string label, string[] options, string selectedOption, UnityAction<int> onChanged)
+      public static TMP_Dropdown AddDropdownRow(Transform parent, SwivelUISharedStyles viewStyles, string label, string[] options, string selectedOption, Action<int> onChanged)
       {
         // === Root Vertical Group ===
         var root = new GameObject($"{label}_DropdownGroup", typeof(RectTransform), typeof(VerticalLayoutGroup));
@@ -63,7 +64,7 @@
         dropdown.options = new List<TMP_Dropdown.OptionData>();
         foreach (var option in options)
           dropdown.options.Add(new TMP_Dropdown.OptionData(option));
-        dropdown.onValueChanged.AddListener(onChanged);
+        dropdown.onValueChanged.AddListener((v) => onChanged(v));
 
         dropdownGO.GetComponent<Image>().color = new Color(0.9f, 0.9f, 0.9f, 1f); // Light gray background
 

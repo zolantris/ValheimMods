@@ -147,6 +147,7 @@
         $"{ValheimVehiclesPrefix}_Ship_Hull_Rib_Corner_Floor";
 
       public static readonly string HullRib = $"{ValheimVehiclesPrefix}_Ship_Hull_Rib";
+      public static readonly string HullRibProw = $"{HullRib}_Prow";
 
       // to only be used for matching with generic prefab names
       public static readonly string HullSlab = $"{ValheimVehiclesPrefix}_Hull_Slab";
@@ -282,13 +283,7 @@
 
       public static string GetDirectionName(DirectionVariant directionVariant)
       {
-        return directionVariant switch
-        {
-          DirectionVariant.Left => "left",
-          DirectionVariant.Right => "right",
-          _ => throw new ArgumentOutOfRangeException(nameof(directionVariant),
-            directionVariant, null)
-        };
+        return directionVariant.ToString().ToLower();
       }
 
       /// <summary> 
@@ -341,6 +336,15 @@
       {
         var materialName = GetMaterialVariantName(materialVariant);
         return $"{HullRibCorner}_{materialName}";
+      }
+
+      public static string GetHullRibCornerProwName(string materialVariant,
+        DirectionVariant directionVariant)
+      {
+        var directionName = GetDirectionName(directionVariant);
+        var materialName = GetMaterialVariantName(materialVariant);
+
+        return $"{HullRibProw}_{materialName}_{directionName}";
       }
 
       public static string GetHullRibCornerFloorName(string materialVariant,

@@ -152,28 +152,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   MaxUIWidth: 700
-  styles:
-    DropdownCaptionFontSize: 24
-    DropdownContentPaddingBottom: 18
-    DropdownContentPaddingLeft: 18
-    DropdownContentPaddingRight: 18
-    DropdownContentPaddingTop: 18
-    DropdownContentSpacing: 18
-    DropdownContentHeight: 250
-    DropdownItemHeight: 24
-    DropdownItemLabelFontSize: 24
-    maxWidth: 500
-    minWidth: 500
-    maxHeight: 600
-    InputTextColor: {r: 0, g: 0, b: 0, a: 1}
-    LabelColor: {r: 1, g: 1, b: 1, a: 1}
-    LabelMinWidth: 160
-    LabelPreferredWidth: 180
-    ScrollViewBackgroundColor: {r: 0.35, g: 0.35, b: 0.55, a: 1}
-    DropdownOptionsContainerColor: {r: 0.75, g: 0.75, b: 0.75, a: 1}
-    FontSizeDropdownLabel: 28
-    FontSizeSectionLabel: 28
-    FontSizeRowLabel: 24
+  hingeAxisRow: {fileID: 0}
+  layoutParent: {fileID: 0}
+  maxXRow: {fileID: 0}
+  maxYRow: {fileID: 0}
+  maxZRow: {fileID: 0}
+  IsEditing: 0
 --- !u!4 &269616584
 Transform:
   m_ObjectHideFlags: 0
@@ -499,6 +483,168 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1368789926}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!1 &1508219398
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1508219400}
+  - component: {fileID: 1508219399}
+  m_Layer: 0
+  m_Name: GameObject
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!223 &1508219399
+Canvas:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1508219398}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_RenderMode: 1
+  m_Camera: {fileID: 0}
+  m_PlaneDistance: 100
+  m_PixelPerfect: 0
+  m_ReceivesEvents: 1
+  m_OverrideSorting: 0
+  m_OverridePixelPerfect: 0
+  m_SortingBucketNormalizedSize: 0
+  m_VertexColorAlwaysGammaSpace: 0
+  m_AdditionalShaderChannelsFlag: 25
+  m_UpdateRectTransformForStandalone: 0
+  m_SortingLayerID: 0
+  m_SortingOrder: 0
+  m_TargetDisplay: 0
+--- !u!224 &1508219400
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1508219398}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 0, y: 0, z: 0}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 1684700532}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
+  m_Pivot: {x: 0, y: 0}
+--- !u!1001 &1678984590
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 1508219400}
+    m_Modifications:
+    - target: {fileID: 61778030574829209, guid: dda5bcc5ea6fd8b4eaced7ba43867fd2, type: 3}
+      propertyPath: m_Pivot.x
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 61778030574829209, guid: dda5bcc5ea6fd8b4eaced7ba43867fd2, type: 3}
+      propertyPath: m_Pivot.y
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 61778030574829209, guid: dda5bcc5ea6fd8b4eaced7ba43867fd2, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 61778030574829209, guid: dda5bcc5ea6fd8b4eaced7ba43867fd2, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 61778030574829209, guid: dda5bcc5ea6fd8b4eaced7ba43867fd2, type: 3}
+      propertyPath: m_AnchorMin.x
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 61778030574829209, guid: dda5bcc5ea6fd8b4eaced7ba43867fd2, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 61778030574829209, guid: dda5bcc5ea6fd8b4eaced7ba43867fd2, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 300
+      objectReference: {fileID: 0}
+    - target: {fileID: 61778030574829209, guid: dda5bcc5ea6fd8b4eaced7ba43867fd2, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 580
+      objectReference: {fileID: 0}
+    - target: {fileID: 61778030574829209, guid: dda5bcc5ea6fd8b4eaced7ba43867fd2, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 61778030574829209, guid: dda5bcc5ea6fd8b4eaced7ba43867fd2, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 61778030574829209, guid: dda5bcc5ea6fd8b4eaced7ba43867fd2, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 61778030574829209, guid: dda5bcc5ea6fd8b4eaced7ba43867fd2, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 61778030574829209, guid: dda5bcc5ea6fd8b4eaced7ba43867fd2, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 61778030574829209, guid: dda5bcc5ea6fd8b4eaced7ba43867fd2, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 61778030574829209, guid: dda5bcc5ea6fd8b4eaced7ba43867fd2, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 61778030574829209, guid: dda5bcc5ea6fd8b4eaced7ba43867fd2, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: -300
+      objectReference: {fileID: 0}
+    - target: {fileID: 61778030574829209, guid: dda5bcc5ea6fd8b4eaced7ba43867fd2, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 61778030574829209, guid: dda5bcc5ea6fd8b4eaced7ba43867fd2, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 61778030574829209, guid: dda5bcc5ea6fd8b4eaced7ba43867fd2, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 61778030574829209, guid: dda5bcc5ea6fd8b4eaced7ba43867fd2, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 61778030574829210, guid: dda5bcc5ea6fd8b4eaced7ba43867fd2, type: 3}
+      propertyPath: m_Name
+      value: edit_sail_panel
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: dda5bcc5ea6fd8b4eaced7ba43867fd2, type: 3}
+--- !u!224 &1684700532 stripped
+RectTransform:
+  m_CorrespondingSourceObject: {fileID: 61778030574829209, guid: dda5bcc5ea6fd8b4eaced7ba43867fd2, type: 3}
+  m_PrefabInstance: {fileID: 1678984590}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1956590024
 GameObject:
   m_ObjectHideFlags: 0
@@ -800,6 +946,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   swivelComponent: {fileID: 3188583891895124357}
+  windDirection: {fileID: 0}
 --- !u!1 &1434714699310914113
 GameObject:
   m_ObjectHideFlags: 0
@@ -982,22 +1129,38 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   mode: 4
+  windDirectionTransform: {fileID: 0}
+  interpolationSpeed: 10
   animatedTransform: {fileID: 0}
-  maxTurnAnglePerSecond: 90
-  maxTurnAngle: 90
-  maxInclineZ: 90
-  turningLerpSpeed: 5
+  currentMotionState: 0
   minTrackingRange: 0
   maxTrackingRange: 50
   nearestTarget: {fileID: 0}
-  isDoorOpen: 0
-  doorLerpSpeed: 100
-  hingeMode: 0
-  zHingeDirection: 0
+  hingeAxes: 1
+  xHingeDirection: 0
   yHingeDirection: 0
-  maxYAngle: 90
-  pieceContainer: {fileID: 0}
+  zHingeDirection: 0
+  maxRotationEuler: {x: 45, y: 90, z: 45}
+  movementOffset: {x: 0, y: 0, z: 0}
+  useWorldPosition: 0
+  piecesContainer: {fileID: 0}
   connectorContainer: {fileID: 0}
+  directionDebuggerArrow: {fileID: 0}
+  swivelPowerConsumer: {fileID: 0}
+  computedInterpolationSpeed: 10
+  startLocalPosition: {x: 0, y: 0, z: 0}
+  startRotation: {x: 0, y: 0, z: 0, w: 0}
+  targetMovementPosition: {x: 0, y: 0, z: 0}
+  targetRotation: {x: 0, y: 0, z: 0, w: 0}
+  currentMovementLerp: 0
+  _lastUpdatedMotionTime: 0
+  _lastUpdateTime: 0
+  lastDeltaTime: 0
+  _IsReady: 1
+  _motionFromLocalPos: {x: 0, y: 0, z: 0}
+  _motionToLocalPos: {x: 0, y: 0, z: 0}
+  _motionFromLocalRot: {x: 0, y: 0, z: 0, w: 0}
+  _motionToLocalRot: {x: 0, y: 0, z: 0, w: 0}
 --- !u!4 &3419177915194938549
 Transform:
   m_ObjectHideFlags: 0
@@ -1297,22 +1460,38 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   mode: 4
+  windDirectionTransform: {fileID: 0}
+  interpolationSpeed: 10
   animatedTransform: {fileID: 0}
-  maxTurnAnglePerSecond: 90
-  maxTurnAngle: 90
-  maxInclineZ: 90
-  turningLerpSpeed: 5
+  currentMotionState: 0
   minTrackingRange: 0
   maxTrackingRange: 50
   nearestTarget: {fileID: 1368789926}
-  isDoorOpen: 0
-  doorLerpSpeed: 100
-  hingeMode: 0
-  zHingeDirection: 0
+  hingeAxes: 1
+  xHingeDirection: 0
   yHingeDirection: 0
-  maxYAngle: 90
-  pieceContainer: {fileID: 0}
+  zHingeDirection: 0
+  maxRotationEuler: {x: 45, y: 90, z: 45}
+  movementOffset: {x: 0, y: 0, z: 0}
+  useWorldPosition: 0
+  piecesContainer: {fileID: 0}
   connectorContainer: {fileID: 0}
+  directionDebuggerArrow: {fileID: 0}
+  swivelPowerConsumer: {fileID: 0}
+  computedInterpolationSpeed: 10
+  startLocalPosition: {x: 0, y: 0, z: 0}
+  startRotation: {x: 0, y: 0, z: 0, w: 0}
+  targetMovementPosition: {x: 0, y: 0, z: 0}
+  targetRotation: {x: 0, y: 0, z: 0, w: 0}
+  currentMovementLerp: 0
+  _lastUpdatedMotionTime: 0
+  _lastUpdateTime: 0
+  lastDeltaTime: 0
+  _IsReady: 1
+  _motionFromLocalPos: {x: 0, y: 0, z: 0}
+  _motionToLocalPos: {x: 0, y: 0, z: 0}
+  _motionFromLocalRot: {x: 0, y: 0, z: 0, w: 0}
+  _motionToLocalRot: {x: 0, y: 0, z: 0, w: 0}
 --- !u!114 &5646547732471220686
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1326,6 +1505,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   swivelComponent: {fileID: 5646547732471220685}
+  windDirection: {fileID: 0}
 --- !u!23 &5735040122166690035
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -1930,3 +2110,4 @@ SceneRoots:
   - {fileID: 3419177915194938549}
   - {fileID: 269616584}
   - {fileID: 535472032}
+  - {fileID: 1508219400}

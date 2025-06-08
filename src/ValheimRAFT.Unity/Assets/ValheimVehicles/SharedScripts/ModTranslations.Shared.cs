@@ -26,6 +26,12 @@ namespace ValheimVehicles.SharedScripts
     public static string ValheimInput_KeyUse = null!;
     public static string ValheimInput_KeyAltPlace = null!;
 
+    public static string SailVariant = null!;
+    public static string CustomSail = null!;
+    public static string DrakkalSail = null!;
+    public static string RaftSail = null!;
+    public static string KarveSail = null!;
+
 
     public static string MechanismSwitch_CommandsHudText = null!;
     public static string MechanismSwitch_MaskColliderEditMode = null!;

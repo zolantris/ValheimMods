@@ -82,7 +82,7 @@ public class SailPrefabs : IRegisterPrefab
     PrefabRegistryHelpers.FixRopes(vikingShipMastPrefab);
     PrefabRegistryHelpers.FixCollisionLayers(vikingShipMastPrefab);
 
-    pieceManager.AddPiece(new CustomPiece(vikingShipMastPrefab, false,
+    pieceManager.AddPiece(new CustomPiece(vikingShipMastPrefab, true,
       new PieceConfig
       {
         PieceTable = PrefabRegistryController.GetPieceTableName(),
@@ -151,7 +151,7 @@ public class SailPrefabs : IRegisterPrefab
     PrefabRegistryHelpers.FixRopes(prefab);
     PrefabRegistryHelpers.FixCollisionLayers(prefab);
 
-    pieceManager.AddPiece(new CustomPiece(prefab, false, new PieceConfig
+    pieceManager.AddPiece(new CustomPiece(prefab, true, new PieceConfig
     {
       PieceTable = PrefabRegistryController.GetPieceTableName(),
       Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
@@ -312,7 +312,7 @@ public class SailPrefabs : IRegisterPrefab
 
     PrefabRegistryHelpers.FixRopes(mbRaftMastPrefab);
     PrefabRegistryHelpers.FixCollisionLayers(mbRaftMastPrefab);
-    pieceManager.AddPiece(new CustomPiece(mbRaftMastPrefab, false,
+    pieceManager.AddPiece(new CustomPiece(mbRaftMastPrefab, true,
       new PieceConfig
       {
         PieceTable = PrefabRegistryController.GetPieceTableName(),
@@ -375,7 +375,7 @@ public class SailPrefabs : IRegisterPrefab
     PrefabRegistryHelpers.FixRopes(mbKarveMastPrefab);
     PrefabRegistryHelpers.FixCollisionLayers(mbKarveMastPrefab);
 
-    pieceManager.AddPiece(new CustomPiece(mbKarveMastPrefab, false,
+    pieceManager.AddPiece(new CustomPiece(mbKarveMastPrefab, true,
       new PieceConfig
       {
         PieceTable = PrefabRegistryController.GetPieceTableName(),

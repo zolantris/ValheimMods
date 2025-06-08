@@ -173,9 +173,16 @@
       var pieceController = PatchSharedData.PlayerLastRayPiece.GetComponentInParent<IPieceController>();
       if (pieceController == null) return gameObject;
 
-      if (pieceController.ComponentName == PrefabNames.SwivelPrefabName && netView)
+      if (pieceController.ComponentName == PrefabNames.SwivelPrefabName)
       {
-        pieceController.AddNewPiece(netView);
+        if (piece.m_nview != null)
+        {
+          pieceController.AddNewPiece(piece.m_nview);
+        }
+        else
+        {
+          pieceController.TrySetPieceToParent(piece.gameObject);
+        }
         return gameObject;
       }
 
@@ -195,15 +202,7 @@
         }
         else
         {
-          Logger.LogDebug("BaseVehicleController: adding temp piece");
-          if (piece.m_nview == null)
-          {
-            pieceController.TrySetPieceToParent(piece.gameObject);
-          }
-          else
-          {
-            pieceController.TrySetPieceToParent(piece.m_nview);
-          }
+          pieceController.TrySetPieceToParent(piece.gameObject);
         }
       }
 

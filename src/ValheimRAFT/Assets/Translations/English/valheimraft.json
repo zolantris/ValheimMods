@@ -257,5 +257,10 @@
   "valheim_vehicles_config_tread_distance_desc": "Treads Distance (distance between treads) affects physics. Makes the vehicle more like a motor bike at lower values. Can be negative values to allow overlapping.",
   "valheim_vehicles_config_treads_scale": "Treads Scale",
   "valheim_vehicles_config_treads_scale_desc": "Treads Scale makes each tread wider/thinner",
-  "valheim_vehicles_treads_max_length": "Treads Max Length (distance front to back)"
+  "valheim_vehicles_treads_max_length": "Treads Max Length (distance front to back)",
+  "valheim_vehicles_sail_variant": "Sail Variant",
+  "valheim_vehicles_sail_custom": "Sail Custom",
+  "valheim_vehicles_sail_karve": "Karve Sail",
+  "valheim_vehicles_sail_raft": "Raft Sail",
+  "valheim_vehicles_sail_drakkal": "Drakkal Sail"
 }

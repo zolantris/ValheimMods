@@ -3,6 +3,7 @@ using System.Linq;
 using Jotunn.Managers;
 using UnityEngine;
 using ValheimVehicles.Controllers;
+using ValheimVehicles.Interfaces;
 using ValheimVehicles.Prefabs;
 using ZdoWatcher;
 using Logger = Jotunn.Logger;
@@ -86,12 +87,12 @@ public class SailCreatorComponent : MonoBehaviour
         if (persistentId != 0)
         {
           var zdo = netView.GetZDO();
-          zdo.Set(SailComponent.SailParentId, persistentId);
-          zdo.Set(SailComponent.SailParentPosition, parentMastComponent.transform.InverseTransformPoint(sailComponent.transform.position));
+          zdo.Set(SailComponent.SailParentIdHash, persistentId);
+          zdo.Set(SailComponent.SailParentPositionHash, parentMastComponent.transform.InverseTransformPoint(sailComponent.transform.position));
 
           // relative to parent rotation.
           var relativeRotation = Quaternion.Inverse(parentMastComponent.transform.rotation) * sailComponent.transform.rotation;
-          zdo.Set(SailComponent.SailParentRotation, relativeRotation.eulerAngles);
+          zdo.Set(SailComponent.SailParentRotationHash, relativeRotation.eulerAngles);
           sailPrefabInstance.transform.SetParent(parentMastComponent.m_rotationTransform);
         }
       }
@@ -123,9 +124,9 @@ public class SailCreatorComponent : MonoBehaviour
   private bool AddToBasicVehicle(ZNetView netView)
   {
     var baseVehicle =
-      m_sailCreators[0].GetComponentInParent<VehiclePiecesController>();
+      m_sailCreators[0].GetComponentInParent<IPieceController>();
 
-    if ((bool)baseVehicle)
+    if (baseVehicle != null)
     {
       baseVehicle.AddNewPiece(netView);
       return true;

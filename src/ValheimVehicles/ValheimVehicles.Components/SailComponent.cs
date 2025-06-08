@@ -73,10 +73,13 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable, INetView
   public static int m_logoRotationHash = "m_logoRotation".GetStableHashCode();
   public static int m_logoOffsetHash = "m_logoOffset".GetStableHashCode();
   public static int m_sailFlagsHash = "m_sailFlagsHash".GetStableHashCode();
-  public static int HasInitialized = "HasInitialized".GetStableHashCode();
-  public static int SailParentId = "SailParentId".GetStableHashCode();
-  public static int SailParentPosition = "SailParentPosition".GetStableHashCode();
-  public static int SailParentRotation = "SailParentRotation".GetStableHashCode();
+  public static int HasInitializedHash = "HasInitialized".GetStableHashCode();
+  public static int SailParentIdHash = "SailParentId".GetStableHashCode();
+  public static int SailParentPositionHash = "SailParentPosition".GetStableHashCode();
+  public static int SailParentRotationHash = "SailParentRotation".GetStableHashCode();
+
+  // for switching between custom/and other built-in sail textures.
+  public static int m_sailMaterialVariantHash = "SailMaterialVariant".GetStableHashCode();
 
   private MastComponent m_mastComponent;
 
@@ -112,7 +115,7 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable, INetView
 
   public Vector2 m_patternOffset;
 
-  public Color m_patternColor;
+  public Color m_patternColor = new(1, 1, 1, 0);
 
   public float m_patternRotation;
 
@@ -122,7 +125,7 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable, INetView
 
   public Vector2 m_logoOffset;
 
-  public Color m_logoColor;
+  public Color m_logoColor = new(1, 1, 1, 0);
 
   public float m_logoRotation;
 
@@ -132,7 +135,7 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable, INetView
 
   public Vector2 m_mainOffset;
 
-  public Color m_mainColor;
+  public Color m_mainColor = Color.white;
 
   public float m_mistAlpha = 1f;
   public CoroutineHandle sailParentRoutine;
@@ -141,6 +144,8 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable, INetView
   private static bool DebugBoxCollider = true;
   private static readonly int MistAlpha = Shader.PropertyToID("_MistAlpha");
   private static readonly int MainColor = Shader.PropertyToID("_MainColor");
+
+  private static readonly int VegetationColor = Shader.PropertyToID("_Color");
 
   private static readonly int PatternColor =
     Shader.PropertyToID("_PatternColor");
@@ -164,6 +169,18 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable, INetView
   private static readonly int LogoNormal = Shader.PropertyToID("_LogoNormal");
   public bool hasRegisteredRPC = false;
 
+  public enum MaterialVariant
+  {
+    Custom,
+    Karve,
+    Drakkal,
+    Raft
+  }
+
+  // used to restore material if using an override in-game variant.
+  private Material customMaterial;
+  public MaterialVariant m_materialVariant = MaterialVariant.Custom;
+
   public void Awake()
   {
     sailParentRoutine = new CoroutineHandle(this);
@@ -173,8 +190,37 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable, INetView
     m_sailCloth = GetComponent<Cloth>();
     m_mastComponent.m_sailCloth = m_sailCloth;
     m_mesh = GetComponent<SkinnedMeshRenderer>();
+    customMaterial = m_mesh.material;
+
     m_meshCollider = GetComponent<MeshCollider>();
     m_nview = GetComponent<ZNetView>();
+
+    AddDefaultSailsToTextures();
+  }
+
+  public static void AddDefaultSailsToTextures()
+  {
+    var drakkalMaterial = OverrideMaterial_DrakkalShipSail();
+    var vikingMaterial = OverrideMaterial_VikingShipSail();
+    var raftShipSailMaterial = OverrideMaterial_RaftShipSail();
+
+    var sailsGroup = CustomTextureGroup.Get("Sails");
+
+    sailsGroup.AddTexture(new CustomTexture
+    {
+      Texture = drakkalMaterial.GetTexture(MainTex),
+      Normal = drakkalMaterial.GetTexture(BumpMap)
+    });
+    sailsGroup.AddTexture(new CustomTexture
+    {
+      Texture = vikingMaterial.GetTexture(MainTex),
+      Normal = vikingMaterial.GetTexture(BumpMap)
+    });
+    sailsGroup.AddTexture(new CustomTexture
+    {
+      Texture = raftShipSailMaterial.GetTexture(MainTex),
+      Normal = raftShipSailMaterial.GetTexture(BumpMap)
+    });
   }
 
 
@@ -213,21 +259,21 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable, INetView
     LoadZDO();
   }
 
-  public static void OverrideMaterial_VikingShipSail(SailComponent sailComponent)
+  public static Material OverrideMaterial_VikingShipSail()
   {
-    sailComponent.GetComponentInChildren<SkinnedMeshRenderer>().material = LoadValheimAssets.vikingShipPrefab.transform
+    return LoadValheimAssets.vikingShipPrefab.transform
       .Find("ship/visual/Mast/Sail").GetComponentInChildren<SkinnedMeshRenderer>().material;
   }
 
-  public static void OverrideMaterial_DrakkalShipSail(SailComponent sailComponent)
+  public static Material OverrideMaterial_DrakkalShipSail()
   {
-    sailComponent.GetComponentInChildren<SkinnedMeshRenderer>().material = LoadValheimAssets.drakkarPrefab.transform
+    return LoadValheimAssets.drakkarPrefab.transform
       .Find("ship/visual/Mast/Sail").GetComponentInChildren<SkinnedMeshRenderer>().material;
   }
 
-  public static void OverrideMaterial_RaftShipSail(SailComponent sailComponent)
+  public static Material OverrideMaterial_RaftShipSail()
   {
-    sailComponent.GetComponentInChildren<SkinnedMeshRenderer>().material = LoadValheimAssets.raftMast.transform
+    return LoadValheimAssets.raftMast.transform
       .Find("Sail").GetComponentInChildren<SkinnedMeshRenderer>().material;
   }
 
@@ -318,23 +364,28 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable, INetView
 
     // only updates the sail parent if applicable. This is not related to StoredSailData.
     UpdateSailParent();
+    SetMaterialVariant((MaterialVariant)data.MaterialVariant);
 
     SetMain(data.MainHash);
     SetMainColor(data.MainColor.ToColor());
     SetMainOffset(data.MainOffset.ToVector2());
     SetMainScale(data.MainScale.ToVector2());
 
-    SetPattern(data.PatternHash);
-    SetPatternColor(data.PatternColor.ToColor());
-    SetPatternOffset(data.PatternOffset.ToVector2());
-    SetPatternScale(data.PatternScale.ToVector2());
-    SetPatternRotation(data.PatternRotation);
+    if (m_materialVariant == MaterialVariant.Custom)
+    {
+      SetPattern(data.PatternHash);
+      SetPatternColor(data.PatternColor.ToColor());
+      SetPatternOffset(data.PatternOffset.ToVector2());
+      SetPatternScale(data.PatternScale.ToVector2());
+      SetPatternRotation(data.PatternRotation);
 
-    SetLogo(data.LogoHash);
-    SetLogoColor(data.LogoColor.ToColor());
-    SetLogoOffset(data.LogoOffset.ToVector2());
-    SetLogoScale(data.LogoScale.ToVector2());
-    SetLogoRotation(data.LogoRotation);
+      SetLogo(data.LogoHash);
+      SetLogoColor(data.LogoColor.ToColor());
+      SetLogoOffset(data.LogoOffset.ToVector2());
+      SetLogoScale(data.LogoScale.ToVector2());
+      SetLogoRotation(data.LogoRotation);
+    }
+
 
     SetSailMastSetting(SailFlags.AllowSailShrinking,
       ((SailFlags)data.SailFlags).HasFlag(SailFlags.AllowSailShrinking));
@@ -366,8 +417,8 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable, INetView
     transform.SetParent(parentMastComponent.m_rotationTransform);
     if (this.IsNetViewValid(out var netView))
     {
-      transform.localPosition = netView.GetZDO().GetVec3(SailParentPosition, Vector3.zero);
-      transform.localRotation = Quaternion.Euler(netView.m_zdo.GetVec3(SailParentRotation, transform.localRotation.eulerAngles));
+      transform.localPosition = netView.GetZDO().GetVec3(SailParentPositionHash, Vector3.zero);
+      transform.localRotation = Quaternion.Euler(netView.m_zdo.GetVec3(SailParentRotationHash, transform.localRotation.eulerAngles));
     }
     else
     {
@@ -379,7 +430,7 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable, INetView
   {
     if (!this.IsNetViewValid(out var netView)) return;
     if (sailParentRoutine.IsRunning) return;
-    var sailParentId = netView.GetZDO().GetInt(SailParentId);
+    var sailParentId = netView.GetZDO().GetInt(SailParentIdHash);
     if (sailParentId == 0) return;
     sailParentRoutine.Start(WaitForSailParent(sailParentId));
   }
@@ -391,7 +442,7 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable, INetView
     var zdo = netView.GetZDO();
     if (zdo == null) return false;
     var zdoCorners = zdo.GetInt(m_sailCornersCountHash);
-    var hasInitialized = zdo.GetBool(HasInitialized);
+    var hasInitialized = zdo.GetBool(HasInitializedHash);
 
     if (!hasInitialized)
     {
@@ -425,7 +476,7 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable, INetView
 
     if (zdoCorners is 3 or 4)
     {
-      zdo.Set(HasInitialized, true);
+      zdo.Set(HasInitializedHash, true);
     }
     else
     {
@@ -471,15 +522,25 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable, INetView
   public void LoadFromMaterial()
   {
     var sailMaterial = GetSailMaterial();
-    m_mainColor = sailMaterial.GetColor(MainColor);
+    m_mainColor = sailMaterial.GetColor(m_materialVariant == MaterialVariant.Custom ? MainColor : VegetationColor);
     m_mistAlpha = 1f;
     var mainTex = sailMaterial.GetTexture(MainTex);
 
-    var sailTexture = LoadValheimRaftAssets.sailTexture;
-    if (sailTexture != null) m_mainHash = mainTex.name.GetStableHashCode();
+    if (mainTex != null)
+    {
+      m_mainHash = mainTex.name.GetStableHashCode();
+    }
+    else
+    {
+      mainTex = LoadValheimRaftAssets.sailTexture;
+      m_mainHash = mainTex.name.GetStableHashCode();
+    }
 
     m_mainScale = sailMaterial.GetTextureScale(MainTex);
     m_mainOffset = sailMaterial.GetTextureOffset(MainTex);
+
+    // do not set incompatible shader values.
+    if (m_materialVariant != MaterialVariant.Custom) return;
 
     var patternTex = sailMaterial.GetTexture(PatternTex);
     var patternGroup = CustomTextureGroup.Get("Patterns")
@@ -525,7 +586,19 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable, INetView
 
   public Material GetSailMaterial()
   {
-    return m_mesh.material;
+    switch (m_materialVariant)
+    {
+      case MaterialVariant.Custom:
+        return customMaterial;
+      case MaterialVariant.Karve:
+        return OverrideMaterial_VikingShipSail();
+      case MaterialVariant.Drakkal:
+        return OverrideMaterial_DrakkalShipSail();
+      case MaterialVariant.Raft:
+        return OverrideMaterial_RaftShipSail();
+      default:
+        return m_mesh.material;
+    }
   }
 
   private void UpdateMistAlphaForPlayerCamera()
@@ -625,6 +698,9 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable, INetView
       SailCorners = m_sailCorners.Select(v => new SerializableVector3(v)).ToList(),
       LockedSides = (int)m_lockedSailSides,
       LockedCorners = (int)m_lockedSailCorners,
+
+      // for full overrides of custom sail
+      MaterialVariant = (int)m_materialVariant,
 
       MainHash = m_mainHash,
       MainScale = new SerializableVector2(m_mainScale),
@@ -1013,8 +1089,11 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable, INetView
     m_meshCollider.sharedMesh = mesh;
   }
 
+  public bool IsNotCustom => m_materialVariant != MaterialVariant.Custom;
+
   public void SetPatternScale(Vector2 vector2)
   {
+    if (IsNotCustom) return;
     if (!(m_patternScale == vector2))
     {
       m_patternScale = vector2;
@@ -1024,6 +1103,7 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable, INetView
 
   public void SetPatternOffset(Vector2 vector2)
   {
+    if (IsNotCustom) return;
     if (!(m_patternOffset == vector2))
     {
       m_patternOffset = vector2;
@@ -1033,18 +1113,21 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable, INetView
 
   public void SetPatternColor(Color color)
   {
+    if (IsNotCustom) return;
     m_patternColor = color;
     m_mesh.material.SetColor(PatternColor, color);
   }
 
   public void SetPatternRotation(float rotation)
   {
+    if (IsNotCustom) return;
     m_patternRotation = rotation;
     m_mesh.material.SetFloat(PatternRotation, rotation);
   }
 
   public void SetPattern(int hash)
   {
+    if (IsNotCustom) return;
     m_patternHash = hash;
     var customtexture =
       CustomTextureGroup.Get("Patterns").GetTextureByHash(hash);
@@ -1076,11 +1159,12 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable, INetView
 
   public void SetMain(int hash)
   {
+    if (m_materialVariant != MaterialVariant.Custom) return;
     m_mainHash = hash;
-    // var customtexture =
-    //   CustomTextureGroup.Get("Sails").GetTextureByHash(hash);
-    var sailTexture = LoadValheimRaftAssets.sailTexture;
-    var sailNormal = LoadValheimRaftAssets.sailTextureNormal;
+    var customtexture =
+      CustomTextureGroup.Get("Sails").GetTextureByHash(hash);
+    var sailTexture = customtexture.Texture;
+    var sailNormal = customtexture.Normal;
     if (!(bool)sailTexture) return;
     m_mesh.material.SetTexture(MainTex, sailTexture);
     if ((bool)sailNormal)
@@ -1089,30 +1173,35 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable, INetView
 
   public void SetLogoScale(Vector2 vector2)
   {
+    if (IsNotCustom) return;
     m_logoScale = vector2;
     m_mesh.material.SetTextureScale(LogoTex, m_logoScale);
   }
 
   public void SetLogoOffset(Vector2 vector2)
   {
+    if (IsNotCustom) return;
     m_logoOffset = vector2;
     m_mesh.material.SetTextureOffset(LogoTex, m_logoOffset);
   }
 
   public void SetLogoColor(Color color)
   {
+    if (IsNotCustom) return;
     m_logoColor = color;
     m_mesh.material.SetColor(LogoColor, color);
   }
 
   public void SetLogoRotation(float rotation)
   {
+    if (IsNotCustom) return;
     m_logoRotation = rotation;
     m_mesh.material.SetFloat(LogoRotation, rotation);
   }
 
   public void SetLogo(int hash)
   {
+    if (IsNotCustom) return;
     m_logoHash = hash;
     var customtexture =
       CustomTextureGroup.Get("Logos").GetTextureByHash(hash);
@@ -1164,6 +1253,12 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable, INetView
   public bool UseItem(Humanoid user, ItemDrop.ItemData item)
   {
     return false;
+  }
+
+  public void SetMaterialVariant(MaterialVariant materialVariant)
+  {
+    m_materialVariant = materialVariant;
+    m_mesh.material = GetSailMaterial();
   }
 
   internal void StartEdit()

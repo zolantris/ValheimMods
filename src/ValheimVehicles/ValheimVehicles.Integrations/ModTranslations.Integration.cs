@@ -115,6 +115,13 @@ public partial class ModTranslations
     // basic states used to combine with other states.
     DisabledText = SafeLocalize("$valheim_vehicles_gui_disabled");
     EnabledText = SafeLocalize("$valheim_vehicles_gui_enabled");
+
+    SailVariant = SafeLocalize("$valheim_vehicles_sail_variant");
+
+    CustomSail = SafeLocalize("$valheim_vehicles_sail_custom");
+    RaftSail = SafeLocalize("$valheim_vehicles_sail_raft");
+    KarveSail = SafeLocalize("$valheim_vehicles_sail_karve");
+    DrakkalSail = SafeLocalize("$valheim_vehicles_sail_drakkal");
   }
 
   private static void UpdateVehicleConfigTranslations()

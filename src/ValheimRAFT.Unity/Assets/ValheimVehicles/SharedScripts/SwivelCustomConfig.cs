@@ -18,6 +18,13 @@ namespace ValheimVehicles.SharedScripts
       get;
       set;
     }
+
+    public Vector3 MinEuler
+    {
+      get;
+      set;
+    }
+
     public Vector3 MovementOffset
     {
       get;
@@ -64,6 +71,7 @@ namespace ValheimVehicles.SharedScripts
       component.MaxTrackingRange = MaxTrackingRange;
       component.HingeAxes = HingeAxes;
       component.MaxEuler = MaxEuler;
+      component.MinEuler = MinEuler;
       component.MovementOffset = MovementOffset;
       component.MotionState = MotionState;
     }
@@ -76,6 +84,7 @@ namespace ValheimVehicles.SharedScripts
       MaxTrackingRange = component.MaxTrackingRange;
       HingeAxes = component.HingeAxes;
       MaxEuler = component.MaxEuler;
+      MinEuler = component.MinEuler;
       MovementOffset = component.MovementOffset;
       MotionState = component.MotionState;
     }

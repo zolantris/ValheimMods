@@ -20,7 +20,7 @@
 
         _MistAlpha("Mist Alpha", Range(0, 1)) = 0.5
 
-        _Glossiness ("Smoothness", Range(0, 1)) = 0.5
+        _Glossiness ("Smoothness", Range(0, 1)) = 0
         _Metallic ("Metallic", Range(0, 1)) = 0
         _Cutoff ("Alpha Cutoff", Range(0, 1)) = 0.5
         _BumpScale ("Normal scale", Float) = 1
@@ -79,12 +79,12 @@
         half _MistAlpha;
         float2 uv_PatternTex;
         float2 uv_LogoTex;
+        float facing : VFACE;
     };
 
     void vert(inout appdata_full v, out Input o)
     {
         UNITY_INITIALIZE_OUTPUT(Input, o);
-        v.normal = -v.normal;
     }
 
 
@@ -111,9 +111,13 @@
         o.Albedo = lerp(o.Albedo, logoCol.rgb * _LogoColor.rgb,
                             logoCol.a * _LogoColor.a);
         // Metallic and smoothness come from slider variables
-        o.Normal = UnpackNormal(tex2D(_MainNormal, IN.uv_MainTex)) + tex2D(
-            _PatternNormal, IN.uv_PatternTex) + tex2D(
-            _LogoNormal, IN.uv_LogoTex);
+          float3 normal = UnpackNormal(tex2D(_MainNormal, IN.uv_MainTex)) + 
+                        UnpackNormal(tex2D(_PatternNormal, IN.uv_PatternTex)) + 
+                        UnpackNormal(tex2D(_LogoNormal, IN.uv_LogoTex));
+
+
+        o.Normal = normal * (IN.facing > 0 ? 1 : -1);
+
         
         o.Metallic = _Glossiness;
         o.Smoothness = _Wet;
@@ -133,9 +137,9 @@
         Blend SrcAlpha OneMinusSrcAlpha
 
         CGPROGRAM
-        #pragma surface surf Standard alpha:fade
+        #pragma surface surf Standard alpha:fade vertex:vert
         #pragma vertex vert
-        #pragma target 3.0
+        #pragma target 5.0
         ENDCG
     }
     Fallback "Diffuse"
