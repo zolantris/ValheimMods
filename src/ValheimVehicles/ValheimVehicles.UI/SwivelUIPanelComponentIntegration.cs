@@ -158,6 +158,6 @@ public class SwivelUIPanelComponentIntegration : SwivelUIPanelComponent
 
   public override GameObject CreateUIRoot()
   {
-    return PanelUtil.CreateDraggableHideShowPanel(PanelName, panelStyles, buttonStyles, ModTranslations.GuiShow, ModTranslations.GuiHide, GuiConfig.SwivelPanelLocation);
+    return PanelUtil.CreateDraggableHideShowPanel(PanelName, VehicleGui.GetVehicleGui().transform, panelStyles, buttonStyles, ModTranslations.GuiShow, ModTranslations.GuiHide, GuiConfig.SwivelPanelLocation);
   }
 }

@@ -273,13 +273,13 @@ public abstract class PrefabRegistryHelpers
     }
   }
 
-  public static void RegisterHullRibProwCornerFloors()
+  public static void RegisterHullRibProwCorners()
   {
     var spriteAtlas = LoadValheimVehicleAssets.VehicleSprites;
-    const string pieceBaseName = "valheim_vehicles_hull_rib_corner_floor";
+    const string pieceBaseName = "valheim_vehicles_hull_rib_corner";
     const string pieceName = $"${pieceBaseName}";
     const string pieceDescription = $"${pieceBaseName}_desc";
-    const string iconBaseName = "hull_corner_floor";
+    const string iconBaseName = "hull_rib_corner_prow";
 
     List<PrefabNames.DirectionVariant> directionVariants =
       [PrefabNames.DirectionVariant.Left, PrefabNames.DirectionVariant.Right];
@@ -436,7 +436,10 @@ public abstract class PrefabRegistryHelpers
     RegisterHullSlabIcons();
     RegisterHullWalls();
     RegisterHullProws();
+
+    RegisterHullRibProwCorners();
     RegisterHullRibCornerWalls();
+
     RegisterHullRibCornerFloors();
 
     PieceDataDictionary.Add(PrefabNames.WaterVehicleShip, new PieceData

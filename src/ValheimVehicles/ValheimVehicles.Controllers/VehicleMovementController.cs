@@ -3020,14 +3020,17 @@
           break;
         }
         case Ship.Speed.Back:
+        case Ship.Speed.Slow:
+        case Ship.Speed.Stop:
         {
-          var from =
-            Quaternion.LookRotation(-ShipDirection.forward, ShipDirection.up);
-          var to2 = Quaternion.LookRotation(-windDir, ShipDirection.up);
-          to2 = Quaternion.RotateTowards(from, to2, 80f);
-          m_mastObject.transform.rotation =
-            Quaternion.RotateTowards(m_mastObject.transform.rotation, to2,
-              30f * deltaTime);
+          m_mastObject.transform.localRotation = Quaternion.Lerp(m_mastObject.transform.localRotation, Quaternion.identity, Time.fixedDeltaTime);
+          // var from =
+          //   Quaternion.LookRotation(-ShipDirection.forward, ShipDirection.up);
+          // var to2 = Quaternion.LookRotation(-windDir, ShipDirection.up);
+          // to2 = Quaternion.RotateTowards(from, to2, 80f);
+          // m_mastObject.transform.rotation =
+          //   Quaternion.RotateTowards(m_mastObject.transform.rotation, to2,
+          //     30f * deltaTime);
           break;
         }
       }
@@ -3038,7 +3041,7 @@
       if (!isCreative) return;
       if (m_mastObject)
       {
-        m_mastObject.transform.localRotation = Quaternion.identity;
+        m_mastObject.transform.localRotation = Quaternion.Lerp(m_mastObject.transform.localRotation, Quaternion.identity, Time.fixedDeltaTime);
       }
 
       SyncVehicleRotationDependentItems();

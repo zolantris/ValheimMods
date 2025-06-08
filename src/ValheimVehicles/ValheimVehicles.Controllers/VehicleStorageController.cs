@@ -21,7 +21,7 @@
   using ValheimVehicles.Shared.Constants;
   using ValheimVehicles.SharedScripts;
   using ValheimVehicles.Storage.Serialization;
-// Assume you want the shared scripts style.
+  // Assume you want the shared scripts style.
   using Object = UnityEngine.Object;
 
 #endregion
@@ -118,13 +118,15 @@
 
         var pieceTransform = piece.transform;
 
+        var relativeRotation = Quaternion.Euler(netView.GetZDO().GetVec3(VehicleZdoVars.MBRotationVecHash, pieceTransform.localRotation.eulerAngles));
+
         // must use MBPosition/rotation as swivels can nest within eachother causing local position to be different from parent or rotated or moved.
         var storedPieceData = new StoredPieceData
         {
           PrefabId = piece.GetInstanceID(),
           PrefabName = piece.GetPrefabName(),
           Position = new SerializableVector3(netView.GetZDO().GetVec3(VehicleZdoVars.MBPositionHash, pieceTransform.localPosition)),
-          Rotation = new SerializableQuaternion(Quaternion.Euler(netView.GetZDO().GetVec3(VehicleZdoVars.MBRotationVecHash, pieceTransform.localRotation.eulerAngles)))
+          Rotation = new SerializableQuaternion(relativeRotation)
         };
 
         AddCustomPieceData(storedPieceData, piece.gameObject);
@@ -235,109 +237,120 @@
 
     private static List<StoredPieceData> SortSwivelPiecesInDependencyOrder(List<StoredPieceData> pieces)
     {
-      // Dictionary to map swivel persistent IDs to their pieces
-      var swivelIdToPiece = new Dictionary<int, StoredPieceData>();
+      var result = new List<StoredPieceData>();
 
-      // First, identify all swivel pieces and map them by their persistent ID
+      // 1. Group pieces into three categories
+      var rootSwivels = new List<StoredPieceData>();
+      var childSwivels = new List<StoredPieceData>();
+      var otherPieces = new List<StoredPieceData>();
+
+      // Dictionary to map swivel persistent IDs to their piece data
+      var swivelIdToData = new Dictionary<int, StoredPieceData>();
+
+      // First pass: categorize pieces and build the ID map
       foreach (var piece in pieces)
       {
-        if (piece.PersistentId.HasValue && piece.PersistentId.Value != 0 &&
-            piece.PrefabName == PrefabNames.SwivelPrefabName)
+        var isSwivel = piece.PrefabName == PrefabNames.SwivelPrefabName &&
+                       piece.PersistentId.HasValue &&
+                       piece.PersistentId.Value != 0;
+
+        if (isSwivel)
         {
-          swivelIdToPiece[piece.PersistentId.Value] = piece;
+          swivelIdToData[piece.PersistentId.Value] = piece;
+
+          if (!piece.PrefabSwivelParentId.HasValue || piece.PrefabSwivelParentId.Value == 0)
+          {
+            rootSwivels.Add(piece); // Root swivel (no parent)
+          }
+          else
+          {
+            childSwivels.Add(piece); // Child swivel (has a parent)
+          }
+        }
+        else
+        {
+          otherPieces.Add(piece); // Non-swivel piece
         }
       }
 
-      // Create a dependency graph - which swivel depends on which
-      var dependencies = new Dictionary<StoredPieceData, List<StoredPieceData>>();
+      // 2. Add all root swivels first
+      result.AddRange(rootSwivels);
 
-      // Identify pieces that are attached to swivels and build dependency tree
-      foreach (var piece in pieces)
+      // 3. Build a dependency graph for child swivels
+      var graph = new Dictionary<int, List<int>>();
+      var processed = new HashSet<int>();
+
+      // Initialize graph with all child swivel IDs
+      foreach (var swivel in childSwivels)
       {
-        if (piece.PrefabSwivelParentId.HasValue &&
-            swivelIdToPiece.TryGetValue(piece.PrefabSwivelParentId.Value, out var parentSwivel))
+        if (swivel.PersistentId.HasValue)
         {
-          // This piece depends on a swivel
-          if (!dependencies.TryGetValue(parentSwivel, out var dependentList))
+          graph[swivel.PersistentId.Value] = new List<int>();
+        }
+      }
+
+      // Build the dependency relationships
+      foreach (var swivel in childSwivels)
+      {
+        if (swivel.PersistentId.HasValue && swivel.PrefabSwivelParentId.HasValue)
+        {
+          var childId = swivel.PersistentId.Value;
+          var parentId = swivel.PrefabSwivelParentId.Value;
+
+          // Add parent as dependency for the child
+          if (graph.ContainsKey(childId))
           {
-            dependentList = new List<StoredPieceData>();
-            dependencies[parentSwivel] = dependentList;
-          }
-
-          dependentList.Add(piece);
-
-          // If this piece is also a swivel, create the dependency link
-          if (piece.PersistentId.HasValue && piece.PersistentId.Value != 0 &&
-              piece.PrefabName == PrefabNames.SwivelPrefabName)
-          {
-            // The parent swivel should be processed before this swivel
-            if (!dependencies.TryGetValue(piece, out var parentDependencies))
-            {
-              parentDependencies = new List<StoredPieceData>();
-              dependencies[piece] = parentDependencies;
-            }
-
-            if (!parentDependencies.Contains(parentSwivel))
-            {
-              parentDependencies.Add(parentSwivel);
-            }
+            graph[childId].Add(parentId);
           }
         }
       }
 
-      // Perform topological sort to get the correct processing order
-      var sortedPieces = new List<StoredPieceData>();
-      var visited = new HashSet<StoredPieceData>();
-      var temporaryMark = new HashSet<StoredPieceData>();
-
-      // Helper function for depth-first search
-      void Visit(StoredPieceData piece)
+      // 4. Topological sort for child swivels
+      void AddSwivel(int swivelId)
       {
-        if (temporaryMark.Contains(piece))
+        // If already processed, skip
+        if (processed.Contains(swivelId)) return;
+
+        // Process dependencies first (parents)
+        if (graph.TryGetValue(swivelId, out var dependencies))
         {
-          // Circular dependency detected - this is a problem, but we'll handle it gracefully
-          LoggerProvider.LogWarning($"Circular dependency detected in swivel hierarchy for piece {piece.PrefabName}, ID: {piece.PersistentId}");
-          return;
-        }
-
-        if (visited.Contains(piece))
-          return;
-
-        temporaryMark.Add(piece);
-
-        // Visit all dependencies first (these are the swivels that should be processed BEFORE this one)
-        if (dependencies.TryGetValue(piece, out var deps))
-        {
-          foreach (var dep in deps)
+          foreach (var depId in dependencies)
           {
-            Visit(dep);
+            AddSwivel(depId);
           }
         }
 
-        temporaryMark.Remove(piece);
-        visited.Add(piece);
-        sortedPieces.Add(piece);
-      }
-
-      // Start with all swivel pieces
-      foreach (var swivelPiece in swivelIdToPiece.Values)
-      {
-        if (!visited.Contains(swivelPiece))
+        // Add this swivel if not already processed
+        if (!processed.Contains(swivelId) && swivelIdToData.TryGetValue(swivelId, out var swivelData))
         {
-          Visit(swivelPiece);
+          result.Add(swivelData);
+          processed.Add(swivelId);
         }
       }
 
-      // Add any remaining non-swivel pieces
-      foreach (var piece in pieces)
+      // Process all child swivels
+      foreach (var swivel in childSwivels)
       {
-        if (!visited.Contains(piece))
+        if (swivel.PersistentId.HasValue)
         {
-          sortedPieces.Add(piece);
+          AddSwivel(swivel.PersistentId.Value);
         }
       }
 
-      return sortedPieces;
+      // 5. Add any remaining child swivels that weren't added due to circular references
+      foreach (var swivel in childSwivels)
+      {
+        if (swivel.PersistentId.HasValue && !processed.Contains(swivel.PersistentId.Value))
+        {
+          result.Add(swivel);
+          LoggerProvider.LogWarning($"Possible circular reference in swivel hierarchy for {swivel.PrefabName} with ID {swivel.PersistentId.Value}");
+        }
+      }
+
+      // 6. Add all other non-swivel pieces last
+      result.AddRange(otherPieces);
+
+      return result;
     }
 
 
@@ -415,13 +428,20 @@
         var piecePrefab = PrefabManager.Instance.GetPrefab(vehicleDataPiece.PrefabName);
         if (piecePrefab == null)
         {
-          LoggerProvider.LogMessage($"Could not find prefab piece by name. {vehicleDataPiece.PrefabName}");
+          LoggerProvider.LogMessage($"Could not find prefab piece by name. {vehicleDataPiece.PrefabName}. Skipping piece.");
           continue;
         }
         try
         {
+          var parentTransform = vehicleShip.transform;
+          SwivelComponentBridge? swivelComponentInstance = null;
+          if (vehicleDataPiece.PrefabSwivelParentId.HasValue && instantiatedSwivelPieces.TryGetValue(vehicleDataPiece.PrefabSwivelParentId.Value, out swivelComponentInstance))
+          {
+            parentTransform = swivelComponentInstance.transform;
+          }
+
           // todo parent might need to be dynamic. But setting to vehicle should align with swivels which first modify the position based on the top level parent. Then reparent into the nested one.
-          var piecePrefabInstance = Object.Instantiate(piecePrefab, vehicleShip.PiecesController.transform.position + vehicleDataPiece.Position.ToVector3(), vehicleDataPiece.Rotation.ToQuaternion(), vehicleShip.PiecesController.transform);
+          var piecePrefabInstance = Object.Instantiate(piecePrefab, parentTransform.position + vehicleDataPiece.Position.ToVector3(), parentTransform.rotation * vehicleDataPiece.Rotation.ToQuaternion(), parentTransform);
 
           if (vehicleDataPiece.PrefabName == PrefabNames.SwivelPrefabName && vehicleDataPiece.PersistentId.HasValue && vehicleDataPiece.SwivelConfigData != null)
           {
@@ -451,16 +471,16 @@
           // all custom checks done here.
           InitPieceCustomData(vehicleDataPiece, piecePrefabInstance);
 
-          if (vehicleDataPiece.PrefabSwivelParentId.HasValue)
+          if (vehicleDataPiece.PrefabSwivelParentId.HasValue && swivelComponentInstance != null)
           {
-            if (!instantiatedSwivelPieces.TryGetValue(vehicleDataPiece.PrefabSwivelParentId.Value, out var swivelComponentInstance))
-            {
-              LoggerProvider.LogError($"Error finding nested swivelComponent. This component should have been instantiated before this child however it was not found. prefab: {vehicleDataPiece.PrefabName} swivelId: {vehicleDataPiece.PrefabSwivelParentId}");
-            }
-            else
-            {
-              swivelComponentInstance.AddNewPiece(piecePrefabInstance);
-            }
+            // if (!instantiatedSwivelPieces.TryGetValue(vehicleDataPiece.PrefabSwivelParentId.Value, out var swivelComponentInstance))
+            // {
+            //   LoggerProvider.LogError($"Error finding nested swivelComponent. This component should have been instantiated before this child however it was not found. prefab: {vehicleDataPiece.PrefabName} swivelId: {vehicleDataPiece.PrefabSwivelParentId}");
+            // }
+            // else
+            // {
+            swivelComponentInstance.AddNewPiece(piecePrefabInstance);
+            // }
           }
           else
           {

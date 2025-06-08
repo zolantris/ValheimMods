@@ -94,9 +94,9 @@ namespace ValheimVehicles.Shared.Constants
     /// <summary>
     /// This is the local rotation hash for an object within the vehicle. This rotation is relative to the vehicle and coordinates are in local rotation after parented within the vehicle.
     /// </summary>
+    /// todo DEPRECATED this probably can be removed as we use the Vec3 hash instead.
     public static readonly int MBRotationHash = "MBRotation".GetStableHashCode();
 
-    // todo DEPRECATED this probably can be removed
     public static readonly int MBRotationVecHash =
       "MBRotationVec".GetStableHashCode();
 

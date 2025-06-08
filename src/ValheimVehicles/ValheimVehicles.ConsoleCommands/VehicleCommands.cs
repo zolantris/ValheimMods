@@ -371,6 +371,11 @@ public class VehicleCommands : ConsoleCommand
 
         TeleportImmediately(safeMoveCharacterData.character,
           targetLocation);
+
+        if (Player.m_localPlayer == safeMoveCharacterData.character)
+        {
+          ZNet.instance.SetReferencePosition(targetLocation);
+        }
       }
     }
 

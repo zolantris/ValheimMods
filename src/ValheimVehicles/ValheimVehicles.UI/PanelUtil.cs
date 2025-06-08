@@ -67,11 +67,11 @@ public class PanelUtil
     WindowPosition.Value = anchoredPosition;
   }
 
-  public static GameObject CreateDraggableHideShowPanel(string panelName, Unity2dViewStyles panelStyles, Unity2dViewStyles buttonStyles, string hideText, string showText, ConfigEntry<Vector2> WindowPosition, Action<Text>? onToggle = null, bool isActive = false)
+  public static GameObject CreateDraggableHideShowPanel(string panelName, Transform panelParent, Unity2dViewStyles panelStyles, Unity2dViewStyles buttonStyles, string hideText, string showText, ConfigEntry<Vector2> WindowPosition, Action<Text>? onToggle = null, bool isActive = false)
   {
     var panel = CreateBasicPanel(panelName, false);
     var dragWindowExtension = panel.AddComponent<DragWindowControllerExtension>();
-    panel.transform.SetParent(GUIManager.CustomGUIFront.transform, false);
+    panel.transform.SetParent(panelParent, false);
     panel.GetComponent<Image>().pixelsPerUnitMultiplier = 1f;
 
     var panelTransform = (RectTransform)panel.transform;
