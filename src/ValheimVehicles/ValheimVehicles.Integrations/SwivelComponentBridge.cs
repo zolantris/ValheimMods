@@ -353,6 +353,20 @@
       return true;
     }
 
+    public bool TryBailOnSameObject(GameObject obj)
+    {
+      if (obj == gameObject) return true;
+      return false;
+    }
+
+    public void AddNewPiece(GameObject obj)
+    {
+      if (TryBailOnSameObject(obj)) return;
+      var nv = obj.GetComponent<ZNetView>();
+      if (nv == null) return;
+      AddNewPiece(nv);
+    }
+
     public void AddNewPiece(ZNetView netView)
     {
 

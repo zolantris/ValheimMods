@@ -41,6 +41,12 @@
         <Compile Update="..\ValheimRAFT.Unity\Assets\ValheimVehicles\SharedScripts\SharedScripts.Modules\FastQuery.cs">
             <Link>SharedScripts\SharedScripts.Modules\FastQuery.cs</Link>
         </Compile>
+        <Compile Update="..\ValheimRAFT.Unity\Assets\ValheimVehicles\SharedScripts\StoredSwivelCustomConfig.cs">
+            <Link>SharedScripts\StoredSwivelCustomConfig.cs</Link>
+        </Compile>
+        <Compile Update="ValheimVehicles.Storage.Serialization\StoredSwivelCustomConfig.cs">
+            <Link>SharedScripts\StoredSwivelCustomConfig.cs</Link>
+        </Compile>
     </ItemGroup>
     <ItemGroup Label="Internal ValheimVehicles scripts">
         <!-- Includes all namespace folders -->

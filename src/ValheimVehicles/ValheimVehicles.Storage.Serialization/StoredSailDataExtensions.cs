@@ -8,7 +8,7 @@ namespace ValheimVehicles.Storage.Serialization;
 /// </summary>
 public static class StoredSailDataExtensions
 {
-  public static StoredSailData LoadFromZDO(ZDO zdo, SailComponent sail)
+  public static StoredSailData GetSerializableData(ZDO zdo, SailComponent sail)
   {
     var data = new StoredSailData
     {
@@ -53,7 +53,7 @@ public static class StoredSailDataExtensions
     return data;
   }
 
-  public static void ApplyToZDO(this StoredSailData data, ZDO zdo, SailComponent sail)
+  public static void ApplySerializableData(this StoredSailData data, ZDO zdo, SailComponent component)
   {
     zdo.Set(SailComponent.m_sailCornersCountHash, data.SailCorners.Count);
     for (var i = 0; i < data.SailCorners.Count && i < 4; i++)
@@ -78,18 +78,18 @@ public static class StoredSailDataExtensions
     zdo.Set(SailComponent.m_mainHashRefHash, data.MainHash);
     zdo.Set(SailComponent.m_mainScaleHash, data.MainScale.ToVector2());
     zdo.Set(SailComponent.m_mainOffsetHash, data.MainOffset.ToVector2());
-    zdo.Set(SailComponent.m_mainColorHash, sail.ConvertColorToByteStream(data.MainColor.ToColor()));
+    zdo.Set(SailComponent.m_mainColorHash, component.ConvertColorToByteStream(data.MainColor.ToColor()));
 
     zdo.Set(SailComponent.m_patternScaleHash, data.PatternScale.ToVector2());
     zdo.Set(SailComponent.m_patternOffsetHash, data.PatternOffset.ToVector2());
-    zdo.Set(SailComponent.m_patternColorHash, sail.ConvertColorToByteStream(data.PatternColor.ToColor()));
+    zdo.Set(SailComponent.m_patternColorHash, component.ConvertColorToByteStream(data.PatternColor.ToColor()));
     zdo.Set(SailComponent.m_patternZDOHash, data.PatternHash);
     zdo.Set(SailComponent.m_patternRotationHash, data.PatternRotation);
 
     zdo.Set(SailComponent.m_logoZdoHash, data.LogoHash);
     zdo.Set(SailComponent.m_logoScaleHash, data.LogoScale.ToVector2());
     zdo.Set(SailComponent.m_logoOffsetHash, data.LogoOffset.ToVector2());
-    zdo.Set(SailComponent.m_logoColorHash, sail.ConvertColorToByteStream(data.LogoColor.ToColor()));
+    zdo.Set(SailComponent.m_logoColorHash, component.ConvertColorToByteStream(data.LogoColor.ToColor()));
     zdo.Set(SailComponent.m_logoRotationHash, data.LogoRotation);
 
     zdo.Set(SailComponent.m_sailFlagsHash, data.SailFlags);

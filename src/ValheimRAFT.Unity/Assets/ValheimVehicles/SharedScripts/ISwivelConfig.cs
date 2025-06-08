@@ -12,7 +12,6 @@ namespace ValheimVehicles.SharedScripts.UI
     public float MaxTrackingRange { get; set; }
     public HingeAxis HingeAxes { get; set; }
     public Vector3 MaxEuler { get; set; }
-    public Vector3 MinEuler { get; set; }
     public Vector3 MovementOffset { get; set; }
     public MotionState MotionState { get; set; }
   }

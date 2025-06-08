@@ -14,8 +14,11 @@
   using ValheimVehicles.Components;
   using ValheimVehicles.ConsoleCommands;
   using ValheimVehicles.Enums;
+  using ValheimVehicles.Helpers;
+  using ValheimVehicles.Integrations;
   using ValheimVehicles.UI;
   using ValheimVehicles.Prefabs;
+  using ValheimVehicles.Shared.Constants;
   using ValheimVehicles.SharedScripts;
   using ValheimVehicles.Storage.Serialization;
 // Assume you want the shared scripts style.
@@ -68,6 +71,10 @@
       public string PrefabName;
       public int PrefabId;
 
+      // optionals that might not exist
+      public int? PrefabSwivelParentId;
+      public int? PersistentId;
+      public StoredSwivelCustomConfig? SwivelConfigData;
       public StoredSailData? SailData; // Optional component data
     }
 
@@ -105,13 +112,19 @@
       foreach (var piece in closestShip.PiecesController.m_pieces)
       {
         if (piece == null) continue;
+
+        var netView = piece.GetComponent<ZNetView>();
+        if (!netView || netView.GetZDO() == null) continue;
+
         var pieceTransform = piece.transform;
+
+        // must use MBPosition/rotation as swivels can nest within eachother causing local position to be different from parent or rotated or moved.
         var storedPieceData = new StoredPieceData
         {
           PrefabId = piece.GetInstanceID(),
           PrefabName = piece.GetPrefabName(),
-          Position = new SerializableVector3(pieceTransform.localPosition),
-          Rotation = new SerializableQuaternion(pieceTransform.localRotation)
+          Position = new SerializableVector3(netView.GetZDO().GetVec3(VehicleZdoVars.MBPositionHash, pieceTransform.localPosition)),
+          Rotation = new SerializableQuaternion(Quaternion.Euler(netView.GetZDO().GetVec3(VehicleZdoVars.MBRotationVecHash, pieceTransform.localRotation.eulerAngles)))
         };
 
         AddCustomPieceData(storedPieceData, piece.gameObject);
@@ -173,6 +186,12 @@
 
     public static void AddCustomPieceData(StoredPieceData storedPieceData, GameObject piecePrefabInstance)
     {
+      var netView = piecePrefabInstance.GetComponent<ZNetView>();
+      if (!netView || netView.GetZDO() == null)
+      {
+        return;
+      }
+
       if (piecePrefabInstance.name.StartsWith(PrefabNames.Tier1CustomSailName))
       {
         var sail = piecePrefabInstance.GetComponent<SailComponent>();
@@ -181,9 +200,21 @@
           var zdo = sail.m_nview.GetZDO();
           if (zdo != null)
           {
-            storedPieceData.SailData = StoredSailDataExtensions.LoadFromZDO(zdo, sail);
+            storedPieceData.SailData = StoredSailDataExtensions.GetSerializableData(zdo, sail);
           }
         }
+      }
+
+      var swivel = piecePrefabInstance.GetComponent<SwivelComponentBridge>();
+      if (swivel)
+      {
+        storedPieceData.SwivelConfigData = swivel.Config.SerializeToJson();
+        storedPieceData.PersistentId = swivel.GetPersistentId();
+      }
+      var swivelParentId = netView.GetZDO().GetInt(VehicleZdoVars.SwivelParentId);
+      if (swivelParentId != 0)
+      {
+        storedPieceData.PrefabSwivelParentId = swivelParentId;
       }
     }
 
@@ -201,6 +232,114 @@
         }
       }
     }
+
+    private static List<StoredPieceData> SortSwivelPiecesInDependencyOrder(List<StoredPieceData> pieces)
+    {
+      // Dictionary to map swivel persistent IDs to their pieces
+      var swivelIdToPiece = new Dictionary<int, StoredPieceData>();
+
+      // First, identify all swivel pieces and map them by their persistent ID
+      foreach (var piece in pieces)
+      {
+        if (piece.PersistentId.HasValue && piece.PersistentId.Value != 0 &&
+            piece.PrefabName == PrefabNames.SwivelPrefabName)
+        {
+          swivelIdToPiece[piece.PersistentId.Value] = piece;
+        }
+      }
+
+      // Create a dependency graph - which swivel depends on which
+      var dependencies = new Dictionary<StoredPieceData, List<StoredPieceData>>();
+
+      // Identify pieces that are attached to swivels and build dependency tree
+      foreach (var piece in pieces)
+      {
+        if (piece.PrefabSwivelParentId.HasValue &&
+            swivelIdToPiece.TryGetValue(piece.PrefabSwivelParentId.Value, out var parentSwivel))
+        {
+          // This piece depends on a swivel
+          if (!dependencies.TryGetValue(parentSwivel, out var dependentList))
+          {
+            dependentList = new List<StoredPieceData>();
+            dependencies[parentSwivel] = dependentList;
+          }
+
+          dependentList.Add(piece);
+
+          // If this piece is also a swivel, create the dependency link
+          if (piece.PersistentId.HasValue && piece.PersistentId.Value != 0 &&
+              piece.PrefabName == PrefabNames.SwivelPrefabName)
+          {
+            // The parent swivel should be processed before this swivel
+            if (!dependencies.TryGetValue(piece, out var parentDependencies))
+            {
+              parentDependencies = new List<StoredPieceData>();
+              dependencies[piece] = parentDependencies;
+            }
+
+            if (!parentDependencies.Contains(parentSwivel))
+            {
+              parentDependencies.Add(parentSwivel);
+            }
+          }
+        }
+      }
+
+      // Perform topological sort to get the correct processing order
+      var sortedPieces = new List<StoredPieceData>();
+      var visited = new HashSet<StoredPieceData>();
+      var temporaryMark = new HashSet<StoredPieceData>();
+
+      // Helper function for depth-first search
+      void Visit(StoredPieceData piece)
+      {
+        if (temporaryMark.Contains(piece))
+        {
+          // Circular dependency detected - this is a problem, but we'll handle it gracefully
+          LoggerProvider.LogWarning($"Circular dependency detected in swivel hierarchy for piece {piece.PrefabName}, ID: {piece.PersistentId}");
+          return;
+        }
+
+        if (visited.Contains(piece))
+          return;
+
+        temporaryMark.Add(piece);
+
+        // Visit all dependencies first (these are the swivels that should be processed BEFORE this one)
+        if (dependencies.TryGetValue(piece, out var deps))
+        {
+          foreach (var dep in deps)
+          {
+            Visit(dep);
+          }
+        }
+
+        temporaryMark.Remove(piece);
+        visited.Add(piece);
+        sortedPieces.Add(piece);
+      }
+
+      // Start with all swivel pieces
+      foreach (var swivelPiece in swivelIdToPiece.Values)
+      {
+        if (!visited.Contains(swivelPiece))
+        {
+          Visit(swivelPiece);
+        }
+      }
+
+      // Add any remaining non-swivel pieces
+      foreach (var piece in pieces)
+      {
+        if (!visited.Contains(piece))
+        {
+          sortedPieces.Add(piece);
+        }
+      }
+
+      return sortedPieces;
+    }
+
 
     /// <summary>
     /// Todo take a position so we can spawn this further from player.
@@ -242,7 +381,34 @@
         return;
       }
 
-      var prefabsToAdd = new List<GameObject>();
+      // prevents accidents where a swivel could not be initialized yet it must be parenting an item or even a nested swivel.
+      vehicleData.Pieces = SortSwivelPiecesInDependencyOrder(vehicleData.Pieces);
+
+      var piecesWithoutSwivelParents = vehicleData.Pieces.Where(x => x.PrefabSwivelParentId == null).ToList();
+      var piecesWithSwivelParents = vehicleData.Pieces.Where(x => x.PrefabSwivelParentId != null).ToList();
+      var swivelPieces = vehicleData.Pieces.Select(x => x.PersistentId != null && x.PersistentId != 0 && PrefabNames.SwivelPrefabName == x.PrefabName).ToList();
+
+      var piecesToSwivelParentIds = new Dictionary<int, List<StoredPieceData>>();
+
+      // old persistentId to new swivelPiece.
+      var instantiatedSwivelPieces = new Dictionary<int, SwivelComponentBridge>();
+
+      foreach (var pieceWithSwivelParent in piecesWithSwivelParents)
+      {
+        if (!pieceWithSwivelParent.PrefabSwivelParentId.HasValue) continue;
+        if (piecesToSwivelParentIds.TryGetValue(pieceWithSwivelParent.PrefabSwivelParentId.Value, out var swivelChildren))
+        {
+          swivelChildren.Add(pieceWithSwivelParent);
+        }
+        else
+        {
+          piecesToSwivelParentIds[pieceWithSwivelParent.PrefabSwivelParentId.Value] = new List<StoredPieceData>
+          {
+            pieceWithSwivelParent
+          };
+        }
+      }
+
 
       foreach (var vehicleDataPiece in vehicleData.Pieces)
       {
@@ -254,11 +420,52 @@
         }
         try
         {
+          // todo parent might need to be dynamic. But setting to vehicle should align with swivels which first modify the position based on the top level parent. Then reparent into the nested one.
           var piecePrefabInstance = Object.Instantiate(piecePrefab, vehicleShip.PiecesController.transform.position + vehicleDataPiece.Position.ToVector3(), vehicleDataPiece.Rotation.ToQuaternion(), vehicleShip.PiecesController.transform);
+
+          if (vehicleDataPiece.PrefabName == PrefabNames.SwivelPrefabName && vehicleDataPiece.PersistentId.HasValue && vehicleDataPiece.SwivelConfigData != null)
+          {
+            var swivel = piecePrefabInstance.GetComponent<SwivelComponentBridge>();
+            if (!swivel)
+            {
+              LoggerProvider.LogError($"Error finding swivel component on piece {piecePrefab.name}. This piece should have been instantiated before this child however it was not found.");
+              continue;
+            }
+            // todo might have to deserialize async/after a couple frames. See below for coroutine.
+            swivel.Config.DeserializeFromJson(vehicleDataPiece.SwivelConfigData);
+
+            if (swivel.m_nview == null)
+            {
+              swivel.WaitForZNetView((nv) =>
+              {
+                swivel.prefabConfigSync.Save(nv.GetZDO());
+              });
+            }
+            else
+            {
+              swivel.prefabConfigSync.Save(swivel.m_nview.GetZDO());
+            }
+            instantiatedSwivelPieces.Add(vehicleDataPiece.PersistentId.Value, swivel);
+          }
 
           // all custom checks done here.
           InitPieceCustomData(vehicleDataPiece, piecePrefabInstance);
-          prefabsToAdd.Add(piecePrefabInstance);
+
+          if (vehicleDataPiece.PrefabSwivelParentId.HasValue)
+          {
+            if (!instantiatedSwivelPieces.TryGetValue(vehicleDataPiece.PrefabSwivelParentId.Value, out var swivelComponentInstance))
+            {
+              LoggerProvider.LogError($"Error finding nested swivelComponent. This component should have been instantiated before this child however it was not found. prefab: {vehicleDataPiece.PrefabName} swivelId: {vehicleDataPiece.PrefabSwivelParentId}");
+            }
+            else
+            {
+              swivelComponentInstance.AddNewPiece(piecePrefabInstance);
+            }
+          }
+          else
+          {
+            vehicleShip.PiecesController.AddNewPiece(piecePrefabInstance);
+          }
         }
         catch (Exception e)
         {
@@ -266,14 +473,7 @@
         }
       }
 
-      foreach (var pieceInstance in prefabsToAdd)
-      {
-        vehicleShip.PiecesController.AddNewPiece(pieceInstance);
-      }
-
       vehicleShip.PiecesController.StartActivatePendingPieces();
-
-      prefabsToAdd.Clear();
     }
 
     /// <summary>

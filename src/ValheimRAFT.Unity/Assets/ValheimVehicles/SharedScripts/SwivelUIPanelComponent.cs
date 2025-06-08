@@ -28,7 +28,6 @@ namespace ValheimVehicles.SharedScripts.UI
     public Transform layoutParent;
     public GameObject maxXRow;
     public GameObject maxYRow;
-    // public GameObject minYRow;
     public GameObject maxZRow;
     public bool IsEditing;
 
@@ -92,13 +91,10 @@ namespace ValheimVehicles.SharedScripts.UI
       motionStateDropdown.value = (int)_currentPanelConfig.MotionState;
 
       var max = _currentPanelConfig.MaxEuler;
-      var min = _currentPanelConfig.MinEuler;
 
       maxXRow.GetComponentInChildren<Slider>().value = max.x;
       maxYRow.GetComponentInChildren<Slider>().value = max.y;
       maxZRow.GetComponentInChildren<Slider>().value = max.z;
-
-      // minYRow.GetComponentInChildren<Slider>().value = min.y;
 
       var offset = _currentPanelConfig.MovementOffset;
       targetDistanceXRow.GetComponentInChildren<Slider>().value = offset.x;
@@ -278,14 +274,6 @@ namespace ValheimVehicles.SharedScripts.UI
         UnsetSavedState();
       });
 
-      // minYRow = SwivelUIHelpers.AddSliderRow(layoutParent, viewStyles, SwivelUIPanelStrings.MaxYAngle, 0f, 360f, _currentPanelConfig.MinEuler.y, v =>
-      // {
-      //   var e = _currentPanelConfig.MinEuler;
-      //   e.y = v;
-      //   _currentPanelConfig.MinEuler = e;
-      //   UnsetSavedState();
-      // });
-
       maxYRow = SwivelUIHelpers.AddSliderRow(layoutParent, viewStyles, SwivelUIPanelStrings.MaxYAngle, 0f, 360f, _currentPanelConfig.MaxEuler.y, v =>
       {
         var e = _currentPanelConfig.MaxEuler;
@@ -351,7 +339,6 @@ namespace ValheimVehicles.SharedScripts.UI
       rotationSectionLabel.SetActive(isRotating);
       hingeAxisRow.SetActive(isRotating);
 
-      // minYRow.SetActive(isWindTarget);
       maxYRow.SetActive(isRotating || isWindTarget);
 
       maxXRow.SetActive(isRotating);

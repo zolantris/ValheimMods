@@ -1259,7 +1259,7 @@
       var dynamicYLinearVelocity =
         isAnchored ? maxYLinearVelocity * 0.1f : maxYLinearVelocity;
 
-      if (!(Mathf.Abs(currentVelocity.y) > dynamicYLinearVelocity)) return;
+      if (IsFlying() || !(Mathf.Abs(currentVelocity.y) > dynamicYLinearVelocity)) return;
       // Clamp Y velocity while keeping X and Z unaffected
       currentVelocity.y = Mathf.Sign(currentVelocity.y) * dynamicYLinearVelocity;
 

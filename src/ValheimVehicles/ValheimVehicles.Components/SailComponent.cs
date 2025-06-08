@@ -667,7 +667,7 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable, INetView
 
     var zdo = m_nview.m_zdo;
 
-    var data = StoredSailDataExtensions.LoadFromZDO(zdo, this);
+    var data = StoredSailDataExtensions.GetSerializableData(zdo, this);
     ApplyLoadedSailData(data);
   }
 
@@ -730,7 +730,7 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable, INetView
 
     var zdo = m_nview.m_zdo;
     var data = CreateStoredSailData();
-    data.ApplyToZDO(zdo, this);
+    data.ApplySerializableData(zdo, this);
   }
 
   /// <summary>
