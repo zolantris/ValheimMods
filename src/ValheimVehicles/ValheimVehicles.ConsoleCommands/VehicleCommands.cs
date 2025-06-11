@@ -237,6 +237,7 @@ public class VehicleCommands : ConsoleCommand
     bool shouldSkipPlayer = true)
   {
     if (vehicleOnboardController == null) return null;
+    if (vehicleOnboardController.PiecesController == null) return null;
 
     var charactersOnShip = vehicleOnboardController.GetCharactersOnShip();
     var characterData = new List<SafeMoveCharacterData>();
@@ -255,10 +256,13 @@ public class VehicleCommands : ConsoleCommand
 
         if (!isKinematic && !isDebugFlying) character.m_body.isKinematic = true;
 
-        var lastLocalOffset = character.transform.parent != null
-          ? character.transform.localPosition
-          : Vector3.zero;
-        character.transform.SetParent(null);
+        var lastLocalOffset = vehicleOnboardController.PiecesController.transform.InverseTransformPoint(character.transform.position);
+
+        // bail on transporting the player if too far away from expected vehicle center of mass.
+        if (vehicleOnboardController.MovementController != null && Vector3.Distance(vehicleOnboardController.MovementController.m_body.centerOfMass, lastLocalOffset) > 200f)
+        {
+          continue;
+        }
 
         characterData.Add(new SafeMoveCharacterData
         {
@@ -269,8 +273,12 @@ public class VehicleCommands : ConsoleCommand
         });
       }
 
-    var wasDebugFlying = Player.m_localPlayer.IsDebugFlying();
-    if (!wasDebugFlying) Player.m_localPlayer.m_body.isKinematic = true;
+    var wasDebugFlying = false;
+    if (Player.m_localPlayer)
+    {
+      wasDebugFlying = Player.m_localPlayer.IsDebugFlying();
+      if (!wasDebugFlying) Player.m_localPlayer.m_body.isKinematic = true;
+    }
 
     return new SafeMoveData
     {
@@ -297,9 +305,9 @@ public class VehicleCommands : ConsoleCommand
   {
     var safeMoveData =
       SafeMovePlayerBefore(onboardController, shouldMoveLocalPlayerOffship);
-    yield return new WaitForFixedUpdate();
 
     if (coroutineFunc != null) yield return coroutineFunc;
+    yield return new WaitForFixedUpdate();
 
     var nextPosition = GetPositionAfterMoveCallback();
     yield return SafeMoveCharacterAfter(safeMoveData, nextPosition, shouldProtectAgainstFallDamage);
