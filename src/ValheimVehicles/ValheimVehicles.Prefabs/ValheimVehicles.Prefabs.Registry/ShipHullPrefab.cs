@@ -44,6 +44,10 @@ public class ShipHullPrefab : IRegisterPrefab
     RegisterWindowWallPorthole8x4Iron();
     RegisterWindowFloorPorthole4x4Iron();
 
+    RegisterHullWallAngular45();
+    RegisterHullWallAngular45Seal();
+    RegisterHullWallAngular45SealInverse();
+
     RegisterCornerWindow("corner_windows");
     RegisterCornerWindow("corner_windows_wide");
     RegisterCornerWindow("corner_windows_narrow");
@@ -393,6 +397,81 @@ public class ShipHullPrefab : IRegisterPrefab
 
     SetupHullPrefab(prefab, prefabName,
       hullMaterial,
+      materialCount);
+  }
+
+  public void RegisterHullWallAngular45()
+  {
+    var prefabName = "Valheim_Vehicles_HullWallAngular_45";
+    var prefabAsset =
+      PrefabRegistryController.vehicleAssetBundle.LoadAsset<GameObject>($"hull_wall_angular_45.prefab");
+    var prefab =
+      PrefabManager.Instance.CreateClonedPrefab(
+        prefabName, prefabAsset);
+
+    // placeholder for wall component.
+    PrefabRegistryHelpers.PieceDataDictionary.Add(prefabName, new PrefabRegistryHelpers.PieceData
+    {
+      Name = "Hull Wall Angular 45",
+      Description = "A hull wall with a 45 degree angle",
+      Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
+        .Power_Storage_Icon)
+    });
+
+    var materialCount = PrefabNames.GetPrefabSizeArea(PrefabNames.PrefabSizeVariant.TwoByTwo);
+
+    SetupHullPrefab(prefab, prefabName,
+      HullMaterial.Wood,
+      materialCount);
+  }
+
+  public void RegisterHullWallAngular45Seal()
+  {
+    var prefabName = "Valheim_Vehicles_HullWallAngular_45_seal";
+    var prefabAsset =
+      PrefabRegistryController.vehicleAssetBundle.LoadAsset<GameObject>($"hull_wall_angular_45_seal.prefab");
+    var prefab =
+      PrefabManager.Instance.CreateClonedPrefab(
+        prefabName, prefabAsset);
+
+    // placeholder for wall component.
+    PrefabRegistryHelpers.PieceDataDictionary.Add(prefabName, new PrefabRegistryHelpers.PieceData
+    {
+      Name = "Hull Wall Angular 45 Seal",
+      Description = "A hull wall with a 45 degree angle Seal",
+      Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
+        .Power_Storage_Icon)
+    });
+
+    var materialCount = PrefabNames.GetPrefabSizeArea(PrefabNames.PrefabSizeVariant.TwoByTwo);
+
+    SetupHullPrefab(prefab, prefabName,
+      HullMaterial.Wood,
+      materialCount);
+  }
+
+  public void RegisterHullWallAngular45SealInverse()
+  {
+    var prefabName = "Valheim_Vehicles_HullWallAngular_45_seal_inverse";
+    var prefabAsset =
+      PrefabRegistryController.vehicleAssetBundle.LoadAsset<GameObject>($"hull_wall_angular_45_seal_inverse.prefab");
+    var prefab =
+      PrefabManager.Instance.CreateClonedPrefab(
+        prefabName, prefabAsset);
+
+    // placeholder for wall component.
+    PrefabRegistryHelpers.PieceDataDictionary.Add(prefabName, new PrefabRegistryHelpers.PieceData
+    {
+      Name = "Hull Wall Angular 45 Seal (Inverse)",
+      Description = "A hull wall with a 45 degree angle Seal",
+      Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
+        .Power_Storage_Icon)
+    });
+
+    var materialCount = PrefabNames.GetPrefabSizeArea(PrefabNames.PrefabSizeVariant.TwoByTwo);
+
+    SetupHullPrefab(prefab, prefabName,
+      HullMaterial.Wood,
       materialCount);
   }
 
