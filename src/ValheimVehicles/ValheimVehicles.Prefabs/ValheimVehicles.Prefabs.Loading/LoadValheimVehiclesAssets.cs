@@ -139,24 +139,47 @@ public class LoadValheimVehicleAssets : ILoadAssets
 
   public static GameObject GetShipHullRibCornerProw(string hullMaterial, PrefabNames.DirectionVariant directionVariant)
   {
-    const string baseName = "hull_rib_corner_prow";
+    // todo use Size variant. This is a 2x1x8 size rib.
+    const string baseName = "hull_rib_corner_2x1x8";
     var directionString = directionVariant.ToString().ToLower();
     var assetNameToLoad = $"{baseName}_{directionString}_{hullMaterial}.prefab";
     return _bundle.LoadAsset<GameObject>(assetNameToLoad);
   }
 
-  public static GameObject GetShipHullRibCorner(string hullMaterial)
+  public static GameObject GetShipHullRibCorner(string hullMaterial, PrefabNames.DirectionVariant? directionVariant, PrefabNames.PrefabSizeVariant sizeVariant)
   {
+    var sizeVariantName = PrefabNames.GetPrefabSizeVariantName(sizeVariant);
     const string baseName = "hull_rib_corner";
-    var assetNameToLoad = $"{baseName}_{hullMaterial}.prefab";
+
+    var assetString = $"{baseName}_{sizeVariantName}";
+
+    if (directionVariant != null)
+    {
+      var directionName = PrefabNames.GetDirectionName(directionVariant.Value);
+      assetString += $"_{directionName}";
+    }
+
+    assetString += $"_{hullMaterial}";
+
+    var assetNameToLoad = $"{assetString}.prefab";
     return _bundle.LoadAsset<GameObject>(assetNameToLoad);
   }
 
   public static GameObject GetShipHullCornerFloor(string hullMaterial,
+    PrefabNames.DirectionVariant directionVariant, PrefabNames.PrefabSizeVariant sizeVariant)
+  {
+    var directionName = PrefabNames.GetDirectionName(directionVariant);
+    var sizeVariantString = PrefabNames.GetPrefabSizeVariantName(sizeVariant);
+    const string baseName = "hull_corner_floor";
+    var assetNameToLoad = $"{baseName}_${sizeVariantString}_{directionName}_{hullMaterial}.prefab";
+    return _bundle.LoadAsset<GameObject>(assetNameToLoad);
+  }
+
+  public static GameObject GetShipHullCornerFloorProw(string hullMaterial,
     PrefabNames.DirectionVariant directionVariant)
   {
     var directionName = PrefabNames.GetDirectionName(directionVariant);
-    const string baseName = "hull_corner_floor";
+    const string baseName = "hull_corner_floor_prow";
     var assetNameToLoad = $"{baseName}_{directionName}_{hullMaterial}.prefab";
     return _bundle.LoadAsset<GameObject>(assetNameToLoad);
   }

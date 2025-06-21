@@ -39,6 +39,7 @@ public class ShipHullPrefab : IRegisterPrefab
       PrefabNames.DirectionVariant.Right
     ];
 
+
     RegisterWindowWallPorthole2x2Iron();
     RegisterWindowWallPorthole4x4Iron();
     RegisterWindowWallPorthole8x4Iron();
@@ -48,31 +49,71 @@ public class ShipHullPrefab : IRegisterPrefab
     RegisterHullWallAngular45Seal();
     RegisterHullWallAngular45SealInverse();
 
-    RegisterCornerWindow("corner_windows");
-    RegisterCornerWindow("corner_windows_wide");
-    RegisterCornerWindow("corner_windows_narrow");
+    RegisterExperimentalHullPiece("hull_rib_prow_front_iron");
+    RegisterExperimentalHullPiece("hull_rib_prow_left_iron");
+    RegisterExperimentalHullPiece("hull_rib_prow_right_iron");
 
-    RegisterDoubleHullProw();
-    RegisterDoubleHullWall();
+    // prows
+    RegisterExperimentalHullPiece("hull_rib_corner_prow_right_iron");
+    RegisterExperimentalHullPiece("hull_rib_corner_prow_left_iron");
+
+    RegisterExperimentalHullPiece("hull_rib_corner_2x8_right_wood");
+    RegisterExperimentalHullPiece("hull_rib_corner_2x8_left_wood");
+
+    RegisterExperimentalHullPiece("hull_corner_floor_2x8_right_iron");
+    RegisterExperimentalHullPiece("hull_corner_floor_2x8_left_iron");
+
+    RegisterExperimentalHullPiece("hull_prow_seal");
+    RegisterExperimentalHullPiece("hull_rib_2x8_iron");
+
+    // ribs
+    RegisterExperimentalHullPiece("hull_rib_2x1x2_iron");
+    RegisterExperimentalHullPiece("hull_rib_2x1x2_wood");
+    RegisterExperimentalHullPiece("hull_rib_corner_2x1x8_left_iron");
+    RegisterExperimentalHullPiece("hull_rib_corner_2x1x8_right_iron");
+
+    // ribs (sideways)
+    RegisterExperimentalHullPiece("hull_rib_vertical_left_iron");
+    RegisterExperimentalHullPiece("hull_rib_vertical_right_iron");
+
+    // RegisterCornerWindow("corner_windows");
+    // RegisterCornerWindow("corner_windows_wide");
+    // RegisterCornerWindow("corner_windows_narrow");
+
+    // RegisterDoubleHullProw();
+    // RegisterDoubleHullWall();
+
+    RegisterHullRib(HullMaterial.Iron, PrefabNames.PrefabSizeVariant.TwoByTwoByTwo);
+    RegisterHullRib(HullMaterial.Wood, PrefabNames.PrefabSizeVariant.TwoByTwoByTwo);
+
+    RegisterHullRib(HullMaterial.Iron, PrefabNames.PrefabSizeVariant.TwoByTwoByFour);
+    RegisterHullRib(HullMaterial.Wood, PrefabNames.PrefabSizeVariant.TwoByTwoByFour);
+
+    RegisterHullRib(HullMaterial.Iron, PrefabNames.PrefabSizeVariant.TwoByOneByEight);
+
+
+    // hull-rib-corner
+    RegisterHullRibCorner(HullMaterial.Wood, null, PrefabNames.PrefabSizeVariant.TwoByTwo);
+    RegisterHullRibCorner(HullMaterial.Wood, PrefabNames.DirectionVariant.Left, PrefabNames.PrefabSizeVariant.TwoByOneByEight);
+    RegisterHullRibCorner(HullMaterial.Wood, PrefabNames.DirectionVariant.Right, PrefabNames.PrefabSizeVariant.TwoByTwoByFour);
+
+    RegisterHullRibCorner(HullMaterial.Iron, null, PrefabNames.PrefabSizeVariant.TwoByTwo);
+    RegisterHullRibCorner(HullMaterial.Iron, PrefabNames.DirectionVariant.Left, PrefabNames.PrefabSizeVariant.TwoByOneByEight);
+    RegisterHullRibCorner(HullMaterial.Iron, PrefabNames.DirectionVariant.Right, PrefabNames.PrefabSizeVariant.TwoByTwoByFour);
+
+    // hull-rib-corner-floor
+    RegisterHullRibCornerFloor(HullMaterial.Wood, PrefabNames.DirectionVariant.Left, PrefabNames.PrefabSizeVariant.TwoByTwo);
+    RegisterHullRibCornerFloor(HullMaterial.Wood, PrefabNames.DirectionVariant.Right, PrefabNames.PrefabSizeVariant.TwoByTwo);
+
+    RegisterHullRibCornerFloor(HullMaterial.Iron, PrefabNames.DirectionVariant.Left, PrefabNames.PrefabSizeVariant.TwoByEight);
+    RegisterHullRibCornerFloor(HullMaterial.Iron, PrefabNames.DirectionVariant.Right, PrefabNames.PrefabSizeVariant.TwoByEight);
+
+    // todo remove iteration as it can be less stable when prefabs are updated with new variants.
 
     foreach (var hullMaterialType in hullMaterialTypes)
       RegisterHull(PrefabNames.GetShipHullCenterName(hullMaterialType), hullMaterialType,
-        16 + 16 + 4,
+        20,
         PrefabNames.PrefabSizeVariant.FourByEight);
-
-    // does not have a size variant
-    foreach (var hullMaterialType in hullMaterialTypes)
-    {
-      RegisterHullRibProw(hullMaterialType, PrefabNames.PrefabSizeVariant.TwoByTwo);
-      RegisterHullRib(PrefabNames.GetHullRibName(hullMaterialType), hullMaterialType);
-      RegisterHullRibCorner(hullMaterialType);
-
-      foreach (var ribDirection in ribDirections)
-      {
-        RegisterHullRibProwCorner(hullMaterialType, ribDirection);
-        RegisterHullRibCornerFloor(hullMaterialType, ribDirection);
-      }
-    }
 
     foreach (var hullMaterialType in hullMaterialTypes)
     foreach (var sizeVariant in sizeVariants)
@@ -237,33 +278,27 @@ public class ShipHullPrefab : IRegisterPrefab
     //   ["mesh"]);
   }
 
-  public void RegisterHullRibProwCorner(
-    string hullMaterial, PrefabNames.DirectionVariant directionVariant)
-  {
-    var prefabName = PrefabNames.GetHullRibCornerProwName(hullMaterial, directionVariant);
-    var prefabAsset =
-      LoadValheimVehicleAssets.GetShipHullRibCornerProw(hullMaterial, directionVariant);
-    var prefab =
-      PrefabManager.Instance.CreateClonedPrefab(
-        prefabName, prefabAsset);
-
-    SetupHullPrefab(prefab, prefabName,
-      hullMaterial, 4, prefab.transform.FindDeepChild("mesh"));
-  }
-
-
   public void RegisterHullRibCorner(
-    string hullMaterial, bool hasInverse = true)
+    string materialVariant, PrefabNames.DirectionVariant? directionVariant, PrefabNames.PrefabSizeVariant sizeVariant, bool hasInverse = true)
   {
-    var prefabName = PrefabNames.GetHullRibCornerName(hullMaterial);
+    PrefabRegistryHelpers.RegisterHullRibCornerWall(materialVariant, directionVariant, sizeVariant);
+
+    var prefabName = PrefabNames.GetHullRibCornerName(materialVariant, sizeVariant);
     var prefabAsset =
-      LoadValheimVehicleAssets.GetShipHullRibCorner(hullMaterial);
+      LoadValheimVehicleAssets.GetShipHullRibCorner(materialVariant, directionVariant, sizeVariant);
+
+    if (!prefabAsset)
+    {
+      LoggerProvider.LogError($"Failed to load {prefabName}.prefab");
+      return;
+    }
+
     var prefab =
       PrefabManager.Instance.CreateClonedPrefab(
         prefabName, prefabAsset);
 
     SetupHullPrefab(prefab, prefabName,
-      hullMaterial, 4, prefab.transform.FindDeepChild("mesh"));
+      materialVariant, 4, prefab.transform.FindDeepChild("mesh"));
 
     // if (hasInverse)
     //   RegisterInverseHullRibCorner(hullMaterial,
@@ -282,20 +317,30 @@ public class ShipHullPrefab : IRegisterPrefab
   /// Registers all Hull-corner-floors (seals a hull rib)
   /// </summary>
   public void RegisterHullRibCornerFloor(
-    string hullMaterial,
-    PrefabNames.DirectionVariant directionVariant)
+    string materialVariant,
+    PrefabNames.DirectionVariant directionVariant, PrefabNames.PrefabSizeVariant sizeVariant)
   {
-    var prefabName = PrefabNames.GetHullRibCornerFloorName(hullMaterial,
-      directionVariant);
+    var prefabName = PrefabNames.GetHullRibCornerFloorName(materialVariant, directionVariant, sizeVariant);
+
+    // adds piece/icon related data.
+    PrefabRegistryHelpers.RegisterHullRibCornerFloor(materialVariant, directionVariant, sizeVariant);
+
     var prefabAsset =
-      LoadValheimVehicleAssets.GetShipHullCornerFloor(hullMaterial,
-        directionVariant);
+      LoadValheimVehicleAssets.GetShipHullCornerFloor(materialVariant,
+        directionVariant, sizeVariant);
+
+    if (!prefabAsset)
+    {
+      LoggerProvider.LogError($"Failed to load {prefabName}.prefab");
+      return;
+    }
+
     var prefab =
       PrefabManager.Instance.CreateClonedPrefab(
         prefabName, prefabAsset);
 
     SetupHullPrefab(prefab, prefabName,
-      hullMaterial, 1, prefab.transform.FindDeepChild("mesh"), ["mesh"]);
+      materialVariant, 1, prefab.transform.FindDeepChild("mesh"), ["mesh"]);
   }
 
   public void RegisterCornerWindow(string assetName)
@@ -386,18 +431,26 @@ public class ShipHullPrefab : IRegisterPrefab
     string hullMaterial,
     PrefabNames.PrefabSizeVariant sizeVariant)
   {
-    var prefabName = PrefabNames.GetHullProwVariants(hullMaterial, sizeVariant);
-    var prefabAsset =
-      LoadValheimVehicleAssets.GetShipHullRibProw(hullMaterial, sizeVariant);
-    var prefab =
-      PrefabManager.Instance.CreateClonedPrefab(
-        prefabName, prefabAsset);
+    try
+    {
 
-    var materialCount = PrefabNames.GetPrefabSizeArea(sizeVariant);
+      var prefabName = PrefabNames.GetHullProwVariants(hullMaterial, sizeVariant);
+      var prefabAsset =
+        LoadValheimVehicleAssets.GetShipHullRibProw(hullMaterial, sizeVariant);
+      var prefab =
+        PrefabManager.Instance.CreateClonedPrefab(
+          prefabName, prefabAsset);
 
-    SetupHullPrefab(prefab, prefabName,
-      hullMaterial,
-      materialCount);
+      var materialCount = PrefabNames.GetPrefabSizeArea(sizeVariant);
+
+      SetupHullPrefab(prefab, prefabName,
+        hullMaterial,
+        materialCount);
+    }
+    catch (Exception e)
+    {
+      LoggerProvider.LogError($"Error while registering for HullRib {e}");
+    }
   }
 
   public void RegisterHullWallAngular45()
@@ -423,6 +476,39 @@ public class ShipHullPrefab : IRegisterPrefab
     SetupHullPrefab(prefab, prefabName,
       HullMaterial.Wood,
       materialCount);
+  }
+
+
+  public void RegisterExperimentalHullPiece(string assetName)
+  {
+    try
+    {
+
+      var prefabAsset =
+        PrefabRegistryController.vehicleAssetBundle.LoadAsset<GameObject>($"{assetName}.prefab");
+      var prefab =
+        PrefabManager.Instance.CreateClonedPrefab(
+          assetName, prefabAsset);
+
+      // placeholder for wall component.
+      PrefabRegistryHelpers.PieceDataDictionary.Add(assetName, new PrefabRegistryHelpers.PieceData
+      {
+        Name = $"{assetName}",
+        Description = $"Experimental {assetName}",
+        Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
+          .Power_Storage_Icon)
+      });
+
+      var materialCount = PrefabNames.GetPrefabSizeArea(PrefabNames.PrefabSizeVariant.TwoByTwo);
+
+      SetupHullPrefab(prefab, assetName,
+        HullMaterial.Wood,
+        materialCount);
+    }
+    catch (Exception e)
+    {
+      LoggerProvider.LogError($"Error registering \n {e}");
+    }
   }
 
   public void RegisterHullWallAngular45Seal()
@@ -525,17 +611,54 @@ public class ShipHullPrefab : IRegisterPrefab
   /// <param name="prefabName"></param>
   /// <param name="hullMaterial"></param>
   private static void RegisterHullRib(
-    string prefabName,
-    string hullMaterial)
+    string hullMaterial, PrefabNames.PrefabSizeVariant sizeVariant)
   {
-    var prefab =
-      PrefabManager.Instance.CreateClonedPrefab(
-        prefabName, LoadValheimVehicleAssets.GetShipHullRib(hullMaterial));
+    try
+    {
+      var prefabName = PrefabNames.GetHullRibName(hullMaterial, sizeVariant);
+      if (!PrefabRegistryHelpers.PieceDataDictionary.ContainsKey(prefabName))
+      {
+        var hullMaterialDescription =
+          ShipHulls.GetHullMaterialDescription(hullMaterial);
+        var sizeVariantString = PrefabNames.GetPrefabSizeVariantName(sizeVariant);
+        PrefabRegistryHelpers.PieceDataDictionary.Add(prefabName
+          , new PrefabRegistryHelpers.PieceData
+          {
+            Name =
+              $"$valheim_vehicles_hull_rib_side {sizeVariantString} $valheim_vehicles_material_iron",
+            Description =
+              $"$valheim_vehicles_hull_rib_side_desc {hullMaterialDescription}",
+            Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
+              .HullRibIron)
+          });
+      }
+      else
+      {
+        LoggerProvider.LogDev($"RegisterHullRib Skipping registry of asset that already exists. Possible duplicate {prefabName}");
+      }
 
-    SetupHullPrefab(prefab, prefabName,
-      hullMaterial,
-      8,
-      prefab.transform.Find("new") ?? prefab.transform);
+      var prefabAsset = LoadValheimVehicleAssets.GetShipHullRib(hullMaterial);
+
+      if (!prefabAsset)
+      {
+        LoggerProvider.LogDev($"RegisterHullRib Skipping registry of asset that does not exist.");
+        return;
+      }
+
+
+      var prefab =
+        PrefabManager.Instance.CreateClonedPrefab(
+          prefabName, prefabAsset);
+
+      SetupHullPrefab(prefab, prefabName,
+        hullMaterial,
+        8,
+        prefab.transform.Find("new") ?? prefab.transform);
+    }
+    catch (Exception e)
+    {
+      LoggerProvider.LogError($"Error registering RegisterHullRib \n {e}");
+    }
   }
 
 
