@@ -66,8 +66,10 @@
         FourByEight, // 4x8
         // 3d
         TwoByTwoByTwo, // 2x2x2
+        TwoByOneByTwo, // 2x1x2
         TwoByTwoByFour, // 2x2x4 
-        TwoByOneByEight //2x1x8
+        TwoByOneByEight, //2x1x8
+        TwoByTwoByEight //2x1x8
       }
 
       public const string MBRopeAnchor = "MBRopeAnchor";
@@ -147,6 +149,7 @@
         $"{ValheimVehiclesPrefix}_WaterVehicleShip";
 
       public static readonly string HullProw = $"{ValheimVehiclesPrefix}_Ship_Hull_Prow";
+      public static readonly string HullProwRib = $"{ValheimVehiclesPrefix}_Ship_Hull_Prow_Rib";
 
       public static readonly string HullRibCorner =
         $"{ValheimVehiclesPrefix}_Ship_Hull_Rib_Corner";
@@ -154,10 +157,7 @@
       public static readonly string HullRibCornerFloor =
         $"{ValheimVehiclesPrefix}_Ship_Hull_Rib_Corner_Floor";
 
-      private static readonly string HullRib_BaseName = $"{ValheimVehiclesPrefix}_Ship_Hull_Rib";
-      public static readonly string HullRib_2x2x2 = HullRib_BaseName; // cannot change this prefab name
-      public static readonly string HullRib_2x1x8 = $"{HullRib_BaseName}_2x1x8";
-
+      public static readonly string HullRib_BaseName = $"{ValheimVehiclesPrefix}_Ship_Hull_Rib";
       // to only be used for matching with generic prefab names
       public static readonly string HullSlab = $"{ValheimVehiclesPrefix}_Hull_Slab";
 
@@ -273,21 +273,46 @@
       public static readonly string SwivelPrefabName = $"{ValheimVehiclesPrefix}_Swivel";
       public static readonly string SwivelAssetName = "swivel";
 
+      public static readonly string HullRibProwSeal = $"{ValheimVehiclesPrefix}_Hull_Rib_Prow_Seal";
+
       /// <summary>
       /// For usage with icons and other prefab registrations
       /// </summary>
       /// <param name="variant"></param>
-      /// <returns></returns>
-      /// <exception cref="ArgumentOutOfRangeException"></exception>
-      public static string GetPrefabSizeName(PrefabSizeVariant variant)
+      public static string GetPrefabSizeVariantName(PrefabSizeVariant variant)
       {
-        return variant switch
+        switch (variant)
         {
-          PrefabSizeVariant.TwoByTwo => "2x2",
-          PrefabSizeVariant.TwoByThree => "2x3",
-          PrefabSizeVariant.FourByFour => "4x4",
-          _ => throw new ArgumentOutOfRangeException(nameof(variant), variant, null)
-        };
+          case PrefabSizeVariant.None:
+            return "";
+          // width height length variants
+          case PrefabSizeVariant.TwoByOneByTwo:
+            return "2x1x2";
+          case PrefabSizeVariant.TwoByOneByEight:
+            return "2x1x8";
+          case PrefabSizeVariant.TwoByTwoByTwo:
+            return "2x2x2";
+          case PrefabSizeVariant.TwoByTwoByFour:
+            return "2x2x4";
+          case PrefabSizeVariant.TwoByTwoByEight:
+            return "2x2x8";
+          // width by length variants
+          case PrefabSizeVariant.TwoByTwo:
+            return "2x2";
+          case PrefabSizeVariant.TwoByThree:
+            return "2x3";
+          case PrefabSizeVariant.TwoByFour:
+            return "2x4";
+          case PrefabSizeVariant.TwoByEight:
+            return "2x8";
+          case PrefabSizeVariant.FourByFour:
+            return "4x4";
+          case PrefabSizeVariant.FourByEight:
+            return "4x8";
+          default:
+            LoggerProvider.LogWarning($"Unhandled prefab size {variant}");
+            return "";
+        }
       }
 
       public static string GetDirectionName(DirectionVariant directionVariant)
@@ -309,6 +334,14 @@
           PrefabSizeVariant.TwoByThree => 2 * 3,
           PrefabSizeVariant.FourByFour => 4 * 4,
           PrefabSizeVariant.FourByEight => 4 * 8,
+          PrefabSizeVariant.None => 1,
+          PrefabSizeVariant.TwoByFour => 2 * 4,
+          PrefabSizeVariant.TwoByEight => 2 * 8,
+          PrefabSizeVariant.TwoByTwoByTwo => 2 * 2,
+          PrefabSizeVariant.TwoByOneByTwo => 3,
+          PrefabSizeVariant.TwoByTwoByFour => 2 * 4,
+          PrefabSizeVariant.TwoByOneByEight => 2 * 8,
+          PrefabSizeVariant.TwoByTwoByEight => 2 * 8,
           _ => throw new ArgumentOutOfRangeException(nameof(variant), variant, null)
         };
       }
@@ -316,57 +349,6 @@
       private static string GetMaterialVariantName(string materialVariant)
       {
         return materialVariant == HullMaterial.Iron ? "Iron" : "Wood";
-      }
-
-      public static string GetPrefabSizeVariantName(
-        PrefabSizeVariant prefabSizeVariant)
-      {
-        if (prefabSizeVariant == PrefabSizeVariant.None)
-        {
-          return "";
-        }
-
-        // width height length variants
-        if (prefabSizeVariant == PrefabSizeVariant.TwoByTwoByTwo)
-        {
-          return "2x2x2";
-        }
-
-        if (prefabSizeVariant == PrefabSizeVariant.TwoByOneByEight)
-        {
-          return "2x1x8";
-        }
-
-
-        if (prefabSizeVariant == PrefabSizeVariant.TwoByTwoByFour)
-        {
-          return "2x2x4";
-        }
-
-        // width by length variants
-
-        if (prefabSizeVariant == PrefabSizeVariant.TwoByTwo)
-        {
-          return "2x2";
-        }
-
-        if (prefabSizeVariant == PrefabSizeVariant.FourByFour)
-        {
-          return "4x4";
-        }
-
-        if (prefabSizeVariant == PrefabSizeVariant.TwoByFour)
-        {
-          return "2x4";
-        }
-
-        if (prefabSizeVariant == PrefabSizeVariant.FourByEight)
-        {
-          return "4x8";
-        }
-
-        LoggerProvider.LogWarning($"Unhandled prefab size {prefabSizeVariant}");
-        return "";
       }
 
       public static string GetHullProwVariants(string materialVariant,
@@ -378,6 +360,24 @@
         return $"{HullProw}_{materialVariantName}_{sizeVariant}";
       }
 
+
+      public static string GetHullProwRibVariants(string materialVariant,
+        PrefabSizeVariant prefabSizeVariant, DirectionVariant? directionVariant, string prefabVariant)
+      {
+        var sizeVariant = GetPrefabSizeVariantName(prefabSizeVariant);
+        var materialVariantName = GetMaterialVariantName(materialVariant);
+
+        var prefabRegistryName = $"{HullProwRib}_{prefabVariant}_{sizeVariant}_{materialVariantName}";
+
+        if (directionVariant != null)
+        {
+          var directionName = GetDirectionName(directionVariant.Value);
+          prefabRegistryName += $"_{directionName}";
+        }
+
+        return prefabRegistryName;
+      }
+
       public static string GetHullRibName(string materialVariant, PrefabSizeVariant sizeVariant)
       {
 
@@ -386,35 +386,26 @@
         // cant override default otherwise it breaks players who update
         if (sizeVariant == PrefabSizeVariant.TwoByTwoByTwo)
         {
-          return $"{HullRib_2x2x2}_{materialVariantName}";
+          return $"{HullRib_BaseName}_{materialVariantName}";
         }
 
         var prefabSizeString = GetPrefabSizeVariantName(sizeVariant);
-        return $"{HullRib_2x2x2}_{prefabSizeString}_{materialVariantName}";
+        return $"{HullRib_BaseName}_{prefabSizeString}_{materialVariantName}";
       }
 
       // material names are always second to last after size names. Direction names are important so they are first
-      public static string GetHullRibCornerName(string materialVariant, PrefabSizeVariant sizeVariant)
+      public static string GetHullRibCornerName(string materialVariant, DirectionVariant? directionVariant, PrefabSizeVariant sizeVariant)
       {
         var materialName = GetMaterialVariantName(materialVariant);
 
         // would need to migrate this otherwise valheim will delete the prefab if we use the new variant names
-        if (sizeVariant == PrefabSizeVariant.TwoByTwoByTwo)
+        if (sizeVariant == PrefabSizeVariant.TwoByTwoByTwo || directionVariant == null)
         {
           return $"{HullRibCorner}_{materialName}";
         }
 
         var sizeVariantString = GetPrefabSizeVariantName(sizeVariant);
-        return $"{HullRibCorner}_{sizeVariantString}_{materialName}";
-      }
-
-      public static string GetHullRibCornerProwName(string materialVariant,
-        DirectionVariant directionVariant)
-      {
-        var directionName = GetDirectionName(directionVariant);
-        var materialName = GetMaterialVariantName(materialVariant);
-
-        return $"{HullRib_2x1x8}_{materialName}_{directionName}";
+        return $"{HullRibCorner}_{sizeVariantString}_{directionVariant}_{materialName}";
       }
 
       public static string GetHullRibCornerFloorName(string materialVariant,
@@ -430,7 +421,12 @@
 
         var sizeVariantName = GetPrefabSizeVariantName(sizeVariant);
 
-        return $"{HullRibCornerFloor}_{directionName}_{materialName}";
+        if (sizeVariantName == "2x2x2")
+        {
+          return $"{HullRibCornerFloor}_{directionName}_{materialName}";
+        }
+
+        return $"{HullRibCornerFloor}_{sizeVariantName}_{directionName}_{materialName}";
       }
 
       public static string GetHullSlabName(string materialVariant,
@@ -524,7 +520,7 @@
       {
         return goName.StartsWith(ShipHullCenterWoodPrefabName) ||
                goName.StartsWith(ShipHullCenterIronPrefabName) ||
-               goName.StartsWith(HullRib_2x2x2) ||
+               goName.StartsWith(HullRib_BaseName) ||
                goName.StartsWith(HullRibCorner)
                || goName.StartsWith(HullWall) || goName.StartsWith(HullSlab) ||
                goName.StartsWith(HullProw) ||

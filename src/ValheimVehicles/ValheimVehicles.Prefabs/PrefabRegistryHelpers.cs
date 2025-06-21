@@ -219,7 +219,7 @@ public abstract class PrefabRegistryHelpers
 
     foreach (var sizeVariant in sizeVariants)
     {
-      var sizeName = PrefabNames.GetPrefabSizeName(sizeVariant);
+      var sizeName = PrefabNames.GetPrefabSizeVariantName(sizeVariant);
       foreach (var materialVariant in materialVariants)
       {
         var materialName = materialVariant.ToLower();
@@ -255,7 +255,7 @@ public abstract class PrefabRegistryHelpers
 
     foreach (var sizeVariant in sizeVariants)
     {
-      var sizeName = PrefabNames.GetPrefabSizeName(sizeVariant);
+      var sizeName = PrefabNames.GetPrefabSizeVariantName(sizeVariant);
       foreach (var materialVariant in materialVariants)
       {
         var materialName = materialVariant.ToLower();
@@ -273,53 +273,63 @@ public abstract class PrefabRegistryHelpers
     }
   }
 
-  public static void RegisterHullRibProwCorners()
-  {
-    var spriteAtlas = LoadValheimVehicleAssets.VehicleSprites;
-    const string pieceBaseName = "valheim_vehicles_hull_rib_corner";
-    const string pieceName = $"${pieceBaseName}";
-    const string pieceDescription = $"${pieceBaseName}_desc";
-    const string iconBaseName = "hull_rib_corner_prow";
-
-    List<PrefabNames.DirectionVariant> directionVariants =
-      [PrefabNames.DirectionVariant.Left, PrefabNames.DirectionVariant.Right];
-    List<string> materialVariants =
-      [HullMaterial.Wood, HullMaterial.Iron];
-
-    foreach (var directionVariant in directionVariants)
-    {
-      var directionName = PrefabNames.GetDirectionName(directionVariant);
-      foreach (var materialVariant in materialVariants)
-      {
-        var materialName = materialVariant.ToLower();
-        var prefabName = PrefabNames.GetHullRibCornerProwName(materialVariant,
-          directionVariant);
-        var pieceData = new PieceData
-        {
-          Name =
-            $"{pieceName} $valheim_vehicles_material_{materialName} $valheim_vehicles_direction_{directionName}",
-          Description = pieceDescription,
-          Icon = spriteAtlas.GetSprite(
-            $"{iconBaseName}_{directionName}_{materialName}")
-        };
-
-        PieceDataDictionary.Add(prefabName, pieceData);
-      }
-    }
-  }
+  // public static void RegisterHullRibProwCorners()
+  // {
+  //   var spriteAtlas = LoadValheimVehicleAssets.VehicleSprites;
+  //   const string pieceBaseName = "valheim_vehicles_hull_rib_corner";
+  //   const string pieceName = $"${pieceBaseName}";
+  //   const string pieceDescription = $"${pieceBaseName}_desc";
+  //   const string iconBaseName = "hull_rib_corner_prow";
+  //
+  //   List<PrefabNames.DirectionVariant> directionVariants =
+  //     [PrefabNames.DirectionVariant.Left, PrefabNames.DirectionVariant.Right];
+  //   List<string> materialVariants =
+  //     [HullMaterial.Wood, HullMaterial.Iron];
+  //
+  //   foreach (var directionVariant in directionVariants)
+  //   {
+  //     var directionName = PrefabNames.GetDirectionName(directionVariant);
+  //     foreach (var materialVariant in materialVariants)
+  //     {
+  //       var materialName = materialVariant.ToLower();
+  //       var prefabName = PrefabNames.GetHullRibCornerProwName(materialVariant,
+  //         directionVariant);
+  //       var pieceData = new PieceData
+  //       {
+  //         Name =
+  //           $"{pieceName} $valheim_vehicles_material_{materialName} $valheim_vehicles_direction_{directionName}",
+  //         Description = pieceDescription,
+  //         Icon = spriteAtlas.GetSprite(
+  //           $"{iconBaseName}_{directionName}_{materialName}")
+  //       };
+  //
+  //       PieceDataDictionary.Add(prefabName, pieceData);
+  //     }
+  //   }
+  // }
 
   public static void RegisterHullRibCornerFloor(string materialVariant,
     PrefabNames.DirectionVariant directionVariant, PrefabNames.PrefabSizeVariant sizeVariant)
   {
     var directionName = PrefabNames.GetDirectionName(directionVariant);
-    var prefabSizeName = PrefabNames.GetPrefabSizeName(sizeVariant);
+    var prefabSizeName = PrefabNames.GetPrefabSizeVariantName(sizeVariant);
     var materialName = materialVariant.ToLower();
     var prefabName = PrefabNames.GetHullRibCornerFloorName(materialVariant,
       directionVariant, sizeVariant);
+    var prefabAssetName = LoadValheimVehicleAssets.GetShipHullCornerFloorAssetName(materialVariant, directionVariant, sizeVariant);
+
     const string pieceBaseName = "valheim_vehicles_hull_rib_corner_floor";
     const string pieceName = $"${pieceBaseName}";
     const string pieceDescription = $"${pieceBaseName}_desc";
-    const string iconBaseName = "hull_corner_floor";
+
+    var icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(
+      prefabAssetName);
+
+    if (!icon)
+    {
+      icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames.Anchor);
+      LoggerProvider.LogWarning($"HullRibCornerFloor missing sprite: {prefabAssetName}");
+    }
 
     if (!PieceDataDictionary.ContainsKey(prefabName))
     {
@@ -328,8 +338,7 @@ public abstract class PrefabRegistryHelpers
         Name =
           $"{pieceName} $valheim_vehicles_material_{materialName} {prefabSizeName} $valheim_vehicles_direction_{directionName}",
         Description = pieceDescription,
-        Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(
-          $"{iconBaseName}_{prefabSizeName}_{directionName}_{materialName}")
+        Icon = icon
       };
       PieceDataDictionary.Add(prefabName, pieceData);
     }
@@ -341,27 +350,31 @@ public abstract class PrefabRegistryHelpers
 
   public static void RegisterHullRibCornerWall(string materialVariant, PrefabNames.DirectionVariant? directionVariant, PrefabNames.PrefabSizeVariant sizeVariant)
   {
-    var spriteAtlas = LoadValheimVehicleAssets.VehicleSprites;
     const string pieceBaseName = "valheim_vehicles_hull_rib_corner";
     const string pieceDescription = $"${pieceBaseName}_desc";
-    const string iconBaseName = "hull_rib_corner";
 
-    var sizeVariantString = PrefabNames.GetPrefabSizeName(sizeVariant);
+    var assetName = LoadValheimVehicleAssets.GetShipHullRibCornerAssetName(materialVariant, directionVariant, sizeVariant);
+    var prefabName = PrefabNames.GetHullRibCornerName(materialVariant, directionVariant, sizeVariant);
+    var sizeVariantString = PrefabNames.GetPrefabSizeVariantName(sizeVariant);
     var materialName = materialVariant.ToLower();
 
+    var pieceName = $"${pieceBaseName} {sizeVariantString} $valheim_vehicles_material_{materialName}_{directionVariant}";
 
-    var pieceName = $"${pieceBaseName} {sizeVariantString} $valheim_vehicles_material_{materialName}";
-    var iconName = $"{iconBaseName}_{sizeVariantString}_{materialName}";
+    var sprite = LoadValheimVehicleAssets.VehicleSprites.GetSprite(
+      assetName);
+
+    if (!sprite)
+    {
+      LoggerProvider.LogWarning($"HullRibCornerWall missing sprite: {assetName}");
+      sprite = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames.ErrorIcon);
+    }
 
     var pieceData = new PieceData
     {
       Name = pieceName,
       Description = pieceDescription,
-      Icon = spriteAtlas.GetSprite(
-        iconName)
+      Icon = sprite
     };
-
-    var prefabName = PrefabNames.GetHullRibCornerName(materialVariant, sizeVariant);
 
     if (!PieceDataDictionary.ContainsKey(prefabName))
     {
@@ -437,8 +450,6 @@ public abstract class PrefabRegistryHelpers
 
     RegisterHullSlabIcons();
     RegisterHullWalls();
-
-    RegisterHullRibProwCorners();
 
     PieceDataDictionary.Add(PrefabNames.WaterVehicleShip, new PieceData
     {

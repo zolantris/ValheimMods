@@ -6,7 +6,7 @@ Mesh:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: hull_rib_prow_front_nose 1
+  m_Name: hull_rib_prow_front_nose
   serializedVersion: 11
   m_SubMeshes:
   - serializedVersion: 2

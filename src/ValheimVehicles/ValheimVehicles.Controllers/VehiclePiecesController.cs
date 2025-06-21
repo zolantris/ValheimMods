@@ -1680,7 +1680,7 @@
             .ShipHullCenterIronPrefabName))
         return 80f;
 
-      if (pieceName.StartsWith(PrefabNames.HullRib_2x2x2))
+      if (pieceName.StartsWith(PrefabNames.HullRib_BaseName))
       {
         if (pieceName.Contains(HullMaterial.Iron)) return 720f;
 

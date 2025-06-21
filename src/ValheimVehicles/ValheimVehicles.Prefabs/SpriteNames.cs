@@ -50,6 +50,8 @@ public abstract class SpriteNames
 
   public const string HullRibWood = "hull_rib_wood";
   public const string HullRibIron = "hull_rib_iron";
+  public const string ErrorIcon = "error";
+  public const string ExperimentIcon = "experiment";
 
   // Windows
   public const string WindowPortholeStandalone = "window_porthole_standalone";
