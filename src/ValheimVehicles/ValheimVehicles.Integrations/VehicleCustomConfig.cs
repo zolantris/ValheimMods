@@ -22,6 +22,7 @@ public class VehicleCustomConfig : ISerializableConfig<VehicleCustomConfig, IVeh
   internal const string Key_HasCustomFloatationHeight = "vehicle_hasCustomFloatationHeight";
   internal const string Key_CustomFloatationHeight = "vehicle_customFloatationHeight";
   internal const string Key_CenterOfMassOffset = "vehicle_centerOfMassOffset";
+  internal const string Key_ForceDocked = "vehicle_forceDocked";
 
   // todo integrate these keys.
   // unused keys.
@@ -55,6 +56,7 @@ public class VehicleCustomConfig : ISerializableConfig<VehicleCustomConfig, IVeh
 
   private bool _hasCustomFloatationHeight = false;
   private float _customFloatationHeight = 0f;
+  private bool _forceDocked = false;
 #if !UNITY_EDITOR
   private float _centerOfMassOffset = PhysicsConfig.VehicleCenterOfMassOffset.Value;
 #else
@@ -130,6 +132,12 @@ public class VehicleCustomConfig : ISerializableConfig<VehicleCustomConfig, IVeh
     set => _centerOfMassOffset = value;
   }
 
+  public bool ForceDocked
+  {
+    get => _forceDocked;
+    set => _forceDocked = value;
+  }
+
   /// <summary>
   /// Write into ZPackage. Serialization is efficient but order dependent, so order matters when serializing and deserializing.
   /// </summary>
@@ -143,9 +151,10 @@ public class VehicleCustomConfig : ISerializableConfig<VehicleCustomConfig, IVeh
     pkg.Write(_treadLength);
     pkg.Write(_treadHeight);
     pkg.Write(_treadScaleX);
+    pkg.Write(_forceDocked);
   }
 
-  public void Save(ZDO zdo, VehicleCustomConfig customConfig, string[]? filterKeys)
+  public void Save(ZDO zdo, VehicleCustomConfig customConfig, string[]? filterKeys = null)
   {
 #if DEBUG
     LoggerProvider.LogDebug("Saving vehicle config");
@@ -158,6 +167,7 @@ public class VehicleCustomConfig : ISerializableConfig<VehicleCustomConfig, IVeh
     zdo.SetDelta(Key_HasCustomFloatationHeight, customConfig.HasCustomFloatationHeight);
     zdo.SetDelta(Key_CustomFloatationHeight, customConfig.CustomFloatationHeight);
     zdo.SetDelta(Key_CenterOfMassOffset, customConfig.CenterOfMassOffset);
+    zdo.SetDelta(Key_ForceDocked, customConfig.ForceDocked);
   }
 
   public VehicleCustomConfig Load(ZDO zdo, IVehicleConfig configFromComponent, string[]? filterKeys = null)
@@ -171,7 +181,8 @@ public class VehicleCustomConfig : ISerializableConfig<VehicleCustomConfig, IVeh
       TreadScaleX = zdo.GetFloat(Key_TreadScaleX, PrefabConfig.ExperimentalTreadScaleX.Value),
       HasCustomFloatationHeight = zdo.GetBool(Key_HasCustomFloatationHeight, configFromComponent.HasCustomFloatationHeight),
       CustomFloatationHeight = zdo.GetFloat(Key_CustomFloatationHeight, configFromComponent.CustomFloatationHeight),
-      CenterOfMassOffset = zdo.GetFloat(Key_CenterOfMassOffset, configFromComponent.CenterOfMassOffset)
+      CenterOfMassOffset = zdo.GetFloat(Key_CenterOfMassOffset, configFromComponent.CenterOfMassOffset),
+      ForceDocked = zdo.GetBool(Key_ForceDocked, configFromComponent.ForceDocked)
     };
   }
 
@@ -185,6 +196,7 @@ public class VehicleCustomConfig : ISerializableConfig<VehicleCustomConfig, IVeh
     HasCustomFloatationHeight = config.HasCustomFloatationHeight;
     CustomFloatationHeight = config.CustomFloatationHeight;
     CenterOfMassOffset = config.CenterOfMassOffset;
+    ForceDocked = config.ForceDocked;
   }
   public void ApplyTo(IVehicleConfig config)
   {
@@ -197,6 +209,7 @@ public class VehicleCustomConfig : ISerializableConfig<VehicleCustomConfig, IVeh
     config.HasCustomFloatationHeight = HasCustomFloatationHeight;
     config.CustomFloatationHeight = Mathf.Clamp(CustomFloatationHeight, -50f, 50f);
     config.CenterOfMassOffset = CenterOfMassOffset;
+    config.ForceDocked = ForceDocked;
   }
 
   public VehicleCustomConfig Deserialize(ZPackage pkg)
@@ -211,7 +224,8 @@ public class VehicleCustomConfig : ISerializableConfig<VehicleCustomConfig, IVeh
       TreadDistance = pkg.ReadSingle(),
       TreadLength = pkg.ReadSingle(),
       TreadHeight = pkg.ReadSingle(),
-      TreadScaleX = pkg.ReadSingle()
+      TreadScaleX = pkg.ReadSingle(),
+      ForceDocked = pkg.ReadBool()
     };
   }
 }

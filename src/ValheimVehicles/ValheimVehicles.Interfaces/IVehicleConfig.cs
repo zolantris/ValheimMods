@@ -49,4 +49,10 @@ public interface IVehicleConfig
     get;
     set;
   }
+
+  public bool ForceDocked
+  {
+    get;
+    set;
+  }
 }

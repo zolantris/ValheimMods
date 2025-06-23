@@ -8,10 +8,12 @@ using UnityEngine.Serialization;
 using ValheimVehicles.BepInExConfig;
 using ValheimVehicles.ConsoleCommands;
 using ValheimVehicles.Constants;
+using ValheimVehicles.Controllers;
 using ValheimVehicles.Helpers;
 using ValheimVehicles.Integrations;
 using ValheimVehicles.Interfaces;
 using ValheimVehicles.Patches;
+using ValheimVehicles.Shared.Constants;
 using ValheimVehicles.Structs;
 using ValheimVehicles.SharedScripts;
 using ValheimVehicles.SharedScripts.Helpers;
@@ -341,7 +343,10 @@ public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interac
         VehicleCommands.ToggleColliderEditMode();
         break;
       case MechanismAction.SwivelEditMode:
-        return TriggerSwivelPanel();
+        TriggerSwivelPanel();
+        break;
+      case MechanismAction.VehicleDock:
+        TriggerDockSequence();
         break;
       case MechanismAction.SwivelActivateMode:
       {
@@ -359,7 +364,44 @@ public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interac
     ToggleVisualActivationState();
     AddPlayerToPullSwitchAnimations(humanoid);
 
+    return true;
+  }
 
+  public bool TriggerDockSequence()
+  {
+    var piecesController = transform.GetComponentInParent<VehiclePiecesController>();
+    if (!piecesController)
+    {
+      Player.m_localPlayer.Message(MessageHud.MessageType.Center, ModTranslations.DockingMessages_NotAttachedToVehicle);
+      return false;
+    }
+
+    var manager = piecesController.Manager;
+
+    if (!manager || manager.MovementController == null || manager.PiecesController == null) return false;
+
+    var parentId = manager.m_nview.GetZDO().GetInt(VehicleZdoVars.MBParentId, 0);
+
+    if (manager.VehicleParent != null || parentId != 0 || manager.ForceDocked)
+    {
+      VehicleManager.RemoveVehicleParent(manager);
+      Player.m_localPlayer.Message(MessageHud.MessageType.Center, ModTranslations.DockingMessages_Undocked);
+    }
+    else
+    {
+      var vehiclePosition = manager.MovementController.m_body.worldCenterOfMass;
+      var maxCastDistance = 200f;
+      var raycastStartpoint = vehiclePosition + Vector3.up * maxCastDistance / 2f;
+
+      var closestVehicleManager = VehicleCommands.GetNearestVehicleManagerInRayOrSphere(raycastStartpoint, vehiclePosition, maxCastDistance, 20f, manager);
+      if (closestVehicleManager == null)
+      {
+        Player.m_localPlayer.Message(MessageHud.MessageType.Center, ModTranslations.DockingMessages_NoVehicleToDockFound);
+        return false;
+      }
+      VehicleManager.AddVehicleParent(closestVehicleManager, manager, true);
+      Player.m_localPlayer.Message(MessageHud.MessageType.Center, ModTranslations.DockingMessages_Docked);
+    }
     return true;
   }
 
@@ -510,6 +552,8 @@ public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interac
       MechanismAction.SwivelEditMode => ModTranslations.MechanismMode_Swivel_Edit,
       MechanismAction.SwivelActivateMode => ModTranslations.Swivel_Name,
       MechanismAction.None => ModTranslations.MechanismMode_None,
+      MechanismAction.VehicleDock => ModTranslations.MechanismMode_VehicleDock,
+      // MechanismAction.VehicleConfig => ModTranslations.MechanismMode_VehicleConfig,
       _ => throw new ArgumentOutOfRangeException(nameof(action), action, null)
     };
   }

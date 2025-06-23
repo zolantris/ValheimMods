@@ -699,6 +699,95 @@ public class VehicleCommands : ConsoleCommand
   }
 
   /// <summary>
+  /// Do a downwards raycast always so the cast position should be a value above where it's expected
+  /// </summary>
+  /// todo figure out why CustomVehicleMask never collides with raycast.
+  /// <returns></returns>
+  public static VehicleManager? GetNearestVehicleManagerInRay(Vector3 castPositionRay, float maxDistanceRay, VehicleManager? excludedManager)
+  {
+    var hits = Physics.RaycastNonAlloc(castPositionRay, Vector3.down, AllocatedRaycast, maxDistanceRay, LayerHelpers.PieceAndCustomVehicleMask);
+    VehicleManager? vehicleManager = null;
+
+    if (hits != 0)
+    {
+      for (var index = 0; index < hits; index++)
+      {
+        var raycastHit = AllocatedRaycast[index];
+        if (TryGetVehicleManager(raycastHit, out vehicleManager))
+        {
+          if (excludedManager != null && excludedManager == vehicleManager)
+          {
+            vehicleManager = null;
+          }
+          else
+          {
+            break;
+          }
+        }
+      }
+    }
+    return vehicleManager;
+  }
+
+  public static VehicleManager? GetNearestVehicleManagerInRayOrSphere(Vector3 castPositionRay, Vector3 castPositionSphere, float maxDistanceRay, float maxSphereRadius, VehicleManager? excludedManager)
+  {
+    if (!GameCamera.instance || !GameCamera.instance) return null;
+    if (!Player.m_localPlayer) return null;
+
+    var vehicleManager = GetNearestVehicleManagerInRay(castPositionRay, maxDistanceRay, excludedManager);
+
+    if (!vehicleManager)
+    {
+      vehicleManager = GetNearestVehicleManagerInSphere(castPositionSphere, maxSphereRadius, excludedManager);
+    }
+
+    if (!vehicleManager)
+    {
+      VehicleNotDetectedMessage();
+      return null;
+    }
+
+    return vehicleManager;
+  }
+
+  /// <summary>
+  /// Distance based on player relative to camera looking direction intersection.
+  /// </summary>
+  /// <returns></returns>
+  public static VehicleManager? GetNearestVehicleManagerInSphere(Vector3 castPosition, float maxDistance, VehicleManager? excludedManager)
+  {
+    if (!GameCamera.instance || !GameCamera.instance) return null;
+    if (!Player.m_localPlayer) return null;
+
+    VehicleManager? vehicleManager = null;
+
+    // continue with heavier check if failed.
+    var hits = Physics.SphereCastNonAlloc(castPosition, maxDistance, Vector3.down, AllocatedRaycast, maxDistance, LayerHelpers.PieceAndCustomVehicleMask);
+    if (hits == 0)
+    {
+      return null;
+    }
+
+    for (var index = 0; index < hits; index++)
+    {
+      var raycastHit = AllocatedRaycast[index];
+      if (TryGetVehicleManager(raycastHit, out vehicleManager))
+      {
+        if (excludedManager != null && excludedManager == vehicleManager)
+        {
+          vehicleManager = null;
+        }
+        else
+        {
+          break;
+        }
+      }
+    }
+
+    return vehicleManager;
+  }
+
+  /// <summary>
   /// Distance based on player relative to camera looking direction intersection.
   /// </summary>
   /// <returns></returns>

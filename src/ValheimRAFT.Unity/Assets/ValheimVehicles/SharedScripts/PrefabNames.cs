@@ -77,6 +77,7 @@
 
       public static readonly string ValheimVehiclesPrefix = "ValheimVehicles";
 
+      public static readonly string DockAttachpoint = $"{ValheimVehiclesPrefix}_DockAttachpoint";
       public static readonly string SailCreator = $"{ValheimVehiclesPrefix}_SailCreator";
       public static readonly string LandVehicle = $"{ValheimVehiclesPrefix}_VehicleLand";
       public static readonly string AirVehicle = $"{ValheimVehiclesPrefix}_VehicleAir";

@@ -102,6 +102,16 @@ public partial class ModTranslations
     MechanismSwitch_AltActionString = SafeLocalize($"[<color=yellow><b>{ValheimInput_KeyAltPlace}+{ValheimInput_KeyUse}</b></color>] $valheim_vehicles_mechanism_mode_configure");
 
     MechanismSwitch_AltHoldActionString = SafeLocalize($"[<color=yellow><b>{SharedKeys_Hold}+{ValheimInput_KeyAltPlace}+{ValheimInput_KeyUse}</b></color>] $valheim_vehicles_mechanism_swivel_edit");
+
+    MechanismMode_VehicleDock = SafeLocalize("$valheim_vehicles_mechanism_mode_vehicle_dock");
+
+    DockingMessages_NotAttachedToVehicle = SafeLocalize("$valheim_vehicles_vehicle_dock_messages_not_attached_to_vehicle");
+    DockingMessages_NoVehicleToDockFound = SafeLocalize("$valheim_vehicles_vehicle_dock_messages_no_dockable_vehicle_found");
+    DockingMessages_Undocked = SafeLocalize("$valheim_vehicles_vehicle_dock_messages_undock_success");
+    DockingMessages_Docked = SafeLocalize("$valheim_vehicles_vehicle_dock_messages_dock_success");
+
+    // debug exposed for now.
+    MechanismMode_VehicleConfig = SafeLocalize($"Vehicle Config");
   }
 
   private static void UpdateGuiEditMenuTranslations()

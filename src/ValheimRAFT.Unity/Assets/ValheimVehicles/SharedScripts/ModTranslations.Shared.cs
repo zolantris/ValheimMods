@@ -42,8 +42,15 @@ namespace ValheimVehicles.SharedScripts
 
     // modes
     public static string MechanismMode_None = null!;
+    public static string MechanismMode_VehicleDock = null!;
+    public static string MechanismMode_VehicleConfig = null!;
     public static string MechanismMode_Swivel_Edit = null!;
     public static string MechanismMode_Hold_To_Edit = null!;
+
+    public static string DockingMessages_Undocked = null!;
+    public static string DockingMessages_NoVehicleToDockFound = null!;
+    public static string DockingMessages_NotAttachedToVehicle = null!;
+    public static string DockingMessages_Docked = null!;
 
     public static string VehicleConfig_CustomFloatationHeight = null!;
 

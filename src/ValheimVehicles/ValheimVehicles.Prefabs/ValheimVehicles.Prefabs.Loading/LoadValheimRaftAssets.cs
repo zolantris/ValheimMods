@@ -15,7 +15,7 @@ public class LoadValheimRaftAssets : ILoadAssets
   public static GameObject editPanel;
   public static GameObject editTexturePanel;
 
-  public static GameObject? rope_anchor;
+  public static GameObject? anchor_rope;
 
   public void Init(AssetBundle assetBundle)
   {
@@ -23,8 +23,8 @@ public class LoadValheimRaftAssets : ILoadAssets
     editTexturePanel = assetBundle.LoadAsset<GameObject>("edit_texture_panel");
     sailTextureNormal = assetBundle.LoadAsset<Texture>("sail_normal.png");
     sailTexture = assetBundle.LoadAsset<Texture>("sail.png");
-    rope_anchor =
-      assetBundle.LoadAsset<GameObject>("rope_anchor.prefab");
+    anchor_rope =
+      assetBundle.LoadAsset<GameObject>("anchor_rope.prefab");
     boardingRampAsset =
       assetBundle.LoadAsset<GameObject>("boarding_ramp.prefab");
     ropeLadder =

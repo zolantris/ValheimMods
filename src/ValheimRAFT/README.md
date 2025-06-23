@@ -341,7 +341,7 @@ discontain other mods.
       </td>
     </tr>
     <tr>
-      <td>Pylons (unavailable) (v3.5.0+)</td>
+      <td>Pylons (unavailable) (v3.6.0+)</td>
       <td>
         <img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/mechanism_power_pylon.png" width="48"/>
       </td>

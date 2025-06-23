@@ -257,8 +257,12 @@
     private Transform? _piecesContainerTransform;
     private Coroutine? _serverUpdatePiecesCoroutine;
 
-    // wheels for rudders
-    internal List<SteeringWheelComponent> _steeringWheelPieces = [];
+    // only one is allowed
+    internal SteeringWheelComponent? _steeringWheelPiece;
+
+    // only one is allowed
+    internal RopeAnchorComponent? m_dockAnchor;
+
     private Bounds BaseControllerHullBounds;
 
     private Bounds BaseControllerPieceBounds;
@@ -591,9 +595,17 @@
             m_rudderPieces.Add(rudder);
             SetShipWakeBounds();
             break;
+          case RopeAnchorComponent ropeAnchor:
+            if (ropeAnchor.IsDockAnchor())
+            {
+              OnAddUniquePieceDestroyPrevious(m_dockAnchor);
+              m_dockAnchor = ropeAnchor;
+            }
+            break;
           case SteeringWheelComponent wheel:
-            OnAddSteeringWheelDestroyPrevious(netView, wheel);
-            _steeringWheelPieces.Add(wheel);
+            OnAddUniquePieceDestroyPrevious(_steeringWheelPiece);
+            _steeringWheelPiece = wheel;
+            RotateVehicleForwardPosition();
             wheel.InitializeControls(netView, Manager);
             break;
           case TeleportWorld portal:
@@ -638,10 +650,18 @@
               SetShipWakeBounds();
             break;
           }
+          case RopeAnchorComponent ropeAnchor:
+            if (ropeAnchor.IsDockAnchor())
+            {
+              m_dockAnchor = null;
+            }
+            break;
           case SteeringWheelComponent wheel:
-            _steeringWheelPieces.Remove(wheel);
-            VehicleMovementController.RemoveAllShipControls(Manager
-              ?.MovementController);
+            _steeringWheelPiece = null;
+            if (Manager)
+            {
+              VehicleMovementController.RemoveAllShipControls(Manager.MovementController);
+            }
             break;
           case Bed bed:
             m_bedPieces.Remove(bed);
@@ -2149,9 +2169,10 @@
       foreach (var anchorComponent in m_anchorMechanismComponents)
         if (anchorState != anchorComponent.currentState)
           anchorComponent.UpdateAnchorState(anchorState, currentWheelStateText);
-      foreach (var steeringWheel in _steeringWheelPieces)
+
+      if (_steeringWheelPiece)
       {
-        steeringWheel.UpdateSteeringHoverMessage(anchorState, currentWheelStateText);
+        _steeringWheelPiece.UpdateSteeringHoverMessage(anchorState, currentWheelStateText);
       }
     }
 
@@ -2659,18 +2680,21 @@
           LoggerProvider.LogWarning($"Attempted to add a nested landvehicle to another land vehicle. This is not allowed. NetView <{netView.name}>");
           return;
         }
-        LoggerProvider.LogWarning("Detected a nested landvehicle within a WaterVehicle. This is supported but could be unstable.");
-      }
-
-      if (m_pieces.Contains(netView))
-      {
-        Logger.LogWarning($"NetView already is added. name: {netView.name}");
-        return;
+#if DEBUG
+        LoggerProvider.LogDev("Detected a nested landvehicle within a WaterVehicle. This is supported but could be unstable.");
+#endif
       }
 
       var previousCount = GetPieceCount();
 
-      TrySetPieceToParent(netView);
+      if (m_pieces.Contains(netView))
+      {
+        LoggerProvider.LogDev($"NetView already is added. name: {netView.name}");
+      }
+      else
+      {
+        TrySetPieceToParent(netView);
+      }
 
       if (netView.m_zdo != null && netView.m_persistent)
       {
@@ -2704,23 +2728,17 @@
       if (previousCount == 0 && GetPieceCount() == 1) SetInitComplete();
     }
 
-// must call wnt destroy otherwise the piece is removed but not destroyed like a player destroying an item.
-// must create a new array to prevent a collection modify error
-    public void OnAddSteeringWheelDestroyPrevious(ZNetView netView,
-      SteeringWheelComponent steeringWheelComponent)
+    public void OnAddUniquePieceDestroyPrevious(MonoBehaviour? component)
     {
-      var wheelPieces = _steeringWheelPieces;
-      if (wheelPieces.Count <= 0) return;
+      if (component == null) return;
+      var netView = component.GetComponent<ZNetView>();
+      if (netView == null) return;
 
-      foreach (var wheelPiece in wheelPieces.ToList())
+      var wnt = netView.GetComponent<WearNTear>();
+      if (wnt != null)
       {
-        if (wheelPiece == null) return;
-        var wnt = wheelPiece.GetComponent<WearNTear>();
-        if (wnt == null) return;
         wnt.Destroy();
       }
-
-      RotateVehicleForwardPosition();
     }
 
     /// <summary>
@@ -2877,12 +2895,20 @@
     {
       if (MovementController == null) return;
 
-      if (_steeringWheelPieces.Count <= 0) return;
-      var firstWheel = _steeringWheelPieces.First();
-      if (firstWheel == null || !firstWheel.enabled) return;
+      if (_steeringWheelPiece == null || !_steeringWheelPiece.enabled) return;
 
-      Manager.MovementController.UpdateShipDirection(
-        firstWheel.transform
+      // forces wheel to always be direction of landvehicle.
+      if (Manager.IsLandVehicle)
+      {
+        _steeringWheelPiece.transform.localRotation = Quaternion.identity;
+        var nv = _steeringWheelPiece.GetComponent<ZNetView>();
+        if (!nv || nv.GetZDO() == null) return;
+        _steeringWheelPiece.GetComponent<ZNetView>().GetZDO().SetRotation(Quaternion.identity);
+        return;
+      }
+
+      MovementController.UpdateShipDirection(
+        _steeringWheelPiece.transform
           .localRotation);
     }
 

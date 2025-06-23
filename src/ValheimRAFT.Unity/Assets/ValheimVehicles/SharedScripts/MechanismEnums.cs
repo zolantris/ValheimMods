@@ -11,6 +11,7 @@ namespace ValheimVehicles.SharedScripts
     SwivelEditMode,
     SwivelActivateMode,
     None,
-    VehicleConfig
+    VehicleDock // docks/undocks vehicle from nearest vehicle
+    // VehicleConfig
   }
 }

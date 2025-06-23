@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 415210666
+CRC: 1356362788
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 0b5daa70a1b749fba14a9d282d6fa73e
+    Hash: 43e0bbf3a84415f6e302ad83a0456333
   TypeTreeHash:
     serializedVersion: 2
-    Hash: 55e2ed7b1f13007c7b7e5a2965ac734e
+    Hash: 2829a51ee33982bdb5ce5c64787aa447
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 0b5daa70a1b749fba14a9d282d6fa73e
+    Hash: 43e0bbf3a84415f6e302ad83a0456333
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -39,6 +39,10 @@ ClassTypes:
 - Class: 108
   Script: {instanceID: 0}
 - Class: 114
+  Script: {fileID: 11500000, guid: 8aa93d7854518e94aaf1cc6faf180375, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 7d873279a1e81b9419d0f6fb8b3c1fa9, type: 3}
+- Class: 114
   Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
 - Class: 114
   Script: {fileID: 11500000, guid: 67db9e8f0e2ae9c40bc1e2b64352a6b4, type: 3}
@@ -55,8 +59,6 @@ ClassTypes:
 - Class: 114
   Script: {fileID: 11500000, guid: 9085046f02f69544eb97fd06b6048fe2, type: 3}
 - Class: 114
-  Script: {fileID: 11500000, guid: 8aa93d7854518e94aaf1cc6faf180375, type: 3}
-- Class: 114
   Script: {fileID: 11500000, guid: 59f8146938fff824cb5fd77236b75775, type: 3}
 - Class: 114
   Script: {fileID: 11500000, guid: 747419968f339df40a827088f25c215d, type: 3}
@@ -68,8 +70,6 @@ ClassTypes:
   Script: {fileID: 11500000, guid: 37593e1934874fe4db91a205982d109e, type: 3}
 - Class: 114
   Script: {fileID: 11500000, guid: 2a4db7a114972834c8e4117be1d82ba3, type: 3}
-- Class: 114
-  Script: {fileID: 11500000, guid: 7d873279a1e81b9419d0f6fb8b3c1fa9, type: 3}
 - Class: 114
   Script: {fileID: 11500000, guid: 19bf60ab5c953fe4ba1db2f29c51ad1b, type: 3}
 - Class: 115
@@ -206,9 +206,10 @@ Assets:
 - Assets/ValheimVehicles/Prefabs/hull_rib_corner_2x2x2_wood.prefab
 - Assets/ValheimVehicles/Prefabs/shared_example_raft.prefab
 - Assets/ValheimVehicles/Material/glass_nautilus_green.mat
-- Assets/ValheimVehicles/Material/TestMat.mat
+- Assets/ValheimVehicles/Prefabs/anchor_dock.prefab
 - Assets/ValheimVehicles/Material/wood_piece_valheim_4x4.mat
 - Assets/ValheimVehicles/Prefabs/shared_hull_slab_wood_2x2_new.prefab
+- Assets/ValheimVehicles/Material/TestMat.mat
 - Assets/ValheimVehicles/Material/RopeMat.mat
 - Assets/ValheimVehicles/Prefabs/hull_prow_2x2x4_iron.prefab
 - Assets/ValheimVehicles/Prefabs/anchor_chain.prefab
@@ -252,7 +253,7 @@ Assets:
 - Assets/ValheimVehicles/Prefabs/boarding_ramp.prefab
 - Assets/ValheimVehicles/Material/bronze_nautilus_metal.mat
 - Assets/ValheimVehicles/Prefabs/mechanism_swivel.prefab
-- Assets/ValheimVehicles/Prefabs/rope_anchor.prefab
+- Assets/ValheimVehicles/Prefabs/anchor_rope.prefab
 - Assets/ValheimVehicles/Material/wood_alt_piece_bg_valheim_wood.mat
 - Assets/ValheimVehicles/Prefabs/GUI/hud_anchor.prefab
 - Assets/ValheimVehicles/Material/iron_pole_vert.mat
@@ -262,7 +263,7 @@ Assets:
 - Assets/ValheimVehicles/Material/blackmetal.mat
 - Assets/ValheimVehicles/Prefabs/chain_link.prefab
 - Assets/ValheimVehicles/Material/cutout_wood_alt_piece_bg_valheim_wood_debug_1.mat
-- Assets/ValheimVehicles/Material/iron_metal.mat
+- Assets/ValheimVehicles/Material/iron_metal_double_sided.mat
 - Assets/ValheimVehicles/Material/glass_nautilus_notint_withmask.mat
 - Assets/ValheimVehicles/Material/iron_metal_rustic_4x4.mat
 - Assets/ValheimVehicles/Prefabs/hull_rib_corner_2x2x4_right_wood.prefab
@@ -359,5 +360,5 @@ Assets:
 - Assets/ValheimVehicles/Prefabs/dirt_floor.prefab
 - Assets/ValheimVehicles/Prefabs/hull_corner_floor_2x2_right_iron.prefab
 - Assets/ValheimVehicles/Prefabs/side_ram.prefab
-- Assets/ValheimVehicles/Material/iron_metal_no_tiling.mat
+- Assets/ValheimVehicles/Material/iron_metal.mat
 Dependencies: []

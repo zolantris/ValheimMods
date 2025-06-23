@@ -400,7 +400,7 @@ public static class PrefabRegistryController
   {
     var prefab =
       prefabManager.CreateClonedPrefab(PrefabNames.MBRopeAnchor,
-        LoadValheimRaftAssets.rope_anchor);
+        LoadValheimRaftAssets.anchor_rope);
 
     var mbRopeAnchorPrefabPiece = prefab.AddComponent<Piece>();
     mbRopeAnchorPrefabPiece.m_name = "$mb_rope_anchor";
