@@ -179,9 +179,9 @@ public class PrefabConfig : BepInExBaseConfig<PrefabConfig>
 
     VehicleDockPositionChangeSpeed = config.BindUnique(SectionKey,
       "VehicleDockPositionChangeSpeed",
-      2.5f,
+      1f,
       ConfigHelpers.CreateConfigDescription(
-        $"Dock position change speed. Higher values will make the vehicle move faster but could cause physics problems", true, false, new AcceptableValueRange<float>(1f, 100f)));
+        $"Dock position change speed. Higher values will make the vehicle move faster but could cause physics problems.", true, false, new AcceptableValueRange<float>(0.001f, 100f)));
 
     VehicleDockVerticalHeight = config.BindUnique(SectionKey,
       "VehicleDockVerticalHeight",

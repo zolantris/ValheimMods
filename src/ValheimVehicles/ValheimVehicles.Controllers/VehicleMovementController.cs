@@ -740,7 +740,8 @@
       var desiredWorldRotation = rotationDelta * m_body.rotation;
 
       // --- Position: offset from m_body origin to our anchor (in world space, not local!)
-      var anchorWorldOffset = ourAnchorTransform.position - m_body.position;
+      var position = m_body.position;
+      var anchorWorldOffset = ourAnchorTransform.position - position;
 
       // Apply desired rotation to the world offset
       var rotatedAnchorOffset = rotationDelta * anchorWorldOffset;
@@ -750,7 +751,7 @@
 
       var desiredWorldPosition = targetWorldAnchorPos - rotatedAnchorOffset;
 
-      var deltaDistance = Vector3.Distance(m_body.position, desiredWorldPosition);
+      var deltaDistance = Vector3.Distance(position, desiredWorldPosition);
 
       // frozen sync will handle this instead.
       if (deltaDistance < dockUpdateDelta)
@@ -758,18 +759,11 @@
         return false;
       }
 
-      // var newPosition = Vector3.Lerp(m_body.position, desiredWorldPosition, Time.fixedDeltaTime * PrefabConfig.VehicleDockPositionChangeSpeed.Value / clampedDistance);
-      var rampFactor = PrefabConfig.VehicleDockPositionChangeSpeed.Value;
-
-      var moveSpeed = Mathf.Clamp(deltaDistance * rampFactor, minSpeed, maxSpeed);
-      var moveDir = (desiredWorldPosition - m_body.position).normalized;
-      var stepSize = Mathf.Min(moveSpeed * Time.fixedDeltaTime, maxStepPerFrame);
-
       var maxLerpFactor = 1f; // full movement
       var minLerpFactor = 0.01f; // minimum lerp per frame
       var distanceFalloff = 2.5f; // how quickly we slow near the target
 
-      var lerpT = Mathf.Clamp01(Time.fixedDeltaTime * distanceFalloff / deltaDistance);
+      var lerpT = Mathf.Clamp01(Time.fixedDeltaTime * distanceFalloff / deltaDistance / PrefabConfig.VehicleDockPositionChangeSpeed.Value);
       lerpT = Mathf.Clamp(lerpT, minLerpFactor, maxLerpFactor);
 
 
