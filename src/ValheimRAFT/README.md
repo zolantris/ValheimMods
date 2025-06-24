@@ -22,6 +22,7 @@ This document contains generic tutorials and information on configuring the mod.
 - [Vehicle Commands](./docs/tutorials/Tutorial_VehicleCommandsInterface.md)
 - Videos
     - [Swivels Visual Tutorial](https://youtu.be/wtnUCGz2zek)
+    - [Vehicle Dock (LandVehicles to WaterVehicle)](https://youtu.be/iJSqmvJZlzo)
 
 ## Mod Info
 
@@ -341,7 +342,7 @@ discontain other mods.
       </td>
     </tr>
     <tr>
-      <td>Pylons (unavailable) (v3.5.0+)</td>
+      <td>Pylons (unavailable) (v3.6.0+)</td>
       <td>
         <img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/mechanism_power_pylon.png" width="48"/>
       </td>
@@ -666,6 +667,14 @@ Previously it only supported Direct3D11.
 | Zolantris   | For supporting and expanding the Raft Mod since v1.5.0.                                                    |
 | RacerX      | For contributing a stag icon for sails - Looks awesome! And the nautilus assets, (experimental)            |
 | Cl0udstr1fe | For adding the new hull meshes for Rib Side, Prow, and Corners. Completes the ship look with these meshes! |
+
+### Icons
+
+<a href="https://www.flaticon.com/free-icons/dock" title="dock icons">Dock icons
+created by Smashicons - Flaticon</a>
+
+Many google icons.
+https://fonts.google.com/icons
 
 ## Support Open Source
 

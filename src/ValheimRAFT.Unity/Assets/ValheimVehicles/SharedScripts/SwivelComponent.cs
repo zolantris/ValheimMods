@@ -137,6 +137,7 @@ namespace ValheimVehicles.SharedScripts
 
     public HingeAxis HingeAxes => hingeAxes;
     public Vector3 MaxEuler => maxRotationEuler;
+
     public virtual int SwivelPersistentId { get; set; }
 
     public virtual void Awake()

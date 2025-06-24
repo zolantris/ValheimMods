@@ -19,7 +19,7 @@ Material:
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 1
   m_DoubleSidedGI: 1
-  m_CustomRenderQueue: -1
+  m_CustomRenderQueue: 3000
   stringTagMap: {}
   disabledShaderPasses: []
   m_LockedProperties: 
@@ -47,7 +47,7 @@ Material:
         m_Scale: {x: 4, y: 4}
         m_Offset: {x: 0, y: 0}
     - _EmissiveTex:
-        m_Texture: {fileID: 2800000, guid: 7dec91e98b346c14ab046c96733bad28, type: 3}
+        m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _Logo:
@@ -63,7 +63,7 @@ Material:
         m_Scale: {x: 2, y: 2}
         m_Offset: {x: -1, y: -1}
     - _MainColorNormal:
-        m_Texture: {fileID: 0}
+        m_Texture: {fileID: 2800000, guid: 2c02d24348c9582469cc686fd59ff89c, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MainNormal:
@@ -99,7 +99,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _PatternTex:
-        m_Texture: {fileID: 2800000, guid: 7dec91e98b346c14ab046c96733bad28, type: 3}
+        m_Texture: {fileID: 2800000, guid: d3094ab58a2dfe846b48da8a6e2f5723, type: 3}
         m_Scale: {x: 2.5, y: 0.5}
         m_Offset: {x: 0, y: 0}
     - _SailNormal:
@@ -117,7 +117,7 @@ Material:
     - _BumpScale: 1
     - _CamCull: 1
     - _Cull: 0
-    - _Cutoff: 0.02
+    - _Cutoff: 0
     - _DetailNormalMapScale: 1
     - _DstBlend: 0
     - _GlossMapScale: 1
@@ -156,9 +156,9 @@ Material:
     m_Colors:
     - _AmbientColor: {r: 1, g: 1, b: 1, a: 1}
     - _Color: {r: 1, g: 1, b: 1, a: 0}
-    - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
-    - _LogoColor: {r: 0.4575472, g: 0.4575472, b: 0.4575472, a: 1}
-    - _MainColor: {r: 0.3820755, g: 0.012615708, b: 0.012615708, a: 1}
+    - _EmissionColor: {r: 0, g: 0, b: 0, a: 0}
+    - _LogoColor: {r: 0.6671158, g: 0.67023534, b: 0.99999994, a: 1}
+    - _MainColor: {r: 1, g: 1, b: 1, a: 1}
     - _PatternColor: {r: 0.6320754, g: 0.6320754, b: 0.6320754, a: 1}
     - _SailColor: {r: 1, g: 1, b: 1, a: 1}
     - _SpecColor: {r: 0.2, g: 0.2, b: 0.2, a: 1}

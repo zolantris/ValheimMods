@@ -23,9 +23,6 @@ public class LoadValheimVehicleAssets : ILoadAssets
   public static Material WaterHeightMaterial = null!;
   public static Material GlassNautilusNoTint = null!;
 
-  public static GameObject HullDoubleProw = null!;
-  public static GameObject HullDoubleWall = null!;
-
   public static GameObject ShipAnchorWood = null!;
 
   // mechanisms/energy
@@ -120,43 +117,113 @@ public class LoadValheimVehicleAssets : ILoadAssets
 
   internal static AssetBundle _bundle = null!;
 
-  private static GameObject GetShipProwAssetByMaterial(string hullMaterial,
+  public static string GetShipProwAssetName(string materialVariant,
     PrefabNames.PrefabSizeVariant sizeVariant)
   {
-    var sizeName = PrefabNames.GetPrefabSizeName(sizeVariant);
-    var assetNameToLoad = $"hull_rib_prow_{hullMaterial}_{sizeName}.prefab";
-    return _bundle.LoadAsset<GameObject>(assetNameToLoad);
+    var sizeName = PrefabNames.GetPrefabSizeVariantName(sizeVariant);
+    const string baseName = "hull_prow";
+    var assetName = $"{baseName}_{sizeName}_{materialVariant}";
+    return assetName;
   }
 
-  public static GameObject GetShipHullRibProw(string hullMaterial,
-    PrefabNames.PrefabSizeVariant sizeVariant)
+
+  /// <summary>
+  /// prow type can be either cutter|smooth
+  /// </summary>
+  /// <returns></returns>
+  public static string GetShipProwRibSpecialVariantAssetName(string materialVariant,
+    PrefabNames.PrefabSizeVariant sizeVariant, PrefabNames.DirectionVariant? directionVariant, string prefabVariant)
   {
-    var sizeName = PrefabNames.GetPrefabSizeName(sizeVariant);
+    var sizeName = PrefabNames.GetPrefabSizeVariantName(sizeVariant);
     const string baseName = "hull_rib_prow";
-    var assetNameToLoad = $"{baseName}_{hullMaterial}_{sizeName}.prefab";
-    return _bundle.LoadAsset<GameObject>(assetNameToLoad);
+
+    var assetName = $"{baseName}_{prefabVariant}_{sizeName}";
+
+    if (directionVariant != null)
+    {
+      var directionName = PrefabNames.GetDirectionName(directionVariant.Value);
+      assetName += $"_{directionName}";
+    }
+
+    assetName += $"_{materialVariant}";
+
+    return assetName;
   }
 
-  public static GameObject GetShipHullRibCorner(string hullMaterial)
+  public static GameObject GetShipHullProw(string materialVariant,
+    PrefabNames.PrefabSizeVariant sizeVariant)
   {
-    const string baseName = "hull_rib_corner";
-    var assetNameToLoad = $"{baseName}_{hullMaterial}.prefab";
+    var assetName = GetShipProwAssetName(materialVariant, sizeVariant);
+    var assetNameToLoad = $"{assetName}.prefab";
     return _bundle.LoadAsset<GameObject>(assetNameToLoad);
   }
 
-  public static GameObject GetShipHullCornerFloor(string hullMaterial,
-    PrefabNames.DirectionVariant directionVariant)
+  public static GameObject GetShipHullRibProwSpecialVariant(string materialVariant,
+    PrefabNames.PrefabSizeVariant sizeVariant, PrefabNames.DirectionVariant? directionVariant, string prefabVariant)
+  {
+    var assetName = GetShipProwRibSpecialVariantAssetName(materialVariant, sizeVariant, directionVariant, prefabVariant);
+    var assetNameToLoad = $"{assetName}.prefab";
+    return _bundle.LoadAsset<GameObject>(assetNameToLoad);
+  }
+
+  public static GameObject GetShipHullRibCorner(string hullMaterial, PrefabNames.DirectionVariant? directionVariant, PrefabNames.PrefabSizeVariant sizeVariant)
+  {
+    var assetString = GetShipHullRibCornerAssetName(hullMaterial, directionVariant, sizeVariant);
+    var assetNameToLoad = $"{assetString}.prefab";
+    return _bundle.LoadAsset<GameObject>(assetNameToLoad);
+  }
+
+
+  public static string GetShipHullCornerFloorAssetName(string materialVariant,
+    PrefabNames.DirectionVariant directionVariant, PrefabNames.PrefabSizeVariant sizeVariant)
   {
     var directionName = PrefabNames.GetDirectionName(directionVariant);
+    var sizeVariantString = PrefabNames.GetPrefabSizeVariantName(sizeVariant);
     const string baseName = "hull_corner_floor";
-    var assetNameToLoad = $"{baseName}_{directionName}_{hullMaterial}.prefab";
+    var assetString = $"{baseName}_{sizeVariantString}_{directionName}_{materialVariant}";
+
+    return assetString;
+  }
+
+  public static GameObject GetShipHullCornerFloor(string materialVariant,
+    PrefabNames.DirectionVariant directionVariant, PrefabNames.PrefabSizeVariant sizeVariant)
+  {
+    var assetString = GetShipHullCornerFloorAssetName(materialVariant, directionVariant, sizeVariant);
+    var assetNameToLoad = $"{assetString}.prefab";
     return _bundle.LoadAsset<GameObject>(assetNameToLoad);
   }
 
-  public static GameObject GetShipHullRib(string hullMaterial)
+  public static string GetShipHullRibCornerAssetName(string materialVariant, PrefabNames.DirectionVariant? directionVariant, PrefabNames.PrefabSizeVariant sizeVariant)
   {
+    var sizeVariantName = PrefabNames.GetPrefabSizeVariantName(sizeVariant);
+    const string baseName = "hull_rib_corner";
+
+    var assetString = $"{baseName}_{sizeVariantName}";
+
+    if (directionVariant != null)
+    {
+      var directionName = PrefabNames.GetDirectionName(directionVariant.Value);
+      assetString += $"_{directionName}";
+    }
+
+    assetString += $"_{materialVariant}";
+
+    return assetString;
+  }
+
+  public static string GetShipHullRibAssetName(string materialVariant, PrefabNames.PrefabSizeVariant sizeVariant)
+  {
+    var sizeVariantName = PrefabNames.GetPrefabSizeVariantName(sizeVariant);
     const string baseName = "hull_rib";
-    var assetNameToLoad = $"{baseName}_{hullMaterial}.prefab";
+
+    var assetString = $"{baseName}_{sizeVariantName}_{materialVariant}";
+    return assetString;
+  }
+
+  public static GameObject GetShipHullRib(string materialVariant, PrefabNames.PrefabSizeVariant sizeVariant)
+  {
+    var assetString = GetShipHullRibAssetName(materialVariant, sizeVariant);
+    var assetNameToLoad = $"{assetString}.prefab";
     return _bundle.LoadAsset<GameObject>(assetNameToLoad);
   }
 
@@ -312,9 +379,6 @@ public class LoadValheimVehicleAssets : ILoadAssets
     // Effects Prefabs
     // from Plugin, todo rename the casing problematic asset.
     LightningMaterial = assetBundle.LoadAsset<Material>("lightning_bolt_material_animated_additive.mat");
-
-    HullDoubleProw = assetBundle.LoadAsset<GameObject>("hull_double_prow");
-    HullDoubleWall = assetBundle.LoadAsset<GameObject>("hull_rib_double");
 
     // Data rebinds done inline
     PowerNetworkController.WireMaterial = new Material(DoubleSidedTransparentMat)

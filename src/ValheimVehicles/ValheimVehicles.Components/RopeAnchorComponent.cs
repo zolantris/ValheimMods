@@ -3,8 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
+using ValheimVehicles.BepInExConfig;
 using ValheimVehicles.Controllers;
 using ValheimVehicles.Shared.Constants;
+using ValheimVehicles.SharedScripts;
 using ValheimVehicles.Structs;
 using ZdoWatcher;
 using ZdoWatcher.ZdoWatcher.Utils;
@@ -96,6 +98,7 @@ public class RopeAnchorComponent : MonoBehaviour, Interactable, Hoverable
   private static string HaulingStartText = "";
   private static string HaulingStopText = "";
 
+  public Transform m_attachpoint;
 
   private static readonly Dictionary<string, string[]> m_attachmentPoints =
     GetAttachmentPoints();
@@ -105,6 +108,7 @@ public class RopeAnchorComponent : MonoBehaviour, Interactable, Hoverable
     m_rigidbody = GetComponentInParent<Rigidbody>();
     m_rope = GetComponent<LineRenderer>();
     m_nview = GetComponent<ZNetView>();
+    m_attachpoint = transform.Find("attachpoint");
     var wnt = GetComponent<WearNTear>();
     if (!wnt)
     {
@@ -119,6 +123,17 @@ public class RopeAnchorComponent : MonoBehaviour, Interactable, Hoverable
 
     SetupLocalization();
     Localization.OnLanguageChange += SetupLocalization;
+  }
+
+  public void Start()
+  {
+    m_maxRopeDistance = IsDockAnchor() ? Mathf.Max(PrefabConfig.VehicleDockVerticalHeight.Value, 64f) : 64f;
+  }
+
+  public bool IsDockAnchor()
+  {
+    if (!gameObject) return false;
+    return gameObject.name.StartsWith(PrefabNames.DockAttachpoint);
   }
 
   public void OnDestroy()
@@ -171,6 +186,11 @@ public class RopeAnchorComponent : MonoBehaviour, Interactable, Hoverable
 
   public string GetHoverText()
   {
+    if (IsDockAnchor())
+    {
+      return "";
+    }
+
     if (isHauling)
     {
       return HaulingStopText;
@@ -206,8 +226,35 @@ public class RopeAnchorComponent : MonoBehaviour, Interactable, Hoverable
     piecesController.MovementController.SetHaulingVehicle(player, this, isHauling);
   }
 
+  public void AddDockPoint(RopeAnchorComponent ropeAnchor)
+  {
+    if (!ropeAnchor) return;
+    if (!ropeAnchor.IsDockAnchor())
+    {
+      LoggerProvider.LogError("error attempted to attach to the wrong type of RopeAnchorComponent");
+      return;
+    }
+    // do not allow multiple ropes.
+    if (m_ropes.Count > 0) return;
+    // dictionary index of 0 since this only connects to another rope anchor
+    AttachRope(ropeAnchor, false);
+  }
+
+  public void RemoveAllRopes()
+  {
+    foreach (var mRope in m_ropes)
+    {
+      if (mRope == null) continue;
+      Destroy(mRope.m_ropeObject);
+    }
+
+    m_ropes.Clear();
+  }
+
   public bool Interact(Humanoid user, bool hold, bool alt)
   {
+    if (IsDockAnchor()) return false;
+
     if (hold && m_draggingRopeFrom)
     {
       m_draggingRopeFrom = null;
@@ -248,6 +295,9 @@ public class RopeAnchorComponent : MonoBehaviour, Interactable, Hoverable
   private static Dictionary<string, string[]> GetAttachmentPoints()
   {
     Dictionary<string, string[]> attachmentPoints = new();
+
+    attachmentPoints.Add($"{PrefabNames.DockAttachpoint}(Clone)", new[] { "attachpoint" });
+
     attachmentPoints.Add("Karve(Clone)",
       new string[5]
       {
@@ -274,6 +324,9 @@ public class RopeAnchorComponent : MonoBehaviour, Interactable, Hoverable
       new string[1] { "Visual/CG/Pelvis/Spine/Spine1/Spine2/Neck" });
     attachmentPoints.Add("Neck(Clone)",
       new string[1] { "Visual/Armature/Hips/Spine/Spine1/Neck" });
+
+
+
     return attachmentPoints;
   }
 
@@ -322,9 +375,9 @@ public class RopeAnchorComponent : MonoBehaviour, Interactable, Hoverable
     return 0;
   }
 
-  private void AttachRope(GameObject gameObject, byte index)
+  private void AttachRope(GameObject go, byte index, bool shouldPersist = true)
   {
-    var nv = gameObject.GetComponentInParent<ZNetView>();
+    var nv = go.GetComponentInParent<ZNetView>();
     if ((bool)nv && nv.m_zdo != null)
     {
       Logger.LogDebug($"AttachRope {index}");
@@ -335,13 +388,16 @@ public class RopeAnchorComponent : MonoBehaviour, Interactable, Hoverable
       if (!RemoveRopeWithID(id))
       {
         CreateNewRope(id);
-        SaveToZDO();
+        if (shouldPersist)
+        {
+          SaveToZDO();
+        }
         CheckRopes();
       }
     }
   }
 
-  private void AttachRope(RopeAnchorComponent ropeAnchorComponent)
+  private void AttachRope(RopeAnchorComponent ropeAnchorComponent, bool shouldPersist = true)
   {
     var parentid =
       ZdoWatchController.Instance.GetOrCreatePersistentID(ropeAnchorComponent
@@ -352,7 +408,10 @@ public class RopeAnchorComponent : MonoBehaviour, Interactable, Hoverable
           new RopeAttachmentTarget(parentid, 0)))
     {
       CreateNewRope(new RopeAttachmentTarget(parentid, 0));
-      SaveToZDO();
+      if (shouldPersist)
+      {
+        SaveToZDO();
+      }
       CheckRopes();
     }
   }
@@ -361,10 +420,16 @@ public class RopeAnchorComponent : MonoBehaviour, Interactable, Hoverable
   {
     var newRope = new Rope();
     newRope.m_ropeAnchorTarget = target;
-    newRope.m_ropeObject = new GameObject("MBRope");
+
+    var ropeType = IsDockAnchor() ? "dock_rope" : "rope";
+    newRope.m_ropeObject = new GameObject($"valheim_vehicles_{ropeType}");
+
     newRope.m_ropeObject.layer = LayerMask.NameToLayer("piece_nonsolid");
     newRope.m_collider = newRope.m_ropeObject.AddComponent<BoxCollider>();
-    newRope.m_collider.size = new Vector3(0.1f, 0.1f, 0.1f);
+
+    var ropeSize = IsDockAnchor() ? 0.1f : 0.3f;
+    newRope.m_collider.size = Vector3.one * ropeSize;
+
     newRope.m_ropeComponent =
       newRope.m_ropeObject.AddComponent<RopeComponent>();
     newRope.m_rope = newRope.m_ropeObject.AddComponent<LineRenderer>();
@@ -436,7 +501,7 @@ public class RopeAnchorComponent : MonoBehaviour, Interactable, Hoverable
 
     if (m_rope.enabled && (bool)Player.m_localPlayer)
     {
-      m_rope.SetPosition(0, transform.position);
+      m_rope.SetPosition(0, m_attachpoint.position);
       if (!isHauling && (bool)m_draggingRopeTo)
       {
         var index = GetIndexAtLocation(m_draggingRopeTo);
@@ -464,7 +529,7 @@ public class RopeAnchorComponent : MonoBehaviour, Interactable, Hoverable
       if ((bool)rope.m_ropeObject && (bool)rope.m_ropeTarget)
       {
         var ropeDistance =
-          (transform.position - rope.m_targetTransform.position).magnitude;
+          (m_attachpoint.position - rope.m_targetTransform.position).magnitude;
         if (m_nview.IsOwner() && (ropeDistance > m_maxRopeDistance ||
                                   ropeDistance >
                                   rope.m_ropeAttachDistance + 8f))
@@ -473,7 +538,7 @@ public class RopeAnchorComponent : MonoBehaviour, Interactable, Hoverable
           continue;
         }
 
-        rope.m_rope.SetPosition(0, transform.position);
+        rope.m_rope.SetPosition(0, m_attachpoint.position);
         rope.m_rope.SetPosition(1, rope.m_targetTransform.position);
       }
       else
@@ -509,10 +574,12 @@ public class RopeAnchorComponent : MonoBehaviour, Interactable, Hoverable
         continue;
       }
 
+      var localAttachpointPosition = m_attachpoint.position;
+
       var targetTransform =
         GetAttachmentTransform(rope.m_ropeTarget, rope.m_ropeAnchorTarget);
       rope.m_ropeAttachDistance =
-        (transform.position - targetTransform.position).magnitude;
+        (localAttachpointPosition - targetTransform.position).magnitude;
       rope.m_targetTransform = targetTransform;
       var rb = rope.m_ropeTarget.GetComponentInParent<Rigidbody>();
       if ((bool)rb)
@@ -527,9 +594,9 @@ public class RopeAnchorComponent : MonoBehaviour, Interactable, Hoverable
         spring.connectedBody = rb;
         spring.autoConfigureConnectedAnchor = false;
         spring.anchor =
-          springRb.transform.InverseTransformPoint(transform.position);
+          springRb.transform.InverseTransformPoint(localAttachpointPosition);
         spring.connectedAnchor =
-          rb.transform.InverseTransformPoint(targetTransform.position);
+          rb.transform.InverseTransformPoint(localAttachpointPosition);
       }
 
       if (!rb && rope.m_ropeTarget.transform.parent == transform.parent ||
@@ -537,7 +604,7 @@ public class RopeAnchorComponent : MonoBehaviour, Interactable, Hoverable
       {
         rope.m_rope.useWorldSpace = false;
         rope.m_rope.SetPosition(0,
-          rope.m_rope.transform.InverseTransformPoint(transform.position));
+          rope.m_rope.transform.InverseTransformPoint(localAttachpointPosition));
         rope.m_rope.SetPosition(1,
           rope.m_rope.transform.InverseTransformPoint(rope.m_targetTransform
             .position));

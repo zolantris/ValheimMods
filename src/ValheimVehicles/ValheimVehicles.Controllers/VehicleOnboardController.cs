@@ -546,18 +546,35 @@
     private void RemovePlayerOnShip(Player player)
     {
       var isPlayerInList = m_localPlayers.Contains(player);
-      player.m_doodadController = null;
-
       if (isPlayerInList)
       {
         m_localPlayers.Remove(player);
-        if (Player.m_localPlayer == player)
+        if (Player.m_localPlayer == player && MovementController != null)
           ValheimBaseGameShip.s_currentShips.Remove(MovementController);
       }
       else
       {
         Logger.LogWarning(
           $"Player {player.GetPlayerName()} detected leaving ship, but not within the ship's player list");
+      }
+
+      if (player.m_doodadController != null)
+      {
+        var controller = player.m_doodadController.GetControlledComponent();
+        // controlling null component means we should remove the player anyways.
+        if (controller == null)
+        {
+          player.m_doodadController = null;
+        }
+        else
+        {
+          // must be same manager.
+          var vehicleManager = controller.GetComponent<VehicleManager>();
+          if (vehicleManager != null && vehicleManager == Manager)
+          {
+            player.m_doodadController = null;
+          }
+        }
       }
 
       RestorePlayerBlockingCamera(player);

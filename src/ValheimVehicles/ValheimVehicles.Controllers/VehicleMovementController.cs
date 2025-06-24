@@ -20,6 +20,7 @@
   using ValheimVehicles.Shared.Constants;
   using ValheimVehicles.SharedScripts;
   using ValheimVehicles.Structs;
+  using ZdoWatcher;
   using Logger = Jotunn.Logger;
 
 #endregion
@@ -281,7 +282,7 @@
     public bool CanDescend =>
       WaterConfig.WaterBallastEnabled.Value && IsNotFlying || IsFlying();
 
-    public FrozenRigidbodySync? _frozenSync;
+    public FrozenRigidbodySync? m_frozenSync;
 
     internal override void Awake()
     {
@@ -312,6 +313,11 @@
       {
         var parentZdoId = nv.GetZDO().GetInt(VehicleZdoVars.MBParentId);
         isWaitingForParentVehicleToBeReady = parentZdoId != 0;
+
+        if (isWaitingForParentVehicleToBeReady)
+        {
+          parentPositionTimerCheck = Stopwatch.StartNew();
+        }
       });
     }
 
@@ -425,7 +431,7 @@
 
         handled = true;
 
-        if (!otherManager || Manager.PiecesController == null || otherManager.MovementController == null) return false;
+        if (otherManager == null || otherManager.PiecesController == null || otherManager.MovementController == null || Manager.PiecesController == null || PiecesController == null) return false;
         otherManager.MovementController.isWaitingForParentVehicleToBeReady = true;
         otherManager.MovementController.m_body.isKinematic = true;
         m_body.velocity = Vector3.zero;
@@ -433,7 +439,7 @@
         // nest the vehicle. This will not parent it, but it will bind the piece to the parent position, ensuring things are accurately synced.
         // Manager.PiecesController.AddNewPiece(otherManager.Manager.m_nview);
 
-        VehicleManager.AddVehicleParent(Manager, otherManager.Manager);
+        VehicleManager.AddVehicleParent(Manager, otherManager.Manager, Manager.Config.ForceDocked);
 
         var otherPieceDataItems = otherManager.PiecesController.m_prefabPieceDataItems.Values;
         var thisPiecesDataItems = PiecesController.m_prefabPieceDataItems.Values;
@@ -554,11 +560,15 @@
 
     public void OnParentReady(VehicleManager vehicleParent)
     {
+      if (parentPositionTimerCheck != null && parentPositionTimerCheck.IsRunning)
+      {
+        parentPositionTimerCheck.Reset();
+      }
       if (_parentSyncRoutine.IsRunning) return;
       _parentSyncRoutine.Start(SyncToParentPosition(vehicleParent));
     }
 
-    public static float ParentSyncMinimumDelayInMs = 5000f;
+    public static float ParentSyncMinimumDelayInMs = 5;
 
     /// <summary>
     /// - raycast or check if still within a boundary of the parent. Maybe just by doing a manual box collider check.
@@ -571,21 +581,35 @@
       if (Manager.VehicleParent == null) yield break;
     }
 
+    public static float maxDockDistance = 300f;
+
+    public bool IsVehicleParentWithinDockDistance()
+    {
+      if (Manager == null || Manager.VehicleParent == null || Manager.OnboardCollider == null || Manager.VehicleParent.OnboardCollider == null) return false;
+
+      var parentClosestPoint = Manager.VehicleParent.OnboardCollider.ClosestPoint(Manager.transform.position);
+      var currentClosesPoint = Manager.OnboardCollider.ClosestPoint(Manager.VehicleParent.transform.position);
+
+      var deltaDistance = Vector3.Distance(currentClosesPoint, parentClosestPoint);
+
+      return deltaDistance <= PrefabConfig.VehicleDockVerticalHeight.Value;
+    }
+
     public bool TrySyncVehicleToParent(ZNetView netView)
     {
       if (!netView) return false;
       try
       {
-        if (Manager.VehicleParent == null) return false;
-        var parentLocalPositionOffset = netView.GetZDO().GetVec3(VehicleZdoVars.MBPositionHash, Vector3.zero);
-        var nextTransform = Manager.VehicleParent.transform.position - parentLocalPositionOffset;
-        var deltaDistance = Vector3.Distance(transform.position, nextTransform);
-        if (deltaDistance > 80f)
+        if (Manager.VehicleParent == null)
         {
-          LoggerProvider.LogWarning("The parent is way further than expected {. This is likely a bug or the vehicle is not nearby. Removing vehicle from parent.");
-          isWaitingForParentVehicleToBeReady = false;
-          Manager.VehicleParent = null;
-          VehiclePiecesController.RemoveVehicleDataFromZdo(netView.GetZDO());
+          VehicleManager.RemoveVehicleParent(Manager);
+          return false;
+        }
+        var isWithinDockDistance = IsVehicleParentWithinDockDistance();
+        if (!isWithinDockDistance)
+        {
+          parentPositionTimerCheck?.Reset();
+          VehicleManager.RemoveVehicleParent(Manager);
           return false;
         }
         return true;
@@ -605,8 +629,9 @@
       if (vehicleParent == null)
       {
         LoggerProvider.LogMessage("The parent is null. This is likely a bug or the vehicle is detached. Skipping sync to prevent bad state.");
-        isWaitingForParentVehicleToBeReady = false;
-        Manager.VehicleParent = null;
+
+        VehicleManager.RemoveVehicleParent(Manager);
+
         yield break;
       }
 
@@ -660,6 +685,7 @@
         isWaitingForParentVehicleToBeReady = false;
         Manager.VehicleParent = null;
         VehiclePiecesController.RemoveVehicleDataFromZdo(netView.GetZDO());
+        TryAddOrRemoveFrozenSync();
         yield break;
       }
 
@@ -667,35 +693,159 @@
       yield return new WaitForFixedUpdate();
 
       isWaitingForParentVehicleToBeReady = false;
+
+      parentPositionTimerCheck?.Reset();
+
+      // additional call in case add dockpoint was not ready before.
+      if (Manager.PiecesController == null || Manager.VehicleParent == null || Manager.VehicleParent.Manager.PiecesController == null) yield break;
+      if (Manager.PiecesController.m_dockAnchor != null && Manager.VehicleParent.Manager.PiecesController.m_dockAnchor != null)
+      {
+        Manager.PiecesController.m_dockAnchor.AddDockPoint(Manager.VehicleParent.Manager.PiecesController.m_dockAnchor);
+      }
     }
 
     public static float velocityFreezeTarget = 2f;
 
-    public bool TryUpdateFrozenSyncFromVelocity()
+    public static float ForceDockRotationSpeed = 2.5f;
+    // public static float ForceDockPositionSpeed = 2.5f;
+    public static float ForceDockOffsetMultiplier = 1.0f;
+
+    public static float minSpeed = 0.5f;
+    public static float maxSpeed = 10f;
+    public static float maxStepPerFrame = 1.5f;
+
+    public static float dockUpdateDelta = 0.2f;
+
+    public bool TryUpdateVehicleDockPosition()
     {
-      if (_frozenSync == null) return false;
-      var isAboveNonKinematicVelocity = _frozenSync.m_targetBody.velocity.magnitude > velocityFreezeTarget;
+      if (Manager.VehicleParent == null) return false;
+      var parentPieceController = Manager.VehicleParent.PiecesController;
+      if (parentPieceController == null || parentPieceController.m_dockAnchor == null) return false;
+      if (PiecesController == null || PiecesController.m_dockAnchor == null) return false;
 
-      if (!_frozenSync.isFrozen && isAboveNonKinematicVelocity)
+      if (m_body == null || !m_body.isKinematic)
       {
-        m_body.isKinematic = true;
-        _frozenSync.SetFrozenState(true);
-        return true;
-      }
-
-      if (_frozenSync.isFrozen && !isAboveNonKinematicVelocity)
-      {
-        m_body.isKinematic = false;
-        _frozenSync.SetFrozenState(false);
+        LoggerProvider.LogWarning("Docking a vehicle requires a kinematic Rigidbody.");
         return false;
       }
 
-      if (_frozenSync.isFrozen)
+      var ourAnchorTransform = PiecesController.m_dockAnchor.m_attachpoint;
+      var targetAnchorTransform = parentPieceController.m_dockAnchor.m_attachpoint;
+
+      // --- Rotation: we want our anchor to face into the target anchor (opposite direction)
+      var targetAnchorFacing = Quaternion.LookRotation(-targetAnchorTransform.forward, targetAnchorTransform.up);
+      var localAnchorRotation = ourAnchorTransform.rotation;
+      var rotationDelta = targetAnchorFacing * Quaternion.Inverse(localAnchorRotation);
+
+      var desiredWorldRotation = rotationDelta * m_body.rotation;
+
+      // --- Position: offset from m_body origin to our anchor (in world space, not local!)
+      var position = m_body.position;
+      var anchorWorldOffset = ourAnchorTransform.position - position;
+
+      // Apply desired rotation to the world offset
+      var rotatedAnchorOffset = rotationDelta * anchorWorldOffset;
+
+      var offsetFromTarget = targetAnchorTransform.forward * ForceDockOffsetMultiplier;
+      var targetWorldAnchorPos = targetAnchorTransform.position + offsetFromTarget;
+
+      var desiredWorldPosition = targetWorldAnchorPos - rotatedAnchorOffset;
+
+      var deltaDistance = Vector3.Distance(position, desiredWorldPosition);
+
+      // frozen sync will handle this instead.
+      if (deltaDistance < dockUpdateDelta)
       {
-        _frozenSync?.FixedUpdate();
+        return false;
+      }
+
+      var maxLerpFactor = 1f; // full movement
+      var minLerpFactor = 0.01f; // minimum lerp per frame
+      var distanceFalloff = 2.5f; // how quickly we slow near the target
+
+      var lerpT = Mathf.Clamp01(Time.fixedDeltaTime * distanceFalloff / deltaDistance / PrefabConfig.VehicleDockPositionChangeSpeed.Value);
+      lerpT = Mathf.Clamp(lerpT, minLerpFactor, maxLerpFactor);
+
+
+      var newPosition = Vector3.Lerp(m_body.position, desiredWorldPosition, lerpT);
+
+      var newRotation = Quaternion.Slerp(m_body.rotation, desiredWorldRotation, Time.fixedDeltaTime * ForceDockRotationSpeed);
+
+      m_body.Move(newPosition, newRotation);
+
+      return true;
+    }
+
+    public static float frozenDistanceThreshold = 0.001f;
+
+    public bool TryUpdateFrozenSyncFromVelocity()
+    {
+      if (m_frozenSync == null) return false;
+      if (!m_frozenSync.m_targetBody)
+      {
+        m_frozenSync = null;
+        return false;
+      }
+
+      // docked vehicles are always frozen
+      // freeze automatically if going fast.
+      var isAboveKinematicThreshold = m_frozenSync.m_targetBody.velocity.magnitude > velocityFreezeTarget;
+      var shouldFreeze = Manager.ForceDocked;
+
+      if (!m_frozenSync.isFrozen && shouldFreeze)
+      {
+        m_body.isKinematic = true;
+        m_frozenSync.SetFrozenState(true);
+        return true;
+      }
+
+      if (m_frozenSync.isFrozen && !shouldFreeze)
+      {
+        m_body.isKinematic = false;
+        m_frozenSync.SetFrozenState(false);
+        return false;
+      }
+
+      if (m_frozenSync.isFrozen)
+      {
+        // run fixedUpdate if we are nearby the frozen point already. Otherwise, run the dock update until it's synced.
+        if (isAboveKinematicThreshold)
+        {
+          m_frozenSync?.FixedUpdate();
+        }
+        else if (Manager.ForceDocked && TryUpdateVehicleDockPosition())
+        {
+          m_frozenSync.SyncFrozenPosition();
+        }
+        else
+        {
+          m_frozenSync?.FixedUpdate();
+        }
       }
 
       return false;
+    }
+
+    private Stopwatch? parentPositionTimerCheck;
+
+    public void ParentDistanceCheck()
+    {
+      if (parentPositionTimerCheck == null)
+      {
+        parentPositionTimerCheck = Stopwatch.StartNew();
+      }
+      if (parentPositionTimerCheck.ElapsedMilliseconds < 5000)
+      {
+        return;
+      }
+      if (!isActiveAndEnabled) return;
+      if (!this.IsNetViewValid()) return;
+
+      var isWithinRange = IsVehicleParentWithinDockDistance();
+      if (!isWithinRange)
+      {
+        VehicleManager.RemoveVehicleParent(Manager);
+      }
     }
 
     public void GuardedFixedUpdate(float deltaTime)
@@ -715,9 +865,9 @@
 
       if (!CanRunPoweredVehicle())
       {
-        if (_hasPower && PiecesController && PiecesController._steeringWheelPieces.Count > 0 && PiecesController._steeringWheelPieces[0] != null)
+        if (_hasPower && PiecesController && PiecesController._steeringWheelPiece != null)
         {
-          PiecesController._steeringWheelPieces[0].UpdateSteeringHoverMessage(ModTranslations.Power_NetworkInfo_NetworkLowPower);
+          PiecesController._steeringWheelPiece.UpdateSteeringHoverMessage(ModTranslations.Power_NetworkInfo_NetworkLowPower);
         }
         _hasPower = false;
         return;
@@ -750,11 +900,12 @@
       // nested vehicles always must wait for parent.
       if (isWaitingForParentVehicleToBeReady)
       {
+        ParentDistanceCheck();
         m_body.isKinematic = true;
         return;
       }
 
-      if (_frozenSync != null && _frozenSync.isFrozen)
+      if (m_frozenSync != null && m_frozenSync.isFrozen)
       {
         return;
       }
@@ -768,7 +919,12 @@
       /*
        * creative mode should not allow movement, and applying force on an object will cause errors, when the object is kinematic
        */
-      if (isCreative) return;
+      if (isCreative)
+      {
+        SyncVehicleCreativeDependentItems();
+        return;
+      }
+
       if (!isPlayerHaulingVehicle && m_body.isKinematic || isPlayerHaulingVehicle && HaulingPlayer != null && HaulingPlayer.transform.root == PiecesController!.transform.root)
       {
         m_body.isKinematic = false;
@@ -1254,7 +1410,7 @@
       var dynamicYLinearVelocity =
         isAnchored ? maxYLinearVelocity * 0.1f : maxYLinearVelocity;
 
-      if (!(Mathf.Abs(currentVelocity.y) > dynamicYLinearVelocity)) return;
+      if (IsFlying() || !(Mathf.Abs(currentVelocity.y) > dynamicYLinearVelocity)) return;
       // Clamp Y velocity while keeping X and Z unaffected
       currentVelocity.y = Mathf.Sign(currentVelocity.y) * dynamicYLinearVelocity;
 
@@ -1483,17 +1639,17 @@
 
     public void TryAddOrRemoveFrozenSync()
     {
-      if (Manager.VehicleParent && Manager.VehicleParent.MovementController && Manager.VehicleParent.MovementController.m_body)
+      if (Manager.VehicleParent != null && Manager.VehicleParent.MovementController != null && Manager.VehicleParent.MovementController.m_body)
       {
-        if (_frozenSync == null)
+        if (m_frozenSync == null)
         {
-          _frozenSync = new FrozenRigidbodySync();
+          m_frozenSync = new FrozenRigidbodySync();
         }
-        _frozenSync.Init(m_body, Manager.VehicleParent.MovementController.m_body);
+        m_frozenSync.Init(m_body, Manager.VehicleParent.MovementController.m_body);
       }
       else
       {
-        _frozenSync = null;
+        m_frozenSync = null;
       }
     }
 
@@ -2650,7 +2806,7 @@
     public void OnValidationFailure(Exception e)
     {
 #if DEBUG
-      Logger.LogDebug($"Error occurred after isInvalid return false. This means validation will need to be re-run. \nErrorMessage:\n{e}");
+      LoggerProvider.LogDebugDebounced($"Error occurred after isInvalid return false. This means validation will need to be re-run. \nErrorMessage:\n{e}");
 #endif
       _isInvalid = true;
       _isLandMovementControllerInvalid = true;
@@ -3015,17 +3171,31 @@
           break;
         }
         case Ship.Speed.Back:
+        case Ship.Speed.Slow:
+        case Ship.Speed.Stop:
         {
-          var from =
-            Quaternion.LookRotation(-ShipDirection.forward, ShipDirection.up);
-          var to2 = Quaternion.LookRotation(-windDir, ShipDirection.up);
-          to2 = Quaternion.RotateTowards(from, to2, 80f);
-          m_mastObject.transform.rotation =
-            Quaternion.RotateTowards(m_mastObject.transform.rotation, to2,
-              30f * deltaTime);
+          m_mastObject.transform.localRotation = Quaternion.Lerp(m_mastObject.transform.localRotation, Quaternion.identity, Time.fixedDeltaTime);
+          // var from =
+          //   Quaternion.LookRotation(-ShipDirection.forward, ShipDirection.up);
+          // var to2 = Quaternion.LookRotation(-windDir, ShipDirection.up);
+          // to2 = Quaternion.RotateTowards(from, to2, 80f);
+          // m_mastObject.transform.rotation =
+          //   Quaternion.RotateTowards(m_mastObject.transform.rotation, to2,
+          //     30f * deltaTime);
           break;
         }
       }
+    }
+
+    private void SyncVehicleCreativeDependentItems()
+    {
+      if (!isCreative) return;
+      if (m_mastObject)
+      {
+        m_mastObject.transform.localRotation = Quaternion.Lerp(m_mastObject.transform.localRotation, Quaternion.identity, Time.fixedDeltaTime);
+      }
+
+      SyncVehicleRotationDependentItems();
     }
 
 
@@ -3049,14 +3219,15 @@
         if (mast.m_allowSailRotation &&
             PropulsionConfig.AllowBaseGameSailRotation.Value)
         {
+          var isWindSync = vehicleSpeed == Ship.Speed.Full || vehicleSpeed == Ship.Speed.Half;
           var newRotation = m_mastObject.transform.localRotation;
           if (mast.m_rotationTransform != null)
           {
-            mast.m_rotationTransform.localRotation = newRotation;
+            mast.m_rotationTransform.localRotation = isWindSync ? newRotation : Quaternion.Lerp(mast.m_rotationTransform.localRotation, Quaternion.identity, Time.fixedDeltaTime);
           }
           else
           {
-            mast.transform.localRotation = newRotation;
+            mast.transform.localRotation = isWindSync ? newRotation : Quaternion.Lerp(mast.transform.localRotation, Quaternion.identity, Time.fixedDeltaTime);
           }
         }
 
@@ -3102,17 +3273,15 @@
         rudder.PivotPoint.localRotation = newRotation;
       }
 
-      foreach (var wheel in PiecesController
-                 ._steeringWheelPieces
-                 .ToList())
-        if (!(bool)wheel)
-          PiecesController._steeringWheelPieces.Remove(wheel);
-        else if (wheel.wheelTransform != null)
-          wheel.wheelTransform.localRotation = Quaternion.Slerp(
-            wheel.wheelTransform.localRotation,
-            Quaternion.Euler(
-              m_rudderRotationMax * (0f - m_rudderValue) *
-              wheel.m_wheelRotationFactor, 0f, 0f), 0.5f);
+      if (!PiecesController) return;
+      var wheel = PiecesController._steeringWheelPiece;
+      if (wheel == null) return;
+      if (wheel.wheelTransform != null)
+        wheel.wheelTransform.localRotation = Quaternion.Slerp(
+          wheel.wheelTransform.localRotation,
+          Quaternion.Euler(
+            m_rudderRotationMax * (0f - m_rudderValue) *
+            wheel.m_wheelRotationFactor, 0f, 0f), 0.5f);
     }
 
     private float GetInterpolatedWindAngleFactor()
@@ -3481,7 +3650,14 @@
 
       if (vehicleRam != null)
       {
-        vehicleRam.CanDamage = vehicleSpeed == Ship.Speed.Full;
+        if (!RamConfig.AllowVehicleCollisionBelowFullSpeed.Value)
+        {
+          vehicleRam.CanDamage = vehicleSpeed == Ship.Speed.Full;
+        }
+        else
+        {
+          vehicleRam.CanDamage = true;
+        }
       }
     }
 
@@ -3607,8 +3783,8 @@
     public void AssignShipControls(Player player)
     {
       if (PiecesController != null &&
-          PiecesController._steeringWheelPieces.Count > 0)
-        player.m_doodadController = PiecesController._steeringWheelPieces[0];
+          PiecesController._steeringWheelPiece != null)
+        player.m_doodadController = PiecesController._steeringWheelPiece;
     }
 
     /// <summary>

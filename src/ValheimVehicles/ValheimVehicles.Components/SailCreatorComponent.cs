@@ -3,8 +3,9 @@ using System.Linq;
 using Jotunn.Managers;
 using UnityEngine;
 using ValheimVehicles.Controllers;
+using ValheimVehicles.Interfaces;
 using ValheimVehicles.Prefabs;
-
+using ZdoWatcher;
 using Logger = Jotunn.Logger;
 
 namespace ValheimVehicles.Components;
@@ -62,7 +63,9 @@ public class SailCreatorComponent : MonoBehaviour
 
     // must switch initialization state to false otherwise LoadZDO will run and see the ZDO is erroring and delete itself
     var sailPrefabInstance = Instantiate(sailPrefab, center, Quaternion.identity);
+    var netView = sailPrefabInstance.GetComponent<ZNetView>();
     var sailComponent = sailPrefabInstance.GetComponent<SailComponent>();
+
     sailComponent.m_sailCorners = [];
 
     for (var j = 0; j < m_sailSize; j++)
@@ -74,10 +77,31 @@ public class SailCreatorComponent : MonoBehaviour
     sailComponent.CreateSailMesh();
     sailComponent.SaveZdo();
 
+    var parentMastComponent = m_sailCreators[0].transform.GetComponentInParent<MastComponent>();
+    if (parentMastComponent)
+    {
+      var parentNetView = parentMastComponent.GetComponent<ZNetView>();
+      if (parentNetView)
+      {
+        var persistentId = ZdoWatchController.Instance.GetOrCreatePersistentID(parentNetView.GetZDO());
+        if (persistentId != 0)
+        {
+          var zdo = netView.GetZDO();
+          zdo.Set(SailComponent.SailParentIdHash, persistentId);
+          zdo.Set(SailComponent.SailParentPositionHash, parentMastComponent.transform.InverseTransformPoint(sailComponent.transform.position));
+
+          // relative to parent rotation.
+          var relativeRotation = Quaternion.Inverse(parentMastComponent.transform.rotation) * sailComponent.transform.rotation;
+          zdo.Set(SailComponent.SailParentRotationHash, relativeRotation.eulerAngles);
+          sailPrefabInstance.transform.SetParent(parentMastComponent.m_rotationTransform);
+        }
+      }
+    }
+
+
     var piece = sailPrefabInstance.GetComponent<Piece>();
     piece.SetCreator(m_sailCreators[0].GetComponent<Piece>().GetCreator());
 
-    var netView = sailPrefabInstance.GetComponent<ZNetView>();
     AddToVehicle(netView);
 
     foreach (var t in m_sailCreators)
@@ -100,8 +124,9 @@ public class SailCreatorComponent : MonoBehaviour
   private bool AddToBasicVehicle(ZNetView netView)
   {
     var baseVehicle =
-      m_sailCreators[0].GetComponentInParent<VehiclePiecesController>();
-    if ((bool)baseVehicle)
+      m_sailCreators[0].GetComponentInParent<IPieceController>();
+
+    if (baseVehicle != null)
     {
       baseVehicle.AddNewPiece(netView);
       return true;

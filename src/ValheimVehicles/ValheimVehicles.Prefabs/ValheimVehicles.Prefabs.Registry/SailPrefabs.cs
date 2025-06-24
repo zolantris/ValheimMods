@@ -46,7 +46,6 @@ public class SailPrefabs : IRegisterPrefab
     var vikingShipMast = LoadValheimAssets.vikingShipPrefab.transform
       .Find("ship/visual/Mast")
       .gameObject;
-
     var vikingShipMastPrefab =
       prefabManager.CreateClonedPrefab(PrefabNames.Tier3RaftMastName,
         vikingShipMast);
@@ -83,7 +82,7 @@ public class SailPrefabs : IRegisterPrefab
     PrefabRegistryHelpers.FixRopes(vikingShipMastPrefab);
     PrefabRegistryHelpers.FixCollisionLayers(vikingShipMastPrefab);
 
-    pieceManager.AddPiece(new CustomPiece(vikingShipMastPrefab, false,
+    pieceManager.AddPiece(new CustomPiece(vikingShipMastPrefab, true,
       new PieceConfig
       {
         PieceTable = PrefabRegistryController.GetPieceTableName(),
@@ -152,7 +151,7 @@ public class SailPrefabs : IRegisterPrefab
     PrefabRegistryHelpers.FixRopes(prefab);
     PrefabRegistryHelpers.FixCollisionLayers(prefab);
 
-    pieceManager.AddPiece(new CustomPiece(prefab, false, new PieceConfig
+    pieceManager.AddPiece(new CustomPiece(prefab, true, new PieceConfig
     {
       PieceTable = PrefabRegistryController.GetPieceTableName(),
       Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
@@ -227,7 +226,7 @@ public class SailPrefabs : IRegisterPrefab
     }
 
     var prefab =
-      prefabManager.CreateEmptyPrefab($"MBSailCreator_{sailCount}", false);
+      prefabManager.CreateEmptyPrefab($"{PrefabNames.SailCreator}_{sailCount}", false);
     prefab.layer = LayerMask.NameToLayer("piece_nonsolid");
 
     var piece = prefab.AddComponent<Piece>();
@@ -313,7 +312,7 @@ public class SailPrefabs : IRegisterPrefab
 
     PrefabRegistryHelpers.FixRopes(mbRaftMastPrefab);
     PrefabRegistryHelpers.FixCollisionLayers(mbRaftMastPrefab);
-    pieceManager.AddPiece(new CustomPiece(mbRaftMastPrefab, false,
+    pieceManager.AddPiece(new CustomPiece(mbRaftMastPrefab, true,
       new PieceConfig
       {
         PieceTable = PrefabRegistryController.GetPieceTableName(),
@@ -376,7 +375,7 @@ public class SailPrefabs : IRegisterPrefab
     PrefabRegistryHelpers.FixRopes(mbKarveMastPrefab);
     PrefabRegistryHelpers.FixCollisionLayers(mbKarveMastPrefab);
 
-    pieceManager.AddPiece(new CustomPiece(mbKarveMastPrefab, false,
+    pieceManager.AddPiece(new CustomPiece(mbKarveMastPrefab, true,
       new PieceConfig
       {
         PieceTable = PrefabRegistryController.GetPieceTableName(),

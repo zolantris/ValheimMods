@@ -277,7 +277,6 @@ public static class PrefabRegistryController
     CustomMeshPrefabs.Instance.Register(prefabManager, pieceManager);
 
     SwivelPrefab.Register();
-    AnchorPrefabs.Register();
 
     ShipRudderPrefabs.Instance.Register(prefabManager, pieceManager);
 
@@ -317,6 +316,7 @@ public static class PrefabRegistryController
     // Rope items
     RegisterRopeAnchor();
     RegisterRopeLadder();
+    AnchorPrefabs.Register();
 
     // pier components
     RegisterPierPole();
@@ -400,7 +400,7 @@ public static class PrefabRegistryController
   {
     var prefab =
       prefabManager.CreateClonedPrefab(PrefabNames.MBRopeAnchor,
-        LoadValheimRaftAssets.rope_anchor);
+        LoadValheimRaftAssets.anchor_rope);
 
     var mbRopeAnchorPrefabPiece = prefab.AddComponent<Piece>();
     mbRopeAnchorPrefabPiece.m_name = "$mb_rope_anchor";

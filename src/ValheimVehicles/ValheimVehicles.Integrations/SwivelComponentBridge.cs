@@ -46,7 +46,7 @@
     public List<ZNetView> m_tempPieces = [];
 
     private SwivelPieceActivator _pieceActivator = null!;
-    public static float turnTime = 50f;
+    public static float turnTime = 2f;
 
     private HoverFadeText m_hoverFadeText;
     public SwivelConfigSync prefabConfigSync;
@@ -353,6 +353,20 @@
       return true;
     }
 
+    public bool TryBailOnSameObject(GameObject obj)
+    {
+      if (obj == gameObject) return true;
+      return false;
+    }
+
+    public void AddNewPiece(GameObject obj)
+    {
+      if (TryBailOnSameObject(obj)) return;
+      var nv = obj.GetComponent<ZNetView>();
+      if (nv == null) return;
+      AddNewPiece(nv);
+    }
+
     public void AddNewPiece(ZNetView netView)
     {
 
@@ -529,8 +543,46 @@
 
         return Quaternion.RotateTowards(piecesContainer.transform.rotation, dir, 30f * Time.fixedDeltaTime);
       }
-      // use the sync mast
-      return m_vehicle.MovementController!.m_mastObject.transform.localRotation;
+      // Use maxRotationEuler to get the rotation limits
+      // If the value is too small, clamp it to a minimum of 15 degrees
+      var maxRotationLimit = Mathf.Max(maxRotationEuler.y, 15f);
+
+      // Get the original rotation in Euler angles
+      var startEulerAngles = startRotation.eulerAngles;
+
+      // Normalize the angle to -180 to 180 range for easier calculations
+      var startYAngle = startEulerAngles.y;
+      if (startYAngle > 180f)
+        startYAngle -= 360f;
+
+      // Get the mast/wind rotation angle
+      var mastRotationY = m_vehicle.MovementController!.m_mastObject.transform.localRotation.eulerAngles.y;
+      if (mastRotationY > 180f)
+        mastRotationY -= 360f;
+
+      // Calculate the difference between mast rotation and start rotation
+      var rotationDifference = Mathf.DeltaAngle(startYAngle, mastRotationY);
+
+      // Calculate the interpolation factor (0 to 1) based on how far the wind has turned
+      var interpolationFactor = Mathf.Clamp01(Mathf.Abs(rotationDifference) / maxRotationLimit);
+
+      // Apply the sign of the rotation difference to determine direction
+      var targetYAngle = startYAngle + (rotationDifference > 0 ? interpolationFactor * maxRotationLimit : -interpolationFactor * maxRotationLimit);
+
+      // Create a target rotation quaternion using the interpolated angle
+      // Preserve the original x and z rotation values
+      var targetRotation = Quaternion.Euler(
+        startEulerAngles.x,
+        targetYAngle,
+        startEulerAngles.z);
+
+      // Smooth interpolation to prevent sudden snapping
+      return Quaternion.Slerp(
+        animatedTransform.localRotation,
+        targetRotation,
+        Time.fixedDeltaTime * computedInterpolationSpeed * 0.05f);
+
+
     }
 
   #region IBasePieceActivator
@@ -667,6 +719,18 @@
     {
       if (netView == null) return;
       AddPieceToParent(netView.transform);
+    }
+
+    /// <summary>
+    /// Allows directly adding pieces but is by default guarded so only valheim vehicles prefixes are allowed. This is provided the piece has no valid netview otherwise TrySetPieceToParent can be used with a netview and Zdo.
+    /// </summary>
+    /// <param name="prefab"></param>
+    public void TrySetPieceToParent(GameObject prefab, bool isForced = false)
+    {
+      if (prefab.name.Contains(PrefabNames.ValheimVehiclesPrefix) || isForced)
+      {
+        AddPieceToParent(prefab.transform);
+      }
     }
 
     ///

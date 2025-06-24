@@ -16,6 +16,7 @@
   using ValheimVehicles.Constants;
   using ValheimVehicles.Controllers;
   using ValheimVehicles.SharedScripts;
+  using ValheimVehicles.SharedScripts.Helpers;
   using ValheimVehicles.SharedScripts.UI;
   using ValheimVehicles.Structs;
   using Logger = Jotunn.Logger;
@@ -34,26 +35,38 @@
     public static VehicleGui Gui;
     public static GameObject GuiObj;
 
-    public static void AddRemoveVehicleGui()
+    public static GameObject GetVehicleGui()
     {
-      if (Game.instance == null) return;
       if (GuiObj == null)
       {
         GuiObj = new GameObject("ValheimVehicles_VehicleGui")
         {
-          transform = { parent = Game.instance.transform },
+          transform = { parent = GUIManager.CustomGUIFront.transform },
           layer = LayerHelpers.UILayer
         };
       }
+      return GuiObj;
+    }
 
-      if (Gui == null)
+    public static void AddRemoveVehicleGui()
+    {
+      if (ZNet.instance == null) return;
+      if (Gui)
       {
-        Gui = GuiObj.GetComponent<VehicleGui>();
+        Gui.RemoveGui();
+        Gui = null;
+      }
+      if (GuiObj)
+      {
+        Destroy(GuiObj);
+        GuiObj = null;
       }
 
+      GuiObj = GetVehicleGui();
+
       if (Gui == null)
       {
-        Gui = GuiObj.AddComponent<VehicleGui>();
+        Gui = GuiObj.gameObject.GetOrAddComponent<VehicleGui>();
       }
 
 
@@ -101,11 +114,11 @@
     public static bool isConfigPanelToggleButtonVisible = false;
 
 
-    private GameObject configWindow;
-    private GameObject commandsWindow;
+    private GameObject? configWindow;
+    private GameObject? commandsWindow;
 
-    private GameObject commandsToggleButtonWindow;
-    private GameObject configToggleButtonWindow;
+    private GameObject? commandsToggleButtonWindow;
+    private GameObject? configToggleButtonWindow;
 
     private List<GameObject> commandsPanelToggleObjects = [];
     // private List<GameObject> devCommandsPanelToggleObjects = [];
@@ -141,7 +154,11 @@
 
     private void OnDisable()
     {
-      // devCommandsPanelToggleObjects.Clear();
+      RemoveGui();
+    }
+
+    public void RemoveGui()
+    {
       commandsPanelToggleObjects.Clear();
       configPanelToggleObjects.Clear();
 
@@ -149,6 +166,12 @@
       if (configToggleButtonWindow) Destroy(configToggleButtonWindow);
       if (commandsWindow) Destroy(commandsWindow);
       if (configWindow) Destroy(configWindow);
+
+      commandsToggleButtonWindow = null;
+      configToggleButtonWindow = null;
+      commandsWindow = null;
+      configWindow = null;
+
       if (GuiObj) Destroy(GuiObj);
     }
 
@@ -400,7 +423,7 @@
         width = buttonWidth
       };
 
-      var panel = PanelUtil.CreateDraggableHideShowPanel(ConfigPanelWindowName, panelStyles, buttonStyles, vehicleConfigHide, vehicleConfigShow, GuiConfig.VehicleCommandsPanelLocation, OnConfigCommandsPanelToggle);
+      var panel = PanelUtil.CreateDraggableHideShowPanel(ConfigPanelWindowName, GuiObj.transform, panelStyles, buttonStyles, vehicleConfigHide, vehicleConfigShow, GuiConfig.VehicleCommandsPanelLocation, OnConfigCommandsPanelToggle);
       return panel;
     }
 
@@ -441,48 +464,7 @@
         width = buttonWidth
       };
 
-      var panel = PanelUtil.CreateDraggableHideShowPanel(CommandsPanelWindowName, panelStyles, buttonStyles, vehicleCommandsHide, vehicleCommandsShow, GuiConfig.VehicleCommandsPanelLocation, OnWindowCommandsPanelToggle);
-
-      // var panel = DefaultControls.CreatePanel(
-      //   GUIManager.Instance.ValheimControlResources
-      // );
-      // panel.name = "ValheimVehicles_commandsWindow";
-      // var dragWindowExtension = panel.AddComponent<DragWindowControllerExtension>();
-      // panel.transform.SetParent(GUIManager.CustomGUIFront.transform, false);
-      // panel.GetComponent<Image>().pixelsPerUnitMultiplier = 1f;
-      // var panelTransform = (RectTransform)panel.transform;
-      // panelTransform.anchoredPosition = new Vector2(VehicleDebugConfig.CommandsWindowPosX.Value, VehicleDebugConfig.CommandsWindowPosY.Value);
-      // panelTransform.anchorMin = anchorMin;
-      // panelTransform.anchorMax = anchorMax;
-      //
-      // panelTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, panelWidth);
-      // panelTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, buttonHeight);
-      //
-      // dragWindowExtension.OnDragCalled += (rectTransform) =>
-      // {
-      //   var anchoredPosition = rectTransform.anchoredPosition;
-      //   VehicleDebugConfig.CommandsWindowPosX.Value = anchoredPosition.x;
-      //   VehicleDebugConfig.CommandsWindowPosY.Value = anchoredPosition.y;
-      // };
-      // // Create the button object above the gui manager. So it can hide itself.
-      // var buttonObject = GUIManager.Instance.CreateButton(
-      //   vehicleCommandsHide,
-      //   panel.transform,
-      //   new Vector2(0.5f, 0.5f),
-      //   new Vector2(0.5f, 0.5f),
-      //   new Vector2(0, 0),
-      //   buttonWidth,
-      //   buttonHeight);
-      // var buttonText = buttonObject.GetComponentInChildren<Text>();
-      //
-      // // Add a listener to the button to close the panel again
-      // var button = buttonObject.GetComponent<Button>();
-      // button.onClick.AddListener(() =>
-      // {
-      //   OnWindowCommandsPanelToggle(buttonText);
-      // });
-      //
-      // panel.SetActive(hasCommandsWindowOpened);
+      var panel = PanelUtil.CreateDraggableHideShowPanel(CommandsPanelWindowName, GuiObj.transform, panelStyles, buttonStyles, vehicleCommandsHide, vehicleCommandsShow, GuiConfig.VehicleCommandsPanelLocation, OnWindowCommandsPanelToggle);
 
       return panel;
     }

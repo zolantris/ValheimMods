@@ -25,5 +25,6 @@
     public void DestroyPiece(WearNTear wnt); // typically with wearntear but also in hammer deletion of non-wearnt pieces.
     public void RemovePiece(ZNetView nv);
     public void TrySetPieceToParent(ZNetView netView);
+    public void TrySetPieceToParent(GameObject netView, bool isForced = false);
 
   }

@@ -91,6 +91,7 @@ namespace ValheimVehicles.SharedScripts.UI
       motionStateDropdown.value = (int)_currentPanelConfig.MotionState;
 
       var max = _currentPanelConfig.MaxEuler;
+
       maxXRow.GetComponentInChildren<Slider>().value = max.x;
       maxYRow.GetComponentInChildren<Slider>().value = max.y;
       maxZRow.GetComponentInChildren<Slider>().value = max.z;
@@ -331,11 +332,16 @@ namespace ValheimVehicles.SharedScripts.UI
     {
       var isRotating = CurrentSwivel && _currentPanelConfig.Mode == SwivelMode.Rotate;
       var isMoving = CurrentSwivel && _currentPanelConfig.Mode == SwivelMode.Move;
+      var isWindTarget = _currentPanelConfig.Mode == SwivelMode.TargetWind;
+
+      motionStateDropdown.gameObject.SetActive(!isWindTarget);
 
       rotationSectionLabel.SetActive(isRotating);
       hingeAxisRow.SetActive(isRotating);
+
+      maxYRow.SetActive(isRotating || isWindTarget);
+
       maxXRow.SetActive(isRotating);
-      maxYRow.SetActive(isRotating);
       maxZRow.SetActive(isRotating);
 
       targetDistanceXRow.SetActive(isMoving);

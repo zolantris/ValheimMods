@@ -8,6 +8,7 @@
   using System.Text.RegularExpressions;
   using HarmonyLib;
   using Jotunn;
+  using StructLinq;
   using UnityEngine;
   using UnityEngine.Serialization;
   using ValheimVehicles.Components;
@@ -17,6 +18,7 @@
   using ValheimVehicles.Helpers;
   using ValheimVehicles.Integrations;
   using ValheimVehicles.Interfaces;
+  using ValheimVehicles.Patches;
   using ValheimVehicles.Prefabs;
   using ValheimVehicles.Prefabs.Registry;
   using ValheimVehicles.Propulsion.Rudder;
@@ -255,8 +257,12 @@
     private Transform? _piecesContainerTransform;
     private Coroutine? _serverUpdatePiecesCoroutine;
 
-    // wheels for rudders
-    internal List<SteeringWheelComponent> _steeringWheelPieces = [];
+    // only one is allowed
+    internal SteeringWheelComponent? _steeringWheelPiece;
+
+    // only one is allowed
+    internal RopeAnchorComponent? m_dockAnchor;
+
     private Bounds BaseControllerHullBounds;
 
     private Bounds BaseControllerPieceBounds;
@@ -589,9 +595,17 @@
             m_rudderPieces.Add(rudder);
             SetShipWakeBounds();
             break;
+          case RopeAnchorComponent ropeAnchor:
+            if (ropeAnchor.IsDockAnchor())
+            {
+              OnAddUniquePieceDestroyPrevious(m_dockAnchor);
+              m_dockAnchor = ropeAnchor;
+            }
+            break;
           case SteeringWheelComponent wheel:
-            OnAddSteeringWheelDestroyPrevious(netView, wheel);
-            _steeringWheelPieces.Add(wheel);
+            OnAddUniquePieceDestroyPrevious(_steeringWheelPiece);
+            _steeringWheelPiece = wheel;
+            RotateVehicleForwardPosition();
             wheel.InitializeControls(netView, Manager);
             break;
           case TeleportWorld portal:
@@ -636,10 +650,18 @@
               SetShipWakeBounds();
             break;
           }
+          case RopeAnchorComponent ropeAnchor:
+            if (ropeAnchor.IsDockAnchor())
+            {
+              m_dockAnchor = null;
+            }
+            break;
           case SteeringWheelComponent wheel:
-            _steeringWheelPieces.Remove(wheel);
-            VehicleMovementController.RemoveAllShipControls(Manager
-              ?.MovementController);
+            _steeringWheelPiece = null;
+            if (Manager)
+            {
+              VehicleMovementController.RemoveAllShipControls(Manager.MovementController);
+            }
             break;
           case Bed bed:
             m_bedPieces.Remove(bed);
@@ -1269,7 +1291,7 @@
                       Manager == null ||
                       Manager.m_nview == null ||
                       MovementController == null ||
-                      MovementController.rigidbody == null;
+                      MovementController.rigidbody == null || !this.IsNetViewValid();
       _isInvalid = isInvalid;
 
       return _isInvalid;
@@ -1678,7 +1700,7 @@
             .ShipHullCenterIronPrefabName))
         return 80f;
 
-      if (pieceName.StartsWith(PrefabNames.HullRib))
+      if (pieceName.StartsWith(PrefabNames.HullRib_BaseName))
       {
         if (pieceName.Contains(HullMaterial.Iron)) return 720f;
 
@@ -2147,9 +2169,10 @@
       foreach (var anchorComponent in m_anchorMechanismComponents)
         if (anchorState != anchorComponent.currentState)
           anchorComponent.UpdateAnchorState(anchorState, currentWheelStateText);
-      foreach (var steeringWheel in _steeringWheelPieces)
+
+      if (_steeringWheelPiece)
       {
-        steeringWheel.UpdateSteeringHoverMessage(anchorState, currentWheelStateText);
+        _steeringWheelPiece.UpdateSteeringHoverMessage(anchorState, currentWheelStateText);
       }
     }
 
@@ -2380,7 +2403,7 @@
     {
       if (netView == null) return;
       var zdo = netView.GetZDO();
-      if (netView.m_zdo == null) return;
+      if (zdo == null) return;
 
       if (TryBailOnSameObject(netView.gameObject))
       {
@@ -2388,7 +2411,7 @@
         return;
       }
 
-      TrySetPieceToParent(netView, zdo);
+      TrySetPieceToParent(netView);
 
       netView.transform.localPosition =
         netView.m_zdo.GetVec3(VehicleZdoVars.MBPositionHash, Vector3.zero);
@@ -2439,7 +2462,7 @@
       if (!shouldSkipAddingProperties)
       {
         AddTempPieceProperties(netView, this);
-        TrySetPieceToParent(netView, zdo);
+        TrySetPieceToParent(netView);
       }
 
       OnPieceAdded(netView.gameObject);
@@ -2470,31 +2493,56 @@
       }
     }
 
-    public void TrySetPieceToParent(ZNetView? netView)
+    public void TrySetPieceToParent(ZNetView? nv)
     {
+      // validate current parent
       if (IsInvalid()) return;
-      if (!this.IsNetViewValid() || !netView || !netView.IsValid()) return;
-      TrySetPieceToParent(netView, netView.GetZDO());
-    }
-
-    /// <summary>
-    /// Adds the piece depending on type to the correct container
-    /// - Rams are rigidbodies and thus must not be controlled by a RigidBody
-    /// </summary>
-    public void TrySetPieceToParent(ZNetView? netView, ZDO? zdo)
-    {
-      if (IsInvalid()) return;
-      if (netView == null || PrefabNames.IsVehicle(netView.name) && netView.name.Contains(PrefabNames.LandVehicle) || zdo == null) return;
-
-      if (RamPrefabs.IsRam(netView!.name))
+      // validate provided netview.
+      if (!ValheimExtensions.Internal_IsNetViewValid(nv, out var netView)) return;
+      var netViewName = netView.name;
+      if (PrefabNames.IsVehicle(netViewName) && netViewName.Contains(PrefabNames.LandVehicle)) return;
+      // no overriding parent if sail already has a custom parent EG a mast.
+      if (netViewName.StartsWith(PrefabNames.Tier1CustomSailName) && netView.GetZDO().GetInt(SailComponent.SailParentIdHash) != 0)
       {
-        if (Manager != null && Manager != null)
+        if (netView.transform.parent == null)
         {
-          netView.transform.SetParent(Manager.transform);
+          var sailComponent = netView.GetComponent<SailComponent>();
+          if (!sailComponent) return;
+          sailComponent.UpdateSailParent();
         }
         return;
       }
-      netView.transform.SetParent(_piecesContainerTransform);
+      TrySetPieceToParent(netView.gameObject);
+    }
+
+    /// <summary>
+    /// Allows directly adding pieces but is by default guarded so only valheim vehicles prefixes are allowed. This is provided the piece has no valid netview otherwise TrySetPieceToParent can be used with a netview and Zdo.
+    /// </summary>
+    /// <param name="prefab"></param>
+    public void TrySetPieceToParent(GameObject prefab, bool isForced = false)
+    {
+      if (prefab.name.Contains(PrefabNames.ValheimVehiclesPrefix) || isForced)
+      {
+        prefab.transform.SetParent(_piecesContainerTransform);
+      }
+
+      if (prefab.name.StartsWith(PrefabNames.SailCreator) && PatchSharedData.PlayerLastRayPiece != null && PatchSharedData.PlayerLastRayPiece.name.StartsWith(PrefabNames.CustomMast))
+      {
+        var parentMaskComponent = PatchSharedData.PlayerLastRayPiece.GetComponent<MastComponent>();
+        if (!parentMaskComponent || !parentMaskComponent.m_rotationTransform) return;
+        prefab.transform.SetParent(parentMaskComponent.m_rotationTransform);
+        return;
+      }
+
+      if (RamPrefabs.IsRam(prefab.name))
+      {
+        if (Manager != null && Manager != null)
+        {
+          prefab.transform.SetParent(Manager.transform);
+        }
+        return;
+      }
+      prefab.transform.SetParent(_piecesContainerTransform);
     }
 
     /**
@@ -2632,18 +2680,21 @@
           LoggerProvider.LogWarning($"Attempted to add a nested landvehicle to another land vehicle. This is not allowed. NetView <{netView.name}>");
           return;
         }
-        LoggerProvider.LogWarning("Detected a nested landvehicle within a WaterVehicle. This is supported but could be unstable.");
-      }
-
-      if (m_pieces.Contains(netView))
-      {
-        Logger.LogWarning($"NetView already is added. name: {netView.name}");
-        return;
+#if DEBUG
+        LoggerProvider.LogDev("Detected a nested landvehicle within a WaterVehicle. This is supported but could be unstable.");
+#endif
       }
 
       var previousCount = GetPieceCount();
 
-      TrySetPieceToParent(netView, zdo);
+      if (m_pieces.Contains(netView))
+      {
+        LoggerProvider.LogDev($"NetView already is added. name: {netView.name}");
+      }
+      else
+      {
+        TrySetPieceToParent(netView);
+      }
 
       if (netView.m_zdo != null && netView.m_persistent)
       {
@@ -2658,16 +2709,17 @@
         netView.m_zdo.Set(VehicleZdoVars.MBRotationVecHash,
           netView.transform.localRotation.eulerAngles);
 
-        if (zdo.m_prefab == PrefabNames.LandVehicle.GetStableHashCode())
-        {
-          netView.m_zdo.Set(VehicleZdoVars.MBPositionHash,
-            transform.position - netView.transform.position);
-        }
-        else
-        {
-          netView.m_zdo.Set(VehicleZdoVars.MBPositionHash,
-            netView.transform.localPosition);
-        }
+        // if (zdo.m_prefab == PrefabNames.LandVehicle.GetStableHashCode())
+        // {
+        //  
+        // }
+        // else
+        // {
+        //   netView.m_zdo.Set(VehicleZdoVars.MBPositionHash,
+        //     transform.InverseTransformPoint(netView.transform.position));
+        // }
+        netView.m_zdo.Set(VehicleZdoVars.MBPositionHash,
+          transform.InverseTransformPoint(netView.transform.position));
       }
 
       AddPiece(netView, true);
@@ -2676,23 +2728,17 @@
       if (previousCount == 0 && GetPieceCount() == 1) SetInitComplete();
     }
 
-// must call wnt destroy otherwise the piece is removed but not destroyed like a player destroying an item.
-// must create a new array to prevent a collection modify error
-    public void OnAddSteeringWheelDestroyPrevious(ZNetView netView,
-      SteeringWheelComponent steeringWheelComponent)
+    public void OnAddUniquePieceDestroyPrevious(MonoBehaviour? component)
     {
-      var wheelPieces = _steeringWheelPieces;
-      if (wheelPieces.Count <= 0) return;
+      if (component == null) return;
+      var netView = component.GetComponent<ZNetView>();
+      if (netView == null) return;
 
-      foreach (var wheelPiece in wheelPieces.ToList())
+      var wnt = netView.GetComponent<WearNTear>();
+      if (wnt != null)
       {
-        if (wheelPiece == null) return;
-        var wnt = wheelPiece.GetComponent<WearNTear>();
-        if (wnt == null) return;
         wnt.Destroy();
       }
-
-      RotateVehicleForwardPosition();
     }
 
     /// <summary>
@@ -2849,12 +2895,20 @@
     {
       if (MovementController == null) return;
 
-      if (_steeringWheelPieces.Count <= 0) return;
-      var firstWheel = _steeringWheelPieces.First();
-      if (firstWheel == null || !firstWheel.enabled) return;
+      if (_steeringWheelPiece == null || !_steeringWheelPiece.enabled) return;
 
-      Manager.MovementController.UpdateShipDirection(
-        firstWheel.transform
+      // forces wheel to always be direction of landvehicle.
+      if (Manager.IsLandVehicle)
+      {
+        _steeringWheelPiece.transform.localRotation = Quaternion.identity;
+        var nv = _steeringWheelPiece.GetComponent<ZNetView>();
+        if (!nv || nv.GetZDO() == null) return;
+        _steeringWheelPiece.GetComponent<ZNetView>().GetZDO().SetRotation(Quaternion.identity);
+        return;
+      }
+
+      MovementController.UpdateShipDirection(
+        _steeringWheelPiece.transform
           .localRotation);
     }
 
@@ -3006,26 +3060,7 @@
           Physics.IgnoreCollision(vehicleCollider, vehicleCollider2, true);
         }
       }
-      // var pieceColliders = transform.GetComponentsInChildren<Collider>(true);
-
-      // heavy but simple ignore all colliders.
-      // foreach (var vehicleCollider in vehicleColliders)
-      // {
-      //   // must ignore all vehicle colliders
-      //   foreach (var vehicleCollider2 in vehicleColliders)
-      //   {
-      //     if (vehicleCollider == vehicleCollider2) continue;
-      //     Physics.IgnoreCollision(vehicleCollider, vehicleCollider2, true);
-      //   }
-      //
-      //   // vehicle colliders must ignore pieces. But pieces should likely not ignore eachother and it won't matter with how piece controller ignores physics engine.
-      //   foreach (var allPieceCollider in pieceColliders)
-      //   {
-      //     Physics.IgnoreCollision(vehicleCollider, allPieceCollider, true);
-      //   }
-      // }
     }
-
     public List<Collider> allVehicleColliders = new();
 
     // For when pieces are added
@@ -3079,7 +3114,6 @@
       cachedSailForce = -1;
       cachedTotalSailArea = -1;
     }
-
     /// <summary>
     /// A override of RebuildBounds scoped towards valheim integration instead of unity-only.
     /// - Must be wrapped in a delay/coroutine to prevent spamming on unmounting bounds
@@ -3119,7 +3153,6 @@
         Logger.LogError(e);
       }
     }
-
     /// <summary>
     /// A complete override of OnConvexHullGenerated.
     /// </summary>
@@ -3451,21 +3484,33 @@
       }
     }
 
-    public VehicleMovementController? MovementController { get; set; }
-    public VehicleConfigSyncComponent? VehicleConfigSync { get; set; }
-    public VehicleOnboardController? OnboardController { get; set; }
-    public VehicleManager Manager { get; set; } = null!;
-
+    public VehicleMovementController? MovementController
+    {
+      get;
+      set;
+    }
+    public VehicleConfigSyncComponent? VehicleConfigSync
+    {
+      get;
+      set;
+    }
+    public VehicleOnboardController? OnboardController
+    {
+      get;
+      set;
+    }
+    public VehicleManager Manager
+    {
+      get;
+      set;
+    } = null!;
     public ZNetView? m_nview
     {
       get;
       set;
     }
-
     public bool IsControllerValid => Manager.IsControllerValid;
-
     public bool IsInitialized => Manager.IsInitialized;
-
     public bool IsDestroying => Manager.IsDestroying;
 
   #endregion

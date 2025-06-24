@@ -40,6 +40,7 @@ public abstract class SpriteNames
   public const string HullCenterWood = "hull_center_wood";
   public const string HullCenterIron = "hull_center_iron";
   public const string RopeLadder = "rope_ladder";
+  public const string Dock = "dock";
 
   public const string HullWall = "hull_wall";
 
@@ -50,6 +51,8 @@ public abstract class SpriteNames
 
   public const string HullRibWood = "hull_rib_wood";
   public const string HullRibIron = "hull_rib_iron";
+  public const string ErrorIcon = "error";
+  public const string ExperimentIcon = "experiment";
 
   // Windows
   public const string WindowPortholeStandalone = "window_porthole_standalone";

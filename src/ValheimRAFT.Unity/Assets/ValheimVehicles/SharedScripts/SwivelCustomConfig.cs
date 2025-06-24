@@ -18,6 +18,7 @@ namespace ValheimVehicles.SharedScripts
       get;
       set;
     }
+
     public Vector3 MovementOffset
     {
       get;

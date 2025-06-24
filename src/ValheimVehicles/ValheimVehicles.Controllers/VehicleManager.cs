@@ -111,6 +111,7 @@
     public bool IsControllerValid { get; private set; }
 
     public VehicleManager? VehicleParent;
+    public int ParentManagerId = 0;
 
     // 1:many
     public static Dictionary<int, HashSet<int>> VehicleParentToChildrenMap = new();
@@ -145,24 +146,63 @@
       VehicleChildToParentMap.Remove(parentManagerId);
     }
 
-    public static void AddVehicleParent(VehicleManager parentManager, VehicleManager childManager)
+    public static void AddVehicleParent(VehicleManager parentManager, VehicleManager childManager, bool isForceDocked = false)
     {
+      if (parentManager.PiecesController == null || childManager.PiecesController == null) return;
+
       parentManager.PiecesController.AddNewPiece(childManager.Manager.m_nview);
+
       var parentId = childManager.m_nview.GetZDO().GetInt(VehicleZdoVars.MBParentId, 0);
-      if (parentId == 0) return;
+
+      // fails to attach somehow. Bail on failure.
+      if (parentId == 0)
+      {
+        return;
+      }
+
       AddVehicleChildToParentMap(childManager.PersistentZdoId, parentId);
+
+      if (isForceDocked)
+      {
+        childManager.Config.ForceDocked = true;
+        childManager.VehicleConfigSync.Save(childManager.m_nview.GetZDO());
+      }
+      childManager.ParentManagerId = parentId;
+
+      if (childManager.MovementController != null)
+      {
+        childManager.MovementController.TryAddOrRemoveFrozenSync();
+      }
+
+      if (childManager.PiecesController.m_dockAnchor != null && parentManager.PiecesController.m_dockAnchor != null)
+      {
+        childManager.PiecesController.m_dockAnchor.AddDockPoint(parentManager.PiecesController.m_dockAnchor);
+      }
     }
 
     public static void RemoveVehicleParent(VehicleManager childManager)
     {
-      if (childManager == null || childManager.MovementController == null) return;
+      if (childManager == null || childManager.MovementController == null || childManager.PiecesController == null) return;
+      var childZdo = childManager.m_nview.GetZDO();
+      if (childZdo == null) return;
 
-      var parentId = childManager.m_nview.GetZDO().GetInt(VehicleZdoVars.MBParentId, 0);
-      VehiclePiecesController.RemoveVehicleDataFromZdo(childManager.m_nview.GetZDO());
+      var parentId = childZdo.GetInt(VehicleZdoVars.MBParentId, 0);
+      VehiclePiecesController.RemoveVehicleDataFromZdo(childZdo);
       RemoveVehicleChildToParentMap(childManager.PersistentZdoId, parentId);
 
+      childManager.Config.ForceDocked = false;
+      childManager.MovementController.m_frozenSync = null;
       childManager.VehicleParent = null;
+
       childManager.MovementController.isWaitingForParentVehicleToBeReady = false;
+      childManager.MovementController.TryAddOrRemoveFrozenSync();
+
+      if (childManager.PiecesController.m_dockAnchor != null)
+      {
+        childManager.PiecesController.m_dockAnchor.RemoveAllRopes();
+      }
+
+      childManager.VehicleConfigSync.Save(childZdo);
     }
 
     public VehicleMovementController? MovementController { get; set; }
@@ -984,6 +1024,12 @@
     public float CenterOfMassOffset
     {
       get => Config.CenterOfMassOffset;
+      set {}
+    }
+
+    public bool ForceDocked
+    {
+      get => Config.ForceDocked;
       set {}
     }
 

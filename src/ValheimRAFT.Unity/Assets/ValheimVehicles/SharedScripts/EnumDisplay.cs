@@ -16,8 +16,10 @@ namespace ValheimVehicles.SharedScripts.Helpers
         SwivelUIPanelStrings.SwivelMode_None,
         SwivelUIPanelStrings.SwivelMode_Rotate,
         SwivelUIPanelStrings.SwivelMode_Move,
-        SwivelUIPanelStrings.SwivelMode_TargetEnemy,
-        SwivelUIPanelStrings.SwivelMode_TargetWind
+        SwivelUIPanelStrings.SwivelMode_TargetWind,
+#if DEBUG
+        SwivelUIPanelStrings.SwivelMode_TargetEnemy
+#endif
       };
     }
 

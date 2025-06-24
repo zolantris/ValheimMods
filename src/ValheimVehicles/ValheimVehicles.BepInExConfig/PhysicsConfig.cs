@@ -114,13 +114,13 @@ public class PhysicsConfig : BepInExBaseConfig<PhysicsConfig>
   public static ConfigEntry<float> MaxLinearVelocity = null!;
   public static ConfigEntry<float> MaxLinearYVelocity = null!;
 
-  private const string SailDampingExplaination =
+  private const string SailDampingDesc =
     "Controls how much the water pushes the boat upwards directly. This value may affect angular damping too. Recommended to keep the original value. But tweaking can remove or add additional jitter. Higher values likely will add more jitter.";
 
-  private const string SailAngularDampingExplaination =
+  private const string SailAngularDampingDesc =
     "Controls how much the water pushes the boat from a vertical angle based on water and velocity. Lower values will cause more rocking and allow better turn rates. Higher values will make the vehicle more stable, but less turning angle and possibly less realistic. If you get motion-sickness this can allow tweaking sway without disabling it all and also prevent rapid turning.";
 
-  private const string SailSidewaysDampingExplaination =
+  private const string SailSidewaysDampingDesc =
     "Controls how much the water pushes the boat sideways based on wind direction and velocity.";
 
   // may make this per version update as this can be very important to force reset people to defaults.
@@ -175,8 +175,8 @@ public class PhysicsConfig : BepInExBaseConfig<PhysicsConfig>
 
   private static readonly AcceptableValueRange<float>
     maxLinearYVelocityAcceptableValues = ModEnvironment.IsDebug
-      ? new AcceptableValueRange<float>(1, 2000f)
-      : new AcceptableValueRange<float>(1, 200f);
+      ? new AcceptableValueRange<float>(0.001f, 2000f)
+      : new AcceptableValueRange<float>(0.2f, 200f);
 
   public override void OnBindConfig(ConfigFile config)
   {
@@ -188,15 +188,15 @@ public class PhysicsConfig : BepInExBaseConfig<PhysicsConfig>
         $"Offset the center of mass by a percentage of vehicle total height. Should always be a positive number. Higher values will make the vehicle more sturdy as it will pivot lower. Too high a value will make the ship behave weirdly possibly flipping. 0 will be the center of all colliders within the physics of the vehicle. \n100% will be 50% lower than the vehicle's collider. \n50% will be the very bottom of the vehicle's collider. {vehicleCustomSettingTodo}", true, true, new AcceptableValueRange<float>(0f, 1f)));
 
     var dampingSidewaysDescription = ConfigHelpers.CreateConfigDescription(
-      SailSidewaysDampingExplaination,
+      SailSidewaysDampingDesc,
       true, true, SafeSidewaysDampingRangeWaterVehicle);
 
     var dampingAngularDescription = ConfigHelpers.CreateConfigDescription(
-      SailAngularDampingExplaination,
+      SailAngularDampingDesc,
       true, true, SafeAngularDampingRangeWaterVehicle);
 
     var dampingDescription = ConfigHelpers.CreateConfigDescription(
-      SailDampingExplaination,
+      SailDampingDesc,
       true, true, SafeDampingRangeWaterVehicle);
 
     var debugSailForceAndFactorDescription =
@@ -299,9 +299,9 @@ public class PhysicsConfig : BepInExBaseConfig<PhysicsConfig>
 
 
     MaxLinearYVelocity = config.BindUnique(SectionKey, $"MaxVehicleLinearYVelocity_{VersionedConfigUtil.GetDynamicMinorVersionKey()}",
-      50f,
+      5f,
       ConfigHelpers.CreateConfigDescription(
-        "Sets the absolute max speed a vehicle can ever move in vertical direction. This will limit the ship capability to launch into space. Lower values are safer. Too low and the vehicle will not use gravity well",
+        "Sets the absolute max speed a vehicle can ever move in vertical direction. This can significantly reduce vertical sway when lowered. This will limit the ship capability to launch into space. Lower values are safer. Too low and the vehicle will not recover fast from being underwater if falling into the water. Flight vehicles will not be affected by this value.",
         true, false, maxLinearYVelocityAcceptableValues));
 
     MaxAngularVelocity = config.BindUnique(SectionKey, "MaxVehicleAngularVelocity",

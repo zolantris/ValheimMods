@@ -5,8 +5,10 @@
 
 using UnityEngine;
 using ValheimVehicles.Helpers;
+using ValheimVehicles.Integrations;
 using ValheimVehicles.Interfaces;
 using ValheimVehicles.SharedScripts.UI;
+using ValheimVehicles.Storage.Serialization;
 
 #endregion
 
@@ -251,6 +253,37 @@ namespace ValheimVehicles.SharedScripts
       }
 
       return swivelConfig;
+    }
+
+    /// <summary>
+    /// Serializes fields we allow for persistence when saving.
+    /// </summary>
+    /// <returns></returns>
+    public StoredSwivelCustomConfig SerializeToJson()
+    {
+      var data = new StoredSwivelCustomConfig
+      {
+        Mode = Mode,
+        InterpolationSpeed = InterpolationSpeed,
+        HingeAxes = HingeAxes,
+        MaxEuler = new SerializableVector3(MaxEuler.x, MaxEuler.y, MaxEuler.z),
+        MovementOffset = new SerializableVector3(MovementOffset.x, MovementOffset.y, MovementOffset.z)
+      };
+
+      return data;
+    }
+
+    /// <summary>
+    /// Deserializes and reads into the Config. Always call SaveAll and Load after deserialization so subscriptions are updated.
+    /// </summary>
+    /// <param name="data"></param>
+    public void DeserializeFromJson(StoredSwivelCustomConfig data)
+    {
+      Mode = data.Mode;
+      InterpolationSpeed = data.InterpolationSpeed;
+      HingeAxes = data.HingeAxes;
+      MaxEuler = data.MaxEuler.ToVector3();
+      MovementOffset = data.MovementOffset.ToVector3();
     }
   }
 }

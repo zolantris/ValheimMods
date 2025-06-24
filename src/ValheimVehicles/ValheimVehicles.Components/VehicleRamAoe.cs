@@ -664,9 +664,6 @@ public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
 
     if (colliderObj.layer == LayerHelpers.ItemLayer)
     {
-#if DEBUG
-      LoggerProvider.LogDev($"Ignoring itemLayer {colliderObj.layer} for gameobject {colliderObj.name} because items are not allowed to be collider by vehicle ram colliders.");
-#endif
       if (ComponentSelectors.TryGetVehiclePiecesController(m_vehicle, out var piecesController) && collider.transform.root != piecesController.transform)
       {
         vehiclePiecesController = piecesController;
@@ -683,9 +680,6 @@ public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
 
     if (!LayerHelpers.IsContainedWithinLayerMask(colliderObj.layer, LayerHelpers.PhysicalLayerMask))
     {
-#if DEBUG
-      // LoggerProvider.LogDebug($"Ignoring layer {colliderObj.layer} for gameobject {colliderObj.name} because it is not within PhysicalLayer mask.");
-#endif
       IgnoreCollider(collider);
       return false;
     }
@@ -716,7 +710,6 @@ public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
       }
 
       // Animal/Tameable support.
-      // confirm this works
       if (!character.IsPlayer() && character.IsTamed() && vehiclePiecesController != null)
       {
         var nv = character.GetComponent<ZNetView>();

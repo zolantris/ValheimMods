@@ -206,32 +206,32 @@ public class PropulsionConfig : BepInExBaseConfig<PropulsionConfig>
 
     SailCustomAreaTier1Multiplier = config.BindUnique(GenericSectionName,
       "SailCustomAreaTier1Multiplier",
-      SailAreaForce.CustomTier1AreaForceMultiplier,
+      SailAreaForce.CustomSailAreaForceMultiplier,
       ConfigHelpers.CreateConfigDescription(
         "Manual sets the sail wind area multiplier the custom tier1 sail. Currently there is only 1 tier",
-        true, true)
+        true, false, new AcceptableValueRange<float>(5f, 50f))
     );
 
     SailTier1Area = config.BindUnique(GenericSectionName,
       "SailTier1Area", SailAreaForce.Tier1,
       ConfigHelpers.CreateConfigDescription(
-        "Manual sets the sail wind area of the tier 1 sail.", true, true)
+        "Manual sets the sail wind area of the tier 1 sail.", true, false)
     );
 
     SailTier2Area = config.BindUnique(GenericSectionName,
       "SailTier2Area", SailAreaForce.Tier2,
       ConfigHelpers.CreateConfigDescription(
-        "Manual sets the sail wind area of the tier 2 sail.", true, true));
+        "Manual sets the sail wind area of the tier 2 sail.", true, false));
 
     SailTier3Area = config.BindUnique(GenericSectionName,
       "SailTier3Area", SailAreaForce.Tier3,
       ConfigHelpers.CreateConfigDescription(
-        "Manual sets the sail wind area of the tier 3 sail.", true, true));
+        "Manual sets the sail wind area of the tier 3 sail.", true, false));
 
     SailTier4Area = config.BindUnique(GenericSectionName,
       "SailTier4Area", SailAreaForce.Tier4,
       ConfigHelpers.CreateConfigDescription(
-        "Manual sets the sail wind area of the tier 4 sail.", true, true));
+        "Manual sets the sail wind area of the tier 4 sail.", true, false));
 
     FlightVerticalToggle = config.BindUnique<bool>(GenericSectionName,
       "FlightVerticalToggle",
@@ -247,7 +247,7 @@ public class PropulsionConfig : BepInExBaseConfig<PropulsionConfig>
       0.02f,
       ConfigHelpers.CreateConfigDescription(
         "Plus or minus deadzone of the wheel when turning. Setting this to 0 will disable this feature. This will zero out the rudder if the user attempts to navigate with a value lower than this threshold range",
-        false, true, new AcceptableValueRange<float>(0f, 0.1f)));
+        false, false, new AcceptableValueRange<float>(0f, 0.1f)));
 
     DefaultPhysicsMode.SettingChanged +=
       (sender, args) =>

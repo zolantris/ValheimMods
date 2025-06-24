@@ -144,7 +144,7 @@
 - Default Value: True
 
 ### CanHitEnvironmentOrTerrain 
-- Description: allows rams to hit friendlies
+- Description: allows rams to hit environment/terrain
 - Default Value: True
 
 ### HitRadius 
@@ -300,6 +300,16 @@
 ### MakeAllPiecesWaterProof 
 - Description: Makes it so all building pieces (walls, floors, etc) on the ship don't take rain damage.
 - Default Value: True
+
+## PrefabConfig
+
+### LandVehicle Max Tread Width 
+- Description: Max width the treads can expand to. Lower values will let you make motor bikes. This affects all vehicles. This is just a default. Any vehicle can be configured directly via config menu.
+- Default Value: 8
+
+### LandVehicle Max Tread Length 
+- Description: Max length the treads can expand to. This is just a default. Any vehicle can be configured directly via config menu.
+- Default Value: 20
 
 ## Vehicle Debugging
 
@@ -498,7 +508,7 @@ Other methods removed after 2.5.0
 
 ### SailCustomAreaTier1Multiplier 
 - Description: Manual sets the sail wind area multiplier the custom tier1 sail. Currently there is only 1 tier
-- Default Value: 0.5
+- Default Value: 15
 
 ### SailTier1Area 
 - Description: Manual sets the sail wind area of the tier 1 sail.
@@ -642,33 +652,21 @@ Other methods removed after 2.5.0
 
 ## Vehicle Physics
 
-### LandVehicle Max Tread Width 
-- Description: Max width the treads can expand to. Lower values will let you make motor bikes. This affects all vehicles. In future version there will be an individual config setting.
-- Default Value: 8
-
-### SwivelsCanSyncOnAllClients 
-- Description: Allow swivels to sync on all clients. Instead of using ChildSync properties which can be a bit laggy.
-- Default Value: True
-
-### LandVehicle Max Tread Length 
-- Description: Max length the treads can expand to. In future version there will be an individual config setting.
-- Default Value: 20
-
 ### Vehicle CenterOfMassOffset 
 - Description: Offset the center of mass by a percentage of vehicle total height. Should always be a positive number. Higher values will make the vehicle more sturdy as it will pivot lower. Too high a value will make the ship behave weirdly possibly flipping. 0 will be the center of all colliders within the physics of the vehicle. 
 100% will be 50% lower than the vehicle's collider. 
-50% will be the very bottom of the vehicle's collider. In future version there will be an individual config setting.
+50% will be the very bottom of the vehicle's collider. This is just a default. Any vehicle can be configured directly via config menu.
 - Default Value: 0.65
 
-### flightDamping_3.4.3 
+### flightDamping_3.5.0 
 - Description: Controls how much the water pushes the boat upwards directly. This value may affect angular damping too. Recommended to keep the original value. But tweaking can remove or add additional jitter. Higher values likely will add more jitter.
 - Default Value: 1
 
-### flightSidewaysDamping_3.4.3 
+### flightSidewaysDamping_3.5.0 
 - Description: Controls how much the water pushes the boat sideways based on wind direction and velocity.
 - Default Value: 2
 
-### flightAngularDamping_3.4.3 
+### flightAngularDamping_3.5.0 
 - Description: Controls how much the water pushes the boat from a vertical angle based on water and velocity. Lower values will cause more rocking and allow better turn rates. Higher values will make the vehicle more stable, but less turning angle and possibly less realistic. If you get motion-sickness this can allow tweaking sway without disabling it all and also prevent rapid turning.
 - Default Value: 1
 
@@ -688,15 +686,15 @@ Other methods removed after 2.5.0
 - Description: Flight angular drag controls how much the vehicle slows down when turning.
 - Default Value: 1.2
 
-### force_3.4.3 
+### force_3.5.0 
 - Description: EXPERIMENTAL_FORCE. Lower values will not allow the vehicle to balance fast when tilted. Lower values can reduce bobbing, but must be below the forceDistance value.
 - Default Value: 2
 
-### forceDistance_3.4.3 
+### forceDistance_3.5.0 
 - Description: EXPERIMENTAL_FORCE_DISTANCE should always be above the value of force. Otherwise bobbing will occur. Lower values will not allow the vehicle to balance fast when tilted
 - Default Value: 10
 
-### backwardForce_3.4.3 
+### backwardForce_3.5.0 
 - Description: EXPERIMENTAL_BackwardFORCE
 - Default Value: 1
 
@@ -704,15 +702,15 @@ Other methods removed after 2.5.0
 - Description: Steer force controls how much the vehicle will resist steering when turning due to water pushing against it
 - Default Value: 1
 
-### waterDamping_3.4.3 
+### waterDamping_3.5.0 
 - Description: Controls how much the water pushes the boat upwards directly. This value may affect angular damping too. Recommended to keep the original value. But tweaking can remove or add additional jitter. Higher values likely will add more jitter.
 - Default Value: 1
 
-### waterSidewaysDamping_3.4.3 
+### waterSidewaysDamping_3.5.0 
 - Description: Controls how much the water pushes the boat sideways based on wind direction and velocity.
 - Default Value: 2
 
-### waterAngularDamping_3.4.3 
+### waterAngularDamping_3.5.0 
 - Description: Controls how much the water pushes the boat from a vertical angle based on water and velocity. Lower values will cause more rocking and allow better turn rates. Higher values will make the vehicle more stable, but less turning angle and possibly less realistic. If you get motion-sickness this can allow tweaking sway without disabling it all and also prevent rapid turning.
 - Default Value: 1
 
@@ -728,15 +726,15 @@ Other methods removed after 2.5.0
 - Description: rotation drag controls how much the vehicle slows down when turning.
 - Default Value: 0.8
 
-### submersibleDamping_3.4.3 
+### submersibleDamping_3.5.0 
 - Description: Controls how much the water pushes the boat upwards directly. This value may affect angular damping too. Recommended to keep the original value. But tweaking can remove or add additional jitter. Higher values likely will add more jitter.
 - Default Value: 1
 
-### submersibleSidewaysDamping_3.4.3 
+### submersibleSidewaysDamping_3.5.0 
 - Description: Controls how much the water pushes the boat sideways based on wind direction and velocity.
 - Default Value: 2
 
-### submersibleAngularDamping_3.4.3 
+### submersibleAngularDamping_3.5.0 
 - Description: Controls how much the water pushes the boat from a vertical angle based on water and velocity. Lower values will cause more rocking and allow better turn rates. Higher values will make the vehicle more stable, but less turning angle and possibly less realistic. If you get motion-sickness this can allow tweaking sway without disabling it all and also prevent rapid turning.
 - Default Value: 1
 
@@ -768,13 +766,13 @@ Other methods removed after 2.5.0
 - Description: Wheel offset for Y position. Allowing for raising the treads higher. May require increasing suspension distance so the treads spawn then push the vehicle upwards. Negative lowers the wheels. Positive raises the treads. This value will not override custom config vehicles.
 - Default Value: -1
 
-### MaxVehicleLinearVelocity_3.4.x 
+### MaxVehicleLinearVelocity_3.5.x 
 - Description: Sets the absolute max speed a vehicle can ever move in. This is X Y Z directions. This will prevent the ship from rapidly flying away. Try staying between 5 and 100. Higher values will increase potential of vehicle flying off to space or rapidly accelerating through objects before physics can apply to an unloaded zone.
 - Default Value: 100
 
-### MaxVehicleLinearYVelocity_3.4.x 
-- Description: Sets the absolute max speed a vehicle can ever move in vertical direction. This will limit the ship capability to launch into space. Lower values are safer. Too low and the vehicle will not use gravity well
-- Default Value: 50
+### MaxVehicleLinearYVelocity_3.5.x 
+- Description: Sets the absolute max speed a vehicle can ever move in vertical direction. This can significantly reduce vertical sway when lowered. This will limit the ship capability to launch into space. Lower values are safer. Too low and the vehicle will not recover fast from being underwater if falling into the water. Flight vehicles will not be affected by this value.
+- Default Value: 5
 
 ### MaxVehicleAngularVelocity 
 - Description: Sets the absolute max speed a vehicle can ROTATE in. Having a high value means the vehicle can spin out of control.
@@ -962,7 +960,7 @@ Other methods removed after 2.5.0
 
 ## PowerSystem
 
-### PowerRangePerPowerItem 
+### PowerPylonRange 
 - Description: The power range per power pylon prefab. Large values will make huge networks. Max range is 50. But this could span entire continents as ZDOs are not limited to render distance.
 - Default Value: 10
 
@@ -1018,17 +1016,25 @@ Other methods removed after 2.5.0
 - Description: The maximum amount of energy a power storage unit can hold.
 - Default Value: 800
 
+### LandVehicle_DoNotRequirePower 
+- Description: Allows for free usage of land-vehicles without power system. Very unbalanced.
+- Default Value: False
+
+### Swivels_DoNotRequirePower 
+- Description: Allows you to use swivels without the vehicle power system.
+- Default Value: False
+
+### LandVehicle_PowerDrain 
+- Description: How much power (watts) is consumed by a LandVehicle per second. This is a base value. Each additional mode will ramp up power. Applies only if LandVehicle_DoNotRequirePower is false.
+- Default Value: 1
+
 ### SwivelPowerDrain 
-- Description: How much power (watts) is consumed by a Swivel per second. Applies only if Swivels_DoNotRequirePower is false.
+- Description: How much power (watts) is consumed by a Swivel per second. Swivels have 1 power mode but swivel lerp speed will affect power cost. Applies only if Swivels_DoNotRequirePower is false.
 - Default Value: 1
 
 ### Mechanism_Switch_DefaultAction 
 - Description: Default action of the mechanism switch. This will be overridden by UpdateIntendedAction if a closer matching action is detected nearby.
 - Default Value: CommandsHud
-
-### Swivels_DoNotRequirePower 
-- Description: Allows you to use swivels without the vehicle power system.
-- Default Value: False
 
 ## QuickStartWorld
 

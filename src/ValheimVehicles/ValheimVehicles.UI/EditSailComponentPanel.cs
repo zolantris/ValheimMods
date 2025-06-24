@@ -1,10 +1,16 @@
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using Jotunn.Managers;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using ValheimVehicles.Components;
 using ValheimVehicles.Injections;
 using ValheimVehicles.Prefabs;
+using ValheimVehicles.SharedScripts;
+using ValheimVehicles.SharedScripts.UI;
+using Object = UnityEngine.Object;
 
 namespace ValheimVehicles.UI;
 
@@ -32,6 +38,39 @@ public class EditSailComponentPanel
 
   private Toggle m_disableClothToggle;
 
+  private TMP_Dropdown m_sailVariantDropdown;
+  private Transform sailVariantTransform;
+
+  public static string[] GetVariantNames()
+  {
+    return new[]
+    {
+      ModTranslations.CustomSail,
+      ModTranslations.RaftSail,
+      ModTranslations.KarveSail,
+      ModTranslations.DrakkalSail
+    };
+  }
+
+  public static string GetMaterialFromVariant(SailComponent.MaterialVariant material)
+  {
+    if (material == SailComponent.MaterialVariant.Custom) return ModTranslations.CustomSail;
+    if (material == SailComponent.MaterialVariant.Raft) return ModTranslations.RaftSail;
+    if (material == SailComponent.MaterialVariant.Drakkal) return ModTranslations.DrakkalSail;
+    if (material == SailComponent.MaterialVariant.Karve) return ModTranslations.KarveSail;
+    return ModTranslations.CustomSail;
+  }
+
+  public static SailComponent.MaterialVariant GetVariant(string variantName)
+  {
+    if (variantName == ModTranslations.CustomSail) return SailComponent.MaterialVariant.Custom;
+    if (variantName == ModTranslations.RaftSail) return SailComponent.MaterialVariant.Raft;
+    if (variantName == ModTranslations.DrakkalSail) return SailComponent.MaterialVariant.Drakkal;
+    if (variantName == ModTranslations.KarveSail) return SailComponent.MaterialVariant.Karve;
+    return SailComponent.MaterialVariant.Custom;
+  }
+
+
   public void ShowPanel(SailComponent sailComponent)
   {
     m_editSail = sailComponent;
@@ -56,6 +95,8 @@ public class EditSailComponentPanel
     m_editLockedSailSides[2] = locksArea.transform.Find("SideC").GetComponent<Toggle>();
     if (!isTri) m_editLockedSailSides[3] = locksArea.transform.Find("SideD").GetComponent<Toggle>();
 
+    UpdateSelectedSailVariant();
+
     for (var i = 0; i < m_editLockedSailCorners.Length; i++)
     {
       m_editLockedSailCorners[i]
@@ -74,6 +115,25 @@ public class EditSailComponentPanel
 
     GUIManager.BlockInput(true);
     m_editPanel.SetActive(true);
+  }
+
+  private void UpdateSelectedSailVariant()
+  {
+    if (sailVariantTransform)
+    {
+      var dropdown = sailVariantTransform.GetComponentInChildren<TMP_Dropdown>();
+      var variantNames = GetVariantNames();
+      var selectedIndex = 0;
+      try
+      {
+        selectedIndex = variantNames.ToList().FindIndex(x => GetVariant(x) == m_editSail.m_materialVariant);
+      }
+      catch (Exception e)
+      {
+        LoggerProvider.LogDev($"Sail variant unfound. Defaulting to 0/custom. \n {e}");
+      }
+      dropdown.SetValueWithoutNotify(selectedIndex);
+    }
   }
 
   /**
@@ -142,6 +202,31 @@ public class EditSailComponentPanel
     var editPatternButton =
       m_editPanel.transform.Find("EditPatternButton").GetComponent<Button>();
     var editLogoButton = m_editPanel.transform.Find("EditLogoButton").GetComponent<Button>();
+
+    sailVariantTransform = m_editPanel.transform.Find("SailVariant");
+    if (sailVariantTransform)
+    {
+      var sailVariantStyles = new SwivelUISharedStyles();
+      var variantNames = GetVariantNames();
+      var selectedIndex = 0;
+      try
+      {
+        selectedIndex = variantNames.ToList().FindIndex(x => GetVariant(x) == m_editSail.m_materialVariant);
+      }
+      catch (Exception e)
+      {
+        LoggerProvider.LogDev($"Sail variant unfound. Defaulting to 0/custom. \n {e}");
+      }
+
+      SwivelUIHelpers.AddDropdownRow(sailVariantTransform, sailVariantStyles, ModTranslations.SailVariant, variantNames, variantNames[selectedIndex], (val) =>
+      {
+        if (val > variantNames.Length - 1) return;
+        var variant = GetVariant(variantNames[val]);
+        m_editSail.SetMaterialVariant(variant);
+      });
+    }
+
+
     editSailButton.onClick.AddListener(delegate
     {
       m_editSailPanel.SetActive(true);

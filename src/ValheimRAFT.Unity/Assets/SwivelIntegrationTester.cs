@@ -26,7 +26,7 @@ namespace ValheimVehicles.SharedScripts
     {
       if (windDirection)
       {
-        SwivelComponent.cachedWindDirection = windDirection.forward;
+        // SwivelComponent. = windDirection.forward;
       }
     }
   }

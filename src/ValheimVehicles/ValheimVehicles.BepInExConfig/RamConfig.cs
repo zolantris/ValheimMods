@@ -19,6 +19,7 @@ public class RamConfig : BepInExBaseConfig<RamConfig>
 
   public static ConfigEntry<bool> WaterVehiclesAreRams { get; set; } = null!;
   public static ConfigEntry<bool> LandVehiclesAreRams { get; set; } = null!;
+  public static ConfigEntry<bool> AllowVehicleCollisionBelowFullSpeed { get; set; }
   public static ConfigEntry<float> HitRadius { get; set; } = null!;
   public static ConfigEntry<float> VehicleRamHitRadius { get; set; } = null!;
   public static ConfigEntry<float> VehicleRamBaseSlashDamage { get; set; } = null!;
@@ -313,6 +314,12 @@ public class RamConfig : BepInExBaseConfig<RamConfig>
       ConfigHelpers.CreateConfigDescription(
         "Adds ram damage to a land vehicle's combined hull mesh. This affects all land vehicles vehicles. This will turn off all rams for land vehicles if set to false.",
         true, true));
+
+    AllowVehicleCollisionBelowFullSpeed = config.BindUnique<bool>(VehicleRamSectionName,
+      "AllowVehicleCollisionBelowFullSpeed", true, ConfigHelpers.CreateConfigDescription(
+        "Guards vehicles so they cannot collide with anything below their full speed. This is especially useful when going through areas you do not want to destroy.",
+        true
+      ));
 
     const int tierDiff = 2;
     const float defaultDamagePerTier = 0.25f;

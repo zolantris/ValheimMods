@@ -237,6 +237,7 @@ public class VehicleCommands : ConsoleCommand
     bool shouldSkipPlayer = true)
   {
     if (vehicleOnboardController == null) return null;
+    if (vehicleOnboardController.PiecesController == null) return null;
 
     var charactersOnShip = vehicleOnboardController.GetCharactersOnShip();
     var characterData = new List<SafeMoveCharacterData>();
@@ -255,10 +256,13 @@ public class VehicleCommands : ConsoleCommand
 
         if (!isKinematic && !isDebugFlying) character.m_body.isKinematic = true;
 
-        var lastLocalOffset = character.transform.parent != null
-          ? character.transform.localPosition
-          : Vector3.zero;
-        character.transform.SetParent(null);
+        var lastLocalOffset = vehicleOnboardController.PiecesController.transform.InverseTransformPoint(character.transform.position);
+
+        // bail on transporting the player if too far away from expected vehicle center of mass.
+        if (vehicleOnboardController.MovementController != null && Vector3.Distance(vehicleOnboardController.MovementController.m_body.centerOfMass, lastLocalOffset) > 200f)
+        {
+          continue;
+        }
 
         characterData.Add(new SafeMoveCharacterData
         {
@@ -269,8 +273,12 @@ public class VehicleCommands : ConsoleCommand
         });
       }
 
-    var wasDebugFlying = Player.m_localPlayer.IsDebugFlying();
-    if (!wasDebugFlying) Player.m_localPlayer.m_body.isKinematic = true;
+    var wasDebugFlying = false;
+    if (Player.m_localPlayer)
+    {
+      wasDebugFlying = Player.m_localPlayer.IsDebugFlying();
+      if (!wasDebugFlying) Player.m_localPlayer.m_body.isKinematic = true;
+    }
 
     return new SafeMoveData
     {
@@ -297,9 +305,9 @@ public class VehicleCommands : ConsoleCommand
   {
     var safeMoveData =
       SafeMovePlayerBefore(onboardController, shouldMoveLocalPlayerOffship);
-    yield return new WaitForFixedUpdate();
 
     if (coroutineFunc != null) yield return coroutineFunc;
+    yield return new WaitForFixedUpdate();
 
     var nextPosition = GetPositionAfterMoveCallback();
     yield return SafeMoveCharacterAfter(safeMoveData, nextPosition, shouldProtectAgainstFallDamage);
@@ -371,6 +379,11 @@ public class VehicleCommands : ConsoleCommand
 
         TeleportImmediately(safeMoveCharacterData.character,
           targetLocation);
+
+        if (Player.m_localPlayer == safeMoveCharacterData.character)
+        {
+          ZNet.instance.SetReferencePosition(targetLocation);
+        }
       }
     }
 
@@ -666,10 +679,9 @@ public class VehicleCommands : ConsoleCommand
 
   public static RaycastHit[] AllocatedRaycast = new RaycastHit[20];
 
-  public static bool TryGetVehicleManager(RaycastHit hitinfo, [NotNullWhen(true)] out VehicleManager? vehicleManager)
+  public static bool TryGetVehicleManager(Collider collider, [NotNullWhen(true)] out VehicleManager? vehicleManager)
   {
     vehicleManager = null;
-    var collider = hitinfo.collider;
     var vpc = collider.GetComponentInParent<VehiclePiecesController>();
     if (vpc)
     {
@@ -683,6 +695,127 @@ public class VehicleCommands : ConsoleCommand
     }
 
     return vehicleManager;
+  }
+
+  /// <summary>
+  /// Do a downwards raycast always so the cast position should be a value above where it's expected
+  /// </summary>
+  /// todo figure out why CustomVehicleMask never collides with raycast.
+  /// <returns></returns>
+  public static VehicleManager? GetNearestVehicleManagerInRay(Vector3 castPositionRay, float maxDistanceRay, VehicleManager? excludedManager)
+  {
+    var hits = Physics.RaycastNonAlloc(castPositionRay, Vector3.down, AllocatedRaycast, maxDistanceRay, LayerHelpers.PieceAndCustomVehicleMask);
+    VehicleManager? vehicleManager = null;
+
+    if (hits != 0)
+    {
+      for (var index = 0; index < hits; index++)
+      {
+        var raycastHit = AllocatedRaycast[index];
+        if (TryGetVehicleManager(raycastHit.collider, out vehicleManager))
+        {
+          if (excludedManager != null && excludedManager == vehicleManager)
+          {
+            vehicleManager = null;
+          }
+          else
+          {
+            break;
+          }
+        }
+      }
+    }
+    return vehicleManager;
+  }
+
+  public static VehicleManager? GetNearestVehicleManagerInBox(Vector3 castPositionRay, float maxDistance, Bounds bounds, VehicleManager? excludedManager)
+  {
+    var halfExtents = bounds.extents;
+    halfExtents.y = 0.1f; // do not use a full 3d box otherwise it will be much larger cast.
+
+    var hits = Physics.BoxCastNonAlloc(castPositionRay, halfExtents, Vector3.up, AllocatedRaycast, Quaternion.identity, maxDistance, LayerHelpers.PieceAndCustomVehicleMask);
+    VehicleManager? vehicleManager = null;
+
+    if (hits != 0)
+    {
+      for (var index = 0; index < hits; index++)
+      {
+        var raycastHit = AllocatedRaycast[index];
+        if (TryGetVehicleManager(raycastHit.collider, out vehicleManager))
+        {
+          if (excludedManager != null && excludedManager == vehicleManager)
+          {
+            vehicleManager = null;
+          }
+          else
+          {
+            break;
+          }
+        }
+      }
+    }
+    return vehicleManager;
+  }
+
+  public static VehicleManager? GetNearestVehicleManagerInRayOrSphere(Vector3 castPositionRay, Vector3 castPositionSphere, float maxDistanceRay, float maxSphereRadius, VehicleManager? excludedManager)
+  {
+    if (!GameCamera.instance || !GameCamera.instance) return null;
+    if (!Player.m_localPlayer) return null;
+
+    var vehicleManager = GetNearestVehicleManagerInRay(castPositionRay, maxDistanceRay, excludedManager);
+
+    if (!vehicleManager)
+    {
+      vehicleManager = GetNearestVehicleManagerInSphere(castPositionSphere, maxSphereRadius, excludedManager);
+    }
+
+    if (!vehicleManager)
+    {
+      VehicleNotDetectedMessage();
+      return null;
+    }
+
+    return vehicleManager;
+  }
+
+  /// <summary>
+  /// Distance based on player relative to camera looking direction intersection.
+  /// </summary>
+  /// <returns></returns>
+  public static VehicleManager? GetNearestVehicleManagerInSphere(Vector3 castPosition, float maxDistance, VehicleManager? excludedManager)
+  {
+    if (!GameCamera.instance || !Player.m_localPlayer) return null;
+
+    VehicleManager? nearestManager = null;
+
+    // Efficient static radius check — no false hits like SphereCastAll(…, 0f)
+    var colliders = Physics.OverlapSphere(castPosition, maxDistance, LayerHelpers.PieceAndCustomVehicleMask);
+
+    if (colliders.Length == 0)
+      return null;
+
+    for (var i = 0; i < colliders.Length; i++)
+    {
+      var collider = colliders[i];
+
+      if (excludedManager != null &&
+          excludedManager.PiecesController != null &&
+          collider.transform.root == excludedManager.PiecesController.transform)
+      {
+        continue; // skip excluded vehicle
+      }
+
+      if (TryGetVehicleManager(collider, out var manager))
+      {
+        if (excludedManager != null && excludedManager == manager)
+          continue;
+
+        nearestManager = manager;
+        break;
+      }
+    }
+
+    return nearestManager;
   }
 
   /// <summary>
@@ -707,7 +840,7 @@ public class VehicleCommands : ConsoleCommand
       LayerHelpers.PieceAndCustomVehicleMask);
     VehicleManager? vehicleManager = null;
 
-    if (localCast && TryGetVehicleManager(hitinfo, out vehicleManager))
+    if (localCast && TryGetVehicleManager(hitinfo.collider, out vehicleManager))
     {
       return vehicleManager;
     }
@@ -723,7 +856,7 @@ public class VehicleCommands : ConsoleCommand
     for (var index = 0; index < hits; index++)
     {
       var raycastHit = AllocatedRaycast[index];
-      if (TryGetVehicleManager(raycastHit, out vehicleManager)) break;
+      if (TryGetVehicleManager(raycastHit.collider, out vehicleManager)) break;
     }
 
     if (!vehicleManager)
