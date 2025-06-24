@@ -775,37 +775,66 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable, INetView
   public Mesh? CreateCollisionMesh(int size)
   {
     var collisionMesh = new Mesh();
+
     if (size == 3)
     {
-      collisionMesh.SetVertices(new Vector3[3]
+      collisionMesh.name = "SailCollider_Tetrahedron";
+
+      var a = m_sailCorners[0];
+      var b = m_sailCorners[1];
+      var c = m_sailCorners[2];
+
+      // Compute normal and offset a bit along it to create a 4th vertex
+      var normal = Vector3.Cross(b - a, c - a).normalized;
+      var offset = normal * 0.01f;
+
+      // Add 4th point slightly above the center of the triangle
+      var d = (a + b + c) / 3f + offset;
+
+      // Add 4 vertices (triangle base + top point)
+      var vertices = new List<Vector3> { a, b, c, d };
+
+      // Build a tetrahedron: base triangle + 3 side faces
+      var triangles = new List<int>
       {
-        m_sailCorners[0],
-        m_sailCorners[1],
-        m_sailCorners[2]
-      });
-      collisionMesh.SetTriangles(new int[6] { 0, 1, 2, 0, 2, 1 }, 0);
-      collisionMesh.Optimize();
+        0, 1, 2, // base
+        0, 1, 3, // side 1
+        1, 2, 3, // side 2
+        2, 0, 3 // side 3
+      };
+
+      collisionMesh.SetVertices(vertices);
+      collisionMesh.SetTriangles(triangles, 0);
+      collisionMesh.RecalculateNormals();
+      collisionMesh.RecalculateBounds();
+
+      return collisionMesh;
     }
 
     if (size == 4)
     {
-      collisionMesh.SetVertices(new Vector3[4]
+      collisionMesh.name = "SailCollider_Quad";
+      collisionMesh.SetVertices(new List<Vector3>
       {
         m_sailCorners[0],
         m_sailCorners[1],
         m_sailCorners[2],
         m_sailCorners[3]
       });
-      collisionMesh.SetTriangles(new int[12]
+
+      collisionMesh.SetTriangles(new[]
       {
-        0, 1, 2, 1, 0, 2, 1, 2, 3, 2,
-        1, 3
+        0, 1, 2,
+        0, 2, 3
       }, 0);
-      collisionMesh.Optimize();
+
+      collisionMesh.RecalculateNormals();
+      collisionMesh.RecalculateBounds();
     }
 
     return collisionMesh;
   }
+
 
   public void CreateSailMesh()
   {
@@ -818,29 +847,46 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable, INetView
     var uvs = new List<Vector2>();
     var triangles = new List<int>();
 
+    // if (m_sailCorners.Count == 3)
+    // {
+    //   vertices.Add(m_sailCorners[0]);
+    //   vertices.Add(m_sailCorners[1]);
+    //   vertices.Add(m_sailCorners[2]);
+    //   triangles.Add(0);
+    //   triangles.Add(1);
+    //   triangles.Add(2);
+    //   uvs.Add(new Vector2
+    //   {
+    //     x = 0f,
+    //     y = 0f
+    //   });
+    //   uvs.Add(new Vector2
+    //   {
+    //     x = 1f,
+    //     y = 0f
+    //   });
+    //   uvs.Add(new Vector2
+    //   {
+    //     x = 1f,
+    //     y = 1f
+    //   });
+    // }
     if (m_sailCorners.Count == 3)
     {
+      // Add vertices in clockwise order for proper normal calculation
       vertices.Add(m_sailCorners[0]);
       vertices.Add(m_sailCorners[1]);
       vertices.Add(m_sailCorners[2]);
+
+      // Add front face triangle
       triangles.Add(0);
       triangles.Add(1);
       triangles.Add(2);
-      uvs.Add(new Vector2
-      {
-        x = 0f,
-        y = 0f
-      });
-      uvs.Add(new Vector2
-      {
-        x = 1f,
-        y = 0f
-      });
-      uvs.Add(new Vector2
-      {
-        x = 1f,
-        y = 1f
-      });
+
+      // Use proper UV mapping that covers the full texture space
+      uvs.Add(new Vector2(0f, 0f)); // Bottom-left
+      uvs.Add(new Vector2(1f, 0f)); // Bottom-right
+      uvs.Add(new Vector2(0.5f, 1f)); // Top-center
     }
     else if (m_sailCorners.Count == 4)
     {
@@ -883,23 +929,32 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable, INetView
     mesh.SetTriangles(triangles, 0);
     mesh.SetUVs(0, uvs);
 
-    mesh.Optimize();
+    // mesh.Optimize();
     mesh.RecalculateNormals();
     mesh.RecalculateTangents();
 
     if (m_sailCorners.Count == 3)
     {
       var sqrSubDist = m_sailSubdivision * m_sailSubdivision;
-      while (true)
+      var subdivisionCount = 0;
+      var maxSubdivisions = 3; // Adjust based on your needs
+
+      while (subdivisionCount < maxSubdivisions)
       {
         var dist = (mesh.vertices[mesh.triangles[0]] -
                     mesh.vertices[mesh.triangles[1]])
           .sqrMagnitude;
+
         if (dist < sqrSubDist) break;
 
         MeshUtils.Subdivide(mesh);
+        subdivisionCount++;
       }
+
+      mesh.RecalculateNormals();
+      mesh.RecalculateTangents();
     }
+
 
     m_mesh.sharedMesh = mesh;
 
@@ -1086,7 +1141,9 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable, INetView
     }
 
     m_sailCloth.coefficients = coefficients;
-    m_meshCollider.sharedMesh = mesh;
+    m_meshCollider.sharedMesh = CreateCollisionMesh(m_sailCorners.Count);
+    m_meshCollider.convex = true; // required for triangle meshes to interact with physics
+    m_meshCollider.enabled = true; // ensure it's not disabled
   }
 
   public bool IsNotCustom => m_materialVariant != MaterialVariant.Custom;
