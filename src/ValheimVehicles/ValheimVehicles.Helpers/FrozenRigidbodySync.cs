@@ -21,6 +21,15 @@ public class FrozenRigidbodySync
     m_targetBody = target;
   }
 
+  public Vector3 GetFrozenSyncPoint()
+  {
+    return m_targetBody.position + m_targetBody.rotation * frozenLocalPos;
+  }
+  public Quaternion GetFrozenSyncRotation()
+  {
+    return m_targetBody.rotation * frozenLocalRot;
+  }
+
   public void SetFrozenState(bool val)
   {
     if (!m_body || !m_body.isKinematic || !m_targetBody)
@@ -31,17 +40,22 @@ public class FrozenRigidbodySync
 
     if (val)
     {
-      frozenLocalPos = Quaternion.Inverse(m_targetBody.rotation) * (m_body.position - m_targetBody.position);
-      frozenLocalRot = Quaternion.Inverse(m_targetBody.rotation) * m_body.rotation;
+      SyncFrozenPosition();
     }
     isFrozen = val;
+  }
+
+  public void SyncFrozenPosition()
+  {
+    frozenLocalPos = Quaternion.Inverse(m_targetBody.rotation) * (m_body.position - m_targetBody.position);
+    frozenLocalRot = Quaternion.Inverse(m_targetBody.rotation) * m_body.rotation;
   }
 
   public void FixedUpdate()
   {
     if (!mustSync || !m_body || !m_body.isKinematic || !m_targetBody) return;
-    var worldPos = m_targetBody.position + m_targetBody.rotation * frozenLocalPos;
-    var worldRot = m_targetBody.rotation * frozenLocalRot;
+    var worldPos = GetFrozenSyncPoint();
+    var worldRot = GetFrozenSyncRotation();
 
     if (Vector3.Distance(worldPos + frozenLocalPos, m_body.position) > 150f)
     {

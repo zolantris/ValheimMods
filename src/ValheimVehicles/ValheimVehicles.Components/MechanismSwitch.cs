@@ -384,16 +384,34 @@ public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interac
 
     if (manager.VehicleParent != null || parentId != 0 || manager.ForceDocked)
     {
+      StartCoroutine(IgnoreCollisionWhileUndocking(manager, manager.VehicleParent));
       VehicleManager.RemoveVehicleParent(manager);
       Player.m_localPlayer.Message(MessageHud.MessageType.Center, ModTranslations.DockingMessages_Undocked);
     }
     else
     {
       var vehiclePosition = manager.MovementController.m_body.worldCenterOfMass;
-      var maxCastDistance = 200f;
-      var raycastStartpoint = vehiclePosition + Vector3.up * maxCastDistance / 2f;
+      if (manager.PiecesController.m_dockAnchor != null)
+      {
+        vehiclePosition = manager.PiecesController.m_dockAnchor.transform.position;
+      }
 
-      var closestVehicleManager = VehicleCommands.GetNearestVehicleManagerInRayOrSphere(raycastStartpoint, vehiclePosition, maxCastDistance, 20f, manager);
+      var maxCastDistance = PrefabConfig.VehicleDockVerticalHeight.Value;
+      VehicleManager? closestVehicleManager = null;
+
+      // square cast upwards. Do this first as it's better to match upwards first
+      if (closestVehicleManager == null && manager.OnboardCollider != null)
+      {
+        var bounds = manager.OnboardCollider.bounds;
+        var startPoint = manager.OnboardCollider.transform.position + new Vector3(0, bounds.extents.y, 0);
+        closestVehicleManager = VehicleCommands.GetNearestVehicleManagerInBox(startPoint, maxCastDistance, bounds, manager);
+      }
+
+      if (closestVehicleManager == null)
+      {
+        closestVehicleManager = VehicleCommands.GetNearestVehicleManagerInSphere(vehiclePosition, PrefabConfig.VehicleDockSphericalRadius.Value, manager);
+      }
+
       if (closestVehicleManager == null)
       {
         Player.m_localPlayer.Message(MessageHud.MessageType.Center, ModTranslations.DockingMessages_NoVehicleToDockFound);
@@ -403,6 +421,48 @@ public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interac
       Player.m_localPlayer.Message(MessageHud.MessageType.Center, ModTranslations.DockingMessages_Docked);
     }
     return true;
+  }
+
+  public IEnumerator IgnoreCollisionWhileUndocking(VehicleManager childManager, VehicleManager? parentManager)
+  {
+    if (parentManager == null) yield break;
+    var childVehicleColliders = childManager.PiecesController.allVehicleColliders;
+    var parentVehicleColliders = parentManager.PiecesController.allVehicleColliders;
+
+    foreach (var collider in childVehicleColliders)
+    foreach (var pieceData in parentManager.PiecesController.m_prefabPieceDataItems)
+    foreach (var pieceCollider in pieceData.Value.AllColliders)
+    {
+
+      if (collider == null || pieceCollider == null) continue;
+      Physics.IgnoreCollision(collider, pieceCollider, true);
+    }
+
+    foreach (var collider in childVehicleColliders)
+    foreach (var parentVehicleCollider in parentVehicleColliders)
+    {
+      if (collider == null && parentVehicleCollider == null) continue;
+      Physics.IgnoreCollision(collider, parentVehicleCollider, true);
+    }
+
+
+    yield return new WaitForSeconds(5f);
+
+    foreach (var collider in childVehicleColliders)
+    foreach (var pieceData in parentManager.PiecesController.m_prefabPieceDataItems)
+    foreach (var pieceCollider in pieceData.Value.AllColliders)
+    {
+
+      if (collider == null || pieceCollider == null) continue;
+      Physics.IgnoreCollision(collider, pieceCollider, false);
+    }
+
+    foreach (var collider in childVehicleColliders)
+    foreach (var parentVehicleCollider in parentVehicleColliders)
+    {
+      if (collider == null && parentVehicleCollider == null) continue;
+      Physics.IgnoreCollision(collider, parentVehicleCollider, false);
+    }
   }
 
   public bool TriggerSwivelPanel()

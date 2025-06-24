@@ -679,10 +679,9 @@ public class VehicleCommands : ConsoleCommand
 
   public static RaycastHit[] AllocatedRaycast = new RaycastHit[20];
 
-  public static bool TryGetVehicleManager(RaycastHit hitinfo, [NotNullWhen(true)] out VehicleManager? vehicleManager)
+  public static bool TryGetVehicleManager(Collider collider, [NotNullWhen(true)] out VehicleManager? vehicleManager)
   {
     vehicleManager = null;
-    var collider = hitinfo.collider;
     var vpc = collider.GetComponentInParent<VehiclePiecesController>();
     if (vpc)
     {
@@ -713,7 +712,36 @@ public class VehicleCommands : ConsoleCommand
       for (var index = 0; index < hits; index++)
       {
         var raycastHit = AllocatedRaycast[index];
-        if (TryGetVehicleManager(raycastHit, out vehicleManager))
+        if (TryGetVehicleManager(raycastHit.collider, out vehicleManager))
+        {
+          if (excludedManager != null && excludedManager == vehicleManager)
+          {
+            vehicleManager = null;
+          }
+          else
+          {
+            break;
+          }
+        }
+      }
+    }
+    return vehicleManager;
+  }
+
+  public static VehicleManager? GetNearestVehicleManagerInBox(Vector3 castPositionRay, float maxDistance, Bounds bounds, VehicleManager? excludedManager)
+  {
+    var halfExtents = bounds.extents;
+    halfExtents.y = 0.1f; // do not use a full 3d box otherwise it will be much larger cast.
+
+    var hits = Physics.BoxCastNonAlloc(castPositionRay, halfExtents, Vector3.up, AllocatedRaycast, Quaternion.identity, maxDistance, LayerHelpers.PieceAndCustomVehicleMask);
+    VehicleManager? vehicleManager = null;
+
+    if (hits != 0)
+    {
+      for (var index = 0; index < hits; index++)
+      {
+        var raycastHit = AllocatedRaycast[index];
+        if (TryGetVehicleManager(raycastHit.collider, out vehicleManager))
         {
           if (excludedManager != null && excludedManager == vehicleManager)
           {
@@ -756,35 +784,38 @@ public class VehicleCommands : ConsoleCommand
   /// <returns></returns>
   public static VehicleManager? GetNearestVehicleManagerInSphere(Vector3 castPosition, float maxDistance, VehicleManager? excludedManager)
   {
-    if (!GameCamera.instance || !GameCamera.instance) return null;
-    if (!Player.m_localPlayer) return null;
+    if (!GameCamera.instance || !Player.m_localPlayer) return null;
 
-    VehicleManager? vehicleManager = null;
+    VehicleManager? nearestManager = null;
 
-    // continue with heavier check if failed.
-    var hits = Physics.SphereCastNonAlloc(castPosition, maxDistance, Vector3.down, AllocatedRaycast, maxDistance, LayerHelpers.PieceAndCustomVehicleMask);
-    if (hits == 0)
-    {
+    // Efficient static radius check — no false hits like SphereCastAll(…, 0f)
+    var colliders = Physics.OverlapSphere(castPosition, maxDistance, LayerHelpers.PieceAndCustomVehicleMask);
+
+    if (colliders.Length == 0)
       return null;
-    }
 
-    for (var index = 0; index < hits; index++)
+    for (var i = 0; i < colliders.Length; i++)
     {
-      var raycastHit = AllocatedRaycast[index];
-      if (TryGetVehicleManager(raycastHit, out vehicleManager))
+      var collider = colliders[i];
+
+      if (excludedManager != null &&
+          excludedManager.PiecesController != null &&
+          collider.transform.root == excludedManager.PiecesController.transform)
       {
-        if (excludedManager != null && excludedManager == vehicleManager)
-        {
-          vehicleManager = null;
-        }
-        else
-        {
-          break;
-        }
+        continue; // skip excluded vehicle
+      }
+
+      if (TryGetVehicleManager(collider, out var manager))
+      {
+        if (excludedManager != null && excludedManager == manager)
+          continue;
+
+        nearestManager = manager;
+        break;
       }
     }
 
-    return vehicleManager;
+    return nearestManager;
   }
 
   /// <summary>
@@ -809,7 +840,7 @@ public class VehicleCommands : ConsoleCommand
       LayerHelpers.PieceAndCustomVehicleMask);
     VehicleManager? vehicleManager = null;
 
-    if (localCast && TryGetVehicleManager(hitinfo, out vehicleManager))
+    if (localCast && TryGetVehicleManager(hitinfo.collider, out vehicleManager))
     {
       return vehicleManager;
     }
@@ -825,7 +856,7 @@ public class VehicleCommands : ConsoleCommand
     for (var index = 0; index < hits; index++)
     {
       var raycastHit = AllocatedRaycast[index];
-      if (TryGetVehicleManager(raycastHit, out vehicleManager)) break;
+      if (TryGetVehicleManager(raycastHit.collider, out vehicleManager)) break;
     }
 
     if (!vehicleManager)

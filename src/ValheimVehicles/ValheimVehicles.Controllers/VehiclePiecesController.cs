@@ -3060,24 +3060,6 @@
           Physics.IgnoreCollision(vehicleCollider, vehicleCollider2, true);
         }
       }
-      // var pieceColliders = transform.GetComponentsInChildren<Collider>(true);
-
-      // heavy but simple ignore all colliders.
-      // foreach (var vehicleCollider in vehicleColliders)
-      // {
-      //   // must ignore all vehicle colliders
-      //   foreach (var vehicleCollider2 in vehicleColliders)
-      //   {
-      //     if (vehicleCollider == vehicleCollider2) continue;
-      //     Physics.IgnoreCollision(vehicleCollider, vehicleCollider2, true);
-      //   }
-      //
-      //   // vehicle colliders must ignore pieces. But pieces should likely not ignore eachother and it won't matter with how piece controller ignores physics engine.
-      //   foreach (var allPieceCollider in pieceColliders)
-      //   {
-      //     Physics.IgnoreCollision(vehicleCollider, allPieceCollider, true);
-      //   }
-      // }
     }
     public List<Collider> allVehicleColliders = new();
 

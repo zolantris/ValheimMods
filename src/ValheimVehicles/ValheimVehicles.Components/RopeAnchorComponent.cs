@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
+using ValheimVehicles.BepInExConfig;
 using ValheimVehicles.Controllers;
 using ValheimVehicles.Shared.Constants;
 using ValheimVehicles.SharedScripts;
@@ -124,6 +125,11 @@ public class RopeAnchorComponent : MonoBehaviour, Interactable, Hoverable
     Localization.OnLanguageChange += SetupLocalization;
   }
 
+  public void Start()
+  {
+    m_maxRopeDistance = IsDockAnchor() ? Mathf.Max(PrefabConfig.VehicleDockVerticalHeight.Value, 64f) : 64f;
+  }
+
   public bool IsDockAnchor()
   {
     if (!gameObject) return false;
@@ -222,11 +228,14 @@ public class RopeAnchorComponent : MonoBehaviour, Interactable, Hoverable
 
   public void AddDockPoint(RopeAnchorComponent ropeAnchor)
   {
+    if (!ropeAnchor) return;
     if (!ropeAnchor.IsDockAnchor())
     {
       LoggerProvider.LogError("error attempted to attach to the wrong type of RopeAnchorComponent");
       return;
     }
+    // do not allow multiple ropes.
+    if (m_ropes.Count > 0) return;
     // dictionary index of 0 since this only connects to another rope anchor
     AttachRope(ropeAnchor, false);
   }

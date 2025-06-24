@@ -1,3 +1,4 @@
+using System.Collections.Specialized;
 using BepInEx.Configuration;
 using Jotunn.Managers;
 using UnityEngine;
@@ -28,6 +29,9 @@ public class PrefabConfig : BepInExBaseConfig<PrefabConfig>
   }
   public static ConfigEntry<int> VehicleLandMaxTreadWidth = null!;
   public static ConfigEntry<int> VehicleLandMaxTreadLength = null!;
+  public static ConfigEntry<float> VehicleDockVerticalHeight = null!;
+  public static ConfigEntry<float> VehicleDockSphericalRadius = null!;
+  public static ConfigEntry<float> VehicleDockPositionChangeSpeed = null!;
 
   public static ConfigEntry<bool> MakeAllPiecesWaterProof { get; set; }
   public static ConfigEntry<bool> AllowTieredMastToRotate { get; set; }
@@ -172,6 +176,23 @@ public class PrefabConfig : BepInExBaseConfig<PrefabConfig>
       20,
       ConfigHelpers.CreateConfigDescription(
         $"Max length the treads can expand to. {customSettingMessage}", true, false, new AcceptableValueRange<int>(4, 100)));
+
+    VehicleDockPositionChangeSpeed = config.BindUnique(SectionKey,
+      "VehicleDockPositionChangeSpeed",
+      2.5f,
+      ConfigHelpers.CreateConfigDescription(
+        $"Dock position change speed. Higher values will make the vehicle move faster but could cause physics problems", true, false, new AcceptableValueRange<float>(1f, 100f)));
+
+    VehicleDockVerticalHeight = config.BindUnique(SectionKey,
+      "VehicleDockVerticalHeight",
+      200f,
+      ConfigHelpers.CreateConfigDescription(
+        $"MaxTowing height where a landvehicle can be grabbed/towed by a ship or flying ship. This is cast from the vehicle's upper most bounds and continues directly upwards without any rotation.", true, false, new AcceptableValueRange<float>(50f, 2000f)));
+    VehicleDockSphericalRadius = config.BindUnique(SectionKey,
+      "VehicleDockSphericalRadius",
+      20f,
+      ConfigHelpers.CreateConfigDescription(
+        $"MaxTowing radius where a landvehicle can be grabbed/towed by a ship or flying ship. Spheres are significantly less accurate so a higher value could result in accidental matches with wrong vehicle", true, false, new AcceptableValueRange<float>(1f, 50f)));
 
     VehicleLandMaxTreadWidth.SettingChanged += (sender, args) => VehicleManager.UpdateAllLandMovementControllers();
     VehicleLandMaxTreadLength.SettingChanged += (sender, args) => VehicleManager.UpdateAllLandMovementControllers();
