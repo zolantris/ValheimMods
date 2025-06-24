@@ -22,6 +22,7 @@ This document contains generic tutorials and information on configuring the mod.
 - [Vehicle Commands](./docs/tutorials/Tutorial_VehicleCommandsInterface.md)
 - Videos
     - [Swivels Visual Tutorial](https://youtu.be/wtnUCGz2zek)
+    - [Vehicle Dock (LandVehicles to WaterVehicle)](https://youtu.be/iJSqmvJZlzo)
 
 ## Mod Info
 
