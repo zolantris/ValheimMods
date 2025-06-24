@@ -714,6 +714,8 @@
     public static float maxSpeed = 10f;
     public static float maxStepPerFrame = 1.5f;
 
+    public static float dockUpdateDelta = 0.2f;
+
     public bool TryUpdateVehicleDockPosition()
     {
       if (Manager.VehicleParent == null) return false;
@@ -750,10 +752,8 @@
 
       var deltaDistance = Vector3.Distance(m_body.position, desiredWorldPosition);
 
-      var clampedDistance = Mathf.Clamp(deltaDistance, 1f, 100f);
-
       // frozen sync will handle this instead.
-      if (deltaDistance < 0.001f)
+      if (deltaDistance < dockUpdateDelta)
       {
         return false;
       }
@@ -765,7 +765,15 @@
       var moveDir = (desiredWorldPosition - m_body.position).normalized;
       var stepSize = Mathf.Min(moveSpeed * Time.fixedDeltaTime, maxStepPerFrame);
 
-      var newPosition = m_body.position + moveDir * stepSize;
+      var maxLerpFactor = 1f; // full movement
+      var minLerpFactor = 0.01f; // minimum lerp per frame
+      var distanceFalloff = 2.5f; // how quickly we slow near the target
+
+      var lerpT = Mathf.Clamp01(Time.fixedDeltaTime * distanceFalloff / deltaDistance);
+      lerpT = Mathf.Clamp(lerpT, minLerpFactor, maxLerpFactor);
+
+
+      var newPosition = Vector3.Lerp(m_body.position, desiredWorldPosition, lerpT);
 
       var newRotation = Quaternion.Slerp(m_body.rotation, desiredWorldRotation, Time.fixedDeltaTime * ForceDockRotationSpeed);
 
@@ -806,7 +814,7 @@
 
       if (m_frozenSync.isFrozen)
       {
-        // run fixedUpdate if we are nearby the frozen point already. Otherwise run the dock update until it's synced.
+        // run fixedUpdate if we are nearby the frozen point already. Otherwise, run the dock update until it's synced.
         if (isAboveKinematicThreshold)
         {
           m_frozenSync?.FixedUpdate();

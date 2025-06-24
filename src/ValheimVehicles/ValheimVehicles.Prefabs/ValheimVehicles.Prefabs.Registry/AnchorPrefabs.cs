@@ -20,7 +20,8 @@ public class AnchorPrefabs : RegisterPrefab<AnchorPrefabs>
     RegisterAnchorDockingAttachment();
   }
 
-  public void RegisterAnchorDockingAttachment()
+
+  public static void RegisterAnchorDockingAttachment()
   {
     var asset = LoadValheimVehicleAssets._bundle.LoadAsset<GameObject>("anchor_dock.prefab");
     if (!asset)
@@ -60,7 +61,7 @@ public class AnchorPrefabs : RegisterPrefab<AnchorPrefabs>
       PieceTable = PrefabRegistryController.GetPieceTableName(),
       Name = "$valheim_vehicles_dock_anchor_point",
       Description = "$valheim_vehicles_dock_anchor_point_desc",
-      Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite("rope_anchor"),
+      Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames.Dock),
       Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Structure),
       Enabled = true,
       Requirements =

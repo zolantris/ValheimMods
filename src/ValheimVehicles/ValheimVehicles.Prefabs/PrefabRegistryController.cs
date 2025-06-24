@@ -277,7 +277,6 @@ public static class PrefabRegistryController
     CustomMeshPrefabs.Instance.Register(prefabManager, pieceManager);
 
     SwivelPrefab.Register();
-    AnchorPrefabs.Register();
 
     ShipRudderPrefabs.Instance.Register(prefabManager, pieceManager);
 
@@ -317,6 +316,7 @@ public static class PrefabRegistryController
     // Rope items
     RegisterRopeAnchor();
     RegisterRopeLadder();
+    AnchorPrefabs.Register();
 
     // pier components
     RegisterPierPole();

@@ -40,6 +40,7 @@ public abstract class SpriteNames
   public const string HullCenterWood = "hull_center_wood";
   public const string HullCenterIron = "hull_center_iron";
   public const string RopeLadder = "rope_ladder";
+  public const string Dock = "dock";
 
   public const string HullWall = "hull_wall";
 
