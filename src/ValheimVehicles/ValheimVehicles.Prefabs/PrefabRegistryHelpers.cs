@@ -358,7 +358,12 @@ public abstract class PrefabRegistryHelpers
     var sizeVariantString = PrefabNames.GetPrefabSizeVariantName(sizeVariant);
     var materialName = materialVariant.ToLower();
 
-    var pieceName = $"${pieceBaseName} {sizeVariantString} $valheim_vehicles_material_{materialName}_{directionVariant}";
+    var pieceName = $"${pieceBaseName} {sizeVariantString} $valheim_vehicles_material_{materialName}";
+
+    if (directionVariant != null)
+    {
+      pieceName += $" $valheim_vehicles_direction_{PrefabNames.GetDirectionName(directionVariant.Value)}";
+    }
 
     var sprite = LoadValheimVehicleAssets.VehicleSprites.GetSprite(
       assetName);
