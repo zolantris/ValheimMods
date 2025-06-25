@@ -50,10 +50,15 @@ public class ShipHullPrefab : IRegisterPrefab
 
     // hull-rib-corner
     RegisterHullRibCorner(HullMaterial.Wood, null, PrefabNames.PrefabSizeVariant.TwoByTwoByTwo);
+    RegisterHullRibCorner(HullMaterial.Iron, null, PrefabNames.PrefabSizeVariant.TwoByTwoByTwo);
+
+
+    RegisterHullRibCorner(HullMaterial.Wood, PrefabNames.DirectionVariant.Left, PrefabNames.PrefabSizeVariant.TwoByTwoByFour);
     RegisterHullRibCorner(HullMaterial.Wood, PrefabNames.DirectionVariant.Right, PrefabNames.PrefabSizeVariant.TwoByTwoByFour);
 
-    RegisterHullRibCorner(HullMaterial.Iron, null, PrefabNames.PrefabSizeVariant.TwoByTwoByTwo);
+    RegisterHullRibCorner(HullMaterial.Iron, PrefabNames.DirectionVariant.Left, PrefabNames.PrefabSizeVariant.TwoByTwoByFour);
     RegisterHullRibCorner(HullMaterial.Iron, PrefabNames.DirectionVariant.Right, PrefabNames.PrefabSizeVariant.TwoByTwoByFour);
+
     // for larger hulls 
     RegisterHullRibCorner(HullMaterial.Iron, PrefabNames.DirectionVariant.Left, PrefabNames.PrefabSizeVariant.TwoByOneByEight);
     RegisterHullRibCorner(HullMaterial.Iron, PrefabNames.DirectionVariant.Right, PrefabNames.PrefabSizeVariant.TwoByOneByEight);
@@ -64,6 +69,12 @@ public class ShipHullPrefab : IRegisterPrefab
 
     RegisterHullCornerFloor(HullMaterial.Iron, PrefabNames.DirectionVariant.Left, PrefabNames.PrefabSizeVariant.TwoByTwo);
     RegisterHullCornerFloor(HullMaterial.Iron, PrefabNames.DirectionVariant.Right, PrefabNames.PrefabSizeVariant.TwoByTwo);
+
+    RegisterHullCornerFloor(HullMaterial.Wood, PrefabNames.DirectionVariant.Left, PrefabNames.PrefabSizeVariant.TwoByFour);
+    RegisterHullCornerFloor(HullMaterial.Wood, PrefabNames.DirectionVariant.Right, PrefabNames.PrefabSizeVariant.TwoByFour);
+
+    RegisterHullCornerFloor(HullMaterial.Iron, PrefabNames.DirectionVariant.Left, PrefabNames.PrefabSizeVariant.TwoByFour);
+    RegisterHullCornerFloor(HullMaterial.Iron, PrefabNames.DirectionVariant.Right, PrefabNames.PrefabSizeVariant.TwoByFour);
 
     RegisterHullCornerFloor(HullMaterial.Wood, PrefabNames.DirectionVariant.Left, PrefabNames.PrefabSizeVariant.TwoByEight);
     RegisterHullCornerFloor(HullMaterial.Wood, PrefabNames.DirectionVariant.Right, PrefabNames.PrefabSizeVariant.TwoByEight);

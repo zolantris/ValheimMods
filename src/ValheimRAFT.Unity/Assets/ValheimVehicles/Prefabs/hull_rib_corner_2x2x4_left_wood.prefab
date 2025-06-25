@@ -8,9 +8,13 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 1428213996334448122, guid: c50d57fe71325794fbd2e3e8fad0e7c3, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4179269162098430418, guid: c50d57fe71325794fbd2e3e8fad0e7c3, type: 3}
       propertyPath: m_Name
-      value: hull_rib_corner_prow_left_wood
+      value: hull_rib_corner_2x2x4_left_wood
       objectReference: {fileID: 0}
     - target: {fileID: 5340342860526972254, guid: c50d57fe71325794fbd2e3e8fad0e7c3, type: 3}
       propertyPath: m_Materials.Array.data[0]

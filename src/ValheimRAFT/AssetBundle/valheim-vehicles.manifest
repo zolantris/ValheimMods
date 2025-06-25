@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 320136848
+CRC: 2624320786
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: c501d8eb0383eae83fd715c5bec34cfe
+    Hash: 0ffb4789b1b6585b88348b0cf327d19d
   TypeTreeHash:
     serializedVersion: 2
     Hash: 2829a51ee33982bdb5ce5c64787aa447
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: c501d8eb0383eae83fd715c5bec34cfe
+    Hash: 0ffb4789b1b6585b88348b0cf327d19d
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -178,6 +178,7 @@ Assets:
 - Assets/ValheimVehicles/Prefabs/shared_hull_rib_prow_2x2.prefab
 - Assets/ValheimVehicles/Prefabs/hull_corner_floor_2x8_left_iron.prefab
 - Assets/ValheimVehicles/Prefabs/mechanism_power_pylon.prefab
+- Assets/ValheimVehicles/Prefabs/hull_corner_floor_2x4_left_wood.prefab
 - Assets/ValheimVehicles/Prefabs/hull_rib_2x2x2_iron.prefab
 - Assets/ValheimVehicles/Prefabs/steering_wheel.prefab
 - Assets/ValheimVehicles/Prefabs/wheel_single_2.prefab
@@ -209,8 +210,9 @@ Assets:
 - Assets/ValheimVehicles/Prefabs/anchor_dock.prefab
 - Assets/ValheimVehicles/Material/wood_piece_valheim_4x4.mat
 - Assets/ValheimVehicles/Prefabs/shared_hull_slab_wood_2x2_new.prefab
-- Assets/ValheimVehicles/Material/TestMat.mat
+- Assets/ValheimVehicles/Prefabs/hull_corner_floor_2x4_right_iron.prefab
 - Assets/ValheimVehicles/Material/RopeMat.mat
+- Assets/ValheimVehicles/Material/TestMat.mat
 - Assets/ValheimVehicles/Prefabs/hull_prow_2x2x4_iron.prefab
 - Assets/ValheimVehicles/Prefabs/anchor_chain.prefab
 - Assets/ValheimVehicles/Prefabs/ram_blade_bottom.prefab
@@ -226,7 +228,6 @@ Assets:
 - Assets/ValheimVehicles/Prefabs/anchor_reel.prefab
 - Assets/ValheimVehicles/Material/glass_nautilus_notint.mat
 - Assets/ValheimVehicles/Prefabs/hull_rib_double_iron.prefab
-- Assets/ValheimVehicles/Prefabs/hull_corner_floor_2x8_right_wood.prefab
 - Assets/ValheimVehicles/Texture/sail.png
 - Assets/ValheimVehicles/Prefabs/hull_light_wood_2x2.prefab
 - Assets/ValheimVehicles/Prefabs/anchor_full_wood_test_variant.prefab
@@ -257,7 +258,6 @@ Assets:
 - Assets/ValheimVehicles/Material/wood_alt_piece_bg_valheim_wood.mat
 - Assets/ValheimVehicles/Prefabs/GUI/hud_anchor.prefab
 - Assets/ValheimVehicles/Material/iron_pole_vert.mat
-- Assets/ValheimVehicles/Prefabs/shared_hull_rib_corner_prow_right.prefab
 - Assets/ValheimVehicles/Prefabs/shared_hull_slab_iron_4x4_worn.prefab
 - Assets/ValheimVehicles/Prefabs/hull_rib_prow_cutter_2x2x8_left_iron.prefab
 - Assets/ValheimVehicles/Material/blackmetal.mat
@@ -271,9 +271,10 @@ Assets:
 - Assets/ValheimVehicles/Prefabs/hull_rib_2x1x8_iron.prefab
 - Assets/ValheimVehicles/Material/wood_alt_piece_bg_rib_2x4.mat
 - Assets/ValheimVehicles/Shaders/DoubleSidedTransparent.shader
-- Assets/ValheimVehicles/Prefabs/hull_rib_corner_2x1x8_left_iron.prefab
+- Assets/shared_hull_rib_corner_prow_right.prefab
 - Assets/ValheimVehicles/Prefabs/vehicle_land.prefab
 - Assets/ValheimVehicles/Material/iron_metal_rustic_2x2.mat
+- Assets/ValheimVehicles/Prefabs/hull_rib_corner_2x1x8_left_iron.prefab
 - Assets/ValheimVehicles/Material/wood_piece_worn.mat
 - Assets/ValheimVehicles/Prefabs/rudder_advanced_double_wood.prefab
 - Assets/ValheimVehicles/Prefabs/mechanism_power_source_eitr.prefab
@@ -287,7 +288,6 @@ Assets:
 - Assets/ValheimVehicles/Material/Dirtfloor 1.mat
 - Assets/ValheimVehicles/Prefabs/hull_rib_double_glass.prefab
 - Assets/ValheimVehicles/Prefabs/hull_prow_2x2x4_wood.prefab
-- Assets/ValheimVehicles/Prefabs/hull_double_prow.prefab
 - Assets/ValheimVehicles/Material/bronze_nautilus_metal_rib 1.mat
 - Assets/ValheimVehicles/Prefabs/shared_hull_wall_wood_4x4_new.prefab
 - Assets/ValheimVehicles/Prefabs/ram_blade_left.prefab
@@ -308,6 +308,7 @@ Assets:
 - Assets/ValheimVehicles/Prefabs/hull_rib_2x2x2_wood.prefab
 - Assets/ValheimVehicles/Prefabs/GUI/edit_texture_panel 1.prefab
 - Assets/ValheimVehicles/Prefabs/hull_wall_wood_4x4.prefab
+- Assets/ValheimVehicles/Prefabs/hull_corner_floor_2x8_right_wood.prefab
 - Assets/ValheimVehicles/Material/wood_alt_piece_bg_rib_8x4.mat
 - Assets/ValheimVehicles/Prefabs/hull_prow_seal_iron.prefab
 - Assets/ValheimVehicles/Prefabs/hull_rib_corner_2x2x4_right_iron.prefab
@@ -334,6 +335,7 @@ Assets:
 - Assets/ValheimVehicles/Prefabs/ram_stake_tier1_1x2.prefab
 - Assets/ValheimVehicles/Material/WaterMaskMaterial.mat
 - Assets/ValheimVehicles/Prefabs/wheel_single.prefab
+- Assets/ValheimVehicles/Prefabs/hull_corner_floor_2x4_right_wood.prefab
 - Assets/ValheimVehicles/Prefabs/hull_center_iron.prefab
 - Assets/ValheimVehicles/Material/bronze_metal.mat
 - Assets/ValheimVehicles/Material/Dirtfloor.mat
@@ -359,6 +361,7 @@ Assets:
 - Assets/ValheimVehicles/Prefabs/ram_nose.prefab
 - Assets/ValheimVehicles/Prefabs/dirt_floor.prefab
 - Assets/ValheimVehicles/Prefabs/hull_corner_floor_2x2_right_iron.prefab
+- Assets/ValheimVehicles/Prefabs/hull_corner_floor_2x4_left_iron.prefab
 - Assets/ValheimVehicles/Prefabs/side_ram.prefab
 - Assets/ValheimVehicles/Material/iron_metal.mat
 Dependencies: []
