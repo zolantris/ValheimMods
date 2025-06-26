@@ -8,7 +8,6 @@
   using JetBrains.Annotations;
   using UnityEngine;
   using UnityEngine.Rendering;
-  using ValheimVehicles.Helpers;
 
 #endregion
 
@@ -366,10 +365,6 @@
               // if A combined mesh is found we skip all other mesh renderers without that name.
               foreach (var tempRenderer in tempRenderers)
               {
-                if (ShouldRunPieceOverlapHelper)
-                {
-                  PieceCoplanarEpsilonHelper.ResolveCoplanarityWithHashNudge(tempRenderer.gameObject);
-                }
                 if (ShouldInclude(tempRenderer.gameObject.name, meshFilterIncludeRegex, meshFilterExclusionRegex))
                 {
                   selectedRenderersCombinedMesh.Add(tempRenderer);
