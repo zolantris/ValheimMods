@@ -8,6 +8,7 @@
   using JetBrains.Annotations;
   using UnityEngine;
   using UnityEngine.Rendering;
+  using ValheimVehicles.Helpers;
 
 #endregion
 
@@ -318,6 +319,8 @@
           };
         }
       }
+
+      public static bool ShouldRunPieceOverlapHelper = true;
       /// <summary>
       /// Main generator method.
       /// - canRebuildExisting = false, existing prefabs are skipped. This means we do not regenerate prefabs if they are already mapped. Saving tons of memory and processing power. This will be heavy only on first render. Afterwards it will only regenerate if the gameobject does not exist in the map.
@@ -363,6 +366,10 @@
               // if A combined mesh is found we skip all other mesh renderers without that name.
               foreach (var tempRenderer in tempRenderers)
               {
+                if (ShouldRunPieceOverlapHelper)
+                {
+                  PieceCoplanarEpsilonHelper.ResolveCoplanarityWithHashNudge(tempRenderer.gameObject);
+                }
                 if (ShouldInclude(tempRenderer.gameObject.name, meshFilterIncludeRegex, meshFilterExclusionRegex))
                 {
                   selectedRenderersCombinedMesh.Add(tempRenderer);
