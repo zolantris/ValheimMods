@@ -1982,6 +1982,8 @@
         if (ZNetScene.instance.InLoadingScreen())
           yield return new WaitForFixedUpdate();
 
+        yield return null;
+
         if (Manager?.m_nview == null)
         {
           // NetView somehow unmounted;
@@ -2016,7 +2018,7 @@
           stopWatch.Restart();
           yield return null;
         }
-        PieceCoplanarEpsilonHelper.ResolveCoplanarityWithHashNudge(zNetView.gameObject);
+        PieceCoplanarEpsilonHelper.ResolveCoplanarityByTransform(zNetView.gameObject);
       }
       stopWatch.Stop();
 
@@ -2652,7 +2654,7 @@
         return;
       }
 
-      PieceCoplanarEpsilonHelper.ResolveCoplanarityWithHashNudge(piece.gameObject);
+      PieceCoplanarEpsilonHelper.ResolveCoplanarityByTransform(piece.gameObject);
 
       if (hasDebug) Logger.LogDebug("Added new piece is valid");
       AddNewPiece(piece.m_nview);

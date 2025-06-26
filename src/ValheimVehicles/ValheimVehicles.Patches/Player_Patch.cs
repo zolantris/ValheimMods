@@ -143,6 +143,9 @@
       var piece = gameObject.GetComponent<Piece>();
 
       if (!piece) return gameObject;
+
+      PieceCoplanarEpsilonHelper.ResolveCoplanarityByTransform(piece.gameObject);
+
       if (PrefabNames.IsVehicle(gameObject.name)) return gameObject;
 
       var rb = piece.GetComponentInChildren<Rigidbody>();
@@ -205,9 +208,6 @@
           pieceController.TrySetPieceToParent(piece.gameObject);
         }
       }
-
-      PieceCoplanarEpsilonHelper.ResolveCoplanarityWithHashNudge(piece.gameObject);
-
 
       return gameObject;
     }
