@@ -206,6 +206,9 @@
         }
       }
 
+      PieceCoplanarEpsilonHelper.ResolveCoplanarityWithHashNudge(piece.gameObject);
+
+
       return gameObject;
     }
 

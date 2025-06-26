@@ -734,6 +734,7 @@
         Logger.LogError("netView does not exist but somehow called AddPiece()");
         return;
       }
+
       // incrementRevision
       IncrementPieceRevision();
       PieceActivatorHelpers.FixPieceMeshes(netView);
@@ -2007,6 +2008,17 @@
       } while
         (_pendingPiecesDirty); // Loop if new items were added during this run
 
+      var stopWatch = new Stopwatch();
+      foreach (var zNetView in m_pieces)
+      {
+        if (stopWatch.ElapsedMilliseconds > 10)
+        {
+          stopWatch.Restart();
+          yield return null;
+        }
+        PieceCoplanarEpsilonHelper.ResolveCoplanarityWithHashNudge(zNetView.gameObject);
+      }
+      stopWatch.Stop();
 
       // todo this might be functional but it is older logic. See if we need it for anything.
       // yield return ActivateDynamicPendingPieces();
@@ -2639,6 +2651,8 @@
         Logger.LogError("m_nview does not exist on piece");
         return;
       }
+
+      PieceCoplanarEpsilonHelper.ResolveCoplanarityWithHashNudge(piece.gameObject);
 
       if (hasDebug) Logger.LogDebug("Added new piece is valid");
       AddNewPiece(piece.m_nview);
