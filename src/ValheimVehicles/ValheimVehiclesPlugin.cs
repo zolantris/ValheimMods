@@ -33,6 +33,8 @@ public class ValheimVehiclesPlugin : MonoBehaviour
   public const string Author = "zolantris";
   public const string Version = "1.0.0";
   internal const string ModName = "ValheimVehicles";
+
+  // not to be used. This GUID is for internal usage only. The real GUID is in ValheimRAFTPlugin.
   public const string Guid = $"{Author}.{ModName}";
   public static bool HasRunSetup;
   private static bool HasCreatedConfig = false;
@@ -150,7 +152,6 @@ public class ValheimVehiclesPlugin : MonoBehaviour
   /// <summary>
   /// This should only be called from the ValheimRAFT mod.
   /// </summary>
-  /// <param name="config"></param>
   [UsedImplicitly]
   public static void CreateConfigFromValheimRAFTPluginConfig(ConfigSync configSync, ConfigFile config)
   {
@@ -177,6 +178,9 @@ public class ValheimVehiclesPlugin : MonoBehaviour
     VehicleGlobalConfig.BindConfig(config);
     GuiConfig.BindConfig(config);
     PowerSystemConfig.BindConfig(config);
+
+    // Sub-Mods
+    Mod_PieceOverlapConfig.BindConfig(config);
 
     LoggerProvider.LogInfo("Plugin ValheimVehicles started on server.");
 

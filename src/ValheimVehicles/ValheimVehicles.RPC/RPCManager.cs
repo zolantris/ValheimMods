@@ -11,7 +11,7 @@ public static class RPCManager
   public static bool HasRegistered = false;
   private static ZRoutedRpc _lastRoutedRpcInstance;
   public static readonly HashSet<string> registeredRpcNames = new();
-
+  public static readonly Dictionary<int, string> RPCHashIdsToHashNames = new();
 
   public static void RegisterAllRPCs()
   {
@@ -54,6 +54,7 @@ public static class RPCManager
     {
       var rpcEntity = new RPCEntity(rpcName, action);
       rpcEntities.Add(rpcEntity.Name, rpcEntity);
+      RPCHashIdsToHashNames.Add(rpcEntity.Name.GetStableHashCode(), rpcName);
       return rpcEntity;
     }
     return rpc;

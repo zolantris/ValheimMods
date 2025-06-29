@@ -318,6 +318,8 @@
           };
         }
       }
+
+      public static bool ShouldRunPieceOverlapHelper = true;
       /// <summary>
       /// Main generator method.
       /// - canRebuildExisting = false, existing prefabs are skipped. This means we do not regenerate prefabs if they are already mapped. Saving tons of memory and processing power. This will be heavy only on first render. Afterwards it will only regenerate if the gameobject does not exist in the map.

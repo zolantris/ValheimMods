@@ -37,7 +37,6 @@ public class PrefabConfig : BepInExBaseConfig<PrefabConfig>
   public static ConfigEntry<bool> AllowTieredMastToRotate { get; set; }
   public static ConfigEntry<bool> AllowExperimentalPrefabs { get; set; }
   public static ConfigEntry<bool> AdminsCanOnlyBuildRaft { get; set; }
-
   public static ConfigEntry<Color> GlassDefaultColor { get; private set; } =
     null!;
 

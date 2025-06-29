@@ -79,7 +79,8 @@ namespace ValheimVehicles.SharedScripts
     public static SwivelComponent? ResolveSwivel(int id)
     {
       var netView = ZdoWatchController.Instance.GetInstance(id);
-      return netView ? netView.GetComponent<SwivelComponent>() : null;
+      if (netView == null) return null;
+      return netView.GetComponent<SwivelComponent>();
     }
 
     private static MechanismAction ParseAction(string actionString)

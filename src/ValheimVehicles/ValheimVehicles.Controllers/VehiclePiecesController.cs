@@ -734,6 +734,7 @@
         Logger.LogError("netView does not exist but somehow called AddPiece()");
         return;
       }
+
       // incrementRevision
       IncrementPieceRevision();
       PieceActivatorHelpers.FixPieceMeshes(netView);
@@ -1332,7 +1333,8 @@
 
       if (!isActiveAndEnabled || !this.IsNetViewValid(out var netView)) return;
       // use center of rigidbody to set position.
-      netView.GetZDO().SetPosition(vehiclePosition);
+      var rootNvZdo = netView.GetZDO();
+      rootNvZdo.SetPosition(vehiclePosition);
 
       for (var index = 0; index < m_pieces.Count; index++)
       {
@@ -1354,15 +1356,9 @@
             UpdatePieceZdoPosition(nv.GetZDO(), vehiclePosition, prefabPieceData.IsBed);
             continue;
           }
-          if (prefabPieceData.IsSwivelChild)
+          if (prefabPieceData.IsSwivelChild && TrySetSwivelPiecePosition(nv))
           {
-            var swivel = nv.GetComponentInParent<SwivelComponentBridge>();
-            if (swivel != null)
-            {
-              // todo might have to make an exception for this.
-              UpdatePieceZdoPosition(nv.GetZDO(), vehiclePosition);
-              continue;
-            }
+            continue;
           }
         }
 
@@ -1395,6 +1391,21 @@
         // should always use actual position as this is a moving object that might have a ZsyncTransform.
         nv.m_zdo?.SetPosition(nv.transform.position);
       }
+    }
+
+    public bool TrySetSwivelPiecePosition(ZNetView nv)
+    {
+      var swivel = nv.GetComponentInParent<SwivelComponentBridge>();
+      if (swivel != null)
+      {
+        var zdo = nv.GetZDO();
+        if (zdo != null)
+        {
+          UpdatePieceZdoPosition(zdo, swivel.transform.position);
+        }
+        return true;
+      }
+      return false;
     }
 
     /**
@@ -1901,53 +1912,6 @@
       PendingPiecesTimer.Restart();
     }
 
-    /// <summary>
-    /// This may be optional now.
-    /// </summary>
-    /// <returns></returns>
-    public IEnumerator ActivateDynamicPendingPieces()
-    {
-      m_dynamicObjects.TryGetValue(PersistentZdoId,
-        out var objectList);
-      var objectListHasNoValidItems = true;
-      if (objectList is { Count: > 0 })
-      {
-        if (hasDebug)
-          Logger.LogDebug($"m_dynamicObjects is valid: {objectList.Count}");
-
-        foreach (var t in objectList)
-        {
-          var go = ZNetScene.instance.FindInstance(t);
-          if (!go) continue;
-
-          var nv = go.GetComponentInParent<ZNetView>();
-          if (!nv || nv.m_zdo == null)
-            continue;
-          objectListHasNoValidItems = false;
-
-          if (ZDOExtraData.s_vec3.TryGetValue(nv.m_zdo.m_uid, out var dic))
-          {
-            if (dic.TryGetValue(VehicleZdoVars.MBPositionHash,
-                  out var offset))
-              nv.transform.position = offset + transform.position;
-
-            offset = default;
-          }
-
-          ZDOExtraData.RemoveInt(nv.m_zdo.m_uid,
-            VehicleZdoVars.TempPieceParentId);
-          ZDOExtraData.RemoveVec3(nv.m_zdo.m_uid,
-            VehicleZdoVars.MBPositionHash);
-          dic = null;
-        }
-
-        if (Manager != null)
-          m_dynamicObjects.Remove(Manager.PersistentZdoId);
-
-        yield return null;
-      }
-    }
-
     public IEnumerator ActivatePendingPiecesCoroutine()
     {
       if (BaseVehicleInitState !=
@@ -1981,6 +1945,8 @@
         if (ZNetScene.instance.InLoadingScreen())
           yield return new WaitForFixedUpdate();
 
+        yield return null;
+
         if (Manager?.m_nview == null)
         {
           // NetView somehow unmounted;
@@ -2006,10 +1972,6 @@
         _pendingPiecesDirty = true; // Mark dirty to re-run coroutine
       } while
         (_pendingPiecesDirty); // Loop if new items were added during this run
-
-
-      // todo this might be functional but it is older logic. See if we need it for anything.
-      // yield return ActivateDynamicPendingPieces();
 
       ActivateTempPieces();
 
@@ -2357,7 +2319,7 @@
     }
 
     /// <summary>
-    /// A Method meant to be called in ActivatePendingPieceCoroutine. This must always be run after all pending ship pieces are activated in order to allow the vehicle to align properly.
+    /// A Method meant to be called in ActivatePendingPieceCoroutine. This must always be run after all pending ship pieces are activated to allow the vehicle to align properly.
     /// </summary>
     public void ActivateTempPieces()
     {
@@ -2640,6 +2602,8 @@
         return;
       }
 
+      var pieceGo = piece.gameObject;
+
       if (hasDebug) Logger.LogDebug("Added new piece is valid");
       AddNewPiece(piece.m_nview);
     }
@@ -2708,19 +2672,41 @@
 
         netView.m_zdo.Set(VehicleZdoVars.MBRotationVecHash,
           netView.transform.localRotation.eulerAngles);
-
-        // if (zdo.m_prefab == PrefabNames.LandVehicle.GetStableHashCode())
-        // {
-        //  
-        // }
-        // else
-        // {
-        //   netView.m_zdo.Set(VehicleZdoVars.MBPositionHash,
-        //     transform.InverseTransformPoint(netView.transform.position));
-        // }
         netView.m_zdo.Set(VehicleZdoVars.MBPositionHash,
           transform.InverseTransformPoint(netView.transform.position));
       }
+
+      PieceOverlapUtils.TryResolveCoplanarityOnPlacement(
+        netView.gameObject,
+        go =>
+        {
+          var goPiece = go.GetComponentInParent<Piece>();
+          if (goPiece) return goPiece.gameObject;
+          var rootGo = go.transform.root.gameObject;
+          LoggerProvider.LogWarning($"Could not find root piece for go {go.name} using root transform {rootGo.name}");
+          return rootGo;
+        },
+        0.001f,
+        16,
+        LayerHelpers.PieceLayerMask,
+        (prefabRoot, pos) =>
+        {
+          if (!prefabRoot || !prefabRoot.GetZDO(out var zdo)) return;
+          zdo.SetPosition(pos);
+
+          // the assumption is this will be true. Fire an error when it's not.
+          var hasMBParent = zdo.GetInt(VehicleZdoVars.MBParentId, 0) != 0;
+          if (hasMBParent)
+          {
+            var positionOffset = transform.InverseTransformPoint(pos);
+            zdo.Set(VehicleZdoVars.MBPositionHash, positionOffset);
+          }
+          else
+          {
+            LoggerProvider.LogError($"Could not find parent ZDOID when fixing overlap of piece {prefabRoot.name}");
+          }
+        }
+      );
 
       AddPiece(netView, true);
       InitZdo(zdo);
