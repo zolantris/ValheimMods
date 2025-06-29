@@ -262,6 +262,9 @@
           PowerSystemRPC.Request_UpdatePowerConsumer(powerConsumerIntegration.Data.zdo.m_uid, powerConsumerIntegration.Data);
         }
 
+        // todo see if we need this.
+        // GuardSwivelValues();
+
         yield return new WaitForSeconds(30f);
       }
     }
@@ -309,6 +312,7 @@
     {
       if (!_pieceActivator) return;
       _pieceActivator.StartActivatePendingPieces();
+      GuardSwivelValues();
     }
 
     public void OnActivationComplete()
@@ -367,12 +371,9 @@
       AddNewPiece(nv);
     }
 
+    // This will also add the piece to the vehicleParent if there is one. 
     public void AddNewPiece(ZNetView netView)
     {
-
-      // do not add a swivel within a swivel. This could cause some really weird behaviors so it's not supported.
-      // if (netView.name.StartsWith(PrefabNames.SwivelPrefabName)) return;
-
       if (netView == null || netView.GetZDO() == null) return;
       var persistentId = GetPersistentId();
       if (persistentId == 0) return;

@@ -109,7 +109,8 @@ public class ZdoWatchController : MonoBehaviour
   /// <returns>bool</returns>
   public bool RequestZdoFromServer(int persistentId)
   {
-    if (ZNet.instance.IsServer())
+    // bail on dedicated only.
+    if (ZNet.instance.IsDedicated())
     {
       return false;
     }

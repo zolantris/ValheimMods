@@ -47,6 +47,9 @@
         <Compile Update="ValheimVehicles.Storage.Serialization\StoredSwivelCustomConfig.cs">
             <Link>SharedScripts\StoredSwivelCustomConfig.cs</Link>
         </Compile>
+        <Compile Update="..\ValheimRAFT.Unity\Assets\ValheimVehicles\SharedScripts\SharedScripts.Helpers\PieceOverlapUtils.cs">
+            <Link>SharedScripts\SharedScripts.Helpers\PieceOverlapUtils.cs</Link>
+        </Compile>
     </ItemGroup>
     <ItemGroup Label="Internal ValheimVehicles scripts">
         <!-- Includes all namespace folders -->

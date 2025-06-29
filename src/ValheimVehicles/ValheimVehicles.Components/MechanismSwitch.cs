@@ -117,19 +117,19 @@ public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interac
   public IEnumerator ScheduleIntendedAction()
   {
     _timer.Restart();
-    while (_timer.ElapsedMilliseconds < 10000f && (!isActiveAndEnabled || !prefabConfigSync || !prefabConfigSync.HasInitLoaded || !this.IsNetViewValid()))
+    while (_timer.ElapsedMilliseconds < 10000f && (isActiveAndEnabled || !prefabConfigSync || !prefabConfigSync.HasInitLoaded || !this.IsNetViewValid()))
     {
-      _timer.Reset();
+      _timer.Restart();
       yield return new WaitForFixedUpdate();
     }
 
-    if (_timer.ElapsedMilliseconds >= 10000f && (!isActiveAndEnabled || !prefabConfigSync || !prefabConfigSync.HasInitLoaded || !this.IsNetViewValid()))
+    if (_timer.ElapsedMilliseconds >= 10000f || !isActiveAndEnabled || !prefabConfigSync || !prefabConfigSync.HasInitLoaded || !this.IsNetViewValid())
     {
       _timer.Reset();
       yield break;
     }
 
-    UpdateIntendedAction();
+    yield return UpdateIntendedAction();
 
     // further delayed load in case we did not get the data
     yield return new WaitForSeconds(5f);
@@ -147,7 +147,7 @@ public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interac
   /// <summary>
   /// Automatically finds the most likely action of this lever.
   /// </summary>
-  public void UpdateIntendedAction()
+  public IEnumerator UpdateIntendedAction()
   {
     prefabConfigSync.Load();
     // Already set and stored a SelectedAction and Swivel.
@@ -155,10 +155,23 @@ public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interac
     {
       if (SelectedAction is MechanismAction.SwivelActivateMode or MechanismAction.SwivelEditMode)
       {
-        TargetSwivel = MechanismSwitchCustomConfig.ResolveSwivel(TargetSwivelId);
+        var shouldResolve = false;
+        yield return ZdoWatchController.Instance.GetZdoFromServerAsync(targetSwivelId, (asyncZdo) =>
+        {
+          shouldResolve = asyncZdo != null;
+          if (!shouldResolve)
+          {
+            LoggerProvider.LogDebug("Swivel with id {targetSwivelId} not found. Resetting mechanism settings");
+            prefabConfigSync.Request_ClearSwivelId();
+          }
+          else
+          {
+            TargetSwivel = MechanismSwitchCustomConfig.ResolveSwivel(TargetSwivelId);
+          }
+        });
       }
 
-      return;
+      yield break;
     }
 
     // for None status / new prefab
@@ -167,7 +180,7 @@ public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interac
       TargetSwivel = closestSwivel;
       SetMechanismAction(MechanismAction.SwivelActivateMode);
       SetMechanismSwivel(closestSwivel);
-      return;
+      yield break;
     }
 
     var pieceController = transform.GetComponentInParent<IPieceController>();
@@ -181,13 +194,13 @@ public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interac
         {
           SetMechanismSwivel(swivelComponent);
         }
-        return;
+        yield break;
       }
 
       if (PrefabNames.IsVehicle(pieceController.ComponentName))
       {
         SetMechanismAction(MechanismAction.CommandsHud);
-        return;
+        yield break;
       }
     }
 
@@ -350,10 +363,6 @@ public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interac
         break;
       case MechanismAction.SwivelActivateMode:
       {
-        if (!TargetSwivel || TargetSwivel.swivelPowerConsumer && !PowerSystemConfig.Swivels_DoNotRequirePower.Value && TargetSwivel.swivelPowerConsumer.IsPowerDenied)
-        {
-          return false;
-        }
         TriggerSwivelAction();
       }
         break;
@@ -515,16 +524,22 @@ public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interac
         TargetSwivel = MechanismSwitchCustomConfig.ResolveSwivel(TargetSwivelId);
         if (!TargetSwivel)
         {
-          LoggerProvider.LogMessage($"Swivel with id {TargetSwivelId} not found. Resetting mechanism settings");
-          prefabConfigSync.Request_ClearSwivelId();
+          // LoggerProvider.LogMessage($"Swivel with id {TargetSwivelId} not found. Resetting mechanism settings");
+          // prefabConfigSync.Request_ClearSwivelId();
+          return;
         }
-        return;
       }
     }
 
 
     if (TargetSwivel != null)
     {
+      if (!PowerSystemConfig.Swivels_DoNotRequirePower.Value && TargetSwivel.swivelPowerConsumer.IsPowerDenied)
+      {
+        Player.m_localPlayer.Message(MessageHud.MessageType.Center, "Not enough power to activate this swivel.");
+        return;
+      }
+
       TargetSwivel.Request_NextMotionState();
     }
     else

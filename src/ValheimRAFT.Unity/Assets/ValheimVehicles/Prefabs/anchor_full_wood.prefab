@@ -9,7 +9,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5211103895378370551}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: $hud_snappoint_corner 1
   m_TagString: snappoint
   m_Icon: {fileID: 0}
@@ -72,7 +72,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4535894434248891811}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: $hud_snappoint_corner 3
   m_TagString: snappoint
   m_Icon: {fileID: 0}
@@ -136,7 +136,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3734677145010196559}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: $hud_snappoint_corner 4
   m_TagString: snappoint
   m_Icon: {fileID: 0}
@@ -269,7 +269,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5963007629768508015}
   - component: {fileID: 7152357614205155694}
-  m_Layer: 5
+  m_Layer: 10
   m_Name: hover_anchor_state_message
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -451,7 +451,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1744322910015913269}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: attachpoint_anchor_start
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -483,7 +483,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6346633100526358710}
   - component: {fileID: 6977071671405956332}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: rope_line
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -694,7 +694,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5844518004106562267}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: $hud_snappoint_corner 2
   m_TagString: snappoint
   m_Icon: {fileID: 0}
@@ -830,7 +830,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5679747169593521771}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: anchor_full_wood
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1182,7 +1182,7 @@ GameObject:
   m_Component:
   - component: {fileID: 8314048746296347427}
   - component: {fileID: 329531839847845171}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: attachpoint_rotational
   m_TagString: Untagged
   m_Icon: {fileID: 0}

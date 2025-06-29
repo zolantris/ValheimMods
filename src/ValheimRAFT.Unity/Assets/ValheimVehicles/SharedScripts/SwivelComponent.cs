@@ -153,8 +153,6 @@ namespace ValheimVehicles.SharedScripts
       connectorContainer = transform.Find("connector_container");
 
       SetLocalStartValues(animatedTransform.localPosition, animatedTransform.localRotation);
-      GuardSwivelValues();
-
       animatedRigidbody = animatedTransform.GetComponent<Rigidbody>();
       if (!animatedRigidbody)
         animatedRigidbody = animatedTransform.gameObject.AddComponent<Rigidbody>();
@@ -181,6 +179,7 @@ namespace ValheimVehicles.SharedScripts
     /// </summary>
     public void GuardSwivelValues()
     {
+      if (!animatedTransform) return;
       if (MotionState is MotionState.AtTarget)
       {
         if (Mode is SwivelMode.Move)
@@ -216,6 +215,7 @@ namespace ValheimVehicles.SharedScripts
 
     public virtual void Start()
     {
+      GuardSwivelValues();
       SetInterpolationSpeed(interpolationSpeed);
     }
 
@@ -235,6 +235,8 @@ namespace ValheimVehicles.SharedScripts
       var localPos = Vector3.zero;
       var localRot = Quaternion.identity;
       SetLocalStartValues(localPos, localRot);
+
+      GuardSwivelValues();
     }
 
     public virtual void Update()
@@ -319,7 +321,8 @@ namespace ValheimVehicles.SharedScripts
       // Always use Rigidbody moves
       if (animatedRigidbody)
       {
-        var newPosition = transform.TransformPoint(pos);
+        // todo could use transform.TransformPoint of animatedRigidbody.position.
+        var newPosition = mode == SwivelMode.Move ? transform.TransformPoint(pos) : transform.position;
         animatedRigidbody.Move(newPosition, transform.rotation * rot);
       }
       else
@@ -447,6 +450,9 @@ namespace ValheimVehicles.SharedScripts
       {
         SetRotationIfNotNear(ref animatedTransform, CalculateRotationTarget(0f));
       }
+
+      // on frozen should call this.
+      GuardSwivelValues();
     }
 
     public virtual void SwivelMoveUpdate()
@@ -467,6 +473,9 @@ namespace ValheimVehicles.SharedScripts
       {
         SetPositionIfNotNear(ref animatedTransform, startLocalPosition);
       }
+
+      // on frozen should call this.
+      GuardSwivelValues();
     }
 
     public virtual void SwivelTargetWindUpdate()
@@ -481,24 +490,6 @@ namespace ValheimVehicles.SharedScripts
       targetRotation = CalculateTargetNearestEnemyRotation();
       animatedRigidbody.Move(transform.position, transform.rotation * targetRotation);
       _didMoveDuringUpdate = true;
-    }
-
-    /// <summary>
-    /// This is meant to protect swivels if there is no update on a moving vehicle. If a moving vehicle is moving it will desync the swivel.
-    /// </summary>
-    public virtual void PostSwivelUpdate()
-    {
-      if (!_didMoveDuringUpdate)
-      {
-        // force syncs the swivel position if no update occurs. This should not happen as we should be in a end position.
-        LoggerProvider.LogDebugDebounced("Did not move during update yet somehow go past early bailouts");
-        var syncPos = animatedTransform.position;
-        var syncRot = transform.rotation;
-        if ((animatedRigidbody.position - syncPos).sqrMagnitude > 0.0001f || Quaternion.Angle(animatedRigidbody.rotation, syncRot) > 0.01f)
-        {
-          animatedRigidbody.Move(syncPos, syncRot);
-        }
-      }
     }
 
     private bool _didMoveDuringUpdate = false;

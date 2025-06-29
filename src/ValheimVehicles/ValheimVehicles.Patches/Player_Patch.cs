@@ -9,6 +9,7 @@
   using HarmonyLib;
   using UnityEngine;
   using Valheim.UI;
+  using ValheimVehicles.BepInExConfig;
   using ValheimVehicles.Components;
   using ValheimVehicles.Controllers;
   using ValheimVehicles.Helpers;
@@ -144,8 +145,6 @@
 
       if (!piece) return gameObject;
 
-      PieceCoplanarEpsilonHelper.ResolveCoplanarityByTransform(piece.gameObject);
-
       if (PrefabNames.IsVehicle(gameObject.name)) return gameObject;
 
       var rb = piece.GetComponentInChildren<Rigidbody>();
@@ -156,8 +155,15 @@
         HidePreviewComponent(netView);
       }
 
-      if ((bool)rb && !rb.isKinematic || !PatchSharedData.PlayerLastRayPiece)
+      if ((bool)rb && !rb.isKinematic)
       {
+        return gameObject;
+      }
+
+      // can run fix piece even if no last piece raycast.
+      if (!PatchSharedData.PlayerLastRayPiece)
+      {
+        TryFixPieceOverlap(gameObject);
         return gameObject;
       }
 
@@ -170,14 +176,20 @@
 
       if (PatchSharedData.PlayerLastRayPiece == null)
       {
+        // should always run FixPieceOverlap
+        TryFixPieceOverlap(gameObject);
         return gameObject;
       }
 
       var pieceController = PatchSharedData.PlayerLastRayPiece.GetComponentInParent<IPieceController>();
-      if (pieceController == null) return gameObject;
-
-      if (pieceController.ComponentName == PrefabNames.SwivelPrefabName)
+      if (pieceController != null)
       {
+        if (gameObject.name.StartsWith(PrefabNames.CustomWaterFloatation))
+        {
+          pieceController.AddCustomPiece(gameObject);
+          return gameObject;
+        }
+
         if (piece.m_nview != null)
         {
           pieceController.AddNewPiece(piece.m_nview);
@@ -185,31 +197,43 @@
         else
         {
           pieceController.TrySetPieceToParent(piece.gameObject);
+          // should always run afterward.
+          TryFixPieceOverlap(gameObject);
         }
+
         return gameObject;
       }
 
-
-      if (pieceController.ComponentName == PrefabNames.VehiclePiecesContainer)
-      {
-        if (gameObject.name.StartsWith(PrefabNames.CustomWaterFloatation))
-        {
-          pieceController.AddCustomPiece(gameObject);
-          return gameObject;
-        }
-        if (netView != null)
-        {
-          Logger.LogDebug(
-            $"BaseVehicleController: adding new piece {piece.name} {gameObject.name}");
-          pieceController.AddNewPiece(netView);
-        }
-        else
-        {
-          pieceController.TrySetPieceToParent(piece.gameObject);
-        }
-      }
+      TryFixPieceOverlap(gameObject);
 
       return gameObject;
+    }
+
+    public static void TryFixPieceOverlap(GameObject gameObject)
+    {
+      if (!Mod_PieceOverlapConfig.PieceOverlap_Enabled.Value)
+      {
+        return;
+      }
+      PieceOverlapUtils.TryResolveCoplanarityOnPlacement(
+        gameObject,
+        go =>
+        {
+          var piece = go.GetComponentInParent<Piece>();
+          if (piece) return piece.gameObject;
+          var rootGo = go.transform.root.gameObject;
+          LoggerProvider.LogWarning($"Could not find root piece for go {go.name} using root transform {rootGo.name}");
+          return rootGo;
+        },
+        0.001f,
+        16,
+        LayerHelpers.PieceLayerMask,
+        (prefabRoot, pos) =>
+        {
+          if (!prefabRoot.GetZDO(out var zdo)) return;
+          zdo.SetPosition(pos);
+        }
+      );
     }
 
     /// <summary>

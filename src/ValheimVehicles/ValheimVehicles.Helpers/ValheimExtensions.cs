@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using JetBrains.Annotations;
 using UnityEngine;
 using ValheimVehicles.Interfaces;
 using ValheimVehicles.SharedScripts;
@@ -20,6 +21,16 @@ public static class ValheimExtensions
     var znet = ZNet.instance;
 
     LoggerProvider.LogDebugDebounced($"IsDedicated: {znet.IsDedicated()}\n IsServer: {znet.IsServer()}, IsClient: {!znet.IsServer() && !znet.IsDedicated()}, IsLocalServer: {!znet.IsServer() && !znet.IsDedicated()}");
+  }
+
+  public static bool GetZDO(this GameObject go, [NotNullWhen(true)] out ZDO? zdo)
+  {
+    zdo = null;
+    if (!go) return false;
+    var nv = go.GetComponent<ZNetView>();
+    if (!nv || !nv.IsValid()) return false;
+    zdo = nv.GetZDO();
+    return zdo != null;
   }
 
   public static void SetDelta<T>(this ZDO zdo, string key, T currentValue)
