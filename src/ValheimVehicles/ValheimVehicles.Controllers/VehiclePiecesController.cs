@@ -450,6 +450,9 @@
 
     public override void OnDisable()
     {
+      // hopefully it can be run otherwise it needs to be patched so it can run just before objects are being cleaned up in a zone.
+      ForceUpdateAllPiecePositions();
+
       base.OnDisable();
 
       _isInvalid = true;
@@ -1401,6 +1404,7 @@
         var zdo = nv.GetZDO();
         if (zdo != null)
         {
+
           UpdatePieceZdoPosition(zdo, swivel.transform.position);
         }
         return true;
