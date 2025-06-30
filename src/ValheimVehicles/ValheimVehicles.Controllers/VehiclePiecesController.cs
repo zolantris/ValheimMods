@@ -3043,9 +3043,11 @@
 
       foreach (var vehicleCollider in vehicleColliders)
       {
+        if (vehicleCollider == null) continue;
         // must ignore all vehicle colliders
         foreach (var vehicleCollider2 in vehicleColliders)
         {
+          if (vehicleCollider2 == null) continue;
           if (vehicleCollider == vehicleCollider2) continue;
           Physics.IgnoreCollision(vehicleCollider, vehicleCollider2, true);
         }

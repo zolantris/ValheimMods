@@ -14,6 +14,7 @@ public class SwivelPieceActivator : BasePieceActivatorComponent
 
   protected override void TrySetPieceToParent(ZNetView netView)
   {
+    if (!netView) return;
     // Classic vehicle-specific logic
     netView.transform.SetParent(_host.GetPieceContainer(), false);
   }
