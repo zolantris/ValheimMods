@@ -1610,6 +1610,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   mode: 1
+  windDirectionTransform: {fileID: 0}
   interpolationSpeed: 10
   animatedTransform: {fileID: 0}
   currentMotionState: 0
@@ -2014,6 +2015,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   mode: 2
+  windDirectionTransform: {fileID: 0}
   interpolationSpeed: 10
   animatedTransform: {fileID: 0}
   currentMotionState: 0
@@ -2230,6 +2232,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   mode: 1
+  windDirectionTransform: {fileID: 0}
   interpolationSpeed: 10
   animatedTransform: {fileID: 0}
   currentMotionState: 0
@@ -2765,6 +2768,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   mode: 4
+  windDirectionTransform: {fileID: 0}
   interpolationSpeed: 10
   animatedTransform: {fileID: 0}
   currentMotionState: 0
@@ -3054,6 +3058,10 @@ PrefabInstance:
       value: mast_V1
       objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: 867f95f407238a54eaac754b357f2ca5, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7396654156298469847, guid: 867f95f407238a54eaac754b357f2ca5, type: 3}
       propertyPath: m_IsActive
       value: 0
       objectReference: {fileID: 0}
@@ -4141,8 +4149,6 @@ MonoBehaviour:
   m_shouldSync: 1
   convexAPIThresholdDistance: {x: 1, y: 1, z: 1}
   vehicleCollidersToIgnore: []
-  convexHullColliders: []
-  convexHullMeshColliders: []
   m_convexHullAPI: {fileID: 0}
   m_meshClusterComponent: {fileID: 0}
   pieceDataChangeIndex: 0
@@ -4302,7 +4308,7 @@ MonoBehaviour:
   debugOriginalMesh: 0
   forwardTransform: {fileID: 3462057762617736770}
   _convexHullAPI: {fileID: 1246876116}
-  vehicleWheelController: {fileID: 7210998224556755449}
+  vehicleLandMovementController: {fileID: 0}
   basePiecesController: {fileID: 1246876114}
   centerOfMassOffset: -4
   cameraTransform: {fileID: 2010887271}
@@ -6047,6 +6053,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   mode: 2
+  windDirectionTransform: {fileID: 0}
   interpolationSpeed: 10
   animatedTransform: {fileID: 0}
   currentMotionState: 0
@@ -6218,6 +6225,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   mode: 3
+  windDirectionTransform: {fileID: 0}
   interpolationSpeed: 10
   animatedTransform: {fileID: 0}
   currentMotionState: 0
