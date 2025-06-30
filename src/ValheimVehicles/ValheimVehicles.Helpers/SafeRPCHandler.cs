@@ -21,7 +21,7 @@ public class SafeRPCHandler : INetView
   public void Register<T>(string name, Action<long, T> method)
   {
     if (!this.IsNetViewValid(out var netView)) return;
-    if (_registeredRpcs.Contains(name)) return;
+    if (netView.m_functions.ContainsKey(name.GetStableHashCode())) return;
     netView.Register(name, method);
     _registeredRpcs.Add(name);
   }
@@ -29,7 +29,8 @@ public class SafeRPCHandler : INetView
   public void Register(string name, Action<long> method)
   {
     if (!this.IsNetViewValid(out var netView)) return;
-    if (_registeredRpcs.Contains(name)) return;
+    if (netView.m_functions.ContainsKey(name.GetStableHashCode())) return;
+
     netView.Register(name, method);
     _registeredRpcs.Add(name);
   }
@@ -39,16 +40,16 @@ public class SafeRPCHandler : INetView
     if (!this.IsNetViewValid(out var netView)) return;
     foreach (var rpc in _registeredRpcs)
     {
+      if (!netView.m_functions.ContainsKey(rpc.GetStableHashCode())) return;
       netView.Unregister(rpc);
     }
-
     _registeredRpcs.Clear();
   }
 
   public void Unregister(string name)
   {
     if (!this.IsNetViewValid(out var netView)) return;
-    if (!_registeredRpcs.Contains(name)) return;
+    if (!netView.m_functions.ContainsKey(name.GetStableHashCode())) return;
     netView.Unregister(name);
     _registeredRpcs.Remove(name);
   }

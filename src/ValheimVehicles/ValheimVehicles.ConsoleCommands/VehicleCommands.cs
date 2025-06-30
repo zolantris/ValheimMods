@@ -234,7 +234,7 @@ public class VehicleCommands : ConsoleCommand
 
   public static SafeMoveData? SafeMovePlayerBefore(
     VehicleOnboardController? vehicleOnboardController,
-    bool shouldSkipPlayer = true)
+    bool shouldMoveLocalPlayer = true)
   {
     if (vehicleOnboardController == null) return null;
     if (vehicleOnboardController.PiecesController == null) return null;
@@ -242,7 +242,7 @@ public class VehicleCommands : ConsoleCommand
     var charactersOnShip = vehicleOnboardController.GetCharactersOnShip();
     var characterData = new List<SafeMoveCharacterData>();
 
-    if (!shouldSkipPlayer && !charactersOnShip.Contains(Player.m_localPlayer))
+    if (shouldMoveLocalPlayer && !charactersOnShip.Contains(Player.m_localPlayer))
     {
       charactersOnShip.Add(Player.m_localPlayer);
     }
@@ -1017,9 +1017,9 @@ public class VehicleCommands : ConsoleCommand
       () =>
       {
         var newPosition = GetCreativeModeTargetPosition(vehicleInstance);
-        vehicleInstance.MovementController.m_body.position = newPosition;
+        vehicleInstance.MovementController.m_body.MovePosition(newPosition);
         return newPosition;
-      }, null, false);
+      }, null, true);
 
     _creativeModeCoroutineInstance = null;
     _creativeModeTimer.Reset();
