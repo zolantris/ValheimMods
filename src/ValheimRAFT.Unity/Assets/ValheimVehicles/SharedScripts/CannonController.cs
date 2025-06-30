@@ -14,7 +14,7 @@ using UnityEngine;
 namespace ValheimVehicles.SharedScripts
 {
     [RequireComponent(typeof(AudioSource))]
-    public class CannonController : MonoBehaviour
+     public class CannonController : MonoBehaviour
     {
         [Header("Cannonball")]
         [Tooltip("Prefab asset for the cannonball projectile (assign in inspector or dynamically).")]
@@ -30,12 +30,16 @@ namespace ValheimVehicles.SharedScripts
         [SerializeField] private Transform projectileLoader;
         [Tooltip("Where muzzle flash and effects are triggered.")]
         [SerializeField] private Transform muzzleFlashPoint;
+        [Tooltip("Transform to use for fire direction (usually barrel/shooter).")]
+        [SerializeField] private Transform shooterTransform;
         [Tooltip("Speed (m/s) for cannonball launch.")]
-        [SerializeField] private float cannonBallSpeed = 50f;
+        [SerializeField] private float cannonballSpeed = 50f;
 
         [Header("Ammunition")]
         [Tooltip("Maximum shells this cannon can hold.")]
-        [SerializeField] private int maxAmmo = 12;
+        [SerializeField] public int maxAmmo = 12;
+        [Tooltip("Current shells. This should be read-only, but exposed for testing")]
+        [SerializeField] private int _currentAmmo;
         [Tooltip("How many shells are reloaded at once.")]
         [SerializeField] private int reloadQuantity = 1;
         [Tooltip("Time to reload (seconds).")]
@@ -57,18 +61,19 @@ namespace ValheimVehicles.SharedScripts
 
         // --- Cannon Recoil Fields ---
         [Header("Cannon Recoil")]
-        [Tooltip("The object that visually rotates for recoil/tilt. Assign your cannon_shooter here.")]
-        [SerializeField] private Transform shooterTransform;
         [Tooltip("Speed the muzzle returns after firing.")]
         [SerializeField] private float recoilReturnSpeed = 6f;
         [Tooltip("Speed the muzzle returns after reload tilt up.")]
         [SerializeField] private float reloadReturnSpeed = 3f;
+
+
+        // --- State ---
         private readonly HashSet<Cannonball> _activeCannonballs = new();
+        private readonly List<Cannonball> _trackedLoadedCannonballs = new List<Cannonball>();
         private AudioSource _audioSource;
         private Queue<Cannonball> _cannonballPool;
         private Coroutine _cleanupCoroutine;
 
-        // --- Private Fields ---
         private float _currentReturnSpeed;
         private Quaternion _defaultShooterLocalRotation;
         private Cannonball _loadedCannonball;
@@ -76,18 +81,18 @@ namespace ValheimVehicles.SharedScripts
         private Quaternion _reloadRotation;
         private Quaternion _targetShooterLocalRotation;
 
-        public int CurrentAmmo { get; private set; }
+        public int CurrentAmmo { get => _currentAmmo; private set => _currentAmmo = value; }
         public bool IsReloading { get; private set; }
         public bool IsLoaded => _loadedCannonball != null;
 
         private void Awake()
         {
             SetupTransforms();
+            CleanupCannonballPrefab();
             SetupCannonballPrefab();
 
             _audioSource = GetComponent<AudioSource>();
             InitializePool();
-            CurrentAmmo = maxAmmo;
             TryReload();
 
             // --- Setup shooter recoil rotation values ---
@@ -116,7 +121,19 @@ namespace ValheimVehicles.SharedScripts
             }
         }
 
-        // --- Events for UI, networking, etc ---
+        private void FixedUpdate()
+        {
+            // Sync "loaded" (not-in-flight) cannonballs to loader, never parented!
+            foreach (var ball in _trackedLoadedCannonballs)
+            {
+                if (ball != null && !ball.IsInFlight)
+                {
+                    ball.transform.position = projectileLoader.position;
+                    ball.transform.rotation = projectileLoader.rotation;
+                }
+            }
+        }
+
         public event Action<int> OnAmmoChanged;
         public event Action OnFired;
         public event Action OnReloaded;
@@ -133,27 +150,22 @@ namespace ValheimVehicles.SharedScripts
 
         private static void CleanupCannonballPrefab()
         {
+            // Only clean up runtime-created prefabs, never destroy inspector assets
             if (CannonballPrefab != null && Application.isPlaying)
             {
-                if (CannonballPrefab.gameObject != null)
+                var go = CannonballPrefab.gameObject;
+                if (go != null && go.scene.IsValid())
                 {
-                    GameObject go = CannonballPrefab.gameObject;
-                    // Destroy if it's a runtime-generated prefab (not a persistent asset)
-                    if (go.scene.IsValid()) // Only runtime objects have a scene assigned
-                    {
-                        Destroy(go);
-                    }
+                    Destroy(go);
                 }
                 CannonballPrefab = null;
             }
         }
 
-        /// <summary>
-        /// Ensures CannonballPrefab is set to a valid prefab with a Cannonball component. NEVER destroyed!
-        /// </summary>
         private void SetupCannonballPrefab()
         {
-            CleanupCannonballPrefab(); // as above
+            if (CannonballPrefab != null && CannonballPrefab.gameObject != null)
+                return;
 
             GameObject sourcePrefab = null;
             if (CannonballPrefabAsset != null)
@@ -173,14 +185,12 @@ namespace ValheimVehicles.SharedScripts
                 cannonballComponent = sourcePrefab.AddComponent<Cannonball>();
             }
 
-            // Static prototype setup
             var go = cannonballComponent.gameObject;
             go.transform.position = Vector3.zero;
             go.transform.rotation = Quaternion.identity;
             go.SetActive(false);
 
-            // Hide physics/colliders on the static prototype
-            var collider = go.GetComponent<Collider>();
+            var collider = go.GetComponentInChildren<Collider>(true);
             if (collider != null)
                 collider.enabled = false;
 
@@ -194,13 +204,13 @@ namespace ValheimVehicles.SharedScripts
             CannonballPrefab = cannonballComponent;
         }
 
-        // --- Object Pooling for Cannonballs ---
         private void InitializePool()
         {
             _cannonballPool = new Queue<Cannonball>(minPoolSize);
             for (int i = 0; i < minPoolSize; i++)
             {
-                var go = Instantiate(CannonballPrefab.gameObject, Vector3.one * 9999, Quaternion.identity, transform);
+                var go = Instantiate(CannonballPrefab.gameObject, projectileLoader.position, projectileLoader.rotation, null);
+                go.name = $"cannonball_queue_{i}";
                 var obj = go.GetComponent<Cannonball>();
                 go.SetActive(false);
                 _cannonballPool.Enqueue(obj);
@@ -212,20 +222,42 @@ namespace ValheimVehicles.SharedScripts
             if (_cannonballPool.Count > 0)
             {
                 var ball = _cannonballPool.Dequeue();
+                ball.gameObject.name = $"cannonball_active_{_cannonballPool.Count}";
                 ball.gameObject.SetActive(true);
+                _trackedLoadedCannonballs.Add(ball);
                 return ball;
             }
-            var go = Instantiate(CannonballPrefab.gameObject, projectileLoader.position, projectileLoader.rotation, transform);
-            var obj = go.GetComponent<Cannonball>();
-            return obj;
+            var go = Instantiate(CannonballPrefab.gameObject, projectileLoader.position, projectileLoader.rotation, null);
+            var localCannonball = go.GetComponent<Cannonball>();
+           
+            go.gameObject.SetActive(true);
+
+            // ignore colliders for all cannonballs.
+            foreach (var ball in _trackedLoadedCannonballs)
+            foreach (var otherCollider in ball.colliders)
+            {
+                if (otherCollider == null) continue;
+                foreach (var localCollider in localCannonball.colliders)
+                {
+                    if (localCollider == null) continue;
+                    Physics.IgnoreCollision(otherCollider, localCollider, true);
+                }
+            }
+            
+            _trackedLoadedCannonballs.Add(localCannonball);
+            go.name = $"cannonball_active_{_trackedLoadedCannonballs.Count}";
+            return localCannonball;
         }
 
         private void ReturnCannonballToPool(Cannonball ball)
         {
             ball.ResetCannonball();
-            ball.gameObject.SetActive(false);
             _cannonballPool.Enqueue(ball);
             _activeCannonballs.Remove(ball);
+            _trackedLoadedCannonballs.Remove(ball);
+            
+            ball.gameObject.SetActive(false);
+            
             StartCleanupCoroutine();
         }
 
@@ -233,28 +265,27 @@ namespace ValheimVehicles.SharedScripts
         {
             if (IsReloading || _loadedCannonball == null || CurrentAmmo <= 0) return false;
 
-            // --- Trigger Recoil ---
             if (shooterTransform != null)
             {
                 shooterTransform.localRotation = _recoilRotation;
                 _targetShooterLocalRotation = _defaultShooterLocalRotation;
                 _currentReturnSpeed = recoilReturnSpeed;
             }
+            
+            _loadedCannonball.transform.position = projectileLoader.position;
 
-            var fireDirection = shooterTransform.forward;
+            var fireDirection = shooterTransform != null
+                ? shooterTransform.forward
+                : projectileLoader.forward;
+
             _loadedCannonball.Fire(
-                fireDirection * cannonBallSpeed,
+                fireDirection * cannonballSpeed,
                 muzzleFlashPoint.position,
                 OnCannonballExitedMuzzle,
                 ReturnCannonballToPool);
 
-            // _loadedCannonball.Fire(
-            //     projectileLoader.forward * cannonBallSpeed,
-            //     muzzleFlashPoint.position,
-            //     OnCannonballExitedMuzzle,
-            //     ReturnCannonballToPool);
-
             _activeCannonballs.Add(_loadedCannonball);
+            _trackedLoadedCannonballs.Remove(_loadedCannonball);
             _loadedCannonball = null;
             CurrentAmmo--;
             OnAmmoChanged?.Invoke(CurrentAmmo);
@@ -263,7 +294,14 @@ namespace ValheimVehicles.SharedScripts
             OnFired?.Invoke();
 
             if (autoReload && CurrentAmmo > 0)
+            {
                 StartCoroutine(ReloadCoroutine());
+                
+            }
+            else
+            {
+                LoggerProvider.LogDev("No ammo left, not reloading.");
+            }
             return true;
         }
 
@@ -280,7 +318,6 @@ namespace ValheimVehicles.SharedScripts
             IsReloading = true;
             _audioSource?.PlayOneShot(reloadClip);
 
-            // --- Trigger Reload "tilt up" effect ---
             if (shooterTransform != null)
             {
                 shooterTransform.localRotation = _reloadRotation;
@@ -312,7 +349,6 @@ namespace ValheimVehicles.SharedScripts
             }
         }
 
-        // Cleanup any excess balls after 10s
         private void StartCleanupCoroutine()
         {
             if (_cleanupCoroutine != null)
@@ -325,7 +361,6 @@ namespace ValheimVehicles.SharedScripts
         private IEnumerator CleanupExtraCannonballsAfterDelay()
         {
             yield return new WaitForSeconds(10f);
-            // Remove excess inactive balls, keep at least minPoolSize
             while (_cannonballPool.Count > minPoolSize)
             {
                 var ball = _cannonballPool.Dequeue();
