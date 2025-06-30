@@ -17,7 +17,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &8606007161889117133
 Transform:
   m_ObjectHideFlags: 0
@@ -81,7 +81,6 @@ MonoBehaviour:
   useCustomGravity: 0
   customGravity: 9.81
   debugDrawTrajectory: 0
-  colliders: []
 --- !u!1 &4720161999693251415
 GameObject:
   m_ObjectHideFlags: 0

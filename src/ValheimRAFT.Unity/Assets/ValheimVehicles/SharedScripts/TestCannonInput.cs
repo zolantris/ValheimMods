@@ -3,6 +3,7 @@
 
 #region
 
+using System.Collections;
 using UnityEngine;
 
 #endregion
@@ -25,11 +26,18 @@ namespace ValheimVehicles.SharedScripts
       var isKey1MousePress = Input.GetMouseButtonDown(1);
       if (isSpacePressed || isKey1MousePress)
       {
-        foreach (var cannon in _cannons)
+        for (var index = 0; index < _cannons.Length; index++)
         {
-          cannon.Fire();
+          var cannon = _cannons[index];
+          StartCoroutine(FireDelayed(cannon, index * 0.1f));
         }
       }
+    }
+
+    public IEnumerator FireDelayed(CannonController cannon, float delay)
+    {
+      yield return new WaitForSeconds(delay);
+      cannon.Fire();
     }
 
     // Optional: Re-scan if cannons are added/removed at runtime

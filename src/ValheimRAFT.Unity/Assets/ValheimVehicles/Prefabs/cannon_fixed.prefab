@@ -9,6 +9,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7672335162888491977}
+  - component: {fileID: 822766217289054655}
   m_Layer: 0
   m_Name: cannon_fixed
   m_TagString: Untagged
@@ -32,6 +33,37 @@ Transform:
   - {fileID: 5122032767939313026}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &822766217289054655
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 946839667581647151}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 084a5a6c3f9b85d4ea6a23b128389c38, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  CannonballPrefabAssetLocal: {fileID: 2476818550654289255, guid: df1f89dac358bd944b2e89cd5b67cf9d, type: 3}
+  projectileLoader: {fileID: 0}
+  muzzleFlashPoint: {fileID: 0}
+  shooterTransform: {fileID: 0}
+  cannonballSpeed: 30
+  maxAmmo: 12
+  _currentAmmo: 50
+  reloadQuantity: 1
+  reloadTime: 0.1
+  autoReload: 1
+  muzzleFlashEffect: {fileID: 0}
+  fireClip: {fileID: 8300000, guid: 289500be71a642446a29dc395c413a31, type: 3}
+  reloadClip: {fileID: 0}
+  minPoolSize: 2
+  recoilReturnSpeed: 6
+  reloadReturnSpeed: 3
+  cannonAudioSourceTransform: {fileID: 0}
+  muzzleFlashEffectTransform: {fileID: 0}
+  hasLoaded: 1
 --- !u!1 &1671928434973718178
 GameObject:
   m_ObjectHideFlags: 0
@@ -289,7 +321,6 @@ GameObject:
   - component: {fileID: 7647719047936149862}
   - component: {fileID: 4562942446465881008}
   - component: {fileID: 4593690619193351648}
-  - component: {fileID: 1409270733316965667}
   m_Layer: 0
   m_Name: Mesh54
   m_TagString: Untagged
@@ -362,28 +393,6 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!64 &1409270733316965667
-MeshCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5364906125097998584}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 1024
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 5
-  m_Convex: 1
-  m_CookingOptions: 30
-  m_Mesh: {fileID: 1956671503918933566, guid: 867f95f407238a54eaac754b357f2ca5, type: 3}
 --- !u!1 &5904641133998519182
 GameObject:
   m_ObjectHideFlags: 0
@@ -911,6 +920,14 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 5122032767939313026}
     m_Modifications:
+    - target: {fileID: 4392484096755558572, guid: eee46121d5491514381b4054d5d36293, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4392484096755558572, guid: eee46121d5491514381b4054d5d36293, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 1.844
+      objectReference: {fileID: 0}
     - target: {fileID: 6552243125327254951, guid: eee46121d5491514381b4054d5d36293, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -933,11 +950,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6552243125327254951, guid: eee46121d5491514381b4054d5d36293, type: 3}
       propertyPath: m_LocalRotation.y
-      value: -0
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6552243125327254951, guid: eee46121d5491514381b4054d5d36293, type: 3}
       propertyPath: m_LocalRotation.z
-      value: -0
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6552243125327254951, guid: eee46121d5491514381b4054d5d36293, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x

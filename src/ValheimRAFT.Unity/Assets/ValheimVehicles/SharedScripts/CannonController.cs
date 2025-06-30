@@ -8,12 +8,12 @@ using System.Collections;
 using System.Collections.Generic;
 using JetBrains.Annotations;
 using UnityEngine;
+using Random = UnityEngine.Random;
 
 #endregion
 
 namespace ValheimVehicles.SharedScripts
 {
-    [RequireComponent(typeof(AudioSource))]
      public class CannonController : MonoBehaviour
     {
         [Header("Cannonball")]
@@ -65,16 +65,23 @@ namespace ValheimVehicles.SharedScripts
         [SerializeField] private float recoilReturnSpeed = 6f;
         [Tooltip("Speed the muzzle returns after reload tilt up.")]
         [SerializeField] private float reloadReturnSpeed = 3f;
+        [SerializeField] public Transform cannonAudioSourceTransform;
+        [SerializeField] public Transform muzzleFlashEffectTransform;
+
+
+        [SerializeField] public bool hasLoaded = true;
 
 
         // --- State ---
         private readonly HashSet<Cannonball> _activeCannonballs = new();
         private readonly List<Cannonball> _trackedLoadedCannonballs = new List<Cannonball>();
         private AudioSource _audioSource;
-        private Queue<Cannonball> _cannonballPool;
+        private Queue<Cannonball> _cannonballPool = new Queue<Cannonball>();
         private Coroutine _cleanupCoroutine;
 
-        private float _currentReturnSpeed;
+        private Collider[] _colliders;
+
+        private float _currentReturnSpeed = 5f;
         private Quaternion _defaultShooterLocalRotation;
         private Cannonball _loadedCannonball;
         private Quaternion _recoilRotation;
@@ -87,15 +94,14 @@ namespace ValheimVehicles.SharedScripts
 
         private void Awake()
         {
+            _colliders = GetComponentsInChildren<Collider>(true);
+
             SetupTransforms();
             CleanupCannonballPrefab();
             SetupCannonballPrefab();
 
-            _audioSource = GetComponent<AudioSource>();
-            InitializePool();
-            TryReload();
-
-            // --- Setup shooter recoil rotation values ---
+            _audioSource = cannonAudioSourceTransform.GetComponent<AudioSource>();
+            
             if (shooterTransform != null)
             {
                 _defaultShooterLocalRotation = shooterTransform.localRotation;
@@ -104,6 +110,21 @@ namespace ValheimVehicles.SharedScripts
                 _targetShooterLocalRotation = _defaultShooterLocalRotation;
                 _currentReturnSpeed = recoilReturnSpeed;
             }
+            
+            
+            if (!IsLoaded && hasLoaded)
+            {
+                _loadedCannonball = GetPooledCannonball();
+                _loadedCannonball.Load(projectileLoader, muzzleFlashPoint);
+            }
+            
+            InitializePool();
+            // --- Setup shooter recoil rotation values ---
+        }
+
+        internal virtual void Start()
+        {
+            TryReload();
         }
 
         private void Update()
@@ -140,12 +161,30 @@ namespace ValheimVehicles.SharedScripts
 
         private void SetupTransforms()
         {
+            if (cannonAudioSourceTransform ==null)
+            {
+                cannonAudioSourceTransform = transform.Find("scalar/cannon_shooter/cannon_shot_audio");
+            }
+
+            if (muzzleFlashEffectTransform == null)
+            {
+                muzzleFlashEffectTransform = transform.Find("scalar/cannon_shooter/muzzle_flash_effect");
+            }
+
+            if (muzzleFlashEffect == null)
+            {
+                muzzleFlashEffect = muzzleFlashEffectTransform.GetComponent<ParticleSystem>();
+            }
+            
             if (shooterTransform == null)
                 shooterTransform = transform.Find("scalar/cannon_shooter");
             if (projectileLoader == null)
                 projectileLoader = transform.Find("scalar/cannon_shooter/shooting_part/points/projectile_loader");
+
             if (muzzleFlashPoint == null)
+            {
                 muzzleFlashPoint = transform.Find("scalar/cannon_shooter/shooting_part/points/muzzle_flash");
+            }
         }
 
         private static void CleanupCannonballPrefab()
@@ -168,10 +207,16 @@ namespace ValheimVehicles.SharedScripts
                 return;
 
             GameObject sourcePrefab = null;
+            var isLocalPrefab = false;
+            
+            // do not mutate the original prefab always create a copy.
             if (CannonballPrefabAsset != null)
-                sourcePrefab = CannonballPrefabAsset;
+                sourcePrefab = Instantiate(CannonballPrefabAsset);
             else if (CannonballPrefabAssetLocal != null)
-                sourcePrefab = CannonballPrefabAssetLocal;
+            {
+                sourcePrefab = Instantiate(CannonballPrefabAssetLocal);
+                isLocalPrefab = true;
+            }
 
             if (sourcePrefab == null)
             {
@@ -185,14 +230,24 @@ namespace ValheimVehicles.SharedScripts
                 cannonballComponent = sourcePrefab.AddComponent<Cannonball>();
             }
 
+            IgnoreLocalColliders(cannonballComponent);
+
             var go = cannonballComponent.gameObject;
             go.transform.position = Vector3.zero;
             go.transform.rotation = Quaternion.identity;
-            go.SetActive(false);
 
-            var collider = go.GetComponentInChildren<Collider>(true);
-            if (collider != null)
-                collider.enabled = false;
+          
+            go.SetActive(false);
+            
+
+            // if (cannonballComponent != null && cannonballComponent.Colliders.Length > 0)
+            // {
+            //     foreach (var cannonballComponentCollider in cannonballComponent.Colliders)
+            //     {
+            //         if (cannonballComponentCollider == null) continue;
+            //         cannonballComponentCollider.gameObject.SetActive(false);
+            //     }
+            // }
 
             var rb = go.GetComponent<Rigidbody>();
             if (rb != null)
@@ -212,8 +267,23 @@ namespace ValheimVehicles.SharedScripts
                 var go = Instantiate(CannonballPrefab.gameObject, projectileLoader.position, projectileLoader.rotation, null);
                 go.name = $"cannonball_queue_{i}";
                 var obj = go.GetComponent<Cannonball>();
+                IgnoreLocalColliders(obj);
                 go.SetActive(false);
                 _cannonballPool.Enqueue(obj);
+            }
+        }
+
+        private void IgnoreLocalColliders(Cannonball cannonball)
+        {
+            if (cannonball == null || _colliders == null) return;
+            foreach (var localCollider in _colliders)
+            {
+                if (localCollider == null) continue;
+                foreach (var cannonballCollider in cannonball.Colliders)
+                {
+                    if (cannonballCollider == null) continue;
+                    Physics.IgnoreCollision(localCollider, cannonballCollider, true);
+                }
             }
         }
 
@@ -229,15 +299,16 @@ namespace ValheimVehicles.SharedScripts
             }
             var go = Instantiate(CannonballPrefab.gameObject, projectileLoader.position, projectileLoader.rotation, null);
             var localCannonball = go.GetComponent<Cannonball>();
+            IgnoreLocalColliders(localCannonball);
            
             go.gameObject.SetActive(true);
 
             // ignore colliders for all cannonballs.
             foreach (var ball in _trackedLoadedCannonballs)
-            foreach (var otherCollider in ball.colliders)
+            foreach (var otherCollider in ball.Colliders)
             {
                 if (otherCollider == null) continue;
-                foreach (var localCollider in localCannonball.colliders)
+                foreach (var localCollider in localCannonball.Colliders)
                 {
                     if (localCollider == null) continue;
                     Physics.IgnoreCollision(otherCollider, localCollider, true);
@@ -277,12 +348,15 @@ namespace ValheimVehicles.SharedScripts
             var fireDirection = shooterTransform != null
                 ? shooterTransform.forward
                 : projectileLoader.forward;
+            
+            IgnoreLocalColliders(_loadedCannonball);
 
             _loadedCannonball.Fire(
                 fireDirection * cannonballSpeed,
                 muzzleFlashPoint.position,
-                OnCannonballExitedMuzzle,
                 ReturnCannonballToPool);
+            
+            OnCannonballExitedMuzzle();
 
             _activeCannonballs.Add(_loadedCannonball);
             _trackedLoadedCannonballs.Remove(_loadedCannonball);
@@ -290,13 +364,16 @@ namespace ValheimVehicles.SharedScripts
             CurrentAmmo--;
             OnAmmoChanged?.Invoke(CurrentAmmo);
 
-            _audioSource?.PlayOneShot(fireClip);
+            if (_audioSource)
+            {
+                PlayFireClip();
+                // Invoke(nameof(PlayFireClipDelayed), Random.Range(0.001f, 0.1f));
+            }
             OnFired?.Invoke();
 
             if (autoReload && CurrentAmmo > 0)
             {
                 StartCoroutine(ReloadCoroutine());
-                
             }
             else
             {
@@ -315,17 +392,43 @@ namespace ValheimVehicles.SharedScripts
 
         private IEnumerator ReloadCoroutine()
         {
+            yield return new WaitUntil(() => _audioSource.isPlaying == false);
             IsReloading = true;
-            _audioSource?.PlayOneShot(reloadClip);
+            
+            // Capture the start rotation, but typically you want to start at recoil
+            var startRotation = _recoilRotation;
+            var endRotation = _reloadRotation;
+            var elapsed = 0f;
 
+            var safeReloadTime = Mathf.Clamp(reloadTime, 0.1f, 5f);
+            while (elapsed < reloadTime)
+            {
+                var t = Mathf.Clamp01(elapsed * 2f / safeReloadTime); // 0..1
+                elapsed += Time.deltaTime;
+                if (shooterTransform != null)
+                {
+                    shooterTransform.localRotation = Quaternion.Lerp(Quaternion.identity, endRotation, Mathf.Clamp01(t));
+                }
+                yield return null; // Wait one frame
+            }
+            
             if (shooterTransform != null)
             {
                 shooterTransform.localRotation = _reloadRotation;
                 _targetShooterLocalRotation = _defaultShooterLocalRotation;
                 _currentReturnSpeed = reloadReturnSpeed;
             }
-
-            yield return new WaitForSeconds(reloadTime);
+            
+            // must wait for reload, then continue with audio. reload must be a higher number otherwise it will conflict with firing audio.
+            if (_audioSource.isPlaying)
+            {
+                _audioSource.Stop();
+            }
+            if (_audioSource)
+            {
+                _audioSource.pitch = 1f;
+                _audioSource.PlayOneShot(reloadClip);
+            }
 
             for (int i = 0; i < reloadQuantity && CurrentAmmo - i > 0; i++)
             {
@@ -347,6 +450,12 @@ namespace ValheimVehicles.SharedScripts
                 muzzleFlashEffect.transform.rotation = muzzleFlashPoint.rotation;
                 muzzleFlashEffect.Play();
             }
+        }
+
+        private void PlayFireClip()
+        {
+            _audioSource.pitch = 1f + Random.Range(-0.2f, 0.2f);
+            _audioSource.PlayOneShot(fireClip);
         }
 
         private void StartCleanupCoroutine()

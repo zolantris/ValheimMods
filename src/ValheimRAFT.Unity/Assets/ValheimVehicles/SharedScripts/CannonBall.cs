@@ -25,15 +25,16 @@ namespace ValheimVehicles.SharedScripts
         [SerializeField] private bool useCustomGravity;
         [SerializeField] private float customGravity = 9.81f;
         [SerializeField] private bool debugDrawTrajectory;
-        public Collider[] colliders;
+        private Collider[] _colliders = new Collider[0];
         private Vector3 _currentVelocity;
 
         private Coroutine _despawnCoroutine;
         private bool _hasExitedMuzzle;
         private Transform _muzzleFlashPoint;
         private Action<Cannonball> _onDeactivate;
-        private Action _onExitMuzzle;
         private Rigidbody _rb;
+
+        public Collider[] Colliders => GetColliders();
 
         public bool IsInFlight
         {
@@ -44,29 +45,7 @@ namespace ValheimVehicles.SharedScripts
         private void Awake()
         {
             _rb = GetComponent<Rigidbody>();
-            colliders = GetComponentsInChildren<Collider>(true); // Cache all colliders, including nested!
-        }
-
-        private void FixedUpdate()
-        {
-            // if (useCustomGravity && IsInFlight)
-            // {
-            //     _currentVelocity += Vector3.down * customGravity * Time.fixedDeltaTime;
-            //     _rb.velocity = _currentVelocity;
-            //     if (debugDrawTrajectory)
-            //         Debug.DrawRay(transform.position, _rb.velocity.normalized * 5, Color.green, 0.1f);
-            // }
-
-            if (!_hasExitedMuzzle && _muzzleFlashPoint)
-            {
-                var dist = Vector3.Distance(transform.position, _muzzleFlashPoint.position);
-                if (dist > 0.3f)
-                {
-                    _hasExitedMuzzle = true;
-                    _onExitMuzzle?.Invoke();
-                    _muzzleFlashPoint = null;
-                }
-            }
+            _colliders = GetColliders();
         }
 
         private void OnCollisionEnter(Collision other)
@@ -92,6 +71,15 @@ namespace ValheimVehicles.SharedScripts
             _onDeactivate?.Invoke(this); // Return to pool
         }
 
+        public Collider[] GetColliders()
+        {
+            if (_colliders == null || _colliders.Length == 0)
+            {
+                _colliders = GetComponentsInChildren<Collider>(true);
+            }
+            return _colliders;
+        }
+
         public void Load(Transform loader, Transform muzzleFlash)
         {
             if (loader == null)
@@ -108,7 +96,7 @@ namespace ValheimVehicles.SharedScripts
             transform.position = loader.position;
             transform.rotation = loader.rotation;
             // Enable all cached colliders
-            foreach (var col in colliders) col.enabled = true;
+            foreach (var col in Colliders) col.enabled = true;
 
             // todo figure out why the heck this is suddenly null.
             if (!_rb)
@@ -126,7 +114,6 @@ namespace ValheimVehicles.SharedScripts
 
             _hasExitedMuzzle = false;
             _muzzleFlashPoint = muzzleFlash;
-            _onExitMuzzle = null;
             _onDeactivate = null;
             IsInFlight = false;
             if (_despawnCoroutine != null)
@@ -136,7 +123,7 @@ namespace ValheimVehicles.SharedScripts
             }
         }
 
-        public void Fire(Vector3 velocity, Vector3 muzzlePoint, Action onExitMuzzle, Action<Cannonball> onDeactivate)
+        public void Fire(Vector3 velocity, Vector3 muzzlePoint, Action<Cannonball> onDeactivate)
         {
             if (!_rb)
             {
@@ -144,7 +131,7 @@ namespace ValheimVehicles.SharedScripts
                 return;
             }
             // Enable all colliders (just in case)
-            foreach (var col in colliders) col.enabled = true;
+            foreach (var col in _colliders) col.enabled = true;
 
             _rb.isKinematic = false;
             _rb.useGravity = true;
@@ -160,7 +147,6 @@ namespace ValheimVehicles.SharedScripts
 
             _muzzleFlashPoint = null;
             _hasExitedMuzzle = false;
-            _onExitMuzzle = onExitMuzzle;
             _onDeactivate = onDeactivate;
             _despawnCoroutine = StartCoroutine(AutoDespawnCoroutine());
         }
@@ -184,7 +170,7 @@ namespace ValheimVehicles.SharedScripts
             _rb.angularVelocity = Vector3.zero;
             // transform.position = Vector3.one * 9999;
             // Disable all colliders
-            foreach (var col in colliders) col.enabled = false;
+            foreach (var col in _colliders) col.enabled = false;
 
 
             _rb.isKinematic = true;
