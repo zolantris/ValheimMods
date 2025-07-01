@@ -55,6 +55,8 @@ namespace ValheimVehicles.SharedScripts
         [SerializeField] private AudioClip fireClip;
         [Tooltip("Sound when reloading.")]
         [SerializeField] private AudioClip reloadClip;
+        [SerializeField] public float fireClipPitch = 1f;
+        [SerializeField] public float reloadClipPitch = 0.75f;
 
         [Header("Pooling")]
         [Tooltip("Minimum cannonballs kept in pool (typically 1 per cannon).")]
@@ -464,7 +466,7 @@ namespace ValheimVehicles.SharedScripts
             }
             if (_audioSource)
             {
-                _audioSource.pitch = 1f;
+                _audioSource.pitch = reloadClipPitch;
                 _audioSource.PlayOneShot(reloadClip);
             }
 
@@ -492,7 +494,7 @@ namespace ValheimVehicles.SharedScripts
 
         private void PlayFireClip()
         {
-            _audioSource.pitch = 1f + Random.Range(-0.2f, 0.2f);
+            _audioSource.pitch = fireClipPitch + Random.Range(-0.2f, 0.2f);
             _audioSource.PlayOneShot(fireClip);
         }
 

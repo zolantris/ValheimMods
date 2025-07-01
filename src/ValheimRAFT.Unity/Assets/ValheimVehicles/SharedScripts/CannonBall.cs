@@ -50,12 +50,16 @@ namespace ValheimVehicles.SharedScripts
         [SerializeField] private float customGravity = 9.81f;
         [SerializeField] private bool debugDrawTrajectory;
         [SerializeField] private ParticleSystem _explosionEffect;
+        [SerializeField] private AudioClip _explosionSound;
 
         private readonly Collider[] allocatedColliders = new Collider[100];
         private List<Collider> _colliders = new();
         private Vector3 _currentVelocity;
 
         private Coroutine _despawnCoroutine;
+
+        private AudioSource _explosionAudioSource;
+        private Transform _explosionParent;
         private bool _hasExitedMuzzle;
         private bool _hasExploded;
         private Transform _muzzleFlashPoint;
@@ -75,7 +79,9 @@ namespace ValheimVehicles.SharedScripts
         {
             _rb = GetComponent<Rigidbody>();
             _colliders = GetColliders();
-            _explosionEffect = transform.Find("explosion_effect").GetComponent<ParticleSystem>();
+            _explosionParent = transform.Find("explosion");
+            _explosionAudioSource = _explosionParent.GetComponent<AudioSource>();
+            _explosionEffect = transform.Find("explosion/explosion_effect").GetComponent<ParticleSystem>();
         }
 
         private void OnCollisionEnter(Collision other)
@@ -198,13 +204,21 @@ namespace ValheimVehicles.SharedScripts
             }
         }
 
-        public IEnumerator ActivateExplosionEffect()
+        public IEnumerator ActivateExplosionEffect(float velocity)
         {
             if (!isActiveAndEnabled || !_explosionEffect) yield break;
             _explosionEffect.transform.SetParent(null);
+            
+            var explosionScalar = Vector3.Lerp(Vector3.one * 0.25f, Vector3.one, velocity / 90f);
+            _explosionEffect.transform.localScale = explosionScalar;
             _explosionEffect.Play();
+            _explosionAudio.Play();
 
             yield return new WaitUntil(() => _explosionEffect.isStopped);
+            
+            _explosionParent.SetParent(transform);
+            _explosionParent.transform.localPosition = Vector3.zero;;
+            
             StopDespawnRoutine();
             _onDeactivate?.Invoke(this);
         }
@@ -216,7 +230,7 @@ namespace ValheimVehicles.SharedScripts
         {
             projectileHitType = ProjectileHitType.None;
             var relativeVelocity = other.relativeVelocity;
-            var relativeVelocityZ = relativeVelocity.z;
+            var relativeVelocityZ = Mathf.Abs(relativeVelocity.z);
             var currentVelocity = _rb.velocity;
             
             var hitMaterial = GetHitMaterial(other);
@@ -233,7 +247,7 @@ namespace ValheimVehicles.SharedScripts
             {
                 projectileHitType = ProjectileHitType.Explosion;
                 GetCollisionsFromExplosion(transform.position, relativeVelocityZ);
-                StartCoroutine(ActivateExplosionEffect());
+                StartCoroutine(ActivateExplosionEffect(relativeVelocityZ));
                 nextZVelocity = 0f;
                 _hasExploded = true;
             }
