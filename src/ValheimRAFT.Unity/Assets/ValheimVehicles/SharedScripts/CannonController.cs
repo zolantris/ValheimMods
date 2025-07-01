@@ -76,7 +76,11 @@ namespace ValheimVehicles.SharedScripts
         [SerializeField] public Transform firingTarget;
         [Tooltip("Generic firing coordinates")]
         [SerializeField] public Vector3 firingCoordinates;
-
+        [Tooltip("Max Range Cannons can fire at.")]
+        [SerializeField] public float maxFiringRange = 150f;
+        [Tooltip("Max degrees a cannon can pivot to hit a object")]
+        [SerializeField] public float maxFiringRotationY = 30f;
+        [SerializeField] public bool canRotateFiringRangeY = true;
 
         // --- State ---
         private readonly HashSet<Cannonball> _activeCannonballs = new();
@@ -468,26 +472,42 @@ private static float SimulateProjectileHeightAtXZ(
             
             if (targetPosition.HasValue && CalculateBallisticAimWithDrag(fireOrigin, targetPosition.Value, cannonballSpeed, CannonballPrefab.cannonBallDrag, out var fireDir, out var angle))
             {
-                // negative angle as this angle must be facing the direction.
-                _targetShooterLocalRotation = Quaternion.Euler(-angle,0f, 0f);
+                var lookDirection = Quaternion.LookRotation(fireDir, Vector3.up);
+                var isWithinRange = Mathf.Abs(lookDirection.eulerAngles.y) <= maxFiringRotationY;
+                
+                // a negative angle as this angle must be facing the direction.
+                _targetShooterLocalRotation = isWithinRange ? Quaternion.Euler(-angle,0f, 0f) : Quaternion.identity;
+                
+                
+                // rotates whole cannon (internal, not prefab) towards firing point.
+                if (canRotateFiringRangeY)
+                {
+                    var rotationTarget = isWithinRange ? lookDirection : Quaternion.identity;
+                    var scalarRotation = cannonScalarTransform.rotation;
+                    scalarRotation = Quaternion.Lerp(scalarRotation, Quaternion.Euler(scalarRotation.eulerAngles.x, rotationTarget.eulerAngles.y, scalarRotation.eulerAngles.z), Time.fixedDeltaTime * aimingSpeed);
+                    cannonScalarTransform.rotation = scalarRotation;
+                }
             }
             else
             {
                 _targetShooterLocalRotation = Quaternion.identity;
             }
+            
             cannonShooterTransform.localRotation = Quaternion.Lerp(cannonShooterTransform.localRotation, _targetShooterLocalRotation, Time.fixedDeltaTime * aimingSpeed);
         }
 
         public bool Fire()
         {
             if (IsReloading || _loadedCannonball == null || CurrentAmmo <= 0) return false;
+            var targetPosition = GetFiringTargetPosition();
+            if (!targetPosition.HasValue) return false;
+            if (Vector3.Distance(targetPosition.Value, projectileLoader.position) > maxFiringRange) return false;
             
             IgnoreLocalColliders(_loadedCannonball);
             _loadedCannonball.transform.position = projectileLoader.position;
 #if UNITY_EDITOR
             Debug.DrawRay(projectileLoader.position, cannonShooterTransform.forward * 150f, Color.green, 20.0f);
 #endif
-    
             
             _loadedCannonball.Fire(
                 cannonShooterTransform.forward * cannonballSpeed,
