@@ -5,6 +5,7 @@
 
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 #endregion
@@ -16,6 +17,29 @@ namespace ValheimVehicles.SharedScripts
     /// </summary>
     public class Cannonball : MonoBehaviour
     {
+
+        public enum HitMaterial
+        {
+            None,
+            Wood,
+            Metal,
+            Stone,
+            Terrain,
+        }
+
+        public enum ProjectileHitType
+        {
+            Explosion,
+            Penetration,
+            None
+        }
+
+        /// <summary>
+        /// Gets the prefab root. This should be overridable.
+        /// </summary>
+        /// <returns></returns>
+        public static Func<Transform, Transform> GetPrefabRoot = transform => transform.root;
+
         [Header("Explosion Physics")]
         [SerializeField] private float explosionForce = 1200f;
         [SerializeField] private float explosionRadius = 6f;
@@ -25,7 +49,9 @@ namespace ValheimVehicles.SharedScripts
         [SerializeField] private bool useCustomGravity;
         [SerializeField] private float customGravity = 9.81f;
         [SerializeField] private bool debugDrawTrajectory;
-        private Collider[] _colliders = new Collider[0];
+
+        private readonly Collider[] allocatedColliders = new Collider[100];
+        private List<Collider> _colliders = new();
         private Vector3 _currentVelocity;
 
         private Coroutine _despawnCoroutine;
@@ -34,7 +60,9 @@ namespace ValheimVehicles.SharedScripts
         private Action<Cannonball> _onDeactivate;
         private Rigidbody _rb;
 
-        public Collider[] Colliders => GetColliders();
+        private List<DamageInfo> CollisionToHit;
+
+        public List<Collider> Colliders => GetColliders();
 
         public bool IsInFlight
         {
@@ -50,32 +78,169 @@ namespace ValheimVehicles.SharedScripts
 
         private void OnCollisionEnter(Collision other)
         {
-            if (other.collider.gameObject.layer == LayerHelpers.TerrainLayer) return;
+            OnHitHandleHitType(other, out _);
+        }
+
+        private void StopDespawnRoutine()
+        {
             if (_despawnCoroutine != null)
             {
                 StopCoroutine(_despawnCoroutine);
                 _despawnCoroutine = null;
             }
-
-            var relativeVelocity = other.relativeVelocity;
-
-            Vector3 explosionPos = transform.position;
-            var colliders = Physics.OverlapSphere(explosionPos, explosionRadius, explosionLayerMask);
-            var actualForce = explosionForce * relativeVelocity.magnitude;
-            foreach (var collider in colliders)
-            {
-                var rb = collider.attachedRigidbody;
-                if (rb != null && rb != _rb)
-                    rb.AddExplosionForce(actualForce, explosionPos, explosionRadius);
-            }
-            _onDeactivate?.Invoke(this); // Return to pool
         }
 
-        public Collider[] GetColliders()
+        public HitMaterial GetHitMaterialFromTransformName(Transform materialNameRoot)
         {
-            if (_colliders == null || _colliders.Length == 0)
+            var materialName = materialNameRoot.name;
+            if (materialName.Contains("wood")) return HitMaterial.Wood;
+            if (materialName.Contains("stone")) return HitMaterial.Stone;
+            if (materialName.Contains("metal")) return HitMaterial.Metal;
+            if (materialName.Contains("land")) return HitMaterial.Terrain;
+
+            return HitMaterial.None;
+        }
+
+        /// <summary>
+        /// Fallback for unhandled collisions we use the layer directly.
+        /// </summary>
+        /// <param name="obj"></param>
+        /// <returns></returns>
+        public HitMaterial GetHitMaterialFromLayer(GameObject obj)
+        {
+            var layer = obj.layer;;
+            if (LayerHelpers.TerrainLayer == layer) return HitMaterial.Terrain;
+            if (LayerHelpers.PieceLayer == layer) return HitMaterial.Wood;
+            return HitMaterial.Wood;
+        }
+
+        public HitMaterial GetHitMaterial(Collision other)
+        {
+            var rootPrefab = GetPrefabRoot(other.collider.transform);
+            var hitMaterial = GetHitMaterialFromTransformName(rootPrefab);
+
+            if (hitMaterial == HitMaterial.None)
             {
-                _colliders = GetComponentsInChildren<Collider>(true);
+                hitMaterial = GetHitMaterialFromLayer(other.collider.gameObject);
+            }
+
+            return hitMaterial;
+        }
+
+        /// <summary>
+        /// A velocity multiplier that is between 0 and 1. 0 being complete loss of velocity and 1 being no change.
+        /// </summary>
+        /// <param name="hitMaterial"></param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentOutOfRangeException"></exception>
+        public float GetHitMaterialVelocityMultiplier(HitMaterial hitMaterial)
+        {
+            switch(hitMaterial)
+            {
+                case HitMaterial.None:
+                    return 1f;
+                case HitMaterial.Wood:
+                    return .75f;
+                case HitMaterial.Metal:
+                    return 0.1f;
+                case HitMaterial.Stone:
+                    return 0.2f;
+                case HitMaterial.Terrain:
+                    return 0f;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(hitMaterial), hitMaterial, null);
+            }
+        }
+
+        /// <summary>
+        /// Todo might not need this. Additionally this would need to be handled on a singleton layer to be optimized/iterated off of to apply damages.
+        /// </summary>
+        /// <param name="collider"></param>
+        private void AddDamageToQueue(Collider collider)
+        {
+            var damageInfo = new DamageInfo
+            {
+                collider = collider,
+                velocity = _currentVelocity,
+                damage = 10f
+            };
+            CollisionToHit.Add(damageInfo);
+        }
+
+        /// <summary>
+        /// Higher speed will generate a larger impact area.
+        /// </summary>
+        /// <param name="speed"></param>
+        private void GetCollisionsFromExplosion( Vector3 explosionOrigin, float force)
+        {
+            var count = Physics.OverlapSphereNonAlloc(explosionOrigin, explosionRadius,allocatedColliders, explosionLayerMask);
+         for (var i = 0; i < count; i++ )
+            {
+                var col = allocatedColliders[i];
+                // Closest point on the collider to explosion
+                var hitPoint = col.ClosestPoint(explosionOrigin);
+                var dir = (hitPoint - explosionOrigin).normalized;
+                var dist = Vector3.Distance(explosionOrigin, hitPoint);
+
+                RaycastHit hitInfo;
+                // Raycast from explosion to object
+                if (Physics.Raycast(explosionOrigin, dir, out hitInfo, dist + 0.1f, explosionLayerMask))
+                {
+                    if (hitInfo.collider == col)
+                    {
+                        var rb = col.attachedRigidbody;
+                        if (rb != null)
+                            rb.AddExplosionForce(force, explosionOrigin, explosionRadius);
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Handles penetration of cannonball. Uses some randomization to determine if the structure is penetrated.
+        /// </summary>
+        private void OnHitHandleHitType(Collision other, out ProjectileHitType projectileHitType)
+        {
+            projectileHitType = ProjectileHitType.None;
+            var relativeVelocity = other.relativeVelocity;
+            var relativeVelocityZ = relativeVelocity.z;
+            var currentVelocity = _rb.velocity;
+            
+            var hitMaterial = GetHitMaterial(other);
+            var hitMaterialVelocityMultiplier = GetHitMaterialVelocityMultiplier(hitMaterial);
+            var nextZVelocity = currentVelocity.z * hitMaterialVelocityMultiplier;
+            
+            var newVelocity = new Vector3(currentVelocity.x, currentVelocity.y, nextZVelocity);
+            // nullify velocity on terrain hits. The ground should soak all impact.
+            if (other.collider.gameObject.layer == LayerHelpers.TerrainLayer)
+            {
+                _rb.velocity = new Vector3(currentVelocity.x, currentVelocity.y, 0);
+            }
+            else if (relativeVelocityZ >= 40f)
+            {
+                projectileHitType = ProjectileHitType.Penetration;
+            }
+            else if (relativeVelocityZ < 40f)
+            {
+                projectileHitType = ProjectileHitType.Explosion;
+                GetCollisionsFromExplosion(transform.position, relativeVelocityZ);
+                
+                // explosions deactivate our cannonball.
+                _onDeactivate?.Invoke(this);
+            }
+            else
+            {
+                projectileHitType = ProjectileHitType.None;
+            }
+
+            _rb.velocity = newVelocity;
+        }
+
+        public List<Collider> GetColliders()
+        {
+            if (_colliders == null || _colliders.Count == 0)
+            {
+                GetComponentsInChildren(true, _colliders);
             }
             return _colliders;
         }
@@ -183,6 +348,13 @@ namespace ValheimVehicles.SharedScripts
                 StopCoroutine(_despawnCoroutine);
                 _despawnCoroutine = null;
             }
+        }
+
+        public struct DamageInfo
+        {
+            public Collider collider;
+            public Vector3 velocity;
+            public float damage;
         }
     }
 }

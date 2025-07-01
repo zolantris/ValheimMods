@@ -32,6 +32,7 @@ namespace ValheimVehicles.SharedScripts
         [SerializeField] private Transform muzzleFlashPoint;
         [Tooltip("Transform to use for fire direction (usually barrel/shooter).")]
         [SerializeField] private Transform shooterTransform;
+        [SerializeField] private Transform cannonScalarTransform;
         [Tooltip("Speed (m/s) for cannonball launch.")]
         [SerializeField] private float cannonballSpeed = 50f;
 
@@ -161,6 +162,11 @@ namespace ValheimVehicles.SharedScripts
 
         private void SetupTransforms()
         {
+            if (cannonScalarTransform == null)
+            {
+                cannonScalarTransform = transform.Find("scalar");
+            }
+            
             if (cannonAudioSourceTransform ==null)
             {
                 cannonAudioSourceTransform = transform.Find("scalar/cannon_shooter/cannon_shot_audio");
@@ -370,15 +376,8 @@ namespace ValheimVehicles.SharedScripts
                 // Invoke(nameof(PlayFireClipDelayed), Random.Range(0.001f, 0.1f));
             }
             OnFired?.Invoke();
-
-            if (autoReload && CurrentAmmo > 0)
-            {
-                StartCoroutine(ReloadCoroutine());
-            }
-            else
-            {
-                LoggerProvider.LogDev("No ammo left, not reloading.");
-            }
+            
+            StartCoroutine(RecoilCoroutine());
             return true;
         }
 
@@ -390,9 +389,48 @@ namespace ValheimVehicles.SharedScripts
             StartCoroutine(ReloadCoroutine());
         }
 
+        private IEnumerator RecoilCoroutine()
+        {
+            var elapsed = 0f;
+            var recoilUpwardAnimationDuration = 0.15f;
+            var recoilReturnAnimationDuration = 0.15f;
+            while (elapsed < recoilReturnAnimationDuration + recoilUpwardAnimationDuration)
+            {
+                var t = Mathf.Clamp01(elapsed /2f / 0.15f ); // 0..1
+                elapsed += Time.deltaTime;
+                
+                if (elapsed > 0.1f)
+                {
+                    if (shooterTransform != null)
+                    {
+                        shooterTransform.localRotation = Quaternion.Lerp(_recoilRotation, Quaternion.identity, Mathf.Clamp01(t));
+                    }
+                    cannonScalarTransform.localPosition = Vector3.Lerp(Vector3.forward * -0.1f,Vector3.zero, t);
+                }
+                else
+                {
+                    cannonScalarTransform.localPosition = Vector3.Lerp(Vector3.zero, Vector3.forward * -0.1f, t);
+                    if (shooterTransform != null)
+                    {
+                        shooterTransform.localRotation = Quaternion.Lerp(Quaternion.identity, _recoilRotation, Mathf.Clamp01(t));
+                    }
+                }
+                yield return null;
+            }
+            
+            if (autoReload && CurrentAmmo > 0)
+            {
+                yield return ReloadCoroutine();
+            }
+            else
+            {
+                LoggerProvider.LogDev("No ammo left, not reloading.");
+            }
+        }
+
         private IEnumerator ReloadCoroutine()
         {
-            yield return new WaitUntil(() => _audioSource.isPlaying == false);
+            // yield return new WaitUntil(() => _audioSource.isPlaying == false);
             IsReloading = true;
             
             // Capture the start rotation, but typically you want to start at recoil
