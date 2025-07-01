@@ -49,6 +49,7 @@ namespace ValheimVehicles.SharedScripts
         [SerializeField] private bool useCustomGravity;
         [SerializeField] private float customGravity = 9.81f;
         [SerializeField] private bool debugDrawTrajectory;
+        [SerializeField] private ParticleSystem _explosionEffect;
 
         private readonly Collider[] allocatedColliders = new Collider[100];
         private List<Collider> _colliders = new();
@@ -56,10 +57,10 @@ namespace ValheimVehicles.SharedScripts
 
         private Coroutine _despawnCoroutine;
         private bool _hasExitedMuzzle;
+        private bool _hasExploded;
         private Transform _muzzleFlashPoint;
         private Action<Cannonball> _onDeactivate;
         private Rigidbody _rb;
-
         private List<DamageInfo> CollisionToHit;
 
         public List<Collider> Colliders => GetColliders();
@@ -74,6 +75,7 @@ namespace ValheimVehicles.SharedScripts
         {
             _rb = GetComponent<Rigidbody>();
             _colliders = GetColliders();
+            _explosionEffect = transform.Find("explosion_effect").GetComponent<ParticleSystem>();
         }
 
         private void OnCollisionEnter(Collision other)
@@ -196,6 +198,17 @@ namespace ValheimVehicles.SharedScripts
             }
         }
 
+        public IEnumerator ActivateExplosionEffect()
+        {
+            if (!isActiveAndEnabled || !_explosionEffect) yield break;
+            _explosionEffect.transform.SetParent(null);
+            _explosionEffect.Play();
+
+            yield return new WaitUntil(() => _explosionEffect.isStopped);
+            StopDespawnRoutine();
+            _onDeactivate?.Invoke(this);
+        }
+
         /// <summary>
         /// Handles penetration of cannonball. Uses some randomization to determine if the structure is penetrated.
         /// </summary>
@@ -210,29 +223,26 @@ namespace ValheimVehicles.SharedScripts
             var hitMaterialVelocityMultiplier = GetHitMaterialVelocityMultiplier(hitMaterial);
             var nextZVelocity = currentVelocity.z * hitMaterialVelocityMultiplier;
             
-            var newVelocity = new Vector3(currentVelocity.x, currentVelocity.y, nextZVelocity);
             // nullify velocity on terrain hits. The ground should soak all impact.
-            if (other.collider.gameObject.layer == LayerHelpers.TerrainLayer)
-            {
-                _rb.velocity = new Vector3(currentVelocity.x, currentVelocity.y, 0);
-            }
-            else if (relativeVelocityZ >= 40f)
+   
+            if (nextZVelocity >= 40f)
             {
                 projectileHitType = ProjectileHitType.Penetration;
             }
-            else if (relativeVelocityZ < 40f)
+            else if (nextZVelocity < 40f && !_hasExploded)
             {
                 projectileHitType = ProjectileHitType.Explosion;
                 GetCollisionsFromExplosion(transform.position, relativeVelocityZ);
-                
-                // explosions deactivate our cannonball.
-                _onDeactivate?.Invoke(this);
+                StartCoroutine(ActivateExplosionEffect());
+                nextZVelocity = 0f;
+                _hasExploded = true;
             }
             else
             {
                 projectileHitType = ProjectileHitType.None;
             }
-
+            
+            var newVelocity = new Vector3(currentVelocity.x, currentVelocity.y, nextZVelocity);
             _rb.velocity = newVelocity;
         }
 
@@ -298,6 +308,12 @@ namespace ValheimVehicles.SharedScripts
             // Enable all colliders (just in case)
             foreach (var col in _colliders) col.enabled = true;
 
+            _hasExploded = false;
+            
+            // fix explosion effect position.
+            _explosionEffect.transform.SetParent(transform);
+            _explosionEffect.transform.localPosition = Vector3.zero;;
+            
             _rb.isKinematic = false;
             _rb.useGravity = true;
             // _rb.useGravity = !useCustomGravity;
@@ -319,6 +335,9 @@ namespace ValheimVehicles.SharedScripts
         private IEnumerator AutoDespawnCoroutine()
         {
             yield return new WaitForSeconds(10f);
+            
+            // wait for explosionEffect to be stopped before deactivating
+            yield return new WaitUntil(() => _explosionEffect.isStopped);
             _onDeactivate?.Invoke(this);
         }
 

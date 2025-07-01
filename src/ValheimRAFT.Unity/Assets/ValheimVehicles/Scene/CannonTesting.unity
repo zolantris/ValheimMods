@@ -1026,6 +1026,10 @@ PrefabInstance:
       propertyPath: cannonballSpeed
       value: 90
       objectReference: {fileID: 0}
+    - target: {fileID: 822766217289054655, guid: 5265c63b2a83c0647a34b75b6d3c62f3, type: 3}
+      propertyPath: CannonballPrefabAssetLocal
+      value: 
+      objectReference: {fileID: 1520418878}
     - target: {fileID: 946839667581647151, guid: 5265c63b2a83c0647a34b75b6d3c62f3, type: 3}
       propertyPath: m_Name
       value: cannon_fixed_3
@@ -1668,6 +1672,11 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1520418878 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 2476818550654289255, guid: df1f89dac358bd944b2e89cd5b67cf9d, type: 3}
+  m_PrefabInstance: {fileID: 278905455}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1576470638
 GameObject:
   m_ObjectHideFlags: 0
@@ -2128,7 +2137,7 @@ Transform:
   m_GameObject: {fileID: 1976009800}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 1, z: 0, w: 0}
-  m_LocalPosition: {x: -3.2, y: 0.37, z: -18.3}
+  m_LocalPosition: {x: 0, y: 0.37, z: -18.3}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -3900,6 +3909,7 @@ MonoBehaviour:
   projectileLoader: {fileID: 0}
   muzzleFlashPoint: {fileID: 0}
   shooterTransform: {fileID: 0}
+  cannonScalarTransform: {fileID: 0}
   cannonballSpeed: 50
   maxAmmo: 12
   _currentAmmo: 0
