@@ -473,16 +473,20 @@ private static float SimulateProjectileHeightAtXZ(
             if (targetPosition.HasValue && CalculateBallisticAimWithDrag(fireOrigin, targetPosition.Value, cannonballSpeed, CannonballPrefab.cannonBallDrag, out var fireDir, out var angle))
             {
                 var lookDirection = Quaternion.LookRotation(fireDir, Vector3.up);
-                var isWithinRange = Mathf.Abs(lookDirection.eulerAngles.y) <= maxFiringRotationY;
+                var isWithinRange = Mathf.Abs(transform.rotation.eulerAngles.y + lookDirection.eulerAngles.y) <= maxFiringRotationY;
                 
                 // a negative angle as this angle must be facing the direction.
                 _targetShooterLocalRotation = isWithinRange ? Quaternion.Euler(-angle,0f, 0f) : Quaternion.identity;
-                
-                
-                // rotates whole cannon (internal, not prefab) towards firing point.
-                if (canRotateFiringRangeY)
+
+                if (!canRotateFiringRangeY && cannonScalarTransform.localRotation != Quaternion.identity)
                 {
+                    cannonScalarTransform.localRotation = Quaternion.identity;
+                }
+                else if (canRotateFiringRangeY)
+                {
+                     // rotates whole cannon (internal, not prefab) towards firing point.
                     var rotationTarget = isWithinRange ? lookDirection : Quaternion.identity;
+                    // var rotationTarget = lookDirection;
                     var scalarRotation = cannonScalarTransform.rotation;
                     scalarRotation = Quaternion.Lerp(scalarRotation, Quaternion.Euler(scalarRotation.eulerAngles.x, rotationTarget.eulerAngles.y, scalarRotation.eulerAngles.z), Time.fixedDeltaTime * aimingSpeed);
                     cannonScalarTransform.rotation = scalarRotation;
