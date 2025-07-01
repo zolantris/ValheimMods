@@ -34,7 +34,7 @@ namespace ValheimVehicles.SharedScripts
         [SerializeField] private Transform shooterTransform;
         [SerializeField] private Transform cannonScalarTransform;
         [Tooltip("Speed (m/s) for cannonball launch.")]
-        [SerializeField] private float cannonballSpeed = 50f;
+        [SerializeField] private float cannonballSpeed = 90f; // 90m/s is standard.
 
         [Header("Ammunition")]
         [Tooltip("Maximum shells this cannon can hold.")]
@@ -74,6 +74,12 @@ namespace ValheimVehicles.SharedScripts
 
         [SerializeField] public bool hasLoaded = true;
 
+        [Header("Cannon Targetting")]
+        [Tooltip("Target To fire upon. Will aim for the position center.")]
+        [SerializeField] public Transform firingTarget;
+        [Tooltip("Generic firing coordinates")]
+        [SerializeField] public Vector3 firingCoordinates;
+
 
         // --- State ---
         private readonly HashSet<Cannonball> _activeCannonballs = new();
@@ -90,6 +96,7 @@ namespace ValheimVehicles.SharedScripts
         private Quaternion _recoilRotation;
         private Quaternion _reloadRotation;
         private Quaternion _targetShooterLocalRotation;
+        public Func<Vector3?> GetFiringTargetPosition = () => null;
 
         public int CurrentAmmo { get => _currentAmmo; private set => _currentAmmo = value; }
         public bool IsReloading { get; private set; }
@@ -122,6 +129,8 @@ namespace ValheimVehicles.SharedScripts
             }
             
             InitializePool();
+
+            GetFiringTargetPosition = HandleFiringTargetPositionDefault;
             // --- Setup shooter recoil rotation values ---
         }
 
@@ -130,20 +139,20 @@ namespace ValheimVehicles.SharedScripts
             TryReload();
         }
 
-        private void Update()
-        {
-            // Smoothly lerp shooter recoil/tilt
-            if (shooterTransform != null && shooterTransform.localRotation != _targetShooterLocalRotation)
-            {
-                shooterTransform.localRotation = Quaternion.Lerp(
-                    shooterTransform.localRotation,
-                    _targetShooterLocalRotation,
-                    Time.deltaTime * _currentReturnSpeed
-                );
-                if (Quaternion.Angle(shooterTransform.localRotation, _targetShooterLocalRotation) < 0.1f)
-                    shooterTransform.localRotation = _targetShooterLocalRotation;
-            }
-        }
+        // private void Update()
+        // {
+        //     // Smoothly lerp shooter recoil/tilt
+        //     if (shooterTransform != null && shooterTransform.localRotation != _targetShooterLocalRotation)
+        //     {
+        //         shooterTransform.localRotation = Quaternion.Lerp(
+        //             shooterTransform.localRotation,
+        //             _targetShooterLocalRotation,
+        //             Time.deltaTime * _currentReturnSpeed
+        //         );
+        //         if (Quaternion.Angle(shooterTransform.localRotation, _targetShooterLocalRotation) < 0.1f)
+        //             shooterTransform.localRotation = _targetShooterLocalRotation;
+        //     }
+        // }
 
         private void FixedUpdate()
         {
@@ -156,6 +165,17 @@ namespace ValheimVehicles.SharedScripts
                     ball.transform.rotation = projectileLoader.rotation;
                 }
             }
+
+            if (firingTarget != null || firingCoordinates != null)
+            {
+                AdjustFiringAngle();
+            }
+        }
+
+        private Vector3? HandleFiringTargetPositionDefault()
+        {
+            if (firingTarget != null) return firingTarget.position;
+            return null;
         }
 
         public event Action<int> OnAmmoChanged;
@@ -340,6 +360,63 @@ namespace ValheimVehicles.SharedScripts
             StartCleanupCoroutine();
         }
 
+        public static bool CalculateBallisticAim(
+            Vector3 fireOrigin,
+            Vector3 targetPosition,
+            float launchSpeed,
+            out Vector3 fireDirection,
+            out float angleDegrees)
+        {
+            Vector3 delta = targetPosition - fireOrigin;
+            float g = Mathf.Abs(Physics.gravity.y);
+            float xzDist = new Vector2(delta.x, delta.z).magnitude;
+            float y = delta.y;
+
+            float speed2 = launchSpeed * launchSpeed;
+            float speed4 = speed2 * speed2;
+            float gx = g * xzDist;
+
+            float discriminant = speed4 - g * (g * xzDist * xzDist + 2 * y * speed2);
+            if (discriminant < 0)
+            {
+                // No solution (target out of range)
+                fireDirection = Vector3.zero;
+                angleDegrees = 0;
+                return false;
+            }
+
+            // Use the lower angle for a "flat" shot:
+            float root = Mathf.Sqrt(discriminant);
+            float theta = Mathf.Atan2(speed2 - root, gx);
+            angleDegrees = theta * Mathf.Rad2Deg;
+
+            // Direction in XZ
+            Vector3 dirXZ = new Vector3(delta.x, 0, delta.z).normalized;
+            // Compose full 3D direction:
+            fireDirection = Quaternion.AngleAxis(angleDegrees, Vector3.Cross(Vector3.up, dirXZ)) * dirXZ;
+
+            return true;
+        }
+
+        public void AdjustFiringAngle()
+        {
+            if (IsReloading) return;
+            
+            var fireOrigin = projectileLoader.position;
+            var targetPosition = GetFiringTargetPosition();
+            
+            if (targetPosition.HasValue && CalculateBallisticAim(fireOrigin, targetPosition.Value, cannonballSpeed, out var fireDir, out var angle))
+            {
+                // negative angle as this angle must be facing the direction.
+                _targetShooterLocalRotation = Quaternion.Euler(-angle,0f, 0f);
+            }
+            else
+            {
+                _targetShooterLocalRotation = Quaternion.identity;
+            }
+            shooterTransform.localRotation = Quaternion.Lerp(shooterTransform.localRotation, _targetShooterLocalRotation, Time.fixedDeltaTime);;
+        }
+
         public bool Fire()
         {
             if (IsReloading || _loadedCannonball == null || CurrentAmmo <= 0) return false;
@@ -350,12 +427,10 @@ namespace ValheimVehicles.SharedScripts
                 _targetShooterLocalRotation = _defaultShooterLocalRotation;
                 _currentReturnSpeed = recoilReturnSpeed;
             }
-            
-            _loadedCannonball.transform.position = projectileLoader.position;
+            var projectileLoaderPosition = projectileLoader.position;
+            _loadedCannonball.transform.position = projectileLoaderPosition;
 
-            var fireDirection = shooterTransform != null
-                ? shooterTransform.forward
-                : projectileLoader.forward;
+            var fireDirection = shooterTransform.forward;
             
             IgnoreLocalColliders(_loadedCannonball);
 
@@ -447,7 +522,7 @@ namespace ValheimVehicles.SharedScripts
                 elapsed += Time.deltaTime;
                 if (shooterTransform != null)
                 {
-                    shooterTransform.localRotation = Quaternion.Lerp(Quaternion.identity, endRotation, Mathf.Clamp01(t));
+                    shooterTransform.localRotation = Quaternion.Lerp(_targetShooterLocalRotation, endRotation, Mathf.Clamp01(t));
                 }
                 yield return null; // Wait one frame
             }
@@ -455,7 +530,6 @@ namespace ValheimVehicles.SharedScripts
             if (shooterTransform != null)
             {
                 shooterTransform.localRotation = _reloadRotation;
-                _targetShooterLocalRotation = _defaultShooterLocalRotation;
                 _currentReturnSpeed = reloadReturnSpeed;
             }
             

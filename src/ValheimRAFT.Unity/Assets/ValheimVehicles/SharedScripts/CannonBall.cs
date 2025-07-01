@@ -207,14 +207,19 @@ namespace ValheimVehicles.SharedScripts
         public IEnumerator ActivateExplosionEffect(float velocity)
         {
             if (!isActiveAndEnabled || !_explosionEffect) yield break;
-            _explosionEffect.transform.SetParent(null);
+            _explosionParent.SetParent(null);
             
             var explosionScalar = Vector3.Lerp(Vector3.one * 0.25f, Vector3.one, velocity / 90f);
             _explosionEffect.transform.localScale = explosionScalar;
             _explosionEffect.Play();
-            _explosionAudio.Play();
+            _explosionAudioSource.Play();
 
             yield return new WaitUntil(() => _explosionEffect.isStopped);
+
+            if (_explosionAudioSource.isPlaying)
+            {
+                _explosionAudioSource.Stop();
+            }
             
             _explosionParent.SetParent(transform);
             _explosionParent.transform.localPosition = Vector3.zero;;
@@ -325,8 +330,8 @@ namespace ValheimVehicles.SharedScripts
             _hasExploded = false;
             
             // fix explosion effect position.
-            _explosionEffect.transform.SetParent(transform);
-            _explosionEffect.transform.localPosition = Vector3.zero;;
+            _explosionParent.SetParent(transform);
+            _explosionParent.transform.localPosition = Vector3.zero;;
             
             _rb.isKinematic = false;
             _rb.useGravity = true;
@@ -352,6 +357,11 @@ namespace ValheimVehicles.SharedScripts
             
             // wait for explosionEffect to be stopped before deactivating
             yield return new WaitUntil(() => _explosionEffect.isStopped);
+            if (_explosionAudioSource.isPlaying)
+            {
+                _explosionAudioSource.Stop();
+            }
+            
             _onDeactivate?.Invoke(this);
         }
 

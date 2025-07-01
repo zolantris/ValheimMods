@@ -37,6 +37,9 @@ namespace ValheimVehicles.SharedScripts
     private const float positionThreshold = 0.01f;
     private const float angleThreshold = 0.01f;
 
+    private const float angleEpsilon = 0.5f; // degrees
+    private const float positionEpsilon = 0.001f; // degrees
+
     public static float RotationInterpolateSpeedMultiplier = 3f;
     public static float MovementInterpolationSpeedMultiplier = 0.2f;
 
@@ -48,6 +51,12 @@ namespace ValheimVehicles.SharedScripts
     public static float UpdateInterval = 0.01f;
     public static bool CanRunSwivelDuringFixedUpdate = true;
     public static bool CanRunSwivelDuringUpdate = true;
+
+    public static bool CanAllClientsSync = true;
+    public static bool ShouldSkipClientOnlyUpdate = true;
+    public static bool ShouldSyncClientOnlyUpdate = false;
+
+    public static float ParentVelocityThreshold = 0.3f;
 
     [Header("Swivel General Settings")]
     [SerializeField] public SwivelMode mode = SwivelMode.Rotate;
@@ -104,13 +113,24 @@ namespace ValheimVehicles.SharedScripts
     public Vector3 _motionToLocalPos;
     public Quaternion _motionFromLocalRot;
     public Quaternion _motionToLocalRot;
+
+    private bool _didMoveDuringUpdate;
+    protected bool _hasArrivedAtDestination = false;
+
+    // authoratative updates
+    protected bool _isAuthoritativeMotionActive;
+    protected float _motionDuration;
+    protected Vector3 _motionFromPosition;
+    protected Quaternion _motionFromRotation;
     internal float _motionLerp; // Always between 0 (AtStart) and 1 (AtTarget)
+    protected double _motionStartTime;
+    protected Vector3 _motionToPosition;
+    protected Quaternion _motionToRotation;
     internal float _nextUpdate;
     private Rigidbody animatedRigidbody;
-    private Rigidbody? parentRigidbody;
-    private bool hasParentRigidbody = false;
     private Vector3 frozenLocalPos;
     private Quaternion frozenLocalRot;
+    private bool hasParentRigidbody;
 
     private Vector3 hingeEndEuler;
     private float hingeLerpProgress;
@@ -119,21 +139,8 @@ namespace ValheimVehicles.SharedScripts
     public Action? onMovementReturned;
     public Action? onRotationReachedTarget;
     public Action? onRotationReturned;
+    private Rigidbody? parentRigidbody;
     private Transform snappoint;
-
-    public static bool CanAllClientsSync = true;
-    public static bool ShouldSkipClientOnlyUpdate = true;
-    public static bool ShouldSyncClientOnlyUpdate = false;
-
-    // authoratative updates
-    protected bool _isAuthoritativeMotionActive;
-    protected double _motionStartTime;
-    protected float _motionDuration;
-    protected Vector3 _motionFromPosition;
-    protected Vector3 _motionToPosition;
-    protected Quaternion _motionFromRotation;
-    protected Quaternion _motionToRotation;
-    protected bool _hasArrivedAtDestination = false;
 
     public HingeAxis HingeAxes => hingeAxes;
     public Vector3 MaxEuler => maxRotationEuler;
@@ -166,6 +173,53 @@ namespace ValheimVehicles.SharedScripts
       {
         Instances.Add(this);
       }
+    }
+
+    public virtual void Start()
+    {
+      GuardSwivelValues();
+      SetInterpolationSpeed(interpolationSpeed);
+    }
+
+    public virtual void Update()
+    {
+      if (CanRunSwivelDuringUpdate)
+      {
+        SwivelUpdate();
+      }
+    }
+
+    public virtual void FixedUpdate()
+    {
+      if (CanRunSwivelDuringFixedUpdate)
+      {
+        SwivelUpdate();
+      }
+    }
+
+    protected virtual void OnDestroy()
+    {
+      Instances.Remove(this);
+    }
+
+    public virtual void OnTransformParentChanged()
+    {
+      if (transform.root != transform)
+      {
+        parentRigidbody = transform.GetComponentInParent<Rigidbody>();
+        hasParentRigidbody = parentRigidbody != null;
+      }
+      else
+      {
+        parentRigidbody = null;
+        hasParentRigidbody = false;
+      }
+
+      var localPos = Vector3.zero;
+      var localRot = Quaternion.identity;
+      SetLocalStartValues(localPos, localRot);
+
+      GuardSwivelValues();
     }
 
     public void SetLocalStartValues(Vector3 pos, Quaternion rot)
@@ -213,53 +267,6 @@ namespace ValheimVehicles.SharedScripts
       }
     }
 
-    public virtual void Start()
-    {
-      GuardSwivelValues();
-      SetInterpolationSpeed(interpolationSpeed);
-    }
-
-    public virtual void OnTransformParentChanged()
-    {
-      if (transform.root != transform)
-      {
-        parentRigidbody = transform.GetComponentInParent<Rigidbody>();
-        hasParentRigidbody = parentRigidbody != null;
-      }
-      else
-      {
-        parentRigidbody = null;
-        hasParentRigidbody = false;
-      }
-
-      var localPos = Vector3.zero;
-      var localRot = Quaternion.identity;
-      SetLocalStartValues(localPos, localRot);
-
-      GuardSwivelValues();
-    }
-
-    public virtual void Update()
-    {
-      if (CanRunSwivelDuringUpdate)
-      {
-        SwivelUpdate();
-      }
-    }
-
-    public virtual void FixedUpdate()
-    {
-      if (CanRunSwivelDuringFixedUpdate)
-      {
-        SwivelUpdate();
-      }
-    }
-
-    protected virtual void OnDestroy()
-    {
-      Instances.Remove(this);
-    }
-
     public virtual void Request_NextMotionState() {}
 
     protected virtual Vector3 GetCurrentTargetPosition()
@@ -275,8 +282,6 @@ namespace ValheimVehicles.SharedScripts
         ? CalculateRotationTarget(1)
         : Quaternion.identity;
     }
-
-    public static float ParentVelocityThreshold = 0.3f;
 
     /// <summary>
     /// - allow other checks to run if calling on the same frame.
@@ -405,9 +410,6 @@ namespace ValheimVehicles.SharedScripts
       return Mathf.Clamp01((float)((now - _motionStartTime) / _motionDuration));
     }
 
-    private const float angleEpsilon = 0.5f; // degrees
-    private const float positionEpsilon = 0.001f; // degrees
-
     /// <summary>
     /// Setting Transforms per update causes conflicts with children calls for Move. This will only update for a single frame to avoid nested rigidbody conflicts.
     /// </summary>
@@ -492,8 +494,6 @@ namespace ValheimVehicles.SharedScripts
       _didMoveDuringUpdate = true;
     }
 
-    private bool _didMoveDuringUpdate = false;
-
     public virtual void SwivelUpdate()
     {
       if (!animatedRigidbody || !animatedTransform.parent || !piecesContainer) return;
@@ -563,7 +563,7 @@ namespace ValheimVehicles.SharedScripts
       if (!nearestTarget || !piecesContainer) return animatedTransform.localRotation;
       var toTarget = nearestTarget.transform.position - piecesContainer.position;
       if (toTarget.magnitude is < 5f or > 50f) return animatedTransform.localRotation;
-      var flat = new Vector3(toTarget.x, 0f, toTarget.z);
+      var flat = new Vector3(toTarget.x, toTarget.y, toTarget.z);
       if (flat.sqrMagnitude < 0.001f) return animatedTransform.localRotation;
       return Quaternion.LookRotation(flat.normalized, Vector3.up);
     }
@@ -727,7 +727,7 @@ namespace ValheimVehicles.SharedScripts
       UpdatePowerConsumer();
     }
 
-  #region ISwivelConfig
+    #region ISwivelConfig
 
     public float InterpolationSpeed
     {
@@ -777,7 +777,7 @@ namespace ValheimVehicles.SharedScripts
       set => SetMode(value);
     }
 
-  #endregion
+    #endregion
 
   }
 }
