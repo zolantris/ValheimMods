@@ -349,7 +349,7 @@ Transform:
   m_GameObject: {fileID: 114459188}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0.7071068, z: 0, w: 0.7071068}
-  m_LocalPosition: {x: 0.113618955, y: 0.11894212, z: 0.18111667}
+  m_LocalPosition: {x: -12.761378, y: 0.11894212, z: 25.306118}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -947,6 +947,14 @@ PrefabInstance:
     - target: {fileID: 822766217289054655, guid: 5265c63b2a83c0647a34b75b6d3c62f3, type: 3}
       propertyPath: fireClipPitch
       value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 822766217289054655, guid: 5265c63b2a83c0647a34b75b6d3c62f3, type: 3}
+      propertyPath: maxFiringPitch
+      value: 25
+      objectReference: {fileID: 0}
+    - target: {fileID: 822766217289054655, guid: 5265c63b2a83c0647a34b75b6d3c62f3, type: 3}
+      propertyPath: minFiringPitch
+      value: 10
       objectReference: {fileID: 0}
     - target: {fileID: 822766217289054655, guid: 5265c63b2a83c0647a34b75b6d3c62f3, type: 3}
       propertyPath: cannonballSpeed
@@ -2280,7 +2288,7 @@ Transform:
   m_GameObject: {fileID: 1976009800}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 1, z: 0, w: 0}
-  m_LocalPosition: {x: 19.849998, y: 7.82, z: -30.9}
+  m_LocalPosition: {x: 2.3499985, y: 3, z: -4.5249996}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -4073,6 +4081,8 @@ MonoBehaviour:
   firingCoordinates: {x: 0, y: 0, z: 0}
   maxFiringRange: 150
   maxFiringRotationY: 30
+  maxFiringPitch: 30
+  minFiringPitch: 15
   canRotateFiringRangeY: 1
 --- !u!82 &7450253620161579911
 AudioSource:

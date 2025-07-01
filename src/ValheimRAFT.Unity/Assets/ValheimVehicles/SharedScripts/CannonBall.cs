@@ -7,6 +7,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Random = UnityEngine.Random;
 
 #endregion
 
@@ -17,6 +18,12 @@ namespace ValheimVehicles.SharedScripts
     /// </summary>
     public class Cannonball : MonoBehaviour
     {
+
+        public enum CannonballType
+        {
+            Solid,
+            Explosive,
+        }
 
         public enum HitMaterial
         {
@@ -38,7 +45,16 @@ namespace ValheimVehicles.SharedScripts
         /// Gets the prefab root. This should be overridable.
         /// </summary>
         /// <returns></returns>
-        public static Func<Transform, Transform> GetPrefabRoot = transform => transform.root;
+        public static Func<Transform, Transform> GetPrefabRoot = localTransform => localTransform.root;
+
+        public static Action<DamageInfo> ApplyDamage = damageInfo =>
+        {
+            LoggerProvider.LogWarning("Cannonball damage not implemented!");
+        };
+
+        [Header("Cannonball properties")]
+        [Tooltip("Type of cannonball")]
+        [SerializeField] public CannonballType cannonballType = CannonballType.Solid;
 
         [Header("Explosion Physics")]
         [SerializeField] private float explosionForce = 1200f;
@@ -53,7 +69,11 @@ namespace ValheimVehicles.SharedScripts
         [SerializeField] private AudioClip _explosionSound;
         [SerializeField] public float cannonBallDrag = 0.47f;
 
+        private readonly List<Collider> _ignoredColliders = new();
+
         private readonly Collider[] allocatedColliders = new Collider[100];
+
+        private CoroutineHandle _applyDamageCoroutine;
         private List<Collider> _colliders = new();
         private Vector3 _currentVelocity;
 
@@ -65,8 +85,8 @@ namespace ValheimVehicles.SharedScripts
         private bool _hasExploded;
         private Transform _muzzleFlashPoint;
         private Action<Cannonball> _onDeactivate;
+        private List<DamageInfo> _queuedDamageInfo;
         private Rigidbody _rb;
-        private List<DamageInfo> CollisionToHit;
 
         public List<Collider> Colliders => GetColliders();
 
@@ -78,6 +98,7 @@ namespace ValheimVehicles.SharedScripts
 
         private void Awake()
         {
+            _applyDamageCoroutine = new CoroutineHandle(this);
             _rb = GetComponent<Rigidbody>();
             _rb.drag = cannonBallDrag;
             _rb.angularDrag = cannonBallDrag;
@@ -167,15 +188,15 @@ namespace ValheimVehicles.SharedScripts
         /// Todo might not need this. Additionally this would need to be handled on a singleton layer to be optimized/iterated off of to apply damages.
         /// </summary>
         /// <param name="collider"></param>
-        private void AddDamageToQueue(Collider collider)
+        private void AddDamageToQueue(Collider collider, float force)
         {
             var damageInfo = new DamageInfo
             {
                 collider = collider,
-                velocity = _currentVelocity,
-                damage = 10f
+                force = force,
+                damage = Mathf.Clamp(10f * force, 10f, 60f),
             };
-            CollisionToHit.Add(damageInfo);
+            _queuedDamageInfo.Add(damageInfo);
         }
 
         /// <summary>
@@ -201,7 +222,10 @@ namespace ValheimVehicles.SharedScripts
                     {
                         var rb = col.attachedRigidbody;
                         if (rb != null)
+                        {
                             rb.AddExplosionForce(force, explosionOrigin, explosionRadius);
+                        }
+                        AddDamageToQueue(hitInfo.collider, force);;
                     }
                 }
             }
@@ -231,6 +255,40 @@ namespace ValheimVehicles.SharedScripts
             _onDeactivate?.Invoke(this);
         }
 
+        private void RestoreCollisionsForTempIgnoredColliders()
+        {
+            foreach (var localCollider in Colliders)
+            {
+                if (localCollider == null) continue;
+                foreach (var ignoredCollider in _ignoredColliders)
+                {
+                    if (ignoredCollider == null) continue;
+                    Physics.IgnoreCollision(localCollider, ignoredCollider, false);
+                }
+            }
+        }
+
+        private void AddColliderToIgnoreList(Collider otherCollider)
+        {
+            _ignoredColliders.Add(otherCollider);
+            foreach (var localCollider in Colliders)
+            {
+                if (localCollider == null) continue;
+                Physics.IgnoreCollision(localCollider, otherCollider, true);
+            }
+        }
+
+        public IEnumerator ScheduleDamageCoroutine()
+        {
+            yield return new WaitForFixedUpdate();
+            foreach (var damageInfo in _queuedDamageInfo)
+            {
+                if (damageInfo.collider == null) continue;
+                ApplyDamage?.Invoke(damageInfo);
+            }
+            _queuedDamageInfo.Clear();
+        }
+
         /// <summary>
         /// Handles penetration of cannonball. Uses some randomization to determine if the structure is penetrated.
         /// </summary>
@@ -245,13 +303,16 @@ namespace ValheimVehicles.SharedScripts
             var hitMaterialVelocityMultiplier = GetHitMaterialVelocityMultiplier(hitMaterial);
             var nextZVelocity = currentVelocity.z * hitMaterialVelocityMultiplier;
             
-            // nullify velocity on terrain hits. The ground should soak all impact.
+            // makes penetration through a collider random.
+            var canPenetrate = Random.value > 0.7f;
    
-            if (nextZVelocity >= 40f)
+            if (nextZVelocity >= 40f && canPenetrate)
             {
                 projectileHitType = ProjectileHitType.Penetration;
+                AddColliderToIgnoreList(other.collider);
+                AddDamageToQueue(other.collider, relativeVelocityZ);;
             }
-            else if (nextZVelocity < 40f && !_hasExploded)
+            else if (!_hasExploded)
             {
                 projectileHitType = ProjectileHitType.Explosion;
                 GetCollisionsFromExplosion(transform.position, relativeVelocityZ);
@@ -262,6 +323,13 @@ namespace ValheimVehicles.SharedScripts
             else
             {
                 projectileHitType = ProjectileHitType.None;
+            }
+
+            // schedule the damage task.
+            // TODO migrate to a singleton scheduler
+            if (!_applyDamageCoroutine.IsRunning && (projectileHitType == ProjectileHitType.Explosion || projectileHitType == ProjectileHitType.Penetration))
+            {
+                    _applyDamageCoroutine.Start(ScheduleDamageCoroutine()); 
             }
             
             var newVelocity = new Vector3(currentVelocity.x, currentVelocity.y, nextZVelocity);
@@ -327,6 +395,7 @@ namespace ValheimVehicles.SharedScripts
                 LoggerProvider.LogWarning("Cannonball has no rigidbody!");
                 return;
             }
+            
             // Enable all colliders (just in case)
             foreach (var col in _colliders) col.enabled = true;
 
@@ -376,10 +445,14 @@ namespace ValheimVehicles.SharedScripts
                 return;
             }
             
+            RestoreCollisionsForTempIgnoredColliders();
+            
+            _applyDamageCoroutine.Stop();
+            
             IsInFlight = false;
             _rb.velocity = Vector3.zero;
             _rb.angularVelocity = Vector3.zero;
-            // transform.position = Vector3.one * 9999;
+            
             // Disable all colliders
             foreach (var col in _colliders) col.enabled = false;
 
@@ -399,7 +472,7 @@ namespace ValheimVehicles.SharedScripts
         public struct DamageInfo
         {
             public Collider collider;
-            public Vector3 velocity;
+            public float force;
             public float damage;
         }
     }
