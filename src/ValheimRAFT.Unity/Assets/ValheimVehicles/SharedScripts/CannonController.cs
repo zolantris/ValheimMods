@@ -31,7 +31,7 @@ namespace ValheimVehicles.SharedScripts
         [Tooltip("Where muzzle flash and effects are triggered.")]
         [SerializeField] private Transform muzzleFlashPoint;
         [Tooltip("Transform to use for fire direction (usually barrel/shooter).")]
-        [SerializeField] private Transform shooterTransform;
+        [SerializeField] private Transform cannonShooterTransform;
         [SerializeField] private Transform cannonScalarTransform;
         [Tooltip("Speed (m/s) for cannonball launch.")]
         [SerializeField] private float cannonballSpeed = 90f; // 90m/s is standard.
@@ -58,23 +58,20 @@ namespace ValheimVehicles.SharedScripts
         [SerializeField] public float fireClipPitch = 1f;
         [SerializeField] public float reloadClipPitch = 0.75f;
 
+        [Header("Cannon Animations")]
+        [Tooltip("Speed at which the cannon aims to adjust to target position.")]
+        [SerializeField] public float aimingSpeed = 5f;
+
         [Header("Pooling")]
         [Tooltip("Minimum cannonballs kept in pool (typically 1 per cannon).")]
         [SerializeField] private int minPoolSize = 1;
-
-        // --- Cannon Recoil Fields ---
-        [Header("Cannon Recoil")]
-        [Tooltip("Speed the muzzle returns after firing.")]
-        [SerializeField] private float recoilReturnSpeed = 6f;
-        [Tooltip("Speed the muzzle returns after reload tilt up.")]
-        [SerializeField] private float reloadReturnSpeed = 3f;
         [SerializeField] public Transform cannonAudioSourceTransform;
         [SerializeField] public Transform muzzleFlashEffectTransform;
 
 
         [SerializeField] public bool hasLoaded = true;
 
-        [Header("Cannon Targetting")]
+        [Header("Cannon Targeting")]
         [Tooltip("Target To fire upon. Will aim for the position center.")]
         [SerializeField] public Transform firingTarget;
         [Tooltip("Generic firing coordinates")]
@@ -89,8 +86,6 @@ namespace ValheimVehicles.SharedScripts
         private Coroutine _cleanupCoroutine;
 
         private Collider[] _colliders;
-
-        private float _currentReturnSpeed = 5f;
         private Quaternion _defaultShooterLocalRotation;
         private Cannonball _loadedCannonball;
         private Quaternion _recoilRotation;
@@ -112,13 +107,12 @@ namespace ValheimVehicles.SharedScripts
 
             _audioSource = cannonAudioSourceTransform.GetComponent<AudioSource>();
             
-            if (shooterTransform != null)
+            if (cannonShooterTransform != null)
             {
-                _defaultShooterLocalRotation = shooterTransform.localRotation;
+                _defaultShooterLocalRotation = cannonShooterTransform.localRotation;
                 _recoilRotation = Quaternion.Euler(-2f, 0f, 0f) * _defaultShooterLocalRotation;
                 _reloadRotation = Quaternion.Euler(10f, 0f, 0f) * _defaultShooterLocalRotation;
                 _targetShooterLocalRotation = _defaultShooterLocalRotation;
-                _currentReturnSpeed = recoilReturnSpeed;
             }
             
             
@@ -204,8 +198,8 @@ namespace ValheimVehicles.SharedScripts
                 muzzleFlashEffect = muzzleFlashEffectTransform.GetComponent<ParticleSystem>();
             }
             
-            if (shooterTransform == null)
-                shooterTransform = transform.Find("scalar/cannon_shooter");
+            if (cannonShooterTransform == null)
+                cannonShooterTransform = transform.Find("scalar/cannon_shooter");
             if (projectileLoader == null)
                 projectileLoader = transform.Find("scalar/cannon_shooter/shooting_part/points/projectile_loader");
 
@@ -320,10 +314,19 @@ namespace ValheimVehicles.SharedScripts
             if (_cannonballPool.Count > 0)
             {
                 var ball = _cannonballPool.Dequeue();
-                ball.gameObject.name = $"cannonball_active_{_cannonballPool.Count}";
-                ball.gameObject.SetActive(true);
-                _trackedLoadedCannonballs.Add(ball);
-                return ball;
+
+                while (ball == null && _cannonballPool.Count > 0)
+                {
+                    ball = _cannonballPool.Dequeue();
+                }
+                
+                if (ball)
+                {
+                    ball.gameObject.name = $"cannonball_active_{_cannonballPool.Count}";
+                    ball.gameObject.SetActive(true);
+                    _trackedLoadedCannonballs.Add(ball);
+                    return ball;
+                }
             }
             var go = Instantiate(CannonballPrefab.gameObject, projectileLoader.position, projectileLoader.rotation, null);
             var localCannonball = go.GetComponent<Cannonball>();
@@ -360,43 +363,101 @@ namespace ValheimVehicles.SharedScripts
             StartCleanupCoroutine();
         }
 
-        public static bool CalculateBallisticAim(
-            Vector3 fireOrigin,
-            Vector3 targetPosition,
-            float launchSpeed,
-            out Vector3 fireDirection,
-            out float angleDegrees)
+        /// <summary>
+/// Numerically finds the firing angle to hit the target, accounting for drag.
+/// </summary>
+public static bool CalculateBallisticAimWithDrag(
+    Vector3 fireOrigin,
+    Vector3 targetPosition,
+    float launchSpeed,
+    float drag,
+    out Vector3 fireDirection,
+    out float angleDegrees,
+    int maxIterations = 100,
+    float tolerance = 0.05f)
+{
+    Vector3 delta = targetPosition - fireOrigin;
+    float xzDist = new Vector2(delta.x, delta.z).magnitude;
+    float y = delta.y;
+
+    // Fail fast if too close
+    if (xzDist < 0.01f)
+    {
+        fireDirection = Vector3.zero;
+        angleDegrees = 0;
+        return false;
+    }
+
+    // Direction in XZ plane
+    Vector3 dirXZ = new Vector3(delta.x, 0, delta.z).normalized;
+
+    // Search for an angle (in radians) that lands within 'tolerance' of the target height
+    float low = 0f;
+    float high = Mathf.PI / 2f;
+    bool found = false;
+    float angle = 0;
+
+    for (int i = 0; i < maxIterations; i++)
+    {
+        angle = (low + high) * 0.5f;
+        float yAtTarget = SimulateProjectileHeightAtXZ(launchSpeed, drag, xzDist, angle);
+
+        float diff = yAtTarget - y;
+
+        if (Mathf.Abs(diff) < tolerance)
         {
-            Vector3 delta = targetPosition - fireOrigin;
-            float g = Mathf.Abs(Physics.gravity.y);
-            float xzDist = new Vector2(delta.x, delta.z).magnitude;
-            float y = delta.y;
-
-            float speed2 = launchSpeed * launchSpeed;
-            float speed4 = speed2 * speed2;
-            float gx = g * xzDist;
-
-            float discriminant = speed4 - g * (g * xzDist * xzDist + 2 * y * speed2);
-            if (discriminant < 0)
-            {
-                // No solution (target out of range)
-                fireDirection = Vector3.zero;
-                angleDegrees = 0;
-                return false;
-            }
-
-            // Use the lower angle for a "flat" shot:
-            float root = Mathf.Sqrt(discriminant);
-            float theta = Mathf.Atan2(speed2 - root, gx);
-            angleDegrees = theta * Mathf.Rad2Deg;
-
-            // Direction in XZ
-            Vector3 dirXZ = new Vector3(delta.x, 0, delta.z).normalized;
-            // Compose full 3D direction:
-            fireDirection = Quaternion.AngleAxis(angleDegrees, Vector3.Cross(Vector3.up, dirXZ)) * dirXZ;
-
-            return true;
+            found = true;
+            break;
         }
+
+        if (diff > 0)
+            high = angle; // Too high
+        else
+            low = angle; // Too low
+    }
+
+    if (!found)
+    {
+        fireDirection = Vector3.zero;
+        angleDegrees = 0;
+        return false;
+    }
+
+    // Build the firing direction
+    fireDirection = Quaternion.AngleAxis(Mathf.Rad2Deg * angle, Vector3.Cross(Vector3.up, dirXZ)) * dirXZ;
+    angleDegrees = angle * Mathf.Rad2Deg;
+    return true;
+}
+
+        /// <summary>
+/// Simulates the Y (vertical) position after traveling horizontalDistance at a given launch angle, speed, and drag.
+/// </summary>
+private static float SimulateProjectileHeightAtXZ(
+    float speed, float drag, float horizontalDistance, float angle)
+{
+    // Simulate flight in XZ plane only
+    float dt = 0.01f; // Smaller for more accuracy!
+    float vx = speed * Mathf.Cos(angle);
+    float vy = speed * Mathf.Sin(angle);
+
+    float x = 0;
+    float y = 0;
+
+    while (x < horizontalDistance && y > -500 && x < 10000)
+    {
+        // Apply drag to velocity (Unity's model)
+        vx *= Mathf.Exp(-drag * dt);
+        vy = (vy + Physics.gravity.y * dt) * Mathf.Exp(-drag * dt);
+
+        x += vx * dt;
+        y += vy * dt;
+
+        // Early out if we've dropped far below the target
+        if (y < -50) break;
+    }
+
+    return y;
+}
 
         public void AdjustFiringAngle()
         {
@@ -405,7 +466,7 @@ namespace ValheimVehicles.SharedScripts
             var fireOrigin = projectileLoader.position;
             var targetPosition = GetFiringTargetPosition();
             
-            if (targetPosition.HasValue && CalculateBallisticAim(fireOrigin, targetPosition.Value, cannonballSpeed, out var fireDir, out var angle))
+            if (targetPosition.HasValue && CalculateBallisticAimWithDrag(fireOrigin, targetPosition.Value, cannonballSpeed, CannonballPrefab.cannonBallDrag, out var fireDir, out var angle))
             {
                 // negative angle as this angle must be facing the direction.
                 _targetShooterLocalRotation = Quaternion.Euler(-angle,0f, 0f);
@@ -414,28 +475,22 @@ namespace ValheimVehicles.SharedScripts
             {
                 _targetShooterLocalRotation = Quaternion.identity;
             }
-            shooterTransform.localRotation = Quaternion.Lerp(shooterTransform.localRotation, _targetShooterLocalRotation, Time.fixedDeltaTime);;
+            cannonShooterTransform.localRotation = Quaternion.Lerp(cannonShooterTransform.localRotation, _targetShooterLocalRotation, Time.fixedDeltaTime * aimingSpeed);
         }
 
         public bool Fire()
         {
             if (IsReloading || _loadedCannonball == null || CurrentAmmo <= 0) return false;
-
-            if (shooterTransform != null)
-            {
-                shooterTransform.localRotation = _recoilRotation;
-                _targetShooterLocalRotation = _defaultShooterLocalRotation;
-                _currentReturnSpeed = recoilReturnSpeed;
-            }
-            var projectileLoaderPosition = projectileLoader.position;
-            _loadedCannonball.transform.position = projectileLoaderPosition;
-
-            var fireDirection = shooterTransform.forward;
             
             IgnoreLocalColliders(_loadedCannonball);
-
+            _loadedCannonball.transform.position = projectileLoader.position;
+#if UNITY_EDITOR
+            Debug.DrawRay(projectileLoader.position, cannonShooterTransform.forward * 150f, Color.green, 20.0f);
+#endif
+    
+            
             _loadedCannonball.Fire(
-                fireDirection * cannonballSpeed,
+                cannonShooterTransform.forward * cannonballSpeed,
                 muzzleFlashPoint.position,
                 ReturnCannonballToPool);
             
@@ -476,21 +531,23 @@ namespace ValheimVehicles.SharedScripts
                 var t = Mathf.Clamp01(elapsed /2f / 0.15f ); // 0..1
                 elapsed += Time.deltaTime;
                 
-                if (elapsed > 0.1f)
+                // move towards recoil.
+                if (elapsed < 0.1f)
                 {
-                    if (shooterTransform != null)
+                    cannonScalarTransform.localPosition = Vector3.Lerp(Vector3.zero, Vector3.forward * -0.1f, t);
+                    if (cannonShooterTransform != null)
                     {
-                        shooterTransform.localRotation = Quaternion.Lerp(_recoilRotation, Quaternion.identity, Mathf.Clamp01(t));
+                        cannonShooterTransform.localRotation = Quaternion.Lerp(_targetShooterLocalRotation, _recoilRotation, Mathf.Clamp01(t));
                     }
-                    cannonScalarTransform.localPosition = Vector3.Lerp(Vector3.forward * -0.1f,Vector3.zero, t);
                 }
                 else
                 {
-                    cannonScalarTransform.localPosition = Vector3.Lerp(Vector3.zero, Vector3.forward * -0.1f, t);
-                    if (shooterTransform != null)
+                    // move back to target position. (and then will reload afterwards) 
+                    if (cannonShooterTransform != null)
                     {
-                        shooterTransform.localRotation = Quaternion.Lerp(Quaternion.identity, _recoilRotation, Mathf.Clamp01(t));
+                        cannonShooterTransform.localRotation = Quaternion.Lerp(_targetShooterLocalRotation * _recoilRotation, _targetShooterLocalRotation, Mathf.Clamp01(t));
                     }
+                    cannonScalarTransform.localPosition = Vector3.Lerp(Vector3.forward * -0.1f,Vector3.zero, t);
                 }
                 yield return null;
             }
@@ -509,28 +566,21 @@ namespace ValheimVehicles.SharedScripts
         {
             // yield return new WaitUntil(() => _audioSource.isPlaying == false);
             IsReloading = true;
-            
-            // Capture the start rotation, but typically you want to start at recoil
-            var startRotation = _recoilRotation;
-            var endRotation = _reloadRotation;
             var elapsed = 0f;
+
+            var startRotation = _targetShooterLocalRotation;
+            var endRotation = Quaternion.Euler(_targetShooterLocalRotation.x + _recoilRotation.x, 0, 0);
 
             var safeReloadTime = Mathf.Clamp(reloadTime, 0.1f, 5f);
             while (elapsed < reloadTime)
             {
                 var t = Mathf.Clamp01(elapsed * 2f / safeReloadTime); // 0..1
                 elapsed += Time.deltaTime;
-                if (shooterTransform != null)
+                if (cannonShooterTransform != null)
                 {
-                    shooterTransform.localRotation = Quaternion.Lerp(_targetShooterLocalRotation, endRotation, Mathf.Clamp01(t));
+                    cannonShooterTransform.localRotation = Quaternion.Lerp(startRotation, endRotation, Mathf.Clamp01(t));
                 }
                 yield return null; // Wait one frame
-            }
-            
-            if (shooterTransform != null)
-            {
-                shooterTransform.localRotation = _reloadRotation;
-                _currentReturnSpeed = reloadReturnSpeed;
             }
             
             // must wait for reload, then continue with audio. reload must be a higher number otherwise it will conflict with firing audio.

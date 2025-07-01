@@ -51,6 +51,7 @@ namespace ValheimVehicles.SharedScripts
         [SerializeField] private bool debugDrawTrajectory;
         [SerializeField] private ParticleSystem _explosionEffect;
         [SerializeField] private AudioClip _explosionSound;
+        [SerializeField] public float cannonBallDrag = 0.47f;
 
         private readonly Collider[] allocatedColliders = new Collider[100];
         private List<Collider> _colliders = new();
@@ -78,6 +79,8 @@ namespace ValheimVehicles.SharedScripts
         private void Awake()
         {
             _rb = GetComponent<Rigidbody>();
+            _rb.drag = cannonBallDrag;
+            _rb.angularDrag = cannonBallDrag;
             _colliders = GetColliders();
             _explosionParent = transform.Find("explosion");
             _explosionAudioSource = _explosionParent.GetComponent<AudioSource>();
@@ -329,10 +332,10 @@ namespace ValheimVehicles.SharedScripts
 
             _hasExploded = false;
             
-            // fix explosion effect position.
+            // fix explosion effect position.   
             _explosionParent.SetParent(transform);
             _explosionParent.transform.localPosition = Vector3.zero;;
-            
+
             _rb.isKinematic = false;
             _rb.useGravity = true;
             // _rb.useGravity = !useCustomGravity;
