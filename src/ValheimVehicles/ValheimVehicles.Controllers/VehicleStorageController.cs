@@ -468,6 +468,12 @@
             instantiatedSwivelPieces.Add(vehicleDataPiece.PersistentId.Value, swivel);
           }
 
+          var netView = piecePrefabInstance.GetComponent<ZNetView>();
+          if (netView != null)
+          {
+            netView.ClaimOwnership();
+          }
+
           // all custom checks done here.
           InitPieceCustomData(vehicleDataPiece, piecePrefabInstance);
 
