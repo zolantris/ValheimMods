@@ -68,7 +68,7 @@ public class CannonPrefabs : RegisterPrefab<CannonPrefabs>
       return;
     }
 
-
+    PrefabRegistryHelpers.HoistSnapPointsToPrefab(prefab);
     var cannonBall = prefab.AddComponent<Cannonball>();
     cannonBall.cannonballType = Cannonball.CannonballType.Solid;
 
@@ -203,6 +203,12 @@ public class CannonPrefabs : RegisterPrefab<CannonPrefabs>
   {
     var asset = LoadValheimVehicleAssets._bundle.LoadAsset<GameObject>("powder_barrel");
     var sprite = LoadValheimVehicleAssets.VehicleSprites.GetSprite("powder_barrel");
+
+    if (!asset)
+    {
+      LoggerProvider.LogError("powder_barrel not found!");
+      return;
+    }
 
     var prefab = PrefabManager.Instance.CreateClonedPrefab(
       PrefabNames.PowderBarrel,

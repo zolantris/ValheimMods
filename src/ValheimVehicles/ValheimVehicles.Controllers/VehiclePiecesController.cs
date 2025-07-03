@@ -376,6 +376,7 @@
 
       targetController = gameObject.AddComponent<TargetController>();
       targetController.targetingMode = TargetController.TargetingMode.DefendPlayer;
+      targetController.autoFire = true;
 
       base.Awake();
 
@@ -418,6 +419,7 @@
       m_localRigidbody = _piecesContainerTransform.GetComponent<Rigidbody>();
       InitializationTimer.Start();
     }
+
 
     public void Start()
     {
@@ -569,6 +571,7 @@
             cannonController.maxAmmo = 50;
             cannonController.CurrentAmmo = 50;
             targetController.AddCannon(cannonController);
+            break;
           case SwivelComponentBridge swivelController:
             InitSwivelController(swivelController);
             break;
