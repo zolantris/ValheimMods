@@ -21,6 +21,8 @@ namespace ValheimVehicles.SharedScripts
     [SerializeField] private float destroyDeactivationDelayTimeInMs;
     [Tooltip("Hides the barrel mesh when the explosion hits the destroy deactivation timer.")]
     [SerializeField] public bool shouldHideBarrelMeshOnExplode = true;
+    [SerializeField] public bool CanDestroyOnExplode = true;
+    [SerializeField] public bool CanExplodeMultipleTimes;
     private readonly Collider[] allocatedColliders = new Collider[100];
     private CoroutineHandle _aoeRoutine;
 
@@ -46,7 +48,10 @@ namespace ValheimVehicles.SharedScripts
     {
       onExplosionComplete = () =>
       {
-        Destroy(gameObject);
+        if (CanDestroyOnExplode)
+        {
+          Destroy(gameObject);
+        }
       };
       
       _explosionRoutine = new CoroutineHandle(this);
@@ -132,7 +137,7 @@ namespace ValheimVehicles.SharedScripts
       {
         yield return new WaitUntil(() => timer.ElapsedMilliseconds > destroyDeactivationDelayTimeInMs);
       }
-      if (shouldHideBarrelMeshOnExplode)
+      if (shouldHideBarrelMeshOnExplode && !CanExplodeMultipleTimes)
       {
         meshesTransform.gameObject.SetActive(false);
       }

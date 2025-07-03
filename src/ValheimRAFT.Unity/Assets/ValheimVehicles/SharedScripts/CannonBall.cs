@@ -259,6 +259,7 @@ namespace ValheimVehicles.SharedScripts
             foreach (var localCollider in Colliders)
             foreach (var (thisCollider, otherCollider) in _ignoredColliders)
             {
+                if (thisCollider == null || otherCollider == null) continue;
                 if (localCollider != null)
                 {
                     Physics.IgnoreCollision(localCollider, thisCollider, false);

@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 2355675511
+CRC: 2248064053
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: c06fd041ef3dde1c5388666cf24a8e17
+    Hash: 24218da2dbf74df0b1706a3c0594b57d
   TypeTreeHash:
     serializedVersion: 2
-    Hash: 2829a51ee33982bdb5ce5c64787aa447
+    Hash: b6efeb52d2f99df2012dfc5a9fd7694a
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: c06fd041ef3dde1c5388666cf24a8e17
+    Hash: 24218da2dbf74df0b1706a3c0594b57d
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -36,12 +36,12 @@ ClassTypes:
   Script: {instanceID: 0}
 - Class: 65
   Script: {instanceID: 0}
+- Class: 82
+  Script: {instanceID: 0}
+- Class: 83
+  Script: {instanceID: 0}
 - Class: 108
   Script: {instanceID: 0}
-- Class: 114
-  Script: {fileID: 11500000, guid: 8aa93d7854518e94aaf1cc6faf180375, type: 3}
-- Class: 114
-  Script: {fileID: 11500000, guid: 7d873279a1e81b9419d0f6fb8b3c1fa9, type: 3}
 - Class: 114
   Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
 - Class: 114
@@ -57,7 +57,13 @@ ClassTypes:
 - Class: 114
   Script: {fileID: 11500000, guid: d199490a83bb2b844b9695cbf13b01ef, type: 3}
 - Class: 114
+  Script: {fileID: 11500000, guid: 4228b3fc01674491bbe0ee8aad1479ec, type: 3}
+- Class: 114
   Script: {fileID: 11500000, guid: 9085046f02f69544eb97fd06b6048fe2, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 084a5a6c3f9b85d4ea6a23b128389c38, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 8aa93d7854518e94aaf1cc6faf180375, type: 3}
 - Class: 114
   Script: {fileID: 11500000, guid: 59f8146938fff824cb5fd77236b75775, type: 3}
 - Class: 114
@@ -71,6 +77,8 @@ ClassTypes:
 - Class: 114
   Script: {fileID: 11500000, guid: 2a4db7a114972834c8e4117be1d82ba3, type: 3}
 - Class: 114
+  Script: {fileID: 11500000, guid: 7d873279a1e81b9419d0f6fb8b3c1fa9, type: 3}
+- Class: 114
   Script: {fileID: 11500000, guid: 19bf60ab5c953fe4ba1db2f29c51ad1b, type: 3}
 - Class: 115
   Script: {instanceID: 0}
@@ -79,6 +87,8 @@ ClassTypes:
 - Class: 128
   Script: {instanceID: 0}
 - Class: 134
+  Script: {instanceID: 0}
+- Class: 135
   Script: {instanceID: 0}
 - Class: 136
   Script: {instanceID: 0}
@@ -192,6 +202,7 @@ Assets:
 - Assets/ValheimVehicles/Prefabs/Backups/shared_hull_slab_4x4_new.prefab
 - Assets/ValheimVehicles/Material/iron.mat
 - Assets/ValheimVehicles/Prefabs/shared_hull_rib_corner.prefab
+- Assets/ValheimVehicles/Prefabs/cannon_fixed.prefab
 - Assets/ValheimVehicles/Material/flametal_rustic.mat
 - Assets/ValheimVehicles/Prefabs/shared_rudder_advanced_single.prefab
 - Assets/ValheimVehicles/Prefabs/rudder_basic.prefab
@@ -237,6 +248,7 @@ Assets:
 - Assets/ValheimVehicles/Prefabs/hull_corner_floor_2x8_right_iron.prefab
 - Assets/ValheimVehicles/Prefabs/GUI/edit_sail_panel.prefab
 - Assets/ValheimVehicles/Material/MaskTest_Wall.mat
+- Assets/ValheimVehicles/Prefabs/cannon_ball_bronze.prefab
 - Assets/ValheimVehicles/Prefabs/mechanism_activator_plate.prefab
 - Assets/ValheimVehicles/Material/MaskTest_ObjectThroughWall.mat
 - Assets/ValheimVehicles/Material/iron_metal_custom.mat
@@ -299,14 +311,16 @@ Assets:
 - Assets/ValheimVehicles/Prefabs/hull_slab_wood_4x4.prefab
 - Assets/ValheimVehicles/Prefabs/mast_level_1.prefab
 - Assets/ValheimVehicles/Material/stake.mat
+- Assets/ValheimVehicles/Prefabs/cannon_ball_blackmetal.prefab
 - Assets/ValheimVehicles/Texture/sail_hide_normal.png
-- Assets/ValheimVehicles/Prefabs/anchor_chain_wheel.prefab
 - Assets/ValheimVehicles/Prefabs/ram_blade_top.prefab
 - Assets/ValheimVehicles/Prefabs/shared_hull_slab_iron_4x4_new.prefab
 - Assets/ValheimVehicles/Prefabs/nautilus_bridge.prefab
+- Assets/ValheimVehicles/Prefabs/Barrel.prefab
 - Assets/ValheimVehicles/Prefabs/mast_level_2.prefab
 - Assets/ValheimVehicles/Prefabs/hull_rib_2x2x2_wood.prefab
 - Assets/ValheimVehicles/Prefabs/GUI/edit_texture_panel 1.prefab
+- Assets/ValheimVehicles/Prefabs/anchor_chain_wheel.prefab
 - Assets/ValheimVehicles/Prefabs/hull_wall_wood_4x4.prefab
 - Assets/ValheimVehicles/Prefabs/hull_corner_floor_2x8_right_wood.prefab
 - Assets/ValheimVehicles/Material/wood_alt_piece_bg_rib_8x4.mat

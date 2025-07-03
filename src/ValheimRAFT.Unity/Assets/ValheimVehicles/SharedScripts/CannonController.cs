@@ -18,8 +18,8 @@ namespace ValheimVehicles.SharedScripts
     [Header("Cannonball")]
     [Tooltip("Prefab asset for the cannonball projectile (assign in inspector or dynamically).")]
     // Will be set from asset and cached for instantiation
-    private static Cannonball CannonballSolidPrefab;
-    private static Cannonball CannonballExplosivePrefab;
+    public static Cannonball CannonballSolidPrefab;
+    public static Cannonball CannonballExplosivePrefab;
     private static bool hasRunSetup;
     [Tooltip("Optional: prefab asset for this instance (overrides static for this controller only).")]
     [SerializeField] private GameObject CannonballSolidPrefabAssetLocal;
@@ -99,10 +99,10 @@ namespace ValheimVehicles.SharedScripts
 
     // --- State ---
     private readonly HashSet<Cannonball> _activeCannonballs = new();
-    private readonly List<Cannonball> _trackedLoadedCannonballs = new List<Cannonball>();
+    private readonly List<Cannonball> _trackedLoadedCannonballs = new();
     private AudioSource _audioSource;
     private bool _canFire;
-    private Queue<Cannonball> _cannonballPool = new Queue<Cannonball>();
+    private Queue<Cannonball> _cannonballPool = new();
     private Coroutine _cleanupCoroutine;
 
     private Collider[] _colliders;
@@ -130,10 +130,10 @@ namespace ValheimVehicles.SharedScripts
 
     private void Awake()
     {
-      #if  UNITY_EDITOR
+#if UNITY_EDITOR
       // Must only be run in Unity Editor. We reset static values so it's like first to load for this object.
       CleanupCannonballPrefab();
-      #endif
+#endif
       _colliders = GetComponentsInChildren<Collider>(true);
 
       SetupTransforms();
@@ -172,8 +172,9 @@ namespace ValheimVehicles.SharedScripts
     {
       if (LastBarrelCheckTime == 0 || LastBarrelCheckTime + BarrelCheckInterval < Time.fixedTime)
       {
-         hasNearbyPowderBarrel = PowderBarrel.FindNearbyBarrels(transform.position, barrelSupplyRadius)?.Count > 0;
-         LastBarrelCheckTime = Time.fixedTime;;
+        hasNearbyPowderBarrel = PowderBarrel.FindNearbyBarrels(transform.position, barrelSupplyRadius)?.Count > 0;
+        LastBarrelCheckTime = Time.fixedTime;
+        ;
       }
       // Sync "loaded" (not-in-flight) cannonballs to loader, never parented!
       foreach (var ball in _trackedLoadedCannonballs)
@@ -236,7 +237,7 @@ namespace ValheimVehicles.SharedScripts
 
     private static void CleanupCannonballPrefab()
     {
-      #if UNITY_EDITOR
+#if UNITY_EDITOR
       hasRunSetup = false;
       // Only clean up runtime-created prefabs, never destroy inspector assets
       if (CannonballSolidPrefab != null && Application.isPlaying)
@@ -258,7 +259,7 @@ namespace ValheimVehicles.SharedScripts
         }
         CannonballExplosivePrefab = null;
       }
-      #endif
+#endif
     }
 
     private Cannonball SelectCannonballType()
@@ -267,8 +268,8 @@ namespace ValheimVehicles.SharedScripts
       {
         SetupCannonballPrefab();
       }
-      
-      switch(ammoType)
+
+      switch (ammoType)
       {
         case Cannonball.CannonballType.Solid:
           return CannonballSolidPrefab;
@@ -293,7 +294,7 @@ namespace ValheimVehicles.SharedScripts
           LoggerProvider.LogWarning("No cannonball explosive prefab asset set. Please set one in CannonballExplosivePrefabAsset or CannonballExplosivePrefabAssetLocal.");
         }
       }
-      
+
       if (CannonballSolidPrefab == null)
       {
         if (CannonballSolidPrefabAssetLocal != null)
@@ -311,7 +312,7 @@ namespace ValheimVehicles.SharedScripts
     private void SetupCannonballPrefab()
     {
       hasRunSetup = true;
-      
+
       InitCannonballPrefabAssets();
       var selectedCannonball = SelectCannonballType();
 
@@ -392,7 +393,7 @@ namespace ValheimVehicles.SharedScripts
         LoggerProvider.LogWarning("No cannonball prefab set. Please set one in CannonballSolidPrefab or CannonballExplosivePrefab.");
         return null;
       }
-      
+
       var go = Instantiate(selectedCannonball.gameObject, projectileLoader.position, projectileLoader.rotation, null);
       var localCannonball = go.GetComponent<Cannonball>();
       IgnoreLocalColliders(localCannonball);
@@ -440,9 +441,9 @@ namespace ValheimVehicles.SharedScripts
       int maxIterations = 100,
       float tolerance = 0.05f)
     {
-      Vector3 delta = targetPosition - fireOrigin;
-      float xzDist = new Vector2(delta.x, delta.z).magnitude;
-      float y = delta.y;
+      var delta = targetPosition - fireOrigin;
+      var xzDist = new Vector2(delta.x, delta.z).magnitude;
+      var y = delta.y;
 
       if (xzDist < 0.01f)
       {
@@ -451,20 +452,20 @@ namespace ValheimVehicles.SharedScripts
         return false;
       }
 
-      Vector3 dirXZ = new Vector3(delta.x, 0, delta.z).normalized;
+      var dirXZ = new Vector3(delta.x, 0, delta.z).normalized;
 
       // ALLOW NEGATIVE ANGLES (downward)
-      float low = -Mathf.PI / 4f;         // -45°
-      float high = Mathf.PI / 2f;         // +90°
-      bool found = false;
+      var low = -Mathf.PI / 4f; // -45°
+      var high = Mathf.PI / 2f; // +90°
+      var found = false;
       float angle = 0;
 
-      for (int i = 0; i < maxIterations; i++)
+      for (var i = 0; i < maxIterations; i++)
       {
         angle = (low + high) * 0.5f;
-        float yAtTarget = SimulateProjectileHeightAtXZ(launchSpeed, drag, xzDist, angle);
+        var yAtTarget = SimulateProjectileHeightAtXZ(launchSpeed, drag, xzDist, angle);
 
-        float diff = yAtTarget - y;
+        var diff = yAtTarget - y;
 
         if (Mathf.Abs(diff) < tolerance)
         {
@@ -497,9 +498,9 @@ namespace ValheimVehicles.SharedScripts
       float speed, float drag, float horizontalDistance, float angle)
     {
       // Simulate flight in XZ plane only
-      float dt = 0.01f; // Smaller for more accuracy!
-      float vx = speed * Mathf.Cos(angle);
-      float vy = speed * Mathf.Sin(angle);
+      var dt = 0.01f; // Smaller for more accuracy!
+      var vx = speed * Mathf.Cos(angle);
+      var vy = speed * Mathf.Sin(angle);
 
       float x = 0;
       float y = 0;
@@ -520,25 +521,69 @@ namespace ValheimVehicles.SharedScripts
       return y;
     }
 
+    public bool CanAimAt(Vector3 targetPosition)
+    {
+      // --- YAW CHECK ---
+      var toTargetXZ = targetPosition - cannonScalarTransform.position;
+      toTargetXZ.y = 0f;
+      if (toTargetXZ.sqrMagnitude < 0.01f) return false;
+
+      var currentYaw = cannonScalarTransform.eulerAngles.y;
+      var desiredYaw = Quaternion.LookRotation(toTargetXZ, Vector3.up).eulerAngles.y;
+      var deltaYaw = Mathf.DeltaAngle(currentYaw, desiredYaw);
+      if (Mathf.Abs(deltaYaw) > maxFiringRotationY) return false;
+
+      // --- PITCH CHECK ---
+      var fireOrigin = projectileLoader.position;
+      var delta = targetPosition - fireOrigin;
+      var xzDist = new Vector2(delta.x, delta.z).magnitude;
+      if (xzDist < 0.01f) return false;
+
+      var dirXZ = new Vector3(delta.x, 0, delta.z).normalized;
+      if (!CalculateBallisticAimWithDrag(fireOrigin, targetPosition, cannonballSpeed, CannonballSolidPrefab.cannonBallDrag, out _, out var angle)) return false;
+
+      var pitch = -angle;
+      if (pitch < -maxFiringPitch || pitch > minFiringPitch) return false;
+
+      return true;
+    }
+
+    public void RotateTowardsOrigin()
+    {
+      if (!float.IsNaN(_lastAllowedYaw))
+      {
+        // Stay at last allowed yaw, do not follow out-of-range targets
+        cannonScalarTransform.localRotation = Quaternion.Lerp(cannonScalarTransform.localRotation, Quaternion.identity, Time.fixedDeltaTime);
+      }
+      else
+      {
+        cannonScalarTransform.localRotation = Quaternion.identity;
+      }
+    }
+
     public void AdjustFiringAngle()
     {
       if (IsReloading) return;
 
       var fireOrigin = projectileLoader.position;
       var targetPosition = GetFiringTargetPosition();
-      if (!targetPosition.HasValue) return;
+      if (!targetPosition.HasValue)
+      {
+        RotateTowardsOrigin();
+        return;
+      }
 
       // --- YAW ---
-      Vector3 toTarget = targetPosition.Value - cannonScalarTransform.position;
+      var toTarget = targetPosition.Value - cannonScalarTransform.position;
       toTarget.y = 0f; // flatten to XZ
       if (toTarget.sqrMagnitude < 0.01f) return;
 
-      Quaternion desiredYawWorld = Quaternion.LookRotation(toTarget.normalized, Vector3.up);
-      float currentYaw = cannonScalarTransform.eulerAngles.y;
-      float targetYaw = desiredYawWorld.eulerAngles.y;
-      float deltaYaw = Mathf.DeltaAngle(currentYaw, targetYaw);
+      var desiredYawWorld = Quaternion.LookRotation(toTarget.normalized, Vector3.up);
+      var currentYaw = cannonScalarTransform.eulerAngles.y;
+      var targetYaw = desiredYawWorld.eulerAngles.y;
+      var deltaYaw = Mathf.DeltaAngle(currentYaw, targetYaw);
 
-      bool isWithinYawRange = Mathf.Abs(deltaYaw) <= maxFiringRotationY;
+      var isWithinYawRange = Mathf.Abs(deltaYaw) <= maxFiringRotationY;
 
       // Only update yaw if within bounds
       if (canRotateFiringRangeY && isWithinYawRange)
@@ -546,12 +591,10 @@ namespace ValheimVehicles.SharedScripts
         _lastAllowedYaw = Mathf.LerpAngle(currentYaw, targetYaw, Time.fixedDeltaTime * aimingSpeed);
         cannonScalarTransform.rotation = Quaternion.Euler(0f, _lastAllowedYaw, 0f);
       }
-      else if (!float.IsNaN(_lastAllowedYaw))
+      else
       {
-        // Stay at last allowed yaw, do not follow out-of-range targets
-        cannonScalarTransform.rotation = Quaternion.Euler(0f, _lastAllowedYaw, 0f);
+        RotateTowardsOrigin();
       }
-      // else: if never aimed at a valid target, stay as-is
 
       // --- PITCH (X/Elevation) ---
       if (isWithinYawRange && CalculateBallisticAimWithDrag(fireOrigin, targetPosition.Value, cannonballSpeed, CannonballSolidPrefab.cannonBallDrag, out var fireDir, out var angle))
@@ -576,7 +619,7 @@ namespace ValheimVehicles.SharedScripts
     public bool Fire()
     {
       if (IsReloading || _loadedCannonball == null || CurrentAmmo <= 0 || !hasNearbyPowderBarrel || !_canFire) return false;
-      
+
       var targetPosition = GetFiringTargetPosition();
       if (!targetPosition.HasValue) return false;
       if (Vector3.Distance(targetPosition.Value, projectileLoader.position) > maxFiringRange) return false;
@@ -662,14 +705,14 @@ namespace ValheimVehicles.SharedScripts
 
     private void FindNearbyPowderBarrel()
     {
-      
+
     }
 
     private IEnumerator ReloadCoroutine()
     {
       if (!hasNearbyPowderBarrel)
       {
-        
+
       }
       IsReloading = true;
       var elapsed = 0f;
@@ -700,7 +743,7 @@ namespace ValheimVehicles.SharedScripts
         _audioSource.PlayOneShot(reloadClip);
       }
 
-      for (int i = 0; i < reloadQuantity && CurrentAmmo - i > 0; i++)
+      for (var i = 0; i < reloadQuantity && CurrentAmmo - i > 0; i++)
       {
         if (_loadedCannonball == null)
         {

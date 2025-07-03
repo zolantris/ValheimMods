@@ -60,7 +60,8 @@ using UnityEngine;
         "character_ghost");
 
       public static int CharacterLayer = LayerMask.NameToLayer("character");
-      public static int CharacterLayerMask = LayerMask.GetMask("character");
+      public static int CharacterTriggerLayer = LayerMask.NameToLayer("character_trigger");
+      public static int CharacterLayerMask = LayerMask.GetMask("character", "character_net", "character_trigger");
 
       public static bool IsItemLayer(int layer)
       {
