@@ -37,6 +37,7 @@ namespace ValheimVehicles.SharedScripts
         public enum ProjectileHitType
         {
             Explosion,
+            Bounce,
             Penetration,
             None
         }
@@ -69,7 +70,8 @@ namespace ValheimVehicles.SharedScripts
         [SerializeField] private AudioClip _explosionSound;
         [SerializeField] public float cannonBallDrag = 0.47f;
 
-        private readonly List<Collider> _ignoredColliders = new();
+        private readonly HashSet<(Collider, Collider)> _ignoredColliders = new();
+        private readonly List<DamageInfo> _queuedDamageInfo = new();
 
         private readonly Collider[] allocatedColliders = new Collider[100];
 
@@ -77,16 +79,18 @@ namespace ValheimVehicles.SharedScripts
         private List<Collider> _colliders = new();
         private Vector3 _currentVelocity;
 
-        private Coroutine _despawnCoroutine;
+        private CoroutineHandle _despawnCoroutine;
 
         private AudioSource _explosionAudioSource;
         private Transform _explosionParent;
         private bool _hasExitedMuzzle;
         private bool _hasExploded;
+
+        private Vector3 _lastVelocity;  // the last velocity before unity physics mutates it.
         private Transform _muzzleFlashPoint;
         private Action<Cannonball> _onDeactivate;
-        private List<DamageInfo> _queuedDamageInfo;
         private Rigidbody _rb;
+
 
         public List<Collider> Colliders => GetColliders();
 
@@ -99,6 +103,7 @@ namespace ValheimVehicles.SharedScripts
         private void Awake()
         {
             _applyDamageCoroutine = new CoroutineHandle(this);
+            _despawnCoroutine = new CoroutineHandle(this);
             _rb = GetComponent<Rigidbody>();
             _rb.drag = cannonBallDrag;
             _rb.angularDrag = cannonBallDrag;
@@ -108,18 +113,14 @@ namespace ValheimVehicles.SharedScripts
             _explosionEffect = transform.Find("explosion/explosion_effect").GetComponent<ParticleSystem>();
         }
 
+        private void FixedUpdate()
+        {
+            _lastVelocity = _rb.velocity;
+        }
+
         private void OnCollisionEnter(Collision other)
         {
             OnHitHandleHitType(other, out _);
-        }
-
-        private void StopDespawnRoutine()
-        {
-            if (_despawnCoroutine != null)
-            {
-                StopCoroutine(_despawnCoroutine);
-                _despawnCoroutine = null;
-            }
         }
 
         public HitMaterial GetHitMaterialFromTransformName(Transform materialNameRoot)
@@ -140,10 +141,11 @@ namespace ValheimVehicles.SharedScripts
         /// <returns></returns>
         public HitMaterial GetHitMaterialFromLayer(GameObject obj)
         {
-            var layer = obj.layer;;
+            var layer = obj.layer;
             if (LayerHelpers.TerrainLayer == layer) return HitMaterial.Terrain;
-            if (LayerHelpers.PieceLayer == layer) return HitMaterial.Wood;
-            return HitMaterial.Wood;
+            if (LayerHelpers.DefaultLayer == layer) return HitMaterial.Wood;
+            if (LayerHelpers.DefaultSmallLayer == layer) return HitMaterial.Wood;
+            return HitMaterial.None;
         }
 
         public HitMaterial GetHitMaterial(Collision other)
@@ -169,30 +171,28 @@ namespace ValheimVehicles.SharedScripts
         {
             switch(hitMaterial)
             {
-                case HitMaterial.None:
-                    return 1f;
                 case HitMaterial.Wood:
-                    return .75f;
+                    return 0.75f;
                 case HitMaterial.Metal:
                     return 0.1f;
                 case HitMaterial.Stone:
                     return 0.2f;
                 case HitMaterial.Terrain:
-                    return 0f;
+                    return 1f;
+                case HitMaterial.None:
                 default:
-                    throw new ArgumentOutOfRangeException(nameof(hitMaterial), hitMaterial, null);
+                    return 0.75f;
             }
         }
 
         /// <summary>
         /// Todo might not need this. Additionally this would need to be handled on a singleton layer to be optimized/iterated off of to apply damages.
         /// </summary>
-        /// <param name="collider"></param>
-        private void AddDamageToQueue(Collider collider, float force)
+        private void AddDamageToQueue(Collider otherCollider, float force)
         {
             var damageInfo = new DamageInfo
             {
-                collider = collider,
+                collider = otherCollider,
                 force = force,
                 damage = Mathf.Clamp(10f * force, 10f, 60f),
             };
@@ -202,11 +202,10 @@ namespace ValheimVehicles.SharedScripts
         /// <summary>
         /// Higher speed will generate a larger impact area.
         /// </summary>
-        /// <param name="speed"></param>
         private void GetCollisionsFromExplosion( Vector3 explosionOrigin, float force)
         {
             var count = Physics.OverlapSphereNonAlloc(explosionOrigin, explosionRadius,allocatedColliders, explosionLayerMask);
-         for (var i = 0; i < count; i++ )
+            for (var i = 0; i < count; i++ )
             {
                 var col = allocatedColliders[i];
                 // Closest point on the collider to explosion
@@ -236,7 +235,7 @@ namespace ValheimVehicles.SharedScripts
             if (!isActiveAndEnabled || !_explosionEffect) yield break;
             _explosionParent.SetParent(null);
             
-            var explosionScalar = Vector3.Lerp(Vector3.one * 0.25f, Vector3.one, velocity / 90f);
+            var explosionScalar = Vector3.Lerp(Vector3.one * 0.25f, Vector3.one * 2f, velocity / 90f);
             _explosionEffect.transform.localScale = explosionScalar;
             _explosionEffect.Play();
             _explosionAudioSource.Play();
@@ -251,30 +250,31 @@ namespace ValheimVehicles.SharedScripts
             _explosionParent.SetParent(transform);
             _explosionParent.transform.localPosition = Vector3.zero;;
             
-            StopDespawnRoutine();
+            ResetCannonball();
             _onDeactivate?.Invoke(this);
         }
 
         private void RestoreCollisionsForTempIgnoredColliders()
         {
             foreach (var localCollider in Colliders)
+            foreach (var (thisCollider, otherCollider) in _ignoredColliders)
             {
-                if (localCollider == null) continue;
-                foreach (var ignoredCollider in _ignoredColliders)
+                if (localCollider != null)
                 {
-                    if (ignoredCollider == null) continue;
-                    Physics.IgnoreCollision(localCollider, ignoredCollider, false);
+                    Physics.IgnoreCollision(localCollider, thisCollider, false);
+                    Physics.IgnoreCollision(localCollider, otherCollider, false);
                 }
+                Physics.IgnoreCollision(thisCollider, otherCollider, false);
             }
         }
 
-        private void AddColliderToIgnoreList(Collider otherCollider)
+        private void AddCollidersToIgnoreList(Collision other)
         {
-            _ignoredColliders.Add(otherCollider);
-            foreach (var localCollider in Colliders)
+            for (var index = 0; index < other.contactCount; index++)
             {
-                if (localCollider == null) continue;
-                Physics.IgnoreCollision(localCollider, otherCollider, true);
+                var contactPoint = other.contacts[index];
+                Physics.IgnoreCollision(contactPoint.thisCollider, contactPoint.otherCollider, true);
+                _ignoredColliders.Add((contactPoint.thisCollider, contactPoint.otherCollider));
             }
         }
 
@@ -289,40 +289,108 @@ namespace ValheimVehicles.SharedScripts
             _queuedDamageInfo.Clear();
         }
 
+        private static bool CanPenetrateMaterial(float relativeVelocityMagnitude, HitMaterial hitMaterial)
+        {
+            var randomValue = Random.value;
+            var velocityRandomizer = relativeVelocityMagnitude / 80f - randomValue;
+            var canPenetrate =  velocityRandomizer > 0.25f;
+
+            if (hitMaterial == HitMaterial.Terrain)
+            {
+                canPenetrate = false;
+            }
+
+            return canPenetrate;
+        }
+
+        public static bool TryTriggerBarrelExplosion(Collider otherCollider)
+        {
+            var colliderName = otherCollider.name;
+            if (colliderName != "barrel_explosion_collider") return false;
+            var powderBarrel = otherCollider.GetComponentInParent<PowderBarrel>();
+            if (powderBarrel == null) return false;
+            powderBarrel.StartExplosion();
+            
+            return true;
+        }
+
         /// <summary>
         /// Handles penetration of cannonball. Uses some randomization to determine if the structure is penetrated.
         /// </summary>
         private void OnHitHandleHitType(Collision other, out ProjectileHitType projectileHitType)
         {
             projectileHitType = ProjectileHitType.None;
-            var relativeVelocity = other.relativeVelocity;
-            var relativeVelocityZ = Mathf.Abs(relativeVelocity.z);
-            var currentVelocity = _rb.velocity;
             
+            var relativeVelocity = other.relativeVelocity;
+            var relativeVelocityMagnitude = relativeVelocity.magnitude;
+            var currentVelocity = _rb.velocity;
+
             var hitMaterial = GetHitMaterial(other);
             var hitMaterialVelocityMultiplier = GetHitMaterialVelocityMultiplier(hitMaterial);
-            var nextZVelocity = currentVelocity.z * hitMaterialVelocityMultiplier;
-            
+
             // makes penetration through a collider random.
-            var canPenetrate = Random.value > 0.7f;
-   
-            if (nextZVelocity >= 40f && canPenetrate)
+            var canPenetrate = CanPenetrateMaterial(relativeVelocityMagnitude, hitMaterial);
+            var nextVelocity = _lastVelocity;
+
+            var wasBarrel = TryTriggerBarrelExplosion(other.collider);
+            if (wasBarrel)
             {
-                projectileHitType = ProjectileHitType.Penetration;
-                AddColliderToIgnoreList(other.collider);
-                AddDamageToQueue(other.collider, relativeVelocityZ);;
+                canPenetrate = true;
             }
-            else if (!_hasExploded)
+            
+            if (canPenetrate)
             {
-                projectileHitType = ProjectileHitType.Explosion;
-                GetCollisionsFromExplosion(transform.position, relativeVelocityZ);
-                StartCoroutine(ActivateExplosionEffect(relativeVelocityZ));
-                nextZVelocity = 0f;
-                _hasExploded = true;
+                nextVelocity.z *= hitMaterialVelocityMultiplier;
+                nextVelocity.x *= hitMaterialVelocityMultiplier;
             }
-            else
+
+            // allows bailing on velocity mutation.
+            var canMutateVelocity = true;
+
+            if (cannonballType == CannonballType.Solid)
             {
-                projectileHitType = ProjectileHitType.None;
+                // do nothing.
+                if (hitMaterial == HitMaterial.Terrain)
+                {
+                    return;
+                }
+                
+                if (canPenetrate)
+                {
+                    projectileHitType = ProjectileHitType.Penetration;
+                    AddCollidersToIgnoreList(other);
+                    AddDamageToQueue(other.collider, relativeVelocityMagnitude);
+                }
+
+                if (!canPenetrate)
+                {
+                    if (_lastVelocity.magnitude > 50f)
+                    {
+                        projectileHitType = ProjectileHitType.Bounce;
+                        AddDamageToQueue(other.collider, relativeVelocityMagnitude);
+                    }
+                    else
+                    {
+                        canMutateVelocity = false;
+                    }
+                }
+            }
+
+            if (cannonballType == CannonballType.Explosive)
+            {
+                if (!_hasExploded)
+                {
+                    projectileHitType = ProjectileHitType.Explosion;
+                    GetCollisionsFromExplosion(transform.position, relativeVelocityMagnitude);
+                    StartCoroutine(ActivateExplosionEffect(relativeVelocityMagnitude));
+                    _hasExploded = true;
+                    nextVelocity.x = 0f;
+                    nextVelocity.y = 0f;
+                }
+                else
+                {
+                    canMutateVelocity = false;
+                }
             }
 
             // schedule the damage task.
@@ -331,9 +399,11 @@ namespace ValheimVehicles.SharedScripts
             {
                     _applyDamageCoroutine.Start(ScheduleDamageCoroutine()); 
             }
-            
-            var newVelocity = new Vector3(currentVelocity.x, currentVelocity.y, nextZVelocity);
-            _rb.velocity = newVelocity;
+
+            if (canMutateVelocity)
+            {
+                _rb.velocity = nextVelocity;
+            }
         }
 
         public List<Collider> GetColliders()
@@ -381,11 +451,8 @@ namespace ValheimVehicles.SharedScripts
             _muzzleFlashPoint = muzzleFlash;
             _onDeactivate = null;
             IsInFlight = false;
-            if (_despawnCoroutine != null)
-            {
-                StopCoroutine(_despawnCoroutine);
-                _despawnCoroutine = null;
-            }
+            
+            ResetCannonball();
         }
 
         public void Fire(Vector3 velocity, Vector3 muzzlePoint, Action<Cannonball> onDeactivate)
@@ -420,53 +487,52 @@ namespace ValheimVehicles.SharedScripts
             _muzzleFlashPoint = null;
             _hasExitedMuzzle = false;
             _onDeactivate = onDeactivate;
-            _despawnCoroutine = StartCoroutine(AutoDespawnCoroutine());
+            _despawnCoroutine.Start(AutoDespawnCoroutine());
         }
 
         private IEnumerator AutoDespawnCoroutine()
         {
             yield return new WaitForSeconds(10f);
             
-            // wait for explosionEffect to be stopped before deactivating
             yield return new WaitUntil(() => _explosionEffect.isStopped);
-            if (_explosionAudioSource.isPlaying)
-            {
-                _explosionAudioSource.Stop();
-            }
-            
+            ResetCannonball();
             _onDeactivate?.Invoke(this);
         }
 
         public void ResetCannonball()
         {
-            if (!_rb)
+            if (_explosionAudioSource.isPlaying)
             {
-                LoggerProvider.LogWarning("Cannonball has no rigidbody!");
-                return;
+                _explosionAudioSource.Stop();
+            }
+            
+            if (_queuedDamageInfo.Count > 0)
+            {
+                _queuedDamageInfo.Clear();
             }
             
             RestoreCollisionsForTempIgnoredColliders();
             
             _applyDamageCoroutine.Stop();
-            
+            _despawnCoroutine.Stop();
+            _applyDamageCoroutine.Stop();
+
+            _hasExploded = false;
             IsInFlight = false;
-            _rb.velocity = Vector3.zero;
-            _rb.angularVelocity = Vector3.zero;
+
+            if (_rb)
+            {
+                _rb.velocity = Vector3.zero;
+                _rb.angularVelocity = Vector3.zero;
+                _rb.isKinematic = true;
+                _rb.includeLayers = LayerMask.GetMask();
+                _rb.useGravity = false;
+            }
             
             // Disable all colliders
             foreach (var col in _colliders) col.enabled = false;
 
 
-            _rb.isKinematic = true;
-            _rb.includeLayers = LayerMask.GetMask();
-            _rb.useGravity = false;
-            gameObject.SetActive(false);
-
-            if (_despawnCoroutine != null)
-            {
-                StopCoroutine(_despawnCoroutine);
-                _despawnCoroutine = null;
-            }
         }
 
         public struct DamageInfo

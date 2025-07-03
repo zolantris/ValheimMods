@@ -25,6 +25,8 @@ For other modders and for myself to reference. These sites have many free assets
 - Sounds https://pixabay.com/sound-effects/search/cannon/
 - Materials: https://www.textures.com/browse/pbr-materials/114558
 - Meshes: https://sketchfab.com/features/free-3d-models
+  - Barrel
+    - https://sketchfab.com/3d-models/barrel-ef2024160ce640558614d2d34d1e3c47
 
 ### Icons
 

@@ -6,7 +6,6 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using JetBrains.Annotations;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
@@ -18,12 +17,13 @@ namespace ValheimVehicles.SharedScripts
   {
     [Header("Cannonball")]
     [Tooltip("Prefab asset for the cannonball projectile (assign in inspector or dynamically).")]
-    [CanBeNull] public static GameObject CannonballPrefabAsset;
-
     // Will be set from asset and cached for instantiation
-    private static Cannonball CannonballPrefab;
+    private static Cannonball CannonballSolidPrefab;
+    private static Cannonball CannonballExplosivePrefab;
+    private static bool hasRunSetup;
     [Tooltip("Optional: prefab asset for this instance (overrides static for this controller only).")]
-    [SerializeField] private GameObject CannonballPrefabAssetLocal;
+    [SerializeField] private GameObject CannonballSolidPrefabAssetLocal;
+    [SerializeField] private GameObject CannonballExplosivePrefabAssetLocal;
 
     [Header("Transforms")]
     [Tooltip("Where the cannonball will be loaded and fired from.")]
@@ -47,6 +47,8 @@ namespace ValheimVehicles.SharedScripts
     [SerializeField] private float reloadTime = 5f;
     [Tooltip("Automatically reload when fired?")]
     [SerializeField] private bool autoReload = true;
+    [Tooltip("Ammunition type")]
+    [SerializeField] private Cannonball.CannonballType ammoType = Cannonball.CannonballType.Solid;
 
     [Header("Effects & Sounds")]
     [Tooltip("Particle effect played at muzzle flash.")]
@@ -86,10 +88,20 @@ namespace ValheimVehicles.SharedScripts
     [SerializeField] public float minFiringPitch = 10f;
     [SerializeField] public bool canRotateFiringRangeY = true;
 
+
+    [Header("Barrel Ammo Logic")]
+    [SerializeField] private bool hasNearbyPowderBarrel;
+    [SerializeField] private float barrelSupplyRadius = 5f;
+
+    // barrel check timers
+    public float LastBarrelCheckTime;
+    public float BarrelCheckInterval = 30f;
+
     // --- State ---
     private readonly HashSet<Cannonball> _activeCannonballs = new();
     private readonly List<Cannonball> _trackedLoadedCannonballs = new List<Cannonball>();
     private AudioSource _audioSource;
+    private bool _canFire;
     private Queue<Cannonball> _cannonballPool = new Queue<Cannonball>();
     private Coroutine _cleanupCoroutine;
 
@@ -106,12 +118,25 @@ namespace ValheimVehicles.SharedScripts
     public bool IsReloading { get; private set; }
     public bool IsLoaded => _loadedCannonball != null;
 
+    public Cannonball.CannonballType AmmoType
+    {
+      get => ammoType;
+      set
+      {
+        ammoType = value;
+        SetupCannonballPrefab();
+      }
+    }
+
     private void Awake()
     {
+      #if  UNITY_EDITOR
+      // Must only be run in Unity Editor. We reset static values so it's like first to load for this object.
+      CleanupCannonballPrefab();
+      #endif
       _colliders = GetComponentsInChildren<Collider>(true);
 
       SetupTransforms();
-      CleanupCannonballPrefab();
       SetupCannonballPrefab();
 
       _audioSource = cannonAudioSourceTransform.GetComponent<AudioSource>();
@@ -139,26 +164,17 @@ namespace ValheimVehicles.SharedScripts
 
     internal virtual void Start()
     {
+      SetupCannonballPrefab();
       TryReload();
     }
 
-    // private void Update()
-    // {
-    //     // Smoothly lerp shooter recoil/tilt
-    //     if (shooterTransform != null && shooterTransform.localRotation != _targetShooterLocalRotation)
-    //     {
-    //         shooterTransform.localRotation = Quaternion.Lerp(
-    //             shooterTransform.localRotation,
-    //             _targetShooterLocalRotation,
-    //             Time.deltaTime * _currentReturnSpeed
-    //         );
-    //         if (Quaternion.Angle(shooterTransform.localRotation, _targetShooterLocalRotation) < 0.1f)
-    //             shooterTransform.localRotation = _targetShooterLocalRotation;
-    //     }
-    // }
-
     private void FixedUpdate()
     {
+      if (LastBarrelCheckTime == 0 || LastBarrelCheckTime + BarrelCheckInterval < Time.fixedTime)
+      {
+         hasNearbyPowderBarrel = PowderBarrel.FindNearbyBarrels(transform.position, barrelSupplyRadius)?.Count > 0;
+         LastBarrelCheckTime = Time.fixedTime;;
+      }
       // Sync "loaded" (not-in-flight) cannonballs to loader, never parented!
       foreach (var ball in _trackedLoadedCannonballs)
       {
@@ -220,65 +236,98 @@ namespace ValheimVehicles.SharedScripts
 
     private static void CleanupCannonballPrefab()
     {
+      #if UNITY_EDITOR
+      hasRunSetup = false;
       // Only clean up runtime-created prefabs, never destroy inspector assets
-      if (CannonballPrefab != null && Application.isPlaying)
+      if (CannonballSolidPrefab != null && Application.isPlaying)
       {
-        var go = CannonballPrefab.gameObject;
+        var go = CannonballSolidPrefab.gameObject;
         if (go != null && go.scene.IsValid())
         {
           Destroy(go);
         }
-        CannonballPrefab = null;
+        CannonballSolidPrefab = null;
+      }
+      
+      if (CannonballExplosivePrefab != null && Application.isPlaying)
+      {
+        var go = CannonballExplosivePrefab.gameObject;
+        if (go != null && go.scene.IsValid())
+        {
+          Destroy(go);
+        }
+        CannonballExplosivePrefab = null;
+      }
+      #endif
+    }
+
+    private Cannonball SelectCannonballType()
+    {
+      if (!hasRunSetup)
+      {
+        SetupCannonballPrefab();
+      }
+      
+      switch(ammoType)
+      {
+        case Cannonball.CannonballType.Solid:
+          return CannonballSolidPrefab;
+        case Cannonball.CannonballType.Explosive:
+          return CannonballExplosivePrefab;
+        default:
+          throw new ArgumentOutOfRangeException();
+      }
+    }
+
+    private void InitCannonballPrefabAssets()
+    {
+      if (CannonballExplosivePrefab == null)
+      {
+        if (CannonballExplosivePrefabAssetLocal != null)
+        {
+          var go = Instantiate(CannonballExplosivePrefabAssetLocal);
+          CannonballExplosivePrefab = go.GetComponent<Cannonball>();
+        }
+        else
+        {
+          LoggerProvider.LogWarning("No cannonball explosive prefab asset set. Please set one in CannonballExplosivePrefabAsset or CannonballExplosivePrefabAssetLocal.");
+        }
+      }
+      
+      if (CannonballSolidPrefab == null)
+      {
+        if (CannonballSolidPrefabAssetLocal != null)
+        {
+          var go = Instantiate(CannonballSolidPrefabAssetLocal);
+          CannonballSolidPrefab = go.GetComponent<Cannonball>();
+        }
+        else
+        {
+          LoggerProvider.LogWarning("No cannonball explosive prefab asset set. Please set one in CannonballExplosivePrefabAsset or CannonballExplosivePrefabAssetLocal.");
+        }
       }
     }
 
     private void SetupCannonballPrefab()
     {
-      if (CannonballPrefab != null && CannonballPrefab.gameObject != null)
-        return;
+      hasRunSetup = true;
+      
+      InitCannonballPrefabAssets();
+      var selectedCannonball = SelectCannonballType();
 
-      GameObject sourcePrefab = null;
-      var isLocalPrefab = false;
-
-      // do not mutate the original prefab always create a copy.
-      if (CannonballPrefabAsset != null)
-        sourcePrefab = Instantiate(CannonballPrefabAsset);
-      else if (CannonballPrefabAssetLocal != null)
+      // already setup.
+      if (selectedCannonball != null)
       {
-        sourcePrefab = Instantiate(CannonballPrefabAssetLocal);
-        isLocalPrefab = true;
-      }
-
-      if (sourcePrefab == null)
-      {
-        LoggerProvider.LogWarning("No cannonball prefab asset set. Please set one in CannonballPrefabAsset or CannonballPrefabAssetLocal.");
         return;
       }
 
-      var cannonballComponent = sourcePrefab.GetComponent<Cannonball>();
-      if (cannonballComponent == null)
-      {
-        cannonballComponent = sourcePrefab.AddComponent<Cannonball>();
-      }
+      IgnoreLocalColliders(selectedCannonball);
 
-      IgnoreLocalColliders(cannonballComponent);
-
-      var go = cannonballComponent.gameObject;
-      go.transform.position = Vector3.zero;
-      go.transform.rotation = Quaternion.identity;
-
-
+      var go = selectedCannonball.gameObject;
+      var goTransform = go.transform;
+      goTransform.position = Vector3.zero;
+      goTransform.rotation = Quaternion.identity;
       go.SetActive(false);
-
-
-      // if (cannonballComponent != null && cannonballComponent.Colliders.Length > 0)
-      // {
-      //     foreach (var cannonballComponentCollider in cannonballComponent.Colliders)
-      //     {
-      //         if (cannonballComponentCollider == null) continue;
-      //         cannonballComponentCollider.gameObject.SetActive(false);
-      //     }
-      // }
 
       var rb = go.GetComponent<Rigidbody>();
       if (rb != null)
@@ -286,17 +335,17 @@ namespace ValheimVehicles.SharedScripts
         rb.isKinematic = true;
         rb.useGravity = false;
       }
-
-      CannonballPrefab = cannonballComponent;
     }
 
     private void InitializePool()
     {
       _cannonballPool = new Queue<Cannonball>(minPoolSize);
-      for (int i = 0; i < minPoolSize; i++)
+      var selectedCannonball = SelectCannonballType();
+      if (!selectedCannonball) return;
+      for (var i = 0; i < minPoolSize; i++)
       {
-        var go = Instantiate(CannonballPrefab.gameObject, projectileLoader.position, projectileLoader.rotation, null);
-        go.name = $"cannonball_queue_{i}";
+        var go = Instantiate(selectedCannonball.gameObject, projectileLoader.position, projectileLoader.rotation, null);
+        go.name = $"cannonball_queue_{ammoType}_{i}";
         var obj = go.GetComponent<Cannonball>();
         IgnoreLocalColliders(obj);
         go.SetActive(false);
@@ -331,13 +380,20 @@ namespace ValheimVehicles.SharedScripts
 
         if (ball)
         {
-          ball.gameObject.name = $"cannonball_active_{_cannonballPool.Count}";
+          ball.gameObject.name = $"cannonball_{ammoType}_active_{_cannonballPool.Count}";
           ball.gameObject.SetActive(true);
           _trackedLoadedCannonballs.Add(ball);
           return ball;
         }
       }
-      var go = Instantiate(CannonballPrefab.gameObject, projectileLoader.position, projectileLoader.rotation, null);
+      var selectedCannonball = SelectCannonballType();
+      if (!selectedCannonball)
+      {
+        LoggerProvider.LogWarning("No cannonball prefab set. Please set one in CannonballSolidPrefab or CannonballExplosivePrefab.");
+        return null;
+      }
+      
+      var go = Instantiate(selectedCannonball.gameObject, projectileLoader.position, projectileLoader.rotation, null);
       var localCannonball = go.GetComponent<Cannonball>();
       IgnoreLocalColliders(localCannonball);
 
@@ -362,7 +418,6 @@ namespace ValheimVehicles.SharedScripts
 
     private void ReturnCannonballToPool(Cannonball ball)
     {
-      ball.ResetCannonball();
       _cannonballPool.Enqueue(ball);
       _activeCannonballs.Remove(ball);
       _trackedLoadedCannonballs.Remove(ball);
@@ -499,13 +554,15 @@ namespace ValheimVehicles.SharedScripts
       // else: if never aimed at a valid target, stay as-is
 
       // --- PITCH (X/Elevation) ---
-      if (isWithinYawRange && CalculateBallisticAimWithDrag(fireOrigin, targetPosition.Value, cannonballSpeed, CannonballPrefab.cannonBallDrag, out var fireDir, out var angle))
+      if (isWithinYawRange && CalculateBallisticAimWithDrag(fireOrigin, targetPosition.Value, cannonballSpeed, CannonballSolidPrefab.cannonBallDrag, out var fireDir, out var angle))
       {
         // min pitch aims cannon down. Max pitch which is negative aims the cannon upwards.
         _targetShooterLocalRotation = Quaternion.Euler(Mathf.Clamp(-angle, -maxFiringPitch, minFiringPitch), 0f, 0f);
+        _canFire = true;
       }
       else
       {
+        _canFire = false;
         _targetShooterLocalRotation = Quaternion.identity;
       }
 
@@ -518,7 +575,8 @@ namespace ValheimVehicles.SharedScripts
 
     public bool Fire()
     {
-      if (IsReloading || _loadedCannonball == null || CurrentAmmo <= 0) return false;
+      if (IsReloading || _loadedCannonball == null || CurrentAmmo <= 0 || !hasNearbyPowderBarrel || !_canFire) return false;
+      
       var targetPosition = GetFiringTargetPosition();
       if (!targetPosition.HasValue) return false;
       if (Vector3.Distance(targetPosition.Value, projectileLoader.position) > maxFiringRange) return false;
@@ -526,7 +584,7 @@ namespace ValheimVehicles.SharedScripts
       IgnoreLocalColliders(_loadedCannonball);
       _loadedCannonball.transform.position = projectileLoader.position;
 #if UNITY_EDITOR
-      Debug.DrawRay(projectileLoader.position, cannonShooterTransform.forward * 150f, Color.green, 20.0f);
+      // Debug.DrawRay(projectileLoader.position, cannonShooterTransform.forward * 150f, Color.green, 1f);
 #endif
 
       _loadedCannonball.Fire(
@@ -602,9 +660,17 @@ namespace ValheimVehicles.SharedScripts
       }
     }
 
+    private void FindNearbyPowderBarrel()
+    {
+      
+    }
+
     private IEnumerator ReloadCoroutine()
     {
-      // yield return new WaitUntil(() => _audioSource.isPlaying == false);
+      if (!hasNearbyPowderBarrel)
+      {
+        
+      }
       IsReloading = true;
       var elapsed = 0f;
 

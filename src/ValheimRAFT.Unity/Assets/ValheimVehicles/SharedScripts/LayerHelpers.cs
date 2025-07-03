@@ -1,8 +1,8 @@
 #region
 
-  using System.Collections.Generic;
-  using JetBrains.Annotations;
-  using UnityEngine;
+using System.Collections.Generic;
+using JetBrains.Annotations;
+using UnityEngine;
 
 #endregion
 
@@ -20,12 +20,9 @@
       public static int TerrainLayer = LayerMask.NameToLayer("terrain");
       public static int UILayer = LayerMask.NameToLayer("UI");
       public static int PieceLayer = LayerMask.NameToLayer("piece");
+      public static int DefaultLayer = LayerMask.NameToLayer("Default");
+      public static int DefaultSmallLayer = LayerMask.NameToLayer("Default_small");
       public static int ItemLayer = LayerMask.NameToLayer("item"); // should be 12
-
-      public static bool IsItemLayer(int layer)
-      {
-        return layer == ItemLayer;
-      }
 
       public static LayerMask CustomRaftLayerMask =
         LayerMask.GetMask(LayerMask.LayerToName(CustomRaftLayer));
@@ -63,6 +60,12 @@
         "character_ghost");
 
       public static int CharacterLayer = LayerMask.NameToLayer("character");
+      public static int CharacterLayerMask = LayerMask.GetMask("character");
+
+      public static bool IsItemLayer(int layer)
+      {
+        return layer == ItemLayer;
+      }
 
       public static bool IsContainedWithinLayerMask(int layer, LayerMask mask)
       {

@@ -3,7 +3,6 @@
 
 #region
 
-using System.Collections;
 using UnityEngine;
 
 #endregion
@@ -12,12 +11,11 @@ namespace ValheimVehicles.SharedScripts
 {
   public class CannonTestInput : MonoBehaviour
   {
-    private CannonController[] _cannons;
+    public TargetController TargetController;
 
     private void Awake()
     {
-      // Find all cannons in this hierarchy
-      _cannons = GetComponentsInChildren<CannonController>(true);
+      TargetController= GetComponent<TargetController>();
     }
 
     private void Update()
@@ -26,24 +24,8 @@ namespace ValheimVehicles.SharedScripts
       var isKey1MousePress = Input.GetMouseButtonDown(1);
       if (isSpacePressed || isKey1MousePress)
       {
-        for (var index = 0; index < _cannons.Length; index++)
-        {
-          var cannon = _cannons[index];
-          StartCoroutine(FireDelayed(cannon, index * 0.1f));
-        }
+        TargetController.StartFiring();
       }
-    }
-
-    public IEnumerator FireDelayed(CannonController cannon, float delay)
-    {
-      yield return new WaitForSeconds(delay);
-      cannon.Fire();
-    }
-
-    // Optional: Re-scan if cannons are added/removed at runtime
-    public void RefreshCannons()
-    {
-      _cannons = GetComponentsInChildren<CannonController>(true);
     }
   }
 }
