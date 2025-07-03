@@ -656,6 +656,12 @@
       var playerInList = GetPlayerComponent(collider);
       if (playerInList == null) return;
 
+      // todo add a remove step...or maybe let it not remove but defend in a bubble further out.
+      if (PiecesController != null && PiecesController.targetController != null)
+      {
+        PiecesController.targetController.AddPlayer(playerInList.transform);
+      }
+
       // All clients should do this
       AddPlayerToLocalShip(playerInList);
       if (Player.m_localPlayer == playerInList)

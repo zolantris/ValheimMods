@@ -114,7 +114,7 @@ namespace ValheimVehicles.SharedScripts
     private Quaternion _targetShooterLocalRotation;
     public Func<Vector3?> GetFiringTargetPosition = () => null;
 
-    public int CurrentAmmo { get => _currentAmmo; private set => _currentAmmo = value; }
+    public int CurrentAmmo { get => _currentAmmo; set => _currentAmmo = value; }
     public bool IsReloading { get; private set; }
     public bool IsLoaded => _loadedCannonball != null;
 

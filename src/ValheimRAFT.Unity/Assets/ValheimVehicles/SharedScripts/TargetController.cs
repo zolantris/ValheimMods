@@ -11,7 +11,8 @@ using UnityEngine;
 
 #endregion
 
-namespace ValheimVehicles.SharedScripts {
+namespace ValheimVehicles.SharedScripts
+{
   public class TargetController : MonoBehaviour
   {
 
@@ -19,14 +20,14 @@ namespace ValheimVehicles.SharedScripts {
     {
       None,
       DefendArea,
-      DefendPlayer,
+      DefendPlayer
       // Future: AttackArea, AttackPlayer, Patrol, etc
     }
 
     public static readonly float DEFEND_PLAYER_SAFE_RADIUS = 1f;
     public static readonly float MAX_DEFEND_SEARCH_RADIUS = 30f;
 
-    public static Func<Transform, bool> IsHostileCharacter = (transform1 => true);
+    public static Func<Transform, bool> IsHostileCharacter = transform1 => true;
 
     [Header("Defense boundaries")]
     [SerializeField] public float MaxDefendSearchRadius = MAX_DEFEND_SEARCH_RADIUS;
@@ -36,7 +37,7 @@ namespace ValheimVehicles.SharedScripts {
     [SerializeField] public List<DefenseArea> defendAreas = new();
 
 // Player defense: player transforms
-    [SerializeField] public List<Transform> defendPlayers = new();
+    [SerializeField] public HashSet<Transform> defendPlayers = new();
 
     public TargetingMode targetingMode = TargetingMode.None;
 
@@ -60,7 +61,7 @@ namespace ValheimVehicles.SharedScripts {
       cannonControllers = list.ToHashSet();
 
       UpdateCannonTarget();
-      
+
       RefreshAllDefenseAreaTriggers();
       RefreshPlayerDefenseTriggers();
     }
@@ -83,12 +84,12 @@ namespace ValheimVehicles.SharedScripts {
     private void OnDrawGizmosSelected()
     {
       Gizmos.color = Color.cyan;
-      
+
       foreach (var player in defendPlayers)
       {
         Gizmos.DrawWireSphere(player.transform.position, MaxDefendSearchRadius);
       }
-      
+
       foreach (var area in defendAreas)
         Gizmos.DrawWireCube(area.center, area.size);
     }
@@ -130,9 +131,10 @@ namespace ValheimVehicles.SharedScripts {
         var playerColliders = player.GetComponentsInChildren<Collider>(true);
         foreach (var playerCollider in playerColliders)
         {
-          Physics.IgnoreCollision(sphere, playerCollider, true);;
+          Physics.IgnoreCollision(sphere, playerCollider, true);
+          ;
         }
-        
+
         sphere.includeLayers = LayerHelpers.CharacterLayerMask;
         sphere.radius = MaxDefendSearchRadius;
         sphere.isTrigger = true;
@@ -153,7 +155,7 @@ namespace ValheimVehicles.SharedScripts {
       _spawnedDefenseAreaTriggers.Clear();
 
       // Recreate for each area
-      for (int i = 0; i < defendAreas.Count; i++)
+      for (var i = 0; i < defendAreas.Count; i++)
       {
         var area = defendAreas[i];
 
@@ -239,7 +241,7 @@ namespace ValheimVehicles.SharedScripts {
     private bool IsValidHostile(Transform t)
     {
       if (IsHostileCharacter(t)) return true;
-      
+
       // fallback
       // Replace this with your actual hostile-check logic
       return t.name.StartsWith("enemy");
@@ -263,7 +265,7 @@ namespace ValheimVehicles.SharedScripts {
         var assigned = cannon.firingTarget;
         if (
           assigned != null &&
-          assignedCounts.TryGetValue(assigned, out int count) &&
+          assignedCounts.TryGetValue(assigned, out var count) &&
           count < maxCannonsPerTarget &&
           cannon.CanAimAt(assigned.position) &&
           Vector3.Distance(cannon.transform.position, assigned.position) <= cannon.maxFiringRange)
@@ -279,14 +281,14 @@ namespace ValheimVehicles.SharedScripts {
       foreach (var cannon in unassignedCannons)
       {
         Transform bestTarget = null;
-        float bestDist = float.MaxValue;
+        var bestDist = float.MaxValue;
 
         foreach (var t in targets)
         {
           if (assignedCounts[t] >= maxCannonsPerTarget) continue;
           if (!cannon.CanAimAt(t.position)) continue;
 
-          float dist = Vector3.SqrMagnitude(cannon.transform.position - t.position); // SqrMagnitude for perf!
+          var dist = Vector3.SqrMagnitude(cannon.transform.position - t.position); // SqrMagnitude for perf!
           if (dist < bestDist)
           {
             bestDist = dist;
@@ -304,16 +306,16 @@ namespace ValheimVehicles.SharedScripts {
 
     public void UpdateCannonTarget()
     {
-      List<Transform> targets = targetingMode switch
+      var targets = targetingMode switch
       {
         TargetingMode.DefendPlayer => AcquireAllTargets_DefendPlayer(),
-        TargetingMode.DefendArea   => AcquireAllTargets_DefendArea(),
-        _                         => null
+        TargetingMode.DefendArea => AcquireAllTargets_DefendArea(),
+        _ => null
       };
 
       if (targets != null && targets.Count > 0)
       {
-        AssignCannonsToTargets(cannonControllers.ToList(), targets, maxCannonsPerTarget: maxCannonsPerEnemy);
+        AssignCannonsToTargets(cannonControllers.ToList(), targets, maxCannonsPerEnemy);
       }
       else
       {
@@ -330,7 +332,7 @@ namespace ValheimVehicles.SharedScripts {
 
     public void AddPlayer(Transform player)
     {
-      if (player == null || defendPlayers.Contains(player)) return;
+      if (player == null) return;
       defendPlayers.Add(player);
       RefreshPlayerDefenseTriggers();
     }
@@ -357,7 +359,10 @@ namespace ValheimVehicles.SharedScripts {
       public Vector3 size;
 
       [NonSerialized] public DefenseAreaTrigger trigger; // Runtime-only
-      public Bounds GetBounds() => new Bounds(center, size);
+      public Bounds GetBounds()
+      {
+        return new Bounds(center, size);
+      }
     }
   }
 }

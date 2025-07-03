@@ -364,6 +364,8 @@
 
     public bool CanActivatePendingPieces => _pendingPiecesCoroutine == null;
 
+    public TargetController targetController;
+
     public override void Awake()
     {
       SetupMeshClusterController();
@@ -371,6 +373,9 @@
 
       // must be called before base.awake()
       SetupJobHandlerOnZNetScene();
+
+      targetController = gameObject.AddComponent<TargetController>();
+      targetController.targetingMode = TargetController.TargetingMode.DefendPlayer;
 
       base.Awake();
 
@@ -546,6 +551,8 @@
       if (isRam) m_ramPieces.Remove(netView);
     }
 
+    public static Cannonball.CannonballType AmmoTypeDefault = Cannonball.CannonballType.Solid;
+
     public void AddPieceDataForComponents(ZNetView netView)
     {
       var components = netView.GetComponents<Component>();
@@ -556,6 +563,12 @@
             LoggerProvider.LogDev("Detected VehicleManager, setting parent to PiecesController.Manager");
             vehicleManager.MovementController.OnParentReady(PiecesController.Manager);
             break;
+          case CannonController cannonController:
+            LoggerProvider.LogDebug("adding cannon to target controller");
+            cannonController.AmmoType = AmmoTypeDefault;
+            cannonController.maxAmmo = 50;
+            cannonController.CurrentAmmo = 50;
+            targetController.AddCannon(cannonController);
           case SwivelComponentBridge swivelController:
             InitSwivelController(swivelController);
             break;
