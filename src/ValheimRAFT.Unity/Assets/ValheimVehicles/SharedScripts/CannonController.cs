@@ -44,7 +44,7 @@ namespace ValheimVehicles.SharedScripts
     [Tooltip("How many shells are reloaded at once.")]
     [SerializeField] private int reloadQuantity = 1;
     [Tooltip("Time to reload (seconds).")]
-    [SerializeField] private float reloadTime = 5f;
+    [SerializeField] private float reloadTime = 0.5f;
     [Tooltip("Automatically reload when fired?")]
     [SerializeField] private bool autoReload = true;
     [Tooltip("Ammunition type")]

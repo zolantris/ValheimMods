@@ -43,7 +43,7 @@ GameObject:
   m_Component:
   - component: {fileID: 8665193222354816109}
   m_Layer: 10
-  m_Name: Barrel
+  m_Name: powder_barrel
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

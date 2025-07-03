@@ -41,8 +41,8 @@ namespace ValheimVehicles.SharedScripts
 
     public TargetingMode targetingMode = TargetingMode.None;
 
-    [SerializeField] private int maxCannonsPerEnemy = 2;
-    [SerializeField] private bool autoFire;
+    [SerializeField] public int maxCannonsPerEnemy = 2;
+    [SerializeField] public bool autoFire;
 
     private readonly Collider[] _enemyBuffer = new Collider[32];
 

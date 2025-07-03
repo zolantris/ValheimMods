@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 2248064053
+CRC: 264775978
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 24218da2dbf74df0b1706a3c0594b57d
+    Hash: ca858bd55e502bd5b950ac14cd502aa3
   TypeTreeHash:
     serializedVersion: 2
-    Hash: b6efeb52d2f99df2012dfc5a9fd7694a
+    Hash: a9f0b182d13c70bb9df56472b983613d
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 24218da2dbf74df0b1706a3c0594b57d
+    Hash: ca858bd55e502bd5b950ac14cd502aa3
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -43,6 +43,12 @@ ClassTypes:
 - Class: 108
   Script: {instanceID: 0}
 - Class: 114
+  Script: {fileID: 11500000, guid: 8aa93d7854518e94aaf1cc6faf180375, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 4228b3fc01674491bbe0ee8aad1479ec, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 7d873279a1e81b9419d0f6fb8b3c1fa9, type: 3}
+- Class: 114
   Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
 - Class: 114
   Script: {fileID: 11500000, guid: 67db9e8f0e2ae9c40bc1e2b64352a6b4, type: 3}
@@ -57,13 +63,7 @@ ClassTypes:
 - Class: 114
   Script: {fileID: 11500000, guid: d199490a83bb2b844b9695cbf13b01ef, type: 3}
 - Class: 114
-  Script: {fileID: 11500000, guid: 4228b3fc01674491bbe0ee8aad1479ec, type: 3}
-- Class: 114
   Script: {fileID: 11500000, guid: 9085046f02f69544eb97fd06b6048fe2, type: 3}
-- Class: 114
-  Script: {fileID: 11500000, guid: 084a5a6c3f9b85d4ea6a23b128389c38, type: 3}
-- Class: 114
-  Script: {fileID: 11500000, guid: 8aa93d7854518e94aaf1cc6faf180375, type: 3}
 - Class: 114
   Script: {fileID: 11500000, guid: 59f8146938fff824cb5fd77236b75775, type: 3}
 - Class: 114
@@ -76,8 +76,6 @@ ClassTypes:
   Script: {fileID: 11500000, guid: 37593e1934874fe4db91a205982d109e, type: 3}
 - Class: 114
   Script: {fileID: 11500000, guid: 2a4db7a114972834c8e4117be1d82ba3, type: 3}
-- Class: 114
-  Script: {fileID: 11500000, guid: 7d873279a1e81b9419d0f6fb8b3c1fa9, type: 3}
 - Class: 114
   Script: {fileID: 11500000, guid: 19bf60ab5c953fe4ba1db2f29c51ad1b, type: 3}
 - Class: 115
@@ -316,7 +314,7 @@ Assets:
 - Assets/ValheimVehicles/Prefabs/ram_blade_top.prefab
 - Assets/ValheimVehicles/Prefabs/shared_hull_slab_iron_4x4_new.prefab
 - Assets/ValheimVehicles/Prefabs/nautilus_bridge.prefab
-- Assets/ValheimVehicles/Prefabs/Barrel.prefab
+- Assets/ValheimVehicles/Prefabs/powder_barrel.prefab
 - Assets/ValheimVehicles/Prefabs/mast_level_2.prefab
 - Assets/ValheimVehicles/Prefabs/hull_rib_2x2x2_wood.prefab
 - Assets/ValheimVehicles/Prefabs/GUI/edit_texture_panel 1.prefab
