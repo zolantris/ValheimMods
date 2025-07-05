@@ -1046,11 +1046,11 @@ MonoBehaviour:
   reloadClip: {fileID: 8300000, guid: ae24df3566c74814aa90d38b3d13b10f, type: 3}
   fireClipPitch: 1
   reloadClipPitch: 0.75
-  _aimingSpeed: 100
   minPoolSizePerBarrel: 1
   cannonFireAudioSourceTransform: {fileID: 0}
   cannonReloadAudioSourceTransform: {fileID: 0}
   hasLoaded: 1
+  _aimingSpeed: 100
   firingTarget: {fileID: 0}
   firingCoordinates: {x: 0, y: 0, z: 0}
   maxFiringRange: 50
@@ -1062,7 +1062,7 @@ MonoBehaviour:
   barrelSupplyRadius: 500
   LastBarrelCheckTime: 0
   BarrelCheckInterval: 30
-  lostTargetDeltaReturnTime: 1
+  lostTargetDeltaReturnTime: 5
   lastUpdateTargetTime: -999
 --- !u!1 &195677740 stripped
 GameObject:
@@ -1102,11 +1102,11 @@ MonoBehaviour:
   reloadClip: {fileID: 8300000, guid: ae24df3566c74814aa90d38b3d13b10f, type: 3}
   fireClipPitch: 1
   reloadClipPitch: 0.75
-  _aimingSpeed: 100
   minPoolSizePerBarrel: 1
   cannonFireAudioSourceTransform: {fileID: 0}
   cannonReloadAudioSourceTransform: {fileID: 0}
   hasLoaded: 1
+  _aimingSpeed: 100
   firingTarget: {fileID: 0}
   firingCoordinates: {x: 0, y: 0, z: 0}
   maxFiringRange: 50
@@ -1118,7 +1118,7 @@ MonoBehaviour:
   barrelSupplyRadius: 500
   LastBarrelCheckTime: 0
   BarrelCheckInterval: 30
-  lostTargetDeltaReturnTime: 1
+  lostTargetDeltaReturnTime: 5
   lastUpdateTargetTime: -999
 --- !u!1001 &218323882
 PrefabInstance:
@@ -2292,11 +2292,11 @@ MonoBehaviour:
   reloadClip: {fileID: 8300000, guid: ae24df3566c74814aa90d38b3d13b10f, type: 3}
   fireClipPitch: 1
   reloadClipPitch: 0.75
-  _aimingSpeed: 100
   minPoolSizePerBarrel: 1
   cannonFireAudioSourceTransform: {fileID: 0}
   cannonReloadAudioSourceTransform: {fileID: 0}
   hasLoaded: 1
+  _aimingSpeed: 100
   firingTarget: {fileID: 0}
   firingCoordinates: {x: 0, y: 0, z: 0}
   maxFiringRange: 50
@@ -2308,7 +2308,7 @@ MonoBehaviour:
   barrelSupplyRadius: 5
   LastBarrelCheckTime: 0
   BarrelCheckInterval: 30
-  lostTargetDeltaReturnTime: 1
+  lostTargetDeltaReturnTime: 5
   lastUpdateTargetTime: -999
 --- !u!1 &636855498
 GameObject:
@@ -2807,11 +2807,11 @@ MonoBehaviour:
   reloadClip: {fileID: 8300000, guid: ae24df3566c74814aa90d38b3d13b10f, type: 3}
   fireClipPitch: 1
   reloadClipPitch: 0.75
-  _aimingSpeed: 100
   minPoolSizePerBarrel: 1
   cannonFireAudioSourceTransform: {fileID: 0}
   cannonReloadAudioSourceTransform: {fileID: 0}
   hasLoaded: 1
+  _aimingSpeed: 100
   firingTarget: {fileID: 0}
   firingCoordinates: {x: 0, y: 0, z: 0}
   maxFiringRange: 50
@@ -2823,7 +2823,7 @@ MonoBehaviour:
   barrelSupplyRadius: 500
   LastBarrelCheckTime: 0
   BarrelCheckInterval: 30
-  lostTargetDeltaReturnTime: 1
+  lostTargetDeltaReturnTime: 5
   lastUpdateTargetTime: -999
 --- !u!1 &731771778
 GameObject:
@@ -2850,7 +2850,7 @@ Transform:
   m_GameObject: {fileID: 731771778}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 1.5009022, y: 0.79068, z: -5.715}
+  m_LocalPosition: {x: 1.5009022, y: 11.9, z: -5.715}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -3874,11 +3874,11 @@ MonoBehaviour:
   reloadClip: {fileID: 8300000, guid: ae24df3566c74814aa90d38b3d13b10f, type: 3}
   fireClipPitch: 1
   reloadClipPitch: 0.75
-  _aimingSpeed: 100
   minPoolSizePerBarrel: 1
   cannonFireAudioSourceTransform: {fileID: 0}
   cannonReloadAudioSourceTransform: {fileID: 0}
   hasLoaded: 1
+  _aimingSpeed: 100
   firingTarget: {fileID: 0}
   firingCoordinates: {x: 0, y: 0, z: 0}
   maxFiringRange: 50
@@ -3890,7 +3890,7 @@ MonoBehaviour:
   barrelSupplyRadius: 500
   LastBarrelCheckTime: 0
   BarrelCheckInterval: 30
-  lostTargetDeltaReturnTime: 1
+  lostTargetDeltaReturnTime: 5
   lastUpdateTargetTime: -999
 --- !u!1001 &1064479029
 PrefabInstance:
@@ -4075,11 +4075,11 @@ MonoBehaviour:
   reloadClip: {fileID: 8300000, guid: ae24df3566c74814aa90d38b3d13b10f, type: 3}
   fireClipPitch: 1
   reloadClipPitch: 0.75
-  _aimingSpeed: 100
   minPoolSizePerBarrel: 1
   cannonFireAudioSourceTransform: {fileID: 0}
   cannonReloadAudioSourceTransform: {fileID: 0}
   hasLoaded: 1
+  _aimingSpeed: 100
   firingTarget: {fileID: 0}
   firingCoordinates: {x: 0, y: 0, z: 0}
   maxFiringRange: 50
@@ -4091,7 +4091,7 @@ MonoBehaviour:
   barrelSupplyRadius: 5
   LastBarrelCheckTime: 0
   BarrelCheckInterval: 30
-  lostTargetDeltaReturnTime: 1
+  lostTargetDeltaReturnTime: 5
   lastUpdateTargetTime: -999
 --- !u!1 &1089713623 stripped
 GameObject:
@@ -4131,11 +4131,11 @@ MonoBehaviour:
   reloadClip: {fileID: 8300000, guid: ae24df3566c74814aa90d38b3d13b10f, type: 3}
   fireClipPitch: 1
   reloadClipPitch: 0.75
-  _aimingSpeed: 100
   minPoolSizePerBarrel: 1
   cannonFireAudioSourceTransform: {fileID: 0}
   cannonReloadAudioSourceTransform: {fileID: 0}
   hasLoaded: 1
+  _aimingSpeed: 100
   firingTarget: {fileID: 0}
   firingCoordinates: {x: 0, y: 0, z: 0}
   maxFiringRange: 50
@@ -4147,7 +4147,7 @@ MonoBehaviour:
   barrelSupplyRadius: 500
   LastBarrelCheckTime: 0
   BarrelCheckInterval: 30
-  lostTargetDeltaReturnTime: 1
+  lostTargetDeltaReturnTime: 5
   lastUpdateTargetTime: -999
 --- !u!1 &1104552423
 GameObject:
@@ -4223,11 +4223,11 @@ MonoBehaviour:
   reloadClip: {fileID: 8300000, guid: ae24df3566c74814aa90d38b3d13b10f, type: 3}
   fireClipPitch: 1
   reloadClipPitch: 0.75
-  _aimingSpeed: 100
   minPoolSizePerBarrel: 1
   cannonFireAudioSourceTransform: {fileID: 0}
   cannonReloadAudioSourceTransform: {fileID: 0}
   hasLoaded: 1
+  _aimingSpeed: 100
   firingTarget: {fileID: 0}
   firingCoordinates: {x: 0, y: 0, z: 0}
   maxFiringRange: 50
@@ -4239,7 +4239,7 @@ MonoBehaviour:
   barrelSupplyRadius: 500
   LastBarrelCheckTime: 0
   BarrelCheckInterval: 30
-  lostTargetDeltaReturnTime: 1
+  lostTargetDeltaReturnTime: 5
   lastUpdateTargetTime: -999
 --- !u!1 &1173261589 stripped
 GameObject:
@@ -4279,11 +4279,11 @@ MonoBehaviour:
   reloadClip: {fileID: 8300000, guid: ae24df3566c74814aa90d38b3d13b10f, type: 3}
   fireClipPitch: 1
   reloadClipPitch: 0.75
-  _aimingSpeed: 100
   minPoolSizePerBarrel: 1
   cannonFireAudioSourceTransform: {fileID: 0}
   cannonReloadAudioSourceTransform: {fileID: 0}
   hasLoaded: 1
+  _aimingSpeed: 100
   firingTarget: {fileID: 0}
   firingCoordinates: {x: 0, y: 0, z: 0}
   maxFiringRange: 50
@@ -4295,7 +4295,7 @@ MonoBehaviour:
   barrelSupplyRadius: 500
   LastBarrelCheckTime: 0
   BarrelCheckInterval: 30
-  lostTargetDeltaReturnTime: 1
+  lostTargetDeltaReturnTime: 5
   lastUpdateTargetTime: -999
 --- !u!1001 &1173997955
 PrefabInstance:
@@ -5011,11 +5011,11 @@ MonoBehaviour:
   reloadClip: {fileID: 8300000, guid: ae24df3566c74814aa90d38b3d13b10f, type: 3}
   fireClipPitch: 1
   reloadClipPitch: 0.75
-  _aimingSpeed: 100
   minPoolSizePerBarrel: 1
   cannonFireAudioSourceTransform: {fileID: 0}
   cannonReloadAudioSourceTransform: {fileID: 0}
   hasLoaded: 1
+  _aimingSpeed: 100
   firingTarget: {fileID: 0}
   firingCoordinates: {x: 0, y: 0, z: 0}
   maxFiringRange: 50
@@ -5027,7 +5027,7 @@ MonoBehaviour:
   barrelSupplyRadius: 500
   LastBarrelCheckTime: 0
   BarrelCheckInterval: 30
-  lostTargetDeltaReturnTime: 1
+  lostTargetDeltaReturnTime: 5
   lastUpdateTargetTime: -999
 --- !u!1 &1343870951
 GameObject:
@@ -6084,11 +6084,11 @@ MonoBehaviour:
   reloadClip: {fileID: 8300000, guid: ae24df3566c74814aa90d38b3d13b10f, type: 3}
   fireClipPitch: 1
   reloadClipPitch: 0.75
-  _aimingSpeed: 100
   minPoolSizePerBarrel: 1
   cannonFireAudioSourceTransform: {fileID: 0}
   cannonReloadAudioSourceTransform: {fileID: 0}
   hasLoaded: 1
+  _aimingSpeed: 100
   firingTarget: {fileID: 0}
   firingCoordinates: {x: 0, y: 0, z: 0}
   maxFiringRange: 50
@@ -6100,7 +6100,7 @@ MonoBehaviour:
   barrelSupplyRadius: 500
   LastBarrelCheckTime: 0
   BarrelCheckInterval: 30
-  lostTargetDeltaReturnTime: 1
+  lostTargetDeltaReturnTime: 5
   lastUpdateTargetTime: -999
 --- !u!1001 &1607086473
 PrefabInstance:
@@ -6901,11 +6901,11 @@ MonoBehaviour:
   reloadClip: {fileID: 8300000, guid: ae24df3566c74814aa90d38b3d13b10f, type: 3}
   fireClipPitch: 1
   reloadClipPitch: 0.75
-  _aimingSpeed: 100
   minPoolSizePerBarrel: 1
   cannonFireAudioSourceTransform: {fileID: 0}
   cannonReloadAudioSourceTransform: {fileID: 0}
   hasLoaded: 1
+  _aimingSpeed: 100
   firingTarget: {fileID: 0}
   firingCoordinates: {x: 0, y: 0, z: 0}
   maxFiringRange: 50
@@ -6917,7 +6917,7 @@ MonoBehaviour:
   barrelSupplyRadius: 500
   LastBarrelCheckTime: 0
   BarrelCheckInterval: 30
-  lostTargetDeltaReturnTime: 1
+  lostTargetDeltaReturnTime: 5
   lastUpdateTargetTime: -999
 --- !u!1 &1807642203
 GameObject:
@@ -7431,11 +7431,11 @@ MonoBehaviour:
   reloadClip: {fileID: 8300000, guid: ae24df3566c74814aa90d38b3d13b10f, type: 3}
   fireClipPitch: 1
   reloadClipPitch: 0.75
-  _aimingSpeed: 100
   minPoolSizePerBarrel: 1
   cannonFireAudioSourceTransform: {fileID: 0}
   cannonReloadAudioSourceTransform: {fileID: 0}
   hasLoaded: 1
+  _aimingSpeed: 100
   firingTarget: {fileID: 0}
   firingCoordinates: {x: 0, y: 0, z: 0}
   maxFiringRange: 50
@@ -7447,7 +7447,7 @@ MonoBehaviour:
   barrelSupplyRadius: 5
   LastBarrelCheckTime: 0
   BarrelCheckInterval: 30
-  lostTargetDeltaReturnTime: 1
+  lostTargetDeltaReturnTime: 5
   lastUpdateTargetTime: -999
 --- !u!1001 &1901420070
 PrefabInstance:
@@ -8055,15 +8055,15 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 2854623241881727283, guid: b30cba3eb432fc64aaf1640e4941241c, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 5.34
+      value: -14.365745
       objectReference: {fileID: 0}
     - target: {fileID: 2854623241881727283, guid: b30cba3eb432fc64aaf1640e4941241c, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -0.3135209
+      value: 6.72
       objectReference: {fileID: 0}
     - target: {fileID: 2854623241881727283, guid: b30cba3eb432fc64aaf1640e4941241c, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 11.73
+      value: 8.415901
       objectReference: {fileID: 0}
     - target: {fileID: 2854623241881727283, guid: b30cba3eb432fc64aaf1640e4941241c, type: 3}
       propertyPath: m_LocalRotation.w
@@ -8531,23 +8531,23 @@ MonoBehaviour:
   reloadClip: {fileID: 8300000, guid: ae24df3566c74814aa90d38b3d13b10f, type: 3}
   fireClipPitch: 1
   reloadClipPitch: 0.75
-  _aimingSpeed: 10
   minPoolSizePerBarrel: 1
   cannonFireAudioSourceTransform: {fileID: 0}
   cannonReloadAudioSourceTransform: {fileID: 0}
   hasLoaded: 1
+  _aimingSpeed: 10
   firingTarget: {fileID: 0}
   firingCoordinates: {x: 0, y: 0, z: 0}
   maxFiringRange: 50
   maxFiringRotationY: 360
-  maxFiringPitch: 90
-  minFiringPitch: 90
+  maxFiringPitch: 145
+  minFiringPitch: -145
   canRotateFiringRangeY: 1
   hasNearbyPowderBarrel: 0
   barrelSupplyRadius: 500
   LastBarrelCheckTime: 0
   BarrelCheckInterval: 30
-  lostTargetDeltaReturnTime: 1
+  lostTargetDeltaReturnTime: 5
   lastUpdateTargetTime: -999
 --- !u!4 &2103432510 stripped
 Transform:
@@ -8962,11 +8962,11 @@ MonoBehaviour:
   reloadClip: {fileID: 8300000, guid: ae24df3566c74814aa90d38b3d13b10f, type: 3}
   fireClipPitch: 1
   reloadClipPitch: 0.75
-  _aimingSpeed: 10
   minPoolSizePerBarrel: 1
   cannonFireAudioSourceTransform: {fileID: 0}
   cannonReloadAudioSourceTransform: {fileID: 0}
   hasLoaded: 1
+  _aimingSpeed: 10
   firingTarget: {fileID: 0}
   firingCoordinates: {x: 0, y: 0, z: 0}
   maxFiringRange: 150
@@ -8978,7 +8978,7 @@ MonoBehaviour:
   barrelSupplyRadius: 5
   LastBarrelCheckTime: 0
   BarrelCheckInterval: 30
-  lostTargetDeltaReturnTime: 1
+  lostTargetDeltaReturnTime: 5
   lastUpdateTargetTime: -999
 --- !u!114 &822766217108343328
 MonoBehaviour:
@@ -9008,11 +9008,11 @@ MonoBehaviour:
   reloadClip: {fileID: 8300000, guid: ae24df3566c74814aa90d38b3d13b10f, type: 3}
   fireClipPitch: 1
   reloadClipPitch: 0.75
-  _aimingSpeed: 10
   minPoolSizePerBarrel: 1
   cannonFireAudioSourceTransform: {fileID: 0}
   cannonReloadAudioSourceTransform: {fileID: 0}
   hasLoaded: 1
+  _aimingSpeed: 10
   firingTarget: {fileID: 0}
   firingCoordinates: {x: 0, y: 0, z: 0}
   maxFiringRange: 150
@@ -9024,7 +9024,7 @@ MonoBehaviour:
   barrelSupplyRadius: 5
   LastBarrelCheckTime: 0
   BarrelCheckInterval: 30
-  lostTargetDeltaReturnTime: 1
+  lostTargetDeltaReturnTime: 5
   lastUpdateTargetTime: -999
 --- !u!4 &825742096546200027
 Transform:
@@ -12375,11 +12375,11 @@ MonoBehaviour:
   reloadClip: {fileID: 0}
   fireClipPitch: 1
   reloadClipPitch: 1
-  _aimingSpeed: 10
   minPoolSizePerBarrel: 1
   cannonFireAudioSourceTransform: {fileID: 0}
   cannonReloadAudioSourceTransform: {fileID: 0}
   hasLoaded: 1
+  _aimingSpeed: 10
   firingTarget: {fileID: 0}
   firingCoordinates: {x: 0, y: 0, z: 0}
   maxFiringRange: 150
@@ -12391,7 +12391,7 @@ MonoBehaviour:
   barrelSupplyRadius: 5
   LastBarrelCheckTime: 0
   BarrelCheckInterval: 30
-  lostTargetDeltaReturnTime: 1
+  lostTargetDeltaReturnTime: 5
   lastUpdateTargetTime: -999
 --- !u!82 &7450253620161579911
 AudioSource:
@@ -12565,11 +12565,11 @@ MonoBehaviour:
   reloadClip: {fileID: 8300000, guid: ae24df3566c74814aa90d38b3d13b10f, type: 3}
   fireClipPitch: 1
   reloadClipPitch: 0.75
-  _aimingSpeed: 10
   minPoolSizePerBarrel: 1
   cannonFireAudioSourceTransform: {fileID: 0}
   cannonReloadAudioSourceTransform: {fileID: 0}
   hasLoaded: 1
+  _aimingSpeed: 10
   firingTarget: {fileID: 0}
   firingCoordinates: {x: 0, y: 0, z: 0}
   maxFiringRange: 150
@@ -12581,7 +12581,7 @@ MonoBehaviour:
   barrelSupplyRadius: 5
   LastBarrelCheckTime: 0
   BarrelCheckInterval: 30
-  lostTargetDeltaReturnTime: 1
+  lostTargetDeltaReturnTime: 5
   lastUpdateTargetTime: -999
 --- !u!4 &7672335162096370590
 Transform:

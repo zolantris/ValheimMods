@@ -339,11 +339,11 @@ namespace ValheimVehicles.SharedScripts
                 cannon.currentAimPoint = bestAimPoint;
                 assignedCounts[bestTarget]++;
             }
-            else
-            {
-                cannon.firingTarget = null;
-                cannon.currentAimPoint = null;
-            }
+            // else
+            // {
+            //     cannon.firingTarget = null;
+            //     cannon.currentAimPoint = null;
+            // }
         }
     }
 

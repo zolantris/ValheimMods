@@ -71,8 +71,6 @@ namespace ValheimVehicles.SharedScripts
     [SerializeField] public AudioClip reloadClip;
     [SerializeField] public float fireClipPitch = 1f;
     [SerializeField] public float reloadClipPitch = 0.75f;
-    [Tooltip("Speed at which the cannon aims to adjust to target position.")]
-    [SerializeField] public float _aimingSpeed = 10f;
 
     [Header("Pooling")]
     [Tooltip("Minimum cannonballs kept in pool (typically 1 per cannon).")]
@@ -84,6 +82,8 @@ namespace ValheimVehicles.SharedScripts
     [SerializeField] public bool hasLoaded = true;
 
     [Header("Cannon Targeting")]
+    [Tooltip("Speed at which the cannon aims to adjust to target position.")]
+    [SerializeField] public float _aimingSpeed = 10f;
     [Tooltip("Target To fire upon. Will aim for the position center.")]
     [SerializeField] public Transform firingTarget;
     [Tooltip("Generic firing coordinates")]
@@ -122,6 +122,8 @@ namespace ValheimVehicles.SharedScripts
     private CoroutineHandle _cleanupRoutine;
 
     private Collider[] _colliders;
+    private float _currentPitch;
+    private float _currentYaw;
     private Quaternion _defaultShooterLocalRotation;
     private float _lastAllowedYaw = float.NaN;
 
@@ -223,24 +225,67 @@ namespace ValheimVehicles.SharedScripts
 
     private void FixedUpdate()
     {
-      if (LastBarrelCheckTime == 0 || LastBarrelCheckTime + BarrelCheckInterval < Time.fixedTime)
+      var targetPosition = GetFiringTargetPosition?.Invoke();
+      if (targetPosition == null)
       {
-        hasNearbyPowderBarrel = PowderBarrel.FindNearbyBarrels(transform.position, barrelSupplyRadius)?.Count > 0;
-        LastBarrelCheckTime = Time.fixedTime;
+        _canFire = false;
+        return;
       }
 
-      SyncLoadedCannonballs();
+      // STEP 1: World vector from pivot to target
+      Vector3 pivotPos = cannonRotationalTransform.position;
+      Vector3 toTarget = targetPosition.Value - pivotPos;
 
-      if (firingTarget != null || firingCoordinates != null)
-      {
-        AdjustFiringAngle();
-      }
+      // STEP 2: Calculate yaw (Y) angle
+      Vector3 toTargetXZ = new Vector3(toTarget.x, 0f, toTarget.z);
+      float yaw = Mathf.Atan2(toTargetXZ.x, toTargetXZ.z) * Mathf.Rad2Deg;
+
+      // Clamp YAW
+      float clampedYaw = Mathf.Clamp(yaw, -FiringRotationMaxY, FiringRotationMaxY);
+
+      // STEP 3: Calculate pitch (X) angle after yaw
+      // Rotate forward to match clamped yaw
+      Quaternion yawRot = Quaternion.Euler(0f, clampedYaw, 0f);
+      Vector3 forwardAfterYaw = yawRot * Vector3.forward;
+
+      // Project target into local space after yaw
+      Vector3 localToTarget = Quaternion.Inverse(yawRot) * toTarget;
+      float flatDist = new Vector2(localToTarget.z, localToTarget.x).magnitude;
+      float pitch = flatDist > 0.01f ? Mathf.Atan2(localToTarget.y, localToTarget.z) * Mathf.Rad2Deg : 0f;
+
+      // Clamp pitch
+      float clampedPitch = Mathf.Clamp(pitch, BarrelPitchMinAngle, BarrelPitchMaxAngle);
+
+      // Compose rotation: first pitch (X), then yaw (Y)
+      Quaternion finalRot = Quaternion.Euler(-clampedPitch, clampedYaw, 0f);
+      cannonRotationalTransform.localRotation = Quaternion.Slerp(
+        cannonRotationalTransform.localRotation,
+        finalRot,
+        Time.fixedDeltaTime * aimingSpeed
+      );
+
+      // For debug: Draw aim ray
+      Debug.DrawRay(cannonRotationalTransform.position, cannonRotationalTransform.forward * 3f, Color.red);
+      Debug.DrawLine(cannonRotationalTransform.position, targetPosition.Value, Color.green);
+
+      // Firing threshold
+      _canFire = (Mathf.Abs(Mathf.DeltaAngle(cannonRotationalTransform.localEulerAngles.y, clampedYaw)) < 0.5f)
+                 && (Mathf.Abs(Mathf.DeltaAngle(cannonRotationalTransform.localEulerAngles.x, clampedPitch)) < 0.5f);
     }
+
 
     private void OnDisable()
     {
       CleanupPool();
     }
+
+// Helper to normalize angle to 0..360 range
+    private static float NormalizeAngle0To360(float angle)
+{
+    angle %= 360f;
+    if (angle < 0) angle += 360f;
+    return angle;
+}
 
     public bool IsBarrelLoaded(BarrelPart part)
     {
@@ -583,9 +628,10 @@ namespace ValheimVehicles.SharedScripts
       Vector3 targetPosition,
       float launchSpeed,
       float drag,
+      float minPitch, // degrees
+      float maxPitch, // degrees
       out Vector3 fireDirection,
       out float angleDegrees,
-      int maxIterations = 100,
       float tolerance = 0.05f)
     {
       var delta = targetPosition - fireOrigin;
@@ -601,29 +647,23 @@ namespace ValheimVehicles.SharedScripts
 
       var dirXZ = new Vector3(delta.x, 0, delta.z).normalized;
 
-      // ALLOW NEGATIVE ANGLES (downward)
-      var low = -Mathf.PI / 4f; // -45°
-      var high = Mathf.PI / 2f; // +90°
-      var found = false;
-      float angle = 0;
+      float bestError = float.MaxValue;
+      float bestAngle = 0;
+      bool found = false;
 
-      for (var i = 0; i < maxIterations; i++)
+      // Only search in allowed pitch range!
+      for (int i = Mathf.RoundToInt(minPitch); i <= Mathf.RoundToInt(maxPitch); i++)
       {
-        angle = (low + high) * 0.5f;
-        var yAtTarget = SimulateProjectileHeightAtXZ(launchSpeed, drag, xzDist, angle);
+        float angleRad = i * Mathf.Deg2Rad;
+        float yAtTarget = SimulateProjectileHeightAtXZ(launchSpeed, drag, xzDist, angleRad);
+        float diff = Mathf.Abs(yAtTarget - y);
 
-        var diff = yAtTarget - y;
-
-        if (Mathf.Abs(diff) < tolerance)
+        if (diff < tolerance && diff < bestError)
         {
+          bestError = diff;
+          bestAngle = angleRad;
           found = true;
-          break;
         }
-
-        if (diff > 0)
-          high = angle; // Too high
-        else
-          low = angle; // Too low
       }
 
       if (!found)
@@ -633,8 +673,8 @@ namespace ValheimVehicles.SharedScripts
         return false;
       }
 
-      fireDirection = Quaternion.AngleAxis(Mathf.Rad2Deg * angle, Vector3.Cross(Vector3.up, dirXZ)) * dirXZ;
-      angleDegrees = angle * Mathf.Rad2Deg;
+      fireDirection = Quaternion.AngleAxis(bestAngle * Mathf.Rad2Deg, Vector3.Cross(Vector3.up, dirXZ)) * dirXZ;
+      angleDegrees = bestAngle * Mathf.Rad2Deg;
       return true;
     }
 
@@ -693,23 +733,19 @@ namespace ValheimVehicles.SharedScripts
       Collider bestCollider = null;
       float bestDist = float.MaxValue;
       Vector3 bestPoint = target.position;
-      var muzzle = cannonShooterAimPoint ? cannonShooterAimPoint.position : transform.position;
+      float bestSizeMagnitude = 0f;
 
       foreach (var col in colliders)
       {
         var point = col.ClosestPoint(fireOrigin); // Closest point on collider to our muzzle
         var dist = Vector3.SqrMagnitude(point - fireOrigin);
 
-        #if DEBUG
-        // LoggerProvider.LogDebugDebounced($"[CannonTargeting] Checking collider '{col.name}' on '{col.gameObject.name}' at layer {col.gameObject.layer} | ClosestPoint: {point} | Dist: {Mathf.Sqrt(dist)}");
-        #endif
-        // RuntimeDebugLineDrawer.DrawLine(muzzle, point, RuntimeDebugLineDrawer.TYellow, 0.05f, 0.05f);
-
-        if (dist < bestDist)
+        if (col.bounds.size.magnitude > bestSizeMagnitude || dist < bestDist)
         {
           bestDist = dist;
           bestPoint = point;
           bestCollider = col;
+          bestSizeMagnitude = col.bounds.size.magnitude;
         }
       }
 
@@ -719,6 +755,8 @@ namespace ValheimVehicles.SharedScripts
       // Final validation: can we actually hit this point?
       if (!CanAimAt(bestPoint))
         return false;
+      
+      RuntimeDebugLineDrawer.DrawLine(cannonShooterTransform.position, bestPoint, RuntimeDebugLineDrawer.TOrange);;
 
       aimPoint = bestPoint;
       return true;
@@ -747,12 +785,21 @@ namespace ValheimVehicles.SharedScripts
       var xzDist = new Vector2(delta.x, delta.z).magnitude;
       if (xzDist < 0.01f) return false;
 
-      var dirXZ = new Vector3(delta.x, 0, delta.z).normalized;
-      if (!CalculateBallisticAimWithDrag(fireOrigin, targetPosition, cannonballSpeed, CannonballSolidPrefab.cannonBallDrag, out _, out var angle)) return false;
-
-      var pitch = -angle;
-      if (pitch < -BarrelPitchMaxAngle || pitch > BarrelPitchMinAngle) return false;
-
+      if (!CalculateBallisticAimWithDrag(
+            fireOrigin,
+            targetPosition,
+            cannonballSpeed,
+            CannonballSolidPrefab.cannonBallDrag,
+            BarrelPitchMinAngle,   // e.g., -30
+            BarrelPitchMaxAngle,   // e.g., 80
+            out var fireDir,
+            out var pitch)) return false;
+      if (pitch < BarrelPitchMinAngle || pitch > BarrelPitchMaxAngle)
+      {
+        LoggerProvider.LogDebugDebounced($"[Cannon] Pitch {pitch} outside allowed range [{BarrelPitchMinAngle}, {BarrelPitchMaxAngle}]");
+        return false;
+      }
+      
       return true;
     }
 
@@ -761,21 +808,18 @@ namespace ValheimVehicles.SharedScripts
       if (!float.IsNaN(_lastAllowedYaw))
       {
         // Stay at last allowed yaw, do not follow out-of-range targets
-        var localRotation = cannonRotationalTransform.localRotation;
-        var rotation = Quaternion.Euler(localRotation.eulerAngles.x, _lastAllowedYaw, localRotation.z);
-        localRotation = Quaternion.Lerp(localRotation, rotation, Time.fixedDeltaTime);
-        cannonRotationalTransform.localRotation = localRotation;
+        // var localRotation = cannonRotationalTransform.localRotation;
+        // var rotation = Quaternion.Euler(localRotation.eulerAngles.x, _lastAllowedYaw, localRotation.z);
+        // localRotation = Quaternion.Lerp(localRotation, rotation, Time.fixedDeltaTime);
+        // cannonRotationalTransform.localRotation = localRotation;
       }
-      else
-      {
-        var rotation = Quaternion.Euler(0f, _lastAllowedYaw, cannonRotationalTransform.localRotation.z);
-        cannonRotationalTransform.localRotation = rotation;
-      }
+      // var rotation = Quaternion.Euler(0f, _lastAllowedYaw, cannonRotationalTransform.localRotation.z);
+      // cannonRotationalTransform.localRotation = rotation;
     }
 
     public void AdjustFiringAngle()
     {
-      if (IsReloading) return;
+      // if (IsReloading) return;
 
       var fireOrigin = cannonShooterTransform.position;
       var targetPosition = GetFiringTargetPosition();
@@ -822,11 +866,19 @@ namespace ValheimVehicles.SharedScripts
       // --- PITCH (X/Elevation) ---
       var hasPitch = false;
         var prevLocalRotation = cannonRotationalTransform.localRotation;
-      if (isWithinYawRange && CalculateBallisticAimWithDrag(fireOrigin, targetPosition.Value, cannonballSpeed, CannonballSolidPrefab.cannonBallDrag, out var fireDir, out var angle))
+      if (isWithinYawRange && !CalculateBallisticAimWithDrag(
+            fireOrigin,
+            targetPosition.Value,
+            cannonballSpeed,
+            CannonballSolidPrefab.cannonBallDrag,
+            BarrelPitchMinAngle,
+            BarrelPitchMaxAngle,
+            out _,
+            out var pitch))
       {
         // Clamp pitch
         // this can already be mutated by rotational in Y
-        _targetShooterLocalRotation = Quaternion.Euler(Mathf.Clamp(-angle, -BarrelPitchMaxAngle, BarrelPitchMinAngle), prevLocalRotation.eulerAngles.y, prevLocalRotation.eulerAngles.z);
+        _targetShooterLocalRotation = Quaternion.Euler(Mathf.Clamp(pitch, BarrelPitchMinAngle, BarrelPitchMaxAngle), prevLocalRotation.eulerAngles.y, prevLocalRotation.eulerAngles.z);
         hasPitch = true;
       }
       else
@@ -989,31 +1041,32 @@ namespace ValheimVehicles.SharedScripts
       var recoilUpwardAnimationDuration = 0.15f;
       var recoilReturnAnimationDuration = 0.15f;
       var recoilRotation = Quaternion.Euler(-2f, 0f, 0f) * _targetShooterLocalRotation;
-      while (elapsed < recoilReturnAnimationDuration + recoilUpwardAnimationDuration)
-      {
-        var t = Mathf.Clamp01(elapsed / 2f / 0.15f); // 0..1
-        elapsed += Time.deltaTime;
-
-        // move towards recoil.
-        if (elapsed < 0.1f)
-        {
-          cannonRotationalTransform.localPosition = Vector3.Lerp(Vector3.zero, Vector3.forward * -0.1f, t);
-          if (cannonShooterTransform != null)
-          {
-            cannonShooterTransform.localRotation = Quaternion.Lerp(_targetShooterLocalRotation, recoilRotation, Mathf.Clamp01(t));
-          }
-        }
-        else
-        {
-          // move back to target position. (and then will reload afterwards) 
-          if (cannonShooterTransform != null)
-          {
-            cannonShooterTransform.localRotation = Quaternion.Lerp(_recoilRotation, _targetShooterLocalRotation, Mathf.Clamp01(t));
-          }
-          cannonRotationalTransform.localPosition = Vector3.Lerp(Vector3.forward * -0.1f, Vector3.zero, t);
-        }
-        yield return null;
-      }
+      // while (elapsed < recoilReturnAnimationDuration + recoilUpwardAnimationDuration)
+      // {
+      //   var t = Mathf.Clamp01(elapsed / 2f / 0.15f); // 0..1
+      //   elapsed += Time.deltaTime;
+      //
+      //   // move towards recoil.
+      //   if (elapsed < 0.1f)
+      //   {
+      //     cannonRotationalTransform.localPosition = Vector3.Lerp(Vector3.zero, Vector3.forward * -0.1f, t);
+      //     if (cannonShooterTransform != null)
+      //     {
+      //       cannonShooterTransform.localRotation = Quaternion.Lerp(_targetShooterLocalRotation, recoilRotation, Mathf.Clamp01(t));
+      //     }
+      //   }
+      //   else
+      //   {
+      //     // move back to target position. (and then will reload afterwards) 
+      //     if (cannonShooterTransform != null)
+      //     {
+      //       cannonShooterTransform.localRotation = Quaternion.Lerp(_recoilRotation, _targetShooterLocalRotation, Mathf.Clamp01(t));
+      //     }
+      //     cannonRotationalTransform.localPosition = Vector3.Lerp(Vector3.forward * -0.1f, Vector3.zero, t);
+      //   }
+      //   yield return null;
+      // }
+      yield return new WaitForSeconds(recoilReturnAnimationDuration);
       IsFiring = false;
 
       if (autoReload && CurrentAmmo > 0)
@@ -1039,14 +1092,16 @@ namespace ValheimVehicles.SharedScripts
       var endRotation = Quaternion.Euler(_targetShooterLocalRotation.x + _recoilRotation.x, localEulerRotation.eulerAngles.y, localEulerRotation.eulerAngles.z);
 
       var safeReloadTime = Mathf.Clamp(reloadTime, 0.1f, 5f);
-      while (elapsed < reloadTime)
-      {
-        var t = Mathf.Clamp01(elapsed * 2f / safeReloadTime); // 0..1
-        elapsed += Time.deltaTime;
-        if (cannonShooterTransform != null)
-          cannonShooterTransform.localRotation = Quaternion.Lerp(startRotation, endRotation, Mathf.Clamp01(t));
-        yield return null; // Wait one frame
-      }
+      
+      yield return new WaitForSeconds(safeReloadTime);
+      // while (elapsed < reloadTime)
+      // {
+      //   var t = Mathf.Clamp01(elapsed * 2f / safeReloadTime); // 0..1
+      //   elapsed += Time.deltaTime;
+      //   if (cannonShooterTransform != null)
+      //     cannonShooterTransform.localRotation = Quaternion.Lerp(startRotation, endRotation, Mathf.Clamp01(t));
+      //   yield return null; // Wait one frame
+      // }
 
       PlayReloadClip();
 
