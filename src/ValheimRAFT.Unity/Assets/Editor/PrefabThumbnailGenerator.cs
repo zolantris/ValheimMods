@@ -29,6 +29,8 @@ public class PrefabThumbnailGenerator : EditorWindow
 
   private static GameObject sceneLight;
 
+  public static string lastScenePath = "";
+
   [FormerlySerializedAs("excludedContainsPrefabNames")] public List<string> excludeContainsPrefabNames = new()
     { "shared_", "steering_wheel", "rope_ladder", "dirt_floor", "dirtfloor_icon","cannon_shoot_part", "chain_link", "rope_anchor", "keel", "rudder_basic", "custom_sail", "mechanism_swivel", "_old", "_test_variant", "tank_tread_icon", "vehicle_hammer", "_backup", "_deprecated" };
   public List<string> excludeExactPrefabNames = new()
@@ -147,12 +149,26 @@ public class PrefabThumbnailGenerator : EditorWindow
     {
       isRunning = false;
     }
+
+    try
+    {
+      if (lastScenePath != string.Empty)
+      {
+        EditorSceneManager.OpenScene(lastScenePath, OpenSceneMode.Single);
+      }
+    }catch(Exception e)
+    {
+      Debug.LogError($"Failed to open scene at {PrefabGenScenePath}");
+    }
   }
 
   private static bool TrySwitchToPrefabGenerationScene()
   {
     var activeScene = SceneManager.GetActiveScene();
-    if (!activeScene.path.EndsWith("GeneratePrefabIcons.unity") && activeScene.isDirty)
+    var isGenerationScene = activeScene.path.EndsWith("GeneratePrefabIcons.unity");
+    lastScenePath = isGenerationScene ? "" : activeScene.path;
+    
+    if (!isGenerationScene && activeScene.isDirty)
     {
       if (!EditorSceneManager.SaveScene(activeScene))
       {
