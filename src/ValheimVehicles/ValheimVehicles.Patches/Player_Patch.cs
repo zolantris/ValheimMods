@@ -209,6 +209,21 @@
       return gameObject;
     }
 
+    [HarmonyPatch(typeof(Player), nameof(Player.UpdatePlacementGhost))]
+    public static void UpdatePlacementGhost_InjectRotation(Player __instance)
+    {
+      if (!__instance.m_placementGhost) return;
+      if (!__instance.m_placementGhost.transform.name.StartsWith(PrefabNames.ValheimVehiclesPrefix)) return;
+      if (__instance.m_manualSnapPoint < 0) return;
+      if (__instance.m_tempSnapPoints1.Count <= __instance.m_manualSnapPoint) return;
+      var quaternion = Quaternion.Euler(0.0f, __instance.m_placeRotationDegrees * (float)__instance.m_placeRotation, 0.0f);
+
+      var snappointTransform = __instance.m_tempSnapPoints1[__instance.m_manualSnapPoint];
+
+      // add rotation on of snappoint onto the current quaternion. This allows for rotating the whole prefab for ValheimVehicle variants
+      __instance.m_placementGhost.transform.rotation = quaternion * snappointTransform.rotation;
+    }
+
     public static void TryFixPieceOverlap(GameObject gameObject)
     {
       if (!Mod_PieceOverlapConfig.PieceOverlap_Enabled.Value)

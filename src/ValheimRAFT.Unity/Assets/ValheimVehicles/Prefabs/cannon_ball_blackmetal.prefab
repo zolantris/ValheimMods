@@ -12,6 +12,26 @@ PrefabInstance:
       propertyPath: m_Name
       value: cannon_ball_blackmetal
       objectReference: {fileID: 0}
+    - target: {fileID: 3262470993815328314, guid: df1f89dac358bd944b2e89cd5b67cf9d, type: 3}
+      propertyPath: rolloffCustomCurve.m_Curve.Array.data[1].time
+      value: 0.08763504
+      objectReference: {fileID: 0}
+    - target: {fileID: 3262470993815328314, guid: df1f89dac358bd944b2e89cd5b67cf9d, type: 3}
+      propertyPath: rolloffCustomCurve.m_Curve.Array.data[1].value
+      value: 0.92206573
+      objectReference: {fileID: 0}
+    - target: {fileID: 3262470993815328314, guid: df1f89dac358bd944b2e89cd5b67cf9d, type: 3}
+      propertyPath: rolloffCustomCurve.m_Curve.Array.data[1].inSlope
+      value: -2.3754866
+      objectReference: {fileID: 0}
+    - target: {fileID: 3262470993815328314, guid: df1f89dac358bd944b2e89cd5b67cf9d, type: 3}
+      propertyPath: rolloffCustomCurve.m_Curve.Array.data[1].outSlope
+      value: -2.3754866
+      objectReference: {fileID: 0}
+    - target: {fileID: 3262470993815328314, guid: df1f89dac358bd944b2e89cd5b67cf9d, type: 3}
+      propertyPath: rolloffCustomCurve.m_Curve.Array.data[1].outWeight
+      value: 0.08719736
+      objectReference: {fileID: 0}
     - target: {fileID: 6621782692716234487, guid: df1f89dac358bd944b2e89cd5b67cf9d, type: 3}
       propertyPath: m_Materials.Array.data[0]
       value: 

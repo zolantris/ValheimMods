@@ -258,8 +258,10 @@
 
       public static readonly string PowderBarrel =
         $"{ValheimVehiclesPrefix}_Powder_Barrel";
-      public static readonly string CannonTier1 =
-        $"{ValheimVehiclesPrefix}_Cannon_Tier1";
+      public static readonly string CannonFixedTier1 =
+        $"{ValheimVehiclesPrefix}_Cannon_Fixed_Tier1";
+      public static readonly string CannonTurretTier1 =
+        $"{ValheimVehiclesPrefix}_Cannon_Turret_Tier1";
       public static readonly string CannonballSolid =
         $"{ValheimVehiclesPrefix}_Cannonball_Solid";
       public static readonly string CannonballExplosive =

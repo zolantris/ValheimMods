@@ -14,26 +14,74 @@ namespace ValheimVehicles.Prefabs.Registry;
 public class CannonPrefabs : RegisterPrefab<CannonPrefabs>
 {
 
-  private void RegisterCannonPrefab()
+  private void RegisterCannonFixedPrefab()
   {
     var asset = LoadValheimVehicleAssets._bundle.LoadAsset<GameObject>("cannon_fixed");
     var sprite = LoadValheimVehicleAssets.VehicleSprites.GetSprite("cannon_fixed");
 
     var prefab = PrefabManager.Instance.CreateClonedPrefab(
-      PrefabNames.CannonTier1,
+      PrefabNames.CannonFixedTier1,
       asset);
 
     PrefabRegistryHelpers.AddNetViewWithPersistence(prefab);
-    PrefabRegistryHelpers.PieceDataDictionary.Add(PrefabNames.CannonTier1, new PrefabRegistryHelpers.PieceData
+    PrefabRegistryHelpers.PieceDataDictionary.Add(PrefabNames.CannonFixedTier1, new PrefabRegistryHelpers.PieceData
     {
-      Name = "$valheim_vehicles_cannon_tier1",
-      Description = "$valheim_vehicles_cannon_tier1_desc",
+      Name = "$valheim_vehicles_cannon_turret_tier1",
+      Description = "$valheim_vehicles_cannon_turret_tier1_desc",
       Icon = sprite
     });
-    PrefabRegistryHelpers.AddPieceForPrefab(PrefabNames.CannonTier1, prefab);
-    var wearNTear = PrefabRegistryHelpers.SetWearNTear(prefab, 3);
+    PrefabRegistryHelpers.AddPieceForPrefab(PrefabNames.CannonFixedTier1, prefab);
+    var wearNTear = PrefabRegistryHelpers.SetWearNTear(prefab, 1);
     // main toggle switch.
-    prefab.AddComponent<CannonController>();
+    var cannonController = prefab.AddComponent<CannonController>();
+    cannonController.canRotateFiringRangeY = false;
+    var cannonControllerInteractions = prefab.AddComponent<CannonControllerInteractions>();
+
+    PieceManager.Instance.AddPiece(new CustomPiece(prefab, true, new PieceConfig
+    {
+      PieceTable = PrefabRegistryController.GetPieceTableName(),
+      Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Tools),
+      Enabled = true,
+      Requirements =
+      [
+        new RequirementConfig
+        {
+          Amount = 4,
+          Item = "Bronze",
+          Recover = true
+        },
+        new RequirementConfig
+        {
+          Amount = 6,
+          Item = "Wood",
+          Recover = true
+        }
+      ]
+    }));
+  }
+
+  private void RegisterCannonTurretPrefab()
+  {
+    var asset = LoadValheimVehicleAssets._bundle.LoadAsset<GameObject>("cannon_turret");
+    var sprite = LoadValheimVehicleAssets.VehicleSprites.GetSprite("cannon_turret");
+
+    var prefab = PrefabManager.Instance.CreateClonedPrefab(
+      PrefabNames.CannonTurretTier1,
+      asset);
+
+    PrefabRegistryHelpers.AddNetViewWithPersistence(prefab);
+    PrefabRegistryHelpers.PieceDataDictionary.Add(PrefabNames.CannonTurretTier1, new PrefabRegistryHelpers.PieceData
+    {
+      Name = "$valheim_vehicles_cannon_turret_tier1",
+      Description = "$valheim_vehicles_cannon_turret_tier1_desc",
+      Icon = sprite
+    });
+    PrefabRegistryHelpers.AddPieceForPrefab(PrefabNames.CannonTurretTier1, prefab);
+    var wearNTear = PrefabRegistryHelpers.SetWearNTear(prefab, 1);
+    // main toggle switch.
+    var cannonController = prefab.AddComponent<CannonController>();
+    cannonController.canRotateFiringRangeY = true;
+    var cannonControllerInteractions = prefab.AddComponent<CannonControllerInteractions>();
 
     PieceManager.Instance.AddPiece(new CustomPiece(prefab, true, new PieceConfig
     {
@@ -74,13 +122,14 @@ public class CannonPrefabs : RegisterPrefab<CannonPrefabs>
 
     CannonController.CannonballSolidPrefab = cannonBall;
 
-    var nv = PrefabRegistryHelpers.AddNetViewWithPersistence(prefab);
-    var zSyncTransform = prefab.AddComponent<ZSyncTransform>();
+    var nv = PrefabRegistryHelpers.AddTempNetView(prefab);
+    nv.m_distant = true;
+    // var zSyncTransform = prefab.AddComponent<ZSyncTransform>();
 
     // verbosely add these.
-    zSyncTransform.m_syncBodyVelocity = true;
-    zSyncTransform.m_syncRotation = true;
-    zSyncTransform.m_syncPosition = true;
+    // zSyncTransform.m_syncBodyVelocity = true;
+    // zSyncTransform.m_syncRotation = true;
+    // zSyncTransform.m_syncPosition = true;
 
     var itemDrop = prefab.AddComponent<ItemDrop>();
     if (itemDrop.m_nview == null)
@@ -144,7 +193,8 @@ public class CannonPrefabs : RegisterPrefab<CannonPrefabs>
 
     CannonController.CannonballExplosivePrefab = cannonBall;
 
-    var nv = PrefabRegistryHelpers.AddNetViewWithPersistence(prefab);
+    var nv = PrefabRegistryHelpers.AddTempNetView(prefab);
+    nv.m_distant = true;
     var zSyncTransform = prefab.AddComponent<ZSyncTransform>();
 
     // verbosely add these.
@@ -224,7 +274,7 @@ public class CannonPrefabs : RegisterPrefab<CannonPrefabs>
     });
     PrefabRegistryHelpers.AddPieceForPrefab(PrefabNames.PowderBarrel, prefab);
 
-    var wearNTear = PrefabRegistryHelpers.SetWearNTear(prefab, 3);
+    var wearNTear = PrefabRegistryHelpers.SetWearNTear(prefab, 1);
 
     // very high health but it can immediately blow up on any damage to consume all health.
     wearNTear.m_health = 100f;
@@ -261,7 +311,8 @@ public class CannonPrefabs : RegisterPrefab<CannonPrefabs>
     RegisterCannonballExplosiveItemPrefab();
     RegisterCannonballSolidItemPrefab();
 
-    RegisterCannonPrefab();
+    RegisterCannonFixedPrefab();
+    RegisterCannonTurretPrefab();
     RegisterPowderBarrelPrefab();
   }
 }

@@ -15,7 +15,6 @@ namespace ValheimVehicles.SharedScripts
 {
   public class TargetController : MonoBehaviour
   {
-
     public enum TargetingMode
     {
       None,
@@ -24,10 +23,13 @@ namespace ValheimVehicles.SharedScripts
       // Future: AttackArea, AttackPlayer, Patrol, etc
     }
 
-    public static readonly float DEFEND_PLAYER_SAFE_RADIUS = 1f;
-    public static readonly float MAX_DEFEND_SEARCH_RADIUS = 30f;
+    public static float DEFEND_PLAYER_SAFE_RADIUS = 1f;
+    public static float MAX_DEFEND_SEARCH_RADIUS = 30f;
+    public static Vector3 MAX_DEFEND_AREA_SEARCH = new(30f, 40f, 30f);
 
     public static Func<Transform, bool> IsHostileCharacter = transform1 => true;
+
+    public static bool canShootPlayer = true;
 
     [Header("Defense boundaries")]
     [SerializeField] public float MaxDefendSearchRadius = MAX_DEFEND_SEARCH_RADIUS;
@@ -37,12 +39,17 @@ namespace ValheimVehicles.SharedScripts
     [SerializeField] public List<DefenseArea> defendAreas = new();
 
 // Player defense: player transforms
-    [SerializeField] public HashSet<Transform> defendPlayers = new();
+    [Tooltip("Player defense")]
+    [SerializeField] public List<Transform> defendPlayers = new();
 
     public TargetingMode targetingMode = TargetingMode.None;
 
     [SerializeField] public int maxCannonsPerEnemy = 2;
     [SerializeField] public bool autoFire;
+
+    public float FiringDelay = 0.1f;
+    public bool CanFire;
+    [SerializeField] public List<CannonController> cannonControllers = new();
 
     private readonly Collider[] _enemyBuffer = new Collider[32];
 
@@ -51,14 +58,23 @@ namespace ValheimVehicles.SharedScripts
     private readonly List<GameObject> _spawnedDefenseAreaTriggers = new();
 
     private CoroutineHandle _fireCannonsRoutine;
-    public HashSet<CannonController> cannonControllers;
 
     private void Awake()
     {
       _fireCannonsRoutine = new CoroutineHandle(this);
 
-      var list = GetComponentsInChildren<CannonController>(true);
-      cannonControllers = list.ToHashSet();
+      IsHostileCharacter = t =>
+      {
+#if !UNITY_EDITOR && !UNITY_2022
+        var character = t.GetComponent<Character>();
+        if (character == null) return false;
+        if (canShootPlayer && character.IsPlayer() && !character.IsDead()) return true;
+        return !character.IsPlayer() && !character.IsTamed(5f) && !character.IsDead();
+#endif
+        return true;
+      };
+
+      GetComponentsInChildren(false, cannonControllers);
 
       UpdateCannonTarget();
 
@@ -68,12 +84,12 @@ namespace ValheimVehicles.SharedScripts
 
     private void FixedUpdate()
     {
+      UpdateCannonTarget();
+
       if (autoFire)
       {
         StartFiring();
       }
-
-      UpdateCannonTarget();
     }
 
     private void OnDrawGizmos()
@@ -132,7 +148,6 @@ namespace ValheimVehicles.SharedScripts
         foreach (var playerCollider in playerColliders)
         {
           Physics.IgnoreCollision(sphere, playerCollider, true);
-          ;
         }
 
         sphere.includeLayers = LayerHelpers.CharacterLayerMask;
@@ -188,18 +203,30 @@ namespace ValheimVehicles.SharedScripts
 
     private IEnumerator FireCannons()
     {
-      foreach (var cannonsController in cannonControllers)
+      CanFire = false;
+      foreach (var cannonsController in cannonControllers.ToList())
       {
+        if (!cannonsController) continue;
         yield return FireCannonDelayed(cannonsController, 0.1f);
       }
+
+      yield return new WaitForSeconds(0.1f);
+
+      CanFire = true;
     }
 
     private List<Transform> AcquireAllTargets_DefendArea()
     {
       var found = new List<Transform>();
-      foreach (var area in defendAreas)
+      var copy = defendAreas.ToList();
+      for (var index = 0; index < copy.Count; index++)
       {
-        if (area.trigger == null) continue;
+        var area = copy[index];
+        if (area.trigger == null)
+        {
+          defendAreas.RemoveAt(index);
+          continue;
+        }
         // You can prune here if you want to clean up destroyed/invalid enemies
         area.trigger.Prune();
         foreach (var t in area.trigger.CurrentEnemies)
@@ -214,14 +241,14 @@ namespace ValheimVehicles.SharedScripts
     private List<Transform> AcquireAllTargets_DefendPlayer()
     {
       var found = new HashSet<Transform>();
-      foreach (var player in defendPlayers)
+      foreach (var player in defendPlayers.ToList())
       {
         if (player == null) continue;
         if (!_playerAreaTriggers.TryGetValue(player, out var trigger) || trigger == null) continue;
 
         trigger.Prune(); // Clean out null/dead refs
 
-        foreach (var t in trigger.CurrentEnemies)
+        foreach (var t in trigger.CurrentEnemies.ToList())
         {
           if (IsValidHostile(t) && Vector3.Distance(player.position, t.position) > DefendPlayerSafeRadius)
             found.Add(t);
@@ -232,7 +259,7 @@ namespace ValheimVehicles.SharedScripts
 
     private bool IsNearAnyPlayer(Vector3 pos, float minDist)
     {
-      foreach (var player in defendPlayers)
+      foreach (var player in defendPlayers.ToList())
         if (player && Vector3.Distance(player.position, pos) < minDist)
           return true;
       return false;
@@ -313,14 +340,20 @@ namespace ValheimVehicles.SharedScripts
         _ => null
       };
 
-      if (targets != null && targets.Count > 0)
+      cannonControllers.RemoveAll(x => x == null);
+      targets?.RemoveAll(x => x == null);
+
+      if (targets != null && targets.Count > 0 && cannonControllers.Count > 0)
       {
         AssignCannonsToTargets(cannonControllers.ToList(), targets, maxCannonsPerEnemy);
       }
       else
       {
-        foreach (var cannon in cannonControllers)
+        foreach (var cannon in cannonControllers.ToList())
+        {
+          if (!cannon) continue;
           cannon.firingTarget = null;
+        }
       }
     }
 
@@ -332,7 +365,7 @@ namespace ValheimVehicles.SharedScripts
 
     public void AddPlayer(Transform player)
     {
-      if (player == null) return;
+      if (player == null || defendPlayers.Contains(player)) return;
       defendPlayers.Add(player);
       RefreshPlayerDefenseTriggers();
     }

@@ -10,7 +10,6 @@ GameObject:
   m_Component:
   - component: {fileID: 8606007161889117133}
   - component: {fileID: 6636219063403578279}
-  - component: {fileID: 629361513249855614}
   m_Layer: 0
   m_Name: cannon_ball_bronze
   m_TagString: Untagged
@@ -55,35 +54,13 @@ Rigidbody:
   m_ExcludeLayers:
     serializedVersion: 2
     m_Bits: 0
-  m_ImplicitCom: 0
-  m_ImplicitTensor: 0
-  m_UseGravity: 0
-  m_IsKinematic: 1
-  m_Interpolate: 1
+  m_ImplicitCom: 1
+  m_ImplicitTensor: 1
+  m_UseGravity: 1
+  m_IsKinematic: 0
+  m_Interpolate: 0
   m_Constraints: 0
-  m_CollisionDetection: 2
---- !u!114 &629361513249855614
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2476818550654289255}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4228b3fc01674491bbe0ee8aad1479ec, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  explosionForce: 1200
-  explosionRadius: 6
-  explosionLayerMask:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  useCustomGravity: 0
-  customGravity: 9.81
-  debugDrawTrajectory: 0
-  _explosionEffect: {fileID: 0}
-  _explosionSound: {fileID: 0}
+  m_CollisionDetection: 1
 --- !u!1 &4720161999693251415
 GameObject:
   m_ObjectHideFlags: 0
@@ -145,7 +122,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0.1, y: 0.1, z: 0.1}
+  m_LocalScale: {x: 0.18, y: 0.18, z: 0.18}
   m_ConstrainProportionsScale: 1
   m_Children: []
   m_Father: {fileID: 1414355423555218424}
@@ -210,7 +187,7 @@ SphereCollider:
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 1050113
   m_ExcludeLayers:
     serializedVersion: 2
     m_Bits: 0

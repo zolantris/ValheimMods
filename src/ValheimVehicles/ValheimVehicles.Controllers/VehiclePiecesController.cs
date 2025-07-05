@@ -568,8 +568,8 @@
           case CannonController cannonController:
             LoggerProvider.LogDebug("adding cannon to target controller");
             cannonController.AmmoType = AmmoTypeDefault;
-            cannonController.maxAmmo = 50;
-            cannonController.CurrentAmmo = 50;
+            cannonController.maxAmmo = 500;
+            cannonController.CurrentAmmo = 500;
             targetController.AddCannon(cannonController);
             break;
           case SwivelComponentBridge swivelController:
@@ -658,6 +658,10 @@
             break;
           case Fireplace fireplace:
             RemoveEffectAreaFromVehicle(netView);
+            break;
+          case CannonController cannonController:
+            LoggerProvider.LogDebug("removing cannon from target controller");
+            targetController.RemoveCannon(cannonController);
             break;
           case MastComponent mast:
             m_mastPieces.Remove(mast);

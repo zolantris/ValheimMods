@@ -2421,6 +2421,111 @@ Transform:
   - {fileID: 111968340}
   m_Father: {fileID: 746667894}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &617293900
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 617293901}
+  - component: {fileID: 617293904}
+  - component: {fileID: 617293903}
+  - component: {fileID: 617293902}
+  m_Layer: 29
+  m_Name: Cube
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &617293901
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 617293900}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 5808629398772157823}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!65 &617293902
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 617293900}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 1, y: 1, z: 1}
+  m_Center: {x: 0, y: 0, z: 0}
+--- !u!23 &617293903
+MeshRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 617293900}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 2
+  m_RayTraceProcedural: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 10303, guid: 0000000000000000f000000000000000, type: 0}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 3
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_AdditionalVertexStreams: {fileID: 0}
+--- !u!33 &617293904
+MeshFilter:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 617293900}
+  m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
 --- !u!1 &619455439
 GameObject:
   m_ObjectHideFlags: 0
@@ -7713,7 +7818,8 @@ Transform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children: []
+  m_Children:
+  - {fileID: 617293901}
   m_Father: {fileID: 8340188237230322239}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &5949302446604775325
@@ -7774,63 +7880,57 @@ MonoBehaviour:
   m_GameObject: {fileID: 8225528950328919720}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 19bf60ab5c953fe4ba1db2f29c51ad1b, type: 3}
+  m_Script: {fileID: 11500000, guid: dea12cabaab3d264285d3dc11b245d8a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   minTreadDistances: 0.1
   treadWidthXScale: 1
   accelerationType: 1
-  inputTurnForce: 0.01
-  inputMovement: 0.01
+  inputTurnForce: 0
+  inputMovement: 0
   MaxWheelRPM: 3000
   turnInputOverride: 0
   UseInputControls: 0
-  maxTreadLength: 40
-  maxTreadWidth: 40
+  maxTreadLength: 20
+  maxTreadWidth: 8
   Override_WheelBottomOffset: 0
   Override_WheelSpring: 0
   Override_WheelRadius: 0
   Override_WheelSuspensionDistance: 0
   Override_TopSpeed: 0
-  Override_wheelDampingRate: 0
-  Override_WheelSpringDamper: 0
+  Override_wheelDampingRate: 2
+  Override_WheelSpringDamper: 2
   Override_IsBraking: 0
   centerOfMassTransform: {fileID: 0}
   front: []
   rear: []
-  left:
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
+  left: []
   leftRenderers: []
   rightRenderers: []
-  right:
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
+  right: []
   m_steeringType: 0
-  forwardDirection: {fileID: 3462057762617736770}
-  wheelPrefab: {fileID: 2037590979320573674, guid: a476ad740d1a255449edb42e69d22446, type: 3}
+  forwardDirection: {fileID: 0}
+  wheelPrefab: {fileID: 0}
   rotationEnginePrefab: {fileID: 0}
   minimumWheelSets: 3
-  maxWheelSets: 5
-  wheelSetIncrement: 10
+  maxWheelSets: 3
+  wheelSetIncrement: 5
   axelPadding: 0.5
-  wheelBottomOffset: 0
-  wheelRadius: 2
-  wheelSuspensionDistance: 2
+  wheelBottomOffset: -1
+  wheelRadius: 1.5
+  wheelSuspensionDistance: 1.5
   wheelSuspensionSpring: 35000
-  wheelSuspensionSpringDamper: 1500
-  wheelSuspensionTarget: 0.5
-  treadsPrefab: {fileID: 5595029556979915977, guid: c5dd1538f0ffd3242b551c837c16135b, type: 3}
+  wheelSuspensionSpringDamper: 10000
+  wheelSuspensionTarget: 0.4
+  treadsPrefab: {fileID: 6407385884862251252}
   baseTorque: 0
-  topSpeed: 10
+  topSpeed: 50
   steeringAngle: 30
   baseMotorTorque: 10
-  baseAcceleration: 3
-  wheelMass: 1
-  wheelParent: {fileID: 2895838982252528142}
-  treadsParent: {fileID: 6870272609440107524}
+  baseAcceleration: 5
+  wheelMass: 500
+  wheelParent: {fileID: 0}
+  treadsParent: {fileID: 0}
   rotationEnginesParent: {fileID: 0}
   treadsRightTransform: {fileID: 0}
   treadsLeftTransform: {fileID: 0}
@@ -7839,7 +7939,7 @@ MonoBehaviour:
   highTorque: 0
   isForward: 1
   lastTurningState: 0
-  ShouldSyncWheelsToCollider: 1
+  ShouldSyncWheelsToCollider: 0
   ShouldCleanupPerInitialize: 0
   useDirectTreadPhysics: 1
   useWheelTorquePhysics: 0
@@ -7855,12 +7955,12 @@ MonoBehaviour:
   UseUnbalancedForce: 0
   ShouldHideWheelRender: 0
   dynamicFriction: 0.01
-  staticFriction: 0.02
+  staticFriction: 0.05
   treadPhysicMaterial: {fileID: 0}
   IsOnGround: 0
-  dampingDuration: 1
-  angularDampingDuration: 1
-  maxHillFactorMultiplier: 10
+  dampingDuration: 0.5
+  angularDampingDuration: 0.25
+  maxHillFactorMultiplier: 3
   ShouldApplyDownwardsForceOnSlop: 1
   currentLeftForce: 0
   currentRightForce: 0

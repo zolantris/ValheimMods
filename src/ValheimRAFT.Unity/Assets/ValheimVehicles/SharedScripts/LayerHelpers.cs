@@ -1,8 +1,8 @@
 #region
 
-using System.Collections.Generic;
-using JetBrains.Annotations;
-using UnityEngine;
+  using System.Collections.Generic;
+  using JetBrains.Annotations;
+  using UnityEngine;
 
 #endregion
 
@@ -44,6 +44,9 @@ using UnityEngine;
         "character", "character_net", "character_trigger", "viewbox",
         "character_nonenv",
         LayerMask.LayerToName(CustomRaftLayer), SmokeLayerString);
+
+      public static LayerMask CannonHitLayers = LayerMask.GetMask("character", "character_net", "Default", "Default_small", "piece", "static_solid", "terrain");
+      public static LayerMask CannonBlockingSiteHitLayers = LayerMask.GetMask("Default", "Default_small", "piece", "terrain");
 
       public static List<string> ActiveLayersForBlockingMask = new();
 

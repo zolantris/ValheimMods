@@ -3,9 +3,13 @@
 
 #region
 
+#if !UNITY_EDITOR && !UNITY_2022
+using ValheimVehicles.Controllers;
+#endif
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
@@ -21,18 +25,28 @@ namespace ValheimVehicles.SharedScripts
     public static Cannonball CannonballSolidPrefab;
     public static Cannonball CannonballExplosivePrefab;
     private static bool hasRunSetup;
+
+    [Header("Cannon Animations")]
+    public static float CannonAimSpeed = 0f;
+
+    public static float CannonFireAudioVolume = 1f;
+    public static float CannonReloadAudioVolume = 0.5f;
+    public static bool HasFireAudio = true;
+    public static bool HasReloadAudio = true;
+    public static LayerMask SightBlockingMask = 0;
+
+    public static float MaxFiringRotationYOverride = 0f;
+    public static float MaxFiringPitchOverride = 0f;
+    public static float MinFiringPitchOverride = 0f;
     [Tooltip("Optional: prefab asset for this instance (overrides static for this controller only).")]
     [SerializeField] private GameObject CannonballSolidPrefabAssetLocal;
     [SerializeField] private GameObject CannonballExplosivePrefabAssetLocal;
 
     [Header("Transforms")]
-    [Tooltip("Where the cannonball will be loaded and fired from.")]
-    [SerializeField] private Transform projectileLoader;
-    [Tooltip("Where muzzle flash and effects are triggered.")]
-    [SerializeField] private Transform muzzleFlashPoint;
     [Tooltip("Transform to use for fire direction (usually barrel/shooter).")]
     [SerializeField] private Transform cannonShooterTransform;
-    [SerializeField] private Transform cannonScalarTransform;
+    [SerializeField] private Transform cannonShooterAimPoint;
+    [SerializeField] private Transform cannonRotationalTransform;
     [Tooltip("Speed (m/s) for cannonball launch.")]
     [SerializeField] private float cannonballSpeed = 90f; // 90m/s is standard.
 
@@ -51,24 +65,20 @@ namespace ValheimVehicles.SharedScripts
     [SerializeField] private Cannonball.CannonballType ammoType = Cannonball.CannonballType.Solid;
 
     [Header("Effects & Sounds")]
-    [Tooltip("Particle effect played at muzzle flash.")]
-    [SerializeField] private ParticleSystem muzzleFlashEffect;
     [Tooltip("Sound when firing.")]
-    [SerializeField] private AudioClip fireClip;
+    [SerializeField] public AudioClip fireClip;
     [Tooltip("Sound when reloading.")]
-    [SerializeField] private AudioClip reloadClip;
+    [SerializeField] public AudioClip reloadClip;
     [SerializeField] public float fireClipPitch = 1f;
     [SerializeField] public float reloadClipPitch = 0.75f;
-
-    [Header("Cannon Animations")]
     [Tooltip("Speed at which the cannon aims to adjust to target position.")]
-    [SerializeField] public float aimingSpeed = 5f;
+    [SerializeField] public float _aimingSpeed = 10f;
 
     [Header("Pooling")]
     [Tooltip("Minimum cannonballs kept in pool (typically 1 per cannon).")]
-    [SerializeField] private int minPoolSize = 1;
-    [SerializeField] public Transform cannonAudioSourceTransform;
-    [SerializeField] public Transform muzzleFlashEffectTransform;
+    [SerializeField] private int minPoolSizePerBarrel = 1;
+    [SerializeField] public Transform cannonFireAudioSourceTransform;
+    [SerializeField] public Transform cannonReloadAudioSourceTransform;
 
 
     [SerializeField] public bool hasLoaded = true;
@@ -92,31 +102,55 @@ namespace ValheimVehicles.SharedScripts
     [Header("Barrel Ammo Logic")]
     [SerializeField] private bool hasNearbyPowderBarrel;
     [SerializeField] private float barrelSupplyRadius = 5f;
-
     // barrel check timers
     public float LastBarrelCheckTime;
     public float BarrelCheckInterval = 30f;
 
     // --- State ---
     private readonly HashSet<Cannonball> _activeCannonballs = new();
+    private readonly Dictionary<ShootingPart, Cannonball> _loadedCannonballs = new();
     private readonly List<Cannonball> _trackedLoadedCannonballs = new();
-    private AudioSource _audioSource;
+
+    private readonly List<ShootingPart> shootingParts = new();
     private bool _canFire;
     private Queue<Cannonball> _cannonballPool = new();
-    private Coroutine _cleanupCoroutine;
+    private AudioSource _cannonFireAudioSource;
+    private AudioSource _cannonReloadAudioSource;
+    private CoroutineHandle _cleanupRoutine;
 
     private Collider[] _colliders;
     private Quaternion _defaultShooterLocalRotation;
     private float _lastAllowedYaw = float.NaN;
-    private Cannonball _loadedCannonball;
+
     private Quaternion _recoilRotation;
+    private CoroutineHandle _recoilRoutine;
     private Quaternion _reloadRotation;
+    private CoroutineHandle _reloadRoutine;
     private Quaternion _targetShooterLocalRotation;
     public Func<Vector3?> GetFiringTargetPosition = () => null;
+    public int MinPoolSize => 1 * Mathf.Min(shootingParts.Count, 1);
+
+    public float aimingSpeed => CannonAimSpeed > 0f ? CannonAimSpeed : _aimingSpeed;
 
     public int CurrentAmmo { get => _currentAmmo; set => _currentAmmo = value; }
     public bool IsReloading { get; private set; }
-    public bool IsLoaded => _loadedCannonball != null;
+    public bool IsFiring { get; private set; }
+
+
+    public bool IsLoaded => shootingParts.All(sp =>
+      _loadedCannonballs.TryGetValue(sp, out var ball) && ball != null);
+
+    public bool IsAnyBarrelLoaded => shootingParts.Any(sp =>
+      _loadedCannonballs.TryGetValue(sp, out var ball) && ball != null);
+
+    public bool IsBarrelLoaded(ShootingPart part)
+    {
+      return _loadedCannonballs.TryGetValue(part, out var ball) && ball != null;
+    }
+
+    public float FiringRotationMaxY => MaxFiringRotationYOverride > 0f ? MaxFiringRotationYOverride : maxFiringRotationY;
+    public float BarrelPitchMaxAngle => MaxFiringPitchOverride > 0f ? MaxFiringPitchOverride : maxFiringPitch;
+    public float BarrelPitchMinAngle => MinFiringPitchOverride > 0f ? MinFiringPitchOverride : minFiringPitch;
 
     public Cannonball.CannonballType AmmoType
     {
@@ -130,16 +164,17 @@ namespace ValheimVehicles.SharedScripts
 
     private void Awake()
     {
-#if UNITY_EDITOR
-      // Must only be run in Unity Editor. We reset static values so it's like first to load for this object.
-      CleanupCannonballPrefab();
-#endif
+      SetupTransforms();
+
+      _cannonFireAudioSource = cannonFireAudioSourceTransform.GetComponent<AudioSource>();
+      _cannonReloadAudioSource = cannonReloadAudioSourceTransform.GetComponent<AudioSource>();
+
       _colliders = GetComponentsInChildren<Collider>(true);
 
-      SetupTransforms();
-      SetupCannonballPrefab();
-
-      _audioSource = cannonAudioSourceTransform.GetComponent<AudioSource>();
+      // routines
+      _cleanupRoutine = new CoroutineHandle(this);
+      _recoilRoutine = new CoroutineHandle(this);
+      _reloadRoutine = new CoroutineHandle(this);
 
       if (cannonShooterTransform != null)
       {
@@ -150,11 +185,24 @@ namespace ValheimVehicles.SharedScripts
       }
 
 
-      if (!IsLoaded && hasLoaded)
+#if UNITY_EDITOR
+      // Must only be run in Unity Editor. We reset static values so it's like first to load for this object.
+      CleanupCannonballPrefab();
+#endif
+      SetupCannonballPrefab();
+
+
+      // we start loaded with this. TODO might move this logic into a network level check.
+      if (!IsAnyBarrelLoaded && hasLoaded)
       {
-        _loadedCannonball = GetPooledCannonball();
-        _loadedCannonball.Load(projectileLoader, muzzleFlashPoint);
+        foreach (var shootingPart in shootingParts)
+        {
+          var loadedCannonball = GetPooledCannonball(shootingPart);
+          loadedCannonball.Load(shootingPart.projectileLoader);
+        }
       }
+
+      SightBlockingMask = GetSightBlockingMask();
 
       InitializePool();
 
@@ -162,8 +210,13 @@ namespace ValheimVehicles.SharedScripts
       // --- Setup shooter recoil rotation values ---
     }
 
+
     internal virtual void Start()
     {
+      LoggerProvider.LogDev("Solver Iterations: " + Physics.defaultSolverIterations);
+      LoggerProvider.LogDev("Solver Velocity Iterations: " + Physics.defaultSolverVelocityIterations);
+      LoggerProvider.LogDev("Fixed Timestep: " + Time.fixedDeltaTime);
+      LoggerProvider.LogDev("Physics Engine: PhysX");
       SetupCannonballPrefab();
       TryReload();
     }
@@ -174,22 +227,60 @@ namespace ValheimVehicles.SharedScripts
       {
         hasNearbyPowderBarrel = PowderBarrel.FindNearbyBarrels(transform.position, barrelSupplyRadius)?.Count > 0;
         LastBarrelCheckTime = Time.fixedTime;
-        ;
       }
-      // Sync "loaded" (not-in-flight) cannonballs to loader, never parented!
-      foreach (var ball in _trackedLoadedCannonballs)
-      {
-        if (ball != null && !ball.IsInFlight)
-        {
-          ball.transform.position = projectileLoader.position;
-          ball.transform.rotation = projectileLoader.rotation;
-        }
-      }
+
+      SyncLoadedCannonballs();
 
       if (firingTarget != null || firingCoordinates != null)
       {
         AdjustFiringAngle();
       }
+    }
+
+    private void OnDisable()
+    {
+      CleanupPool();
+    }
+
+    public void SyncLoadedCannonballFromList(IEnumerable<Cannonball> cannonballs)
+    {
+      foreach (var ball in cannonballs)
+      {
+        if (ball != null && !ball.IsInFlight)
+        {
+          var ballTransform = ball.transform;
+          if (ball.m_body != null)
+          {
+            var t = ball.lastFireTransform != null ? ball.lastFireTransform : cannonShooterTransform;
+            ball.m_body.Move(t.position, t.rotation);
+          }
+          else
+          {
+            ballTransform.position = cannonShooterTransform.position;
+            ballTransform.rotation = cannonShooterTransform.rotation;
+          }
+        }
+      }
+    }
+
+    // Sync "loaded" (not-in-flight) cannonballs to loader, never parented!
+    public void SyncLoadedCannonballs()
+    {
+      SyncLoadedCannonballFromList(_trackedLoadedCannonballs);
+      SyncLoadedCannonballFromList(_cannonballPool);
+    }
+
+    /// <summary>
+    /// todo this needs to be masks that do not block as much but could obstruct a shot.
+    ///
+    /// without this layermask for terrain the cannons will keep firing and missing.
+    /// </summary>
+    /// <returns></returns>
+    public LayerMask GetSightBlockingMask()
+    {
+      return 0;
+      // return LayerMask.GetMask("terrain");
+      // return LayerHelpers.CannonBlockingSiteHitLayers;
     }
 
     private Vector3? HandleFiringTargetPositionDefault()
@@ -204,34 +295,40 @@ namespace ValheimVehicles.SharedScripts
 
     private void SetupTransforms()
     {
-      if (cannonScalarTransform == null)
+      if (cannonRotationalTransform == null)
       {
-        cannonScalarTransform = transform.Find("scalar");
+        cannonRotationalTransform = transform.Find("rotational");
       }
 
-      if (cannonAudioSourceTransform == null)
+      if (cannonFireAudioSourceTransform == null)
       {
-        cannonAudioSourceTransform = transform.Find("scalar/cannon_shooter/cannon_shot_audio");
+        cannonFireAudioSourceTransform = transform.Find("rotational/cannon_shooter/cannon_shot_audio");
       }
 
-      if (muzzleFlashEffectTransform == null)
+      if (cannonReloadAudioSourceTransform == null)
       {
-        muzzleFlashEffectTransform = transform.Find("scalar/cannon_shooter/muzzle_flash_effect");
-      }
-
-      if (muzzleFlashEffect == null)
-      {
-        muzzleFlashEffect = muzzleFlashEffectTransform.GetComponent<ParticleSystem>();
+        cannonReloadAudioSourceTransform = transform.Find("rotational/cannon_shooter/cannon_reload_audio");
       }
 
       if (cannonShooterTransform == null)
-        cannonShooterTransform = transform.Find("scalar/cannon_shooter");
-      if (projectileLoader == null)
-        projectileLoader = transform.Find("scalar/cannon_shooter/shooting_part/points/projectile_loader");
+        cannonShooterTransform = transform.Find("rotational/cannon_shooter");
 
-      if (muzzleFlashPoint == null)
+      if (cannonShooterAimPoint == null)
+        cannonShooterAimPoint = transform.Find("rotational/cannon_shooter/shooter_aim_point");
+
+      for (var i = 0; i < cannonShooterTransform.childCount; i++)
       {
-        muzzleFlashPoint = transform.Find("scalar/cannon_shooter/shooting_part/points/muzzle_flash");
+        var child = cannonShooterTransform.GetChild(i);
+        if (child.name.StartsWith("cannon_shooter_part"))
+        {
+          var shootingPart = ShootingPart.Init(child);
+          shootingParts.Add(shootingPart);
+        }
+      }
+
+      if (shootingParts.Count == 0)
+      {
+        LoggerProvider.LogError("No shooting parts found in cannon shooter.");
       }
     }
 
@@ -309,49 +406,82 @@ namespace ValheimVehicles.SharedScripts
       }
     }
 
+    private void CleanupPool()
+    {
+      if (_cannonballPool.Count > 0)
+      {
+        while (_cannonballPool.Count > 0)
+        {
+          var ball = _cannonballPool.Dequeue();
+          if (ball == null) continue;
+          Destroy(ball.gameObject);
+        }
+      }
+      _trackedLoadedCannonballs.RemoveAll(x => x == null);
+    }
+
     private void SetupCannonballPrefab()
     {
       hasRunSetup = true;
 
+      // must clean the pool if shooting new cannonballs.
+      CleanupPool();
       InitCannonballPrefabAssets();
+
+
       var selectedCannonball = SelectCannonballType();
 
-      // already setup.
-      if (selectedCannonball != null)
+      if (selectedCannonball == null)
       {
-        return;
+        LoggerProvider.LogError("Unexpected null cannonball prefab.");
       }
 
-      IgnoreLocalColliders(selectedCannonball);
-
-      var go = selectedCannonball.gameObject;
-      var goTransform = go.transform;
-      goTransform.position = Vector3.zero;
-      goTransform.rotation = Quaternion.identity;
-      go.SetActive(false);
-
-      var rb = go.GetComponent<Rigidbody>();
-      if (rb != null)
-      {
-        rb.isKinematic = true;
-        rb.useGravity = false;
-      }
+      // IgnoreVehicleColliders(selectedCannonball);
+      // IgnoreLocalColliders(selectedCannonball);
+      //
+      // var go = selectedCannonball.gameObject;
+      // var goTransform = go.transform;
+      // goTransform.position = Vector3.zero;
+      // goTransform.rotation = Quaternion.identity;
+      // go.SetActive(false);
+      //
+      // var rb = go.GetComponent<Rigidbody>();
+      // if (rb != null)
+      // {
+      //   rb.isKinematic = true;
+      //   rb.useGravity = false;
+      // }
     }
 
     private void InitializePool()
     {
-      _cannonballPool = new Queue<Cannonball>(minPoolSize);
+      _cannonballPool = new Queue<Cannonball>(MinPoolSize);
       var selectedCannonball = SelectCannonballType();
       if (!selectedCannonball) return;
-      for (var i = 0; i < minPoolSize; i++)
+      for (var i = 0; i < MinPoolSize; i++)
       {
-        var go = Instantiate(selectedCannonball.gameObject, projectileLoader.position, projectileLoader.rotation, null);
-        go.name = $"cannonball_queue_{ammoType}_{i}";
-        var obj = go.GetComponent<Cannonball>();
-        IgnoreLocalColliders(obj);
-        go.SetActive(false);
-        _cannonballPool.Enqueue(obj);
+        foreach (var shootingPart in shootingParts)
+        {
+          var go = Instantiate(selectedCannonball.gameObject, shootingPart.projectileLoader.position, shootingPart.projectileLoader.rotation, null);
+          go.name = $"cannonball_queue_{ammoType}_{i}";
+          var obj = go.GetComponent<Cannonball>();
+          IgnoreLocalColliders(obj);
+          go.SetActive(false);
+          _cannonballPool.Enqueue(obj);
+        }
       }
+    }
+
+    // ReSharper disable once UseNullableReferenceTypesAnnotationSyntax
+    private void IgnoreVehicleColliders(Cannonball selectedCannonball)
+    {
+#if !UNITY_2022 && !UNITY_EDITOR
+      var vehiclePiecesController = GetComponentInParent<VehiclePiecesController>();
+      if (vehiclePiecesController != null)
+      {
+        vehiclePiecesController.IgnoreAllVehicleCollidersForGameObjectChildren(selectedCannonball.gameObject);
+      }
+#endif
     }
 
     private void IgnoreLocalColliders(Cannonball cannonball)
@@ -368,8 +498,26 @@ namespace ValheimVehicles.SharedScripts
       }
     }
 
-    private Cannonball GetPooledCannonball()
+    private void IgnoreOtherCannonballColliders(Cannonball localCannonball)
     {
+      foreach (var ball in _trackedLoadedCannonballs)
+      {
+        if (!ball) continue;
+        foreach (var otherCollider in ball.Colliders)
+        {
+          if (otherCollider == null) continue;
+          foreach (var localCollider in localCannonball.Colliders)
+          {
+            if (localCollider == null) continue;
+            Physics.IgnoreCollision(otherCollider, localCollider, true);
+          }
+        }
+      }
+    }
+
+    private Cannonball GetPooledCannonball(ShootingPart shootingPart)
+    {
+      _trackedLoadedCannonballs.RemoveAll(x => x == null);
       if (_cannonballPool.Count > 0)
       {
         var ball = _cannonballPool.Dequeue();
@@ -394,31 +542,23 @@ namespace ValheimVehicles.SharedScripts
         return null;
       }
 
-      var go = Instantiate(selectedCannonball.gameObject, projectileLoader.position, projectileLoader.rotation, null);
+      var go = Instantiate(selectedCannonball.gameObject, shootingPart.projectileLoader.position, shootingPart.projectileLoader.rotation, null);
       var localCannonball = go.GetComponent<Cannonball>();
+
       IgnoreLocalColliders(localCannonball);
+      IgnoreOtherCannonballColliders(localCannonball);
 
       go.gameObject.SetActive(true);
 
-      // ignore colliders for all cannonballs.
-      foreach (var ball in _trackedLoadedCannonballs)
-      foreach (var otherCollider in ball.Colliders)
-      {
-        if (otherCollider == null) continue;
-        foreach (var localCollider in localCannonball.Colliders)
-        {
-          if (localCollider == null) continue;
-          Physics.IgnoreCollision(otherCollider, localCollider, true);
-        }
-      }
-
       _trackedLoadedCannonballs.Add(localCannonball);
-      go.name = $"cannonball_active_{_trackedLoadedCannonballs.Count}";
+      go.name = $"cannonball_{ammoType}_active_{_trackedLoadedCannonballs.Count}";
       return localCannonball;
     }
 
-    private void ReturnCannonballToPool(Cannonball ball)
+    public void ReturnCannonballToPool(Cannonball ball)
     {
+      if (!isActiveAndEnabled) return;
+      if (!ball) return;
       _cannonballPool.Enqueue(ball);
       _activeCannonballs.Remove(ball);
       _trackedLoadedCannonballs.Remove(ball);
@@ -523,18 +663,23 @@ namespace ValheimVehicles.SharedScripts
 
     public bool CanAimAt(Vector3 targetPosition)
     {
+      // Do not fire on out of sight target.
+      if (!HasLineOfSightToTarget(targetPosition, SightBlockingMask, true))
+      {
+        return false;
+      }
       // --- YAW CHECK ---
-      var toTargetXZ = targetPosition - cannonScalarTransform.position;
+      var toTargetXZ = targetPosition - cannonShooterAimPoint.position;
       toTargetXZ.y = 0f;
       if (toTargetXZ.sqrMagnitude < 0.01f) return false;
 
-      var currentYaw = cannonScalarTransform.eulerAngles.y;
+      var currentYaw = cannonRotationalTransform.eulerAngles.y;
       var desiredYaw = Quaternion.LookRotation(toTargetXZ, Vector3.up).eulerAngles.y;
       var deltaYaw = Mathf.DeltaAngle(currentYaw, desiredYaw);
-      if (Mathf.Abs(deltaYaw) > maxFiringRotationY) return false;
+      if (Mathf.Abs(deltaYaw) > FiringRotationMaxY) return false;
 
       // --- PITCH CHECK ---
-      var fireOrigin = projectileLoader.position;
+      var fireOrigin = cannonShooterAimPoint.position;
       var delta = targetPosition - fireOrigin;
       var xzDist = new Vector2(delta.x, delta.z).magnitude;
       if (xzDist < 0.01f) return false;
@@ -543,7 +688,7 @@ namespace ValheimVehicles.SharedScripts
       if (!CalculateBallisticAimWithDrag(fireOrigin, targetPosition, cannonballSpeed, CannonballSolidPrefab.cannonBallDrag, out _, out var angle)) return false;
 
       var pitch = -angle;
-      if (pitch < -maxFiringPitch || pitch > minFiringPitch) return false;
+      if (pitch < -BarrelPitchMaxAngle || pitch > BarrelPitchMinAngle) return false;
 
       return true;
     }
@@ -553,113 +698,204 @@ namespace ValheimVehicles.SharedScripts
       if (!float.IsNaN(_lastAllowedYaw))
       {
         // Stay at last allowed yaw, do not follow out-of-range targets
-        cannonScalarTransform.localRotation = Quaternion.Lerp(cannonScalarTransform.localRotation, Quaternion.identity, Time.fixedDeltaTime);
+        cannonRotationalTransform.localRotation = Quaternion.Lerp(cannonRotationalTransform.localRotation, Quaternion.identity, Time.fixedDeltaTime);
       }
       else
       {
-        cannonScalarTransform.localRotation = Quaternion.identity;
+        cannonRotationalTransform.localRotation = Quaternion.identity;
       }
     }
+
 
     public void AdjustFiringAngle()
     {
       if (IsReloading) return;
 
-      var fireOrigin = projectileLoader.position;
+      var fireOrigin = cannonShooterTransform.position;
       var targetPosition = GetFiringTargetPosition();
       if (!targetPosition.HasValue)
       {
         RotateTowardsOrigin();
+        _canFire = false;
         return;
       }
 
       // --- YAW ---
-      var toTarget = targetPosition.Value - cannonScalarTransform.position;
+      var toTarget = targetPosition.Value - cannonRotationalTransform.position;
       toTarget.y = 0f; // flatten to XZ
-      if (toTarget.sqrMagnitude < 0.01f) return;
+      if (toTarget.sqrMagnitude < 0.01f)
+      {
+        _canFire = false;
+        return;
+      }
 
       var desiredYawWorld = Quaternion.LookRotation(toTarget.normalized, Vector3.up);
-      var currentYaw = cannonScalarTransform.eulerAngles.y;
+      var currentYaw = cannonRotationalTransform.eulerAngles.y;
       var targetYaw = desiredYawWorld.eulerAngles.y;
       var deltaYaw = Mathf.DeltaAngle(currentYaw, targetYaw);
 
       var isWithinYawRange = Mathf.Abs(deltaYaw) <= maxFiringRotationY;
 
-      // Only update yaw if within bounds
       if (canRotateFiringRangeY && isWithinYawRange)
       {
         _lastAllowedYaw = Mathf.LerpAngle(currentYaw, targetYaw, Time.fixedDeltaTime * aimingSpeed);
-        cannonScalarTransform.rotation = Quaternion.Euler(0f, _lastAllowedYaw, 0f);
+        var prevRotation = cannonRotationalTransform.rotation;
+        cannonRotationalTransform.rotation = Quaternion.Euler(prevRotation.x, _lastAllowedYaw, prevRotation.z);
       }
       else
       {
         RotateTowardsOrigin();
+        _canFire = false;
+        return;
       }
-
       // --- PITCH (X/Elevation) ---
+      var hasPitch = false;
       if (isWithinYawRange && CalculateBallisticAimWithDrag(fireOrigin, targetPosition.Value, cannonballSpeed, CannonballSolidPrefab.cannonBallDrag, out var fireDir, out var angle))
       {
-        // min pitch aims cannon down. Max pitch which is negative aims the cannon upwards.
-        _targetShooterLocalRotation = Quaternion.Euler(Mathf.Clamp(-angle, -maxFiringPitch, minFiringPitch), 0f, 0f);
-        _canFire = true;
+        // Clamp pitch
+        // this can already be mutated by rotational in Y
+        var prevRotation = cannonRotationalTransform.localRotation;
+        _targetShooterLocalRotation = Quaternion.Euler(Mathf.Clamp(-angle, -BarrelPitchMaxAngle, BarrelPitchMinAngle), prevRotation.y, prevRotation.z);
+        hasPitch = true;
       }
       else
       {
-        _canFire = false;
+        hasPitch = false;
         _targetShooterLocalRotation = Quaternion.identity;
       }
 
-      cannonShooterTransform.localRotation = Quaternion.Lerp(
-        cannonShooterTransform.localRotation,
+      var localRotation = cannonShooterTransform.localRotation;
+
+      localRotation = Quaternion.Lerp(
+        localRotation,
         _targetShooterLocalRotation,
         Time.fixedDeltaTime * aimingSpeed
       );
+      cannonShooterTransform.localRotation = localRotation;
+
+      // --- Firing check (with angle threshold) ---
+      var alignedYaw = Mathf.Abs(Mathf.DeltaAngle(targetYaw, cannonRotationalTransform.rotation.eulerAngles.y)) < 0.5f;
+      var alignedPitch = Quaternion.Angle(localRotation, _targetShooterLocalRotation) < 0.5f;
+
+      _canFire = isWithinYawRange && hasPitch && alignedYaw && alignedPitch;
     }
 
-    public bool Fire()
+    public void Fire()
     {
-      if (IsReloading || _loadedCannonball == null || CurrentAmmo <= 0 || !hasNearbyPowderBarrel || !_canFire) return false;
+      if (!isActiveAndEnabled) return;
+      if (IsReloading || IsFiring || CurrentAmmo <= 0 || !hasNearbyPowderBarrel || !_canFire) return;
+      IsFiring = true;
+
+      var hasFired = false;
+      foreach (var shootingPart in shootingParts)
+      {
+        if (!FireSingle(shootingPart)) break;
+        hasFired = true;
+      }
+
+      if (!hasFired)
+      {
+        IsFiring = false;
+        return;
+      }
+
+      CurrentAmmo = Math.Max(0, CurrentAmmo - shootingParts.Count);
+
+      // use a single audio clip for now. Using multiple is not worth it for perf.
+      PlayFireClip();
+
+      OnAmmoChanged?.Invoke(CurrentAmmo);
+      OnFired?.Invoke();
+
+      _recoilRoutine.Start(RecoilCoroutine());
+    }
+
+    private bool FireSingle(ShootingPart shootingPart)
+    {
+      if (!_loadedCannonballs.TryGetValue(shootingPart, out var loadedCannonball) || loadedCannonball == null)
+      {
+        loadedCannonball = GetPooledCannonball(shootingPart);
+        if (loadedCannonball == null)
+        {
+          LoggerProvider.LogWarning("No cannonball available. Please increase the pool size.");
+          return false;
+        }
+        _loadedCannonballs[shootingPart] = loadedCannonball;
+        loadedCannonball.Load(shootingPart.projectileLoader);
+      }
 
       var targetPosition = GetFiringTargetPosition();
       if (!targetPosition.HasValue) return false;
-      if (Vector3.Distance(targetPosition.Value, projectileLoader.position) > maxFiringRange) return false;
+      if (Vector3.Distance(targetPosition.Value, shootingPart.projectileLoader.position) > maxFiringRange) return false;
 
-      IgnoreLocalColliders(_loadedCannonball);
-      _loadedCannonball.transform.position = projectileLoader.position;
-#if UNITY_EDITOR
-      // Debug.DrawRay(projectileLoader.position, cannonShooterTransform.forward * 150f, Color.green, 1f);
-#endif
+      IgnoreLocalColliders(loadedCannonball);
+      loadedCannonball.transform.position = shootingPart.projectileLoader.position;
 
-      _loadedCannonball.Fire(
+      loadedCannonball.Fire(
         cannonShooterTransform.forward * cannonballSpeed,
-        muzzleFlashPoint.position,
-        ReturnCannonballToPool);
+        shootingPart.projectileLoader, this);
 
-      OnCannonballExitedMuzzle();
+      PlayMuzzleFlash(shootingPart);
 
-      _activeCannonballs.Add(_loadedCannonball);
-      _trackedLoadedCannonballs.Remove(_loadedCannonball);
-      _loadedCannonball = null;
-      CurrentAmmo--;
-      OnAmmoChanged?.Invoke(CurrentAmmo);
+      _activeCannonballs.Add(loadedCannonball);
+      _trackedLoadedCannonballs.Remove(loadedCannonball);
 
-      if (_audioSource)
-      {
-        PlayFireClip();
-        // Invoke(nameof(PlayFireClipDelayed), Random.Range(0.001f, 0.1f));
-      }
-      OnFired?.Invoke();
+      // Clean up loaded ball for this barrel
+      _loadedCannonballs[shootingPart] = null;
 
-      StartCoroutine(RecoilCoroutine());
       return true;
     }
 
     [ContextMenu("Reload Cannon")]
     public void TryReload()
     {
-      if (IsReloading || CurrentAmmo <= 0 || _loadedCannonball != null)
+      if (IsReloading || CurrentAmmo <= 0 || IsAnyBarrelLoaded)
         return;
-      StartCoroutine(ReloadCoroutine());
+      _reloadRoutine.Start(ReloadCoroutine());
+    }
+
+    /// <summary>
+    /// Checks if the cannon has clear line of sight from the muzzle to the specified target position,
+    /// ignoring any colliders belonging to itself. Returns true if nothing blocks the shot.
+    /// </summary>
+    public bool HasLineOfSightToTarget(Vector3 targetPosition, LayerMask obstacleMask, bool raycastDebugDraw = false)
+    {
+      // Use a small offset forward to avoid muzzle collisions
+      var fireOrigin = cannonShooterAimPoint.position;
+
+      var dir = targetPosition - fireOrigin;
+      var distance = dir.magnitude;
+      dir.Normalize();
+
+      // Allow for multiple skips if we hit our own ship/vehicle/cannon parts
+      var currOrigin = fireOrigin;
+      var remainingDist = distance;
+      const int maxSelfSkips = 8;
+      for (var i = 0; i < maxSelfSkips; i++)
+      {
+        if (Physics.Raycast(currOrigin, dir, out var hit, remainingDist, obstacleMask))
+        {
+          // If we hit ourselves, skip past and keep going
+          if (hit.transform == transform || hit.transform.IsChildOf(transform))
+          {
+            currOrigin = hit.point + dir * hit.collider.bounds.size.magnitude; // Move just past this collider
+            remainingDist = distance - (currOrigin - fireOrigin).magnitude;
+            continue;
+          }
+
+          if (raycastDebugDraw)
+            Debug.DrawLine(fireOrigin, hit.point, Color.red, 0.05f);
+
+          // Any other collider is considered blocking
+          return false;
+        }
+        // No hit = clear shot
+        if (raycastDebugDraw)
+          Debug.DrawLine(fireOrigin, targetPosition, Color.green, 0.05f);
+        return true;
+      }
+      // If we exceeded skips, treat as blocked (fail-safe)
+      return false;
     }
 
     private IEnumerator RecoilCoroutine()
@@ -675,7 +911,7 @@ namespace ValheimVehicles.SharedScripts
         // move towards recoil.
         if (elapsed < 0.1f)
         {
-          cannonScalarTransform.localPosition = Vector3.Lerp(Vector3.zero, Vector3.forward * -0.1f, t);
+          cannonRotationalTransform.localPosition = Vector3.Lerp(Vector3.zero, Vector3.forward * -0.1f, t);
           if (cannonShooterTransform != null)
           {
             cannonShooterTransform.localRotation = Quaternion.Lerp(_targetShooterLocalRotation, _recoilRotation, Mathf.Clamp01(t));
@@ -688,14 +924,15 @@ namespace ValheimVehicles.SharedScripts
           {
             cannonShooterTransform.localRotation = Quaternion.Lerp(_targetShooterLocalRotation * _recoilRotation, _targetShooterLocalRotation, Mathf.Clamp01(t));
           }
-          cannonScalarTransform.localPosition = Vector3.Lerp(Vector3.forward * -0.1f, Vector3.zero, t);
+          cannonRotationalTransform.localPosition = Vector3.Lerp(Vector3.forward * -0.1f, Vector3.zero, t);
         }
         yield return null;
       }
+      IsFiring = false;
 
       if (autoReload && CurrentAmmo > 0)
       {
-        yield return ReloadCoroutine();
+        _reloadRoutine.Start(ReloadCoroutine());
       }
       else
       {
@@ -703,17 +940,11 @@ namespace ValheimVehicles.SharedScripts
       }
     }
 
-    private void FindNearbyPowderBarrel()
-    {
-
-    }
-
     private IEnumerator ReloadCoroutine()
     {
       if (!hasNearbyPowderBarrel)
-      {
+        yield break;
 
-      }
       IsReloading = true;
       var elapsed = 0f;
 
@@ -726,67 +957,99 @@ namespace ValheimVehicles.SharedScripts
         var t = Mathf.Clamp01(elapsed * 2f / safeReloadTime); // 0..1
         elapsed += Time.deltaTime;
         if (cannonShooterTransform != null)
-        {
           cannonShooterTransform.localRotation = Quaternion.Lerp(startRotation, endRotation, Mathf.Clamp01(t));
-        }
         yield return null; // Wait one frame
       }
 
-      // must wait for reload, then continue with audio. reload must be a higher number otherwise it will conflict with firing audio.
-      if (_audioSource.isPlaying)
-      {
-        _audioSource.Stop();
-      }
-      if (_audioSource)
-      {
-        _audioSource.pitch = reloadClipPitch;
-        _audioSource.PlayOneShot(reloadClip);
-      }
+      PlayReloadClip();
 
-      for (var i = 0; i < reloadQuantity && CurrentAmmo - i > 0; i++)
+      var shotsToReload = Math.Min(reloadQuantity, shootingParts.Count);
+      for (var i = 0; i < shotsToReload && CurrentAmmo - i > 0; i++)
       {
-        if (_loadedCannonball == null)
-        {
-          _loadedCannonball = GetPooledCannonball();
-          _loadedCannonball.Load(projectileLoader, muzzleFlashPoint);
-        }
+        var shootingPart = shootingParts[i];
+        if (shootingPart == null) break;
+        var loaded = GetPooledCannonball(shootingPart);
+        loaded.Load(shootingPart.projectileLoader);
+        _loadedCannonballs[shootingPart] = loaded;
       }
       IsReloading = false;
       OnReloaded?.Invoke();
     }
 
-    private void OnCannonballExitedMuzzle()
+    private void PlayMuzzleFlash(ShootingPart shootingPart)
     {
-      if (muzzleFlashEffect)
+      if (shootingPart?.muzzleFlashEffect)
       {
-        muzzleFlashEffect.transform.position = muzzleFlashPoint.position;
-        muzzleFlashEffect.transform.rotation = muzzleFlashPoint.rotation;
-        muzzleFlashEffect.Play();
+        shootingPart.muzzleFlashEffect.Play();
       }
+    }
+
+    private void PlayReloadClip()
+    {
+      if (!HasReloadAudio) return;
+      if (!_cannonReloadAudioSource) return;
+      _cannonReloadAudioSource.volume = CannonReloadAudioVolume;
+
+      // do nothing on reload if it's already playing.
+      if (_cannonReloadAudioSource.isPlaying)
+      {
+        return;
+      }
+
+      _cannonReloadAudioSource.pitch = reloadClipPitch;
+      _cannonReloadAudioSource.Play();
     }
 
     private void PlayFireClip()
     {
-      _audioSource.pitch = fireClipPitch + Random.Range(-0.2f, 0.2f);
-      _audioSource.PlayOneShot(fireClip);
+      if (!HasFireAudio || !_cannonFireAudioSource) return;
+      _cannonFireAudioSource.volume = CannonFireAudioVolume;
+
+      if (_cannonFireAudioSource.isPlaying)
+      {
+        _cannonFireAudioSource.Stop();
+      }
+
+      _cannonFireAudioSource.pitch = fireClipPitch + Random.Range(-0.2f, 0.2f);
+      _cannonFireAudioSource.Play();
     }
 
     private void StartCleanupCoroutine()
     {
-      if (_cleanupCoroutine != null)
-      {
-        StopCoroutine(_cleanupCoroutine);
-      }
-      _cleanupCoroutine = StartCoroutine(CleanupExtraCannonballsAfterDelay());
+      if (!isActiveAndEnabled) return;
+      _cleanupRoutine.Start(CleanupExtraCannonballsAfterDelay());
     }
 
     private IEnumerator CleanupExtraCannonballsAfterDelay()
     {
       yield return new WaitForSeconds(10f);
-      while (_cannonballPool.Count > minPoolSize)
+      while (_cannonballPool.Count > MinPoolSize)
       {
         var ball = _cannonballPool.Dequeue();
-        Destroy(ball.gameObject);
+        if (ball != null)
+        {
+          Destroy(ball.gameObject);
+        }
+      }
+
+      _trackedLoadedCannonballs.RemoveAll(x => x == null);
+    }
+
+    public class ShootingPart
+    {
+      public Transform muzzleExitPoint;
+      public ParticleSystem muzzleFlashEffect;
+      public Transform projectileLoader;
+
+      public static ShootingPart Init(Transform shootingPartTransform)
+      {
+        var shootingPart = new ShootingPart
+        {
+          muzzleExitPoint = shootingPartTransform.Find("points/muzzle_exit_point"),
+          muzzleFlashEffect = shootingPartTransform.Find("muzzle_flash_effect").GetComponent<ParticleSystem>(),
+          projectileLoader = shootingPartTransform.Find("points/projectile_loader")
+        };
+        return shootingPart;
       }
     }
   }
