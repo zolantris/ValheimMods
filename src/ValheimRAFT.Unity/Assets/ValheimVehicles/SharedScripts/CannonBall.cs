@@ -84,8 +84,12 @@ namespace ValheimVehicles.SharedScripts
     [SerializeField] private ParticleSystem _explosionEffect;
     [SerializeField] private AudioClip _explosionSound;
     [SerializeField] public float cannonBallDrag = 0.47f;
+    [SerializeField] public bool CanPlayWindSound;
     public Rigidbody m_body;
     [CanBeNull] public Transform lastFireTransform;
+
+    [SerializeField] private AudioSource _windAudioSource;
+    [SerializeField] private float _explosionClipStartPosition = 0.1f;
 
     private readonly HashSet<(Collider, Collider)> _ignoredColliders = new();
     private readonly List<DamageInfo> _queuedDamageInfo = new();
@@ -93,6 +97,7 @@ namespace ValheimVehicles.SharedScripts
     private readonly Collider[] allocatedColliders = new Collider[100];
 
     private CoroutineHandle _applyDamageCoroutine;
+    private bool _canUseEffect;
     private List<Collider> _colliders = new();
     private Vector3 _currentVelocity;
 
@@ -126,6 +131,7 @@ namespace ValheimVehicles.SharedScripts
       _explosionParent = transform.Find("explosion");
       _explosionAudioSource = _explosionParent.GetComponent<AudioSource>();
       _explosionEffect = transform.Find("explosion/explosion_effect").GetComponent<ParticleSystem>();
+      _windAudioSource = transform.Find("wind_sound").GetComponent<AudioSource>();
 
       foreach (var localCollider in _colliders)
       {
@@ -148,6 +154,35 @@ namespace ValheimVehicles.SharedScripts
     private void OnCollisionEnter(Collision other)
     {
       OnHitHandleHitType(other, out _);
+    }
+
+    public void PlayWindSound()
+    {
+      if (!CanPlayWindSound) return;
+      if (!_windAudioSource) return;
+      var clipLength = _windAudioSource.clip.length;
+      _windAudioSource.time = Mathf.Max(0, clipLength / 2f);
+      _windAudioSource.Play((long)0.1);
+    }
+
+    public void PlayExplosionSound()
+    {
+      if (!_explosionAudioSource) return;
+      _explosionAudioSource.time = _explosionClipStartPosition;
+      _explosionAudioSource.Play();
+    }
+
+    public void StopWindSound()
+    {
+      if (!CanPlayWindSound) return;
+      if (!_windAudioSource || !_windAudioSource.isPlaying) return;
+      _windAudioSource.Stop();
+    }
+
+    public void StopExplosionSound()
+    {
+      if (!_explosionAudioSource || !_explosionAudioSource.isPlaying) return;
+      _explosionAudioSource.Stop();
     }
 
     public HitMaterial GetHitMaterialFromTransformName(Transform materialNameRoot)
@@ -250,7 +285,10 @@ namespace ValheimVehicles.SharedScripts
             var rb = col.attachedRigidbody;
             if (rb != null)
             {
-              rb.AddExplosionForce(force, explosionOrigin, explosionRadius);
+              if (!PrefabNames.IsVehicle(rb.name) && !PrefabNames.IsVehiclePiecesCollider(rb.name))
+              {
+                rb.AddExplosionForce(force, explosionOrigin, explosionRadius);
+              }
             }
             AddDamageToQueue(hitInfo.collider, Vector3.up, force);
           }
@@ -265,16 +303,18 @@ namespace ValheimVehicles.SharedScripts
 
       var explosionScalar = Vector3.Lerp(Vector3.one * 0.25f, Vector3.one * 2f, velocity / 90f);
       _explosionEffect.transform.localScale = explosionScalar;
-      _explosionEffect.Play();
-      _explosionAudioSource.Play();
 
-      yield return new WaitUntil(() => _explosionEffect.isStopped);
-
-      if (_explosionAudioSource.isPlaying)
+      if (_canUseEffect)
       {
-        _explosionAudioSource.Stop();
+        _explosionEffect.Play();
+        PlayExplosionSound();
+        yield return new WaitUntil(() => _explosionEffect.isStopped);
       }
-
+      else
+      {
+        yield return new WaitForSeconds(0.2f);
+      }
+      
       _explosionParent.SetParent(transform);
       _explosionParent.transform.localPosition = Vector3.zero;
 
@@ -351,11 +391,25 @@ namespace ValheimVehicles.SharedScripts
     private void OnHitHandleHitType(Collision other, out ProjectileHitType projectileHitType)
     {
       projectileHitType = ProjectileHitType.None;
-      if (other.collider.name.StartsWith("cannonball")) return;
+      var isCollidingWithParent = controller && other.collider.transform.root == controller.transform.root;
+
+      // allow ignoring parent colliders and do not restore.
+      if (isCollidingWithParent)
+      {
+        foreach (var collider1 in _colliders)
+        {
+          Physics.IgnoreCollision(other.collider, collider1 , true);
+        }
+      }
+      
+      if (other.collider.name.StartsWith("cannonball") || isCollidingWithParent)
+      {
+        m_body.velocity = _lastVelocity;
+        return;
+      };
 
       var relativeVelocity = other.relativeVelocity;
       var relativeVelocityMagnitude = relativeVelocity.magnitude;
-      var currentVelocity = m_body.velocity;
 
       var hitMaterial = GetHitMaterial(other);
       var hitMaterialVelocityMultiplier = GetHitMaterialVelocityMultiplier(hitMaterial);
@@ -480,13 +534,20 @@ namespace ValheimVehicles.SharedScripts
       ResetCannonball();
     }
 
-    public void Fire(Vector3 velocity, Transform fireTransform, CannonController cannonController)
+    public void Fire(Vector3 velocity, Transform fireTransform, CannonController cannonController, int firingIndex)
     {
       if (!m_body)
       {
         LoggerProvider.LogWarning("Cannonball has no rigidbody!");
         return;
       }
+      _canUseEffect = firingIndex == 0;
+      
+      if (_canUseEffect)
+      {
+        PlayWindSound();
+      }
+      
       lastFireTransform = fireTransform;
 
       controller = cannonController;
@@ -539,10 +600,8 @@ namespace ValheimVehicles.SharedScripts
 
     public void ResetCannonball()
     {
-      if (_explosionAudioSource.isPlaying)
-      {
-        _explosionAudioSource.Stop();
-      }
+      StopExplosionSound(); 
+      StopWindSound();
 
       if (_queuedDamageInfo.Count > 0)
       {
@@ -556,6 +615,7 @@ namespace ValheimVehicles.SharedScripts
       _applyDamageCoroutine.Stop();
 
       _hasExploded = false;
+      _canUseEffect = true;
       IsInFlight = false;
 
       if (m_body)

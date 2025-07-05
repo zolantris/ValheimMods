@@ -23,7 +23,7 @@ namespace ValheimVehicles.SharedScripts
       // Future: AttackArea, AttackPlayer, Patrol, etc
     }
 
-    public static float DEFEND_PLAYER_SAFE_RADIUS = 1f;
+    public static float DEFEND_PLAYER_SAFE_RADIUS = 3f;
     public static float MAX_DEFEND_SEARCH_RADIUS = 30f;
     public static Vector3 MAX_DEFEND_AREA_SEARCH = new(30f, 40f, 30f);
 
@@ -70,6 +70,12 @@ namespace ValheimVehicles.SharedScripts
         if (character == null) return false;
         if (canShootPlayer && character.IsPlayer() && !character.IsDead()) return true;
         return !character.IsPlayer() && !character.IsTamed(5f) && !character.IsDead();
+        #else
+        if (!t) return false;
+        var tName = t.name;
+        var rootName = t.root.name;
+        if (rootName.StartsWith("player") || rootName.Contains("friendly") || tName.StartsWith("player_collider")) return false;
+        return true;
 #endif
         return true;
       };
@@ -275,59 +281,70 @@ namespace ValheimVehicles.SharedScripts
     }
 
     private void AssignCannonsToTargets(
-      List<CannonController> cannons,
-      List<Transform> targets,
-      int maxCannonsPerTarget = 1)
+    List<CannonController> cannons,
+    List<Transform> targets,
+    int maxCannonsPerTarget = 1)
     {
-      // 1. Map to keep track of cannons per target.
-      var assignedCounts = new Dictionary<Transform, int>(targets.Count);
-      foreach (var t in targets)
-        assignedCounts[t] = 0;
-
-      // 2. Retain existing assignments if possible (O(N))
-      var unassignedCannons = new List<CannonController>(cannons.Count);
-
-      foreach (var cannon in cannons)
-      {
-        var assigned = cannon.firingTarget;
-        if (
-          assigned != null &&
-          assignedCounts.TryGetValue(assigned, out var count) &&
-          count < maxCannonsPerTarget &&
-          cannon.CanAimAt(assigned.position) &&
-          Vector3.Distance(cannon.transform.position, assigned.position) <= cannon.maxFiringRange)
-        {
-          assignedCounts[assigned]++;
-          continue; // Retain assignment
-        }
-        cannon.firingTarget = null;
-        unassignedCannons.Add(cannon);
-      }
-
-      // 3. For each unassigned cannon, assign to nearest eligible target (O(N*M) but only for unassigned)
-      foreach (var cannon in unassignedCannons)
-      {
-        Transform bestTarget = null;
-        var bestDist = float.MaxValue;
-
+        // 1. Map to keep track of cannons per target.
+        var assignedCounts = new Dictionary<Transform, int>(targets.Count);
         foreach (var t in targets)
-        {
-          if (assignedCounts[t] >= maxCannonsPerTarget) continue;
-          if (!cannon.CanAimAt(t.position)) continue;
+            assignedCounts[t] = 0;
 
-          var dist = Vector3.SqrMagnitude(cannon.transform.position - t.position); // SqrMagnitude for perf!
-          if (dist < bestDist)
-          {
-            bestDist = dist;
-            bestTarget = t;
-          }
-        }
-        if (bestTarget != null)
+        var unassignedCannons = new List<CannonController>(cannons.Count);
+
+        // 2. Retain existing assignments if possible (O(N))
+        foreach (var cannon in cannons)
         {
-          cannon.firingTarget = bestTarget;
-          assignedCounts[bestTarget]++;
+            var assigned = cannon.firingTarget;
+            if (
+                assigned != null &&
+                assignedCounts.TryGetValue(assigned, out var count) &&
+                count < maxCannonsPerTarget &&
+                cannon.CanHitTargetCollider(assigned, out var aimPoint) &&
+                Vector3.Distance(cannon.transform.position, aimPoint) <= cannon.maxFiringRange)
+            {
+                cannon.currentAimPoint = aimPoint;
+                assignedCounts[assigned]++;
+                continue;
+            }
+            cannon.firingTarget = null;
+            cannon.currentAimPoint = null;
+            unassignedCannons.Add(cannon);
         }
-      }
+
+        // 3. Assign unassigned cannons to best targets (O(N*M))
+        foreach (var cannon in unassignedCannons)
+        {
+            Transform bestTarget = null;
+            Vector3 bestAimPoint = default;
+            float bestDist = float.MaxValue;
+
+            foreach (var t in targets)
+            {
+                if (assignedCounts[t] >= maxCannonsPerTarget) continue;
+                if (!cannon.CanHitTargetCollider(t, out var aimPoint)) continue;
+                
+                float dist = Vector3.SqrMagnitude(cannon.transform.position - aimPoint);
+                if (dist < bestDist)
+                {
+                    bestDist = dist;
+                    bestTarget = t;
+                    bestAimPoint = aimPoint;
+                }
+            }
+
+            if (bestTarget != null)
+            {
+                cannon.firingTarget = bestTarget;
+                cannon.currentAimPoint = bestAimPoint;
+                assignedCounts[bestTarget]++;
+            }
+            else
+            {
+                cannon.firingTarget = null;
+                cannon.currentAimPoint = null;
+            }
+        }
     }
 
 

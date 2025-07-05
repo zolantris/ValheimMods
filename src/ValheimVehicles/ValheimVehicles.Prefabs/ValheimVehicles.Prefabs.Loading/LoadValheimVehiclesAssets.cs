@@ -386,6 +386,8 @@ public class LoadValheimVehicleAssets : ILoadAssets
       color = Color.black
     };
 
+    RuntimeDebugLineDrawer.DebugRayMaterial = new Material(DoubleSidedTransparentMat);
+
     PowerPylon.LightningMaterial = LightningMaterial;
     MovingTreadComponent.fallbackPrefab = TankTreadsSingle;
 
