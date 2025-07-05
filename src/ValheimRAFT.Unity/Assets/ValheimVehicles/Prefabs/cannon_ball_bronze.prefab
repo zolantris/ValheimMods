@@ -244,7 +244,7 @@ GameObject:
   - component: {fileID: 6621782692716234487}
   - component: {fileID: 7920779334040085154}
   m_Layer: 0
-  m_Name: sphere
+  m_Name: cannonball_collider
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

@@ -65,7 +65,7 @@ namespace ValheimVehicles.SharedScripts
             DontDestroyOnLoad(_singletonObject);
         }
 
-        public static void DrawLine(Vector3 start, Vector3 end, Color color, float duration = 0.02f, float width = 0.04f)
+        public static void DrawLine(Vector3 start, Vector3 end, Color color, float duration = 0.1f, float width = 0.04f)
         {
             if (!Instance) Init();
 
