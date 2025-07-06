@@ -296,12 +296,22 @@ namespace ValheimVehicles.SharedScripts
         foreach (var cannon in cannons)
         {
             var assigned = cannon.firingTarget;
+            if (assigned == null)
+            {
+              cannon.firingTarget = null;
+              cannon.currentAimPoint = null;
+              unassignedCannons.Add(cannon);
+              continue;
+            }
+
+            var hasCounts = assignedCounts.TryGetValue(assigned, out var count);
+            var canHitTarget = cannon.CanHitTargetCollider(assigned, out var aimPoint);
+            var isNearTarget = Vector3.Distance(cannon.cannonShooterAimPoint.position, aimPoint) <= cannon.maxFiringRange;
+            
             if (
-                assigned != null &&
-                assignedCounts.TryGetValue(assigned, out var count) &&
+                hasCounts &&
                 count < maxCannonsPerTarget &&
-                cannon.CanHitTargetCollider(assigned, out var aimPoint) &&
-                Vector3.Distance(cannon.transform.position, aimPoint) <= cannon.maxFiringRange)
+                canHitTarget && isNearTarget)
             {
                 cannon.currentAimPoint = aimPoint;
                 assignedCounts[assigned]++;
@@ -316,15 +326,15 @@ namespace ValheimVehicles.SharedScripts
         foreach (var cannon in unassignedCannons)
         {
             Transform bestTarget = null;
-            Vector3 bestAimPoint = default;
-            float bestDist = float.MaxValue;
+            Vector3? bestAimPoint = null;
+            var bestDist = cannon.maxFiringRange;
 
             foreach (var t in targets)
             {
                 if (assignedCounts[t] >= maxCannonsPerTarget) continue;
                 if (!cannon.CanHitTargetCollider(t, out var aimPoint)) continue;
                 
-                float dist = Vector3.SqrMagnitude(cannon.cannonShooterAimPoint.position - aimPoint);
+                var dist = Vector3.Distance(cannon.cannonShooterAimPoint.position, aimPoint);
                 if (dist < bestDist)
                 {
                     bestDist = dist;
@@ -339,11 +349,11 @@ namespace ValheimVehicles.SharedScripts
                 cannon.currentAimPoint = bestAimPoint;
                 assignedCounts[bestTarget]++;
             }
-            else
-            {
-                cannon.firingTarget = null;
-                cannon.currentAimPoint = null;
-            }
+            // else
+            // {
+            //     cannon.firingTarget = null;
+            //     cannon.currentAimPoint = null;
+            // }
         }
     }
 
