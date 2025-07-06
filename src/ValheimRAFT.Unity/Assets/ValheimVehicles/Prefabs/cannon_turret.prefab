@@ -192,7 +192,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3927644146118392527}
   - component: {fileID: 513667467943538715}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: cannon_turret_pivot_collider
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -411,7 +411,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4211315656319008195}
   - component: {fileID: 2218279397958691094}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: cannon_turret_gears_collider
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -792,7 +792,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2525342373951622399}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: static_colliders
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -858,7 +858,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5214873445535601833}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: colliders
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1258,7 +1258,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 85455439046529888}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: pivot
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1273,13 +1273,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8410948612852831981}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalRotation: {x: -0, y: -0.79319984, z: -0, w: 0.6089615}
   m_LocalPosition: {x: -0.015537024, y: 0.01, z: 0.008999944}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 5122032767939313026}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: -104.971, z: 0}
 --- !u!1001 &1383408186662049430
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1291,6 +1291,10 @@ PrefabInstance:
     - target: {fileID: 625773691141595227, guid: 1eef16041ff0c764d8f2f59224f59e7c, type: 3}
       propertyPath: m_Name
       value: cannon_shooter
+      objectReference: {fileID: 0}
+    - target: {fileID: 625773691141595227, guid: 1eef16041ff0c764d8f2f59224f59e7c, type: 3}
+      propertyPath: m_Layer
+      value: 10
       objectReference: {fileID: 0}
     - target: {fileID: 743058366039380346, guid: 1eef16041ff0c764d8f2f59224f59e7c, type: 3}
       propertyPath: m_LocalPosition.x
@@ -1335,6 +1339,14 @@ PrefabInstance:
     - target: {fileID: 4691913112889780347, guid: 1eef16041ff0c764d8f2f59224f59e7c, type: 3}
       propertyPath: m_Name
       value: cannon_shooter_part 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 4691913112889780347, guid: 1eef16041ff0c764d8f2f59224f59e7c, type: 3}
+      propertyPath: m_Layer
+      value: 10
+      objectReference: {fileID: 0}
+    - target: {fileID: 4821508612394975690, guid: 1eef16041ff0c764d8f2f59224f59e7c, type: 3}
+      propertyPath: m_Layer
+      value: 10
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

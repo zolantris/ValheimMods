@@ -327,7 +327,8 @@ namespace ValheimVehicles.SharedScripts
         {
             Transform bestTarget = null;
             Vector3? bestAimPoint = null;
-            var bestDist = cannon.maxFiringRange;
+            // just 1 higher than max distance.
+            var bestDist = cannon.maxFiringRange + 1f;
 
             foreach (var t in targets)
             {
@@ -349,11 +350,11 @@ namespace ValheimVehicles.SharedScripts
                 cannon.currentAimPoint = bestAimPoint;
                 assignedCounts[bestTarget]++;
             }
-            // else
-            // {
-            //     cannon.firingTarget = null;
-            //     cannon.currentAimPoint = null;
-            // }
+            else
+            {
+                cannon.firingTarget = null;
+                cannon.currentAimPoint = null;
+            }
         }
     }
 

@@ -122,8 +122,6 @@ namespace ValheimVehicles.SharedScripts
 
     private void Awake()
     {
-      _applyDamageCoroutine = new CoroutineHandle(this);
-      _despawnCoroutine = new CoroutineHandle(this);
       m_body = GetComponent<Rigidbody>();
       m_body.drag = cannonBallDrag;
       m_body.angularDrag = cannonBallDrag;
@@ -146,6 +144,12 @@ namespace ValheimVehicles.SharedScripts
       _lastVelocity = m_body.velocity;
     }
 
+    private void OnEnable()
+    {
+      _applyDamageCoroutine = new CoroutineHandle(this);
+      _despawnCoroutine = new CoroutineHandle(this);
+    }
+
     private void OnDestroy()
     {
       StopAllCoroutines();
@@ -155,6 +159,8 @@ namespace ValheimVehicles.SharedScripts
     {
       OnHitHandleHitType(other, out _);
     }
+
+    public CoroutineHandle GetCoroutineHandle() => new CoroutineHandle(this);
 
     public void PlayWindSound()
     {
@@ -400,13 +406,12 @@ namespace ValheimVehicles.SharedScripts
         {
           Physics.IgnoreCollision(other.collider, collider1 , true);
         }
-      }
-      
-      if (other.collider.name.StartsWith("cannonball") || isCollidingWithParent)
-      {
         m_body.velocity = _lastVelocity;
         return;
-      };
+      }
+
+      // var colliderName = other.collider.name;
+      
 
       var relativeVelocity = other.relativeVelocity;
       var relativeVelocityMagnitude = relativeVelocity.magnitude;
