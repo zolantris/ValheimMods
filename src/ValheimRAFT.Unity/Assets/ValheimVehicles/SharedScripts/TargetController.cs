@@ -47,21 +47,26 @@ namespace ValheimVehicles.SharedScripts
     [SerializeField] public int maxCannonsPerEnemy = 2;
     [SerializeField] public bool autoFire;
 
-    public float FiringDelay = 0.1f;
-    public bool CanFire;
-    [SerializeField] public List<CannonController> cannonControllers = new();
+    public float FiringCooldown = 0.2f;
+    public float FiringDelayPerCannon = 0.2f;
+    [SerializeField] public List<CannonController> allCannonControllers = new();
+    [SerializeField] public List<CannonController> autoTargetControllers = new();
+    [SerializeField] public List<CannonController> manualFireControllers = new();
 
     private readonly Collider[] _enemyBuffer = new Collider[32];
+    private readonly Dictionary<int,CoroutineHandle> _manualFireCannonsRoutines = new();
 
     private readonly Dictionary<Transform, DefenseAreaTrigger> _playerAreaTriggers = new();
 
     private readonly List<GameObject> _spawnedDefenseAreaTriggers = new();
 
-    private CoroutineHandle _fireCannonsRoutine;
+    private CoroutineHandle _acquireTargetsRoutine;
+    private CoroutineHandle _autoFireCannonsRoutine;
 
     private void Awake()
     {
-      _fireCannonsRoutine = new CoroutineHandle(this);
+      _autoFireCannonsRoutine = new CoroutineHandle(this);
+      _acquireTargetsRoutine = new CoroutineHandle(this);
 
       IsHostileCharacter = t =>
       {
@@ -80,22 +85,47 @@ namespace ValheimVehicles.SharedScripts
         return true;
       };
 
-      GetComponentsInChildren(false, cannonControllers);
+      #if UNITY_EDITOR
+      // mostly for local testing.
+      GetComponentsInChildren(false, allCannonControllers);
+      foreach (var allCannonController in allCannonControllers)
+      {
+        switch (allCannonController.GetFiringMode())
+        {
+          case CannonController.FiringMode.Manual:
+            manualFireControllers.Add(allCannonController);
+            break;
+          case CannonController.FiringMode.Auto:
+            autoTargetControllers.Add(allCannonController);
+            break;
+          default:
+            throw new ArgumentOutOfRangeException();
+        }
+      }
+      #endif
 
-      UpdateCannonTarget();
-
+      UpdateAutoCannonTargets();
       RefreshAllDefenseAreaTriggers();
       RefreshPlayerDefenseTriggers();
     }
 
     private void FixedUpdate()
     {
-      UpdateCannonTarget();
-
+      if (autoTargetControllers.Count > 0)
+      {
+        StartUpdatingAutoCannonTargets();
+      }
+      
       if (autoFire)
       {
-        StartFiring();
+        StartAutoFiring();
       }
+    }
+
+    public void OnEnable()
+    {
+      _autoFireCannonsRoutine ??= new CoroutineHandle(this);
+      _acquireTargetsRoutine ??= new CoroutineHandle(this);
     }
 
     private void OnDrawGizmos()
@@ -116,12 +146,20 @@ namespace ValheimVehicles.SharedScripts
         Gizmos.DrawWireCube(area.center, area.size);
     }
 
+    /// <summary>
+    /// Todo for area bombing/and base combat or deforesting. not ready.
+    /// </summary>
+    /// <param name="index"></param>
     public void AddDefenseArea(Vector3 center, Vector3 size)
     {
       defendAreas.Add(new DefenseArea { center = center, size = size });
       RefreshAllDefenseAreaTriggers();
     }
 
+    /// <summary>
+    /// Todo for area bombing/and base combat or deforesting. not ready.
+    /// </summary>
+    /// <param name="index"></param>
     public void RemoveDefenseArea(int index)
     {
       if (index < 0 || index >= defendAreas.Count) return;
@@ -143,7 +181,14 @@ namespace ValheimVehicles.SharedScripts
       foreach (var player in defendPlayers)
       {
         if (player == null) continue;
-        var go = new GameObject($"PlayerDefenseAreaTrigger_{player.name}")
+        var defenseTrigger = player.GetComponent<DefenseAreaTrigger>();
+        if (defenseTrigger)
+        {
+          _playerAreaTriggers[player] = defenseTrigger;
+          continue;
+        }
+        
+        var go = new GameObject($"{PrefabNames.ValheimVehiclesPrefix}_PlayerDefenseAreaTrigger_{player.name}")
         {
           transform = { position = player.position, parent = player.transform },
           layer = LayerHelpers.CharacterTriggerLayer
@@ -181,7 +226,7 @@ namespace ValheimVehicles.SharedScripts
         var area = defendAreas[i];
 
         // Spawn
-        var go = new GameObject($"DefenseAreaTrigger_{i}");
+        var go = new GameObject($"{PrefabNames.ValheimVehiclesPrefix}_DefenseAreaTrigger_{i}");
         go.transform.SetParent(null);
         go.transform.position = area.center;
         go.transform.localScale = Vector3.one;
@@ -201,24 +246,32 @@ namespace ValheimVehicles.SharedScripts
       }
     }
 
-    private IEnumerator FireCannonDelayed(CannonController cannon, float delay)
+    private IEnumerator FireCannonDelayed(CannonController cannon, float delay, bool isManualFire)
     {
       yield return new WaitForSeconds(delay);
-      cannon.Fire();
+      cannon.Fire(isManualFire);
     }
 
-    private IEnumerator FireCannons()
+    private IEnumerator ManualFireCannons(int groupId)
     {
-      CanFire = false;
-      foreach (var cannonsController in cannonControllers.ToList())
+      foreach (var cannonsController in manualFireControllers.ToList())
       {
-        if (!cannonsController) continue;
-        yield return FireCannonDelayed(cannonsController, 0.1f);
+        if (!cannonsController || cannonsController.ManualFiringGroupId != groupId) continue;
+        yield return FireCannonDelayed(cannonsController, FiringDelayPerCannon, true);
       }
 
-      yield return new WaitForSeconds(0.1f);
+      yield return new WaitForSeconds(FiringCooldown);
+    }
 
-      CanFire = true;
+    private IEnumerator AutoFireCannons()
+    {
+      foreach (var cannonsController in autoTargetControllers.ToList())
+      {
+        if (!cannonsController) continue;
+        yield return FireCannonDelayed(cannonsController, FiringDelayPerCannon, false);
+      }
+
+      yield return new WaitForSeconds(FiringCooldown);
     }
 
     private List<Transform> AcquireAllTargets_DefendArea()
@@ -358,37 +411,68 @@ namespace ValheimVehicles.SharedScripts
         }
     }
 
-
-    public void UpdateCannonTarget()
+    private IEnumerator UpdateCannonTargetsRoutine()
     {
-      var targets = targetingMode switch
-      {
-        TargetingMode.DefendPlayer => AcquireAllTargets_DefendPlayer(),
-        TargetingMode.DefendArea => AcquireAllTargets_DefendArea(),
-        _ => null
-      };
+      UpdateAutoCannonTargets();
+      yield return new WaitForSeconds(0.2f);
+    }
 
-      cannonControllers.RemoveAll(x => x == null);
-      targets?.RemoveAll(x => x == null);
+    private void StartUpdatingAutoCannonTargets()
+    {
+      if (_autoFireCannonsRoutine.IsRunning) return;
+      _autoFireCannonsRoutine.Start(UpdateCannonTargetsRoutine());
+    }
 
-      if (targets != null && targets.Count > 0 && cannonControllers.Count > 0)
+    private void UpdateAutoCannonTargets()
+    {
+      try
       {
-        AssignCannonsToTargets(cannonControllers.ToList(), targets, maxCannonsPerEnemy);
-      }
-      else
-      {
-        foreach (var cannon in cannonControllers.ToList())
+        var targets = targetingMode switch
         {
-          if (!cannon) continue;
-          cannon.firingTarget = null;
+          TargetingMode.DefendPlayer => AcquireAllTargets_DefendPlayer(),
+          TargetingMode.DefendArea => AcquireAllTargets_DefendArea(),
+          _ => null
+        };
+
+        allCannonControllers.RemoveAll(x => x == null);
+        autoTargetControllers.RemoveAll(x => x == null);
+
+        targets?.RemoveAll(x => x == null);
+
+        if (targets != null && targets.Count > 0 && autoTargetControllers.Count > 0)
+        {
+          AssignCannonsToTargets(allCannonControllers.ToList(), targets, maxCannonsPerEnemy);
         }
+        else
+        {
+          foreach (var cannon in allCannonControllers.ToList())
+          {
+            if (!cannon) continue;
+            cannon.firingTarget = null;
+          }
+        }
+      }
+      catch (Exception e)
+      {
+        LoggerProvider.LogDebugDebounced($"Error while updating auto cannon targets\n{e}");
       }
     }
 
-    public void StartFiring()
+    public void StartManualFiring(int groupId = 0)
     {
-      if (_fireCannonsRoutine.IsRunning) return;
-      _fireCannonsRoutine.Start(FireCannons());
+      if (!_manualFireCannonsRoutines.TryGetValue(groupId, out var routine))
+      {
+        routine = new CoroutineHandle(this);
+      }
+      if (routine.IsRunning) return;
+      routine.Start(ManualFireCannons(groupId));
+    }
+
+
+    public void StartAutoFiring()
+    {
+      if (_autoFireCannonsRoutine.IsRunning) return;
+      _autoFireCannonsRoutine.Start(AutoFireCannons());
     }
 
     public void AddPlayer(Transform player)
@@ -405,12 +489,36 @@ namespace ValheimVehicles.SharedScripts
 
     public void AddCannon(CannonController controller)
     {
-      cannonControllers.Add(controller);
+      allCannonControllers.Add(controller);
+
+      switch (controller.GetFiringMode())
+      {
+        case CannonController.FiringMode.Manual:
+          manualFireControllers.Add(controller);
+          break;
+        case CannonController.FiringMode.Auto:
+          autoTargetControllers.Add(controller);
+          break;
+        default:
+          throw new ArgumentOutOfRangeException();
+      }
     }
 
     public void RemoveCannon(CannonController controller)
     {
-      cannonControllers.Remove(controller);
+      allCannonControllers.Remove(controller);
+      switch (controller.GetFiringMode())
+      {
+
+        case CannonController.FiringMode.Manual:
+          manualFireControllers.Remove(controller);
+          break;
+        case CannonController.FiringMode.Auto:
+          autoTargetControllers.Remove(controller);
+          break;
+        default:
+          throw new ArgumentOutOfRangeException();
+      }   
     }
 
     [Serializable]

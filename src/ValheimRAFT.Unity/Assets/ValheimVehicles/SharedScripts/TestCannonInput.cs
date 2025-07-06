@@ -12,11 +12,13 @@ namespace ValheimVehicles.SharedScripts
   public class CannonTestInput : MonoBehaviour
   {
     public TargetController TargetController;
+    [SerializeField] public int firingGroup;
 
     private void Awake()
     {
       TargetController= GetComponent<TargetController>();
     }
+
 
     private void Update()
     {
@@ -24,7 +26,7 @@ namespace ValheimVehicles.SharedScripts
       var isKey1MousePress = Input.GetMouseButtonDown(1);
       if (isSpacePressed || isKey1MousePress)
       {
-        TargetController.StartFiring();
+        TargetController.StartManualFiring(firingGroup);
       }
     }
   }

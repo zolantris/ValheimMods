@@ -122,6 +122,7 @@ namespace ValheimVehicles.SharedScripts
 
     private void Awake()
     {
+      InitCoroutines();
       m_body = GetComponent<Rigidbody>();
       m_body.drag = cannonBallDrag;
       m_body.angularDrag = cannonBallDrag;
@@ -146,8 +147,7 @@ namespace ValheimVehicles.SharedScripts
 
     private void OnEnable()
     {
-      _applyDamageCoroutine = new CoroutineHandle(this);
-      _despawnCoroutine = new CoroutineHandle(this);
+      InitCoroutines();
     }
 
     private void OnDestroy()
@@ -158,6 +158,12 @@ namespace ValheimVehicles.SharedScripts
     private void OnCollisionEnter(Collision other)
     {
       OnHitHandleHitType(other, out _);
+    }
+
+    private void InitCoroutines()
+    {
+      _applyDamageCoroutine ??= new CoroutineHandle(this);
+      _despawnCoroutine ??= new CoroutineHandle(this);
     }
 
     public CoroutineHandle GetCoroutineHandle() => new CoroutineHandle(this);
