@@ -134,6 +134,17 @@ public partial class ModTranslations
     DrakkalSail = SafeLocalize("$valheim_vehicles_sail_drakkal");
   }
 
+  private static void UpdateVehicleCannonTranslations()
+  {
+    VehicleCannon_FireCannons = SafeLocalize("$valheim_vehicles_cannons_fire");
+    VehicleCannon_FireCannonGroup = SafeLocalize("$valheim_vehicles_cannons_fire_group");
+    VehicleCannon_ToggleAutoFire = SafeLocalize("$valheim_vehicles_cannons_toggle_auto_fire");
+    VehicleCannon_SwapCannonBallType = SafeLocalize("$valheim_vehicles_cannons_swap_cannonball_type");
+    VehicleCannon_AmmoText = SafeLocalize("$valheim_vehicles_cannons_ammo_text");
+    VehicleCannon_CannonBallSolid = SafeLocalize("$valheim_vehicles_cannonball_solid");
+    VehicleCannon_CannonBallExplosive = SafeLocalize("$valheim_vehicles_cannonball_explosive");
+  }
+
   private static void UpdateVehicleConfigTranslations()
   {
     VehicleConfig_CustomFloatationHeight = SafeLocalize("$valheim_vehicles_custom_floatation_height");
@@ -163,6 +174,8 @@ public partial class ModTranslations
     SharedKeys_Owner = SafeLocalize("$valheim_vehicles_shared_keys_owner");
     SharedKeys_Hold = SafeLocalize("$valheim_vehicles_shared_keys_hold");
     SharedKeys_Reset = SafeLocalize("$valheim_vehicles_shared_keys_reset");
+    SharedKeys_AddMany = SafeLocalize("$valheim_vehicles_mechanism_interact_add_many");
+    SharedKeys_InteractAltAndPlace = SafeLocalize($"[<color=yellow><b>{ValheimInput_KeyAltPlace}+{ValheimInput_KeyUse}</b></color>]");
   }
 
   private static void SetCurrentLocalizedLanguage()
@@ -328,6 +341,7 @@ public partial class ModTranslations
       UpdatePowerTranslations();
       UpdateSwivelUITranslations();
       UpdateVehicleCommandsTranslations();
+      UpdateVehicleCannonTranslations();
     }
     catch (Exception e)
     {

@@ -104,6 +104,7 @@ public class VehicleHammerItemRegistry : GuardedRegistry<VehicleHammerItemRegist
       Name = "$valheim_vehicles_hammer_name",
       Description = "$valheim_vehicles_hammer_description",
       Icon = icon,
+      RepairStation = "piece_workbench",
       Requirements =
       [
         new RequirementConfig

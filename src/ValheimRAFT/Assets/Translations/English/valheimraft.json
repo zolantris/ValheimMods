@@ -286,5 +286,11 @@
   "valheim_vehicles_cannonball_solid": "Cannonball: Solid",
   "valheim_vehicles_cannonball_solid_desc": "An solid cannonball. Can tear through multiple layers of a structure damaging everything in it's path. Different materials slow down it's speed and damage",
   "valheim_vehicles_cannonball_explosive": "Cannonball: Explosive",
-  "valheim_vehicles_cannonball_explosive_desc": "An explosive cannonball. Cannot penetrate structures but it can do massive damage across an impact area."
+  "valheim_vehicles_cannonball_explosive_desc": "An explosive cannonball. Cannot penetrate structures but it can do massive damage across an impact area.",
+  "valheim_vehicles_cannons_add_cannonball": "Add Cannonball",
+  "valheim_vehicles_cannons_swap_cannonball_type": "Swap Cannonball",
+  "valheim_vehicles_cannons_toggle_auto_fire": "A",
+  "valheim_vehicles_cannons_fire_group": "fire group",
+  "valheim_vehicles_cannons_fire": "fire group",
+  "valheim_vehicles_cannons_ammo_text": "Ammo"
 }

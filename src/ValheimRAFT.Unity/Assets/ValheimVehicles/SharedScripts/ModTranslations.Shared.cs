@@ -119,6 +119,8 @@ namespace ValheimVehicles.SharedScripts
     public static string SharedKeys_Owner = null!;
     public static string SharedKeys_Hold = null!;
     public static string SharedKeys_Reset = null!;
+    public static string SharedKeys_AddMany = null!;
+    public static string SharedKeys_InteractAltAndPlace = null!;
 
     // vehicle config
     public static string VehicleConfig_Beached = null!;
@@ -165,6 +167,14 @@ namespace ValheimVehicles.SharedScripts
     public static string VehicleCommand_DestroyVehicle;
     public static string VehicleCommand_ConfigPanel;
     public static string VehicleCommand_Message_VehicleNotFound;
+
+    public static string VehicleCannon_FireCannons;
+    public static string VehicleCannon_FireCannonGroup;
+    public static string VehicleCannon_ToggleAutoFire;
+    public static string VehicleCannon_SwapCannonBallType;
+    public static string VehicleCannon_AmmoText;
+    public static string VehicleCannon_CannonBallExplosive;
+    public static string VehicleCannon_CannonBallSolid;
 
     // vehicle config
     public static string VehicleConfig_TreadsDistance;

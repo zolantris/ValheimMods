@@ -35,6 +35,7 @@ public class PrefabConfig : BepInExBaseConfig<PrefabConfig>
   public static ConfigEntry<float> VehicleDockPositionChangeSpeed = null!;
 
   public static ConfigEntry<bool> HasCannonFireAudio { get; set; } = null!;
+  public static ConfigEntry<float> CannonBallInventoryWeight { get; set; } = null!;
   public static ConfigEntry<bool> HasCannonReloadAudio { get; set; } = null!;
   public static ConfigEntry<float> CannonReloadAudioVolume { get; set; } = null!;
   public static ConfigEntry<float> CannonFireAudioVolume { get; set; } = null!;
@@ -80,6 +81,8 @@ public class PrefabConfig : BepInExBaseConfig<PrefabConfig>
   public static ConfigEntry<float> ExperimentalTreadScaleX = null!;
 
   private const string SectionKey = "PrefabConfig";
+  private const string VehicleCannonsSection = "PrefabConfig: VehicleCannons";
+
 
   public static void UpdatePrefabEnabled(string prefabName, bool enabled)
   {
@@ -206,20 +209,22 @@ public class PrefabConfig : BepInExBaseConfig<PrefabConfig>
         $"MaxTowing radius where a landvehicle can be grabbed/towed by a ship or flying ship. Spheres are significantly less accurate so a higher value could result in accidental matches with wrong vehicle", true, false, new AcceptableValueRange<float>(1f, 50f)));
 
 
-    HasCannonFireAudio = config.BindUnique(SectionKey, "VehicleCannons_HasCannonFireAudio", true, ConfigHelpers.CreateConfigDescription("Allows toggling the cannon fire audio", false, false));
-    HasCannonReloadAudio = config.BindUnique(SectionKey, "VehicleCannons_HasCannonReloadAudio", true, ConfigHelpers.CreateConfigDescription("Allows toggling the reload audio", false, false));
+    CannonBallInventoryWeight = config.BindUnique(VehicleCannonsSection, "CannonBallInventoryWeight", 12f, ConfigHelpers.CreateConfigDescription("Set the weight of cannonballs. For realism 12-48lbs for these cannons.", false, false, new AcceptableValueRange<float>(0, 100)));
 
-    CannonReloadAudioVolume = config.BindUnique(SectionKey, "VehicleCannons_CannonFireVolume", 1f, ConfigHelpers.CreateConfigDescription("Allows setting cannon audio", false, false));
-    CannonFireAudioVolume = config.BindUnique(SectionKey, "VehicleCannons_CannonReloadVolume", 1f, ConfigHelpers.CreateConfigDescription("Allows setting the reload audio", false, false));
+    HasCannonFireAudio = config.BindUnique(VehicleCannonsSection, "HasCannonFireAudio", true, ConfigHelpers.CreateConfigDescription("Allows toggling the cannon fire audio", false, false));
+    HasCannonReloadAudio = config.BindUnique(VehicleCannonsSection, "HasCannonReloadAudio", true, ConfigHelpers.CreateConfigDescription("Allows toggling the reload audio", false, false));
 
-    CannonAutoAimSpeed = config.BindUnique(SectionKey, "VehicleCannons_CannonAutoAimSpeed", 10f, ConfigHelpers.CreateConfigDescription("Set how fast a cannon can adjust aim and fire. This speeds up both firing and animations. Lower values might not be able to fire cannons at all for smaller targets. Keep in mind sea swell will impact the aiming of cannons.", true, false, new AcceptableValueRange<float>(5f, 50f)));
-    CannonAimMaxYRotation = config.BindUnique(SectionKey, "VehicleCannons_CannonAimMaxYRotation", 15f, ConfigHelpers.CreateConfigDescription("Maximum Y rotational a cannon can turn. Left to right. Front to bow etc.", true, false, new AcceptableValueRange<float>(5f, 50f)));
-    CannonBarrelAimMaxTiltRotation = config.BindUnique(SectionKey, "VehicleCannons_CannonBarrelAimMaxTiltRotation", 15f, ConfigHelpers.CreateConfigDescription("Maximum Y rotational a cannon can turn. Left to right. Front to bow etc.", true, false, new AcceptableValueRange<float>(5f, 50f)));
-    CannonBarrelAimMinTiltRotation = config.BindUnique(SectionKey, "VehicleCannons_CannonBarrelAimMinTiltRotation", 15f, ConfigHelpers.CreateConfigDescription("Min X rotation the barrel of the cannon can turn. This is the downwards rotation.", true, false, new AcceptableValueRange<float>(5f, 50f)));
+    CannonReloadAudioVolume = config.BindUnique(VehicleCannonsSection, "CannonFireVolume", 1f, ConfigHelpers.CreateConfigDescription("Allows setting cannon audio", false, false));
+    CannonFireAudioVolume = config.BindUnique(VehicleCannonsSection, "CannonReloadVolume", 1f, ConfigHelpers.CreateConfigDescription("Allows setting the reload audio", false, false));
 
-    CannonPlayerProtectionRangeRadius = config.BindUnique(SectionKey, "VehicleCannons_CannonPlayerProtectionRange", 15f, ConfigHelpers.CreateConfigDescription("Player protection range of vehicle. This will be applied the moment they enter the vehicle and leave the vehicle. Players nearby the vehicle will not be included (for now).", true, false, new AcceptableValueRange<float>(5f, 150f)));
+    CannonAutoAimSpeed = config.BindUnique(VehicleCannonsSection, "CannonAutoAimSpeed", 10f, ConfigHelpers.CreateConfigDescription("Set how fast a cannon can adjust aim and fire. This speeds up both firing and animations. Lower values might not be able to fire cannons at all for smaller targets. Keep in mind sea swell will impact the aiming of cannons.", true, false, new AcceptableValueRange<float>(5f, 50f)));
+    CannonAimMaxYRotation = config.BindUnique(VehicleCannonsSection, "CannonAimMaxYRotation", 15f, ConfigHelpers.CreateConfigDescription("Maximum Y rotational a cannon can turn. Left to right. Front to bow etc.", true, false, new AcceptableValueRange<float>(5f, 50f)));
+    CannonBarrelAimMaxTiltRotation = config.BindUnique(VehicleCannonsSection, "CannonBarrelAimMaxTiltRotation", 15f, ConfigHelpers.CreateConfigDescription("Maximum Y rotational a cannon can turn. Left to right. Front to bow etc.", true, false, new AcceptableValueRange<float>(5f, 50f)));
+    CannonBarrelAimMinTiltRotation = config.BindUnique(VehicleCannonsSection, "CannonBarrelAimMinTiltRotation", 15f, ConfigHelpers.CreateConfigDescription("Min X rotation the barrel of the cannon can turn. This is the downwards rotation.", true, false, new AcceptableValueRange<float>(5f, 50f)));
 
-    CannonVehicleProtectionRange = config.BindUnique(SectionKey, "VehicleCannons_CannonVehicleProtectionRange", new SerializableVector3(Vector3.one).ToVector3(), ConfigHelpers.CreateConfigDescription("Vehicle Protection Range of Cannons. This is added on top of the current vehicle Box bounds in X, Y, Z. NOT YET CONNECTED. ZONE SYSTEMS NEED TO BE SUPPORTED FOR THIS TO WORK.", true, false));
+    CannonPlayerProtectionRangeRadius = config.BindUnique(VehicleCannonsSection, "CannonPlayerProtectionRange", 15f, ConfigHelpers.CreateConfigDescription("Player protection range of vehicle. This will be applied the moment they enter the vehicle and leave the vehicle. Players nearby the vehicle will not be included (for now).", true, false, new AcceptableValueRange<float>(5f, 150f)));
+
+    CannonVehicleProtectionRange = config.BindUnique(VehicleCannonsSection, "CannonVehicleProtectionRange", new SerializableVector3(Vector3.one).ToVector3(), ConfigHelpers.CreateConfigDescription("Vehicle Protection Range of Cannons. This is added on top of the current vehicle Box bounds in X, Y, Z. NOT YET CONNECTED. ZONE SYSTEMS NEED TO BE SUPPORTED FOR THIS TO WORK.", true, false));
 
     CannonPlayerProtectionRangeRadius.SettingChanged += (sender, args) => TargetController.MAX_DEFEND_SEARCH_RADIUS = CannonPlayerProtectionRangeRadius.Value;
     // CannonVehicleProtectionRange.SettingChanged += (sender, args) => TargetController.HasReloadAudio = HasCannonReloadAudio.Value;

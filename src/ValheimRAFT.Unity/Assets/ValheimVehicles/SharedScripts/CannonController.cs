@@ -12,19 +12,20 @@ using System.Collections.Generic;
 using System.Linq;
 using JetBrains.Annotations;
 using UnityEngine;
+using ValheimVehicles.SharedScripts.UI;
 using Random = UnityEngine.Random;
 
 #endregion
 
 namespace ValheimVehicles.SharedScripts
 {
-  public class CannonController : MonoBehaviour
+  public class CannonController : MonoBehaviour, ICannonConfig
   {
 
     public enum FiringMode
     {
       Manual,
-      Auto,
+      Auto
     }
 
     [Header("Cannonball")]
@@ -62,7 +63,7 @@ namespace ValheimVehicles.SharedScripts
     [Tooltip("Maximum shells this cannon can hold.")]
     [SerializeField] public int maxAmmo = 12;
     [Tooltip("Current shells. This should be read-only, but exposed for testing")]
-    [SerializeField] private int _currentAmmo;
+    [SerializeField] private int _ammoCount;
     [Tooltip("How many shells are reloaded at once.")]
     [SerializeField] private int reloadQuantity = 1;
     [Tooltip("Time to reload (seconds).")]
@@ -117,7 +118,7 @@ namespace ValheimVehicles.SharedScripts
     public float BarrelCheckInterval = 30f;
 
     [Header("Firing Modes")]
-    [SerializeField] private FiringMode firingMode = FiringMode.Auto;
+    [SerializeField] public FiringMode firingMode = FiringMode.Auto;
 
     // --- State ---
     private readonly Dictionary<BarrelPart, Cannonball> _loadedCannonballs = new();
@@ -146,7 +147,6 @@ namespace ValheimVehicles.SharedScripts
 
     public float aimingSpeed => CannonAimSpeed > 0f ? CannonAimSpeed : _aimingSpeed;
 
-    public int CurrentAmmo { get => _currentAmmo; set => _currentAmmo = value; }
     public bool IsReloading { get; private set; }
     public bool IsFiring { get; private set; }
 
@@ -161,6 +161,12 @@ namespace ValheimVehicles.SharedScripts
     public float BarrelPitchMaxAngle => MaxFiringPitchOverride > 0f ? MaxFiringPitchOverride : maxFiringPitch;
     public float BarrelPitchMinAngle => MinFiringPitchOverride > 0f ? MinFiringPitchOverride : minFiringPitch;
 
+    public int AmmoCount
+    {
+      get => _ammoCount;
+      set => _ammoCount = value;
+    }
+
     public Cannonball.CannonballType AmmoType
     {
       get => ammoType;
@@ -171,7 +177,7 @@ namespace ValheimVehicles.SharedScripts
       }
     }
 
-    private void Awake()
+    protected internal virtual void Awake()
     {
       SetupTransforms();
       InitCoroutines();
@@ -238,12 +244,12 @@ namespace ValheimVehicles.SharedScripts
       AdjustFiringAngle();
     }
 
-    public void OnEnable()
+    protected internal virtual void OnEnable()
     {
       InitCoroutines();
     }
 
-    private void OnDisable()
+    protected internal virtual void OnDisable()
     {
       CleanupPool();
     }
@@ -254,7 +260,10 @@ namespace ValheimVehicles.SharedScripts
       _recoilRoutine ??= new CoroutineHandle(this);
       _reloadRoutine ??= new CoroutineHandle(this);
     }
-    public FiringMode GetFiringMode() => firingMode;
+    public FiringMode GetFiringMode()
+    {
+      return firingMode;
+    }
 
     public void UpdateNearbyBarrels()
     {
@@ -614,7 +623,7 @@ namespace ValheimVehicles.SharedScripts
       var xzDist = new Vector2(delta.x, delta.z).magnitude;
       var y = delta.y;
 
-   
+
       // --- Early-out for extremely close shots ---
       if (dist < 0.01f)
       {
@@ -714,9 +723,9 @@ namespace ValheimVehicles.SharedScripts
 
       // Get all colliders on the target and its children, filter by layer
       var colliders = target.GetComponentsInChildren<Collider>(false)
-        .Where(c => ((1 << c.gameObject.layer) & LayerHelpers.CharacterLayerMask) != 0 && c.enabled)
+        .Where(c => (1 << c.gameObject.layer & LayerHelpers.CharacterLayerMask) != 0 && c.enabled)
         .ToList();
-      
+
 
       if (colliders.Count == 0)
         return false;
@@ -725,7 +734,7 @@ namespace ValheimVehicles.SharedScripts
       var fireOrigin = cannonShooterAimPoint ? cannonShooterAimPoint.position : transform.position;
       Collider bestCollider = null;
       var bestDist = maxFiringRange;
-      Vector3 bestPoint = target.position;
+      var bestPoint = target.position;
       var largestSize = 0f;
       var muzzle = cannonShooterAimPoint ? cannonShooterAimPoint.position : transform.position;
 
@@ -738,18 +747,18 @@ namespace ValheimVehicles.SharedScripts
         var colliderCenter = bounds.center;
         // LoggerProvider.LogDebugDebounced($"[CannonTargeting] Checking collider '{col.name}' on '{col.gameObject.name}' at layer {col.gameObject.layer} | ClosestPoint: {point} | Dist: {Mathf.Sqrt(dist)}");
         if (size == 0) continue;
-        
-        if (largestSize < size || (largestSize <= size && dist < bestDist))
+
+        if (largestSize < size || largestSize <= size && dist < bestDist)
         {
           largestSize = size;
           bestDist = dist;
           bestPoint = colliderCenter;
           bestCollider = col;
-          RuntimeDebugLineDrawer.DrawLine(muzzle,colliderCenter, Color.green, 0.1f, 0.05f);
+          RuntimeDebugLineDrawer.DrawLine(muzzle, colliderCenter, Color.green, 0.1f, 0.05f);
         }
         else
         {
-          RuntimeDebugLineDrawer.DrawLine(muzzle,colliderCenter, Color.yellow, 0.1f, 0.05f);
+          RuntimeDebugLineDrawer.DrawLine(muzzle, colliderCenter, Color.yellow, 0.1f, 0.05f);
         }
       }
 
@@ -886,7 +895,7 @@ namespace ValheimVehicles.SharedScripts
     public void Fire(bool isManualFiring)
     {
       if (!isActiveAndEnabled) return;
-      if (IsReloading || IsFiring || CurrentAmmo <= 0 || !hasNearbyPowderBarrel) return;
+      if (IsReloading || IsFiring || AmmoCount <= 0 || !hasNearbyPowderBarrel) return;
       // auto fire logic prevents firing while cannon is misaligned with the target.
       if (!isManualFiring && !_canAutoFire) return;
       IsFiring = true;
@@ -895,7 +904,7 @@ namespace ValheimVehicles.SharedScripts
       for (var index = 0; index < shootingParts.Count; index++)
       {
         var shootingPart = shootingParts[index];
-        if (!FireSingle(shootingPart,index, isManualFiring)) break;
+        if (!FireSingle(shootingPart, index, isManualFiring)) break;
         hasFired = true;
       }
 
@@ -905,12 +914,12 @@ namespace ValheimVehicles.SharedScripts
         return;
       }
 
-      CurrentAmmo = Math.Max(0, CurrentAmmo - shootingParts.Count);
+      AmmoCount = Math.Max(0, AmmoCount - shootingParts.Count);
 
       // use a single audio clip for now. Using multiple is not worth it for perf.
       PlayFireClip();
 
-      OnAmmoChanged?.Invoke(CurrentAmmo);
+      OnAmmoChanged?.Invoke(AmmoCount);
       OnFired?.Invoke();
 
       _recoilRoutine.Start(RecoilCoroutine());
@@ -943,7 +952,7 @@ namespace ValheimVehicles.SharedScripts
 
       var randomVelocityMultiplier = (Random.value - 0.5f) * 2f;
       var localSpeed = cannonballSpeed + randomVelocityMultiplier;
-      
+
       loadedCannonball.Fire(
         cannonShooterTransform.forward * localSpeed,
         barrel.projectileLoader, this, barrelCount);
@@ -961,7 +970,7 @@ namespace ValheimVehicles.SharedScripts
     [ContextMenu("Reload Cannon")]
     public void TryReload()
     {
-      if (IsReloading || CurrentAmmo <= 0 || IsAnyBarrelLoaded)
+      if (IsReloading || AmmoCount <= 0 || IsAnyBarrelLoaded)
         return;
       _reloadRoutine.Start(ReloadCoroutine());
     }
@@ -1003,7 +1012,8 @@ namespace ValheimVehicles.SharedScripts
         }
         // No hit = clear shot
         if (raycastDebugDraw)
-          RuntimeDebugLineDrawer.DrawLine(fireOrigin, hit.point, Color.red, 0.05f, 0.05f);        return true;
+          RuntimeDebugLineDrawer.DrawLine(fireOrigin, hit.point, Color.red, 0.05f, 0.05f);
+        return true;
       }
       // If we exceeded skips, treat as blocked (fail-safe)
       return false;
@@ -1041,7 +1051,7 @@ namespace ValheimVehicles.SharedScripts
       }
       IsFiring = false;
 
-      if (autoReload && CurrentAmmo > 0)
+      if (autoReload && AmmoCount > 0)
       {
         _reloadRoutine.Start(ReloadCoroutine());
       }
@@ -1076,7 +1086,7 @@ namespace ValheimVehicles.SharedScripts
 
 
       var shotsToReload = Math.Min(reloadQuantity, shootingParts.Count);
-      for (var i = 0; i < shotsToReload && CurrentAmmo - i > 0; i++)
+      for (var i = 0; i < shotsToReload && AmmoCount - i > 0; i++)
       {
         var shootingPart = shootingParts[i];
         if (shootingPart == null) break;
