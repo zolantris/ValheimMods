@@ -43,6 +43,7 @@ namespace ValheimVehicles.SharedScripts
     // modes
     public static string MechanismMode_None = null!;
     public static string MechanismMode_VehicleDock = null!;
+    public static string MechanismMode_FireCannonGroup = null!;
     public static string MechanismMode_VehicleConfig = null!;
     public static string MechanismMode_Swivel_Edit = null!;
     public static string MechanismMode_Hold_To_Edit = null!;
@@ -175,6 +176,7 @@ namespace ValheimVehicles.SharedScripts
     public static string VehicleCannon_AmmoText;
     public static string VehicleCannon_CannonBallExplosive;
     public static string VehicleCannon_CannonBallSolid;
+    public static string VehicleCannon_CannonMissingNearbyPowderBarrel;
 
     // vehicle config
     public static string VehicleConfig_TreadsDistance;

@@ -35,9 +35,9 @@ public class CannonPrefabs : RegisterPrefab<CannonPrefabs>
     PrefabRegistryHelpers.AddPieceForPrefab(PrefabNames.CannonFixedTier1, prefab);
     var wearNTear = PrefabRegistryHelpers.SetWearNTear(prefab, 1);
     // main toggle switch.
-    var cannonController = prefab.AddComponent<CannonController>();
+    var cannonController = prefab.AddComponent<CannonControllerBridge>();
+    cannonController.firingMode = CannonController.FiringMode.Manual;
     cannonController.canRotateFiringRangeY = false;
-    var cannonControllerInteractions = prefab.AddComponent<CannonControllerBridge>();
 
     PieceManager.Instance.AddPiece(new CustomPiece(prefab, true, new PieceConfig
     {
@@ -70,7 +70,7 @@ public class CannonPrefabs : RegisterPrefab<CannonPrefabs>
 
     // main toggle switch.
     var cannonController = prefab.AddComponent<CannonControllerBridge>();
-    cannonController.firingMode = CannonController.FiringMode.Manual;
+    cannonController.firingMode = CannonController.FiringMode.Auto;
     cannonController.canRotateFiringRangeY = true;
 
     PieceManager.Instance.AddPiece(new CustomPiece(prefab, true, new PieceConfig

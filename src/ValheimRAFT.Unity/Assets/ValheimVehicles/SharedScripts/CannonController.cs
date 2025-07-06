@@ -110,7 +110,7 @@ namespace ValheimVehicles.SharedScripts
     [SerializeField] public bool canRotateFiringRangeY = true;
 
     [Header("Barrel Ammo Logic")]
-    [SerializeField] private bool hasNearbyPowderBarrel;
+    [SerializeField] public bool hasNearbyPowderBarrel;
     [SerializeField] private float barrelSupplyRadius = 5f;
     [SerializeField] public int ManualFiringGroupId;
     // barrel check timers

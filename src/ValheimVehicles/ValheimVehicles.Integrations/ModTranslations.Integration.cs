@@ -104,6 +104,7 @@ public partial class ModTranslations
     MechanismSwitch_AltHoldActionString = SafeLocalize($"[<color=yellow><b>{SharedKeys_Hold}+{ValheimInput_KeyAltPlace}+{ValheimInput_KeyUse}</b></color>] $valheim_vehicles_mechanism_swivel_edit");
 
     MechanismMode_VehicleDock = SafeLocalize("$valheim_vehicles_mechanism_mode_vehicle_dock");
+    MechanismMode_VehicleDock = SafeLocalize("$valheim_vehicles_mechanism_mode_fire_cannon_group");
 
     DockingMessages_NotAttachedToVehicle = SafeLocalize("$valheim_vehicles_vehicle_dock_messages_not_attached_to_vehicle");
     DockingMessages_NoVehicleToDockFound = SafeLocalize("$valheim_vehicles_vehicle_dock_messages_no_dockable_vehicle_found");
@@ -143,6 +144,7 @@ public partial class ModTranslations
     VehicleCannon_AmmoText = SafeLocalize("$valheim_vehicles_cannons_ammo_text");
     VehicleCannon_CannonBallSolid = SafeLocalize("$valheim_vehicles_cannonball_solid");
     VehicleCannon_CannonBallExplosive = SafeLocalize("$valheim_vehicles_cannonball_explosive");
+    VehicleCannon_CannonMissingNearbyPowderBarrel = SafeLocalize(WithBoldText("$valheim_vehicles_cannons_missing_nearby_powder_barrels", "red"));
   }
 
   private static void UpdateVehicleConfigTranslations()

@@ -59,6 +59,7 @@ namespace ValheimVehicles.SharedScripts
       var hitData = new HitData();
       hitData.m_damage.m_damage = 20f;
       hitData.m_damage.m_blunt = 25f;
+      hitData.m_toolTier = 999;
       hitData.m_point = damageInfo.collider.bounds.center;
       hitData.m_dir = damageInfo.velocity.normalized;
       hitData.m_hitType = HitData.HitType.Impact;
@@ -166,7 +167,10 @@ namespace ValheimVehicles.SharedScripts
       _despawnCoroutine ??= new CoroutineHandle(this);
     }
 
-    public CoroutineHandle GetCoroutineHandle() => new CoroutineHandle(this);
+    public CoroutineHandle GetCoroutineHandle()
+    {
+      return new CoroutineHandle(this);
+    }
 
     public void PlayWindSound()
     {
@@ -326,7 +330,7 @@ namespace ValheimVehicles.SharedScripts
       {
         yield return new WaitForSeconds(0.2f);
       }
-      
+
       _explosionParent.SetParent(transform);
       _explosionParent.transform.localPosition = Vector3.zero;
 
@@ -410,14 +414,14 @@ namespace ValheimVehicles.SharedScripts
       {
         foreach (var collider1 in _colliders)
         {
-          Physics.IgnoreCollision(other.collider, collider1 , true);
+          Physics.IgnoreCollision(other.collider, collider1, true);
         }
         m_body.velocity = _lastVelocity;
         return;
       }
 
       // var colliderName = other.collider.name;
-      
+
 
       var relativeVelocity = other.relativeVelocity;
       var relativeVelocityMagnitude = relativeVelocity.magnitude;
@@ -553,12 +557,12 @@ namespace ValheimVehicles.SharedScripts
         return;
       }
       _canUseEffect = firingIndex == 0;
-      
+
       if (_canUseEffect)
       {
         PlayWindSound();
       }
-      
+
       lastFireTransform = fireTransform;
 
       controller = cannonController;
@@ -611,7 +615,7 @@ namespace ValheimVehicles.SharedScripts
 
     public void ResetCannonball()
     {
-      StopExplosionSound(); 
+      StopExplosionSound();
       StopWindSound();
 
       if (_queuedDamageInfo.Count > 0)

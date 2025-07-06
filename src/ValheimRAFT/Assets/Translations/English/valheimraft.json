@@ -220,6 +220,7 @@
   "valheim_vehicles_mechanism_mode_none": "None",
   "valheim_vehicles_mechanism_mode_configure": "Configure",
   "valheim_vehicles_mechanism_mode_vehicle_dock": "Vehicle Dock",
+  "valheim_vehicles_mechanism_mode_fire_cannon_group": "Fire Cannon Group",
   "valheim_vehicles_vehicle_dock_messages_not_attached_to_vehicle": "Not attached to a vehicle",
   "valheim_vehicles_vehicle_dock_messages_no_dockable_vehicle_found": "No dockable vehicle found nearby.",
   "valheim_vehicles_vehicle_dock_messages_dock_success": "Vehicle is docked",
@@ -292,5 +293,6 @@
   "valheim_vehicles_cannons_toggle_auto_fire": "A",
   "valheim_vehicles_cannons_fire_group": "fire group",
   "valheim_vehicles_cannons_fire": "fire group",
-  "valheim_vehicles_cannons_ammo_text": "Ammo"
+  "valheim_vehicles_cannons_ammo_text": "Ammo",
+  "$valheim_vehicles_cannons_missing_nearby_powder_barrels": "No Powder Barrel"
 }

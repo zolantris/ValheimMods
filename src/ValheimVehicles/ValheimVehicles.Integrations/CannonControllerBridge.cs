@@ -63,7 +63,11 @@ public class CannonControllerBridge : CannonController, Hoverable, Interactable,
   {
     var s = $"{ModTranslations.PowerSource_Interact_AddOne} / {ModTranslations.SharedKeys_Hold} {ModTranslations.SharedKeys_AddMany}";
     s += $"\n{ModTranslations.SharedKeys_InteractAltAndPlace} {ModTranslations.VehicleCannon_SwapCannonBallType}";
-    s += $"\n{ModTranslations.VehicleCannon_AmmoText}: {CannonballNameFromType()}\n";
+    s += $"\n{ModTranslations.VehicleCannon_AmmoText}: {CannonballNameFromType()} ({AmmoCount})";
+    if (!hasNearbyPowderBarrel)
+    {
+      s += $"\n{ModTranslations.VehicleCannon_CannonMissingNearbyPowderBarrel}";
+    }
     return s;
   }
 
