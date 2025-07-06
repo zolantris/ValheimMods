@@ -40,6 +40,8 @@ public class PrefabConfig : BepInExBaseConfig<PrefabConfig>
   public static ConfigEntry<float> CannonReloadAudioVolume { get; set; } = null!;
   public static ConfigEntry<float> CannonFiringDelayPerCannon { get; set; } = null!;
   public static ConfigEntry<float> CannonFireAudioVolume { get; set; } = null!;
+  public static ConfigEntry<float> CannonballSolidDamage { get; set; } = null!;
+  public static ConfigEntry<float> CannonballExplosiveDamage { get; set; } = null!;
   public static ConfigEntry<float> CannonAutoAimSpeed { get; set; } = null!;
   public static ConfigEntry<float> CannonAimMaxYRotation { get; set; } = null!;
   public static ConfigEntry<float> CannonBarrelAimMaxTiltRotation { get; set; } = null!;
@@ -215,10 +217,17 @@ public class PrefabConfig : BepInExBaseConfig<PrefabConfig>
     HasCannonFireAudio = config.BindUnique(VehicleCannonsSection, "HasCannonFireAudio", true, ConfigHelpers.CreateConfigDescription("Allows toggling the cannon fire audio", false, false));
     HasCannonReloadAudio = config.BindUnique(VehicleCannonsSection, "HasCannonReloadAudio", true, ConfigHelpers.CreateConfigDescription("Allows toggling the reload audio", false, false));
 
-    CannonFiringDelayPerCannon = config.BindUnique(VehicleCannonsSection, "CannonFireVolume", 0.01f, ConfigHelpers.CreateConfigDescription("Allows setting cannon audio", false, false, new AcceptableValueRange<float>(0, 0.3f)));
+    CannonFiringDelayPerCannon = config.BindUnique(VehicleCannonsSection, "CannonFiringDelayPerCannon", 0.01f, ConfigHelpers.CreateConfigDescription("Allows setting cannon firing delays. This makes cannons fire in a order.", false, false, new AcceptableValueRange<float>(0, 0.3f)));
 
-    CannonReloadAudioVolume = config.BindUnique(VehicleCannonsSection, "CannonFireVolume", 1f, ConfigHelpers.CreateConfigDescription("Allows setting cannon audio", false, false));
-    CannonFireAudioVolume = config.BindUnique(VehicleCannonsSection, "CannonReloadVolume", 1f, ConfigHelpers.CreateConfigDescription("Allows setting the reload audio", false, false));
+    CannonReloadAudioVolume = config.BindUnique(VehicleCannonsSection, "CannonReloadAudioVolume", 1f, ConfigHelpers.CreateConfigDescription("Allows customizing cannon firing audio volume", false, false));
+    CannonFireAudioVolume = config.BindUnique(VehicleCannonsSection, "CannonFireAudioVolume", 1f, ConfigHelpers.CreateConfigDescription("Allows customizing cannon reload audio volume", false, false));
+
+    CannonballSolidDamage = CannonFireAudioVolume = config.BindUnique(VehicleCannonsSection, "CannonballSolidDamage", 30f, ConfigHelpers.CreateConfigDescription("Set the amount of damage a solid cannon ball does. This value is multiplied by the velocity of the cannonball around 90 at max speed decreasing to 20 m/s at lowest hit damage level.", false, false));
+    CannonballExplosiveDamage = CannonFireAudioVolume = config.BindUnique(VehicleCannonsSection, "CannonballExplosiveDamage", 30f, ConfigHelpers.CreateConfigDescription("Set the amount of damage a explosive cannon ball does. This damage includes both the AOE and hit. AOE will do same damage on top of the impact of the shot.", false, false));
+
+    CannonballSolidDamage.SettingChanged += (sender, args) => Cannonball.BaseDamageSolid = CannonballSolidDamage.Value;
+    CannonballExplosiveDamage.SettingChanged += (sender, args) => Cannonball.BaseDamageExplosive = CannonballExplosiveDamage.Value;
+
 
     CannonAutoAimSpeed = config.BindUnique(VehicleCannonsSection, "CannonAutoAimSpeed", 10f, ConfigHelpers.CreateConfigDescription("Set how fast a cannon can adjust aim and fire. This speeds up both firing and animations. Lower values might not be able to fire cannons at all for smaller targets. Keep in mind sea swell will impact the aiming of cannons.", true, false, new AcceptableValueRange<float>(5f, 50f)));
 

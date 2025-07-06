@@ -43,13 +43,16 @@ namespace ValheimVehicles.SharedScripts
       None
     }
 
+    public static float BaseDamageExplosive = 50f;
+    public static float BaseDamageSolid = 50f;
+
     /// <summary>
     /// Gets the prefab root. This should be overridable.
     /// </summary>
     /// <returns></returns>
     public static Func<Transform, Transform> GetPrefabRoot = localTransform => localTransform.root;
 
-    public static Action<DamageInfo> ApplyDamage = damageInfo =>
+    public Action<DamageInfo> ApplyDamage = damageInfo =>
     {
 #if !UNITY_2022 && !UNITY_EDITOR
       if (!damageInfo.collider) return;
@@ -57,8 +60,9 @@ namespace ValheimVehicles.SharedScripts
       if (destructible == null) return;
 
       var hitData = new HitData();
-      hitData.m_damage.m_damage = 20f;
-      hitData.m_damage.m_blunt = 25f;
+      hitData.m_damage.m_damage = damageInfo.damage * 0.5f;
+      hitData.m_damage.m_blunt = damageInfo.damage * 0.5f;
+      hitData.m_damage.m_pickaxe = damageInfo.damage;
       hitData.m_toolTier = 999;
       hitData.m_point = damageInfo.collider.bounds.center;
       hitData.m_dir = damageInfo.velocity.normalized;
@@ -273,7 +277,7 @@ namespace ValheimVehicles.SharedScripts
         collider = otherCollider,
         velocity = velocity,
         force = force,
-        damage = Mathf.Clamp(10f * force, 10f, 60f)
+        damage = Mathf.Clamp(cannonballType == CannonballType.Solid ? BaseDamageSolid : BaseDamageExplosive * force, 10f, 200f)
       };
       _queuedDamageInfo.Add(damageInfo);
     }
@@ -306,7 +310,7 @@ namespace ValheimVehicles.SharedScripts
                 rb.AddExplosionForce(force, explosionOrigin, explosionRadius);
               }
             }
-            AddDamageToQueue(hitInfo.collider, Vector3.up, force);
+            AddDamageToQueue(hitInfo.collider, Vector3.up, Mathf.Max(30f, force));
           }
         }
       }
@@ -482,6 +486,10 @@ namespace ValheimVehicles.SharedScripts
         if (!_hasExploded && Vector3.Distance(controller.transform.position, transform.position) > 3f)
         {
           projectileHitType = ProjectileHitType.Explosion;
+
+          // addition impact damage first
+          AddDamageToQueue(other.collider, nextVelocity, relativeVelocityMagnitude);
+          // explosion next
           GetCollisionsFromExplosion(transform.position, relativeVelocityMagnitude);
           StartCoroutine(ActivateExplosionEffect(relativeVelocityMagnitude));
           _hasExploded = true;

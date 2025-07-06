@@ -47,14 +47,14 @@ namespace ValheimVehicles.SharedScripts
     [SerializeField] public int maxCannonsPerEnemy = 2;
     [SerializeField] public bool autoFire;
 
-    public float FiringCooldown = 0.2f;
-    public float FiringDelayPerCannon = 0.2f;
+    public static float FiringCooldown = 0.2f;
+    public static float FiringDelayPerCannon = 0.05f;
     [SerializeField] public List<CannonController> allCannonControllers = new();
     [SerializeField] public List<CannonController> autoTargetControllers = new();
     [SerializeField] public List<CannonController> manualFireControllers = new();
 
     private readonly Collider[] _enemyBuffer = new Collider[32];
-    private readonly Dictionary<int,CoroutineHandle> _manualFireCannonsRoutines = new();
+    private readonly Dictionary<int, CoroutineHandle> _manualFireCannonsRoutines = new();
 
     private readonly Dictionary<Transform, DefenseAreaTrigger> _playerAreaTriggers = new();
 
@@ -75,7 +75,7 @@ namespace ValheimVehicles.SharedScripts
         if (character == null) return false;
         if (canShootPlayer && character.IsPlayer() && !character.IsDead()) return true;
         return !character.IsPlayer() && !character.IsTamed(5f) && !character.IsDead();
-        #else
+#else
         if (!t) return false;
         var tName = t.name;
         var rootName = t.root.name;
@@ -85,7 +85,7 @@ namespace ValheimVehicles.SharedScripts
         return true;
       };
 
-      #if UNITY_EDITOR
+#if UNITY_EDITOR
       // mostly for local testing.
       GetComponentsInChildren(false, allCannonControllers);
       foreach (var allCannonController in allCannonControllers)
@@ -102,7 +102,7 @@ namespace ValheimVehicles.SharedScripts
             throw new ArgumentOutOfRangeException();
         }
       }
-      #endif
+#endif
 
       UpdateAutoCannonTargets();
       RefreshAllDefenseAreaTriggers();
@@ -115,7 +115,7 @@ namespace ValheimVehicles.SharedScripts
       {
         StartUpdatingAutoCannonTargets();
       }
-      
+
       if (autoFire)
       {
         StartAutoFiring();
@@ -187,7 +187,7 @@ namespace ValheimVehicles.SharedScripts
           _playerAreaTriggers[player] = defenseTrigger;
           continue;
         }
-        
+
         var go = new GameObject($"{PrefabNames.ValheimVehiclesPrefix}_PlayerDefenseAreaTrigger_{player.name}")
         {
           transform = { position = player.position, parent = player.transform },
@@ -334,81 +334,81 @@ namespace ValheimVehicles.SharedScripts
     }
 
     private void AssignCannonsToTargets(
-    List<CannonController> cannons,
-    List<Transform> targets,
-    int maxCannonsPerTarget = 1)
+      List<CannonController> cannons,
+      List<Transform> targets,
+      int maxCannonsPerTarget = 1)
     {
-        // 1. Map to keep track of cannons per target.
-        var assignedCounts = new Dictionary<Transform, int>(targets.Count);
+      // 1. Map to keep track of cannons per target.
+      var assignedCounts = new Dictionary<Transform, int>(targets.Count);
+      foreach (var t in targets)
+        assignedCounts[t] = 0;
+
+      var unassignedCannons = new List<CannonController>(cannons.Count);
+
+      // 2. Retain existing assignments if possible (O(N))
+      foreach (var cannon in cannons)
+      {
+        var assigned = cannon.firingTarget;
+        if (assigned == null)
+        {
+          cannon.firingTarget = null;
+          cannon.currentAimPoint = null;
+          unassignedCannons.Add(cannon);
+          continue;
+        }
+
+        var hasCounts = assignedCounts.TryGetValue(assigned, out var count);
+        var canHitTarget = cannon.CanHitTargetCollider(assigned, out var aimPoint);
+        var isNearTarget = Vector3.Distance(cannon.cannonShooterAimPoint.position, aimPoint) <= cannon.maxFiringRange;
+
+        if (
+          hasCounts &&
+          count < maxCannonsPerTarget &&
+          canHitTarget && isNearTarget)
+        {
+          cannon.currentAimPoint = aimPoint;
+          assignedCounts[assigned]++;
+          continue;
+        }
+        cannon.firingTarget = null;
+        cannon.currentAimPoint = null;
+        unassignedCannons.Add(cannon);
+      }
+
+      // 3. Assign unassigned cannons to best targets (O(N*M))
+      foreach (var cannon in unassignedCannons)
+      {
+        Transform bestTarget = null;
+        Vector3? bestAimPoint = null;
+        // just 1 higher than max distance.
+        var bestDist = cannon.maxFiringRange + 1f;
+
         foreach (var t in targets)
-            assignedCounts[t] = 0;
-
-        var unassignedCannons = new List<CannonController>(cannons.Count);
-
-        // 2. Retain existing assignments if possible (O(N))
-        foreach (var cannon in cannons)
         {
-            var assigned = cannon.firingTarget;
-            if (assigned == null)
-            {
-              cannon.firingTarget = null;
-              cannon.currentAimPoint = null;
-              unassignedCannons.Add(cannon);
-              continue;
-            }
+          if (assignedCounts[t] >= maxCannonsPerTarget) continue;
+          if (!cannon.CanHitTargetCollider(t, out var aimPoint)) continue;
 
-            var hasCounts = assignedCounts.TryGetValue(assigned, out var count);
-            var canHitTarget = cannon.CanHitTargetCollider(assigned, out var aimPoint);
-            var isNearTarget = Vector3.Distance(cannon.cannonShooterAimPoint.position, aimPoint) <= cannon.maxFiringRange;
-            
-            if (
-                hasCounts &&
-                count < maxCannonsPerTarget &&
-                canHitTarget && isNearTarget)
-            {
-                cannon.currentAimPoint = aimPoint;
-                assignedCounts[assigned]++;
-                continue;
-            }
-            cannon.firingTarget = null;
-            cannon.currentAimPoint = null;
-            unassignedCannons.Add(cannon);
+          var dist = Vector3.Distance(cannon.cannonShooterAimPoint.position, aimPoint);
+          if (dist < bestDist)
+          {
+            bestDist = dist;
+            bestTarget = t;
+            bestAimPoint = aimPoint;
+          }
         }
 
-        // 3. Assign unassigned cannons to best targets (O(N*M))
-        foreach (var cannon in unassignedCannons)
+        if (bestTarget != null)
         {
-            Transform bestTarget = null;
-            Vector3? bestAimPoint = null;
-            // just 1 higher than max distance.
-            var bestDist = cannon.maxFiringRange + 1f;
-
-            foreach (var t in targets)
-            {
-                if (assignedCounts[t] >= maxCannonsPerTarget) continue;
-                if (!cannon.CanHitTargetCollider(t, out var aimPoint)) continue;
-                
-                var dist = Vector3.Distance(cannon.cannonShooterAimPoint.position, aimPoint);
-                if (dist < bestDist)
-                {
-                    bestDist = dist;
-                    bestTarget = t;
-                    bestAimPoint = aimPoint;
-                }
-            }
-
-            if (bestTarget != null)
-            {
-                cannon.firingTarget = bestTarget;
-                cannon.currentAimPoint = bestAimPoint;
-                assignedCounts[bestTarget]++;
-            }
-            else
-            {
-                cannon.firingTarget = null;
-                cannon.currentAimPoint = null;
-            }
+          cannon.firingTarget = bestTarget;
+          cannon.currentAimPoint = bestAimPoint;
+          assignedCounts[bestTarget]++;
         }
+        else
+        {
+          cannon.firingTarget = null;
+          cannon.currentAimPoint = null;
+        }
+      }
     }
 
     private IEnumerator UpdateCannonTargetsRoutine()
@@ -518,7 +518,7 @@ namespace ValheimVehicles.SharedScripts
           break;
         default:
           throw new ArgumentOutOfRangeException();
-      }   
+      }
     }
 
     [Serializable]
