@@ -36,6 +36,8 @@ public class PrefabConfig : BepInExBaseConfig<PrefabConfig>
 
   public static ConfigEntry<bool> HasCannonFireAudio { get; set; } = null!;
   public static ConfigEntry<bool> HasCannonballExplosionAudio { get; set; } = null!;
+  public static ConfigEntry<bool> HasCannonballWindAudio { get; set; } = null!;
+  public static ConfigEntry<float> CannonballWindAudioVolume { get; set; } = null!;
   public static ConfigEntry<float> CannonballExplosionAudioVolume { get; set; } = null!;
   public static ConfigEntry<float> CannonBallInventoryWeight { get; set; } = null!;
   public static ConfigEntry<bool> HasCannonReloadAudio { get; set; } = null!;
@@ -217,8 +219,8 @@ public class PrefabConfig : BepInExBaseConfig<PrefabConfig>
     CannonBallInventoryWeight = config.BindUnique(VehicleCannonsSection, "CannonBallInventoryWeight", 12f, ConfigHelpers.CreateConfigDescription("Set the weight of cannonballs. For realism 12-48lbs for these cannons.", false, false, new AcceptableValueRange<float>(0, 100)));
 
     HasCannonFireAudio = config.BindUnique(VehicleCannonsSection, "HasCannonFireAudio", true, ConfigHelpers.CreateConfigDescription("Allows toggling the cannon fire audio", false, false));
-    HasCannonReloadAudio = config.BindUnique(VehicleCannonsSection, "HasCannonReloadAudio", true, ConfigHelpers.CreateConfigDescription("Allows toggling the reload audio", false, false));
-    HasCannonballExplosionAudio = config.BindUnique(VehicleCannonsSection, "HasCannonballExplosionAudio", true, ConfigHelpers.CreateConfigDescription("Allows toggling the cannonball explosion/impact audio", false, false));
+    HasCannonReloadAudio = config.BindUnique(VehicleCannonsSection, "UNSTABLE_HasCannonReloadAudio", false, ConfigHelpers.CreateConfigDescription("Allows toggling the reload audio. Unstable b/c it does not sound great when many of these are fired together.", false, false));
+    HasCannonballExplosionAudio = config.BindUnique(VehicleCannonsSection, "UNSTABLE_HasCannonballExplosionAudio", true, ConfigHelpers.CreateConfigDescription("Allows toggling the cannonball explosion/impact audio. Unstable b/c it does not sound great when many of these are fired together.", false, false));
 
     CannonFiringDelayPerCannon = config.BindUnique(VehicleCannonsSection, "CannonFiringDelayPerCannon", 0.01f, ConfigHelpers.CreateConfigDescription("Allows setting cannon firing delays. This makes cannons fire in a order.", false, false, new AcceptableValueRange<float>(0, 0.3f)));
 
@@ -226,10 +228,13 @@ public class PrefabConfig : BepInExBaseConfig<PrefabConfig>
     CannonFireAudioVolume = config.BindUnique(VehicleCannonsSection, "Cannon_FireAudioVolume", 1f, ConfigHelpers.CreateConfigDescription("Allows customizing cannon reload audio volume", false, false));
     CannonballExplosionAudioVolume = config.BindUnique(VehicleCannonsSection, "Cannonball_ExplosionAudioVolume", 1f, ConfigHelpers.CreateConfigDescription("Allows customizing cannon reload audio volume", false, false));
 
-    CannonballSolidDamage = CannonFireAudioVolume = config.BindUnique(VehicleCannonsSection, "CannonballSolidDamage", 30f, ConfigHelpers.CreateConfigDescription("Set the amount of damage a solid cannon ball does. This value is multiplied by the velocity of the cannonball around 90 at max speed decreasing to 20 m/s at lowest hit damage level.", false, false));
+    HasCannonballWindAudio = config.BindUnique(VehicleCannonsSection, "Cannonball_HasWindAudio", true, ConfigHelpers.CreateConfigDescription("Allows enable cannonball wind audio - which can be heard if a cannonball passes nearby.", false, false));
+    CannonballWindAudioVolume = config.BindUnique(VehicleCannonsSection, "Cannonball_WindAudioVolume", 0.2f, ConfigHelpers.CreateConfigDescription("Allows customizing cannonball wind audio - which can be heard if a cannonball passes nearby. Recommended below 0.2f", false, false));
+
+    CannonballSolidDamage = CannonFireAudioVolume = config.BindUnique(VehicleCannonsSection, "Cannonball_SolidDamage", 30f, ConfigHelpers.CreateConfigDescription("Set the amount of damage a solid cannon ball does. This value is multiplied by the velocity of the cannonball around 90 at max speed decreasing to 20 m/s at lowest hit damage level.", false, false));
     CannonballSolidDamage.SettingChanged += (sender, args) => CannonballHitScheduler.BaseDamageSolidCannonball = CannonballSolidDamage.Value;
 
-    CannonballExplosiveDamage = CannonFireAudioVolume = config.BindUnique(VehicleCannonsSection, "CannonballExplosiveDamage", 30f, ConfigHelpers.CreateConfigDescription("Set the amount of damage a explosive cannon ball does. This damage includes both the AOE and hit. AOE will do same damage on top of the impact of the shot.", false, false));
+    CannonballExplosiveDamage = CannonFireAudioVolume = config.BindUnique(VehicleCannonsSection, "Cannonball_ExplosiveDamage", 30f, ConfigHelpers.CreateConfigDescription("Set the amount of damage a explosive cannon ball does. This damage includes both the AOE and hit. AOE will do same damage on top of the impact of the shot.", false, false));
     CannonballExplosiveDamage.SettingChanged += (sender, args) => CannonballHitScheduler.BaseDamageExplosiveCannonball = CannonballExplosiveDamage.Value;
 
 
@@ -248,6 +253,9 @@ public class PrefabConfig : BepInExBaseConfig<PrefabConfig>
 
     HasCannonFireAudio.SettingChanged += (sender, args) => CannonController.HasFireAudio = HasCannonFireAudio.Value;
     CannonFireAudioVolume.SettingChanged += (sender, args) => CannonController.CannonFireAudioVolume = CannonFireAudioVolume.Value;
+
+    HasCannonballWindAudio.SettingChanged += (sender, args) => Cannonball.HasCannonballWindAudio = HasCannonballWindAudio.Value;
+    CannonballWindAudioVolume.SettingChanged += (sender, args) => Cannonball.CannonballWindAudioVolume = CannonballWindAudioVolume.Value;
 
     HasCannonballExplosionAudio.SettingChanged += (sender, args) => Cannonball.HasExplosionAudio = HasCannonballExplosionAudio.Value;
     CannonballExplosionAudioVolume.SettingChanged += (sender, args) => Cannonball.ExplosionAudioVolume = CannonballExplosionAudioVolume.Value;

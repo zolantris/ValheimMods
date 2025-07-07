@@ -4,6 +4,7 @@
 #region
 
 using System.Collections;
+using JetBrains.Annotations;
 using UnityEngine;
 
 #endregion
@@ -12,16 +13,19 @@ namespace ValheimVehicles.SharedScripts
 {
   public class CoroutineHandle
   {
-    private Coroutine _coroutine;
-    private MonoBehaviour _owner;
-
-    public bool IsRunning => _coroutine != null;
-
-    public Coroutine Instance => _coroutine;
+    [CanBeNull] private readonly MonoBehaviour _owner;
 
     public CoroutineHandle(MonoBehaviour owner)
     {
       _owner = owner;
+    }
+
+    public bool IsRunning => Instance != null;
+
+    public Coroutine Instance
+    {
+      get;
+      private set;
     }
 
     /// <summary>
@@ -37,15 +41,21 @@ namespace ValheimVehicles.SharedScripts
       {
         return;
       }
-      _coroutine = _owner.StartCoroutine(Wrap(routine));
+      if (_owner != null)
+      {
+        Instance = _owner.StartCoroutine(Wrap(routine));
+      }
     }
 
     public void Stop()
     {
-      if (_coroutine != null)
+      if (Instance != null)
       {
-        _owner.StopCoroutine(_coroutine);
-        _coroutine = null;
+        if (_owner!= null)
+        {
+          _owner.StopCoroutine(Instance);
+        }
+        Instance = null;
       }
     }
 
@@ -57,7 +67,7 @@ namespace ValheimVehicles.SharedScripts
       }
       finally
       {
-        _coroutine = null;
+        Instance = null;
       }
     }
   }

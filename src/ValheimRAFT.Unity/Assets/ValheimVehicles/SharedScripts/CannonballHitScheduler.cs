@@ -1,11 +1,16 @@
 // ReSharper disable ArrangeNamespaceBody
 // ReSharper disable NamespaceStyle
 
+#region
+
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
-using HarmonyLib;
+using JetBrains.Annotations;
 using UnityEngine;
+
+#endregion
+
 namespace ValheimVehicles.SharedScripts
 {
   public struct DamageInfo
@@ -30,26 +35,49 @@ namespace ValheimVehicles.SharedScripts
   public class CannonballHitScheduler : SingletonBehaviour<CannonballHitScheduler>
   {
     private static CoroutineHandle _applyDamageCoroutine;
+    private static CoroutineHandle _applyAudioCoroutine;
     private static readonly Queue<DamageInfo> _queuedDamageInfo = new();
     public static bool UseCharacterHit = false;
 
+    [CanBeNull] public static Cannonball CurrentImpactAudioCannonball;
+    public static Queue<(Cannonball, float)> CannonballImpactAudioQueue = new ();
     // damage types.
     public static float BaseDamageExplosiveCannonball = 50f;
     public static float BaseDamageSolidCannonball = 50f;
 
-    public override void OnAwake()
-    {
-      _applyDamageCoroutine = new CoroutineHandle(this);
-    }
-
     public void OnEnable()
     {
-      _applyDamageCoroutine ??= new CoroutineHandle(this);
+      SetupCoroutines();
     }
     public void OnDisable()
     {
-      _applyDamageCoroutine ??= new CoroutineHandle(this);
+      SetupCoroutines();
     }
+
+    public override void OnAwake()
+    {
+      SetupCoroutines();
+    }
+
+    public static void SetupCoroutines()
+    {
+      _applyDamageCoroutine ??= new CoroutineHandle(Instance);
+      _applyAudioCoroutine ??= new CoroutineHandle(Instance);
+    }
+
+#if UNITY_EDITOR
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
+    static void EditorDomainReloadInit()
+    {
+      if (Instance == null)
+      {
+        var go = new GameObject("CannonballHitScheduler");
+        Instance = go.AddComponent<CannonballHitScheduler>();
+        DontDestroyOnLoad(go);
+        SetupCoroutines();
+      }
+    }
+#endif
 
     private static void CommitDamage(DamageInfo damageInfo)
     {
@@ -110,12 +138,18 @@ namespace ValheimVehicles.SharedScripts
 #if !UNITY_EDITOR && !UNITY_2022
       if (!Game.instance) return false;
 #endif
-      if (Instance) return true;
+      if (Instance != null) return true;
 #if !UNITY_EDITOR && !UNITY_2022
       Instance = Game.instance.gameObject.AddComponent<CannonballHitScheduler>();
 #else
-      Instance = new GameObject("CannonballHitScheduler").AddComponent<CannonballHitScheduler>();
+      var go = new GameObject("CannonballHitScheduler");
+      Instance = go.AddComponent<CannonballHitScheduler>();
+      DontDestroyOnLoad(go);
 #endif
+      if (Instance)
+      {
+        SetupCoroutines();
+      }
       return Instance != null;
     }
 
@@ -172,10 +206,9 @@ namespace ValheimVehicles.SharedScripts
         cannonballType = cannonballType,
         damage = Mathf.Clamp(isSolidCannonball ? BaseDamageSolidCannonball : BaseDamageExplosiveCannonball * force, 10f, 200f)
       };
-      _queuedDamageInfo.AddItem(damageInfo);
-
-      ScheduleCommitDamage();
+      _queuedDamageInfo.Enqueue(damageInfo);
 #endif
+      ScheduleCommitDamage();
     }
 
     public static void ScheduleCommitDamage()
@@ -183,6 +216,28 @@ namespace ValheimVehicles.SharedScripts
       if (!TryInit()) return;
       if (_applyDamageCoroutine.IsRunning) return;
       _applyDamageCoroutine.Start(CommitDamageCoroutine());
+    }
+
+    public static void ScheduleImpactSound(Cannonball cannonball, float impactVelocity)
+    {
+      if (!TryInit()) return;
+      CannonballImpactAudioQueue.Enqueue((cannonball, impactVelocity));
+      if (_applyAudioCoroutine.IsRunning) return;
+      _applyAudioCoroutine.Start(ImpactEffectSchedulerCoroutine());
+    }
+
+    public static IEnumerator ImpactEffectSchedulerCoroutine()
+    {
+      while (CannonballImpactAudioQueue.Count > 0)
+      {
+        var (cannonball, impactVelocity) = CannonballImpactAudioQueue.Dequeue();
+        CurrentImpactAudioCannonball = cannonball;
+        if (cannonball != null && cannonball.isActiveAndEnabled && cannonball.gameObject.activeInHierarchy)
+        {
+          cannonball.StartImpactEffectAudio(impactVelocity);
+        }
+        yield return new WaitForSeconds(Random.value * 0.1f);
+      }
     }
 
     /// <summary>

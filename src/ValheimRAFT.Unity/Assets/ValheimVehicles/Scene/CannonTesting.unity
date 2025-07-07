@@ -645,7 +645,7 @@ MonoBehaviour:
   cannonRotationalTransform: {fileID: 0}
   cannonballSpeed: 90
   maxAmmo: 500
-  _ammoCount: 0
+  _ammoCount: 500
   reloadQuantity: 2
   reloadTime: 0.5
   autoReload: 1
@@ -653,7 +653,7 @@ MonoBehaviour:
   fireClip: {fileID: 8300000, guid: 58702308a806c104abe9efa4a9e87166, type: 3}
   reloadClip: {fileID: 8300000, guid: ae24df3566c74814aa90d38b3d13b10f, type: 3}
   fireClipPitch: 1
-  reloadClipPitch: 0.75
+  reloadClipPitch: 1
   _aimingSpeed: 10
   minPoolSizePerBarrel: 1
   cannonFireAudioSourceTransform: {fileID: 0}
@@ -671,7 +671,7 @@ MonoBehaviour:
   ManualFiringGroupId: 0
   LastBarrelCheckTime: 0
   BarrelCheckInterval: 30
-  firingMode: 0
+  firingMode: 1
 --- !u!4 &97383924 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 6552243125327254951, guid: eee46121d5491514381b4054d5d36293, type: 3}
@@ -1509,6 +1509,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: cannon_fixed_2
       objectReference: {fileID: 0}
+    - target: {fileID: 946839667581647151, guid: 5265c63b2a83c0647a34b75b6d3c62f3, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 7672335162888491977, guid: 5265c63b2a83c0647a34b75b6d3c62f3, type: 3}
       propertyPath: m_LocalPosition.x
       value: -5.2597375
@@ -1586,7 +1590,7 @@ MonoBehaviour:
   cannonRotationalTransform: {fileID: 0}
   cannonballSpeed: 90
   maxAmmo: 500
-  _ammoCount: 0
+  _ammoCount: 500
   reloadQuantity: 2
   reloadTime: 0.5
   autoReload: 1
@@ -1594,7 +1598,7 @@ MonoBehaviour:
   fireClip: {fileID: 8300000, guid: 58702308a806c104abe9efa4a9e87166, type: 3}
   reloadClip: {fileID: 8300000, guid: ae24df3566c74814aa90d38b3d13b10f, type: 3}
   fireClipPitch: 1
-  reloadClipPitch: 0.75
+  reloadClipPitch: 1
   _aimingSpeed: 10
   minPoolSizePerBarrel: 1
   cannonFireAudioSourceTransform: {fileID: 0}
@@ -1991,7 +1995,7 @@ Transform:
   m_GameObject: {fileID: 488359076}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 1, z: 0, w: 0}
-  m_LocalPosition: {x: 5.4749985, y: 0.625, z: 5.8499985}
+  m_LocalPosition: {x: 5.4749985, y: 0.625, z: -1}
   m_LocalScale: {x: 2, y: 2, z: 2}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -5906,6 +5910,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: cannon_turret_flipped
       objectReference: {fileID: 0}
+    - target: {fileID: 946839667581647151, guid: 1d693bb2f2308ff4580609256404c415, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 7672335162888491977, guid: 1d693bb2f2308ff4580609256404c415, type: 3}
       propertyPath: m_LocalPosition.x
       value: -1.9455415
@@ -6180,8 +6188,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0b96e3b9a0cb409fafa3ebcc246aad1a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  HasMovement: 1
-  HasRotation: 1
+  HasMovement: 0
+  HasRotation: 0
   HasRigidbodyAnimation: 0
   deltaMove: 1
   RotationSpeed: 50
@@ -6553,7 +6561,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5922495745319733562, guid: b9dcfb370abb23044b74e71a3cec1b89, type: 3}
       propertyPath: m_Enabled
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 5922495745319733562, guid: b9dcfb370abb23044b74e71a3cec1b89, type: 3}
       propertyPath: WanderForce
@@ -6589,7 +6597,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6172958945017688131, guid: b9dcfb370abb23044b74e71a3cec1b89, type: 3}
       propertyPath: m_Constraints
-      value: 126
+      value: 80
       objectReference: {fileID: 0}
     - target: {fileID: 6172958945017688131, guid: b9dcfb370abb23044b74e71a3cec1b89, type: 3}
       propertyPath: m_IsKinematic
@@ -7124,6 +7132,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: cannon_fixed_3
       objectReference: {fileID: 0}
+    - target: {fileID: 946839667581647151, guid: 5265c63b2a83c0647a34b75b6d3c62f3, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 7672335162888491977, guid: 5265c63b2a83c0647a34b75b6d3c62f3, type: 3}
       propertyPath: m_LocalPosition.x
       value: -7.759738
@@ -7201,7 +7213,7 @@ MonoBehaviour:
   cannonRotationalTransform: {fileID: 0}
   cannonballSpeed: 90
   maxAmmo: 500
-  _ammoCount: 0
+  _ammoCount: 500
   reloadQuantity: 2
   reloadTime: 0.5
   autoReload: 1
@@ -7209,7 +7221,7 @@ MonoBehaviour:
   fireClip: {fileID: 8300000, guid: 58702308a806c104abe9efa4a9e87166, type: 3}
   reloadClip: {fileID: 8300000, guid: ae24df3566c74814aa90d38b3d13b10f, type: 3}
   fireClipPitch: 1
-  reloadClipPitch: 0.75
+  reloadClipPitch: 1
   _aimingSpeed: 10
   minPoolSizePerBarrel: 1
   cannonFireAudioSourceTransform: {fileID: 0}
@@ -8020,7 +8032,7 @@ MonoBehaviour:
   cannonRotationalTransform: {fileID: 0}
   cannonballSpeed: 90
   maxAmmo: 500
-  _ammoCount: 0
+  _ammoCount: 500
   reloadQuantity: 2
   reloadTime: 0.5
   autoReload: 1
@@ -8028,7 +8040,7 @@ MonoBehaviour:
   fireClip: {fileID: 8300000, guid: 58702308a806c104abe9efa4a9e87166, type: 3}
   reloadClip: {fileID: 8300000, guid: ae24df3566c74814aa90d38b3d13b10f, type: 3}
   fireClipPitch: 1
-  reloadClipPitch: 0.75
+  reloadClipPitch: 1
   _aimingSpeed: 10
   minPoolSizePerBarrel: 1
   cannonFireAudioSourceTransform: {fileID: 0}
@@ -8588,7 +8600,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 946839667581647151, guid: 1d693bb2f2308ff4580609256404c415, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 7672335162888491977, guid: 1d693bb2f2308ff4580609256404c415, type: 3}
       propertyPath: m_LocalPosition.x
@@ -9035,6 +9047,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: cannon_turret
       objectReference: {fileID: 0}
+    - target: {fileID: 946839667581647151, guid: 1d693bb2f2308ff4580609256404c415, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 7672335162888491977, guid: 1d693bb2f2308ff4580609256404c415, type: 3}
       propertyPath: m_LocalPosition.x
       value: -1.9455415
@@ -9112,7 +9128,7 @@ MonoBehaviour:
   cannonRotationalTransform: {fileID: 0}
   cannonballSpeed: 90
   maxAmmo: 500
-  _ammoCount: 0
+  _ammoCount: 500
   reloadQuantity: 2
   reloadTime: 0.5
   autoReload: 1
@@ -9120,7 +9136,7 @@ MonoBehaviour:
   fireClip: {fileID: 8300000, guid: 58702308a806c104abe9efa4a9e87166, type: 3}
   reloadClip: {fileID: 8300000, guid: ae24df3566c74814aa90d38b3d13b10f, type: 3}
   fireClipPitch: 1
-  reloadClipPitch: 0.75
+  reloadClipPitch: 1
   _aimingSpeed: 10
   minPoolSizePerBarrel: 1
   cannonFireAudioSourceTransform: {fileID: 0}
@@ -9138,7 +9154,7 @@ MonoBehaviour:
   ManualFiringGroupId: 0
   LastBarrelCheckTime: 0
   BarrelCheckInterval: 30
-  firingMode: 0
+  firingMode: 1
 --- !u!4 &2103432510 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 2854623241881727283, guid: b30cba3eb432fc64aaf1640e4941241c, type: 3}
@@ -11860,7 +11876,7 @@ MonoBehaviour:
   _windAudioSource: {fileID: 0}
   cannonBallDrag: 0.47
   cannonballType: 1
-  CanPlayWindSound: 1
+  CanPlayWindSound: 0
   debugDrawTrajectory: 0
   explosionForce: 1200
   lastFireTransform: {fileID: 0}
@@ -12165,7 +12181,7 @@ MonoBehaviour:
   cannonRotationalTransform: {fileID: 0}
   cannonballSpeed: 90
   maxAmmo: 500
-  _ammoCount: 0
+  _ammoCount: 500
   reloadQuantity: 2
   reloadTime: 0.5
   autoReload: 1
@@ -12173,7 +12189,7 @@ MonoBehaviour:
   fireClip: {fileID: 8300000, guid: 58702308a806c104abe9efa4a9e87166, type: 3}
   reloadClip: {fileID: 8300000, guid: ae24df3566c74814aa90d38b3d13b10f, type: 3}
   fireClipPitch: 1
-  reloadClipPitch: 0.75
+  reloadClipPitch: 1
   _aimingSpeed: 10
   minPoolSizePerBarrel: 1
   cannonFireAudioSourceTransform: {fileID: 0}
@@ -12517,7 +12533,7 @@ MonoBehaviour:
   _windAudioSource: {fileID: 0}
   cannonBallDrag: 0.47
   cannonballType: 0
-  CanPlayWindSound: 1
+  CanPlayWindSound: 0
   debugDrawTrajectory: 0
   explosionForce: 1200
   lastFireTransform: {fileID: 0}

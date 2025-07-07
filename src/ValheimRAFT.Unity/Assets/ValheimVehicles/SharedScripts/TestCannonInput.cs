@@ -14,9 +14,9 @@ namespace ValheimVehicles.SharedScripts
     public TargetController TargetController;
     [SerializeField] public int firingGroup;
 
-    private void Awake()
+    private void Start()
     {
-      TargetController= GetComponent<TargetController>();
+      UpdateAllValues();
     }
 
 
@@ -27,6 +27,28 @@ namespace ValheimVehicles.SharedScripts
       if (isSpacePressed || isKey1MousePress)
       {
         TargetController.StartManualFiring(firingGroup);
+      }
+    }
+
+    private void OnEnable()
+    {
+      UpdateAllValues();
+    }
+
+    public void UpdateAllValues()
+    {
+      TargetController= GetComponent<TargetController>();
+
+      var wanderers = FindObjectsOfType<RandomWanderer>(true);
+      if (wanderers.Length > 0)
+      {
+        foreach (var randomWanderer in wanderers)
+        {
+          if (randomWanderer.gameObject.name.Contains("player"))
+          {
+            TargetController.AddPlayer(randomWanderer.transform);
+          }
+        }
       }
     }
   }

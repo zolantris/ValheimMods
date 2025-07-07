@@ -42,7 +42,7 @@ namespace ValheimVehicles.SharedScripts
     public static float CannonFireAudioVolume = 1f;
     public static float CannonReloadAudioVolume = 0.5f;
     public static bool HasFireAudio = true;
-    public static bool HasReloadAudio = true;
+    public static bool HasReloadAudio = false;
     public static LayerMask SightBlockingMask = 0;
 
     public static float MaxFiringRotationYOverride = 0f;
@@ -80,7 +80,7 @@ namespace ValheimVehicles.SharedScripts
     [Tooltip("Sound when reloading.")]
     [SerializeField] public AudioClip reloadClip;
     [SerializeField] public float fireClipPitch = 1f;
-    [SerializeField] public float reloadClipPitch = 0.75f;
+    [SerializeField] public float reloadClipPitch = 1f;
     [Tooltip("Speed at which the cannon aims to adjust to target position.")]
     [SerializeField] public float _aimingSpeed = 10f;
 
@@ -162,22 +162,6 @@ namespace ValheimVehicles.SharedScripts
     public float BarrelPitchMaxAngle => MaxFiringPitchOverride > 0f ? MaxFiringPitchOverride : maxFiringPitch;
     public float BarrelPitchMinAngle => MinFiringPitchOverride > 0f ? MinFiringPitchOverride : minFiringPitch;
 
-    public int AmmoCount
-    {
-      get => _ammoCount;
-      set => _ammoCount = value;
-    }
-
-    public Cannonball.CannonballType AmmoType
-    {
-      get => ammoType;
-      set
-      {
-        ammoType = value;
-        SetupCannonballPrefab();
-      }
-    }
-
     protected internal virtual void Awake()
     {
       SetupTransforms();
@@ -253,6 +237,22 @@ namespace ValheimVehicles.SharedScripts
     protected internal virtual void OnDisable()
     {
       CleanupPool();
+    }
+
+    public int AmmoCount
+    {
+      get => _ammoCount;
+      set => _ammoCount = value;
+    }
+
+    public Cannonball.CannonballType AmmoType
+    {
+      get => ammoType;
+      set
+      {
+        ammoType = value;
+        SetupCannonballPrefab();
+      }
     }
 
     public void InitCoroutines()
@@ -755,11 +755,11 @@ namespace ValheimVehicles.SharedScripts
           bestDist = dist;
           bestPoint = colliderCenter;
           bestCollider = col;
-          RuntimeDebugLineDrawer.DrawLine(muzzle, colliderCenter, Color.green, 0.1f, 0.05f);
+          RuntimeDebugLineDrawer.DrawLine(muzzle, colliderCenter, Color.green, 3f);
         }
         else
         {
-          RuntimeDebugLineDrawer.DrawLine(muzzle, colliderCenter, Color.yellow, 0.1f, 0.05f);
+          RuntimeDebugLineDrawer.DrawLine(muzzle, colliderCenter, Color.yellow, 3f);
         }
       }
 
@@ -1006,14 +1006,12 @@ namespace ValheimVehicles.SharedScripts
           }
 
           if (raycastDebugDraw)
-            RuntimeDebugLineDrawer.DrawLine(fireOrigin, hit.point, Color.red, 0.05f, 0.05f);
+            RuntimeDebugLineDrawer.DrawLine(fireOrigin, hit.point, RuntimeDebugLineDrawer.TOrange, 0.3f);
 
           // Any other collider is considered blocking
           return false;
         }
         // No hit = clear shot
-        if (raycastDebugDraw)
-          RuntimeDebugLineDrawer.DrawLine(fireOrigin, hit.point, Color.red, 0.05f, 0.05f);
         return true;
       }
       // If we exceeded skips, treat as blocked (fail-safe)
@@ -1075,6 +1073,7 @@ namespace ValheimVehicles.SharedScripts
 
       var safeReloadTime = Mathf.Clamp(reloadTime, 0.1f, 5f);
       PlayReloadClip();
+      yield return new WaitUntil(() => !_cannonReloadAudioSource.isPlaying);
       yield return new WaitForSeconds(safeReloadTime);
       // while (elapsed < reloadTime)
       // {

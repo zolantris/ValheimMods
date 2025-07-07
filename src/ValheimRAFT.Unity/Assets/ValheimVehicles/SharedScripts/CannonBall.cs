@@ -3,12 +3,13 @@
 
 #region
 
-#endregion
-
 using System.Collections;
 using System.Collections.Generic;
 using JetBrains.Annotations;
 using UnityEngine;
+
+#endregion
+
 namespace ValheimVehicles.SharedScripts
 {
   /// <summary>
@@ -42,33 +43,16 @@ namespace ValheimVehicles.SharedScripts
 
     [CanBeNull] public static AudioClip ImpactSoundOverride;
 
+    // audio config.
     public static float ExplosionAudioVolume = 1f;
     public static bool HasExplosionAudio = true;
 
-    private readonly HashSet<(Collider, Collider)> _ignoredColliders = new();
+    public static float CannonballWindAudioVolume = 0.1f;
+    public static bool HasCannonballWindAudio = true;
 
-    private readonly Collider[] allocatedColliders = new Collider[100];
-    private bool _canHit = true;
-
-    private bool _canUseEffect;
-    private Vector3 _currentVelocity;
-
-    private CoroutineHandle _despawnCoroutine;
-
-    private AudioSource _explosionAudioSource;
-    [SerializeField] private readonly float _explosionClipStartPosition = 0.1f;
     [SerializeField] private ParticleSystem _explosionEffect;
-    private Transform _explosionParent;
     [SerializeField] private AudioClip _explosionSound;
-    [CanBeNull] public Vector3? _fireOrigin = null;
-    private bool _hasExitedMuzzle;
-    private bool _hasExploded;
     [SerializeField] private AudioClip _impactSound;
-    private CoroutineHandle _impactSoundCoroutine;
-    private readonly float _impactSoundEndTime = 0.2f;
-    private readonly float _impactSoundStartTime = 0.02f;
-
-    private Vector3 _lastVelocity; // the last velocity before unity physics mutates it.
 
     [SerializeField] private AudioSource _windAudioSource;
     [SerializeField] public float cannonBallDrag = 0.47f;
@@ -77,17 +61,39 @@ namespace ValheimVehicles.SharedScripts
     [Tooltip("Type of cannonball")]
     [SerializeField] public CannonballType cannonballType = CannonballType.Solid;
     [SerializeField] public bool CanPlayWindSound;
-    private CannonController controller;
 
     [Header("Physics & Trajectory")]
     [SerializeField] private bool debugDrawTrajectory;
 
     [Header("Explosion Physics")]
     [SerializeField] private float explosionForce = 1200f;
-    [SerializeField] private readonly LayerMask explosionLayerMask = ~0;
-    [SerializeField] private readonly float explosionRadius = 6f;
     [CanBeNull] public Transform lastFireTransform;
     public Rigidbody m_body;
+    private readonly float _explosionClipStartPosition = 0.1f;
+
+    private readonly HashSet<(Collider, Collider)> _ignoredColliders = new();
+    private readonly float _impactSoundEndTime = 1.2f;
+    private readonly float _impactSoundStartTime = 0.02f;
+
+    private readonly Collider[] allocatedColliders = new Collider[100];
+    private readonly LayerMask explosionLayerMask = ~0;
+    private readonly float explosionRadius = 6f;
+    private bool _canHit = true;
+
+    private bool _canUseEffect;
+    private Vector3 _currentVelocity;
+
+    private CoroutineHandle _despawnCoroutine;
+
+    private AudioSource _explosionAudioSource;
+    private Transform _explosionParent;
+    [CanBeNull] public Vector3? _fireOrigin;
+    private bool _hasExitedMuzzle;
+    private bool _hasExploded;
+    private CoroutineHandle _impactSoundCoroutine;
+
+    private Vector3 _lastVelocity; // the last velocity before unity physics mutates it.
+    private CannonController controller;
     private SphereCollider sphereCollider;
 
     public List<Collider> Colliders
@@ -111,6 +117,10 @@ namespace ValheimVehicles.SharedScripts
       {
         _impactSound = ImpactSoundOverride;
       }
+      
+      #if UNITY_EDITOR
+      HasCannonballWindAudio = CanPlayWindSound;
+      #endif
 
       m_body = GetComponent<Rigidbody>();
       m_body.drag = cannonBallDrag;
@@ -164,9 +174,9 @@ namespace ValheimVehicles.SharedScripts
 
     public void PlayWindSound()
     {
-      if (!CanPlayWindSound) return;
+      if (!HasCannonballWindAudio) return;
       if (!_windAudioSource) return;
-      _windAudioSource.volume = ExplosionAudioVolume;
+      _windAudioSource.volume = CannonballWindAudioVolume;
       var clipLength = _windAudioSource.clip.length;
       _windAudioSource.time = Mathf.Max(0, clipLength / 2f);
       _windAudioSource.Play((long)0.1f);
@@ -375,17 +385,28 @@ namespace ValheimVehicles.SharedScripts
       return true;
     }
 
-    public IEnumerator ImpactEffectCoroutine()
+    public IEnumerator ImpactEffectCoroutine(float impactVelocity)
     {
       var timer = _impactSoundStartTime;
+      var lerpedVolume = Mathf.Lerp(0f, 0.3f, impactVelocity / 90f);
+      var lerpedPitch = Mathf.Lerp(1f, 1.2f, impactVelocity / 90f);
+      
       _explosionAudioSource.time = _impactSoundStartTime;
-      _explosionAudioSource.PlayOneShot(_impactSound, 0.1f);
+      _explosionAudioSource.pitch = lerpedPitch;
+      _explosionAudioSource.volume = lerpedVolume;
+      _explosionAudioSource.PlayOneShot(_impactSound);
       while (timer < _impactSoundEndTime)
       {
         timer += Time.deltaTime;
         yield return null;
       }
       _explosionAudioSource.Stop();
+    }
+
+    // to be called by CannonballHitScheduler
+    public void StartImpactEffectAudio(float impactVelocity)
+    {
+      _impactSoundCoroutine.Start(ImpactEffectCoroutine(impactVelocity));
     }
 
     /// <summary>
@@ -443,7 +464,7 @@ namespace ValheimVehicles.SharedScripts
       {
         if (!_impactSoundCoroutine.IsRunning)
         {
-          _impactSoundCoroutine.Start(ImpactEffectCoroutine());
+          CannonballHitScheduler.ScheduleImpactSound(this, relativeVelocityMagnitude);
         }
 
         if (canPenetrate)

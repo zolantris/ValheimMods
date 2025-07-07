@@ -15,7 +15,11 @@ namespace ValheimVehicles.SharedScripts
   {
     private static GameObject _singletonObject;
     public static Material DebugRayMaterial;
+    #if UNITY_EDITOR
+    public static bool IsEnabled = true;
+    #else
     public static bool IsEnabled = false;
+    #endif
     public static Color TRed = new(1f, 0, 0, 0.75f);
     public static Color TGreen = new(0, 1, 0, 0.75f);
     public static Color TBlue = new(0, 0.5f, 1, 0.75f);

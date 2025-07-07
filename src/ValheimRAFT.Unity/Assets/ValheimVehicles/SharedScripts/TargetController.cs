@@ -31,6 +31,9 @@ namespace ValheimVehicles.SharedScripts
 
     public static bool canShootPlayer = true;
 
+    public static float FiringCooldown = 0.2f;
+    public static float FiringDelayPerCannon = 0.05f;
+
     [Header("Defense boundaries")]
     [SerializeField] public float MaxDefendSearchRadius = MAX_DEFEND_SEARCH_RADIUS;
     [SerializeField] public float DefendPlayerSafeRadius = DEFEND_PLAYER_SAFE_RADIUS;
@@ -46,9 +49,6 @@ namespace ValheimVehicles.SharedScripts
 
     [SerializeField] public int maxCannonsPerEnemy = 2;
     [SerializeField] public bool autoFire;
-
-    public static float FiringCooldown = 0.2f;
-    public static float FiringDelayPerCannon = 0.05f;
     [SerializeField] public List<CannonController> allCannonControllers = new();
     [SerializeField] public List<CannonController> autoTargetControllers = new();
     [SerializeField] public List<CannonController> manualFireControllers = new();
@@ -126,6 +126,25 @@ namespace ValheimVehicles.SharedScripts
     {
       _autoFireCannonsRoutine ??= new CoroutineHandle(this);
       _acquireTargetsRoutine ??= new CoroutineHandle(this);
+      
+#if UNITY_EDITOR
+      // mostly for local testing.
+      GetComponentsInChildren(false, allCannonControllers);
+      foreach (var allCannonController in allCannonControllers)
+      {
+        switch (allCannonController.GetFiringMode())
+        {
+          case CannonController.FiringMode.Manual:
+            manualFireControllers.Add(allCannonController);
+            break;
+          case CannonController.FiringMode.Auto:
+            autoTargetControllers.Add(allCannonController);
+            break;
+          default:
+            throw new ArgumentOutOfRangeException();
+        }
+      }
+#endif
     }
 
     private void OnDrawGizmos()
@@ -403,11 +422,11 @@ namespace ValheimVehicles.SharedScripts
           cannon.currentAimPoint = bestAimPoint;
           assignedCounts[bestTarget]++;
         }
-        else
-        {
-          cannon.firingTarget = null;
-          cannon.currentAimPoint = null;
-        }
+        // else
+        // {
+        //   cannon.firingTarget = null;
+        //   cannon.currentAimPoint = null;
+        // }
       }
     }
 
@@ -419,8 +438,8 @@ namespace ValheimVehicles.SharedScripts
 
     private void StartUpdatingAutoCannonTargets()
     {
-      if (_autoFireCannonsRoutine.IsRunning) return;
-      _autoFireCannonsRoutine.Start(UpdateCannonTargetsRoutine());
+      if (_acquireTargetsRoutine.IsRunning) return;
+      _acquireTargetsRoutine.Start(UpdateCannonTargetsRoutine());
     }
 
     private void UpdateAutoCannonTargets()
@@ -441,7 +460,7 @@ namespace ValheimVehicles.SharedScripts
 
         if (targets != null && targets.Count > 0 && autoTargetControllers.Count > 0)
         {
-          AssignCannonsToTargets(allCannonControllers.ToList(), targets, maxCannonsPerEnemy);
+          AssignCannonsToTargets(autoTargetControllers.ToList(), targets, maxCannonsPerEnemy);
         }
         else
         {
