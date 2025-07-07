@@ -40,7 +40,7 @@ namespace ValheimVehicles.SharedScripts
     public static bool UseCharacterHit = false;
 
     [CanBeNull] public static Cannonball CurrentImpactAudioCannonball;
-    public static Queue<(Cannonball, float)> CannonballImpactAudioQueue = new ();
+    public static Queue<(Cannonball, float)> CannonballImpactAudioQueue = new();
     // damage types.
     public static float BaseDamageExplosiveCannonball = 50f;
     public static float BaseDamageSolidCannonball = 50f;
@@ -99,6 +99,9 @@ namespace ValheimVehicles.SharedScripts
       hitData.m_attacker = Player.m_localPlayer.GetZDOID();
       hitData.m_hitType = HitData.HitType.Impact;
       hitData.m_pushForce = 2f;
+      hitData.m_radius = damageInfo.explosionRadius;
+      hitData.m_ranged = true;
+      hitData.m_blockable = true;
 
       if (UseCharacterHit && damageCollider != null)
       {
@@ -118,15 +121,29 @@ namespace ValheimVehicles.SharedScripts
         }
       }
 
-      if (damageInfo.isMineRock5Hit != null)
+      if (damageInfo.isMineRock5Hit)
       {
         var mineRock5 = damageCollider.GetComponentInParent<MineRock5>();
-        mineRock5.Damage(hitData);
+        if (mineRock5 != null)
+        {
+          mineRock5.Damage(hitData);
+        }
       }
-      else if (damageInfo.isDestructibleHit != null)
+      else if (damageInfo.isMineRockHit)
+      {
+        var mineRock = damageCollider.GetComponentInParent<MineRock>();
+        if (mineRock != null)
+        {
+          mineRock.Damage(hitData);
+        }
+      }
+      else if (damageInfo.isDestructibleHit)
       {
         var destructible = damageCollider.GetComponentInParent<IDestructible>();
-        destructible.Damage(hitData);
+        if (destructible != null)
+        {
+          destructible.Damage(hitData);
+        }
       }
 #else
         LoggerProvider.LogWarning("Cannonball damage not implemented!");

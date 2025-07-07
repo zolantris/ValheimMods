@@ -389,7 +389,7 @@ public class LoadValheimVehicleAssets : ILoadAssets
     RuntimeDebugLineDrawer.DebugRayMaterial = new Material(DoubleSidedTransparentMat);
 
     // for hit effect with solid cannonball.
-    Cannonball.ImpactSoundOverride = assetBundle.LoadAsset<AudioClip>("impact-hit-sound-fx.mp3");
+    Cannonball.ImpactSoundOverride = assetBundle.LoadAsset<AudioClip>("impact-hit-sound-fx");
 
     PowerPylon.LightningMaterial = LightningMaterial;
     MovingTreadComponent.fallbackPrefab = TankTreadsSingle;

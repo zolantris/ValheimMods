@@ -465,30 +465,6 @@ namespace ValheimVehicles.SharedScripts
       // must clean the pool if shooting new cannonballs.
       CleanupPool();
       InitCannonballPrefabAssets();
-
-
-      var selectedCannonball = SelectCannonballType();
-
-      if (selectedCannonball == null)
-      {
-        LoggerProvider.LogError("Unexpected null cannonball prefab.");
-      }
-
-      // IgnoreVehicleColliders(selectedCannonball);
-      // IgnoreLocalColliders(selectedCannonball);
-      //
-      // var go = selectedCannonball.gameObject;
-      // var goTransform = go.transform;
-      // goTransform.position = Vector3.zero;
-      // goTransform.rotation = Quaternion.identity;
-      // go.SetActive(false);
-      //
-      // var rb = go.GetComponent<Rigidbody>();
-      // if (rb != null)
-      // {
-      //   rb.isKinematic = true;
-      //   rb.useGravity = false;
-      // }
     }
 
     private void InitializePool()
@@ -503,6 +479,7 @@ namespace ValheimVehicles.SharedScripts
           var go = Instantiate(selectedCannonball.gameObject, shootingPart.projectileLoader.position, shootingPart.projectileLoader.rotation, null);
           go.name = $"cannonball_queue_{ammoType}_{i}";
           var obj = go.GetComponent<Cannonball>();
+          IgnoreVehicleColliders(obj);
           IgnoreLocalColliders(obj);
           go.SetActive(false);
           _cannonballPool.Enqueue(obj);
@@ -584,8 +561,10 @@ namespace ValheimVehicles.SharedScripts
       var go = Instantiate(selectedCannonball.gameObject, barrelPart.projectileLoader.position, barrelPart.projectileLoader.rotation, null);
       var localCannonball = go.GetComponent<Cannonball>();
 
+      IgnoreVehicleColliders(localCannonball);
       IgnoreLocalColliders(localCannonball);
       IgnoreOtherCannonballColliders(localCannonball);
+      localCannonball.IgnoredTransformRoots = IgnoredTransformRoots;
 
       go.gameObject.SetActive(true);
 
@@ -1155,6 +1134,17 @@ namespace ValheimVehicles.SharedScripts
       }
 
       _trackedLoadedCannonballs.RemoveAll(x => x == null);
+    }
+
+    public HashSet<Transform> IgnoredTransformRoots = new();
+
+    public void AddIgnoredTransforms(IEnumerable<Transform> transforms)
+    {
+      IgnoredTransformRoots.RemoveWhere(x => x == null);
+      foreach (var transform1 in transforms)
+      {
+        IgnoredTransformRoots.Add(transform1);
+      }
     }
 
     public class BarrelPart

@@ -96,10 +96,9 @@ namespace ValheimVehicles.SharedScripts
     private CannonController controller;
     private SphereCollider sphereCollider;
 
-    public List<Collider> Colliders
-    {
-      get;
-    } = new();
+    private List<Collider> _colliders = new();
+    public List<Collider> Colliders => TryGetColliders();
+    public HashSet<Transform> IgnoredTransformRoots = new();
 
     public bool CanHit => _canHit && _fireOrigin != null && isActiveAndEnabled;
 
@@ -117,15 +116,15 @@ namespace ValheimVehicles.SharedScripts
       {
         _impactSound = ImpactSoundOverride;
       }
-      
-      #if UNITY_EDITOR
+
+#if UNITY_EDITOR
       HasCannonballWindAudio = CanPlayWindSound;
-      #endif
+#endif
 
       m_body = GetComponent<Rigidbody>();
       m_body.drag = cannonBallDrag;
       m_body.angularDrag = cannonBallDrag;
-      TrySetColliders();
+      TryGetColliders();
 
       _explosionParent = transform.Find("explosion");
       _explosionAudioSource = _explosionParent.GetComponent<AudioSource>();
@@ -232,6 +231,23 @@ namespace ValheimVehicles.SharedScripts
       if (LayerHelpers.DefaultLayer == layer) return HitMaterial.Wood;
       if (LayerHelpers.DefaultSmallLayer == layer) return HitMaterial.Wood;
       return HitMaterial.None;
+    }
+
+    public bool IsColliderRootInIgnoredTransform(Transform colliderTransform)
+    {
+      var colliderRoot = ValheimCompatibility.GetPrefabRoot(colliderTransform);
+      foreach (var ignoredTransformRoot in IgnoredTransformRoots)
+      {
+        if (colliderRoot == ignoredTransformRoot)
+        {
+          return true;
+        }
+        if (colliderTransform == ignoredTransformRoot)
+        {
+          return true;
+        }
+      }
+      return false;
     }
 
     public HitMaterial GetHitMaterial(Collision other)
@@ -390,7 +406,7 @@ namespace ValheimVehicles.SharedScripts
       var timer = _impactSoundStartTime;
       var lerpedVolume = Mathf.Lerp(0f, 0.3f, impactVelocity / 90f);
       var lerpedPitch = Mathf.Lerp(1f, 1.2f, impactVelocity / 90f);
-      
+
       _explosionAudioSource.time = _impactSoundStartTime;
       _explosionAudioSource.pitch = lerpedPitch;
       _explosionAudioSource.volume = lerpedVolume;
@@ -416,10 +432,12 @@ namespace ValheimVehicles.SharedScripts
     {
       if (!CanHit || !_fireOrigin.HasValue) return;
       if (!sphereCollider.gameObject.activeInHierarchy) return;
-      var isCollidingWithParent = controller && other.collider.transform.root == controller.transform.root;
-
+      var colliderTransform = other.collider.transform;
+      var isCollidingWithParent = controller && colliderTransform.root == controller.transform.root;
+      var isSameRoot = ValheimCompatibility.GetPrefabRoot(colliderTransform) == ValheimCompatibility.GetPrefabRoot(transform);
+      var isInIgnoredRoot = IsColliderRootInIgnoredTransform(other.collider.transform);
       // allow ignoring parent colliders and do not restore.
-      if (isCollidingWithParent)
+      if (isInIgnoredRoot || isCollidingWithParent || isSameRoot)
       {
         foreach (var collider1 in Colliders)
         {
@@ -518,10 +536,12 @@ namespace ValheimVehicles.SharedScripts
       }
     }
 
-    public void TrySetColliders()
+    public List<Collider> TryGetColliders()
     {
-      GetComponentsInChildren(true, Colliders);
+      if (_colliders.Count > 0) return _colliders;
+      GetComponentsInChildren(true, _colliders);
       sphereCollider = GetComponentInChildren<SphereCollider>(true);
+      return _colliders;
     }
 
     public void Load(Transform loader)

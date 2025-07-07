@@ -568,9 +568,10 @@
           case CannonController cannonController:
             LoggerProvider.LogDebug("adding cannon to target controller");
             cannonController.AmmoType = AmmoTypeDefault;
-            cannonController.maxAmmo = 500;
-            cannonController.AmmoCount = 500;
+            cannonController.maxAmmo = 50;
             targetController.AddCannon(cannonController);
+            cannonController.AddIgnoredTransforms([transform, Manager!.transform]);
+            ;
             break;
           case SwivelComponentBridge swivelController:
             InitSwivelController(swivelController);
