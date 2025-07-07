@@ -327,6 +327,100 @@
 - Description: MaxTowing radius where a landvehicle can be grabbed/towed by a ship or flying ship. Spheres are significantly less accurate so a higher value could result in accidental matches with wrong vehicle
 - Default Value: 20
 
+## PrefabConfig: VehicleCannons
+
+### CannonBallInventoryWeight 
+- Description: Set the weight of cannonballs. For realism 12-48lbs for these cannons.
+- Default Value: 12
+
+### HasCannonFireAudio 
+- Description: Allows toggling the cannon fire audio
+- Default Value: True
+
+### UNSTABLE_HasCannonReloadAudio 
+- Description: Allows toggling the reload audio. Unstable b/c it does not sound great when many of these are fired together.
+- Default Value: False
+
+### UNSTABLE_HasCannonballExplosionAudio 
+- Description: Allows toggling the cannonball explosion/impact audio. Unstable b/c it does not sound great when many of these are fired together.
+- Default Value: True
+
+### CannonFiringDelayPerCannon 
+- Description: Allows setting cannon firing delays. This makes cannons fire in a order.
+- Default Value: 0.01
+
+### Cannon_ReloadAudioVolume 
+- Description: Allows customizing cannon firing audio volume
+- Default Value: 1
+
+### Cannon_FireAudioVolume 
+- Description: Allows customizing cannon reload audio volume
+- Default Value: 1
+
+### Cannonball_ExplosionAudioVolume 
+- Description: Allows customizing cannon reload audio volume
+- Default Value: 1
+
+### Cannonball_HasWindAudio 
+- Description: Allows enable cannonball wind audio - which can be heard if a cannonball passes nearby.
+- Default Value: True
+
+### Cannonball_WindAudioVolume 
+- Description: Allows customizing cannonball wind audio - which can be heard if a cannonball passes nearby. Recommended below 0.2f
+- Default Value: 0.2
+
+### Cannonball_SolidDamage 
+- Description: Set the amount of damage a solid cannon ball does. This value is multiplied by the velocity of the cannonball around 90 at max speed decreasing to 20 m/s at lowest hit damage level.
+- Default Value: 30
+
+### Cannonball_ExplosiveDamage 
+- Description: Set the amount of damage a explosive cannon ball does. This damage includes both the AOE and hit. AOE will do same damage on top of the impact of the shot.
+- Default Value: 30
+
+### CannonAutoAimSpeed 
+- Description: Set how fast a cannon can adjust aim and fire. This speeds up both firing and animations. Lower values might not be able to fire cannons at all for smaller targets. Keep in mind sea swell will impact the aiming of cannons.
+- Default Value: 10
+
+### CannonAimMaxYRotation 
+- Description: Maximum Y rotational a cannon can turn. Left to right. Front to bow etc.
+- Default Value: 15
+
+### CannonBarrelAimMaxTiltRotation 
+- Description: Maximum X rotation the barrel of the cannon can turn. Left to right
+- Default Value: 180
+
+### CannonBarrelAimMinTiltRotation 
+- Description: Min X rotation the barrel of the cannon can turn. This is the downwards rotation.
+- Default Value: -180
+
+### CannonPlayerProtectionRange 
+- Description: Player protection range of vehicle. This will be applied the moment they enter the vehicle and leave the vehicle. Players nearby the vehicle will not be included (for now).
+- Default Value: 15
+
+### CannonVehicleProtectionRange 
+- Description: Vehicle Protection Range of Cannons. This is added on top of the current vehicle Box bounds in X, Y, Z. NOT YET CONNECTED. ZONE SYSTEMS NEED TO BE SUPPORTED FOR THIS TO WORK.
+- Default Value: (1.00, 1.00, 1.00)
+
+## RecipeConfig
+
+### ValheimVehicles_Cannonball_Explosive [,Recover]
+- Description: Recipe requirements for ValheimVehicles_Cannonball_Explosive.
+Format: ItemName,Amount[,Recover][,AmountPerLevel]|... (e.g., BlackPowder,2,true|Bronze,1,true)
+Recover is optional (defaults true). AmountPerLevel is optional (defaults 0).
+- Default Value: BlackMetal,1,true|Coal,1,true
+
+### ValheimVehicles_Cannonball_Solid 
+- Description: Recipe requirements for ValheimVehicles_Cannonball_Solid.
+- Default Value: Bronze,1,true
+
+### ValheimVehicles_Cannon_Fixed_Tier1 
+- Description: Recipe requirements for ValheimVehicles_Cannon_Fixed_Tier1.
+- Default Value: Bronze,1,true|Wood,6,true
+
+### ValheimVehicles_Cannon_Turret_Tier1 
+- Description: Recipe requirements for ValheimVehicles_Cannon_Turret_Tier1.
+- Default Value: Bronze,4,true|Chain,1,true|Iron,2,true
+
 ## Vehicle Debugging
 
 ### AllowDebugCommandsForNonAdmins 
@@ -674,15 +768,15 @@ Other methods removed after 2.5.0
 50% will be the very bottom of the vehicle's collider. This is just a default. Any vehicle can be configured directly via config menu.
 - Default Value: 0.65
 
-### flightDamping_3.5.3 
+### flightDamping_3.6.0 
 - Description: Controls how much the water pushes the boat upwards directly. This value may affect angular damping too. Recommended to keep the original value. But tweaking can remove or add additional jitter. Higher values likely will add more jitter.
 - Default Value: 1
 
-### flightSidewaysDamping_3.5.3 
+### flightSidewaysDamping_3.6.0 
 - Description: Controls how much the water pushes the boat sideways based on wind direction and velocity.
 - Default Value: 2
 
-### flightAngularDamping_3.5.3 
+### flightAngularDamping_3.6.0 
 - Description: Controls how much the water pushes the boat from a vertical angle based on water and velocity. Lower values will cause more rocking and allow better turn rates. Higher values will make the vehicle more stable, but less turning angle and possibly less realistic. If you get motion-sickness this can allow tweaking sway without disabling it all and also prevent rapid turning.
 - Default Value: 1
 
@@ -702,15 +796,15 @@ Other methods removed after 2.5.0
 - Description: Flight angular drag controls how much the vehicle slows down when turning.
 - Default Value: 1.2
 
-### force_3.5.3 
+### force_3.6.0 
 - Description: EXPERIMENTAL_FORCE. Lower values will not allow the vehicle to balance fast when tilted. Lower values can reduce bobbing, but must be below the forceDistance value.
 - Default Value: 2
 
-### forceDistance_3.5.3 
+### forceDistance_3.6.0 
 - Description: EXPERIMENTAL_FORCE_DISTANCE should always be above the value of force. Otherwise bobbing will occur. Lower values will not allow the vehicle to balance fast when tilted
 - Default Value: 10
 
-### backwardForce_3.5.3 
+### backwardForce_3.6.0 
 - Description: EXPERIMENTAL_BackwardFORCE
 - Default Value: 1
 
@@ -718,15 +812,15 @@ Other methods removed after 2.5.0
 - Description: Steer force controls how much the vehicle will resist steering when turning due to water pushing against it
 - Default Value: 1
 
-### waterDamping_3.5.3 
+### waterDamping_3.6.0 
 - Description: Controls how much the water pushes the boat upwards directly. This value may affect angular damping too. Recommended to keep the original value. But tweaking can remove or add additional jitter. Higher values likely will add more jitter.
 - Default Value: 1
 
-### waterSidewaysDamping_3.5.3 
+### waterSidewaysDamping_3.6.0 
 - Description: Controls how much the water pushes the boat sideways based on wind direction and velocity.
 - Default Value: 2
 
-### waterAngularDamping_3.5.3 
+### waterAngularDamping_3.6.0 
 - Description: Controls how much the water pushes the boat from a vertical angle based on water and velocity. Lower values will cause more rocking and allow better turn rates. Higher values will make the vehicle more stable, but less turning angle and possibly less realistic. If you get motion-sickness this can allow tweaking sway without disabling it all and also prevent rapid turning.
 - Default Value: 1
 
@@ -742,15 +836,15 @@ Other methods removed after 2.5.0
 - Description: rotation drag controls how much the vehicle slows down when turning.
 - Default Value: 0.8
 
-### submersibleDamping_3.5.3 
+### submersibleDamping_3.6.0 
 - Description: Controls how much the water pushes the boat upwards directly. This value may affect angular damping too. Recommended to keep the original value. But tweaking can remove or add additional jitter. Higher values likely will add more jitter.
 - Default Value: 1
 
-### submersibleSidewaysDamping_3.5.3 
+### submersibleSidewaysDamping_3.6.0 
 - Description: Controls how much the water pushes the boat sideways based on wind direction and velocity.
 - Default Value: 2
 
-### submersibleAngularDamping_3.5.3 
+### submersibleAngularDamping_3.6.0 
 - Description: Controls how much the water pushes the boat from a vertical angle based on water and velocity. Lower values will cause more rocking and allow better turn rates. Higher values will make the vehicle more stable, but less turning angle and possibly less realistic. If you get motion-sickness this can allow tweaking sway without disabling it all and also prevent rapid turning.
 - Default Value: 1
 
@@ -782,11 +876,11 @@ Other methods removed after 2.5.0
 - Description: Wheel offset for Y position. Allowing for raising the treads higher. May require increasing suspension distance so the treads spawn then push the vehicle upwards. Negative lowers the wheels. Positive raises the treads. This value will not override custom config vehicles.
 - Default Value: -1
 
-### MaxVehicleLinearVelocity_3.5.x 
+### MaxVehicleLinearVelocity_3.6.x 
 - Description: Sets the absolute max speed a vehicle can ever move in. This is X Y Z directions. This will prevent the ship from rapidly flying away. Try staying between 5 and 100. Higher values will increase potential of vehicle flying off to space or rapidly accelerating through objects before physics can apply to an unloaded zone.
 - Default Value: 100
 
-### MaxVehicleLinearYVelocity_3.5.x 
+### MaxVehicleLinearYVelocity_3.6.x 
 - Description: Sets the absolute max speed a vehicle can ever move in vertical direction. This can significantly reduce vertical sway when lowered. This will limit the ship capability to launch into space. Lower values are safer. Too low and the vehicle will not recover fast from being underwater if falling into the water. Flight vehicles will not be affected by this value.
 - Default Value: 5
 
