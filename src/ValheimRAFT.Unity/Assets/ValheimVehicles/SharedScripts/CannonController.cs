@@ -33,6 +33,7 @@ namespace ValheimVehicles.SharedScripts
     // Will be set from asset and cached for instantiation
     public static Cannonball CannonballSolidPrefab;
     public static Cannonball CannonballExplosivePrefab;
+    public static float BarrelSupplyDistance = 5f;
     private static bool hasRunSetup;
 
     [Header("Cannon Animations")]
@@ -111,7 +112,7 @@ namespace ValheimVehicles.SharedScripts
 
     [Header("Barrel Ammo Logic")]
     [SerializeField] public bool hasNearbyPowderBarrel;
-    [SerializeField] private float barrelSupplyRadius = 5f;
+    [SerializeField] private float barrelSupplyRadius = BarrelSupplyDistance;
     [SerializeField] public int ManualFiringGroupId;
     // barrel check timers
     public float LastBarrelCheckTime;

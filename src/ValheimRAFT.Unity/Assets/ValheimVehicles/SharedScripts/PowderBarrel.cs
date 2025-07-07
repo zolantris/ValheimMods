@@ -53,17 +53,46 @@ namespace ValheimVehicles.SharedScripts
           Destroy(gameObject);
         }
       };
-      
+
       _explosionRoutine = new CoroutineHandle(this);
       _aoeRoutine = new CoroutineHandle(this);
-      
+
       explosionTransform = transform.Find("explosion");
       meshesTransform = transform.Find("meshes");
       explosionFxTransform = explosionTransform.Find("explosion_effect");
-      explosionCollider = transform.Find(BarrelExplosionColliderName).GetComponent<BoxCollider>();;
-    
+      explosionCollider = transform.Find(BarrelExplosionColliderName).GetComponent<BoxCollider>();
+
       explosionAudio = explosionTransform.GetComponent<AudioSource>();
       explosionFx = explosionFxTransform.GetComponent<ParticleSystem>();
+    }
+
+    /// <summary>
+    /// update cannons nearby with slight delay.
+    /// </summary>
+    public void StartUpdateNearbyCannonsOnPlace()
+    {
+      Invoke(nameof(UpdateNearbyCannonsOnPlace), 0.5f);
+    }
+
+    [CanBeNull]
+    public static List<PowderBarrel> UpdateNearbyCannonsOnPlace(Vector3 position, float radius)
+    {
+      // ReSharper disable once Unity.PreferNonAllocApi
+      var colliders = Physics.OverlapSphere(position, CannonController.BarrelSupplyDistance, LayerHelpers.PieceLayerMask);
+      var barrels = new List<PowderBarrel>();
+
+      for (var i = 0; i < colliders.Length; i++)
+      {
+        var col = colliders[i];
+        if (col.name != BarrelExplosionColliderName) continue;
+        var controller = col.GetComponentInParent<CannonController>();
+        if (controller != null)
+        {
+          controller.hasNearbyPowderBarrel = true;
+        }
+      }
+
+      return barrels;
     }
 
     [CanBeNull]
@@ -92,11 +121,11 @@ namespace ValheimVehicles.SharedScripts
       yield return new WaitForFixedUpdate();
 
       var explosionOrigin = explosionCollider.bounds.center;
-      int count = Physics.OverlapSphereNonAlloc(explosionOrigin, 5f, allocatedColliders, LayerHelpers.PieceLayerMask);
+      var count = Physics.OverlapSphereNonAlloc(explosionOrigin, 5f, allocatedColliders, LayerHelpers.PieceLayerMask);
 
       // Gather all barrels and distances.
       var barrels = new List<(PowderBarrel barrel, float distance)>(count);
-      for (int i = 0; i < count; i++)
+      for (var i = 0; i < count; i++)
       {
         var col = allocatedColliders[i];
         if (col.name == BarrelExplosionColliderName)
@@ -104,7 +133,7 @@ namespace ValheimVehicles.SharedScripts
           var powderBarrel = col.GetComponentInParent<PowderBarrel>();
           if (powderBarrel != null)
           {
-            float dist = Vector3.Distance(explosionOrigin, powderBarrel.transform.position);
+            var dist = Vector3.Distance(explosionOrigin, powderBarrel.transform.position);
             barrels.Add((powderBarrel, dist));
           }
           continue;
@@ -132,7 +161,7 @@ namespace ValheimVehicles.SharedScripts
       explosionAudio.Play();
 
       var timer = Stopwatch.StartNew();
-      
+
       if (destroyDeactivationDelayTimeInMs > 0)
       {
         yield return new WaitUntil(() => timer.ElapsedMilliseconds > destroyDeactivationDelayTimeInMs);

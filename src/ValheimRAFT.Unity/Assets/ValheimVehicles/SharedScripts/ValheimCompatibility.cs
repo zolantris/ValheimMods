@@ -13,9 +13,8 @@ using UnityEngine;
 
 namespace ValheimVehicles.SharedScripts
 {
-  public static class ValheimClassConverter
+  public static class ValheimCompatibility
   {
-
     /// <summary>
     /// Quick getter for WearNTear api
     /// </summary>
@@ -27,6 +26,20 @@ namespace ValheimVehicles.SharedScripts
     {
       var provider = WearNTearProviderBase.GetWearNTearComponent(obj);
       return provider;
+    }
+
+    public static Transform GetPrefabRoot(Transform t)
+    {
+#if !UNITY_EDITOR && !UNITY_2022
+      var netView = t.GetComponentInParent<ZNetView>();
+      if (netView != null)
+      {
+        return netView.transform;
+      }
+      return t.root;
+#else
+      return t.root;
+#endif
     }
   }
 }
