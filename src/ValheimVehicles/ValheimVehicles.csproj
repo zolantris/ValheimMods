@@ -50,6 +50,12 @@
         <Compile Update="..\ValheimRAFT.Unity\Assets\ValheimVehicles\SharedScripts\SharedScripts.Helpers\PieceOverlapUtils.cs">
             <Link>SharedScripts\SharedScripts.Helpers\PieceOverlapUtils.cs</Link>
         </Compile>
+        <Compile Update="..\ValheimRAFT.Unity\Assets\ValheimVehicles\SharedScripts\ICannonConfig.cs">
+            <Link>SharedScripts\ICannonConfig.cs</Link>
+        </Compile>
+        <Compile Update="..\ValheimRAFT.Unity\Assets\ValheimVehicles\SharedScripts\CannonBallHitScheduler.cs">
+            <Link>SharedScripts\CannonBallHitScheduler.cs</Link>
+        </Compile>
     </ItemGroup>
     <ItemGroup Label="Internal ValheimVehicles scripts">
         <!-- Includes all namespace folders -->

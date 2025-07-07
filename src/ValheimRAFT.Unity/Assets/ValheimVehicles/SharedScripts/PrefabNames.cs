@@ -256,6 +256,17 @@
       public static readonly string Mechanism_Power_Storage_Eitr =
         $"{ValheimVehiclesPrefix}_Power_Storage_Eitr";
 
+      public static readonly string PowderBarrel =
+        $"{ValheimVehiclesPrefix}_Powder_Barrel";
+      public static readonly string CannonFixedTier1 =
+        $"{ValheimVehiclesPrefix}_Cannon_Fixed_Tier1";
+      public static readonly string CannonTurretTier1 =
+        $"{ValheimVehiclesPrefix}_Cannon_Turret_Tier1";
+      public static readonly string CannonballSolid =
+        $"{ValheimVehiclesPrefix}_Cannonball_Solid";
+      public static readonly string CannonballExplosive =
+        $"{ValheimVehiclesPrefix}_Cannonball_Explosive";
+
       public static readonly string VehicleShipMovementOrientation =
         "VehicleShip_MovementOrientation";
 

@@ -143,7 +143,29 @@ public static class LoggerProvider
       }
       else
       {
-        Debug.LogWarning(message); // Unity fallback if no logger
+        // Properly map log levels to Unity log methods
+        switch (level)
+        {
+          case LogLevel.Fatal:
+          case LogLevel.Error:
+            Debug.LogError(message);
+            break;
+          case LogLevel.Warning:
+            Debug.LogWarning(message);
+            break;
+          case LogLevel.Message:
+          case LogLevel.Info:
+            Debug.Log(message);
+            break;
+          case LogLevel.Debug:
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            Debug.Log("[DEBUG] " + message);
+#endif
+            break;
+          default:
+            Debug.Log(message);
+            break;
+        }
       }
     }
     catch (Exception e)
@@ -151,6 +173,7 @@ public static class LoggerProvider
       Debug.LogWarning($"LoggerProvider: Failed to log message. Exception: {e.Message}\nOriginalMessage: {message}");
     }
   }
+
 
   private static string Format(string logType, string message, string file, int line)
   {

@@ -364,6 +364,8 @@
 
     public bool CanActivatePendingPieces => _pendingPiecesCoroutine == null;
 
+    public TargetController targetController;
+
     public override void Awake()
     {
       SetupMeshClusterController();
@@ -371,6 +373,10 @@
 
       // must be called before base.awake()
       SetupJobHandlerOnZNetScene();
+
+      targetController = gameObject.AddComponent<TargetController>();
+      targetController.targetingMode = TargetController.TargetingMode.DefendPlayer;
+      targetController.autoFire = true;
 
       base.Awake();
 
@@ -413,6 +419,7 @@
       m_localRigidbody = _piecesContainerTransform.GetComponent<Rigidbody>();
       InitializationTimer.Start();
     }
+
 
     public void Start()
     {
@@ -546,6 +553,8 @@
       if (isRam) m_ramPieces.Remove(netView);
     }
 
+    public static Cannonball.CannonballType AmmoTypeDefault = Cannonball.CannonballType.Solid;
+
     public void AddPieceDataForComponents(ZNetView netView)
     {
       var components = netView.GetComponents<Component>();
@@ -555,6 +564,14 @@
           case VehicleManager vehicleManager:
             LoggerProvider.LogDev("Detected VehicleManager, setting parent to PiecesController.Manager");
             vehicleManager.MovementController.OnParentReady(PiecesController.Manager);
+            break;
+          case CannonController cannonController:
+            LoggerProvider.LogDebug("adding cannon to target controller");
+            cannonController.AmmoType = AmmoTypeDefault;
+            cannonController.maxAmmo = 50;
+            targetController.AddCannon(cannonController);
+            cannonController.AddIgnoredTransforms([transform, Manager!.transform]);
+            ;
             break;
           case SwivelComponentBridge swivelController:
             InitSwivelController(swivelController);
@@ -642,6 +659,10 @@
             break;
           case Fireplace fireplace:
             RemoveEffectAreaFromVehicle(netView);
+            break;
+          case CannonController cannonController:
+            LoggerProvider.LogDebug("removing cannon from target controller");
+            targetController.RemoveCannon(cannonController);
             break;
           case MastComponent mast:
             m_mastPieces.Remove(mast);

@@ -41,7 +41,7 @@ public static class PatchController
       typeof(Fireplace_WaterPatches),
       typeof(Minimap_VehicleIcons),
 #if DEBUG
-      typeof(RPCRegistryDebugger_Patches)
+      typeof(RPCRegistryDebugger_Patches),
 #endif
       typeof(RPCManager_Patches)
     );

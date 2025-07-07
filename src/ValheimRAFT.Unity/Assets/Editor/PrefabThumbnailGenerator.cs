@@ -5,8 +5,10 @@ using System.Collections.Generic;
 using System.IO;
 using JetBrains.Annotations;
 using UnityEditor;
+using UnityEditor.SceneManagement;
 using UnityEditor.U2D;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.Serialization;
 using UnityEngine.U2D;
 using Object = UnityEngine.Object;
@@ -21,12 +23,16 @@ public class PrefabThumbnailGenerator : EditorWindow
 {
 
   private const int GuiWidth = 150;
+
+  private const string PrefabGenScenePath = "Assets/ValheimVehicles/Scene/GeneratePrefabIcons.unity";
   private static string outputDirPath = "Assets/ValheimVehicles/GeneratedIcons/"; // output dir
 
   private static GameObject sceneLight;
 
+  public static string lastScenePath = "";
+
   [FormerlySerializedAs("excludedContainsPrefabNames")] public List<string> excludeContainsPrefabNames = new()
-    { "shared_", "steering_wheel", "rope_ladder", "dirt_floor", "dirtfloor_icon", "rope_anchor", "keel", "rudder_basic", "custom_sail", "mechanism_swivel", "_old", "_test_variant", "tank_tread_icon", "vehicle_hammer", "_backup", "_deprecated" };
+    { "shared_", "steering_wheel", "rope_ladder", "dirt_floor", "dirtfloor_icon","cannon_shoot_part", "chain_link", "rope_anchor", "keel", "rudder_basic", "custom_sail", "mechanism_swivel", "_old", "_test_variant", "tank_tread_icon", "vehicle_hammer", "_backup", "_deprecated" };
   public List<string> excludeExactPrefabNames = new()
     { "shared_", "steering_wheel", "rope_ladder", "dirt_floor", "dirtfloor_icon", "rope_anchor", "keel", "rudder_basic", "custom_sail", "mechanism_swivel", "_old", "_test_variant", "tank_tread_icon", "vehicle_hammer" };
 
@@ -54,16 +60,15 @@ public class PrefabThumbnailGenerator : EditorWindow
     if (GUILayout.Button(runCaptureGuiContent))
     {
       isRunning = true;
-      try
+      if (TrySwitchToPrefabGenerationScene())
       {
-        CaptureTexturesForPrefabs();
+        // Defer to next Editor update loop so the scene/cameras/lights are all valid
+        EditorApplication.delayCall += RunGenerationAfterSceneLoad;
       }
-      catch
+      else
       {
         isRunning = false;
       }
-
-      isRunning = false;
     }
     
     GUILayout.BeginHorizontal();
@@ -122,6 +127,65 @@ public class PrefabThumbnailGenerator : EditorWindow
   {
     GetWindow(typeof(PrefabThumbnailGenerator));
   }
+
+  private void RunGenerationAfterSceneLoad()
+  {
+    // Only run ONCE
+    EditorApplication.delayCall -= RunGenerationAfterSceneLoad;
+
+    var activeScene = SceneManager.GetActiveScene();
+    if (!activeScene.path.EndsWith("GeneratePrefabIcons.unity"))
+    {
+      Debug.LogError("Scene not loaded as expected!");
+      isRunning = false;
+      return;
+    }
+
+    try
+    {
+      CaptureTexturesForPrefabs();
+    }
+    finally
+    {
+      isRunning = false;
+    }
+
+    try
+    {
+      if (lastScenePath != string.Empty)
+      {
+        EditorSceneManager.OpenScene(lastScenePath, OpenSceneMode.Single);
+      }
+    }catch(Exception e)
+    {
+      Debug.LogError($"Failed to open scene at {PrefabGenScenePath}");
+    }
+  }
+
+  private static bool TrySwitchToPrefabGenerationScene()
+  {
+    var activeScene = SceneManager.GetActiveScene();
+    var isGenerationScene = activeScene.path.EndsWith("GeneratePrefabIcons.unity");
+    lastScenePath = isGenerationScene ? "" : activeScene.path;
+    
+    if (!isGenerationScene && activeScene.isDirty)
+    {
+      if (!EditorSceneManager.SaveScene(activeScene))
+      {
+        Debug.LogError($"Failed to save active scene: {activeScene.path}");
+        return false;
+      }
+    }
+
+    var scene = EditorSceneManager.OpenScene(PrefabGenScenePath, OpenSceneMode.Single);
+    if (!scene.IsValid())
+    {
+      Debug.LogError($"Failed to open scene at {PrefabGenScenePath}");
+      return false;
+    }
+    return true;
+  }
+
 
   private List<GameObject> GetFilesFromSearchPath()
   {

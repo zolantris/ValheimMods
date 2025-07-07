@@ -6,11 +6,14 @@ namespace ValheimVehicles.Prefabs.Registry;
 /**
  * example registry of a prefab
  */
-public class ExamplePrefab : IRegisterPrefab
+public class ExamplePrefab : RegisterPrefab<ExamplePrefab>
 {
-  public static readonly ExamplePrefab Instance = new();
-
-  public void Register(PrefabManager prefabManager, PieceManager pieceManager)
+  private void RegisterPrefabXYZ()
   {
+
+  }
+  public override void OnRegister()
+  {
+    RegisterPrefabXYZ();
   }
 }

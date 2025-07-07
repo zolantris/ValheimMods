@@ -104,6 +104,7 @@ public partial class ModTranslations
     MechanismSwitch_AltHoldActionString = SafeLocalize($"[<color=yellow><b>{SharedKeys_Hold}+{ValheimInput_KeyAltPlace}+{ValheimInput_KeyUse}</b></color>] $valheim_vehicles_mechanism_swivel_edit");
 
     MechanismMode_VehicleDock = SafeLocalize("$valheim_vehicles_mechanism_mode_vehicle_dock");
+    MechanismMode_VehicleDock = SafeLocalize("$valheim_vehicles_mechanism_mode_fire_cannon_group");
 
     DockingMessages_NotAttachedToVehicle = SafeLocalize("$valheim_vehicles_vehicle_dock_messages_not_attached_to_vehicle");
     DockingMessages_NoVehicleToDockFound = SafeLocalize("$valheim_vehicles_vehicle_dock_messages_no_dockable_vehicle_found");
@@ -132,6 +133,18 @@ public partial class ModTranslations
     RaftSail = SafeLocalize("$valheim_vehicles_sail_raft");
     KarveSail = SafeLocalize("$valheim_vehicles_sail_karve");
     DrakkalSail = SafeLocalize("$valheim_vehicles_sail_drakkal");
+  }
+
+  private static void UpdateVehicleCannonTranslations()
+  {
+    VehicleCannon_FireCannons = SafeLocalize("$valheim_vehicles_cannons_fire");
+    VehicleCannon_FireCannonGroup = SafeLocalize("$valheim_vehicles_cannons_fire_group");
+    VehicleCannon_ToggleAutoFire = SafeLocalize("$valheim_vehicles_cannons_toggle_auto_fire");
+    VehicleCannon_SwapCannonBallType = SafeLocalize("$valheim_vehicles_cannons_swap_cannonball_type");
+    VehicleCannon_AmmoText = SafeLocalize("$valheim_vehicles_cannons_ammo_text");
+    VehicleCannon_CannonBallSolid = SafeLocalize("$valheim_vehicles_cannonball_solid");
+    VehicleCannon_CannonBallExplosive = SafeLocalize("$valheim_vehicles_cannonball_explosive");
+    VehicleCannon_CannonMissingNearbyPowderBarrel = SafeLocalize(WithBoldText("$valheim_vehicles_cannons_missing_nearby_powder_barrels", "red"));
   }
 
   private static void UpdateVehicleConfigTranslations()
@@ -163,6 +176,8 @@ public partial class ModTranslations
     SharedKeys_Owner = SafeLocalize("$valheim_vehicles_shared_keys_owner");
     SharedKeys_Hold = SafeLocalize("$valheim_vehicles_shared_keys_hold");
     SharedKeys_Reset = SafeLocalize("$valheim_vehicles_shared_keys_reset");
+    SharedKeys_AddMany = SafeLocalize("$valheim_vehicles_mechanism_interact_add_many");
+    SharedKeys_InteractAltAndPlace = SafeLocalize($"[<color=yellow><b>{ValheimInput_KeyAltPlace}+{ValheimInput_KeyUse}</b></color>]");
   }
 
   private static void SetCurrentLocalizedLanguage()
@@ -328,6 +343,7 @@ public partial class ModTranslations
       UpdatePowerTranslations();
       UpdateSwivelUITranslations();
       UpdateVehicleCommandsTranslations();
+      UpdateVehicleCannonTranslations();
     }
     catch (Exception e)
     {

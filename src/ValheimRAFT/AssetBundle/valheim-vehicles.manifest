@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 1288921870
+CRC: 3923376747
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 88806e1758f560f41101bc7b4906097b
+    Hash: c801fbe4521d8b457c848028b3974b54
   TypeTreeHash:
     serializedVersion: 2
-    Hash: 2829a51ee33982bdb5ce5c64787aa447
+    Hash: e982d1c7cd6aec4c8ff2c2946a00578c
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 88806e1758f560f41101bc7b4906097b
+    Hash: c801fbe4521d8b457c848028b3974b54
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -36,12 +36,12 @@ ClassTypes:
   Script: {instanceID: 0}
 - Class: 65
   Script: {instanceID: 0}
+- Class: 82
+  Script: {instanceID: 0}
+- Class: 83
+  Script: {instanceID: 0}
 - Class: 108
   Script: {instanceID: 0}
-- Class: 114
-  Script: {fileID: 11500000, guid: 8aa93d7854518e94aaf1cc6faf180375, type: 3}
-- Class: 114
-  Script: {fileID: 11500000, guid: 7d873279a1e81b9419d0f6fb8b3c1fa9, type: 3}
 - Class: 114
   Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
 - Class: 114
@@ -59,6 +59,8 @@ ClassTypes:
 - Class: 114
   Script: {fileID: 11500000, guid: 9085046f02f69544eb97fd06b6048fe2, type: 3}
 - Class: 114
+  Script: {fileID: 11500000, guid: 8aa93d7854518e94aaf1cc6faf180375, type: 3}
+- Class: 114
   Script: {fileID: 11500000, guid: 59f8146938fff824cb5fd77236b75775, type: 3}
 - Class: 114
   Script: {fileID: 11500000, guid: 747419968f339df40a827088f25c215d, type: 3}
@@ -71,6 +73,8 @@ ClassTypes:
 - Class: 114
   Script: {fileID: 11500000, guid: 2a4db7a114972834c8e4117be1d82ba3, type: 3}
 - Class: 114
+  Script: {fileID: 11500000, guid: 7d873279a1e81b9419d0f6fb8b3c1fa9, type: 3}
+- Class: 114
   Script: {fileID: 11500000, guid: 19bf60ab5c953fe4ba1db2f29c51ad1b, type: 3}
 - Class: 115
   Script: {instanceID: 0}
@@ -79,6 +83,8 @@ ClassTypes:
 - Class: 128
   Script: {instanceID: 0}
 - Class: 134
+  Script: {instanceID: 0}
+- Class: 135
   Script: {instanceID: 0}
 - Class: 136
   Script: {instanceID: 0}
@@ -165,6 +171,8 @@ Assets:
 - Assets/ValheimVehicles/Prefabs/shared_ram_stake.prefab
 - Assets/ValheimVehicles/Texture/sail_diffuse.png
 - Assets/ValheimVehicles/Prefabs/hull_wall_window_square_wood_2x2.prefab
+- Assets/ValheimVehicles/Prefabs/cannon_turret.prefab
+- Assets/ValheimVehicles/ExternalAssets/Sounds/incoming-motar-4.mp3
 - Assets/ValheimVehicles/Prefabs/Backups/shared_hull_slab_iron_4x4_new.prefab
 - Assets/ValheimVehicles/Prefabs/hull_rib_2x1x2_wood.prefab
 - Assets/ValheimVehicles/Material/WaterHeightMaterial.mat
@@ -192,6 +200,7 @@ Assets:
 - Assets/ValheimVehicles/Prefabs/Backups/shared_hull_slab_4x4_new.prefab
 - Assets/ValheimVehicles/Material/iron.mat
 - Assets/ValheimVehicles/Prefabs/shared_hull_rib_corner.prefab
+- Assets/ValheimVehicles/Prefabs/cannon_fixed.prefab
 - Assets/ValheimVehicles/Material/flametal_rustic.mat
 - Assets/ValheimVehicles/Prefabs/shared_rudder_advanced_single.prefab
 - Assets/ValheimVehicles/Prefabs/rudder_basic.prefab
@@ -237,6 +246,7 @@ Assets:
 - Assets/ValheimVehicles/Prefabs/hull_corner_floor_2x8_right_iron.prefab
 - Assets/ValheimVehicles/Prefabs/GUI/edit_sail_panel.prefab
 - Assets/ValheimVehicles/Material/MaskTest_Wall.mat
+- Assets/ValheimVehicles/Prefabs/cannon_ball_bronze.prefab
 - Assets/ValheimVehicles/Prefabs/mechanism_activator_plate.prefab
 - Assets/ValheimVehicles/Material/MaskTest_ObjectThroughWall.mat
 - Assets/ValheimVehicles/Material/iron_metal_custom.mat
@@ -265,6 +275,7 @@ Assets:
 - Assets/ValheimVehicles/Material/cutout_wood_alt_piece_bg_valheim_wood_debug_1.mat
 - Assets/ValheimVehicles/Material/iron_metal_double_sided.mat
 - Assets/ValheimVehicles/Material/glass_nautilus_notint_withmask.mat
+- Assets/ValheimVehicles/ExternalAssets/Sounds/tank-reload.mp3
 - Assets/ValheimVehicles/Material/iron_metal_rustic_4x4.mat
 - Assets/ValheimVehicles/Prefabs/hull_rib_corner_2x2x4_right_wood.prefab
 - Assets/ValheimVehicles/Prefabs/hull_wall_window_porthole_iron_8x4.prefab
@@ -286,6 +297,7 @@ Assets:
 - Assets/ValheimVehicles/Prefabs/ram_stake_tier1_2x4.prefab
 - Assets/ValheimVehicles/Material/StandardStencilCutout.shader
 - Assets/ValheimVehicles/Material/Dirtfloor 1.mat
+- Assets/ValheimVehicles/ExternalAssets/Sounds/explosion-fx.mp3
 - Assets/ValheimVehicles/Prefabs/hull_rib_double_glass.prefab
 - Assets/ValheimVehicles/Prefabs/hull_prow_2x2x4_wood.prefab
 - Assets/ValheimVehicles/Material/bronze_nautilus_metal_rib 1.mat
@@ -299,20 +311,23 @@ Assets:
 - Assets/ValheimVehicles/Prefabs/hull_slab_wood_4x4.prefab
 - Assets/ValheimVehicles/Prefabs/mast_level_1.prefab
 - Assets/ValheimVehicles/Material/stake.mat
+- Assets/ValheimVehicles/Prefabs/cannon_ball_blackmetal.prefab
 - Assets/ValheimVehicles/Texture/sail_hide_normal.png
-- Assets/ValheimVehicles/Prefabs/anchor_chain_wheel.prefab
 - Assets/ValheimVehicles/Prefabs/ram_blade_top.prefab
 - Assets/ValheimVehicles/Prefabs/shared_hull_slab_iron_4x4_new.prefab
 - Assets/ValheimVehicles/Prefabs/nautilus_bridge.prefab
+- Assets/ValheimVehicles/Prefabs/powder_barrel.prefab
 - Assets/ValheimVehicles/Prefabs/mast_level_2.prefab
 - Assets/ValheimVehicles/Prefabs/hull_rib_2x2x2_wood.prefab
 - Assets/ValheimVehicles/Prefabs/GUI/edit_texture_panel 1.prefab
+- Assets/ValheimVehicles/Prefabs/anchor_chain_wheel.prefab
 - Assets/ValheimVehicles/Prefabs/hull_wall_wood_4x4.prefab
 - Assets/ValheimVehicles/Prefabs/hull_corner_floor_2x8_right_wood.prefab
 - Assets/ValheimVehicles/Material/wood_alt_piece_bg_rib_8x4.mat
 - Assets/ValheimVehicles/Prefabs/hull_prow_seal_iron.prefab
 - Assets/ValheimVehicles/Prefabs/hull_rib_corner_2x2x4_right_iron.prefab
 - Assets/ValheimVehicles/Prefabs/custom_sail.prefab
+- Assets/ValheimVehicles/ExternalAssets/Sounds/impact-hit-sound-fx.mp3
 - Assets/ValheimVehicles/Prefabs/shared_rudder_advanced_double.prefab
 - Assets/ValheimVehicles/Prefabs/hull_corner_floor_2x2_left_iron.prefab
 - Assets/ValheimVehicles/Prefabs/rudder_advanced_single_wood.prefab
@@ -336,6 +351,7 @@ Assets:
 - Assets/ValheimVehicles/Material/WaterMaskMaterial.mat
 - Assets/ValheimVehicles/Prefabs/wheel_single.prefab
 - Assets/ValheimVehicles/Prefabs/hull_corner_floor_2x4_right_wood.prefab
+- Assets/ValheimVehicles/ExternalAssets/Sounds/powerful-cannon-shot.mp3
 - Assets/ValheimVehicles/Prefabs/hull_center_iron.prefab
 - Assets/ValheimVehicles/Material/bronze_metal.mat
 - Assets/ValheimVehicles/Material/Dirtfloor.mat

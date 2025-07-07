@@ -242,6 +242,11 @@ public class VehicleCommands : ConsoleCommand
     var charactersOnShip = vehicleOnboardController.GetCharactersOnShip();
     var characterData = new List<SafeMoveCharacterData>();
 
+    if (Player.m_localPlayer && Player.m_localPlayer.transform.parent != null)
+    {
+      Player.m_localPlayer.transform.SetParent(null);
+    }
+
     if (shouldMoveLocalPlayer && !charactersOnShip.Contains(Player.m_localPlayer))
     {
       charactersOnShip.Add(Player.m_localPlayer);
@@ -253,6 +258,11 @@ public class VehicleCommands : ConsoleCommand
       {
         var isDebugFlying = character.IsDebugFlying();
         var isKinematic = character.m_body.isKinematic;
+
+        if (character.transform.parent)
+        {
+          character.transform.SetParent(null);
+        }
 
         if (!isKinematic && !isDebugFlying) character.m_body.isKinematic = true;
 
@@ -334,10 +344,18 @@ public class VehicleCommands : ConsoleCommand
       character.m_nview.m_zdo.SetRotation(character.transform.rotation);
       return;
     }
-    // reset teleporting
-    player.m_teleporting = false;
-    player.m_teleportTimer = 999f;
-    player.TeleportTo(toPosition, character.transform.rotation, false);
+    if (Player.m_localPlayer == player)
+    {
+      ZNet.instance.SetReferencePosition(toPosition);
+    }
+    else
+    {
+      // reset teleporting
+      player.m_teleporting = false;
+      player.m_teleportTimer = 999f;
+      player.TeleportTo(toPosition, character.transform.rotation, false);
+    }
+
   }
 
   /// <summary>

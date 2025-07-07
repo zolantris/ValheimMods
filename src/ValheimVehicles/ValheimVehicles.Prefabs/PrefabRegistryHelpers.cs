@@ -768,6 +768,8 @@ public abstract class PrefabRegistryHelpers
     {
       // todo add different hit effect and destroy effect
       wearNTearComponent.m_materialType = WearNTear.MaterialType.Iron;
+      wearNTearComponent.m_destroyedEffect =
+        LoadValheimAssets.stoneFloorPieceWearNTear.m_destroyedEffect;
     }
 
     wearNTearComponent.m_health = PrefabRegistryController.wearNTearBaseHealth *

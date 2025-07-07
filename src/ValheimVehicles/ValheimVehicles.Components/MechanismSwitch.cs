@@ -364,8 +364,13 @@ public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interac
       case MechanismAction.SwivelActivateMode:
       {
         TriggerSwivelAction();
-      }
         break;
+      }
+      case MechanismAction.FireCannonGroup:
+      {
+        FireCannonGroup();
+        break;
+      }
       default:
         throw new ArgumentOutOfRangeException();
     }
@@ -374,6 +379,17 @@ public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interac
     AddPlayerToPullSwitchAnimations(humanoid);
 
     return true;
+  }
+
+  public void FireCannonGroup()
+  {
+    var targetController = GetComponentInParent<TargetController>();
+    if (!targetController)
+    {
+      Player.m_localPlayer.Message(MessageHud.MessageType.Center, "No target controller. This must be used on a vehicle for now.");
+      return;
+    }
+    targetController.StartManualFiring(0);
   }
 
   public bool TriggerDockSequence()
@@ -628,6 +644,7 @@ public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interac
       MechanismAction.SwivelActivateMode => ModTranslations.Swivel_Name,
       MechanismAction.None => ModTranslations.MechanismMode_None,
       MechanismAction.VehicleDock => ModTranslations.MechanismMode_VehicleDock,
+      MechanismAction.FireCannonGroup => ModTranslations.MechanismMode_FireCannonGroup,
       // MechanismAction.VehicleConfig => ModTranslations.MechanismMode_VehicleConfig,
       _ => throw new ArgumentOutOfRangeException(nameof(action), action, null)
     };

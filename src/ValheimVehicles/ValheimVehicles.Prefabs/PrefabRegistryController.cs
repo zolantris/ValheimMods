@@ -280,6 +280,8 @@ public static class PrefabRegistryController
 
     ShipRudderPrefabs.Instance.Register(prefabManager, pieceManager);
 
+    CannonPrefabs.Register();
+
     // Raft Structure
     ShipHullPrefab.Instance.Register(prefabManager, pieceManager);
 

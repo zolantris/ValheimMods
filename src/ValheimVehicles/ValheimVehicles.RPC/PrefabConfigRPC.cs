@@ -11,7 +11,7 @@ namespace ValheimVehicles.RPC;
 public static class PrefabConfigRPC
 {
   public static Dictionary<ZDO, IPrefabSyncRPCSubscribeActions> ZdoToPrefabConfigListeners = new();
-  public static RPCEntity SyncConfigKeysRPC;
+  private static RPCEntity SyncConfigKeysRPC = null!;
 
   public static void RegisterAll()
   {

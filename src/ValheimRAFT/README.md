@@ -661,20 +661,7 @@ Previously it only supported Direct3D11.
 
 ## Attribution
 
-| Name        | Contributions                                                                                              |
-|-------------|------------------------------------------------------------------------------------------------------------|
-| Sarcen      | For creating the initial mod and supporting it until v1.4.8!                                               |
-| Zolantris   | For supporting and expanding the Raft Mod since v1.5.0.                                                    |
-| RacerX      | For contributing a stag icon for sails - Looks awesome! And the nautilus assets, (experimental)            |
-| Cl0udstr1fe | For adding the new hull meshes for Rib Side, Prow, and Corners. Completes the ship look with these meshes! |
-
-### Icons
-
-<a href="https://www.flaticon.com/free-icons/dock" title="dock icons">Dock icons
-created by Smashicons - Flaticon</a>
-
-Many google icons.
-https://fonts.google.com/icons
+See [Attribution document](https://github.com/zolantris/ValheimMods/blob/main/docs/Attribution.md)
 
 ## Support Open Source
 

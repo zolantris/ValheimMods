@@ -1,8 +1,9 @@
 #region
 
-  using System.Collections.Generic;
-  using JetBrains.Annotations;
-  using UnityEngine;
+using System;
+using System.Collections.Generic;
+using JetBrains.Annotations;
+using UnityEngine;
 
 #endregion
 
@@ -20,12 +21,9 @@
       public static int TerrainLayer = LayerMask.NameToLayer("terrain");
       public static int UILayer = LayerMask.NameToLayer("UI");
       public static int PieceLayer = LayerMask.NameToLayer("piece");
+      public static int DefaultLayer = LayerMask.NameToLayer("Default");
+      public static int DefaultSmallLayer = LayerMask.NameToLayer("Default_small");
       public static int ItemLayer = LayerMask.NameToLayer("item"); // should be 12
-
-      public static bool IsItemLayer(int layer)
-      {
-        return layer == ItemLayer;
-      }
 
       public static LayerMask CustomRaftLayerMask =
         LayerMask.GetMask(LayerMask.LayerToName(CustomRaftLayer));
@@ -48,6 +46,9 @@
         "character_nonenv",
         LayerMask.LayerToName(CustomRaftLayer), SmokeLayerString);
 
+      public static LayerMask CannonHitLayers = LayerMask.GetMask("character", "character_net", "Default", "Default_small", "piece", "static_solid", "terrain");
+      public static LayerMask CannonBlockingSiteHitLayers = LayerMask.GetMask("Default", "Default_small", "piece", "terrain", "character", "character_net", "character_noenv");
+
       public static List<string> ActiveLayersForBlockingMask = new();
 
       public static int NonSolidLayer =
@@ -63,11 +64,25 @@
         "character_ghost");
 
       public static int CharacterLayer = LayerMask.NameToLayer("character");
+      public static int CharacterTriggerLayer = LayerMask.NameToLayer("character_trigger");
+      public static int CharacterLayerMask = LayerMask.GetMask("character", "character_net");
+
+      public static bool IsItemLayer(int layer)
+      {
+        return layer == ItemLayer;
+      }
 
       public static bool IsContainedWithinLayerMask(int layer, LayerMask mask)
       {
         return (mask.value & 1 << layer) != 0;
       }
+
+      // Returns a predicate that checks if a collider's GameObject is in the LayerMask
+      public static Func<Collider, bool> IsContainedWithinLayerMaskPredicate(LayerMask mask) => c =>
+      {
+        return c != null && ((1 << c.gameObject.layer) & mask.value) != 0;
+      };
+
 
       [UsedImplicitly]
       public static List<int> GetActiveLayers(LayerMask mask)

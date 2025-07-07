@@ -81,7 +81,7 @@ namespace ValheimVehicles.SharedScripts.UI
       _currentPanelConfig = new SwivelCustomConfig();
       _currentPanelConfig.ApplyFrom(target);
 
-      if (!_hasCreatedUI)
+      if (!_hasCreatedUI || maxXRow == null || maxYRow == null || maxZRow == null || targetDistanceXRow == null || targetDistanceYRow == null || targetDistanceZRow == null)
       {
         isToggle = false;
         CreateUI();

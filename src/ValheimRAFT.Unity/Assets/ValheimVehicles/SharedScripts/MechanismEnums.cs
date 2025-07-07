@@ -11,7 +11,7 @@ namespace ValheimVehicles.SharedScripts
     SwivelEditMode,
     SwivelActivateMode,
     None,
-    VehicleDock // docks/undocks vehicle from nearest vehicle
-    // VehicleConfig
+    VehicleDock, // docks/undocks vehicle from nearest vehicle
+    FireCannonGroup // Allows for firing Cannons of a specific group. Defaults to group 0 until support is created for this.
   }
 }

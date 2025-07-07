@@ -165,6 +165,7 @@ public class ValheimVehiclesPlugin : MonoBehaviour
     PatchConfig.BindConfig(config);
     RamConfig.BindConfig(config);
     PrefabConfig.BindConfig(config);
+    PrefabRecipeConfig.BindConfig(config);
     VehicleDebugConfig.BindConfig(config);
     PropulsionConfig.BindConfig(config);
     ModSupportConfig.BindConfig(config);
