@@ -305,6 +305,7 @@ namespace ValheimVehicles.SharedScripts
 
         RaycastHit hitInfo;
         // Raycast from explosion to object
+        var hasHitMineRock = false;
         if (Physics.Raycast(explosionOrigin, dir, out hitInfo, dist + 0.1f, explosionLayerMask))
         {
           if (hitInfo.collider == col)
@@ -317,7 +318,22 @@ namespace ValheimVehicles.SharedScripts
                 rb.AddExplosionForce(force, explosionOrigin, explosionRadius);
               }
             }
-            CannonballHitScheduler.AddDamageToQueue(this, hitInfo.collider, hitPoint, dir, Vector3.up * 40f, Mathf.Max(30f, force), true);
+            var damageInfo = CannonballHitScheduler.GetDamageInfoForHit(this, hitInfo.collider, hitPoint, dir, Vector3.up * 40f, Mathf.Max(30f, force), true);
+            var hitMineRockLocal = damageInfo.isMineRock5Hit || damageInfo.isMineRockHit;
+
+            // This logic prevents a cascade of Damage calls only one minerock should be damaged otherwise every hit triggers a minerock damage itself.
+            if (!hasHitMineRock)
+            {
+              if (hitMineRockLocal)
+              {
+                hasHitMineRock = hitMineRockLocal;
+              }
+              CannonballHitScheduler.AddDamageToQueue(damageInfo);
+            }
+            else if (hasHitMineRock && !hitMineRockLocal)
+            {
+              CannonballHitScheduler.AddDamageToQueue(damageInfo);
+            }
           }
         }
       }

@@ -170,11 +170,10 @@ namespace ValheimVehicles.SharedScripts
       return Instance != null;
     }
 
-    public static void AddDamageToQueue(Cannonball cannonball, Collider otherCollider, Vector3 hitPoint, Vector3 dir, Vector3 velocity, float force, bool isExplosionHit)
+    public static DamageInfo GetDamageInfoForHit(Cannonball cannonball, Collider otherCollider, Vector3 hitPoint, Vector3 dir, Vector3 velocity, float force, bool isExplosionHit)
     {
 #if !UNITY_EDITOR && !UNITY_2022
 
-      if (!TryInit()) return;
       // The main types of damage that can be done.
       // current order should be MineRock5 -> MineRock -> IDestructible
       // todo only get components needed based on order so either components are not fetched if one of them is truthy.
@@ -219,10 +218,29 @@ namespace ValheimVehicles.SharedScripts
         isMineRock5Hit = isMineRock5Hit,
         isDestructibleHit = isDestructibleHit,
         isSelfHit = isSelfHit,
-        explosionRadius = isExplosionHit ? Mathf.Clamp(5 * velocity.magnitude, 5f, 15f) : 0f,
+        explosionRadius = isExplosionHit ? Mathf.Clamp(5f * velocity.magnitude / 90f, 0f, 5f) : 0f,
         cannonballType = cannonballType,
         damage = Mathf.Clamp(isSolidCannonball ? BaseDamageSolidCannonball : BaseDamageExplosiveCannonball * force, 10f, 200f)
       };
+#else
+      var damageInfo = new DamageInfo();
+#endif
+
+      return damageInfo;
+    }
+
+    public static void AddDamageToQueue(DamageInfo damageInfo)
+    {
+      if (!TryInit()) return;
+      _queuedDamageInfo.Enqueue(damageInfo);
+      ScheduleCommitDamage();
+    }
+
+    public static void AddDamageToQueue(Cannonball cannonball, Collider otherCollider, Vector3 hitPoint, Vector3 dir, Vector3 velocity, float force, bool isExplosionHit)
+    {
+      if (!TryInit()) return;
+#if !UNITY_EDITOR && !UNITY_2022
+      var damageInfo = GetDamageInfoForHit(cannonball, otherCollider, hitPoint, dir, velocity, force, isExplosionHit);
       _queuedDamageInfo.Enqueue(damageInfo);
 #endif
       ScheduleCommitDamage();
