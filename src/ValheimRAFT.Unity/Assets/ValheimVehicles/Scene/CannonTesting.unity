@@ -645,7 +645,7 @@ MonoBehaviour:
   cannonRotationalTransform: {fileID: 0}
   cannonballSpeed: 90
   maxAmmo: 500
-  _currentAmmo: 500
+  _ammoCount: 0
   reloadQuantity: 2
   reloadTime: 0.5
   autoReload: 1
@@ -829,8 +829,6 @@ MonoBehaviour:
   targetingMode: 2
   maxCannonsPerEnemy: 1
   autoFire: 1
-  FiringCooldown: 0.2
-  FiringDelayPerCannon: 0.2
   allCannonControllers: []
   autoTargetControllers: []
   manualFireControllers: []
@@ -1096,7 +1094,7 @@ MonoBehaviour:
   cannonRotationalTransform: {fileID: 0}
   cannonballSpeed: 90
   maxAmmo: 500
-  _currentAmmo: 500
+  _ammoCount: 0
   reloadQuantity: 2
   reloadTime: 0.5
   autoReload: 1
@@ -1152,7 +1150,7 @@ MonoBehaviour:
   cannonRotationalTransform: {fileID: 0}
   cannonballSpeed: 90
   maxAmmo: 500
-  _currentAmmo: 500
+  _ammoCount: 0
   reloadQuantity: 2
   reloadTime: 0.5
   autoReload: 1
@@ -1588,7 +1586,7 @@ MonoBehaviour:
   cannonRotationalTransform: {fileID: 0}
   cannonballSpeed: 90
   maxAmmo: 500
-  _currentAmmo: 500
+  _ammoCount: 0
   reloadQuantity: 2
   reloadTime: 0.5
   autoReload: 1
@@ -2463,7 +2461,7 @@ MonoBehaviour:
   cannonRotationalTransform: {fileID: 0}
   cannonballSpeed: 90
   maxAmmo: 500
-  _currentAmmo: 500
+  _ammoCount: 0
   reloadQuantity: 2
   reloadTime: 0.5
   autoReload: 1
@@ -2978,7 +2976,7 @@ MonoBehaviour:
   cannonRotationalTransform: {fileID: 0}
   cannonballSpeed: 90
   maxAmmo: 500
-  _currentAmmo: 500
+  _ammoCount: 0
   reloadQuantity: 2
   reloadTime: 0.5
   autoReload: 1
@@ -3096,8 +3094,6 @@ MonoBehaviour:
   targetingMode: 2
   maxCannonsPerEnemy: 1
   autoFire: 1
-  FiringCooldown: 0.2
-  FiringDelayPerCannon: 0.2
   allCannonControllers: []
   autoTargetControllers: []
   manualFireControllers: []
@@ -4113,7 +4109,7 @@ MonoBehaviour:
   cannonRotationalTransform: {fileID: 0}
   cannonballSpeed: 90
   maxAmmo: 500
-  _currentAmmo: 500
+  _ammoCount: 0
   reloadQuantity: 2
   reloadTime: 0.5
   autoReload: 1
@@ -4314,7 +4310,7 @@ MonoBehaviour:
   cannonRotationalTransform: {fileID: 0}
   cannonballSpeed: 90
   maxAmmo: 12
-  _currentAmmo: 50
+  _ammoCount: 0
   reloadQuantity: 1
   reloadTime: 0.5
   autoReload: 1
@@ -4370,7 +4366,7 @@ MonoBehaviour:
   cannonRotationalTransform: {fileID: 0}
   cannonballSpeed: 90
   maxAmmo: 500
-  _currentAmmo: 500
+  _ammoCount: 0
   reloadQuantity: 2
   reloadTime: 0.5
   autoReload: 1
@@ -4522,7 +4518,7 @@ MonoBehaviour:
   cannonRotationalTransform: {fileID: 0}
   cannonballSpeed: 90
   maxAmmo: 500
-  _currentAmmo: 500
+  _ammoCount: 0
   reloadQuantity: 2
   reloadTime: 0.5
   autoReload: 1
@@ -4578,7 +4574,7 @@ MonoBehaviour:
   cannonRotationalTransform: {fileID: 0}
   cannonballSpeed: 90
   maxAmmo: 500
-  _currentAmmo: 500
+  _ammoCount: 0
   reloadQuantity: 2
   reloadTime: 0.5
   autoReload: 1
@@ -5310,7 +5306,7 @@ MonoBehaviour:
   cannonRotationalTransform: {fileID: 0}
   cannonballSpeed: 90
   maxAmmo: 500
-  _currentAmmo: 500
+  _ammoCount: 0
   reloadQuantity: 2
   reloadTime: 0.5
   autoReload: 1
@@ -5440,8 +5436,6 @@ MonoBehaviour:
   targetingMode: 2
   maxCannonsPerEnemy: 2
   autoFire: 1
-  FiringCooldown: 0.2
-  FiringDelayPerCannon: 0.2
   allCannonControllers: []
   autoTargetControllers: []
   manualFireControllers: []
@@ -6446,7 +6440,7 @@ MonoBehaviour:
   cannonRotationalTransform: {fileID: 0}
   cannonballSpeed: 90
   maxAmmo: 500
-  _currentAmmo: 500
+  _ammoCount: 0
   reloadQuantity: 2
   reloadTime: 0.5
   autoReload: 1
@@ -7207,7 +7201,7 @@ MonoBehaviour:
   cannonRotationalTransform: {fileID: 0}
   cannonballSpeed: 90
   maxAmmo: 500
-  _currentAmmo: 500
+  _ammoCount: 0
   reloadQuantity: 2
   reloadTime: 0.5
   autoReload: 1
@@ -7379,7 +7373,7 @@ MonoBehaviour:
   cannonRotationalTransform: {fileID: 0}
   cannonballSpeed: 90
   maxAmmo: 500
-  _currentAmmo: 500
+  _ammoCount: 0
   reloadQuantity: 2
   reloadTime: 0.5
   autoReload: 1
@@ -7910,7 +7904,7 @@ MonoBehaviour:
   cannonRotationalTransform: {fileID: 0}
   cannonballSpeed: 90
   maxAmmo: 12
-  _currentAmmo: 50
+  _ammoCount: 0
   reloadQuantity: 1
   reloadTime: 0.5
   autoReload: 1
@@ -8026,7 +8020,7 @@ MonoBehaviour:
   cannonRotationalTransform: {fileID: 0}
   cannonballSpeed: 90
   maxAmmo: 500
-  _currentAmmo: 500
+  _ammoCount: 0
   reloadQuantity: 2
   reloadTime: 0.5
   autoReload: 1
@@ -9118,7 +9112,7 @@ MonoBehaviour:
   cannonRotationalTransform: {fileID: 0}
   cannonballSpeed: 90
   maxAmmo: 500
-  _currentAmmo: 500
+  _ammoCount: 0
   reloadQuantity: 2
   reloadTime: 0.5
   autoReload: 1
@@ -9541,7 +9535,7 @@ MonoBehaviour:
   cannonRotationalTransform: {fileID: 0}
   cannonballSpeed: 90
   maxAmmo: 12
-  _currentAmmo: 50
+  _ammoCount: 0
   reloadQuantity: 1
   reloadTime: 0.5
   autoReload: 1
@@ -11860,21 +11854,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4228b3fc01674491bbe0ee8aad1479ec, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  cannonballType: 1
-  explosionForce: 1200
-  explosionRadius: 6
-  explosionLayerMask:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  debugDrawTrajectory: 0
   _explosionEffect: {fileID: 0}
   _explosionSound: {fileID: 0}
-  cannonBallDrag: 0.47
-  CanPlayWindSound: 1
-  m_body: {fileID: 0}
-  lastFireTransform: {fileID: 0}
+  _impactSound: {fileID: 8300000, guid: a4613e7d675fa424bae2318ca98db5c9, type: 3}
   _windAudioSource: {fileID: 0}
-  _explosionClipStartPosition: 0.1
+  cannonBallDrag: 0.47
+  cannonballType: 1
+  CanPlayWindSound: 1
+  debugDrawTrajectory: 0
+  explosionForce: 1200
+  lastFireTransform: {fileID: 0}
+  m_body: {fileID: 0}
 --- !u!1 &7336150139914808452
 GameObject:
   m_ObjectHideFlags: 0
@@ -11949,7 +11939,7 @@ MonoBehaviour:
   cannonRotationalTransform: {fileID: 0}
   cannonballSpeed: 50
   maxAmmo: 12
-  _currentAmmo: 0
+  _ammoCount: 0
   reloadQuantity: 1
   reloadTime: 5
   autoReload: 1
@@ -12124,7 +12114,7 @@ MonoBehaviour:
   cannonRotationalTransform: {fileID: 0}
   cannonballSpeed: 90
   maxAmmo: 12
-  _currentAmmo: 50
+  _ammoCount: 0
   reloadQuantity: 1
   reloadTime: 0.5
   autoReload: 1
@@ -12175,7 +12165,7 @@ MonoBehaviour:
   cannonRotationalTransform: {fileID: 0}
   cannonballSpeed: 90
   maxAmmo: 500
-  _currentAmmo: 500
+  _ammoCount: 0
   reloadQuantity: 2
   reloadTime: 0.5
   autoReload: 1
@@ -12521,21 +12511,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4228b3fc01674491bbe0ee8aad1479ec, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  cannonballType: 0
-  explosionForce: 1200
-  explosionRadius: 6
-  explosionLayerMask:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  debugDrawTrajectory: 0
   _explosionEffect: {fileID: 0}
   _explosionSound: {fileID: 0}
-  cannonBallDrag: 0.47
-  CanPlayWindSound: 1
-  m_body: {fileID: 0}
-  lastFireTransform: {fileID: 0}
+  _impactSound: {fileID: 8300000, guid: a4613e7d675fa424bae2318ca98db5c9, type: 3}
   _windAudioSource: {fileID: 0}
-  _explosionClipStartPosition: 0.1
+  cannonBallDrag: 0.47
+  cannonballType: 0
+  CanPlayWindSound: 1
+  debugDrawTrajectory: 0
+  explosionForce: 1200
+  lastFireTransform: {fileID: 0}
+  m_body: {fileID: 0}
 --- !u!1 &8618939438076775013
 GameObject:
   m_ObjectHideFlags: 0
