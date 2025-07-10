@@ -266,6 +266,9 @@
         $"{ValheimVehiclesPrefix}_Cannonball_Solid";
       public static readonly string CannonballExplosive =
         $"{ValheimVehiclesPrefix}_Cannonball_Explosive";
+      
+      public static readonly string TelescopeItem =
+        $"{ValheimVehiclesPrefix}_Telescope_Item";
 
       public static readonly string VehicleShipMovementOrientation =
         "VehicleShip_MovementOrientation";

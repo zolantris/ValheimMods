@@ -34,6 +34,10 @@ namespace ValheimVehicles.SharedScripts
     private Transform explosionTransform;
     private Transform meshesTransform;
 
+#if !UNITY_2022 && !UNITY_EDITOR
+    public WearNTear wearNTear;
+#endif
+
     // meant for integration, we need to destroy the barrel.
     [CanBeNull] public Action onExplosionComplete = () =>
     {
@@ -50,7 +54,12 @@ namespace ValheimVehicles.SharedScripts
       {
         if (CanDestroyOnExplode)
         {
+          // Destroys the prefab or uses wearntear to destroy it if in game.
+#if !UNITY_2022 && !UNITY_EDITOR
+          wearNTear.Destroy(null, true);
+#else
           Destroy(gameObject);
+#endif
         }
       };
 
@@ -64,6 +73,45 @@ namespace ValheimVehicles.SharedScripts
 
       explosionAudio = explosionTransform.GetComponent<AudioSource>();
       explosionFx = explosionFxTransform.GetComponent<ParticleSystem>();
+#if !UNITY_2022 && !UNITY_EDITOR
+      wearNTear = GetComponent<WearNTear>();
+#endif
+    }
+
+    public void OnEnable()
+    {
+#if !UNITY_2022 && !UNITY_EDITOR
+      wearNTear = GetComponent<WearNTear>();
+      if (wearNTear != null)
+      {
+        wearNTear.m_onDamaged += OnWearNTearDamage;
+      }
+#endif
+    }
+
+    public void OnDisable()
+    {
+#if !UNITY_2022 && !UNITY_EDITOR
+      wearNTear = GetComponent<WearNTear>();
+      if (wearNTear != null)
+      {
+        wearNTear.m_onDamaged -= OnWearNTearDamage;
+      }
+#endif
+    }
+
+    /// <summary>
+    /// Destroys the prefab on wearntear damage.
+    /// </summary>
+    public void OnWearNTearDamage()
+    {
+#if !UNITY_2022 && !UNITY_EDITOR
+      if (wearNTear == null) return;
+      if (wearNTear.m_healthPercentage <= 75)
+      {
+        wearNTear.Destroy(null, true);
+      }
+#endif
     }
 
     /// <summary>

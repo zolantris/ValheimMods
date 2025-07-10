@@ -84,7 +84,8 @@ public class CannonPrefabs : RegisterPrefab<CannonPrefabs>
 
   private void RegisterCannonballSolidItemPrefab()
   {
-    var prefab = LoadValheimVehicleAssets._bundle.LoadAsset<GameObject>("cannon_ball_bronze");
+    var prefabAsset = LoadValheimVehicleAssets._bundle.LoadAsset<GameObject>("cannon_ball_bronze");
+    var prefab = PrefabManager.Instance.CreateClonedPrefab(PrefabNames.CannonballSolid, prefabAsset);
     var icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite("cannon_ball_bronze");
     if (!prefab)
     {
@@ -153,8 +154,9 @@ public class CannonPrefabs : RegisterPrefab<CannonPrefabs>
 
   private void RegisterCannonballExplosiveItemPrefab()
   {
-    var prefab = LoadValheimVehicleAssets._bundle.LoadAsset<GameObject>("cannon_ball_blackmetal");
+    var prefabAsset = LoadValheimVehicleAssets._bundle.LoadAsset<GameObject>("cannon_ball_blackmetal");
     var icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite("cannon_ball_blackmetal");
+    var prefab = PrefabManager.Instance.CreateClonedPrefab(PrefabNames.CannonballExplosive, prefabAsset);
     if (!prefab)
     {
       LoggerProvider.LogError("VehicleHammerPrefab not found!");
@@ -214,16 +216,19 @@ public class CannonPrefabs : RegisterPrefab<CannonPrefabs>
 #if DEBUG
   private void RegisterHandCannonPrefab()
   {
-    // var hammerPrefab = PrefabManager.Instance.GetPrefab("VehicleHammerPrefab");
-    var hammerPrefab = LoadValheimVehicleAssets.VehicleHammer;
-    if (!hammerPrefab)
+    var prefabAssetName = "cannon_turret_tier1";
+    var prefabAsset = LoadValheimVehicleAssets._bundle.LoadAsset<GameObject>(prefabAssetName);
+    var icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(prefabAssetName);
+    var prefab = PrefabManager.Instance.CreateClonedPrefab(PrefabNames.CannonballExplosive, prefabAsset);
+
+    if (!prefab)
     {
-      LoggerProvider.LogError("VehicleHammerPrefab not found!");
+      LoggerProvider.LogError($"{prefabAssetName} not found!");
       return;
     }
 
-    var nv = PrefabRegistryHelpers.AddNetViewWithPersistence(hammerPrefab);
-    var zSyncTransform = hammerPrefab.AddComponent<ZSyncTransform>();
+    var nv = PrefabRegistryHelpers.AddNetViewWithPersistence(prefab);
+    var zSyncTransform = prefab.AddComponent<ZSyncTransform>();
 
     // hammerPrefab.AddComponent<VehicleBuildHammer>();
     // hammerPrefab.AddComponent<VehicleHammerInputListener>();
@@ -233,13 +238,11 @@ public class CannonPrefabs : RegisterPrefab<CannonPrefabs>
     zSyncTransform.m_syncRotation = true;
     zSyncTransform.m_syncPosition = true;
 
-    var itemDrop = hammerPrefab.AddComponent<ItemDrop>();
+    var itemDrop = prefab.AddComponent<ItemDrop>();
     if (itemDrop.m_nview == null)
     {
       itemDrop.m_nview = nv;
     }
-
-    var icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite("cannon_turret_tier1");
 
     itemDrop.m_itemData.m_shared = new ItemDrop.ItemData.SharedData
     {
@@ -304,8 +307,7 @@ public class CannonPrefabs : RegisterPrefab<CannonPrefabs>
       PieceTable = PrefabRegistryController.GetPieceTableName()
     };
 
-    var customItem = new CustomItem(hammerPrefab, true, itemConfig);
-
+    var customItem = new CustomItem(prefab, true, itemConfig);
     var success = ItemManager.Instance.AddItem(customItem);
     if (!success)
     {
@@ -313,6 +315,91 @@ public class CannonPrefabs : RegisterPrefab<CannonPrefabs>
     }
 
     LoggerProvider.LogMessage("Registered HandCannon");
+  }
+
+  private void RegisterTelescopePrefab()
+  {
+    var prefabAssetName = "telescope";
+    var prefabAsset = LoadValheimVehicleAssets._bundle.LoadAsset<GameObject>(prefabAssetName);
+    var icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(prefabAssetName);
+    var prefab = PrefabManager.Instance.CreateClonedPrefab(PrefabNames.TelescopeItem, prefabAsset);
+    if (!prefab)
+    {
+      LoggerProvider.LogError($"{prefabAsset} not found!");
+      return;
+    }
+
+    var nv = PrefabRegistryHelpers.AddNetViewWithPersistence(prefab);
+    var zSyncTransform = prefab.AddComponent<ZSyncTransform>();
+
+    // hammerPrefab.AddComponent<VehicleBuildHammer>();
+    // hammerPrefab.AddComponent<VehicleHammerInputListener>();
+
+    // verbosely add these.
+    zSyncTransform.m_syncRotation = true;
+    zSyncTransform.m_syncPosition = true;
+
+    var itemDrop = prefab.AddComponent<ItemDrop>();
+    if (itemDrop.m_nview == null)
+    {
+      itemDrop.m_nview = nv;
+    }
+
+
+    itemDrop.m_itemData.m_shared = new ItemDrop.ItemData.SharedData
+    {
+      m_name = PrefabNames.VehicleHammer,
+      m_maxQuality = 5,
+      m_useDurability = true,
+      m_useDurabilityDrain = 1f,
+      m_durabilityDrain = 0f,
+      m_durabilityPerLevel = 200f,
+      m_maxDurability = 100f,
+      m_icons = [icon],
+      m_buildPieces = PrefabRegistryController.GetPieceTable(),
+      m_toolTier = 50,
+      m_animationState = ItemDrop.ItemData.AnimationState.OneHanded,
+      m_equipDuration = 0,
+      m_skillType = Skills.SkillType.Swords,
+      m_itemType = ItemDrop.ItemData.ItemType.Tool
+    };
+
+    if (itemDrop.m_itemData.m_shared.m_attack == null)
+    {
+      itemDrop.m_itemData.m_shared.m_attack = new Attack();
+    }
+
+    itemDrop.m_itemData.m_shared.m_attack.m_attackAnimation = "swing_hammer";
+    itemDrop.m_itemData.m_shared.m_attack.m_attackType = Attack.AttackType.TriggerProjectile;
+    itemDrop.m_itemData.m_shared.m_attack.m_attackStamina = 5;
+    itemDrop.m_itemData.m_shared.m_attack.m_hitTerrain = true;
+
+    var itemConfig = new ItemConfig
+    {
+      Name = "$valheim_vehicles_hammer_name",
+      Description = "$valheim_vehicles_hammer_description",
+      Icon = icon,
+      RepairStation = "piece_workbench",
+      Requirements =
+      [
+        new RequirementConfig
+        {
+          Amount = 3,
+          Item = "Wood"
+        }
+      ],
+      PieceTable = PrefabRegistryController.GetPieceTableName()
+    };
+
+    var customItem = new CustomItem(prefab, true, itemConfig);
+
+    var success = ItemManager.Instance.AddItem(customItem);
+    if (!success)
+    {
+      LoggerProvider.LogError($"Error occurred while registering {PrefabNames.TelescopeItem}");
+    }
+
+    LoggerProvider.LogMessage("Registered Telescope");
   }
 #endif
 
@@ -381,5 +468,8 @@ public class CannonPrefabs : RegisterPrefab<CannonPrefabs>
     RegisterCannonFixedPrefab();
     RegisterCannonTurretPrefab();
     RegisterPowderBarrelPrefab();
+
+    RegisterTelescopePrefab();
+    RegisterHandCannonPrefab();
   }
 }

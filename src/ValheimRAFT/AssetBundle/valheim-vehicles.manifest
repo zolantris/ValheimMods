@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 3923376747
+CRC: 1464831317
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: c801fbe4521d8b457c848028b3974b54
+    Hash: a77e9289fe837daa78ba6b2ceb8721d0
   TypeTreeHash:
     serializedVersion: 2
     Hash: e982d1c7cd6aec4c8ff2c2946a00578c
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: c801fbe4521d8b457c848028b3974b54
+    Hash: a77e9289fe837daa78ba6b2ceb8721d0
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -301,6 +301,7 @@ Assets:
 - Assets/ValheimVehicles/Prefabs/hull_rib_double_glass.prefab
 - Assets/ValheimVehicles/Prefabs/hull_prow_2x2x4_wood.prefab
 - Assets/ValheimVehicles/Material/bronze_nautilus_metal_rib 1.mat
+- Assets/ValheimVehicles/Prefabs/telescope.prefab
 - Assets/ValheimVehicles/Prefabs/shared_hull_wall_wood_4x4_new.prefab
 - Assets/ValheimVehicles/Prefabs/ram_blade_left.prefab
 - Assets/ValheimVehicles/Material/stake_iron.mat
