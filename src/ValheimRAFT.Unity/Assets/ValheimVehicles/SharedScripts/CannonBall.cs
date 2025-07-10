@@ -5,8 +5,12 @@
 
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using JetBrains.Annotations;
 using UnityEngine;
+# if !UNITY_2022
+using StructLinq;
+#endif
 
 #endregion
 
@@ -81,6 +85,8 @@ namespace ValheimVehicles.SharedScripts
     private bool _canHit = true;
 
     private bool _canUseEffect;
+
+    private readonly List<Collider> _colliders = new();
     private Vector3 _currentVelocity;
 
     private CoroutineHandle _despawnCoroutine;
@@ -94,11 +100,13 @@ namespace ValheimVehicles.SharedScripts
 
     private Vector3 _lastVelocity; // the last velocity before unity physics mutates it.
     private CannonController controller;
-    private SphereCollider sphereCollider;
-
-    private List<Collider> _colliders = new();
-    public List<Collider> Colliders => TryGetColliders();
     public HashSet<Transform> IgnoredTransformRoots = new();
+    private SphereCollider sphereCollider;
+    public List<Collider> Colliders => TryGetColliders();
+
+#if !UNITY_2022 && !UNITY_EDITOR
+    public ZSyncTransform m_zSyncTransform;
+#endif
 
     public bool CanHit => _canHit && _fireOrigin != null && isActiveAndEnabled;
 
@@ -441,33 +449,52 @@ namespace ValheimVehicles.SharedScripts
       _impactSoundCoroutine.Start(ImpactEffectCoroutine(impactVelocity));
     }
 
-    /// <summary>
-    /// Handles penetration of cannonball. Uses some randomization to determine if the structure is penetrated.
-    /// </summary>
-    private void OnHitHandler(Collision other)
+    public bool IsTrackedCannonball(Collision other)
     {
-      if (!CanHit || !_fireOrigin.HasValue) return;
-      if (!sphereCollider.gameObject.activeInHierarchy) return;
+      return controller._trackedLoadedCannonballs.Any(controllerTrackedLoadedCannonball => controllerTrackedLoadedCannonball.sphereCollider == other.collider);
+    }
+
+    public bool IsCollidingWithRoot(Transform colliderTransform)
+    {
+      var isCollidingWithRoot = controller && colliderTransform.root == controller.transform.root;
+      return isCollidingWithRoot;
+    }
+
+    public bool IsCollidingWithPrefabRoot(Transform colliderTransform)
+    {
+      return ValheimCompatibility.GetPrefabRoot(colliderTransform) == ValheimCompatibility.GetPrefabRoot(transform);
+    }
+
+    public bool TryBailAndIgnoreCollider(Collision other)
+    {
       var colliderTransform = other.collider.transform;
-      var isCollidingWithParent = controller && colliderTransform.root == controller.transform.root;
-      var isSameRoot = ValheimCompatibility.GetPrefabRoot(colliderTransform) == ValheimCompatibility.GetPrefabRoot(transform);
-      var isInIgnoredRoot = IsColliderRootInIgnoredTransform(other.collider.transform);
       // allow ignoring parent colliders and do not restore.
-      if (isInIgnoredRoot || isCollidingWithParent || isSameRoot)
+      if (IsCollidingWithRoot(colliderTransform) || IsCollidingWithPrefabRoot(colliderTransform) || IsColliderRootInIgnoredTransform(colliderTransform) || IsTrackedCannonball(other))
       {
         foreach (var collider1 in Colliders)
         {
           Physics.IgnoreCollision(other.collider, collider1, true);
         }
         m_body.velocity = _lastVelocity;
-        return;
+        return true;
       }
+
+      return false;
+    }
+
+    /// <summary>
+    /// Handles penetration of cannonball. Uses some randomization to determine if the structure is penetrated.
+    /// </summary>
+    private void OnHitHandler(Collision other)
+    {
+      if (!CanHit || _hasExploded || !IsInFlight || !_fireOrigin.HasValue) return;
+      if (!sphereCollider.gameObject.activeInHierarchy) return;
+      if (TryBailAndIgnoreCollider(other)) return;
 
       var otherCollider = other.collider;
       var hitPoint = sphereCollider.ClosestPoint(otherCollider.bounds.center);
       var direction = (otherCollider.bounds.center - hitPoint).normalized;
       // var colliderName = other.collider.name;
-
 
       var relativeVelocity = other.relativeVelocity;
       var relativeVelocityMagnitude = relativeVelocity.magnitude;
@@ -515,6 +542,13 @@ namespace ValheimVehicles.SharedScripts
           {
             CannonballHitScheduler.AddDamageToQueue(this, other.collider, hitPoint, direction, nextVelocity, relativeVelocityMagnitude, false);
           }
+          else
+          {
+            // bail and prevent hits.
+            IsInFlight = false;
+            _canHit = false;
+            return;
+          }
 
           canMutateVelocity = true;
           // clamp velocity but allow physics for downwards velocity.
@@ -538,6 +572,10 @@ namespace ValheimVehicles.SharedScripts
           _hasExploded = true;
           nextVelocity.x = 0f;
           nextVelocity.z = 0f;
+
+          // bail and prevent hits.
+          IsInFlight = false;
+          _canHit = false;
         }
         else
         {
@@ -582,6 +620,9 @@ namespace ValheimVehicles.SharedScripts
       if (m_body)
       {
         m_body.isKinematic = true;
+#if !UNITY_2022 && !UNITY_EDITOR
+        m_zSyncTransform.m_isKinematicBody = m_body.isKinematic;
+#endif
         m_body.useGravity = false;
         m_body.velocity = Vector3.zero;
         m_body.angularVelocity = Vector3.zero;
@@ -593,13 +634,11 @@ namespace ValheimVehicles.SharedScripts
       ResetCannonball();
     }
 
-    public void Fire(Vector3 velocity, Transform fireTransform, CannonController cannonController, int firingIndex)
+    public IEnumerator FireCannonball(Vector3 velocity, Transform fireTransform, int firingIndex)
     {
-      if (!m_body)
-      {
-        LoggerProvider.LogWarning("Cannonball has no rigidbody!");
-        return;
-      }
+      // must set booleans after fixedupdate which will prevent colliders from triggering earlier than wanted.
+      yield return new WaitForFixedUpdate();
+
 
       // allows collisions now.
       _canHit = true;
@@ -614,7 +653,6 @@ namespace ValheimVehicles.SharedScripts
       lastFireTransform = fireTransform;
       _fireOrigin = fireTransform.position;
 
-      controller = cannonController;
 
       // Enable all colliders (just in case)
       foreach (var col in Colliders) col.enabled = true;
@@ -626,6 +664,9 @@ namespace ValheimVehicles.SharedScripts
       _explosionParent.transform.localPosition = Vector3.zero;
 
       m_body.isKinematic = false;
+#if !UNITY_2022 && !UNITY_EDITOR
+      m_zSyncTransform.m_isKinematicBody = m_body.isKinematic;
+#endif
       m_body.useGravity = true;
       m_body.velocity = Vector3.zero;
       m_body.angularVelocity = Vector3.zero;
@@ -638,6 +679,17 @@ namespace ValheimVehicles.SharedScripts
 
       _hasExitedMuzzle = false;
       _despawnCoroutine.Start(AutoDespawnCoroutine());
+    }
+
+    public void Fire(Vector3 velocity, Transform fireTransform, CannonController cannonController, int firingIndex)
+    {
+      if (!m_body)
+      {
+        LoggerProvider.LogWarning("Cannonball has no rigidbody!");
+        return;
+      }
+      controller = cannonController;
+      StartCoroutine(FireCannonball(velocity, fireTransform, firingIndex));
     }
 
     private IEnumerator AutoDespawnCoroutine()
@@ -692,6 +744,9 @@ namespace ValheimVehicles.SharedScripts
         m_body.velocity = Vector3.zero;
         m_body.angularVelocity = Vector3.zero;
         m_body.isKinematic = true;
+#if !UNITY_2022 && !UNITY_EDITOR
+        m_zSyncTransform.m_isKinematicBody = m_body.isKinematic;
+#endif
         m_body.includeLayers = -1;
         m_body.useGravity = false;
       }

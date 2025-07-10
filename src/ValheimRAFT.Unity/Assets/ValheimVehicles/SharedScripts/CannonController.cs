@@ -43,6 +43,8 @@ namespace ValheimVehicles.SharedScripts
     public static float CannonReloadAudioVolume = 0.5f;
     public static bool HasFireAudio = true;
     public static bool HasReloadAudio = false;
+    public static bool HasUnlimitedAmmo = false;
+    public static float CannonAimingCenterOffsetY = 1;
     public static LayerMask SightBlockingMask = 0;
 
     public static float MaxFiringRotationYOverride = 0f;
@@ -123,7 +125,7 @@ namespace ValheimVehicles.SharedScripts
 
     // --- State ---
     private readonly Dictionary<BarrelPart, Cannonball> _loadedCannonballs = new();
-    private readonly List<Cannonball> _trackedLoadedCannonballs = new();
+    internal readonly List<Cannonball> _trackedLoadedCannonballs = new();
 
     private readonly List<BarrelPart> shootingParts = new();
     private bool _canAutoFire;
@@ -142,7 +144,7 @@ namespace ValheimVehicles.SharedScripts
     private CoroutineHandle _reloadRoutine;
     private Quaternion _targetShooterLocalRotation;
     [NonSerialized] public Vector3? currentAimPoint; // Null if no current target assigned
-    public Func<Vector3?> GetFiringTargetPosition = () => null;
+    public Func<Vector3?> GetFiringTargetCurrentAimPoint = () => null;
 
     public int MinPoolSize => 1 * Mathf.Min(shootingParts.Count, 1);
 
@@ -207,7 +209,7 @@ namespace ValheimVehicles.SharedScripts
 
       InitializePool();
 
-      GetFiringTargetPosition = HandleFiringTargetPositionDefault;
+      GetFiringTargetCurrentAimPoint = HandleFiringTargetPositionDefault;
       // --- Setup shooter recoil rotation values ---
     }
 
@@ -588,75 +590,68 @@ namespace ValheimVehicles.SharedScripts
     /// <summary>
     /// Numerically finds the firing angle to hit the target, accounting for drag.
     /// </summary>
-    public bool CalculateBallisticAimWithDrag(
+    public static bool CalculateBallisticAimWithDrag(
       Vector3 fireOrigin,
       Vector3 targetPosition,
       float launchSpeed,
       float drag,
       out Vector3 fireDirection,
       out float angleDegrees,
-      int maxIterations = 1000,
+      int maxIterations = 100,
       float tolerance = 0.05f)
     {
+      fireDirection = Vector3.zero;
+      angleDegrees = 0;
+
       var delta = targetPosition - fireOrigin;
-      var dist = delta.magnitude;
       var xzDist = new Vector2(delta.x, delta.z).magnitude;
       var y = delta.y;
+      var dist = delta.magnitude;
 
-
-      // --- Early-out for extremely close shots ---
       if (dist < 0.01f)
-      {
-        fireDirection = Vector3.zero;
-        angleDegrees = 0;
         return false;
-      }
 
-      // --- Early-out for shots that are very close or nearly vertical ---
-      // If the shot is nearly vertical (almost no XZ displacement), or just really close, aim straight at the target
-      const float verticalOrCloseThreshold = 0.1f; // can be tweaked
-      if (xzDist < verticalOrCloseThreshold || xzDist < 10f && Mathf.Abs(y) < maxFiringRange)
-      {
-        fireDirection = delta.normalized;
-        angleDegrees = Vector3.Angle(Vector3.ProjectOnPlane(delta, Vector3.up), delta) * Mathf.Sign(y);
-        return true;
-      }
-      var dirXZ = new Vector3(delta.x, 0, delta.z).normalized;
+      var dirXZ = xzDist > 0.001f ? new Vector3(delta.x, 0, delta.z).normalized : Vector3.forward; // fallback if directly up/down
 
-      // ALLOW NEGATIVE ANGLES (downward)
-      var low = -Mathf.PI / 2; // -45°
-      var high = Mathf.PI / 2; // +90°
+      // 1. Get direct (laser) aim angle in radians (-90 to +90)
+      var directAngle = Mathf.Atan2(y, xzDist);
+
+      // 2. Search a wide range: allow -89° to +89° (so you can shoot directly down or up)
+      var low = Mathf.Deg2Rad * -89f;
+      var high = Mathf.Deg2Rad * 89f;
+      var bestAngle = directAngle;
       var found = false;
-      float angle = 0;
 
       for (var i = 0; i < maxIterations; i++)
       {
-        angle = (low + high) * 0.5f;
-        var yAtTarget = SimulateProjectileHeightAtXZ(launchSpeed, drag, xzDist, angle);
+        var testAngle = (low + high) * 0.5f;
+        var yAtTarget = SimulateProjectileHeightAtXZ(launchSpeed, drag, xzDist, testAngle);
 
         var diff = yAtTarget - y;
-
         if (Mathf.Abs(diff) < tolerance)
         {
+          bestAngle = testAngle;
           found = true;
           break;
         }
-
         if (diff > 0)
-          high = angle; // Too high
+          high = testAngle; // Too high, lower angle
         else
-          low = angle; // Too low
+          low = testAngle; // Too low, raise angle
       }
 
       if (!found)
-      {
-        fireDirection = Vector3.zero;
-        angleDegrees = 0;
         return false;
-      }
 
-      fireDirection = Quaternion.AngleAxis(Mathf.Rad2Deg * angle, Vector3.Cross(Vector3.up, dirXZ)) * dirXZ;
-      angleDegrees = angle * Mathf.Rad2Deg;
+      // 3. Build the direction vector
+      // For a true 360°, rotate around the right axis (cross local forward & up)
+      var rotationAxis = Vector3.Cross(Vector3.up, dirXZ).normalized;
+      if (rotationAxis == Vector3.zero)
+        rotationAxis = Vector3.right; // fallback if aiming straight up/down
+
+      fireDirection = Quaternion.AngleAxis(Mathf.Rad2Deg * bestAngle, rotationAxis) * dirXZ;
+      fireDirection.Normalize();
+      angleDegrees = bestAngle * Mathf.Rad2Deg;
       return true;
     }
 
@@ -725,16 +720,19 @@ namespace ValheimVehicles.SharedScripts
         var bounds = col.bounds;
         var size = bounds.size.sqrMagnitude;
         var colliderCenter = bounds.center;
+
         // LoggerProvider.LogDebugDebounced($"[CannonTargeting] Checking collider '{col.name}' on '{col.gameObject.name}' at layer {col.gameObject.layer} | ClosestPoint: {point} | Dist: {Mathf.Sqrt(dist)}");
         if (size == 0) continue;
 
         if (largestSize < size || largestSize <= size && dist < bestDist)
         {
+          var bestCenterPoint = new Vector3(colliderCenter.x, Mathf.Max(bounds.center.y + bounds.extents.y * CannonAimingCenterOffsetY, bounds.center.y), colliderCenter.z);
+
           largestSize = size;
           bestDist = dist;
-          bestPoint = colliderCenter;
+          bestPoint = bestCenterPoint;
           bestCollider = col;
-          RuntimeDebugLineDrawer.DrawLine(muzzle, colliderCenter, Color.green, 3f);
+          RuntimeDebugLineDrawer.DrawLine(muzzle, bestCenterPoint, Color.green, 3f);
         }
         else
         {
@@ -804,7 +802,7 @@ namespace ValheimVehicles.SharedScripts
       if (IsReloading) return;
 
       var fireOrigin = cannonShooterTransform.position;
-      var targetPosition = GetFiringTargetPosition();
+      var targetPosition = GetFiringTargetCurrentAimPoint();
       if (!targetPosition.HasValue)
       {
         // RotateTowardsOrigin();
@@ -875,7 +873,7 @@ namespace ValheimVehicles.SharedScripts
     public void Fire(bool isManualFiring)
     {
       if (!isActiveAndEnabled) return;
-      if (IsReloading || IsFiring || AmmoCount <= 0 || !hasNearbyPowderBarrel) return;
+      if (IsReloading || IsFiring || !HasUnlimitedAmmo && AmmoCount <= 0 || !hasNearbyPowderBarrel) return;
       // auto fire logic prevents firing while cannon is misaligned with the target.
       if (!isManualFiring && !_canAutoFire) return;
       IsFiring = true;
@@ -894,12 +892,16 @@ namespace ValheimVehicles.SharedScripts
         return;
       }
 
-      AmmoCount = Math.Max(0, AmmoCount - shootingParts.Count);
+      AmmoCount = Math.Max(HasUnlimitedAmmo ? 50 : 0, AmmoCount - shootingParts.Count);
 
       // use a single audio clip for now. Using multiple is not worth it for perf.
       PlayFireClip();
 
-      OnAmmoChanged?.Invoke(AmmoCount);
+      // do not invoke ammo update for unlimited ammo.
+      if (!HasUnlimitedAmmo)
+      {
+        OnAmmoChanged?.Invoke(AmmoCount);
+      }
       OnFired?.Invoke();
 
       _recoilRoutine.Start(RecoilCoroutine());
@@ -922,7 +924,7 @@ namespace ValheimVehicles.SharedScripts
       // more checks for auto firing.
       if (!isManualFiring)
       {
-        var targetPosition = GetFiringTargetPosition();
+        var targetPosition = GetFiringTargetCurrentAimPoint();
         if (!targetPosition.HasValue) return false;
         if (Vector3.Distance(targetPosition.Value, barrel.projectileLoader.position) > maxFiringRange) return false;
       }
@@ -934,7 +936,7 @@ namespace ValheimVehicles.SharedScripts
       var localSpeed = cannonballSpeed + randomVelocityMultiplier;
 
       loadedCannonball.Fire(
-        cannonShooterTransform.forward * localSpeed,
+        cannonShooterAimPoint.forward * localSpeed,
         barrel.projectileLoader, this, barrelCount);
 
       PlayMuzzleFlash(barrel);
@@ -1063,7 +1065,6 @@ namespace ValheimVehicles.SharedScripts
       //   yield return null; // Wait one frame
       // }
 
-
       var shotsToReload = Math.Min(reloadQuantity, shootingParts.Count);
       for (var i = 0; i < shotsToReload && AmmoCount - i > 0; i++)
       {
@@ -1073,6 +1074,7 @@ namespace ValheimVehicles.SharedScripts
         loaded.Load(shootingPart.projectileLoader);
         _loadedCannonballs[shootingPart] = loaded;
       }
+      yield return new WaitForFixedUpdate();
       IsReloading = false;
       OnReloaded?.Invoke();
     }

@@ -16,6 +16,7 @@ public class LoadValheimVehicleAssets : ILoadAssets
   public static GameObject CustomSail = null!;
 
   public static Material DoubleSidedTransparentMat = null!;
+  public static Material DebugLineMat = null!;
 
   public static GameObject VehicleHammer = null!;
 
@@ -248,6 +249,9 @@ public class LoadValheimVehicleAssets : ILoadAssets
     DoubleSidedTransparentMat =
       assetBundle.LoadAsset<Material>(
         "double_sided_transparent.mat");
+    DebugLineMat =
+      assetBundle.LoadAsset<Material>(
+        "debug_line_material.mat");
 
     WaterHeightMaterial =
       assetBundle.LoadAsset<Material>("WaterHeightMaterial.mat");
@@ -381,12 +385,12 @@ public class LoadValheimVehicleAssets : ILoadAssets
     LightningMaterial = assetBundle.LoadAsset<Material>("lightning_bolt_material_animated_additive.mat");
 
     // Data rebinds done inline
-    PowerNetworkController.WireMaterial = new Material(DoubleSidedTransparentMat)
+    PowerNetworkController.WireMaterial = new Material(DebugLineMat)
     {
       color = Color.black
     };
 
-    RuntimeDebugLineDrawer.DebugRayMaterial = new Material(DoubleSidedTransparentMat);
+    RuntimeDebugLineDrawer.DebugRayMaterial = new Material(DebugLineMat);
 
     // for hit effect with solid cannonball.
     Cannonball.ImpactSoundOverride = assetBundle.LoadAsset<AudioClip>("impact-hit-sound-fx.mp3");

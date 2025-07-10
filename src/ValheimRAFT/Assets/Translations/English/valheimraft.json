@@ -282,6 +282,8 @@
   "valheim_vehicles_cannon_fixed_tier1_desc": "A fixed cannon that can be used to defend your ship. Can be fired manually from the ship console or left on automatic to defend player and area. A fixed turret must align perfectly with the target's hit area. Auto firing will not work unless the target is large.",
   "valheim_vehicles_cannon_turret_tier1": "Cannon (turret)",
   "valheim_vehicles_cannon_turret_tier1_desc": "A turret cannon that can be used to defend your ship. Can be fired manually from the ship console or left on automatic to defend player and area. Requires gunpowder barrel nearby to function and cannonballs.",
+  "valheim_vehicles_cannon_handheld_item": "Cannon (Hand-held)",
+  "valheim_vehicles_cannon_handheld_item_desc": "All the power of a cannon but you are the turret.",
   "valheim_vehicles_powder_barrel": "Powder Barrel",
   "valheim_vehicles_powder_barrel_desc": "A highly explosive powder barrel use to fuel nearby cannons. Make sure you protect this barrel or it can be hit in ship to ship combat.",
   "valheim_vehicles_cannonball_solid": "Cannonball: Solid",
@@ -293,6 +295,8 @@
   "valheim_vehicles_cannons_toggle_auto_fire": "A",
   "valheim_vehicles_cannons_fire_group": "fire group",
   "valheim_vehicles_cannons_fire": "fire group",
+  "$valheim_vehicles_telescope": "telescope",
+  "$valheim_vehicles_telescope_desc": "telescope to zoom in and target enemies from afar. Allows calling long-range attacks from autonomous cannons and switching targeting between specific enemies and structures.",
   "valheim_vehicles_cannons_ammo_text": "Ammo",
   "$valheim_vehicles_cannons_missing_nearby_powder_barrels": "No Powder Barrel"
 }

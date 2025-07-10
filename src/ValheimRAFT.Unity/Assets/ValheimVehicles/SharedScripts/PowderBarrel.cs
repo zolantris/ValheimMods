@@ -38,11 +38,6 @@ namespace ValheimVehicles.SharedScripts
     public WearNTear wearNTear;
 #endif
 
-    // meant for integration, we need to destroy the barrel.
-    [CanBeNull] public Action onExplosionComplete = () =>
-    {
-    };
-
     public Action<Collider> OnHitCollider = c =>
     {
       LoggerProvider.LogDev($"Hit collider {c.name}");
@@ -50,22 +45,9 @@ namespace ValheimVehicles.SharedScripts
 
     private void Awake()
     {
-      onExplosionComplete = () =>
-      {
-        if (CanDestroyOnExplode)
-        {
-          // Destroys the prefab or uses wearntear to destroy it if in game.
-#if !UNITY_2022 && !UNITY_EDITOR
-          wearNTear.Destroy(null, true);
-#else
-          Destroy(gameObject);
-#endif
-        }
-      };
-
       _explosionRoutine = new CoroutineHandle(this);
       _aoeRoutine = new CoroutineHandle(this);
-
+ww
       explosionTransform = transform.Find("explosion");
       meshesTransform = transform.Find("meshes");
       explosionFxTransform = explosionTransform.Find("explosion_effect");
@@ -100,6 +82,16 @@ namespace ValheimVehicles.SharedScripts
 #endif
     }
 
+    public void OnExplodeDestroy()
+    {
+#if !UNITY_2022 && !UNITY_EDITOR
+      if (wearNTear == null) return;
+      wearNTear.Destroy(null, true);
+#else
+          Destroy(gameObject);
+#endif
+    }
+
     /// <summary>
     /// Destroys the prefab on wearntear damage.
     /// </summary>
@@ -107,9 +99,10 @@ namespace ValheimVehicles.SharedScripts
     {
 #if !UNITY_2022 && !UNITY_EDITOR
       if (wearNTear == null) return;
+      if (_explosionRoutine.IsRunning) return;
       if (wearNTear.m_healthPercentage <= 75)
       {
-        wearNTear.Destroy(null, true);
+        StartExplosion();
       }
 #endif
     }
@@ -220,7 +213,7 @@ namespace ValheimVehicles.SharedScripts
       }
       yield return new WaitUntil(() => timer.ElapsedMilliseconds > 10000f || explosionFx.isStopped && !explosionAudio.isPlaying);
       timer.Reset();
-      onExplosionComplete?.Invoke();
+      OnExplodeDestroy();
       yield return null;
     }
 

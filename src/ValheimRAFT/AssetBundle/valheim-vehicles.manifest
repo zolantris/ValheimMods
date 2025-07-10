@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 1464831317
+CRC: 1244870513
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: a77e9289fe837daa78ba6b2ceb8721d0
+    Hash: 3328d31b913207c97e9495b458639ea5
   TypeTreeHash:
     serializedVersion: 2
     Hash: e982d1c7cd6aec4c8ff2c2946a00578c
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: a77e9289fe837daa78ba6b2ceb8721d0
+    Hash: 3328d31b913207c97e9495b458639ea5
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -278,6 +278,7 @@ Assets:
 - Assets/ValheimVehicles/ExternalAssets/Sounds/tank-reload.mp3
 - Assets/ValheimVehicles/Material/iron_metal_rustic_4x4.mat
 - Assets/ValheimVehicles/Prefabs/hull_rib_corner_2x2x4_right_wood.prefab
+- Assets/ValheimVehicles/Material/debug_line_material.mat
 - Assets/ValheimVehicles/Prefabs/hull_wall_window_porthole_iron_8x4.prefab
 - Assets/ValheimVehicles/Prefabs/hull_rib_2x1x8_iron.prefab
 - Assets/ValheimVehicles/Material/wood_alt_piece_bg_rib_2x4.mat

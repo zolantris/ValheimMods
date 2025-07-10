@@ -39,6 +39,7 @@ public class PrefabConfig : BepInExBaseConfig<PrefabConfig>
   public static ConfigEntry<bool> HasCannonballWindAudio { get; set; } = null!;
   public static ConfigEntry<float> CannonballWindAudioVolume { get; set; } = null!;
   public static ConfigEntry<float> CannonballExplosionAudioVolume { get; set; } = null!;
+  public static ConfigEntry<bool> DEBUG_CannonballUnlimitedAmmo { get; set; } = null!;
   public static ConfigEntry<float> CannonBallInventoryWeight { get; set; } = null!;
   public static ConfigEntry<bool> HasCannonReloadAudio { get; set; } = null!;
   public static ConfigEntry<float> CannonReloadAudioVolume { get; set; } = null!;
@@ -47,6 +48,7 @@ public class PrefabConfig : BepInExBaseConfig<PrefabConfig>
   public static ConfigEntry<float> CannonballSolidDamage { get; set; } = null!;
   public static ConfigEntry<float> CannonballExplosiveDamage { get; set; } = null!;
   public static ConfigEntry<float> CannonAutoAimSpeed { get; set; } = null!;
+  public static ConfigEntry<float> CannonAutoAimYOffset { get; set; } = null!;
   public static ConfigEntry<float> CannonAimMaxYRotation { get; set; } = null!;
   public static ConfigEntry<float> CannonBarrelAimMaxTiltRotation { get; set; } = null!;
   public static ConfigEntry<float> CannonBarrelAimMinTiltRotation { get; set; } = null!;
@@ -228,6 +230,12 @@ public class PrefabConfig : BepInExBaseConfig<PrefabConfig>
     CannonFireAudioVolume = config.BindUnique(VehicleCannonsSection, "Cannon_FireAudioVolume", 1f, ConfigHelpers.CreateConfigDescription("Allows customizing cannon reload audio volume", false, false));
     CannonballExplosionAudioVolume = config.BindUnique(VehicleCannonsSection, "Cannonball_ExplosionAudioVolume", 1f, ConfigHelpers.CreateConfigDescription("Allows customizing cannon reload audio volume", false, false));
 
+    DEBUG_CannonballUnlimitedAmmo = config.BindUnique(VehicleCannonsSection, "DEBUG_CannonballUnlimitedAmmo", false, ConfigHelpers.CreateConfigDescription("Allows unlimited ammo for cannons.", true, false));
+    DEBUG_CannonballUnlimitedAmmo.SettingChanged += (sender, args) =>
+    {
+      CannonController.HasUnlimitedAmmo = DEBUG_CannonballUnlimitedAmmo.Value;
+    };
+
     HasCannonballWindAudio = config.BindUnique(VehicleCannonsSection, "Cannonball_HasWindAudio", true, ConfigHelpers.CreateConfigDescription("Allows enable cannonball wind audio - which can be heard if a cannonball passes nearby.", false, false));
     CannonballWindAudioVolume = config.BindUnique(VehicleCannonsSection, "Cannonball_WindAudioVolume", 0.2f, ConfigHelpers.CreateConfigDescription("Allows customizing cannonball wind audio - which can be heard if a cannonball passes nearby. Recommended below 0.2f", false, false));
 
@@ -238,6 +246,7 @@ public class PrefabConfig : BepInExBaseConfig<PrefabConfig>
     CannonballExplosiveDamage.SettingChanged += (sender, args) => CannonballHitScheduler.BaseDamageExplosiveCannonball = CannonballExplosiveDamage.Value;
 
 
+    CannonAutoAimYOffset = config.BindUnique(VehicleCannonsSection, "CannonAutoAimYOffset", 1f, ConfigHelpers.CreateConfigDescription("Set the Y offset where the cannonball attempt to hit. 0 will aim deadcenter, but it could miss due to gravity. Using above 0 will aim from center to top (1).", true, false, new AcceptableValueRange<float>(-1f, 1f)));
     CannonAutoAimSpeed = config.BindUnique(VehicleCannonsSection, "CannonAutoAimSpeed", 10f, ConfigHelpers.CreateConfigDescription("Set how fast a cannon can adjust aim and fire. This speeds up both firing and animations. Lower values might not be able to fire cannons at all for smaller targets. Keep in mind sea swell will impact the aiming of cannons.", true, false, new AcceptableValueRange<float>(5f, 50f)));
 
     CannonAimMaxYRotation = config.BindUnique(VehicleCannonsSection, "CannonAimMaxYRotation", 15f, ConfigHelpers.CreateConfigDescription("Maximum Y rotational a cannon can turn. Left to right. Front to bow etc.", true, false, new AcceptableValueRange<float>(5f, 50f)));
@@ -251,6 +260,10 @@ public class PrefabConfig : BepInExBaseConfig<PrefabConfig>
 
     CannonPlayerProtectionRangeRadius.SettingChanged += (sender, args) => TargetController.MAX_DEFEND_SEARCH_RADIUS = CannonPlayerProtectionRangeRadius.Value;
 
+    CannonAutoAimYOffset.SettingChanged += (sender, args) =>
+    {
+      CannonController.CannonAimingCenterOffsetY = CannonAutoAimYOffset.Value;
+    };
     HasCannonFireAudio.SettingChanged += (sender, args) => CannonController.HasFireAudio = HasCannonFireAudio.Value;
     CannonFireAudioVolume.SettingChanged += (sender, args) => CannonController.CannonFireAudioVolume = CannonFireAudioVolume.Value;
 

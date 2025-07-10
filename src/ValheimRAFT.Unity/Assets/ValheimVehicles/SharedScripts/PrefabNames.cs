@@ -266,7 +266,10 @@
         $"{ValheimVehiclesPrefix}_Cannonball_Solid";
       public static readonly string CannonballExplosive =
         $"{ValheimVehiclesPrefix}_Cannonball_Explosive";
-      
+
+      public static readonly string CannonHandHeldItem =
+        $"{ValheimVehiclesPrefix}_Cannon_Handheld_Item";
+
       public static readonly string TelescopeItem =
         $"{ValheimVehiclesPrefix}_Telescope_Item";
 

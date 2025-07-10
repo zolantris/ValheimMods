@@ -17,6 +17,8 @@ public class VehicleDebugConfig : BepInExBaseConfig<VehicleDebugConfig>
   public static ConfigEntry<int> VehicleCreativeHeight;
   public static ConfigEntry<bool> HasDebugPieces;
 
+  public static ConfigEntry<bool> HasDebugCannonTargets = null!;
+
   public static ConfigEntry<float> CommandsWindowPosX;
 
   public static ConfigEntry<float> CommandsWindowPosY;
@@ -102,8 +104,21 @@ public class VehicleDebugConfig : BepInExBaseConfig<VehicleDebugConfig>
     AllowDebugCommandsForNonAdmins = config.BindUnique(SectionName, "AllowDebugCommandsForNonAdmins",
       true,
       ConfigHelpers.CreateConfigDescription(
-        "Will will allow all debug commands for non-admins. Turning this to false will only allow debug (cheat) commands if the user is an admin.",
+        "Will allow all debug commands for non-admins. Turning this to false will only allow debug (cheat) commands if the user is an admin.",
         true, true));
+    HasDebugCannonTargets = config.BindUnique(SectionName, "HasDebugCannonTargets",
+      true,
+      ConfigHelpers.CreateConfigDescription(
+        "Will allow debugging cannon targets.",
+        false, false));
+
+    HasDebugCannonTargets.SettingChanged += (sender, args) =>
+    {
+      RuntimeDebugLineDrawer.IsEnabled = HasDebugCannonTargets.Value;
+    };
+    RuntimeDebugLineDrawer.IsEnabled = HasDebugCannonTargets.Value;
+
+
     AllowEditCommandsForNonAdmins = config.BindUnique(SectionName, "AllowEditCommandsForNonAdmins",
       true,
       ConfigHelpers.CreateConfigDescription(

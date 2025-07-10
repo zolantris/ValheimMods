@@ -82,6 +82,8 @@ public class CannonPrefabs : RegisterPrefab<CannonPrefabs>
     }));
   }
 
+  private const string CannonAmmoType = "cannon_ball";
+
   private void RegisterCannonballSolidItemPrefab()
   {
     var prefabAsset = LoadValheimVehicleAssets._bundle.LoadAsset<GameObject>("cannon_ball_bronze");
@@ -121,6 +123,7 @@ public class CannonPrefabs : RegisterPrefab<CannonPrefabs>
       m_toolTier = 50,
       m_weight = PrefabConfig.CannonBallInventoryWeight.Value, // this could be 12-24lbs...but that would make the game less fun
       m_skillType = Skills.SkillType.None,
+      m_ammoType = CannonAmmoType,
       m_itemType = ItemDrop.ItemData.ItemType.AmmoNonEquipable
     };
 
@@ -191,6 +194,7 @@ public class CannonPrefabs : RegisterPrefab<CannonPrefabs>
       m_toolTier = 50,
       m_maxStackSize = 200,
       m_skillType = Skills.SkillType.None,
+      m_ammoType = CannonAmmoType,
       m_itemType = ItemDrop.ItemData.ItemType.AmmoNonEquipable
     };
 
@@ -216,14 +220,13 @@ public class CannonPrefabs : RegisterPrefab<CannonPrefabs>
 #if DEBUG
   private void RegisterHandCannonPrefab()
   {
-    var prefabAssetName = "cannon_turret_tier1";
-    var prefabAsset = LoadValheimVehicleAssets._bundle.LoadAsset<GameObject>(prefabAssetName);
-    var icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(prefabAssetName);
-    var prefab = PrefabManager.Instance.CreateClonedPrefab(PrefabNames.CannonballExplosive, prefabAsset);
+    var asset = LoadValheimVehicleAssets._bundle.LoadAsset<GameObject>("cannon_turret");
+    var icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite("cannon_turret");
+    var prefab = PrefabManager.Instance.CreateClonedPrefab(PrefabNames.CannonHandHeldItem, asset);
 
     if (!prefab)
     {
-      LoggerProvider.LogError($"{prefabAssetName} not found!");
+      LoggerProvider.LogError($"cannon_turret not found!");
       return;
     }
 
@@ -246,7 +249,7 @@ public class CannonPrefabs : RegisterPrefab<CannonPrefabs>
 
     itemDrop.m_itemData.m_shared = new ItemDrop.ItemData.SharedData
     {
-      m_name = PrefabNames.VehicleHammer,
+      m_name = PrefabNames.CannonHandHeldItem,
       m_maxQuality = 5,
       m_useDurability = true,
       m_useDurabilityDrain = 1f,
@@ -254,8 +257,8 @@ public class CannonPrefabs : RegisterPrefab<CannonPrefabs>
       m_durabilityPerLevel = 200f,
       m_maxDurability = 100f,
       m_icons = [icon],
-      m_buildPieces = PrefabRegistryController.GetPieceTable(),
       m_toolTier = 50,
+      m_ammoType = "cannon_ball",
       m_animationState = ItemDrop.ItemData.AnimationState.OneHanded,
       // must be 0 to override default of 1. 1 adds an equip delay automatically
       m_equipDuration = 0,
@@ -264,8 +267,8 @@ public class CannonPrefabs : RegisterPrefab<CannonPrefabs>
       // - m_skillType =  Skills.SkillType.Swords
       // - m_itemType = ItemDrop.ItemData.ItemType.Tool
       // - prefab name must container "hammer" lower case.
-      m_skillType = Skills.SkillType.Swords,
-      m_itemType = ItemDrop.ItemData.ItemType.Tool
+      m_skillType = Skills.SkillType.Crossbows,
+      m_itemType = ItemDrop.ItemData.ItemType.TwoHandedWeapon
     };
 
     if (itemDrop.m_itemData.m_shared.m_attack == null)
@@ -273,7 +276,8 @@ public class CannonPrefabs : RegisterPrefab<CannonPrefabs>
       itemDrop.m_itemData.m_shared.m_attack = new Attack();
     }
 
-    itemDrop.m_itemData.m_shared.m_attack.m_attackAnimation = "swing_hammer";
+    // needs to be cross-bow or something custom.
+    itemDrop.m_itemData.m_shared.m_attack.m_attackAnimation = "";
     itemDrop.m_itemData.m_shared.m_attack.m_attackType = Attack.AttackType.TriggerProjectile;
     itemDrop.m_itemData.m_shared.m_attack.m_attackStamina = 5;
     itemDrop.m_itemData.m_shared.m_attack.m_hitTerrain = true;
@@ -292,8 +296,8 @@ public class CannonPrefabs : RegisterPrefab<CannonPrefabs>
 
     var itemConfig = new ItemConfig
     {
-      Name = "$valheim_vehicles_hammer_name",
-      Description = "$valheim_vehicles_hammer_description",
+      Name = "$valheim_vehicles_cannon_handheld_item",
+      Description = "$valheim_vehicles_cannon_handheld_item_description",
       Icon = icon,
       RepairStation = "piece_workbench",
       Requirements =
@@ -348,7 +352,7 @@ public class CannonPrefabs : RegisterPrefab<CannonPrefabs>
 
     itemDrop.m_itemData.m_shared = new ItemDrop.ItemData.SharedData
     {
-      m_name = PrefabNames.VehicleHammer,
+      m_name = PrefabNames.TelescopeItem,
       m_maxQuality = 5,
       m_useDurability = true,
       m_useDurabilityDrain = 1f,
@@ -356,12 +360,11 @@ public class CannonPrefabs : RegisterPrefab<CannonPrefabs>
       m_durabilityPerLevel = 200f,
       m_maxDurability = 100f,
       m_icons = [icon],
-      m_buildPieces = PrefabRegistryController.GetPieceTable(),
       m_toolTier = 50,
-      m_animationState = ItemDrop.ItemData.AnimationState.OneHanded,
+      m_animationState = ItemDrop.ItemData.AnimationState.Crossbow,
       m_equipDuration = 0,
-      m_skillType = Skills.SkillType.Swords,
-      m_itemType = ItemDrop.ItemData.ItemType.Tool
+      m_skillType = Skills.SkillType.Bows,
+      m_itemType = ItemDrop.ItemData.ItemType.TwoHandedWeapon
     };
 
     if (itemDrop.m_itemData.m_shared.m_attack == null)
@@ -376,8 +379,8 @@ public class CannonPrefabs : RegisterPrefab<CannonPrefabs>
 
     var itemConfig = new ItemConfig
     {
-      Name = "$valheim_vehicles_hammer_name",
-      Description = "$valheim_vehicles_hammer_description",
+      Name = "$valheim_vehicles_telescope",
+      Description = "$valheim_vehicles_telescope_desc",
       Icon = icon,
       RepairStation = "piece_workbench",
       Requirements =
@@ -431,7 +434,7 @@ public class CannonPrefabs : RegisterPrefab<CannonPrefabs>
     var wearNTear = PrefabRegistryHelpers.SetWearNTear(prefab, 1);
 
     // very high health but it can immediately blow up on any damage to consume all health.
-    wearNTear.m_health = 100f;
+    wearNTear.m_health = 250f;
 
     // main toggle switch.
     var powderBarrel = prefab.AddComponent<PowderBarrel>();

@@ -15,11 +15,12 @@ namespace ValheimVehicles.SharedScripts
   {
     private static GameObject _singletonObject;
     public static Material DebugRayMaterial;
-    #if UNITY_EDITOR
+#if UNITY_EDITOR
     public static bool IsEnabled = true;
-    #else
+#else
     public static bool IsEnabled = false;
-    #endif
+#endif
+    public static bool HasMaterialColorOverride = true;
     public static Color TRed = new(1f, 0, 0, 0.75f);
     public static Color TGreen = new(0, 1, 0, 0.75f);
     public static Color TBlue = new(0, 0.5f, 1, 0.75f);
@@ -77,7 +78,8 @@ namespace ValheimVehicles.SharedScripts
     public static void DrawLine(Vector3 start, Vector3 end, Color color, float duration = 0.1f, float width = 0.04f)
     {
       if (!IsEnabled) return;
-      if (!Instance) Init();
+      if (Instance == null) Init();
+      if (Instance == null || !Instance.isActiveAndEnabled) return;
 
       // Reuse a pooled line or create new
       LineInstance inst = null;
@@ -108,6 +110,12 @@ namespace ValheimVehicles.SharedScripts
       inst.renderer.enabled = true;
       inst.renderer.SetPosition(0, start);
       inst.renderer.SetPosition(1, end);
+
+      if (HasMaterialColorOverride)
+      {
+        inst.renderer.material.color = color;
+      }
+
       inst.renderer.startColor = color;
       inst.renderer.endColor = color;
       inst.renderer.startWidth = width;
