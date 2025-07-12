@@ -521,10 +521,13 @@
 
     public static bool TryUpdateNearestVehicle([NotNullWhen(true)] out VehicleManager? manager)
     {
-      if (!CurrentSelectedVehicle)
+      var nearestVehicle = VehicleCommands.GetNearestVehicleManager();
+
+      if (nearestVehicle != null)
       {
-        CurrentSelectedVehicle = VehicleCommands.GetNearestVehicleManager();
+        CurrentSelectedVehicle = nearestVehicle;
       }
+
       manager = CurrentSelectedVehicle;
       return CurrentSelectedVehicle != null;
     }

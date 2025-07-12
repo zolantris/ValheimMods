@@ -2,6 +2,7 @@ using System;
 using UnityEngine;
 using ValheimVehicles.Helpers;
 using ValheimVehicles.Interfaces;
+using ValheimVehicles.Prefabs.Registry;
 using ValheimVehicles.SharedScripts;
 using ValheimVehicles.SharedScripts.Helpers;
 namespace ValheimVehicles.Integrations;
@@ -14,14 +15,23 @@ public class CannonControllerBridge : CannonController, Hoverable, Interactable,
 
   protected internal override sealed void Awake()
   {
+#if !UNITY_2022 && !UNITY_EDITOR
+    CannonballSolidPrefab = CannonPrefabs.CannonballSolidProjectile;
+    CannonballExplosivePrefab = CannonPrefabs.CannonballExplosiveProjectile;
+#endif
+
     base.Awake();
+
+    m_nview = GetComponent<ZNetView>();
+    if (!m_nview)
+    {
+      m_nview = GetComponentInParent<ZNetView>();
+    }
 
     if (!prefabConfigSync)
     {
       this.GetOrCache(ref prefabConfigSync, ref _hasInitPrefabSync);
     }
-
-    m_nview = GetComponent<ZNetView>();
   }
 
   protected internal override sealed void OnEnable()

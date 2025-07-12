@@ -262,10 +262,16 @@
         $"{ValheimVehiclesPrefix}_Cannon_Fixed_Tier1";
       public static readonly string CannonTurretTier1 =
         $"{ValheimVehiclesPrefix}_Cannon_Turret_Tier1";
+
       public static readonly string CannonballSolid =
         $"{ValheimVehiclesPrefix}_Cannonball_Solid";
       public static readonly string CannonballExplosive =
         $"{ValheimVehiclesPrefix}_Cannonball_Explosive";
+
+      public static readonly string CannonballSolidProjectile =
+        $"{ValheimVehiclesPrefix}_Cannonball_Solid_Projectile";
+      public static readonly string CannonballExplosiveProjectile =
+        $"{ValheimVehiclesPrefix}Cannonball_Explosive_Projectile";
 
       public static readonly string CannonHandHeldItem =
         $"{ValheimVehiclesPrefix}_Cannon_Handheld_Item";

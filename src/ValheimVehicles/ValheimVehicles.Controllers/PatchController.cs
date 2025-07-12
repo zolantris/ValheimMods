@@ -43,7 +43,8 @@ public static class PatchController
 #if DEBUG
       typeof(RPCRegistryDebugger_Patches),
 #endif
-      typeof(RPCManager_Patches)
+      typeof(RPCManager_Patches),
+      typeof(Humanoid_EquipPatch)
     );
 
     if (PatchConfig.MineRockPatch.Value)

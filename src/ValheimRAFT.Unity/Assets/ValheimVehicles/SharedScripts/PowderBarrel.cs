@@ -34,6 +34,7 @@ namespace ValheimVehicles.SharedScripts
     private Transform explosionTransform;
     private Transform meshesTransform;
 
+    public static float LastBarrelPlaceTime = 0f;
 #if !UNITY_2022 && !UNITY_EDITOR
     public WearNTear wearNTear;
 #endif
@@ -47,7 +48,6 @@ namespace ValheimVehicles.SharedScripts
     {
       _explosionRoutine = new CoroutineHandle(this);
       _aoeRoutine = new CoroutineHandle(this);
-ww
       explosionTransform = transform.Find("explosion");
       meshesTransform = transform.Find("meshes");
       explosionFxTransform = explosionTransform.Find("explosion_effect");
@@ -58,6 +58,11 @@ ww
 #if !UNITY_2022 && !UNITY_EDITOR
       wearNTear = GetComponent<WearNTear>();
 #endif
+    }
+
+    private void Start()
+    {
+      LastBarrelPlaceTime = Time.fixedTime;
     }
 
     public void OnEnable()

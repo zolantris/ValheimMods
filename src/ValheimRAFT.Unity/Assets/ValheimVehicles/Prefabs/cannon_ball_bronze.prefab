@@ -169,7 +169,8 @@ Transform:
   m_Children:
   - {fileID: 5069697177503601226}
   - {fileID: 8980924538280895418}
-  - {fileID: 1414355423555218424}
+  - {fileID: 6242705007179387431}
+  - {fileID: 9133834850323129848}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!54 &6636219063403578279
@@ -180,7 +181,7 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2476818550654289255}
   serializedVersion: 4
-  m_Mass: 300
+  m_Mass: 26
   m_Drag: 0.47
   m_AngularDrag: 0.47
   m_CenterOfMass: {x: 0, y: 0, z: 0}
@@ -199,7 +200,7 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 1
---- !u!1 &4720161999693251415
+--- !u!1 &3249370162779625115
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -207,30 +208,51 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 1414355423555218424}
+  - component: {fileID: 9133834850323129848}
+  - component: {fileID: 9088861817242448789}
   m_Layer: 0
-  m_Name: mesh
+  m_Name: cannonball_collider
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &1414355423555218424
+--- !u!4 &9133834850323129848
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4720161999693251415}
+  m_GameObject: {fileID: 3249370162779625115}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 6242705007179387431}
+  m_LocalScale: {x: 0.18, y: 0.18, z: 0.18}
+  m_ConstrainProportionsScale: 1
+  m_Children: []
   m_Father: {fileID: 8606007161889117133}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!135 &9088861817242448789
+SphereCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3249370162779625115}
+  m_Material: {fileID: 13400000, guid: bebf00f439c2575409208249cfbcfc90, type: 2}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 1050113
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Radius: 0.5
+  m_Center: {x: 0, y: 0, z: 0}
 --- !u!1 &6160547753747382601
 GameObject:
   m_ObjectHideFlags: 0
@@ -242,9 +264,8 @@ GameObject:
   - component: {fileID: 6242705007179387431}
   - component: {fileID: 6262263644585476038}
   - component: {fileID: 6621782692716234487}
-  - component: {fileID: 7920779334040085154}
   m_Layer: 0
-  m_Name: cannonball_collider
+  m_Name: cannonball_mesh
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -263,7 +284,7 @@ Transform:
   m_LocalScale: {x: 0.18, y: 0.18, z: 0.18}
   m_ConstrainProportionsScale: 1
   m_Children: []
-  m_Father: {fileID: 1414355423555218424}
+  m_Father: {fileID: 8606007161889117133}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!33 &6262263644585476038
 MeshFilter:
@@ -315,27 +336,6 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!135 &7920779334040085154
-SphereCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6160547753747382601}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 1050113
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 0
-  serializedVersion: 3
-  m_Radius: 0.5
-  m_Center: {x: 0, y: 0, z: 0}
 --- !u!1 &6467300405394785435
 GameObject:
   m_ObjectHideFlags: 0

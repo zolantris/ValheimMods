@@ -614,10 +614,15 @@ public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interac
 
     if (hold && !alt)
     {
+      if (SelectedAction == MechanismAction.FireCannonGroup)
+      {
+        FireCannonGroup();
+        return true;
+      }
       return false;
     }
 
-    if (hold && alt)
+    if (SelectedAction == MechanismAction.SwivelActivateMode && hold && alt)
     {
       if (holdTimer.IsRunning) return false;
       Invoke(nameof(OnHoldActionHandler), 1f);
