@@ -9,19 +9,20 @@ namespace ValheimVehicles.Integrations
 {
   /// <summary>
   /// Rotates the assigned barrel (or this transform) to aim at the GameCamera crosshair hit point,
-  /// but will not rotate more than 'maxYaw' from the player's forward (Y) direction.
+  /// ignoring the player’s own body and equipment.
   /// Attach to the hand cannon or the barrel GameObject.
   /// </summary>
   public class HandCannonCameraPitchAiming : MonoBehaviour
   {
     [Header("Aiming")]
-    [SerializeField] public float minPitch = -70f;
-    [SerializeField] public float maxPitch = 70f;
-    [SerializeField] public float maxYawFromPlayer = 30f; // Degrees, left/right from player forward
+    [SerializeField] public float minPitch = -70f; // Looking down
+    [SerializeField] public float maxPitch = 70f; // Looking up
+    [SerializeField] public float minYaw = -30f; // Yaw limit left
+    [SerializeField] public float maxYaw = 30f; // Yaw limit right
+    [SerializeField] public float defaultElevationDegrees = 10f; // This tilts barrel upwards by default
     [SerializeField] public bool debugDraw = false;
 
     private CannonController _controller;
-    private Vector3 _lastValidLook = Vector3.forward;
 
     private void Start()
     {
@@ -30,11 +31,19 @@ namespace ValheimVehicles.Integrations
 
     private bool TryInitController()
     {
-      if (_controller == null)
+      try
       {
-        _controller = GetComponentInChildren<CannonController>(true);
+        if (_controller == null)
+        {
+          _controller = GetComponentInChildren<CannonController>(true);
+        }
+        return _controller != null;
       }
-      return _controller != null;
+      catch (Exception ex)
+      {
+        LoggerProvider.LogError($"[HandCannonCameraPitchAiming] Failed to init controller: \n{ex.Message}");
+        return false;
+      }
     }
 
     private void LateUpdate()
@@ -45,56 +54,30 @@ namespace ValheimVehicles.Integrations
       var camera = GameCamera.instance.m_camera;
       if (camera == null) return;
 
-      // 1. Reference transform for aiming
-      var cannonRoot = _controller.cannonRotationalTransform;
-      var parent = cannonRoot.parent;
+      // 1. Get the cannon's parent space
+      var parent = _controller.cannonRotationalTransform.parent;
       if (!parent) return;
 
-      // 2. Compute desired look dir (camera forward, but in cannon's parent space)
-      var targetWorldFwd = camera.transform.forward;
-      if (targetWorldFwd.sqrMagnitude < 1e-4f)
-        targetWorldFwd = _lastValidLook;
-      if (targetWorldFwd.sqrMagnitude < 1e-4f)
-        targetWorldFwd = parent.forward; // fallback
-      _lastValidLook = targetWorldFwd;
+      // 2. Transform camera forward into the cannon’s parent space
+      var localLook = parent.InverseTransformDirection(camera.transform.forward);
 
-      var localLook = parent.InverseTransformDirection(targetWorldFwd).normalized;
+      // Check for degenerate input
+      if (localLook.sqrMagnitude < 1e-6f) return;
 
-      // 3. Compute player forward in local space
-      var player = Player.m_localPlayer;
-      if (!player) return;
-      var playerFwdLocal = parent.InverseTransformDirection(player.transform.forward).normalized;
+      // 3. Calculate desired yaw (Y) and pitch (X)
+      var yaw = Mathf.Atan2(localLook.x, localLook.z) * Mathf.Rad2Deg;
+      yaw = Mathf.Clamp(yaw, minYaw, maxYaw);
 
-      // 4. Clamp YAW (Y axis) within allowed arc of player forward
-      //    Project both vectors to XZ plane
-      var targetXZ = new Vector3(localLook.x, 0, localLook.z).normalized;
-      var playerXZ = new Vector3(playerFwdLocal.x, 0, playerFwdLocal.z).normalized;
-
-      if (targetXZ.sqrMagnitude < 1e-4f) targetXZ = playerXZ;
-      if (playerXZ.sqrMagnitude < 1e-4f) playerXZ = Vector3.forward;
-
-      var yawFromPlayer = Vector3.SignedAngle(playerXZ, targetXZ, Vector3.up);
-      var clampedYaw = Mathf.Clamp(yawFromPlayer, -maxYawFromPlayer, maxYawFromPlayer);
-
-      // Reconstruct local aim dir with clamped yaw
-      var yawRotation = Quaternion.AngleAxis(clampedYaw, Vector3.up);
-      var clampedXZ = yawRotation * playerXZ;
-
-      // 5. Clamp pitch based on the direction from the cannon
       var pitch = -Mathf.Asin(Mathf.Clamp(localLook.y, -1f, 1f)) * Mathf.Rad2Deg;
+      pitch += defaultElevationDegrees; // <--- add the "skyward" bias
       pitch = Mathf.Clamp(pitch, minPitch, maxPitch);
 
-      // 6. Final aim direction: combine clamped XZ with desired (but clamped) pitch
-      // Build rotation first in yaw, then pitch (X axis)
-      var finalRot = Quaternion.LookRotation(clampedXZ, Vector3.up) * Quaternion.AngleAxis(pitch, Vector3.right);
-
-      // Apply to localRotation
-      _controller.cannonRotationalTransform.localRotation = finalRot;
+      // 4. Apply as a single local rotation. (Assume Z is roll, unused)
+      _controller.cannonRotationalTransform.localRotation = Quaternion.Euler(pitch, yaw, 0f);
 
       if (debugDraw)
       {
-        RuntimeDebugLineDrawer.DrawLine(
-          _controller.cannonShooterTransform.position,
+        RuntimeDebugLineDrawer.DrawLine(_controller.cannonShooterTransform.position,
           _controller.cannonShooterTransform.position + _controller.cannonShooterTransform.forward * 5f,
           Color.magenta, 0.1f);
       }
