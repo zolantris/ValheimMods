@@ -2,7 +2,7 @@ using System;
 using UnityEngine;
 using ValheimVehicles.SharedScripts;
 
-public class CannonHandHeldController : MonoBehaviour, Hoverable
+public class CannonHandHeldController : CannonController, Hoverable
 {
   [Header("Aiming")]
   [SerializeField] public float minPitch = -70f; // Looking down
@@ -18,26 +18,24 @@ public class CannonHandHeldController : MonoBehaviour, Hoverable
   private Quaternion _lastRotation;
 
   public static float SquareMagnitudeThreshold = 1e-6f;
-  public static bool ShouldUpdate = false;
+  public static bool ShouldUpdate = true;
 
-  private CannonController cannonController;
   private AmmoController _ammoController;
 
-  private void Start()
+  protected internal override void Start()
   {
     _ammoController = GetComponent<AmmoController>();
     TryInitController();
+    base.Start();
   }
 
   private bool TryInitController()
   {
     try
     {
-      if (cannonController == null)
-        cannonController = GetComponentInChildren<CannonController>(true);
       if (_ammoController == null)
         _ammoController = GetComponent<AmmoController>();
-      return cannonController != null && _ammoController != null;
+      return _ammoController != null;
     }
     catch (Exception ex)
     {
@@ -46,8 +44,9 @@ public class CannonHandHeldController : MonoBehaviour, Hoverable
     }
   }
 
-  private void FixedUpdate()
+  protected internal override void FixedUpdate()
   {
+    base.FixedUpdate();
     if (!ShouldUpdate) return;
     if (!IsHeldByLocalPlayer()) return;
     if (!TryInitController()) return;
@@ -55,7 +54,7 @@ public class CannonHandHeldController : MonoBehaviour, Hoverable
     var camera = GameCamera.instance.m_camera;
     if (camera == null) return;
 
-    var parent = cannonController.cannonRotationalTransform.parent;
+    var parent = cannonRotationalTransform.parent;
     if (!parent) return;
 
     var localLook = parent.InverseTransformDirection(camera.transform.forward);
@@ -96,7 +95,7 @@ public class CannonHandHeldController : MonoBehaviour, Hoverable
     // Only update transform if rotation is actually different, to avoid dirtying transform unnecessarily
     if (!_hasLastAngles || Quaternion.Angle(rotation, _lastRotation) > 0.01f)
     {
-      cannonController.cannonRotationalTransform.localRotation = rotation;
+      cannonRotationalTransform.localRotation = rotation;
       _lastRotation = rotation;
       _lastPitch = pitch;
       _lastYaw = yaw;
@@ -105,17 +104,17 @@ public class CannonHandHeldController : MonoBehaviour, Hoverable
 
     if (debugDraw)
     {
-      RuntimeDebugLineDrawer.DrawLine(cannonController.cannonShooterTransform.position,
-        cannonController.cannonShooterTransform.position + cannonController.cannonShooterTransform.forward * 5f,
+      RuntimeDebugLineDrawer.DrawLine(cannonShooterTransform.position,
+        cannonShooterTransform.position + cannonShooterTransform.forward * 5f,
         Color.green, 0.1f);
     }
   }
 
-  public bool Fire()
+  public bool FireHandheld()
   {
-    if (cannonController.Fire(true, _ammoController.GetAmmoAmountFromCannonballVariant(cannonController.AmmoVariant), out var deltaAmmo))
+    if (Fire(true, _ammoController.GetAmmoAmountFromCannonballVariant(AmmoVariant), out var deltaAmmo))
     {
-      _ammoController.OnAmmoChangedFromVariant(cannonController.AmmoVariant, deltaAmmo);
+      _ammoController.OnAmmoChangedFromVariant(AmmoVariant, deltaAmmo);
       return true;
     }
     return false;

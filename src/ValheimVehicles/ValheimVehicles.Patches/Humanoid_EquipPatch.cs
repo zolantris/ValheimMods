@@ -17,18 +17,16 @@ public static class Humanoid_EquipPatch
   [HarmonyPostfix]
   private static void EquipItemPatch(Player __instance, ItemDrop.ItemData item, bool triggerEquipEffects)
   {
-    if (item == null || __instance == null) return;
-    if (item.m_shared.m_name != HandCannonName) return;
-    var currentWeapon = __instance.GetCurrentWeapon();
-    var cannonController = __instance.GetComponentInChildren<CannonControllerBridge>();
-    if (!cannonController) return;
-    LoggerProvider.LogDebug("Got cannoncontroller on equip");
+    // if (item == null || __instance == null) return;
+    // if (item.m_shared.m_name != HandCannonName) return;
+    // var currentWeapon = __instance.GetCurrentWeapon();
+    // var cannonController = __instance.GetComponentInChildren<CannonControllerBridge>();
+    // if (!cannonController) return;
+    // LoggerProvider.LogDebug("Got cannoncontroller on equipe");
   }
 
-  public static void GetSelectedAmmoFromWeapon(Player __instance, CannonHandHeldController cannonController)
+  public static void LogWeaponData(ItemDrop.ItemData currentWeapon)
   {
-
-    var currentWeapon = __instance.GetCurrentWeapon();
     LoggerProvider.LogDebug($"ammo currentAmmoType {currentWeapon.m_shared.m_ammoType}");
     LoggerProvider.LogDebug($"ammo m_attack.m_attackProjectile {currentWeapon.m_shared.m_attack.m_attackProjectile}");
     LoggerProvider.LogDebug($"ammo ammoItem {currentWeapon.m_shared?.m_attack?.m_ammoItem?.m_shared.m_name}");
@@ -84,15 +82,14 @@ public static class Humanoid_EquipPatch
       return true;
     }
 
-    GetSelectedAmmoFromWeapon(__instance, cannonHandheldController);
-
-    if (cannonHandheldController.Fire() && CanDirectlyConsume)
+    LogWeaponData(currentWeapon);
+    var ammoItem = __instance.GetAmmoItem();
+    if (ammoItem == null)
     {
-      var ammoItem = currentWeapon.m_shared.m_attack?.m_ammoItem ?? null;
-      if (ammoItem == null) return false;
-      __instance.ConsumeItem(__instance.m_inventory, ammoItem);
+      return false;
     }
-
+    cannonHandheldController.SetAmmoVariantFromToken(ammoItem.m_shared.m_name);
+    cannonHandheldController.FireHandheld();
 
     return false;
   }

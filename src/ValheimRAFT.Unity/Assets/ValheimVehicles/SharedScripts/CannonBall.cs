@@ -82,7 +82,7 @@ namespace ValheimVehicles.SharedScripts
     private readonly float _impactSoundStartTime = 0.02f;
 
     private readonly Collider[] allocatedColliders = new Collider[100];
-    private readonly LayerMask explosionLayerMask = ~0;
+    private LayerMask explosionLayerMask = ~0;
     private readonly float explosionRadius = 6f;
     private bool _canHit = true;
 
@@ -310,7 +310,7 @@ namespace ValheimVehicles.SharedScripts
     /// </summary>
     private void GetCollisionsFromExplosion(Vector3 explosionOrigin, float force)
     {
-      var count = Physics.OverlapSphereNonAlloc(explosionOrigin, explosionRadius, allocatedColliders, explosionLayerMask);
+      var count = Physics.OverlapSphereNonAlloc(explosionOrigin, explosionRadius, allocatedColliders, LayerHelpers.CannonHitLayers);
       for (var i = 0; i < count; i++)
       {
         var col = allocatedColliders[i];
@@ -319,39 +319,57 @@ namespace ValheimVehicles.SharedScripts
         var dir = (hitPoint - explosionOrigin).normalized;
         var dist = Vector3.Distance(explosionOrigin, hitPoint);
 
-        RaycastHit hitInfo;
-        // Raycast from explosion to object
+#if DEBUG
+        var distHitToCenter = Vector3.Distance(hitPoint, col.bounds.center);
+        LoggerProvider.LogDebugDebounced($"Distance from center {distHitToCenter} hitpoint {hitPoint} dist from origin {dist}");
+#endif
+        var damageInfo = CannonballHitScheduler.GetDamageInfoForHit(this, col, hitPoint, dir, Vector3.up * 90f, Mathf.Max(90f, force), true);
+        var hitMineRockLocal = damageInfo.isMineRock5Hit || damageInfo.isMineRockHit;
         var hasHitMineRock = false;
-        if (Physics.Raycast(explosionOrigin, dir, out hitInfo, dist + 0.1f, explosionLayerMask))
+        if (!hasHitMineRock)
         {
-          if (hitInfo.collider == col)
+          if (hitMineRockLocal)
           {
-            var rb = col.attachedRigidbody;
-            if (rb != null)
-            {
-              if (!PrefabNames.IsVehicle(rb.name) && !PrefabNames.IsVehiclePiecesContainer(rb.name))
-              {
-                rb.AddExplosionForce(force, explosionOrigin, explosionRadius);
-              }
-            }
-            var damageInfo = CannonballHitScheduler.GetDamageInfoForHit(this, hitInfo.collider, hitPoint, dir, Vector3.up * 40f, Mathf.Max(30f, force), true);
-            var hitMineRockLocal = damageInfo.isMineRock5Hit || damageInfo.isMineRockHit;
-
-            // This logic prevents a cascade of Damage calls only one minerock should be damaged otherwise every hit triggers a minerock damage itself.
-            if (!hasHitMineRock)
-            {
-              if (hitMineRockLocal)
-              {
-                hasHitMineRock = hitMineRockLocal;
-              }
-              CannonballHitScheduler.AddDamageToQueue(damageInfo);
-            }
-            else if (hasHitMineRock && !hitMineRockLocal)
-            {
-              CannonballHitScheduler.AddDamageToQueue(damageInfo);
-            }
+            hasHitMineRock = hitMineRockLocal;
           }
+          CannonballHitScheduler.AddDamageToQueue(damageInfo);
         }
+        else if (hasHitMineRock && !hitMineRockLocal)
+        {
+          CannonballHitScheduler.AddDamageToQueue(damageInfo);
+        }
+
+        // RaycastHit hitInfo;
+        // // Raycast from explosion to object
+        // var hasHitMineRock = false;
+        // if (Physics.Raycast(explosionOrigin, dir, out hitInfo, dist + 0.1f, explosionLayerMask))
+        // {
+        //   if (hitInfo.collider == col)
+        //   {
+        //     var rb = col.attachedRigidbody;
+        //     if (rb != null)
+        //     {
+        //       if (!PrefabNames.IsVehicle(rb.name) && !PrefabNames.IsVehiclePiecesContainer(rb.name))
+        //       {
+        //         rb.AddExplosionForce(force, explosionOrigin, explosionRadius);
+        //       }
+        //     }
+        //
+        //     // This logic prevents a cascade of Damage calls only one minerock should be damaged otherwise every hit triggers a minerock damage itself.
+        //     if (!hasHitMineRock)
+        //     {
+        //       if (hitMineRockLocal)
+        //       {
+        //         hasHitMineRock = hitMineRockLocal;
+        //       }
+        //       CannonballHitScheduler.AddDamageToQueue(damageInfo);
+        //     }
+        //     else if (hasHitMineRock && !hitMineRockLocal)
+        //     {
+        //       CannonballHitScheduler.AddDamageToQueue(damageInfo);
+        //     }
+        //   }
+        // }
       }
     }
 
@@ -583,7 +601,7 @@ namespace ValheimVehicles.SharedScripts
         if (!_hasExploded && Vector3.Distance(_fireOrigin.Value, transform.position) > 3f)
         {
           // addition impact damage first
-          CannonballHitScheduler.AddDamageToQueue(this, other.collider, hitPoint, direction, nextVelocity, relativeVelocityMagnitude, true);
+          CannonballHitScheduler.AddDamageToQueue(this, other.collider, hitPoint, direction, nextVelocity, relativeVelocityMagnitude, false);
           // explosion next
 
           GetCollisionsFromExplosion(transform.position, relativeVelocityMagnitude);
@@ -651,7 +669,6 @@ namespace ValheimVehicles.SharedScripts
 
 
       // allows collisions now.
-      _canHit = true;
       // allow effect for only first index. Otherwise it doubles up on hits with cannons firing from same-explosive.
       _canUseEffect = firingIndex == 0;
 
@@ -675,12 +692,19 @@ namespace ValheimVehicles.SharedScripts
 
       UpdateCannonballPhysics(true);
 
-      if (m_body.isKinematic)
+      if (!m_body.isKinematic)
       {
         m_body.velocity = Vector3.zero;
         m_body.angularVelocity = Vector3.zero;
       }
+
+      m_body.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
+
+      yield return null;
+
+      _canHit = true;
       IsInFlight = true;
+
 
       m_body.AddForce(velocity, ForceMode.VelocityChange);
       _lastVelocity = velocity; // For custom gravity
@@ -767,6 +791,7 @@ namespace ValheimVehicles.SharedScripts
 
       if (m_body)
       {
+        m_body.collisionDetectionMode = CollisionDetectionMode.Discrete;
         if (!m_body.isKinematic)
         {
           m_body.velocity = Vector3.zero;

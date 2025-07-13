@@ -219,7 +219,7 @@ namespace ValheimVehicles.SharedScripts
       SetupCannonballPrefab();
     }
 
-    private void FixedUpdate()
+    protected internal virtual void FixedUpdate()
     {
       UpdateNearbyBarrels();
       SyncLoadedCannonballs();
@@ -273,9 +273,15 @@ namespace ValheimVehicles.SharedScripts
       set;
     }
 
-    public void SetAmmoType(CannonballVariant val)
+    public void SetAmmoVariant(CannonballVariant val)
     {
       AmmoVariant = val;
+    }
+
+    public void SetAmmoVariantFromToken(string tokenId)
+    {
+      var equippedVariant = AmmoController.GetAmmoVariantFromToken(tokenId);
+      AmmoVariant = equippedVariant;
     }
 
     public void InitCoroutines()

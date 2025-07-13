@@ -273,22 +273,44 @@ namespace ValheimVehicles.SharedScripts
       }
     }
 
-    private IEnumerator FireCannonDelayed(CannonController cannon, float delay, bool isManualFire)
+    private IEnumerator FireCannonDelayed(CannonController cannon, float delay, bool isManualFire, Action<int> OnAmmoUpdate)
     {
+      var ammoVariant = cannon.AmmoVariant;
+      var remainingAmmo = _ammoController.GetAmmoAmountFromCannonballVariant(ammoVariant);
+
       // only yield if the cannon actually fires
-      if (cannon.Fire(isManualFire, _ammoController.GetAmmoAmountFromCannonballVariant(cannon.AmmoVariant), out var deltaAmmo))
+      if (cannon.Fire(isManualFire, remainingAmmo, out var deltaAmmo))
       {
-        _ammoController.OnAmmoChangedFromVariant(cannon.AmmoVariant, deltaAmmo);
+        OnAmmoUpdate.Invoke(deltaAmmo);
         yield return new WaitForSeconds(delay);
       }
     }
 
     private IEnumerator ManualFireCannons(int groupId)
     {
-      foreach (var cannonsController in manualFireControllers.ToList())
+      var totalAmmoDeltaExplosive = 0;
+      var totalAmmoDeltaSolid = 0;
+
+      var list = manualFireControllers.ToList();
+      foreach (var cannonsController in list)
       {
         if (!cannonsController || cannonsController.ManualFiringGroupId != groupId) continue;
-        yield return FireCannonDelayed(cannonsController, FiringDelayPerCannon, true);
+        yield return FireCannonDelayed(cannonsController, FiringDelayPerCannon, true, (deltaAmmo) =>
+        {
+          if (cannonsController.AmmoVariant == CannonballVariant.Solid)
+          {
+            totalAmmoDeltaSolid += deltaAmmo;
+          }
+          if (cannonsController.AmmoVariant == CannonballVariant.Explosive)
+          {
+            totalAmmoDeltaExplosive += deltaAmmo;
+          }
+        });
+      }
+
+      if (list.Count > 0 && (totalAmmoDeltaExplosive > 0 || totalAmmoDeltaSolid > 0))
+      {
+        _ammoController.OnAmmoChanged(totalAmmoDeltaSolid, totalAmmoDeltaExplosive);
       }
 
       yield return new WaitForSeconds(FiringCooldown);
@@ -296,10 +318,28 @@ namespace ValheimVehicles.SharedScripts
 
     private IEnumerator AutoFireCannons()
     {
-      foreach (var cannonsController in autoTargetControllers.ToList())
+      var totalAmmoDeltaExplosive = 0;
+      var totalAmmoDeltaSolid = 0;
+      var list = autoTargetControllers.ToList();
+      foreach (var cannonsController in list)
       {
         if (!cannonsController) continue;
-        yield return FireCannonDelayed(cannonsController, FiringDelayPerCannon, false);
+        yield return FireCannonDelayed(cannonsController, FiringDelayPerCannon, false, (deltaAmmo) =>
+        {
+          if (cannonsController.AmmoVariant == CannonballVariant.Solid)
+          {
+            totalAmmoDeltaSolid += deltaAmmo;
+          }
+          if (cannonsController.AmmoVariant == CannonballVariant.Explosive)
+          {
+            totalAmmoDeltaExplosive += deltaAmmo;
+          }
+        });
+      }
+
+      if (list.Count > 0 && (totalAmmoDeltaExplosive > 0 || totalAmmoDeltaSolid > 0))
+      {
+        _ammoController.OnAmmoChanged(totalAmmoDeltaSolid, totalAmmoDeltaExplosive);
       }
 
       yield return new WaitForSeconds(FiringCooldown);
@@ -495,14 +535,14 @@ namespace ValheimVehicles.SharedScripts
       {
         routine = new CoroutineHandle(this);
       }
-      if (routine.IsRunning) return;
+      if (routine.IsRunning || manualFireControllers.Count == 0) return;
       routine.Start(ManualFireCannons(groupId));
     }
 
 
     public void StartAutoFiring()
     {
-      if (_autoFireCannonsRoutine.IsRunning) return;
+      if (_autoFireCannonsRoutine.IsRunning || autoTargetControllers.Count == 0) return;
       _autoFireCannonsRoutine.Start(AutoFireCannons());
     }
 

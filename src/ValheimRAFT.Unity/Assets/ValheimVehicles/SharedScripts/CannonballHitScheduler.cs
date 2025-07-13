@@ -92,17 +92,20 @@ namespace ValheimVehicles.SharedScripts
         m_hitCollider = damageCollider
       };
       hitData.m_damage.m_damage = damageInfo.damage * 0.5f;
-      hitData.m_damage.m_blunt = damageInfo.damage * 0.5f;
-      hitData.m_damage.m_pickaxe = damageInfo.damage;
-      hitData.m_toolTier = 999;
+      hitData.m_damage.m_blunt = damageInfo.isExplosionHit ? 0f : damageInfo.damage * 0.5f;
+      hitData.m_damage.m_pickaxe = damageInfo.isExplosionHit ? 0f : damageInfo.damage;
+      hitData.m_damage.m_fire = damageInfo.isExplosionHit ? damageInfo.damage : 0f;
+      hitData.m_toolTier = 100;
       hitData.m_point = damageInfo.hitPoint;
       hitData.m_dir = damageInfo.direction;
       hitData.m_attacker = Player.m_localPlayer.GetZDOID();
       hitData.m_hitType = HitData.HitType.Impact;
       hitData.m_pushForce = 2f;
+      hitData.m_staggerMultiplier = 12f;
       hitData.m_radius = damageInfo.explosionRadius;
       hitData.m_ranged = true;
-      hitData.m_blockable = true;
+      hitData.m_dodgeable = false;
+      hitData.m_blockable = false;
 
       if (UseCharacterHit && damageCollider != null)
       {
@@ -224,7 +227,7 @@ namespace ValheimVehicles.SharedScripts
         isMineRock5Hit = isMineRock5Hit,
         isDestructibleHit = isDestructibleHit,
         isSelfHit = isSelfHit,
-        explosionRadius = isExplosionHit ? ExplosionShellRadius : 0f,
+        explosionRadius = (isMineRock5Hit || isMineRockHit) && isExplosionHit ? ExplosionShellRadius : 0f,
         cannonballVariant = cannonballVariant,
         damage = forceDamage
       };
@@ -290,8 +293,11 @@ namespace ValheimVehicles.SharedScripts
       if (!TryInit()) yield break;
       yield return new WaitForFixedUpdate();
       var timer = Stopwatch.StartNew();
-      while (_queuedDamageInfo.Count > 0)
+      const int maxLoops = 1000;
+      var count = 0;
+      while (_queuedDamageInfo.Count > 0 && count < maxLoops)
       {
+        count++;
         if (timer.ElapsedMilliseconds > 10)
         {
           yield return null;
@@ -299,10 +305,13 @@ namespace ValheimVehicles.SharedScripts
         }
 
         var damageInfo = _queuedDamageInfo.Dequeue();
-        if (damageInfo.collider == null) continue;
+        if (damageInfo.collider == null)
+        {
+          continue;
+        }
         CommitDamage(damageInfo);
       }
-      _queuedDamageInfo.Clear();
+      timer.Stop();
     }
   }
 }
