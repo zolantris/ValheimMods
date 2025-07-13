@@ -14,6 +14,14 @@ using ValheimVehicles.SharedScripts.Helpers;
 
 namespace ValheimVehicles.SharedScripts
 {
+  public enum CannonDirectionGroup
+  {
+    Forward,
+    Right,
+    Back,
+    Left
+  }
+
   [RequireComponent(typeof(AmmoController))]
   public class TargetController : MonoBehaviour
   {
@@ -43,7 +51,7 @@ namespace ValheimVehicles.SharedScripts
     [Header("Defense Areas")]
     [SerializeField] public List<DefenseArea> defendAreas = new();
 
-// Player defense: player transforms
+    // Player defense: player transforms
     [Tooltip("Player defense")]
     [SerializeField] public List<Transform> defendPlayers = new();
 
@@ -68,6 +76,10 @@ namespace ValheimVehicles.SharedScripts
     public Action? OnCannonListUpdated;
 
     private AmmoController _ammoController = null!;
+
+    // --- Direction Group Cache ---
+    private Dictionary<CannonDirectionGroup, List<CannonController>> _groupedCannons = null!;
+    public IReadOnlyDictionary<CannonDirectionGroup, List<CannonController>> GroupedCannons => _groupedCannons;
 
     private void Awake()
     {
@@ -112,9 +124,10 @@ namespace ValheimVehicles.SharedScripts
       }
 #endif
 
-      UpdateAutoCannonTargets();
       RefreshAllDefenseAreaTriggers();
       RefreshPlayerDefenseTriggers();
+
+      RecalculateCannonGroups(); // New: Build initial grouping
     }
 
     private void FixedUpdate()
@@ -153,6 +166,7 @@ namespace ValheimVehicles.SharedScripts
         }
       }
 #endif
+      RecalculateCannonGroups();
     }
 
     private void OnDrawGizmos()
@@ -173,20 +187,12 @@ namespace ValheimVehicles.SharedScripts
         Gizmos.DrawWireCube(area.center, area.size);
     }
 
-    /// <summary>
-    /// Todo for area bombing/and base combat or deforesting. not ready.
-    /// </summary>
-    /// <param name="index"></param>
     public void AddDefenseArea(Vector3 center, Vector3 size)
     {
       defendAreas.Add(new DefenseArea { center = center, size = size });
       RefreshAllDefenseAreaTriggers();
     }
 
-    /// <summary>
-    /// Todo for area bombing/and base combat or deforesting. not ready.
-    /// </summary>
-    /// <param name="index"></param>
     public void RemoveDefenseArea(int index)
     {
       if (index < 0 || index >= defendAreas.Count) return;
@@ -398,9 +404,7 @@ namespace ValheimVehicles.SharedScripts
     private bool IsValidHostile(Transform t)
     {
       if (IsHostileCharacter(t)) return true;
-
       // fallback
-      // Replace this with your actual hostile-check logic
       return t.name.StartsWith("enemy");
     }
 
@@ -409,14 +413,12 @@ namespace ValheimVehicles.SharedScripts
       List<Transform> targets,
       int maxCannonsPerTarget = 1)
     {
-      // 1. Map to keep track of cannons per target.
       var assignedCounts = new Dictionary<Transform, int>(targets.Count);
       foreach (var t in targets)
         assignedCounts[t] = 0;
 
       var unassignedCannons = new List<CannonController>(cannons.Count);
 
-      // 2. Retain existing assignments if possible (O(N))
       foreach (var cannon in cannons)
       {
         var assigned = cannon.firingTarget;
@@ -446,12 +448,10 @@ namespace ValheimVehicles.SharedScripts
         unassignedCannons.Add(cannon);
       }
 
-      // 3. Assign unassigned cannons to best targets (O(N*M))
       foreach (var cannon in unassignedCannons)
       {
         Transform bestTarget = null;
         Vector3? bestAimPoint = null;
-        // just 1 higher than max distance.
         var bestDist = cannon.maxFiringRange + 1f;
 
         foreach (var t in targets)
@@ -474,11 +474,6 @@ namespace ValheimVehicles.SharedScripts
           cannon.currentAimPoint = bestAimPoint;
           assignedCounts[bestTarget]++;
         }
-        // else
-        // {
-        //   cannon.firingTarget = null;
-        //   cannon.currentAimPoint = null;
-        // }
       }
     }
 
@@ -539,7 +534,6 @@ namespace ValheimVehicles.SharedScripts
       routine.Start(ManualFireCannons(groupId));
     }
 
-
     public void StartAutoFiring()
     {
       if (_autoFireCannonsRoutine.IsRunning || autoTargetControllers.Count == 0) return;
@@ -574,6 +568,7 @@ namespace ValheimVehicles.SharedScripts
           throw new ArgumentOutOfRangeException();
       }
 
+      RecalculateCannonGroups();
       OnCannonListUpdated?.Invoke();
     }
 
@@ -592,7 +587,54 @@ namespace ValheimVehicles.SharedScripts
           throw new ArgumentOutOfRangeException();
       }
 
+      RecalculateCannonGroups();
       OnCannonListUpdated?.Invoke();
+    }
+
+    // --- GROUPING LOGIC ---
+
+    private static CannonDirectionGroup GetDirectionGroup(Transform reference, Transform cannon)
+    {
+      var toCannon = cannon.position - reference.position;
+      toCannon.y = 0f;
+      if (toCannon.sqrMagnitude < 1e-4f)
+        return CannonDirectionGroup.Forward;
+
+      var local = reference.InverseTransformDirection(toCannon.normalized);
+      var angle = Mathf.Atan2(local.x, local.z) * Mathf.Rad2Deg;
+      angle = (angle + 360f) % 360f;
+
+      if (angle >= 315f || angle < 45f)
+        return CannonDirectionGroup.Forward;
+      if (angle >= 45f && angle < 135f)
+        return CannonDirectionGroup.Right;
+      if (angle >= 135f && angle < 225f)
+        return CannonDirectionGroup.Back;
+      return CannonDirectionGroup.Left;
+    }
+
+    private void RecalculateCannonGroups()
+    {
+      // O(N) - Efficient, no allocations except per-list
+      _groupedCannons = new Dictionary<CannonDirectionGroup, List<CannonController>>
+      {
+        { CannonDirectionGroup.Forward, new List<CannonController>() },
+        { CannonDirectionGroup.Right, new List<CannonController>() },
+        { CannonDirectionGroup.Back, new List<CannonController>() },
+        { CannonDirectionGroup.Left, new List<CannonController>() }
+      };
+      foreach (var cannon in allCannonControllers)
+      {
+        if (cannon == null) continue;
+        var group = GetDirectionGroup(transform, cannon.transform);
+        _groupedCannons[group].Add(cannon);
+      }
+    }
+
+    // Example public API for outside use (can expand to support N directions easily)
+    public IReadOnlyList<CannonController> GetCannonsByDirection(CannonDirectionGroup group)
+    {
+      return _groupedCannons.TryGetValue(group, out var list) ? list : Array.Empty<CannonController>();
     }
 
     [Serializable]
