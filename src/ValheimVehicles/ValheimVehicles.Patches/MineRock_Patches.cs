@@ -1,5 +1,6 @@
 ﻿using HarmonyLib;
 using UnityEngine;
+using ValheimVehicles.SharedScripts;
 namespace ValheimVehicles.Patches;
 
 public class MineRock_Patches
@@ -54,14 +55,13 @@ public class MineRock_Patches
       }
       if (num1 != 0)
         return false;
-      ;
-      ZLog.Log((object)("Minerock hit has no collider or invalid hit area on " + __instance.gameObject.name));
+      LoggerProvider.LogDebugDebounced($"Minerock hit has no collider or invalid hit area on {__instance.gameObject.name}");
     }
     else
     {
       var areaIndex = __instance.GetAreaIndex(hit.m_hitCollider);
       if (areaIndex < 0)
-        ZLog.Log((object)("Invalid hit area on " + __instance.gameObject.name));
+        LoggerProvider.LogDebugDebounced($"Invalid hit area on {__instance.gameObject.name}");
       else
         __instance.m_nview.InvokeRPC("RPC_Damage", (object)hit, (object)areaIndex);
     }

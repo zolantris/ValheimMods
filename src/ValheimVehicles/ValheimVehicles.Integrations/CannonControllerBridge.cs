@@ -11,7 +11,7 @@ public class CannonControllerBridge : CannonController, Hoverable, Interactable,
 {
   public CannonConfigSync prefabConfigSync = null!;
   private bool _hasInitPrefabSync = false;
-  public CannonConfig Config => this.GetOrCache(ref prefabConfigSync, ref _hasInitPrefabSync).Config;
+  public CannonPersistentConfig PersistentConfig => this.GetOrCache(ref prefabConfigSync, ref _hasInitPrefabSync).Config;
 
   protected internal override sealed void Awake()
   {
@@ -34,6 +34,16 @@ public class CannonControllerBridge : CannonController, Hoverable, Interactable,
     }
   }
 
+  protected internal override void Start()
+  {
+    base.Start();
+  }
+
+  public void SetAmmoType()
+  {
+
+  }
+
   protected internal override sealed void OnEnable()
   {
     OnAmmoChanged += OnAmmoUpdate;
@@ -46,27 +56,27 @@ public class CannonControllerBridge : CannonController, Hoverable, Interactable,
 
   public void OnAmmoUpdate(int val)
   {
-    if (!this.IsNetViewValid(out var nv)) return;
-    if (!nv.HasOwner())
-    {
-      nv.ClaimOwnership();
-    }
-
-    // do not do anything for non-owner. Otherwise this could loop.
-    if (!nv.IsOwner()) return;
-
-    AmmoCount = val;
-
-    // commit update and sync.
-    prefabConfigSync.Request_CommitConfigChange(Config);
-    prefabConfigSync.Load();
+    // if (!this.IsNetViewValid(out var nv)) return;
+    // if (!nv.HasOwner())
+    // {
+    //   nv.ClaimOwnership();
+    // }
+    //
+    // // do not do anything for non-owner. Otherwise this could loop.
+    // if (!nv.IsOwner()) return;
+    //
+    // AmmoCount = val;
+    //
+    // // commit update and sync.
+    // prefabConfigSync.Request_CommitConfigChange(PersistentConfig);
+    // prefabConfigSync.Load();
   }
 
   // todo Add a TryGetFuel similar to PowerHoverComponent.
 
   public string CannonballNameFromType()
   {
-    return AmmoType == Cannonball.CannonballType.Explosive ? ModTranslations.VehicleCannon_CannonBallExplosive : ModTranslations.VehicleCannon_CannonBallSolid;
+    return AmmoVariant == CannonballVariant.Explosive ? ModTranslations.VehicleCannon_CannonBallExplosive : ModTranslations.VehicleCannon_CannonBallSolid;
   }
 
   public string GetHoverText()
@@ -95,7 +105,7 @@ public class CannonControllerBridge : CannonController, Hoverable, Interactable,
 
     if (alt)
     {
-      AmmoType = AmmoType == Cannonball.CannonballType.Explosive ? Cannonball.CannonballType.Solid : Cannonball.CannonballType.Explosive;
+      AmmoVariant = AmmoVariant == CannonballVariant.Explosive ? CannonballVariant.Solid : CannonballVariant.Explosive;
       return true;
     }
 

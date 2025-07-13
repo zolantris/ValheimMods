@@ -19,15 +19,8 @@ using Random = UnityEngine.Random;
 
 namespace ValheimVehicles.SharedScripts
 {
-  public class CannonController : MonoBehaviour, ICannonConfig
+  public class CannonController : MonoBehaviour, ICannonPersistentConfig
   {
-
-    public enum FiringMode
-    {
-      Manual,
-      Auto
-    }
-
     [Header("Cannonball")]
     [Tooltip("Prefab asset for the cannonball projectile (assign in inspector or dynamically).")]
     // Will be set from asset and cached for instantiation
@@ -43,13 +36,15 @@ namespace ValheimVehicles.SharedScripts
     public static float CannonReloadAudioVolume = 0.5f;
     public static bool HasFireAudio = true;
     public static bool HasReloadAudio = false;
-    public static bool HasUnlimitedAmmo = false;
     public static float CannonAimingCenterOffsetY = 0f;
     public static LayerMask SightBlockingMask = 0;
 
     public static float MaxFiringRotationYOverride = 0f;
     public static float MaxFiringPitchOverride = 0f;
     public static float MinFiringPitchOverride = 0f;
+
+    public static float maxSidewaysArcDegrees = 0.15f; // Tune as desired
+    public static float maxVerticalArcDegrees = 0.15f; // Small up/down variation
     [Tooltip("Optional: prefab asset for this instance (overrides static for this controller only).")]
     [SerializeField] private GameObject CannonballSolidPrefabAssetLocal;
     [SerializeField] private GameObject CannonballExplosivePrefabAssetLocal;
@@ -74,7 +69,7 @@ namespace ValheimVehicles.SharedScripts
     [Tooltip("Automatically reload when fired?")]
     [SerializeField] private bool autoReload = true;
     [Tooltip("Ammunition type")]
-    [SerializeField] private Cannonball.CannonballType ammoType = Cannonball.CannonballType.Solid;
+    [SerializeField] private CannonballVariant ammoVariant = CannonballVariant.Solid;
 
     [Header("Effects & Sounds")]
     [Tooltip("Sound when firing.")]
@@ -114,7 +109,6 @@ namespace ValheimVehicles.SharedScripts
 
     [Header("Barrel Ammo Logic")]
     [SerializeField] public bool hasNearbyPowderBarrel;
-    [SerializeField] public bool isHandCannon;
     [SerializeField] private float barrelSupplyRadius = BarrelSupplyDistance;
     [SerializeField] public int ManualFiringGroupId;
     // barrel check timers
@@ -122,7 +116,9 @@ namespace ValheimVehicles.SharedScripts
     public float BarrelCheckInterval = 5f;
 
     [Header("Firing Modes")]
-    [SerializeField] public FiringMode firingMode = FiringMode.Auto;
+    [SerializeField] public CannonFiringMode cannonFiringMode = CannonFiringMode.Auto;
+
+    public CannonVariant cannonVariant = CannonVariant.Unknown;
 
     private readonly List<Collider> _colliders = new();
 
@@ -171,6 +167,7 @@ namespace ValheimVehicles.SharedScripts
     {
       SetupTransforms();
       InitCoroutines();
+      UpdateTurretTypeFromPrefabName();
 
       _cannonFireAudioSource = cannonFireAudioSourceTransform.GetComponent<AudioSource>();
       _cannonReloadAudioSource = cannonReloadAudioSourceTransform.GetComponent<AudioSource>();
@@ -217,7 +214,7 @@ namespace ValheimVehicles.SharedScripts
     }
 
 
-    internal virtual void Start()
+    protected internal virtual void Start()
     {
       SetupCannonballPrefab();
       TryReload();
@@ -240,7 +237,7 @@ namespace ValheimVehicles.SharedScripts
       CleanupPool();
     }
 
-    protected internal void OnDestroy()
+    protected internal virtual void OnDestroy()
     {
       StopAllCoroutines();
       foreach (var cannonball in _cannonballPool)
@@ -261,25 +258,25 @@ namespace ValheimVehicles.SharedScripts
       }
     }
 
-    public int AmmoCount
+    public CannonballVariant AmmoVariant
     {
-      get => _ammoCount;
-      set => _ammoCount = value;
-    }
-
-    public Cannonball.CannonballType AmmoType
-    {
-      get => ammoType;
+      get => ammoVariant;
       set
       {
-        ammoType = value;
+        ammoVariant = value;
         SetupCannonballPrefab();
       }
     }
 
-    public void SetAmmoType(Cannonball.CannonballType val)
+    public CannonFiringMode CannonFiringMode
     {
-      AmmoType = val;
+      get;
+      set;
+    }
+
+    public void SetAmmoType(CannonballVariant val)
+    {
+      AmmoVariant = val;
     }
 
     public void InitCoroutines()
@@ -288,9 +285,9 @@ namespace ValheimVehicles.SharedScripts
       _recoilRoutine ??= new CoroutineHandle(this);
       _reloadRoutine ??= new CoroutineHandle(this);
     }
-    public FiringMode GetFiringMode()
+    public CannonFiringMode GetFiringMode()
     {
-      return firingMode;
+      return cannonFiringMode;
     }
 
     public void UpdateNearbyBarrels()
@@ -317,12 +314,13 @@ namespace ValheimVehicles.SharedScripts
           if (ball.m_body != null)
           {
             var t = ball.lastFireTransform != null ? ball.lastFireTransform : cannonShooterTransform;
-            ball.m_body.Move(t.position, t.rotation);
+            ball.m_body.MovePosition(t.position);
+            // ball.m_body.Move(t.position, t.rotation);
           }
           else
           {
             ballTransform.position = cannonShooterTransform.position;
-            ballTransform.rotation = cannonShooterTransform.rotation;
+            // ballTransform.rotation = cannonShooterTransform.rotation;
           }
         }
       }
@@ -357,6 +355,34 @@ namespace ValheimVehicles.SharedScripts
     public event Action<int> OnAmmoChanged;
     public event Action OnFired;
     public event Action OnReloaded;
+
+    /// <summary>
+    /// Matches valheim runtime or unity editor variants of cannons and sets their type.
+    /// </summary>
+    private void UpdateTurretTypeFromPrefabName()
+    {
+      var prefabName = transform.name;
+
+      if (prefabName.StartsWith(PrefabNames.CannonFixedTier1) || prefabName.Contains("cannon_fixed"))
+      {
+        cannonVariant = CannonVariant.Fixed;
+        return;
+      }
+
+      if (prefabName.StartsWith(PrefabNames.CannonTurretTier1) || prefabName.Contains("cannon_turret"))
+      {
+        cannonVariant = CannonVariant.Turret;
+        return;
+      }
+
+      if (prefabName.StartsWith(PrefabNames.CannonHandHeldItem) || prefabName.Contains("handheld"))
+      {
+        cannonVariant = CannonVariant.HandHeld;
+        return;
+      }
+
+      LoggerProvider.LogError($"Unknown cannon variant for prefab {prefabName}. Using serialized value {cannonVariant}");
+    }
 
     private void SetupTransforms()
     {
@@ -431,11 +457,11 @@ namespace ValheimVehicles.SharedScripts
         SetupCannonballPrefab();
       }
 
-      switch (ammoType)
+      switch (ammoVariant)
       {
-        case Cannonball.CannonballType.Solid:
+        case CannonballVariant.Solid:
           return CannonballSolidPrefab;
-        case Cannonball.CannonballType.Explosive:
+        case CannonballVariant.Explosive:
           return CannonballExplosivePrefab;
         default:
           throw new ArgumentOutOfRangeException();
@@ -504,7 +530,7 @@ namespace ValheimVehicles.SharedScripts
         foreach (var shootingPart in shootingParts)
         {
           var go = Instantiate(selectedCannonball, shootingPart.projectileLoader.position, shootingPart.projectileLoader.rotation, null);
-          go.name = $"cannonball_queue_{ammoType}_{i}";
+          go.name = $"cannonball_queue_{ammoVariant}_{i}";
           var obj = go.GetComponent<Cannonball>();
           IgnoreVehicleColliders(obj);
           IgnoreLocalColliders(obj);
@@ -587,7 +613,7 @@ namespace ValheimVehicles.SharedScripts
 
         if (ball)
         {
-          ball.gameObject.name = $"cannonball_{ammoType}_active_{_cannonballPool.Count}";
+          ball.gameObject.name = $"cannonball_{ammoVariant}_active_{_cannonballPool.Count}";
           ball.gameObject.SetActive(true);
           _trackedLoadedCannonballs.Add(ball);
           return ball;
@@ -606,7 +632,7 @@ namespace ValheimVehicles.SharedScripts
       var go = Instantiate(selectedCannonball, barrelPart.projectileLoader.position, barrelPart.projectileLoader.rotation, null);
       var localCannonball = go.GetComponent<Cannonball>();
 
-      if (isHandCannon)
+      if (cannonVariant == CannonVariant.HandHeld)
       {
         IgnoreAllCollidersFromPlayerRoot(localCannonball);
       }
@@ -622,7 +648,7 @@ namespace ValheimVehicles.SharedScripts
       go.gameObject.SetActive(true);
 
       _trackedLoadedCannonballs.Add(localCannonball);
-      go.name = $"cannonball_{ammoType}_active_{_trackedLoadedCannonballs.Count}";
+      go.name = $"cannonball_{ammoVariant}_active_{_trackedLoadedCannonballs.Count}";
       return localCannonball;
     }
 
@@ -819,7 +845,7 @@ namespace ValheimVehicles.SharedScripts
       if (toTargetXZ.sqrMagnitude < 0.01f) return false;
 
       var currentYaw = cannonRotationalTransform.eulerAngles.y;
-      var desiredYaw = Quaternion.LookRotation(toTargetXZ, Vector3.up).eulerAngles.y;
+      var desiredYaw = QuaternionExtensions.LookRotationSafe(toTargetXZ, Vector3.up).eulerAngles.y;
       var deltaYaw = Mathf.DeltaAngle(currentYaw, desiredYaw);
       if (Mathf.Abs(deltaYaw) > FiringRotationMaxY) return false;
 
@@ -855,7 +881,7 @@ namespace ValheimVehicles.SharedScripts
 
     public void AdjustFiringAngle()
     {
-      if (firingMode == FiringMode.Manual || isHandCannon) return;
+      if (cannonFiringMode == CannonFiringMode.Manual || isHandCannon) return;
       if (IsReloading) return;
 
       var fireOrigin = cannonShooterTransform.position;
@@ -876,7 +902,7 @@ namespace ValheimVehicles.SharedScripts
         return;
       }
 
-      var desiredYawWorld = Quaternion.LookRotation(toTarget.normalized, Vector3.up);
+      var desiredYawWorld = QuaternionExtensions.LookRotationSafe(toTarget.normalized, Vector3.up);
       var currentYaw = cannonRotationalTransform.eulerAngles.y;
       var targetYaw = desiredYawWorld.eulerAngles.y;
       var deltaYaw = Mathf.DeltaAngle(currentYaw, targetYaw);
@@ -927,41 +953,51 @@ namespace ValheimVehicles.SharedScripts
       _canAutoFire = isWithinYawRange && hasPitch && alignedYaw && alignedPitch;
     }
 
-    public void Fire(bool isManualFiring)
+    public bool IsHandHeldCannon => cannonVariant == CannonVariant.HandHeld;
+
+    private bool CanFire(bool isManualFiring)
     {
-      if (!isActiveAndEnabled) return;
-      if (IsReloading || IsFiring || !HasUnlimitedAmmo && AmmoCount <= 0 || !isHandCannon && !hasNearbyPowderBarrel) return;
+      if (!isActiveAndEnabled) return false;
+      if (IsReloading || IsFiring || !IsHandHeldCannon && !hasNearbyPowderBarrel) return false;
       // auto fire logic prevents firing while cannon is misaligned with the target.
-      if (!isManualFiring && !_canAutoFire) return;
+      if (!isManualFiring && !_canAutoFire) return false;
+
+      return true;
+    }
+
+    public bool Fire(bool isManualFiring, ref int remainingAmmo)
+    {
+      if (!CanFire(isManualFiring))
+      {
+        return false;
+      }
+
       IsFiring = true;
 
       var hasFired = false;
       for (var index = 0; index < shootingParts.Count; index++)
       {
         var shootingPart = shootingParts[index];
+        if (remainingAmmo <= 0) break;
         if (!FireSingle(shootingPart, index, isManualFiring)) break;
+        remainingAmmo--;
         hasFired = true;
       }
 
       if (!hasFired)
       {
         IsFiring = false;
-        return;
+        return false;
       }
-
-      AmmoCount = Math.Max(HasUnlimitedAmmo ? 50 : 0, AmmoCount - shootingParts.Count);
 
       // use a single audio clip for now. Using multiple is not worth it for perf.
       PlayFireClip();
 
-      // do not invoke ammo update for unlimited ammo.
-      if (!HasUnlimitedAmmo)
-      {
-        OnAmmoChanged?.Invoke(AmmoCount);
-      }
       OnFired?.Invoke();
 
       _recoilRoutine.Start(RecoilCoroutine());
+
+      return true;
     }
 
     private bool FireSingle(BarrelPart barrel, int barrelCount, bool isManualFiring)
@@ -978,7 +1014,6 @@ namespace ValheimVehicles.SharedScripts
         loadedCannonball.Load(barrel.projectileLoader);
       }
 
-      // more checks for auto firing.
       if (!isManualFiring)
       {
         var targetPosition = GetFiringTargetCurrentAimPoint();
@@ -989,18 +1024,43 @@ namespace ValheimVehicles.SharedScripts
       IgnoreLocalColliders(loadedCannonball);
       loadedCannonball.transform.position = barrel.projectileLoader.position;
 
-      var randomVelocityMultiplier = (Random.value - 0.5f) * 2f;
+      var randomVelocityMultiplier = Random.Range(-1f, 1f);
       var localSpeed = cannonballSpeed + randomVelocityMultiplier;
 
+      var sideArc = Random.Range(-maxSidewaysArcDegrees, maxSidewaysArcDegrees);
+
+      var baseForward = cannonShooterAimPoint.forward;
+
+// Defensive: If forward is degenerate, fallback to transform.forward or world forward.
+      if (baseForward.sqrMagnitude < 1e-5f)
+      {
+        // You can log this once or just silently fallback for performance.
+        baseForward = transform.forward.sqrMagnitude > 1e-5f ? transform.forward : Vector3.forward;
+#if UNITY_EDITOR
+    Debug.LogWarning("CannonController: cannonShooterAimPoint.forward was zero, using fallback for firing direction.");
+#endif
+      }
+
+      var arcRot = Quaternion.Euler(0f, sideArc, 0f);
+      var arcedForward = arcRot * baseForward;
+
+// Defensive: If arcRot or math yields a bad direction, fallback again.
+      if (arcedForward.sqrMagnitude < 1e-5f)
+      {
+        arcedForward = baseForward.sqrMagnitude > 1e-5f ? baseForward : Vector3.forward;
+#if UNITY_EDITOR
+    Debug.LogWarning("CannonController: arcedForward was zero, using fallback.");
+#endif
+      }
+
       loadedCannonball.Fire(
-        cannonShooterAimPoint.forward * localSpeed,
+        arcedForward.normalized * localSpeed,
         barrel.projectileLoader, this, barrelCount);
 
       PlayMuzzleFlash(barrel);
 
       _trackedLoadedCannonballs.Remove(loadedCannonball);
 
-      // Clean up loaded ball for this barrel
       _loadedCannonballs[barrel] = null;
 
       return true;

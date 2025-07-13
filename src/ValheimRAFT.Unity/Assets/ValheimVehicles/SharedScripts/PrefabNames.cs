@@ -530,7 +530,7 @@
                objName.StartsWith(WaterVehicleOnboardCollider) || objName.StartsWith(ConvexHull);
       }
 
-      public static bool IsVehiclePiecesCollider(string objName)
+      public static bool IsVehiclePiecesContainer(string objName)
       {
         return objName.StartsWith(VehiclePiecesContainer);
       }

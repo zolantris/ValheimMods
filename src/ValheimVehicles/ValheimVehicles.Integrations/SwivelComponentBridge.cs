@@ -537,7 +537,7 @@
 
         // these calcs are probably all wrong.
         // var dir = Utils.YawFromDirection(transform.InverseTransformDirection(windDir));
-        var dir = Quaternion.LookRotation(
+        var dir = QuaternionExtensions.LookRotationSafe(
           -Vector3.Lerp(windDir,
             Vector3.Normalize(windDir - piecesContainer.forward), turnTime),
           piecesContainer.up);

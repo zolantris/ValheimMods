@@ -1,6 +1,19 @@
-namespace DefaultNamespace;
+// ReSharper disable ArrangeNamespaceBody
+// ReSharper disable NamespaceStyle
 
-public class CannonControllerEnums
+namespace ValheimVehicles.SharedScripts
 {
-  
+  public enum CannonFiringMode
+  {
+    Manual,
+    Auto
+  }
+
+  public enum CannonVariant
+  {
+    Turret,
+    Fixed,
+    HandHeld,
+    Unknown
+  }
 }

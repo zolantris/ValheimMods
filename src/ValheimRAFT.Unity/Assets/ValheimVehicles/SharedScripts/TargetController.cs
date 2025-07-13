@@ -8,11 +8,13 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using ValheimVehicles.SharedScripts.Helpers;
 
 #endregion
 
 namespace ValheimVehicles.SharedScripts
 {
+  [RequireComponent(typeof(AmmoController))]
   public class TargetController : MonoBehaviour
   {
     public enum TargetingMode
@@ -49,9 +51,9 @@ namespace ValheimVehicles.SharedScripts
 
     [SerializeField] public int maxCannonsPerEnemy = 2;
     [SerializeField] public bool autoFire;
-    [SerializeField] public List<CannonController> allCannonControllers = new();
-    [SerializeField] public List<CannonController> autoTargetControllers = new();
-    [SerializeField] public List<CannonController> manualFireControllers = new();
+    [SerializeField] public List<CannonPersistentController> allCannonControllers = new();
+    [SerializeField] public List<CannonPersistentController> autoTargetControllers = new();
+    [SerializeField] public List<CannonPersistentController> manualFireControllers = new();
 
     private readonly Collider[] _enemyBuffer = new Collider[32];
     private readonly Dictionary<int, CoroutineHandle> _manualFireCannonsRoutines = new();
@@ -63,10 +65,17 @@ namespace ValheimVehicles.SharedScripts
     private CoroutineHandle _acquireTargetsRoutine;
     private CoroutineHandle _autoFireCannonsRoutine;
 
+    public Action? OnCannonListUpdated;
+
+    private AmmoController _ammoController = null!;
+    public int RemainingAmmo => _ammoController!.Ammo;
+
     private void Awake()
     {
       _autoFireCannonsRoutine = new CoroutineHandle(this);
       _acquireTargetsRoutine = new CoroutineHandle(this);
+
+      _ammoController = gameObject.GetOrAddComponent<AmmoController>();
 
       IsHostileCharacter = t =>
       {
@@ -92,10 +101,10 @@ namespace ValheimVehicles.SharedScripts
       {
         switch (allCannonController.GetFiringMode())
         {
-          case CannonController.FiringMode.Manual:
+          case CannonFiringMode.Manual:
             manualFireControllers.Add(allCannonController);
             break;
-          case CannonController.FiringMode.Auto:
+          case CannonFiringMode.Auto:
             autoTargetControllers.Add(allCannonController);
             break;
           default:
@@ -126,7 +135,7 @@ namespace ValheimVehicles.SharedScripts
     {
       _autoFireCannonsRoutine ??= new CoroutineHandle(this);
       _acquireTargetsRoutine ??= new CoroutineHandle(this);
-      
+
 #if UNITY_EDITOR
       // mostly for local testing.
       GetComponentsInChildren(false, allCannonControllers);
@@ -134,10 +143,10 @@ namespace ValheimVehicles.SharedScripts
       {
         switch (allCannonController.GetFiringMode())
         {
-          case CannonController.FiringMode.Manual:
+          case CannonFiringMode.Manual:
             manualFireControllers.Add(allCannonController);
             break;
-          case CannonController.FiringMode.Auto:
+          case CannonFiringMode.Auto:
             autoTargetControllers.Add(allCannonController);
             break;
           default:
@@ -265,10 +274,11 @@ namespace ValheimVehicles.SharedScripts
       }
     }
 
-    private IEnumerator FireCannonDelayed(CannonController cannon, float delay, bool isManualFire)
+    private IEnumerator FireCannonDelayed(CannonPersistentController cannonPersistent, float delay, bool isManualFire)
     {
+
       yield return new WaitForSeconds(delay);
-      cannon.Fire(isManualFire);
+      cannonPersistent.Fire(isManualFire, remainingAmmo);
     }
 
     private IEnumerator ManualFireCannons(int groupId)
@@ -353,7 +363,7 @@ namespace ValheimVehicles.SharedScripts
     }
 
     private void AssignCannonsToTargets(
-      List<CannonController> cannons,
+      List<CannonPersistentController> cannons,
       List<Transform> targets,
       int maxCannonsPerTarget = 1)
     {
@@ -362,7 +372,7 @@ namespace ValheimVehicles.SharedScripts
       foreach (var t in targets)
         assignedCounts[t] = 0;
 
-      var unassignedCannons = new List<CannonController>(cannons.Count);
+      var unassignedCannons = new List<CannonPersistentController>(cannons.Count);
 
       // 2. Retain existing assignments if possible (O(N))
       foreach (var cannon in cannons)
@@ -506,38 +516,41 @@ namespace ValheimVehicles.SharedScripts
       RefreshPlayerDefenseTriggers();
     }
 
-    public void AddCannon(CannonController controller)
+    public void AddCannon(CannonPersistentController persistentController)
     {
-      allCannonControllers.Add(controller);
+      allCannonControllers.Add(persistentController);
 
-      switch (controller.GetFiringMode())
+      switch (persistentController.GetFiringMode())
       {
-        case CannonController.FiringMode.Manual:
-          manualFireControllers.Add(controller);
+        case CannonFiringMode.Manual:
+          manualFireControllers.Add(persistentController);
           break;
-        case CannonController.FiringMode.Auto:
-          autoTargetControllers.Add(controller);
+        case CannonFiringMode.Auto:
+          autoTargetControllers.Add(persistentController);
           break;
         default:
           throw new ArgumentOutOfRangeException();
       }
+
+      OnCannonListUpdated?.Invoke();
     }
 
-    public void RemoveCannon(CannonController controller)
+    public void RemoveCannon(CannonPersistentController persistentController)
     {
-      allCannonControllers.Remove(controller);
-      switch (controller.GetFiringMode())
+      allCannonControllers.Remove(persistentController);
+      switch (persistentController.GetFiringMode())
       {
-
-        case CannonController.FiringMode.Manual:
-          manualFireControllers.Remove(controller);
+        case CannonFiringMode.Manual:
+          manualFireControllers.Remove(persistentController);
           break;
-        case CannonController.FiringMode.Auto:
-          autoTargetControllers.Remove(controller);
+        case CannonFiringMode.Auto:
+          autoTargetControllers.Remove(persistentController);
           break;
         default:
           throw new ArgumentOutOfRangeException();
       }
+
+      OnCannonListUpdated?.Invoke();
     }
 
     [Serializable]

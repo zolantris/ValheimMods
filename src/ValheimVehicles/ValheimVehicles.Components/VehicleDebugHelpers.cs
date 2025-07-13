@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Dynamic;
 using System.Linq;
 using System.Text.RegularExpressions;
+using DefaultNamespace;
 using HarmonyLib;
 using Jotunn.Managers;
 using TMPro;
@@ -241,8 +242,8 @@ public class VehicleDebugHelpers : MonoBehaviour
     {
       textTransform.LookAt(Camera.main.transform);
       textTransform.rotation =
-        Quaternion.LookRotation(textTransform.forward *
-                                -1); // Flip to face correctly
+        QuaternionExtensions.LookRotationSafe(textTransform.forward *
+                                              -1); // Flip to face correctly
     }
   }
 

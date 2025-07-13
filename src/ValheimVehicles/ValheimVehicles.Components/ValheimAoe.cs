@@ -285,7 +285,7 @@ public class ValheimAoe : MonoBehaviour, IProjectile, IMonoUpdater
               var num2 = Vector3.Distance(position2, transform.position);
               foreach (var gameObject2 in m_chainEffects.Create(
                          position1 + Vector3.up,
-                         Quaternion.LookRotation(
+                         QuaternionExtensions.LookRotationSafe(
                            position1.DirTo(position2 + Vector3.up))))
                 gameObject2.transform.localScale = Vector3.one * num2;
             }

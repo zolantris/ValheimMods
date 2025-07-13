@@ -553,7 +553,7 @@
       if (isRam) m_ramPieces.Remove(netView);
     }
 
-    public static Cannonball.CannonballType AmmoTypeDefault = Cannonball.CannonballType.Solid;
+    public static CannonballVariant AmmoVariantDefault = CannonballVariant.Solid;
 
     public void AddPieceDataForComponents(ZNetView netView)
     {
@@ -565,9 +565,9 @@
             LoggerProvider.LogDev("Detected VehicleManager, setting parent to PiecesController.Manager");
             vehicleManager.MovementController.OnParentReady(PiecesController.Manager);
             break;
-          case CannonController cannonController:
+          case CannonPersistentController cannonController:
             LoggerProvider.LogDebug("adding cannon to target controller");
-            cannonController.AmmoType = AmmoTypeDefault;
+            cannonController.AmmoVariant = AmmoVariantDefault;
             cannonController.maxAmmo = 50;
             targetController.AddCannon(cannonController);
             cannonController.AddIgnoredTransforms([transform, Manager!.transform]);
@@ -660,7 +660,7 @@
           case Fireplace fireplace:
             RemoveEffectAreaFromVehicle(netView);
             break;
-          case CannonController cannonController:
+          case CannonPersistentController cannonController:
             LoggerProvider.LogDebug("removing cannon from target controller");
             targetController.RemoveCannon(cannonController);
             break;
@@ -747,7 +747,7 @@
     public static bool CanRemoveRigidbodyFromChild(string name)
     {
       return !RamPrefabs.IsRam(name) &&
-             !name.Contains(PrefabNames.ShipAnchorWood) && !PrefabNames.IsVehicle(name) && !PrefabNames.IsVehiclePiecesCollider(name) && !name.StartsWith(PrefabNames.SwivelPrefabName);
+             !name.Contains(PrefabNames.ShipAnchorWood) && !PrefabNames.IsVehicle(name) && !PrefabNames.IsVehiclePiecesContainer(name) && !name.StartsWith(PrefabNames.SwivelPrefabName);
     }
 
     public void AddPiece(ZNetView netView, bool isNew = false)

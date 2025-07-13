@@ -1,92 +1,124 @@
-// ReSharper disable ArrangeNamespaceBody
-// ReSharper disable NamespaceStyle
-
 using System;
 using UnityEngine;
 using ValheimVehicles.SharedScripts;
 
-namespace ValheimVehicles.Integrations
+public class HandCannonCameraPitchAiming : MonoBehaviour, Hoverable
 {
-  /// <summary>
-  /// Rotates the assigned barrel (or this transform) to aim at the GameCamera crosshair hit point,
-  /// ignoring the player’s own body and equipment.
-  /// Attach to the hand cannon or the barrel GameObject.
-  /// </summary>
-  public class HandCannonCameraPitchAiming : MonoBehaviour
+  [Header("Aiming")]
+  [SerializeField] public float minPitch = -70f; // Looking down
+  [SerializeField] public float maxPitch = 70f; // Looking up
+  [SerializeField] public float minYaw = -30f; // Yaw limit left
+  [SerializeField] public float maxYaw = 30f; // Yaw limit right
+  [SerializeField] public float defaultElevationDegrees = 5f;
+  [SerializeField] public bool debugDraw = false;
+
+  private float _lastPitch;
+  private float _lastYaw;
+  private bool _hasLastAngles;
+  private Quaternion _lastRotation;
+
+  public static float SquareMagnitudeThreshold = 1e-6f;
+  public static bool ShouldUpdate = false;
+
+  private CannonController cannonController;
+
+  private void Start()
   {
-    [Header("Aiming")]
-    [SerializeField] public float minPitch = -70f; // Looking down
-    [SerializeField] public float maxPitch = 70f; // Looking up
-    [SerializeField] public float minYaw = -30f; // Yaw limit left
-    [SerializeField] public float maxYaw = 30f; // Yaw limit right
-    [SerializeField] public float defaultElevationDegrees = 10f; // This tilts barrel upwards by default
-    [SerializeField] public bool debugDraw = false;
+    TryInitController();
+  }
 
-    private CannonController _controller;
-
-    private void Start()
+  private bool TryInitController()
+  {
+    try
     {
-      TryInitController();
+      if (cannonController == null)
+        cannonController = GetComponentInChildren<CannonController>(true);
+      return cannonController != null;
+    }
+    catch (Exception ex)
+    {
+      LoggerProvider.LogError($"[HandCannonCameraPitchAiming] Failed to init controller: \n{ex.Message}");
+      return false;
+    }
+  }
+
+  private void FixedUpdate()
+  {
+    if (!ShouldUpdate) return;
+    if (!IsHeldByLocalPlayer()) return;
+    if (!TryInitController()) return;
+    if (GameCamera.instance == null) return;
+    var camera = GameCamera.instance.m_camera;
+    if (camera == null) return;
+
+    var parent = cannonController.cannonRotationalTransform.parent;
+    if (!parent) return;
+
+    var localLook = parent.InverseTransformDirection(camera.transform.forward);
+
+    // Check for degenerate input
+    if (localLook.sqrMagnitude < SquareMagnitudeThreshold) return;
+
+    var yaw = Mathf.Atan2(localLook.x, localLook.z) * Mathf.Rad2Deg;
+    yaw = Mathf.Clamp(yaw, minYaw, maxYaw);
+
+    var pitch = -Mathf.Asin(Mathf.Clamp(localLook.y, -1f, 1f)) * Mathf.Rad2Deg;
+    pitch -= defaultElevationDegrees;
+    pitch = Mathf.Clamp(pitch, minPitch, maxPitch);
+
+    // Don't update if unchanged (floating point safe check)
+    if (_hasLastAngles &&
+        Mathf.Approximately(pitch, _lastPitch) &&
+        Mathf.Approximately(yaw, _lastYaw))
+    {
+      return;
     }
 
-    private bool TryInitController()
+    // Only update if we're within the valid aiming range (already clamped above)
+    // If you want to prevent updating at *exact* clamp edges, check:
+    // if (pitch == minPitch || pitch == maxPitch || yaw == minYaw || yaw == maxYaw) return;
+    // Or, only skip update if the *input* before clamping was outside the range.
+
+    var rotation = Quaternion.Euler(pitch, yaw, 0f);
+    var forward = rotation * Vector3.forward;
+    if (forward.sqrMagnitude < 1e-5f)
     {
-      try
-      {
-        if (_controller == null)
-        {
-          _controller = GetComponentInChildren<CannonController>(true);
-        }
-        return _controller != null;
-      }
-      catch (Exception ex)
-      {
-        LoggerProvider.LogError($"[HandCannonCameraPitchAiming] Failed to init controller: \n{ex.Message}");
-        return false;
-      }
+      rotation = Quaternion.LookRotation(Vector3.forward, Vector3.up);
+#if UNITY_EDITOR
+            Debug.LogWarning("HandCannonCameraPitchAiming: Aiming rotation would result in zero forward, using fallback.");
+#endif
     }
 
-    private void LateUpdate()
+    // Only update transform if rotation is actually different, to avoid dirtying transform unnecessarily
+    if (!_hasLastAngles || Quaternion.Angle(rotation, _lastRotation) > 0.01f)
     {
-      if (!IsHeldByLocalPlayer()) return;
-      if (!TryInitController()) return;
-      if (GameCamera.instance == null) return;
-      var camera = GameCamera.instance.m_camera;
-      if (camera == null) return;
-
-      // 1. Get the cannon's parent space
-      var parent = _controller.cannonRotationalTransform.parent;
-      if (!parent) return;
-
-      // 2. Transform camera forward into the cannon’s parent space
-      var localLook = parent.InverseTransformDirection(camera.transform.forward);
-
-      // Check for degenerate input
-      if (localLook.sqrMagnitude < 1e-6f) return;
-
-      // 3. Calculate desired yaw (Y) and pitch (X)
-      var yaw = Mathf.Atan2(localLook.x, localLook.z) * Mathf.Rad2Deg;
-      yaw = Mathf.Clamp(yaw, minYaw, maxYaw);
-
-      var pitch = -Mathf.Asin(Mathf.Clamp(localLook.y, -1f, 1f)) * Mathf.Rad2Deg;
-      pitch += defaultElevationDegrees; // <--- add the "skyward" bias
-      pitch = Mathf.Clamp(pitch, minPitch, maxPitch);
-
-      // 4. Apply as a single local rotation. (Assume Z is roll, unused)
-      _controller.cannonRotationalTransform.localRotation = Quaternion.Euler(pitch, yaw, 0f);
-
-      if (debugDraw)
-      {
-        RuntimeDebugLineDrawer.DrawLine(_controller.cannonShooterTransform.position,
-          _controller.cannonShooterTransform.position + _controller.cannonShooterTransform.forward * 5f,
-          Color.magenta, 0.1f);
-      }
+      cannonController.cannonRotationalTransform.localRotation = rotation;
+      _lastRotation = rotation;
+      _lastPitch = pitch;
+      _lastYaw = yaw;
+      _hasLastAngles = true;
     }
 
-    private bool IsHeldByLocalPlayer()
+    if (debugDraw)
     {
-      if (Player.m_localPlayer == null) return false;
-      return transform.IsChildOf(Player.m_localPlayer.transform);
+      RuntimeDebugLineDrawer.DrawLine(cannonController.cannonShooterTransform.position,
+        cannonController.cannonShooterTransform.position + cannonController.cannonShooterTransform.forward * 5f,
+        Color.green, 0.1f);
     }
+  }
+
+  private bool IsHeldByLocalPlayer()
+  {
+    if (Player.m_localPlayer == null) return false;
+    return transform.IsChildOf(Player.m_localPlayer.transform);
+  }
+
+  public string GetHoverText()
+  {
+    return Localization.instance.Localize("$valheim_vehicles_cannon_handheld_item (H)");
+  }
+  public string GetHoverName()
+  {
+    return Localization.instance.Localize("$valheim_vehicles_cannon_handheld_item");
   }
 }

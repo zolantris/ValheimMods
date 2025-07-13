@@ -28,7 +28,7 @@ namespace ValheimVehicles.SharedScripts
     public bool isDestructibleHit;
     public bool isSelfHit;
     public float damage;
-    public Cannonball.CannonballType cannonballType;
+    public CannonballVariant cannonballVariant;
   }
 
 
@@ -202,8 +202,8 @@ namespace ValheimVehicles.SharedScripts
       var isCharacterHit = character != null;
       var isSelfHit = isCharacterHit && character as Player == Player.m_localPlayer;
 
-      var cannonballType = cannonball.cannonballType;
-      var isSolidCannonball = cannonballType == Cannonball.CannonballType.Solid;
+      var cannonballType = CannonballVariant;
+      var isSolidCannonball = cannonballType == CannonballVariant.Solid;
 
       var damageInfo = new DamageInfo
       {
@@ -219,7 +219,7 @@ namespace ValheimVehicles.SharedScripts
         isDestructibleHit = isDestructibleHit,
         isSelfHit = isSelfHit,
         explosionRadius = isExplosionHit ? Mathf.Clamp(5f * velocity.magnitude / 90f, 0f, 5f) : 0f,
-        cannonballType = cannonballType,
+        cannonballVariant = cannonballType,
         damage = Mathf.Clamp(isSolidCannonball ? BaseDamageSolidCannonball : BaseDamageExplosiveCannonball * force, 10f, 200f)
       };
 #else

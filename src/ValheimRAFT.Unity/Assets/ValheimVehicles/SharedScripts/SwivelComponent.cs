@@ -565,7 +565,7 @@ namespace ValheimVehicles.SharedScripts
       if (toTarget.magnitude is < 5f or > 50f) return animatedTransform.localRotation;
       var flat = new Vector3(toTarget.x, toTarget.y, toTarget.z);
       if (flat.sqrMagnitude < 0.001f) return animatedTransform.localRotation;
-      return Quaternion.LookRotation(flat.normalized, Vector3.up);
+      return QuaternionExtensions.LookRotationSafe(flat.normalized, Vector3.up);
     }
 
     private static float NormalizeAngle(float angle)
@@ -584,7 +584,7 @@ namespace ValheimVehicles.SharedScripts
         return animatedTransform.localRotation;
 
       // Calculate target look rotation
-      var target = Quaternion.LookRotation(flatWind, Vector3.up);
+      var target = QuaternionExtensions.LookRotationSafe(flatWind, Vector3.up);
       var current = animatedTransform.localRotation;
 
       // Lerp toward wind direction using movementLerpSpeed

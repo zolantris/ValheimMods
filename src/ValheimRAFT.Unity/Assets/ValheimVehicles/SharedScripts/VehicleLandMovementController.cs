@@ -967,7 +967,7 @@
         // **Correct rotation: Prevent tilting, but allow rolling**
         // var forward = wheelCollider.transform.forward; // Preserve rolling direction
         // var up = -Vector3.up; // Keep the wheel upright (prevent unwanted tilts)
-        // visualWheel.rotation = Quaternion.LookRotation(forward, up);
+        // visualWheel.rotation = QuaternionExtensions.LookRotationSafe(forward, up);
       }
       /// <summary>
       /// Responsible for matching wheels and treads visually with their speed. This is throttled to make the visual performant across frames.

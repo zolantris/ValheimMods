@@ -5,7 +5,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 using UnityEngine;
-
+// ReSharper disable ArrangeNamespaceBody
+// ReSharper disable NamespaceStyle
 #endregion
 
 namespace ValheimVehicles.SharedScripts
@@ -17,7 +18,7 @@ namespace ValheimVehicles.SharedScripts
     public Material cubeMaterial;
 
     public Transform DebugUtilParent;
-    private List<DebugItem> _instances = new();
+    private readonly List<DebugItem> _instances = new();
     private bool isSetup;
 
     private void Start()
@@ -126,8 +127,8 @@ namespace ValheimVehicles.SharedScripts
       {
         textTransform.LookAt(Camera.main.transform);
         textTransform.rotation =
-          Quaternion.LookRotation(textTransform.forward *
-                                  -1); // Flip to face correctly
+          QuaternionExtensions.LookRotationSafe(textTransform.forward *
+                                                -1); // Flip to face correctly
       }
     }
 

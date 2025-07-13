@@ -14,18 +14,18 @@ using ValheimVehicles.Storage.Serialization;
 
 namespace ValheimVehicles.SharedScripts
 {
-  public partial class CannonConfig : ISerializableConfig<CannonConfig, ICannonConfig>, ICannonConfig
+  public partial class CannonPersistentConfig : ISerializableConfig<CannonPersistentConfig, ICannonPersistentConfig>, ICannonPersistentConfig
   {
     public const string Key_AmmoType = "cannon_ammo_type";
-    public const string Key_AmmoCount = "cannon_ammo_count";
+    public const string Key_CannonFiringMode = "cannon_firing_mode";
 
     public int GetStableHashCode()
     {
       unchecked
       {
         var hash = 17;
-        hash = hash * 31 + AmmoCount.GetHashCode();
-        hash = hash * 31 + (int)AmmoType;
+        hash = hash * 31 + CannonFiringMode.GetHashCode();
+        hash = hash * 31 + AmmoVariant.GetHashCode();
         return hash;
       }
     }
@@ -34,61 +34,61 @@ namespace ValheimVehicles.SharedScripts
     {
       throw new System.NotImplementedException();
     }
-    public CannonConfig Deserialize(ZPackage pkg)
+    public CannonPersistentConfig Deserialize(ZPackage pkg)
     {
       pkg.SetPos(0); // Always reset read pointer otherwise we start at end and fail.
 
-      return new CannonConfig
+      return new CannonPersistentConfig
       {
-        AmmoCount = pkg.ReadInt(),
-        AmmoType = (Cannonball.CannonballType)pkg.ReadInt()
+        CannonFiringMode = (CannonFiringMode)pkg.ReadInt(),
+        AmmoVariant = (CannonballVariant)pkg.ReadInt()
       };
     }
 
-    public void LoadByKey(ZDO zdo, ICannonConfig config, string key)
+    public void LoadByKey(ZDO zdo, ICannonPersistentConfig persistentConfig, string key)
     {
       switch (key)
       {
-        case Key_AmmoCount:
-          config.AmmoCount = zdo.GetInt(Key_AmmoCount, config.AmmoCount);
-          break;
         case Key_AmmoType:
-          config.AmmoType = (Cannonball.CannonballType)zdo.GetInt(Key_AmmoType, (int)config.AmmoType);
+          persistentConfig.AmmoVariant = (CannonballVariant)zdo.GetInt(Key_AmmoType, (int)persistentConfig.AmmoVariant);
+          break;
+        case Key_CannonFiringMode:
+          persistentConfig.CannonFiringMode = (CannonFiringMode)zdo.GetInt(Key_CannonFiringMode, (int)persistentConfig.CannonFiringMode);
           break;
         default:
           LoggerProvider.LogDebug($"CannonConfig: Unknown key: {key}");
           break;
       }
     }
-    public void Save(ZDO zdo, CannonConfig config, string[]? filterKeys)
+    public void Save(ZDO zdo, CannonPersistentConfig persistentConfig, string[]? filterKeys)
     {
       if (filterKeys == null || filterKeys.Length == 0)
       {
-        SaveAll(zdo, config);
+        SaveAll(zdo, persistentConfig);
         return;
       }
 
       foreach (var filterKey in filterKeys)
       {
-        SaveByKey(zdo, config, filterKey);
+        SaveByKey(zdo, persistentConfig, filterKey);
       }
     }
 
-    public void SaveAll(ZDO zdo, CannonConfig config)
+    public void SaveAll(ZDO zdo, CannonPersistentConfig persistentConfig)
     {
-      zdo.SetDelta(Key_AmmoType, (int)config.AmmoType);
-      zdo.SetDelta(Key_AmmoCount, config.AmmoCount);
+      zdo.SetDelta(Key_AmmoType, (int)persistentConfig.AmmoVariant);
+      zdo.SetDelta(Key_CannonFiringMode, persistentConfig.CannonFiringMode);
     }
 
-    public void SaveByKey(ZDO zdo, CannonConfig config, string key)
+    public void SaveByKey(ZDO zdo, CannonPersistentConfig persistentConfig, string key)
     {
       switch (key)
       {
         case Key_AmmoType:
-          zdo.Set(Key_AmmoType, (int)config.AmmoType);
+          zdo.Set(Key_AmmoType, (int)persistentConfig.AmmoVariant);
           break;
-        case Key_AmmoCount:
-          zdo.Set(Key_AmmoCount, config.AmmoCount);
+        case Key_CannonFiringMode:
+          zdo.Set(Key_CannonFiringMode, (int)persistentConfig.CannonFiringMode);
           break;
         default:
           LoggerProvider.LogDebug($"SwivelConfig: Unknown key: {key}");
@@ -96,40 +96,40 @@ namespace ValheimVehicles.SharedScripts
       }
     }
 
-    public CannonConfig LoadAll(ZDO zdo, ICannonConfig configFromComponent)
+    public CannonPersistentConfig LoadAll(ZDO zdo, ICannonPersistentConfig persistentConfigFromComponent)
     {
-      var newConfig = new CannonConfig
+      var newConfig = new CannonPersistentConfig
       {
-        AmmoCount = zdo.GetInt(Key_AmmoCount, configFromComponent.AmmoCount),
-        AmmoType = (Cannonball.CannonballType)zdo.GetInt(Key_AmmoType, (int)configFromComponent.AmmoType)
+        CannonFiringMode = (CannonFiringMode)zdo.GetInt(Key_CannonFiringMode, (int)persistentConfigFromComponent.CannonFiringMode),
+        AmmoVariant = (CannonballVariant)zdo.GetInt(Key_AmmoType, (int)persistentConfigFromComponent.AmmoVariant)
       };
       return newConfig;
     }
 
-    public void ApplyTo(ICannonConfig component)
+    public void ApplyTo(ICannonPersistentConfig component)
     {
-      component.AmmoCount = AmmoCount;
-      component.AmmoType = AmmoType;
+      component.CannonFiringMode = CannonFiringMode;
+      component.AmmoVariant = AmmoVariant;
     }
-    public void ApplyFrom(ICannonConfig component)
+    public void ApplyFrom(ICannonPersistentConfig component)
     {
-      AmmoCount = component.AmmoCount;
-      AmmoType = component.AmmoType;
+      CannonFiringMode = component.CannonFiringMode;
+      AmmoVariant = component.AmmoVariant;
     }
 
-    public CannonConfig Load(ZDO zdo, ICannonConfig configFromComponent, string[]? filterKeys = null)
+    public CannonPersistentConfig Load(ZDO zdo, ICannonPersistentConfig persistentConfigFromComponent, string[]? filterKeys = null)
     {
       if (filterKeys == null || filterKeys.Length == 0)
       {
-        return LoadAll(zdo, configFromComponent);
+        return LoadAll(zdo, persistentConfigFromComponent);
       }
-      return LoadByKeys(zdo, configFromComponent, filterKeys);
+      return LoadByKeys(zdo, persistentConfigFromComponent, filterKeys);
     }
 
-    public CannonConfig LoadByKeys(ZDO zdo, ICannonConfig configFromComponent, string[] filterKeys)
+    public CannonPersistentConfig LoadByKeys(ZDO zdo, ICannonPersistentConfig persistentConfigFromComponent, string[] filterKeys)
     {
-      var config = new CannonConfig();
-      config.ApplyFrom(configFromComponent);
+      var config = new CannonPersistentConfig();
+      config.ApplyFrom(persistentConfigFromComponent);
 
       foreach (var key in filterKeys)
       {
@@ -139,12 +139,12 @@ namespace ValheimVehicles.SharedScripts
       return config;
     }
 
-    public int AmmoCount
+    public CannonballVariant AmmoVariant
     {
       get;
       set;
     }
-    public Cannonball.CannonballType AmmoType
+    public CannonFiringMode CannonFiringMode
     {
       get;
       set;

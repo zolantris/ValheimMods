@@ -17,18 +17,17 @@ using StructLinq;
 
 namespace ValheimVehicles.SharedScripts
 {
+  public enum CannonballVariant
+  {
+    Solid,
+    Explosive
+  }
+
   /// <summary>
   /// Cannonball manages its own firing, physics, trigger, and returns itself to pool.
   /// </summary>
   public class Cannonball : MonoBehaviour
   {
-
-    public enum CannonballType
-    {
-      Solid,
-      Explosive
-    }
-
     public enum HitMaterial
     {
       None,
@@ -66,7 +65,7 @@ namespace ValheimVehicles.SharedScripts
 
     [Header("Cannonball properties")]
     [Tooltip("Type of cannonball")]
-    [SerializeField] public CannonballType cannonballType = CannonballType.Solid;
+    [SerializeField] public CannonballVariant cannonballVariant = CannonballVariant.Solid;
     [SerializeField] public bool CanPlayWindSound;
 
     [Header("Physics & Trajectory")]
@@ -100,7 +99,7 @@ namespace ValheimVehicles.SharedScripts
     private CoroutineHandle _impactSoundCoroutine;
 
     private Vector3 _lastVelocity; // the last velocity before unity physics mutates it.
-    private CannonController controller;
+    private CannonController _controller;
     public HashSet<Transform> IgnoredTransformRoots = new();
     public SphereCollider sphereCollider;
     private GameObject meshGameObject;
@@ -330,7 +329,7 @@ namespace ValheimVehicles.SharedScripts
             var rb = col.attachedRigidbody;
             if (rb != null)
             {
-              if (!PrefabNames.IsVehicle(rb.name) && !PrefabNames.IsVehiclePiecesCollider(rb.name))
+              if (!PrefabNames.IsVehicle(rb.name) && !PrefabNames.IsVehiclePiecesContainer(rb.name))
               {
                 rb.AddExplosionForce(force, explosionOrigin, explosionRadius);
               }
@@ -460,12 +459,12 @@ namespace ValheimVehicles.SharedScripts
 
     public bool IsTrackedCannonball(Collision other)
     {
-      return controller._trackedLoadedCannonballs.Any(controllerTrackedLoadedCannonball => controllerTrackedLoadedCannonball.sphereCollider == other.collider);
+      return _controller._trackedLoadedCannonballs.Any(controllerTrackedLoadedCannonball => controllerTrackedLoadedCannonball.sphereCollider == other.collider);
     }
 
     public bool IsCollidingWithRoot(Transform colliderTransform)
     {
-      var isCollidingWithRoot = controller && colliderTransform.root == controller.transform.root;
+      var isCollidingWithRoot = _controller && colliderTransform.root == _controller.transform.root;
       return isCollidingWithRoot;
     }
 
@@ -527,7 +526,7 @@ namespace ValheimVehicles.SharedScripts
       var hitMaterialVelocityMultiplier = GetHitMaterialVelocityMultiplier(hitMaterial);
 
       // makes penetration through a collider random.
-      var canPenetrate = cannonballType == CannonballType.Solid && CanPenetrateMaterial(relativeVelocityMagnitude, hitMaterial);
+      var canPenetrate = cannonballVariant == CannonballVariant.Solid && CanPenetrateMaterial(relativeVelocityMagnitude, hitMaterial);
       var nextVelocity = _lastVelocity;
 
       var wasBarrel = TryTriggerBarrelExplosion(other.collider);
@@ -545,7 +544,7 @@ namespace ValheimVehicles.SharedScripts
       // allows bailing on velocity mutation.
       var canMutateVelocity = true;
 
-      if (cannonballType == CannonballType.Solid)
+      if (cannonballVariant == CannonballVariant.Solid)
       {
         if (!_impactSoundCoroutine.IsRunning)
         {
@@ -579,7 +578,7 @@ namespace ValheimVehicles.SharedScripts
         }
       }
 
-      if (cannonballType == CannonballType.Explosive)
+      if (cannonballVariant == CannonballVariant.Explosive)
       {
         if (!_hasExploded && Vector3.Distance(_fireOrigin.Value, transform.position) > 3f)
         {
@@ -699,7 +698,7 @@ namespace ValheimVehicles.SharedScripts
         LoggerProvider.LogWarning("Cannonball has no rigidbody!");
         return;
       }
-      controller = cannonController;
+      _controller = cannonController;
       StartCoroutine(FireCannonball(velocity, fireTransform, firingIndex));
     }
 
@@ -719,9 +718,9 @@ namespace ValheimVehicles.SharedScripts
 
     public void ReturnOrDestroyCannonball()
     {
-      if (controller != null && controller.isActiveAndEnabled)
+      if (_controller != null && _controller.isActiveAndEnabled)
       {
-        controller.ReturnCannonballToPool(this);
+        _controller.ReturnCannonballToPool(this);
       }
       else
       {

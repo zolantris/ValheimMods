@@ -1,12 +1,11 @@
 // ReSharper disable ArrangeNamespaceBody
 // ReSharper disable NamespaceStyle
 
-using UnityEngine;
 namespace ValheimVehicles.SharedScripts.UI
 {
-  public interface ICannonConfig
+  public interface ICannonPersistentConfig
   {
-    public int AmmoCount { get; set; }
-    public Cannonball.CannonballType AmmoType { get; set; }
+    public CannonballVariant AmmoVariant { get; set; }
+    public CannonFiringMode CannonFiringMode { get; set; }
   }
 }

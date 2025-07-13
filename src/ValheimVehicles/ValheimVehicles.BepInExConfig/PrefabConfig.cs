@@ -233,7 +233,7 @@ public class PrefabConfig : BepInExBaseConfig<PrefabConfig>
     DEBUG_CannonballUnlimitedAmmo = config.BindUnique(VehicleCannonsSection, "DEBUG_CannonballUnlimitedAmmo", false, ConfigHelpers.CreateConfigDescription("Allows unlimited ammo for cannons.", true, false));
     DEBUG_CannonballUnlimitedAmmo.SettingChanged += (sender, args) =>
     {
-      CannonController.HasUnlimitedAmmo = DEBUG_CannonballUnlimitedAmmo.Value;
+      CannonPersistentController.HasUnlimitedAmmo = DEBUG_CannonballUnlimitedAmmo.Value;
     };
 
     HasCannonballWindAudio = config.BindUnique(VehicleCannonsSection, "Cannonball_HasWindAudio", true, ConfigHelpers.CreateConfigDescription("Allows enable cannonball wind audio - which can be heard if a cannonball passes nearby.", false, false));
@@ -262,10 +262,10 @@ public class PrefabConfig : BepInExBaseConfig<PrefabConfig>
 
     CannonAutoAimYOffset.SettingChanged += (sender, args) =>
     {
-      CannonController.CannonAimingCenterOffsetY = CannonAutoAimYOffset.Value;
+      CannonPersistentController.CannonAimingCenterOffsetY = CannonAutoAimYOffset.Value;
     };
-    HasCannonFireAudio.SettingChanged += (sender, args) => CannonController.HasFireAudio = HasCannonFireAudio.Value;
-    CannonFireAudioVolume.SettingChanged += (sender, args) => CannonController.CannonFireAudioVolume = CannonFireAudioVolume.Value;
+    HasCannonFireAudio.SettingChanged += (sender, args) => CannonPersistentController.HasFireAudio = HasCannonFireAudio.Value;
+    CannonFireAudioVolume.SettingChanged += (sender, args) => CannonPersistentController.CannonFireAudioVolume = CannonFireAudioVolume.Value;
 
     HasCannonballWindAudio.SettingChanged += (sender, args) => Cannonball.HasCannonballWindAudio = HasCannonballWindAudio.Value;
     CannonballWindAudioVolume.SettingChanged += (sender, args) => Cannonball.CannonballWindAudioVolume = CannonballWindAudioVolume.Value;
@@ -273,14 +273,14 @@ public class PrefabConfig : BepInExBaseConfig<PrefabConfig>
     HasCannonballExplosionAudio.SettingChanged += (sender, args) => Cannonball.HasExplosionAudio = HasCannonballExplosionAudio.Value;
     CannonballExplosionAudioVolume.SettingChanged += (sender, args) => Cannonball.ExplosionAudioVolume = CannonballExplosionAudioVolume.Value;
 
-    HasCannonReloadAudio.SettingChanged += (sender, args) => CannonController.HasReloadAudio = HasCannonReloadAudio.Value;
-    CannonReloadAudioVolume.SettingChanged += (sender, args) => CannonController.CannonReloadAudioVolume = CannonReloadAudioVolume.Value;
+    HasCannonReloadAudio.SettingChanged += (sender, args) => CannonPersistentController.HasReloadAudio = HasCannonReloadAudio.Value;
+    CannonReloadAudioVolume.SettingChanged += (sender, args) => CannonPersistentController.CannonReloadAudioVolume = CannonReloadAudioVolume.Value;
 
     CannonFiringDelayPerCannon.SettingChanged += (sender, args) => TargetController.FiringDelayPerCannon = CannonFiringDelayPerCannon.Value;
-    CannonAutoAimSpeed.SettingChanged += (sender, args) => CannonController.CannonAimSpeed = CannonAutoAimSpeed.Value;
-    CannonAimMaxYRotation.SettingChanged += (sender, args) => CannonController.MaxFiringRotationYOverride = CannonAimMaxYRotation.Value;
-    CannonBarrelAimMinTiltRotation.SettingChanged += (sender, args) => CannonController.MinFiringPitchOverride = CannonBarrelAimMinTiltRotation.Value;
-    CannonBarrelAimMaxTiltRotation.SettingChanged += (sender, args) => CannonController.MaxFiringPitchOverride = CannonBarrelAimMaxTiltRotation.Value;
+    CannonAutoAimSpeed.SettingChanged += (sender, args) => CannonPersistentController.CannonAimSpeed = CannonAutoAimSpeed.Value;
+    CannonAimMaxYRotation.SettingChanged += (sender, args) => CannonPersistentController.MaxFiringRotationYOverride = CannonAimMaxYRotation.Value;
+    CannonBarrelAimMinTiltRotation.SettingChanged += (sender, args) => CannonPersistentController.MinFiringPitchOverride = CannonBarrelAimMinTiltRotation.Value;
+    CannonBarrelAimMaxTiltRotation.SettingChanged += (sender, args) => CannonPersistentController.MaxFiringPitchOverride = CannonBarrelAimMaxTiltRotation.Value;
 
     VehicleLandMaxTreadWidth.SettingChanged += (sender, args) => VehicleManager.UpdateAllLandMovementControllers();
     VehicleLandMaxTreadLength.SettingChanged += (sender, args) => VehicleManager.UpdateAllLandMovementControllers();

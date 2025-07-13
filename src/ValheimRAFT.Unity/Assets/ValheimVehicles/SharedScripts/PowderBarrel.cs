@@ -34,7 +34,7 @@ namespace ValheimVehicles.SharedScripts
     private Transform explosionTransform;
     private Transform meshesTransform;
 
-    public static float LastBarrelPlaceTime = 0f;
+    public static float LastBarrelPlaceTime;
 #if !UNITY_2022 && !UNITY_EDITOR
     public WearNTear wearNTear;
 #endif

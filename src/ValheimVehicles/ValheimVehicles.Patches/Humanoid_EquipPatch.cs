@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using HarmonyLib;
 using UnityEngine;
 using ValheimVehicles.Integrations;
@@ -31,7 +32,7 @@ public static class Humanoid_EquipPatch
     if (currentWeapon.m_customData.TryGetValue("ammo", out var ammoStr))
       cannonController.AmmoCount = int.Parse(ammoStr);
     if (currentWeapon.m_customData.TryGetValue("ammotype", out var ammoTypeStr))
-      cannonController.AmmoType = (Cannonball.CannonballType)int.Parse(ammoTypeStr);
+      cannonController.AmmoVariant = (CannonballVariant)int.Parse(ammoTypeStr);
 
     cannonController.TryReload();
   }
@@ -61,6 +62,8 @@ public static class Humanoid_EquipPatch
   public static bool DebugOverrideCannon = true;
   public static bool SkipCustomCannonFire = false;
 
+  public static Dictionary<Player, CannonController> PlayerCannonController = new();
+
   [HarmonyPatch(typeof(Humanoid), nameof(Humanoid.OnAttackTrigger))]
   [HarmonyPrefix]
   private static bool HandCannon_OnAttackTrigger(Player __instance)
@@ -68,8 +71,20 @@ public static class Humanoid_EquipPatch
     if (SkipCustomCannonFire) return true;
     var currentWeapon = __instance.GetCurrentWeapon();
     if (currentWeapon == null || currentWeapon.m_shared.m_name != HandCannonName) return true;
-    var cannonController = __instance.GetComponentInChildren<CannonControllerBridge>();
-    if (!cannonController) return true;
+    if (!PlayerCannonController.TryGetValue(__instance, out var cannonController) || cannonController == null)
+    {
+      cannonController = __instance.GetComponentInChildren<CannonController>();
+      if (cannonController)
+      {
+        PlayerCannonController[__instance] = cannonController;
+      }
+    }
+
+    if (!cannonController)
+    {
+      PlayerCannonController.Remove(__instance);
+      return true;
+    }
 
     GetSelectedAmmoFromWeapon(__instance, cannonController);
 
@@ -78,7 +93,7 @@ public static class Humanoid_EquipPatch
       cannonController.AmmoCount = 500;
     }
 
-    cannonController.Fire(true);
+    cannonController.Fire(true, 50f);
     return false;
   }
 }

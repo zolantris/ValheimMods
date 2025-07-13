@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
+using ValheimVehicles.SharedScripts;
 using ValheimVehicles.UI;
 using Logger = Jotunn.Logger;
 
@@ -206,7 +207,7 @@ public class BoardingRampComponent : MonoBehaviour, Interactable, Hoverable
     {
       m_stateProgress = Mathf.Clamp01(m_stateProgress -
                                       Time.deltaTime / (m_stateChangeDuration *
-                                        (float)m_segments));
+                                                        (float)m_segments));
       UpdateRamp();
       if (m_stateProgress <= 0f) m_state = BoardingRampState.Closed;
     }
@@ -214,7 +215,7 @@ public class BoardingRampComponent : MonoBehaviour, Interactable, Hoverable
     {
       m_stateProgress = Mathf.Clamp01(m_stateProgress +
                                       Time.deltaTime / (m_stateChangeDuration *
-                                        (float)m_segments));
+                                                        (float)m_segments));
       UpdateRamp();
       if (m_stateProgress >= 1f) m_state = BoardingRampState.Open;
     }
@@ -356,12 +357,12 @@ public class BoardingRampComponent : MonoBehaviour, Interactable, Hoverable
     }
     else
     {
-      m_desiredRotation = Quaternion.LookRotation((m_hitPosition -
-                                                   (transform.position -
-                                                    new Vector3(0f,
-                                                      m_hitDistance *
-                                                      m_segmentHeight *
-                                                      (float)m_segments, 0f)))
+      m_desiredRotation = QuaternionExtensions.LookRotationSafe((m_hitPosition -
+                                                                 (transform.position -
+                                                                  new Vector3(0f,
+                                                                    m_hitDistance *
+                                                                    m_segmentHeight *
+                                                                    (float)m_segments, 0f)))
         .normalized);
       m_desiredRotation =
         Quaternion.Euler(

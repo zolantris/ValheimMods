@@ -38,9 +38,10 @@ public class CannonPrefabs : RegisterPrefab<CannonPrefabs>
     });
     PrefabRegistryHelpers.AddPieceForPrefab(PrefabNames.CannonFixedTier1, prefab);
     var wearNTear = PrefabRegistryHelpers.SetWearNTear(prefab, 1);
+
     // main toggle switch.
     var cannonController = prefab.AddComponent<CannonControllerBridge>();
-    cannonController.firingMode = CannonController.FiringMode.Manual;
+    cannonController.cannonFiringMode = CannonFiringMode.Manual;
     cannonController.canRotateFiringRangeY = false;
 
     PieceManager.Instance.AddPiece(new CustomPiece(prefab, true, new PieceConfig
@@ -74,7 +75,7 @@ public class CannonPrefabs : RegisterPrefab<CannonPrefabs>
 
     // main toggle switch.
     var cannonController = prefab.AddComponent<CannonControllerBridge>();
-    cannonController.firingMode = CannonController.FiringMode.Auto;
+    cannonController.cannonFiringMode = CannonFiringMode.Auto;
     cannonController.canRotateFiringRangeY = true;
 
     PieceManager.Instance.AddPiece(new CustomPiece(prefab, true, new PieceConfig
@@ -113,7 +114,7 @@ public class CannonPrefabs : RegisterPrefab<CannonPrefabs>
     projectile.m_nview = nv;
 
     var cannonBall = prefab.AddComponent<Cannonball>();
-    cannonBall.cannonballType = Cannonball.CannonballType.Solid;
+    cannonBall.cannonballVariant = CannonballVariant.Solid;
 
     foreach (var c in prefab.GetComponents<Component>())
       LoggerProvider.LogDev($"Component on prefab: {c.GetType().Name}");
@@ -159,7 +160,7 @@ public class CannonPrefabs : RegisterPrefab<CannonPrefabs>
     projectile.m_nview = nv;
 
     var cannonBall = prefab.AddComponent<Cannonball>();
-    cannonBall.cannonballType = Cannonball.CannonballType.Explosive;
+    cannonBall.cannonballVariant = CannonballVariant.Explosive;
 
     foreach (var c in prefab.GetComponents<Component>())
       LoggerProvider.LogDev($"Component on prefab: {c.GetType().Name}");
@@ -287,7 +288,7 @@ public class CannonPrefabs : RegisterPrefab<CannonPrefabs>
   }
 
 #if DEBUG
-  private void RegisterHandCannonPrefab()
+  private void RegisterCannonHandHeldPrefab()
   {
     var asset = LoadValheimVehicleAssets._bundle.LoadAsset<GameObject>("cannon_handheld");
     var icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite("cannon_handheld");
@@ -302,14 +303,14 @@ public class CannonPrefabs : RegisterPrefab<CannonPrefabs>
     var nv = PrefabRegistryHelpers.AddNetViewWithPersistence(prefab);
     var zSyncTransform = prefab.AddComponent<ZSyncTransform>();
 
-    var cannonControllerTransform = prefab.transform.Find("attach/cannon_turret");
-    var cannonController = cannonControllerTransform.gameObject.AddComponent<CannonControllerBridge>();
+    var cannonControllerTransform = prefab.transform.Find("attach/cannon_handheld");
+    var cannonController = cannonControllerTransform.gameObject.AddComponent<CannonController>();
     var handCannon = cannonControllerTransform.gameObject.AddComponent<HandCannonCameraPitchAiming>();
 
-
-    cannonController.firingMode = CannonController.FiringMode.Manual;
+    cannonController.cannonFiringMode = CannonFiringMode.Manual;
+    cannonController.cannonVariant = CannonVariant.HandHeld; // should auto do this, but this makes it a bit safer.
     cannonController.canRotateFiringRangeY = false;
-    cannonController.isHandCannon = true;
+
     // verbosely add these.
     zSyncTransform.m_syncBodyVelocity = false;
     zSyncTransform.m_syncRotation = true;
@@ -541,6 +542,6 @@ public class CannonPrefabs : RegisterPrefab<CannonPrefabs>
     RegisterPowderBarrelPrefab();
 
     RegisterTelescopePrefab();
-    RegisterHandCannonPrefab();
+    RegisterCannonHandHeldPrefab();
   }
 }
