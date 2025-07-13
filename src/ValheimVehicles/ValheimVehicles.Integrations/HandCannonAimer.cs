@@ -2,7 +2,7 @@ using System;
 using UnityEngine;
 using ValheimVehicles.SharedScripts;
 
-public class HandCannonCameraPitchAiming : MonoBehaviour, Hoverable
+public class CannonHandHeldController : MonoBehaviour, Hoverable
 {
   [Header("Aiming")]
   [SerializeField] public float minPitch = -70f; // Looking down
@@ -21,9 +21,11 @@ public class HandCannonCameraPitchAiming : MonoBehaviour, Hoverable
   public static bool ShouldUpdate = false;
 
   private CannonController cannonController;
+  private AmmoController _ammoController;
 
   private void Start()
   {
+    GetComponent<AmmoController>();
     TryInitController();
   }
 
@@ -105,6 +107,16 @@ public class HandCannonCameraPitchAiming : MonoBehaviour, Hoverable
         cannonController.cannonShooterTransform.position + cannonController.cannonShooterTransform.forward * 5f,
         Color.green, 0.1f);
     }
+  }
+
+  public bool Fire()
+  {
+    if (cannonController.Fire(true, _ammoController.GetAmmoAmountFromCannonballVariant(cannonController.AmmoVariant), out var deltaAmmo))
+    {
+      _ammoController.OnAmmoChangedFromVariant(cannonController.AmmoVariant, deltaAmmo);
+      return true;
+    }
+    return false;
   }
 
   private bool IsHeldByLocalPlayer()

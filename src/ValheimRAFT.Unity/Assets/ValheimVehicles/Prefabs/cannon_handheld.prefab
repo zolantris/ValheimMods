@@ -687,7 +687,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3603376382689019161}
   m_Layer: 10
-  m_Name: cannon_turret
+  m_Name: cannon_handheld
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

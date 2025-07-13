@@ -39,6 +39,9 @@ public class PrefabConfig : BepInExBaseConfig<PrefabConfig>
   public static ConfigEntry<bool> HasCannonballWindAudio { get; set; } = null!;
   public static ConfigEntry<float> CannonballWindAudioVolume { get; set; } = null!;
   public static ConfigEntry<float> CannonballExplosionAudioVolume { get; set; } = null!;
+  public static ConfigEntry<float> CannonballExplosiveRadius { get; set; } = null!;
+  public static ConfigEntry<float> CannonballSolidBaseDamage { get; set; } = null!;
+  public static ConfigEntry<float> CannonballExplosiveBaseDamage { get; set; } = null!;
   public static ConfigEntry<bool> DEBUG_CannonballUnlimitedAmmo { get; set; } = null!;
   public static ConfigEntry<float> CannonBallInventoryWeight { get; set; } = null!;
   public static ConfigEntry<bool> HasCannonReloadAudio { get; set; } = null!;
@@ -230,11 +233,32 @@ public class PrefabConfig : BepInExBaseConfig<PrefabConfig>
     CannonFireAudioVolume = config.BindUnique(VehicleCannonsSection, "Cannon_FireAudioVolume", 1f, ConfigHelpers.CreateConfigDescription("Allows customizing cannon reload audio volume", false, false));
     CannonballExplosionAudioVolume = config.BindUnique(VehicleCannonsSection, "Cannonball_ExplosionAudioVolume", 1f, ConfigHelpers.CreateConfigDescription("Allows customizing cannon reload audio volume", false, false));
 
+    CannonballExplosiveRadius = config.BindUnique(VehicleCannonsSection, "Cannonball_ExplosionRadius", 7.5f, ConfigHelpers.CreateConfigDescription("Allows customizing cannonball explosion radius/aoe. Large sizes will lag out objects like rocks", false, false, new AcceptableValueRange<float>(3f, 20f)));
+    CannonballExplosiveRadius.SettingChanged += (sender, args) =>
+    {
+      CannonballHitScheduler.ExplosionShellRadius = CannonballExplosiveRadius.Value;
+    };
+
+    CannonballSolidBaseDamage = config.BindUnique(VehicleCannonsSection, "Cannonball_SolidShell_BaseDamage", 85f, ConfigHelpers.CreateConfigDescription("Allows customizing cannonball solid hit damage", false, false, new AcceptableValueRange<float>(25f, 500f)));
+    CannonballSolidBaseDamage.SettingChanged += (sender, args) =>
+    {
+      CannonballHitScheduler.BaseDamageSolidCannonball = CannonballSolidBaseDamage.Value;
+    };
+
+    CannonballExplosiveBaseDamage = config.BindUnique(VehicleCannonsSection, "Cannonball_ExplosiveShell_BaseDamage", 50f, ConfigHelpers.CreateConfigDescription("Allows customizing cannonball explosion hit AOE damage. The damage is uniform across the entire radius.", false, false, new AcceptableValueRange<float>(25f, 500f)));
+    CannonballExplosiveBaseDamage.SettingChanged += (sender, args) =>
+    {
+      CannonballHitScheduler.BaseDamageExplosiveCannonball = CannonballExplosiveBaseDamage.Value;
+    };
+
+
     DEBUG_CannonballUnlimitedAmmo = config.BindUnique(VehicleCannonsSection, "DEBUG_CannonballUnlimitedAmmo", false, ConfigHelpers.CreateConfigDescription("Allows unlimited ammo for cannons.", true, false));
     DEBUG_CannonballUnlimitedAmmo.SettingChanged += (sender, args) =>
     {
-      CannonPersistentController.HasUnlimitedAmmo = DEBUG_CannonballUnlimitedAmmo.Value;
+      AmmoController.HasUnlimitedAmmo = DEBUG_CannonballUnlimitedAmmo.Value;
     };
+
+
 
     HasCannonballWindAudio = config.BindUnique(VehicleCannonsSection, "Cannonball_HasWindAudio", true, ConfigHelpers.CreateConfigDescription("Allows enable cannonball wind audio - which can be heard if a cannonball passes nearby.", false, false));
     CannonballWindAudioVolume = config.BindUnique(VehicleCannonsSection, "Cannonball_WindAudioVolume", 0.2f, ConfigHelpers.CreateConfigDescription("Allows customizing cannonball wind audio - which can be heard if a cannonball passes nearby. Recommended below 0.2f", false, false));
@@ -262,10 +286,10 @@ public class PrefabConfig : BepInExBaseConfig<PrefabConfig>
 
     CannonAutoAimYOffset.SettingChanged += (sender, args) =>
     {
-      CannonPersistentController.CannonAimingCenterOffsetY = CannonAutoAimYOffset.Value;
+      CannonController.CannonAimingCenterOffsetY = CannonAutoAimYOffset.Value;
     };
-    HasCannonFireAudio.SettingChanged += (sender, args) => CannonPersistentController.HasFireAudio = HasCannonFireAudio.Value;
-    CannonFireAudioVolume.SettingChanged += (sender, args) => CannonPersistentController.CannonFireAudioVolume = CannonFireAudioVolume.Value;
+    HasCannonFireAudio.SettingChanged += (sender, args) => CannonController.HasFireAudio = HasCannonFireAudio.Value;
+    CannonFireAudioVolume.SettingChanged += (sender, args) => CannonController.CannonFireAudioVolume = CannonFireAudioVolume.Value;
 
     HasCannonballWindAudio.SettingChanged += (sender, args) => Cannonball.HasCannonballWindAudio = HasCannonballWindAudio.Value;
     CannonballWindAudioVolume.SettingChanged += (sender, args) => Cannonball.CannonballWindAudioVolume = CannonballWindAudioVolume.Value;
@@ -273,14 +297,14 @@ public class PrefabConfig : BepInExBaseConfig<PrefabConfig>
     HasCannonballExplosionAudio.SettingChanged += (sender, args) => Cannonball.HasExplosionAudio = HasCannonballExplosionAudio.Value;
     CannonballExplosionAudioVolume.SettingChanged += (sender, args) => Cannonball.ExplosionAudioVolume = CannonballExplosionAudioVolume.Value;
 
-    HasCannonReloadAudio.SettingChanged += (sender, args) => CannonPersistentController.HasReloadAudio = HasCannonReloadAudio.Value;
-    CannonReloadAudioVolume.SettingChanged += (sender, args) => CannonPersistentController.CannonReloadAudioVolume = CannonReloadAudioVolume.Value;
+    HasCannonReloadAudio.SettingChanged += (sender, args) => CannonController.HasReloadAudio = HasCannonReloadAudio.Value;
+    CannonReloadAudioVolume.SettingChanged += (sender, args) => CannonController.CannonReloadAudioVolume = CannonReloadAudioVolume.Value;
 
     CannonFiringDelayPerCannon.SettingChanged += (sender, args) => TargetController.FiringDelayPerCannon = CannonFiringDelayPerCannon.Value;
-    CannonAutoAimSpeed.SettingChanged += (sender, args) => CannonPersistentController.CannonAimSpeed = CannonAutoAimSpeed.Value;
-    CannonAimMaxYRotation.SettingChanged += (sender, args) => CannonPersistentController.MaxFiringRotationYOverride = CannonAimMaxYRotation.Value;
-    CannonBarrelAimMinTiltRotation.SettingChanged += (sender, args) => CannonPersistentController.MinFiringPitchOverride = CannonBarrelAimMinTiltRotation.Value;
-    CannonBarrelAimMaxTiltRotation.SettingChanged += (sender, args) => CannonPersistentController.MaxFiringPitchOverride = CannonBarrelAimMaxTiltRotation.Value;
+    CannonAutoAimSpeed.SettingChanged += (sender, args) => CannonController.CannonAimSpeed = CannonAutoAimSpeed.Value;
+    CannonAimMaxYRotation.SettingChanged += (sender, args) => CannonController.MaxFiringRotationYOverride = CannonAimMaxYRotation.Value;
+    CannonBarrelAimMinTiltRotation.SettingChanged += (sender, args) => CannonController.MinFiringPitchOverride = CannonBarrelAimMinTiltRotation.Value;
+    CannonBarrelAimMaxTiltRotation.SettingChanged += (sender, args) => CannonController.MaxFiringPitchOverride = CannonBarrelAimMaxTiltRotation.Value;
 
     VehicleLandMaxTreadWidth.SettingChanged += (sender, args) => VehicleManager.UpdateAllLandMovementControllers();
     VehicleLandMaxTreadLength.SettingChanged += (sender, args) => VehicleManager.UpdateAllLandMovementControllers();

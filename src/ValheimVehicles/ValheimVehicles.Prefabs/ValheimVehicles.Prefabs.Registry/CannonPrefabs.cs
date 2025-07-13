@@ -305,7 +305,9 @@ public class CannonPrefabs : RegisterPrefab<CannonPrefabs>
 
     var cannonControllerTransform = prefab.transform.Find("attach/cannon_handheld");
     var cannonController = cannonControllerTransform.gameObject.AddComponent<CannonController>();
-    var handCannon = cannonControllerTransform.gameObject.AddComponent<HandCannonCameraPitchAiming>();
+    var ammoController = cannonControllerTransform.gameObject.AddComponent<AmmoController>();
+    ammoController.IsHandheld = true;
+    var handCannon = cannonControllerTransform.gameObject.AddComponent<CannonHandHeldController>();
 
     cannonController.cannonFiringMode = CannonFiringMode.Manual;
     cannonController.cannonVariant = CannonVariant.HandHeld; // should auto do this, but this makes it a bit safer.

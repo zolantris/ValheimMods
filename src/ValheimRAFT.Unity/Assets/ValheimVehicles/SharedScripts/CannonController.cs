@@ -217,7 +217,6 @@ namespace ValheimVehicles.SharedScripts
     protected internal virtual void Start()
     {
       SetupCannonballPrefab();
-      TryReload();
     }
 
     private void FixedUpdate()
@@ -348,7 +347,7 @@ namespace ValheimVehicles.SharedScripts
 
     private Vector3? HandleFiringTargetPositionDefault()
     {
-      if (currentAimPoint != null && isHandCannon || firingTarget != null) return currentAimPoint;
+      if (currentAimPoint != null && IsHandHeldCannon || firingTarget != null) return currentAimPoint;
       return null;
     }
 
@@ -881,7 +880,7 @@ namespace ValheimVehicles.SharedScripts
 
     public void AdjustFiringAngle()
     {
-      if (cannonFiringMode == CannonFiringMode.Manual || isHandCannon) return;
+      if (cannonFiringMode == CannonFiringMode.Manual || IsHandHeldCannon) return;
       if (IsReloading) return;
 
       var fireOrigin = cannonShooterTransform.position;
@@ -965,8 +964,9 @@ namespace ValheimVehicles.SharedScripts
       return true;
     }
 
-    public bool Fire(bool isManualFiring, ref int remainingAmmo)
+    public bool Fire(bool isManualFiring, int remainingAmmo, out int deltaAmmo)
     {
+      deltaAmmo = 0;
       if (!CanFire(isManualFiring))
       {
         return false;
@@ -995,7 +995,7 @@ namespace ValheimVehicles.SharedScripts
 
       OnFired?.Invoke();
 
-      _recoilRoutine.Start(RecoilCoroutine());
+      _recoilRoutine.Start(RecoilCoroutine(remainingAmmo));
 
       return true;
     }
@@ -1066,14 +1066,6 @@ namespace ValheimVehicles.SharedScripts
       return true;
     }
 
-    [ContextMenu("Reload Cannon")]
-    public void TryReload()
-    {
-      if (IsReloading || AmmoCount <= 0 || IsAnyBarrelLoaded)
-        return;
-      _reloadRoutine.Start(ReloadCoroutine());
-    }
-
     /// <summary>
     /// Checks if the cannon has clear line of sight from the muzzle to the specified target position,
     /// ignoring any colliders belonging to itself. Returns true if nothing blocks the shot.
@@ -1116,7 +1108,7 @@ namespace ValheimVehicles.SharedScripts
       return false;
     }
 
-    private IEnumerator RecoilCoroutine()
+    private IEnumerator RecoilCoroutine(int remainingAmmo)
     {
       var elapsed = 0f;
       var recoilUpwardAnimationDuration = 0.15f;
@@ -1150,9 +1142,10 @@ namespace ValheimVehicles.SharedScripts
 
       yield return new WaitUntil(() => !_cannonFireAudioSource.isPlaying);
 
-      if (autoReload && AmmoCount > 0)
+      var canReload = remainingAmmo > 0;
+      if (autoReload && canReload)
       {
-        _reloadRoutine.Start(ReloadCoroutine());
+        _reloadRoutine.Start(ReloadCoroutine(remainingAmmo));
       }
       else
       {
@@ -1160,7 +1153,7 @@ namespace ValheimVehicles.SharedScripts
       }
     }
 
-    private IEnumerator ReloadCoroutine()
+    private IEnumerator ReloadCoroutine(int remainingAmmo)
     {
       if (!hasNearbyPowderBarrel)
         yield break;
@@ -1185,7 +1178,7 @@ namespace ValheimVehicles.SharedScripts
       // }
 
       var shotsToReload = Math.Min(reloadQuantity, shootingParts.Count);
-      for (var i = 0; i < shotsToReload && AmmoCount - i > 0; i++)
+      for (var i = 0; i < shotsToReload && remainingAmmo - i > 0; i++)
       {
         var shootingPart = shootingParts[i];
         if (shootingPart == null) break;
@@ -1198,9 +1191,9 @@ namespace ValheimVehicles.SharedScripts
       OnReloaded?.Invoke();
     }
 
-    private void PlayMuzzleFlash(BarrelPart barrelPart)
+    private void PlayMuzzleFlash(BarrelPart? barrelPart)
     {
-      if (barrelPart?.muzzleFlashEffect)
+      if (barrelPart != null && barrelPart.muzzleFlashEffect != null)
       {
         barrelPart.muzzleFlashEffect.Play();
       }

@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 2661041119
+CRC: 1581078091
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 0ce389f2cc8d70c92a50d5e65239ed0b
+    Hash: 2a40b2090100eee029dd56f21f96c8ea
   TypeTreeHash:
     serializedVersion: 2
     Hash: e982d1c7cd6aec4c8ff2c2946a00578c
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 0ce389f2cc8d70c92a50d5e65239ed0b
+    Hash: 2a40b2090100eee029dd56f21f96c8ea
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -181,7 +181,6 @@ Assets:
 - Assets/ValheimVehicles/Prefabs/vehicle_ship_pieces.prefab
 - Assets/ValheimVehicles/Prefabs/nautilus_hatch.prefab
 - Assets/ValheimVehicles/Prefabs/nautilus.prefab
-- Assets/ValheimVehicles/Prefabs/cannon_handheld 1.prefab
 - Assets/ValheimVehicles/Prefabs/rudder_advanced_single_iron.prefab
 - Assets/ValheimVehicles/Prefabs/GUI/ship_compass.prefab
 - Assets/ValheimVehicles/Prefabs/shared_hull_rib_prow_2x2.prefab

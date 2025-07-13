@@ -43,7 +43,8 @@ namespace ValheimVehicles.SharedScripts
     public static Queue<(Cannonball, float)> CannonballImpactAudioQueue = new();
     // damage types.
     public static float BaseDamageExplosiveCannonball = 50f;
-    public static float BaseDamageSolidCannonball = 50f;
+    public static float BaseDamageSolidCannonball = 80f;
+    public static float ExplosionShellRadius = 7.5f;
 
     public void OnEnable()
     {
@@ -202,8 +203,13 @@ namespace ValheimVehicles.SharedScripts
       var isCharacterHit = character != null;
       var isSelfHit = isCharacterHit && character as Player == Player.m_localPlayer;
 
-      var cannonballType = CannonballVariant;
-      var isSolidCannonball = cannonballType == CannonballVariant.Solid;
+      var cannonballVariant = cannonball.cannonballVariant;
+      var isSolidCannonball = cannonballVariant == CannonballVariant.Solid;
+
+      var baseDamage = isSolidCannonball ? BaseDamageSolidCannonball : BaseDamageExplosiveCannonball;
+      // makes cannonball damage variable within specific bounds.
+      var lerpedForceDamage = Mathf.Lerp(0.1f, 1.5f, force / 90f);
+      var forceDamage = Mathf.Clamp(baseDamage * lerpedForceDamage, 10f, 300f);
 
       var damageInfo = new DamageInfo
       {
@@ -218,9 +224,9 @@ namespace ValheimVehicles.SharedScripts
         isMineRock5Hit = isMineRock5Hit,
         isDestructibleHit = isDestructibleHit,
         isSelfHit = isSelfHit,
-        explosionRadius = isExplosionHit ? Mathf.Clamp(5f * velocity.magnitude / 90f, 0f, 5f) : 0f,
-        cannonballVariant = cannonballType,
-        damage = Mathf.Clamp(isSolidCannonball ? BaseDamageSolidCannonball : BaseDamageExplosiveCannonball * force, 10f, 200f)
+        explosionRadius = isExplosionHit ? ExplosionShellRadius : 0f,
+        cannonballVariant = cannonballVariant,
+        damage = forceDamage
       };
 #else
       var damageInfo = new DamageInfo();

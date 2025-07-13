@@ -51,9 +51,9 @@ namespace ValheimVehicles.SharedScripts
 
     [SerializeField] public int maxCannonsPerEnemy = 2;
     [SerializeField] public bool autoFire;
-    [SerializeField] public List<CannonPersistentController> allCannonControllers = new();
-    [SerializeField] public List<CannonPersistentController> autoTargetControllers = new();
-    [SerializeField] public List<CannonPersistentController> manualFireControllers = new();
+    [SerializeField] public List<CannonController> allCannonControllers = new();
+    [SerializeField] public List<CannonController> autoTargetControllers = new();
+    [SerializeField] public List<CannonController> manualFireControllers = new();
 
     private readonly Collider[] _enemyBuffer = new Collider[32];
     private readonly Dictionary<int, CoroutineHandle> _manualFireCannonsRoutines = new();
@@ -68,7 +68,6 @@ namespace ValheimVehicles.SharedScripts
     public Action? OnCannonListUpdated;
 
     private AmmoController _ammoController = null!;
-    public int RemainingAmmo => _ammoController!.Ammo;
 
     private void Awake()
     {
@@ -274,11 +273,14 @@ namespace ValheimVehicles.SharedScripts
       }
     }
 
-    private IEnumerator FireCannonDelayed(CannonPersistentController cannonPersistent, float delay, bool isManualFire)
+    private IEnumerator FireCannonDelayed(CannonController cannon, float delay, bool isManualFire)
     {
-
-      yield return new WaitForSeconds(delay);
-      cannonPersistent.Fire(isManualFire, remainingAmmo);
+      // only yield if the cannon actually fires
+      if (cannon.Fire(isManualFire, _ammoController.GetAmmoAmountFromCannonballVariant(cannon.AmmoVariant), out var deltaAmmo))
+      {
+        _ammoController.OnAmmoChangedFromVariant(cannon.AmmoVariant, deltaAmmo);
+        yield return new WaitForSeconds(delay);
+      }
     }
 
     private IEnumerator ManualFireCannons(int groupId)
@@ -363,7 +365,7 @@ namespace ValheimVehicles.SharedScripts
     }
 
     private void AssignCannonsToTargets(
-      List<CannonPersistentController> cannons,
+      List<CannonController> cannons,
       List<Transform> targets,
       int maxCannonsPerTarget = 1)
     {
@@ -372,7 +374,7 @@ namespace ValheimVehicles.SharedScripts
       foreach (var t in targets)
         assignedCounts[t] = 0;
 
-      var unassignedCannons = new List<CannonPersistentController>(cannons.Count);
+      var unassignedCannons = new List<CannonController>(cannons.Count);
 
       // 2. Retain existing assignments if possible (O(N))
       foreach (var cannon in cannons)
@@ -516,17 +518,17 @@ namespace ValheimVehicles.SharedScripts
       RefreshPlayerDefenseTriggers();
     }
 
-    public void AddCannon(CannonPersistentController persistentController)
+    public void AddCannon(CannonController controller)
     {
-      allCannonControllers.Add(persistentController);
+      allCannonControllers.Add(controller);
 
-      switch (persistentController.GetFiringMode())
+      switch (controller.GetFiringMode())
       {
         case CannonFiringMode.Manual:
-          manualFireControllers.Add(persistentController);
+          manualFireControllers.Add(controller);
           break;
         case CannonFiringMode.Auto:
-          autoTargetControllers.Add(persistentController);
+          autoTargetControllers.Add(controller);
           break;
         default:
           throw new ArgumentOutOfRangeException();
@@ -535,16 +537,16 @@ namespace ValheimVehicles.SharedScripts
       OnCannonListUpdated?.Invoke();
     }
 
-    public void RemoveCannon(CannonPersistentController persistentController)
+    public void RemoveCannon(CannonController controller)
     {
-      allCannonControllers.Remove(persistentController);
-      switch (persistentController.GetFiringMode())
+      allCannonControllers.Remove(controller);
+      switch (controller.GetFiringMode())
       {
         case CannonFiringMode.Manual:
-          manualFireControllers.Remove(persistentController);
+          manualFireControllers.Remove(controller);
           break;
         case CannonFiringMode.Auto:
-          autoTargetControllers.Remove(persistentController);
+          autoTargetControllers.Remove(controller);
           break;
         default:
           throw new ArgumentOutOfRangeException();

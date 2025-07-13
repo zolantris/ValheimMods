@@ -5,7 +5,6 @@
   using System.Collections.Generic;
   using System.Diagnostics;
   using System.Linq;
-  using DefaultNamespace;
   using UnityEngine;
   using UnityEngine.Serialization;
   using ValheimVehicles.Components;

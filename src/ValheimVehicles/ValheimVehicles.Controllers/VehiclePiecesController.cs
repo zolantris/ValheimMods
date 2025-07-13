@@ -565,7 +565,7 @@
             LoggerProvider.LogDev("Detected VehicleManager, setting parent to PiecesController.Manager");
             vehicleManager.MovementController.OnParentReady(PiecesController.Manager);
             break;
-          case CannonPersistentController cannonController:
+          case CannonController cannonController:
             LoggerProvider.LogDebug("adding cannon to target controller");
             cannonController.AmmoVariant = AmmoVariantDefault;
             cannonController.maxAmmo = 50;
@@ -660,7 +660,7 @@
           case Fireplace fireplace:
             RemoveEffectAreaFromVehicle(netView);
             break;
-          case CannonPersistentController cannonController:
+          case CannonController cannonController:
             LoggerProvider.LogDebug("removing cannon from target controller");
             targetController.RemoveCannon(cannonController);
             break;

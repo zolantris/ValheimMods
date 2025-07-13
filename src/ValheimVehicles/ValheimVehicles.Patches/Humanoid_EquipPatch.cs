@@ -25,16 +25,13 @@ public static class Humanoid_EquipPatch
     LoggerProvider.LogDebug("Got cannoncontroller on equip");
   }
 
-  public static void GetSelectedAmmoFromWeapon(Player __instance, CannonController cannonController)
+  public static void GetSelectedAmmoFromWeapon(Player __instance, CannonHandHeldController cannonController)
   {
 
     var currentWeapon = __instance.GetCurrentWeapon();
-    if (currentWeapon.m_customData.TryGetValue("ammo", out var ammoStr))
-      cannonController.AmmoCount = int.Parse(ammoStr);
-    if (currentWeapon.m_customData.TryGetValue("ammotype", out var ammoTypeStr))
-      cannonController.AmmoVariant = (CannonballVariant)int.Parse(ammoTypeStr);
-
-    cannonController.TryReload();
+    LoggerProvider.LogDebug($"ammo currentAmmoType {currentWeapon.m_shared.m_ammoType}");
+    LoggerProvider.LogDebug($"ammo m_attack.m_attackProjectile {currentWeapon.m_shared.m_attack.m_attackProjectile}");
+    LoggerProvider.LogDebug($"ammo ammoItem {currentWeapon.m_shared?.m_attack?.m_ammoItem?.m_shared.m_name}");
   }
 
   public static void UpdateCannonControllerAmmo(Player __instance)
@@ -61,8 +58,9 @@ public static class Humanoid_EquipPatch
 
   public static bool DebugOverrideCannon = true;
   public static bool SkipCustomCannonFire = false;
+  public static bool CanDirectlyConsume = true;
 
-  public static Dictionary<Player, CannonController> PlayerCannonController = new();
+  public static Dictionary<Player, CannonHandHeldController> PlayerCannonController = new();
 
   [HarmonyPatch(typeof(Humanoid), nameof(Humanoid.OnAttackTrigger))]
   [HarmonyPrefix]
@@ -71,29 +69,31 @@ public static class Humanoid_EquipPatch
     if (SkipCustomCannonFire) return true;
     var currentWeapon = __instance.GetCurrentWeapon();
     if (currentWeapon == null || currentWeapon.m_shared.m_name != HandCannonName) return true;
-    if (!PlayerCannonController.TryGetValue(__instance, out var cannonController) || cannonController == null)
+    if (!PlayerCannonController.TryGetValue(__instance, out var cannonHandheldController) || cannonHandheldController == null)
     {
-      cannonController = __instance.GetComponentInChildren<CannonController>();
-      if (cannonController)
+      cannonHandheldController = __instance.GetComponentInChildren<CannonHandHeldController>();
+      if (cannonHandheldController)
       {
-        PlayerCannonController[__instance] = cannonController;
+        PlayerCannonController[__instance] = cannonHandheldController;
       }
     }
 
-    if (!cannonController)
+    if (!cannonHandheldController)
     {
       PlayerCannonController.Remove(__instance);
       return true;
     }
 
-    GetSelectedAmmoFromWeapon(__instance, cannonController);
+    GetSelectedAmmoFromWeapon(__instance, cannonHandheldController);
 
-    if (DebugOverrideCannon)
+    if (cannonHandheldController.Fire() && CanDirectlyConsume)
     {
-      cannonController.AmmoCount = 500;
+      var ammoItem = currentWeapon.m_shared.m_attack?.m_ammoItem ?? null;
+      if (ammoItem == null) return false;
+      __instance.ConsumeItem(__instance.m_inventory, ammoItem);
     }
 
-    cannonController.Fire(true, 50f);
+
     return false;
   }
 }

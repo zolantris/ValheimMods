@@ -83,7 +83,7 @@ public class CannonControllerBridge : CannonController, Hoverable, Interactable,
   {
     var s = $"{ModTranslations.PowerSource_Interact_AddOne} / {ModTranslations.SharedKeys_Hold} {ModTranslations.SharedKeys_AddMany}";
     s += $"\n{ModTranslations.SharedKeys_InteractAltAndPlace} {ModTranslations.VehicleCannon_SwapCannonBallType}";
-    s += $"\n{ModTranslations.VehicleCannon_AmmoText}: {CannonballNameFromType()} ({AmmoCount})";
+    s += $"\n{ModTranslations.VehicleCannon_AmmoText}: {CannonballNameFromType()}";
     if (!hasNearbyPowderBarrel)
     {
       s += $"\n{ModTranslations.VehicleCannon_CannonMissingNearbyPowderBarrel}";
@@ -93,13 +93,13 @@ public class CannonControllerBridge : CannonController, Hoverable, Interactable,
 
   public string GetHoverName()
   {
-    return "HOVER NAME";
+    return "CannonController Hover (Should not be visible)";
   }
   public bool Interact(Humanoid user, bool hold, bool alt)
   {
     if (hold)
     {
-      AmmoCount += 10;
+      // AmmoCount += 10;
       return false;
     }
 
@@ -109,7 +109,7 @@ public class CannonControllerBridge : CannonController, Hoverable, Interactable,
       return true;
     }
 
-    AmmoCount += 1;
+    // AmmoCount += 1;
 
     return true;
   }
