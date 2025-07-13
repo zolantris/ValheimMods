@@ -967,7 +967,7 @@ namespace ValheimVehicles.SharedScripts
     public bool Fire(bool isManualFiring, int remainingAmmo, out int deltaAmmo)
     {
       deltaAmmo = 0;
-      if (!CanFire(isManualFiring))
+      if (remainingAmmo <= 0 || !CanFire(isManualFiring))
       {
         return false;
       }
@@ -980,6 +980,7 @@ namespace ValheimVehicles.SharedScripts
         var shootingPart = shootingParts[index];
         if (remainingAmmo <= 0) break;
         if (!FireSingle(shootingPart, index, isManualFiring)) break;
+        deltaAmmo++;
         remainingAmmo--;
         hasFired = true;
       }

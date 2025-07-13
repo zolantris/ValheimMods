@@ -25,7 +25,7 @@ public class CannonHandHeldController : MonoBehaviour, Hoverable
 
   private void Start()
   {
-    GetComponent<AmmoController>();
+    _ammoController = GetComponent<AmmoController>();
     TryInitController();
   }
 
@@ -35,7 +35,9 @@ public class CannonHandHeldController : MonoBehaviour, Hoverable
     {
       if (cannonController == null)
         cannonController = GetComponentInChildren<CannonController>(true);
-      return cannonController != null;
+      if (_ammoController == null)
+        _ammoController = GetComponent<AmmoController>();
+      return cannonController != null && _ammoController != null;
     }
     catch (Exception ex)
     {
