@@ -151,6 +151,7 @@ namespace ValheimVehicles.SharedScripts
 
     public bool IsReloading { get; private set; }
     public bool IsFiring { get; private set; }
+    public CannonDirectionGroup? CurrentManualDirectionGroup { get; set; }
 
 
     public bool IsLoaded => shootingParts.All(sp =>
@@ -186,7 +187,6 @@ namespace ValheimVehicles.SharedScripts
         _reloadRotation = Quaternion.Euler(10f, 0f, 0f) * _defaultShooterLocalRotation;
         _targetShooterLocalRotation = _defaultShooterLocalRotation;
       }
-
 
 #if UNITY_EDITOR
       // Must only be run in Unity Editor. We reset static values so it's like first to load for this object.
@@ -267,10 +267,26 @@ namespace ValheimVehicles.SharedScripts
       }
     }
 
+
     public CannonFiringMode CannonFiringMode
     {
       get;
       set;
+    }
+
+    // --- Add below your other methods ---
+    public void SetManualYaw(float yaw)
+    {
+      if (cannonRotationalTransform != null)
+      {
+        var euler = cannonRotationalTransform.localEulerAngles;
+        euler.y = yaw;
+        cannonRotationalTransform.localEulerAngles = euler;
+      }
+    }
+    public void SetFiringMode(CannonFiringMode mode)
+    {
+      cannonFiringMode = mode;
     }
 
     public void SetAmmoVariant(CannonballVariant val)

@@ -81,6 +81,26 @@ namespace ValheimVehicles.SharedScripts
     private Dictionary<CannonDirectionGroup, List<CannonController>> _groupedCannons = null!;
     public IReadOnlyDictionary<CannonDirectionGroup, List<CannonController>> GroupedCannons => _groupedCannons;
 
+    private readonly Dictionary<CannonDirectionGroup, List<CannonController>> _manualCannonGroups =
+      new()
+      {
+        { CannonDirectionGroup.Forward, new List<CannonController>() },
+        { CannonDirectionGroup.Right, new List<CannonController>() },
+        { CannonDirectionGroup.Back, new List<CannonController>() },
+        { CannonDirectionGroup.Left, new List<CannonController>() }
+      };
+    private readonly Dictionary<CannonDirectionGroup, float> _manualGroupYaw =
+      new()
+      {
+        { CannonDirectionGroup.Forward, 0f },
+        { CannonDirectionGroup.Right, 0f },
+        { CannonDirectionGroup.Back, 0f },
+        { CannonDirectionGroup.Left, 0f }
+      };
+
+    public IReadOnlyDictionary<CannonDirectionGroup, List<CannonController>> ManualCannonGroups => _manualCannonGroups;
+    public IReadOnlyDictionary<CannonDirectionGroup, float> ManualGroupYaw => _manualGroupYaw;
+
     private void Awake()
     {
       _autoFireCannonsRoutine = new CoroutineHandle(this);
@@ -552,14 +572,103 @@ namespace ValheimVehicles.SharedScripts
       RefreshPlayerDefenseTriggers();
     }
 
+    private void AddManualCannonToGroup(CannonController cannon)
+    {
+      var group = GetDirectionGroup(transform, cannon.transform);
+      _manualCannonGroups[group].Add(cannon);
+      cannon.CurrentManualDirectionGroup = group;
+    }
+
+    private void RemoveManualCannonFromGroup(CannonController cannon)
+    {
+      if (cannon.CurrentManualDirectionGroup.HasValue)
+      {
+        var group = cannon.CurrentManualDirectionGroup.Value;
+        _manualCannonGroups[group].Remove(cannon);
+        cannon.CurrentManualDirectionGroup = null;
+      }
+      else
+      {
+        // Fallback: rare
+        foreach (var kv in _manualCannonGroups)
+          kv.Value.Remove(cannon);
+      }
+    }
+
+    /// <summary>
+    /// Call if you move/re-parent a manual cannon at runtime and need to regroup.
+    /// </summary>
+    public void RefreshManualCannonGroup(CannonController cannon)
+    {
+      RemoveManualCannonFromGroup(cannon);
+      AddManualCannonToGroup(cannon);
+    }
+
+    // Yaw per group
+    public void SetManualGroupYaw(CannonDirectionGroup group, float yaw)
+    {
+      _manualGroupYaw[group] = yaw;
+    }
+    public float GetManualGroupYaw(CannonDirectionGroup group)
+    {
+      return _manualGroupYaw[group];
+    }
+
+    public void StartManualGroupFiring(CannonDirectionGroup group)
+    {
+      if (!_manualFireCannonsRoutines.TryGetValue((int)group, out var routine))
+        routine = new CoroutineHandle(this);
+      if (routine.IsRunning || _manualCannonGroups[group].Count == 0) return;
+      routine.Start(ManualFireCannonsGroupCoroutine(group));
+    }
+
+    /// <summary>
+    /// Coroutine: fires all cannons in the group in staggered sequence, tracks ammo usage, applies OnAmmoChanged at the end.
+    /// </summary>
+    private IEnumerator ManualFireCannonsGroupCoroutine(CannonDirectionGroup group)
+    {
+      var totalAmmoDeltaSolid = 0;
+      var totalAmmoDeltaExplosive = 0;
+      var yaw = _manualGroupYaw[group];
+      var cannons = _manualCannonGroups[group].ToList();
+
+      foreach (var cannon in cannons)
+      {
+        if (!cannon) continue;
+
+        cannon.SetManualYaw(yaw);
+
+        if (cannon.Fire(
+              true,
+              _ammoController.GetAmmoAmountFromCannonballVariant(cannon.AmmoVariant),
+              out var deltaAmmo))
+        {
+          if (cannon.AmmoVariant == CannonballVariant.Solid)
+            totalAmmoDeltaSolid += deltaAmmo;
+          else if (cannon.AmmoVariant == CannonballVariant.Explosive)
+            totalAmmoDeltaExplosive += deltaAmmo;
+
+          // Stagger delay only if fired
+          yield return new WaitForSeconds(FiringDelayPerCannon);
+        }
+      }
+
+      if (cannons.Count > 0 && (totalAmmoDeltaSolid != 0 || totalAmmoDeltaExplosive != 0))
+      {
+        _ammoController.OnAmmoChanged(totalAmmoDeltaSolid, totalAmmoDeltaExplosive);
+      }
+
+      yield return new WaitForSeconds(FiringCooldown);
+    }
+
     public void AddCannon(CannonController controller)
     {
       allCannonControllers.Add(controller);
-
       switch (controller.GetFiringMode())
       {
         case CannonFiringMode.Manual:
           manualFireControllers.Add(controller);
+          AddManualCannonToGroup(controller);
           break;
         case CannonFiringMode.Auto:
           autoTargetControllers.Add(controller);
@@ -567,8 +676,6 @@ namespace ValheimVehicles.SharedScripts
         default:
           throw new ArgumentOutOfRangeException();
       }
-
-      RecalculateCannonGroups();
       OnCannonListUpdated?.Invoke();
     }
 
@@ -579,6 +686,7 @@ namespace ValheimVehicles.SharedScripts
       {
         case CannonFiringMode.Manual:
           manualFireControllers.Remove(controller);
+          RemoveManualCannonFromGroup(controller);
           break;
         case CannonFiringMode.Auto:
           autoTargetControllers.Remove(controller);
@@ -586,8 +694,6 @@ namespace ValheimVehicles.SharedScripts
         default:
           throw new ArgumentOutOfRangeException();
       }
-
-      RecalculateCannonGroups();
       OnCannonListUpdated?.Invoke();
     }
 
