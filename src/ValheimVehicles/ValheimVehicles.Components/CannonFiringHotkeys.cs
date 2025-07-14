@@ -170,8 +170,6 @@ namespace ValheimVehicles.SharedScripts
         AdjustManualGroupTilt(CannonDirectionGroup.Back, -tiltStep * Time.deltaTime);
       }
 
-      // blocks if we are holding that key down.
-      ZInput_Patches.ShouldBlockInputForAlpha1234Keys = true;
     }
 
     private void ProcessButtonGroup(string button, CannonDirectionGroup group)

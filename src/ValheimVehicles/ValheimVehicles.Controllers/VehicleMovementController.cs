@@ -4486,7 +4486,7 @@
 
       // adds targeting controls to player when they take over vehicle.
       var firingHotkeys = targetPlayer.gameObject.GetOrAddComponent<CannonFiringHotkeys>();
-      firingHotkeys.targetController = PiecesController.targetController;
+      firingHotkeys.SetTargetController(PiecesController.targetController);
 
       UpdatePlayerOnShip(targetPlayer);
       UpdateVehicleSpeedThrottle();

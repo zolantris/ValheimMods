@@ -14,7 +14,7 @@ public static class ZInput_Patches
     // Cannon controls (your mappings)
     "JoyDPadUp", "JoyDPadDown", "JoyDPadLeft", "JoyDPadRight",
     // Camera zoom (mouse scroll bindings in Valheim)
-    "CamZoomIn", "CamZoomOut"
+    "CamZoomIn", "CamZoomOut", "JoyCamZoomIn", "JoyCamZoomOut"
     // Add more as needed!
   };
 
@@ -30,5 +30,17 @@ public static class ZInput_Patches
       return false; // Block original call
     }
     return true; // Allow default processing
+  }
+
+  [HarmonyPatch(typeof(ZInput), nameof(ZInput.GetMouseScrollWheel))]
+  [HarmonyPrefix]
+  public static bool ZInput_BlockMouseScroll(ref float __result)
+  {
+    if (ShouldBlockInputForAlpha1234Keys)
+    {
+      __result = 0f;
+      return false; // Block original call
+    }
+    return true;
   }
 }

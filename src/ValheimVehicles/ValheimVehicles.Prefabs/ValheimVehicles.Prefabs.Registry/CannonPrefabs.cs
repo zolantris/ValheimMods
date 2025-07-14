@@ -266,6 +266,7 @@ public class CannonPrefabs : RegisterPrefab<CannonPrefabs>
       m_buildPieces = PrefabRegistryController.GetPieceTable(),
       m_toolTier = 50,
       m_maxStackSize = 200,
+      m_weight = PrefabConfig.CannonBallInventoryWeight.Value, // this could be 12-24lbs...but that would make the game less fun
       m_skillType = Skills.SkillType.Bows,
       m_ammoType = CannonAmmoType,
       m_itemType = ItemDrop.ItemData.ItemType.Ammo

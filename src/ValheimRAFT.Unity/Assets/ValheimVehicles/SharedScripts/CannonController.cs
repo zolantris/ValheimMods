@@ -65,7 +65,7 @@ namespace ValheimVehicles.SharedScripts
     [Tooltip("How many shells are reloaded at once.")]
     [SerializeField] private int reloadQuantity = 1;
     [Tooltip("Time to reload (seconds).")]
-    [SerializeField] private float reloadTime = 0.5f;
+    [SerializeField] private float _reloadTime = 0.5f;
     [Tooltip("Automatically reload when fired?")]
     [SerializeField] private bool autoReload = true;
     [Tooltip("Ammunition type")]
@@ -130,6 +130,7 @@ namespace ValheimVehicles.SharedScripts
     private bool _canAutoFire;
     private Queue<Cannonball> _cannonballPool = new();
     private AudioSource _cannonFireAudioSource;
+    public static float CannonHandheld_FireAudioStartTime = 0.5f;
     private AudioSource _cannonReloadAudioSource;
     private CoroutineHandle _cleanupRoutine;
     private Quaternion _defaultShooterLocalRotation;
@@ -153,6 +154,9 @@ namespace ValheimVehicles.SharedScripts
     public bool IsFiring { get; private set; }
     public CannonDirectionGroup? CurrentManualDirectionGroup { get; set; }
 
+    public static float ReloadTimeOverride = 0f;
+
+    public float ReloadTime => ReloadTimeOverride > 0f ? ReloadTimeOverride : _reloadTime;
 
     public bool IsLoaded => shootingParts.All(sp =>
       _loadedCannonballs.TryGetValue(sp, out var ball) && ball != null);
@@ -1152,18 +1156,9 @@ namespace ValheimVehicles.SharedScripts
         if (elapsed < 0.1f)
         {
           cannonRotationalTransform.localPosition = Vector3.Lerp(Vector3.zero, Vector3.forward * -0.1f, t);
-          if (cannonShooterTransform != null)
-          {
-            cannonShooterTransform.localRotation = Quaternion.Lerp(_targetShooterLocalRotation, _recoilRotation, Mathf.Clamp01(t));
-          }
         }
         else
         {
-          // move back to target position. (and then will reload afterwards) 
-          if (cannonShooterTransform != null)
-          {
-            cannonShooterTransform.localRotation = Quaternion.Lerp(_targetShooterLocalRotation * _recoilRotation, _targetShooterLocalRotation, Mathf.Clamp01(t));
-          }
           cannonRotationalTransform.localPosition = Vector3.Lerp(Vector3.forward * -0.1f, Vector3.zero, t);
         }
         yield return null;
@@ -1191,21 +1186,10 @@ namespace ValheimVehicles.SharedScripts
       IsReloading = true;
       var elapsed = 0f;
 
-      var startRotation = _targetShooterLocalRotation;
-      var endRotation = Quaternion.Euler(_targetShooterLocalRotation.x + _recoilRotation.x, 0, 0);
-
-      var safeReloadTime = Mathf.Clamp(reloadTime, 0.1f, 5f);
+      var safeReloadTime = Mathf.Clamp(ReloadTime, 0.1f, 5f);
       PlayReloadClip();
       yield return new WaitUntil(() => !_cannonReloadAudioSource.isPlaying);
       yield return new WaitForSeconds(safeReloadTime);
-      // while (elapsed < reloadTime)
-      // {
-      //   var t = Mathf.Clamp01(elapsed * 2f / safeReloadTime); // 0..1
-      //   elapsed += Time.deltaTime;
-      //   if (cannonShooterTransform != null)
-      //     cannonShooterTransform.localRotation = Quaternion.Lerp(startRotation, endRotation, Mathf.Clamp01(t));
-      //   yield return null; // Wait one frame
-      // }
 
       var shotsToReload = Math.Min(reloadQuantity, shootingParts.Count);
       for (var i = 0; i < shotsToReload && remainingAmmo - i > 0; i++)
@@ -1245,6 +1229,7 @@ namespace ValheimVehicles.SharedScripts
       _cannonReloadAudioSource.Play();
     }
 
+
     private void PlayFireClip()
     {
       if (!HasFireAudio || !_cannonFireAudioSource) return;
@@ -1255,6 +1240,10 @@ namespace ValheimVehicles.SharedScripts
         _cannonFireAudioSource.Stop();
       }
 
+      if (IsHandHeldCannon)
+      {
+        _cannonFireAudioSource.time = CannonHandheld_FireAudioStartTime;
+      }
       _cannonFireAudioSource.pitch = fireClipPitch + Random.Range(-0.2f, 0.2f);
       _cannonFireAudioSource.Play();
     }

@@ -117,12 +117,6 @@ namespace ValheimVehicles.SharedScripts
 
       SetupForwardTransform();
 
-
-
-      // todo this should not be initialized here. It should be added to players controlling vehicle only and removed on controls removal.
-      _cannonFiringHotkeys = gameObject.GetOrAddComponent<CannonFiringHotkeys>();
-      _cannonFiringHotkeys.SetTargetController(this);
-
       IsHostileCharacter = t =>
       {
 #if !UNITY_EDITOR && !UNITY_2022

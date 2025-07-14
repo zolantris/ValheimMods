@@ -380,9 +380,6 @@
 
       base.Awake();
 
-      // _pieceActivator = gameObject.AddComponent<VehiclePieceActivator>();
-      // _pieceActivator.Init(this);
-
       if (vehicleCenter == null)
       {
         CreatePieceCenter();

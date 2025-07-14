@@ -167,19 +167,23 @@ namespace ValheimVehicles.SharedScripts
       yield return new WaitForFixedUpdate();
 
       var explosionOrigin = explosionCollider.bounds.center;
-      var count = Physics.OverlapSphereNonAlloc(explosionOrigin, 5f, allocatedColliders, LayerHelpers.PieceLayerMask);
+      var count = Physics.OverlapSphereNonAlloc(explosionOrigin, 5f, allocatedColliders, LayerHelpers.CannonHitLayers);
 
       // Gather all barrels and distances.
       var barrels = new List<(PowderBarrel barrel, float distance)>(count);
       for (var i = 0; i < count; i++)
       {
         var col = allocatedColliders[i];
+        var hitPoint = col.ClosestPointOnBounds(explosionOrigin);
+        var dir = (hitPoint - explosionOrigin).normalized;
+        var dist = Vector3.Distance(explosionOrigin, hitPoint);
+
+        CannonballHitScheduler.AddDamageToQueue(this, col, hitPoint, dir, Vector3.zero, 90f, true);
         if (col.name == BarrelExplosionColliderName)
         {
           var powderBarrel = col.GetComponentInParent<PowderBarrel>();
           if (powderBarrel != null)
           {
-            var dist = Vector3.Distance(explosionOrigin, powderBarrel.transform.position);
             barrels.Add((powderBarrel, dist));
           }
           continue;
