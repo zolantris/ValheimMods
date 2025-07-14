@@ -13,6 +13,8 @@ public class CannonControllerBridge : CannonController, Hoverable, Interactable,
   private bool _hasInitPrefabSync = false;
   public CannonPersistentConfig PersistentConfig => this.GetOrCache(ref prefabConfigSync, ref _hasInitPrefabSync).Config;
 
+  public AmmoController? ammoController;
+
   protected internal override sealed void Awake()
   {
 #if !UNITY_2022 && !UNITY_EDITOR
@@ -37,6 +39,7 @@ public class CannonControllerBridge : CannonController, Hoverable, Interactable,
   protected internal override void Start()
   {
     base.Start();
+    ammoController = GetComponent<AmmoController>();
   }
 
   public void SetAmmoType()
@@ -81,9 +84,17 @@ public class CannonControllerBridge : CannonController, Hoverable, Interactable,
 
   public string GetHoverText()
   {
-    var s = $"{ModTranslations.PowerSource_Interact_AddOne} / {ModTranslations.SharedKeys_Hold} {ModTranslations.SharedKeys_AddMany}";
+    // var s = $"{ModTranslations.PowerSource_Interact_AddOne} / {ModTranslations.SharedKeys_Hold} {ModTranslations.SharedKeys_AddMany}";
+    var s = "";
     s += $"\n{ModTranslations.SharedKeys_InteractAltAndPlace} {ModTranslations.VehicleCannon_SwapCannonBallType}";
+
     s += $"\n{ModTranslations.VehicleCannon_AmmoText}: {CannonballNameFromType()}";
+
+    if (ammoController != null)
+    {
+      s += $"({ammoController.GetAmmoAmountFromCannonballVariant(AmmoVariant)})";
+    }
+
     if (!hasNearbyPowderBarrel)
     {
       s += $"\n{ModTranslations.VehicleCannon_CannonMissingNearbyPowderBarrel}";
