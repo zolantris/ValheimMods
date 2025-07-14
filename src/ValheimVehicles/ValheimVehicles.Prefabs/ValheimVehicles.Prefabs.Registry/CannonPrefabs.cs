@@ -290,7 +290,6 @@ public class CannonPrefabs : RegisterPrefab<CannonPrefabs>
     }
   }
 
-#if DEBUG
   private void RegisterCannonHandHeldPrefab()
   {
     var asset = LoadValheimVehicleAssets._bundle.LoadAsset<GameObject>("cannon_handheld");
@@ -389,6 +388,7 @@ public class CannonPrefabs : RegisterPrefab<CannonPrefabs>
     LoggerProvider.LogMessage("Registered HandCannon");
   }
 
+#if DEBUG
   private void RegisterTelescopePrefab()
   {
     var prefabAssetName = "telescope";
@@ -546,7 +546,10 @@ public class CannonPrefabs : RegisterPrefab<CannonPrefabs>
     RegisterCannonTurretPrefab();
     RegisterPowderBarrelPrefab();
 
+#if DEBUG
     RegisterTelescopePrefab();
+#endif
+
     RegisterCannonHandHeldPrefab();
   }
 }
