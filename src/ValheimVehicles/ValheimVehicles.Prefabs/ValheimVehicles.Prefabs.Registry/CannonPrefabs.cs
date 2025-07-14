@@ -108,31 +108,11 @@ public class CannonPrefabs : RegisterPrefab<CannonPrefabs>
     zSyncTransform.m_syncRotation = true;
     zSyncTransform.m_syncPosition = true;
 
-    var itemDatabase = ItemManager.Instance.GetItem(PrefabNames.CannonballSolid);
-    var projectile = prefab.AddComponent<Projectile>();
-    projectile.m_ammo = itemDatabase.ItemDrop.m_itemData;
-    projectile.m_nview = nv;
-
     var cannonBall = prefab.AddComponent<Cannonball>();
     cannonBall.cannonballVariant = CannonballVariant.Solid;
 
-    foreach (var c in prefab.GetComponents<Component>())
-      LoggerProvider.LogDev($"Component on prefab: {c.GetType().Name}");
-
     CannonController.CannonballSolidPrefab = prefab;
     CannonballSolidProjectile = prefab;
-
-    // copy all components from final prefab.
-    // var finalPrefab = Object.Instantiate(prefab);
-    // Object.Destroy(prefab);
-    //
-    // finalPrefab.name = PrefabNames.CannonballSolid;
-    // Object.DontDestroyOnLoad(finalPrefab);
-    //
-    // foreach (var c in finalPrefab.GetComponents<Component>())
-    //   LoggerProvider.LogDev($"Component on prefab: {c.GetType().Name}");
-    // CannonController.CannonballSolidPrefab = finalPrefab;
-    // CannonballSolidProjectile = finalPrefab;
   }
 
   private void RegisterCannonballExplosiveProjectilePrefab()
@@ -154,16 +134,8 @@ public class CannonPrefabs : RegisterPrefab<CannonPrefabs>
     zSyncTransform.m_syncRotation = true;
     zSyncTransform.m_syncPosition = true;
 
-    var itemDatabase = ItemManager.Instance.GetItem(PrefabNames.CannonballSolid);
-    var projectile = prefab.AddComponent<Projectile>();
-    projectile.m_ammo = itemDatabase.ItemDrop.m_itemData;
-    projectile.m_nview = nv;
-
     var cannonBall = prefab.AddComponent<Cannonball>();
     cannonBall.cannonballVariant = CannonballVariant.Explosive;
-
-    foreach (var c in prefab.GetComponents<Component>())
-      LoggerProvider.LogDev($"Component on prefab: {c.GetType().Name}");
 
     CannonController.CannonballExplosivePrefab = prefab;
     CannonballExplosiveProjectile = prefab;

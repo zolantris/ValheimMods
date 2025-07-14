@@ -20,10 +20,11 @@ namespace ValheimVehicles.SharedScripts
     public const string BarrelExplosionColliderName = "barrel_explosion_collider";
     [SerializeField] private float destroyDeactivationDelayTimeInMs;
     [Tooltip("Hides the barrel mesh when the explosion hits the destroy deactivation timer.")]
-    [SerializeField] public bool shouldHideBarrelMeshOnExplode = true;
+    [SerializeField] public bool shouldHideBarrelMeshOnExplode = false;
     [SerializeField] public bool CanDestroyOnExplode = true;
-    [SerializeField] public bool CanExplodeMultipleTimes;
+    [SerializeField] public bool CanExplodeMultipleTimes = false;
     private readonly Collider[] allocatedColliders = new Collider[100];
+    public static float BarrelExplosionChainDelay = 0.5f;
     private CoroutineHandle _aoeRoutine;
 
     private CoroutineHandle _explosionRoutine;
@@ -33,6 +34,8 @@ namespace ValheimVehicles.SharedScripts
     private Transform explosionFxTransform;
     private Transform explosionTransform;
     private Transform meshesTransform;
+
+    public static HashSet<PowderBarrel> ExplodingBarrels = new();
 
     public static float LastBarrelPlaceTime;
 #if !UNITY_2022 && !UNITY_EDITOR
@@ -178,16 +181,21 @@ namespace ValheimVehicles.SharedScripts
         var dir = (hitPoint - explosionOrigin).normalized;
         var dist = Vector3.Distance(explosionOrigin, hitPoint);
 
-        CannonballHitScheduler.AddDamageToQueue(this, col, hitPoint, dir, Vector3.zero, 90f, true);
         if (col.name == BarrelExplosionColliderName)
         {
           var powderBarrel = col.GetComponentInParent<PowderBarrel>();
           if (powderBarrel != null)
           {
-            barrels.Add((powderBarrel, dist));
+            if (ExplodingBarrels.Add(powderBarrel))
+            {
+              barrels.Add((powderBarrel, dist));
+            }
           }
           continue;
         }
+
+        CannonballHitScheduler.AddDamageToQueue(this, col, hitPoint, dir, Vector3.zero, 90f, true);
+
         // Not a barrel, invoke fallback
         OnHitCollider?.Invoke(col);
       }
@@ -199,8 +207,15 @@ namespace ValheimVehicles.SharedScripts
       foreach (var (barrel, _) in barrels)
       {
         barrel.StartExplosion();
+#if DEBUG
         LoggerProvider.LogDev($"Triggered powder barrel explosion at {barrel.transform.position}");
-        yield return new WaitForSeconds(0.5f); // Adjust as needed
+#endif
+        yield return new WaitForSeconds(BarrelExplosionChainDelay); // Adjust as needed
+      }
+
+      foreach (var (barrel, _) in barrels)
+      {
+        ExplodingBarrels.Remove(barrel);
       }
     }
 
@@ -220,6 +235,11 @@ namespace ValheimVehicles.SharedScripts
       {
         meshesTransform.gameObject.SetActive(false);
       }
+      else
+      {
+        meshesTransform.localScale = new Vector3(1f, 0.1f, 1f);
+      }
+
       yield return new WaitUntil(() => timer.ElapsedMilliseconds > 10000f || explosionFx.isStopped && !explosionAudio.isPlaying);
       timer.Reset();
       OnExplodeDestroy();

@@ -56,6 +56,7 @@ public class PrefabConfig : BepInExBaseConfig<PrefabConfig>
   public static ConfigEntry<float> CannonAutoAimYOffset { get; set; } = null!;
   public static ConfigEntry<float> CannonAimMaxYRotation { get; set; } = null!;
   public static ConfigEntry<float> CannonBarrelAimMaxTiltRotation { get; set; } = null!;
+  public static ConfigEntry<float> PowderBarrelExplosiveChainDelay { get; set; } = null!;
   public static ConfigEntry<float> CannonBarrelAimMinTiltRotation { get; set; } = null!;
   public static ConfigEntry<Vector3> CannonVehicleProtectionRange { get; set; } = null!;
   public static ConfigEntry<float> CannonPlayerProtectionRangeRadius { get; set; } = null!;
@@ -96,6 +97,7 @@ public class PrefabConfig : BepInExBaseConfig<PrefabConfig>
 
   private const string SectionKey = "PrefabConfig";
   private const string VehicleCannonsSection = "PrefabConfig: VehicleCannons";
+  private const string PowderBarrelSection = "PrefabConfig: PowderBarrel";
 
 
   public static void UpdatePrefabEnabled(string prefabName, bool enabled)
@@ -275,6 +277,12 @@ public class PrefabConfig : BepInExBaseConfig<PrefabConfig>
 
     HasCannonballWindAudio = config.BindUnique(VehicleCannonsSection, "Cannonball_HasWindAudio", true, ConfigHelpers.CreateConfigDescription("Allows enable cannonball wind audio - which can be heard if a cannonball passes nearby.", false, false));
     CannonballWindAudioVolume = config.BindUnique(VehicleCannonsSection, "Cannonball_WindAudioVolume", 0.2f, ConfigHelpers.CreateConfigDescription("Allows customizing cannonball wind audio - which can be heard if a cannonball passes nearby. Recommended below 0.2f", false, false));
+
+    PowderBarrelExplosiveChainDelay = config.BindUnique(PowderBarrelSection, "PowderBarrelExplosiveChainDelay", 0.5f, ConfigHelpers.CreateConfigDescription("Set the powder barrel explosive chain delay. It will blow up nearby barrels but at a delayed fuse to make things a bit more realistic or at least cinematic.", false, false, new AcceptableValueRange<float>(0f, 2f)));
+    PowderBarrelExplosiveChainDelay.SettingChanged += (sender, args) =>
+    {
+      PowderBarrel.BarrelExplosionChainDelay = PowderBarrelExplosiveChainDelay.Value;
+    };
 
     CannonballSolidDamage = config.BindUnique(VehicleCannonsSection, "Cannonball_SolidDamage", 30f, ConfigHelpers.CreateConfigDescription("Set the amount of damage a solid cannon ball does. This value is multiplied by the velocity of the cannonball around 90 at max speed decreasing to 20 m/s at lowest hit damage level.", false, false));
     CannonballSolidDamage.SettingChanged += (sender, args) => CannonballHitScheduler.BaseDamageSolidCannonball = CannonballSolidDamage.Value;

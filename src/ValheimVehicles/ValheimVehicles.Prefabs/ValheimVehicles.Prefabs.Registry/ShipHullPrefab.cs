@@ -1,10 +1,12 @@
 using System;
+using System.Linq;
 using HarmonyLib;
 using Jotunn.Configs;
 using Jotunn.Entities;
 using Jotunn.Extensions;
 using Jotunn.Managers;
 using UnityEngine;
+using ValheimVehicles.BepInExConfig;
 using ValheimVehicles.SharedScripts;
 using ValheimVehicles.SharedScripts.Enums;
 using ValheimVehicles.SharedScripts.Prefabs;
@@ -15,8 +17,6 @@ namespace ValheimVehicles.Prefabs.Registry;
 public class ShipHullPrefab : IRegisterPrefab
 {
   public static readonly ShipHullPrefab Instance = new();
-
-  public static Shader MaskShader = null!;
 
   /// <summary>
   /// Main method for all hull registry. This method is not efficient for iteration however, it keeps all hull variants together instead of spacing them everywhere.
@@ -224,7 +224,16 @@ public class ShipHullPrefab : IRegisterPrefab
   public static RequirementConfig[] GetRequirements(string material,
     int materialCount)
   {
-    RequirementConfig[] requirements = [];
+    var requirements = PrefabRecipeConfig.GetHullMaterialRecipeConfig(material, materialCount);
+
+    if (requirements.Length > 0)
+    {
+      return requirements;
+    }
+
+    LoggerProvider.LogWarning("RequirementConfig is using deprecated material method. This means something is wrong with the base hull material config that can be set by the user.");
+
+    // fallback for old approach if things fail.
     return material switch
     {
       HullMaterial.Iron =>

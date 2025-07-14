@@ -232,11 +232,13 @@ namespace ValheimVehicles.SharedScripts
 
     protected internal virtual void OnEnable()
     {
+      Application.logMessageReceived += OnLogMessageReceived;
       InitCoroutines();
     }
 
     protected internal virtual void OnDisable()
     {
+      Application.logMessageReceived -= OnLogMessageReceived;
       CleanupPool();
     }
 
@@ -341,17 +343,11 @@ namespace ValheimVehicles.SharedScripts
       {
         if (ball != null && !ball.IsInFlight)
         {
-          var ballTransform = ball.transform;
-          if (ball.m_body != null)
+          if (ball.m_body != null && ball.m_body.isKinematic)
           {
             var t = ball.lastFireTransform != null ? ball.lastFireTransform : cannonShooterTransform;
             ball.m_body.MovePosition(t.position);
             // ball.m_body.Move(t.position, t.rotation);
-          }
-          else
-          {
-            ballTransform.position = cannonShooterTransform.position;
-            // ballTransform.rotation = cannonShooterTransform.rotation;
           }
         }
       }
@@ -656,9 +652,6 @@ namespace ValheimVehicles.SharedScripts
         LoggerProvider.LogWarning("No cannonball prefab set. Please set one in CannonballSolidPrefab or CannonballExplosivePrefab.");
         return null;
       }
-
-      foreach (var c in selectedCannonball.GetComponents<Component>())
-        LoggerProvider.LogDev($"Component on prefab: {c.GetType().Name}");
 
       var go = Instantiate(selectedCannonball, barrelPart.projectileLoader.position, barrelPart.projectileLoader.rotation, null);
       var localCannonball = go.GetComponent<Cannonball>();
@@ -1142,11 +1135,12 @@ namespace ValheimVehicles.SharedScripts
       return false;
     }
 
+    public static float recoilUpwardAnimationDuration = 0.5f;
+    public static float recoilReturnAnimationDuration = 0.5f;
+
     private IEnumerator RecoilCoroutine(int remainingAmmo)
     {
       var elapsed = 0f;
-      var recoilUpwardAnimationDuration = 0.15f;
-      var recoilReturnAnimationDuration = 0.15f;
       while (elapsed < recoilReturnAnimationDuration + recoilUpwardAnimationDuration)
       {
         var t = Mathf.Clamp01(elapsed / 2f / 0.15f); // 0..1
@@ -1175,6 +1169,14 @@ namespace ValheimVehicles.SharedScripts
       else
       {
         LoggerProvider.LogDev("No ammo left, not reloading.");
+      }
+    }
+
+    private void OnLogMessageReceived(string condition, string stackTrace, LogType type)
+    {
+      if (condition != null && condition.Contains("Look rotation viewing vector is zero"))
+      {
+        Debug.LogError("Zero LookRotation: \n" + stackTrace);
       }
     }
 

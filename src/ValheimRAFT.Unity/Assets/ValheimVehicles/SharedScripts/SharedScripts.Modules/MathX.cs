@@ -61,6 +61,10 @@ namespace ValheimVehicles.SharedScripts.Modules
     {
       return Math.Max(min, Math.Min(max, v));
     }
+    public static int Clamp(int v, int min, int max)
+    {
+      return Math.Max(min, Math.Min(max, v));
+    }
     public static float Min(float a, float b)
     {
       return Math.Min(a, b);
