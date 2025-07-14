@@ -331,23 +331,31 @@
 
 ### CannonBallInventoryWeight 
 - Description: Set the weight of cannonballs. For realism 12-48lbs for these cannons.
-- Default Value: 12
+- Default Value: 4
 
-### HasCannonFireAudio 
+### CannonHandheld_AudioStartPosition 
+- Description: Set set the audio start position. This will sound like a heavy flintlock if to close to 0f
+- Default Value: 0.35
+
+### Cannon_HasFireAudio 
 - Description: Allows toggling the cannon fire audio
 - Default Value: True
 
-### UNSTABLE_HasCannonReloadAudio 
+### UNSTABLE_Cannon_HasReloadAudio 
 - Description: Allows toggling the reload audio. Unstable b/c it does not sound great when many of these are fired together.
 - Default Value: False
 
-### UNSTABLE_HasCannonballExplosionAudio 
+### Cannonball_HasExplosionAudio 
 - Description: Allows toggling the cannonball explosion/impact audio. Unstable b/c it does not sound great when many of these are fired together.
 - Default Value: True
 
-### CannonFiringDelayPerCannon 
+### Cannon_FiringDelayPerCannon 
 - Description: Allows setting cannon firing delays. This makes cannons fire in a order.
 - Default Value: 0.01
+
+### Cannon_ReloadTime 
+- Description: Allows setting cannon reload delays. This makes cannons reload longer or shorter. Shortest value is 100ms highest is 60seconds
+- Default Value: 6
 
 ### Cannon_ReloadAudioVolume 
 - Description: Allows customizing cannon firing audio volume
@@ -360,6 +368,22 @@
 ### Cannonball_ExplosionAudioVolume 
 - Description: Allows customizing cannon reload audio volume
 - Default Value: 1
+
+### Cannonball_ExplosionRadius 
+- Description: Allows customizing cannonball explosion radius/aoe. Large sizes will lag out objects like rocks
+- Default Value: 7.5
+
+### Cannonball_SolidShell_BaseDamage 
+- Description: Allows customizing cannonball solid hit damage
+- Default Value: 85
+
+### Cannonball_ExplosiveShell_BaseDamage 
+- Description: Allows customizing cannonball explosion hit AOE damage. The damage is uniform across the entire radius.
+- Default Value: 50
+
+### DEBUG_CannonballUnlimitedAmmo 
+- Description: Allows unlimited ammo for cannons.
+- Default Value: False
 
 ### Cannonball_HasWindAudio 
 - Description: Allows enable cannonball wind audio - which can be heard if a cannonball passes nearby.
@@ -376,6 +400,10 @@
 ### Cannonball_ExplosiveDamage 
 - Description: Set the amount of damage a explosive cannon ball does. This damage includes both the AOE and hit. AOE will do same damage on top of the impact of the shot.
 - Default Value: 30
+
+### CannonAutoAimYOffset 
+- Description: Set the Y offset where the cannonball attempt to hit. 0 will aim deadcenter, but it could miss due to gravity. Using above 0 will aim from center to top (1).
+- Default Value: 1
 
 ### CannonAutoAimSpeed 
 - Description: Set how fast a cannon can adjust aim and fire. This speeds up both firing and animations. Lower values might not be able to fire cannons at all for smaller targets. Keep in mind sea swell will impact the aiming of cannons.
@@ -424,7 +452,11 @@ Recover is optional (defaults true). AmountPerLevel is optional (defaults 0).
 ## Vehicle Debugging
 
 ### AllowDebugCommandsForNonAdmins 
-- Description: Will will allow all debug commands for non-admins. Turning this to false will only allow debug (cheat) commands if the user is an admin.
+- Description: Will allow all debug commands for non-admins. Turning this to false will only allow debug (cheat) commands if the user is an admin.
+- Default Value: True
+
+### HasDebugCannonTargets 
+- Description: Will allow debugging cannon targets.
 - Default Value: True
 
 ### AllowEditCommandsForNonAdmins 

@@ -31,7 +31,7 @@ public class PrefabRecipeConfig : BepInExBaseConfig<PrefabRecipeConfig>
       PrefabNames.CannonFixedTier1, [
         new RequirementConfig
         {
-          Amount = 1,
+          Amount = 4,
           Item = "Bronze",
           Recover = true
         },
@@ -64,8 +64,35 @@ public class PrefabRecipeConfig : BepInExBaseConfig<PrefabRecipeConfig>
           Recover = true
         }
       ]
+    },
+    {
+      PrefabNames.CannonHandHeldItem, [
+        new RequirementConfig
+        {
+          Amount = 4,
+          Item = "Bronze",
+          Recover = true
+        },
+        new RequirementConfig
+        {
+          Amount = 1,
+          Item = "Chain",
+          Recover = true
+        },
+        new RequirementConfig
+        {
+          Amount = 2,
+          Item = "Iron",
+          Recover = true
+        }
+      ]
+    },
+    {
+      PrefabNames.PowderBarrel, [
+        new RequirementConfig { Item = "Wood", Amount = 4, Recover = true },
+        new RequirementConfig { Item = "Coal", Amount = 20, Recover = true }
+      ]
     }
-    // ...etc
   };
 
   // Map: prefabName => config entry

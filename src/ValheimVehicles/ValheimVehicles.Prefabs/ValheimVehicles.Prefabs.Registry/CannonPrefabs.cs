@@ -368,14 +368,7 @@ public class CannonPrefabs : RegisterPrefab<CannonPrefabs>
       Description = "$valheim_vehicles_cannon_handheld_item_description",
       Icon = icon,
       RepairStation = "piece_workbench",
-      Requirements =
-      [
-        new RequirementConfig
-        {
-          Amount = 3,
-          Item = "Wood"
-        }
-      ]
+      Requirements = PrefabRecipeConfig.GetRequirements(prefab.name)
     };
 
     var customItem = new CustomItem(prefab, true, itemConfig);
@@ -512,21 +505,7 @@ public class CannonPrefabs : RegisterPrefab<CannonPrefabs>
       PieceTable = PrefabRegistryController.GetPieceTableName(),
       Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Tools),
       Enabled = true,
-      Requirements =
-      [
-        new RequirementConfig
-        {
-          Amount = 20,
-          Item = "Coal",
-          Recover = true
-        },
-        new RequirementConfig
-        {
-          Amount = 4,
-          Item = "Wood",
-          Recover = true
-        }
-      ]
+      Requirements = PrefabRecipeConfig.GetRequirements(prefab.name)
     }));
   }
 
