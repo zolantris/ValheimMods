@@ -274,14 +274,20 @@ namespace ValheimVehicles.SharedScripts
       set;
     }
 
+    public Transform GetTiltTransformForPrefab()
+    {
+      return transform.name.Contains("auto") ? cannonRotationalTransform : cannonShooterTransform;
+    }
+
     // --- Add below your other methods ---
-    public void SetManualYaw(float yaw)
+    public void SetManualTilt(float yaw)
     {
       if (cannonRotationalTransform != null)
       {
-        var euler = cannonRotationalTransform.localEulerAngles;
-        euler.y = yaw;
-        cannonRotationalTransform.localEulerAngles = euler;
+        var selectedTransform = GetTiltTransformForPrefab();
+        var euler = selectedTransform.localEulerAngles;
+        euler.x = yaw;
+        selectedTransform.localEulerAngles = euler;
       }
     }
     public void SetFiringMode(CannonFiringMode mode)
@@ -976,9 +982,10 @@ namespace ValheimVehicles.SharedScripts
 
     public bool IsHandHeldCannon => cannonVariant == CannonVariant.HandHeld;
 
-    private bool CanFire(bool isManualFiring)
+    private bool CanFire(bool isManualFiring, int remainingAmmo)
     {
       if (!isActiveAndEnabled) return false;
+      if (remainingAmmo <= 0) return false;
       if (IsReloading || IsFiring || !IsHandHeldCannon && !hasNearbyPowderBarrel) return false;
       // auto fire logic prevents firing while cannon is misaligned with the target.
       if (!isManualFiring && !_canAutoFire) return false;
@@ -989,7 +996,7 @@ namespace ValheimVehicles.SharedScripts
     public bool Fire(bool isManualFiring, int remainingAmmo, out int deltaAmmo)
     {
       deltaAmmo = 0;
-      if (remainingAmmo <= 0 || !CanFire(isManualFiring))
+      if (!CanFire(isManualFiring, remainingAmmo))
       {
         return false;
       }

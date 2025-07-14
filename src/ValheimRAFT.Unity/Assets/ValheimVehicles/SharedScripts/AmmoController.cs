@@ -26,8 +26,8 @@ namespace ValheimVehicles.SharedScripts
   public class AmmoController : MonoBehaviour
   {
     private static readonly HashSet<AmmoController> Instances = new();
-    private CoroutineHandle _containerFindRoutine;
-    private CoroutineHandle _ammoUpdateRoutine;
+    private CoroutineHandle _containerFindRoutine = null!;
+    private CoroutineHandle _ammoUpdateRoutine = null!;
     public static bool HasUnlimitedAmmo = false;
 
 #if !UNITY_2022 && !UNITY_EDITOR
@@ -65,10 +65,12 @@ namespace ValheimVehicles.SharedScripts
     {
       IsPiecesController = PrefabNames.IsVehiclePiecesContainer(transform.root.name);
       IsHandheld = transform.name.Contains("handheld");
+      InitCoroutines();
     }
 
     private void InitCoroutines()
     {
+      _ammoUpdateRoutine ??= new CoroutineHandle(this);
       _containerFindRoutine ??= new CoroutineHandle(this);
     }
 
@@ -82,6 +84,7 @@ namespace ValheimVehicles.SharedScripts
       // bail on handheld.
       if (IsHandheld) return;
       Instances.Add(this);
+      InitCoroutines();
 
 #if !UNITY_2022 && !UNITY_EDITOR
       ValheimContainerTracker.OnContainerAddSubscriptions += TryAddNearbyContainer;
@@ -130,7 +133,7 @@ namespace ValheimVehicles.SharedScripts
     {
       if (IsHandheld)
       {
-        UpdateAvailableAmmoTypes();
+        _ammoUpdateRoutine.Start(UpdateAvailableAmmoTypes());
         return;
       }
       if (_containerFindRoutine.IsRunning)
@@ -197,7 +200,7 @@ namespace ValheimVehicles.SharedScripts
       }
 #endif
       yield return null;
-      UpdateAvailableAmmoTypes();
+      yield return UpdateAvailableAmmoTypes();
     }
 
 #if !UNITY_EDITOR && !UNITY_2022
@@ -273,7 +276,7 @@ namespace ValheimVehicles.SharedScripts
       InventorySnapshotData[inventory] = new AmmoInventoryData { explosiveAmmo = currentExplosiveAmmo, solidAmmo = currentSolidAmmo };
     }
 #endif
-    private void UpdateAvailableAmmoTypes()
+    private IEnumerator UpdateAvailableAmmoTypes()
     {
       if (HasUnlimitedAmmo)
       {
@@ -295,9 +298,9 @@ namespace ValheimVehicles.SharedScripts
       else
       {
         var player = GetComponentInParent<Player>();
-        if (player == null || player.IsDead() || player.IsTeleporting()) return;
+        if (player == null || player.IsDead() || player.IsTeleporting()) yield break;
         var inventory = player.GetInventory();
-        if (inventory == null) return;
+        if (inventory == null) yield break;
         currentSolidAmmo += inventory.CountItems(SolidAmmoToken);
         currentExplosiveAmmo += inventory.CountItems(ExplosiveAmmoToken);
       }

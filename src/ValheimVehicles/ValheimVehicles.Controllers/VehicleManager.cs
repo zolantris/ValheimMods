@@ -454,7 +454,7 @@
       // has to set itself. Otherwise it is mismatched unless saved as a ZDO value.
       SetVehicleVariant(vehicleVariant);
 
-      VehicleConfigSync = gameObject.AddComponent<VehicleConfigSyncComponent>();
+      VehicleConfigSync = gameObject.GetOrAddComponent<VehicleConfigSyncComponent>();
       VehicleConfigSync.OnLoadSubscriptions += OnVehicleConfigChange;
       // this flag can be updated manually via VehicleCommands.
       HasVehicleDebugger = VehicleDebugConfig.VehicleDebugMenuEnabled.Value;

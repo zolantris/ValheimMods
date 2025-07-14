@@ -8,6 +8,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using ValheimVehicles.Controllers;
 using ValheimVehicles.SharedScripts.Helpers;
 
 #endregion
@@ -89,7 +90,7 @@ namespace ValheimVehicles.SharedScripts
         { CannonDirectionGroup.Back, new List<CannonController>() },
         { CannonDirectionGroup.Left, new List<CannonController>() }
       };
-    private readonly Dictionary<CannonDirectionGroup, float> _manualGroupYaw =
+    private readonly Dictionary<CannonDirectionGroup, float> _manualGroupTilt =
       new()
       {
         { CannonDirectionGroup.Forward, 0f },
@@ -99,7 +100,13 @@ namespace ValheimVehicles.SharedScripts
       };
 
     public IReadOnlyDictionary<CannonDirectionGroup, List<CannonController>> ManualCannonGroups => _manualCannonGroups;
-    public IReadOnlyDictionary<CannonDirectionGroup, float> ManualGroupYaw => _manualGroupYaw;
+    public IReadOnlyDictionary<CannonDirectionGroup, float> ManualGroupTilt => _manualGroupTilt;
+    public CannonFiringHotkeys _cannonFiringHotkeys;
+
+#if !UNITY_2022 && !UNITY_EDITOR
+    private VehiclePiecesController _piecesController;
+#endif
+    public Transform _forwardTransform { get; set; }
 
     private void Awake()
     {
@@ -107,6 +114,14 @@ namespace ValheimVehicles.SharedScripts
       _acquireTargetsRoutine = new CoroutineHandle(this);
 
       _ammoController = gameObject.GetOrAddComponent<AmmoController>();
+
+      SetupForwardTransform();
+
+
+
+      // todo this should not be initialized here. It should be added to players controlling vehicle only and removed on controls removal.
+      _cannonFiringHotkeys = gameObject.GetOrAddComponent<CannonFiringHotkeys>();
+      _cannonFiringHotkeys.SetTargetController(this);
 
       IsHostileCharacter = t =>
       {
@@ -148,6 +163,31 @@ namespace ValheimVehicles.SharedScripts
       RefreshPlayerDefenseTriggers();
 
       RecalculateCannonGroups(); // New: Build initial grouping
+    }
+
+    public void SetupForwardTransform()
+    {
+#if !UNITY_2022 && !UNITY_EDITOR
+      _piecesController = GetComponent<VehiclePiecesController>();
+      _forwardTransform = _piecesController != null && _piecesController.MovementController != null ? _piecesController.MovementController.ShipDirection : transform;
+#else
+      ForwardTransform = transform
+#endif
+    }
+
+    /// <summary>
+    /// Ensures some components are not retained.
+    /// </summary>
+    protected internal virtual void OnDestroy()
+    {
+      if (_ammoController != null)
+      {
+        Destroy(_ammoController);
+      }
+      if (_cannonFiringHotkeys != null)
+      {
+        Destroy(_cannonFiringHotkeys);
+      }
     }
 
     private void FixedUpdate()
@@ -574,7 +614,7 @@ namespace ValheimVehicles.SharedScripts
 
     private void AddManualCannonToGroup(CannonController cannon)
     {
-      var group = GetDirectionGroup(transform, cannon.transform);
+      var group = GetDirectionGroup(_forwardTransform, cannon.transform);
       _manualCannonGroups[group].Add(cannon);
       cannon.CurrentManualDirectionGroup = group;
     }
@@ -605,13 +645,18 @@ namespace ValheimVehicles.SharedScripts
     }
 
     // Yaw per group
-    public void SetManualGroupYaw(CannonDirectionGroup group, float yaw)
+    public void SetManualGroupTilt(CannonDirectionGroup group, float yaw)
     {
-      _manualGroupYaw[group] = yaw;
+      _manualGroupTilt[group] = yaw;
+
+      foreach (var cannon in _manualCannonGroups[group])
+      {
+        cannon.SetManualTilt(yaw);
+      }
     }
     public float GetManualGroupYaw(CannonDirectionGroup group)
     {
-      return _manualGroupYaw[group];
+      return _manualGroupTilt[group];
     }
 
     public void StartManualGroupFiring(CannonDirectionGroup group)
@@ -629,14 +674,14 @@ namespace ValheimVehicles.SharedScripts
     {
       var totalAmmoDeltaSolid = 0;
       var totalAmmoDeltaExplosive = 0;
-      var yaw = _manualGroupYaw[group];
+      var tilt = _manualGroupTilt[group];
       var cannons = _manualCannonGroups[group].ToList();
 
       foreach (var cannon in cannons)
       {
         if (!cannon) continue;
 
-        cannon.SetManualYaw(yaw);
+        cannon.SetManualTilt(tilt);
 
         if (cannon.Fire(
               true,
@@ -701,25 +746,29 @@ namespace ValheimVehicles.SharedScripts
 
     private static CannonDirectionGroup GetDirectionGroup(Transform reference, Transform cannon)
     {
-      var toCannon = cannon.position - reference.position;
-      toCannon.y = 0f;
-      if (toCannon.sqrMagnitude < 1e-4f)
-        return CannonDirectionGroup.Forward;
+      // Compute the yaw difference between the reference (vehicle) and the cannon's forward
+      // 0 = Forward, 90 = Right, 180/-180 = Back, -90 = Left
 
-      var local = reference.InverseTransformDirection(toCannon.normalized);
-      var angle = Mathf.Atan2(local.x, local.z) * Mathf.Rad2Deg;
-      angle = (angle + 360f) % 360f;
+      // Get the local rotation of the cannon relative to the reference
+      var localRotation = Quaternion.Inverse(reference.rotation) * cannon.rotation;
+      var localYaw = localRotation.eulerAngles.y;
 
-      if (angle >= 315f || angle < 45f)
+      // Convert yaw to -180..180 for easy grouping
+      var yaw = Mathf.DeltaAngle(0, localYaw);
+
+      // Group by quadrant (Forward, Right, Back, Left)
+      if (yaw >= -45f && yaw < 45f)
         return CannonDirectionGroup.Forward;
-      if (angle >= 45f && angle < 135f)
+      if (yaw >= 45f && yaw < 135f)
         return CannonDirectionGroup.Right;
-      if (angle >= 135f && angle < 225f)
-        return CannonDirectionGroup.Back;
-      return CannonDirectionGroup.Left;
+      if (yaw >= -135f && yaw < -45f)
+        return CannonDirectionGroup.Left;
+      // All others (135..180, -180..-135) = Back
+      return CannonDirectionGroup.Back;
     }
 
-    private void RecalculateCannonGroups()
+
+    public void RecalculateCannonGroups()
     {
       // O(N) - Efficient, no allocations except per-list
       _groupedCannons = new Dictionary<CannonDirectionGroup, List<CannonController>>
@@ -732,7 +781,7 @@ namespace ValheimVehicles.SharedScripts
       foreach (var cannon in allCannonControllers)
       {
         if (cannon == null) continue;
-        var group = GetDirectionGroup(transform, cannon.transform);
+        var group = GetDirectionGroup(_forwardTransform, cannon.transform);
         _groupedCannons[group].Add(cannon);
       }
     }

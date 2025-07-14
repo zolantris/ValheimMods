@@ -626,6 +626,7 @@
             OnAddUniquePieceDestroyPrevious(_steeringWheelPiece);
             _steeringWheelPiece = wheel;
             RotateVehicleForwardPosition();
+
             wheel.InitializeControls(netView, Manager);
             break;
           case TeleportWorld portal:
@@ -2921,6 +2922,11 @@
       MovementController.UpdateShipDirection(
         _steeringWheelPiece.transform
           .localRotation);
+
+      if (targetController)
+      {
+        targetController.RecalculateCannonGroups();
+      }
     }
 
     /// <summary>
