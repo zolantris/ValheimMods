@@ -196,7 +196,7 @@ public class CustomMeshCreatorComponent : MonoBehaviour
     var up = Vector3.Cross(forward, right).normalized; // Up direction
 
     // Create the rotation from these vectors
-    var rotation = Quaternion.LookRotation(forward, up);
+    var rotation = QuaternionExtensions.LookRotationSafe(forward, up);
 
     return rotation;
   }

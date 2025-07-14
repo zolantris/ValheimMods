@@ -1,21 +1,14 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Dynamic;
 using System.Linq;
 using System.Text.RegularExpressions;
-using HarmonyLib;
-using Jotunn.Managers;
 using TMPro;
 using UnityEngine;
-using UnityEngine.Serialization;
 using ValheimVehicles.BepInExConfig;
 using ValheimVehicles.ConsoleCommands;
-using ValheimVehicles.Controllers;
 using ValheimVehicles.Prefabs;
-using ValheimVehicles.Components;
-using Logger = Jotunn.Logger;
-using Object = UnityEngine.Object;
+using ValheimVehicles.SharedScripts;
 
 namespace ValheimVehicles.Components;
 
@@ -241,8 +234,8 @@ public class VehicleDebugHelpers : MonoBehaviour
     {
       textTransform.LookAt(Camera.main.transform);
       textTransform.rotation =
-        Quaternion.LookRotation(textTransform.forward *
-                                -1); // Flip to face correctly
+        QuaternionExtensions.LookRotationSafe(textTransform.forward *
+                                              -1); // Flip to face correctly
     }
   }
 
@@ -328,10 +321,10 @@ public class VehicleDebugHelpers : MonoBehaviour
 
   private IEnumerable DrawCollidersCoroutine()
   {
-    Logger.LogDebug("called DrawCollidersCoroutine");
+    LoggerProvider.LogDebugDebounced("called DrawCollidersCoroutine");
     while (autoUpdateColliders == true)
     {
-      Logger.LogDebug("DrawCollidersCoroutine Update");
+      LoggerProvider.LogDebugDebounced("DrawCollidersCoroutine Update");
       DrawAllColliders();
       yield return null;
     }

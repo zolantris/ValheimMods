@@ -108,6 +108,8 @@ namespace ValheimVehicles.SharedScripts
       if (ropeLine == null) ropeLine = GetComponent<LineRenderer>();
       UpdateRopeVisual();
       UpdateAnchorState(AnchorState.Recovered, GetCurrentStateText());
+
+      anchorRb.MovePosition(anchorRopeAttachStartPoint.position);
     }
 
     private void Update()
@@ -133,7 +135,7 @@ namespace ValheimVehicles.SharedScripts
         case AnchorState.Idle:
           if (anchorRb != null)
           {
-            anchorRb.transform.localPosition = anchorStartLocalPosition;
+            anchorRb.transform.position = anchorRopeAttachStartPoint.position;
             anchorRb.transform.localRotation = Quaternion.identity;
           }
           break;

@@ -8,11 +8,22 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using ValheimVehicles.Controllers;
+using ValheimVehicles.SharedScripts.Helpers;
 
 #endregion
 
 namespace ValheimVehicles.SharedScripts
 {
+  public enum CannonDirectionGroup
+  {
+    Forward,
+    Right,
+    Back,
+    Left
+  }
+
+  [RequireComponent(typeof(AmmoController))]
   public class TargetController : MonoBehaviour
   {
     public enum TargetingMode
@@ -41,7 +52,7 @@ namespace ValheimVehicles.SharedScripts
     [Header("Defense Areas")]
     [SerializeField] public List<DefenseArea> defendAreas = new();
 
-// Player defense: player transforms
+    // Player defense: player transforms
     [Tooltip("Player defense")]
     [SerializeField] public List<Transform> defendPlayers = new();
 
@@ -63,10 +74,48 @@ namespace ValheimVehicles.SharedScripts
     private CoroutineHandle _acquireTargetsRoutine;
     private CoroutineHandle _autoFireCannonsRoutine;
 
+    public Action? OnCannonListUpdated;
+
+    private AmmoController _ammoController = null!;
+
+    // --- Direction Group Cache ---
+    private Dictionary<CannonDirectionGroup, List<CannonController>> _groupedCannons = null!;
+    public IReadOnlyDictionary<CannonDirectionGroup, List<CannonController>> GroupedCannons => _groupedCannons;
+
+    private readonly Dictionary<CannonDirectionGroup, List<CannonController>> _manualCannonGroups =
+      new()
+      {
+        { CannonDirectionGroup.Forward, new List<CannonController>() },
+        { CannonDirectionGroup.Right, new List<CannonController>() },
+        { CannonDirectionGroup.Back, new List<CannonController>() },
+        { CannonDirectionGroup.Left, new List<CannonController>() }
+      };
+    private readonly Dictionary<CannonDirectionGroup, float> _manualGroupTilt =
+      new()
+      {
+        { CannonDirectionGroup.Forward, 0f },
+        { CannonDirectionGroup.Right, 0f },
+        { CannonDirectionGroup.Back, 0f },
+        { CannonDirectionGroup.Left, 0f }
+      };
+
+    public IReadOnlyDictionary<CannonDirectionGroup, List<CannonController>> ManualCannonGroups => _manualCannonGroups;
+    public IReadOnlyDictionary<CannonDirectionGroup, float> ManualGroupTilt => _manualGroupTilt;
+    public CannonFiringHotkeys _cannonFiringHotkeys;
+
+#if !UNITY_2022 && !UNITY_EDITOR
+    private VehiclePiecesController _piecesController;
+#endif
+    public Transform _forwardTransform { get; set; }
+
     private void Awake()
     {
       _autoFireCannonsRoutine = new CoroutineHandle(this);
       _acquireTargetsRoutine = new CoroutineHandle(this);
+
+      _ammoController = gameObject.GetOrAddComponent<AmmoController>();
+
+      SetupForwardTransform();
 
       IsHostileCharacter = t =>
       {
@@ -92,10 +141,10 @@ namespace ValheimVehicles.SharedScripts
       {
         switch (allCannonController.GetFiringMode())
         {
-          case CannonController.FiringMode.Manual:
+          case CannonFiringMode.Manual:
             manualFireControllers.Add(allCannonController);
             break;
-          case CannonController.FiringMode.Auto:
+          case CannonFiringMode.Auto:
             autoTargetControllers.Add(allCannonController);
             break;
           default:
@@ -104,9 +153,35 @@ namespace ValheimVehicles.SharedScripts
       }
 #endif
 
-      UpdateAutoCannonTargets();
       RefreshAllDefenseAreaTriggers();
       RefreshPlayerDefenseTriggers();
+
+      RecalculateCannonGroups(); // New: Build initial grouping
+    }
+
+    public void SetupForwardTransform()
+    {
+#if !UNITY_2022 && !UNITY_EDITOR
+      _piecesController = GetComponent<VehiclePiecesController>();
+      _forwardTransform = _piecesController != null && _piecesController.MovementController != null ? _piecesController.MovementController.ShipDirection : transform;
+#else
+      ForwardTransform = transform
+#endif
+    }
+
+    /// <summary>
+    /// Ensures some components are not retained.
+    /// </summary>
+    protected internal virtual void OnDestroy()
+    {
+      if (_ammoController != null)
+      {
+        Destroy(_ammoController);
+      }
+      if (_cannonFiringHotkeys != null)
+      {
+        Destroy(_cannonFiringHotkeys);
+      }
     }
 
     private void FixedUpdate()
@@ -126,7 +201,7 @@ namespace ValheimVehicles.SharedScripts
     {
       _autoFireCannonsRoutine ??= new CoroutineHandle(this);
       _acquireTargetsRoutine ??= new CoroutineHandle(this);
-      
+
 #if UNITY_EDITOR
       // mostly for local testing.
       GetComponentsInChildren(false, allCannonControllers);
@@ -134,10 +209,10 @@ namespace ValheimVehicles.SharedScripts
       {
         switch (allCannonController.GetFiringMode())
         {
-          case CannonController.FiringMode.Manual:
+          case CannonFiringMode.Manual:
             manualFireControllers.Add(allCannonController);
             break;
-          case CannonController.FiringMode.Auto:
+          case CannonFiringMode.Auto:
             autoTargetControllers.Add(allCannonController);
             break;
           default:
@@ -145,6 +220,7 @@ namespace ValheimVehicles.SharedScripts
         }
       }
 #endif
+      RecalculateCannonGroups();
     }
 
     private void OnDrawGizmos()
@@ -165,20 +241,12 @@ namespace ValheimVehicles.SharedScripts
         Gizmos.DrawWireCube(area.center, area.size);
     }
 
-    /// <summary>
-    /// Todo for area bombing/and base combat or deforesting. not ready.
-    /// </summary>
-    /// <param name="index"></param>
     public void AddDefenseArea(Vector3 center, Vector3 size)
     {
       defendAreas.Add(new DefenseArea { center = center, size = size });
       RefreshAllDefenseAreaTriggers();
     }
 
-    /// <summary>
-    /// Todo for area bombing/and base combat or deforesting. not ready.
-    /// </summary>
-    /// <param name="index"></param>
     public void RemoveDefenseArea(int index)
     {
       if (index < 0 || index >= defendAreas.Count) return;
@@ -265,18 +333,44 @@ namespace ValheimVehicles.SharedScripts
       }
     }
 
-    private IEnumerator FireCannonDelayed(CannonController cannon, float delay, bool isManualFire)
+    private IEnumerator FireCannonDelayed(CannonController cannon, float delay, bool isManualFire, Action<int> OnAmmoUpdate)
     {
-      yield return new WaitForSeconds(delay);
-      cannon.Fire(isManualFire);
+      var ammoVariant = cannon.AmmoVariant;
+      var remainingAmmo = _ammoController.GetAmmoAmountFromCannonballVariant(ammoVariant);
+
+      // only yield if the cannon actually fires
+      if (cannon.Fire(isManualFire, remainingAmmo, out var deltaAmmo))
+      {
+        OnAmmoUpdate.Invoke(deltaAmmo);
+        yield return new WaitForSeconds(delay);
+      }
     }
 
     private IEnumerator ManualFireCannons(int groupId)
     {
-      foreach (var cannonsController in manualFireControllers.ToList())
+      var totalAmmoDeltaExplosive = 0;
+      var totalAmmoDeltaSolid = 0;
+
+      var list = manualFireControllers.ToList();
+      foreach (var cannonsController in list)
       {
         if (!cannonsController || cannonsController.ManualFiringGroupId != groupId) continue;
-        yield return FireCannonDelayed(cannonsController, FiringDelayPerCannon, true);
+        yield return FireCannonDelayed(cannonsController, FiringDelayPerCannon, true, (deltaAmmo) =>
+        {
+          if (cannonsController.AmmoVariant == CannonballVariant.Solid)
+          {
+            totalAmmoDeltaSolid += deltaAmmo;
+          }
+          if (cannonsController.AmmoVariant == CannonballVariant.Explosive)
+          {
+            totalAmmoDeltaExplosive += deltaAmmo;
+          }
+        });
+      }
+
+      if (list.Count > 0 && (totalAmmoDeltaExplosive > 0 || totalAmmoDeltaSolid > 0))
+      {
+        _ammoController.OnAmmoChanged(totalAmmoDeltaSolid, totalAmmoDeltaExplosive);
       }
 
       yield return new WaitForSeconds(FiringCooldown);
@@ -284,10 +378,28 @@ namespace ValheimVehicles.SharedScripts
 
     private IEnumerator AutoFireCannons()
     {
-      foreach (var cannonsController in autoTargetControllers.ToList())
+      var totalAmmoDeltaExplosive = 0;
+      var totalAmmoDeltaSolid = 0;
+      var list = autoTargetControllers.ToList();
+      foreach (var cannonsController in list)
       {
         if (!cannonsController) continue;
-        yield return FireCannonDelayed(cannonsController, FiringDelayPerCannon, false);
+        yield return FireCannonDelayed(cannonsController, FiringDelayPerCannon, false, (deltaAmmo) =>
+        {
+          if (cannonsController.AmmoVariant == CannonballVariant.Solid)
+          {
+            totalAmmoDeltaSolid += deltaAmmo;
+          }
+          if (cannonsController.AmmoVariant == CannonballVariant.Explosive)
+          {
+            totalAmmoDeltaExplosive += deltaAmmo;
+          }
+        });
+      }
+
+      if (list.Count > 0 && (totalAmmoDeltaExplosive > 0 || totalAmmoDeltaSolid > 0))
+      {
+        _ammoController.OnAmmoChanged(totalAmmoDeltaSolid, totalAmmoDeltaExplosive);
       }
 
       yield return new WaitForSeconds(FiringCooldown);
@@ -346,9 +458,7 @@ namespace ValheimVehicles.SharedScripts
     private bool IsValidHostile(Transform t)
     {
       if (IsHostileCharacter(t)) return true;
-
       // fallback
-      // Replace this with your actual hostile-check logic
       return t.name.StartsWith("enemy");
     }
 
@@ -357,14 +467,12 @@ namespace ValheimVehicles.SharedScripts
       List<Transform> targets,
       int maxCannonsPerTarget = 1)
     {
-      // 1. Map to keep track of cannons per target.
       var assignedCounts = new Dictionary<Transform, int>(targets.Count);
       foreach (var t in targets)
         assignedCounts[t] = 0;
 
       var unassignedCannons = new List<CannonController>(cannons.Count);
 
-      // 2. Retain existing assignments if possible (O(N))
       foreach (var cannon in cannons)
       {
         var assigned = cannon.firingTarget;
@@ -394,12 +502,10 @@ namespace ValheimVehicles.SharedScripts
         unassignedCannons.Add(cannon);
       }
 
-      // 3. Assign unassigned cannons to best targets (O(N*M))
       foreach (var cannon in unassignedCannons)
       {
         Transform bestTarget = null;
         Vector3? bestAimPoint = null;
-        // just 1 higher than max distance.
         var bestDist = cannon.maxFiringRange + 1f;
 
         foreach (var t in targets)
@@ -422,11 +528,6 @@ namespace ValheimVehicles.SharedScripts
           cannon.currentAimPoint = bestAimPoint;
           assignedCounts[bestTarget]++;
         }
-        // else
-        // {
-        //   cannon.firingTarget = null;
-        //   cannon.currentAimPoint = null;
-        // }
       }
     }
 
@@ -483,14 +584,13 @@ namespace ValheimVehicles.SharedScripts
       {
         routine = new CoroutineHandle(this);
       }
-      if (routine.IsRunning) return;
+      if (routine.IsRunning || manualFireControllers.Count == 0) return;
       routine.Start(ManualFireCannons(groupId));
     }
 
-
     public void StartAutoFiring()
     {
-      if (_autoFireCannonsRoutine.IsRunning) return;
+      if (_autoFireCannonsRoutine.IsRunning || autoTargetControllers.Count == 0) return;
       _autoFireCannonsRoutine.Start(AutoFireCannons());
     }
 
@@ -506,21 +606,116 @@ namespace ValheimVehicles.SharedScripts
       RefreshPlayerDefenseTriggers();
     }
 
+    private void AddManualCannonToGroup(CannonController cannon)
+    {
+      var group = GetDirectionGroup(_forwardTransform, cannon.transform);
+      _manualCannonGroups[group].Add(cannon);
+      cannon.CurrentManualDirectionGroup = group;
+    }
+
+    private void RemoveManualCannonFromGroup(CannonController cannon)
+    {
+      if (cannon.CurrentManualDirectionGroup.HasValue)
+      {
+        var group = cannon.CurrentManualDirectionGroup.Value;
+        _manualCannonGroups[group].Remove(cannon);
+        cannon.CurrentManualDirectionGroup = null;
+      }
+      else
+      {
+        // Fallback: rare
+        foreach (var kv in _manualCannonGroups)
+          kv.Value.Remove(cannon);
+      }
+    }
+
+    /// <summary>
+    /// Call if you move/re-parent a manual cannon at runtime and need to regroup.
+    /// </summary>
+    public void RefreshManualCannonGroup(CannonController cannon)
+    {
+      RemoveManualCannonFromGroup(cannon);
+      AddManualCannonToGroup(cannon);
+    }
+
+    // Yaw per group
+    public void SetManualGroupTilt(CannonDirectionGroup group, float yaw)
+    {
+      _manualGroupTilt[group] = yaw;
+
+      foreach (var cannon in _manualCannonGroups[group])
+      {
+        cannon.SetManualTilt(yaw);
+      }
+    }
+    public float GetManualGroupYaw(CannonDirectionGroup group)
+    {
+      return _manualGroupTilt[group];
+    }
+
+    public void StartManualGroupFiring(CannonDirectionGroup group)
+    {
+      if (!_manualFireCannonsRoutines.TryGetValue((int)group, out var routine))
+        routine = new CoroutineHandle(this);
+      if (routine.IsRunning || _manualCannonGroups[group].Count == 0) return;
+      routine.Start(ManualFireCannonsGroupCoroutine(group));
+    }
+
+    /// <summary>
+    /// Coroutine: fires all cannons in the group in staggered sequence, tracks ammo usage, applies OnAmmoChanged at the end.
+    /// </summary>
+    private IEnumerator ManualFireCannonsGroupCoroutine(CannonDirectionGroup group)
+    {
+      var totalAmmoDeltaSolid = 0;
+      var totalAmmoDeltaExplosive = 0;
+      var tilt = _manualGroupTilt[group];
+      var cannons = _manualCannonGroups[group].ToList();
+
+      foreach (var cannon in cannons)
+      {
+        if (!cannon) continue;
+
+        cannon.SetManualTilt(tilt);
+
+        if (cannon.Fire(
+              true,
+              _ammoController.GetAmmoAmountFromCannonballVariant(cannon.AmmoVariant),
+              out var deltaAmmo))
+        {
+          if (cannon.AmmoVariant == CannonballVariant.Solid)
+            totalAmmoDeltaSolid += deltaAmmo;
+          else if (cannon.AmmoVariant == CannonballVariant.Explosive)
+            totalAmmoDeltaExplosive += deltaAmmo;
+
+          // Stagger delay only if fired
+          yield return new WaitForSeconds(FiringDelayPerCannon);
+        }
+      }
+
+      if (cannons.Count > 0 && (totalAmmoDeltaSolid != 0 || totalAmmoDeltaExplosive != 0))
+      {
+        _ammoController.OnAmmoChanged(totalAmmoDeltaSolid, totalAmmoDeltaExplosive);
+      }
+
+      yield return new WaitForSeconds(FiringCooldown);
+    }
+
     public void AddCannon(CannonController controller)
     {
       allCannonControllers.Add(controller);
-
       switch (controller.GetFiringMode())
       {
-        case CannonController.FiringMode.Manual:
+        case CannonFiringMode.Manual:
           manualFireControllers.Add(controller);
+          AddManualCannonToGroup(controller);
           break;
-        case CannonController.FiringMode.Auto:
+        case CannonFiringMode.Auto:
           autoTargetControllers.Add(controller);
           break;
         default:
           throw new ArgumentOutOfRangeException();
       }
+      OnCannonListUpdated?.Invoke();
     }
 
     public void RemoveCannon(CannonController controller)
@@ -528,16 +723,67 @@ namespace ValheimVehicles.SharedScripts
       allCannonControllers.Remove(controller);
       switch (controller.GetFiringMode())
       {
-
-        case CannonController.FiringMode.Manual:
+        case CannonFiringMode.Manual:
           manualFireControllers.Remove(controller);
+          RemoveManualCannonFromGroup(controller);
           break;
-        case CannonController.FiringMode.Auto:
+        case CannonFiringMode.Auto:
           autoTargetControllers.Remove(controller);
           break;
         default:
           throw new ArgumentOutOfRangeException();
       }
+      OnCannonListUpdated?.Invoke();
+    }
+
+    // --- GROUPING LOGIC ---
+
+    private static CannonDirectionGroup GetDirectionGroup(Transform reference, Transform cannon)
+    {
+      // Compute the yaw difference between the reference (vehicle) and the cannon's forward
+      // 0 = Forward, 90 = Right, 180/-180 = Back, -90 = Left
+
+      // Get the local rotation of the cannon relative to the reference
+      var localRotation = Quaternion.Inverse(reference.rotation) * cannon.rotation;
+      var localYaw = localRotation.eulerAngles.y;
+
+      // Convert yaw to -180..180 for easy grouping
+      var yaw = Mathf.DeltaAngle(0, localYaw);
+
+      // Group by quadrant (Forward, Right, Back, Left)
+      if (yaw >= -45f && yaw < 45f)
+        return CannonDirectionGroup.Forward;
+      if (yaw >= 45f && yaw < 135f)
+        return CannonDirectionGroup.Right;
+      if (yaw >= -135f && yaw < -45f)
+        return CannonDirectionGroup.Left;
+      // All others (135..180, -180..-135) = Back
+      return CannonDirectionGroup.Back;
+    }
+
+
+    public void RecalculateCannonGroups()
+    {
+      // O(N) - Efficient, no allocations except per-list
+      _groupedCannons = new Dictionary<CannonDirectionGroup, List<CannonController>>
+      {
+        { CannonDirectionGroup.Forward, new List<CannonController>() },
+        { CannonDirectionGroup.Right, new List<CannonController>() },
+        { CannonDirectionGroup.Back, new List<CannonController>() },
+        { CannonDirectionGroup.Left, new List<CannonController>() }
+      };
+      foreach (var cannon in allCannonControllers)
+      {
+        if (cannon == null) continue;
+        var group = GetDirectionGroup(_forwardTransform, cannon.transform);
+        _groupedCannons[group].Add(cannon);
+      }
+    }
+
+    // Example public API for outside use (can expand to support N directions easily)
+    public IReadOnlyList<CannonController> GetCannonsByDirection(CannonDirectionGroup group)
+    {
+      return _groupedCannons.TryGetValue(group, out var list) ? list : Array.Empty<CannonController>();
     }
 
     [Serializable]

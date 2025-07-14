@@ -5,6 +5,7 @@
   using System.Collections.Generic;
   using System.Diagnostics;
   using System.Linq;
+  using Jotunn;
   using UnityEngine;
   using UnityEngine.Serialization;
   using ValheimVehicles.Components;
@@ -400,7 +401,7 @@
 
       var isVehicleCollider = PrefabNames.IsVehicleCollider(collision.transform.name);
 
-      if (isVehicleCollider || PrefabNames.IsVehiclePiecesCollider(collision.transform.name))
+      if (isVehicleCollider || PrefabNames.IsVehiclePiecesContainer(collision.transform.name))
       {
         foreach (var c in collision.contacts)
         {
@@ -473,7 +474,7 @@
 
     public bool TryBailOnCollisionOfDifferentVehicleType(Collision collision)
     {
-      if (PrefabNames.IsVehiclePiecesCollider(collision.collider.name))
+      if (PrefabNames.IsVehiclePiecesContainer(collision.collider.name))
       {
         var otherVPC = collision.collider.GetComponentInParent<VehiclePiecesController>();
         if (!otherVPC) return true;
@@ -733,7 +734,7 @@
       var targetAnchorTransform = parentPieceController.m_dockAnchor.m_attachpoint;
 
       // --- Rotation: we want our anchor to face into the target anchor (opposite direction)
-      var targetAnchorFacing = Quaternion.LookRotation(-targetAnchorTransform.forward, targetAnchorTransform.up);
+      var targetAnchorFacing = QuaternionExtensions.LookRotationSafe(-targetAnchorTransform.forward, targetAnchorTransform.up);
       var localAnchorRotation = ourAnchorTransform.rotation;
       var rotationDelta = targetAnchorFacing * Quaternion.Inverse(localAnchorRotation);
 
@@ -2999,7 +3000,7 @@
       distanceMovedSinceHaulTick += Vector3.Distance(position, newPosition);
 
       // Calculate desired rotation
-      var targetRotation = Quaternion.LookRotation(direction, Vector3.up);
+      var targetRotation = QuaternionExtensions.LookRotationSafe(direction, Vector3.up);
 
       // Adjust rotation to align with the pivot’s forward
       var adjustedRotation = Quaternion.Euler(0, targetRotation.eulerAngles.y - ShipDirection.rotation.eulerAngles.y, 0);
@@ -3161,7 +3162,7 @@
         case Ship.Speed.Full:
         case Ship.Speed.Half:
         {
-          var to = Quaternion.LookRotation(
+          var to = QuaternionExtensions.LookRotationSafe(
             -Vector3.Lerp(windDir,
               Vector3.Normalize(windDir - ShipDirection.forward), t),
             ShipDirection.up);
@@ -3176,8 +3177,8 @@
         {
           m_mastObject.transform.localRotation = Quaternion.Lerp(m_mastObject.transform.localRotation, Quaternion.identity, Time.fixedDeltaTime);
           // var from =
-          //   Quaternion.LookRotation(-ShipDirection.forward, ShipDirection.up);
-          // var to2 = Quaternion.LookRotation(-windDir, ShipDirection.up);
+          //   QuaternionExtensions.LookRotationSafe(-ShipDirection.forward, ShipDirection.up);
+          // var to2 = QuaternionExtensions.LookRotationSafe(-windDir, ShipDirection.up);
           // to2 = Quaternion.RotateTowards(from, to2, 80f);
           // m_mastObject.transform.rotation =
           //   Quaternion.RotateTowards(m_mastObject.transform.rotation, to2,
@@ -4482,6 +4483,11 @@
         return;
 
       EjectPreviousPlayerFromControls(previousPlayer);
+
+      // adds targeting controls to player when they take over vehicle.
+      var firingHotkeys = targetPlayer.gameObject.GetOrAddComponent<CannonFiringHotkeys>();
+      firingHotkeys.SetTargetController(PiecesController.targetController);
+
       UpdatePlayerOnShip(targetPlayer);
       UpdateVehicleSpeedThrottle();
       VehicleOnboardController.AddOrRemovePlayerBlockingCamera(targetPlayer);
@@ -4526,6 +4532,13 @@
     private void EjectPreviousPlayerFromControls(Player? player)
     {
       if (player == null) return;
+
+      var firingHotkeys = player.GetComponent<CannonFiringHotkeys>();
+      if (PiecesController != null && PiecesController.targetController != null && firingHotkeys != null && firingHotkeys.targetController == PiecesController.targetController)
+      {
+        Destroy(firingHotkeys);
+      }
+
       player.m_doodadController = null;
       player.AttachStop();
     }

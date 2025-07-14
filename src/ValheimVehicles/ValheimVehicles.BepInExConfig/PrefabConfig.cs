@@ -34,19 +34,26 @@ public class PrefabConfig : BepInExBaseConfig<PrefabConfig>
   public static ConfigEntry<float> VehicleDockSphericalRadius = null!;
   public static ConfigEntry<float> VehicleDockPositionChangeSpeed = null!;
 
-  public static ConfigEntry<bool> HasCannonFireAudio { get; set; } = null!;
-  public static ConfigEntry<bool> HasCannonballExplosionAudio { get; set; } = null!;
+  public static ConfigEntry<bool> Cannon_HasFireAudio { get; set; } = null!;
+  public static ConfigEntry<float> Cannon_ReloadTime { get; set; } = null!;
+  public static ConfigEntry<bool> Cannonball_HasExplosionAudio { get; set; } = null!;
   public static ConfigEntry<bool> HasCannonballWindAudio { get; set; } = null!;
   public static ConfigEntry<float> CannonballWindAudioVolume { get; set; } = null!;
-  public static ConfigEntry<float> CannonballExplosionAudioVolume { get; set; } = null!;
+  public static ConfigEntry<float> Cannonball_ExplosionAudioVolume { get; set; } = null!;
+  public static ConfigEntry<float> Cannonball_ExplosiveRadius { get; set; } = null!;
+  public static ConfigEntry<float> Cannonball_SolidBaseDamage { get; set; } = null!;
+  public static ConfigEntry<float> Cannonball_ExplosiveBaseDamage { get; set; } = null!;
+  public static ConfigEntry<bool> DEBUG_CannonballUnlimitedAmmo { get; set; } = null!;
   public static ConfigEntry<float> CannonBallInventoryWeight { get; set; } = null!;
-  public static ConfigEntry<bool> HasCannonReloadAudio { get; set; } = null!;
-  public static ConfigEntry<float> CannonReloadAudioVolume { get; set; } = null!;
-  public static ConfigEntry<float> CannonFiringDelayPerCannon { get; set; } = null!;
-  public static ConfigEntry<float> CannonFireAudioVolume { get; set; } = null!;
+  public static ConfigEntry<bool> Cannon_HasReloadAudio { get; set; } = null!;
+  public static ConfigEntry<float> Cannon_ReloadAudioVolume { get; set; } = null!;
+  public static ConfigEntry<float> Cannon_FiringDelayPerCannon { get; set; } = null!;
+  public static ConfigEntry<float> CannonHandheld_AudioStartPosition { get; set; } = null!;
+  public static ConfigEntry<float> Cannon_FireAudioVolume { get; set; } = null!;
   public static ConfigEntry<float> CannonballSolidDamage { get; set; } = null!;
   public static ConfigEntry<float> CannonballExplosiveDamage { get; set; } = null!;
   public static ConfigEntry<float> CannonAutoAimSpeed { get; set; } = null!;
+  public static ConfigEntry<float> CannonAutoAimYOffset { get; set; } = null!;
   public static ConfigEntry<float> CannonAimMaxYRotation { get; set; } = null!;
   public static ConfigEntry<float> CannonBarrelAimMaxTiltRotation { get; set; } = null!;
   public static ConfigEntry<float> CannonBarrelAimMinTiltRotation { get; set; } = null!;
@@ -215,29 +222,68 @@ public class PrefabConfig : BepInExBaseConfig<PrefabConfig>
       ConfigHelpers.CreateConfigDescription(
         $"MaxTowing radius where a landvehicle can be grabbed/towed by a ship or flying ship. Spheres are significantly less accurate so a higher value could result in accidental matches with wrong vehicle", true, false, new AcceptableValueRange<float>(1f, 50f)));
 
+    // todo would have to subscribe to prefab registry to update this.
+    CannonBallInventoryWeight = config.BindUnique(VehicleCannonsSection, "CannonBallInventoryWeight", 4f, ConfigHelpers.CreateConfigDescription("Set the weight of cannonballs. For realism 12-48lbs for these cannons.", true, false, new AcceptableValueRange<float>(0, 100)));
 
-    CannonBallInventoryWeight = config.BindUnique(VehicleCannonsSection, "CannonBallInventoryWeight", 12f, ConfigHelpers.CreateConfigDescription("Set the weight of cannonballs. For realism 12-48lbs for these cannons.", false, false, new AcceptableValueRange<float>(0, 100)));
+    CannonHandheld_AudioStartPosition = config.BindUnique(VehicleCannonsSection, "CannonHandheld_AudioStartPosition", 0.35f, ConfigHelpers.CreateConfigDescription("Set set the audio start position. This will sound like a heavy flintlock if to close to 0f", false, true, new AcceptableValueRange<float>(0f, 1.5f)));
+    CannonHandheld_AudioStartPosition.SettingChanged += (sender, args) =>
+    {
+      CannonController.CannonHandheld_FireAudioStartTime = CannonHandheld_AudioStartPosition.Value;
+    };
 
-    HasCannonFireAudio = config.BindUnique(VehicleCannonsSection, "HasCannonFireAudio", true, ConfigHelpers.CreateConfigDescription("Allows toggling the cannon fire audio", false, false));
-    HasCannonReloadAudio = config.BindUnique(VehicleCannonsSection, "UNSTABLE_HasCannonReloadAudio", false, ConfigHelpers.CreateConfigDescription("Allows toggling the reload audio. Unstable b/c it does not sound great when many of these are fired together.", false, false));
-    HasCannonballExplosionAudio = config.BindUnique(VehicleCannonsSection, "UNSTABLE_HasCannonballExplosionAudio", true, ConfigHelpers.CreateConfigDescription("Allows toggling the cannonball explosion/impact audio. Unstable b/c it does not sound great when many of these are fired together.", false, false));
+    Cannon_HasFireAudio = config.BindUnique(VehicleCannonsSection, "Cannon_HasFireAudio", true, ConfigHelpers.CreateConfigDescription("Allows toggling the cannon fire audio", false, false));
+    Cannon_HasReloadAudio = config.BindUnique(VehicleCannonsSection, "UNSTABLE_Cannon_HasReloadAudio", false, ConfigHelpers.CreateConfigDescription("Allows toggling the reload audio. Unstable b/c it does not sound great when many of these are fired together.", false, false));
+    Cannonball_HasExplosionAudio = config.BindUnique(VehicleCannonsSection, "Cannonball_HasExplosionAudio", true, ConfigHelpers.CreateConfigDescription("Allows toggling the cannonball explosion/impact audio. Unstable b/c it does not sound great when many of these are fired together.", false, false));
 
-    CannonFiringDelayPerCannon = config.BindUnique(VehicleCannonsSection, "CannonFiringDelayPerCannon", 0.01f, ConfigHelpers.CreateConfigDescription("Allows setting cannon firing delays. This makes cannons fire in a order.", false, false, new AcceptableValueRange<float>(0, 0.3f)));
+    Cannon_FiringDelayPerCannon = config.BindUnique(VehicleCannonsSection, "Cannon_FiringDelayPerCannon", 0.01f, ConfigHelpers.CreateConfigDescription("Allows setting cannon firing delays. This makes cannons fire in a order.", false, false, new AcceptableValueRange<float>(0, 0.3f)));
+    Cannon_ReloadTime = config.BindUnique(VehicleCannonsSection, "Cannon_ReloadTime", 6f, ConfigHelpers.CreateConfigDescription("Allows setting cannon reload delays. This makes cannons reload longer or shorter. Shortest value is 100ms highest is 60seconds", false, false, new AcceptableValueRange<float>(0.1f, 60f)));
+    Cannon_ReloadTime.SettingChanged += (sender, args) =>
+    {
+      CannonController.ReloadTimeOverride = Cannon_ReloadTime.Value;
+    };
 
-    CannonReloadAudioVolume = config.BindUnique(VehicleCannonsSection, "Cannon_ReloadAudioVolume", 1f, ConfigHelpers.CreateConfigDescription("Allows customizing cannon firing audio volume", false, false));
-    CannonFireAudioVolume = config.BindUnique(VehicleCannonsSection, "Cannon_FireAudioVolume", 1f, ConfigHelpers.CreateConfigDescription("Allows customizing cannon reload audio volume", false, false));
-    CannonballExplosionAudioVolume = config.BindUnique(VehicleCannonsSection, "Cannonball_ExplosionAudioVolume", 1f, ConfigHelpers.CreateConfigDescription("Allows customizing cannon reload audio volume", false, false));
+    Cannon_ReloadAudioVolume = config.BindUnique(VehicleCannonsSection, "Cannon_ReloadAudioVolume", 1f, ConfigHelpers.CreateConfigDescription("Allows customizing cannon firing audio volume", false, false));
+    Cannon_FireAudioVolume = config.BindUnique(VehicleCannonsSection, "Cannon_FireAudioVolume", 1f, ConfigHelpers.CreateConfigDescription("Allows customizing cannon reload audio volume", false, false));
+    Cannonball_ExplosionAudioVolume = config.BindUnique(VehicleCannonsSection, "Cannonball_ExplosionAudioVolume", 1f, ConfigHelpers.CreateConfigDescription("Allows customizing cannon reload audio volume", false, false));
+
+    Cannonball_ExplosiveRadius = config.BindUnique(VehicleCannonsSection, "Cannonball_ExplosionRadius", 7.5f, ConfigHelpers.CreateConfigDescription("Allows customizing cannonball explosion radius/aoe. Large sizes will lag out objects like rocks", false, false, new AcceptableValueRange<float>(3f, 20f)));
+    Cannonball_ExplosiveRadius.SettingChanged += (sender, args) =>
+    {
+      CannonballHitScheduler.ExplosionShellRadius = Cannonball_ExplosiveRadius.Value;
+    };
+
+    Cannonball_SolidBaseDamage = config.BindUnique(VehicleCannonsSection, "Cannonball_SolidShell_BaseDamage", 85f, ConfigHelpers.CreateConfigDescription("Allows customizing cannonball solid hit damage", false, false, new AcceptableValueRange<float>(25f, 500f)));
+    Cannonball_SolidBaseDamage.SettingChanged += (sender, args) =>
+    {
+      CannonballHitScheduler.BaseDamageSolidCannonball = Cannonball_SolidBaseDamage.Value;
+    };
+
+    Cannonball_ExplosiveBaseDamage = config.BindUnique(VehicleCannonsSection, "Cannonball_ExplosiveShell_BaseDamage", 50f, ConfigHelpers.CreateConfigDescription("Allows customizing cannonball explosion hit AOE damage. The damage is uniform across the entire radius.", false, false, new AcceptableValueRange<float>(25f, 500f)));
+    Cannonball_ExplosiveBaseDamage.SettingChanged += (sender, args) =>
+    {
+      CannonballHitScheduler.BaseDamageExplosiveCannonball = Cannonball_ExplosiveBaseDamage.Value;
+    };
+
+
+    DEBUG_CannonballUnlimitedAmmo = config.BindUnique(VehicleCannonsSection, "DEBUG_CannonballUnlimitedAmmo", false, ConfigHelpers.CreateConfigDescription("Allows unlimited ammo for cannons.", true, false));
+    DEBUG_CannonballUnlimitedAmmo.SettingChanged += (sender, args) =>
+    {
+      AmmoController.HasUnlimitedAmmo = DEBUG_CannonballUnlimitedAmmo.Value;
+    };
+
+
 
     HasCannonballWindAudio = config.BindUnique(VehicleCannonsSection, "Cannonball_HasWindAudio", true, ConfigHelpers.CreateConfigDescription("Allows enable cannonball wind audio - which can be heard if a cannonball passes nearby.", false, false));
     CannonballWindAudioVolume = config.BindUnique(VehicleCannonsSection, "Cannonball_WindAudioVolume", 0.2f, ConfigHelpers.CreateConfigDescription("Allows customizing cannonball wind audio - which can be heard if a cannonball passes nearby. Recommended below 0.2f", false, false));
 
-    CannonballSolidDamage = CannonFireAudioVolume = config.BindUnique(VehicleCannonsSection, "Cannonball_SolidDamage", 30f, ConfigHelpers.CreateConfigDescription("Set the amount of damage a solid cannon ball does. This value is multiplied by the velocity of the cannonball around 90 at max speed decreasing to 20 m/s at lowest hit damage level.", false, false));
+    CannonballSolidDamage = config.BindUnique(VehicleCannonsSection, "Cannonball_SolidDamage", 30f, ConfigHelpers.CreateConfigDescription("Set the amount of damage a solid cannon ball does. This value is multiplied by the velocity of the cannonball around 90 at max speed decreasing to 20 m/s at lowest hit damage level.", false, false));
     CannonballSolidDamage.SettingChanged += (sender, args) => CannonballHitScheduler.BaseDamageSolidCannonball = CannonballSolidDamage.Value;
 
-    CannonballExplosiveDamage = CannonFireAudioVolume = config.BindUnique(VehicleCannonsSection, "Cannonball_ExplosiveDamage", 30f, ConfigHelpers.CreateConfigDescription("Set the amount of damage a explosive cannon ball does. This damage includes both the AOE and hit. AOE will do same damage on top of the impact of the shot.", false, false));
+    CannonballExplosiveDamage = config.BindUnique(VehicleCannonsSection, "Cannonball_ExplosiveDamage", 30f, ConfigHelpers.CreateConfigDescription("Set the amount of damage a explosive cannon ball does. This damage includes both the AOE and hit. AOE will do same damage on top of the impact of the shot.", false, false));
     CannonballExplosiveDamage.SettingChanged += (sender, args) => CannonballHitScheduler.BaseDamageExplosiveCannonball = CannonballExplosiveDamage.Value;
 
 
+    CannonAutoAimYOffset = config.BindUnique(VehicleCannonsSection, "CannonAutoAimYOffset", 1f, ConfigHelpers.CreateConfigDescription("Set the Y offset where the cannonball attempt to hit. 0 will aim deadcenter, but it could miss due to gravity. Using above 0 will aim from center to top (1).", true, false, new AcceptableValueRange<float>(-1f, 1f)));
     CannonAutoAimSpeed = config.BindUnique(VehicleCannonsSection, "CannonAutoAimSpeed", 10f, ConfigHelpers.CreateConfigDescription("Set how fast a cannon can adjust aim and fire. This speeds up both firing and animations. Lower values might not be able to fire cannons at all for smaller targets. Keep in mind sea swell will impact the aiming of cannons.", true, false, new AcceptableValueRange<float>(5f, 50f)));
 
     CannonAimMaxYRotation = config.BindUnique(VehicleCannonsSection, "CannonAimMaxYRotation", 15f, ConfigHelpers.CreateConfigDescription("Maximum Y rotational a cannon can turn. Left to right. Front to bow etc.", true, false, new AcceptableValueRange<float>(5f, 50f)));
@@ -251,19 +297,23 @@ public class PrefabConfig : BepInExBaseConfig<PrefabConfig>
 
     CannonPlayerProtectionRangeRadius.SettingChanged += (sender, args) => TargetController.MAX_DEFEND_SEARCH_RADIUS = CannonPlayerProtectionRangeRadius.Value;
 
-    HasCannonFireAudio.SettingChanged += (sender, args) => CannonController.HasFireAudio = HasCannonFireAudio.Value;
-    CannonFireAudioVolume.SettingChanged += (sender, args) => CannonController.CannonFireAudioVolume = CannonFireAudioVolume.Value;
+    CannonAutoAimYOffset.SettingChanged += (sender, args) =>
+    {
+      CannonController.CannonAimingCenterOffsetY = CannonAutoAimYOffset.Value;
+    };
+    Cannon_HasFireAudio.SettingChanged += (sender, args) => CannonController.HasFireAudio = Cannon_HasFireAudio.Value;
+    Cannon_FireAudioVolume.SettingChanged += (sender, args) => CannonController.CannonFireAudioVolume = Cannon_FireAudioVolume.Value;
 
     HasCannonballWindAudio.SettingChanged += (sender, args) => Cannonball.HasCannonballWindAudio = HasCannonballWindAudio.Value;
     CannonballWindAudioVolume.SettingChanged += (sender, args) => Cannonball.CannonballWindAudioVolume = CannonballWindAudioVolume.Value;
 
-    HasCannonballExplosionAudio.SettingChanged += (sender, args) => Cannonball.HasExplosionAudio = HasCannonballExplosionAudio.Value;
-    CannonballExplosionAudioVolume.SettingChanged += (sender, args) => Cannonball.ExplosionAudioVolume = CannonballExplosionAudioVolume.Value;
+    Cannonball_HasExplosionAudio.SettingChanged += (sender, args) => Cannonball.HasExplosionAudio = Cannonball_HasExplosionAudio.Value;
+    Cannonball_ExplosionAudioVolume.SettingChanged += (sender, args) => Cannonball.ExplosionAudioVolume = Cannonball_ExplosionAudioVolume.Value;
 
-    HasCannonReloadAudio.SettingChanged += (sender, args) => CannonController.HasReloadAudio = HasCannonReloadAudio.Value;
-    CannonReloadAudioVolume.SettingChanged += (sender, args) => CannonController.CannonReloadAudioVolume = CannonReloadAudioVolume.Value;
+    Cannon_HasReloadAudio.SettingChanged += (sender, args) => CannonController.HasReloadAudio = Cannon_HasReloadAudio.Value;
+    Cannon_ReloadAudioVolume.SettingChanged += (sender, args) => CannonController.CannonReloadAudioVolume = Cannon_ReloadAudioVolume.Value;
 
-    CannonFiringDelayPerCannon.SettingChanged += (sender, args) => TargetController.FiringDelayPerCannon = CannonFiringDelayPerCannon.Value;
+    Cannon_FiringDelayPerCannon.SettingChanged += (sender, args) => TargetController.FiringDelayPerCannon = Cannon_FiringDelayPerCannon.Value;
     CannonAutoAimSpeed.SettingChanged += (sender, args) => CannonController.CannonAimSpeed = CannonAutoAimSpeed.Value;
     CannonAimMaxYRotation.SettingChanged += (sender, args) => CannonController.MaxFiringRotationYOverride = CannonAimMaxYRotation.Value;
     CannonBarrelAimMinTiltRotation.SettingChanged += (sender, args) => CannonController.MinFiringPitchOverride = CannonBarrelAimMinTiltRotation.Value;

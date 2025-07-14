@@ -1,9 +1,9 @@
 ﻿#region
 
-  using System.Collections;
-  using TMPro;
-  using UnityEngine;
-  using static System.String;
+using System.Collections;
+using TMPro;
+using UnityEngine;
+using static System.String;
 
 #endregion
 
@@ -17,23 +17,13 @@
     {
       public static bool hasHudEnabled = true;
       public static float hideTextTimer = 3f;
+      private static readonly Color messageColor = new(249f, 224f, 0f, 255f);
       public TextMeshPro textMeshPro;
       public float timePassedSinceStateUpdate;
-      private float messageFadeValue = 255f;
-      private static readonly Color messageColor = new(249f, 224f, 0f, 255f);
       public string currentText = "";
       public bool canUpdate = true;
+      private float messageFadeValue = 255f;
       private Coroutine? UpdateTextCoroutine;
-
-      public static HoverFadeText CreateHoverFadeText(Transform? parent = null)
-      {
-        var hoverFadeGameObject = new GameObject("HoverFadeText")
-        {
-          transform = { parent = parent, localPosition = Vector3.zero, localRotation = Quaternion.identity, localScale = Vector3.one }
-        };
-        var hoverFadeText = hoverFadeGameObject.AddComponent<HoverFadeText>();
-        return hoverFadeText;
-      }
 
       public void Awake()
       {
@@ -43,6 +33,16 @@
         textMeshPro.alignment = TextAlignmentOptions.Center;
         textMeshPro.outlineWidth = 0.136f;
         textMeshPro.fontSize = 4;
+      }
+
+      public static HoverFadeText CreateHoverFadeText(Transform? parent = null)
+      {
+        var hoverFadeGameObject = new GameObject("HoverFadeText")
+        {
+          transform = { parent = parent, localPosition = Vector3.zero, localRotation = Quaternion.identity, localScale = Vector3.one }
+        };
+        var hoverFadeText = hoverFadeGameObject.AddComponent<HoverFadeText>();
+        return hoverFadeText;
       }
 
       public bool ShouldHideAfterLastStateUpdate()
@@ -134,8 +134,8 @@
 
           textMeshPro.text = currentText;
           transform.rotation =
-            Quaternion.LookRotation(transform.forward *
-                                    -1); // Flip to face correctly
+            QuaternionExtensions.LookRotationSafe(transform.forward *
+                                                  -1); // Flip to face correctly
           // anchorStateTextMesh.fontSize = anchorTextSize;
           yield return new WaitForFixedUpdate();
         }
@@ -188,10 +188,10 @@
       //   transform.LookAt(Camera.main.transform);
       //   textMeshPro.text = currentText;
       //   transform.rotation =
-      //     Quaternion.LookRotation(transform.forward *
+      //     QuaternionExtensions.LookRotationSafe(transform.forward *
       //                             -1); // Flip to face correctly
       //   // anchorStateTextMesh.fontSize = anchorTextSize;
       //
       // }
     }
-  };
+  }

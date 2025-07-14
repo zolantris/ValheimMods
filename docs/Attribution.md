@@ -24,6 +24,8 @@ should include anything related to open source content attribution.
       Premswaroop Kasukurthi</a>
       from <a href="https://pixabay.com//?utm_source=link-attribution&utm_medium=referral&utm_campaign=music&utm_content=12445">
       Pixabay</a>
+- Telescope
+    - https://sketchfab.com/3d-models/vintage-telescope-abff3fee5721417e8aaed00064a4125a
 - Cannonball explosion
     - Sound Effect
       by <a href="https://pixabay.com/users/soundreality-31074404/?utm_source=link-attribution&utm_medium=referral&utm_campaign=music&utm_content=343683">

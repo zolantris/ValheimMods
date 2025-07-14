@@ -35,8 +35,15 @@ public class PrefabConfigSync<T, TComponentInterface> : MonoBehaviour, IPrefabCu
   {
     if (ZNetView.m_forceDisableInit) return;
     retryGuard = new RetryGuard(this);
-    m_nview = GetComponent<ZNetView>();
     controller = GetComponent<TComponentInterface>();
+    if (controller is INetView nvController)
+    {
+      m_nview = nvController.m_nview;
+    }
+    else
+    {
+      m_nview = GetComponent<ZNetView>();
+    }
   }
 
   public virtual void OnEnable()
@@ -48,7 +55,7 @@ public class PrefabConfigSync<T, TComponentInterface> : MonoBehaviour, IPrefabCu
       RegisterRPCListeners();
       PrefabConfigRPC.AddSubscription(nv.m_zdo, this);
       Load();
-    });
+    }, 10f, true);
   }
 
   public virtual void OnDisable()

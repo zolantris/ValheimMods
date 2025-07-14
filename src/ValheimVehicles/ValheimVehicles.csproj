@@ -29,33 +29,6 @@
     <ItemGroup Label="ValheimVehicle.SharedScripts Unity testable scripts">
         <!--  Allows for both sharing and testing these scripts within unity. Best of both worlds.      -->
         <Compile Include="..\ValheimRAFT.Unity\Assets\ValheimVehicles\SharedScripts\**\*.cs"/>
-        <Compile Update="..\ValheimRAFT.Unity\Assets\ValheimVehicles\SharedScripts\PowerSystemSimulator.cs">
-            <Link>SharedScripts\PowerSystemSimulator.cs</Link>
-        </Compile>
-        <Compile Update="..\ValheimRAFT.Unity\Assets\ValheimVehicles\SharedScripts\Shared.Constants\VehicleZdoVars.cs">
-            <Link>SharedScripts\Shared.Constants\VehicleZdoVars.cs</Link>
-        </Compile>
-        <Compile Update="..\ValheimRAFT.Unity\Assets\ValheimVehicles\SharedScripts\SharedScripts.Modules\CollectionIterators.cs">
-            <Link>SharedScripts\SharedScripts.Modules\CollectionIterators.cs</Link>
-        </Compile>
-        <Compile Update="..\ValheimRAFT.Unity\Assets\ValheimVehicles\SharedScripts\SharedScripts.Modules\FastQuery.cs">
-            <Link>SharedScripts\SharedScripts.Modules\FastQuery.cs</Link>
-        </Compile>
-        <Compile Update="..\ValheimRAFT.Unity\Assets\ValheimVehicles\SharedScripts\StoredSwivelCustomConfig.cs">
-            <Link>SharedScripts\StoredSwivelCustomConfig.cs</Link>
-        </Compile>
-        <Compile Update="ValheimVehicles.Storage.Serialization\StoredSwivelCustomConfig.cs">
-            <Link>SharedScripts\StoredSwivelCustomConfig.cs</Link>
-        </Compile>
-        <Compile Update="..\ValheimRAFT.Unity\Assets\ValheimVehicles\SharedScripts\SharedScripts.Helpers\PieceOverlapUtils.cs">
-            <Link>SharedScripts\SharedScripts.Helpers\PieceOverlapUtils.cs</Link>
-        </Compile>
-        <Compile Update="..\ValheimRAFT.Unity\Assets\ValheimVehicles\SharedScripts\ICannonConfig.cs">
-            <Link>SharedScripts\ICannonConfig.cs</Link>
-        </Compile>
-        <Compile Update="..\ValheimRAFT.Unity\Assets\ValheimVehicles\SharedScripts\CannonBallHitScheduler.cs">
-            <Link>SharedScripts\CannonBallHitScheduler.cs</Link>
-        </Compile>
     </ItemGroup>
     <ItemGroup Label="Internal ValheimVehicles scripts">
         <!-- Includes all namespace folders -->

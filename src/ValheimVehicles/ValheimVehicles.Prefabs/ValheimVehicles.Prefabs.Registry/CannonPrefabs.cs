@@ -3,6 +3,7 @@ using Jotunn.Entities;
 using Jotunn.Managers;
 using UnityEngine;
 using ValheimVehicles.BepInExConfig;
+using ValheimVehicles.Controllers;
 using ValheimVehicles.Integrations;
 using ValheimVehicles.SharedScripts;
 using Logger = Jotunn.Logger;
@@ -14,6 +15,9 @@ namespace ValheimVehicles.Prefabs.Registry;
  */
 public class CannonPrefabs : RegisterPrefab<CannonPrefabs>
 {
+
+  public static GameObject CannonballSolidProjectile;
+  public static GameObject CannonballExplosiveProjectile;
 
   private void RegisterCannonFixedPrefab()
   {
@@ -34,9 +38,10 @@ public class CannonPrefabs : RegisterPrefab<CannonPrefabs>
     });
     PrefabRegistryHelpers.AddPieceForPrefab(PrefabNames.CannonFixedTier1, prefab);
     var wearNTear = PrefabRegistryHelpers.SetWearNTear(prefab, 1);
+
     // main toggle switch.
     var cannonController = prefab.AddComponent<CannonControllerBridge>();
-    cannonController.firingMode = CannonController.FiringMode.Manual;
+    cannonController.cannonFiringMode = CannonFiringMode.Manual;
     cannonController.canRotateFiringRangeY = false;
 
     PieceManager.Instance.AddPiece(new CustomPiece(prefab, true, new PieceConfig
@@ -70,7 +75,7 @@ public class CannonPrefabs : RegisterPrefab<CannonPrefabs>
 
     // main toggle switch.
     var cannonController = prefab.AddComponent<CannonControllerBridge>();
-    cannonController.firingMode = CannonController.FiringMode.Auto;
+    cannonController.cannonFiringMode = CannonFiringMode.Auto;
     cannonController.canRotateFiringRangeY = true;
 
     PieceManager.Instance.AddPiece(new CustomPiece(prefab, true, new PieceConfig
@@ -82,9 +87,92 @@ public class CannonPrefabs : RegisterPrefab<CannonPrefabs>
     }));
   }
 
+  private const string CannonAmmoType = "cannon_ball";
+  private void RegisterCannonballSolidProjectilePrefab()
+  {
+    var prefabAsset = LoadValheimVehicleAssets._bundle.LoadAsset<GameObject>("cannon_ball_bronze");
+    var prefab = PrefabManager.Instance.CreateClonedPrefab(PrefabNames.CannonballSolidProjectile, prefabAsset);
+
+    if (!prefab)
+    {
+      LoggerProvider.LogError("cannon_ball_bronze projectile not found!");
+      return;
+    }
+
+    var nv = PrefabRegistryHelpers.AddTempNetView(prefab);
+    nv.m_distant = true;
+    var zSyncTransform = prefab.AddComponent<VehicleZSyncTransform>();
+
+    // must have zsync transform in order to sync the projectile.
+    zSyncTransform.m_syncBodyVelocity = true;
+    zSyncTransform.m_syncRotation = true;
+    zSyncTransform.m_syncPosition = true;
+
+    var itemDatabase = ItemManager.Instance.GetItem(PrefabNames.CannonballSolid);
+    var projectile = prefab.AddComponent<Projectile>();
+    projectile.m_ammo = itemDatabase.ItemDrop.m_itemData;
+    projectile.m_nview = nv;
+
+    var cannonBall = prefab.AddComponent<Cannonball>();
+    cannonBall.cannonballVariant = CannonballVariant.Solid;
+
+    foreach (var c in prefab.GetComponents<Component>())
+      LoggerProvider.LogDev($"Component on prefab: {c.GetType().Name}");
+
+    CannonController.CannonballSolidPrefab = prefab;
+    CannonballSolidProjectile = prefab;
+
+    // copy all components from final prefab.
+    // var finalPrefab = Object.Instantiate(prefab);
+    // Object.Destroy(prefab);
+    //
+    // finalPrefab.name = PrefabNames.CannonballSolid;
+    // Object.DontDestroyOnLoad(finalPrefab);
+    //
+    // foreach (var c in finalPrefab.GetComponents<Component>())
+    //   LoggerProvider.LogDev($"Component on prefab: {c.GetType().Name}");
+    // CannonController.CannonballSolidPrefab = finalPrefab;
+    // CannonballSolidProjectile = finalPrefab;
+  }
+
+  private void RegisterCannonballExplosiveProjectilePrefab()
+  {
+    var prefabAsset = LoadValheimVehicleAssets._bundle.LoadAsset<GameObject>("cannon_ball_blackmetal");
+    var prefab = PrefabManager.Instance.CreateClonedPrefab(PrefabNames.CannonballExplosiveProjectile, prefabAsset);
+    if (!prefab)
+    {
+      LoggerProvider.LogError("VehicleHammerPrefab not found!");
+      return;
+    }
+
+    var nv = PrefabRegistryHelpers.AddTempNetView(prefab);
+    nv.m_distant = true;
+    var zSyncTransform = prefab.AddComponent<VehicleZSyncTransform>();
+
+    // must have zsync transform in order to sync the projectile.
+    zSyncTransform.m_syncBodyVelocity = true;
+    zSyncTransform.m_syncRotation = true;
+    zSyncTransform.m_syncPosition = true;
+
+    var itemDatabase = ItemManager.Instance.GetItem(PrefabNames.CannonballSolid);
+    var projectile = prefab.AddComponent<Projectile>();
+    projectile.m_ammo = itemDatabase.ItemDrop.m_itemData;
+    projectile.m_nview = nv;
+
+    var cannonBall = prefab.AddComponent<Cannonball>();
+    cannonBall.cannonballVariant = CannonballVariant.Explosive;
+
+    foreach (var c in prefab.GetComponents<Component>())
+      LoggerProvider.LogDev($"Component on prefab: {c.GetType().Name}");
+
+    CannonController.CannonballExplosivePrefab = prefab;
+    CannonballExplosiveProjectile = prefab;
+  }
+
   private void RegisterCannonballSolidItemPrefab()
   {
-    var prefab = LoadValheimVehicleAssets._bundle.LoadAsset<GameObject>("cannon_ball_bronze");
+    var prefabAsset = LoadValheimVehicleAssets._bundle.LoadAsset<GameObject>("cannon_ball_bronze");
+    var prefab = PrefabManager.Instance.CreateClonedPrefab(PrefabNames.CannonballSolid, prefabAsset);
     var icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite("cannon_ball_bronze");
     if (!prefab)
     {
@@ -92,13 +180,7 @@ public class CannonPrefabs : RegisterPrefab<CannonPrefabs>
       return;
     }
 
-    var cannonBall = prefab.AddComponent<Cannonball>();
-    cannonBall.cannonballType = Cannonball.CannonballType.Solid;
-
-    CannonController.CannonballSolidPrefab = cannonBall;
-
-    var nv = PrefabRegistryHelpers.AddTempNetView(prefab);
-    nv.m_distant = true;
+    var nv = PrefabRegistryHelpers.AddNetViewWithPersistence(prefab);
     var zSyncTransform = prefab.AddComponent<ZSyncTransform>();
 
     // must have zsync transform in order to sync the projectile.
@@ -118,9 +200,11 @@ public class CannonPrefabs : RegisterPrefab<CannonPrefabs>
       m_icons = [icon],
       m_buildPieces = PrefabRegistryController.GetPieceTable(),
       m_toolTier = 50,
+      m_maxStackSize = 200,
       m_weight = PrefabConfig.CannonBallInventoryWeight.Value, // this could be 12-24lbs...but that would make the game less fun
       m_skillType = Skills.SkillType.None,
-      m_itemType = ItemDrop.ItemData.ItemType.AmmoNonEquipable
+      m_ammoType = CannonAmmoType,
+      m_itemType = ItemDrop.ItemData.ItemType.Ammo
     };
 
     var itemConfig = new ItemConfig
@@ -151,27 +235,21 @@ public class CannonPrefabs : RegisterPrefab<CannonPrefabs>
     }
   }
 
+
   private void RegisterCannonballExplosiveItemPrefab()
   {
-    var prefab = LoadValheimVehicleAssets._bundle.LoadAsset<GameObject>("cannon_ball_blackmetal");
+    var prefabAsset = LoadValheimVehicleAssets._bundle.LoadAsset<GameObject>("cannon_ball_blackmetal");
     var icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite("cannon_ball_blackmetal");
+    var prefab = PrefabManager.Instance.CreateClonedPrefab(PrefabNames.CannonballExplosive, prefabAsset);
     if (!prefab)
     {
       LoggerProvider.LogError("VehicleHammerPrefab not found!");
       return;
     }
 
-    var cannonBall = prefab.AddComponent<Cannonball>();
-    cannonBall.cannonballType = Cannonball.CannonballType.Explosive;
-
-    CannonController.CannonballExplosivePrefab = cannonBall;
-
-    var nv = PrefabRegistryHelpers.AddTempNetView(prefab);
-    nv.m_distant = true;
+    var nv = PrefabRegistryHelpers.AddNetViewWithPersistence(prefab);
     var zSyncTransform = prefab.AddComponent<ZSyncTransform>();
-
-    // must have zsync transform in order to sync the projectile.
-    zSyncTransform.m_syncBodyVelocity = true;
+    zSyncTransform.m_syncBodyVelocity = false;
     zSyncTransform.m_syncRotation = true;
     zSyncTransform.m_syncPosition = true;
 
@@ -188,8 +266,10 @@ public class CannonPrefabs : RegisterPrefab<CannonPrefabs>
       m_buildPieces = PrefabRegistryController.GetPieceTable(),
       m_toolTier = 50,
       m_maxStackSize = 200,
-      m_skillType = Skills.SkillType.None,
-      m_itemType = ItemDrop.ItemData.ItemType.AmmoNonEquipable
+      m_weight = PrefabConfig.CannonBallInventoryWeight.Value, // this could be 12-24lbs...but that would make the game less fun
+      m_skillType = Skills.SkillType.Bows,
+      m_ammoType = CannonAmmoType,
+      m_itemType = ItemDrop.ItemData.ItemType.Ammo
     };
 
     var itemConfig = new ItemConfig
@@ -197,13 +277,12 @@ public class CannonPrefabs : RegisterPrefab<CannonPrefabs>
       Name = "$valheim_vehicles_cannonball_explosive",
       Description = "$valheim_vehicles_cannonball_explosive_desc",
       Icon = icon,
+      StackSize = 200,
       CraftingStation = "forge",
       Requirements = PrefabRecipeConfig.GetRequirements(prefab.name),
       PieceTable = PrefabRegistryController.GetPieceTableName()
     };
-
     var customItem = new CustomItem(prefab, true, itemConfig);
-
     var success = ItemManager.Instance.AddItem(customItem);
     if (!success)
     {
@@ -211,58 +290,59 @@ public class CannonPrefabs : RegisterPrefab<CannonPrefabs>
     }
   }
 
-#if DEBUG
-  private void RegisterHandCannonPrefab()
+  private void RegisterCannonHandHeldPrefab()
   {
-    // var hammerPrefab = PrefabManager.Instance.GetPrefab("VehicleHammerPrefab");
-    var hammerPrefab = LoadValheimVehicleAssets.VehicleHammer;
-    if (!hammerPrefab)
+    var asset = LoadValheimVehicleAssets._bundle.LoadAsset<GameObject>("cannon_handheld");
+    var icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite("cannon_handheld");
+    var prefab = PrefabManager.Instance.CreateClonedPrefab(PrefabNames.CannonHandHeldItem, asset);
+
+    if (!prefab)
     {
-      LoggerProvider.LogError("VehicleHammerPrefab not found!");
+      LoggerProvider.LogError($"cannon_turret not found!");
       return;
     }
 
-    var nv = PrefabRegistryHelpers.AddNetViewWithPersistence(hammerPrefab);
-    var zSyncTransform = hammerPrefab.AddComponent<ZSyncTransform>();
+    var nv = PrefabRegistryHelpers.AddNetViewWithPersistence(prefab);
+    var zSyncTransform = prefab.AddComponent<ZSyncTransform>();
 
-    // hammerPrefab.AddComponent<VehicleBuildHammer>();
-    // hammerPrefab.AddComponent<VehicleHammerInputListener>();
+    var cannonControllerTransform = prefab.transform.Find("attach/cannon_handheld");
+    var cannonController = cannonControllerTransform.gameObject.AddComponent<CannonController>();
+    var ammoController = cannonControllerTransform.gameObject.AddComponent<AmmoController>();
+    ammoController.IsHandheld = true;
+    var handCannon = cannonControllerTransform.gameObject.AddComponent<CannonHandHeldController>();
+
+    cannonController.cannonFiringMode = CannonFiringMode.Manual;
+    cannonController.cannonVariant = CannonVariant.HandHeld; // should auto do this, but this makes it a bit safer.
+    cannonController.canRotateFiringRangeY = false;
 
     // verbosely add these.
     zSyncTransform.m_syncBodyVelocity = false;
     zSyncTransform.m_syncRotation = true;
     zSyncTransform.m_syncPosition = true;
 
-    var itemDrop = hammerPrefab.AddComponent<ItemDrop>();
+    var itemDrop = prefab.AddComponent<ItemDrop>();
     if (itemDrop.m_nview == null)
     {
       itemDrop.m_nview = nv;
     }
 
-    var icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite("cannon_turret_tier1");
-
     itemDrop.m_itemData.m_shared = new ItemDrop.ItemData.SharedData
     {
-      m_name = PrefabNames.VehicleHammer,
+      m_name = PrefabNames.CannonHandHeldItem,
       m_maxQuality = 5,
+      m_weight = 5,
       m_useDurability = true,
       m_useDurabilityDrain = 1f,
       m_durabilityDrain = 0f,
       m_durabilityPerLevel = 200f,
       m_maxDurability = 100f,
       m_icons = [icon],
-      m_buildPieces = PrefabRegistryController.GetPieceTable(),
       m_toolTier = 50,
-      m_animationState = ItemDrop.ItemData.AnimationState.OneHanded,
-      // must be 0 to override default of 1. 1 adds an equip delay automatically
+      m_ammoType = CannonAmmoType,
+      m_animationState = ItemDrop.ItemData.AnimationState.Crossbow,
       m_equipDuration = 0,
-      // See In HammerItemElement.IsHammer (valheim.dll) regarding hammer logic matchers
-      // requires
-      // - m_skillType =  Skills.SkillType.Swords
-      // - m_itemType = ItemDrop.ItemData.ItemType.Tool
-      // - prefab name must container "hammer" lower case.
-      m_skillType = Skills.SkillType.Swords,
-      m_itemType = ItemDrop.ItemData.ItemType.Tool
+      m_skillType = Skills.SkillType.Crossbows,
+      m_itemType = ItemDrop.ItemData.ItemType.TwoHandedWeapon
     };
 
     if (itemDrop.m_itemData.m_shared.m_attack == null)
@@ -270,27 +350,22 @@ public class CannonPrefabs : RegisterPrefab<CannonPrefabs>
       itemDrop.m_itemData.m_shared.m_attack = new Attack();
     }
 
-    itemDrop.m_itemData.m_shared.m_attack.m_attackAnimation = "swing_hammer";
-    itemDrop.m_itemData.m_shared.m_attack.m_attackType = Attack.AttackType.TriggerProjectile;
-    itemDrop.m_itemData.m_shared.m_attack.m_attackStamina = 5;
-    itemDrop.m_itemData.m_shared.m_attack.m_hitTerrain = true;
+    var attack = itemDrop.m_itemData.m_shared.m_attack;
 
-    // secondary attacks are invalid as valheim uses Player To destroy the piece and do a raycast when pressing center button.
-    // if (itemDrop.m_itemData.m_shared.m_secondaryAttack == null)
-    // {
-    //   itemDrop.m_itemData.m_shared.m_secondaryAttack = new Attack();
-    // }
-    // itemDrop.m_itemData.m_shared.m_secondaryAttack.m_attackAnimation = "";
-    // itemDrop.m_itemData.m_shared.m_secondaryAttack.m_attackType = Attack.AttackType.Horizontal;
-    // itemDrop.m_itemData.m_shared.m_secondaryAttack.m_attackAnimation = "swing_hammer";
-    // itemDrop.m_itemData.m_shared.m_secondaryAttack.m_attackStamina = 20;
-    // itemDrop.m_itemData.m_shared.m_attack.m_speedFactor = 0.2f; // default value. can remove 
-    // itemDrop.m_itemData.m_shared.m_attack.m_speedFactorRotation = 0.2f; // default value. can remove.
+    // needs to be cross-bow or something custom.
+    attack.m_attackAnimation = "crossbow_fire";
+    attack.m_attackType = Attack.AttackType.TriggerProjectile;
+    attack.m_attackStamina = 5;
+    attack.m_attackHealth = 0;
+    attack.m_hitTerrain = true;
+    attack.m_speedFactor = 0.2f;
+    attack.m_hitTerrain = true;
+    attack.m_speedFactorRotation = 0.2f; // default value. can remove.
 
     var itemConfig = new ItemConfig
     {
-      Name = "$valheim_vehicles_hammer_name",
-      Description = "$valheim_vehicles_hammer_description",
+      Name = "$valheim_vehicles_cannon_handheld_item",
+      Description = "$valheim_vehicles_cannon_handheld_item_description",
       Icon = icon,
       RepairStation = "piece_workbench",
       Requirements =
@@ -300,12 +375,10 @@ public class CannonPrefabs : RegisterPrefab<CannonPrefabs>
           Amount = 3,
           Item = "Wood"
         }
-      ],
-      PieceTable = PrefabRegistryController.GetPieceTableName()
+      ]
     };
 
-    var customItem = new CustomItem(hammerPrefab, true, itemConfig);
-
+    var customItem = new CustomItem(prefab, true, itemConfig);
     var success = ItemManager.Instance.AddItem(customItem);
     if (!success)
     {
@@ -313,6 +386,91 @@ public class CannonPrefabs : RegisterPrefab<CannonPrefabs>
     }
 
     LoggerProvider.LogMessage("Registered HandCannon");
+  }
+
+#if DEBUG
+  private void RegisterTelescopePrefab()
+  {
+    var prefabAssetName = "telescope";
+    var prefabAsset = LoadValheimVehicleAssets._bundle.LoadAsset<GameObject>(prefabAssetName);
+    var icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(prefabAssetName);
+    var prefab = PrefabManager.Instance.CreateClonedPrefab(PrefabNames.TelescopeItem, prefabAsset);
+    if (!prefab)
+    {
+      LoggerProvider.LogError($"{prefabAsset} not found!");
+      return;
+    }
+
+    var nv = PrefabRegistryHelpers.AddNetViewWithPersistence(prefab);
+    var zSyncTransform = prefab.AddComponent<ZSyncTransform>();
+
+    // hammerPrefab.AddComponent<VehicleBuildHammer>();
+    // hammerPrefab.AddComponent<VehicleHammerInputListener>();
+
+    // verbosely add these.
+    zSyncTransform.m_syncRotation = true;
+    zSyncTransform.m_syncPosition = true;
+
+    var itemDrop = prefab.AddComponent<ItemDrop>();
+    if (itemDrop.m_nview == null)
+    {
+      itemDrop.m_nview = nv;
+    }
+
+
+    itemDrop.m_itemData.m_shared = new ItemDrop.ItemData.SharedData
+    {
+      m_name = PrefabNames.TelescopeItem,
+      m_maxQuality = 5,
+      m_useDurability = true,
+      m_useDurabilityDrain = 1f,
+      m_durabilityDrain = 0f,
+      m_durabilityPerLevel = 200f,
+      m_maxDurability = 100f,
+      m_icons = [icon],
+      m_toolTier = 50,
+      m_animationState = ItemDrop.ItemData.AnimationState.Crossbow,
+      m_equipDuration = 0,
+      m_skillType = Skills.SkillType.Bows,
+      m_itemType = ItemDrop.ItemData.ItemType.TwoHandedWeapon
+    };
+
+    if (itemDrop.m_itemData.m_shared.m_attack == null)
+    {
+      itemDrop.m_itemData.m_shared.m_attack = new Attack();
+    }
+
+    itemDrop.m_itemData.m_shared.m_attack.m_attackAnimation = "swing_sword";
+    itemDrop.m_itemData.m_shared.m_attack.m_attackType = Attack.AttackType.TriggerProjectile;
+    itemDrop.m_itemData.m_shared.m_attack.m_attackStamina = 5;
+    itemDrop.m_itemData.m_shared.m_attack.m_hitTerrain = true;
+
+    var itemConfig = new ItemConfig
+    {
+      Name = "$valheim_vehicles_telescope",
+      Description = "$valheim_vehicles_telescope_desc",
+      Icon = icon,
+      Icons = [icon],
+      RepairStation = "piece_workbench",
+      Requirements =
+      [
+        new RequirementConfig
+        {
+          Amount = 3,
+          Item = "Wood"
+        }
+      ]
+    };
+
+    var customItem = new CustomItem(prefab, true, itemConfig);
+
+    var success = ItemManager.Instance.AddItem(customItem);
+    if (!success)
+    {
+      LoggerProvider.LogError($"Error occurred while registering {PrefabNames.TelescopeItem}");
+    }
+
+    LoggerProvider.LogMessage("Registered Telescope");
   }
 #endif
 
@@ -344,7 +502,7 @@ public class CannonPrefabs : RegisterPrefab<CannonPrefabs>
     var wearNTear = PrefabRegistryHelpers.SetWearNTear(prefab, 1);
 
     // very high health but it can immediately blow up on any damage to consume all health.
-    wearNTear.m_health = 100f;
+    wearNTear.m_health = 250f;
 
     // main toggle switch.
     var powderBarrel = prefab.AddComponent<PowderBarrel>();
@@ -375,11 +533,23 @@ public class CannonPrefabs : RegisterPrefab<CannonPrefabs>
 
   public override void OnRegister()
   {
-    RegisterCannonballExplosiveItemPrefab();
+    // persistent inventory items
     RegisterCannonballSolidItemPrefab();
+    RegisterCannonballExplosiveItemPrefab();
+
+    // projectiles are not persistent.
+    RegisterCannonballSolidProjectilePrefab();
+    RegisterCannonballExplosiveProjectilePrefab();
+
 
     RegisterCannonFixedPrefab();
     RegisterCannonTurretPrefab();
     RegisterPowderBarrelPrefab();
+
+#if DEBUG
+    RegisterTelescopePrefab();
+#endif
+
+    RegisterCannonHandHeldPrefab();
   }
 }

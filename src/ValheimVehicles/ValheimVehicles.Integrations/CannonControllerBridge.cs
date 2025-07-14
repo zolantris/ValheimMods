@@ -2,6 +2,7 @@ using System;
 using UnityEngine;
 using ValheimVehicles.Helpers;
 using ValheimVehicles.Interfaces;
+using ValheimVehicles.Prefabs.Registry;
 using ValheimVehicles.SharedScripts;
 using ValheimVehicles.SharedScripts.Helpers;
 namespace ValheimVehicles.Integrations;
@@ -10,18 +11,40 @@ public class CannonControllerBridge : CannonController, Hoverable, Interactable,
 {
   public CannonConfigSync prefabConfigSync = null!;
   private bool _hasInitPrefabSync = false;
-  public CannonConfig Config => this.GetOrCache(ref prefabConfigSync, ref _hasInitPrefabSync).Config;
+  public CannonPersistentConfig PersistentConfig => this.GetOrCache(ref prefabConfigSync, ref _hasInitPrefabSync).Config;
+
+  public AmmoController? ammoController;
 
   protected internal override sealed void Awake()
   {
+#if !UNITY_2022 && !UNITY_EDITOR
+    CannonballSolidPrefab = CannonPrefabs.CannonballSolidProjectile;
+    CannonballExplosivePrefab = CannonPrefabs.CannonballExplosiveProjectile;
+#endif
+
     base.Awake();
+
+    m_nview = GetComponent<ZNetView>();
+    if (!m_nview)
+    {
+      m_nview = GetComponentInParent<ZNetView>();
+    }
 
     if (!prefabConfigSync)
     {
       this.GetOrCache(ref prefabConfigSync, ref _hasInitPrefabSync);
     }
+  }
 
-    m_nview = GetComponent<ZNetView>();
+  protected internal override void Start()
+  {
+    base.Start();
+    ammoController = GetComponent<AmmoController>();
+  }
+
+  public void SetAmmoType()
+  {
+
   }
 
   protected internal override sealed void OnEnable()
@@ -36,34 +59,42 @@ public class CannonControllerBridge : CannonController, Hoverable, Interactable,
 
   public void OnAmmoUpdate(int val)
   {
-    if (!this.IsNetViewValid(out var nv)) return;
-    if (!nv.HasOwner())
-    {
-      nv.ClaimOwnership();
-    }
-
-    // do not do anything for non-owner. Otherwise this could loop.
-    if (!nv.IsOwner()) return;
-
-    AmmoCount = val;
-
-    // commit update and sync.
-    prefabConfigSync.Request_CommitConfigChange(Config);
-    prefabConfigSync.Load();
+    // if (!this.IsNetViewValid(out var nv)) return;
+    // if (!nv.HasOwner())
+    // {
+    //   nv.ClaimOwnership();
+    // }
+    //
+    // // do not do anything for non-owner. Otherwise this could loop.
+    // if (!nv.IsOwner()) return;
+    //
+    // AmmoCount = val;
+    //
+    // // commit update and sync.
+    // prefabConfigSync.Request_CommitConfigChange(PersistentConfig);
+    // prefabConfigSync.Load();
   }
 
   // todo Add a TryGetFuel similar to PowerHoverComponent.
 
   public string CannonballNameFromType()
   {
-    return AmmoType == Cannonball.CannonballType.Explosive ? ModTranslations.VehicleCannon_CannonBallExplosive : ModTranslations.VehicleCannon_CannonBallSolid;
+    return AmmoVariant == CannonballVariant.Explosive ? ModTranslations.VehicleCannon_CannonBallExplosive : ModTranslations.VehicleCannon_CannonBallSolid;
   }
 
   public string GetHoverText()
   {
-    var s = $"{ModTranslations.PowerSource_Interact_AddOne} / {ModTranslations.SharedKeys_Hold} {ModTranslations.SharedKeys_AddMany}";
+    // var s = $"{ModTranslations.PowerSource_Interact_AddOne} / {ModTranslations.SharedKeys_Hold} {ModTranslations.SharedKeys_AddMany}";
+    var s = "";
     s += $"\n{ModTranslations.SharedKeys_InteractAltAndPlace} {ModTranslations.VehicleCannon_SwapCannonBallType}";
-    s += $"\n{ModTranslations.VehicleCannon_AmmoText}: {CannonballNameFromType()} ({AmmoCount})";
+
+    s += $"\n{ModTranslations.VehicleCannon_AmmoText}: {CannonballNameFromType()}";
+
+    if (ammoController != null)
+    {
+      s += $"({ammoController.GetAmmoAmountFromCannonballVariant(AmmoVariant)})";
+    }
+
     if (!hasNearbyPowderBarrel)
     {
       s += $"\n{ModTranslations.VehicleCannon_CannonMissingNearbyPowderBarrel}";
@@ -73,23 +104,23 @@ public class CannonControllerBridge : CannonController, Hoverable, Interactable,
 
   public string GetHoverName()
   {
-    return "HOVER NAME";
+    return "CannonController Hover (Should not be visible)";
   }
   public bool Interact(Humanoid user, bool hold, bool alt)
   {
     if (hold)
     {
-      AmmoCount += 10;
+      // AmmoCount += 10;
       return false;
     }
 
     if (alt)
     {
-      AmmoType = AmmoType == Cannonball.CannonballType.Explosive ? Cannonball.CannonballType.Solid : Cannonball.CannonballType.Explosive;
+      AmmoVariant = AmmoVariant == CannonballVariant.Explosive ? CannonballVariant.Solid : CannonballVariant.Explosive;
       return true;
     }
 
-    AmmoCount += 1;
+    // AmmoCount += 1;
 
     return true;
   }

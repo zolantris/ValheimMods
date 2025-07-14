@@ -380,9 +380,6 @@
 
       base.Awake();
 
-      // _pieceActivator = gameObject.AddComponent<VehiclePieceActivator>();
-      // _pieceActivator.Init(this);
-
       if (vehicleCenter == null)
       {
         CreatePieceCenter();
@@ -553,7 +550,7 @@
       if (isRam) m_ramPieces.Remove(netView);
     }
 
-    public static Cannonball.CannonballType AmmoTypeDefault = Cannonball.CannonballType.Solid;
+    public static CannonballVariant AmmoVariantDefault = CannonballVariant.Solid;
 
     public void AddPieceDataForComponents(ZNetView netView)
     {
@@ -567,7 +564,7 @@
             break;
           case CannonController cannonController:
             LoggerProvider.LogDebug("adding cannon to target controller");
-            cannonController.AmmoType = AmmoTypeDefault;
+            cannonController.AmmoVariant = AmmoVariantDefault;
             cannonController.maxAmmo = 50;
             targetController.AddCannon(cannonController);
             cannonController.AddIgnoredTransforms([transform, Manager!.transform]);
@@ -626,6 +623,7 @@
             OnAddUniquePieceDestroyPrevious(_steeringWheelPiece);
             _steeringWheelPiece = wheel;
             RotateVehicleForwardPosition();
+
             wheel.InitializeControls(netView, Manager);
             break;
           case TeleportWorld portal:
@@ -747,7 +745,7 @@
     public static bool CanRemoveRigidbodyFromChild(string name)
     {
       return !RamPrefabs.IsRam(name) &&
-             !name.Contains(PrefabNames.ShipAnchorWood) && !PrefabNames.IsVehicle(name) && !PrefabNames.IsVehiclePiecesCollider(name) && !name.StartsWith(PrefabNames.SwivelPrefabName);
+             !name.Contains(PrefabNames.ShipAnchorWood) && !PrefabNames.IsVehicle(name) && !PrefabNames.IsVehiclePiecesContainer(name) && !name.StartsWith(PrefabNames.SwivelPrefabName);
     }
 
     public void AddPiece(ZNetView netView, bool isNew = false)
@@ -2921,6 +2919,11 @@
       MovementController.UpdateShipDirection(
         _steeringWheelPiece.transform
           .localRotation);
+
+      if (targetController)
+      {
+        targetController.RecalculateCannonGroups();
+      }
     }
 
     /// <summary>

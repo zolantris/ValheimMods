@@ -34,10 +34,10 @@ namespace ValheimVehicles.SharedScripts
     private Transform explosionTransform;
     private Transform meshesTransform;
 
-    // meant for integration, we need to destroy the barrel.
-    [CanBeNull] public Action onExplosionComplete = () =>
-    {
-    };
+    public static float LastBarrelPlaceTime;
+#if !UNITY_2022 && !UNITY_EDITOR
+    public WearNTear wearNTear;
+#endif
 
     public Action<Collider> OnHitCollider = c =>
     {
@@ -46,17 +46,8 @@ namespace ValheimVehicles.SharedScripts
 
     private void Awake()
     {
-      onExplosionComplete = () =>
-      {
-        if (CanDestroyOnExplode)
-        {
-          Destroy(gameObject);
-        }
-      };
-
       _explosionRoutine = new CoroutineHandle(this);
       _aoeRoutine = new CoroutineHandle(this);
-
       explosionTransform = transform.Find("explosion");
       meshesTransform = transform.Find("meshes");
       explosionFxTransform = explosionTransform.Find("explosion_effect");
@@ -64,6 +55,61 @@ namespace ValheimVehicles.SharedScripts
 
       explosionAudio = explosionTransform.GetComponent<AudioSource>();
       explosionFx = explosionFxTransform.GetComponent<ParticleSystem>();
+#if !UNITY_2022 && !UNITY_EDITOR
+      wearNTear = GetComponent<WearNTear>();
+#endif
+    }
+
+    private void Start()
+    {
+      LastBarrelPlaceTime = Time.fixedTime;
+    }
+
+    public void OnEnable()
+    {
+#if !UNITY_2022 && !UNITY_EDITOR
+      wearNTear = GetComponent<WearNTear>();
+      if (wearNTear != null)
+      {
+        wearNTear.m_onDamaged += OnWearNTearDamage;
+      }
+#endif
+    }
+
+    public void OnDisable()
+    {
+#if !UNITY_2022 && !UNITY_EDITOR
+      wearNTear = GetComponent<WearNTear>();
+      if (wearNTear != null)
+      {
+        wearNTear.m_onDamaged -= OnWearNTearDamage;
+      }
+#endif
+    }
+
+    public void OnExplodeDestroy()
+    {
+#if !UNITY_2022 && !UNITY_EDITOR
+      if (wearNTear == null) return;
+      wearNTear.Destroy(null, true);
+#else
+          Destroy(gameObject);
+#endif
+    }
+
+    /// <summary>
+    /// Destroys the prefab on wearntear damage.
+    /// </summary>
+    public void OnWearNTearDamage()
+    {
+#if !UNITY_2022 && !UNITY_EDITOR
+      if (wearNTear == null) return;
+      if (_explosionRoutine.IsRunning) return;
+      if (wearNTear.m_healthPercentage <= 75)
+      {
+        StartExplosion();
+      }
+#endif
     }
 
     /// <summary>
@@ -121,19 +167,23 @@ namespace ValheimVehicles.SharedScripts
       yield return new WaitForFixedUpdate();
 
       var explosionOrigin = explosionCollider.bounds.center;
-      var count = Physics.OverlapSphereNonAlloc(explosionOrigin, 5f, allocatedColliders, LayerHelpers.PieceLayerMask);
+      var count = Physics.OverlapSphereNonAlloc(explosionOrigin, 5f, allocatedColliders, LayerHelpers.CannonHitLayers);
 
       // Gather all barrels and distances.
       var barrels = new List<(PowderBarrel barrel, float distance)>(count);
       for (var i = 0; i < count; i++)
       {
         var col = allocatedColliders[i];
+        var hitPoint = col.ClosestPointOnBounds(explosionOrigin);
+        var dir = (hitPoint - explosionOrigin).normalized;
+        var dist = Vector3.Distance(explosionOrigin, hitPoint);
+
+        CannonballHitScheduler.AddDamageToQueue(this, col, hitPoint, dir, Vector3.zero, 90f, true);
         if (col.name == BarrelExplosionColliderName)
         {
           var powderBarrel = col.GetComponentInParent<PowderBarrel>();
           if (powderBarrel != null)
           {
-            var dist = Vector3.Distance(explosionOrigin, powderBarrel.transform.position);
             barrels.Add((powderBarrel, dist));
           }
           continue;
@@ -172,7 +222,7 @@ namespace ValheimVehicles.SharedScripts
       }
       yield return new WaitUntil(() => timer.ElapsedMilliseconds > 10000f || explosionFx.isStopped && !explosionAudio.isPlaying);
       timer.Reset();
-      onExplosionComplete?.Invoke();
+      OnExplodeDestroy();
       yield return null;
     }
 

@@ -28,7 +28,7 @@ namespace ValheimVehicles.SharedScripts
     public bool isDestructibleHit;
     public bool isSelfHit;
     public float damage;
-    public Cannonball.CannonballType cannonballType;
+    public CannonballVariant cannonballVariant;
   }
 
 
@@ -43,7 +43,8 @@ namespace ValheimVehicles.SharedScripts
     public static Queue<(Cannonball, float)> CannonballImpactAudioQueue = new();
     // damage types.
     public static float BaseDamageExplosiveCannonball = 50f;
-    public static float BaseDamageSolidCannonball = 50f;
+    public static float BaseDamageSolidCannonball = 80f;
+    public static float ExplosionShellRadius = 7.5f;
 
     public void OnEnable()
     {
@@ -91,17 +92,20 @@ namespace ValheimVehicles.SharedScripts
         m_hitCollider = damageCollider
       };
       hitData.m_damage.m_damage = damageInfo.damage * 0.5f;
-      hitData.m_damage.m_blunt = damageInfo.damage * 0.5f;
-      hitData.m_damage.m_pickaxe = damageInfo.damage;
-      hitData.m_toolTier = 999;
+      hitData.m_damage.m_blunt = damageInfo.isExplosionHit ? 0f : damageInfo.damage * 0.5f;
+      hitData.m_damage.m_pickaxe = damageInfo.isExplosionHit ? 0f : damageInfo.damage;
+      hitData.m_damage.m_fire = damageInfo.isExplosionHit ? damageInfo.damage : 0f;
+      hitData.m_toolTier = 100;
       hitData.m_point = damageInfo.hitPoint;
       hitData.m_dir = damageInfo.direction;
       hitData.m_attacker = Player.m_localPlayer.GetZDOID();
       hitData.m_hitType = HitData.HitType.Impact;
       hitData.m_pushForce = 2f;
+      hitData.m_staggerMultiplier = 12f;
       hitData.m_radius = damageInfo.explosionRadius;
       hitData.m_ranged = true;
-      hitData.m_blockable = true;
+      hitData.m_dodgeable = false;
+      hitData.m_blockable = false;
 
       if (UseCharacterHit && damageCollider != null)
       {
@@ -170,6 +174,71 @@ namespace ValheimVehicles.SharedScripts
       return Instance != null;
     }
 
+    /// <summary>
+    /// For handling powderbarrels too
+    /// </summary>
+    ///  Todo make this a bit less focused on cannonballs and more on types of hits
+    public static DamageInfo GetDamageInfoForHit(PowderBarrel powderBarrel, Collider otherCollider, Vector3 hitPoint, Vector3 dir, Vector3 velocity, float force, bool isExplosionHit)
+    {
+#if !UNITY_EDITOR && !UNITY_2022
+
+      // The main types of damage that can be done.
+      // current order should be MineRock5 -> MineRock -> IDestructible
+      // todo only get components needed based on order so either components are not fetched if one of them is truthy.
+      var character = otherCollider.GetComponentInParent<Character>();
+      var mineRock5 = otherCollider.GetComponentInParent<MineRock5>();
+      var mineRock = otherCollider.GetComponentInParent<MineRock>();
+      var destructible = otherCollider.GetComponentInParent<IDestructible>();
+
+      var isMineRockHit = mineRock != null;
+      var isMineRock5Hit = mineRock5 != null;
+      var isDestructibleHit = destructible != null;
+
+      if (isDestructibleHit)
+      {
+        if (isMineRockHit)
+        {
+          LoggerProvider.LogDebug($"IsMineRock equal to IDestructible {destructible == mineRock as IDestructible}");
+        }
+
+        if (isMineRock5Hit)
+        {
+          LoggerProvider.LogDebug($"IsMineRock5 equal to IDestructible {destructible == mineRock5 as IDestructible}");
+        }
+      }
+
+      var isCharacterHit = character != null;
+      var isSelfHit = isCharacterHit && character as Player == Player.m_localPlayer;
+
+      var baseDamage = BaseDamageExplosiveCannonball;
+      // makes cannonball damage variable within specific bounds.
+      var lerpedForceDamage = Mathf.Lerp(0.1f, 1.5f, force / 90f);
+      var forceDamage = Mathf.Clamp(baseDamage * lerpedForceDamage, 10f, 300f);
+
+      var damageInfo = new DamageInfo
+      {
+        collider = otherCollider,
+        velocity = velocity,
+        direction = dir,
+        hitPoint = hitPoint,
+        force = force,
+        isExplosionHit = isExplosionHit,
+        isCharacterHit = isCharacterHit,
+        isMineRockHit = isMineRockHit,
+        isMineRock5Hit = isMineRock5Hit,
+        isDestructibleHit = isDestructibleHit,
+        isSelfHit = isSelfHit,
+        explosionRadius = (isMineRock5Hit || isMineRockHit) && isExplosionHit ? ExplosionShellRadius : 0f,
+        cannonballVariant = CannonballVariant.Explosive,
+        damage = forceDamage
+      };
+#else
+      var damageInfo = new DamageInfo();
+#endif
+
+      return damageInfo;
+    }
+
     public static DamageInfo GetDamageInfoForHit(Cannonball cannonball, Collider otherCollider, Vector3 hitPoint, Vector3 dir, Vector3 velocity, float force, bool isExplosionHit)
     {
 #if !UNITY_EDITOR && !UNITY_2022
@@ -202,8 +271,13 @@ namespace ValheimVehicles.SharedScripts
       var isCharacterHit = character != null;
       var isSelfHit = isCharacterHit && character as Player == Player.m_localPlayer;
 
-      var cannonballType = cannonball.cannonballType;
-      var isSolidCannonball = cannonballType == Cannonball.CannonballType.Solid;
+      var cannonballVariant = cannonball.cannonballVariant;
+      var isSolidCannonball = cannonballVariant == CannonballVariant.Solid;
+
+      var baseDamage = isSolidCannonball ? BaseDamageSolidCannonball : BaseDamageExplosiveCannonball;
+      // makes cannonball damage variable within specific bounds.
+      var lerpedForceDamage = Mathf.Lerp(0.1f, 1.5f, force / 90f);
+      var forceDamage = Mathf.Clamp(baseDamage * lerpedForceDamage, 10f, 300f);
 
       var damageInfo = new DamageInfo
       {
@@ -218,9 +292,9 @@ namespace ValheimVehicles.SharedScripts
         isMineRock5Hit = isMineRock5Hit,
         isDestructibleHit = isDestructibleHit,
         isSelfHit = isSelfHit,
-        explosionRadius = isExplosionHit ? Mathf.Clamp(5f * velocity.magnitude / 90f, 0f, 5f) : 0f,
-        cannonballType = cannonballType,
-        damage = Mathf.Clamp(isSolidCannonball ? BaseDamageSolidCannonball : BaseDamageExplosiveCannonball * force, 10f, 200f)
+        explosionRadius = (isMineRock5Hit || isMineRockHit) && isExplosionHit ? ExplosionShellRadius : 0f,
+        cannonballVariant = cannonballVariant,
+        damage = forceDamage
       };
 #else
       var damageInfo = new DamageInfo();
@@ -233,6 +307,16 @@ namespace ValheimVehicles.SharedScripts
     {
       if (!TryInit()) return;
       _queuedDamageInfo.Enqueue(damageInfo);
+      ScheduleCommitDamage();
+    }
+
+    public static void AddDamageToQueue(PowderBarrel powderBarrel, Collider otherCollider, Vector3 hitPoint, Vector3 dir, Vector3 velocity, float force, bool isExplosionHit)
+    {
+      if (!TryInit()) return;
+#if !UNITY_EDITOR && !UNITY_2022
+      var damageInfo = GetDamageInfoForHit(powderBarrel, otherCollider, hitPoint, dir, velocity, force, isExplosionHit);
+      _queuedDamageInfo.Enqueue(damageInfo);
+#endif
       ScheduleCommitDamage();
     }
 
@@ -284,8 +368,11 @@ namespace ValheimVehicles.SharedScripts
       if (!TryInit()) yield break;
       yield return new WaitForFixedUpdate();
       var timer = Stopwatch.StartNew();
-      while (_queuedDamageInfo.Count > 0)
+      const int maxLoops = 1000;
+      var count = 0;
+      while (_queuedDamageInfo.Count > 0 && count < maxLoops)
       {
+        count++;
         if (timer.ElapsedMilliseconds > 10)
         {
           yield return null;
@@ -293,10 +380,13 @@ namespace ValheimVehicles.SharedScripts
         }
 
         var damageInfo = _queuedDamageInfo.Dequeue();
-        if (damageInfo.collider == null) continue;
+        if (damageInfo.collider == null)
+        {
+          continue;
+        }
         CommitDamage(damageInfo);
       }
-      _queuedDamageInfo.Clear();
+      timer.Stop();
     }
   }
 }

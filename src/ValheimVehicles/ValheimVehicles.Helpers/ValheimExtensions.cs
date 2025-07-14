@@ -153,19 +153,42 @@ public static class ValheimExtensions
     return true;
   }
 
-  public static Coroutine WaitForZNetView(this MonoBehaviour instance, Action action)
+  public static Coroutine? WaitForZNetView(this MonoBehaviour instance, Action action)
   {
+    var nvController = instance as INetView;
+
+    // early bail.
+    if (nvController != null && nvController.m_nview != null && nvController.m_nview.IsValid())
+    {
+      action();
+      return null;
+    }
+
     return instance.StartCoroutine(WaitForZNetViewCoroutine(instance, _ => action()));
   }
 
-  public static Coroutine WaitForZNetView(this MonoBehaviour instance, Action<ZNetView> action)
+  public static Coroutine? WaitForZNetView(this MonoBehaviour instance, Action<ZNetView> action, float timeout = 10f, bool shouldLookAtParent = false)
   {
-    return instance.StartCoroutine(WaitForZNetViewCoroutine(instance, action));
+    var nvController = instance as INetView;
+
+    // early bail.
+    if (nvController != null && nvController.m_nview != null && nvController.m_nview.IsValid())
+    {
+      action(nvController.m_nview);
+      return null;
+    }
+    return instance.StartCoroutine(WaitForZNetViewCoroutine(instance, action, timeout, shouldLookAtParent));
   }
 
-  public static IEnumerator WaitForZNetViewCoroutine(this MonoBehaviour instance, Action<ZNetView> action, float timeout = 10f)
+  public static IEnumerator WaitForZNetViewCoroutine(this MonoBehaviour instance, Action<ZNetView> action, float timeout = 10f, bool shouldLookAtParent = false)
   {
-    var netView = instance.GetComponent<ZNetView>();
+    ZNetView GetNetView()
+    {
+      return shouldLookAtParent ? instance.GetComponentInParent<ZNetView>() : instance.GetComponent<ZNetView>();
+    }
+
+    var netView = GetNetView();
+
 
     var timer = Stopwatch.StartNew();
 
@@ -175,7 +198,7 @@ public static class ValheimExtensions
       if (!instance) yield break;
       if (!netView)
       {
-        netView = instance.GetComponent<ZNetView>();
+        netView = GetNetView();
       }
       if (netView == null || !netView.IsValid()) continue;
     }
