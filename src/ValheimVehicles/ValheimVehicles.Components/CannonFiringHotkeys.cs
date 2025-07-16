@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using ValheimVehicles.Patches;
+using Random = UnityEngine.Random;
 
 namespace ValheimVehicles.SharedScripts
 {
@@ -214,7 +215,7 @@ namespace ValheimVehicles.SharedScripts
         LoggerProvider.LogWarning("No target controller but somehow tried to fire a cannon. This should not be possible as TargetingController initializes CannonFiringHotkeys ");
         return;
       }
-      targetController.StartManualGroupFiring(group);
+      targetController.Request_FireManualCannons(group);
     }
   }
 }

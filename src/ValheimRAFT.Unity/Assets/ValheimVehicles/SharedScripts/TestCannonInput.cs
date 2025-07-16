@@ -12,7 +12,7 @@ namespace ValheimVehicles.SharedScripts
   public class CannonTestInput : MonoBehaviour
   {
     public TargetController TargetController;
-    [SerializeField] public int firingGroup;
+    [SerializeField] public CannonDirectionGroup firingGroup = CannonDirectionGroup.Forward;
 
     private void Start()
     {
@@ -26,7 +26,9 @@ namespace ValheimVehicles.SharedScripts
       var isKey1MousePress = Input.GetMouseButtonDown(1);
       if (isSpacePressed || isKey1MousePress)
       {
-        TargetController.StartManualFiring(firingGroup);
+        var randomVelocityModifier = CannonController.GetRandomCannonVelocity;
+        var randomArcModifier = CannonController.GetRandomCannonArc;
+        TargetController.StartManualGroupFiring(firingGroup, randomVelocityModifier, randomArcModifier);
       }
     }
 
@@ -37,7 +39,7 @@ namespace ValheimVehicles.SharedScripts
 
     public void UpdateAllValues()
     {
-      TargetController= GetComponent<TargetController>();
+      TargetController = GetComponent<TargetController>();
 
       var wanderers = FindObjectsOfType<RandomWanderer>(true);
       if (wanderers.Length > 0)

@@ -7,13 +7,9 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using JetBrains.Annotations;
-using Jotunn.Managers;
 using UnityEngine;
-using ValheimVehicles.Helpers;
-using ValheimVehicles.RPC;
 # if !UNITY_2022 && !UNITY_EDITOR
 using ValheimVehicles.Controllers;
-using StructLinq;
 #endif
 
 #endregion
@@ -754,118 +750,8 @@ namespace ValheimVehicles.SharedScripts
       }
       _controller = cannonController;
       lastFireTransform = fireTransform;
-#if !UNITY_2022 || !UNITY_EDITOR
-      RequestFireCannonball(velocity, fireTransform.position, firingIndex);
-#else
       Fire(velocity, fireTransform.position, firingIndex, Random.value);
-#endif
     }
-
-  #region ValheimIntegrations
-
-#if !UNITY_2022 || !UNITY_EDITOR
-    private void RequestFireCannonball(Vector3 velocity, Vector3 position, int firingIndex)
-    {
-      // Only the server should send this RPC.
-      // if (ZNet.instance.IsServer() || m_nview.IsOwner())
-      // {
-      //   if (!m_nview.IsOwner())
-      //   {
-      //     m_nview.ClaimOwnership();
-      //   }
-      // }
-
-      if (!_controller)
-      {
-        LoggerProvider.LogWarning("Cannonball has no controller!");
-        return;
-      }
-
-      var controllerNV = _controller.GetComponentInParent<ZNetView>();
-      if (!controllerNV)
-      {
-        LoggerProvider.LogWarning("Cannonball has no controller znetview!");
-        return;
-      }
-
-      var package = new ZPackage();
-      package.Write(controllerNV.GetZDO().m_uid);
-      package.Write(m_nview.GetZDO().m_uid);
-      package.Write((int)cannonballVariant);
-      package.Write(velocity);
-      package.Write(position);
-      package.Write(firingIndex);
-      package.Write(Random.value);
-
-      FireCannonballRPC.Send(ZNetView.Everybody, package);
-    }
-
-    public static RPCEntity FireCannonballRPC;
-
-    public static void RegisterCannonballRPCs()
-    {
-      FireCannonballRPC = RPCManager.RegisterRPC(nameof(RPC_FireCannonball), RPC_FireCannonball);
-    }
-
-    public static IEnumerator RPC_FireCannonball(long senderId, ZPackage package)
-    {
-      package.SetPos(0);
-      var cannonControllerZDOID = package.ReadZDOID();
-      var cannonballZdoid = package.ReadZDOID();
-      var cannonballVariant = (CannonballVariant)package.ReadInt();
-      var velocity = package.ReadVector3();
-      var firingPosition = package.ReadVector3();
-      var firingIndex = package.ReadInt();
-      var syncedRandomValue = package.ReadShort();
-
-      var cannonControllerInstance = ZNetScene.instance.FindInstance(cannonControllerZDOID);
-      var cannonballInstance = ZNetScene.instance.FindInstance(cannonballZdoid);
-      if (!cannonControllerInstance)
-      {
-        LoggerProvider.LogWarning($"Cannoncontroller {cannonControllerZDOID} not found. CannonController should exist otherwise we cannot instantiate cannonball without collision issues");
-        yield break;
-      }
-
-      var cannonController = cannonControllerInstance.GetComponent<CannonController>();
-      if (!cannonController)
-      {
-        LoggerProvider.LogWarning($"Cannoncontroller {cannonControllerZDOID} not found. CannonController should exist otherwise we cannot instantiate cannonball without collision issues");
-        yield break;
-      }
-
-      if (cannonballInstance == null)
-      {
-
-        var cannonballPrefab = CannonController.SelectCannonballType(cannonballVariant);
-        if (!cannonballPrefab)
-        {
-          LoggerProvider.LogWarning("No cannonball prefab found for cannonball variant");
-          yield break;
-        }
-
-
-
-        // cannonballInstance = Instantiate(cannonballPrefab, firingPosition, Quaternion.identity, null);
-        if (cannonballInstance == null)
-        {
-          LoggerProvider.LogWarning($"Cannonball {cannonControllerZDOID} not found!");
-          yield break;
-        }
-      }
-
-      var cannonball = cannonballInstance.GetComponent<Cannonball>();
-      if (cannonball)
-      {
-        cannonball.Fire(velocity, firingPosition, firingIndex, syncedRandomValue);
-      }
-      else
-      {
-        LoggerProvider.LogDebug($"Cannonball not found on {cannonControllerInstance.name}!");
-      }
-    }
-#endif
-
-  #endregion
 
     private IEnumerator AutoDespawnCoroutine()
     {

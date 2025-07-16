@@ -12,6 +12,7 @@ using System.Collections.Generic;
 using System.Linq;
 using JetBrains.Annotations;
 using UnityEngine;
+using ValheimVehicles.RPC;
 using ValheimVehicles.SharedScripts.UI;
 using Random = UnityEngine.Random;
 
@@ -974,7 +975,7 @@ namespace ValheimVehicles.SharedScripts
 
     public bool IsHandHeldCannon => cannonVariant == CannonVariant.HandHeld;
 
-    private bool CanFire(bool isManualFiring, int remainingAmmo)
+    public bool CanFire(bool isManualFiring, int remainingAmmo)
     {
       if (!isActiveAndEnabled) return false;
       if (remainingAmmo <= 0) return false;
@@ -985,7 +986,10 @@ namespace ValheimVehicles.SharedScripts
       return true;
     }
 
-    public bool Fire(bool isManualFiring, int remainingAmmo, out int deltaAmmo)
+    public static float GetRandomCannonVelocity => Random.value;
+    public static float GetRandomCannonArc => Random.Range(-maxSidewaysArcDegrees, maxSidewaysArcDegrees);
+
+    public bool Fire(bool isManualFiring, float randomVelocity, float randomArc, int remainingAmmo, out int deltaAmmo)
     {
       deltaAmmo = 0;
       if (!CanFire(isManualFiring, remainingAmmo))
@@ -995,12 +999,14 @@ namespace ValheimVehicles.SharedScripts
 
       IsFiring = true;
 
+
+
       var hasFired = false;
       for (var index = 0; index < shootingParts.Count; index++)
       {
         var shootingPart = shootingParts[index];
         if (remainingAmmo <= 0) break;
-        if (!FireSingle(shootingPart, index, isManualFiring)) break;
+        if (!FireSingle(shootingPart, index, isManualFiring, randomVelocity, randomArc)) break;
         deltaAmmo++;
         remainingAmmo--;
         hasFired = true;
@@ -1022,7 +1028,7 @@ namespace ValheimVehicles.SharedScripts
       return true;
     }
 
-    private bool FireSingle(BarrelPart barrel, int barrelCount, bool isManualFiring)
+    private bool FireSingle(BarrelPart barrel, int barrelCount, bool isManualFiring, float randomValue, float randomSideArcValue)
     {
       if (!_loadedCannonballs.TryGetValue(barrel, out var loadedCannonball) || loadedCannonball == null)
       {
@@ -1046,10 +1052,10 @@ namespace ValheimVehicles.SharedScripts
       IgnoreLocalColliders(loadedCannonball);
       loadedCannonball.transform.position = barrel.projectileLoader.position;
 
-      var randomVelocityMultiplier = Random.Range(-1f, 1f);
+      var randomVelocityMultiplier = randomValue;
       var localSpeed = cannonballSpeed + randomVelocityMultiplier;
 
-      var sideArc = Random.Range(-maxSidewaysArcDegrees, maxSidewaysArcDegrees);
+      // var sideArc = Random.Range(-maxSidewaysArcDegrees, maxSidewaysArcDegrees);
 
       var baseForward = cannonShooterAimPoint.forward;
 
@@ -1063,7 +1069,7 @@ namespace ValheimVehicles.SharedScripts
 #endif
       }
 
-      var arcRot = Quaternion.Euler(0f, sideArc, 0f);
+      var arcRot = Quaternion.Euler(0f, randomSideArcValue, 0f);
       var arcedForward = arcRot * baseForward;
 
 // Defensive: If arcRot or math yields a bad direction, fallback again.

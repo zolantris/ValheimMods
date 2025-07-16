@@ -1,6 +1,10 @@
 using System;
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
+using ValheimVehicles.RPC;
 using ValheimVehicles.SharedScripts;
+using Random = UnityEngine.Random;
 
 public class CannonHandHeldController : CannonController, Hoverable
 {
@@ -21,9 +25,11 @@ public class CannonHandHeldController : CannonController, Hoverable
   public static bool ShouldUpdate = true;
 
   private AmmoController _ammoController;
+  private ZNetView m_nview;
 
   protected internal override void Start()
   {
+    m_nview = GetComponentInParent<ZNetView>();
     _ammoController = GetComponent<AmmoController>();
     TryInitController();
     base.Start();
@@ -110,9 +116,67 @@ public class CannonHandHeldController : CannonController, Hoverable
     }
   }
 
-  public bool FireHandheld()
+  public void Request_FireHandHeld()
   {
-    if (Fire(true, _ammoController.GetAmmoAmountFromCannonballVariant(AmmoVariant), out var deltaAmmo))
+    // prevent firing at 0 ammo.
+    if (_ammoController.GetAmmoAmountFromCannonballVariant(AmmoVariant) < 1) return;
+
+    // random arc synced across server.
+    var randomVelocityModifier = Random.value;
+    var randomArcModifier = Random.Range(-maxSidewaysArcDegrees, maxSidewaysArcDegrees);
+
+    if (!m_nview)
+    {
+      m_nview = GetComponentInParent<ZNetView>();
+    }
+    if (!m_nview)
+    {
+      LoggerProvider.LogWarning("cannonController missing znetview!");
+      return;
+    }
+
+    var package = new ZPackage();
+    package.Write(m_nview.GetZDO().m_uid);
+    package.Write(randomVelocityModifier);
+    package.Write(randomArcModifier);
+    Fire_RPC.Send(ZNetView.Everybody, package);
+  }
+
+  public static RPCEntity Fire_RPC = null!;
+
+  public static void RegisterCannonControllerRPCs()
+  {
+    Fire_RPC = RPCManager.RegisterRPC(nameof(RPC_FireHandHeldCannon), RPC_FireHandHeldCannon);
+  }
+
+  public static IEnumerator RPC_FireHandHeldCannon(long senderId, ZPackage package)
+  {
+    package.SetPos(0);
+    var cannonControllerZDOID = package.ReadZDOID();
+    var syncedRandomValue = package.ReadShort();
+    var syncedArcRandomValue = package.ReadShort();
+
+    var cannonHandHeldInstance = ZNetScene.instance.FindInstance(cannonControllerZDOID);
+    if (!cannonHandHeldInstance)
+    {
+      LoggerProvider.LogWarning($"cannonHandheld {cannonControllerZDOID} not found. CannonController should exist otherwise we cannot instantiate cannonball without collision issues");
+      yield break;
+    }
+
+    // can be a child for the handheld version.
+    var cannonHandheld = cannonHandHeldInstance.GetComponentInChildren<CannonHandHeldController>();
+    if (!cannonHandheld)
+    {
+      LoggerProvider.LogWarning($"cannonHandheld {cannonControllerZDOID} not found. CannonController should exist otherwise we cannot instantiate cannonball without collision issues");
+      yield break;
+    }
+
+    cannonHandheld.FireHandHeldCannon(syncedRandomValue, syncedArcRandomValue);
+  }
+
+  internal bool FireHandHeldCannon(float randomVelocity, float randomArc)
+  {
+    if (Fire(true, randomVelocity, randomArc, _ammoController.GetAmmoAmountFromCannonballVariant(AmmoVariant), out var deltaAmmo))
     {
       _ammoController.OnAmmoChangedFromVariant(AmmoVariant, deltaAmmo);
       return true;

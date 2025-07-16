@@ -89,7 +89,7 @@ public static class Humanoid_EquipPatch
       return false;
     }
     cannonHandheldController.SetAmmoVariantFromToken(ammoItem.m_shared.m_name);
-    cannonHandheldController.FireHandheld();
+    cannonHandheldController.Request_FireHandHeld();
 
     return false;
   }
