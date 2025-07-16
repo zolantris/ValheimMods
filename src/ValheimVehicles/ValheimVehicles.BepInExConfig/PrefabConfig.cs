@@ -226,6 +226,22 @@ public class PrefabConfig : BepInExBaseConfig<PrefabConfig>
 
     // todo would have to subscribe to prefab registry to update this.
     CannonBallInventoryWeight = config.BindUnique(VehicleCannonsSection, "CannonBallInventoryWeight", 4f, ConfigHelpers.CreateConfigDescription("Set the weight of cannonballs. For realism 12-48lbs for these cannons.", true, false, new AcceptableValueRange<float>(0, 100)));
+    CannonBallInventoryWeight.SettingChanged += (sender, args) =>
+    {
+      if (PrefabManager.Instance == null) return;
+      var cannonballExplosive = ItemManager.Instance.GetItem($"$valheim_vehicles_cannonball_explosive");
+      var cannonballSolid = ItemManager.Instance.GetItem("$valheim_vehicles_cannonball_solid");
+
+      if (cannonballSolid != null)
+      {
+        cannonballSolid.ItemDrop.m_itemData.m_shared.m_weight = CannonBallInventoryWeight.Value;
+      }
+
+      if (cannonballExplosive != null)
+      {
+        cannonballExplosive.ItemDrop.m_itemData.m_shared.m_weight = CannonBallInventoryWeight.Value;
+      }
+    };
 
     CannonHandheld_AudioStartPosition = config.BindUnique(VehicleCannonsSection, "CannonHandheld_AudioStartPosition", 0.35f, ConfigHelpers.CreateConfigDescription("Set set the audio start position. This will sound like a heavy flintlock if to close to 0f", false, true, new AcceptableValueRange<float>(0f, 1.5f)));
     CannonHandheld_AudioStartPosition.SettingChanged += (sender, args) =>
@@ -278,7 +294,7 @@ public class PrefabConfig : BepInExBaseConfig<PrefabConfig>
     HasCannonballWindAudio = config.BindUnique(VehicleCannonsSection, "Cannonball_HasWindAudio", true, ConfigHelpers.CreateConfigDescription("Allows enable cannonball wind audio - which can be heard if a cannonball passes nearby.", false, false));
     CannonballWindAudioVolume = config.BindUnique(VehicleCannonsSection, "Cannonball_WindAudioVolume", 0.2f, ConfigHelpers.CreateConfigDescription("Allows customizing cannonball wind audio - which can be heard if a cannonball passes nearby. Recommended below 0.2f", false, false));
 
-    PowderBarrelExplosiveChainDelay = config.BindUnique(PowderBarrelSection, "PowderBarrelExplosiveChainDelay", 0.5f, ConfigHelpers.CreateConfigDescription("Set the powder barrel explosive chain delay. It will blow up nearby barrels but at a delayed fuse to make things a bit more realistic or at least cinematic.", false, false, new AcceptableValueRange<float>(0f, 2f)));
+    PowderBarrelExplosiveChainDelay = config.BindUnique(PowderBarrelSection, "PowderBarrelExplosiveChainDelay", 0.25f, ConfigHelpers.CreateConfigDescription("Set the powder barrel explosive chain delay. It will blow up nearby barrels but at a delayed fuse to make things a bit more realistic or at least cinematic.", false, false, new AcceptableValueRange<float>(0f, 2f)));
     PowderBarrelExplosiveChainDelay.SettingChanged += (sender, args) =>
     {
       PowderBarrel.BarrelExplosionChainDelay = PowderBarrelExplosiveChainDelay.Value;

@@ -25,6 +25,7 @@ public static class RPCManager_Patches
     PrefabConfigRPC.RegisterAll();
     PowerSystemRPC.RegisterAll();
     PlayerEitrRPC.RegisterAll();
+    Cannonball.RegisterCannonballRPCs();
 
     // finally, call the network registry.
     RPCManager.RegisterAllRPCs();

@@ -99,7 +99,7 @@ public class CannonPrefabs : RegisterPrefab<CannonPrefabs>
       return;
     }
 
-    var nv = PrefabRegistryHelpers.AddTempNetView(prefab);
+    var nv = PrefabRegistryHelpers.AddTempNetView(prefab, true);
     nv.m_distant = true;
     var zSyncTransform = prefab.AddComponent<VehicleZSyncTransform>();
 
@@ -125,7 +125,7 @@ public class CannonPrefabs : RegisterPrefab<CannonPrefabs>
       return;
     }
 
-    var nv = PrefabRegistryHelpers.AddTempNetView(prefab);
+    var nv = PrefabRegistryHelpers.AddTempNetView(prefab, true);
     nv.m_distant = true;
     var zSyncTransform = prefab.AddComponent<VehicleZSyncTransform>();
 

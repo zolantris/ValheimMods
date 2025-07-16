@@ -7,7 +7,10 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using JetBrains.Annotations;
+using Jotunn.Managers;
 using UnityEngine;
+using ValheimVehicles.Helpers;
+using ValheimVehicles.RPC;
 # if !UNITY_2022 && !UNITY_EDITOR
 using ValheimVehicles.Controllers;
 using StructLinq;
@@ -90,6 +93,7 @@ namespace ValheimVehicles.SharedScripts
 
     private readonly List<Collider> _colliders = new();
     private CoroutineHandle _despawnCoroutine;
+    private CoroutineHandle _firingCannonballCoroutine;
 
     private AudioSource _explosionAudioSource;
     private Transform _explosionParent;
@@ -100,6 +104,7 @@ namespace ValheimVehicles.SharedScripts
 
     private Vector3 _lastVelocity; // the last velocity before unity physics mutates it.
     private CannonController _controller;
+    private float _syncedRandomValue;
     public HashSet<Transform> IgnoredTransformRoots = new();
     public SphereCollider sphereCollider;
     private GameObject meshGameObject;
@@ -107,6 +112,7 @@ namespace ValheimVehicles.SharedScripts
 
 #if !UNITY_2022 && !UNITY_EDITOR
     public VehicleZSyncTransform m_customZSyncTransform;
+    public ZNetView m_nview;
 #endif
 
     public bool CanHit => _canHit && _fireOrigin != null && isActiveAndEnabled;
@@ -130,6 +136,7 @@ namespace ValheimVehicles.SharedScripts
       HasCannonballWindAudio = CanPlayWindSound;
 #endif
 #if !UNITY_2022 && !UNITY_EDITOR
+      m_nview = GetComponent<ZNetView>();
       m_customZSyncTransform = GetComponent<VehicleZSyncTransform>();
 #endif
       meshGameObject = transform.Find("cannonball_mesh").gameObject;
@@ -178,6 +185,7 @@ namespace ValheimVehicles.SharedScripts
 
     private void InitCoroutines()
     {
+      _firingCannonballCoroutine ??= new CoroutineHandle(this);
       _despawnCoroutine ??= new CoroutineHandle(this);
       _impactSoundCoroutine ??= new CoroutineHandle(this);
     }
@@ -426,10 +434,9 @@ namespace ValheimVehicles.SharedScripts
       }
     }
 
-    private static bool CanPenetrateMaterial(float relativeVelocityMagnitude, HitMaterial hitMaterial)
+    private static bool CanPenetrateMaterial(float relativeVelocityMagnitude, HitMaterial hitMaterial, float randomValue)
     {
-      var randomValue = Random.value;
-      var velocityRandomizer = relativeVelocityMagnitude / 80f - randomValue;
+      var velocityRandomizer = relativeVelocityMagnitude / 50f - randomValue;
       var canPenetrate = velocityRandomizer > 0.25f;
 
       if (hitMaterial == HitMaterial.Terrain)
@@ -477,6 +484,7 @@ namespace ValheimVehicles.SharedScripts
 
     public bool IsTrackedCannonball(Collision other)
     {
+      if (_controller == null) return false;
       return _controller._trackedLoadedCannonballs.Any(controllerTrackedLoadedCannonball => controllerTrackedLoadedCannonball.sphereCollider == other.collider);
     }
 
@@ -521,6 +529,15 @@ namespace ValheimVehicles.SharedScripts
     }
 
     /// <summary>
+    /// Todo migrate this to cannoncontroller and set a boolean such as isHost or canDamageColliders when firing from the controlling host.
+    /// </summary>
+    /// <returns></returns>
+    public bool CanDoDamage()
+    {
+      return _controller != null;
+    }
+
+    /// <summary>
     /// Handles penetration of cannonball. Uses some randomization to determine if the structure is penetrated.
     /// </summary>
     private void OnHitHandler(Collision other)
@@ -544,7 +561,7 @@ namespace ValheimVehicles.SharedScripts
       var hitMaterialVelocityMultiplier = GetHitMaterialVelocityMultiplier(hitMaterial);
 
       // makes penetration through a collider random.
-      var canPenetrate = cannonballVariant == CannonballVariant.Solid && CanPenetrateMaterial(relativeVelocityMagnitude, hitMaterial);
+      var canPenetrate = cannonballVariant == CannonballVariant.Solid && CanPenetrateMaterial(relativeVelocityMagnitude, hitMaterial, _syncedRandomValue);
       var nextVelocity = _lastVelocity;
 
       var wasBarrel = TryTriggerBarrelExplosion(other.collider);
@@ -572,7 +589,10 @@ namespace ValheimVehicles.SharedScripts
         if (canPenetrate)
         {
           AddCollidersToIgnoreList(other);
-          CannonballHitScheduler.AddDamageToQueue(this, other.collider, hitPoint, direction, nextVelocity, relativeVelocityMagnitude, false);
+          if (CanDoDamage())
+          {
+            CannonballHitScheduler.AddDamageToQueue(this, other.collider, hitPoint, direction, nextVelocity, relativeVelocityMagnitude, false);
+          }
           canMutateVelocity = true;
         }
 
@@ -581,7 +601,10 @@ namespace ValheimVehicles.SharedScripts
         {
           if (_lastVelocity.magnitude > 20f)
           {
-            CannonballHitScheduler.AddDamageToQueue(this, other.collider, hitPoint, direction, nextVelocity, relativeVelocityMagnitude, false);
+            if (CanDoDamage())
+            {
+              CannonballHitScheduler.AddDamageToQueue(this, other.collider, hitPoint, direction, nextVelocity, relativeVelocityMagnitude, false);
+            }
           }
           // clamp velocity but allow physics for downwards velocity.
           // var velocity = m_body.velocity;
@@ -600,11 +623,14 @@ namespace ValheimVehicles.SharedScripts
       {
         if (!_hasExploded && Vector3.Distance(_fireOrigin.Value, transform.position) > 3f)
         {
-          // addition impact damage first
-          CannonballHitScheduler.AddDamageToQueue(this, other.collider, hitPoint, direction, nextVelocity, relativeVelocityMagnitude, false);
-          // explosion next
+          if (CanDoDamage())
+          {
+            // addition impact damage first
+            CannonballHitScheduler.AddDamageToQueue(this, other.collider, hitPoint, direction, nextVelocity, relativeVelocityMagnitude, false);
+            // explosion next
+            GetCollisionsFromExplosion(transform.position, relativeVelocityMagnitude);
+          }
 
-          GetCollisionsFromExplosion(transform.position, relativeVelocityMagnitude);
           StartCoroutine(ActivateExplosionEffect(relativeVelocityMagnitude));
           _hasExploded = true;
           nextVelocity.x = 0f;
@@ -660,7 +686,7 @@ namespace ValheimVehicles.SharedScripts
       ResetCannonball();
     }
 
-    public IEnumerator FireCannonball(Vector3 velocity, Transform fireTransform, int firingIndex)
+    public IEnumerator FireCannonball(Vector3 velocity, Vector3 fireOrigin, int firingIndex)
     {
       meshGameObject.SetActive(true);
 
@@ -677,9 +703,7 @@ namespace ValheimVehicles.SharedScripts
         PlayWindSound();
       }
 
-      lastFireTransform = fireTransform;
-      _fireOrigin = fireTransform.position;
-
+      _fireOrigin = fireOrigin;
 
       // Enable all colliders (just in case)
       foreach (var col in Colliders) col.enabled = true;
@@ -715,6 +739,12 @@ namespace ValheimVehicles.SharedScripts
       _despawnCoroutine.Start(AutoDespawnCoroutine());
     }
 
+    public void Fire(Vector3 velocity, Vector3 fireOrigin, int firingIndex, float randomValue)
+    {
+      _syncedRandomValue = randomValue;
+      _firingCannonballCoroutine.Start(FireCannonball(velocity, fireOrigin, firingIndex));
+    }
+
     public void Fire(Vector3 velocity, Transform fireTransform, CannonController cannonController, int firingIndex)
     {
       if (!m_body)
@@ -723,8 +753,119 @@ namespace ValheimVehicles.SharedScripts
         return;
       }
       _controller = cannonController;
-      StartCoroutine(FireCannonball(velocity, fireTransform, firingIndex));
+      lastFireTransform = fireTransform;
+#if !UNITY_2022 || !UNITY_EDITOR
+      RequestFireCannonball(velocity, fireTransform.position, firingIndex);
+#else
+      Fire(velocity, fireTransform.position, firingIndex, Random.value);
+#endif
     }
+
+  #region ValheimIntegrations
+
+#if !UNITY_2022 || !UNITY_EDITOR
+    private void RequestFireCannonball(Vector3 velocity, Vector3 position, int firingIndex)
+    {
+      // Only the server should send this RPC.
+      // if (ZNet.instance.IsServer() || m_nview.IsOwner())
+      // {
+      //   if (!m_nview.IsOwner())
+      //   {
+      //     m_nview.ClaimOwnership();
+      //   }
+      // }
+
+      if (!_controller)
+      {
+        LoggerProvider.LogWarning("Cannonball has no controller!");
+        return;
+      }
+
+      var controllerNV = _controller.GetComponentInParent<ZNetView>();
+      if (!controllerNV)
+      {
+        LoggerProvider.LogWarning("Cannonball has no controller znetview!");
+        return;
+      }
+
+      var package = new ZPackage();
+      package.Write(controllerNV.GetZDO().m_uid);
+      package.Write(m_nview.GetZDO().m_uid);
+      package.Write((int)cannonballVariant);
+      package.Write(velocity);
+      package.Write(position);
+      package.Write(firingIndex);
+      package.Write(Random.value);
+
+      FireCannonballRPC.Send(ZNetView.Everybody, package);
+    }
+
+    public static RPCEntity FireCannonballRPC;
+
+    public static void RegisterCannonballRPCs()
+    {
+      FireCannonballRPC = RPCManager.RegisterRPC(nameof(RPC_FireCannonball), RPC_FireCannonball);
+    }
+
+    public static IEnumerator RPC_FireCannonball(long senderId, ZPackage package)
+    {
+      package.SetPos(0);
+      var cannonControllerZDOID = package.ReadZDOID();
+      var cannonballZdoid = package.ReadZDOID();
+      var cannonballVariant = (CannonballVariant)package.ReadInt();
+      var velocity = package.ReadVector3();
+      var firingPosition = package.ReadVector3();
+      var firingIndex = package.ReadInt();
+      var syncedRandomValue = package.ReadShort();
+
+      var cannonControllerInstance = ZNetScene.instance.FindInstance(cannonControllerZDOID);
+      var cannonballInstance = ZNetScene.instance.FindInstance(cannonballZdoid);
+      if (!cannonControllerInstance)
+      {
+        LoggerProvider.LogWarning($"Cannoncontroller {cannonControllerZDOID} not found. CannonController should exist otherwise we cannot instantiate cannonball without collision issues");
+        yield break;
+      }
+
+      var cannonController = cannonControllerInstance.GetComponent<CannonController>();
+      if (!cannonController)
+      {
+        LoggerProvider.LogWarning($"Cannoncontroller {cannonControllerZDOID} not found. CannonController should exist otherwise we cannot instantiate cannonball without collision issues");
+        yield break;
+      }
+
+      if (cannonballInstance == null)
+      {
+
+        var cannonballPrefab = CannonController.SelectCannonballType(cannonballVariant);
+        if (!cannonballPrefab)
+        {
+          LoggerProvider.LogWarning("No cannonball prefab found for cannonball variant");
+          yield break;
+        }
+
+
+
+        // cannonballInstance = Instantiate(cannonballPrefab, firingPosition, Quaternion.identity, null);
+        if (cannonballInstance == null)
+        {
+          LoggerProvider.LogWarning($"Cannonball {cannonControllerZDOID} not found!");
+          yield break;
+        }
+      }
+
+      var cannonball = cannonballInstance.GetComponent<Cannonball>();
+      if (cannonball)
+      {
+        cannonball.Fire(velocity, firingPosition, firingIndex, syncedRandomValue);
+      }
+      else
+      {
+        LoggerProvider.LogDebug($"Cannonball not found on {cannonControllerInstance.name}!");
+      }
+    }
+#endif
+
+  #endregion
 
     private IEnumerator AutoDespawnCoroutine()
     {
@@ -748,8 +889,12 @@ namespace ValheimVehicles.SharedScripts
       }
       else
       {
-        // destroy self if the cannon gets broken.
+        // destroy self if the cannon gets broken or current provider has no access to cannon instance.
+#if !UNITY_2022 || !UNITY_EDITOR
+        ZNetScene.instance.Destroy(gameObject);
+#else
         Destroy(gameObject);
+#endif
       }
     }
 

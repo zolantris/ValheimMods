@@ -477,14 +477,9 @@ namespace ValheimVehicles.SharedScripts
 #endif
     }
 
-    private GameObject SelectCannonballType()
+    public static GameObject? SelectCannonballType(CannonballVariant cannonballVariant)
     {
-      if (!hasRunSetup)
-      {
-        SetupCannonballPrefab();
-      }
-
-      switch (ammoVariant)
+      switch (cannonballVariant)
       {
         case CannonballVariant.Solid:
           return CannonballSolidPrefab;
@@ -550,7 +545,7 @@ namespace ValheimVehicles.SharedScripts
     private void InitializePool()
     {
       _cannonballPool = new Queue<Cannonball>(MinPoolSize);
-      var selectedCannonball = SelectCannonballType();
+      var selectedCannonball = SelectCannonballType(ammoVariant);
       if (!selectedCannonball) return;
       for (var i = 0; i < MinPoolSize; i++)
       {
@@ -626,7 +621,7 @@ namespace ValheimVehicles.SharedScripts
       }
     }
 
-    private Cannonball GetPooledCannonball(BarrelPart barrelPart)
+    public Cannonball GetPooledCannonball(BarrelPart barrelPart)
     {
       _trackedLoadedCannonballs.RemoveAll(x => x == null);
       if (_cannonballPool.Count > 0)
@@ -646,7 +641,7 @@ namespace ValheimVehicles.SharedScripts
           return ball;
         }
       }
-      var selectedCannonball = SelectCannonballType();
+      var selectedCannonball = SelectCannonballType(ammoVariant);
       if (!selectedCannonball)
       {
         LoggerProvider.LogWarning("No cannonball prefab set. Please set one in CannonballSolidPrefab or CannonballExplosivePrefab.");

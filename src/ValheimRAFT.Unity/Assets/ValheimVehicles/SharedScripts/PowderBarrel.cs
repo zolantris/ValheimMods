@@ -18,13 +18,13 @@ namespace ValheimVehicles.SharedScripts
   {
 
     public const string BarrelExplosionColliderName = "barrel_explosion_collider";
-    [SerializeField] private float destroyDeactivationDelayTimeInMs;
+    [SerializeField] private float destroyDeactivationDelayTimeInMs = 0.25f;
     [Tooltip("Hides the barrel mesh when the explosion hits the destroy deactivation timer.")]
-    [SerializeField] public bool shouldHideBarrelMeshOnExplode = false;
+    [SerializeField] public bool shouldHideBarrelMeshImmediatelyOnExplode = false;
     [SerializeField] public bool CanDestroyOnExplode = true;
     [SerializeField] public bool CanExplodeMultipleTimes = false;
     private readonly Collider[] allocatedColliders = new Collider[100];
-    public static float BarrelExplosionChainDelay = 0.5f;
+    public static float BarrelExplosionChainDelay = 0.25f;
     private CoroutineHandle _aoeRoutine;
 
     private CoroutineHandle _explosionRoutine;
@@ -221,7 +221,6 @@ namespace ValheimVehicles.SharedScripts
 
     private IEnumerator Explode()
     {
-      LoggerProvider.LogDev("Exploding");
       explosionFx.Play();
       explosionAudio.Play();
 
@@ -231,7 +230,7 @@ namespace ValheimVehicles.SharedScripts
       {
         yield return new WaitUntil(() => timer.ElapsedMilliseconds > destroyDeactivationDelayTimeInMs);
       }
-      if (shouldHideBarrelMeshOnExplode && !CanExplodeMultipleTimes)
+      if (shouldHideBarrelMeshImmediatelyOnExplode && !CanExplodeMultipleTimes)
       {
         meshesTransform.gameObject.SetActive(false);
       }
@@ -240,7 +239,16 @@ namespace ValheimVehicles.SharedScripts
         meshesTransform.localScale = new Vector3(1f, 0.1f, 1f);
       }
 
-      yield return new WaitUntil(() => timer.ElapsedMilliseconds > 10000f || explosionFx.isStopped && !explosionAudio.isPlaying);
+      var maxEffectsTimeInMs = Mathf.Max(explosionFx.totalTime, explosionAudio.clip.length) * 1000;
+
+      // hide mesh transform (halfway through explosion.
+      if (!shouldHideBarrelMeshImmediatelyOnExplode && !CanExplodeMultipleTimes)
+      {
+        yield return new WaitUntil(() => timer.ElapsedMilliseconds > maxEffectsTimeInMs / 2f);
+        meshesTransform.gameObject.SetActive(false);
+      }
+
+      yield return new WaitUntil(() => timer.ElapsedMilliseconds > maxEffectsTimeInMs || !explosionFx.isPlaying && !explosionAudio.isPlaying);
       timer.Reset();
       OnExplodeDestroy();
       yield return null;
