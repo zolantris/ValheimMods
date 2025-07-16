@@ -261,7 +261,7 @@ public class PrefabConfig : BepInExBaseConfig<PrefabConfig>
       CannonController.ReloadTimeOverride = Cannon_ReloadTime.Value;
     };
 
-    Cannon_HandHeldReloadTime = config.BindUnique(VehicleCannonsSection, "Cannon_HandHeldReloadTime", 6f, ConfigHelpers.CreateConfigDescription("Allows setting cannon reload delays. This makes cannons reload longer or shorter. Shortest value is 100ms highest is 60seconds", false, false, new AcceptableValueRange<float>(0.1f, 60f)));
+    Cannon_HandHeldReloadTime = config.BindUnique(VehicleCannonsSection, "Cannon_HandHeldReloadTime", 6f, ConfigHelpers.CreateConfigDescription("Allows setting cannon-handheld reload delays. This makes cannons reload longer or shorter. Shortest value is 100ms highest is 60seconds", false, false, new AcceptableValueRange<float>(0.1f, 60f)));
     Cannon_HandHeldReloadTime.SettingChanged += (sender, args) =>
     {
       CannonController.Cannon_HandHeldReloadTime = Cannon_HandHeldReloadTime.Value;

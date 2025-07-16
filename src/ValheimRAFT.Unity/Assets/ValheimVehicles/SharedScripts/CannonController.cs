@@ -1221,7 +1221,7 @@ namespace ValheimVehicles.SharedScripts
 
     private IEnumerator ReloadCoroutine(int remainingAmmo)
     {
-      if (!hasNearbyPowderBarrel)
+      if (!hasNearbyPowderBarrel && !IsHandHeldCannon)
         yield break;
 
       IsReloading = true;

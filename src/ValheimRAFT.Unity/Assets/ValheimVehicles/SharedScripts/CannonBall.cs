@@ -494,9 +494,14 @@ namespace ValheimVehicles.SharedScripts
     {
       if (_controller)
       {
+        var colliderTransformRoot = ValheimCompatibility.GetPrefabRoot(colliderTransform);
         var root = ValheimCompatibility.GetPrefabRoot(_controller.transform);
 #if !UNITY_2022 && !UNITY_EDITOR
-        if (_controller.PiecesController && _controller.PiecesController.Manager.transform == root) return true;
+        if (PrefabNames.IsVehiclePiecesContainer(_controller.transform.root.name))
+        {
+          _controller.PiecesController = _controller.transform.root.GetComponent<VehiclePiecesController>();
+        }
+        if (_controller.PiecesController && _controller.PiecesController.Manager.transform == colliderTransformRoot) return true;
 #endif
         if (root == ValheimCompatibility.GetPrefabRoot(transform))
           return true;
