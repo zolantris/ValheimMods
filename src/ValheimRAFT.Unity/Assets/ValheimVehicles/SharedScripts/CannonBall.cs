@@ -105,7 +105,7 @@ namespace ValheimVehicles.SharedScripts
     public SphereCollider sphereCollider;
     private GameObject meshGameObject;
     public List<Collider> Colliders => TryGetColliders();
-
+    [SerializeField] public bool CanApplyDamage = true;
 #if !UNITY_2022 && !UNITY_EDITOR
     public VehicleZSyncTransform m_customZSyncTransform;
     public ZNetView m_nview;
@@ -492,6 +492,15 @@ namespace ValheimVehicles.SharedScripts
 
     public bool IsCollidingWithPrefabRoot(Transform colliderTransform)
     {
+      if (_controller)
+      {
+        var root = ValheimCompatibility.GetPrefabRoot(_controller.transform);
+#if !UNITY_2022 && !UNITY_EDITOR
+        if (_controller.PiecesController && _controller.PiecesController.Manager.transform == root) return true;
+#endif
+        if (root == ValheimCompatibility.GetPrefabRoot(transform))
+          return true;
+      }
       return ValheimCompatibility.GetPrefabRoot(colliderTransform) == ValheimCompatibility.GetPrefabRoot(transform);
     }
 
@@ -530,7 +539,7 @@ namespace ValheimVehicles.SharedScripts
     /// <returns></returns>
     public bool CanDoDamage()
     {
-      return _controller != null;
+      return CanApplyDamage && _controller != null;
     }
 
     /// <summary>

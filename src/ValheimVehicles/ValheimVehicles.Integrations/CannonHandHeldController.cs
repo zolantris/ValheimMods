@@ -139,22 +139,22 @@ public class CannonHandHeldController : CannonController, Hoverable
     package.Write(m_nview.GetZDO().m_uid);
     package.Write(randomVelocityModifier);
     package.Write(randomArcModifier);
-    Fire_RPC.Send(ZNetView.Everybody, package);
+    FireHandHeldCannon_RPC.Send(ZNetView.Everybody, package);
   }
 
-  public static RPCEntity Fire_RPC = null!;
+  public static RPCEntity FireHandHeldCannon_RPC = null!;
 
   public static void RegisterCannonControllerRPCs()
   {
-    Fire_RPC = RPCManager.RegisterRPC(nameof(RPC_FireHandHeldCannon), RPC_FireHandHeldCannon);
+    FireHandHeldCannon_RPC = RPCManager.RegisterRPC(nameof(RPC_FireHandHeldCannon), RPC_FireHandHeldCannon);
   }
 
   public static IEnumerator RPC_FireHandHeldCannon(long senderId, ZPackage package)
   {
     package.SetPos(0);
     var cannonControllerZDOID = package.ReadZDOID();
-    var syncedRandomValue = package.ReadShort();
-    var syncedArcRandomValue = package.ReadShort();
+    var syncedRandomValue = package.ReadSingle();
+    var syncedArcRandomValue = package.ReadSingle();
 
     var cannonHandHeldInstance = ZNetScene.instance.FindInstance(cannonControllerZDOID);
     if (!cannonHandHeldInstance)

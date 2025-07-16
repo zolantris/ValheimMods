@@ -112,6 +112,8 @@ namespace ValheimVehicles.SharedScripts
     [SerializeField] public bool hasNearbyPowderBarrel;
     [SerializeField] private float barrelSupplyRadius = BarrelSupplyDistance;
     [SerializeField] public int ManualFiringGroupId;
+
+    public bool CanApplyDamage = true;
     // barrel check timers
     public float LastBarrelCheckTime;
     public float BarrelCheckInterval = 5f;
@@ -156,8 +158,24 @@ namespace ValheimVehicles.SharedScripts
     public CannonDirectionGroup? CurrentManualDirectionGroup { get; set; }
 
     public static float ReloadTimeOverride = 0f;
+    public static float Cannon_HandHeldReloadTime = 5f;
 
-    public float ReloadTime => ReloadTimeOverride > 0f ? ReloadTimeOverride : _reloadTime;
+#if !UNITY_2022 && !UNITY_EDITOR
+    public VehiclePiecesController PiecesController;
+#endif
+
+    public float ReloadTime
+    {
+      get
+      {
+        if (IsHandHeldCannon)
+          return Cannon_HandHeldReloadTime;
+        else
+          return ReloadTimeOverride > 0f
+            ? ReloadTimeOverride
+            : _reloadTime;
+      }
+    }
 
     public bool IsLoaded => shootingParts.All(sp =>
       _loadedCannonballs.TryGetValue(sp, out var ball) && ball != null);
@@ -193,7 +211,13 @@ namespace ValheimVehicles.SharedScripts
         _targetShooterLocalRotation = _defaultShooterLocalRotation;
       }
 
-#if UNITY_EDITOR
+#if !UNITY_2022 && !UNITY_EDITOR
+      m_nview = GetComponent<ZNetView>();
+      if (!m_nview)
+      {
+        m_nview = GetComponentInParent<ZNetView>();
+      }
+#else
       // Must only be run in Unity Editor. We reset static values so it's like first to load for this object.
       CleanupCannonballPrefab();
 #endif
@@ -224,8 +248,18 @@ namespace ValheimVehicles.SharedScripts
       SetupCannonballPrefab();
     }
 
+
+#if !UNITY_2022 && !UNITY_EDITOR
+    private ZNetView m_nview;
+#endif
     protected internal virtual void FixedUpdate()
     {
+#if !UNITY_2022 && !UNITY_EDITOR
+      if (m_nview)
+      {
+        CanApplyDamage = m_nview.IsOwner();
+      }
+#endif
       UpdateNearbyBarrels();
       SyncLoadedCannonballs();
       AdjustFiringAngle();
@@ -567,10 +601,13 @@ namespace ValheimVehicles.SharedScripts
     private void IgnoreVehicleColliders(Cannonball selectedCannonball)
     {
 #if !UNITY_2022 && !UNITY_EDITOR
-      var vehiclePiecesController = GetComponentInParent<VehiclePiecesController>();
-      if (vehiclePiecesController != null)
+      if (!PiecesController)
       {
-        vehiclePiecesController.IgnoreAllVehicleCollidersForGameObjectChildren(selectedCannonball.gameObject);
+        PiecesController = GetComponentInParent<VehiclePiecesController>();
+      }
+      if (PiecesController != null)
+      {
+        PiecesController.IgnoreAllVehicleCollidersForGameObjectChildren(selectedCannonball.gameObject);
       }
 #endif
     }
@@ -1080,6 +1117,7 @@ namespace ValheimVehicles.SharedScripts
     Debug.LogWarning("CannonController: arcedForward was zero, using fallback.");
 #endif
       }
+      loadedCannonball.CanApplyDamage = CanApplyDamage;
 
       loadedCannonball.Fire(
         arcedForward.normalized * localSpeed,
@@ -1189,10 +1227,13 @@ namespace ValheimVehicles.SharedScripts
       IsReloading = true;
       var elapsed = 0f;
 
-      var safeReloadTime = Mathf.Clamp(ReloadTime, 0.1f, 5f);
+      var safeReloadTime = Mathf.Clamp(ReloadTime, 0.1f, 15f);
       PlayReloadClip();
-      yield return new WaitUntil(() => !_cannonReloadAudioSource.isPlaying);
       yield return new WaitForSeconds(safeReloadTime);
+      if (_cannonReloadAudioSource.isPlaying)
+      {
+        yield return new WaitUntil(() => !_cannonReloadAudioSource.isPlaying);
+      }
 
       var shotsToReload = Math.Min(reloadQuantity, shootingParts.Count);
       for (var i = 0; i < shotsToReload && remainingAmmo - i > 0; i++)

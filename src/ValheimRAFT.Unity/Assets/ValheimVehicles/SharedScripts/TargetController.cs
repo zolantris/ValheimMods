@@ -8,6 +8,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using ValheimVehicles.Components;
 using ValheimVehicles.Controllers;
 using ValheimVehicles.RPC;
 using ValheimVehicles.SharedScripts.Helpers;
@@ -347,8 +348,10 @@ namespace ValheimVehicles.SharedScripts
 
   #region RPC NETWORKING
 
+#if !UNITY_2022 && !UNITY_EDITOR
     public void Request_AutoFireCannons()
     {
+      if (autoTargetControllers.Count < 1) return;
       if (!m_nview)
       {
         m_nview = GetComponentInParent<ZNetView>();
@@ -358,13 +361,17 @@ namespace ValheimVehicles.SharedScripts
         LoggerProvider.LogWarning("cannonController missing znetview!");
         return;
       }
+      var randomVelocityModifier = CannonController.GetRandomCannonVelocity;
+      var randomArcModifier = CannonController.GetRandomCannonArc;
 
       var package = new ZPackage();
       package.Write(m_nview.GetZDO().m_uid);
+      package.Write(randomVelocityModifier);
+      package.Write(randomArcModifier);
 
       // todo sync the auto target rotation X Y...per cannon. This must be done per turret.
 
-      Fire_RPC.Send(ZNetView.Everybody, package);
+      AutoFireCannonGroup_RPC.Send(ZNetView.Everybody, package);
     }
 
     public void Request_FireManualCannons(CannonDirectionGroup[] cannonGroups)
@@ -385,13 +392,23 @@ namespace ValheimVehicles.SharedScripts
 
       if (!m_nview)
       {
-        m_nview = GetComponentInParent<ZNetView>();
+        if (_piecesController)
+        {
+          m_nview = _piecesController.Manager.m_nview;
+        }
+        else
+        {
+          m_nview = GetComponentInParent<ZNetView>();
+        }
       }
       if (!m_nview)
       {
         LoggerProvider.LogWarning("cannonController missing znetview!");
         return;
       }
+
+      var zdo = m_nview.GetZDO();
+      if (zdo == null) return;
 
       var cannonTilt = _manualGroupTilt[cannonGroupId];
 
@@ -401,25 +418,25 @@ namespace ValheimVehicles.SharedScripts
       package.Write(cannonTilt);
       package.Write(randomVelocityModifier);
       package.Write(randomArcModifier);
-      Fire_RPC.Send(ZNetView.Everybody, package);
+      FireCannonGroup_RPC.Send(ZNetView.Everybody, package);
     }
 
-    public static RPCEntity Fire_RPC = null!;
+    public static RPCEntity FireCannonGroup_RPC = null!;
+    public static RPCEntity AutoFireCannonGroup_RPC = null!;
 
     public static void RegisterCannonControllerRPCs()
     {
-      Fire_RPC = RPCManager.RegisterRPC(nameof(RPC_FireAllCannonsInGroup), RPC_FireAllCannonsInGroup);
+      FireCannonGroup_RPC = RPCManager.RegisterRPC(nameof(RPC_FireAllCannonsInGroup), RPC_FireAllCannonsInGroup);
+      AutoFireCannonGroup_RPC = RPCManager.RegisterRPC(nameof(RPC_AutoFireAllCannons), RPC_AutoFireAllCannons);
     }
 
-    public static IEnumerator RPC_FireAllCannonsInGroup(long senderId, ZPackage package)
+    public static IEnumerator RPC_AutoFireAllCannons(long senderId, ZPackage package)
     {
       package.SetPos(0);
 
       var targetControllerZDOID = package.ReadZDOID();
-      var cannonGroupId = (CannonDirectionGroup)package.ReadInt();
-      var cannonTilt = package.ReadShort();
-      var syncedRandomValue = package.ReadShort();
-      var syncedArcRandomValue = package.ReadShort();
+      var syncedRandomValue = package.ReadSingle();
+      var syncedArcRandomValue = package.ReadSingle();
 
       var targetControllerObj = ZNetScene.instance.FindInstance(targetControllerZDOID);
       if (!targetControllerObj)
@@ -437,9 +454,54 @@ namespace ValheimVehicles.SharedScripts
       }
 
       // for updates the group tilt from the host that requested to sync it to a client.
+      targetController.StartAutoFiring(syncedRandomValue, syncedArcRandomValue);
+    }
+
+    public static TargetController? GetTargetControllerFromNetViewRoot(GameObject obj)
+    {
+      TargetController? targetController = null;
+      // can be a child for the handheld version.
+      if (PrefabNames.IsVehicle(obj.name))
+      {
+        var vehicle = obj.GetComponent<VehicleManager>();
+        if (vehicle == null || vehicle.PiecesController == null) return null;
+        targetController = vehicle.PiecesController.targetController;
+      }
+      else
+      {
+        targetController = obj.GetComponentInChildren<TargetController>();
+      }
+
+      return targetController;
+    }
+
+    public static IEnumerator RPC_FireAllCannonsInGroup(long senderId, ZPackage package)
+    {
+      package.SetPos(0);
+
+      var targetControllerZDOID = package.ReadZDOID();
+      var cannonGroupId = (CannonDirectionGroup)package.ReadInt();
+      var cannonTilt = package.ReadSingle();
+      var syncedRandomValue = package.ReadSingle();
+      var syncedArcRandomValue = package.ReadSingle();
+
+      var targetControllerObj = ZNetScene.instance.FindInstance(targetControllerZDOID);
+      if (!targetControllerObj)
+      {
+        LoggerProvider.LogWarning($"targetControllerObj {targetControllerZDOID} not found. targetControllerObj should exist otherwise we cannot instantiate cannonball without collision issues");
+        yield break;
+      }
+      var targetController = GetTargetControllerFromNetViewRoot(targetControllerObj);
+      if (targetController == null)
+      {
+        LoggerProvider.LogWarning($"targetController {targetControllerZDOID} not found. CannonController should exist otherwise we cannot instantiate cannonball without collision issues");
+        yield break;
+      }
+      // for updates the group tilt from the host that requested to sync it to a client.
       targetController._manualGroupTilt[cannonGroupId] = cannonTilt;
       targetController.StartManualGroupFiring(cannonGroupId, syncedRandomValue, syncedArcRandomValue);
     }
+#endif
 
   #endregion
 
@@ -670,6 +732,7 @@ namespace ValheimVehicles.SharedScripts
       defendPlayers.Add(player);
       RefreshPlayerDefenseTriggers();
     }
+
     public void RemovePlayer(Transform player)
     {
       defendPlayers.Remove(player);
@@ -718,6 +781,7 @@ namespace ValheimVehicles.SharedScripts
         cannon.SetManualTilt(yaw);
       }
     }
+
     public float GetManualGroupTilt(CannonDirectionGroup group)
     {
       return _manualGroupTilt[group];

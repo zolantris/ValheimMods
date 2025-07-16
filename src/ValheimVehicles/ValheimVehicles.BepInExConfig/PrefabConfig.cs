@@ -36,6 +36,7 @@ public class PrefabConfig : BepInExBaseConfig<PrefabConfig>
 
   public static ConfigEntry<bool> Cannon_HasFireAudio { get; set; } = null!;
   public static ConfigEntry<float> Cannon_ReloadTime { get; set; } = null!;
+  public static ConfigEntry<float> Cannon_HandHeldReloadTime { get; set; } = null!;
   public static ConfigEntry<bool> Cannonball_HasExplosionAudio { get; set; } = null!;
   public static ConfigEntry<bool> HasCannonballWindAudio { get; set; } = null!;
   public static ConfigEntry<float> CannonballWindAudioVolume { get; set; } = null!;
@@ -229,8 +230,8 @@ public class PrefabConfig : BepInExBaseConfig<PrefabConfig>
     CannonBallInventoryWeight.SettingChanged += (sender, args) =>
     {
       if (PrefabManager.Instance == null) return;
-      var cannonballExplosive = ItemManager.Instance.GetItem($"$valheim_vehicles_cannonball_explosive");
-      var cannonballSolid = ItemManager.Instance.GetItem("$valheim_vehicles_cannonball_solid");
+      var cannonballExplosive = ItemManager.Instance.GetItem(PrefabNames.CannonballExplosive);
+      var cannonballSolid = ItemManager.Instance.GetItem(PrefabNames.CannonballSolid);
 
       if (cannonballSolid != null)
       {
@@ -258,6 +259,12 @@ public class PrefabConfig : BepInExBaseConfig<PrefabConfig>
     Cannon_ReloadTime.SettingChanged += (sender, args) =>
     {
       CannonController.ReloadTimeOverride = Cannon_ReloadTime.Value;
+    };
+
+    Cannon_HandHeldReloadTime = config.BindUnique(VehicleCannonsSection, "Cannon_HandHeldReloadTime", 6f, ConfigHelpers.CreateConfigDescription("Allows setting cannon reload delays. This makes cannons reload longer or shorter. Shortest value is 100ms highest is 60seconds", false, false, new AcceptableValueRange<float>(0.1f, 60f)));
+    Cannon_HandHeldReloadTime.SettingChanged += (sender, args) =>
+    {
+      CannonController.Cannon_HandHeldReloadTime = Cannon_HandHeldReloadTime.Value;
     };
 
     Cannon_ReloadAudioVolume = config.BindUnique(VehicleCannonsSection, "Cannon_ReloadAudioVolume", 1f, ConfigHelpers.CreateConfigDescription("Allows customizing cannon firing audio volume", false, false));
