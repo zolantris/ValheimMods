@@ -88,7 +88,6 @@
         <Folder Include="docs-images\"/>
         <Folder Include="ValheimRAFT.Patches\"/>
     </ItemGroup>
-
     <!-- Debug Variants -->
     <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
         <OutputPath>bin\Debug\</OutputPath>

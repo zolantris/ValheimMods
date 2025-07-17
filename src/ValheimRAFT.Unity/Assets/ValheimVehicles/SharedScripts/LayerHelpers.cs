@@ -1,9 +1,9 @@
 #region
 
-using System;
-using System.Collections.Generic;
-using JetBrains.Annotations;
-using UnityEngine;
+  using System;
+  using System.Collections.Generic;
+  using JetBrains.Annotations;
+  using UnityEngine;
 
 #endregion
 
@@ -46,7 +46,7 @@ using UnityEngine;
         "character_nonenv",
         LayerMask.LayerToName(CustomRaftLayer), SmokeLayerString);
 
-      public static LayerMask CannonHitLayers = LayerMask.GetMask("character", "character_net", "Default", "Default_small", "piece", "static_solid", "terrain");
+      public static LayerMask CannonHitLayers = LayerMask.GetMask("character", "character_net", "character_ghost", "character_noenv", "Default", "Default_small", "hitbox", "piece", "static_solid", "terrain", "vehicle");
       public static LayerMask CannonBlockingSiteHitLayers = LayerMask.GetMask("Default", "Default_small", "piece", "terrain", "character", "character_net", "character_noenv");
 
       public static List<string> ActiveLayersForBlockingMask = new();
@@ -78,10 +78,13 @@ using UnityEngine;
       }
 
       // Returns a predicate that checks if a collider's GameObject is in the LayerMask
-      public static Func<Collider, bool> IsContainedWithinLayerMaskPredicate(LayerMask mask) => c =>
+      public static Func<Collider, bool> IsContainedWithinLayerMaskPredicate(LayerMask mask)
       {
-        return c != null && ((1 << c.gameObject.layer) & mask.value) != 0;
-      };
+        return c =>
+        {
+          return c != null && (1 << c.gameObject.layer & mask.value) != 0;
+        };
+      }
 
 
       [UsedImplicitly]

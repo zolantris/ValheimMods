@@ -1114,7 +1114,7 @@ namespace ValheimVehicles.SharedScripts
 
       // var sideArc = Random.Range(-maxSidewaysArcDegrees, maxSidewaysArcDegrees);
 
-      var baseForward = cannonShooterAimPoint.forward;
+      var baseForward = data.shootingDirection;
 
 // Defensive: If forward is degenerate, fallback to transform.forward or world forward.
       if (baseForward.sqrMagnitude < 1e-5f)
@@ -1138,10 +1138,9 @@ namespace ValheimVehicles.SharedScripts
 #endif
       }
       loadedCannonball.CanApplyDamage = data.canApplyDamage;
-
+      var barrelIndex = barrelCount - 1;
       loadedCannonball.Fire(
-        arcedForward.normalized * localSpeed,
-        barrel.projectileLoader, this, barrelCount);
+        data, this, arcedForward.normalized * localSpeed, barrelIndex);
 
       PlayMuzzleFlash(barrel);
 

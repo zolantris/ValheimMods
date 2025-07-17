@@ -4511,11 +4511,12 @@
       {
         VehicleConfigSync.SyncVehicleBounds();
       }
-      var attachTransform = lastUsedWheelComponent.AttachPoint;
+      if (lastUsedWheelComponent == null) return;
 
       // local player only.
       if (isLocalPlayer) targetPlayer.StartDoodadControl(lastUsedWheelComponent);
 
+      var attachTransform = lastUsedWheelComponent.AttachPoint;
       if (attachTransform == null) return;
 
       // non-local player too as this will show them controlling the object.

@@ -13,6 +13,8 @@ public struct CannonFireData
   public int allocatedAmmo;
   public CannonballVariant ammoVariant;
   public bool canApplyDamage;
+  public Vector3 shootingDirection;
+  public Quaternion cannonLocalRotation;
 
   public static List<CannonFireData> CreateListOfCannonFireDataFromTargetController(TargetController targetController, List<CannonController> firingGroup)
   {
@@ -57,24 +59,32 @@ public struct CannonFireData
   public static CannonFireData? CreateCannonFireData(CannonController cannonController, int remainingAmmo)
   {
     if (remainingAmmo == 0) return null;
+    if (cannonController == null || cannonController.m_nview == null || !cannonController.m_nview.IsValid()) return null;
 
     var cannonShootingPositions = cannonController.shootingBarrelParts.Where(x => x != null).Select(x => x.projectileLoader.position).ToList();
+
+    if (cannonShootingPositions.Count == 0) return null;
 
     while (remainingAmmo < cannonShootingPositions.Count && cannonShootingPositions.Count > 0)
     {
       cannonShootingPositions.RemoveAt(remainingAmmo - 1);
     }
+    if (cannonShootingPositions.Count == 0) return null;
 
+    var zdoid = cannonController.m_nview.GetZDO().m_uid;
     var canApplyDamage = cannonController.m_nview.IsOwner();
 
     var data = new CannonFireData
     {
-      canApplyDamage = canApplyDamage,
-      cannonShootingPositions = cannonController.shootingBarrelParts.Where(x => x != null).Select(x => x.projectileLoader.position).ToList(),
+      cannonControllerZDOID = zdoid,
       randomVelocityValue = CannonController.GetRandomCannonVelocity,
       randomArcValue = CannonController.GetRandomCannonArc,
       ammoVariant = cannonController.AmmoVariant,
-      allocatedAmmo = remainingAmmo
+      allocatedAmmo = remainingAmmo,
+      canApplyDamage = canApplyDamage,
+      shootingDirection = cannonController.cannonShooterAimPoint.forward,
+      cannonShootingPositions = cannonShootingPositions,
+      cannonLocalRotation = cannonController.cannonRotationalTransform.localRotation
     };
 
     return data;
@@ -88,8 +98,9 @@ public struct CannonFireData
     // Write each CannonFireData
     foreach (var data in dataList)
     {
-      WriteToPackageInto(pkg, data);
+      WriteIntoPackage(pkg, data);
     }
+
     return pkg;
   }
 
@@ -112,19 +123,20 @@ public struct CannonFireData
   public static ZPackage WriteToPackage(CannonFireData data)
   {
     var pkg = new ZPackage();
-    WriteToPackageInto(pkg, data);
+    WriteIntoPackage(pkg, data);
     return pkg;
   }
 
-  public static void WriteToPackageInto(ZPackage pkg, CannonFireData data)
+  public static void WriteIntoPackage(ZPackage pkg, CannonFireData data)
   {
-    pkg.SetPos(0);
     pkg.Write(data.cannonControllerZDOID);
     pkg.Write(data.randomVelocityValue);
     pkg.Write(data.randomArcValue);
     pkg.Write((int)data.ammoVariant);
     pkg.Write(data.allocatedAmmo);
     pkg.Write(data.canApplyDamage);
+    pkg.Write(data.shootingDirection);
+    pkg.Write(data.cannonLocalRotation);
 
     // Write barrel positions
     pkg.Write(data.cannonShootingPositions.Count);
@@ -138,7 +150,6 @@ public struct CannonFireData
   // --- Read ---
   public static CannonFireData ReadFromPackage(ZPackage pkg)
   {
-    pkg.SetPos(0);
     var data = new CannonFireData
     {
       cannonControllerZDOID = pkg.ReadZDOID(),
@@ -146,7 +157,9 @@ public struct CannonFireData
       randomArcValue = pkg.ReadSingle(),
       ammoVariant = (CannonballVariant)pkg.ReadInt(),
       allocatedAmmo = pkg.ReadInt(),
-      canApplyDamage = pkg.ReadBool()
+      canApplyDamage = pkg.ReadBool(),
+      shootingDirection = pkg.ReadVector3(),
+      cannonLocalRotation = pkg.ReadQuaternion()
     };
 
     // Read barrel positions

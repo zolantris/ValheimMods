@@ -72,21 +72,28 @@
     <!--  Required for vehicle serialization/storage  -->
     <ItemGroup>
         <Reference Include="Newtonsoft.Json" Version="13.0.3">
-            <HintPath>$(SolutionDir)\plugins\Newtonsoft.Json.dll</HintPath>
+            <HintPath>$(SolutionDir)\Dependencies\Newtonsoft.Json.dll</HintPath>
+        </Reference>
+    </ItemGroup>
+
+    <ItemGroup>
+        <!--   Required for structlinq to work     -->
+        <Reference Include="System.Collections.Immutable" Version="5.0.0">
+            <HintPath>$(SolutionDir)\Dependencies\System.Collections.Immutable.dll</HintPath>
         </Reference>
     </ItemGroup>
 
     <!-- Required for O(n) performant Linq like readable loops -->
     <ItemGroup>
         <Reference Include="StructLinq" Version="0.28.2">
-            <HintPath>$(SolutionDir)\plugins\StructLinq.dll</HintPath>
+            <HintPath>$(SolutionDir)\Dependencies\StructLinq.dll</HintPath>
         </Reference>
     </ItemGroup>
 
     <!-- Required for vehicle syncing (lots of players not using bepinex config manager)   -->
     <ItemGroup>
         <Reference Include="ServerSync" Version="1.19.0">
-            <HintPath>$(SolutionDir)\plugins\ServerSync.dll</HintPath>
+            <HintPath>$(SolutionDir)\Dependencies\ServerSync.dll</HintPath>
         </Reference>
     </ItemGroup>
 
@@ -408,7 +415,7 @@
         <Error Condition="!Exists('@(CheckValheimServerPath)')"/>
 
         <MakeDir Directories="$(ValheimServerPath)\$(PluginDeployTarget)"/>
-        <Exec Command="xcopy &quot;$(SolutionDir)plugins&quot; &quot;$(ValheimServerPath)\$(PluginDeployTarget)&quot; /q /s /y /i"/>
+        <Exec Command="xcopy &quot;$(SolutionDir)Dependencies&quot; &quot;$(ValheimServerPath)\$(PluginDeployTarget)&quot; /q /s /y /i"/>
 
         <Exec Command="copy &quot;$(OutDir)$(AssemblyName).dll&quot; &quot;$(ValheimServerPath)\$(PluginDeployTarget)\$(AssemblyName).dll&quot;"/>
         <Exec Command="copy &quot;$(OutDir)$(AssemblyName).pdb&quot; &quot;$(ValheimServerPath)\$(PluginDeployTarget)\$(AssemblyName).pdb&quot;"/>
@@ -419,13 +426,22 @@
         <!--        <Exec Condition="Exists('$(AssetsDir)')" Command="xcopy /d &quot;$(AssetsDir)&quot; &quot;$(ValheimServerPath)\$(PluginDeployTarget)\Assets\&quot; /E/H/Y"/>-->
         <!--        <Exec Condition="Exists('$(AssetsDir)Translations\English\')" Command="xcopy /d &quot;$(AssetsDir)Translations\English\&quot; &quot;$(ValheimServerPath)\$(PluginDeployTarget)\Assets\Translations\English\&quot; /E/H/Y"/>-->
     </Target>
+    <ItemGroup>
+        <DependencyLibs Include="$(SolutionDir)Dependencies\**\*.*"/>
+    </ItemGroup>
+    <Target Name="CopyDependencyLibsToR2ModMan" AfterTargets="Build">
+        <Message Text="Copying dependency libs from $(SolutionDir)Dependencies to $(PluginDeployPath)..." Importance="high"/>
+        <Copy
+                SourceFiles="@(DependencyLibs)"
+                DestinationFolder="$(PluginDeployPath)\%(RecursiveDir)"
+                SkipUnchangedFiles="true"/>
+    </Target>
     <Target Name="Copy_To_R2ModMan" AfterTargets="convert_pdb_to_mdb" Condition="'$(IsRunnable)' == 'true' and '$(IsNotArchive)' == 'true' and '$(IsRunnableServer)' != 'true' and '$(ClientFileExitCode)' == '0'">
         <!--  Eventually we need to copy and test this lib over in unity     -->
         <!--        <Exec Condition="'$(IsRelease)' == 'true'" Command="copy &quot;$(OutDir)$(AssemblyName).dll&quot; &quot;$(SolutionDir)src\ValheimRAFT\ValheimRAFT.Unity\Assets\Assemblies\$(AssemblyName).dll&quot;"/>-->
 
         <!--    required plugins  -->
-        <Exec Command="xcopy &quot;$(SolutionDir)plugins&quot; &quot;$(PluginDeployPath)\$(PluginDeployTarget)\&quot; /q /s /y /i"/>
-
+        <!--        <Exec Command="xcopy &quot;$(SolutionDir)Dependencies&quot; &quot;$(PluginDeployPath)\&quot; /q /s /y /i"/>-->
 
         <Exec Command="copy &quot;$(OutDir)$(AssemblyName).dll&quot; &quot;$(PluginDeployPath)\$(AssemblyName).dll&quot;"/>
         <Exec Command="copy &quot;$(OutDir)$(AssemblyName).pdb&quot; &quot;$(PluginDeployPath)\$(AssemblyName).pdb&quot;"/>
@@ -440,14 +456,16 @@
     <!--     Condition=" $(AssemblyName) == 'ValheimRAFT' And Exists('$(SandboxiePluginDeployPath)') And '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' "-->
     <Target Name="Copy_To_R2ModMan_vm" AfterTargets="Copy_To_R2ModMan" Condition="'$(IsRunnable)' == 'true' and '$(SandBoxieFileExitCode)' == '0'">
         <!--   Will only run if the above passes     -->
-        <Exec Command="copy &quot;$(SolutionDir)plugins\Newtonsoft.Json.dll&quot; &quot;$(SandboxiePluginDeployPath)\Newtonsoft.Json.dll&quot;"/>
-        <Exec Command="copy &quot;$(SolutionDir)plugins\ServerSync.dll&quot; &quot;$(SandboxiePluginDeployPath)\ServerSync.dll&quot;"/>
+        <Copy
+                SourceFiles="@(DependencyLibs)"
+                DestinationFolder="$(SandboxiePluginDeployPath)\%(RecursiveDir)"
+                SkipUnchangedFiles="true"/>
 
         <Exec Condition="Exists('$(OutDir)$(AssemblyName).dll')" Command="copy &quot;$(OutDir)$(AssemblyName).dll&quot; &quot;$(SandboxiePluginDeployPath)\$(AssemblyName).dll&quot;"/>
         <Exec Condition="Exists('$(OutDir)$(AssemblyName).pdb')" Command="copy &quot;$(OutDir)$(AssemblyName).pdb&quot; &quot;$(SandboxiePluginDeployPath)\$(AssemblyName).pdb&quot;"/>
         <Exec Condition="Exists('$(OutDir)$(AssemblyName).mdb')" Command="copy &quot;$(OutDir)$(AssemblyName).mdb&quot; &quot;$(SandboxiePluginDeployPath)\$(AssemblyName).mdb&quot;"/>
 
-        <Exec Condition="$(AssemblyName) == 'SentryUnityWrapper'" Command="xcopy &quot;$(SolutionDir)\SentryUnity\1.8.0\runtime&quot; &quot;$(SandboxiePluginDeployPath)\&quot; /q /s /y /i"/>
+        <!--        <Exec Condition="$(AssemblyName) == 'SentryUnityWrapper'" Command="xcopy &quot;$(SolutionDir)\SentryUnity\1.8.0\runtime&quot; &quot;$(SandboxiePluginDeployPath)\&quot; /q /s /y /i"/>-->
         <!--        <Exec Condition="'$(FilesCheckExitCode)' == '0'" Command="xcopy &quot;$(TargetDir)&quot; &quot;$(SandboxiePluginDeployPath)\&quot; /q /s /y /i"/>-->
 
         <Exec Condition="Exists('$(AssetsDir)')" Command="xcopy /d &quot;$(AssetsDir)&quot; &quot;$(SandboxiePluginDeployPath)\Assets\&quot; /E/H/Y"/>

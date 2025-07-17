@@ -101,12 +101,12 @@ public class CannonPrefabs : RegisterPrefab<CannonPrefabs>
 
     var nv = PrefabRegistryHelpers.AddTempNetView(prefab, true);
     nv.m_distant = true;
-    var zSyncTransform = prefab.AddComponent<VehicleZSyncTransform>();
+    // var zSyncTransform = prefab.AddComponent<VehicleZSyncTransform>();
 
     // must have zsync transform in order to sync the projectile.
-    zSyncTransform.m_syncBodyVelocity = true;
-    zSyncTransform.m_syncRotation = true;
-    zSyncTransform.m_syncPosition = true;
+    // zSyncTransform.m_syncBodyVelocity = true;
+    // zSyncTransform.m_syncRotation = true;
+    // zSyncTransform.m_syncPosition = true;
 
     var cannonBall = prefab.AddComponent<Cannonball>();
     cannonBall.cannonballVariant = CannonballVariant.Solid;
@@ -127,12 +127,12 @@ public class CannonPrefabs : RegisterPrefab<CannonPrefabs>
 
     var nv = PrefabRegistryHelpers.AddTempNetView(prefab, true);
     nv.m_distant = true;
-    var zSyncTransform = prefab.AddComponent<VehicleZSyncTransform>();
+    // var zSyncTransform = prefab.AddComponent<VehicleZSyncTransform>();
 
     // must have zsync transform in order to sync the projectile.
-    zSyncTransform.m_syncBodyVelocity = true;
-    zSyncTransform.m_syncRotation = true;
-    zSyncTransform.m_syncPosition = true;
+    // zSyncTransform.m_syncBodyVelocity = true;
+    // zSyncTransform.m_syncRotation = true;
+    // zSyncTransform.m_syncPosition = true;
 
     var cannonBall = prefab.AddComponent<Cannonball>();
     cannonBall.cannonballVariant = CannonballVariant.Explosive;

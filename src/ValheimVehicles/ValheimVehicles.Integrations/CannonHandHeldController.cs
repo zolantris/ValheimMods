@@ -50,26 +50,30 @@ public class CannonHandHeldController : CannonController, Hoverable
     }
   }
 
-  public Transform? playerParent;
+  public Transform? playerParentTransform;
+  public Player? playerParentComponent;
 
-  public Transform? GetPlayerParent()
+  public void UpdatePlayerParent()
   {
-    if (playerParent != null) return playerParent;
-    var player = transform.GetComponentInParent<Player>();
-    if (player == null) playerParent = null;
-    playerParent = player.transform;
-
-    return playerParent;
+    if (playerParentTransform != null) return;
+    playerParentComponent = transform.GetComponentInParent<Player>();
+    if (playerParentComponent == null)
+    {
+      playerParentTransform = null;
+      playerParentComponent = null;
+      return;
+    }
+    playerParentTransform = playerParentComponent.transform;
   }
 
   protected internal override void FixedUpdate()
   {
     if (!ShouldUpdate) return;
     if (!TryInitController()) return;
-    var isLocalPlayer = !IsHeldByLocalPlayer();
-    if (isLocalPlayer) return;
-    GetPlayerParent();
-    if (playerParent == null) return;
+    UpdatePlayerParent();
+
+    var isLocalPlayer = IsHeldByLocalPlayer();
+    if (playerParentTransform == null) return;
     var parent = cannonRotationalTransform.parent;
     if (!parent) return;
 
@@ -84,7 +88,7 @@ public class CannonHandHeldController : CannonController, Hoverable
     }
     else
     {
-      localLook = parent.InverseTransformDirection(playerParent.forward);
+      localLook = parent.InverseTransformDirection(playerParentTransform.forward);
     }
 
     // Check for degenerate input
@@ -144,11 +148,6 @@ public class CannonHandHeldController : CannonController, Hoverable
   {
     // prevent firing at 0 ammo.
     if (ammoController.GetAmmoAmountFromCannonballVariant(AmmoVariant) < 1) return;
-
-    // random arc synced across server.
-    var randomVelocityModifier = Random.value;
-    var randomArcModifier = Random.Range(-maxSidewaysArcDegrees, maxSidewaysArcDegrees);
-
     if (!m_nview)
     {
       m_nview = GetComponentInParent<ZNetView>();
@@ -165,6 +164,7 @@ public class CannonHandHeldController : CannonController, Hoverable
       return;
     }
     var package = CannonFireData.WriteToPackage(data.Value);
+    cannonRotationalTransform.localRotation = data.Value.cannonLocalRotation;
     FireHandHeldCannon_RPC.Send(ZNetView.Everybody, package);
   }
 
@@ -215,7 +215,8 @@ public class CannonHandHeldController : CannonController, Hoverable
   private bool IsHeldByLocalPlayer()
   {
     if (Player.m_localPlayer == null) return false;
-    return transform.IsChildOf(Player.m_localPlayer.transform);
+    if (playerParentComponent == null) return false;
+    return Player.m_localPlayer == playerParentComponent;
   }
 
   public string GetHoverText()

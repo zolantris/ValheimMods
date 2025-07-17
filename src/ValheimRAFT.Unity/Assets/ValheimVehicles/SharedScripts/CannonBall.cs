@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.Linq;
 using JetBrains.Annotations;
 using UnityEngine;
+using ValheimVehicles.Structs;
 using Random = UnityEngine.Random;
 # if !UNITY_2022 && !UNITY_EDITOR
 using ValheimVehicles.Controllers;
@@ -102,6 +103,7 @@ namespace ValheimVehicles.SharedScripts
 
     private Vector3 _lastVelocity; // the last velocity before unity physics mutates it.
     private CannonController _controller;
+    private CannonFireData? _fireData;
     private float _syncedRandomValue;
     public HashSet<Transform> IgnoredTransformRoots = new();
     public SphereCollider sphereCollider;
@@ -161,13 +163,13 @@ namespace ValheimVehicles.SharedScripts
 
     private void LateUpdate()
     {
-      if (m_customZSyncTransform)
-      {
-        if (m_nview.IsOwner())
-        {
-          m_customZSyncTransform.OwnerSync();
-        }
-      }
+      // if (m_customZSyncTransform)
+      // {
+      //   if (m_nview.IsOwner())
+      //   {
+      //     m_customZSyncTransform.OwnerSync();
+      //   }
+      // }
     }
 
     private void FixedUpdate()
@@ -176,18 +178,18 @@ namespace ValheimVehicles.SharedScripts
       {
         _lastVelocity = m_body.velocity;
       }
-      if (m_customZSyncTransform)
-      {
-        if (!m_nview.IsOwner())
-        {
-          var dt = Time.deltaTime;
-          m_customZSyncTransform.ClientSync(dt);
-        }
-        else
-        {
-          m_customZSyncTransform.OwnerSync();
-        }
-      }
+      // if (m_customZSyncTransform)
+      // {
+      //   if (!m_nview.IsOwner())
+      //   {
+      //     var dt = Time.deltaTime;
+      //     m_customZSyncTransform.ClientSync(dt);
+      //   }
+      //   else
+      //   {
+      //     m_customZSyncTransform.OwnerSync();
+      //   }
+      // }
     }
 
     private void OnEnable()
@@ -564,13 +566,9 @@ namespace ValheimVehicles.SharedScripts
       return false;
     }
 
-    /// <summary>
-    /// Todo migrate this to cannoncontroller and set a boolean such as isHost or canDamageColliders when firing from the controlling host.
-    /// </summary>
-    /// <returns></returns>
     public bool CanDoDamage()
     {
-      return CanApplyDamage && _controller != null;
+      return _fireData.HasValue && _fireData.Value.canApplyDamage;
     }
 
     /// <summary>
@@ -722,7 +720,7 @@ namespace ValheimVehicles.SharedScripts
       ResetCannonball();
     }
 
-    public IEnumerator FireCannonball(Vector3 velocity, Vector3 fireOrigin, int firingIndex)
+    public IEnumerator FireCannonball(CannonFireData data, Vector3 velocity, int firingIndex)
     {
       meshGameObject.SetActive(true);
 
@@ -739,7 +737,7 @@ namespace ValheimVehicles.SharedScripts
         PlayWindSound();
       }
 
-      _fireOrigin = fireOrigin;
+      _fireOrigin = data.cannonShootingPositions[firingIndex];
 
       // Enable all colliders (just in case)
       foreach (var col in Colliders) col.enabled = true;
@@ -775,13 +773,7 @@ namespace ValheimVehicles.SharedScripts
       _despawnCoroutine.Start(AutoDespawnCoroutine());
     }
 
-    public void Fire(Vector3 velocity, Vector3 fireOrigin, int firingIndex, float randomValue)
-    {
-      _syncedRandomValue = randomValue;
-      _firingCannonballCoroutine.Start(FireCannonball(velocity, fireOrigin, firingIndex));
-    }
-
-    public void Fire(Vector3 velocity, Transform fireTransform, CannonController cannonController, int firingIndex)
+    public void Fire(CannonFireData data, CannonController cannonController, Vector3 velocity, int firingIndex)
     {
       if (!m_body)
       {
@@ -789,8 +781,8 @@ namespace ValheimVehicles.SharedScripts
         return;
       }
       _controller = cannonController;
-      lastFireTransform = fireTransform;
-      Fire(velocity, fireTransform.position, firingIndex, Random.value);
+      _fireData = data;
+      _firingCannonballCoroutine.Start(FireCannonball(data, velocity, firingIndex));
     }
 
     private IEnumerator AutoDespawnCoroutine()

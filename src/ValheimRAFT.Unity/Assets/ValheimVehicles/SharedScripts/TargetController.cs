@@ -385,10 +385,8 @@ namespace ValheimVehicles.SharedScripts
       }
     }
 
-    public void Request_FireManualCannons(CannonDirectionGroup cannonGroupId)
+    public ZNetView? GetNetView()
     {
-      if (ammoController.ExplosiveAmmo < 1 && ammoController.SolidAmmo < 1) return;
-
       if (!m_nview)
       {
         if (_piecesController)
@@ -403,16 +401,24 @@ namespace ValheimVehicles.SharedScripts
       if (!m_nview)
       {
         LoggerProvider.LogWarning("cannonController missing znetview!");
-        return;
       }
-      if (!m_nview.IsValid()) return;
+
+      return m_nview;
+    }
+
+    public void Request_FireManualCannons(CannonDirectionGroup cannonGroupId)
+    {
+      if (ammoController.ExplosiveAmmo < 1 && ammoController.SolidAmmo < 1) return;
+      var nv = GetNetView();
+      if (nv == null || !nv.IsValid()) return;
 
       var zdo = m_nview.GetZDO();
       if (zdo == null) return;
 
       var cannonTilt = _manualGroupTilt[cannonGroupId];
+      var firingCannonGroup = _manualCannonGroups[cannonGroupId];
 
-      var cannonFireDataList = CannonFireData.CreateListOfCannonFireDataFromTargetController(this, autoTargetCannonControllers);
+      var cannonFireDataList = CannonFireData.CreateListOfCannonFireDataFromTargetController(this, firingCannonGroup);
       if (cannonFireDataList.Count == 0) return;
 
       var pkg = new ZPackage();
@@ -824,9 +830,10 @@ namespace ValheimVehicles.SharedScripts
     public void SetManualGroupTilt(CannonDirectionGroup group, float yaw)
     {
       _manualGroupTilt[group] = yaw;
-
-      foreach (var cannon in _manualCannonGroups[group])
+      var cannons = _manualCannonGroups[group];
+      foreach (var cannon in cannons)
       {
+        if (cannon == null) continue;
         cannon.SetManualTilt(yaw);
       }
     }
