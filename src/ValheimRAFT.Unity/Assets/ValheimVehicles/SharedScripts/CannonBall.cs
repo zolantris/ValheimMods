@@ -3,11 +3,13 @@
 
 #region
 
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using JetBrains.Annotations;
 using UnityEngine;
+using Random = UnityEngine.Random;
 # if !UNITY_2022 && !UNITY_EDITOR
 using ValheimVehicles.Controllers;
 #endif
@@ -157,11 +159,36 @@ namespace ValheimVehicles.SharedScripts
       ResetCannonball();
     }
 
+    private void LateUpdate()
+    {
+
+      if (m_customZSyncTransform)
+      {
+        if (m_nview.IsOwner())
+        {
+          m_customZSyncTransform.OwnerSync();
+        }
+      }
+    }
+
     private void FixedUpdate()
     {
-      if (m_body.isKinematic) return;
-      if (m_body.velocity == Vector3.zero) return;
-      _lastVelocity = m_body.velocity;
+      if (!m_body.isKinematic && m_body.velocity != Vector3.zero)
+      {
+        _lastVelocity = m_body.velocity;
+      }
+      if (m_customZSyncTransform)
+      {
+        if (!m_nview.IsOwner())
+        {
+          var dt = Time.deltaTime;
+          m_customZSyncTransform.ClientSync(dt);
+        }
+        else
+        {
+          m_customZSyncTransform.OwnerSync();
+        }
+      }
     }
 
     private void OnEnable()

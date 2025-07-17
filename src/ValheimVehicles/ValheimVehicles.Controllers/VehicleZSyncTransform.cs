@@ -110,7 +110,7 @@ public class VehicleZSyncTransform : MonoBehaviour, IMonoUpdater
         transform.rotation = zdo.GetRotation();
         flag3 = true;
       }
-      if (m_syncBodyVelocity && (bool)(Object)m_body)
+      if (!m_body.isKinematic && m_syncBodyVelocity && (bool)(Object)m_body)
       {
         m_body.velocity = zdo.GetVec3(ZDOVars.s_bodyVelHash, Vector3.zero);
         m_body.angularVelocity = zdo.GetVec3(ZDOVars.s_bodyAVelHash, Vector3.zero);
@@ -165,7 +165,7 @@ public class VehicleZSyncTransform : MonoBehaviour, IMonoUpdater
       }
       if ((bool)(Object)m_body)
       {
-        if (m_syncBodyVelocity)
+        if (!m_body.isKinematic && m_syncBodyVelocity)
         {
           m_nview.GetZDO().Set(ZDOVars.s_bodyVelHash, m_body.velocity);
           m_nview.GetZDO().Set(ZDOVars.s_bodyAVelHash, m_body.angularVelocity);
@@ -272,7 +272,7 @@ public class VehicleZSyncTransform : MonoBehaviour, IMonoUpdater
     if ((bool)(Object)m_body)
     {
       m_body.useGravity = false;
-      if (m_syncBodyVelocity && m_nview.HasOwner())
+      if (!m_body.isKinematic && m_syncBodyVelocity && m_nview.HasOwner())
       {
         var vec3_1 = zdo.GetVec3(ZDOVars.s_bodyVelHash, Vector3.zero);
         var vec3_2 = zdo.GetVec3(ZDOVars.s_bodyAVelHash, Vector3.zero);
@@ -345,6 +345,8 @@ public class VehicleZSyncTransform : MonoBehaviour, IMonoUpdater
     if (m_lastUpdateFrame == frameCount)
       return;
     m_lastUpdateFrame = frameCount;
+
+    m_isKinematicBody = m_body.isKinematic;
 
     if (m_isKinematicBody)
     {
