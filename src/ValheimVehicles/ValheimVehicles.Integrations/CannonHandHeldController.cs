@@ -201,7 +201,7 @@ public class CannonHandHeldController : CannonController, Hoverable
 
   internal bool FireHandHeldCannon(CannonFireData data)
   {
-    if (Fire(data, true))
+    if (Fire(data, ammoController.GetAmmoAmountFromCannonballVariant(AmmoVariant), true))
     {
       if (data.canApplyDamage)
       {

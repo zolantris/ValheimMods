@@ -1029,7 +1029,7 @@ namespace ValheimVehicles.SharedScripts
     public static float GetRandomCannonVelocity => Random.value;
     public static float GetRandomCannonArc => Random.Range(-maxSidewaysArcDegrees, maxSidewaysArcDegrees);
 
-    public bool Fire(CannonFireData data, bool isManualFiring)
+    public bool Fire(CannonFireData data, int remainingAmmo, bool isManualFiring)
     {
       if (!CanFire(isManualFiring, data.allocatedAmmo))
       {
@@ -1040,13 +1040,13 @@ namespace ValheimVehicles.SharedScripts
       // force updates the ammo variant.
       ammoVariant = data.ammoVariant;
 
-      var remainingAmmo = data.allocatedAmmo;
+      var currentAmmo = data.allocatedAmmo;
       var hasFired = false;
       for (var index = 0; index < data.cannonShootingPositions.Count; index++)
       {
         if (remainingAmmo <= 0) break;
         if (!FireSingle(data, isManualFiring, index)) break;
-        remainingAmmo--;
+        currentAmmo--;
         hasFired = true;
       }
 
@@ -1061,8 +1061,13 @@ namespace ValheimVehicles.SharedScripts
 
       OnFired?.Invoke();
 
-      _recoilRoutine.Start(RecoilCoroutine(remainingAmmo));
+      _recoilRoutine.Start(RecoilCoroutine());
+      var canReload = remainingAmmo > 0;
 
+      if (autoReload && canReload)
+      {
+        _reloadRoutine.Start(ReloadCoroutine(remainingAmmo));
+      }
       return true;
     }
 
@@ -1196,7 +1201,7 @@ namespace ValheimVehicles.SharedScripts
     public static float recoilUpwardAnimationDuration = 0.5f;
     public static float recoilReturnAnimationDuration = 0.5f;
 
-    private IEnumerator RecoilCoroutine(int remainingAmmo)
+    private IEnumerator RecoilCoroutine()
     {
       var elapsed = 0f;
       while (elapsed < recoilReturnAnimationDuration + recoilUpwardAnimationDuration)
@@ -1213,21 +1218,9 @@ namespace ValheimVehicles.SharedScripts
         {
           cannonRotationalTransform.localPosition = Vector3.Lerp(Vector3.forward * -0.1f, Vector3.zero, t);
         }
-        yield return null;
+        yield return new WaitForFixedUpdate();
       }
       IsFiring = false;
-
-      yield return new WaitUntil(() => !_cannonFireAudioSource.isPlaying);
-
-      var canReload = remainingAmmo > 0;
-      if (autoReload && canReload)
-      {
-        _reloadRoutine.Start(ReloadCoroutine(remainingAmmo));
-      }
-      else
-      {
-        LoggerProvider.LogDev("No ammo left, not reloading.");
-      }
     }
 
     private void OnLogMessageReceived(string condition, string stackTrace, LogType type)

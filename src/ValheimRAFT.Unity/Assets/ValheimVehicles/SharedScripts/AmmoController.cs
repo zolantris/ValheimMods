@@ -11,7 +11,6 @@ using UnityEngine;
 
 #if !UNITY_2022 && !UNITY_EDITOR
 using System.Linq;
-using StructLinq;
 using ValheimVehicles.ModSupport;
 #endif
 // ReSharper disable ArrangeNamespaceBody
@@ -305,7 +304,7 @@ namespace ValheimVehicles.SharedScripts
       currentSolidAmmo += localSolidAmmo;
       currentExplosiveAmmo += localExplosiveAmmo;
 
-      InventorySnapshotData[inventory] = new AmmoInventoryData { explosiveAmmo = currentExplosiveAmmo, solidAmmo = currentSolidAmmo };
+      InventorySnapshotData[inventory] = new AmmoInventoryData { explosiveAmmo = localExplosiveAmmo, solidAmmo = localSolidAmmo };
     }
 #endif
     private IEnumerator UpdateAvailableAmmoTypes()

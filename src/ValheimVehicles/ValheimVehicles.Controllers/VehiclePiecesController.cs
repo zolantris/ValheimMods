@@ -8,7 +8,6 @@
   using System.Text.RegularExpressions;
   using HarmonyLib;
   using Jotunn;
-  using StructLinq;
   using UnityEngine;
   using UnityEngine.Serialization;
   using ValheimVehicles.Components;

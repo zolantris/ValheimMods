@@ -76,20 +76,6 @@
         </Reference>
     </ItemGroup>
 
-    <ItemGroup>
-        <!--   Required for structlinq to work     -->
-        <Reference Include="System.Collections.Immutable" Version="5.0.0">
-            <HintPath>$(SolutionDir)\Dependencies\System.Collections.Immutable.dll</HintPath>
-        </Reference>
-    </ItemGroup>
-
-    <!-- Required for O(n) performant Linq like readable loops -->
-    <ItemGroup>
-        <Reference Include="StructLinq" Version="0.28.2">
-            <HintPath>$(SolutionDir)\Dependencies\StructLinq.dll</HintPath>
-        </Reference>
-    </ItemGroup>
-
     <!-- Required for vehicle syncing (lots of players not using bepinex config manager)   -->
     <ItemGroup>
         <Reference Include="ServerSync" Version="1.19.0">
@@ -181,6 +167,7 @@
     <ItemGroup Label="Csharp-Libs">
         <Reference Include="System"/>
         <Reference Include="System.Core"/>
+        <Reference Include="System.Collections.Immutable"/>
     </ItemGroup>
 
     <!-- Add Unity references -->
@@ -441,7 +428,7 @@
         <!--        <Exec Condition="'$(IsRelease)' == 'true'" Command="copy &quot;$(OutDir)$(AssemblyName).dll&quot; &quot;$(SolutionDir)src\ValheimRAFT\ValheimRAFT.Unity\Assets\Assemblies\$(AssemblyName).dll&quot;"/>-->
 
         <!--    required plugins  -->
-        <!--        <Exec Command="xcopy &quot;$(SolutionDir)Dependencies&quot; &quot;$(PluginDeployPath)\&quot; /q /s /y /i"/>-->
+        <Exec Command="xcopy &quot;$(SolutionDir)Dependencies&quot; &quot;$(PluginDeployPath)\&quot; /q /s /y /i"/>
 
         <Exec Command="copy &quot;$(OutDir)$(AssemblyName).dll&quot; &quot;$(PluginDeployPath)\$(AssemblyName).dll&quot;"/>
         <Exec Command="copy &quot;$(OutDir)$(AssemblyName).pdb&quot; &quot;$(PluginDeployPath)\$(AssemblyName).pdb&quot;"/>

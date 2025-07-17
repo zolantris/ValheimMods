@@ -8,8 +8,6 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using StructLinq;
-using StructLinq.Array;
 using UnityEngine;
 using ValheimVehicles.Components;
 using ValheimVehicles.Controllers;
@@ -544,7 +542,7 @@ namespace ValheimVehicles.SharedScripts
     private IEnumerator FireCannonDelayed(CannonController cannon, CannonFireData data, float delay, bool isManualFire)
     {
       // only yield if the cannon actually fires
-      if (cannon.Fire(data, isManualFire))
+      if (cannon.Fire(data, ammoController.GetAmmoAmountFromCannonballVariant(data.ammoVariant), isManualFire))
       {
         yield return new WaitForSeconds(delay);
       }
@@ -783,18 +781,21 @@ namespace ValheimVehicles.SharedScripts
     {
       var group = GetDirectionGroup(_forwardTransform, cannon.transform);
 
-      var cannonGroup = _manualCannonGroups[group];
-      if (cannonGroup == null)
+      // Use TryGetValue for perf, don’t double index.
+      if (!_manualCannonGroups.TryGetValue(group, out var cannonGroup) || cannonGroup == null)
       {
         cannonGroup = new List<CannonController>();
+        _manualCannonGroups[group] = cannonGroup;
       }
+
       cannonGroup.Add(cannon);
-      var sortedGroup = _manualCannonGroups[group]
-        .ToStructEnumerable()
+
+      // Filter out nulls, then sort.
+      var sortedGroup = cannonGroup
+        .Where(x => x != null)
         .OrderBy(c =>
-            (transform.InverseTransformPoint(c.transform.position).x,
-              transform.InverseTransformPoint(c.transform.position).z),
-          Comparer<(float, float)>.Default)
+          (transform.InverseTransformPoint(c.transform.position).x,
+            transform.InverseTransformPoint(c.transform.position).z))
         .ToList();
 
       _manualCannonGroups[group] = sortedGroup;
@@ -871,14 +872,13 @@ namespace ValheimVehicles.SharedScripts
 
         cannon.SetManualTilt(tilt);
 
-        if (cannon.Fire(data, true)) // true = isManualFiring
+        if (cannon.Fire(data, ammoController.GetAmmoAmountFromCannonballVariant(data.ammoVariant), true)) // true = isManualFiring
         {
           AmmoController.SubtractAmmoByVariant(data.ammoVariant, data.allocatedAmmo, ref totalAmmoDeltaSolid, ref totalAmmoDeltaExplosive);
           // Ammo logic (optional, if ammo is spent inside CannonController now)
           yield return new WaitForSeconds(FiringDelayPerCannon);
         }
       }
-
 
       if (cannons.Count > 0 && m_nview.IsOwner())
       {
