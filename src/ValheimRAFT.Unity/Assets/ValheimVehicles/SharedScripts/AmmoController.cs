@@ -61,6 +61,38 @@ namespace ValheimVehicles.SharedScripts
 
     public bool IsPiecesController;
 
+    public void SetAmmoByVariant(CannonballVariant variant, int amount)
+    {
+      if (variant == CannonballVariant.Solid)
+      {
+        _solidAmmo = amount;
+      }
+      if (variant == CannonballVariant.Explosive)
+      {
+        _explosiveAmmo = amount;
+      }
+    }
+
+    public static int SubtractAmmoByVariant(CannonballVariant variant, int requestAmount, ref int ammoSolid, ref int ammoExplosive)
+    {
+      var delta = 0;
+      if (variant == CannonballVariant.Solid)
+      {
+        delta = Math.Max(0, Math.Min(requestAmount, ammoSolid));
+        ammoSolid -= delta;
+        return delta;
+      }
+      if (variant == CannonballVariant.Explosive)
+      {
+        delta = Math.Max(0, Math.Min(requestAmount, ammoExplosive));
+        ammoExplosive -= delta;
+        return delta;
+      }
+
+      LoggerProvider.LogWarning($"Unexpected variant {variant}. Could not subtract ammo.");
+      return delta;
+    }
+
     private void Awake()
     {
       IsPiecesController = PrefabNames.IsVehiclePiecesContainer(transform.root.name);

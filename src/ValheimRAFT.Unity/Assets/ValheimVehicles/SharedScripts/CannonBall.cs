@@ -161,7 +161,6 @@ namespace ValheimVehicles.SharedScripts
 
     private void LateUpdate()
     {
-
       if (m_customZSyncTransform)
       {
         if (m_nview.IsOwner())

@@ -6,12 +6,16 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
+using StructLinq;
+using StructLinq.Array;
 using UnityEngine;
 using ValheimVehicles.Components;
 using ValheimVehicles.Controllers;
 using ValheimVehicles.RPC;
 using ValheimVehicles.SharedScripts.Helpers;
+using ValheimVehicles.Structs;
 using Random = UnityEngine.Random;
 
 #endregion
@@ -64,7 +68,7 @@ namespace ValheimVehicles.SharedScripts
     [SerializeField] public int maxCannonsPerEnemy = 2;
     [SerializeField] public bool autoFire;
     [SerializeField] public List<CannonController> allCannonControllers = new();
-    [SerializeField] public List<CannonController> autoTargetControllers = new();
+    [SerializeField] public List<CannonController> autoTargetCannonControllers = new();
     [SerializeField] public List<CannonController> manualFireControllers = new();
 
     private readonly Collider[] _enemyBuffer = new Collider[32];
@@ -79,7 +83,7 @@ namespace ValheimVehicles.SharedScripts
 
     public Action? OnCannonListUpdated;
 
-    private AmmoController _ammoController = null!;
+    public AmmoController ammoController = null!;
 
     // --- Direction Group Cache ---
     private Dictionary<CannonDirectionGroup, List<CannonController>> _groupedCannons = null!;
@@ -110,7 +114,7 @@ namespace ValheimVehicles.SharedScripts
     private VehiclePiecesController _piecesController;
 #endif
     public Transform _forwardTransform { get; set; }
-    private ZNetView m_nview;
+    public ZNetView m_nview;
 
     private void Awake()
     {
@@ -119,7 +123,7 @@ namespace ValheimVehicles.SharedScripts
       _autoFireCannonsRoutine = new CoroutineHandle(this);
       _acquireTargetsRoutine = new CoroutineHandle(this);
 
-      _ammoController = gameObject.GetOrAddComponent<AmmoController>();
+      ammoController = gameObject.GetOrAddComponent<AmmoController>();
 
       SetupForwardTransform();
 
@@ -180,9 +184,9 @@ namespace ValheimVehicles.SharedScripts
     /// </summary>
     protected internal virtual void OnDestroy()
     {
-      if (_ammoController != null)
+      if (ammoController != null)
       {
-        Destroy(_ammoController);
+        Destroy(ammoController);
       }
       if (_cannonFiringHotkeys != null)
       {
@@ -192,7 +196,7 @@ namespace ValheimVehicles.SharedScripts
 
     private void FixedUpdate()
     {
-      if (autoTargetControllers.Count > 0)
+      if (autoTargetCannonControllers.Count > 0)
       {
         StartUpdatingAutoCannonTargets();
       }
@@ -351,7 +355,7 @@ namespace ValheimVehicles.SharedScripts
 #if !UNITY_2022 && !UNITY_EDITOR
     public void Request_AutoFireCannons()
     {
-      if (autoTargetControllers.Count < 1) return;
+      if (autoTargetCannonControllers.Count < 1) return;
       if (!m_nview)
       {
         m_nview = GetComponentInParent<ZNetView>();
@@ -361,17 +365,16 @@ namespace ValheimVehicles.SharedScripts
         LoggerProvider.LogWarning("cannonController missing znetview!");
         return;
       }
-      var randomVelocityModifier = CannonController.GetRandomCannonVelocity;
-      var randomArcModifier = CannonController.GetRandomCannonArc;
+      if (!m_nview.IsValid()) return;
+      var zdo = m_nview.GetZDO();
+      var cannonFireDataList = CannonFireData.CreateListOfCannonFireDataFromTargetController(this, autoTargetCannonControllers);
+      if (cannonFireDataList.Count == 0) return;
 
-      var package = new ZPackage();
-      package.Write(m_nview.GetZDO().m_uid);
-      package.Write(randomVelocityModifier);
-      package.Write(randomArcModifier);
+      var pkg = new ZPackage();
+      pkg.Write(zdo.m_uid);
+      CannonFireData.WriteListToPackage(pkg, cannonFireDataList);
 
-      // todo sync the auto target rotation X Y...per cannon. This must be done per turret.
-
-      AutoFireCannonGroup_RPC.Send(ZNetView.Everybody, package);
+      AutoFireCannonGroup_RPC.Send(ZNetView.Everybody, pkg);
     }
 
     public void Request_FireManualCannons(CannonDirectionGroup[] cannonGroups)
@@ -384,11 +387,7 @@ namespace ValheimVehicles.SharedScripts
 
     public void Request_FireManualCannons(CannonDirectionGroup cannonGroupId)
     {
-      if (_ammoController.ExplosiveAmmo < 1 && _ammoController.SolidAmmo < 1) return;
-
-      // random arc synced across server.
-      var randomVelocityModifier = CannonController.GetRandomCannonVelocity;
-      var randomArcModifier = CannonController.GetRandomCannonArc;
+      if (ammoController.ExplosiveAmmo < 1 && ammoController.SolidAmmo < 1) return;
 
       if (!m_nview)
       {
@@ -406,19 +405,25 @@ namespace ValheimVehicles.SharedScripts
         LoggerProvider.LogWarning("cannonController missing znetview!");
         return;
       }
+      if (!m_nview.IsValid()) return;
 
       var zdo = m_nview.GetZDO();
       if (zdo == null) return;
 
       var cannonTilt = _manualGroupTilt[cannonGroupId];
 
-      var package = new ZPackage();
-      package.Write(m_nview.GetZDO().m_uid);
-      package.Write((int)cannonGroupId);
-      package.Write(cannonTilt);
-      package.Write(randomVelocityModifier);
-      package.Write(randomArcModifier);
-      FireCannonGroup_RPC.Send(ZNetView.Everybody, package);
+      var cannonFireDataList = CannonFireData.CreateListOfCannonFireDataFromTargetController(this, autoTargetCannonControllers);
+      if (cannonFireDataList.Count == 0) return;
+
+      var pkg = new ZPackage();
+
+      pkg.Write(zdo.m_uid);
+      pkg.Write((int)cannonGroupId);
+      pkg.Write(cannonTilt);
+
+      CannonFireData.WriteListToPackage(pkg, cannonFireDataList);
+
+      FireCannonGroup_RPC.Send(ZNetView.Everybody, pkg);
     }
 
     public static RPCEntity FireCannonGroup_RPC = null!;
@@ -435,26 +440,24 @@ namespace ValheimVehicles.SharedScripts
       package.SetPos(0);
 
       var targetControllerZDOID = package.ReadZDOID();
-      var syncedRandomValue = package.ReadSingle();
-      var syncedArcRandomValue = package.ReadSingle();
 
-      var targetControllerObj = ZNetScene.instance.FindInstance(targetControllerZDOID);
-      if (!targetControllerObj)
-      {
-        LoggerProvider.LogWarning($"targetControllerObj {targetControllerZDOID} not found. targetControllerObj should exist otherwise we cannot instantiate cannonball without collision issues");
-        yield break;
-      }
+      GameObject? targetControllerObj = null;
+      yield return FindInstanceAsync(targetControllerZDOID, x => targetControllerObj = x);
+      if (targetControllerObj == null) yield break;
+
+      // allocate/read the rest of the package after finding object.
+      var cannonFireDataList = CannonFireData.ReadListFromPackage(package);
 
       // can be a child for the handheld version.
       var targetController = targetControllerObj.GetComponentInChildren<TargetController>();
       if (!targetController)
       {
-        LoggerProvider.LogWarning($"targetController {targetControllerZDOID} not found. CannonController should exist otherwise we cannot instantiate cannonball without collision issues");
+        LoggerProvider.LogWarning($"targetController with zdoid: {targetControllerZDOID} not found on object {targetControllerObj.name}. CannonController should exist otherwise we cannot instantiate cannonball without collision issues");
         yield break;
       }
 
       // for updates the group tilt from the host that requested to sync it to a client.
-      targetController.StartAutoFiring(syncedRandomValue, syncedArcRandomValue);
+      targetController.StartAutoFiring(cannonFireDataList);
     }
 
     public static TargetController? GetTargetControllerFromNetViewRoot(GameObject obj)
@@ -475,73 +478,99 @@ namespace ValheimVehicles.SharedScripts
       return targetController;
     }
 
-    public static IEnumerator RPC_FireAllCannonsInGroup(long senderId, ZPackage package)
+    public static IEnumerator FindInstanceAsync(ZDOID zdoid, Action<GameObject> callback)
     {
-      package.SetPos(0);
-
-      var targetControllerZDOID = package.ReadZDOID();
-      var cannonGroupId = (CannonDirectionGroup)package.ReadInt();
-      var cannonTilt = package.ReadSingle();
-      var syncedRandomValue = package.ReadSingle();
-      var syncedArcRandomValue = package.ReadSingle();
-
-      var targetControllerObj = ZNetScene.instance.FindInstance(targetControllerZDOID);
-      if (!targetControllerObj)
+      var obj = ZNetScene.instance.FindInstance(zdoid);
+      if (obj == null)
       {
-        LoggerProvider.LogWarning($"targetControllerObj {targetControllerZDOID} not found. targetControllerObj should exist otherwise we cannot instantiate cannonball without collision issues");
-        yield break;
+        var stopwatch = Stopwatch.StartNew();
+        var lastUpdateTime = 0;
+        ZDOMan.instance.RequestZDO(zdoid);
+        while (stopwatch.ElapsedMilliseconds < 1000 && obj == null)
+        {
+          obj = ZNetScene.instance.FindInstance(zdoid);
+          if (stopwatch.ElapsedMilliseconds - lastUpdateTime > 10)
+          {
+            ZDOMan.instance.RequestZDO(zdoid);
+          }
+          yield return null;
+        }
+
+        if (obj == null)
+        {
+          LoggerProvider.LogError($"Could not find obj with ZDOID {zdoid}");
+          yield break;
+        }
       }
+
+      callback.Invoke(obj);
+    }
+
+    public static IEnumerator RPC_FireAllCannonsInGroup(long senderId, ZPackage pkg)
+    {
+      pkg.SetPos(0);
+      var zdoid = pkg.ReadZDOID();
+
+      GameObject? targetControllerObj = null;
+      yield return FindInstanceAsync(zdoid, x => targetControllerObj = x);
+      if (targetControllerObj == null) yield break;
+
+      // allocate the other data if the zdo exists.
+      var cannonGroupId = (CannonDirectionGroup)pkg.ReadInt();
+      var cannonTilt = pkg.ReadSingle();
+      var firingDataList = CannonFireData.ReadListFromPackage(pkg);
+
       var targetController = GetTargetControllerFromNetViewRoot(targetControllerObj);
       if (targetController == null)
       {
-        LoggerProvider.LogWarning($"targetController {targetControllerZDOID} not found. CannonController should exist otherwise we cannot instantiate cannonball without collision issues");
+        LoggerProvider.LogWarning($"targetController {zdoid} not found. CannonController should exist otherwise we cannot instantiate cannonball without collision issues");
         yield break;
       }
+
       // for updates the group tilt from the host that requested to sync it to a client.
-      targetController._manualGroupTilt[cannonGroupId] = cannonTilt;
-      targetController.StartManualGroupFiring(cannonGroupId, syncedRandomValue, syncedArcRandomValue);
+      targetController.SetManualGroupTilt(cannonGroupId, cannonTilt);
+      targetController.StartManualGroupFiring(firingDataList, cannonGroupId);
     }
 #endif
 
   #endregion
 
-    private IEnumerator FireCannonDelayed(CannonController cannon, float delay, bool isManualFire, float randomVelocity, float randomArc, Action<int> OnAmmoUpdate)
+    private IEnumerator FireCannonDelayed(CannonController cannon, CannonFireData data, float delay, bool isManualFire)
     {
-      var ammoVariant = cannon.AmmoVariant;
-      var remainingAmmo = _ammoController.GetAmmoAmountFromCannonballVariant(ammoVariant);
-
       // only yield if the cannon actually fires
-      if (cannon.Fire(isManualFire, randomVelocity, randomArc, remainingAmmo, out var deltaAmmo))
+      if (cannon.Fire(data, isManualFire))
       {
-        OnAmmoUpdate.Invoke(deltaAmmo);
         yield return new WaitForSeconds(delay);
       }
     }
 
-    private IEnumerator AutoFireCannons(float randomVelocity, float randomArc)
+    private IEnumerator AutoFireCannons(List<CannonFireData> cannonFiringDataList)
     {
+      var objToCannonControllerMap = autoTargetCannonControllers.ToDictionary(x => x.gameObject, x => x);
       var totalAmmoDeltaExplosive = 0;
       var totalAmmoDeltaSolid = 0;
-      var list = autoTargetControllers.ToList();
-      foreach (var cannonsController in list)
+
+      foreach (var cannonFireData in cannonFiringDataList)
       {
-        if (!cannonsController) continue;
-        yield return FireCannonDelayed(cannonsController, FiringDelayPerCannon, false, randomVelocity, randomArc, (deltaAmmo) =>
+        var cannonControllerObj = ZNetScene.instance.FindInstance(cannonFireData.cannonControllerZDOID);
+        if (cannonControllerObj == null) continue;
+        // optimistic getter for cannonControllers. But possibly not valid.
+        if (!objToCannonControllerMap.TryGetValue(cannonControllerObj, out var cannonController))
         {
-          if (cannonsController.AmmoVariant == CannonballVariant.Solid)
+          cannonController = cannonControllerObj.GetComponent<CannonController>();
+          if (!cannonController)
           {
-            totalAmmoDeltaSolid += deltaAmmo;
+            continue;
           }
-          if (cannonsController.AmmoVariant == CannonballVariant.Explosive)
-          {
-            totalAmmoDeltaExplosive += deltaAmmo;
-          }
-        });
+        }
+        if (cannonController == null) continue;
+        yield return FireCannonDelayed(cannonController, cannonFireData, FiringDelayPerCannon, false);
+        AmmoController.SubtractAmmoByVariant(cannonFireData.ammoVariant, cannonFireData.allocatedAmmo, ref totalAmmoDeltaSolid, ref totalAmmoDeltaExplosive);
       }
 
-      if (list.Count > 0 && (totalAmmoDeltaExplosive > 0 || totalAmmoDeltaSolid > 0))
+      if (cannonFiringDataList.Count > 0 && m_nview.IsOwner())
       {
-        _ammoController.OnAmmoChanged(totalAmmoDeltaSolid, totalAmmoDeltaExplosive);
+        ammoController.OnAmmoChanged(Math.Abs(totalAmmoDeltaSolid), Mathf.Abs(totalAmmoDeltaExplosive));
       }
 
       yield return new WaitForSeconds(FiringCooldown);
@@ -697,13 +726,13 @@ namespace ValheimVehicles.SharedScripts
         };
 
         allCannonControllers.RemoveAll(x => x == null);
-        autoTargetControllers.RemoveAll(x => x == null);
+        autoTargetCannonControllers.RemoveAll(x => x == null);
 
         targets?.RemoveAll(x => x == null);
 
-        if (targets != null && targets.Count > 0 && autoTargetControllers.Count > 0)
+        if (targets != null && targets.Count > 0 && autoTargetCannonControllers.Count > 0)
         {
-          AssignCannonsToTargets(autoTargetControllers.ToList(), targets, maxCannonsPerEnemy);
+          AssignCannonsToTargets(autoTargetCannonControllers.ToList(), targets, maxCannonsPerEnemy);
         }
         else
         {
@@ -720,10 +749,10 @@ namespace ValheimVehicles.SharedScripts
       }
     }
 
-    public void StartAutoFiring(float randomVelocity, float randomArc)
+    public void StartAutoFiring(List<CannonFireData> cannonFireDataList)
     {
-      if (_autoFireCannonsRoutine.IsRunning || autoTargetControllers.Count == 0) return;
-      _autoFireCannonsRoutine.Start(AutoFireCannons(randomVelocity, randomArc));
+      if (_autoFireCannonsRoutine.IsRunning || autoTargetCannonControllers.Count == 0) return;
+      _autoFireCannonsRoutine.Start(AutoFireCannons(cannonFireDataList));
     }
 
     public void AddPlayer(Transform player)
@@ -742,7 +771,22 @@ namespace ValheimVehicles.SharedScripts
     private void AddManualCannonToGroup(CannonController cannon)
     {
       var group = GetDirectionGroup(_forwardTransform, cannon.transform);
-      _manualCannonGroups[group].Add(cannon);
+
+      var cannonGroup = _manualCannonGroups[group];
+      if (cannonGroup == null)
+      {
+        cannonGroup = new List<CannonController>();
+      }
+      cannonGroup.Add(cannon);
+      var sortedGroup = _manualCannonGroups[group]
+        .ToStructEnumerable()
+        .OrderBy(c =>
+            (transform.InverseTransformPoint(c.transform.position).x,
+              transform.InverseTransformPoint(c.transform.position).z),
+          Comparer<(float, float)>.Default)
+        .ToList();
+
+      _manualCannonGroups[group] = sortedGroup;
       cannon.CurrentManualDirectionGroup = group;
     }
 
@@ -787,49 +831,46 @@ namespace ValheimVehicles.SharedScripts
       return _manualGroupTilt[group];
     }
 
-    public void StartManualGroupFiring(CannonDirectionGroup group, float randomVelocity, float randomArc)
+    public void StartManualGroupFiring(List<CannonFireData> cannonFireDataList, CannonDirectionGroup group)
     {
       if (!_manualFireCannonsRoutines.TryGetValue((int)group, out var routine))
         routine = new CoroutineHandle(this);
       if (routine.IsRunning || _manualCannonGroups[group].Count == 0) return;
-      routine.Start(ManualFireCannonsGroupCoroutine(group, randomVelocity, randomArc));
+      routine.Start(ManualFireCannonsGroupCoroutine(cannonFireDataList, group));
     }
 
     /// <summary>
     /// Coroutine: fires all cannons in the group in staggered sequence, tracks ammo usage, applies OnAmmoChanged at the end.
     /// </summary>
-    private IEnumerator ManualFireCannonsGroupCoroutine(CannonDirectionGroup group, float randomVelocity, float randomArc)
+    private IEnumerator ManualFireCannonsGroupCoroutine(List<CannonFireData> cannonFireDataList, CannonDirectionGroup group)
     {
       var totalAmmoDeltaSolid = 0;
       var totalAmmoDeltaExplosive = 0;
       var tilt = _manualGroupTilt[group];
       var cannons = _manualCannonGroups[group].ToList();
 
-      foreach (var cannon in cannons)
+      for (var i = 0; i < cannonFireDataList.Count; i++)
       {
+        var data = cannonFireDataList[i];
+        var cannonControllerObj = ZNetScene.instance.FindInstance(data.cannonControllerZDOID);
+        if (!cannonControllerObj) continue;
+        var cannon = cannonControllerObj.GetComponent<CannonController>();
         if (!cannon) continue;
 
         cannon.SetManualTilt(tilt);
 
-        if (cannon.Fire(
-              true,
-              randomVelocity, randomArc,
-              _ammoController.GetAmmoAmountFromCannonballVariant(cannon.AmmoVariant),
-              out var deltaAmmo))
+        if (cannon.Fire(data, true)) // true = isManualFiring
         {
-          if (cannon.AmmoVariant == CannonballVariant.Solid)
-            totalAmmoDeltaSolid += deltaAmmo;
-          else if (cannon.AmmoVariant == CannonballVariant.Explosive)
-            totalAmmoDeltaExplosive += deltaAmmo;
-
-          // Stagger delay only if fired
+          AmmoController.SubtractAmmoByVariant(data.ammoVariant, data.allocatedAmmo, ref totalAmmoDeltaSolid, ref totalAmmoDeltaExplosive);
+          // Ammo logic (optional, if ammo is spent inside CannonController now)
           yield return new WaitForSeconds(FiringDelayPerCannon);
         }
       }
 
-      if (cannons.Count > 0 && (totalAmmoDeltaSolid != 0 || totalAmmoDeltaExplosive != 0))
+
+      if (cannons.Count > 0 && m_nview.IsOwner())
       {
-        _ammoController.OnAmmoChanged(totalAmmoDeltaSolid, totalAmmoDeltaExplosive);
+        ammoController.OnAmmoChanged(Math.Abs(totalAmmoDeltaSolid), Mathf.Abs(totalAmmoDeltaExplosive));
       }
 
       yield return new WaitForSeconds(FiringCooldown);
@@ -845,7 +886,7 @@ namespace ValheimVehicles.SharedScripts
           AddManualCannonToGroup(controller);
           break;
         case CannonFiringMode.Auto:
-          autoTargetControllers.Add(controller);
+          autoTargetCannonControllers.Add(controller);
           break;
         default:
           throw new ArgumentOutOfRangeException();
@@ -863,7 +904,7 @@ namespace ValheimVehicles.SharedScripts
           RemoveManualCannonFromGroup(controller);
           break;
         case CannonFiringMode.Auto:
-          autoTargetControllers.Remove(controller);
+          autoTargetCannonControllers.Remove(controller);
           break;
         default:
           throw new ArgumentOutOfRangeException();

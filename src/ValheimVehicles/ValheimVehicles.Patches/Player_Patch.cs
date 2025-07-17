@@ -209,23 +209,37 @@
       return gameObject;
     }
 
+#if DEBUG
+    /// <summary>
+    /// Controls snappoint alignment with rotationals that can flip a snappoint.
+    /// </summary>
+    /// <param name="__instance"></param>
+    /// <returns></returns>
     [HarmonyPatch(typeof(Player), nameof(Player.UpdatePlacementGhost))]
-    [HarmonyPrefix]
-    public static bool UpdatePlacementGhost_InjectRotation(Player __instance)
+    [HarmonyPostfix]
+    public static void UpdatePlacementGhost_InjectRotation(Player __instance)
     {
-      if (!__instance.m_placementGhost) return true;
-      if (!__instance.m_placementGhost.transform.name.StartsWith(PrefabNames.ValheimVehiclesPrefix)) return true;
-      if (__instance.m_manualSnapPoint < 0) return true;
-      if (__instance.m_tempSnapPoints1.Count <= __instance.m_manualSnapPoint) return true;
+      if (!__instance.m_placementGhost) return;
+      if (!__instance.m_placementGhost.transform.name.StartsWith(PrefabNames.ValheimVehiclesPrefix)) return;
+      var manualSnapIndex = __instance.m_manualSnapPoint;
+      if (manualSnapIndex < 1 || __instance.m_tempSnapPoints1.Count < manualSnapIndex) return;
       var quaternion = Quaternion.Euler(0.0f, __instance.m_placeRotationDegrees * (float)__instance.m_placeRotation, 0.0f);
 
-      var snappointTransform = __instance.m_tempSnapPoints1[__instance.m_manualSnapPoint];
+      Transform? snappointTransform = null;
 
-      // add rotation on of snappoint onto the current quaternion. This allows for rotating the whole prefab for ValheimVehicle variants
-      __instance.m_placementGhost.transform.rotation = quaternion * snappointTransform.rotation;
+      if (snappointTransform == null)
+      {
+        snappointTransform = __instance.m_tempSnapPoints1[__instance.m_manualSnapPoint];
+      }
 
-      return false;
+      if (snappointTransform != null)
+      {
+        LoggerProvider.LogDebugDebounced($"Got {snappointTransform.name}");
+        // add rotation on of snappoint onto the current quaternion. This allows for rotating the whole prefab for ValheimVehicle variants
+        __instance.m_placementGhost.transform.rotation = quaternion * snappointTransform.localRotation;
+      }
     }
+#endif
 
     public static void TryFixPieceOverlap(GameObject gameObject)
     {

@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using ValheimVehicles.RPC;
 using ValheimVehicles.SharedScripts;
+using ValheimVehicles.Structs;
 using Random = UnityEngine.Random;
 
 public class CannonHandHeldController : CannonController, Hoverable
@@ -24,13 +25,12 @@ public class CannonHandHeldController : CannonController, Hoverable
   public static float SquareMagnitudeThreshold = 1e-6f;
   public static bool ShouldUpdate = true;
 
-  private AmmoController _ammoController;
-  private ZNetView m_nview;
+  public AmmoController ammoController;
 
   protected internal override void Start()
   {
     m_nview = GetComponentInParent<ZNetView>();
-    _ammoController = GetComponent<AmmoController>();
+    ammoController = GetComponent<AmmoController>();
     TryInitController();
     base.Start();
   }
@@ -39,9 +39,9 @@ public class CannonHandHeldController : CannonController, Hoverable
   {
     try
     {
-      if (_ammoController == null)
-        _ammoController = GetComponent<AmmoController>();
-      return _ammoController != null;
+      if (ammoController == null)
+        ammoController = GetComponent<AmmoController>();
+      return ammoController != null;
     }
     catch (Exception ex)
     {
@@ -50,20 +50,42 @@ public class CannonHandHeldController : CannonController, Hoverable
     }
   }
 
+  public Transform? playerParent;
+
+  public Transform? GetPlayerParent()
+  {
+    if (playerParent != null) return playerParent;
+    var player = transform.GetComponentInParent<Player>();
+    if (player == null) playerParent = null;
+    playerParent = player.transform;
+
+    return playerParent;
+  }
+
   protected internal override void FixedUpdate()
   {
-    base.FixedUpdate();
     if (!ShouldUpdate) return;
-    if (!IsHeldByLocalPlayer()) return;
     if (!TryInitController()) return;
-    if (GameCamera.instance == null) return;
-    var camera = GameCamera.instance.m_camera;
-    if (camera == null) return;
-
+    var isLocalPlayer = !IsHeldByLocalPlayer();
+    if (isLocalPlayer) return;
+    GetPlayerParent();
+    if (playerParent == null) return;
     var parent = cannonRotationalTransform.parent;
     if (!parent) return;
 
-    var localLook = parent.InverseTransformDirection(camera.transform.forward);
+    Vector3 localLook;
+
+    if (isLocalPlayer)
+    {
+      if (GameCamera.instance == null) return;
+      var camera = GameCamera.instance.m_camera;
+      if (camera == null) return;
+      localLook = parent.InverseTransformDirection(camera.transform.forward);
+    }
+    else
+    {
+      localLook = parent.InverseTransformDirection(playerParent.forward);
+    }
 
     // Check for degenerate input
     if (localLook.sqrMagnitude < SquareMagnitudeThreshold) return;
@@ -114,12 +136,14 @@ public class CannonHandHeldController : CannonController, Hoverable
         cannonShooterTransform.position + cannonShooterTransform.forward * 5f,
         Color.green, 0.1f);
     }
+
+    base.FixedUpdate();
   }
 
   public void Request_FireHandHeld()
   {
     // prevent firing at 0 ammo.
-    if (_ammoController.GetAmmoAmountFromCannonballVariant(AmmoVariant) < 1) return;
+    if (ammoController.GetAmmoAmountFromCannonballVariant(AmmoVariant) < 1) return;
 
     // random arc synced across server.
     var randomVelocityModifier = Random.value;
@@ -134,11 +158,13 @@ public class CannonHandHeldController : CannonController, Hoverable
       LoggerProvider.LogWarning("cannonController missing znetview!");
       return;
     }
-
-    var package = new ZPackage();
-    package.Write(m_nview.GetZDO().m_uid);
-    package.Write(randomVelocityModifier);
-    package.Write(randomArcModifier);
+    var data = CannonFireData.CreateCannonFireDataFromHandHeld(this);
+    if (!data.HasValue)
+    {
+      LoggerProvider.LogWarning("cannonController missing cannonfiredata!");
+      return;
+    }
+    var package = CannonFireData.WriteToPackage(data.Value);
     FireHandHeldCannon_RPC.Send(ZNetView.Everybody, package);
   }
 
@@ -152,9 +178,8 @@ public class CannonHandHeldController : CannonController, Hoverable
   public static IEnumerator RPC_FireHandHeldCannon(long senderId, ZPackage package)
   {
     package.SetPos(0);
-    var cannonControllerZDOID = package.ReadZDOID();
-    var syncedRandomValue = package.ReadSingle();
-    var syncedArcRandomValue = package.ReadSingle();
+    var cannonFireData = CannonFireData.ReadFromPackage(package);
+    var cannonControllerZDOID = cannonFireData.cannonControllerZDOID;
 
     var cannonHandHeldInstance = ZNetScene.instance.FindInstance(cannonControllerZDOID);
     if (!cannonHandHeldInstance)
@@ -171,14 +196,17 @@ public class CannonHandHeldController : CannonController, Hoverable
       yield break;
     }
 
-    cannonHandheld.FireHandHeldCannon(syncedRandomValue, syncedArcRandomValue);
+    cannonHandheld.FireHandHeldCannon(cannonFireData);
   }
 
-  internal bool FireHandHeldCannon(float randomVelocity, float randomArc)
+  internal bool FireHandHeldCannon(CannonFireData data)
   {
-    if (Fire(true, randomVelocity, randomArc, _ammoController.GetAmmoAmountFromCannonballVariant(AmmoVariant), out var deltaAmmo))
+    if (Fire(data, true))
     {
-      _ammoController.OnAmmoChangedFromVariant(AmmoVariant, deltaAmmo);
+      if (data.canApplyDamage)
+      {
+        ammoController.OnAmmoChangedFromVariant(data.ammoVariant, data.allocatedAmmo);
+      }
       return true;
     }
     return false;

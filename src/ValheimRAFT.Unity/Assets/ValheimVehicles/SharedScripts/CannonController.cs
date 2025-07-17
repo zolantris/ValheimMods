@@ -14,6 +14,7 @@ using JetBrains.Annotations;
 using UnityEngine;
 using ValheimVehicles.RPC;
 using ValheimVehicles.SharedScripts.UI;
+using ValheimVehicles.Structs;
 using Random = UnityEngine.Random;
 
 #endregion
@@ -112,8 +113,6 @@ namespace ValheimVehicles.SharedScripts
     [SerializeField] public bool hasNearbyPowderBarrel;
     [SerializeField] private float barrelSupplyRadius = BarrelSupplyDistance;
     [SerializeField] public int ManualFiringGroupId;
-
-    public bool CanApplyDamage = true;
     // barrel check timers
     public float LastBarrelCheckTime;
     public float BarrelCheckInterval = 5f;
@@ -129,7 +128,7 @@ namespace ValheimVehicles.SharedScripts
     private readonly Dictionary<BarrelPart, Cannonball> _loadedCannonballs = new();
     internal readonly List<Cannonball> _trackedLoadedCannonballs = new();
 
-    private readonly List<BarrelPart> shootingParts = new();
+    public readonly List<BarrelPart> shootingBarrelParts = new();
     private bool _canAutoFire;
     private Queue<Cannonball> _cannonballPool = new();
     private AudioSource _cannonFireAudioSource;
@@ -149,7 +148,7 @@ namespace ValheimVehicles.SharedScripts
 
     public HashSet<Transform> IgnoredTransformRoots = new();
 
-    public int MinPoolSize => 1 * Mathf.Min(shootingParts.Count, 1);
+    public int MinPoolSize => 1 * Mathf.Min(shootingBarrelParts.Count, 1);
 
     public float aimingSpeed => CannonAimSpeed > 0f ? CannonAimSpeed : _aimingSpeed;
 
@@ -177,15 +176,24 @@ namespace ValheimVehicles.SharedScripts
       }
     }
 
-    public bool IsLoaded => shootingParts.All(sp =>
+    public bool IsLoaded => shootingBarrelParts.All(sp =>
       _loadedCannonballs.TryGetValue(sp, out var ball) && ball != null);
 
-    public bool IsAnyBarrelLoaded => shootingParts.Any(sp =>
+    public bool IsAnyBarrelLoaded => shootingBarrelParts.Any(sp =>
       _loadedCannonballs.TryGetValue(sp, out var ball) && ball != null);
 
     public float FiringRotationMaxY => MaxFiringRotationYOverride > 0f ? MaxFiringRotationYOverride : maxFiringRotationY;
     public float BarrelPitchMaxAngle => MaxFiringPitchOverride > 0f ? MaxFiringPitchOverride : maxFiringPitch;
     public float BarrelPitchMinAngle => MinFiringPitchOverride > 0f ? MinFiringPitchOverride : minFiringPitch;
+
+  #region Valheim Integrations
+
+#if !UNITY_2022 && !UNITY_EDITOR
+    public ZNetView m_nview;
+#endif
+
+  #endregion
+
 
     protected internal virtual void Awake()
     {
@@ -227,7 +235,7 @@ namespace ValheimVehicles.SharedScripts
       // we start loaded with this. TODO might move this logic into a network level check.
       if (!IsAnyBarrelLoaded && hasLoaded)
       {
-        foreach (var shootingPart in shootingParts)
+        foreach (var shootingPart in shootingBarrelParts)
         {
           var loadedCannonball = GetPooledCannonball(shootingPart);
           loadedCannonball.Load(shootingPart.projectileLoader);
@@ -248,18 +256,8 @@ namespace ValheimVehicles.SharedScripts
       SetupCannonballPrefab();
     }
 
-
-#if !UNITY_2022 && !UNITY_EDITOR
-    private ZNetView m_nview;
-#endif
     protected internal virtual void FixedUpdate()
     {
-#if !UNITY_2022 && !UNITY_EDITOR
-      if (m_nview)
-      {
-        CanApplyDamage = m_nview.IsOwner();
-      }
-#endif
       UpdateNearbyBarrels();
       SyncLoadedCannonballs();
       AdjustFiringAngle();
@@ -372,6 +370,11 @@ namespace ValheimVehicles.SharedScripts
       return _loadedCannonballs.TryGetValue(part, out var ball) && ball != null;
     }
 
+    public int GetBarrelCount()
+    {
+      return shootingBarrelParts.Count;
+    }
+
     public void SyncLoadedCannonballFromList(IEnumerable<Cannonball> cannonballs)
     {
       foreach (var ball in cannonballs)
@@ -475,11 +478,11 @@ namespace ValheimVehicles.SharedScripts
         if (child.name.StartsWith("cannon_shooter_part"))
         {
           var shootingPart = BarrelPart.Init(child);
-          shootingParts.Add(shootingPart);
+          shootingBarrelParts.Add(shootingPart);
         }
       }
 
-      if (shootingParts.Count == 0)
+      if (shootingBarrelParts.Count == 0)
       {
         LoggerProvider.LogError("No shooting parts found in cannon shooter.");
       }
@@ -584,7 +587,7 @@ namespace ValheimVehicles.SharedScripts
       if (!selectedCannonball) return;
       for (var i = 0; i < MinPoolSize; i++)
       {
-        foreach (var shootingPart in shootingParts)
+        foreach (var shootingPart in shootingBarrelParts)
         {
           var go = Instantiate(selectedCannonball, shootingPart.projectileLoader.position, shootingPart.projectileLoader.rotation, null);
           go.name = $"cannonball_queue_{ammoVariant}_{i}";
@@ -1026,25 +1029,23 @@ namespace ValheimVehicles.SharedScripts
     public static float GetRandomCannonVelocity => Random.value;
     public static float GetRandomCannonArc => Random.Range(-maxSidewaysArcDegrees, maxSidewaysArcDegrees);
 
-    public bool Fire(bool isManualFiring, float randomVelocity, float randomArc, int remainingAmmo, out int deltaAmmo)
+    public bool Fire(CannonFireData data, bool isManualFiring)
     {
-      deltaAmmo = 0;
-      if (!CanFire(isManualFiring, remainingAmmo))
+      if (!CanFire(isManualFiring, data.allocatedAmmo))
       {
         return false;
       }
-
       IsFiring = true;
 
+      // force updates the ammo variant.
+      ammoVariant = data.ammoVariant;
 
-
+      var remainingAmmo = data.allocatedAmmo;
       var hasFired = false;
-      for (var index = 0; index < shootingParts.Count; index++)
+      for (var index = 0; index < data.cannonShootingPositions.Count; index++)
       {
-        var shootingPart = shootingParts[index];
         if (remainingAmmo <= 0) break;
-        if (!FireSingle(shootingPart, index, isManualFiring, randomVelocity, randomArc)) break;
-        deltaAmmo++;
+        if (!FireSingle(data, isManualFiring, index)) break;
         remainingAmmo--;
         hasFired = true;
       }
@@ -1065,7 +1066,26 @@ namespace ValheimVehicles.SharedScripts
       return true;
     }
 
-    private bool FireSingle(BarrelPart barrel, int barrelCount, bool isManualFiring, float randomValue, float randomSideArcValue)
+    private bool FireSingle(CannonFireData data, bool isManualFiring, int barrelIndex)
+    {
+      if (data.cannonShootingPositions == null || data.cannonShootingPositions.Count == 0)
+        return false;
+      if (barrelIndex < 0 || barrelIndex >= data.cannonShootingPositions.Count)
+        return false;
+
+      // Find the matching barrel part by comparing position
+      var firePosition = data.cannonShootingPositions[barrelIndex];
+      var barrel = shootingBarrelParts.FirstOrDefault(bp =>
+        Vector3.Distance(bp.projectileLoader.position, firePosition) < 0.01f);
+      if (barrel == null)
+        barrel = shootingBarrelParts.ElementAtOrDefault(barrelIndex);
+      if (barrel == null)
+        return false;
+
+      return FireSingle(data, barrel, data.allocatedAmmo, isManualFiring);
+    }
+
+    private bool FireSingle(CannonFireData data, BarrelPart barrel, int barrelCount, bool isManualFiring)
     {
       if (!_loadedCannonballs.TryGetValue(barrel, out var loadedCannonball) || loadedCannonball == null)
       {
@@ -1089,7 +1109,7 @@ namespace ValheimVehicles.SharedScripts
       IgnoreLocalColliders(loadedCannonball);
       loadedCannonball.transform.position = barrel.projectileLoader.position;
 
-      var randomVelocityMultiplier = randomValue;
+      var randomVelocityMultiplier = data.randomVelocityValue;
       var localSpeed = cannonballSpeed + randomVelocityMultiplier;
 
       // var sideArc = Random.Range(-maxSidewaysArcDegrees, maxSidewaysArcDegrees);
@@ -1106,7 +1126,7 @@ namespace ValheimVehicles.SharedScripts
 #endif
       }
 
-      var arcRot = Quaternion.Euler(0f, randomSideArcValue, 0f);
+      var arcRot = Quaternion.Euler(0f, data.randomArcValue, 0f);
       var arcedForward = arcRot * baseForward;
 
 // Defensive: If arcRot or math yields a bad direction, fallback again.
@@ -1117,7 +1137,7 @@ namespace ValheimVehicles.SharedScripts
     Debug.LogWarning("CannonController: arcedForward was zero, using fallback.");
 #endif
       }
-      loadedCannonball.CanApplyDamage = CanApplyDamage;
+      loadedCannonball.CanApplyDamage = data.canApplyDamage;
 
       loadedCannonball.Fire(
         arcedForward.normalized * localSpeed,
@@ -1235,10 +1255,10 @@ namespace ValheimVehicles.SharedScripts
         yield return new WaitUntil(() => !_cannonReloadAudioSource.isPlaying);
       }
 
-      var shotsToReload = Math.Min(reloadQuantity, shootingParts.Count);
+      var shotsToReload = Math.Min(reloadQuantity, shootingBarrelParts.Count);
       for (var i = 0; i < shotsToReload && remainingAmmo - i > 0; i++)
       {
-        var shootingPart = shootingParts[i];
+        var shootingPart = shootingBarrelParts[i];
         if (shootingPart == null) break;
         var loaded = GetPooledCannonball(shootingPart);
         loaded.Load(shootingPart.projectileLoader);

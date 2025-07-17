@@ -24,8 +24,8 @@ public class VehicleZSyncTransform : MonoBehaviour, IMonoUpdater
   public ZNetView m_nview;
   public Rigidbody m_body;
   public Projectile m_projectile;
-  public Vector3 m_positionCached = Vector3.negativeInfinity;
-  public Vector3 m_velocityCached = Vector3.negativeInfinity;
+  public Vector3 m_positionCached = Vector3.zero;
+  public Vector3 m_velocityCached = Vector3.zero;
   private bool _isReady = false;
 
   public void Awake()
@@ -38,14 +38,12 @@ public class VehicleZSyncTransform : MonoBehaviour, IMonoUpdater
     if (_isReady) return true;
     try
     {
-      m_nview = GetComponent<ZNetView>();
-      m_body = GetComponent<Rigidbody>();
+      m_nview = GetComponentInParent<ZNetView>();
+      m_body = GetComponentInParent<Rigidbody>();
       m_projectile = GetComponent<Projectile>();
-      if (m_nview == null || m_body == null) return false;
-
-      if (m_nview.GetZDO() == null)
+      if (m_nview == null || m_nview.GetZDO() == null || !m_nview.IsValid() || m_body == null)
       {
-        enabled = false;
+        _isReady = false;
         return false;
       }
 
@@ -53,11 +51,13 @@ public class VehicleZSyncTransform : MonoBehaviour, IMonoUpdater
       m_useGravity = m_body.useGravity;
 
       m_wasOwner = m_nview.GetZDO().IsOwner();
+      _isReady = true;
 
-      return true;
+      return _isReady;
     }
     catch (Exception e)
     {
+      LoggerProvider.LogDebugDebounced($"Exception in TryInit \n{e}");
       return false;
     }
   }
@@ -91,6 +91,10 @@ public class VehicleZSyncTransform : MonoBehaviour, IMonoUpdater
 
   public void OwnerSync()
   {
+    if (!_isReady) return;
+    // force updates kinematic body.
+    m_isKinematicBody = m_body.isKinematic;
+
     var zdo = m_nview.GetZDO();
     var flag1 = zdo.IsOwner();
     var flag2 = !m_wasOwner & flag1;
@@ -110,7 +114,7 @@ public class VehicleZSyncTransform : MonoBehaviour, IMonoUpdater
         transform.rotation = zdo.GetRotation();
         flag3 = true;
       }
-      if (!m_body.isKinematic && m_syncBodyVelocity && (bool)(Object)m_body)
+      if (m_syncBodyVelocity && (bool)(Object)m_body)
       {
         m_body.velocity = zdo.GetVec3(ZDOVars.s_bodyVelHash, Vector3.zero);
         m_body.angularVelocity = zdo.GetVec3(ZDOVars.s_bodyAVelHash, Vector3.zero);
@@ -165,7 +169,7 @@ public class VehicleZSyncTransform : MonoBehaviour, IMonoUpdater
       }
       if ((bool)(Object)m_body)
       {
-        if (!m_body.isKinematic && m_syncBodyVelocity)
+        if (m_syncBodyVelocity)
         {
           m_nview.GetZDO().Set(ZDOVars.s_bodyVelHash, m_body.velocity);
           m_nview.GetZDO().Set(ZDOVars.s_bodyAVelHash, m_body.angularVelocity);
@@ -272,7 +276,7 @@ public class VehicleZSyncTransform : MonoBehaviour, IMonoUpdater
     if ((bool)(Object)m_body)
     {
       m_body.useGravity = false;
-      if (!m_body.isKinematic && m_syncBodyVelocity && m_nview.HasOwner())
+      if (m_syncBodyVelocity && m_nview.HasOwner())
       {
         var vec3_1 = zdo.GetVec3(ZDOVars.s_bodyVelHash, Vector3.zero);
         var vec3_2 = zdo.GetVec3(ZDOVars.s_bodyAVelHash, Vector3.zero);
@@ -338,6 +342,7 @@ public class VehicleZSyncTransform : MonoBehaviour, IMonoUpdater
 
   public void ClientSync(float dt)
   {
+    if (!_isReady) return;
     var zdo = m_nview.GetZDO();
     if (zdo.IsOwner())
       return;
@@ -345,7 +350,6 @@ public class VehicleZSyncTransform : MonoBehaviour, IMonoUpdater
     if (m_lastUpdateFrame == frameCount)
       return;
     m_lastUpdateFrame = frameCount;
-
     m_isKinematicBody = m_body.isKinematic;
 
     if (m_isKinematicBody)
