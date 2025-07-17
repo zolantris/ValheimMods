@@ -768,6 +768,11 @@ namespace ValheimVehicles.SharedScripts
       RefreshPlayerDefenseTriggers();
     }
 
+    public List<CannonController> GetCannonManualFiringGroup(CannonDirectionGroup group)
+    {
+      return _manualCannonGroups[group];
+    }
+
     private void AddManualCannonToGroup(CannonController cannon)
     {
       var group = GetDirectionGroup(_forwardTransform, cannon.transform);
