@@ -1,23 +1,23 @@
-<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk" ToolsVersion="4.8" DefaultTargets="Build">
+    <Import Project="$(SolutionDir)\targets\valheim.targets"/>
     <PropertyGroup>
+        <TargetFramework>netstandard2.0</TargetFramework>
+        <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
         <Nullable>enable</Nullable>
         <Configurations>Debug;Release;ReleaseBETA Archive</Configurations>
         <Platforms>AnyCPU</Platforms>
     </PropertyGroup>
     <PropertyGroup Condition=" '$(Configuration)' == 'ReleaseBETA Archive' ">
-      <PlatformTarget>AnyCPU</PlatformTarget>
-      <DebugType>pdbonly</DebugType>
-      <Optimize>true</Optimize>
-      <OutputPath>bin\Release\</OutputPath>
-      <DefineConstants>TRACE</DefineConstants>
-      <ErrorReport>prompt</ErrorReport>
-      <WarningLevel>4</WarningLevel>
-      <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+        <PlatformTarget>AnyCPU</PlatformTarget>
+        <DebugType>pdbonly</DebugType>
+        <Optimize>true</Optimize>
+        <OutputPath>bin\Release\</OutputPath>
+        <DefineConstants>TRACE</DefineConstants>
+        <ErrorReport>prompt</ErrorReport>
+        <WarningLevel>4</WarningLevel>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     </PropertyGroup>
-    <Import Project="..\..\base.targets"/>
-    <Import Project="..\..\valheim.targets"/>
-    <Import Project="..\..\gameLauncher.targets"/>
 
     <!--  Converts valheim to a unity debug build  -->
-    <Import Project="..\..\unity-debug-build-converter.targets"/>
+    <Import Project="$(SolutionDir)\targets\unity-debug-build-converter.targets"/>
 </Project>

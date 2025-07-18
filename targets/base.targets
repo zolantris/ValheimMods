@@ -1,0 +1,34 @@
+<Project Sdk="Microsoft.NET.Sdk" ToolsVersion="4.8" DefaultTargets="Build">
+    <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props"
+            Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')"/>
+    <PropertyGroup>
+        <TargetFramework>netstandard2.0</TargetFramework>
+        <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
+        <Platforms>AnyCPU</Platforms>
+        <PlatformTarget>AnyCPU</PlatformTarget>
+        <LangVersion>12</LangVersion>
+        <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    </PropertyGroup>
+    <PropertyGroup Label="Code Preferences">
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+    <!--  critical for local variables, can affect any project in this repo reliant on it  -->
+    <Import Project="$(SolutionDir)targets\.props" Condition="Exists('$(SolutionDir)targets\.props')"/>
+    <Import Project="$(SolutionDir)targets\build_variables.targets" Condition="Exists('$(SolutionDir)targets\build_variables.targets')"/>
+
+    <PropertyGroup Condition=" '$(Configuration)' == 'ReleaseBETA Archive' or '$(Configuration)' == 'Release'">
+        <PlatformTarget>AnyCPU</PlatformTarget>
+        <DebugType>pdbonly</DebugType>
+        <Optimize>true</Optimize>
+        <OutputPath>bin\Release\</OutputPath>
+        <DefineConstants>TRACE</DefineConstants>
+        <ErrorReport>prompt</ErrorReport>
+        <WarningLevel>4</WarningLevel>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <Compile Include="$(AssemblyDir)\.*cs"/>
+        <Compile Include="$(AssemblyDir)\Properties\.*cs"/>
+    </ItemGroup>
+</Project>

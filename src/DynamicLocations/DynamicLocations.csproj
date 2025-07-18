@@ -4,23 +4,14 @@
         <Configurations>Debug;Release;Release Archive;ReleaseBETA Archive</Configurations>
         <Platforms>AnyCPU</Platforms>
     </PropertyGroup>
-    <PropertyGroup Condition=" '$(Configuration)' == 'ReleaseBETA Archive' ">
-      <PlatformTarget>AnyCPU</PlatformTarget>
-      <DebugType>pdbonly</DebugType>
-      <Optimize>true</Optimize>
-      <OutputPath>bin\Release\</OutputPath>
-      <DefineConstants>TRACE</DefineConstants>
-      <ErrorReport>prompt</ErrorReport>
-      <WarningLevel>4</WarningLevel>
-      <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    </PropertyGroup>
-    <Import Project="..\..\base.targets"/>
-    <Import Project="..\..\valheim.targets"/>
-    <Import Project="..\..\gameLauncher.targets"/>
+    <Import Project="$(SolutionDir)\targets\valheim.targets"/>
+
     <!-- Compiled Shared items  -->
     <ItemGroup>
         <ProjectReference Include="..\Shared\Shared.csproj"/>
     </ItemGroup>
+
+
     <!--  requires zdowatcher  -->
     <ItemGroup>
         <ProjectReference Include="..\ZdoWatcher\ZdoWatcher.csproj"/>

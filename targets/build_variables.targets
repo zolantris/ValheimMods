@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <Import Project="$(SolutionDir)targets\.props" Condition="Exists('$(SolutionDir)targets\.props')"/>
+    <PropertyGroup Label="Runnables and Project Booleans">
+        <!-- Runnable variants execute Valheim server or client process after building -->
+        <IsRunnableDebug Condition="'$(Configuration)' == 'Debug Run Client' or '$(Configuration)' == 'Debug Run Server' or '$(Configuration)' == 'Debug Run ClientServer'">true</IsRunnableDebug>
+        <IsRunnableRelease Condition="'$(Configuration)' == 'Release Run Client' or '$(Configuration)' == 'Release Run Server' or '$(Configuration)' == 'Release Run ClientServer'">true</IsRunnableRelease>
+        <IsRunnableClientServer Condition="'$(Configuration)' == 'Release Run ClientServer' or '$(Configuration)' == 'Debug Run ClientServer'">true</IsRunnableClientServer>
+        <IsRunnableServer Condition="'$(Configuration)' == 'Release Run Server' or '$(Configuration)' == 'Debug Run Server'">true</IsRunnableServer>
+        <IsRunnableClient Condition="'$(IsRunnableRelease)' == 'true' or '$(IsRunnableDebug)' == 'true'">true</IsRunnableClient>
+        <IsRunnable Condition="'$(IsRunnableRelease)' == 'true' or '$(IsRunnableDebug)' == 'true'">true</IsRunnable>
+        <!--        <IsRunnable Condition="'$(Configuration)' == 'Debug Run Client' or-->
+        <!--                          '$(Configuration)' == 'Debug Run Server' or-->
+        <!--                          '$(Configuration)' == 'Debug Run ClientServer' or-->
+        <!--                          '$(Configuration)' == 'Release Run Client' or-->
+        <!--                          '$(Configuration)' == 'Release Run Server' or-->
+        <!--                          '$(Configuration)' == 'Release Run ClientServer'">true-->
+        <!--        </IsRunnable>-->
+        <IsRunnable>true</IsRunnable>
+        <!--        <IsRunnable Condition="'$(IsRunnable)' != 'true'">false</IsRunnable>-->
+        <IsDebug Condition="'$(Configuration)' == 'Debug' or '$(IsRunnableDebug)' == 'true'">true</IsDebug>
+        <IsRelease Condition="'$(Configuration)' == 'Release' or '$(IsRunnableRelease)' == 'true'">true</IsRelease>
+        <IsNotArchive Condition="'$(Configuration)' != 'Release Archive' and '$(Configuration)' != 'ReleaseBETA Archive'">true</IsNotArchive>
+    </PropertyGroup>
+</Project>

@@ -1,0 +1,46 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <RootNamespace>ModPostInstaller</RootNamespace>
+    </PropertyGroup>
+    <Import Project="$(SolutionDir)\targets\build_variables.targets"/>
+
+    <!--  for autolaunching   -->
+    <Import Project="$(SolutionDir)\targets\game_launcher.targets"/>
+
+    <ItemGroup>
+        <!--   All main projects     -->
+        <ProjectReference Include="..\ValheimRAFT\ValheimRAFT.csproj"/>
+        <ProjectReference Include="..\Shared\Shared.csproj"/>
+        <ProjectReference Include="..\ZdoWatcher\ZdoWatcher.csproj"/>
+        <ProjectReference Include="..\DynamicLocations\DynamicLocations.csproj"/>
+        <ProjectReference Include="..\ValheimVehicles\ValheimVehicles.csproj"/>
+    </ItemGroup>
+
+    <PropertyGroup>
+        <PostInstallerEnabled>true</PostInstallerEnabled>
+        <PostInstallerPath>$(SolutionDir)tools\ModPostInstaller\ModPostInstaller.dll</PostInstallerPath>
+    </PropertyGroup>
+
+    <Target Name="RunPostInstaller"
+            AfterTargets="Build"
+            Condition=" '$(PostInstallerEnabled)' == 'true' ">
+        <Message Text="Running ModPostInstaller after all builds..." Importance="high"/>
+        <Exec Command='dotnet "$(PostInstallerPath)" 
+      --solutionDir "$(SolutionDir)" 
+      --outDir "$(OutDir)" 
+      --config "$(Configuration)" 
+      --platform "$(Platform)" 
+      --isRunnable "$(IsRunnable)" 
+      --isRunnableServer "$(IsRunnableServer)" 
+      --pluginDeployPath "$(PluginDeployPath)" 
+      --valheimServerPath "$(ValheimServerPath)" 
+      --assetsDir "$(AssetsDir)" 
+      --applicationVersion "$(ApplicationVersion)" 
+      --assemblyName "$(AssemblyName)" 
+      --serverFileExitCode "$(ServerFileExitCode)" 
+      --clientFileExitCode "$(ClientFileExitCode)" 
+      --sandBoxieFileExitCode "$(SandBoxieFileExitCode)" 
+      '/>
+    </Target>
+</Project>

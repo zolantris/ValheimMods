@@ -6,19 +6,13 @@
         <ProjectGuid>{6015B165-2627-40A7-8CA1-3E6B6CD7CB49}</ProjectGuid>
         <OutputType>Library</OutputType>
         <AssemblyName>ValheimRAFT</AssemblyName>
-        <TargetFramework>netstandard2.0</TargetFramework>
-        <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
-        <Platforms>AnyCPU</Platforms>
-        <PlatformTarget>AnyCPU</PlatformTarget>
         <ApplicationVersion>3.6.1</ApplicationVersion>
         <FileAlignment>512</FileAlignment>
         <RootNamespace>ValheimRAFT</RootNamespace>
-        <LangVersion>latest</LangVersion>
-        <Nullable>enable</Nullable>
+        <LangVersion>12</LangVersion>
         <Configurations>Debug;Release;Release Archive;Debug Run ClientServer;Debug Run Client;ReleaseBETA Archive;Debug Run Server;Release Run Server;Release Run ClientServer</Configurations>
     </PropertyGroup>
-    <Import Project="..\..\base.targets"/>
-    <Import Project="..\..\valheim.targets"/>
+    <Import Project="$(SolutionDir)\targets\valheim.targets"/>
 
     <!-- Until ValheimVehicles is published, RAFT will directly pull in it's dependencies -->
     <!--    <ItemGroup Label="Embedded Resources">-->
@@ -35,7 +29,6 @@
         <ProjectReference Include="..\ValheimVehicles\ValheimVehicles.csproj"/>
         <!--        <Compile Include="..\ValheimVehicles\ValheimVehicles.*\**\*.cs"/>-->
     </ItemGroup>
-    <Import Project="..\..\gameLauncher.targets"/>
     <PropertyGroup>
         <SentryDSN>https://e720adb5b1a1fdb40d073635eb76817d@o243490.ingest.sentry.io/4506613652586496</SentryDSN>
     </PropertyGroup>
