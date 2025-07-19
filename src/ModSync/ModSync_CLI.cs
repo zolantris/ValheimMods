@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using ModSync.Programs;
 
 namespace ModSync;
 
@@ -11,100 +12,175 @@ public static class ModPostInstall_Program
 {
   // Main entrypoint for EXE
   // Public method to copy to multiple directories based on feature flags
-  public static void copyToDir(string sourceDir, string targetDir, Dictionary<string, string> flags)
-  {
-    if (string.IsNullOrEmpty(sourceDir) || string.IsNullOrEmpty(targetDir))
-    {
-      Console.WriteLine("Warning: Source or target directory is null or empty");
-      return;
-    }
 
-    Console.WriteLine($"Copying from {sourceDir} to {targetDir}");
-    CopyDirectory(sourceDir, targetDir);
-
-    // Copy to additional locations based on flags
-    if (flags.TryGetValue("clientDeployPath", out var clientPath) && !string.IsNullOrEmpty(clientPath) && flags.ContainsKey("isClient"))
-    {
-      Console.WriteLine($"Copying to client path: {clientPath}");
-      CopyDirectory(sourceDir, clientPath);
-    }
-
-    if (flags.TryGetValue("serverDeployPath", out var serverPath) && !string.IsNullOrEmpty(serverPath) && flags.ContainsKey("isServer"))
-    {
-      Console.WriteLine($"Copying to server path: {serverPath}");
-      CopyDirectory(sourceDir, serverPath);
-    }
-
-    if (flags.TryGetValue("sandboxieDeployPath", out var sandboxiePath) && !string.IsNullOrEmpty(sandboxiePath) && flags.ContainsKey("isSandboxie"))
-    {
-      Console.WriteLine($"Copying to sandboxie path: {sandboxiePath}");
-      CopyDirectory(sourceDir, sandboxiePath);
-    }
-  }
-
+  // Arg types
   public const string Arg_Sync = "sync";
-  public const string Arg_Deploy = "sync";
+  public const string Arg_Deploy = "deploy";
   public const string Arg_Run = "run";
+  public const string Arg_Help = "--help";
+  public const string DefaultConfigPath = "modSync.json5";
 
   public static int Main(string[] args)
   {
-    var options = ParseArgs(args);
-
-    Console.WriteLine("=== ModPostInstaller Arguments ===");
-    foreach (var kv in options)
+    if (args.Length == 0 || args.Length == 1 && (args[0] == Arg_Help || args[0] == "-h"))
     {
-      Console.WriteLine($"{kv.Key}: {kv.Value}");
-    }
-
-    // Example: Run your core logic based on options
-    try
-    {
-      RunPostInstall(options);
-      Console.WriteLine("ModPostInstaller completed successfully.");
+      PrintUsage();
       return 0;
     }
-    catch (Exception ex)
+
+    var mode = args[0].ToLower();
+    var options = ParseArgs(args);
+
+    if (options.ContainsKey("help") || mode == Arg_Help)
     {
-      Console.Error.WriteLine("ModPostInstaller FAILED: " + ex);
+      PrintUsage();
+      return 0;
+    }
+
+    // Select config file (can be overridden by --config=myconfig.json5)
+    options.TryGetValue("config", out var configPath);
+    configPath = string.IsNullOrWhiteSpace(configPath) ? DefaultConfigPath : configPath;
+    if (!File.Exists(configPath))
+    {
+      Console.Error.WriteLine($"Config file not found: {configPath}");
       return 1;
+    }
+
+    // Load and parse JSON5 config
+    dynamic configRoot = Json5Document.Parse(File.ReadAllText(configPath)).ToDynamic();
+
+    // Dispatch command
+    switch (mode)
+    {
+      case Arg_Sync:
+        HandleSync(options, configRoot);
+        break;
+      case Arg_Deploy:
+        HandleDeploy(options, configRoot);
+        break;
+      case Arg_Run:
+        HandleRun(options, configRoot);
+        break;
+      default:
+        PrintUsage();
+        return 1;
+    }
+
+    return 0;
+  }
+
+  private static void HandleSync(Dictionary<string, string> options, dynamic config)
+  {
+    // Parse comma-separated deployTargets (by deployName)
+    if (!options.TryGetValue("deployTargets", out var deployTargetNames) || string.IsNullOrWhiteSpace(deployTargetNames))
+    {
+      Console.WriteLine("No deployTargets specified. Available targets:");
+      foreach (var target in config.deployTargets)
+      {
+        Console.WriteLine($"- {target.deployName}");
+      }
+      return;
+    }
+
+    var targetList = deployTargetNames.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+    foreach (var tName in targetList)
+    {
+      var match = FindByName(config.deployTargets, "deployName", tName);
+      if (match == null)
+      {
+        Console.WriteLine($"No deploy target found for '{tName}'");
+        continue;
+      }
+
+      var folderPath = (string)match.pluginFolderPath;
+      var folderName = (string)match.folderName;
+      Console.WriteLine($"[SYNC] Would sync to: {folderPath}\\{folderName}");
+      // ... Your sync logic here (e.g. CopyDirectory)
     }
   }
 
-  // Simple parser: --key value or --key=value with support for environment variables and quoted values
+  private static void HandleDeploy(Dictionary<string, string> options, dynamic config)
+  {
+    // You could run actual deploy logic here
+    Console.WriteLine("Deploy not implemented. Available deployTargets:");
+    foreach (var target in config.deployTargets)
+    {
+      Console.WriteLine($"- {target.deployName}");
+    }
+  }
+
+  private static void HandleRun(Dictionary<string, string> options, dynamic config)
+  {
+    if (!options.TryGetValue("runTargets", out var runNames) || string.IsNullOrWhiteSpace(runNames))
+    {
+      Console.WriteLine("No runTargets specified. Available targets:");
+      foreach (var rt in config.runTargets)
+      {
+        Console.WriteLine($"- {rt.name}");
+      }
+      return;
+    }
+
+    var runList = runNames.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+    foreach (var rName in runList)
+    {
+      var match = FindByName(config.runTargets, "name", rName);
+      if (match == null)
+      {
+        Console.WriteLine($"No run target found for '{rName}'");
+        continue;
+      }
+      Console.WriteLine($"[RUN] Would run: {match.binaryTarget} {string.Join(" ", match.args)}");
+      // ... Your launch logic here
+    }
+  }
+
+  private static dynamic FindByName(dynamic arr, string key, string value)
+  {
+    foreach (var obj in arr)
+      if ((string)obj[key] == value)
+        return obj;
+    return null;
+  }
+
   private static Dictionary<string, string> ParseArgs(string[] args)
   {
-    var result = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-    string key = null;
-
-    foreach (var arg in args)
+    var opts = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+    for (var i = 1; i < args.Length; i++)
     {
-      // Handle --key=value format
+      var arg = args[i];
       if (arg.StartsWith("--") && arg.Contains('='))
       {
-        var parts = arg.Substring(2).Split(new[] { '=' }, 2);
-        if (parts.Length == 2)
+        var split = arg.Substring(2).Split('=', 2);
+        opts[split[0]] = split[1].Trim('"');
+      }
+      else if (arg.StartsWith("--"))
+      {
+        var key = arg.Substring(2);
+        if (i + 1 < args.Length && !args[i + 1].StartsWith("--"))
         {
-          result[parts[0]] = parts[1].Trim('"'); // Remove quotes if present
-          key = null;
-          continue;
+          opts[key] = args[++i].Trim('"');
+        }
+        else
+        {
+          opts[key] = "true";
         }
       }
-
-      // Handle --key value format
-      if (arg.StartsWith("--"))
-      {
-        key = arg.Substring(2);
-      }
-      else if (key != null)
-      {
-        result[key] = arg.Trim('"'); // Remove quotes if present
-        key = null;
-      }
     }
-    // Handle last arg if value is empty
-    if (key != null && !result.ContainsKey(key))
-      result[key] = "true";
-    return result;
+    return opts;
+  }
+
+  private static void PrintUsage()
+  {
+    Console.WriteLine("Usage:");
+    Console.WriteLine("  ModSync <sync|deploy|run> [--deployTargets=foo,bar] [--runTargets=run1,run2] [--config=deploy.config.json5]");
+    Console.WriteLine();
+    Console.WriteLine("Examples:");
+    Console.WriteLine("  ModSync sync --deployTargets=default,test-server");
+    Console.WriteLine("  ModSync run --runTargets=build-server");
+    Console.WriteLine("  ModSync deploy --deployTargets=default");
+    Console.WriteLine();
+    Console.WriteLine("Use --help for this message.");
   }
 
   // Your core post-install logic goes here
@@ -172,18 +248,18 @@ public static class ModPostInstall_Program
     try
     {
       // Convert PDB to MDB
-      ConvertPdbToMdb(solutionDir, targetPath, assemblyName);
+      PdbToMdbConverter.ConvertPdbToMdb(solutionDir, targetPath, assemblyName);
 
       // Copy to Valheim server if applicable
       if (isRunnable && !string.IsNullOrEmpty(valheimServerPath) && serverFileExitCode == 0)
       {
-        CopyToValheimServer(solutionDir, targetPath, valheimServerPath, pluginDeployTarget, assemblyName, assetsDir);
+        SyncToTarget.CopyToValheimServer(solutionDir, targetPath, valheimServerPath, pluginDeployTarget, assemblyName, assetsDir);
       }
 
       // Copy to R2ModMan if applicable
       if (isRunnable && !string.IsNullOrEmpty(pluginDeployPath) && clientFileExitCode == 0 && !isRunnableServer)
       {
-        CopyToR2ModMan(solutionDir, targetPath, pluginDeployPath, assemblyName, assetsDir);
+        SyncToTarget.CopyToR2ModMan(solutionDir, targetPath, pluginDeployPath, assemblyName, assetsDir);
       }
 
       // Copy to Sandboxie if applicable
@@ -192,7 +268,7 @@ public static class ModPostInstall_Program
         opts.TryGetValue("sandboxiePluginDeployPath", out var sandboxiePluginDeployPath);
         if (!string.IsNullOrEmpty(sandboxiePluginDeployPath))
         {
-          CopyToSandboxie(solutionDir, targetPath, sandboxiePluginDeployPath, assemblyName, assetsDir);
+          SyncToTarget.CopyToSandboxie(solutionDir, targetPath, sandboxiePluginDeployPath, assemblyName, assetsDir);
         }
       }
 
@@ -202,401 +278,13 @@ public static class ModPostInstall_Program
         opts.TryGetValue("applicationVersion", out var applicationVersion);
 
         // Pass modOutputDir directly from MSBuild
-        GenerateModArchive(solutionDir, targetPath, assemblyName, applicationVersion, isRelease, pluginDeployPath, modOutputDir);
+        SyncToTarget.GenerateModArchive(solutionDir, targetPath, assemblyName, applicationVersion, isRelease, pluginDeployPath, modOutputDir);
       }
     }
     catch (Exception ex)
     {
       Console.Error.WriteLine($"Error during post-install: {ex.Message}");
       throw;
-    }
-  }
-
-  public static void ConvertPdbToMdb(string solutionDir, string targetPath, string assemblyName)
-  {
-    Console.WriteLine("Converting PDB to MDB...");
-    var targetDll = Path.Combine(targetPath, $"{assemblyName}.dll");
-    var pdb2mdbPath = Path.Combine(solutionDir, "pdb2mdb.exe");
-
-    if (!File.Exists(pdb2mdbPath))
-    {
-      Console.WriteLine($"Warning: pdb2mdb.exe not found at {pdb2mdbPath}, skipping conversion");
-      return;
-    }
-
-    try
-    {
-      // Run pdb2mdb.exe
-      var psi = new System.Diagnostics.ProcessStartInfo
-      {
-        FileName = pdb2mdbPath,
-        Arguments = $"\"{targetDll}\"",
-        UseShellExecute = false,
-        RedirectStandardOutput = true,
-        CreateNoWindow = true
-      };
-
-      using (var process = System.Diagnostics.Process.Start(psi))
-      {
-        if (process != null)
-        {
-          process.WaitForExit();
-        }
-        else
-        {
-          Console.WriteLine("Warning: pdb2mdb.exe process is null. It exited way to early.");
-        }
-
-        Console.WriteLine(process.StandardOutput.ReadToEnd());
-
-        if (process.ExitCode != 0)
-        {
-          Console.WriteLine($"Warning: pdb2mdb.exe exited with code {process.ExitCode}");
-        }
-      }
-
-      // Rename the .dll.mdb to .mdb
-      var sourceMdb = Path.Combine(targetPath, $"{assemblyName}.dll.mdb");
-      var targetMdb = Path.Combine(targetPath, $"{assemblyName}.mdb");
-
-      if (File.Exists(sourceMdb))
-      {
-        if (File.Exists(targetMdb))
-          File.Delete(targetMdb);
-
-        File.Move(sourceMdb, targetMdb);
-        Console.WriteLine($"Renamed {sourceMdb} to {targetMdb}");
-      }
-    }
-    catch (Exception ex)
-    {
-      Console.WriteLine($"Error during PDB to MDB conversion: {ex.Message}");
-    }
-  }
-
-  private static void CopyToValheimServer(string solutionDir, string targetPath, string valheimServerPath,
-    string pluginDeployTarget, string assemblyName, string assetsDir)
-  {
-    Console.WriteLine($"Copying files to Valheim server at {valheimServerPath}...");
-
-    if (!Directory.Exists(valheimServerPath))
-    {
-      Console.WriteLine($"Warning: Valheim server path does not exist: {valheimServerPath}");
-      return;
-    }
-
-    var serverPluginPath = Path.Combine(valheimServerPath, pluginDeployTarget);
-    Directory.CreateDirectory(serverPluginPath);
-
-    // Copy dependencies
-    var dependenciesPath = Path.Combine(solutionDir, "Dependencies");
-    if (Directory.Exists(dependenciesPath))
-    {
-      CopyDirectory(dependenciesPath, serverPluginPath);
-    }
-
-    // Copy main files
-    CopyFile(Path.Combine(targetPath, $"{assemblyName}.dll"), Path.Combine(serverPluginPath, $"{assemblyName}.dll"));
-    CopyFile(Path.Combine(targetPath, $"{assemblyName}.pdb"), Path.Combine(serverPluginPath, $"{assemblyName}.pdb"));
-    CopyFile(Path.Combine(targetPath, $"{assemblyName}.mdb"), Path.Combine(serverPluginPath, $"{assemblyName}.mdb"));
-
-    // Copy assets if they exist
-    if (!string.IsNullOrEmpty(assetsDir) && Directory.Exists(assetsDir))
-    {
-      var serverAssetsPath = Path.Combine(serverPluginPath, "Assets");
-      CopyDirectory(assetsDir, serverAssetsPath);
-
-      // Copy translations if they exist
-      var translationsDir = Path.Combine(assetsDir, "Translations", "English");
-      if (Directory.Exists(translationsDir))
-      {
-        var serverTranslationsPath = Path.Combine(serverPluginPath, "Assets", "Translations", "English");
-        CopyDirectory(translationsDir, serverTranslationsPath);
-      }
-    }
-    else
-    {
-      Console.WriteLine($"Warning: Assets directory does not exist: {assetsDir}. Please make the directly. This code does not create directories for the top level plugins as a safety precaution.");
-    }
-  }
-
-  private static void CopyToR2ModMan(string solutionDir, string targetPath, string pluginDeployPath, string assemblyName, string assetsDir)
-  {
-    Console.WriteLine($"Copying files to R2ModMan at {pluginDeployPath}...");
-
-    if (!Directory.Exists(pluginDeployPath))
-    {
-      Directory.CreateDirectory(pluginDeployPath);
-    }
-
-    // Copy dependencies
-    var dependenciesPath = Path.Combine(solutionDir, "Dependencies");
-    if (Directory.Exists(dependenciesPath))
-    {
-      CopyDirectory(dependenciesPath, pluginDeployPath);
-    }
-
-    // Copy main files
-    CopyFile(Path.Combine(targetPath, $"{assemblyName}.dll"), Path.Combine(pluginDeployPath, $"{assemblyName}.dll"));
-    CopyFile(Path.Combine(targetPath, $"{assemblyName}.pdb"), Path.Combine(pluginDeployPath, $"{assemblyName}.pdb"));
-    CopyFile(Path.Combine(targetPath, $"{assemblyName}.mdb"), Path.Combine(pluginDeployPath, $"{assemblyName}.mdb"));
-
-    // Handle SentryUnityWrapper
-    if (assemblyName == "SentryUnityWrapper")
-    {
-      var sentryPath = Path.Combine(solutionDir, "SentryUnity", "1.8.0", "runtime");
-      if (Directory.Exists(sentryPath))
-      {
-        CopyDirectory(sentryPath, pluginDeployPath);
-      }
-    }
-
-    // Copy assets if they exist
-    if (!string.IsNullOrEmpty(assetsDir) && Directory.Exists(assetsDir))
-    {
-      var clientAssetsPath = Path.Combine(pluginDeployPath, "Assets");
-      CopyDirectory(assetsDir, clientAssetsPath);
-
-      // Copy translations if they exist
-      var translationsDir = Path.Combine(assetsDir, "Translations", "English");
-      if (Directory.Exists(translationsDir))
-      {
-        var clientTranslationsPath = Path.Combine(pluginDeployPath, "Assets", "Translations", "English");
-        CopyDirectory(translationsDir, clientTranslationsPath);
-      }
-    }
-  }
-
-  private static void CopyToSandboxie(string solutionDir, string targetPath, string sandboxiePluginDeployPath, string assemblyName, string assetsDir)
-  {
-    Console.WriteLine($"Copying files to Sandboxie at {sandboxiePluginDeployPath}...");
-
-    if (!Directory.Exists(sandboxiePluginDeployPath))
-    {
-      Directory.CreateDirectory(sandboxiePluginDeployPath);
-    }
-
-    // Copy dependencies
-    var dependenciesPath = Path.Combine(solutionDir, "Dependencies");
-    if (Directory.Exists(dependenciesPath))
-    {
-      CopyDirectory(dependenciesPath, sandboxiePluginDeployPath);
-    }
-
-    // Copy main files
-    CopyFile(Path.Combine(targetPath, $"{assemblyName}.dll"), Path.Combine(sandboxiePluginDeployPath, $"{assemblyName}.dll"));
-    CopyFile(Path.Combine(targetPath, $"{assemblyName}.pdb"), Path.Combine(sandboxiePluginDeployPath, $"{assemblyName}.pdb"));
-    CopyFile(Path.Combine(targetPath, $"{assemblyName}.mdb"), Path.Combine(sandboxiePluginDeployPath, $"{assemblyName}.mdb"));
-
-    // Copy assets if they exist
-    if (!string.IsNullOrEmpty(assetsDir) && Directory.Exists(assetsDir))
-    {
-      var sandboxieAssetsPath = Path.Combine(sandboxiePluginDeployPath, "Assets");
-      CopyDirectory(assetsDir, sandboxieAssetsPath);
-
-      // Copy translations if they exist
-      var translationsDir = Path.Combine(assetsDir, "Translations", "English");
-      if (Directory.Exists(translationsDir))
-      {
-        var sandboxieTranslationsPath = Path.Combine(sandboxiePluginDeployPath, "Assets", "Translations", "English");
-        CopyDirectory(translationsDir, sandboxieTranslationsPath);
-      }
-    }
-  }
-
-  private static void GenerateModArchive(string solutionDir, string targetPath, string assemblyName, string applicationVersion, bool isRelease, string pluginDeployPath, string outputDir)
-  {
-    var suffix = isRelease ? "" : "-beta";
-    var repoDir = Path.Combine(solutionDir, "src", "ValheimRAFT");
-
-    // Use the directory directly from MSBuild
-    var outDir = outputDir;
-    if (string.IsNullOrEmpty(outDir))
-    {
-      // Fallback to targetPath directory if outputDir is not provided
-      outDir = Path.GetDirectoryName(targetPath);
-      Console.WriteLine($"Warning: outputDir is not provided, using targetPath directory: {outDir}");
-    }
-
-    var modOutputDir = Path.Combine(outDir, "ModVersions");
-    var tmpDir = Path.Combine(outDir, "tmp");
-
-    // Ensure all directories exist
-    Directory.CreateDirectory(outDir);
-    Directory.CreateDirectory(modOutputDir);
-    Directory.CreateDirectory(tmpDir);
-    var thunderStoreDir = Path.Combine(repoDir, isRelease ? "ThunderStore" : "ThunderStoreBeta");
-
-    var modNameVersion = $"{assemblyName}-{applicationVersion}{suffix}.zip";
-    var autoDocName = $"{assemblyName}_AutoDoc.md";
-
-    // Use pluginDeployPath from parameters if provided, otherwise get it from environment variables
-    var effectivePluginPath = !string.IsNullOrEmpty(pluginDeployPath)
-      ? pluginDeployPath
-      : Environment.GetEnvironmentVariable("VALHEIM_PLUGIN_PATH") ??
-        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-          "r2modmanPlus-local", "Valheim", "profiles", "Default", "BepInEx", "plugins");
-
-    Console.WriteLine($"Using plugin path: {effectivePluginPath}");
-
-    var autoDocPath = Path.Combine(effectivePluginPath, autoDocName);
-    var localAutoDocPath = Path.Combine(solutionDir, "src", assemblyName, "docs", autoDocName);
-
-    Console.WriteLine($"Generating mod archive: {modNameVersion}");
-
-    // Clean up temporary directories
-    if (Directory.Exists(Path.Combine(tmpDir, "plugins", "Assets")))
-      Directory.Delete(Path.Combine(tmpDir, "plugins", "Assets"), true);
-
-    if (Directory.Exists(tmpDir))
-      Directory.Delete(tmpDir, true);
-
-    // Create necessary directories
-    Directory.CreateDirectory(modOutputDir);
-    Directory.CreateDirectory(tmpDir);
-    Directory.CreateDirectory(Path.Combine(tmpDir, "plugins"));
-    Directory.CreateDirectory(Path.Combine(tmpDir, assemblyName));
-
-    // Copy plugins
-    var pluginsDir = Path.Combine(solutionDir, "plugins");
-    if (Directory.Exists(pluginsDir))
-      CopyDirectory(pluginsDir, Path.Combine(tmpDir, "plugins"));
-
-    // Copy main files
-    CopyFile(Path.Combine(targetPath, $"{assemblyName}.dll"), Path.Combine(tmpDir, "plugins", $"{assemblyName}.dll"));
-    CopyFile(Path.Combine(targetPath, $"{assemblyName}.pdb"), Path.Combine(tmpDir, "plugins", $"{assemblyName}.pdb"));
-    CopyFile(Path.Combine(repoDir, "README.md"), Path.Combine(tmpDir, "README.md"));
-
-    // Copy auto-doc if it exists
-    if (File.Exists(autoDocPath) && File.Exists(localAutoDocPath))
-    {
-      CopyFile(autoDocPath, localAutoDocPath);
-    }
-
-    // Look for assets directory
-    var assetsDir = Path.Combine(solutionDir, "src", assemblyName, "Assets");
-    if (!Directory.Exists(assetsDir))
-    {
-      assetsDir = Path.Combine(solutionDir, "Assets");
-    }
-
-    // Copy assets
-    if (!string.IsNullOrEmpty(assetsDir) && Directory.Exists(assetsDir))
-    {
-      CopyDirectory(assetsDir, Path.Combine(tmpDir, "plugins", "Assets"));
-
-      // Delete .meta files
-      foreach (var metaFile in Directory.GetFiles(Path.Combine(tmpDir, "plugins", "Assets"), "*.png.meta", SearchOption.AllDirectories))
-      {
-        File.Delete(metaFile);
-      }
-    }
-
-    // Copy all files from output directory
-    CopyDirectory(targetPath, Path.Combine(tmpDir, "plugins"));
-
-    // Copy ThunderStore files
-    if (Directory.Exists(thunderStoreDir))
-      CopyDirectory(thunderStoreDir, tmpDir);
-
-    // Delete existing archives if they exist
-    var thunderstoreZip = Path.Combine(modOutputDir, $"Thunderstore-{modNameVersion}");
-    var nexusZip = Path.Combine(modOutputDir, $"Nexus-{modNameVersion}");
-    var libsZip = Path.Combine(modOutputDir, $"libs-{applicationVersion}.zip");
-
-    if (File.Exists(thunderstoreZip))
-      File.Delete(thunderstoreZip);
-
-    if (File.Exists(nexusZip))
-      File.Delete(nexusZip);
-
-    if (File.Exists(libsZip))
-      File.Delete(libsZip);
-
-    // Create ThunderStore archive
-    CreateZipArchive(tmpDir, thunderstoreZip);
-
-    // Create Nexus archive
-    CopyDirectory(Path.Combine(tmpDir, "plugins"), Path.Combine(tmpDir, assemblyName));
-    CreateZipArchive(Path.Combine(tmpDir, assemblyName), nexusZip);
-
-    // Create libs archive
-    var libsDir = Path.Combine(solutionDir, "libs");
-    if (Directory.Exists(libsDir))
-      CreateZipArchive(libsDir, libsZip);
-  }
-
-  private static void CopyFile(string source, string destination)
-  {
-    if (File.Exists(source))
-    {
-      Directory.CreateDirectory(Path.GetDirectoryName(destination));
-      File.Copy(source, destination, true);
-      Console.WriteLine($"Copied {source} to {destination}");
-    }
-    else
-    {
-      Console.WriteLine($"Warning: Source file does not exist: {source}");
-    }
-  }
-
-  private static void CopyDirectory(string sourceDir, string destinationDir)
-  {
-    if (!Directory.Exists(sourceDir))
-    {
-      Console.WriteLine($"Warning: Source directory does not exist: {sourceDir}");
-      return;
-    }
-
-    // Create destination directory if it doesn't exist
-    Directory.CreateDirectory(destinationDir);
-
-    // Copy files
-    foreach (var file in Directory.GetFiles(sourceDir))
-    {
-      var fileName = Path.GetFileName(file);
-      var destFile = Path.Combine(destinationDir, fileName);
-      File.Copy(file, destFile, true);
-    }
-
-    // Copy subdirectories recursively
-    foreach (var dir in Directory.GetDirectories(sourceDir))
-    {
-      var dirName = Path.GetFileName(dir);
-      var destDir = Path.Combine(destinationDir, dirName);
-      CopyDirectory(dir, destDir);
-    }
-  }
-
-  private static void CreateZipArchive(string sourceDir, string destinationZipFile)
-  {
-    try
-    {
-      var psi = new System.Diagnostics.ProcessStartInfo
-      {
-        FileName = "powershell",
-        Arguments = $"Compress-Archive '{sourceDir}/*' '{destinationZipFile}'",
-        UseShellExecute = false,
-        RedirectStandardOutput = true,
-        CreateNoWindow = true
-      };
-
-      using (var process = System.Diagnostics.Process.Start(psi))
-      {
-        process.WaitForExit();
-        Console.WriteLine(process.StandardOutput.ReadToEnd());
-
-        if (process.ExitCode != 0)
-        {
-          Console.WriteLine($"Warning: Compress-Archive exited with code {process.ExitCode}");
-        }
-      }
-
-      Console.WriteLine($"Created archive: {destinationZipFile}");
-    }
-    catch (Exception ex)
-    {
-      Console.WriteLine($"Error creating zip archive: {ex.Message}");
     }
   }
 }
