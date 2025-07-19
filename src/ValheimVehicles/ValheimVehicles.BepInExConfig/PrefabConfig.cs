@@ -260,12 +260,14 @@ public class PrefabConfig : BepInExBaseConfig<PrefabConfig>
     {
       CannonController.ReloadTimeOverride = Cannon_ReloadTime.Value;
     };
+    CannonController.ReloadTimeOverride = Cannon_ReloadTime.Value;
 
     Cannon_HandHeldReloadTime = config.BindUnique(VehicleCannonsSection, "Cannon_HandHeldReloadTime", 6f, ConfigHelpers.CreateConfigDescription("Allows setting cannon-handheld reload delays. This makes cannons reload longer or shorter. Shortest value is 100ms highest is 60seconds", false, false, new AcceptableValueRange<float>(0.1f, 60f)));
     Cannon_HandHeldReloadTime.SettingChanged += (sender, args) =>
     {
       CannonController.Cannon_HandHeldReloadTime = Cannon_HandHeldReloadTime.Value;
     };
+    CannonController.Cannon_HandHeldReloadTime = Cannon_HandHeldReloadTime.Value;
 
     Cannon_ReloadAudioVolume = config.BindUnique(VehicleCannonsSection, "Cannon_ReloadAudioVolume", 1f, ConfigHelpers.CreateConfigDescription("Allows customizing cannon firing audio volume", false, false));
     Cannon_FireAudioVolume = config.BindUnique(VehicleCannonsSection, "Cannon_FireAudioVolume", 1f, ConfigHelpers.CreateConfigDescription("Allows customizing cannon reload audio volume", false, false));
@@ -276,18 +278,21 @@ public class PrefabConfig : BepInExBaseConfig<PrefabConfig>
     {
       CannonballHitScheduler.ExplosionShellRadius = Cannonball_ExplosiveRadius.Value;
     };
+    CannonballHitScheduler.ExplosionShellRadius = Cannonball_ExplosiveRadius.Value;
 
     Cannonball_SolidBaseDamage = config.BindUnique(VehicleCannonsSection, "Cannonball_SolidShell_BaseDamage", 85f, ConfigHelpers.CreateConfigDescription("Allows customizing cannonball solid hit damage", false, false, new AcceptableValueRange<float>(25f, 500f)));
     Cannonball_SolidBaseDamage.SettingChanged += (sender, args) =>
     {
       CannonballHitScheduler.BaseDamageSolidCannonball = Cannonball_SolidBaseDamage.Value;
     };
+    CannonballHitScheduler.BaseDamageSolidCannonball = Cannonball_SolidBaseDamage.Value;
 
     Cannonball_ExplosiveBaseDamage = config.BindUnique(VehicleCannonsSection, "Cannonball_ExplosiveShell_BaseDamage", 50f, ConfigHelpers.CreateConfigDescription("Allows customizing cannonball explosion hit AOE damage. The damage is uniform across the entire radius.", false, false, new AcceptableValueRange<float>(25f, 500f)));
     Cannonball_ExplosiveBaseDamage.SettingChanged += (sender, args) =>
     {
       CannonballHitScheduler.BaseDamageExplosiveCannonball = Cannonball_ExplosiveBaseDamage.Value;
     };
+    CannonballHitScheduler.BaseDamageExplosiveCannonball = Cannonball_ExplosiveBaseDamage.Value;
 
 
     DEBUG_CannonballUnlimitedAmmo = config.BindUnique(VehicleCannonsSection, "DEBUG_CannonballUnlimitedAmmo", false, ConfigHelpers.CreateConfigDescription("Allows unlimited ammo for cannons.", true, false));
