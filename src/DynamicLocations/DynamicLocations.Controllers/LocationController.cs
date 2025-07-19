@@ -23,7 +23,7 @@ public interface ICachedLocation
 public class CacheLocationItem : ICachedLocation
 {
   public Vector3? Offset { get; set; }
-  public ZDO Zdo { get; set; }
+  public ZDO? Zdo { get; set; }
 }
 
 public class LocationController : MonoBehaviour
@@ -93,25 +93,33 @@ public class LocationController : MonoBehaviour
 
   internal static long WorldIdOverride = 0;
 
-  public static string GetLogoutZdoOffsetKey() =>
-    !ZNet.instance
+  public static string GetLogoutZdoOffsetKey()
+  {
+    return !ZNet.instance
       ? ""
       : $"{GetFullPrefix()}_{LogoutParentZdoOffsetPrefix}_{CurrentWorldId}";
+  }
 
-  public static string GetLogoutZdoKey() =>
-    !ZNet.instance
+  public static string GetLogoutZdoKey()
+  {
+    return !ZNet.instance
       ? ""
       : $"{GetFullPrefix()}_{LogoutParentZdoPrefix}_{CurrentWorldId}";
+  }
 
-  public static string GetSpawnZdoOffsetKey() =>
-    !ZNet.instance
+  public static string GetSpawnZdoOffsetKey()
+  {
+    return !ZNet.instance
       ? ""
       : $"{GetFullPrefix()}_{SpawnZdoOffsetPrefix}_{CurrentWorldId}";
+  }
 
-  public static string GetSpawnZdoKey() =>
-    !ZNet.instance
+  public static string GetSpawnZdoKey()
+  {
+    return !ZNet.instance
       ? ""
       : $"{GetFullPrefix()}_{SpawnZdoPrefix}_{CurrentWorldId}";
+  }
 
   /// <summary>
   /// Todo see if this is needed
@@ -355,7 +363,7 @@ public class LocationController : MonoBehaviour
     }
 
     var dynamicLocationsObject =
-      (zdoOutput).GetInt(ZdoVarKeys.DynamicLocationsPoint);
+      zdoOutput.GetInt(ZdoVarKeys.DynamicLocationsPoint);
 
     // these zdos must be setup corretly, if they do not have this key it should be considered invalid / unstable
     if (dynamicLocationsObject == 0)
@@ -372,8 +380,10 @@ public class LocationController : MonoBehaviour
   }
 
   public static Vector3 GetOffset(
-    LocationVariation locationVariationType, Player? player) =>
-    GetOffset(GetOffsetStorageKey(locationVariationType), player);
+    LocationVariation locationVariationType, Player? player)
+  {
+    return GetOffset(GetOffsetStorageKey(locationVariationType), player);
+  }
 
   public static Vector3 GetOffset(string key, Player? player)
   {
@@ -438,8 +448,10 @@ public class LocationController : MonoBehaviour
 
   public static Vector3? SetOffset(
     LocationVariation locationVariationType, Player player,
-    Vector3 offset) =>
-    SetOffset(GetOffsetStorageKey(locationVariationType), player, offset);
+    Vector3 offset)
+  {
+    return SetOffset(GetOffsetStorageKey(locationVariationType), player, offset);
+  }
 
   /// <summary>
   /// Only sets offset if necessary, otherwise scrubs the data
@@ -501,7 +513,7 @@ public class LocationController : MonoBehaviour
       SetZdo(locationVariation, player, zdo);
     if (locationZdo == null) return false;
     SetCachedDynamicLocation(locationVariation,
-      new CacheLocationItem() { Zdo = locationZdo, Offset = locationOffset });
+      new CacheLocationItem { Zdo = locationZdo, Offset = locationOffset });
     return true;
   }
 

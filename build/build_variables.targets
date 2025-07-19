@@ -20,11 +20,12 @@
         <IsRelease Condition="'$(Configuration)' == 'Release' or '$(IsRunnableRelease)' == 'true'">true</IsRelease>
         <IsNotArchive Condition="'$(Configuration)' != 'Release Archive' and '$(Configuration)' != 'ReleaseBETA Archive'">true</IsNotArchive>
     </PropertyGroup>
-    
+
 
     <PropertyGroup Label="Directories">
         <ProjectDir>$(SolutionDir)src\$(AssemblyName)</ProjectDir>
         <ModOutputDir>$(ProjectDir)\bin\$(Configuration)\$(TargetFramework)\ModVersions</ModOutputDir>
         <DLLFromRoot>$(ProjectDir)\bin\$(Configuration)\net8.0\$(AssemblyName).dll</DLLFromRoot>
+        <ModSyncDll>$(SolutionDir)src\ModSync\bin\Debug\net8.0\ModSync.dll</ModSyncDll>
     </PropertyGroup>
 </Project>

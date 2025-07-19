@@ -1,0 +1,47 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+    <Import Project="$(SolutionDir)build\base.props"/>
+    <Import Project="$(SolutionDir)build\build_variables.targets"/>
+    <Import Project="$(SolutionDir)\build\game_launcher.targets"/>
+
+    <ItemGroup>
+        <!--   All main projects     -->
+        <ProjectReference Include="..\ValheimRAFT\ValheimRAFT.csproj"/>
+        <ProjectReference Include="..\Shared\Shared.csproj"/>
+        <ProjectReference Include="..\ZdoWatcher\ZdoWatcher.csproj"/>
+        <ProjectReference Include="..\DynamicLocations\DynamicLocations.csproj"/>
+        <ProjectReference Include="..\ValheimVehicles\ValheimVehicles.csproj"/>
+        <ProjectReference Include="..\ModSync\ModSync.csproj">
+            <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+        </ProjectReference>
+    </ItemGroup>
+
+    <PropertyGroup>
+        <PostInstallerEnabled>true</PostInstallerEnabled>
+        <Optimize>false</Optimize>
+        <OutputPath>bin\$(Configuration)\</OutputPath>
+        <Configurations>Debug;Release;Debug Run ClientServer;Debug Run Client;Release Archive;ReleaseBeta Archive</Configurations>
+        <TargetFramework>Net8.0</TargetFramework>
+    </PropertyGroup>
+
+    <!-- Consolidated RunPostInstaller target -->
+    <!--    KeepDuplicateOutputs prevents caching of this        -->
+    <Target Name="RunPostInstaller"
+            KeepDuplicateOutputs="false"
+            AfterTargets="Build"
+            Condition=" '$(PostInstallerEnabled)' == 'true' ">
+        <Message Text="TargetPath is: $(TargetPath)" Importance="high"/>
+        <Message Text="SolutionDir is: $(SolutionDir)" Importance="high"/>
+        <Message Text="OutDir is: $(OutDir)" Importance="high"/>
+        <Message Text="Configuration is: $(Configuration)" Importance="high"/>
+        <Message Text="Platform is: $(Platform)" Importance="high"/>
+        <Message Text="IsRunnable is: $(IsRunnable)" Importance="high"/>
+        <Message Text="IsRunnableServer is: $(IsRunnableServer)" Importance="high"/>
+        <Message Text="PluginDeployPath is: $(PluginDeployPath)" Importance="high"/>
+        <Message Text="ProjectDir is: $(ProjectDir)" Importance="high"/>
+        <Message Text="ModOutputDir is: $(ModOutputDir)" Importance="high"/>
+
+        <Exec Command="dotnet &quot;$(ModSyncDll)&quot; sync --targets=&quot;localClient&quot;"
+              WorkingDirectory="$(SolutionDir)"
+              IgnoreExitCode="false"/>
+    </Target>
+</Project>

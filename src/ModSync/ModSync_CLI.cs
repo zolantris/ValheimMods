@@ -106,51 +106,47 @@ public static class ModSyncCli
     return 0;
   }
 
-  public static string[] GetTargets(Dictionary<string, string> options, dynamic config)
+  private static string[] GetTargets(Dictionary<string, string> options, ModSyncConfig.ModSyncConfigObject config)
   {
     if (!options.TryGetValue(Opt_Targets, out var targetNames) || string.IsNullOrWhiteSpace(targetNames))
     {
       Console.WriteLine("No targets specified. Available sync targets:");
-      foreach (var target in config.deployTargets)
-      {
-        Console.WriteLine($"- {target.deployName}");
-      }
       throw new Exception("You must specify at least one target via --targets=...");
     }
 
-    var targetList = targetNames.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+    var targetList = targetNames.Split(',', StringSplitOptions.RemoveEmptyEntries);
 
     return targetList;
   }
 
-  private static void HandleDeploy(Dictionary<string, string> options, dynamic config)
+  private static void HandleDeploy(Dictionary<string, string> options, ModSyncConfig.ModSyncConfigObject config)
   {
-    if (!options.TryGetValue("targets", out var targetNames) || string.IsNullOrWhiteSpace(targetNames))
-    {
-      Console.WriteLine("No targets specified. Available deploy targets:");
-      foreach (var target in config.deployTargets)
-      {
-        Console.WriteLine($"- {target.deployName}");
-      }
-      throw new Exception("You must specify at least one target via --targets=...");
-    }
-
-    var targetList = targetNames.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-
-    foreach (var tName in targetList)
-    {
-      var match = FindByName(config.deployTargets, "target", tName);
-      if (match == null)
-      {
-        Console.WriteLine($"No deploy target found for '{tName}'");
-        continue;
-      }
-
-      var folderPath = (string)match.pluginFolderPath;
-      var folderName = (string)match.folderName;
-      Console.WriteLine($"[DEPLOY] Would deploy to: {folderPath}\\{folderName}");
-      // ... Deploy logic here
-    }
+    // if (!options.TryGetValue("targets", out var targetNames) || string.IsNullOrWhiteSpace(targetNames))
+    // {
+    //   Console.WriteLine("No targets specified. Available deploy targets:");
+    //   foreach (var target in config.runTargets)
+    //   {
+    //     Console.WriteLine($"- {target.deployName}");
+    //   }
+    //   throw new Exception("You must specify at least one target via --targets=...");
+    // }
+    //
+    // var targetList = targetNames.Split(',', StringSplitOptions.RemoveEmptyEntries);
+    //
+    // foreach (var tName in targetList)
+    // {
+    //   var match = FindByName(config.deployTargets, "target", tName);
+    //   if (match == null)
+    //   {
+    //     Console.WriteLine($"No deploy target found for '{tName}'");
+    //     continue;
+    //   }
+    //
+    //   var folderPath = (string)match.pluginFolderPath;
+    //   var folderName = (string)match.folderName;
+    //   Console.WriteLine($"[DEPLOY] Would deploy to: {folderPath}\\{folderName}");
+    //   // ... Deploy logic here
+    // }
   }
 
   private static void HandleRun(string[] targets, Dictionary<string, ModSyncConfig.RunTargetItem>? runTargets)
@@ -180,14 +176,6 @@ public static class ModSyncCli
 
       // ... Run logic here
     }
-  }
-
-  internal static dynamic FindByName(dynamic arr, string key, string value)
-  {
-    foreach (var obj in arr)
-      if ((string)obj[key] == value)
-        return obj;
-    return null;
   }
 
   private static Dictionary<string, string> ParseArgs(string[] args)
@@ -228,110 +216,5 @@ public static class ModSyncCli
     Console.WriteLine("  ModSync deploy --targets=default");
     Console.WriteLine();
     Console.WriteLine("Use --help for this message.");
-  }
-
-  // Your core post-install logic goes here
-  private static void RunPostInstall(Dictionary<string, string> opts)
-  {
-    Console.WriteLine("=== All Option Key-Value Pairs ===");
-    foreach (var pair in opts)
-    {
-      Console.WriteLine($"{pair.Key}: {pair.Value}");
-    }
-    Console.WriteLine("==============================");
-    // Check required paths
-    if (!opts.TryGetValue("solutionDir", out var solutionDir))
-      throw new ArgumentException("--solutionDir not provided");
-    if (!opts.TryGetValue("outDir", out var outDir))
-      throw new ArgumentException("--outDir not provided");
-
-    // Get path overrides directly from MSBuild
-    opts.TryGetValue("modPostInstallerDir", out var modPostInstallerDir);
-    opts.TryGetValue("modOutputDir", out var modOutputDir);
-
-    Console.WriteLine($"modPostInstallerDir: {modPostInstallerDir}");
-    Console.WriteLine($"modOutputDir: {modOutputDir}");
-
-    // Get assembly name
-    opts.TryGetValue("assemblyName", out var assemblyName);
-    if (string.IsNullOrEmpty(assemblyName))
-    {
-      assemblyName = Path.GetFileNameWithoutExtension(Assembly.GetEntryAssembly().Location);
-    }
-
-    // Get configuration
-    opts.TryGetValue("config", out var configuration);
-    var isDebug = configuration?.Contains("Debug") ?? true;
-    var isRelease = configuration?.Contains("Release") ?? false;
-    var isArchive = configuration?.Contains("Archive") ?? false;
-
-    // Get deployment paths
-    opts.TryGetValue("pluginDeployPath", out var pluginDeployPath);
-    opts.TryGetValue("valheimServerPath", out var valheimServerPath);
-    opts.TryGetValue("assetsDir", out var assetsDir);
-
-    // Get flags
-    opts.TryGetValue("isRunnable", out var isRunnableStr);
-    opts.TryGetValue("isRunnableServer", out var isRunnableServerStr);
-    var isRunnable = !string.IsNullOrEmpty(isRunnableStr) && isRunnableStr.ToLower() != "false";
-    var isRunnableServer = !string.IsNullOrEmpty(isRunnableServerStr) && isRunnableServerStr.ToLower() != "false";
-
-    // Exit codes for file locks
-    opts.TryGetValue("serverFileExitCode", out var serverFileExitCodeStr);
-    opts.TryGetValue("clientFileExitCode", out var clientFileExitCodeStr);
-    opts.TryGetValue("sandboxieFileExitCode", out var sandboxieFileExitCodeStr);
-
-    int.TryParse(serverFileExitCodeStr, out var serverFileExitCode);
-    int.TryParse(clientFileExitCodeStr, out var clientFileExitCode);
-    int.TryParse(sandboxieFileExitCodeStr, out var sandboxieFileExitCode);
-
-    Console.WriteLine($"Running post-install for {assemblyName} in {configuration} mode");
-
-    // Calculate paths
-    var targetPath = Path.Combine(solutionDir, outDir);
-    var pluginDeployTarget = "BepInEx/plugins";
-
-    // Execute post-build steps based on the MSBuild file
-    try
-    {
-      // Convert PDB to MDB
-      PdbToMdbConverter.ConvertPdbToMdb(solutionDir, targetPath, assemblyName);
-
-      // Copy to Valheim server if applicable
-      if (isRunnable && !string.IsNullOrEmpty(valheimServerPath) && serverFileExitCode == 0)
-      {
-        SyncToTarget.CopyToValheimServer(solutionDir, targetPath, valheimServerPath, pluginDeployTarget, assemblyName, assetsDir);
-      }
-
-      // Copy to R2ModMan if applicable
-      if (isRunnable && !string.IsNullOrEmpty(pluginDeployPath) && clientFileExitCode == 0 && !isRunnableServer)
-      {
-        SyncToTarget.CopyToR2ModMan(solutionDir, targetPath, pluginDeployPath, assemblyName, assetsDir);
-      }
-
-      // Copy to Sandboxie if applicable
-      if (isRunnable && sandboxieFileExitCode == 0)
-      {
-        opts.TryGetValue("sandboxiePluginDeployPath", out var sandboxiePluginDeployPath);
-        if (!string.IsNullOrEmpty(sandboxiePluginDeployPath))
-        {
-          SyncToTarget.CopyToSandboxie(solutionDir, targetPath, sandboxiePluginDeployPath, assemblyName, assetsDir);
-        }
-      }
-
-      // Generate mod archive if applicable
-      if (isArchive)
-      {
-        opts.TryGetValue("applicationVersion", out var applicationVersion);
-
-        // Pass modOutputDir directly from MSBuild
-        SyncToTarget.GenerateModArchive(solutionDir, targetPath, assemblyName, applicationVersion, isRelease, pluginDeployPath, modOutputDir);
-      }
-    }
-    catch (Exception ex)
-    {
-      Console.Error.WriteLine($"Error during post-install: {ex.Message}");
-      throw;
-    }
   }
 }

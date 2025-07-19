@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
-using ValheimVehicles.Integrations;
 namespace ModSync.Programs;
 
 internal static class PdbToMdbConverter
@@ -51,7 +50,6 @@ internal static class PdbToMdbConverter
   }
   public static void ConvertPdbToMdb(string solutionDir, string targetPath, string assemblyName)
   {
-
     var assemblyWithDlcExtension = assemblyName.EndsWith(".dll") ? assemblyName : $"{assemblyName}.dll";
     var targetDll = Path.Combine(targetPath, assemblyWithDlcExtension);
     var pdb2mdbPath = Path.Combine(solutionDir, "pdb2mdb.exe");
