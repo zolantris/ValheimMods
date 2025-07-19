@@ -35,7 +35,7 @@ public class RPCEntity(
   /// if (!this.m_server || routedRpcData.m_targetPeerID == this.m_id)
   /// return;
   /// </summary>
-  public void Send(long peerId, ZPackage pkg, bool canRunOnClient)
+  public void Send(long peerId, ZPackage pkg, bool canRunOnClient = true)
   {
     pkg.SetPos(0);
 

@@ -4,92 +4,95 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Reflection;
 using JetBrains.Annotations;
+using ValheimVehicles.SharedScripts;
 
-namespace Zolantris.Shared
+namespace Zolantris.Shared;
+
+[AttributeUsage(AttributeTargets.Method)]
+public class MeasureTimeAttribute : Attribute
 {
-  [AttributeUsage(AttributeTargets.Method)]
-  public class MeasureTimeAttribute : Attribute
+}
+
+public static class TimerUtility
+{
+  public static void ExecuteWithTiming(Action action,
+    [System.Runtime.CompilerServices.CallerMemberName]
+    string methodName = "")
   {
+#if DEBUG
+    var stopwatch = Stopwatch.StartNew();
+    action();
+    stopwatch.Stop();
+    BatchedLogger.Instance.Log(
+      $"[{methodName}] ran in: {stopwatch.ElapsedMilliseconds} ms");
+#endif
   }
 
-  public static class TimerUtility
+  public static void MeasureTimeWithAttribute(object instance,
+    string methodName)
   {
-    public static void ExecuteWithTiming(Action action,
-      [System.Runtime.CompilerServices.CallerMemberName]
-      string methodName = "")
+    var method = instance.GetType().GetMethod(methodName);
+    if (method is not null &&
+        method.GetCustomAttribute<MeasureTimeAttribute>() is not null)
     {
-#if DEBUG
-      var stopwatch = Stopwatch.StartNew();
-      action();
-      stopwatch.Stop();
-      BatchedLogger.Instance.Log(
-        $"[{methodName}] ran in: {stopwatch.ElapsedMilliseconds} ms");
-#endif
+      ExecuteWithTiming(() => method.Invoke(instance, null), methodName);
     }
-
-    public static void MeasureTimeWithAttribute(object instance,
-      string methodName)
+    else
     {
-      var method = instance.GetType().GetMethod(methodName);
-      if (method is not null &&
-          method.GetCustomAttribute<MeasureTimeAttribute>() is not null)
+      method?.Invoke(instance, null);
+    }
+  }
+}
+
+public class BatchedLogger : MonoBehaviour
+{
+  private static BatchedLogger? _instance;
+  private static readonly Queue<string> _logQueue = new();
+  private float _timer;
+  public static bool IsLoggingEnabled { get; set; } = true;
+
+  [UsedImplicitly]
+  public static float BatchIntervalFrequencyInSeconds { get; set; } =
+    3f; // Adjust as necessary
+
+  public static BatchedLogger Instance
+  {
+    get
+    {
+      if (_instance is null)
       {
-        ExecuteWithTiming(() => method.Invoke(instance, null), methodName);
+        var loggerObject = new GameObject("Logger");
+        _instance = loggerObject.AddComponent<BatchedLogger>();
+        DontDestroyOnLoad(loggerObject);
       }
-      else
-      {
-        method?.Invoke(instance, null);
-      }
+
+      return _instance;
     }
   }
 
-  public class BatchedLogger : MonoBehaviour
-  {
-    private static BatchedLogger? _instance;
-    private static readonly Queue<string> _logQueue = new();
-    private float _timer;
-    public static bool IsLoggingEnabled { get; set; } = true;
-
-    [UsedImplicitly]
-    public static float BatchIntervalFrequencyInSeconds { get; set; } =
-      3f; // Adjust as necessary
-
-    public static BatchedLogger Instance
-    {
-      get
-      {
-        if (_instance is null)
-        {
-          var loggerObject = new GameObject("Logger");
-          _instance = loggerObject.AddComponent<BatchedLogger>();
-          DontDestroyOnLoad(loggerObject);
-        }
-
-        return _instance;
-      }
-    }
-
 #if DEBUG
-    private void Update()
-    {
-      _timer += Time.deltaTime;
+  private void Update()
+  {
+    _timer += Time.deltaTime;
 
-      if (_timer >= BatchIntervalFrequencyInSeconds)
-      {
-        FlushLogs();
-        _timer = 0f;
-      }
+    if (_timer >= BatchIntervalFrequencyInSeconds)
+    {
+      FlushLogs();
+      _timer = 0f;
     }
+  }
 #endif
 
-    public void Log(string message) => _logQueue.Enqueue(message);
+  public void Log(string message)
+  {
+    _logQueue.Enqueue(message);
+  }
 
-    private void FlushLogs()
+  private void FlushLogs()
+  {
+    while (_logQueue.Count > 0)
     {
-      while (_logQueue.Count > 0)
-      {
-        Jotunn.Logger.LogInfo(_logQueue.Dequeue());
-      }
+      LoggerProvider.LogInfoDebounced(_logQueue.Dequeue());
     }
   }
 }

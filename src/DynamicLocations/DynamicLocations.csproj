@@ -1,10 +1,12 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
+    <Import Project="$(SolutionDir)build\base.props"/>
+    <Import Project="$(SolutionDir)build\valheim.props"/>
+
     <PropertyGroup>
         <Nullable>enable</Nullable>
         <Configurations>Debug;Release;Release Archive;ReleaseBETA Archive</Configurations>
         <Platforms>AnyCPU</Platforms>
     </PropertyGroup>
-    <Import Project="$(SolutionDir)\targets\valheim.targets"/>
 
     <!-- Compiled Shared items  -->
     <ItemGroup>

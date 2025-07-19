@@ -3,10 +3,10 @@
         <OutputType>Exe</OutputType>
         <RootNamespace>ModPostInstaller</RootNamespace>
     </PropertyGroup>
-    <Import Project="$(SolutionDir)\targets\build_variables.targets"/>
+    <Import Project="$(SolutionDir)\build\build_variables.targets"/>
 
     <!--  for autolaunching   -->
-    <Import Project="$(SolutionDir)\targets\game_launcher.targets"/>
+    <Import Project="$(SolutionDir)\build\game_launcher.targets"/>
 
     <ItemGroup>
         <!--   All main projects     -->

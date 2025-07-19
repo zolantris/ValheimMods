@@ -1,5 +1,8 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project Sdk="Microsoft.NET.Sdk" ToolsVersion="4.8" DefaultTargets="Build">
+<Project Sdk="Microsoft.NET.Sdk">
+    <Import Project="$(SolutionDir)build\base.props"/>
+    <Import Project="$(SolutionDir)build\valheim.props"/>
+
     <PropertyGroup>
         <Configuration Condition=" '$(Configuration)' == '' ">Debug;VALHEIM_RAFT</Configuration>
         <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
@@ -9,26 +12,16 @@
         <ApplicationVersion>3.6.1</ApplicationVersion>
         <FileAlignment>512</FileAlignment>
         <RootNamespace>ValheimRAFT</RootNamespace>
-        <LangVersion>12</LangVersion>
         <Configurations>Debug;Release;Release Archive;Debug Run ClientServer;Debug Run Client;ReleaseBETA Archive;Debug Run Server;Release Run Server;Release Run ClientServer</Configurations>
     </PropertyGroup>
-    <Import Project="$(SolutionDir)\targets\valheim.targets"/>
 
-    <!-- Until ValheimVehicles is published, RAFT will directly pull in it's dependencies -->
-    <!--    <ItemGroup Label="Embedded Resources">-->
-    <!--    </ItemGroup>-->
-    <ItemGroup>
+    <ItemGroup Label="Local Dependencies">
+        <ProjectReference Include="..\Shared\Shared.csproj"/>
         <ProjectReference Include="..\DynamicLocations\DynamicLocations.csproj"/>
         <ProjectReference Include="..\ZdoWatcher\ZdoWatcher.csproj"/>
-    </ItemGroup>
-    <!-- Compiled Shared items  -->
-    <ItemGroup>
-        <ProjectReference Include="..\Shared\Shared.csproj"/>
-    </ItemGroup>
-    <ItemGroup Label="Embedded ValheimVehicles">
         <ProjectReference Include="..\ValheimVehicles\ValheimVehicles.csproj"/>
-        <!--        <Compile Include="..\ValheimVehicles\ValheimVehicles.*\**\*.cs"/>-->
     </ItemGroup>
+
     <PropertyGroup>
         <SentryDSN>https://e720adb5b1a1fdb40d073635eb76817d@o243490.ingest.sentry.io/4506613652586496</SentryDSN>
     </PropertyGroup>

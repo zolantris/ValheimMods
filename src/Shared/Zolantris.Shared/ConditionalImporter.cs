@@ -1,6 +1,6 @@
 using System;
 using System.Reflection;
-using Jotunn;
+using ValheimVehicles.SharedScripts;
 
 namespace Zolantris.Shared.ModIntegrations;
 
@@ -18,7 +18,7 @@ public static class ConditionalImporter
     if (_parentType != null)
     {
       // Parent class exists, you can safely use it
-      Logger.LogDebug(
+      LoggerProvider.LogDebug(
         $"Conditional {modGuid} found. {targetClass} will now run");
       var conditionalClass =
         Activator.CreateInstance(_parentType) as IModIntegrationApi;
@@ -28,7 +28,7 @@ public static class ConditionalImporter
 
     else
     {
-      Logger.LogDebug(
+      LoggerProvider.LogDebug(
         $"Conditional {modGuid} not found. Exiting");
       return false;
     }

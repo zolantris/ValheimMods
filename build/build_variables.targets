@@ -1,5 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
-    <Import Project="$(SolutionDir)targets\.props" Condition="Exists('$(SolutionDir)targets\.props')"/>
+<Project>
     <PropertyGroup Label="Runnables and Project Booleans">
         <!-- Runnable variants execute Valheim server or client process after building -->
         <IsRunnableDebug Condition="'$(Configuration)' == 'Debug Run Client' or '$(Configuration)' == 'Debug Run Server' or '$(Configuration)' == 'Debug Run ClientServer'">true</IsRunnableDebug>

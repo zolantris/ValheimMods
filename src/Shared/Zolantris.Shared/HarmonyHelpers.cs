@@ -21,12 +21,12 @@ public static class HarmonyHelper
       harmonyInstance.PatchAll(type);
       if (IsDebug)
       {
-        Jotunn.Logger.LogDebug($"[Harmony] Successfully patched: {type.Name}");
+        ValheimVehicles.SharedScripts.LoggerProvider.LogDebug($"[Harmony] Successfully patched: {type.Name}");
       }
     }
     catch (Exception ex)
     {
-      Jotunn.Logger.LogError($"[Harmony] Failed to patch: {type.Name}\n{ex}");
+      ValheimVehicles.SharedScripts.LoggerProvider.LogError($"[Harmony] Failed to patch: {type.Name}\n{ex}");
     }
   }
 

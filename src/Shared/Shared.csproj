@@ -1,23 +1,12 @@
 <Project Sdk="Microsoft.NET.Sdk" ToolsVersion="4.8" DefaultTargets="Build">
-    <Import Project="$(SolutionDir)\targets\valheim.targets"/>
-    <PropertyGroup>
-        <TargetFramework>netstandard2.0</TargetFramework>
-        <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
-        <Nullable>enable</Nullable>
-        <Configurations>Debug;Release;ReleaseBETA Archive</Configurations>
-        <Platforms>AnyCPU</Platforms>
-    </PropertyGroup>
-    <PropertyGroup Condition=" '$(Configuration)' == 'ReleaseBETA Archive' ">
-        <PlatformTarget>AnyCPU</PlatformTarget>
-        <DebugType>pdbonly</DebugType>
-        <Optimize>true</Optimize>
-        <OutputPath>bin\Release\</OutputPath>
-        <DefineConstants>TRACE</DefineConstants>
-        <ErrorReport>prompt</ErrorReport>
-        <WarningLevel>4</WarningLevel>
-        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    </PropertyGroup>
+    <Import Project="$(SolutionDir)build\base.props"/>
+    <Import Project="$(SolutionDir)build\valheim.props"/>
+
+    <ItemGroup Label="ValheimVehicle.SharedScripts Unity testable scripts">
+        <!--  Allows for both sharing and testing these scripts within unity. Best of both worlds.      -->
+        <Compile Include="$(SolutionDir)src\ValheimRAFT.Unity\Assets\ValheimVehicles\SharedScripts\LoggerProvider.cs"/>
+    </ItemGroup>
 
     <!--  Converts valheim to a unity debug build  -->
-    <Import Project="$(SolutionDir)\targets\unity-debug-build-converter.targets"/>
+    <Import Project="..\..\build\unity-debug-build-converter.targets"/>
 </Project>

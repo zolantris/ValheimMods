@@ -1,14 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk" ToolsVersion="4.8" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-    <PropertyGroup>
-        <PreferredToolArchitecture>true</PreferredToolArchitecture>
-        <AssemblyName>$(ProjectName)</AssemblyName>
-        <RootNamespace>$(ProjectName)</RootNamespace>
-        <TargetFramework>netstandard2.0</TargetFramework>
-        <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
-        <Platforms>AnyCPU</Platforms>
-        <PlatformTarget>AnyCPU</PlatformTarget>
-    </PropertyGroup>
-    <Import Project="$(SolutionDir)\targets\base.targets"/>
+<Project>
     <PropertyGroup Label="Runnables and Project Booleans">
         <!-- Runnable variants execute Valheim server or client process after building -->
         <IsRunnableDebug Condition="'$(Configuration)' == 'Debug Run Client' or '$(Configuration)' == 'Debug Run Server' or '$(Configuration)' == 'Debug Run ClientServer'">true</IsRunnableDebug>
@@ -51,7 +41,7 @@
         <WarningLevel>4</WarningLevel>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     </PropertyGroup>
-    <PropertyGroup Condition="!Exists('$(SolutionDir).props')">
+    <PropertyGroup Condition="!Exists('$(SolutionDir)build\.props')">
         <BepInExPath>$(SolutionDir)libs</BepInExPath>
         <ManagedDataPath>$(SolutionDir)libs</ManagedDataPath>
     </PropertyGroup>
@@ -167,7 +157,7 @@
     <ItemGroup Label="Csharp-Libs">
         <Reference Include="System"/>
         <Reference Include="System.Core"/>
-        <Reference Include="System.Collections.Immutable"/>
+        <!--        <Reference Include="System.Collections.Immutable"/>-->
     </ItemGroup>
 
     <!-- Add Unity references -->

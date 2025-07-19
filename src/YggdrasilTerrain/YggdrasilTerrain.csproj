@@ -6,16 +6,16 @@
         <ApplicationVersion>1.0.0</ApplicationVersion>
     </PropertyGroup>
     <PropertyGroup Condition=" '$(Configuration)' == 'ReleaseBETA Archive' ">
-      <PlatformTarget>AnyCPU</PlatformTarget>
-      <DebugType>pdbonly</DebugType>
-      <Optimize>true</Optimize>
-      <OutputPath>bin\Release\</OutputPath>
-      <DefineConstants>TRACE</DefineConstants>
-      <ErrorReport>prompt</ErrorReport>
-      <WarningLevel>4</WarningLevel>
-      <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+        <PlatformTarget>AnyCPU</PlatformTarget>
+        <DebugType>pdbonly</DebugType>
+        <Optimize>true</Optimize>
+        <OutputPath>bin\Release\</OutputPath>
+        <DefineConstants>TRACE</DefineConstants>
+        <ErrorReport>prompt</ErrorReport>
+        <WarningLevel>4</WarningLevel>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     </PropertyGroup>
-    <Import Project="..\..\base.targets"/>
-    <Import Project="..\..\valheim.targets"/>
-    <Import Project="..\..\gameLauncher.targets"/>
+    <Import Project="$(SolutionDir)\build\base.props"/>
+    <Import Project="$(SolutionDir)\build\valheim.targets"/>
+    <Import Project="$(SolutionDir)\build\gameLauncher.targets"/>
 </Project>

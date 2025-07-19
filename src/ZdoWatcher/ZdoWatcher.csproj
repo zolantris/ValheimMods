@@ -1,4 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
+    <Import Project="$(SolutionDir)build\base.props"/>
+    <Import Project="$(SolutionDir)build\valheim.props"/>
     <PropertyGroup>
         <Configurations>Debug;Release;ReleaseBETA Archive</Configurations>
         <Platforms>AnyCPU</Platforms>
@@ -13,7 +15,6 @@
         <WarningLevel>4</WarningLevel>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     </PropertyGroup>
-    <Import Project="$(SolutionDir)\targets\valheim.targets"/>
 
     <ItemGroup>
         <ProjectReference Include="..\Shared\Shared.csproj"/>
