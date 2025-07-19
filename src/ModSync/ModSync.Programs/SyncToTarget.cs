@@ -3,8 +3,75 @@ using System.Collections.Generic;
 using System.IO;
 namespace ModSync.Programs;
 
-public class SyncToTarget
+internal static class SyncToTarget
 {
+  private const int MaxRecurseCount = 5;
+
+  /// <summary>
+  /// Recursive way to extend config.
+  /// </summary>
+  private static void HandleSyncItem(ModSyncConfig.ModSyncConfigObject allTargets, string targetName, ModSyncConfig.SyncTargetShared? parentTarget = null, int recurseCount = 0)
+  {
+    ModSyncConfig.SyncTargetShared currentTarget;
+    if (recurseCount > MaxRecurseCount)
+    {
+      Console.WriteLine($"[SYNC] Recursion limit reached for target {targetName}");
+      return;
+    }
+
+    if (parentTarget != null)
+    {
+      if (!ModSyncConfig.TryGetShareDependencyKey(allTargets.sharedTargets, targetName, out currentTarget)) return;
+    }
+    else
+    {
+      if (allTargets.syncTargets == null) return;
+      if (!allTargets.syncTargets.TryGetValue(targetName, out currentTarget)) return;
+    }
+
+    if (currentTarget == null) return;
+
+    currentTarget.inputPath ??= parentTarget?.inputPath;
+    currentTarget.outputPath ??= parentTarget?.outputPath;
+
+    var inputPath = currentTarget.inputPath;
+    var outputPath = currentTarget.outputPath;
+    var dependsOn = currentTarget.dependsOn;
+
+    if (dependsOn is
+        {
+          Length: > 0
+        })
+    {
+      foreach (var otherTargetName in dependsOn)
+      {
+        HandleSyncItem(allTargets, otherTargetName, currentTarget, recurseCount + 1);
+      }
+    }
+
+    if (ModSyncConfig.IsVerbose)
+    {
+      Console.WriteLine($"[SYNC] Would sync to: inputPath <{inputPath}> \\ outputPath <{outputPath}>");
+    }
+    if (ModSyncConfig.IsDryRun) return;
+    if (inputPath == null || outputPath == null) return;
+    PdbToMdbConverter.TryConvertDir(currentTarget);
+    CopyDirectory(inputPath, outputPath);
+  }
+
+  internal static void HandleSync(string[] targets, Dictionary<string, ModSyncConfig.SyncTargetShared>? syncTargets, ModSyncConfig.ModSyncConfigObject allTargets)
+  {
+    if (syncTargets == null)
+    {
+      Console.WriteLine("No syncTargets found in config");
+      return;
+    }
+
+    foreach (var targetName in targets)
+    {
+      HandleSyncItem(allTargets, targetName, null);
+    }
+  }
 
   internal static void CopyToValheimServer(string solutionDir, string targetPath, string valheimServerPath,
     string pluginDeployTarget, string assemblyName, string assetsDir)
@@ -52,39 +119,8 @@ public class SyncToTarget
     }
   }
 
-  public static void copyToDir(string sourceDir, string targetDir, Dictionary<string, string> flags)
-  {
-    if (string.IsNullOrEmpty(sourceDir) || string.IsNullOrEmpty(targetDir))
-    {
-      Console.WriteLine("Warning: Source or target directory is null or empty");
-      return;
-    }
 
-    Console.WriteLine($"Copying from {sourceDir} to {targetDir}");
-    CopyDirectory(sourceDir, targetDir);
-
-    // Copy to additional locations based on flags
-    if (flags.TryGetValue("clientDeployPath", out var clientPath) && !string.IsNullOrEmpty(clientPath) && flags.ContainsKey("isClient"))
-    {
-      Console.WriteLine($"Copying to client path: {clientPath}");
-      CopyDirectory(sourceDir, clientPath);
-    }
-
-    if (flags.TryGetValue("serverDeployPath", out var serverPath) && !string.IsNullOrEmpty(serverPath) && flags.ContainsKey("isServer"))
-    {
-      Console.WriteLine($"Copying to server path: {serverPath}");
-      CopyDirectory(sourceDir, serverPath);
-    }
-
-    if (flags.TryGetValue("sandboxieDeployPath", out var sandboxiePath) && !string.IsNullOrEmpty(sandboxiePath) && flags.ContainsKey("isSandboxie"))
-    {
-      Console.WriteLine($"Copying to sandboxie path: {sandboxiePath}");
-      CopyDirectory(sourceDir, sandboxiePath);
-    }
-  }
-
-
-  private static void CopyToR2ModMan(string solutionDir, string targetPath, string pluginDeployPath, string assemblyName, string assetsDir)
+  internal static void CopyToR2ModMan(string solutionDir, string targetPath, string pluginDeployPath, string assemblyName, string assetsDir)
   {
     Console.WriteLine($"Copying files to R2ModMan at {pluginDeployPath}...");
 
@@ -131,7 +167,7 @@ public class SyncToTarget
     }
   }
 
-  private static void CopyToSandboxie(string solutionDir, string targetPath, string sandboxiePluginDeployPath, string assemblyName, string assetsDir)
+  internal static void CopyToSandboxie(string solutionDir, string targetPath, string sandboxiePluginDeployPath, string assemblyName, string assetsDir)
   {
     Console.WriteLine($"Copying files to Sandboxie at {sandboxiePluginDeployPath}...");
 
@@ -290,7 +326,7 @@ public class SyncToTarget
       CreateZipArchive(libsDir, libsZip);
   }
 
-  private static void CopyFile(string source, string destination)
+  internal static void CopyFile(string source, string destination)
   {
     if (File.Exists(source))
     {
@@ -311,7 +347,7 @@ public class SyncToTarget
     }
   }
 
-  private static void CopyDirectory(string sourceDir, string destinationDir)
+  internal static void CopyDirectory(string sourceDir, string destinationDir)
   {
     if (!Directory.Exists(sourceDir))
     {
@@ -339,7 +375,7 @@ public class SyncToTarget
     }
   }
 
-  private static void CreateZipArchive(string sourceDir, string destinationZipFile)
+  internal static void CreateZipArchive(string sourceDir, string destinationZipFile)
   {
     try
     {

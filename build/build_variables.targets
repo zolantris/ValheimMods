@@ -1,10 +1,4 @@
 <Project>
-    <PropertyGroup Label="Directories">
-        <ProjectDir>$(SolutionDir)src\$(AssemblyName)</ProjectDir>
-        <ModOutputDir>$(ProjectDir)\bin\$(Configuration)\$(TargetFramework)\ModVersions</ModOutputDir>
-        <DLLFromRoot>$(ProjectDir)\bin\$(Configuration)\net8.0\$(AssemblyName).dll</DLLFromRoot>
-    </PropertyGroup>
-
     <PropertyGroup Label="Runnables and Project Booleans">
         <!-- Runnable variants execute Valheim server or client process after building -->
         <IsRunnableDebug Condition="'$(Configuration)' == 'Debug Run Client' or '$(Configuration)' == 'Debug Run Server' or '$(Configuration)' == 'Debug Run ClientServer'">true</IsRunnableDebug>
@@ -25,5 +19,12 @@
         <IsDebug Condition="'$(Configuration)' == 'Debug' or '$(IsRunnableDebug)' == 'true'">true</IsDebug>
         <IsRelease Condition="'$(Configuration)' == 'Release' or '$(IsRunnableRelease)' == 'true'">true</IsRelease>
         <IsNotArchive Condition="'$(Configuration)' != 'Release Archive' and '$(Configuration)' != 'ReleaseBETA Archive'">true</IsNotArchive>
+    </PropertyGroup>
+    
+
+    <PropertyGroup Label="Directories">
+        <ProjectDir>$(SolutionDir)src\$(AssemblyName)</ProjectDir>
+        <ModOutputDir>$(ProjectDir)\bin\$(Configuration)\$(TargetFramework)\ModVersions</ModOutputDir>
+        <DLLFromRoot>$(ProjectDir)\bin\$(Configuration)\net8.0\$(AssemblyName).dll</DLLFromRoot>
     </PropertyGroup>
 </Project>

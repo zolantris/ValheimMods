@@ -4,11 +4,12 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using ModSync.Programs;
 
 namespace ModSync;
 
-public static class ModPostInstall_Program
+public static class ModSyncCli
 {
   // Main entrypoint for EXE
   // Public method to copy to multiple directories based on feature flags
@@ -17,49 +18,85 @@ public static class ModPostInstall_Program
   public const string Arg_Sync = "sync";
   public const string Arg_Deploy = "deploy";
   public const string Arg_Run = "run";
-  public const string Arg_Help = "--help";
-  public const string DefaultConfigPath = "modSync.json5";
+
+  // option types
+  public const string Opt_Help = "help";
+  public const string Opt_Config = "config";
+  public const string Opt_Verbose = "verbose";
+  public const string Opt_DryRun = "dry-run";
+  public const string Opt_Targets = "targets"; // required.
+
+  public const string configFileName = "modSync.json5";
+
 
   public static int Main(string[] args)
   {
-    if (args.Length == 0 || args.Length == 1 && (args[0] == Arg_Help || args[0] == "-h"))
+    if (args.Length == 0 || args.Length == 1 && (args[0] == Opt_Help || args[0] == "-h"))
     {
       PrintUsage();
       return 0;
     }
+
 
     var mode = args[0].ToLower();
     var options = ParseArgs(args);
 
-    if (options.ContainsKey("help") || mode == Arg_Help)
+    var isDefaultConfigPath = false;
+    var currentDir = Environment.CurrentDirectory;
+
+    if (!options.TryGetValue(Opt_Config, out var configPath))
+    {
+      isDefaultConfigPath = true;
+      if (string.IsNullOrWhiteSpace(currentDir))
+      {
+        Console.Error.WriteLine("Could not determine EXE directory");
+        return 1;
+      }
+      configPath = Path.Combine(currentDir, configFileName);
+    }
+
+    ModSyncConfig.UpdateConfigBooleans(options);
+
+    if (options.ContainsKey("help") || mode == Opt_Help)
     {
       PrintUsage();
       return 0;
     }
 
-    // Select config file (can be overridden by --config=myconfig.json5)
-    options.TryGetValue("config", out var configPath);
-    configPath = string.IsNullOrWhiteSpace(configPath) ? DefaultConfigPath : configPath;
+    if (string.IsNullOrWhiteSpace(configPath))
+    {
+      Console.Error.WriteLine($"Config file not specified or could not be found at <{configPath}>. Please provide a --config or add a modSync.json in the directory of the modSync.exe file.");
+      return 1;
+    }
+
     if (!File.Exists(configPath))
     {
-      Console.Error.WriteLine($"Config file not found: {configPath}");
+      var msg = $"Config file not found: {configPath}";
+      if (isDefaultConfigPath)
+      {
+        msg += $"\nExecutingAssemblyPath: {currentDir}";
+      }
+      Console.Error.WriteLine(msg);
       return 1;
     }
 
     // Load and parse JSON5 config
-    dynamic configRoot = Json5Document.Parse(File.ReadAllText(configPath)).ToDynamic();
+    var json5String = File.ReadAllText(configPath);
+    var configRoot = Json5Core.Json5.Deserialize<ModSyncConfig.ModSyncConfigObject>(json5String);
+
+    var targets = GetTargets(options, configRoot);
 
     // Dispatch command
     switch (mode)
     {
       case Arg_Sync:
-        HandleSync(options, configRoot);
+        SyncToTarget.HandleSync(targets, configRoot.syncTargets, configRoot);
         break;
-      case Arg_Deploy:
-        HandleDeploy(options, configRoot);
-        break;
+      // case Arg_Deploy:
+      //   HandleDeploy(options, configRoot.deployTargets);
+      //   break;
       case Arg_Run:
-        HandleRun(options, configRoot);
+        HandleRun(targets, configRoot.runTargets);
         break;
       default:
         PrintUsage();
@@ -69,23 +106,40 @@ public static class ModPostInstall_Program
     return 0;
   }
 
-  private static void HandleSync(Dictionary<string, string> options, dynamic config)
+  public static string[] GetTargets(Dictionary<string, string> options, dynamic config)
   {
-    // Parse comma-separated deployTargets (by deployName)
-    if (!options.TryGetValue("deployTargets", out var deployTargetNames) || string.IsNullOrWhiteSpace(deployTargetNames))
+    if (!options.TryGetValue(Opt_Targets, out var targetNames) || string.IsNullOrWhiteSpace(targetNames))
     {
-      Console.WriteLine("No deployTargets specified. Available targets:");
+      Console.WriteLine("No targets specified. Available sync targets:");
       foreach (var target in config.deployTargets)
       {
         Console.WriteLine($"- {target.deployName}");
       }
-      return;
+      throw new Exception("You must specify at least one target via --targets=...");
     }
 
-    var targetList = deployTargetNames.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+    var targetList = targetNames.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+    return targetList;
+  }
+
+  private static void HandleDeploy(Dictionary<string, string> options, dynamic config)
+  {
+    if (!options.TryGetValue("targets", out var targetNames) || string.IsNullOrWhiteSpace(targetNames))
+    {
+      Console.WriteLine("No targets specified. Available deploy targets:");
+      foreach (var target in config.deployTargets)
+      {
+        Console.WriteLine($"- {target.deployName}");
+      }
+      throw new Exception("You must specify at least one target via --targets=...");
+    }
+
+    var targetList = targetNames.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
     foreach (var tName in targetList)
     {
-      var match = FindByName(config.deployTargets, "deployName", tName);
+      var match = FindByName(config.deployTargets, "target", tName);
       if (match == null)
       {
         Console.WriteLine($"No deploy target found for '{tName}'");
@@ -94,48 +148,41 @@ public static class ModPostInstall_Program
 
       var folderPath = (string)match.pluginFolderPath;
       var folderName = (string)match.folderName;
-      Console.WriteLine($"[SYNC] Would sync to: {folderPath}\\{folderName}");
-      // ... Your sync logic here (e.g. CopyDirectory)
+      Console.WriteLine($"[DEPLOY] Would deploy to: {folderPath}\\{folderName}");
+      // ... Deploy logic here
     }
   }
 
-  private static void HandleDeploy(Dictionary<string, string> options, dynamic config)
+  private static void HandleRun(string[] targets, Dictionary<string, ModSyncConfig.RunTargetItem>? runTargets)
   {
-    // You could run actual deploy logic here
-    Console.WriteLine("Deploy not implemented. Available deployTargets:");
-    foreach (var target in config.deployTargets)
+    if (runTargets == null)
     {
-      Console.WriteLine($"- {target.deployName}");
-    }
-  }
-
-  private static void HandleRun(Dictionary<string, string> options, dynamic config)
-  {
-    if (!options.TryGetValue("runTargets", out var runNames) || string.IsNullOrWhiteSpace(runNames))
-    {
-      Console.WriteLine("No runTargets specified. Available targets:");
-      foreach (var rt in config.runTargets)
-      {
-        Console.WriteLine($"- {rt.name}");
-      }
+      Console.WriteLine("No runTargets found in config");
       return;
     }
 
-    var runList = runNames.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-    foreach (var rName in runList)
+    foreach (var targetName in targets)
     {
-      var match = FindByName(config.runTargets, "name", rName);
-      if (match == null)
+      if (!runTargets.TryGetValue(targetName, out var match))
       {
-        Console.WriteLine($"No run target found for '{rName}'");
+        Console.WriteLine($"No runTarget found for '{targetName}'");
         continue;
       }
-      Console.WriteLine($"[RUN] Would run: {match.binaryTarget} {string.Join(" ", match.args)}");
-      // ... Your launch logic here
+
+      var binary = match.binaryTarget;
+      var args = string.Join(" ", match.args);
+
+      if (ModSyncConfig.IsVerbose)
+      {
+        Console.WriteLine($"[SYNC] Would sync to: binary <{binary}> \\ args <{args}>");
+      }
+      if (ModSyncConfig.IsDryRun) continue;
+
+      // ... Run logic here
     }
   }
 
-  private static dynamic FindByName(dynamic arr, string key, string value)
+  internal static dynamic FindByName(dynamic arr, string key, string value)
   {
     foreach (var obj in arr)
       if ((string)obj[key] == value)
@@ -173,12 +220,12 @@ public static class ModPostInstall_Program
   private static void PrintUsage()
   {
     Console.WriteLine("Usage:");
-    Console.WriteLine("  ModSync <sync|deploy|run> [--deployTargets=foo,bar] [--runTargets=run1,run2] [--config=deploy.config.json5]");
+    Console.WriteLine("  ModSync <sync|deploy|run> [--targets=foo,bar] [--config=./path/to/config/modSync.json5]");
     Console.WriteLine();
     Console.WriteLine("Examples:");
-    Console.WriteLine("  ModSync sync --deployTargets=default,test-server");
-    Console.WriteLine("  ModSync run --runTargets=build-server");
-    Console.WriteLine("  ModSync deploy --deployTargets=default");
+    Console.WriteLine("  ModSync sync --targets=default,test-server");
+    Console.WriteLine("  ModSync run --targets=build-server");
+    Console.WriteLine("  ModSync deploy --targets=default");
     Console.WriteLine();
     Console.WriteLine("Use --help for this message.");
   }
@@ -209,7 +256,7 @@ public static class ModPostInstall_Program
     opts.TryGetValue("assemblyName", out var assemblyName);
     if (string.IsNullOrEmpty(assemblyName))
     {
-      assemblyName = Path.GetFileNameWithoutExtension(System.Reflection.Assembly.GetEntryAssembly().Location);
+      assemblyName = Path.GetFileNameWithoutExtension(Assembly.GetEntryAssembly().Location);
     }
 
     // Get configuration

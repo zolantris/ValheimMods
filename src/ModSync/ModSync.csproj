@@ -27,18 +27,14 @@
         <PostInstallerEnabled>true</PostInstallerEnabled>
         <Optimize>false</Optimize>
         <OutputPath>bin\$(Configuration)\</OutputPath>
-        <!-- Define path variables for consistency across all projects -->
-        <ModPostInstallerDir>$(SolutionDir)src\ModPostInstaller</ModPostInstallerDir>
-        <ModOutputDir>$(ModPostInstallerDir)\bin\$(Configuration)\$(TargetFramework)\ModVersions</ModOutputDir>
-        <DLLFromRoot>src\ModPostInstaller\bin\$(Configuration)\$(TargetFramework)\ModPostInstaller.dll</DLLFromRoot>
     </PropertyGroup>
 
     <!-- Consolidated RunPostInstaller target -->
     <!--    KeepDuplicateOutputs prevents caching of this        -->
-    <Target Name="RunPostInstaller"
+    <Target Name="ModSync"
             KeepDuplicateOutputs="false"
             AfterTargets="Build"
-            Condition=" '$(PostInstallerEnabled)' == 'true' AND '$(MSBuildProjectName)' != 'ModPostInstaller' ">
+            Condition=" '$(PostInstallerEnabled)' == 'true' AND '$(MSBuildProjectName)' != 'ModSync' ">
         <Message Text="TargetPath is: $(TargetPath)" Importance="high"/>
         <Message Text="SolutionDir is: $(SolutionDir)" Importance="high"/>
         <Message Text="OutDir is: $(OutDir)" Importance="high"/>
@@ -47,11 +43,11 @@
         <Message Text="IsRunnable is: $(IsRunnable)" Importance="high"/>
         <Message Text="IsRunnableServer is: $(IsRunnableServer)" Importance="high"/>
         <Message Text="PluginDeployPath is: $(PluginDeployPath)" Importance="high"/>
-        <Message Text="ModPostInstallerDir is: $(ModPostInstallerDir)" Importance="high"/>
+        <Message Text="ProjectDir is: $(ProjectDir)" Importance="high"/>
         <Message Text="ModOutputDir is: $(ModOutputDir)" Importance="high"/>
 
-        <Exec Command="dotnet &quot;$(SolutionDir)$(DLLFromRoot)&quot; --solutionDir=&quot;$(SolutionDir)&quot;--outDir=&quot;$(OutDir)&quot; --config=&quot;$(Configuration)&quot; --assemblyName=&quot;$(AssemblyName)&quot; --modPostInstallerDir=&quot;$(ModPostInstallerDir)&quot; --modOutputDir=&quot;$(ModOutputDir)&quot; --isRunnable=&quot;$(IsRunnable)&quot; --isRunnableServer=&quot;$(IsRunnableServer)&quot; --pluginDeployPath=&quot;$(PluginDeployPath)&quot; --valheimServerPath=&quot;$(ValheimServerPath)&quot; --assetsDir=&quot;$(AssetsDir)&quot; --sandboxiePluginDeployPath=&quot;$(SandboxiePluginDeployPath)&quot; --applicationVersion=&quot;$(ApplicationVersion)&quot; --clientFileExitCode=%25ERRORLEVEL%25 $([System.String]::new(' ').PadRight(1)) --serverFileExitCode=%25ERRORLEVEL%25 $([System.String]::new(' ').PadRight(1)) --sandboxieFileExitCode=%25ERRORLEVEL%25"
-              WorkingDirectory="$(SolutionDir)"
+        <Exec Command="dotnet &quot;$(SolutionDir)$(DLLFromRoot)&quot;"
+              WorkingDirectory="$(ProjectDir)"
               IgnoreExitCode="true"/>
     </Target>
 

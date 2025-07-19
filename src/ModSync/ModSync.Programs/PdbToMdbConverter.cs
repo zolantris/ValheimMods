@@ -1,19 +1,70 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using System.Text.RegularExpressions;
+using ValheimVehicles.Integrations;
 namespace ModSync.Programs;
 
-public static class PdbToMdbConverter
+internal static class PdbToMdbConverter
 {
+  public static Regex GenerateRegexFromList(List<string> keyNames)
+  {
+    // Escape special characters in the strings and join them with a pipe (|) for OR condition
+    var escapedPrefixes = new List<string>();
+    foreach (var prefix in keyNames)
+    {
+      escapedPrefixes.Add(Regex.Escape(prefix));
+    }
+
+    // Create a regex pattern that matches the start of the string (^)
+    // It will match any of the provided prefixes at the start of the string
+    var pattern = "^(" + string.Join("|", escapedPrefixes) + ")";
+    return new Regex(pattern, RegexOptions.Compiled);
+  }
+
+  internal static void TryConvertDir(ModSyncConfig.SyncTargetShared syncTarget)
+  {
+    if (syncTarget.outputPath == null || syncTarget.inputPath == null || syncTarget.canGenerateDebugFiles != true || syncTarget.generatedFilesRegexp == null || syncTarget.generatedFilesRegexp.Count == 0)
+    {
+      return;
+    }
+
+    if (!ModSyncConfig.GenerateDebugTargets.TryAdd(syncTarget.inputPath, true)) return;
+
+    var files = Directory.GetFiles(syncTarget.inputPath, "*.dll", SearchOption.AllDirectories).Select(x => x.Replace($"{syncTarget.inputPath}\\", ""));
+
+    // remove previous mdb files.
+    var mdbFiles = Directory.GetFiles(syncTarget.inputPath, "*.mdb", SearchOption.AllDirectories);
+    foreach (var mdbFile in mdbFiles)
+    {
+      File.Delete(mdbFile);
+    }
+
+    var regexp = GenerateRegexFromList(syncTarget.generatedFilesRegexp.ToList());
+    foreach (var file in files)
+    {
+      if (!regexp.IsMatch(file)) continue;
+      Console.WriteLine($"Converting file: <{file}>");
+      ConvertPdbToMdb(Environment.CurrentDirectory, syncTarget.inputPath, file);
+    }
+  }
   public static void ConvertPdbToMdb(string solutionDir, string targetPath, string assemblyName)
   {
-    Console.WriteLine("Converting PDB to MDB...");
-    var targetDll = Path.Combine(targetPath, $"{assemblyName}.dll");
+
+    var assemblyWithDlcExtension = assemblyName.EndsWith(".dll") ? assemblyName : $"{assemblyName}.dll";
+    var targetDll = Path.Combine(targetPath, assemblyWithDlcExtension);
     var pdb2mdbPath = Path.Combine(solutionDir, "pdb2mdb.exe");
 
     if (!File.Exists(pdb2mdbPath))
     {
       Console.WriteLine($"Warning: pdb2mdb.exe not found at {pdb2mdbPath}, skipping conversion");
       return;
+    }
+
+    if (ModSyncConfig.IsVerbose)
+    {
+      Console.WriteLine($"Converting: targetDll {targetDll} ...");
     }
 
     try

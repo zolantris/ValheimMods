@@ -1,6 +1,5 @@
-namespace ModSync.ModSync.Programs;
+namespace ModSync.Programs;
 
 public class RunTarget
 {
-  
 }
