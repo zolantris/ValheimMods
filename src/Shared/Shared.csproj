@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk" ToolsVersion="4.8" DefaultTargets="Build">
+<Project Sdk="Microsoft.NET.Sdk">
     <Import Project="$(SolutionDir)build\base.props"/>
     <Import Project="$(SolutionDir)build\valheim.props"/>
 

@@ -307,7 +307,7 @@
     <ItemGroup Label="required-mods">
         <Reference Include="Jotunn">
             <SpecificVersion>False</SpecificVersion>
-            <HintPath>$(SolutionDir)\libs\Jotunn.dll</HintPath>
+            <HintPath>$(SolutionDir)libs\Jotunn.dll</HintPath>
             <Private>False</Private>
         </Reference>
     </ItemGroup>
@@ -318,30 +318,23 @@
         <Publicize Include="PlanBuild"/>
         <Reference Include="PlanBuild">
             <SpecificVersion>False</SpecificVersion>
-            <HintPath>$(SolutionDir)\libs\PlanBuild.dll</HintPath>
+            <HintPath>$(SolutionDir)libs\PlanBuild.dll</HintPath>
             <Private>False</Private>
         </Reference>
         <Publicize Include="Advize_PlantEasily"/>
         <Reference Include="Advize_PlantEasily">
             <SpecificVersion>False</SpecificVersion>
-            <HintPath>$(SolutionDir)\libs\Advize_PlantEasily.dll</HintPath>
+            <HintPath>$(SolutionDir)libs\Advize_PlantEasily.dll</HintPath>
             <Private>False</Private>
         </Reference>
         <Publicize Include="ComfyGizmo"/>
         <Reference Include="ComfyGizmo">
             <SpecificVersion>False</SpecificVersion>
-            <HintPath>$(SolutionDir)\libs\ComfyGizmo.dll</HintPath>
+            <HintPath>$(SolutionDir)libs\ComfyGizmo.dll</HintPath>
             <Private>False</Private>
         </Reference>
     </ItemGroup>
 
-    <!--  Metrics  -->
-    <ItemGroup Condition="$(AssemblyName) == 'ValheimRAFT'">
-        <Reference Include="SentryUnityWrapper">
-            <HintPath>$(SolutionDir)\src\SentryUnityWrapper\bin\Debug\SentryUnityWrapper.dll</HintPath>
-            <Private>False</Private>
-        </Reference>
-    </ItemGroup>
     <PropertyGroup>
         <AssetsDir>$(SolutionDir)src\ValheimRAFT\Assets\</AssetsDir>
     </PropertyGroup>

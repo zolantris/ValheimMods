@@ -12,8 +12,7 @@
     <ItemGroup>
         <ProjectReference Include="..\Shared\Shared.csproj"/>
     </ItemGroup>
-
-
+    
     <!--  requires zdowatcher  -->
     <ItemGroup>
         <ProjectReference Include="..\ZdoWatcher\ZdoWatcher.csproj"/>
