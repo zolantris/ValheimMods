@@ -19,7 +19,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Shared", "src\Shared\Shared
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ValheimVehiclesTests", "src\ValheimVehiclesTests\ValheimVehiclesTests.csproj", "{10B24D55-0341-4EAF-92D6-C14F121180F1}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ModPostInstaller", "src\ModPostInstaller\ModPostInstaller.csproj", "{F7517F9F-2B2F-4DBD-ABDD-5FAEB8D8DF27}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ModSync", "src\ModSync\ModSync.csproj", "{F7517F9F-2B2F-4DBD-ABDD-5FAEB8D8DF27}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
