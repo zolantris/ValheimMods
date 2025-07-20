@@ -200,12 +200,13 @@ namespace ValheimVehicles.SharedScripts
     // Tilt helper
     private void AdjustManualGroupTilt(CannonDirectionGroup group, float tiltDelta)
     {
+      if (targetController == null) return;
       manualGroupTilt[group] = Mathf.Clamp(
         manualGroupTilt[group] + tiltDelta,
         minPitch, maxPitch
       );
-      if (targetController != null)
-        targetController.SetManualGroupTilt(group, manualGroupTilt[group]);
+      targetController.SetManualGroupTilt(group, manualGroupTilt[group]);
+      targetController.ScheduleGroupCannonSync(group);
     }
 
     private void FireManualGroup(CannonDirectionGroup group, object key)

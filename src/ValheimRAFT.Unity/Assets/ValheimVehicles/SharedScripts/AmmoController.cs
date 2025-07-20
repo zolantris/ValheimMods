@@ -468,6 +468,8 @@
         _canTriggerChangeUpdate = true;
       }
 
+      private bool _hasAction;
+
 #if VALHEIM
       /// <summary>
       /// To be called whenever a container that we watch updates.
@@ -476,8 +478,16 @@
       {
         if (!_canTriggerChangeUpdate) return;
         _queuedInventoryUpdates.Add(container);
-        CancelInvoke(nameof(UpdatePartialRemainingAmmo));
-        Invoke(nameof(UpdatePartialRemainingAmmo), 5f);
+        if (_hasAction)
+        {
+          CancelInvoke(nameof(UpdatePartialRemainingAmmo));
+          _hasAction = false;
+        }
+        if (gameObject.activeInHierarchy)
+        {
+          Invoke(nameof(UpdatePartialRemainingAmmo), 5f);
+          _hasAction = true;
+        }
       }
 #endif
     }

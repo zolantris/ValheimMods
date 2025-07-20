@@ -54,6 +54,7 @@ public class TargetControlsInteractive : MonoBehaviour, Hoverable, Interactable,
       var cannonFiringHotkeys = player.gameObject.GetOrAddComponent<CannonFiringHotkeys>();
       cannonFiringHotkeys.SetTargetController(targetController);
       playerHotkeyControllers[player] = cannonFiringHotkeys;
+      targetController.OnDetectionModeChange();
     }
   }
 
@@ -82,7 +83,7 @@ public class TargetControlsInteractive : MonoBehaviour, Hoverable, Interactable,
 
   public void ApplyControlls(Vector3 moveDir, Vector3 lookDir, bool run, bool autoRun, bool block)
   {
-    LoggerProvider.LogDev($"Applying controls called to {name}");
+    LoggerProvider.LogDebugDebounced($"{moveDir}");
   }
 
   public Component GetControlledComponent()

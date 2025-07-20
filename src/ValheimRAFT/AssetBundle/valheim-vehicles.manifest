@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 4190601562
+CRC: 1417248872
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: c7b22104f3ae37a8264478c7ba858242
+    Hash: 24ec1d6badf2aac560f80f26f0956f91
   TypeTreeHash:
     serializedVersion: 2
-    Hash: e982d1c7cd6aec4c8ff2c2946a00578c
+    Hash: d2d257a36cfda9203227196a88d368e9
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: c7b22104f3ae37a8264478c7ba858242
+    Hash: 24ec1d6badf2aac560f80f26f0956f91
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -43,37 +43,37 @@ ClassTypes:
 - Class: 108
   Script: {instanceID: 0}
 - Class: 114
-  Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
+  Script: {fileID: 11500000, guid: 8aa93d7854518e94aaf1cc6faf180375, type: 3}
 - Class: 114
-  Script: {fileID: 11500000, guid: 67db9e8f0e2ae9c40bc1e2b64352a6b4, type: 3}
-- Class: 114
-  Script: {fileID: 11500000, guid: 0d0b652f32a2cc243917e4028fa0f046, type: 3}
-- Class: 114
-  Script: {fileID: 11500000, guid: 5f7201a12d95ffc409449d95f23cf332, type: 3}
-- Class: 114
-  Script: {fileID: 11500000, guid: 1aa08ab6e0800fa44ae55d278d1423e3, type: 3}
-- Class: 114
-  Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-- Class: 114
-  Script: {fileID: 11500000, guid: d199490a83bb2b844b9695cbf13b01ef, type: 3}
+  Script: {fileID: 11500000, guid: 7d873279a1e81b9419d0f6fb8b3c1fa9, type: 3}
 - Class: 114
   Script: {fileID: 11500000, guid: 9085046f02f69544eb97fd06b6048fe2, type: 3}
 - Class: 114
-  Script: {fileID: 11500000, guid: 8aa93d7854518e94aaf1cc6faf180375, type: 3}
+  Script: {fileID: 11500000, guid: 31a19414c41e5ae4aae2af33fee712f6, type: 3}
 - Class: 114
-  Script: {fileID: 11500000, guid: 59f8146938fff824cb5fd77236b75775, type: 3}
+  Script: {fileID: 11500000, guid: d199490a83bb2b844b9695cbf13b01ef, type: 3}
 - Class: 114
   Script: {fileID: 11500000, guid: 747419968f339df40a827088f25c215d, type: 3}
-- Class: 114
-  Script: {fileID: 11500000, guid: 31a19414c41e5ae4aae2af33fee712f6, type: 3}
 - Class: 114
   Script: {fileID: 11500000, guid: f44587a585f05c540ad46e160444cf0c, type: 3}
 - Class: 114
   Script: {fileID: 11500000, guid: 37593e1934874fe4db91a205982d109e, type: 3}
 - Class: 114
+  Script: {fileID: 11500000, guid: 67db9e8f0e2ae9c40bc1e2b64352a6b4, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 59f8146938fff824cb5fd77236b75775, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 1aa08ab6e0800fa44ae55d278d1423e3, type: 3}
+- Class: 114
   Script: {fileID: 11500000, guid: 2a4db7a114972834c8e4117be1d82ba3, type: 3}
 - Class: 114
-  Script: {fileID: 11500000, guid: 7d873279a1e81b9419d0f6fb8b3c1fa9, type: 3}
+  Script: {fileID: 11500000, guid: 0d0b652f32a2cc243917e4028fa0f046, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 5f7201a12d95ffc409449d95f23cf332, type: 3}
 - Class: 114
   Script: {fileID: 11500000, guid: 19bf60ab5c953fe4ba1db2f29c51ad1b, type: 3}
 - Class: 115
@@ -181,6 +181,7 @@ Assets:
 - Assets/ValheimVehicles/Prefabs/vehicle_ship_pieces.prefab
 - Assets/ValheimVehicles/Prefabs/nautilus_hatch.prefab
 - Assets/ValheimVehicles/Prefabs/nautilus.prefab
+- Assets/ValheimVehicles/Prefabs/hull_rib_prow_sleek_2x2x8_right_wood.prefab
 - Assets/ValheimVehicles/Prefabs/rudder_advanced_single_iron.prefab
 - Assets/ValheimVehicles/Prefabs/GUI/ship_compass.prefab
 - Assets/ValheimVehicles/Prefabs/shared_hull_rib_prow_2x2.prefab
@@ -222,6 +223,7 @@ Assets:
 - Assets/ValheimVehicles/Prefabs/hull_corner_floor_2x4_right_iron.prefab
 - Assets/ValheimVehicles/Material/RopeMat.mat
 - Assets/ValheimVehicles/Material/TestMat.mat
+- Assets/ValheimVehicles/Prefabs/hull_rib_prow_sleek_2x2x8_left_wood.prefab
 - Assets/ValheimVehicles/Prefabs/hull_prow_2x2x4_iron.prefab
 - Assets/ValheimVehicles/Prefabs/anchor_chain.prefab
 - Assets/ValheimVehicles/Prefabs/ram_blade_bottom.prefab
@@ -347,6 +349,7 @@ Assets:
 - Assets/ValheimVehicles/Prefabs/shared_hull_slab_wood_2x2_worn.prefab
 - Assets/ValheimVehicles/Material/SailMat.mat
 - Assets/ValheimVehicles/Material/wood_piece_valheim_2x4.mat
+- Assets/ValheimVehicles/Prefabs/cannon_control_center.prefab
 - Assets/ValheimVehicles/Material/wood_alt_piece_pole_vert.mat
 - Assets/ValheimVehicles/Prefabs/Backups/shared_hull_slab_iron_4x4_worn.prefab
 - Assets/ValheimVehicles/Material/wood_piece.mat

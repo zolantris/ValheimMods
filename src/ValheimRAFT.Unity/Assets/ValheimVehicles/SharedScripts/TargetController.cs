@@ -43,7 +43,7 @@ namespace ValheimVehicles.SharedScripts
     public enum CannonDetectionMode
     {
       Parent,
-      Collider
+      Cast // cast is better b/c colliders are not well setup for many pieces. Do 1 cast then only cast again on interaction. Cast should be stagged though so it runs every 30seconds.
     }
 
     public CannonDetectionMode cannonDetectionMode = CannonDetectionMode.Parent;
@@ -160,7 +160,7 @@ namespace ValheimVehicles.SharedScripts
 
     public void UpdateCannonDetectionModeFromPrefabName()
     {
-      cannonDetectionMode = gameObject.name.StartsWith(PrefabNames.CannonControlCenter) ? CannonDetectionMode.Collider : CannonDetectionMode.Parent;
+      cannonDetectionMode = gameObject.name.StartsWith(PrefabNames.CannonControlCenter) ? CannonDetectionMode.Cast : CannonDetectionMode.Parent;
 
       OnDetectionModeChange();
     }
@@ -222,26 +222,40 @@ namespace ValheimVehicles.SharedScripts
 
     public void OnDetectionModeChange()
     {
-      if (cannonDetectionMode == CannonDetectionMode.Collider)
+      if (cannonDetectionMode == CannonDetectionMode.Cast)
       {
-        var rb = gameObject.GetOrAddComponent<Rigidbody>();
-        rb.isKinematic = true;
-        rb.useGravity = false;
-        rb.constraints = RigidbodyConstraints.FreezeAll;
-        rb.detectCollisions = true;
-        detectionAreaObj = new GameObject("DetectionArea", typeof(SphereCollider));
-        detectionAreaObj.transform.SetParent(transform);
-        detectionAreaObj.layer = LayerHelpers.PieceNonSolidLayer;
-        var sphereCollider = detectionAreaObj.GetOrAddComponent<SphereCollider>();
-        sphereCollider.radius = CannonControlCenterDiscoveryRadius;
-        sphereCollider.isTrigger = true;
-        sphereCollider.includeLayers = LayerHelpers.PieceLayer;
-        sphereCollider.center = Vector3.zero;
-        var sphereTransform = sphereCollider.transform;
-        sphereTransform.localPosition = Vector3.zero;
-        sphereTransform.localRotation = Quaternion.identity;
-        sphereTransform.localScale = Vector3.one;
-        sphereCollider.enabled = true;
+        var colliders = Physics.OverlapSphere(transform.position, CannonControlCenterDiscoveryRadius, LayerHelpers.PieceLayerMask);
+
+        foreach (var collider in colliders)
+        {
+          var piece = collider.GetComponentInParent<Piece>();
+          if (piece == null) continue;
+          var isCannonPiece = piece.name.StartsWith(PrefabNames.CannonTurretTier1) || piece.name.StartsWith(PrefabNames.CannonFixedTier1);
+          if (!isCannonPiece) continue;
+
+          var cannonController = piece.GetComponentInParent<CannonController>();
+          if (cannonController == null) continue;
+          AddCannon(cannonController);
+        }
+
+        // var rb = gameObject.GetOrAddComponent<Rigidbody>();
+        // rb.isKinematic = true;
+        // rb.useGravity = false;
+        // rb.constraints = RigidbodyConstraints.FreezeAll;
+        // rb.detectCollisions = true;
+        // detectionAreaObj = new GameObject("DetectionArea", typeof(SphereCollider));
+        // detectionAreaObj.transform.SetParent(transform);
+        // detectionAreaObj.layer = LayerHelpers.IgnoreRaycastLayer; // works with pieces...but might not work with cannons to hit them.
+        // var sphereCollider = detectionAreaObj.GetOrAddComponent<SphereCollider>();
+        // sphereCollider.radius = CannonControlCenterDiscoveryRadius;
+        // sphereCollider.isTrigger = true;
+        // sphereCollider.includeLayers = LayerHelpers.PieceLayer;
+        // sphereCollider.center = Vector3.zero;
+        // var sphereTransform = sphereCollider.transform;
+        // sphereTransform.localPosition = Vector3.zero;
+        // sphereTransform.localRotation = Quaternion.identity;
+        // sphereTransform.localScale = Vector3.one;
+        // sphereCollider.enabled = true;
       }
       else
       {

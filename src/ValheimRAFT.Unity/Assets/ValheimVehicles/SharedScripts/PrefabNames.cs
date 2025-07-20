@@ -284,7 +284,7 @@
         $"{ValheimVehiclesPrefix}_Cannon_Handheld_Item";
 
       public static readonly string CannonControlCenter =
-        $"{ValheimVehiclesPrefix}_Cannon_ControlCenter";
+        $"{ValheimVehiclesPrefix}_Cannon_Control_Center";
 
       public static readonly string TelescopeItem =
         $"{ValheimVehiclesPrefix}_Telescope_Item";

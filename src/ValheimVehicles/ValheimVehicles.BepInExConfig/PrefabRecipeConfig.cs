@@ -73,6 +73,16 @@ public class PrefabRecipeConfig : BepInExBaseConfig<PrefabRecipeConfig>
       ]
     },
     {
+      PrefabNames.CannonControlCenter, [
+        new RequirementConfig
+        {
+          Amount = 2,
+          Item = "Bronze",
+          Recover = true
+        }
+      ]
+    },
+    {
       PrefabNames.CannonHandHeldItem, [
         new RequirementConfig
         {

@@ -448,7 +448,7 @@ public class CannonPrefabs : RegisterPrefab<CannonPrefabs>
     var prefabAssetName = "cannon_control_center";
     var prefabAsset = LoadValheimVehicleAssets._bundle.LoadAsset<GameObject>(prefabAssetName);
     var icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(prefabAssetName);
-    var prefab = PrefabManager.Instance.CreateClonedPrefab(PrefabNames.TelescopeItem, prefabAsset);
+    var prefab = PrefabManager.Instance.CreateClonedPrefab(PrefabNames.CannonControlCenter, prefabAsset);
     if (!prefab)
     {
       LoggerProvider.LogError($"{prefabAsset} not found!");
@@ -458,13 +458,13 @@ public class CannonPrefabs : RegisterPrefab<CannonPrefabs>
     PrefabRegistryHelpers.HoistSnapPointsToPrefab(prefab);
     PrefabRegistryHelpers.AddNetViewWithPersistence(prefab);
 
-    PrefabRegistryHelpers.PieceDataDictionary.Add(PrefabNames.PowderBarrel, new PrefabRegistryHelpers.PieceData
+    PrefabRegistryHelpers.PieceDataDictionary.Add(PrefabNames.CannonControlCenter, new PrefabRegistryHelpers.PieceData
     {
       Name = "$valheim_vehicles_cannon_control_center",
       Description = "$valheim_vehicles_cannon_control_center_desc",
       Icon = icon
     });
-    var piece = PrefabRegistryHelpers.AddPieceForPrefab(PrefabNames.PowderBarrel, prefab);
+    var piece = PrefabRegistryHelpers.AddPieceForPrefab(PrefabNames.CannonControlCenter, prefab);
     piece.m_primaryTarget = true;
     var wearNTear = PrefabRegistryHelpers.SetWearNTear(prefab, 1);
 
@@ -473,7 +473,7 @@ public class CannonPrefabs : RegisterPrefab<CannonPrefabs>
 
     // main toggle switch.
     var targetController = prefab.AddComponent<TargetController>();
-    targetController.cannonDetectionMode = TargetController.CannonDetectionMode.Collider;
+    targetController.cannonDetectionMode = TargetController.CannonDetectionMode.Cast;
 
     prefab.AddComponent<TargetControlsInteractive>();
 
