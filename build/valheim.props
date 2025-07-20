@@ -7,15 +7,7 @@
         <IsRunnableServer Condition="'$(Configuration)' == 'Release Run Server' or '$(Configuration)' == 'Debug Run Server'">true</IsRunnableServer>
         <IsRunnableClient Condition="'$(IsRunnableRelease)' == 'true' or '$(IsRunnableDebug)' == 'true'">true</IsRunnableClient>
         <IsRunnable Condition="'$(IsRunnableRelease)' == 'true' or '$(IsRunnableDebug)' == 'true'">true</IsRunnable>
-        <!--        <IsRunnable Condition="'$(Configuration)' == 'Debug Run Client' or-->
-        <!--                          '$(Configuration)' == 'Debug Run Server' or-->
-        <!--                          '$(Configuration)' == 'Debug Run ClientServer' or-->
-        <!--                          '$(Configuration)' == 'Release Run Client' or-->
-        <!--                          '$(Configuration)' == 'Release Run Server' or-->
-        <!--                          '$(Configuration)' == 'Release Run ClientServer'">true-->
-        <!--        </IsRunnable>-->
         <IsRunnable>true</IsRunnable>
-        <!--        <IsRunnable Condition="'$(IsRunnable)' != 'true'">false</IsRunnable>-->
         <IsDebug Condition="'$(Configuration)' == 'Debug' or '$(IsRunnableDebug)' == 'true'">true</IsDebug>
         <IsRelease Condition="'$(Configuration)' == 'Release' or '$(IsRunnableRelease)' == 'true'">true</IsRelease>
         <IsNotArchive Condition="'$(Configuration)' != 'Release Archive' and '$(Configuration)' != 'ReleaseBETA Archive'">true</IsNotArchive>
@@ -127,11 +119,11 @@
             <HintPath>$(ManagedDataPath)\assembly_guiutils.dll</HintPath>
             <Private>False</Private>
         </Reference>
-<!--        <Reference Include="ui_lib">-->
-<!--            <SpecificVersion>False</SpecificVersion>-->
-<!--            <HintPath>$(ManagedDataPath)\ui_lib.dll</HintPath>-->
-<!--            <Private>False</Private>-->
-<!--        </Reference>-->
+        <Reference Include="ui_lib">
+            <SpecificVersion>False</SpecificVersion>
+            <HintPath>$(ManagedDataPath)\ui_lib.dll</HintPath>
+            <Private>False</Private>
+        </Reference>
         <Reference Include="assembly_postprocessing">
             <SpecificVersion>False</SpecificVersion>
             <HintPath>$(ManagedDataPath)\assembly_postprocessing.dll</HintPath>
@@ -267,11 +259,11 @@
             <HintPath>$(ManagedDataPath)\UnityEngine.TerrainModule.dll</HintPath>
             <Private>False</Private>
         </Reference>
-        <!--        <Reference Include="UnityEngine.TextCoreModule">-->
-        <!--            <SpecificVersion>False</SpecificVersion>-->
-        <!--            <HintPath>$(ManagedDataPath)\UnityEngine.TextCoreModule.dll</HintPath>-->
-        <!--            <Private>False</Private>-->
-        <!--        </Reference>-->
+        <Reference Include="UnityEngine.TextCoreModule">
+            <SpecificVersion>False</SpecificVersion>
+            <HintPath>$(ManagedDataPath)\UnityEngine.TextCoreModule.dll</HintPath>
+            <Private>False</Private>
+        </Reference>
         <Reference Include="UnityEngine.TextRenderingModule">
             <SpecificVersion>False</SpecificVersion>
             <HintPath>$(ManagedDataPath)\UnityEngine.TextRenderingModule.dll</HintPath>

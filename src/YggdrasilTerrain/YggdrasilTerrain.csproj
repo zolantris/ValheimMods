@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
         <Nullable>enable</Nullable>
-        <Configurations>Debug;Release;Release Archive;ReleaseBETA Archive</Configurations>
+        <Configurations>Debug;Release;ReleaseBETA Archive;ModSyncOnly</Configurations>
         <Platforms>AnyCPU</Platforms>
         <ApplicationVersion>1.0.0</ApplicationVersion>
     </PropertyGroup>

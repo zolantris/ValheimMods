@@ -3,25 +3,11 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
+using ModSync.Utils;
 namespace ModSync.Programs;
 
 internal static class PdbToMdbConverter
 {
-  public static Regex GenerateRegexFromList(List<string> keyNames)
-  {
-    // Escape special characters in the strings and join them with a pipe (|) for OR condition
-    var escapedPrefixes = new List<string>();
-    foreach (var prefix in keyNames)
-    {
-      escapedPrefixes.Add(Regex.Escape(prefix));
-    }
-
-    // Create a regex pattern that matches the start of the string (^)
-    // It will match any of the provided prefixes at the start of the string
-    var pattern = "^(" + string.Join("|", escapedPrefixes) + ")";
-    return new Regex(pattern, RegexOptions.Compiled);
-  }
-
   internal static void TryConvertDir(ModSyncConfig.SyncTargetShared syncTarget)
   {
     if (syncTarget.outputPath == null || syncTarget.inputPath == null || syncTarget.canGenerateDebugFiles != true || syncTarget.generatedFilesRegexp == null || syncTarget.generatedFilesRegexp.Count == 0)
@@ -40,7 +26,7 @@ internal static class PdbToMdbConverter
       File.Delete(mdbFile);
     }
 
-    var regexp = GenerateRegexFromList(syncTarget.generatedFilesRegexp.ToList());
+    var regexp = RegexGenerator.GenerateRegexFromList(syncTarget.generatedFilesRegexp.ToList());
     foreach (var file in files)
     {
       if (!regexp.IsMatch(file)) continue;

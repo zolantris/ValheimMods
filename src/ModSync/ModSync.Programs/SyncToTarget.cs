@@ -1,16 +1,32 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using ModSync.Utils;
 namespace ModSync.Programs;
 
 internal static class SyncToTarget
 {
   private const int MaxRecurseCount = 5;
 
+  internal static void HandleSync(string[] targets)
+  {
+    if (ModSyncConfig.ConfigInstance.syncTargets == null)
+    {
+      Console.WriteLine("No syncTargets found in config");
+      return;
+    }
+
+    foreach (var targetName in targets)
+    {
+      RecursiveSync(targetName, null);
+    }
+  }
+
   /// <summary>
   /// Recursive way to extend config.
   /// </summary>
-  private static void HandleSyncItem(ModSyncConfig.ModSyncConfigObject allTargets, string targetName, ModSyncConfig.SyncTargetShared? parentTarget = null, int recurseCount = 0)
+  private static void RecursiveSync(string targetName, ModSyncConfig.SyncTargetShared? parentTarget = null, int recurseCount = 0)
   {
     ModSyncConfig.SyncTargetShared currentTarget;
     if (recurseCount > MaxRecurseCount)
@@ -21,21 +37,19 @@ internal static class SyncToTarget
 
     if (parentTarget != null)
     {
-      if (!ModSyncConfig.TryGetShareDependencyKey(allTargets.sharedTargets, targetName, out currentTarget)) return;
+      if (!ModSyncConfig.TryGetShareDependencyKey(ModSyncConfig.ConfigInstance.sharedTargets, targetName, out currentTarget)) return;
     }
     else
     {
-      if (allTargets.syncTargets == null) return;
-      if (!allTargets.syncTargets.TryGetValue(targetName, out currentTarget)) return;
+      if (ModSyncConfig.ConfigInstance.syncTargets == null) return;
+      if (!ModSyncConfig.ConfigInstance.syncTargets.TryGetValue(targetName, out currentTarget)) return;
     }
 
     if (currentTarget == null) return;
 
-    currentTarget.inputPath ??= parentTarget?.inputPath;
-    currentTarget.outputPath ??= parentTarget?.outputPath;
-
-    var inputPath = currentTarget.inputPath;
-    var outputPath = currentTarget.outputPath;
+    var inputPath = parentTarget?.inputPath ?? currentTarget.inputPath;
+    var outputPath = parentTarget?.outputPath ?? currentTarget.outputPath;
+    var relativePath = currentTarget.relativeOutputPath;
     var dependsOn = currentTarget.dependsOn;
 
     if (dependsOn is
@@ -45,7 +59,7 @@ internal static class SyncToTarget
     {
       foreach (var otherTargetName in dependsOn)
       {
-        HandleSyncItem(allTargets, otherTargetName, currentTarget, recurseCount + 1);
+        RecursiveSync(otherTargetName, currentTarget, recurseCount + 1);
       }
     }
 
@@ -55,153 +69,13 @@ internal static class SyncToTarget
     }
     if (ModSyncConfig.IsDryRun) return;
     if (inputPath == null || outputPath == null) return;
+    if (!string.IsNullOrEmpty(relativePath))
+    {
+      outputPath = PathUtils.SafeCombine(outputPath, relativePath);
+    }
+
     PdbToMdbConverter.TryConvertDir(currentTarget);
     CopyDirectory(inputPath, outputPath);
-  }
-
-  internal static void HandleSync(string[] targets, Dictionary<string, ModSyncConfig.SyncTargetShared>? syncTargets, ModSyncConfig.ModSyncConfigObject allTargets)
-  {
-    if (syncTargets == null)
-    {
-      Console.WriteLine("No syncTargets found in config");
-      return;
-    }
-
-    foreach (var targetName in targets)
-    {
-      HandleSyncItem(allTargets, targetName, null);
-    }
-  }
-
-  internal static void CopyToValheimServer(string solutionDir, string targetPath, string valheimServerPath,
-    string pluginDeployTarget, string assemblyName, string assetsDir)
-  {
-    Console.WriteLine($"Copying files to Valheim server at {valheimServerPath}...");
-
-    if (!Directory.Exists(valheimServerPath))
-    {
-      Console.WriteLine($"Warning: Valheim server path does not exist: {valheimServerPath}");
-      return;
-    }
-
-    var serverPluginPath = Path.Combine(valheimServerPath, pluginDeployTarget);
-    Directory.CreateDirectory(serverPluginPath);
-
-    // Copy dependencies
-    var dependenciesPath = Path.Combine(solutionDir, "Dependencies");
-    if (Directory.Exists(dependenciesPath))
-    {
-      CopyDirectory(dependenciesPath, serverPluginPath);
-    }
-
-    // Copy main files
-    CopyFile(Path.Combine(targetPath, $"{assemblyName}.dll"), Path.Combine(serverPluginPath, $"{assemblyName}.dll"));
-    CopyFile(Path.Combine(targetPath, $"{assemblyName}.pdb"), Path.Combine(serverPluginPath, $"{assemblyName}.pdb"));
-    CopyFile(Path.Combine(targetPath, $"{assemblyName}.mdb"), Path.Combine(serverPluginPath, $"{assemblyName}.mdb"));
-
-    // Copy assets if they exist
-    if (!string.IsNullOrEmpty(assetsDir) && Directory.Exists(assetsDir))
-    {
-      var serverAssetsPath = Path.Combine(serverPluginPath, "Assets");
-      CopyDirectory(assetsDir, serverAssetsPath);
-
-      // Copy translations if they exist
-      var translationsDir = Path.Combine(assetsDir, "Translations", "English");
-      if (Directory.Exists(translationsDir))
-      {
-        var serverTranslationsPath = Path.Combine(serverPluginPath, "Assets", "Translations", "English");
-        CopyDirectory(translationsDir, serverTranslationsPath);
-      }
-    }
-    else
-    {
-      Console.WriteLine($"Warning: Assets directory does not exist: {assetsDir}. Please make the directly. This code does not create directories for the top level plugins as a safety precaution.");
-    }
-  }
-
-
-  internal static void CopyToR2ModMan(string solutionDir, string targetPath, string pluginDeployPath, string assemblyName, string assetsDir)
-  {
-    Console.WriteLine($"Copying files to R2ModMan at {pluginDeployPath}...");
-
-    if (!Directory.Exists(pluginDeployPath))
-    {
-      Directory.CreateDirectory(pluginDeployPath);
-    }
-
-    // Copy dependencies
-    var dependenciesPath = Path.Combine(solutionDir, "Dependencies");
-    if (Directory.Exists(dependenciesPath))
-    {
-      CopyDirectory(dependenciesPath, pluginDeployPath);
-    }
-
-    // Copy main files
-    CopyFile(Path.Combine(targetPath, $"{assemblyName}.dll"), Path.Combine(pluginDeployPath, $"{assemblyName}.dll"));
-    CopyFile(Path.Combine(targetPath, $"{assemblyName}.pdb"), Path.Combine(pluginDeployPath, $"{assemblyName}.pdb"));
-    CopyFile(Path.Combine(targetPath, $"{assemblyName}.mdb"), Path.Combine(pluginDeployPath, $"{assemblyName}.mdb"));
-
-    // Handle SentryUnityWrapper
-    if (assemblyName == "SentryUnityWrapper")
-    {
-      var sentryPath = Path.Combine(solutionDir, "SentryUnity", "1.8.0", "runtime");
-      if (Directory.Exists(sentryPath))
-      {
-        CopyDirectory(sentryPath, pluginDeployPath);
-      }
-    }
-
-    // Copy assets if they exist
-    if (!string.IsNullOrEmpty(assetsDir) && Directory.Exists(assetsDir))
-    {
-      var clientAssetsPath = Path.Combine(pluginDeployPath, "Assets");
-      CopyDirectory(assetsDir, clientAssetsPath);
-
-      // Copy translations if they exist
-      var translationsDir = Path.Combine(assetsDir, "Translations", "English");
-      if (Directory.Exists(translationsDir))
-      {
-        var clientTranslationsPath = Path.Combine(pluginDeployPath, "Assets", "Translations", "English");
-        CopyDirectory(translationsDir, clientTranslationsPath);
-      }
-    }
-  }
-
-  internal static void CopyToSandboxie(string solutionDir, string targetPath, string sandboxiePluginDeployPath, string assemblyName, string assetsDir)
-  {
-    Console.WriteLine($"Copying files to Sandboxie at {sandboxiePluginDeployPath}...");
-
-    if (!Directory.Exists(sandboxiePluginDeployPath))
-    {
-      Directory.CreateDirectory(sandboxiePluginDeployPath);
-    }
-
-    // Copy dependencies
-    var dependenciesPath = Path.Combine(solutionDir, "Dependencies");
-    if (Directory.Exists(dependenciesPath))
-    {
-      CopyDirectory(dependenciesPath, sandboxiePluginDeployPath);
-    }
-
-    // Copy main files
-    CopyFile(Path.Combine(targetPath, $"{assemblyName}.dll"), Path.Combine(sandboxiePluginDeployPath, $"{assemblyName}.dll"));
-    CopyFile(Path.Combine(targetPath, $"{assemblyName}.pdb"), Path.Combine(sandboxiePluginDeployPath, $"{assemblyName}.pdb"));
-    CopyFile(Path.Combine(targetPath, $"{assemblyName}.mdb"), Path.Combine(sandboxiePluginDeployPath, $"{assemblyName}.mdb"));
-
-    // Copy assets if they exist
-    if (!string.IsNullOrEmpty(assetsDir) && Directory.Exists(assetsDir))
-    {
-      var sandboxieAssetsPath = Path.Combine(sandboxiePluginDeployPath, "Assets");
-      CopyDirectory(assetsDir, sandboxieAssetsPath);
-
-      // Copy translations if they exist
-      var translationsDir = Path.Combine(assetsDir, "Translations", "English");
-      if (Directory.Exists(translationsDir))
-      {
-        var sandboxieTranslationsPath = Path.Combine(sandboxiePluginDeployPath, "Assets", "Translations", "English");
-        CopyDirectory(translationsDir, sandboxieTranslationsPath);
-      }
-    }
   }
 
   internal static void GenerateModArchive(string solutionDir, string targetPath, string assemblyName, string applicationVersion, bool isRelease, string pluginDeployPath, string outputDir)
@@ -353,6 +227,11 @@ internal static class SyncToTarget
     {
       Console.WriteLine($"Warning: Source directory does not exist: {sourceDir}");
       return;
+    }
+
+    if (ModSyncConfig.IsVerbose)
+    {
+      Console.WriteLine($"Copying directory: {sourceDir} -> {destinationDir}");
     }
 
     // Create destination directory if it doesn't exist

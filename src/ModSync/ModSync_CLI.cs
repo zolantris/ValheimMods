@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -28,7 +29,6 @@ public static class ModSyncCli
 
   public const string configFileName = "modSync.json5";
 
-
   public static int Main(string[] args)
   {
     if (args.Length == 0 || args.Length == 1 && (args[0] == Opt_Help || args[0] == "-h"))
@@ -41,21 +41,7 @@ public static class ModSyncCli
     var mode = args[0].ToLower();
     var options = ParseArgs(args);
 
-    var isDefaultConfigPath = false;
-    var currentDir = Environment.CurrentDirectory;
-
-    if (!options.TryGetValue(Opt_Config, out var configPath))
-    {
-      isDefaultConfigPath = true;
-      if (string.IsNullOrWhiteSpace(currentDir))
-      {
-        Console.Error.WriteLine("Could not determine EXE directory");
-        return 1;
-      }
-      configPath = Path.Combine(currentDir, configFileName);
-    }
-
-    ModSyncConfig.UpdateConfigBooleans(options);
+    if (!TryGetConfigPath(options, out var configPath)) return 1;
 
     if (options.ContainsKey("help") || mode == Opt_Help)
     {
@@ -63,10 +49,58 @@ public static class ModSyncCli
       return 0;
     }
 
+    // Load and parse JSON5 config
+    if (!ModSyncConfig.TryCreateConfig(configPath))
+    {
+      Console.Error.WriteLine($"Error parsing config file: {configPath}. Bailing.");
+      return 1;
+    }
+
+    ModSyncConfig.UpdateConfigBooleans(options);
+
+    var targets = GetTargets(options, ModSyncConfig.ConfigInstance);
+
+    // Dispatch command
+    switch (mode)
+    {
+      case Arg_Sync:
+        SyncToTarget.HandleSync(targets);
+        break;
+      // case Arg_Deploy:
+      //   HandleDeploy(options, configRoot.deployTargets);
+      //   break;
+      case Arg_Run:
+        HandleRun(targets);
+        break;
+      default:
+        PrintUsage();
+        return 1;
+    }
+
+    return 0;
+  }
+
+
+  private static bool TryGetConfigPath(Dictionary<string, string> options, [NotNullWhen(true)] out string? configPath)
+  {
+    var isDefaultConfigPath = false;
+    var currentDir = Environment.CurrentDirectory;
+
+    if (!options.TryGetValue(Opt_Config, out configPath))
+    {
+      isDefaultConfigPath = true;
+      if (string.IsNullOrWhiteSpace(currentDir))
+      {
+        Console.Error.WriteLine("Could not determine EXE directory");
+        return false;
+      }
+      configPath = Path.Combine(currentDir, configFileName);
+    }
+
     if (string.IsNullOrWhiteSpace(configPath))
     {
       Console.Error.WriteLine($"Config file not specified or could not be found at <{configPath}>. Please provide a --config or add a modSync.json in the directory of the modSync.exe file.");
-      return 1;
+      return false;
     }
 
     if (!File.Exists(configPath))
@@ -77,33 +111,10 @@ public static class ModSyncCli
         msg += $"\nExecutingAssemblyPath: {currentDir}";
       }
       Console.Error.WriteLine(msg);
-      return 1;
+      return false;
     }
 
-    // Load and parse JSON5 config
-    var json5String = File.ReadAllText(configPath);
-    var configRoot = Json5Core.Json5.Deserialize<ModSyncConfig.ModSyncConfigObject>(json5String);
-
-    var targets = GetTargets(options, configRoot);
-
-    // Dispatch command
-    switch (mode)
-    {
-      case Arg_Sync:
-        SyncToTarget.HandleSync(targets, configRoot.syncTargets, configRoot);
-        break;
-      // case Arg_Deploy:
-      //   HandleDeploy(options, configRoot.deployTargets);
-      //   break;
-      case Arg_Run:
-        HandleRun(targets, configRoot.runTargets);
-        break;
-      default:
-        PrintUsage();
-        return 1;
-    }
-
-    return 0;
+    return true;
   }
 
   private static string[] GetTargets(Dictionary<string, string> options, ModSyncConfig.ModSyncConfigObject config)
@@ -149,9 +160,9 @@ public static class ModSyncCli
     // }
   }
 
-  private static void HandleRun(string[] targets, Dictionary<string, ModSyncConfig.RunTargetItem>? runTargets)
+  private static void HandleRun(string[] targets)
   {
-    if (runTargets == null)
+    if (ModSyncConfig.ConfigInstance.runTargets == null)
     {
       Console.WriteLine("No runTargets found in config");
       return;
@@ -159,7 +170,7 @@ public static class ModSyncCli
 
     foreach (var targetName in targets)
     {
-      if (!runTargets.TryGetValue(targetName, out var match))
+      if (!ModSyncConfig.ConfigInstance.runTargets.TryGetValue(targetName, out var match))
       {
         Console.WriteLine($"No runTarget found for '{targetName}'");
         continue;

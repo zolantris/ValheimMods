@@ -19,8 +19,15 @@
         <PostInstallerEnabled>true</PostInstallerEnabled>
         <Optimize>false</Optimize>
         <OutputPath>bin\$(Configuration)\</OutputPath>
-        <Configurations>Debug;Release;Debug Run ClientServer;Debug Run Client;Release Archive;ReleaseBeta Archive</Configurations>
+        <Configurations>Debug;Release;Debug Run ClientServer;Debug Run Client;Release Archive;ReleaseBeta Archive;ModSyncOnly</Configurations>
         <TargetFramework>Net8.0</TargetFramework>
+        <Platforms>AnyCPU</Platforms>
+    </PropertyGroup>
+
+    <PropertyGroup Label="For target args generation">
+        <SyncTargets Condition="'$(IsRunnableServer)' == 'true'">server</SyncTargets>
+        <SyncTargets Condition="'$(IsRunnableClient)' == 'true'">localClient</SyncTargets>
+        <SyncTargets Condition="'$(IsRunnableClientServer)' == 'true'">localClient,vmClient,server</SyncTargets>
     </PropertyGroup>
 
     <!-- Consolidated RunPostInstaller target -->
@@ -40,8 +47,10 @@
         <Message Text="ProjectDir is: $(ProjectDir)" Importance="high"/>
         <Message Text="ModOutputDir is: $(ModOutputDir)" Importance="high"/>
 
-        <Exec Command="dotnet &quot;$(ModSyncDll)&quot; sync --targets=&quot;localClient&quot;"
+        <Exec Condition=" '$(SyncTargets)' != '' "
+              Command="dotnet &quot;$(ModSyncDll)&quot; sync --targets=&quot;localClient&quot;"
               WorkingDirectory="$(SolutionDir)"
-              IgnoreExitCode="false"/>
+              IgnoreExitCode="false"
+        />
     </Target>
 </Project>

@@ -4,7 +4,7 @@
 
     <PropertyGroup>
         <Nullable>enable</Nullable>
-        <Configurations>Debug;Release;Release Archive;ReleaseBETA Archive</Configurations>
+        <Configurations>Debug;Release;Release Archive;ReleaseBETA Archive;ModSyncOnly</Configurations>
         <Platforms>AnyCPU</Platforms>
     </PropertyGroup>
 
@@ -12,7 +12,7 @@
     <ItemGroup>
         <ProjectReference Include="..\Shared\Shared.csproj"/>
     </ItemGroup>
-    
+
     <!--  requires zdowatcher  -->
     <ItemGroup>
         <ProjectReference Include="..\ZdoWatcher\ZdoWatcher.csproj"/>

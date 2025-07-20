@@ -18,6 +18,7 @@
         <Nullable>enable</Nullable>
         <ApplicationVersion>1.8.0</ApplicationVersion>
         <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+        <Configurations>Debug;Release;ReleaseBETA Archive;ModSyncOnly</Configurations>
     </PropertyGroup>
     <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'ReleaseBETA Archive|AnyCPU' ">
         <OutputPath>bin\ReleaseBETA Archive\</OutputPath>

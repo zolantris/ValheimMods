@@ -4,7 +4,7 @@
     <PropertyGroup>
         <BepInExPath>$(SolutionDir)libs</BepInExPath>
         <ManagedDataPath>$(SolutionDir)libs</ManagedDataPath>
-        <Configurations>Debug;Release;Test</Configurations>
+        <Configurations>Debug;Release;Test;ModSyncOnly</Configurations>
         <Platforms>AnyCPU</Platforms>
     </PropertyGroup>
     <PropertyGroup>

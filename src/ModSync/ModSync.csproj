@@ -5,8 +5,7 @@
 
     <PropertyGroup>
         <OutputType>Exe</OutputType>
-        <RootNamespace>ModSync</RootNamespace>
-        <Configurations>Debug;Release;</Configurations>
+        <Configurations>Debug;Release;ModSyncOnly</Configurations>
         <Platforms>AnyCPU</Platforms>
         <TargetFramework>Net8.0</TargetFramework>
     </PropertyGroup>
