@@ -36,7 +36,7 @@ public class PrefabConfig : BepInExBaseConfig<PrefabConfig>
 
   public static ConfigEntry<bool> Cannon_HasFireAudio { get; set; } = null!;
   public static ConfigEntry<float> Cannon_ReloadTime { get; set; } = null!;
-  public static ConfigEntry<float> Cannon_HandHeldReloadTime { get; set; } = null!;
+  public static ConfigEntry<float> CannonHandHeld_ReloadTime { get; set; } = null!;
   public static ConfigEntry<bool> Cannonball_HasExplosionAudio { get; set; } = null!;
   public static ConfigEntry<bool> HasCannonballWindAudio { get; set; } = null!;
   public static ConfigEntry<float> CannonballWindAudioVolume { get; set; } = null!;
@@ -56,6 +56,9 @@ public class PrefabConfig : BepInExBaseConfig<PrefabConfig>
   public static ConfigEntry<float> CannonAutoAimSpeed { get; set; } = null!;
   public static ConfigEntry<float> CannonAutoAimYOffset { get; set; } = null!;
   public static ConfigEntry<float> CannonAimMaxYRotation { get; set; } = null!;
+
+  // cannon control center
+  public static ConfigEntry<float> CannonControlCenter_DiscoveryRadius { get; set; } = null!;
 
   // left right rotation.
   public static ConfigEntry<float> CannonHandheld_AimYRotationMax { get; set; } = null!;
@@ -103,6 +106,7 @@ public class PrefabConfig : BepInExBaseConfig<PrefabConfig>
 
   private const string SectionKey = "PrefabConfig";
   private const string VehicleCannonsSection = "PrefabConfig: VehicleCannons";
+  private const string CannonControlCenterSection = "PrefabConfig: CannonControlCenter";
   private const string PowderBarrelSection = "PrefabConfig: PowderBarrel";
 
 
@@ -267,12 +271,12 @@ public class PrefabConfig : BepInExBaseConfig<PrefabConfig>
     };
     CannonController.ReloadTimeOverride = Cannon_ReloadTime.Value;
 
-    Cannon_HandHeldReloadTime = config.BindUnique(VehicleCannonsSection, "Cannon_HandHeldReloadTime", 6f, ConfigHelpers.CreateConfigDescription("Allows setting cannon-handheld reload delays. This makes cannons reload longer or shorter. Shortest value is 100ms highest is 60seconds", false, false, new AcceptableValueRange<float>(0.1f, 60f)));
-    Cannon_HandHeldReloadTime.SettingChanged += (sender, args) =>
+    CannonHandHeld_ReloadTime = config.BindUnique(VehicleCannonsSection, "CannonHandHeld_ReloadTime", 6f, ConfigHelpers.CreateConfigDescription("Allows setting cannon-handheld reload delays. This makes cannons reload longer or shorter. Shortest value is 100ms highest is 60seconds", false, false, new AcceptableValueRange<float>(0.1f, 60f)));
+    CannonHandHeld_ReloadTime.SettingChanged += (sender, args) =>
     {
-      CannonController.Cannon_HandHeldReloadTime = Cannon_HandHeldReloadTime.Value;
+      CannonController.CannonHandHeld_ReloadTime = CannonHandHeld_ReloadTime.Value;
     };
-    CannonController.Cannon_HandHeldReloadTime = Cannon_HandHeldReloadTime.Value;
+    CannonController.CannonHandHeld_ReloadTime = CannonHandHeld_ReloadTime.Value;
 
     Cannon_ReloadAudioVolume = config.BindUnique(VehicleCannonsSection, "Cannon_ReloadAudioVolume", 1f, ConfigHelpers.CreateConfigDescription("Allows customizing cannon firing audio volume", false, false));
     Cannon_FireAudioVolume = config.BindUnique(VehicleCannonsSection, "Cannon_FireAudioVolume", 1f, ConfigHelpers.CreateConfigDescription("Allows customizing cannon reload audio volume", false, false));
@@ -329,8 +333,15 @@ public class PrefabConfig : BepInExBaseConfig<PrefabConfig>
 
     CannonAimMaxYRotation = config.BindUnique(VehicleCannonsSection, "CannonAimMaxYRotation", 15f, ConfigHelpers.CreateConfigDescription("Maximum Y rotational a cannon can turn. Left to right. Front to bow etc.", true, false, new AcceptableValueRange<float>(5f, 50f)));
 
+    CannonControlCenter_DiscoveryRadius = config.BindUnique(CannonControlCenterSection, "DiscoveryRadius", 15f, ConfigHelpers.CreateConfigDescription("The radius in which a single cannon control center controls all cannons and detect and prevents other control radiuses from being placed. Requires a reload of the area when updating.", true, false, new AcceptableValueRange<float>(30f, 80f)));
+    CannonControlCenter_DiscoveryRadius.SettingChanged += (sender, args) =>
+    {
+      TargetController.CannonControlCenterDiscoveryRadius = CannonControlCenter_DiscoveryRadius.Value;
+    };
+    TargetController.CannonControlCenterDiscoveryRadius = CannonControlCenter_DiscoveryRadius.Value;
 
-    CannonHandheld_AimYRotationMax = config.BindUnique(VehicleCannonsSection, "CannonHandheld_AimYRotationMax", CannonHandHeldController.minYaw, ConfigHelpers.CreateConfigDescription("Maximum Y, the  rotational a cannon can turn toward right. Too much will overlap player and look weird. But it would allow aiming left significantly more without needing to rotate body.", true, false, new AcceptableValueRange<float>(30f, 180f)));
+
+    CannonHandheld_AimYRotationMax = config.BindUnique(VehicleCannonsSection, "CannonHandheld_AimYRotationMax", CannonHandHeldController.maxYaw, ConfigHelpers.CreateConfigDescription("Maximum Y, the  rotational a cannon can turn toward right. Too much will overlap player and look weird. But it would allow aiming left significantly more without needing to rotate body.", true, false, new AcceptableValueRange<float>(30f, 180f)));
     CannonHandheld_AimYRotationMin = config.BindUnique(VehicleCannonsSection, "CannonHandheld_AimYRotationMin", CannonHandHeldController.minYaw, ConfigHelpers.CreateConfigDescription("Minimum Y rotational a cannon can turn, left. Too much will overlap player. But it would allow aiming left significantly more without needing to rotate body.", true, false, new AcceptableValueRange<float>(-180f, -30f)));
     CannonHandheld_AimYRotationMax.SettingChanged += (sender, args) => CannonHandHeldController.maxYaw = CannonHandheld_AimYRotationMax.Value;
     CannonHandheld_AimYRotationMin.SettingChanged += (sender, args) => CannonHandHeldController.minYaw = CannonHandheld_AimYRotationMin.Value;

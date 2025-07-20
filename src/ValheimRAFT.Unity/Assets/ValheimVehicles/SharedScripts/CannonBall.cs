@@ -3,15 +3,13 @@
 
 #region
 
-using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using JetBrains.Annotations;
 using UnityEngine;
-using ValheimVehicles.Structs;
-using Random = UnityEngine.Random;
-# if !UNITY_2022 && !UNITY_EDITOR
+using ValheimVehicles.SharedScripts.Structs;
+# if VALHEIM
 using ValheimVehicles.Controllers;
 #endif
 
@@ -36,7 +34,8 @@ namespace ValheimVehicles.SharedScripts
       Wood,
       Metal,
       Stone,
-      Terrain
+      Terrain,
+      Character
     }
 
     public enum ProjectileHitType
@@ -74,7 +73,7 @@ namespace ValheimVehicles.SharedScripts
     [SerializeField] private bool debugDrawTrajectory;
 
     [Header("Explosion Physics")]
-    [SerializeField] private float explosionForce = 1200f;
+    [SerializeField] private float explosionForce = 3f;
     [CanBeNull] public Transform lastFireTransform;
     public Rigidbody m_body;
     private readonly float _explosionClipStartPosition = 0.1f;
@@ -110,7 +109,7 @@ namespace ValheimVehicles.SharedScripts
     private GameObject meshGameObject;
     public List<Collider> Colliders => TryGetColliders();
     [SerializeField] public bool CanApplyDamage = true;
-#if !UNITY_2022 && !UNITY_EDITOR
+#if VALHEIM
     public VehicleZSyncTransform m_customZSyncTransform;
     public ZNetView m_nview;
 #endif
@@ -135,7 +134,7 @@ namespace ValheimVehicles.SharedScripts
 #if UNITY_EDITOR
       HasCannonballWindAudio = CanPlayWindSound;
 #endif
-#if !UNITY_2022 && !UNITY_EDITOR
+#if VALHEIM
       m_nview = GetComponent<ZNetView>();
       m_customZSyncTransform = GetComponent<VehicleZSyncTransform>();
 #endif
@@ -275,6 +274,7 @@ namespace ValheimVehicles.SharedScripts
     public HitMaterial GetHitMaterialFromLayer(GameObject obj)
     {
       var layer = obj.layer;
+      if (LayerHelpers.IsContainedWithinLayerMask(layer, LayerHelpers.CharacterLayerMask)) return HitMaterial.Character;
       if (LayerHelpers.TerrainLayer == layer) return HitMaterial.Terrain;
       if (LayerHelpers.DefaultLayer == layer) return HitMaterial.Wood;
       if (LayerHelpers.DefaultSmallLayer == layer) return HitMaterial.Wood;
@@ -313,27 +313,36 @@ namespace ValheimVehicles.SharedScripts
 
     /// <summary>
     /// A velocity multiplier that is between 0 and 1. 0 being complete loss of velocity and 1 being no change.
+    /// e.g. Metal / Stone should absorb most velocity but characters will only lose 10% velocity per hit.
     /// </summary>
-    /// <param name="hitMaterial"></param>
-    /// <returns></returns>
-    /// <exception cref="System.ArgumentOutOfRangeException"></exception>
     public float GetHitMaterialVelocityMultiplier(HitMaterial hitMaterial)
     {
       switch (hitMaterial)
       {
-        case HitMaterial.Wood:
-          return 0.75f;
         case HitMaterial.Metal:
-          return 0.1f;
+          return 0.05f;
         case HitMaterial.Stone:
-          return 0.2f;
+          return 0.25f;
         case HitMaterial.Terrain:
-          return 1f;
+          return 0.25f;
+        case HitMaterial.Wood:
+          return 0.9f;
+        case HitMaterial.Character:
+          return 0.9f;
         case HitMaterial.None:
         default:
-          return 0.75f;
+          return 0.5f;
       }
     }
+
+    public void LogDeltaDistance(Vector3 explosionOrigin, Vector3 hitPoint, Collider col)
+    {
+      var dist = Vector3.Distance(explosionOrigin, hitPoint);
+      var distHitToCenter = Vector3.Distance(hitPoint, col.bounds.center);
+      LoggerProvider.LogDebugDebounced($"Distance from center {distHitToCenter} hitpoint {hitPoint} dist from origin {dist}");
+    }
+
+    public static bool HasCannonballDebugger = false;
 
     /// <summary>
     /// Higher speed will generate a larger impact h.
@@ -343,21 +352,30 @@ namespace ValheimVehicles.SharedScripts
     private void GetCollisionsFromExplosion(Vector3 explosionOrigin, float force)
     {
       var count = Physics.OverlapSphereNonAlloc(explosionOrigin, explosionRadius, allocatedColliders, LayerHelpers.CannonHitLayers);
+      var hasHitMineRock = false;
       for (var i = 0; i < count; i++)
       {
         var col = allocatedColliders[i];
-        // Closest point on the collider to explosion
         var hitPoint = col.ClosestPointOnBounds(explosionOrigin);
         var dir = (hitPoint - explosionOrigin).normalized;
-        var dist = Vector3.Distance(explosionOrigin, hitPoint);
 
-#if DEBUG
-        var distHitToCenter = Vector3.Distance(hitPoint, col.bounds.center);
-        LoggerProvider.LogDebugDebounced($"Distance from center {distHitToCenter} hitpoint {hitPoint} dist from origin {dist}");
-#endif
-        var damageInfo = CannonballHitScheduler.GetDamageInfoForHit(this, col, hitPoint, dir, Vector3.up * 90f, Mathf.Max(90f, force), true);
+        if (HasCannonballDebugger)
+        {
+          LogDeltaDistance(explosionOrigin, hitPoint, col);
+        }
+
+        var damageInfo = CannonballHitScheduler.GetDamageInfoForHit(col, hitPoint, dir, Vector3.up * 90f, Mathf.Max(90f, force), true);
         var hitMineRockLocal = damageInfo.isMineRock5Hit || damageInfo.isMineRockHit;
-        var hasHitMineRock = false;
+
+        if (hasHitMineRock)
+        {
+          if (!hitMineRockLocal)
+          {
+            CannonballHitScheduler.AddDamageToQueue(damageInfo);
+          }
+          continue;
+        }
+
         if (!hasHitMineRock)
         {
           if (hitMineRockLocal)
@@ -366,42 +384,6 @@ namespace ValheimVehicles.SharedScripts
           }
           CannonballHitScheduler.AddDamageToQueue(damageInfo);
         }
-        else if (hasHitMineRock && !hitMineRockLocal)
-        {
-          CannonballHitScheduler.AddDamageToQueue(damageInfo);
-        }
-
-        // RaycastHit hitInfo;
-        // // Raycast from explosion to object
-        // var hasHitMineRock = false;
-        // if (Physics.Raycast(explosionOrigin, dir, out hitInfo, dist + 0.1f, explosionLayerMask))
-        // {
-        //   if (hitInfo.collider == col)
-        //   {
-        //     var rb = col.attachedRigidbody;
-        //     if (rb != null)
-        //     {
-        //       if (!PrefabNames.IsVehicle(rb.name) && !PrefabNames.IsVehiclePiecesContainer(rb.name))
-        //       {
-        //         rb.AddExplosionForce(force, explosionOrigin, explosionRadius);
-        //       }
-        //     }
-        //
-        //     // This logic prevents a cascade of Damage calls only one minerock should be damaged otherwise every hit triggers a minerock damage itself.
-        //     if (!hasHitMineRock)
-        //     {
-        //       if (hitMineRockLocal)
-        //       {
-        //         hasHitMineRock = hitMineRockLocal;
-        //       }
-        //       CannonballHitScheduler.AddDamageToQueue(damageInfo);
-        //     }
-        //     else if (hasHitMineRock && !hitMineRockLocal)
-        //     {
-        //       CannonballHitScheduler.AddDamageToQueue(damageInfo);
-        //     }
-        //   }
-        // }
       }
     }
 
@@ -462,12 +444,6 @@ namespace ValheimVehicles.SharedScripts
     {
       var velocityRandomizer = relativeVelocityMagnitude / 50f - randomValue;
       var canPenetrate = velocityRandomizer > 0.25f;
-
-      if (hitMaterial == HitMaterial.Terrain)
-      {
-        canPenetrate = false;
-      }
-
       return canPenetrate;
     }
 
@@ -524,7 +500,7 @@ namespace ValheimVehicles.SharedScripts
       {
         var colliderTransformRoot = ValheimCompatibility.GetPrefabRoot(colliderTransform);
         var root = ValheimCompatibility.GetPrefabRoot(_controller.transform);
-#if !UNITY_2022 && !UNITY_EDITOR
+#if VALHEIM
         if (PrefabNames.IsVehiclePiecesContainer(_controller.transform.root.name))
         {
           _controller.PiecesController = _controller.transform.root.GetComponent<VehiclePiecesController>();
@@ -586,7 +562,6 @@ namespace ValheimVehicles.SharedScripts
       var otherCollider = other.collider;
       var hitPoint = sphereCollider.ClosestPoint(otherCollider.bounds.center);
       var direction = (otherCollider.bounds.center - hitPoint).normalized;
-      // var colliderName = other.collider.name;
 
       var relativeVelocity = other.relativeVelocity;
       var relativeVelocityMagnitude = relativeVelocity.magnitude;
@@ -625,7 +600,7 @@ namespace ValheimVehicles.SharedScripts
           AddCollidersToIgnoreList(other);
           if (CanDoDamage())
           {
-            CannonballHitScheduler.AddDamageToQueue(this, other.collider, hitPoint, direction, nextVelocity, relativeVelocityMagnitude, false);
+            CannonballHitScheduler.AddDamageToQueue(other.collider, hitPoint, direction, nextVelocity, relativeVelocityMagnitude, false);
           }
           canMutateVelocity = true;
         }
@@ -637,7 +612,7 @@ namespace ValheimVehicles.SharedScripts
           {
             if (CanDoDamage())
             {
-              CannonballHitScheduler.AddDamageToQueue(this, other.collider, hitPoint, direction, nextVelocity, relativeVelocityMagnitude, false);
+              CannonballHitScheduler.AddDamageToQueue(other.collider, hitPoint, direction, nextVelocity, relativeVelocityMagnitude, false);
             }
           }
           // clamp velocity but allow physics for downwards velocity.
@@ -652,15 +627,14 @@ namespace ValheimVehicles.SharedScripts
           return;
         }
       }
-
-      if (cannonballVariant == CannonballVariant.Explosive)
+      else if (cannonballVariant == CannonballVariant.Explosive)
       {
         if (!_hasExploded && Vector3.Distance(_fireOrigin.Value, transform.position) > 3f)
         {
           if (CanDoDamage())
           {
             // addition impact damage first
-            CannonballHitScheduler.AddDamageToQueue(this, other.collider, hitPoint, direction, nextVelocity, relativeVelocityMagnitude, false);
+            CannonballHitScheduler.AddDamageToQueue(other.collider, hitPoint, direction, nextVelocity, relativeVelocityMagnitude, false);
             // explosion next
             GetCollisionsFromExplosion(transform.position, relativeVelocityMagnitude);
           }
@@ -781,6 +755,7 @@ namespace ValheimVehicles.SharedScripts
         return;
       }
       _controller = cannonController;
+      _syncedRandomValue = data.randomVelocityValue;
       _fireData = data;
       _firingCannonballCoroutine.Start(FireCannonball(data, velocity, firingIndex));
     }
@@ -808,7 +783,7 @@ namespace ValheimVehicles.SharedScripts
       else
       {
         // destroy self if the cannon gets broken or current provider has no access to cannon instance.
-#if !UNITY_2022 || !UNITY_EDITOR
+#if VALHEIM
         ZNetScene.instance.Destroy(gameObject);
 #else
         Destroy(gameObject);
@@ -821,7 +796,7 @@ namespace ValheimVehicles.SharedScripts
       if (!m_body) return;
       var hasKinematic = !isFiring;
 
-#if !UNITY_2022 && !UNITY_EDITOR
+#if VALHEIM
       if (m_customZSyncTransform)
       {
         m_customZSyncTransform.SetKinematic(hasKinematic);

@@ -87,6 +87,9 @@ public class ShipHullPrefab : IRegisterPrefab
 
     RegisterHullProwSeal();
 
+    RegisterHullProwSpecialVariant(HullMaterial.Wood, PrefabNames.PrefabSizeVariant.TwoByTwoByEight, PrefabNames.DirectionVariant.Left, "sleek");
+    RegisterHullProwSpecialVariant(HullMaterial.Wood, PrefabNames.PrefabSizeVariant.TwoByTwoByEight, PrefabNames.DirectionVariant.Right, "sleek");
+
     RegisterHullProwSpecialVariant(HullMaterial.Iron, PrefabNames.PrefabSizeVariant.TwoByTwoByEight, PrefabNames.DirectionVariant.Left, "cutter");
     RegisterHullProwSpecialVariant(HullMaterial.Iron, PrefabNames.PrefabSizeVariant.TwoByTwoByEight, PrefabNames.DirectionVariant.Right, "cutter");
 

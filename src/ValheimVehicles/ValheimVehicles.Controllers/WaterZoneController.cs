@@ -222,7 +222,7 @@ public class WaterZoneController : CreativeModeColliderComponent
   public void UseDebugComponents()
   {
     CreateDebugHelperComponent();
-    gameObject.layer = LayerHelpers.NonSolidLayer;
+    gameObject.layer = LayerHelpers.PieceNonSolidLayer;
   }
 
   /// <summary>

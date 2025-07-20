@@ -42,7 +42,7 @@ namespace ValheimVehicles.SharedScripts
 
     [CanBeNull] private Transform GetEnemyRootTransform(Collider col)
     {
-#if !UNITY_EDITOR && !UNITY_2022
+#if VALHEIM
       // For Valheim: Prefer Character (Valheim's NPC/monster/player class)
       var character = col.GetComponentInParent<Character>();
       if (character != null && !character.IsPlayer() && !character.IsTamed(5f) && !character.IsDead())
@@ -73,7 +73,7 @@ namespace ValheimVehicles.SharedScripts
     {
       _currentEnemies.RemoveWhere(t =>
         {
-#if !UNITY_EDITOR && !UNITY_2022
+#if VALHEIM
           if (t != null)
           {
             var character = t.GetComponent<Character>();

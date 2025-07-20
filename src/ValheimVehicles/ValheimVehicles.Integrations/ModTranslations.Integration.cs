@@ -177,7 +177,9 @@ public partial class ModTranslations
     SharedKeys_Hold = SafeLocalize("$valheim_vehicles_shared_keys_hold");
     SharedKeys_Reset = SafeLocalize("$valheim_vehicles_shared_keys_reset");
     SharedKeys_AddMany = SafeLocalize("$valheim_vehicles_mechanism_interact_add_many");
-    SharedKeys_InteractAltAndPlace = SafeLocalize($"[<color=yellow><b>{ValheimInput_KeyAltPlace}+{ValheimInput_KeyUse}</b></color>]");
+
+    SharedKeys_InteractPrimary = SafeLocalize($"[<color=yellow><b>{ValheimInput_KeyUse}</b></color>]");
+    SharedKeys_InteractAlt = SafeLocalize($"[<color=yellow><b>{ValheimInput_KeyAltPlace}+{ValheimInput_KeyUse}</b></color>]");
   }
 
   private static void SetCurrentLocalizedLanguage()

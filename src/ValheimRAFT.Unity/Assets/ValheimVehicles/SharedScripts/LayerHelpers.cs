@@ -51,7 +51,7 @@
 
       public static List<string> ActiveLayersForBlockingMask = new();
 
-      public static int NonSolidLayer =
+      public static int PieceNonSolidLayer =
         LayerMask.NameToLayer("piece_nonsolid");
 
       public static int IgnoreRaycastLayer =
@@ -65,7 +65,7 @@
 
       public static int CharacterLayer = LayerMask.NameToLayer("character");
       public static int CharacterTriggerLayer = LayerMask.NameToLayer("character_trigger");
-      public static int CharacterLayerMask = LayerMask.GetMask("character", "character_net");
+      public static int CharacterLayerMask = LayerMask.GetMask("character", "character_net", "character_nonenv");
 
       public static bool IsItemLayer(int layer)
       {

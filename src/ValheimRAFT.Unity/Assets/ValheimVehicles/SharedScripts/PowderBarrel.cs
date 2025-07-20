@@ -38,7 +38,7 @@ namespace ValheimVehicles.SharedScripts
     public static HashSet<PowderBarrel> ExplodingBarrels = new();
 
     public static float LastBarrelPlaceTime;
-#if !UNITY_2022 && !UNITY_EDITOR
+#if VALHEIM
     public WearNTear wearNTear;
 #endif
 
@@ -58,7 +58,7 @@ namespace ValheimVehicles.SharedScripts
 
       explosionAudio = explosionTransform.GetComponent<AudioSource>();
       explosionFx = explosionFxTransform.GetComponent<ParticleSystem>();
-#if !UNITY_2022 && !UNITY_EDITOR
+#if VALHEIM
       wearNTear = GetComponent<WearNTear>();
 #endif
     }
@@ -70,7 +70,7 @@ namespace ValheimVehicles.SharedScripts
 
     public void OnEnable()
     {
-#if !UNITY_2022 && !UNITY_EDITOR
+#if VALHEIM
       wearNTear = GetComponent<WearNTear>();
       if (wearNTear != null)
       {
@@ -81,7 +81,7 @@ namespace ValheimVehicles.SharedScripts
 
     public void OnDisable()
     {
-#if !UNITY_2022 && !UNITY_EDITOR
+#if VALHEIM
       wearNTear = GetComponent<WearNTear>();
       if (wearNTear != null)
       {
@@ -92,7 +92,7 @@ namespace ValheimVehicles.SharedScripts
 
     public void OnExplodeDestroy()
     {
-#if !UNITY_2022 && !UNITY_EDITOR
+#if VALHEIM
       if (wearNTear == null) return;
       wearNTear.Destroy(null, true);
 #else
@@ -105,7 +105,7 @@ namespace ValheimVehicles.SharedScripts
     /// </summary>
     public void OnWearNTearDamage()
     {
-#if !UNITY_2022 && !UNITY_EDITOR
+#if VALHEIM
       if (wearNTear == null) return;
       if (_explosionRoutine.IsRunning) return;
       if (wearNTear.m_healthPercentage <= 75)
@@ -194,7 +194,7 @@ namespace ValheimVehicles.SharedScripts
           continue;
         }
 
-        CannonballHitScheduler.AddDamageToQueue(this, col, hitPoint, dir, Vector3.zero, 90f, true);
+        CannonballHitScheduler.AddDamageToQueue(col, hitPoint, dir, Vector3.zero, 90f, true);
 
         // Not a barrel, invoke fallback
         OnHitCollider?.Invoke(col);

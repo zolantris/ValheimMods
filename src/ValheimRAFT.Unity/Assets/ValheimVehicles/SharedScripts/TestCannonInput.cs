@@ -5,7 +5,7 @@
 
 using System.Collections.Generic;
 using UnityEngine;
-using ValheimVehicles.Structs;
+using ValheimVehicles.SharedScripts.Structs;
 
 #endregion
 

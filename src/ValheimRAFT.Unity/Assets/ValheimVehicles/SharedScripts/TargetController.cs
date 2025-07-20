@@ -9,12 +9,13 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using UnityEngine;
+using ValheimVehicles.SharedScripts.Helpers;
+using ValheimVehicles.SharedScripts.Structs;
+#if VALHEIM
 using ValheimVehicles.Components;
 using ValheimVehicles.Controllers;
 using ValheimVehicles.RPC;
-using ValheimVehicles.SharedScripts.Helpers;
-using ValheimVehicles.Structs;
-using Random = UnityEngine.Random;
+#endif
 
 #endregion
 
@@ -39,11 +40,18 @@ namespace ValheimVehicles.SharedScripts
       // Future: AttackArea, AttackPlayer, Patrol, etc
     }
 
+    public enum CannonDetectionMode
+    {
+      Parent,
+      Collider
+    }
+
+    public CannonDetectionMode cannonDetectionMode = CannonDetectionMode.Parent;
+
     public static float DEFEND_PLAYER_SAFE_RADIUS = 3f;
+    public static float CannonControlCenterDiscoveryRadius = 30f;
     public static float MAX_DEFEND_SEARCH_RADIUS = 30f;
     public static Vector3 MAX_DEFEND_AREA_SEARCH = new(30f, 40f, 30f);
-
-    public static Func<Transform, bool> IsHostileCharacter = transform1 => true;
 
     public static bool canShootPlayer = true;
 
@@ -107,41 +115,22 @@ namespace ValheimVehicles.SharedScripts
 
     public IReadOnlyDictionary<CannonDirectionGroup, List<CannonController>> ManualCannonGroups => _manualCannonGroups;
     public IReadOnlyDictionary<CannonDirectionGroup, float> ManualGroupTilt => _manualGroupTilt;
-    public CannonFiringHotkeys _cannonFiringHotkeys;
 
-#if !UNITY_2022 && !UNITY_EDITOR
+#if VALHEIM
+    public CannonFiringHotkeys _cannonFiringHotkeys;
     private VehiclePiecesController _piecesController;
     public static RPCEntity FireCannonGroup_RPC = null!;
     public static RPCEntity SyncCannonGroup_RPC = null!;
     public static RPCEntity AutoFireCannonGroup_RPC = null!;
+    public ZNetView m_nview;
 #endif
     public Transform _forwardTransform { get; set; }
-    public ZNetView m_nview;
 
     private void Awake()
     {
-      m_nview = GetComponentInParent<ZNetView>();
-
       ammoController = gameObject.GetOrAddComponent<AmmoController>();
 
       SetupForwardTransform();
-
-      IsHostileCharacter = t =>
-      {
-#if !UNITY_EDITOR && !UNITY_2022
-        var character = t.GetComponent<Character>();
-        if (character == null) return false;
-        if (canShootPlayer && character.IsPlayer() && !character.IsDead()) return true;
-        return !character.IsPlayer() && !character.IsTamed(5f) && !character.IsDead();
-#else
-        if (!t) return false;
-        var tName = t.name;
-        var rootName = t.root.name;
-        if (rootName.StartsWith("player") || rootName.Contains("friendly") || tName.StartsWith("player_collider")) return false;
-        return true;
-#endif
-        return true;
-      };
 
 #if UNITY_EDITOR
       // mostly for local testing.
@@ -154,18 +143,118 @@ namespace ValheimVehicles.SharedScripts
             manualFireControllers.Add(allCannonController);
             break;
           case CannonFiringMode.Auto:
-            autoTargetControllers.Add(allCannonController);
+            autoTargetCannonControllers.Add(allCannonController);
             break;
           default:
             throw new ArgumentOutOfRangeException();
         }
       }
 #endif
+      UpdateCannonDetectionModeFromPrefabName();
 
       RefreshAllDefenseAreaTriggers();
       RefreshPlayerDefenseTriggers();
 
       RecalculateCannonGroups(); // New: Build initial grouping
+    }
+
+    public void UpdateCannonDetectionModeFromPrefabName()
+    {
+      cannonDetectionMode = gameObject.name.StartsWith(PrefabNames.CannonControlCenter) ? CannonDetectionMode.Collider : CannonDetectionMode.Parent;
+
+      OnDetectionModeChange();
+    }
+    /// <summary>
+    /// This is a guard. We can block most of the placement in onPlace patches
+    /// </summary>
+    public void OnTransformParentChanged()
+    {
+#if VALHEIM
+      if (!gameObject.name.StartsWith(PrefabNames.CannonControlCenter)) return;
+      if (transform.root == transform) return;
+
+      if (!m_nview) Destroy(this);
+      if (Player.m_localPlayer)
+      {
+        Player.m_localPlayer.Message(MessageHud.MessageType.Center, Localization.instance.Localize("$valheim_vehicles_cannon_control_center_placement_error"));
+      }
+
+      var wnt = m_nview.GetComponent<WearNTear>();
+      if (wnt)
+      {
+        wnt.Destroy();
+      }
+      else
+      {
+        Destroy(gameObject);
+      }
+#endif
+    }
+
+    public void OnTriggerEnter(Collider other)
+    {
+#if VALHEIM
+      var piece = other.GetComponentInParent<Piece>();
+      if (piece == null) return;
+      var isCannonPiece = piece.name.StartsWith(PrefabNames.CannonTurretTier1) || piece.name.StartsWith(PrefabNames.CannonFixedTier1);
+      if (!isCannonPiece) return;
+
+      var cannonController = piece.GetComponentInParent<CannonController>();
+      if (cannonController == null) return;
+      AddCannon(cannonController);
+#endif
+    }
+
+    public void OnTriggerExit(Collider other)
+    {
+#if VALHEIM
+      var piece = other.GetComponentInParent<Piece>();
+      if (piece == null) return;
+      var isCannonPiece = piece.name.StartsWith(PrefabNames.CannonTurretTier1) || piece.name.StartsWith(PrefabNames.CannonFixedTier1);
+      if (!isCannonPiece) return;
+      var cannonController = piece.GetComponentInParent<CannonController>();
+      if (cannonController == null) return;
+      RemoveCannon(cannonController);
+#endif
+    }
+
+    public GameObject detectionAreaObj;
+
+    public void OnDetectionModeChange()
+    {
+      if (cannonDetectionMode == CannonDetectionMode.Collider)
+      {
+        var rb = gameObject.GetOrAddComponent<Rigidbody>();
+        rb.isKinematic = true;
+        rb.useGravity = false;
+        rb.constraints = RigidbodyConstraints.FreezeAll;
+        rb.detectCollisions = true;
+        detectionAreaObj = new GameObject("DetectionArea", typeof(SphereCollider));
+        detectionAreaObj.transform.SetParent(transform);
+        detectionAreaObj.layer = LayerHelpers.PieceNonSolidLayer;
+        var sphereCollider = detectionAreaObj.GetOrAddComponent<SphereCollider>();
+        sphereCollider.radius = CannonControlCenterDiscoveryRadius;
+        sphereCollider.isTrigger = true;
+        sphereCollider.includeLayers = LayerHelpers.PieceLayer;
+        sphereCollider.center = Vector3.zero;
+        var sphereTransform = sphereCollider.transform;
+        sphereTransform.localPosition = Vector3.zero;
+        sphereTransform.localRotation = Quaternion.identity;
+        sphereTransform.localScale = Vector3.one;
+        sphereCollider.enabled = true;
+      }
+      else
+      {
+        var rb = GetComponent<Rigidbody>();
+        if (rb)
+        {
+          Destroy(rb);
+        }
+        if (detectionAreaObj)
+        {
+          Destroy(detectionAreaObj);
+        }
+      }
     }
 
     public void InitCoroutineHandlers()
@@ -177,11 +266,11 @@ namespace ValheimVehicles.SharedScripts
 
     public void SetupForwardTransform()
     {
-#if !UNITY_2022 && !UNITY_EDITOR
+#if VALHEIM
       _piecesController = GetComponent<VehiclePiecesController>();
       _forwardTransform = _piecesController != null && _piecesController.MovementController != null ? _piecesController.MovementController.ShipDirection : transform;
 #else
-      ForwardTransform = transform
+      _forwardTransform = transform;
 #endif
     }
 
@@ -194,10 +283,13 @@ namespace ValheimVehicles.SharedScripts
       {
         Destroy(ammoController);
       }
+
+#if VALHEIM
       if (_cannonFiringHotkeys != null)
       {
         Destroy(_cannonFiringHotkeys);
       }
+#endif
 
       StopAllCoroutines();
     }
@@ -209,7 +301,7 @@ namespace ValheimVehicles.SharedScripts
         StartUpdatingAutoCannonTargets();
       }
 
-#if !UNITY_2022 && !UNITY_EDITOR
+#if VALHEIM
       if (autoFire && m_nview && m_nview.IsOwner())
       {
         Request_AutoFireCannons();
@@ -217,7 +309,8 @@ namespace ValheimVehicles.SharedScripts
 #else
       if (autoFire)
       {
-        StartAutoFiring();
+        var data = CannonFireData.CreateListOfCannonFireDataFromTargetController(this, autoTargetCannonControllers);
+        StartAutoFiring(data);
       }
 #endif
     }
@@ -227,20 +320,10 @@ namespace ValheimVehicles.SharedScripts
       InitCoroutineHandlers();
 #if UNITY_EDITOR
       // mostly for local testing.
-      GetComponentsInChildren(false, allCannonControllers);
-      foreach (var allCannonController in allCannonControllers)
+      var cannons = gameObject.GetComponentsInChildren<CannonController>(false);
+      foreach (var allCannonController in cannons)
       {
-        switch (allCannonController.GetFiringMode())
-        {
-          case CannonFiringMode.Manual:
-            manualFireControllers.Add(allCannonController);
-            break;
-          case CannonFiringMode.Auto:
-            autoTargetControllers.Add(allCannonController);
-            break;
-          default:
-            throw new ArgumentOutOfRangeException();
-        }
+        AddCannon(allCannonController);
       }
 #endif
       RecalculateCannonGroups();
@@ -263,6 +346,24 @@ namespace ValheimVehicles.SharedScripts
       foreach (var area in defendAreas)
         Gizmos.DrawWireCube(area.center, area.size);
     }
+
+    public bool IsHostileCharacter(Transform t)
+    {
+#if VALHEIM
+      var character = t.GetComponent<Character>();
+      if (character == null) return false;
+      if (canShootPlayer && character.IsPlayer() && !character.IsDead()) return true;
+      return !character.IsPlayer() && !character.IsTamed(5f) && !character.IsDead();
+#else
+      if (!t) return false;
+      var tName = t.name;
+      var rootName = t.root.name;
+      if (rootName.StartsWith("player") || rootName.Contains("friendly") || tName.StartsWith("player_collider")) return false;
+      return true;
+#endif
+      return true;
+    }
+
 
     public void AddDefenseArea(Vector3 center, Vector3 size)
     {
@@ -358,7 +459,7 @@ namespace ValheimVehicles.SharedScripts
 
   #region RPC NETWORKING
 
-#if !UNITY_2022 && !UNITY_EDITOR
+#if VALHEIM
     public void Request_AutoFireCannons()
     {
       if (autoTargetCannonControllers.Count < 1) return;
@@ -621,34 +722,48 @@ namespace ValheimVehicles.SharedScripts
 
     private IEnumerator AutoFireCannons(List<CannonFireData> cannonFiringDataList)
     {
-      var objToCannonControllerMap = autoTargetCannonControllers.ToDictionary(x => x.gameObject, x => x);
+      var objToCannonControllerMap = autoTargetCannonControllers.ToDictionary(x => x.gameObject != null, x => x);
       var totalAmmoDeltaExplosive = 0;
       var totalAmmoDeltaSolid = 0;
 
       foreach (var cannonFireData in cannonFiringDataList)
       {
-        var cannonControllerObj = ZNetScene.instance.FindInstance(cannonFireData.cannonControllerZDOID);
+        var cannonControllerObj = cannonFireData.GetCannonControllerObj();
         if (cannonControllerObj == null) continue;
         // optimistic getter for cannonControllers. But possibly not valid.
         if (!objToCannonControllerMap.TryGetValue(cannonControllerObj, out var cannonController))
         {
           cannonController = cannonControllerObj.GetComponent<CannonController>();
-          if (!cannonController)
+          if (cannonController)
           {
-            continue;
+            objToCannonControllerMap[cannonControllerObj] = cannonController;
+          }
+          else
+          {
+            objToCannonControllerMap.Remove(cannonControllerObj);
           }
         }
-        if (cannonController == null) continue;
+        if (!cannonController) continue;
         yield return FireCannonDelayed(cannonController, cannonFireData, FiringDelayPerCannon, false);
         AmmoController.SubtractAmmoByVariant(cannonFireData.ammoVariant, cannonFireData.allocatedAmmo, ref totalAmmoDeltaSolid, ref totalAmmoDeltaExplosive);
       }
 
-      if (cannonFiringDataList.Count > 0 && m_nview.IsOwner())
+      if (CanUpdateAmmo(cannonFiringDataList))
       {
         ammoController.OnAmmoChanged(Math.Abs(totalAmmoDeltaSolid), Mathf.Abs(totalAmmoDeltaExplosive));
       }
 
       yield return new WaitForSeconds(FiringCooldown);
+    }
+
+    public bool CanUpdateAmmo(List<CannonFireData> cannonFiringDataList)
+    {
+#if VALHEIM
+      var canUpdateAmmo = cannonFiringDataList.Count > 0 && m_nview.IsOwner();
+#else
+      var canUpdateAmmo = cannonFiringDataList.Count > 0;
+#endif
+      return canUpdateAmmo;
     }
 
     private List<Transform> AcquireAllTargets_DefendArea()
@@ -931,12 +1046,11 @@ namespace ValheimVehicles.SharedScripts
       var totalAmmoDeltaSolid = 0;
       var totalAmmoDeltaExplosive = 0;
       var tilt = _manualGroupTilt[group];
-      var cannons = _manualCannonGroups[group].ToList();
 
       for (var i = 0; i < cannonFireDataList.Count; i++)
       {
         var data = cannonFireDataList[i];
-        var cannonControllerObj = ZNetScene.instance.FindInstance(data.cannonControllerZDOID);
+        var cannonControllerObj = data.GetCannonControllerObj();
         if (!cannonControllerObj) continue;
         var cannon = cannonControllerObj.GetComponent<CannonController>();
         if (!cannon) continue;
@@ -951,10 +1065,18 @@ namespace ValheimVehicles.SharedScripts
         }
       }
 
-      if (cannons.Count > 0 && m_nview.IsOwner())
+      if (CanUpdateAmmo(cannonFireDataList))
       {
         ammoController.OnAmmoChanged(Math.Abs(totalAmmoDeltaSolid), Mathf.Abs(totalAmmoDeltaExplosive));
       }
+
+#if UNITY_EDITOR
+      // prevents constant allocation with testing implementation.
+      foreach (var cannonFireData in cannonFireDataList)
+      {
+        CannonFireData.CannonControllerMap.Remove(cannonFireData);
+      }
+#endif
 
       yield return new WaitForSeconds(FiringCooldown);
     }

@@ -121,7 +121,8 @@ namespace ValheimVehicles.SharedScripts
     public static string SharedKeys_Hold = null!;
     public static string SharedKeys_Reset = null!;
     public static string SharedKeys_AddMany = null!;
-    public static string SharedKeys_InteractAltAndPlace = null!;
+    public static string SharedKeys_InteractAlt = null!;
+    public static string SharedKeys_InteractPrimary = null!;
 
     // vehicle config
     public static string VehicleConfig_Beached = null!;

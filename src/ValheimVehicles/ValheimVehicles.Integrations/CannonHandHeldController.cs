@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using ValheimVehicles.RPC;
 using ValheimVehicles.SharedScripts;
+using ValheimVehicles.SharedScripts.Structs;
 using ValheimVehicles.Structs;
 using Random = UnityEngine.Random;
 
@@ -13,7 +14,7 @@ public class CannonHandHeldController : CannonController, Hoverable
   public static float minPitch = -70f; // Looking down
   public static float maxPitch = 70f; // Looking up
   public static float minYaw = -30f; // Yaw limit left
-  public static float maxYaw = 30f; // Yaw limit right
+  public static float maxYaw = 50f; // Yaw limit right
   [SerializeField] public float defaultElevationDegrees = 5f;
   [SerializeField] public bool debugDraw = false;
 
@@ -27,7 +28,7 @@ public class CannonHandHeldController : CannonController, Hoverable
 
   public AmmoController ammoController;
 
-#if !UNITY_2022 && !UNITY_EDITOR
+#if VALHEIM
   private Player m_player;
 #endif
   protected internal override void Start()

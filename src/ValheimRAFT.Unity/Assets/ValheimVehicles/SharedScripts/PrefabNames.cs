@@ -38,6 +38,13 @@
       public static readonly int WaterVehicleShip = PrefabNames.WaterVehicleShip.GetStableHashCode();
     }
 
+    public static class PrefabItemTranslations
+    {
+      public const string CannonHandHeldName = "$valheim_vehicles_item_cannon_handheld";
+      public const string TelescopeName = "$valheim_vehicles_item_telescope_handheld";
+      public const string CannonAmmoType = "$valheim_vehicles_item_ammo_cannon_ball";
+    }
+
     /**
      * @todo register translatable pieceName and pieceDescription based on these names for easy lookups
      *
@@ -275,6 +282,9 @@
 
       public static readonly string CannonHandHeldItem =
         $"{ValheimVehiclesPrefix}_Cannon_Handheld_Item";
+
+      public static readonly string CannonControlCenter =
+        $"{ValheimVehiclesPrefix}_Cannon_ControlCenter";
 
       public static readonly string TelescopeItem =
         $"{ValheimVehiclesPrefix}_Telescope_Item";

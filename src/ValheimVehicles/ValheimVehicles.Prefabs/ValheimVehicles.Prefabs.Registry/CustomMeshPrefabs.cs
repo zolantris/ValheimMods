@@ -205,7 +205,7 @@ public class CustomMeshPrefabs : IRegisterPrefab
   {
     var waterMaskPrefab = new GameObject("WaterMaskPrefab")
     {
-      layer = LayerHelpers.NonSolidLayer
+      layer = LayerHelpers.PieceNonSolidLayer
     };
 
     var prefab =

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using HarmonyLib;
 using UnityEngine;
+using ValheimVehicles.BepInExConfig;
 using ValheimVehicles.Integrations;
 using ValheimVehicles.SharedScripts;
 using ValheimVehicles.SharedScripts.Helpers;
@@ -11,18 +12,19 @@ namespace ValheimVehicles.Patches;
 public static class Humanoid_EquipPatch
 {
   // must use translation names for shared.m_name
-  public static string HandCannonName = "$valheim_vehicles_cannon_handheld_item";
 
   [HarmonyPatch(typeof(Humanoid), nameof(Humanoid.EquipItem), new Type[] { typeof(ItemDrop.ItemData), typeof(bool) })]
   [HarmonyPostfix]
   private static void EquipItemPatch(Player __instance, ItemDrop.ItemData item, bool triggerEquipEffects)
   {
-    // if (item == null || __instance == null) return;
+    if (__instance == null) return;
+    if (item.m_shared.m_name != PrefabItemTranslations.TelescopeName) return;
     // if (item.m_shared.m_name != HandCannonName) return;
     // var currentWeapon = __instance.GetCurrentWeapon();
     // var cannonController = __instance.GetComponentInChildren<CannonControllerBridge>();
     // if (!cannonController) return;
     // LoggerProvider.LogDebug("Got cannoncontroller on equipe");
+    var currentWeapon = __instance.GetCurrentWeapon();
   }
 
   public static void LogWeaponData(ItemDrop.ItemData currentWeapon)
@@ -66,7 +68,7 @@ public static class Humanoid_EquipPatch
   {
     if (SkipCustomCannonFire) return true;
     var currentWeapon = __instance.GetCurrentWeapon();
-    if (currentWeapon == null || currentWeapon.m_shared.m_name != HandCannonName) return true;
+    if (currentWeapon == null || currentWeapon.m_shared.m_name != PrefabItemTranslations.CannonHandHeldName) return true;
     if (!PlayerCannonController.TryGetValue(__instance, out var cannonHandheldController) || cannonHandheldController == null)
     {
       cannonHandheldController = __instance.GetComponentInChildren<CannonHandHeldController>();
@@ -81,6 +83,8 @@ public static class Humanoid_EquipPatch
       PlayerCannonController.Remove(__instance);
       return true;
     }
+
+    currentWeapon.m_shared.m_attack.m_reloadTime = PrefabConfig.CannonHandHeld_ReloadTime.Value;
 
     LogWeaponData(currentWeapon);
     var ammoItem = __instance.GetAmmoItem();

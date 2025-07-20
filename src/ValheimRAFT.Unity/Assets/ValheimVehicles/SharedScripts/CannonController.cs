@@ -3,8 +3,10 @@
 
 #region
 
-#if !UNITY_EDITOR && !UNITY_2022
+#if VALHEIM
 using ValheimVehicles.Controllers;
+using ValheimVehicles.Structs;
+using ValheimVehicles.RPC;
 #endif
 using System;
 using System.Collections;
@@ -12,9 +14,10 @@ using System.Collections.Generic;
 using System.Linq;
 using JetBrains.Annotations;
 using UnityEngine;
-using ValheimVehicles.RPC;
+using ValheimVehicles.SharedScripts.Structs;
 using ValheimVehicles.SharedScripts.UI;
-using ValheimVehicles.Structs;
+
+// assignments
 using Random = UnityEngine.Random;
 
 #endregion
@@ -157,9 +160,9 @@ namespace ValheimVehicles.SharedScripts
     public CannonDirectionGroup? CurrentManualDirectionGroup { get; set; }
 
     public static float ReloadTimeOverride = 0f;
-    public static float Cannon_HandHeldReloadTime = 5f;
+    public static float CannonHandHeld_ReloadTime = 5f;
 
-#if !UNITY_2022 && !UNITY_EDITOR
+#if VALHEIM
     public VehiclePiecesController PiecesController;
 #endif
 
@@ -168,11 +171,10 @@ namespace ValheimVehicles.SharedScripts
       get
       {
         if (IsHandHeldCannon)
-          return Cannon_HandHeldReloadTime;
-        else
-          return ReloadTimeOverride > 0f
-            ? ReloadTimeOverride
-            : _reloadTime;
+          return CannonHandHeld_ReloadTime;
+        return ReloadTimeOverride > 0f
+          ? ReloadTimeOverride
+          : _reloadTime;
       }
     }
 
@@ -188,7 +190,7 @@ namespace ValheimVehicles.SharedScripts
 
   #region Valheim Integrations
 
-#if !UNITY_2022 && !UNITY_EDITOR
+#if VALHEIM
     public ZNetView m_nview;
 #endif
 
@@ -219,7 +221,7 @@ namespace ValheimVehicles.SharedScripts
         _targetShooterLocalRotation = _defaultShooterLocalRotation;
       }
 
-#if !UNITY_2022 && !UNITY_EDITOR
+#if VALHEIM
       m_nview = GetComponent<ZNetView>();
       if (!m_nview)
       {
@@ -603,7 +605,7 @@ namespace ValheimVehicles.SharedScripts
     // ReSharper disable once UseNullableReferenceTypesAnnotationSyntax
     private void IgnoreVehicleColliders(Cannonball selectedCannonball)
     {
-#if !UNITY_2022 && !UNITY_EDITOR
+#if VALHEIM
       if (!PiecesController)
       {
         PiecesController = GetComponentInParent<VehiclePiecesController>();
@@ -617,7 +619,7 @@ namespace ValheimVehicles.SharedScripts
 
     private void IgnoreAllCollidersFromPlayerRoot(Cannonball selectedCannonball)
     {
-#if !UNITY_2022 && !UNITY_EDITOR
+#if VALHEIM
       // var allColliders = transform.root.GetComponentsInChildren<Collider>();
       var player = transform.GetComponentInParent<Player>();
       if (!player) return;

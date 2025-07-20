@@ -30,7 +30,7 @@ namespace ValheimVehicles.SharedScripts
 
     public static Transform GetPrefabRoot(Transform t)
     {
-#if !UNITY_EDITOR && !UNITY_2022
+#if VALHEIM
       var netView = t.GetComponentInParent<ZNetView>();
       if (netView != null)
       {

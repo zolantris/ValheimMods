@@ -1088,26 +1088,6 @@ PrefabInstance:
       propertyPath: m_LocalPosition.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 1921264779464253360, guid: eee46121d5491514381b4054d5d36293, type: 3}
-      propertyPath: m_Volume
-      value: 0.529
-      objectReference: {fileID: 0}
-    - target: {fileID: 1921264779464253360, guid: eee46121d5491514381b4054d5d36293, type: 3}
-      propertyPath: m_audioClip
-      value: 
-      objectReference: {fileID: 8300000, guid: ae24df3566c74814aa90d38b3d13b10f, type: 3}
-    - target: {fileID: 1921264779464253360, guid: eee46121d5491514381b4054d5d36293, type: 3}
-      propertyPath: rolloffCustomCurve.m_Curve.Array.data[1].time
-      value: 0.10700607
-      objectReference: {fileID: 0}
-    - target: {fileID: 1921264779464253360, guid: eee46121d5491514381b4054d5d36293, type: 3}
-      propertyPath: rolloffCustomCurve.m_Curve.Array.data[1].value
-      value: 0.5402374
-      objectReference: {fileID: 0}
-    - target: {fileID: 2616394466530829092, guid: eee46121d5491514381b4054d5d36293, type: 3}
-      propertyPath: m_audioClip
-      value: 
-      objectReference: {fileID: 8300000, guid: 58702308a806c104abe9efa4a9e87166, type: 3}
     - target: {fileID: 3340548883507085369, guid: eee46121d5491514381b4054d5d36293, type: 3}
       propertyPath: m_LocalPosition.y
       value: 0

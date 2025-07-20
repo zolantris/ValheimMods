@@ -75,29 +75,6 @@
         <Folder Include="docs-images\"/>
         <Folder Include="ValheimRAFT.Patches\"/>
     </ItemGroup>
-    <!-- Debug Variants -->
-    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-        <OutputPath>bin\Debug\</OutputPath>
-        <DefineConstants>VALHEIM_RAFT;DEBUG;TRACE</DefineConstants>
-    </PropertyGroup>
-    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug Run ClientServer|AnyCPU' ">
-        <BaseConfiguration>Debug</BaseConfiguration>
-        <DefineConstants>$(DefineConstants);VALHEIM_RAFT;RUN_CLIENT</DefineConstants>
-        <OutputPath>bin\Debug</OutputPath>
-        <PlatformTarget>x64</PlatformTarget>
-    </PropertyGroup>
-    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug Run Client|AnyCPU' ">
-        <BaseConfiguration>Debug</BaseConfiguration>
-        <DefineConstants>$(DefineConstants);VALHEIM_RAFT;RUN_CLIENT</DefineConstants>
-        <OutputPath>bin\Debug</OutputPath>
-        <PlatformTarget>x64</PlatformTarget>
-    </PropertyGroup>
-    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug Run Server|AnyCPU' ">
-        <BaseConfiguration>Debug</BaseConfiguration>
-        <DefineConstants>$(DefineConstants);VALHEIM_RAFT;RUN_CLIENT</DefineConstants>
-        <OutputPath>bin\Debug</OutputPath>
-    </PropertyGroup>
-
     <!-- Releases -->
     <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release Archive|AnyCPU' ">
         <OutputPath>bin\Release Archive\</OutputPath>
@@ -111,7 +88,7 @@
         <DebugType>pdbonly</DebugType>
         <Optimize>true</Optimize>
         <OutputPath>bin\Release\</OutputPath>
-        <DefineConstants>TRACE</DefineConstants>
+        <DefineConstants>TRACE;VALHEIM;</DefineConstants>
         <ErrorReport>prompt</ErrorReport>
         <WarningLevel>4</WarningLevel>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
