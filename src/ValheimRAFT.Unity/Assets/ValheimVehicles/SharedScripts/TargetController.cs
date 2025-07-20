@@ -78,6 +78,7 @@ namespace ValheimVehicles.SharedScripts
 
     private CoroutineHandle _acquireTargetsRoutine;
     private CoroutineHandle _autoFireCannonsRoutine;
+    private CoroutineHandle _cannonGroupSyncScheduler;
 
     public Action? OnCannonListUpdated;
 
@@ -110,6 +111,9 @@ namespace ValheimVehicles.SharedScripts
 
 #if !UNITY_2022 && !UNITY_EDITOR
     private VehiclePiecesController _piecesController;
+    public static RPCEntity FireCannonGroup_RPC = null!;
+    public static RPCEntity SyncCannonGroup_RPC = null!;
+    public static RPCEntity AutoFireCannonGroup_RPC = null!;
 #endif
     public Transform _forwardTransform { get; set; }
     public ZNetView m_nview;
@@ -117,9 +121,6 @@ namespace ValheimVehicles.SharedScripts
     private void Awake()
     {
       m_nview = GetComponentInParent<ZNetView>();
-
-      _autoFireCannonsRoutine = new CoroutineHandle(this);
-      _acquireTargetsRoutine = new CoroutineHandle(this);
 
       ammoController = gameObject.GetOrAddComponent<AmmoController>();
 
@@ -167,6 +168,13 @@ namespace ValheimVehicles.SharedScripts
       RecalculateCannonGroups(); // New: Build initial grouping
     }
 
+    public void InitCoroutineHandlers()
+    {
+      _autoFireCannonsRoutine ??= new CoroutineHandle(this);
+      _cannonGroupSyncScheduler ??= new CoroutineHandle(this);
+      _acquireTargetsRoutine ??= new CoroutineHandle(this);
+    }
+
     public void SetupForwardTransform()
     {
 #if !UNITY_2022 && !UNITY_EDITOR
@@ -190,6 +198,8 @@ namespace ValheimVehicles.SharedScripts
       {
         Destroy(_cannonFiringHotkeys);
       }
+
+      StopAllCoroutines();
     }
 
     private void FixedUpdate()
@@ -214,9 +224,7 @@ namespace ValheimVehicles.SharedScripts
 
     public void OnEnable()
     {
-      _autoFireCannonsRoutine ??= new CoroutineHandle(this);
-      _acquireTargetsRoutine ??= new CoroutineHandle(this);
-
+      InitCoroutineHandlers();
 #if UNITY_EDITOR
       // mostly for local testing.
       GetComponentsInChildren(false, allCannonControllers);
@@ -371,8 +379,7 @@ namespace ValheimVehicles.SharedScripts
       var pkg = new ZPackage();
       pkg.Write(zdo.m_uid);
       CannonFireData.WriteListToPackage(pkg, cannonFireDataList);
-
-      AutoFireCannonGroup_RPC.Send(ZNetView.Everybody, pkg);
+      AutoFireCannonGroup_RPC.SendNearby(pkg, zdo, 150f);
     }
 
     public void Request_FireManualCannons(CannonDirectionGroup[] cannonGroups)
@@ -427,16 +434,80 @@ namespace ValheimVehicles.SharedScripts
 
       CannonFireData.WriteListToPackage(pkg, cannonFireDataList);
 
-      FireCannonGroup_RPC.Send(ZNetView.Everybody, pkg);
+      FireCannonGroup_RPC.SendNearby(pkg, zdo, 150f);
     }
 
-    public static RPCEntity FireCannonGroup_RPC = null!;
-    public static RPCEntity AutoFireCannonGroup_RPC = null!;
 
     public static void RegisterCannonControllerRPCs()
     {
       FireCannonGroup_RPC = RPCManager.RegisterRPC(nameof(RPC_FireAllCannonsInGroup), RPC_FireAllCannonsInGroup);
       AutoFireCannonGroup_RPC = RPCManager.RegisterRPC(nameof(RPC_AutoFireAllCannons), RPC_AutoFireAllCannons);
+      SyncCannonGroup_RPC = RPCManager.RegisterRPC(nameof(RPC_SyncCannonGroup), RPC_SyncCannonGroup);
+    }
+
+    public HashSet<CannonDirectionGroup> groupsToSync = new();
+
+    public void ScheduleGroupCannonSync(CannonDirectionGroup group)
+    {
+      groupsToSync.Add(group);
+
+      if (_cannonGroupSyncScheduler.IsRunning)
+      {
+        return;
+      }
+
+      _cannonGroupSyncScheduler.Start(ScheduleGroupCannonSync_Coroutine());
+    }
+
+    public IEnumerator ScheduleGroupCannonSync_Coroutine()
+    {
+      yield return new WaitForSeconds(0.2f);
+      if (ZNet.instance == null || groupsToSync.Count == 0 || m_nview == null || !m_nview.IsValid())
+      {
+        yield break;
+      }
+
+      var localGroups = groupsToSync.ToList();
+
+      // prevents access error.
+      groupsToSync.Clear();
+      var zdo = m_nview.GetZDO();
+
+      foreach (var cannonDirectionGroup in localGroups)
+      {
+        var pkg = new ZPackage();
+        pkg.Write(zdo.m_uid);
+        pkg.Write((int)cannonDirectionGroup);
+        pkg.Write(GetManualGroupTilt(cannonDirectionGroup));
+        SyncCannonGroup_RPC.SendNearby(pkg, zdo, 150f);
+      }
+
+      yield return null;
+    }
+
+    public static IEnumerator RPC_SyncCannonGroup(long senderId, ZPackage package)
+    {
+      package.SetPos(0);
+
+      var targetControllerZDOID = package.ReadZDOID();
+      var cannonGroupId = (CannonDirectionGroup)package.ReadInt();
+      var cannonTilt = package.ReadSingle();
+
+      GameObject? targetControllerObj = null;
+      yield return FindInstanceAsync(targetControllerZDOID, x => targetControllerObj = x);
+      if (targetControllerObj == null) yield break;
+
+
+      // can be a child for the handheld version.
+      var targetController = targetControllerObj.GetComponentInChildren<TargetController>();
+      if (!targetController)
+      {
+        LoggerProvider.LogWarning($"targetController with zdoid: {targetControllerZDOID} not found on object {targetControllerObj.name}. CannonController should exist otherwise we cannot instantiate cannonball without collision issues");
+        yield break;
+      }
+
+      // for updates the group tilt from the host that requested to sync it to a client.
+      targetController.SetManualGroupTilt(cannonGroupId, cannonTilt);
     }
 
     public static IEnumerator RPC_AutoFireAllCannons(long senderId, ZPackage package)

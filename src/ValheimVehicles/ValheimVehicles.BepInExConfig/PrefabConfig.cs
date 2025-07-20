@@ -56,6 +56,11 @@ public class PrefabConfig : BepInExBaseConfig<PrefabConfig>
   public static ConfigEntry<float> CannonAutoAimSpeed { get; set; } = null!;
   public static ConfigEntry<float> CannonAutoAimYOffset { get; set; } = null!;
   public static ConfigEntry<float> CannonAimMaxYRotation { get; set; } = null!;
+
+  // left right rotation.
+  public static ConfigEntry<float> CannonHandheld_AimYRotationMax { get; set; } = null!;
+  public static ConfigEntry<float> CannonHandheld_AimYRotationMin { get; set; } = null!;
+
   public static ConfigEntry<float> CannonBarrelAimMaxTiltRotation { get; set; } = null!;
   public static ConfigEntry<float> PowderBarrelExplosiveChainDelay { get; set; } = null!;
   public static ConfigEntry<float> CannonBarrelAimMinTiltRotation { get; set; } = null!;
@@ -323,6 +328,15 @@ public class PrefabConfig : BepInExBaseConfig<PrefabConfig>
     CannonAutoAimSpeed = config.BindUnique(VehicleCannonsSection, "CannonAutoAimSpeed", 10f, ConfigHelpers.CreateConfigDescription("Set how fast a cannon can adjust aim and fire. This speeds up both firing and animations. Lower values might not be able to fire cannons at all for smaller targets. Keep in mind sea swell will impact the aiming of cannons.", true, false, new AcceptableValueRange<float>(5f, 50f)));
 
     CannonAimMaxYRotation = config.BindUnique(VehicleCannonsSection, "CannonAimMaxYRotation", 15f, ConfigHelpers.CreateConfigDescription("Maximum Y rotational a cannon can turn. Left to right. Front to bow etc.", true, false, new AcceptableValueRange<float>(5f, 50f)));
+
+
+    CannonHandheld_AimYRotationMax = config.BindUnique(VehicleCannonsSection, "CannonHandheld_AimYRotationMax", CannonHandHeldController.minYaw, ConfigHelpers.CreateConfigDescription("Maximum Y, the  rotational a cannon can turn toward right. Too much will overlap player and look weird. But it would allow aiming left significantly more without needing to rotate body.", true, false, new AcceptableValueRange<float>(30f, 180f)));
+    CannonHandheld_AimYRotationMin = config.BindUnique(VehicleCannonsSection, "CannonHandheld_AimYRotationMin", CannonHandHeldController.minYaw, ConfigHelpers.CreateConfigDescription("Minimum Y rotational a cannon can turn, left. Too much will overlap player. But it would allow aiming left significantly more without needing to rotate body.", true, false, new AcceptableValueRange<float>(-180f, -30f)));
+    CannonHandheld_AimYRotationMax.SettingChanged += (sender, args) => CannonHandHeldController.maxYaw = CannonHandheld_AimYRotationMax.Value;
+    CannonHandheld_AimYRotationMin.SettingChanged += (sender, args) => CannonHandHeldController.minYaw = CannonHandheld_AimYRotationMin.Value;
+    CannonHandHeldController.maxYaw = CannonHandheld_AimYRotationMax.Value;
+    CannonHandHeldController.minYaw = CannonHandheld_AimYRotationMin.Value;
+
 
     CannonBarrelAimMaxTiltRotation = config.BindUnique(VehicleCannonsSection, "CannonBarrelAimMaxTiltRotation", 180f, ConfigHelpers.CreateConfigDescription("Maximum X rotation the barrel of the cannon can turn. Left to right", true, false, new AcceptableValueRange<float>(5f, 50f)));
     CannonBarrelAimMinTiltRotation = config.BindUnique(VehicleCannonsSection, "CannonBarrelAimMinTiltRotation", -180f, ConfigHelpers.CreateConfigDescription("Min X rotation the barrel of the cannon can turn. This is the downwards rotation.", true, false, new AcceptableValueRange<float>(5f, 50f)));

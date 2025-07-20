@@ -1029,7 +1029,7 @@ namespace ValheimVehicles.SharedScripts
     public static float GetRandomCannonVelocity => Random.value;
     public static float GetRandomCannonArc => Random.Range(-maxSidewaysArcDegrees, maxSidewaysArcDegrees);
 
-    public bool Fire(CannonFireData data, int remainingAmmo, bool isManualFiring)
+    public bool Fire(CannonFireData data, int remainingAmmo, bool isManualFiring, bool isHost = true)
     {
       if (!CanFire(isManualFiring, data.allocatedAmmo))
       {
@@ -1044,7 +1044,7 @@ namespace ValheimVehicles.SharedScripts
       var hasFired = false;
       for (var index = 0; index < data.cannonShootingPositions.Count; index++)
       {
-        if (remainingAmmo <= 0) break;
+        if (currentAmmo <= 0) break;
         if (!FireSingle(data, isManualFiring, index)) break;
         currentAmmo--;
         hasFired = true;
@@ -1062,7 +1062,7 @@ namespace ValheimVehicles.SharedScripts
       OnFired?.Invoke();
 
       _recoilRoutine.Start(RecoilCoroutine());
-      var canReload = remainingAmmo > 0;
+      var canReload = !isHost || remainingAmmo > 0;
 
       if (autoReload && canReload)
       {

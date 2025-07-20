@@ -1,5 +1,8 @@
 using System.Collections;
+using System.Collections.Generic;
 using System.Reflection;
+using UnityEngine;
+using ValheimVehicles.SharedScripts;
 
 namespace ValheimVehicles.RPC;
 
@@ -26,6 +29,32 @@ public class RPCEntity(
   public void Send(ZPackage pkg, bool canRunOnClient = true)
   {
     Send(ZRoutedRpc.Everybody, pkg, canRunOnClient);
+  }
+
+  /// <summary>
+  /// Send to nearby peer only.
+  /// </summary>
+  public void SendNearby(ZPackage pkg, ZDO zdo, float distance, bool canRunOnClient = true)
+  {
+    var sentPeerIds = new HashSet<long>();
+    RPCUtils.RunIfNearby(zdo, distance, (peerId) =>
+    {
+      sentPeerIds.Add(peerId);
+      Send(peerId, pkg, canRunOnClient);
+    });
+
+    if (canRunOnClient && Player.m_localPlayer != null)
+    {
+      var owner = Player.m_localPlayer.GetOwner();
+      if (!sentPeerIds.Contains(owner))
+      {
+        ZNet.instance.StartCoroutine(Action(Player.m_localPlayer.GetOwner(), new ZPackage(pkg.GetArray())));
+      }
+      else
+      {
+        LoggerProvider.LogDev("player peer was already called for local player.");
+      }
+    }
   }
 
   /// <summary>

@@ -27,6 +27,7 @@
     <PropertyGroup Label="For target args generation">
         <SyncTargets Condition="'$(IsRunnableServer)' == 'true'">server</SyncTargets>
         <SyncTargets Condition="'$(IsRunnableClient)' == 'true'">localClient</SyncTargets>
+        <!--  This overrides server or client config -->
         <SyncTargets Condition="'$(IsRunnableClientServer)' == 'true'">localClient,vmClient,server</SyncTargets>
     </PropertyGroup>
 
@@ -35,22 +36,16 @@
     <Target Name="RunPostInstaller"
             KeepDuplicateOutputs="false"
             AfterTargets="Build"
-            Condition=" '$(PostInstallerEnabled)' == 'true' ">
-        <Message Text="TargetPath is: $(TargetPath)" Importance="high"/>
-        <Message Text="SolutionDir is: $(SolutionDir)" Importance="high"/>
-        <Message Text="OutDir is: $(OutDir)" Importance="high"/>
-        <Message Text="Configuration is: $(Configuration)" Importance="high"/>
-        <Message Text="Platform is: $(Platform)" Importance="high"/>
-        <Message Text="IsRunnable is: $(IsRunnable)" Importance="high"/>
+            Condition=" '$(PostInstallerEnabled)' == 'true' AND '$(SyncTargets)' != '' ">
         <Message Text="IsRunnableServer is: $(IsRunnableServer)" Importance="high"/>
-        <Message Text="PluginDeployPath is: $(PluginDeployPath)" Importance="high"/>
-        <Message Text="ProjectDir is: $(ProjectDir)" Importance="high"/>
-        <Message Text="ModOutputDir is: $(ModOutputDir)" Importance="high"/>
-
-        <Exec Condition=" '$(SyncTargets)' != '' "
-              Command="dotnet &quot;$(ModSyncDll)&quot; sync --targets=&quot;localClient&quot;"
-              WorkingDirectory="$(SolutionDir)"
-              IgnoreExitCode="false"
+        <Message Text="IsRunnableClient is: $(IsRunnableClient)" Importance="high"/>
+        <Message Text="IsRunnableClientServer is: $(IsRunnableClientServer)" Importance="high"/>
+        <Message Text="SyncTargets is: $(SyncTargets)" Importance="high"/>
+        <Exec
+                Command="dotnet &quot;$(ModSyncDll)&quot; sync --targets=&quot;$(SyncTargets)&quot;"
+                WorkingDirectory="$(SolutionDir)"
+                IgnoreExitCode="false"
         />
+        <Message Text="Success" Importance="high"/>
     </Target>
 </Project>

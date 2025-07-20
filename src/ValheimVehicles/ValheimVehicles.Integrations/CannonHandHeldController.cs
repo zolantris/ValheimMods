@@ -10,10 +10,10 @@ using Random = UnityEngine.Random;
 public class CannonHandHeldController : CannonController, Hoverable
 {
   [Header("Aiming")]
-  [SerializeField] public float minPitch = -70f; // Looking down
-  [SerializeField] public float maxPitch = 70f; // Looking up
-  [SerializeField] public float minYaw = -30f; // Yaw limit left
-  [SerializeField] public float maxYaw = 30f; // Yaw limit right
+  public static float minPitch = -70f; // Looking down
+  public static float maxPitch = 70f; // Looking up
+  public static float minYaw = -30f; // Yaw limit left
+  public static float maxYaw = 30f; // Yaw limit right
   [SerializeField] public float defaultElevationDegrees = 5f;
   [SerializeField] public bool debugDraw = false;
 
@@ -27,12 +27,39 @@ public class CannonHandHeldController : CannonController, Hoverable
 
   public AmmoController ammoController;
 
+#if !UNITY_2022 && !UNITY_EDITOR
+  private Player m_player;
+#endif
   protected internal override void Start()
   {
     m_nview = GetComponentInParent<ZNetView>();
     ammoController = GetComponent<AmmoController>();
     TryInitController();
     base.Start();
+  }
+
+  protected internal override void OnEnable()
+  {
+    base.OnEnable();
+    OnFired += OnCannonFire;
+  }
+
+  protected internal override void OnDisable()
+  {
+    base.OnDisable();
+    OnFired -= OnCannonFire;
+  }
+
+  public void OnCannonFire()
+  {
+    if (!m_player)
+    {
+      m_player = GetComponentInParent<Player>();
+    }
+    if (m_player == null) return;
+
+    m_player.ApplyPushback(-m_player.transform.forward, 0.2f);
+    m_player.ResetLoadedWeapon();
   }
 
   private bool TryInitController()
@@ -196,12 +223,13 @@ public class CannonHandHeldController : CannonController, Hoverable
       yield break;
     }
 
-    cannonHandheld.FireHandHeldCannon(cannonFireData);
+    var isOwner = cannonHandheld.m_nview.IsOwner();
+    cannonHandheld.FireHandHeldCannon(cannonFireData, isOwner);
   }
 
-  internal bool FireHandHeldCannon(CannonFireData data)
+  internal bool FireHandHeldCannon(CannonFireData data, bool isHost = true)
   {
-    if (Fire(data, ammoController.GetAmmoAmountFromCannonballVariant(AmmoVariant), true))
+    if (Fire(data, ammoController.GetAmmoAmountFromCannonballVariant(AmmoVariant), true, isHost))
     {
       if (data.canApplyDamage)
       {

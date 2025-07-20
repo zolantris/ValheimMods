@@ -330,7 +330,11 @@ public class CannonPrefabs : RegisterPrefab<CannonPrefabs>
     attack.m_attackStamina = 5;
     attack.m_attackHealth = 0;
     attack.m_hitTerrain = true;
+    attack.m_requiresReload = true;
+    attack.m_reloadTime = PrefabConfig.Cannon_HandHeldReloadTime.Value;
+    attack.m_reloadAnimation = "reload_crossbow";
     attack.m_speedFactor = 0.2f;
+    attack.m_reloadStaminaDrain = 10f;
     attack.m_hitTerrain = true;
     attack.m_speedFactorRotation = 0.2f; // default value. can remove.
 
