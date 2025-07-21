@@ -39,7 +39,7 @@
     <Target Name="Run_Valheim" AfterTargets="RunPostInstaller"
             Condition="'$(IsRunnableClientServer)' == 'true' or '$(IsRunnableClient)' == 'true'">
         <!--       doorstop >=4.0.0 requires doorstop-target-assembly flag vs doorstop-target in v3       -->
-        <Exec Command="wt.exe -w 2 --title ValheimClient $(GamePath)\valheim.exe -console --doorstop-enable true --doorstop-target-assembly &quot;$(BepInExPath)\BepInEx.Preloader.dll&quot;;wt.exe -w 2 --title &quot;ValheimClient [Logger]&quot; powershell -NoProfile -NoExit -File &quot;$(SolutionDir)logValheim.ps1&quot; --LogPath &quot;%USERPROFILE%\AppData\LocalLow\IronGate\Valheim\Player.log&quot;"/>
+        <Exec Command="wt.exe -w 2 --title ValheimClient $(GamePath)\valheim.exe -console -diag-job-temp-memory-leak-validation --doorstop-enable true --doorstop-target-assembly &quot;$(BepInExPath)\BepInEx.Preloader.dll&quot;;wt.exe -w 2 --title &quot;ValheimClient [Logger]&quot; powershell -NoProfile -NoExit -File &quot;$(SolutionDir)logValheim.ps1&quot; --LogPath &quot;%USERPROFILE%\AppData\LocalLow\IronGate\Valheim\Player.log&quot;"/>
     </Target>
 
     <!--    <Target Name="Run_Valheim_vm" Condition="('$(IsRunnableClientServer)' == 'true' or '$(IsRunnableClient)' == 'true') And $(SandboxieVMExists) == 'true'">-->

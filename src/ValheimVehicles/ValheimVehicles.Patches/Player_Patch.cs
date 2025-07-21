@@ -209,16 +209,16 @@
       return gameObject;
     }
 
-#if DEBUG
     /// <summary>
     /// Controls snappoint alignment with rotationals that can flip a snappoint.
+    ///
+    /// - Supports Rotating Cannons. But is not perfect. May need to call RotateTowards or RotateAround which would move the point upwards. Experimental flag but enabled by default as it does not appear to regress other prefabs.
     /// </summary>
-    /// <param name="__instance"></param>
-    /// <returns></returns>
     [HarmonyPatch(typeof(Player), nameof(Player.UpdatePlacementGhost))]
     [HarmonyPostfix]
     public static void UpdatePlacementGhost_InjectRotation(Player __instance)
     {
+      if (!PatchConfig.Experimental_SnappointRotationalPatch.Value) return;
       if (!__instance.m_placementGhost) return;
       if (!__instance.m_placementGhost.transform.name.StartsWith(PrefabNames.ValheimVehiclesPrefix)) return;
       var manualSnapIndex = __instance.m_manualSnapPoint;
@@ -234,12 +234,9 @@
 
       if (snappointTransform != null)
       {
-        LoggerProvider.LogDebugDebounced($"Got {snappointTransform.name}");
-        // add rotation on of snappoint onto the current quaternion. This allows for rotating the whole prefab for ValheimVehicle variants
         __instance.m_placementGhost.transform.rotation = quaternion * snappointTransform.localRotation;
       }
     }
-#endif
 
     public static void TryFixPieceOverlap(GameObject gameObject)
     {

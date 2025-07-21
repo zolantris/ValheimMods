@@ -172,7 +172,7 @@
         }
         if (_containerFindRoutine.IsRunning)
         {
-          _containerFindRoutine.Stop();
+          return;
         }
         _containerFindRoutine.Start(UpdateNearbyContainers());
       }
@@ -225,6 +225,7 @@
       {
 #if VALHEIM
 
+        yield return new WaitForFixedUpdate();
         // copy it in case modification can happen.
         var containersCopy = ValheimContainerTracker.ActiveContainers.ToList();
 

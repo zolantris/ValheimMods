@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -7,6 +8,7 @@ using DynamicLocations.Constants;
 using DynamicLocations.Controllers;
 using HarmonyLib;
 using UnityEngine;
+using ValheimVehicles.SharedScripts;
 using Logger = Jotunn.Logger;
 
 namespace DynamicLocations.Patches;
@@ -55,56 +57,31 @@ public class DynamicLocationsPatches
       return;
     }
 
-    LocationController.RemoveZdoTarget(
-      LocationVariation.Logout, __instance);
+    try
+    {
+      LocationController.RemoveZdoTarget(
+        LocationVariation.Logout, __instance);
+    }
+    catch (Exception e)
+    {
+      LoggerProvider.LogError($"Error occurred while removing a zdotarget. \n{e}");
+    }
   }
 
   [HarmonyPatch(typeof(Player), "ShowTeleportAnimation")]
   [HarmonyPostfix]
   private static void ShowTeleportAnimation(bool __result)
   {
+    if (PlayerSpawnController.Instance == null) return;
+
     var isRespawnTeleporting =
-      PlayerSpawnController.Instance?.IsTeleportingToDynamicLocation ?? false;
+      PlayerSpawnController.Instance.IsTeleportingToDynamicLocation;
+
     if (isRespawnTeleporting)
     {
       __result = false;
     }
   }
-
-  // [HarmonyPatch(typeof(Game), "FindSpawnPoint")]
-  // [HarmonyPrefix]
-  // private static bool FindSpawnPoint(Game __instance, bool __result, out Vector3 point,
-  //   out bool usedLogoutPoint, float dt)
-  // {
-  //   usedLogoutPoint = false;
-  //
-  //   if (PlayerSpawnController.Instance && __instance.m_respawnAfterDeath)
-  //   {
-  //     var offset = DynamicLocations.GetSpawnTargetZdoOffset(Player.m_localPlayer);
-  //     var zdoid = DynamicLocations.GetSpawnTargetZdo(Player.m_localPlayer);
-  //     if (zdoid == null)
-  //     {
-  //       point = Vector3.zero;
-  //       return true;
-  //     }
-  //
-  //     ZDOMan.instance.RequestZDO((ZDOID)zdoid);
-  //     var spawnZdo = ZDOMan.instance.GetZDO((ZDOID)zdoid);
-  //
-  //     if (spawnZdo != null)
-  //     {
-  //       __instance.m_respawnWait += dt;
-  //       usedLogoutPoint = false;
-  //
-  //       point = spawnZdo.m_position + offset;
-  //       __result = true;
-  //       return false;
-  //     }
-  //   }
-  //
-  //   point = Vector3.zero;
-  //   return true;
-  // }
 
   [HarmonyPatch(typeof(Game), nameof(Game.Awake))]
   [HarmonyPostfix]
@@ -120,77 +97,43 @@ public class DynamicLocationsPatches
   [HarmonyPostfix]
   private static void ResetSpawnController(Game __instance)
   {
-    Logger.LogDebug("Game destroy called ResetSpawnController");
-    LocationController.ResetCachedValues();
-    // may not need to call this provided ZNetScene already calls onDestroy
-    // Object.Destroy(PlayerSpawnController.Instance);
+    try
+    {
+
+      LocationController.ResetCachedValues();
+    }
+    catch (Exception e)
+    {
+      LoggerProvider.LogError($"Error with ResetSpawnController \n{e}");
+    }
   }
 
 
-  // [HarmonyPatch(typeof(Game), nameof(Game.FindSpawnPoint))]
-  // [HarmonyPostfix]
-  // private static void OnFindSpawnPoint(Game __instance)
-  // {
-  //   var spawnType = PlayerSpawnController.GetLocationType(__instance);
-  //   var output = PlayerSpawnController.Instance?.OnFindSpawnPoint(spawnType);
-  //   if (output != null)
-  //   {
-  //     __instance.m_respawnAfterDeath = true;
-  //   }
-  // }
+  [HarmonyPatch(typeof(Game), nameof(Game.RequestRespawn))]
+  [HarmonyPrefix]
+  public static bool RequestRespawnListener(Game __instance)
+  {
+#if DEBUG || BETA
+    if (DynamicLocationsConfig.PlayerRespawnImmediately.Value)
+    {
+      __instance._RequestRespawn();
+      return false;
+    }
+#endif
+    return true;
+  }
 
 
-  // /// <summary>
-  // /// Patches request respawn so the respawn time is customized and much faster.
-  // /// </summary>
-  // /// <notes>GPT-4 Generated</notes>
-  // /// <param name="instructions"></param>
-  // /// <returns></returns>
-  // [HarmonyPatch(typeof(Game), nameof(Game.RequestRespawn))]
-  // [HarmonyTranspiler]
-  // // The transpiler method
-  // public static IEnumerable<CodeInstruction> Transpiler(
-  //   IEnumerable<CodeInstruction> instructions)
-  // {
-  //   var codes = new List<CodeInstruction>(instructions);
-  //
-  //   // bails if the config is disabled.
-  //   if (!DynamicLocationsConfig.HasCustomSpawnDelay.Value) return codes;
-  //
-  //   // Loop through instructions to find the Invoke call
-  //   for (var i = 0; i < codes.Count; i++)
-  //   {
-  //     // Look for the Invoke call
-  //     if (codes[i].opcode == OpCodes.Call &&
-  //         codes[i].operand is MethodInfo methodInfo &&
-  //         methodInfo.Name == "Invoke")
-  //     {
-  //       // Replace the delay argument before the Invoke call
-  //       // Assuming the delay is the second argument, we replace it with 0
-  //       // Move back two instructions: ldarg.1 (delay) and replace it with ldc.r4 0
-  //
-  //       // Insert the 0 before the Invoke call
-  //       codes.Insert(i - 1,
-  //         new CodeInstruction(OpCodes.Ldc_R4,
-  //           DynamicLocationsConfig.CustomSpawnDelay.Value));
-  //
-  //       // The original delay argument will still be on the stack, so we need to remove it
-  //       codes.RemoveAt(i); // Remove the call to Invoke
-  //       break; // No need to continue searching after we've modified
-  //     }
-  //   }
-  //
-  //   return codes.AsEnumerable();
-  // }
-
-#if DEBUG
-  public static float flyFastSpeed = 50;
   public static void SetupPlayerDebugValues()
   {
-    Game.instance.m_fadeTimeDeath = 0;
-    Player.m_localPlayer.m_flyFastSpeed = flyFastSpeed;
-  }
+#if DEBUG || BETA
+    if (Game.instance != null)
+    {
+      Game.instance.m_fadeTimeDeath = DynamicLocationsConfig.PlayerRespawnFadeTime.Value;
+    }
 #endif
+    Character.m_debugFlySpeed = Mathf.RoundToInt(DynamicLocationsConfig.FastDebugFlySpeed.Value);
+  }
 
   /// <summary>
   /// Noting that I could override Game.FindSpawnPoint and PlayerProfile.HaveLogoutPoint to return the updated data. Updating this would then force the game to load in the correct location.
@@ -206,14 +149,20 @@ public class DynamicLocationsPatches
   {
 
     if (ZNetView.m_forceDisableInit) return;
-    if (__result == null || Game.instance == null) return;
+    if (!DynamicLocationsConfig.EnableDynamicLogoutPoint.Value && !DynamicLocationsConfig.EnableDynamicLogoutPoint.Value)
+      if (__result == null || Game.instance == null)
+        return;
 
-#if DEBUG
     SetupPlayerDebugValues();
-#endif
 
     var character = __result;
     var profile = Game.instance.GetPlayerProfile();
+
+    if (PlayerSpawnController.Instance == null)
+    {
+      LoggerProvider.LogWarning("No spawn controller. This means dynamic locations is not working.");
+      return;
+    }
 
     // Always prefer logout point if valid
     if (profile?.HaveLogoutPoint() == true)
@@ -222,7 +171,7 @@ public class DynamicLocationsPatches
           !character.InInterior() &&
           !character.InIntro())
       {
-        PlayerSpawnController.Instance?.MovePlayerToLogoutPoint();
+        PlayerSpawnController.Instance.MovePlayerToLogoutPoint();
       }
     }
     // Only use spawn point if no logout point and death respawn
@@ -230,7 +179,7 @@ public class DynamicLocationsPatches
              DynamicLocationsConfig.EnableDynamicSpawnPoint.Value &&
              !character.InIntro())
     {
-      PlayerSpawnController.Instance?.MovePlayerToSpawnPoint();
+      PlayerSpawnController.Instance.MovePlayerToSpawnPoint();
     }
   }
 

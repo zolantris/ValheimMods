@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using BepInEx.Configuration;
 using DynamicLocations.Controllers;
+using DynamicLocations.Patches;
 using Zolantris.Shared;
 
 namespace DynamicLocations.Config;
@@ -15,12 +16,13 @@ public static class DynamicLocationsConfig
   //   DynamicSpawnPointGameObjects { get; private set; } = null!;
 
 
-  public static ConfigEntry<string> DisabledLoginApiIntegrationsString
-  {
-    get;
-    private set;
-  } =
-    null!;
+  public static ConfigEntry<string> DisabledLoginApiIntegrationsString = null!;
+
+#if DEBUG || BETA
+  public static ConfigEntry<int> FastDebugFlySpeed = null!;
+  public static ConfigEntry<bool> PlayerRespawnImmediately = null!;
+  public static ConfigEntry<float> PlayerRespawnFadeTime = null!;
+#endif
 
   public static ConfigEntry<int> LocationControlsTimeoutInMs
   {
@@ -90,6 +92,45 @@ public static class DynamicLocationsConfig
   public static void BindConfig(ConfigFile config)
   {
     Config = config;
+
+    FastDebugFlySpeed = config.BindUnique(MainSection,
+      "FastDebugFlySpeed",
+      40,
+      new ConfigDescription(
+        "Allows for setting the speed of debug flight during sprint. This will make it much faster. You can configure the value to adjust flight if there are problems. This is mostly useful for admins or creative servers.",
+        new AcceptableValueRange<int>(15, 250),
+        new ConfigurationManagerAttributes
+          { IsAdminOnly = false, IsAdvanced = false }));
+
+    FastDebugFlySpeed.SettingChanged += (sender, args) =>
+    {
+      DynamicLocationsPatches.SetupPlayerDebugValues();
+    };
+#if DEBUG || BETA
+    PlayerRespawnImmediately = config.BindUnique(MainSection,
+      "PlayerRespawnImmediately",
+      false,
+      new ConfigDescription(
+        "Allows player to respawn immediately on death. May require additional props.",
+        null,
+        new ConfigurationManagerAttributes
+          { IsAdminOnly = true, IsAdvanced = false }));
+    PlayerRespawnFadeTime = config.BindUnique(MainSection,
+      "PlayerRespawnTime",
+      0.1f,
+      new ConfigDescription(
+        "Allows for configuring player respawn time. Mostly for testing respawn issues.",
+        new AcceptableValueRange<float>(-1, 10f),
+        new ConfigurationManagerAttributes
+          { IsAdminOnly = false, IsAdvanced = false }));
+
+    PlayerRespawnFadeTime.SettingChanged += (sender, args) =>
+    {
+      DynamicLocationsPatches.SetupPlayerDebugValues();
+    };
+    DynamicLocationsPatches.SetupPlayerDebugValues();
+#endif
+
 
     DEBUG_ShouldNotRemoveTargetKey = config.BindUnique(MainSection,
       "DEBUG_ShouldNotRemoveTargetKey",

@@ -226,18 +226,26 @@ namespace ValheimVehicles.SharedScripts
     {
       if (cannonDetectionMode == CannonDetectionMode.Cast)
       {
-        var colliders = Physics.OverlapSphere(transform.position, CannonControlCenterDiscoveryRadius, LayerHelpers.PieceLayerMask);
-
-        foreach (var collider in colliders)
+        if (CannonController.Instances.Count > 1000)
         {
-          var piece = collider.GetComponentInParent<Piece>();
-          if (piece == null) continue;
-          var isCannonPiece = piece.name.StartsWith(PrefabNames.CannonTurretTier1) || piece.name.StartsWith(PrefabNames.CannonFixedTier1);
-          if (!isCannonPiece) continue;
+          var colliders = Physics.OverlapSphere(transform.position, CannonControlCenterDiscoveryRadius, LayerHelpers.PieceLayerMask);
 
-          var cannonController = piece.GetComponentInParent<CannonController>();
-          if (cannonController == null) continue;
-          AddCannon(cannonController);
+          foreach (var collider in colliders)
+          {
+            var piece = collider.GetComponentInParent<Piece>();
+            if (piece == null) continue;
+            var isCannonPiece = piece.name.StartsWith(PrefabNames.CannonTurretTier1) || piece.name.StartsWith(PrefabNames.CannonFixedTier1);
+            if (!isCannonPiece) continue;
+
+            var cannonController = piece.GetComponentInParent<CannonController>();
+            if (cannonController == null) continue;
+            AddCannon(cannonController);
+          }
+        }
+        else
+        {
+          // Likely most optimal solution for < 1000 cannons in an area.
+          CannonController.Instances.Where(x => x != null && Vector3.Distance(x.transform.position, transform.position) < CannonControlCenterDiscoveryRadius).ToList().ForEach(AddCannon);
         }
       }
       else

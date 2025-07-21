@@ -1,8 +1,10 @@
 using BepInEx.Configuration;
+using UnityEngine;
 using ValheimVehicles.Controllers;
 using ValheimVehicles.SharedScripts;
 using ValheimVehicles.Components;
 using ValheimVehicles.Helpers;
+using ValheimVehicles.Patches;
 using ValheimVehicles.UI;
 using Zolantris.Shared;
 
@@ -16,6 +18,11 @@ public class VehicleDebugConfig : BepInExBaseConfig<VehicleDebugConfig>
   public static ConfigEntry<bool> AllowEditCommandsForNonAdmins;
   public static ConfigEntry<int> VehicleCreativeHeight;
   public static ConfigEntry<bool> HasDebugPieces;
+
+#if DEBUG
+  public static ConfigEntry<int> Experimental_CustomMaxCreatedObjectsPerFrame { get; set; }
+  public static ConfigEntry<bool> Experimental_CustomMaxCreatedObjectsPerFrame_Enabled { get; set; }
+#endif
 
   public static ConfigEntry<bool> HasDebugCannonTargets = null!;
 
@@ -100,6 +107,17 @@ public class VehicleDebugConfig : BepInExBaseConfig<VehicleDebugConfig>
   public override void OnBindConfig(ConfigFile config)
   {
     Config = config;
+
+#if DEBUG
+    Experimental_CustomMaxCreatedObjectsPerFrame = config.BindUnique(SectionName, "Experimental_CustomMaxCreatedObjectsPerFrame", 100, ConfigHelpers.CreateConfigDescription("Allows valheim's base engine for spawning objects to be customize", true, true));
+    Experimental_CustomMaxCreatedObjectsPerFrame_Enabled = config.BindUnique(SectionName, "Experimental_CustomMaxCreatedObjectsPerFrame_Enabled", true, ConfigHelpers.CreateConfigDescription("Allows valheim's base engine for spawning objects to be customize", true, true));
+    Experimental_CustomMaxCreatedObjectsPerFrame.SettingChanged += (sender, args) =>
+    {
+      ZNetScene_CreateObjects_Patch.CustomMaxCreatedPerFrame = Experimental_CustomMaxCreatedObjectsPerFrame.Value;
+      ZNetScene_CreateObjects_Patch.CustomLoadingScreenMaxCreatedPerFrame = Mathf.Max(10, Experimental_CustomMaxCreatedObjectsPerFrame.Value);
+    };
+    ZNetScene_CreateObjects_Patch.CustomLoadingScreenMaxCreatedPerFrame = Mathf.Max(100, Experimental_CustomMaxCreatedObjectsPerFrame.Value);
+#endif
 
     AllowDebugCommandsForNonAdmins = config.BindUnique(SectionName, "AllowDebugCommandsForNonAdmins",
       true,

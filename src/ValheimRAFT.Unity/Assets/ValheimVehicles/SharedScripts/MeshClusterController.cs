@@ -409,7 +409,7 @@
             if (!mesh.isReadable)
             {
 #if DEBUG
-              Logger($"Skipping unreadable mesh {mesh.name}");
+              LoggerProvider.LogDebugDebounced($"Skipping unreadable mesh {mesh.name}");
 #endif
               continue; // Skip unreadable meshes
             }

@@ -290,11 +290,15 @@
       {
 
         var pieceCount = GetPieceCount();
+        yield return new WaitUntil(() => _lastRebuildTime + 5f < Time.fixedTime);
+
         var timer = Stopwatch.StartNew();
         while (timer.ElapsedMilliseconds < 2000f && !isInitialPieceActivationComplete)
         {
           if (!isActiveAndEnabled) yield break;
+          yield return new WaitForFixedUpdate();
         }
+
         if (pieceCount <= 0)
         {
           _rebuildBoundsRoutineInstance = null;
@@ -322,6 +326,9 @@
           var timeToWait = Mathf.Clamp(additionalWaitTimeFromItems, RebuildPieceMinDelay, RebuildPieceMaxDelay);
           yield return new WaitForSeconds(timeToWait);
         }
+
+        // always wait 1 second.
+        yield return new WaitForSeconds(1f);
 
         _rebuildBoundsRoutineInstance = null;
 
