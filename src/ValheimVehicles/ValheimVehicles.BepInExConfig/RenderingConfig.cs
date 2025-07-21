@@ -24,7 +24,7 @@ public class RenderingConfig : BepInExBaseConfig<RenderingConfig>
 
   private const string RenderingSectionKey = "Rendering";
 
-  private void ApplySpawnConfig()
+  private static void ApplySpawnConfig()
   {
     if (Experimental_CustomMaxCreatedObjectsPerFrame_Enabled.Value)
     {
