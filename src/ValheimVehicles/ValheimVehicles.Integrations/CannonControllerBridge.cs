@@ -49,11 +49,13 @@ public class CannonControllerBridge : CannonController, Hoverable, Interactable,
 
   protected internal override sealed void OnEnable()
   {
+    base.OnEnable();
     OnAmmoChanged += OnAmmoUpdate;
   }
 
   protected internal override sealed void OnDisable()
   {
+    base.OnDisable();
     OnAmmoChanged -= OnAmmoUpdate;
   }
 

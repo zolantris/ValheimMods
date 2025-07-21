@@ -193,33 +193,6 @@ namespace ValheimVehicles.SharedScripts
 #endif
     }
 
-    public void OnTriggerEnter(Collider other)
-    {
-#if VALHEIM
-      var piece = other.GetComponentInParent<Piece>();
-      if (piece == null) return;
-      var isCannonPiece = piece.name.StartsWith(PrefabNames.CannonTurretTier1) || piece.name.StartsWith(PrefabNames.CannonFixedTier1);
-      if (!isCannonPiece) return;
-
-      var cannonController = piece.GetComponentInParent<CannonController>();
-      if (cannonController == null) return;
-      AddCannon(cannonController);
-#endif
-    }
-
-    public void OnTriggerExit(Collider other)
-    {
-#if VALHEIM
-      var piece = other.GetComponentInParent<Piece>();
-      if (piece == null) return;
-      var isCannonPiece = piece.name.StartsWith(PrefabNames.CannonTurretTier1) || piece.name.StartsWith(PrefabNames.CannonFixedTier1);
-      if (!isCannonPiece) return;
-      var cannonController = piece.GetComponentInParent<CannonController>();
-      if (cannonController == null) return;
-      RemoveCannon(cannonController);
-#endif
-    }
-
     public GameObject detectionAreaObj;
 
     public void OnDetectionModeChange()

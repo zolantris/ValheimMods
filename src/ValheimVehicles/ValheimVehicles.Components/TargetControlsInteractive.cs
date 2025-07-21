@@ -64,6 +64,12 @@ public class TargetControlsInteractive : MonoBehaviour, Hoverable, Interactable,
     if (!player) return false;
     var shouldRemovePreviousDoodad = player.m_doodadController != null;
 
+    if (player.IsAttached())
+    {
+      player.AttachStop();
+      return false;
+    }
+    targetController.OnDetectionModeChange();
     AddOrRemoveHotKeyControllers(player, shouldRemovePreviousDoodad);
 
     player.m_doodadController = shouldRemovePreviousDoodad ? null : this;
