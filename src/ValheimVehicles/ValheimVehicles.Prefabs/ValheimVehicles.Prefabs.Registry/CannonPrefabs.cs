@@ -343,8 +343,8 @@ public class CannonPrefabs : RegisterPrefab<CannonPrefabs>
 
     var itemConfig = new ItemConfig
     {
-      Name = "$valheim_vehicles_cannon_handheld_item",
-      Description = "$valheim_vehicles_cannon_handheld_item_description",
+      Name = "$valheim_vehicles_item_cannon_handheld_item",
+      Description = "$valheim_vehicles_item_cannon_handheld_item_desc",
       Icon = icon,
       CraftingStation = "forge",
       RepairStation = "forge",

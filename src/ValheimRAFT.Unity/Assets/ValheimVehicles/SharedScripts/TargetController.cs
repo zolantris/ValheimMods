@@ -6,7 +6,6 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using UnityEngine;
 using ValheimVehicles.SharedScripts.Helpers;
@@ -73,9 +72,9 @@ namespace ValheimVehicles.SharedScripts
 
     [SerializeField] public int maxCannonsPerEnemy = 2;
     [SerializeField] public bool autoFire;
-    [SerializeField] public HashSet<CannonController> allCannonControllers = new();
-    [SerializeField] public HashSet<CannonController> autoTargetCannonControllers = new();
-    [SerializeField] public HashSet<CannonController> manualFireControllers = new();
+    public HashSet<CannonController> allCannonControllers = new();
+    public HashSet<CannonController> autoTargetCannonControllers = new();
+    public HashSet<CannonController> manualFireControllers = new();
 
     private readonly Collider[] _enemyBuffer = new Collider[32];
     private readonly Dictionary<int, CoroutineHandle> _manualFireCannonsRoutines = new();
@@ -136,20 +135,10 @@ namespace ValheimVehicles.SharedScripts
 
 #if UNITY_EDITOR
       // mostly for local testing.
-      GetComponentsInChildren(false, allCannonControllers);
-      foreach (var allCannonController in allCannonControllers)
+      var controllers = GetComponentsInChildren<CannonController>(false);
+      foreach (var cannonController in controllers)
       {
-        switch (allCannonController.GetFiringMode())
-        {
-          case CannonFiringMode.Manual:
-            manualFireControllers.Add(allCannonController);
-            break;
-          case CannonFiringMode.Auto:
-            autoTargetCannonControllers.Add(allCannonController);
-            break;
-          default:
-            throw new ArgumentOutOfRangeException();
-        }
+        AddCannon(cannonController);
       }
 #endif
       UpdateCannonDetectionModeFromPrefabName();
@@ -197,6 +186,7 @@ namespace ValheimVehicles.SharedScripts
 
     public void OnDetectionModeChange()
     {
+      #if VALHEIM
       if (cannonDetectionMode == CannonDetectionMode.Cast)
       {
         if (CannonController.Instances.Count > 1000)
@@ -233,6 +223,7 @@ namespace ValheimVehicles.SharedScripts
           Destroy(detectionAreaObj);
         }
       }
+#endif
     }
 
     public void InitCoroutineHandlers()
@@ -287,7 +278,7 @@ namespace ValheimVehicles.SharedScripts
 #else
       if (autoFire)
       {
-        var data = CannonFireData.CreateListOfCannonFireDataFromTargetController(this, autoTargetCannonControllers);
+        var data = CannonFireData.CreateListOfCannonFireDataFromTargetController(this, autoTargetCannonControllers, out _, out _);
         StartAutoFiring(data);
       }
 #endif

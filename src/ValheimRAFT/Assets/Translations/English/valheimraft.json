@@ -282,7 +282,7 @@
   "valheim_vehicles_cannon_fixed_tier1_desc": "A fixed cannon that can be used to defend your ship. Can be fired manually from the ship console or left on automatic to defend player and area. A fixed turret must align perfectly with the target's hit area. Auto firing will not work unless the target is large.",
   "valheim_vehicles_cannon_turret_tier1": "Cannon (turret)",
   "valheim_vehicles_cannon_turret_tier1_desc": "A turret cannon that can be used to defend your ship. Can be fired manually from the ship console or left on automatic to defend player and area. Requires gunpowder barrel nearby to function and cannonballs.",
-  "valheim_vehicles_item_cannon_handheld": "Cannon (Hand-held)",
+  "valheim_vehicles_item_cannon_handheld_item": "Cannon Handheld",
   "valheim_vehicles_item_cannon_handheld_item_desc": "All the power of a cannon but you are the turret.",
   "valheim_vehicles_item_telescope": "Telescope",
   "valheim_vehicles_item_telescope_desc": "Control nearby turrets if there is a control center nearby.",
