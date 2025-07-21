@@ -357,6 +357,10 @@
 - Description: Allows setting cannon reload delays. This makes cannons reload longer or shorter. Shortest value is 100ms highest is 60seconds
 - Default Value: 6
 
+### CannonHandHeld_ReloadTime 
+- Description: Allows setting cannon-handheld reload delays. This makes cannons reload longer or shorter. Shortest value is 100ms highest is 60seconds
+- Default Value: 6
+
 ### Cannon_ReloadAudioVolume 
 - Description: Allows customizing cannon firing audio volume
 - Default Value: 1
@@ -393,6 +397,14 @@
 - Description: Allows customizing cannonball wind audio - which can be heard if a cannonball passes nearby. Recommended below 0.2f
 - Default Value: 0.2
 
+## PrefabConfig: PowderBarrel
+
+### PowderBarrelExplosiveChainDelay 
+- Description: Set the powder barrel explosive chain delay. It will blow up nearby barrels but at a delayed fuse to make things a bit more realistic or at least cinematic.
+- Default Value: 0.25
+
+## PrefabConfig: VehicleCannons
+
 ### Cannonball_SolidDamage 
 - Description: Set the amount of damage a solid cannon ball does. This value is multiplied by the velocity of the cannonball around 90 at max speed decreasing to 20 m/s at lowest hit damage level.
 - Default Value: 30
@@ -413,6 +425,22 @@
 - Description: Maximum Y rotational a cannon can turn. Left to right. Front to bow etc.
 - Default Value: 15
 
+## PrefabConfig: CannonControlCenter
+
+### DiscoveryRadius 
+- Description: The radius in which a single cannon control center controls all cannons and detect and prevents other control radiuses from being placed. Requires a reload of the area when updating.
+- Default Value: 15
+
+## PrefabConfig: VehicleCannons
+
+### CannonHandheld_AimYRotationMax 
+- Description: Maximum Y, the  rotational a cannon can turn toward right. Too much will overlap player and look weird. But it would allow aiming left significantly more without needing to rotate body.
+- Default Value: 50
+
+### CannonHandheld_AimYRotationMin 
+- Description: Minimum Y rotational a cannon can turn, left. Too much will overlap player. But it would allow aiming left significantly more without needing to rotate body.
+- Default Value: -30
+
 ### CannonBarrelAimMaxTiltRotation 
 - Description: Maximum X rotation the barrel of the cannon can turn. Left to right
 - Default Value: 180
@@ -429,12 +457,34 @@
 - Description: Vehicle Protection Range of Cannons. This is added on top of the current vehicle Box bounds in X, Y, Z. NOT YET CONNECTED. ZONE SYSTEMS NEED TO BE SUPPORTED FOR THIS TO WORK.
 - Default Value: (1.00, 1.00, 1.00)
 
+## RecipeConfig: HullMaterial
+
+### IronRatio 
+- Description: For configuring hull size ratio. EG materialValue 2x2=4 but ratio 1/4 would get 1 of <itemName>. (rounds to lowets 0 or nearest int). This is meant for the default recipe. Customize the base recipe if you want to override things.
+- Default Value: 0.25
+
+### BronzeRatio 
+- Description: For configuring hull size ratio
+- Default Value: 0.25
+
+### WoodRatio 
+- Description: For configuring hull size ratio
+- Default Value: 2
+
+### YggdrasilWoodRatio 
+- Description: For configuring hull size ratio
+- Default Value: 1
+
+### NailsRatio 
+- Description: For configuring hull size ratio
+- Default Value: 1
+
 ## RecipeConfig
 
 ### ValheimVehicles_Cannonball_Explosive [,Recover]
 - Description: Recipe requirements for ValheimVehicles_Cannonball_Explosive.
 Format: ItemName,Amount[,Recover][,AmountPerLevel]|... (e.g., BlackPowder,2,true|Bronze,1,true)
-Recover is optional (defaults true). AmountPerLevel is optional (defaults 0).
+Recover is optional (defaults true). AmountPerLevel is optional (defaults 0). Amount is clamped between 0 and 100. No decimals are allowed.
 - Default Value: BlackMetal,1,true|Coal,1,true
 
 ### ValheimVehicles_Cannonball_Solid 
@@ -443,11 +493,31 @@ Recover is optional (defaults true). AmountPerLevel is optional (defaults 0).
 
 ### ValheimVehicles_Cannon_Fixed_Tier1 
 - Description: Recipe requirements for ValheimVehicles_Cannon_Fixed_Tier1.
-- Default Value: Bronze,1,true|Wood,6,true
+- Default Value: Bronze,4,true|Wood,6,true
 
 ### ValheimVehicles_Cannon_Turret_Tier1 
 - Description: Recipe requirements for ValheimVehicles_Cannon_Turret_Tier1.
 - Default Value: Bronze,4,true|Chain,1,true|Iron,2,true
+
+### ValheimVehicles_Cannon_Control_Center 
+- Description: Recipe requirements for ValheimVehicles_Cannon_Control_Center.
+- Default Value: Bronze,2,true
+
+### ValheimVehicles_Cannon_Handheld_Item 
+- Description: Recipe requirements for ValheimVehicles_Cannon_Handheld_Item.
+- Default Value: Bronze,4,true|Chain,1,true|Iron,2,true
+
+### ValheimVehicles_Powder_Barrel 
+- Description: Recipe requirements for ValheimVehicles_Powder_Barrel.
+- Default Value: Wood,4,true|Coal,20,true
+
+### hull_base_recipe_iron 
+- Description: Recipe requirements for hull_base_recipe_iron.
+- Default Value: Iron,1,true|Bronze,1,true|BronzeNails,2,true|YggdrasilWood,1,true
+
+### hull_base_recipe_wood 
+- Description: Recipe requirements for hull_base_recipe_wood.
+- Default Value: Wood,2,true
 
 ## Vehicle Debugging
 
@@ -800,15 +870,15 @@ Other methods removed after 2.5.0
 50% will be the very bottom of the vehicle's collider. This is just a default. Any vehicle can be configured directly via config menu.
 - Default Value: 0.65
 
-### flightDamping_3.6.0 
+### flightDamping_3.6.1 
 - Description: Controls how much the water pushes the boat upwards directly. This value may affect angular damping too. Recommended to keep the original value. But tweaking can remove or add additional jitter. Higher values likely will add more jitter.
 - Default Value: 1
 
-### flightSidewaysDamping_3.6.0 
+### flightSidewaysDamping_3.6.1 
 - Description: Controls how much the water pushes the boat sideways based on wind direction and velocity.
 - Default Value: 2
 
-### flightAngularDamping_3.6.0 
+### flightAngularDamping_3.6.1 
 - Description: Controls how much the water pushes the boat from a vertical angle based on water and velocity. Lower values will cause more rocking and allow better turn rates. Higher values will make the vehicle more stable, but less turning angle and possibly less realistic. If you get motion-sickness this can allow tweaking sway without disabling it all and also prevent rapid turning.
 - Default Value: 1
 
@@ -828,15 +898,15 @@ Other methods removed after 2.5.0
 - Description: Flight angular drag controls how much the vehicle slows down when turning.
 - Default Value: 1.2
 
-### force_3.6.0 
+### force_3.6.1 
 - Description: EXPERIMENTAL_FORCE. Lower values will not allow the vehicle to balance fast when tilted. Lower values can reduce bobbing, but must be below the forceDistance value.
 - Default Value: 2
 
-### forceDistance_3.6.0 
+### forceDistance_3.6.1 
 - Description: EXPERIMENTAL_FORCE_DISTANCE should always be above the value of force. Otherwise bobbing will occur. Lower values will not allow the vehicle to balance fast when tilted
 - Default Value: 10
 
-### backwardForce_3.6.0 
+### backwardForce_3.6.1 
 - Description: EXPERIMENTAL_BackwardFORCE
 - Default Value: 1
 
@@ -844,15 +914,15 @@ Other methods removed after 2.5.0
 - Description: Steer force controls how much the vehicle will resist steering when turning due to water pushing against it
 - Default Value: 1
 
-### waterDamping_3.6.0 
+### waterDamping_3.6.1 
 - Description: Controls how much the water pushes the boat upwards directly. This value may affect angular damping too. Recommended to keep the original value. But tweaking can remove or add additional jitter. Higher values likely will add more jitter.
 - Default Value: 1
 
-### waterSidewaysDamping_3.6.0 
+### waterSidewaysDamping_3.6.1 
 - Description: Controls how much the water pushes the boat sideways based on wind direction and velocity.
 - Default Value: 2
 
-### waterAngularDamping_3.6.0 
+### waterAngularDamping_3.6.1 
 - Description: Controls how much the water pushes the boat from a vertical angle based on water and velocity. Lower values will cause more rocking and allow better turn rates. Higher values will make the vehicle more stable, but less turning angle and possibly less realistic. If you get motion-sickness this can allow tweaking sway without disabling it all and also prevent rapid turning.
 - Default Value: 1
 
@@ -868,15 +938,15 @@ Other methods removed after 2.5.0
 - Description: rotation drag controls how much the vehicle slows down when turning.
 - Default Value: 0.8
 
-### submersibleDamping_3.6.0 
+### submersibleDamping_3.6.1 
 - Description: Controls how much the water pushes the boat upwards directly. This value may affect angular damping too. Recommended to keep the original value. But tweaking can remove or add additional jitter. Higher values likely will add more jitter.
 - Default Value: 1
 
-### submersibleSidewaysDamping_3.6.0 
+### submersibleSidewaysDamping_3.6.1 
 - Description: Controls how much the water pushes the boat sideways based on wind direction and velocity.
 - Default Value: 2
 
-### submersibleAngularDamping_3.6.0 
+### submersibleAngularDamping_3.6.1 
 - Description: Controls how much the water pushes the boat from a vertical angle based on water and velocity. Lower values will cause more rocking and allow better turn rates. Higher values will make the vehicle more stable, but less turning angle and possibly less realistic. If you get motion-sickness this can allow tweaking sway without disabling it all and also prevent rapid turning.
 - Default Value: 1
 

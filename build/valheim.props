@@ -9,11 +9,11 @@
         <IsRunnable Condition="'$(IsRunnableRelease)' == 'true' or '$(IsRunnableDebug)' == 'true'">true</IsRunnable>
         <IsRunnable>true</IsRunnable>
         <IsDebug Condition="'$(Configuration)' == 'Debug' or '$(IsRunnableDebug)' == 'true'">true</IsDebug>
-        <IsRelease Condition="'$(Configuration)' == 'Release' or '$(IsRunnableRelease)' == 'true'">true</IsRelease>
+        <IsRelease Condition="'$(Configuration)' == 'Release' or '$(Configuration)' == 'Release Archive' or '$(Configuration)' == 'ReleaseBeta Archive' or '$(IsRunnableRelease)' == 'true'">true</IsRelease>
         <IsNotArchive Condition="'$(Configuration)' != 'Release Archive' and '$(Configuration)' != 'ReleaseBETA Archive'">true</IsNotArchive>
     </PropertyGroup>
     <!-- Default   -->
-    <PropertyGroup>
+    <PropertyGroup Condition="'$(IsDebug)' == 'true'">
         <PlatformTarget>AnyCPU</PlatformTarget>
         <DebugSymbols>true</DebugSymbols>
         <DebugType>full</DebugType>
@@ -24,7 +24,7 @@
         <WarningLevel>4</WarningLevel>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     </PropertyGroup>
-    <PropertyGroup Condition="'$(IsRelease)' == 'true' or '$(Configuration)' == 'Release Archive' or '$(Configuration)' == 'ReleaseBETA Archive'">
+    <PropertyGroup Condition="'$(IsRelease)' == 'true'">
         <PlatformTarget>AnyCPU</PlatformTarget>
         <DebugType>pdbonly</DebugType>
         <Optimize>true</Optimize>
@@ -327,10 +327,6 @@
             <Private>False</Private>
         </Reference>
     </ItemGroup>
-
-    <PropertyGroup>
-        <AssetsDir>$(SolutionDir)src\ValheimRAFT\Assets\</AssetsDir>
-    </PropertyGroup>
 
     <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets"/>
 </Project>

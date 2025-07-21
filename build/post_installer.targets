@@ -5,7 +5,7 @@
         <Platforms>AnyCPU</Platforms>
     </PropertyGroup>
     <Import Project="..\..\targets\base.targets"/>
-    
+
     <PropertyGroup Label="FileLockValidation">
 
         <ServerFileToValidate>$(ValheimServerPath)\$(PluginDeployTarget)\$(AssemblyName).dll</ServerFileToValidate>
@@ -52,7 +52,7 @@
         <Error Condition="!Exists('@(CheckValheimServerPath)')"/>
 
         <MakeDir Directories="$(ValheimServerPath)\$(PluginDeployTarget)"/>
-        <Exec Command="xcopy &quot;$(SolutionDir)Dependencies&quot; &quot;$(ValheimServerPath)\$(PluginDeployTarget)&quot; /q /s /y /i"/>
+        <Exec Command="xcopy &quot;$(SolutionDir)dependencies&quot; &quot;$(ValheimServerPath)\$(PluginDeployTarget)&quot; /q /s /y /i"/>
 
         <Exec Command="copy &quot;$(OutDir)$(AssemblyName).dll&quot; &quot;$(ValheimServerPath)\$(PluginDeployTarget)\$(AssemblyName).dll&quot;"/>
         <Exec Command="copy &quot;$(OutDir)$(AssemblyName).pdb&quot; &quot;$(ValheimServerPath)\$(PluginDeployTarget)\$(AssemblyName).pdb&quot;"/>
@@ -64,7 +64,7 @@
         <!--        <Exec Condition="Exists('$(AssetsDir)Translations\English\')" Command="xcopy /d &quot;$(AssetsDir)Translations\English\&quot; &quot;$(ValheimServerPath)\$(PluginDeployTarget)\Assets\Translations\English\&quot; /E/H/Y"/>-->
     </Target>
     <ItemGroup>
-        <DependencyLibs Include="$(SolutionDir)Dependencies\**\*.*"/>
+        <DependencyLibs Include="$(SolutionDir)dependencies\**\*.*"/>
     </ItemGroup>
     <Target Name="CopyDependencyLibsToR2ModMan" AfterTargets="Build">
         <Message Text="Copying dependency libs from $(SolutionDir)Dependencies to $(PluginDeployPath)..." Importance="high"/>
@@ -78,7 +78,7 @@
         <!--        <Exec Condition="'$(IsRelease)' == 'true'" Command="copy &quot;$(OutDir)$(AssemblyName).dll&quot; &quot;$(SolutionDir)src\ValheimRAFT\ValheimRAFT.Unity\Assets\Assemblies\$(AssemblyName).dll&quot;"/>-->
 
         <!--    required plugins  -->
-        <Exec Command="xcopy &quot;$(SolutionDir)Dependencies&quot; &quot;$(PluginDeployPath)\&quot; /q /s /y /i"/>
+        <Exec Command="xcopy &quot;$(SolutionDir)dependencies&quot; &quot;$(PluginDeployPath)\&quot; /q /s /y /i"/>
 
         <Exec Command="copy &quot;$(OutDir)$(AssemblyName).dll&quot; &quot;$(PluginDeployPath)\$(AssemblyName).dll&quot;"/>
         <Exec Command="copy &quot;$(OutDir)$(AssemblyName).pdb&quot; &quot;$(PluginDeployPath)\$(AssemblyName).pdb&quot;"/>

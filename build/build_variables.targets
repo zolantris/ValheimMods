@@ -24,8 +24,9 @@
 
     <PropertyGroup Label="Directories">
         <ProjectDir>$(SolutionDir)src\$(AssemblyName)</ProjectDir>
-        <ModOutputDir>$(ProjectDir)\bin\$(Configuration)\$(TargetFramework)\ModVersions</ModOutputDir>
+        <ModOutputDir>$(SolutionDir)mod-release\versions\</ModOutputDir>
         <DLLFromRoot>$(ProjectDir)\bin\$(Configuration)\net8.0\$(AssemblyName).dll</DLLFromRoot>
         <ModSyncDll>$(SolutionDir)src\ModSync\bin\Debug\net8.0\ModSync.dll</ModSyncDll>
+        <AssetsDir>$(SolutionDir)src\ValheimRAFT\Assets\</AssetsDir>
     </PropertyGroup>
 </Project>

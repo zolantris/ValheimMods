@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using ModSync.Utils;
 namespace ModSync.Programs;
 
@@ -221,6 +222,9 @@ internal static class SyncToTarget
     }
   }
 
+  public static List<string> excludedFiles = ["SolutionPostBuild", "ModSync"];
+  public static Regex ExcludedFilesRegex = RegexGenerator.GenerateRegexFromList(excludedFiles);
+
   internal static void CopyDirectory(string sourceDir, string destinationDir)
   {
     if (!Directory.Exists(sourceDir))
@@ -241,6 +245,8 @@ internal static class SyncToTarget
     foreach (var file in Directory.GetFiles(sourceDir))
     {
       var fileName = Path.GetFileName(file);
+      if (ExcludedFilesRegex.IsMatch(fileName)) continue;
+      Console.WriteLine($"FileName: {fileName}");
       var destFile = Path.Combine(destinationDir, fileName);
       File.Copy(file, destFile, true);
     }

@@ -27,12 +27,16 @@ namespace ValheimVehicles.SharedScripts.Modules
   }
 
 // for running nunit and other tests outside of unity.
-#if UNITY_ENGINE || !DEBUG
+#if VALHEIM && !TEST
   public static partial class MathX // or MathMock, MathUtil, etc.
   {
     public static float Clamp(float value, float min, float max)
     {
       return Mathf.Clamp(value, min, max);
+    }
+    public static int Clamp(int v, int min, int max)
+    {
+      return Mathf.Max(min, Math.Min(max, v));
     }
     public static float Min(float a, float b)
     {
