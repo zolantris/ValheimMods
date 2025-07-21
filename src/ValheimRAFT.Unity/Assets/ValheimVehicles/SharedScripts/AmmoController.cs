@@ -31,7 +31,7 @@
       public static bool HasUnlimitedAmmo = false;
 
 #if VALHEIM
-      private List<Container> _nearbyContainers = new();
+      private HashSet<Container> _nearbyContainers = new();
 #endif
 
       [Header("Distances")]
@@ -349,6 +349,7 @@
         {
           _explosiveAmmo = 999;
           _solidAmmo = 999;
+          return;
         }
 
 #if VALHEIM

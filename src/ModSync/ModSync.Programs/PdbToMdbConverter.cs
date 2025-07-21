@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
+using ModSync.Config;
 using ModSync.Utils;
 namespace ModSync.Programs;
 
@@ -42,14 +43,11 @@ internal static class PdbToMdbConverter
 
     if (!File.Exists(pdb2mdbPath))
     {
-      Console.WriteLine($"Warning: pdb2mdb.exe not found at {pdb2mdbPath}, skipping conversion");
+      Logger.Warn($"Warning: pdb2mdb.exe not found at {pdb2mdbPath}, skipping conversion");
       return;
     }
 
-    if (ModSyncConfig.IsVerbose)
-    {
-      Console.WriteLine($"Converting: targetDll {targetDll} ...");
-    }
+    Logger.Debug($"Converting: targetDll {targetDll} ...");
 
     try
     {

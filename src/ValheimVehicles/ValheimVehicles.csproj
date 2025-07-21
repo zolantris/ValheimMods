@@ -12,10 +12,10 @@
         <RootNamespace>ValheimVehicles</RootNamespace>
         <AssemblyName>ValheimVehicles</AssemblyName>
         <FileAlignment>512</FileAlignment>
-        <Configurations>Debug;Release;ReleaseBETA Archive;ModSyncOnly</Configurations>
+        <Configurations>Debug;Release;</Configurations>
         <Platforms>AnyCPU</Platforms>
     </PropertyGroup>
-    
+
     <!--    <Import Project="$(SolutionDir)\build\valheim.targets"/>-->
     <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'ReleaseBETA Archive|AnyCPU' ">
         <OutputPath>bin\ReleaseBETA Archive\</OutputPath>

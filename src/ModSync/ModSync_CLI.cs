@@ -1,4 +1,4 @@
-﻿// File: Program.cs
+﻿// This is the entrypoint program for whole ModSync.
 
 using System;
 using System.Collections.Generic;
@@ -6,6 +6,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using ModSync.Config;
 using ModSync.Programs;
 
 namespace ModSync;
@@ -49,16 +50,19 @@ public static class ModSyncCli
       return 0;
     }
 
+    // bail on error
+    if (!TryGetEnvName(options, out var envName)) return 1;
+
+    ModSyncConfig.UpdateConfigBooleans(options);
+
     // Load and parse JSON5 config
-    if (!ModSyncConfig.TryCreateConfig(configPath))
+    if (!ModSyncConfig.TryCreateConfig(configPath, envName))
     {
       Console.Error.WriteLine($"Error parsing config file: {configPath}. Bailing.");
       return 1;
     }
 
-    ModSyncConfig.UpdateConfigBooleans(options);
-
-    var targets = GetTargets(options, ModSyncConfig.ConfigInstance);
+    var targets = GetTargets(options, ModSyncConfig.Instance);
 
     // Dispatch command
     switch (mode)
@@ -78,6 +82,41 @@ public static class ModSyncCli
     }
 
     return 0;
+  }
+
+  private static bool TryGetEnvName(Dictionary<string, string> options, out string? envName)
+  {
+    try
+    {
+      envName = GetSelectedEnvironment(options);
+      return true;
+    }
+    catch (Exception ex)
+    {
+      Console.Error.WriteLine(ex.Message);
+      envName = null;
+      return false;
+    }
+  }
+
+  private static string? GetSelectedEnvironment(Dictionary<string, string> options)
+  {
+    var envKeys = options
+      .Where(kv => kv.Key.StartsWith("env-", StringComparison.OrdinalIgnoreCase) &&
+                   !string.Equals(kv.Value, "false", StringComparison.OrdinalIgnoreCase))
+      .Select(kv => kv.Key.Substring("env-".Length))
+      .ToList();
+
+    if (envKeys.Count > 1)
+    {
+      var errorString = $"{Logger.ModSyncName}: -> Multiple environments specified: <{string.Join(", ", envKeys)}>. Please specify only one.";
+      Logger.Error(errorString);
+      throw new Exception(errorString);
+    }
+    if (envKeys.Count == 1)
+      return envKeys[0];
+
+    return null;
   }
 
 
@@ -117,7 +156,7 @@ public static class ModSyncCli
     return true;
   }
 
-  private static string[] GetTargets(Dictionary<string, string> options, ModSyncConfig.ModSyncConfigObject config)
+  private static string[] GetTargets(Dictionary<string, string> options, ModSyncConfig.ConfigData config)
   {
     if (!options.TryGetValue(Opt_Targets, out var targetNames) || string.IsNullOrWhiteSpace(targetNames))
     {
@@ -130,7 +169,7 @@ public static class ModSyncCli
     return targetList;
   }
 
-  private static void HandleDeploy(Dictionary<string, string> options, ModSyncConfig.ModSyncConfigObject config)
+  private static void HandleDeploy(Dictionary<string, string> options, ModSyncConfig.ConfigData config)
   {
     // if (!options.TryGetValue("targets", out var targetNames) || string.IsNullOrWhiteSpace(targetNames))
     // {
@@ -162,7 +201,7 @@ public static class ModSyncCli
 
   private static void HandleRun(string[] targets)
   {
-    if (ModSyncConfig.ConfigInstance.runTargets == null)
+    if (ModSyncConfig.Instance.runTargets == null)
     {
       Console.WriteLine("No runTargets found in config");
       return;
@@ -170,7 +209,7 @@ public static class ModSyncCli
 
     foreach (var targetName in targets)
     {
-      if (!ModSyncConfig.ConfigInstance.runTargets.TryGetValue(targetName, out var match))
+      if (!ModSyncConfig.Instance.runTargets.TryGetValue(targetName, out var match))
       {
         Console.WriteLine($"No runTarget found for '{targetName}'");
         continue;
@@ -179,10 +218,7 @@ public static class ModSyncCli
       var binary = match.binaryTarget;
       var args = string.Join(" ", match.args);
 
-      if (ModSyncConfig.IsVerbose)
-      {
-        Console.WriteLine($"[SYNC] Would sync to: binary <{binary}> \\ args <{args}>");
-      }
+      Logger.Debug($"[SYNC] Would sync to: binary <{binary}> \\ args <{args}>");
       if (ModSyncConfig.IsDryRun) continue;
 
       // ... Run logic here

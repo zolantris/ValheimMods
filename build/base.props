@@ -1,6 +1,10 @@
 <Project>
     <!--    <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props"-->
     <!--            Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')"/>-->
+    <!--  critical for local variables, can affect any project in this repo reliant on it  -->
+    <Import Project="$(SolutionDir)build\.props" Condition="Exists('$(SolutionDir)build\.props')"/>
+    <Import Project="$(SolutionDir)build\build_variables.props" Condition="Exists('$(SolutionDir)build\build_variables.props')"/>
+
     <PropertyGroup>
         <TargetFramework>netstandard2.1</TargetFramework>
         <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
@@ -9,16 +13,13 @@
         <LangVersion>12</LangVersion>
         <Nullable>enable</Nullable>
         <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
-        <Configurations>Debug;Release;ReleaseBETA Archive</Configurations>
+        <Configurations>Debug;Release</Configurations>
+        <OutputPath>bin\Debug</OutputPath>
     </PropertyGroup>
     <PropertyGroup Label="Code Preferences">
         <Nullable>enable</Nullable>
     </PropertyGroup>
-    <!--  critical for local variables, can affect any project in this repo reliant on it  -->
-    <Import Project="$(SolutionDir)build\.props" Condition="Exists('$(SolutionDir)build\.props')"/>
-    <Import Project="$(SolutionDir)build\build_variables.props" Condition="Exists('$(SolutionDir)build\build_variables.props')"/>
-
-    <PropertyGroup Condition=" '$(Configuration)' == 'ReleaseBETA Archive' or '$(Configuration)' == 'Release'">
+    <PropertyGroup Condition="'$(IsRelease)' == 'true' or '$(Configuration)' == 'ReleaseBETA Archive' or '$(Configuration)' == 'Release'">
         <PlatformTarget>AnyCPU</PlatformTarget>
         <DebugType>pdbonly</DebugType>
         <Optimize>true</Optimize>

@@ -2,7 +2,7 @@
 // ReSharper disable NamespaceStyle
 
 using System;
-#if UNITY_ENGINE || !DEBUG
+#if VALHEIM && (!TEST || !DEBUG)
 using UnityEngine;
 #else
 using System;

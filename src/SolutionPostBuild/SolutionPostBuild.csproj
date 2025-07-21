@@ -17,7 +17,7 @@
 
     <PropertyGroup>
         <PostInstallerEnabled>true</PostInstallerEnabled>
-        <Configurations>Debug;Release;Debug Run ClientServer;Debug Run Client;Release Archive;ReleaseBeta Archive;ModSyncOnly</Configurations>
+        <Configurations>Debug;Release;Debug Run ClientServer;Debug Run Client;Release Archive;ReleaseBeta Archive;ModSyncOnly;Release Run Client</Configurations>
         <TargetFramework>Net8.0</TargetFramework>
         <Platforms>AnyCPU</Platforms>
     </PropertyGroup>
@@ -27,6 +27,9 @@
         <SyncTargets Condition="'$(IsRunnableClient)' == 'true'">localClient</SyncTargets>
         <!--  This overrides server or client config -->
         <SyncTargets Condition="'$(IsRunnableClientServer)' == 'true'">localClient,vmClient,server</SyncTargets>
+
+        <SyncEnvFlags>--env-debug=true</SyncEnvFlags>
+        <SyncEnvFlags Condition="'$(IsRelease)' == 'true'">--env-release</SyncEnvFlags>
     </PropertyGroup>
 
     <!-- Consolidated RunPostInstaller target -->
@@ -40,7 +43,7 @@
         <Message Text="IsRunnableClientServer is: $(IsRunnableClientServer)" Importance="high"/>
         <Message Text="SyncTargets is: $(SyncTargets)" Importance="high"/>
         <Exec
-                Command="dotnet &quot;$(ModSyncDll)&quot; sync --targets=&quot;$(SyncTargets)&quot;"
+                Command="dotnet &quot;$(ModSyncDll)&quot; sync --targets=&quot;$(SyncTargets)&quot; $(SyncEnvFlags)"
                 WorkingDirectory="$(SolutionDir)"
                 IgnoreExitCode="false"
         />

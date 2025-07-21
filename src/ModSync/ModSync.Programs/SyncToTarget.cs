@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
+using ModSync.Config;
 using ModSync.Utils;
 namespace ModSync.Programs;
 
@@ -12,9 +13,9 @@ internal static class SyncToTarget
 
   internal static void HandleSync(string[] targets)
   {
-    if (ModSyncConfig.ConfigInstance.syncTargets == null)
+    if (ModSyncConfig.Instance.syncTargets == null)
     {
-      Console.WriteLine("No syncTargets found in config");
+      Logger.Debug("No syncTargets found in config");
       return;
     }
 
@@ -22,6 +23,8 @@ internal static class SyncToTarget
     {
       RecursiveSync(targetName, null);
     }
+
+    Logger.Debug("Successfully synced all targets");
   }
 
   /// <summary>
@@ -32,18 +35,18 @@ internal static class SyncToTarget
     ModSyncConfig.SyncTargetShared currentTarget;
     if (recurseCount > MaxRecurseCount)
     {
-      Console.WriteLine($"[SYNC] Recursion limit reached for target {targetName}");
+      Logger.Debug($"[SYNC] Recursion limit reached for target {targetName}");
       return;
     }
 
     if (parentTarget != null)
     {
-      if (!ModSyncConfig.TryGetShareDependencyKey(ModSyncConfig.ConfigInstance.sharedTargets, targetName, out currentTarget)) return;
+      if (!ModSyncConfig.TryGetShareDependencyKey(ModSyncConfig.Instance.sharedTargets, targetName, out currentTarget)) return;
     }
     else
     {
-      if (ModSyncConfig.ConfigInstance.syncTargets == null) return;
-      if (!ModSyncConfig.ConfigInstance.syncTargets.TryGetValue(targetName, out currentTarget)) return;
+      if (ModSyncConfig.Instance.syncTargets == null) return;
+      if (!ModSyncConfig.Instance.syncTargets.TryGetValue(targetName, out currentTarget)) return;
     }
 
     if (currentTarget == null) return;
@@ -64,10 +67,8 @@ internal static class SyncToTarget
       }
     }
 
-    if (ModSyncConfig.IsVerbose)
-    {
-      Console.WriteLine($"[SYNC] Would sync to: inputPath <{inputPath}> \\ outputPath <{outputPath}>");
-    }
+    Logger.Debug($"[SYNC] Would sync to: inputPath <{inputPath}> \\ outputPath <{outputPath}>");
+
     if (ModSyncConfig.IsDryRun) return;
     if (inputPath == null || outputPath == null) return;
     if (!string.IsNullOrEmpty(relativePath))
@@ -90,7 +91,7 @@ internal static class SyncToTarget
     {
       // Fallback to targetPath directory if outputDir is not provided
       outDir = Path.GetDirectoryName(targetPath);
-      Console.WriteLine($"Warning: outputDir is not provided, using targetPath directory: {outDir}");
+      Logger.Debug($"Warning: outputDir is not provided, using targetPath directory: {outDir}");
     }
 
     var modOutputDir = Path.Combine(outDir, "ModVersions");
@@ -112,12 +113,12 @@ internal static class SyncToTarget
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
           "r2modmanPlus-local", "Valheim", "profiles", "Default", "BepInEx", "plugins");
 
-    Console.WriteLine($"Using plugin path: {effectivePluginPath}");
+    Logger.Debug($"Using plugin path: {effectivePluginPath}");
 
     var autoDocPath = Path.Combine(effectivePluginPath, autoDocName);
     var localAutoDocPath = Path.Combine(solutionDir, "src", assemblyName, "docs", autoDocName);
 
-    Console.WriteLine($"Generating mod archive: {modNameVersion}");
+    Logger.Debug($"Generating mod archive: {modNameVersion}");
 
     // Clean up temporary directories
     if (Directory.Exists(Path.Combine(tmpDir, "plugins", "Assets")))
@@ -208,17 +209,17 @@ internal static class SyncToTarget
       var dirName = Path.GetDirectoryName(destination);
       if (dirName == null)
       {
-        Console.WriteLine($"Warning: Destination directory is null for file {destination}");
+        Logger.Warn($"Warning: Destination directory is null for file {destination}");
         return;
       }
 
       Directory.CreateDirectory(dirName);
       File.Copy(source, destination, true);
-      Console.WriteLine($"Copied {source} to {destination}");
+      Logger.Debug($"Copied {source} to {destination}");
     }
     else
     {
-      Console.WriteLine($"Warning: Source file does not exist: {source}");
+      Logger.Warn($"Warning: Source file does not exist: {source}");
     }
   }
 
@@ -229,26 +230,36 @@ internal static class SyncToTarget
   {
     if (!Directory.Exists(sourceDir))
     {
-      Console.WriteLine($"Warning: Source directory does not exist: {sourceDir}");
+      Logger.Debug($"Warning: Source directory does not exist: {sourceDir}");
       return;
     }
 
-    if (ModSyncConfig.IsVerbose)
-    {
-      Console.WriteLine($"Copying directory: {sourceDir} -> {destinationDir}");
-    }
+
+    Logger.Debug($"Copying directory: {sourceDir} -> {destinationDir}");
 
     // Create destination directory if it doesn't exist
-    Directory.CreateDirectory(destinationDir);
+
+    if (!ModSyncConfig.IsDryRun)
+    {
+      Directory.CreateDirectory(destinationDir);
+    }
+
 
     // Copy files
     foreach (var file in Directory.GetFiles(sourceDir))
     {
       var fileName = Path.GetFileName(file);
       if (ExcludedFilesRegex.IsMatch(fileName)) continue;
-      Console.WriteLine($"FileName: {fileName}");
+
+
+      Logger.Debug($"FileName: {fileName}");
+
       var destFile = Path.Combine(destinationDir, fileName);
-      File.Copy(file, destFile, true);
+
+      if (!ModSyncConfig.IsDryRun)
+      {
+        File.Copy(file, destFile, true);
+      }
     }
 
     // Copy subdirectories recursively
@@ -275,20 +286,25 @@ internal static class SyncToTarget
 
       using (var process = System.Diagnostics.Process.Start(psi))
       {
+        if (process == null)
+        {
+          Logger.Warn("Warning: Compress-Archive process is null. It exited way to early.");
+          return;
+        }
         process.WaitForExit();
-        Console.WriteLine(process.StandardOutput.ReadToEnd());
+        Logger.Debug(process.StandardOutput.ReadToEnd());
 
         if (process.ExitCode != 0)
         {
-          Console.WriteLine($"Warning: Compress-Archive exited with code {process.ExitCode}");
+          Logger.Warn($"Warning: Compress-Archive exited with code {process.ExitCode}");
         }
       }
 
-      Console.WriteLine($"Created archive: {destinationZipFile}");
+      Logger.Debug($"Created archive: {destinationZipFile}");
     }
     catch (Exception ex)
     {
-      Console.WriteLine($"Error creating zip archive: {ex.Message}");
+      Logger.Error($"Error creating zip archive: {ex.Message}");
     }
   }
 }
