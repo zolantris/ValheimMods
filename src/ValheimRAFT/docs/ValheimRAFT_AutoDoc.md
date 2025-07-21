@@ -13,6 +13,10 @@
 - Description: Vehicle/Raft Creative mode will set all axises to 0 for rotation instead keeping the turn axis. Gizmo has issues with rotated vehicles, so zeroing things out is much safer. Works regardless of patch if mod exists
 - Default Value: True
 
+### EXPERIMENTAL: Snappoint Rotational Patch 
+- Description: Some prefabs on ValheimRAFT have flipped/rotated snappoints. This will allow rotating based on rotated point transform. Eg pieces can be flipped upside down. Supports Rotating Cannons. It does not flip the actual snappoint though. So the collision point requires a bit of creativity..
+- Default Value: True
+
 ### Vehicles Prevent Pausing 
 - Description: Prevents pausing on a boat, pausing causes a TON of desync problems and can make your boat crash or other players crash
 - Default Value: True
@@ -430,6 +434,10 @@
 ### DiscoveryRadius 
 - Description: The radius in which a single cannon control center controls all cannons and detect and prevents other control radiuses from being placed. Requires a reload of the area when updating.
 - Default Value: 15
+
+### CannonTiltAdjustSpeed 
+- Description: Tilt adjust speed for the manual cannons while using the control center. This is a percentage 0% is 10x slower than 100%
+- Default Value: 0.5
 
 ## PrefabConfig: VehicleCannons
 
@@ -870,15 +878,15 @@ Other methods removed after 2.5.0
 50% will be the very bottom of the vehicle's collider. This is just a default. Any vehicle can be configured directly via config menu.
 - Default Value: 0.65
 
-### flightDamping_3.6.1 
+### flightDamping_3.6.2 
 - Description: Controls how much the water pushes the boat upwards directly. This value may affect angular damping too. Recommended to keep the original value. But tweaking can remove or add additional jitter. Higher values likely will add more jitter.
 - Default Value: 1
 
-### flightSidewaysDamping_3.6.1 
+### flightSidewaysDamping_3.6.2 
 - Description: Controls how much the water pushes the boat sideways based on wind direction and velocity.
 - Default Value: 2
 
-### flightAngularDamping_3.6.1 
+### flightAngularDamping_3.6.2 
 - Description: Controls how much the water pushes the boat from a vertical angle based on water and velocity. Lower values will cause more rocking and allow better turn rates. Higher values will make the vehicle more stable, but less turning angle and possibly less realistic. If you get motion-sickness this can allow tweaking sway without disabling it all and also prevent rapid turning.
 - Default Value: 1
 
@@ -898,15 +906,15 @@ Other methods removed after 2.5.0
 - Description: Flight angular drag controls how much the vehicle slows down when turning.
 - Default Value: 1.2
 
-### force_3.6.1 
+### force_3.6.2 
 - Description: EXPERIMENTAL_FORCE. Lower values will not allow the vehicle to balance fast when tilted. Lower values can reduce bobbing, but must be below the forceDistance value.
 - Default Value: 2
 
-### forceDistance_3.6.1 
+### forceDistance_3.6.2 
 - Description: EXPERIMENTAL_FORCE_DISTANCE should always be above the value of force. Otherwise bobbing will occur. Lower values will not allow the vehicle to balance fast when tilted
 - Default Value: 10
 
-### backwardForce_3.6.1 
+### backwardForce_3.6.2 
 - Description: EXPERIMENTAL_BackwardFORCE
 - Default Value: 1
 
@@ -914,15 +922,15 @@ Other methods removed after 2.5.0
 - Description: Steer force controls how much the vehicle will resist steering when turning due to water pushing against it
 - Default Value: 1
 
-### waterDamping_3.6.1 
+### waterDamping_3.6.2 
 - Description: Controls how much the water pushes the boat upwards directly. This value may affect angular damping too. Recommended to keep the original value. But tweaking can remove or add additional jitter. Higher values likely will add more jitter.
 - Default Value: 1
 
-### waterSidewaysDamping_3.6.1 
+### waterSidewaysDamping_3.6.2 
 - Description: Controls how much the water pushes the boat sideways based on wind direction and velocity.
 - Default Value: 2
 
-### waterAngularDamping_3.6.1 
+### waterAngularDamping_3.6.2 
 - Description: Controls how much the water pushes the boat from a vertical angle based on water and velocity. Lower values will cause more rocking and allow better turn rates. Higher values will make the vehicle more stable, but less turning angle and possibly less realistic. If you get motion-sickness this can allow tweaking sway without disabling it all and also prevent rapid turning.
 - Default Value: 1
 
@@ -938,15 +946,15 @@ Other methods removed after 2.5.0
 - Description: rotation drag controls how much the vehicle slows down when turning.
 - Default Value: 0.8
 
-### submersibleDamping_3.6.1 
+### submersibleDamping_3.6.2 
 - Description: Controls how much the water pushes the boat upwards directly. This value may affect angular damping too. Recommended to keep the original value. But tweaking can remove or add additional jitter. Higher values likely will add more jitter.
 - Default Value: 1
 
-### submersibleSidewaysDamping_3.6.1 
+### submersibleSidewaysDamping_3.6.2 
 - Description: Controls how much the water pushes the boat sideways based on wind direction and velocity.
 - Default Value: 2
 
-### submersibleAngularDamping_3.6.1 
+### submersibleAngularDamping_3.6.2 
 - Description: Controls how much the water pushes the boat from a vertical angle based on water and velocity. Lower values will cause more rocking and allow better turn rates. Higher values will make the vehicle more stable, but less turning angle and possibly less realistic. If you get motion-sickness this can allow tweaking sway without disabling it all and also prevent rapid turning.
 - Default Value: 1
 
@@ -1113,6 +1121,14 @@ Other methods removed after 2.5.0
 - Default Value: 0.5
 
 ## Rendering
+
+### Experimental_CustomMaxCreatedObjectsPerFrame 
+- Description: Allows valheim's base engine for spawning objects to be customize. Original value was 10. Now it's 100. Makes it render 10x faster instead of 600 prefabs per second its 6000 prefabs per second.
+- Default Value: 100
+
+### Experimental_CustomMaxCreatedObjectsPerFrame_Enabled 
+- Description: Allows valheim's base engine for spawning objects to be customize. This will significantly boost speed of objects being rendered. It will build ships in near moments. Base game has this value set way too low for most PCs. Turning this off will disable the patch and require a restart of the game.
+- Default Value: True
 
 ### UNSTABLE_AllowVehiclePiecesToUseWorldPosition 
 - Description: WARNING UNSTABLE CONFIG do NOT set this to true unless you need to. All vehicles will no longer sync pieces in one position then offset them. It will sync pieces by their actual position. This means the vehicle could de-sync and lose pieces. Only use this for mods like <Planbuild> and want to copy the vehicle with position/rotation properly set.

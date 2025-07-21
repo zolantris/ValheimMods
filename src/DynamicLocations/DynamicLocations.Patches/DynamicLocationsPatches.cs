@@ -131,8 +131,8 @@ public class DynamicLocationsPatches
     {
       Game.instance.m_fadeTimeDeath = DynamicLocationsConfig.PlayerRespawnFadeTime.Value;
     }
-#endif
     Character.m_debugFlySpeed = Mathf.RoundToInt(DynamicLocationsConfig.FastDebugFlySpeed.Value);
+#endif
   }
 
   /// <summary>

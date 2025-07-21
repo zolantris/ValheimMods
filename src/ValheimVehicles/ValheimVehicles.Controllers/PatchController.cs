@@ -32,11 +32,8 @@ public static class PatchController
       typeof(Hud_Patch),
       typeof(MonoUpdaterPatches),
       typeof(EffectsArea_VehiclePatches),
-
-#if DEBUG
       // object loading optimizations
       typeof(ZNetScene_CreateObjects_Patch),
-#endif
       // water effects
       typeof(WaterVolume_WaterPatches),
       typeof(GameCamera_WaterPatches),

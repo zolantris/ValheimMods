@@ -4,7 +4,6 @@ using HarmonyLib;
 using ValheimVehicles.SharedScripts;
 namespace ValheimVehicles.Patches;
 
-#if DEBUG
 [HarmonyPatch(typeof(ZNetScene), nameof(ZNetScene.CreateObjects))]
 public class ZNetScene_CreateObjects_Patch
 {
@@ -40,4 +39,3 @@ public class ZNetScene_CreateObjects_Patch
       LoggerProvider.LogWarning("[ZNetScenePatch] Could not patch all expected instructions (possibly another mod has already modified them).");
   }
 }
-#endif

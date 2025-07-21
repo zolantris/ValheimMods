@@ -93,7 +93,8 @@ public static class DynamicLocationsConfig
   {
     Config = config;
 
-    FastDebugFlySpeed = config.BindUnique(MainSection,
+#if DEBUG || BETA
+FastDebugFlySpeed = config.BindUnique(MainSection,
       "FastDebugFlySpeed",
       40,
       new ConfigDescription(
@@ -106,7 +107,6 @@ public static class DynamicLocationsConfig
     {
       DynamicLocationsPatches.SetupPlayerDebugValues();
     };
-#if DEBUG || BETA
     PlayerRespawnImmediately = config.BindUnique(MainSection,
       "PlayerRespawnImmediately",
       false,
