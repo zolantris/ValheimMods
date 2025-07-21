@@ -4489,6 +4489,12 @@
       UpdateVehicleSpeedThrottle();
       VehicleOnboardController.AddOrRemovePlayerBlockingCamera(targetPlayer);
 
+      if (PiecesController)
+      {
+        PiecesController.targetController.OnDetectionModeChange();
+      }
+
+
       var isLocalPlayer = targetPlayer == Player.m_localPlayer;
 
       var previousUserId = previousPlayer?.GetPlayerID() ?? 0L;

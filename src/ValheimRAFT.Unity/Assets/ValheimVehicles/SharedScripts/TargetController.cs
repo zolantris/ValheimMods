@@ -591,9 +591,10 @@ namespace ValheimVehicles.SharedScripts
       if (targetControllerObj == null) yield break;
 
 
+      var targetController = GetTargetControllerFromNetViewRoot(targetControllerObj);
+
       // can be a child for the handheld version.
-      var targetController = targetControllerObj.GetComponentInChildren<TargetController>();
-      if (!targetController)
+      if (targetController == null)
       {
         LoggerProvider.LogWarning($"targetController with zdoid: {targetControllerZDOID} not found on object {targetControllerObj.name}. CannonController should exist otherwise we cannot instantiate cannonball without collision issues");
         yield break;
@@ -1071,6 +1072,13 @@ namespace ValheimVehicles.SharedScripts
     public HashSet<CannonController> GetCannonManualFiringGroup(CannonDirectionGroup group)
     {
       return _manualCannonGroups[group];
+    }
+
+    public int LastGroupSize => GetLastManualCannonGroupSize();
+
+    public int GetLastManualCannonGroupSize()
+    {
+      return GetCannonManualFiringGroup(lastManualGroup).Count;
     }
 
     private void AddManualCannonToGroup(CannonController cannon)

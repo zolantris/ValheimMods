@@ -16,7 +16,7 @@ public class TargetControlsInteractive : MonoBehaviour, Hoverable, Interactable,
   public bool hasTutorial = true;
 
   public const string Key_ShowTutorial = "TargetControlsInteractive_ShowTutorial";
-  public HoverFadeText m_hoverText;
+  public HoverFadeText m_hoverFadeText;
   public Transform hoverTextPoint;
   public Transform attachpoint;
   private bool _hasSubscribed = false;
@@ -25,10 +25,10 @@ public class TargetControlsInteractive : MonoBehaviour, Hoverable, Interactable,
   {
     hoverTextPoint = transform.Find("hover_text_point");
     attachpoint = transform.Find("attachpoint");
-    m_hoverText = HoverFadeText.CreateHoverFadeText();
-    m_hoverText.transform.position = hoverTextPoint.position;
-    m_hoverText.transform.SetParent(hoverTextPoint);
-    m_hoverText.canUpdate = false;
+    m_hoverFadeText = HoverFadeText.CreateHoverFadeText();
+    m_hoverFadeText.transform.position = hoverTextPoint.position;
+    m_hoverFadeText.transform.SetParent(hoverTextPoint);
+    m_hoverFadeText.canUpdate = false;
   }
 
   public void Start()
@@ -37,7 +37,7 @@ public class TargetControlsInteractive : MonoBehaviour, Hoverable, Interactable,
     {
       m_nview = nv;
       targetController = GetComponentInParent<TargetController>();
-      targetController.OnCannonGroupChange += UpdateTextFromCannonDirectionGroup;
+      targetController.OnCannonGroupChange += (val) => UpdateTextFromCannonDirectionGroup(m_hoverFadeText, val, targetController.LastGroupSize);
       _hasSubscribed = true;
       hasTutorial = GetCanShowTutorial(nv);
     });
@@ -48,7 +48,7 @@ public class TargetControlsInteractive : MonoBehaviour, Hoverable, Interactable,
     if (targetController != null)
     {
       _hasSubscribed = true;
-      targetController.OnCannonGroupChange += UpdateTextFromCannonDirectionGroup;
+      targetController.OnCannonGroupChange += (val) => UpdateTextFromCannonDirectionGroup(m_hoverFadeText, val, targetController.LastGroupSize);
     }
   }
 
@@ -57,7 +57,7 @@ public class TargetControlsInteractive : MonoBehaviour, Hoverable, Interactable,
     if (targetController)
     {
       _hasSubscribed = false;
-      targetController.OnCannonGroupChange -= UpdateTextFromCannonDirectionGroup;
+      targetController.OnCannonGroupChange -= (val) => UpdateTextFromCannonDirectionGroup(m_hoverFadeText, val, targetController.LastGroupSize);
     }
   }
 
@@ -177,9 +177,9 @@ public class TargetControlsInteractive : MonoBehaviour, Hoverable, Interactable,
     LoggerProvider.LogDev($"OnUseStop called to {name}");
   }
 
-  public void UpdateTextFromCannonDirectionGroup(CannonDirectionGroup cannonGroup)
+  public static void UpdateTextFromCannonDirectionGroup(HoverFadeText hoverFadeText, CannonDirectionGroup cannonGroup, int groupSize)
   {
-    if (m_hoverText == null) return;
+    if (hoverFadeText == null) return;
     var text = cannonGroup switch
     {
       CannonDirectionGroup.Forward => ModTranslations.CannonGroup_Forward,
@@ -188,9 +188,9 @@ public class TargetControlsInteractive : MonoBehaviour, Hoverable, Interactable,
       CannonDirectionGroup.Back => ModTranslations.CannonGroup_Backward,
       _ => throw new ArgumentOutOfRangeException()
     };
-    if (m_hoverText.currentText == text) return;
-    m_hoverText.currentText = text;
-    m_hoverText.Show();
+    if (hoverFadeText.currentText == text) return;
+    hoverFadeText.currentText = $"{text} ({groupSize})";
+    hoverFadeText.Show();
   }
 
   /// <summary>
