@@ -8,8 +8,8 @@ namespace ValheimVehicles.Patches;
 [HarmonyPatch(typeof(ZNetScene), nameof(ZNetScene.CreateObjects))]
 public class ZNetScene_CreateObjects_Patch
 {
-  public static int CustomMaxCreatedPerFrame = 50;
-  public static int CustomLoadingScreenMaxCreatedPerFrame = 200;
+  public static int CustomMaxCreatedPerFrame = 100;
+  public static int CustomLoadingScreenMaxCreatedPerFrame = 100;
 
   private static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
   {

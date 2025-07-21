@@ -1,6 +1,8 @@
 using BepInEx.Configuration;
+using UnityEngine;
 using ValheimVehicles.Controllers;
 using ValheimVehicles.Helpers;
+using ValheimVehicles.Patches;
 using ValheimVehicles.SharedScripts;
 using Zolantris.Shared;
 
@@ -13,6 +15,8 @@ public class RenderingConfig : BepInExBaseConfig<RenderingConfig>
 
   public static ConfigEntry<bool> UNSTABLE_VehiclePositionSync_AllowVehiclePiecesToUseWorldPosition = null!;
   public static ConfigEntry<bool> VehiclePositionSync_AllowBedsToSyncToWorldPosition = null!;
+  public static ConfigEntry<int> Experimental_CustomMaxCreatedObjectsPerFrame = null!;
+  public static ConfigEntry<bool> Experimental_CustomMaxCreatedObjectsPerFrame_Enabled = null!;
 
 #if DEBUG
   public static ConfigEntry<bool> EnableWorldClusterMeshRendering = null!;
@@ -20,8 +24,29 @@ public class RenderingConfig : BepInExBaseConfig<RenderingConfig>
 
   private const string RenderingSectionKey = "Rendering";
 
+  private void ApplySpawnConfig()
+  {
+    if (Experimental_CustomMaxCreatedObjectsPerFrame_Enabled.Value)
+    {
+      ZNetScene_CreateObjects_Patch.CustomMaxCreatedPerFrame = Experimental_CustomMaxCreatedObjectsPerFrame.Value;
+      ZNetScene_CreateObjects_Patch.CustomLoadingScreenMaxCreatedPerFrame = Mathf.Max(100, Experimental_CustomMaxCreatedObjectsPerFrame.Value);
+    }
+    else
+    {
+      ZNetScene_CreateObjects_Patch.CustomMaxCreatedPerFrame = 10; // Vanilla
+      ZNetScene_CreateObjects_Patch.CustomLoadingScreenMaxCreatedPerFrame = 100; // Vanilla
+    }
+  }
+
   public override void OnBindConfig(ConfigFile config)
   {
+    Experimental_CustomMaxCreatedObjectsPerFrame = config.BindUnique(RenderingSectionKey, "Experimental_CustomMaxCreatedObjectsPerFrame", 100, ConfigHelpers.CreateConfigDescription("Allows valheim's base engine for spawning objects to be customize. Original value was 10. Now it's 100. Makes it render 10x faster instead of 600 prefabs per second its 6000 prefabs per second.", true, false));
+    Experimental_CustomMaxCreatedObjectsPerFrame_Enabled = config.BindUnique(RenderingSectionKey, "Experimental_CustomMaxCreatedObjectsPerFrame_Enabled", true, ConfigHelpers.CreateConfigDescription("Allows valheim's base engine for spawning objects to be customize. This will significantly boost speed of objects being rendered. It will build ships in near moments. Base game has this value set way too low for most PCs. Turning this off will disable the patch and require a restart of the game.", true, false));
+    ApplySpawnConfig();
+
+    Experimental_CustomMaxCreatedObjectsPerFrame_Enabled.SettingChanged += (sender, args) => ApplySpawnConfig();
+    Experimental_CustomMaxCreatedObjectsPerFrame.SettingChanged += (sender, args) => ApplySpawnConfig();
+
     UNSTABLE_VehiclePositionSync_AllowVehiclePiecesToUseWorldPosition = config.BindUnique(RenderingSectionKey,
       "UNSTABLE_AllowVehiclePiecesToUseWorldPosition", false,
       ConfigHelpers.CreateConfigDescription(

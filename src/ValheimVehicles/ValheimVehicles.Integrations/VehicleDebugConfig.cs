@@ -19,10 +19,8 @@ public class VehicleDebugConfig : BepInExBaseConfig<VehicleDebugConfig>
   public static ConfigEntry<int> VehicleCreativeHeight;
   public static ConfigEntry<bool> HasDebugPieces;
 
-#if DEBUG
   public static ConfigEntry<int> Experimental_CustomMaxCreatedObjectsPerFrame { get; set; }
   public static ConfigEntry<bool> Experimental_CustomMaxCreatedObjectsPerFrame_Enabled { get; set; }
-#endif
 
   public static ConfigEntry<bool> HasDebugCannonTargets = null!;
 
@@ -108,16 +106,14 @@ public class VehicleDebugConfig : BepInExBaseConfig<VehicleDebugConfig>
   {
     Config = config;
 
-#if DEBUG
-    Experimental_CustomMaxCreatedObjectsPerFrame = config.BindUnique(SectionName, "Experimental_CustomMaxCreatedObjectsPerFrame", 100, ConfigHelpers.CreateConfigDescription("Allows valheim's base engine for spawning objects to be customize", true, true));
-    Experimental_CustomMaxCreatedObjectsPerFrame_Enabled = config.BindUnique(SectionName, "Experimental_CustomMaxCreatedObjectsPerFrame_Enabled", true, ConfigHelpers.CreateConfigDescription("Allows valheim's base engine for spawning objects to be customize", true, true));
+    Experimental_CustomMaxCreatedObjectsPerFrame = config.BindUnique(SectionName, "Experimental_CustomMaxCreatedObjectsPerFrame", 100, ConfigHelpers.CreateConfigDescription("Allows valheim's base engine for spawning objects to be customize. Original value was 10. Now it's 100. Makes it render 10x faster instead of 600 prefabs per second its 6000 prefabs per second.", true, false));
+    Experimental_CustomMaxCreatedObjectsPerFrame_Enabled = config.BindUnique(SectionName, "Experimental_CustomMaxCreatedObjectsPerFrame_Enabled", true, ConfigHelpers.CreateConfigDescription("Allows valheim's base engine for spawning objects to be customize. This will significantly boost speed of objects being rendered. It will build ships in near moments. Base game has this value set way too low for most PCs.", true, false));
     Experimental_CustomMaxCreatedObjectsPerFrame.SettingChanged += (sender, args) =>
     {
       ZNetScene_CreateObjects_Patch.CustomMaxCreatedPerFrame = Experimental_CustomMaxCreatedObjectsPerFrame.Value;
       ZNetScene_CreateObjects_Patch.CustomLoadingScreenMaxCreatedPerFrame = Mathf.Max(10, Experimental_CustomMaxCreatedObjectsPerFrame.Value);
     };
     ZNetScene_CreateObjects_Patch.CustomLoadingScreenMaxCreatedPerFrame = Mathf.Max(100, Experimental_CustomMaxCreatedObjectsPerFrame.Value);
-#endif
 
     AllowDebugCommandsForNonAdmins = config.BindUnique(SectionName, "AllowDebugCommandsForNonAdmins",
       true,
