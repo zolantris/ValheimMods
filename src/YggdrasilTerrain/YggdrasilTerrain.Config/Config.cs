@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using BepInEx.Configuration;
 using UnityEngine;
+using Zolantris.Shared;
 using Logger = Jotunn.Logger;
 
 namespace YggdrasilTerrain.Config;

@@ -16,7 +16,7 @@
     </PropertyGroup>
     <!--  critical for local variables, can affect any project in this repo reliant on it  -->
     <Import Project="$(SolutionDir)build\.props" Condition="Exists('$(SolutionDir)build\.props')"/>
-    <Import Project="$(SolutionDir)build\build_variables.targets" Condition="Exists('$(SolutionDir)build\build_variables.targets')"/>
+    <Import Project="$(SolutionDir)build\build_variables.props" Condition="Exists('$(SolutionDir)build\build_variables.props')"/>
 
     <PropertyGroup Condition=" '$(Configuration)' == 'ReleaseBETA Archive' or '$(Configuration)' == 'Release'">
         <PlatformTarget>AnyCPU</PlatformTarget>

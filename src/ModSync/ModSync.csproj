@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <Import Project="$(SolutionDir)build\base.props"/>
-    <Import Project="$(SolutionDir)build\build_variables.targets"/>
+    <Import Project="$(SolutionDir)build\build_variables.props"/>
 
     <PropertyGroup>
         <OutputType>Exe</OutputType>

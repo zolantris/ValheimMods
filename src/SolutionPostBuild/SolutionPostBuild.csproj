@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
     <Import Project="$(SolutionDir)build\base.props"/>
-    <Import Project="$(SolutionDir)build\build_variables.targets"/>
+    <Import Project="$(SolutionDir)build\build_variables.props"/>
     <Import Project="$(SolutionDir)\build\game_launcher.targets"/>
 
     <ItemGroup>
@@ -59,14 +59,15 @@
             <AutoDocName>$(ReleaseName)_AutoDoc.md</AutoDocName>
             <AutoDocPath>$(PluginDeployPath)/$(AutoDocName)</AutoDocPath>
             <LocalAutoDocPath>$(SolutionDir)src\$(ReleaseName)\docs\$(AutoDocName)</LocalAutoDocPath>
-            <ModNameVersion>$(ReleaseName)-$(ReleaseVersion)-beta.zip</ModNameVersion>
         </PropertyGroup>
 
         <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release Archive|AnyCPU'">
             <ThunderStoreDir>$(RepoDir)ThunderStore\</ThunderStoreDir>
+            <ModNameVersion>$(ReleaseName)-$(ReleaseVersion).zip</ModNameVersion>
         </PropertyGroup>
         <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'ReleaseBeta Archive|AnyCPU'">
             <ThunderStoreDir>$(RepoDir)ThunderStoreBeta\</ThunderStoreDir>
+            <ModNameVersion>$(ReleaseName)-$(ReleaseVersion)-beta.zip</ModNameVersion>
         </PropertyGroup>
 
         <Exec Command="if exist &quot;$(TmpDir)plugins\Assets&quot; rd /s /q &quot;$(TmpDir)plugins\Assets&quot;"/>

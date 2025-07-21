@@ -120,7 +120,8 @@
             <HintPath>$(ManagedDataPath)\assembly_guiutils.dll</HintPath>
             <Private>False</Private>
         </Reference>
-        <Reference Include="ui_lib">
+        <!--   Might be deprecated/removed. This only is brought in if it's discovered     -->
+        <Reference Condition="Exists('$(ManagedDataPath)\assembly_steamworks.dll')" Include="ui_lib">
             <SpecificVersion>False</SpecificVersion>
             <HintPath>$(ManagedDataPath)\ui_lib.dll</HintPath>
             <Private>False</Private>
@@ -130,7 +131,7 @@
             <HintPath>$(ManagedDataPath)\assembly_postprocessing.dll</HintPath>
             <Private>False</Private>
         </Reference>
-        <Reference Include="assembly_steamworks">
+        <Reference Condition="Exists('$(ManagedDataPath)\assembly_steamworks.dll')" Include="assembly_steamworks">
             <SpecificVersion>False</SpecificVersion>
             <HintPath>$(ManagedDataPath)\assembly_steamworks.dll</HintPath>
             <Private>False</Private>
@@ -260,7 +261,7 @@
             <HintPath>$(ManagedDataPath)\UnityEngine.TerrainModule.dll</HintPath>
             <Private>False</Private>
         </Reference>
-        <Reference Include="UnityEngine.TextCoreModule">
+        <Reference Condition="Exists('$(ManagedDataPath)\UnityEngine.TextCoreModule.dll')" Include="UnityEngine.TextCoreModule">
             <SpecificVersion>False</SpecificVersion>
             <HintPath>$(ManagedDataPath)\UnityEngine.TextCoreModule.dll</HintPath>
             <Private>False</Private>
