@@ -488,20 +488,31 @@ namespace ValheimVehicles.SharedScripts
       }
       if (!m_nview.IsValid()) return;
       var zdo = m_nview.GetZDO();
-      var cannonFireDataList = CannonFireData.CreateListOfCannonFireDataFromTargetController(this, autoTargetCannonControllers);
+
+      var cannonFireDataList = CannonFireData.CreateListOfCannonFireDataFromTargetController(this, autoTargetCannonControllers, out var ammoSolidUsage, out var ammoExplosiveUsage);
+
       if (cannonFireDataList.Count == 0) return;
 
       var pkg = new ZPackage();
       pkg.Write(zdo.m_uid);
       CannonFireData.WriteListToPackage(pkg, cannonFireDataList);
       AutoFireCannonGroup_RPC.SendNearby(pkg, zdo, 150f);
+
+      if (m_nview.IsOwner())
+      {
+        ammoController.OnAmmoChanged(ammoSolidUsage, ammoExplosiveUsage);
+      }
+      else
+      {
+        LoggerProvider.LogWarning("Attempted to decrement ammo but the user is not the owner.");
+      }
     }
 
-    public void Request_FireManualCannons(CannonDirectionGroup[] cannonGroups)
+    public void Request_FireAllManualCannonGroups(CannonDirectionGroup[] cannonGroups)
     {
       foreach (var cannonGroup in cannonGroups)
       {
-        Request_FireManualCannons(cannonGroup);
+        Request_FireManualCannonGroup(cannonGroup);
       }
     }
 
@@ -526,7 +537,7 @@ namespace ValheimVehicles.SharedScripts
       return m_nview;
     }
 
-    public void Request_FireManualCannons(CannonDirectionGroup cannonGroupId)
+    public void Request_FireManualCannonGroup(CannonDirectionGroup cannonGroupId)
     {
       if (ammoController.ExplosiveAmmo < 1 && ammoController.SolidAmmo < 1) return;
       var nv = GetNetView();
@@ -538,7 +549,7 @@ namespace ValheimVehicles.SharedScripts
       var cannonTilt = _manualGroupTilt[cannonGroupId];
       var firingCannonGroup = _manualCannonGroups[cannonGroupId];
 
-      var cannonFireDataList = CannonFireData.CreateListOfCannonFireDataFromTargetController(this, firingCannonGroup);
+      var cannonFireDataList = CannonFireData.CreateListOfCannonFireDataFromTargetController(this, firingCannonGroup, out var ammoSolidUsage, out var ammoExplosiveUsage);
       if (cannonFireDataList.Count == 0) return;
 
       var pkg = new ZPackage();
@@ -550,6 +561,15 @@ namespace ValheimVehicles.SharedScripts
       CannonFireData.WriteListToPackage(pkg, cannonFireDataList);
 
       FireCannonGroup_RPC.SendNearby(pkg, zdo, 150f);
+
+      if (m_nview.IsOwner())
+      {
+        ammoController.OnAmmoChanged(ammoSolidUsage, ammoExplosiveUsage);
+      }
+      else
+      {
+        LoggerProvider.LogWarning("Attempted to decrement ammo but the user is not the owner.");
+      }
     }
 
 
@@ -759,7 +779,6 @@ namespace ValheimVehicles.SharedScripts
         }
         if (!cannonController) continue;
         yield return FireCannonDelayed(cannonController, cannonFireData, FiringDelayPerCannon, false);
-        AmmoController.SubtractAmmoByVariant(cannonFireData.ammoVariant, cannonFireData.allocatedAmmo, ref totalAmmoDeltaSolid, ref totalAmmoDeltaExplosive);
       }
 
       if (CanUpdateAmmo(cannonFiringDataList))
@@ -1061,6 +1080,8 @@ namespace ValheimVehicles.SharedScripts
       var totalAmmoDeltaExplosive = 0;
       var tilt = _manualGroupTilt[group];
 
+      var canUpdateAmmo = CanUpdateAmmo(cannonFireDataList);
+
       for (var i = 0; i < cannonFireDataList.Count; i++)
       {
         var data = cannonFireDataList[i];
@@ -1071,17 +1092,11 @@ namespace ValheimVehicles.SharedScripts
 
         cannon.SetManualTilt(tilt);
 
-        if (cannon.Fire(data, ammoController.GetAmmoAmountFromCannonballVariant(data.ammoVariant), true)) // true = isManualFiring
+        if (cannon.Fire(data, data.allocatedAmmo, true)) // true = isManualFiring
         {
-          AmmoController.SubtractAmmoByVariant(data.ammoVariant, data.allocatedAmmo, ref totalAmmoDeltaSolid, ref totalAmmoDeltaExplosive);
           // Ammo logic (optional, if ammo is spent inside CannonController now)
           yield return new WaitForSeconds(FiringDelayPerCannon);
         }
-      }
-
-      if (CanUpdateAmmo(cannonFireDataList))
-      {
-        ammoController.OnAmmoChanged(Math.Abs(totalAmmoDeltaSolid), Mathf.Abs(totalAmmoDeltaExplosive));
       }
 
 #if UNITY_EDITOR

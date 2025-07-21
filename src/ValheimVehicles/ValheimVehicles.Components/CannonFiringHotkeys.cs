@@ -216,7 +216,7 @@ namespace ValheimVehicles.SharedScripts
         LoggerProvider.LogWarning("No target controller but somehow tried to fire a cannon. This should not be possible as TargetingController initializes CannonFiringHotkeys ");
         return;
       }
-      targetController.Request_FireManualCannons(group);
+      targetController.Request_FireManualCannonGroup(group);
     }
   }
 }

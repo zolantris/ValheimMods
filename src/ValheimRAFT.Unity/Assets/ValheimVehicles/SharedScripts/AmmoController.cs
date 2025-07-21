@@ -73,19 +73,21 @@
         }
       }
 
-      public static int SubtractAmmoByVariant(CannonballVariant variant, int requestAmount, ref int ammoSolid, ref int ammoExplosive)
+      public static int UpdateConsumedAmmo(CannonballVariant variant, int requestAmount, ref int ammoSolidUsage, ref int ammoExplosiveUsage, int totalSolid, int totalExplosive)
       {
         var delta = 0;
         if (variant == CannonballVariant.Solid)
         {
-          delta = Math.Max(0, Math.Min(requestAmount, ammoSolid));
-          ammoSolid -= delta;
+          var remaining = totalSolid - ammoSolidUsage;
+          delta = Mathf.Max(0, Mathf.Min(requestAmount, remaining));
+          ammoSolidUsage += delta;
           return delta;
         }
         if (variant == CannonballVariant.Explosive)
         {
-          delta = Math.Max(0, Math.Min(requestAmount, ammoExplosive));
-          ammoExplosive -= delta;
+          var remaining = totalExplosive - ammoExplosiveUsage;
+          delta = Mathf.Max(0, Mathf.Min(requestAmount, remaining));
+          ammoExplosiveUsage += delta;
           return delta;
         }
 
@@ -352,6 +354,8 @@
           return;
         }
 
+        if (ammoToRemoveExplosive <= 0 && ammoToRemoveSolid <= 0) return;
+
 #if VALHEIM
         var currentAmmoToRemoveSolid = ammoToRemoveSolid;
         var currentAmmoToRemoveExplosive = ammoToRemoveExplosive;
@@ -365,7 +369,7 @@
           {
             if (nearbyContainer == null) continue;
             if (!nearbyContainer.isActiveAndEnabled) continue;
-            if (ammoToRemoveExplosive <= 0 && ammoToRemoveSolid <= 0) break;
+            if (currentAmmoToRemoveExplosive <= 0 && currentAmmoToRemoveExplosive <= 0) break;
             var inventory = nearbyContainer.GetInventory();
             if (inventory == null) continue;
             var localSolidAmmo = inventory.CountItems(SolidAmmoToken);

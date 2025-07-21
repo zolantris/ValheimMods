@@ -41,16 +41,18 @@ namespace ValheimVehicles.SharedScripts.Structs
 #endif
     }
 
-    public static List<CannonFireData> CreateListOfCannonFireDataFromTargetController(TargetController targetController, List<CannonController> firingGroup)
+    public static List<CannonFireData> CreateListOfCannonFireDataFromTargetController(TargetController targetController, List<CannonController> firingGroup, out int ammoSolidUsage, out int ammoExplosiveUsage)
     {
+      ammoSolidUsage = 0;
+      ammoExplosiveUsage = 0;
 #if VALHEIM
       if (!targetController.m_nview) return new List<CannonFireData>();
 #endif
+      var totalAmmoSolid = targetController.ammoController.SolidAmmo;
+      var totalAmmoExplosive = targetController.ammoController.ExplosiveAmmo;
 
       var cannonFireDataList = new List<CannonFireData>();
 
-      var ammoSolid = targetController.ammoController.SolidAmmo;
-      var ammoExplosive = targetController.ammoController.ExplosiveAmmo;
 #if VALHEIM
       var canApplyDamage = targetController.m_nview.IsOwner();
 #else
@@ -60,7 +62,11 @@ namespace ValheimVehicles.SharedScripts.Structs
       {
         if (cannonController == null) continue;
         var barrelCount = cannonController.GetBarrelCount();
-        var ammoToUse = AmmoController.SubtractAmmoByVariant(cannonController.AmmoVariant, barrelCount, ref ammoSolid, ref ammoExplosive);
+
+        var deltaAmmoUsage = AmmoController.UpdateConsumedAmmo(cannonController.AmmoVariant, barrelCount, ref ammoSolidUsage, ref ammoExplosiveUsage, totalAmmoSolid, totalAmmoExplosive);
+
+        // skip cannons that cannot fire due to ammo not being available.
+        if (deltaAmmoUsage == 0) continue;
 
 #if VALHEIM
         if (canApplyDamage)
@@ -69,7 +75,7 @@ namespace ValheimVehicles.SharedScripts.Structs
         }
 #endif
 
-        var data = CreateCannonFireData(cannonController, ammoToUse);
+        var data = CreateCannonFireData(cannonController);
         if (data.HasValue)
         {
           cannonFireDataList.Add(data.Value);
@@ -82,18 +88,22 @@ namespace ValheimVehicles.SharedScripts.Structs
 #if VALHEIM
     public static CannonFireData? CreateCannonFireDataFromHandHeld(CannonHandHeldController cannonHandHeld)
     {
+      var ammoSolidUsage = 0;
+      var ammoExplosiveUsage = 0;
+
       var ammoSolid = cannonHandHeld.ammoController.SolidAmmo;
       var ammoExplosive = cannonHandHeld.ammoController.ExplosiveAmmo;
-      var ammoToUse = AmmoController.SubtractAmmoByVariant(cannonHandHeld.AmmoVariant, cannonHandHeld.GetBarrelCount(), ref ammoSolid, ref ammoExplosive);
 
-      var fireData = CreateCannonFireData(cannonHandHeld, ammoToUse);
+      var ammoToUse = AmmoController.UpdateConsumedAmmo(cannonHandHeld.AmmoVariant, cannonHandHeld.GetBarrelCount(), ref ammoSolidUsage, ref ammoExplosiveUsage, ammoSolid, ammoExplosive);
+      if (ammoToUse == 0) return null;
+
+      var fireData = CreateCannonFireData(cannonHandHeld);
       return fireData;
     }
 #endif
 
-    public static CannonFireData? CreateCannonFireData(CannonController cannonController, int remainingAmmo)
+    public static CannonFireData? CreateCannonFireData(CannonController cannonController)
     {
-      if (remainingAmmo == 0) return null;
       if (cannonController == null) return null;
 #if VALHEIM
       if (cannonController.m_nview == null || !cannonController.m_nview.IsValid()) return null;
@@ -101,12 +111,6 @@ namespace ValheimVehicles.SharedScripts.Structs
 
       var cannonShootingPositions = cannonController.shootingBarrelParts.Where(x => x != null).Select(x => x.projectileLoader.position).ToList();
 
-      if (cannonShootingPositions.Count == 0) return null;
-
-      while (remainingAmmo < cannonShootingPositions.Count && cannonShootingPositions.Count > 0)
-      {
-        cannonShootingPositions.RemoveAt(remainingAmmo - 1);
-      }
       if (cannonShootingPositions.Count == 0) return null;
 
 #if VALHEIM
@@ -124,7 +128,6 @@ namespace ValheimVehicles.SharedScripts.Structs
         randomVelocityValue = CannonController.GetRandomCannonVelocity,
         randomArcValue = CannonController.GetRandomCannonArc,
         ammoVariant = cannonController.AmmoVariant,
-        allocatedAmmo = remainingAmmo,
         canApplyDamage = canApplyDamage,
         shootingDirection = cannonController.cannonShooterAimPoint.forward,
         cannonShootingPositions = cannonShootingPositions,

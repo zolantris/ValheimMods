@@ -194,6 +194,15 @@ public class CannonHandHeldController : CannonController, Hoverable
     var package = CannonFireData.WriteToPackage(data.Value);
     cannonRotationalTransform.localRotation = data.Value.cannonLocalRotation;
     FireHandHeldCannon_RPC.Send(ZNetView.Everybody, package);
+
+    if (m_nview.IsOwner())
+    {
+      ammoController.OnAmmoChangedFromVariant(AmmoVariant, data.Value.allocatedAmmo);
+    }
+    else
+    {
+      LoggerProvider.LogWarning("Attempted to decrement ammo but the user is not the owner.");
+    }
   }
 
   public static RPCEntity FireHandHeldCannon_RPC = null!;
@@ -232,10 +241,6 @@ public class CannonHandHeldController : CannonController, Hoverable
   {
     if (Fire(data, ammoController.GetAmmoAmountFromCannonballVariant(AmmoVariant), true, isHost))
     {
-      if (data.canApplyDamage)
-      {
-        ammoController.OnAmmoChangedFromVariant(data.ammoVariant, data.allocatedAmmo);
-      }
       return true;
     }
     return false;

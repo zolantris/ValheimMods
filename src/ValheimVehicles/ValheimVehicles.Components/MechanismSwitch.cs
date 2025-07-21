@@ -390,7 +390,7 @@ public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interac
       Player.m_localPlayer.Message(MessageHud.MessageType.Center, "No target controller. This must be used on a vehicle for now.");
       return;
     }
-    targetController.Request_FireManualCannons([CannonDirectionGroup.Forward, CannonDirectionGroup.Back, CannonDirectionGroup.Left, CannonDirectionGroup.Right]);
+    targetController.Request_FireAllManualCannonGroups([CannonDirectionGroup.Forward, CannonDirectionGroup.Back, CannonDirectionGroup.Left, CannonDirectionGroup.Right]);
   }
 
   public bool TriggerDockSequence()

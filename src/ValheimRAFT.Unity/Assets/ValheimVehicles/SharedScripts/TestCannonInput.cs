@@ -21,7 +21,7 @@ namespace ValheimVehicles.SharedScripts
     private void Start()
     {
       UpdateAllValues();
-      cannonFireDataList = CannonFireData.CreateListOfCannonFireDataFromTargetController(targetController, targetController.GetCannonManualFiringGroup(firingGroup));
+      cannonFireDataList = CannonFireData.CreateListOfCannonFireDataFromTargetController(targetController, targetController.GetCannonManualFiringGroup(firingGroup), out _, out _);
     }
 
 
