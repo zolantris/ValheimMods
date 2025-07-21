@@ -235,6 +235,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 7063894066276959676}
+  - {fileID: 1828279911118502283}
   - {fileID: 8338912282861446822}
   - {fileID: 6955216620922370376}
   - {fileID: 1132400124009740671}
@@ -280,7 +281,7 @@ GameObject:
   - component: {fileID: 7063894066276959676}
   m_Layer: 0
   m_Name: attachpoint
-  m_TagString: Untagged
+  m_TagString: grabpoint
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -294,12 +295,43 @@ Transform:
   m_GameObject: {fileID: 3332904543831399244}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -0.019999942, y: -0.904, z: -0.659}
+  m_LocalPosition: {x: -0.019999942, y: -0.904, z: -0.97}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 6589294939018646251}
   m_LocalEulerAnglesHint: {x: 0, y: 90, z: 0}
+--- !u!1 &3799328693415442525
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1828279911118502283}
+  m_Layer: 0
+  m_Name: hover_text_point
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1828279911118502283
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3799328693415442525}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -0.0031313896, y: 0.95037544, z: 1.807606}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 6589294939018646251}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &4488238224887379225
 GameObject:
   m_ObjectHideFlags: 0

@@ -6,6 +6,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using UnityEngine;
 using ValheimVehicles.SharedScripts.Helpers;
@@ -186,7 +187,7 @@ namespace ValheimVehicles.SharedScripts
 
     public void OnDetectionModeChange()
     {
-      #if VALHEIM
+#if VALHEIM
       if (cannonDetectionMode == CannonDetectionMode.Cast)
       {
         if (CannonController.Instances.Count > 1000)

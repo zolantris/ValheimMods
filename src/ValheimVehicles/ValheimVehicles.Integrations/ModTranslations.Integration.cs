@@ -145,6 +145,12 @@ public partial class ModTranslations
     VehicleCannon_CannonBallSolid = SafeLocalize("$valheim_vehicles_cannonball_solid");
     VehicleCannon_CannonBallExplosive = SafeLocalize("$valheim_vehicles_cannonball_explosive");
     VehicleCannon_CannonMissingNearbyPowderBarrel = SafeLocalize(WithBoldText("$valheim_vehicles_cannons_missing_nearby_powder_barrels", "red"));
+    Vehicle_Cannon_Controls_Tutorial = SafeLocalize("$valheim_vehicles_cannon_control_center_tutorial");
+
+    CannonGroup_Forward = SafeLocalize("$valheim_vehicles_cannon_control_center_select_group_forward");
+    CannonGroup_Backward = SafeLocalize("$valheim_vehicles_cannon_control_center_select_group_backward");
+    CannonGroup_Left = SafeLocalize("$valheim_vehicles_cannon_control_center_select_group_left");
+    CannonGroup_Right = SafeLocalize("$valheim_vehicles_cannon_control_center_select_group_right");
   }
 
   private static void UpdateVehicleConfigTranslations()
@@ -180,6 +186,7 @@ public partial class ModTranslations
 
     SharedKeys_InteractPrimary = SafeLocalize($"[<color=yellow><b>{ValheimInput_KeyUse}</b></color>]");
     SharedKeys_InteractAlt = SafeLocalize($"[<color=yellow><b>{ValheimInput_KeyAltPlace}+{ValheimInput_KeyUse}</b></color>]");
+    SharedKeys_Tutorial = SafeLocalize("$valheim_vehicles_shared_keys_tutorial");
   }
 
   private static void SetCurrentLocalizedLanguage()

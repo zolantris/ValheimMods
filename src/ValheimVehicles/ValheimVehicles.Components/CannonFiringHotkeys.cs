@@ -22,6 +22,8 @@ namespace ValheimVehicles.SharedScripts
     public KeyCode shiftKeyAlt = KeyCode.RightShift;
     public string gamepadShift = "JoyLTrigger";
 
+    public Action<CannonDirectionGroup>? OnCannonGroupChange;
+
     private readonly string dpadUp = "JoyDPadUp";
     private readonly string dpadLeft = "JoyDPadLeft";
     private readonly string dpadRight = "JoyDPadRight";
@@ -35,7 +37,7 @@ namespace ValheimVehicles.SharedScripts
     public float tiltSpeed = 30f; // deg/sec for stick
     public float holdToAdjustThreshold = 0.5f; // seconds
 
-    private CannonDirectionGroup lastManualGroup = CannonDirectionGroup.Forward;
+    public CannonDirectionGroup lastManualGroup = CannonDirectionGroup.Forward;
 
     // Track per-group tilt
     private readonly Dictionary<CannonDirectionGroup, float> manualGroupTilt = new()
@@ -115,7 +117,7 @@ namespace ValheimVehicles.SharedScripts
       if (ZInput.GetKeyDown(key))
       {
         groupHoldStartTime[group] = Time.unscaledTime;
-        lastManualGroup = group;
+        SetGroup(group);
       }
 
       // Held: allow tilt
@@ -164,13 +166,12 @@ namespace ValheimVehicles.SharedScripts
       // Also allow DPad Up/Down to adjust tilt (hold for adjust, tap for fire)
       if (ZInput.GetButton(dpadUp) && !ZInput.GetButtonDown(dpadUp))
       {
-        AdjustManualGroupTilt(CannonDirectionGroup.Forward, +tiltStep * Time.deltaTime);
+        AdjustManualGroupTilt(lastManualGroup, +tiltStep * Time.deltaTime);
       }
       if (ZInput.GetButton(dpadDown) && !ZInput.GetButtonDown(dpadDown))
       {
-        AdjustManualGroupTilt(CannonDirectionGroup.Back, -tiltStep * Time.deltaTime);
+        AdjustManualGroupTilt(lastManualGroup, -tiltStep * Time.deltaTime);
       }
-
     }
 
     private void ProcessButtonGroup(string button, CannonDirectionGroup group)
@@ -198,7 +199,7 @@ namespace ValheimVehicles.SharedScripts
   #endregion
 
     // Tilt helper
-    private void AdjustManualGroupTilt(CannonDirectionGroup group, float tiltDelta)
+    public void AdjustManualGroupTilt(CannonDirectionGroup group, float tiltDelta)
     {
       if (targetController == null) return;
       manualGroupTilt[group] = Mathf.Clamp(
@@ -207,6 +208,37 @@ namespace ValheimVehicles.SharedScripts
       );
       targetController.SetManualGroupTilt(group, manualGroupTilt[group]);
       targetController.ScheduleGroupCannonSync(group);
+    }
+
+    public CannonDirectionGroup GetNextGroup(int dir)
+    {
+      return dir switch
+      {
+        -1 => lastManualGroup switch
+        {
+          CannonDirectionGroup.Forward => CannonDirectionGroup.Right,
+          CannonDirectionGroup.Back => CannonDirectionGroup.Forward,
+          CannonDirectionGroup.Left => CannonDirectionGroup.Back,
+          CannonDirectionGroup.Right => CannonDirectionGroup.Left,
+          _ => throw new ArgumentOutOfRangeException()
+        },
+        1 => lastManualGroup switch
+        {
+          CannonDirectionGroup.Forward => CannonDirectionGroup.Back,
+          CannonDirectionGroup.Back => CannonDirectionGroup.Left,
+          CannonDirectionGroup.Left => CannonDirectionGroup.Right,
+          CannonDirectionGroup.Right => CannonDirectionGroup.Forward,
+          _ => throw new ArgumentOutOfRangeException()
+        },
+        _ => throw new Exception("Invalid dir. Must be -1 or 1")
+      };
+    }
+
+    public void SetGroup(CannonDirectionGroup group)
+    {
+      if (lastManualGroup == group) return;
+      lastManualGroup = group;
+      OnCannonGroupChange?.Invoke(group);
     }
 
     private void FireManualGroup(CannonDirectionGroup group, object key)
