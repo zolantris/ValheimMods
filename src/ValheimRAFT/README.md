@@ -16,7 +16,8 @@ previews, swap to the beta variant.
 
 - 3.6.x Adds cannons, hand cannons (item) and turret prefabs.
 - Adds manual standalone turret controls as well as ship controls
-- Adds prefab recipe configs for cannons and walls/floors.
+- Adds prefab recipe configs for cannons and walls/floors. Allows for setting
+  all recipe ingredients and quantity.
 - Adds wood 2x8 walls (sleek) this will remain until we get new hull assets.
 - Significantly increases speed of rendering ships and entire valheim world with
   `Experimental_CustomMaxCreatedObjectsPerFrame`. This was originally 600 items
