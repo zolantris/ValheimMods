@@ -1,5 +1,8 @@
 using System.Collections;
+using System.Collections.Generic;
 using System.Reflection;
+using UnityEngine;
+using ValheimVehicles.SharedScripts;
 
 namespace ValheimVehicles.RPC;
 
@@ -23,26 +26,64 @@ public class RPCEntity(
     return $"{ExecutingAssemblyName}_{rpcName}";
   }
 
-  public void Send(ZPackage pkg)
+  public void Send(ZPackage pkg, bool canRunOnClient = true)
   {
-    pkg.SetPos(0);
-
-    if (ZNet.IsSinglePlayer || ZNet.instance.IsServer())
-    {
-      ZNet.instance.StartCoroutine(Action(ZRoutedRpc.instance.GetServerPeerID(), pkg));
-      return;
-    }
-    ZRoutedRpc.instance.InvokeRoutedRPC(ZRoutedRpc.instance.GetServerPeerID(), Name, pkg);
+    Send(ZRoutedRpc.Everybody, pkg, canRunOnClient);
   }
 
-  public void Send(long peerId, ZPackage pkg)
+  /// <summary>
+  /// Send to nearby peer only.
+  /// </summary>
+  public void SendNearby(ZPackage pkg, ZDO zdo, float distance, bool canRunOnClient = true)
+  {
+    var sentPeerIds = new HashSet<long>();
+    RPCUtils.RunIfNearby(zdo, distance, (peerId) =>
+    {
+      sentPeerIds.Add(peerId);
+      Send(peerId, pkg, canRunOnClient);
+    });
+
+    if (canRunOnClient && Player.m_localPlayer != null)
+    {
+      var owner = Player.m_localPlayer.GetOwner();
+      if (!sentPeerIds.Contains(owner))
+      {
+        ZNet.instance.StartCoroutine(Action(Player.m_localPlayer.GetOwner(), new ZPackage(pkg.GetArray())));
+      }
+      else
+      {
+        LoggerProvider.LogDev("player peer was already called for local player.");
+      }
+    }
+  }
+
+  /// <summary>
+  /// This must run the RPC method directly if not a server or using the target server ZRoutedRPC.instance.m_id.
+  ///
+  /// Valheim Bails here.
+  /// if (!this.m_server || routedRpcData.m_targetPeerID == this.m_id)
+  /// return;
+  /// </summary>
+  public void Send(long peerId, ZPackage pkg, bool canRunOnClient = true)
   {
     pkg.SetPos(0);
-    if (peerId == ZRoutedRpc.instance.GetServerPeerID() && (ZNet.IsSinglePlayer || ZNet.instance.IsServer()))
+
+    var serverPeerId = ZRoutedRpc.instance.GetServerPeerID();
+    var isLocalServer = ZRoutedRpc.instance.m_server && ZRoutedRpc.instance.m_id == serverPeerId;
+    var isServerPeerRequest = peerId == serverPeerId;
+    var isSelfCall = peerId != 0L && isServerPeerRequest && isLocalServer;
+    var isEveryone = peerId == 0L;
+    // invoke this is provided everyone peer or the current peer is the host.
+    // must duplicate the pkg otherwise it will conflict or mutate by different peers.
+    if (canRunOnClient && (isSelfCall || isEveryone))
     {
-      ZNet.instance.StartCoroutine(Action(peerId, pkg));
-      return;
+      ZNet.instance.StartCoroutine(Action(peerId, new ZPackage(pkg.GetArray())));
     }
-    ZRoutedRpc.instance.InvokeRoutedRPC(peerId, Name, pkg);
+
+    // do not invoke to self if sending to self peer this is thrown out in ZRoutedRPC anyways.
+    if (!isSelfCall)
+    {
+      ZRoutedRpc.instance.InvokeRoutedRPC(peerId, Name, pkg);
+    }
   }
 }

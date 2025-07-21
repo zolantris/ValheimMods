@@ -41,13 +41,8 @@ namespace ValheimVehicles.SharedScripts
     private void InitComponentProperties(GameObject prefab)
     {
       IsBed = false;
-      // IsBed = prefab.GetComponent<Bed>();
       var swivelComponentParent = prefab.GetComponentInParent<SwivelComponent>();
       IsSwivelChild = swivelComponentParent != null;
-
-#if DEBUG
-      LoggerProvider.LogDev($"isSwivelChild: {IsSwivelChild}");
-#endif
     }
 
     /// <summary>

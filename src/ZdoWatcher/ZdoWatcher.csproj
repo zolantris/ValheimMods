@@ -1,23 +1,22 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
+    <Import Project="$(SolutionDir)build\base.props"/>
+    <Import Project="$(SolutionDir)build\valheim.props"/>
     <PropertyGroup>
-        <Nullable>enable</Nullable>
-        <Configurations>Debug;Release;ReleaseBETA Archive</Configurations>
+        <Configurations>Debug;Release;ReleaseBETA Archive;ModSyncOnly</Configurations>
         <Platforms>AnyCPU</Platforms>
     </PropertyGroup>
     <PropertyGroup Condition=" '$(Configuration)' == 'ReleaseBETA Archive' ">
-      <PlatformTarget>AnyCPU</PlatformTarget>
-      <DebugType>pdbonly</DebugType>
-      <Optimize>true</Optimize>
-      <OutputPath>bin\Release\</OutputPath>
-      <DefineConstants>TRACE</DefineConstants>
-      <ErrorReport>prompt</ErrorReport>
-      <WarningLevel>4</WarningLevel>
-      <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+        <PlatformTarget>AnyCPU</PlatformTarget>
+        <DebugType>pdbonly</DebugType>
+        <Optimize>true</Optimize>
+        <OutputPath>bin\Release\</OutputPath>
+        <DefineConstants>TRACE</DefineConstants>
+        <ErrorReport>prompt</ErrorReport>
+        <WarningLevel>4</WarningLevel>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     </PropertyGroup>
+
     <ItemGroup>
-      <ProjectReference Include="..\Shared\Shared.csproj" />
+        <ProjectReference Include="..\Shared\Shared.csproj"/>
     </ItemGroup>
-    <Import Project="..\..\base.targets"/>
-    <Import Project="..\..\valheim.targets"/>
-    <Import Project="..\..\gameLauncher.targets"/>
 </Project>

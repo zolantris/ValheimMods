@@ -20,7 +20,7 @@ public class DynamicLocationsPlugin : BaseUnityPlugin
   public const string ModName = "DynamicLocations";
   public const string BepInGuid = $"{Author}.{ModName}";
   public static string HarmonyGuid => BepInGuid;
-  private static Harmony _harmony;
+  private static Harmony _harmony = null!;
 
   public const string ModDescription =
     "Valheim Mod made to attach to an item/prefab such as a bed and place a player or object near the item wherever it is in the current game. Meant for ValheimVehicles but could be used for any movement mod. Requires Jotunn and ZdoWatcher";

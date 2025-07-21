@@ -1,9 +1,11 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project Sdk="Microsoft.NET.Sdk">
     <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')"/>
     <PropertyGroup>
         <BepInExPath>$(SolutionDir)libs</BepInExPath>
         <ManagedDataPath>$(SolutionDir)libs</ManagedDataPath>
+        <Configurations>Debug;Release;Test;ModSyncOnly</Configurations>
+        <Platforms>AnyCPU</Platforms>
     </PropertyGroup>
     <PropertyGroup>
         <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -62,10 +64,10 @@
     </ItemGroup>
     <!--  Other bepinex plugins  -->
     <ItemGroup>
-        <Reference Include="SentryUnityWrapper">
-            <HintPath>$(SolutionDir)\src\SentryUnityWrapper\bin\Debug\SentryUnityWrapper.dll</HintPath>
-            <Private>False</Private>
-        </Reference>
+        <!--        <Reference Include="SentryUnityWrapper">-->
+        <!--            <HintPath>$(SolutionDir)\src\SentryUnityWrapper\bin\Debug\SentryUnityWrapper.dll</HintPath>-->
+        <!--            <Private>False</Private>-->
+        <!--        </Reference>-->
         <Reference Include="PlanBuild">
             <HintPath>$(SolutionDir)\libs\PlanBuild.dll</HintPath>
             <Private>False</Private>

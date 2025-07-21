@@ -1,0 +1,212 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <Nullable>enable</Nullable>
+        <Configurations>Debug;Release;Release Archive;ReleaseBETA Archive</Configurations>
+        <Platforms>AnyCPU</Platforms>
+    </PropertyGroup>
+    <Import Project="..\..\targets\base.targets"/>
+
+    <PropertyGroup Label="FileLockValidation">
+
+        <ServerFileToValidate>$(ValheimServerPath)\$(PluginDeployTarget)\$(AssemblyName).dll</ServerFileToValidate>
+        <ServerFileExitCode>1</ServerFileExitCode>
+
+        <ClientFileToValidate>$(PluginDeployPath)\$(AssemblyName)\$(AssemblyName).dll</ClientFileToValidate>
+        <ClientFileExitCode>1</ClientFileExitCode>
+
+        <SandBoxieFileToValidate>$(SandboxiePluginDeployPath)\$(AssemblyName).dll</SandBoxieFileToValidate>
+        <SandBoxieFileExitCode>1</SandBoxieFileExitCode>
+
+        <PowerShellScript>$(SolutionDir)CheckFilesLocked.ps1</PowerShellScript>
+    </PropertyGroup>
+
+    <Target Name="file_lock_check" BeforeTargets="PostBuildEvent">
+        <Message Text="Checking if files are locked...in distinations" Importance="high"/>
+        <Exec Command="powershell -ExecutionPolicy Bypass -File &quot;$(PowerShellScript)&quot; &quot;$(ClientFileToValidate)&quot;"
+              IgnoreExitCode="true">
+            <Output TaskParameter="ExitCode" PropertyName="ClientFileExitCode"/>
+        </Exec>
+        <Exec Command="powershell -ExecutionPolicy Bypass -File &quot;$(PowerShellScript)&quot; &quot;$(ServerFileToValidate)&quot;"
+              IgnoreExitCode="true">
+            <Output TaskParameter="ExitCode" PropertyName="ServerFileExitCode"/>
+        </Exec>
+        <Exec Command="powershell -ExecutionPolicy Bypass -File &quot;$(PowerShellScript)&quot; &quot;$(SandBoxieFileToValidate)&quot;"
+              IgnoreExitCode="true">
+            <Output TaskParameter="ExitCode" PropertyName="SandBoxieFileExitCode"/>
+        </Exec>
+        <Message Text="Results: ServerFileExitCode: $(ServerFileExitCode), ClientFileExitCode: $(ClientFileExitCode), SandBoxieFileExitCode: $(SandBoxieFileExitCode)," Importance="high"/>
+    </Target>
+
+    <Target Name="convert_pdb_to_mdb" AfterTargets="file_lock_check">
+        <!--  Copy/convert commands are top level  -->
+        <Exec Command="$(SolutionDir)pdb2mdb.exe $(TargetPath)"/>
+        <!--   Renames the dll.mdb to just mdb     -->
+        <Move SourceFiles="$(OutDir)$(AssemblyName).dll.mdb" DestinationFiles="$(OutDir)$(AssemblyName).mdb"/>
+    </Target>
+
+    <!--     and $(IsRunnableClientServer) == 'true' or '$(IsRunnableServer)' == 'true'-->
+    <Target Name="copy_to_valheim_server" AfterTargets="convert_pdb_to_mdb" KeepDuplicateOutputs="false" Condition="'$(IsRunnable)' == 'true' and $(AssemblyName) != 'SentryUnityWrapper' and '$(ServerFileExitCode)' == '0'">
+        <ItemGroup>
+            <CheckValheimServerPath Include="$(ValheimServerPath)"/>
+        </ItemGroup>
+        <Error Condition="!Exists('@(CheckValheimServerPath)')"/>
+
+        <MakeDir Directories="$(ValheimServerPath)\$(PluginDeployTarget)"/>
+        <Exec Command="xcopy &quot;$(SolutionDir)dependencies&quot; &quot;$(ValheimServerPath)\$(PluginDeployTarget)&quot; /q /s /y /i"/>
+
+        <Exec Command="copy &quot;$(OutDir)$(AssemblyName).dll&quot; &quot;$(ValheimServerPath)\$(PluginDeployTarget)\$(AssemblyName).dll&quot;"/>
+        <Exec Command="copy &quot;$(OutDir)$(AssemblyName).pdb&quot; &quot;$(ValheimServerPath)\$(PluginDeployTarget)\$(AssemblyName).pdb&quot;"/>
+        <Exec Command="copy &quot;$(OutDir)$(AssemblyName).mdb&quot; &quot;$(ValheimServerPath)\$(PluginDeployTarget)\$(AssemblyName).mdb&quot;"/>
+
+        <!--        <Exec Command="xcopy &quot;$(TargetDir)&quot; &quot;$(ValheimServerPath)\$(PluginDeployTarget)\&quot; /q /s /y /i"/>-->
+
+        <!--        <Exec Condition="Exists('$(AssetsDir)')" Command="xcopy /d &quot;$(AssetsDir)&quot; &quot;$(ValheimServerPath)\$(PluginDeployTarget)\Assets\&quot; /E/H/Y"/>-->
+        <!--        <Exec Condition="Exists('$(AssetsDir)Translations\English\')" Command="xcopy /d &quot;$(AssetsDir)Translations\English\&quot; &quot;$(ValheimServerPath)\$(PluginDeployTarget)\Assets\Translations\English\&quot; /E/H/Y"/>-->
+    </Target>
+    <ItemGroup>
+        <DependencyLibs Include="$(SolutionDir)dependencies\**\*.*"/>
+    </ItemGroup>
+    <Target Name="CopyDependencyLibsToR2ModMan" AfterTargets="Build">
+        <Message Text="Copying dependency libs from $(SolutionDir)Dependencies to $(PluginDeployPath)..." Importance="high"/>
+        <Copy
+                SourceFiles="@(DependencyLibs)"
+                DestinationFolder="$(PluginDeployPath)\%(RecursiveDir)"
+                SkipUnchangedFiles="true"/>
+    </Target>
+    <Target Name="Copy_To_R2ModMan" AfterTargets="convert_pdb_to_mdb" Condition="'$(IsRunnable)' == 'true' and '$(IsNotArchive)' == 'true' and '$(IsRunnableServer)' != 'true' and '$(ClientFileExitCode)' == '0'">
+        <!--  Eventually we need to copy and test this lib over in unity     -->
+        <!--        <Exec Condition="'$(IsRelease)' == 'true'" Command="copy &quot;$(OutDir)$(AssemblyName).dll&quot; &quot;$(SolutionDir)src\ValheimRAFT\ValheimRAFT.Unity\Assets\Assemblies\$(AssemblyName).dll&quot;"/>-->
+
+        <!--    required plugins  -->
+        <Exec Command="xcopy &quot;$(SolutionDir)dependencies&quot; &quot;$(PluginDeployPath)\&quot; /q /s /y /i"/>
+
+        <Exec Command="copy &quot;$(OutDir)$(AssemblyName).dll&quot; &quot;$(PluginDeployPath)\$(AssemblyName).dll&quot;"/>
+        <Exec Command="copy &quot;$(OutDir)$(AssemblyName).pdb&quot; &quot;$(PluginDeployPath)\$(AssemblyName).pdb&quot;"/>
+        <Exec Command="copy &quot;$(OutDir)$(AssemblyName).mdb&quot; &quot;$(PluginDeployPath)\$(AssemblyName).mdb&quot;"/>
+
+        <Exec Condition="$(AssemblyName) == 'SentryUnityWrapper'" Command="xcopy &quot;$(SolutionDir)\SentryUnity\1.8.0\runtime&quot; &quot;$(PluginDeployPath)\&quot; /q /s /y /i"/>
+        <!--        <Exec Command="xcopy &quot;$(TargetDir)&quot; &quot;$(PluginDeployPath)\&quot; /q /s /y /i"/>-->
+
+        <Exec Condition="Exists('$(AssetsDir)')" Command="xcopy /d &quot;$(AssetsDir)&quot; &quot;$(PluginDeployPath)\Assets\&quot; /E/H/Y"/>
+        <Exec Condition="Exists('$(AssetsDir)Translations\English\')" Command="xcopy /d &quot;$(AssetsDir)Translations\English\&quot; &quot;$(PluginDeployPath)\Assets\Translations\English\&quot; /E/H/Y"/>
+    </Target>
+    <!--     Condition=" $(AssemblyName) == 'ValheimRAFT' And Exists('$(SandboxiePluginDeployPath)') And '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' "-->
+    <Target Name="Copy_To_R2ModMan_vm" AfterTargets="Copy_To_R2ModMan" Condition="'$(IsRunnable)' == 'true' and '$(SandBoxieFileExitCode)' == '0'">
+        <!--   Will only run if the above passes     -->
+        <Copy
+                SourceFiles="@(DependencyLibs)"
+                DestinationFolder="$(SandboxiePluginDeployPath)\%(RecursiveDir)"
+                SkipUnchangedFiles="true"/>
+
+        <Exec Condition="Exists('$(OutDir)$(AssemblyName).dll')" Command="copy &quot;$(OutDir)$(AssemblyName).dll&quot; &quot;$(SandboxiePluginDeployPath)\$(AssemblyName).dll&quot;"/>
+        <Exec Condition="Exists('$(OutDir)$(AssemblyName).pdb')" Command="copy &quot;$(OutDir)$(AssemblyName).pdb&quot; &quot;$(SandboxiePluginDeployPath)\$(AssemblyName).pdb&quot;"/>
+        <Exec Condition="Exists('$(OutDir)$(AssemblyName).mdb')" Command="copy &quot;$(OutDir)$(AssemblyName).mdb&quot; &quot;$(SandboxiePluginDeployPath)\$(AssemblyName).mdb&quot;"/>
+
+        <!--        <Exec Condition="$(AssemblyName) == 'SentryUnityWrapper'" Command="xcopy &quot;$(SolutionDir)\SentryUnity\1.8.0\runtime&quot; &quot;$(SandboxiePluginDeployPath)\&quot; /q /s /y /i"/>-->
+        <!--        <Exec Condition="'$(FilesCheckExitCode)' == '0'" Command="xcopy &quot;$(TargetDir)&quot; &quot;$(SandboxiePluginDeployPath)\&quot; /q /s /y /i"/>-->
+
+        <Exec Condition="Exists('$(AssetsDir)')" Command="xcopy /d &quot;$(AssetsDir)&quot; &quot;$(SandboxiePluginDeployPath)\Assets\&quot; /E/H/Y"/>
+        <Exec Condition="Exists('$(AssetsDir)Translations\English\')" Command="xcopy /d &quot;$(AssetsDir)Translations\English\&quot; &quot;$(SandboxiePluginDeployPath)\Assets\Translations\English\&quot; /E/H/Y"/>
+    </Target>
+    <Target Name="Generate_Mod_Archive" AfterTargets="PostBuildEvent" Condition=" '$(Configuration)|$(Platform)' == 'Release Archive|AnyCPU' ">
+        <PropertyGroup>
+            <RepoDir>$(SolutionDir)src\ValheimRAFT\</RepoDir>
+            <ModOutputDir>$(OutDir)..\ModVersions\</ModOutputDir>
+            <TmpDir>$(OutDir)..\tmp\</TmpDir>
+            <ThunderStoreDir>$(RepoDir)ThunderStore\</ThunderStoreDir>
+            <ThunderStoreName>Thunderstore</ThunderStoreName>
+            <NexusName>Nexus</NexusName>
+            <ModNameVersion>$(AssemblyName)-$(ApplicationVersion).zip</ModNameVersion>
+            <AutoDocName>$(AssemblyName)_AutoDoc.md</AutoDocName>
+            <AutoDocPath>$(PluginDeployPath)/$(AutoDocName)</AutoDocPath>
+            <LocalAutoDocPath>$(SolutionDir)src\$(AssemblyName)\docs\$(AutoDocName)</LocalAutoDocPath>
+        </PropertyGroup>
+        <Exec Command="if exist &quot;$(TmpDir)plugins\Assets&quot; rd /s /q &quot;$(TmpDir)plugins\Assets&quot;"/>
+        <Exec Command="if exist &quot;$(TmpDir)&quot; rd /s /q &quot;$(TmpDir)&quot;"/>
+
+        <Exec Command="if not exist &quot;$(ModOutputDir)&quot; mkdir &quot;$(ModOutputDir)&quot;"/>
+        <Exec Command="if not exist &quot;$(TmpDir)&quot; mkdir &quot;$(TmpDir)&quot;"/>
+        <Exec Command="if not exist &quot;$(TmpDir)plugins&quot; mkdir &quot;$(TmpDir)plugins&quot;"/>
+        <Exec Command="if not exist &quot;$(TmpDir)$(AssemblyName)&quot; mkdir &quot;$(TmpDir)$(AssemblyName)&quot;"/>
+
+        <Exec Command="xcopy &quot;$(SolutionDir)plugins&quot; &quot;$(TmpDir)plugins&quot; /q /s /y /i"/>
+
+        <Exec Command="copy &quot;$(OutDir)$(AssemblyName).dll&quot; &quot;$(TmpDir)plugins\$(AssemblyName).dll&quot;"/>
+        <Exec Command="copy &quot;$(OutDir)$(AssemblyName).pdb&quot; &quot;$(TmpDir)plugins\$(AssemblyName).pdb&quot;"/>
+        <Exec Command="copy &quot;$(RepoDir)README.md&quot; &quot;$(TmpDir)README.md&quot;"/>
+
+        <!-- Overrites the auto-doc -->
+        <Copy Condition="Exists('$(AutoDocPath)') and Exists('$(LocalAutoDocPath)')" SourceFiles="$(AutoDocPath)" DestinationFolder="$(SolutionDir)src\$(AssemblyName)\docs\"/>
+
+        <!-- Copy Assets -->
+        <Exec Command="if exist &quot;$(AssetsDir)&quot; xcopy /d &quot;$(AssetsDir)&quot; &quot;$(TmpDir)plugins\Assets\&quot; /E/H"/>
+        <Exec Command="if exist $&quot;$(AssetsDir)&quot; del &quot;$(TmpDir)plugins\Assets\*.png.meta&quot;"/>
+
+        <!--   copy all files from outputdir, anything included is something that does not exist in the base game dependencies...this copies too many things, including dev only deps fyi. dont use it for production     -->
+        <Exec Command="xcopy &quot;$(TargetDir)&quot; &quot;$(TmpDir)plugins\&quot; /q /s /y /i"/>
+
+        <Exec Command="xcopy /d &quot;$(ThunderStoreDir)&quot; &quot;$(TmpDir)&quot; /E/H"/>
+        <!-- delete duplicate mod version-->
+        <Exec Command="if exist &quot;$(ModOutputDir)$(ThunderStoreName)-$(ModNameVersion)&quot; del /s /q &quot;$(ModOutputDir)$(ThunderStoreName)-$(ModNameVersion)&quot;"/>
+        <Exec Command="if exist &quot;$(ModOutputDir)$(NexusName)-$(ModNameVersion)&quot; del /s /q &quot;$(ModOutputDir)$(NexusName)-$(ModNameVersion)&quot;"/>
+        <Exec Command="if exist &quot;$(ModOutputDir)libs-$(ApplicationVersion).zip&quot; del /s /q &quot;$(ModOutputDir)libs-$(ApplicationVersion).zip&quot;"/>
+
+        <Exec Command="powershell Compress-Archive '$(TmpDir)\*' '$(ModOutputDir)$(ThunderStoreName)-$(ModNameVersion)'"/>
+
+        <!--  For modNexus there needs to be a folder with the modname     -->
+        <Exec Command="xcopy /d &quot;$(TmpDir)plugins&quot; &quot;$(TmpDir)$(AssemblyName)&quot; /E/H"/>
+        <Exec Command="powershell Compress-Archive '$(TmpDir)$(AssemblyName)' '$(ModOutputDir)$(NexusName)-$(ModNameVersion)'"/>
+        <Exec Command="powershell Compress-Archive '$(SolutionDir)libs\*' '$(ModOutputDir)libs-$(ApplicationVersion).zip'"/>
+    </Target>
+    <Target Name="Generate_Mod_ArchiveBeta" AfterTargets="PostBuildEvent" Condition=" '$(Configuration)|$(Platform)' == 'ReleaseBETA Archive|AnyCPU' ">
+        <PropertyGroup>
+            <RepoDir>$(SolutionDir)src\ValheimRAFT\</RepoDir>
+            <ModOutputDir>$(OutDir)..\ModVersions\</ModOutputDir>
+            <TmpDir>$(OutDir)..\tmp\</TmpDir>
+            <ThunderStoreDir>$(RepoDir)ThunderStoreBeta\</ThunderStoreDir>
+            <ThunderStoreName>Thunderstore</ThunderStoreName>
+            <NexusName>Nexus</NexusName>
+            <ModNameVersion>$(AssemblyName)-$(ApplicationVersion)-beta.zip</ModNameVersion>
+            <AutoDocName>$(AssemblyName)_AutoDoc.md</AutoDocName>
+            <AutoDocPath>$(PluginDeployPath)/$(AutoDocName)</AutoDocPath>
+            <LocalAutoDocPath>$(SolutionDir)src\$(AssemblyName)\docs\$(AutoDocName)</LocalAutoDocPath>
+        </PropertyGroup>
+        <Exec Command="if exist &quot;$(TmpDir)plugins\Assets&quot; rd /s /q &quot;$(TmpDir)plugins\Assets&quot;"/>
+        <Exec Command="if exist &quot;$(TmpDir)&quot; rd /s /q &quot;$(TmpDir)&quot;"/>
+
+        <Exec Command="if not exist &quot;$(ModOutputDir)&quot; mkdir &quot;$(ModOutputDir)&quot;"/>
+        <Exec Command="if not exist &quot;$(TmpDir)&quot; mkdir &quot;$(TmpDir)&quot;"/>
+        <Exec Command="if not exist &quot;$(TmpDir)plugins&quot; mkdir &quot;$(TmpDir)plugins&quot;"/>
+        <Exec Command="if not exist &quot;$(TmpDir)$(AssemblyName)&quot; mkdir &quot;$(TmpDir)$(AssemblyName)&quot;"/>
+
+        <Exec Command="xcopy &quot;$(SolutionDir)plugins&quot; &quot;$(TmpDir)plugins&quot; /q /s /y /i"/>
+
+        <Exec Command="copy &quot;$(OutDir)$(AssemblyName).dll&quot; &quot;$(TmpDir)plugins\$(AssemblyName).dll&quot;"/>
+        <Exec Command="copy &quot;$(OutDir)$(AssemblyName).pdb&quot; &quot;$(TmpDir)plugins\$(AssemblyName).pdb&quot;"/>
+        <Exec Command="copy &quot;$(SolutionDir)src\ValheimRAFT\README.md&quot; &quot;$(TmpDir)README.md&quot;"/>
+
+        <!-- Overrites the auto-doc -->
+        <Copy Condition="Exists('$(AutoDocPath)') and Exists('$(LocalAutoDocPath)')" SourceFiles="$(AutoDocPath)" DestinationFolder="$(SolutionDir)src\$(AssemblyName)\docs\"/>
+
+        <!-- Copy Assets -->
+        <Exec Command="if exist &quot;$(AssetsDir)&quot; xcopy /d &quot;$(AssetsDir)&quot; &quot;$(TmpDir)plugins\Assets\&quot; /E/H"/>
+        <Exec Command="if exist $&quot;$(AssetsDir)&quot; del &quot;$(TmpDir)plugins\Assets\*.png.meta&quot;"/>
+
+        <!--   copy all files from outputdir, anything included is something that does not exist in the base game dependencies...this copies too many things, including dev only deps fyi. dont use it for production     -->
+        <Exec Command="xcopy &quot;$(TargetDir)&quot; &quot;$(TmpDir)plugins\&quot; /q /s /y /i"/>
+
+        <Exec Command="xcopy /d &quot;$(ThunderStoreDir)&quot; &quot;$(TmpDir)&quot; /E/H"/>
+        <!-- delete duplicate mod version-->
+
+        <Exec Command="if exist &quot;$(ModOutputDir)$(ThunderStoreName)-$(ModNameVersion)&quot; del /s /q &quot;$(ModOutputDir)$(ThunderStoreName)-$(ModNameVersion)&quot;"/>
+        <Exec Command="if exist &quot;$(ModOutputDir)$(NexusName)-$(ModNameVersion)&quot; del /s /q &quot;$(ModOutputDir)$(NexusName)-$(ModNameVersion)&quot;"/>
+        <Exec Command="if exist &quot;$(ModOutputDir)libs-$(ApplicationVersion).zip&quot; del /s /q &quot;$(ModOutputDir)libs-$(ApplicationVersion).zip&quot;"/>
+
+        <Exec Command="powershell Compress-Archive '$(TmpDir)\*' '$(ModOutputDir)$(ThunderStoreName)-$(ModNameVersion)'"/>
+
+        <!--  For modNexus there needs to be a folder with the modname     -->
+        <Exec Command="xcopy /d &quot;$(TmpDir)plugins&quot; &quot;$(TmpDir)$(AssemblyName)&quot; /E/H"/>
+        <Exec Command="powershell Compress-Archive '$(TmpDir)$(AssemblyName)' '$(ModOutputDir)$(NexusName)-$(ModNameVersion)'"/>
+        <Exec Command="powershell Compress-Archive '$(SolutionDir)libs\*' '$(ModOutputDir)libs-$(ApplicationVersion).zip'"/>
+    </Target>
+</Project>

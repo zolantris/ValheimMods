@@ -11,7 +11,6 @@ using HarmonyLib;
 using Jotunn;
 using Jotunn.Entities;
 using Jotunn.Managers;
-using StructLinq;
 using UnityEngine;
 using UnityEngine.Assertions.Must;
 using ValheimVehicles.BepInExConfig;

@@ -13,6 +13,10 @@
 - Description: Vehicle/Raft Creative mode will set all axises to 0 for rotation instead keeping the turn axis. Gizmo has issues with rotated vehicles, so zeroing things out is much safer. Works regardless of patch if mod exists
 - Default Value: True
 
+### EXPERIMENTAL: Snappoint Rotational Patch 
+- Description: Some prefabs on ValheimRAFT have flipped/rotated snappoints. This will allow rotating based on rotated point transform. Eg pieces can be flipped upside down. Supports Rotating Cannons. It does not flip the actual snappoint though. So the collision point requires a bit of creativity..
+- Default Value: True
+
 ### Vehicles Prevent Pausing 
 - Description: Prevents pausing on a boat, pausing causes a TON of desync problems and can make your boat crash or other players crash
 - Default Value: True
@@ -331,23 +335,35 @@
 
 ### CannonBallInventoryWeight 
 - Description: Set the weight of cannonballs. For realism 12-48lbs for these cannons.
-- Default Value: 12
+- Default Value: 4
 
-### HasCannonFireAudio 
+### CannonHandheld_AudioStartPosition 
+- Description: Set set the audio start position. This will sound like a heavy flintlock if to close to 0f
+- Default Value: 0.35
+
+### Cannon_HasFireAudio 
 - Description: Allows toggling the cannon fire audio
 - Default Value: True
 
-### UNSTABLE_HasCannonReloadAudio 
+### UNSTABLE_Cannon_HasReloadAudio 
 - Description: Allows toggling the reload audio. Unstable b/c it does not sound great when many of these are fired together.
 - Default Value: False
 
-### UNSTABLE_HasCannonballExplosionAudio 
+### Cannonball_HasExplosionAudio 
 - Description: Allows toggling the cannonball explosion/impact audio. Unstable b/c it does not sound great when many of these are fired together.
 - Default Value: True
 
-### CannonFiringDelayPerCannon 
+### Cannon_FiringDelayPerCannon 
 - Description: Allows setting cannon firing delays. This makes cannons fire in a order.
 - Default Value: 0.01
+
+### Cannon_ReloadTime 
+- Description: Allows setting cannon reload delays. This makes cannons reload longer or shorter. Shortest value is 100ms highest is 60seconds
+- Default Value: 6
+
+### CannonHandHeld_ReloadTime 
+- Description: Allows setting cannon-handheld reload delays. This makes cannons reload longer or shorter. Shortest value is 100ms highest is 60seconds
+- Default Value: 6
 
 ### Cannon_ReloadAudioVolume 
 - Description: Allows customizing cannon firing audio volume
@@ -361,6 +377,22 @@
 - Description: Allows customizing cannon reload audio volume
 - Default Value: 1
 
+### Cannonball_ExplosionRadius 
+- Description: Allows customizing cannonball explosion radius/aoe. Large sizes will lag out objects like rocks
+- Default Value: 7.5
+
+### Cannonball_SolidShell_BaseDamage 
+- Description: Allows customizing cannonball solid hit damage
+- Default Value: 85
+
+### Cannonball_ExplosiveShell_BaseDamage 
+- Description: Allows customizing cannonball explosion hit AOE damage. The damage is uniform across the entire radius.
+- Default Value: 50
+
+### DEBUG_CannonballUnlimitedAmmo 
+- Description: Allows unlimited ammo for cannons.
+- Default Value: False
+
 ### Cannonball_HasWindAudio 
 - Description: Allows enable cannonball wind audio - which can be heard if a cannonball passes nearby.
 - Default Value: True
@@ -368,6 +400,14 @@
 ### Cannonball_WindAudioVolume 
 - Description: Allows customizing cannonball wind audio - which can be heard if a cannonball passes nearby. Recommended below 0.2f
 - Default Value: 0.2
+
+## PrefabConfig: PowderBarrel
+
+### PowderBarrelExplosiveChainDelay 
+- Description: Set the powder barrel explosive chain delay. It will blow up nearby barrels but at a delayed fuse to make things a bit more realistic or at least cinematic.
+- Default Value: 0.25
+
+## PrefabConfig: VehicleCannons
 
 ### Cannonball_SolidDamage 
 - Description: Set the amount of damage a solid cannon ball does. This value is multiplied by the velocity of the cannonball around 90 at max speed decreasing to 20 m/s at lowest hit damage level.
@@ -377,6 +417,10 @@
 - Description: Set the amount of damage a explosive cannon ball does. This damage includes both the AOE and hit. AOE will do same damage on top of the impact of the shot.
 - Default Value: 30
 
+### CannonAutoAimYOffset 
+- Description: Set the Y offset where the cannonball attempt to hit. 0 will aim deadcenter, but it could miss due to gravity. Using above 0 will aim from center to top (1).
+- Default Value: 1
+
 ### CannonAutoAimSpeed 
 - Description: Set how fast a cannon can adjust aim and fire. This speeds up both firing and animations. Lower values might not be able to fire cannons at all for smaller targets. Keep in mind sea swell will impact the aiming of cannons.
 - Default Value: 10
@@ -384,6 +428,26 @@
 ### CannonAimMaxYRotation 
 - Description: Maximum Y rotational a cannon can turn. Left to right. Front to bow etc.
 - Default Value: 15
+
+## PrefabConfig: CannonControlCenter
+
+### DiscoveryRadius 
+- Description: The radius in which a single cannon control center controls all cannons and detect and prevents other control radiuses from being placed. Requires a reload of the area when updating.
+- Default Value: 15
+
+### CannonTiltAdjustSpeed 
+- Description: Tilt adjust speed for the manual cannons while using the control center. This is a percentage 0% is 10x slower than 100%
+- Default Value: 0.5
+
+## PrefabConfig: VehicleCannons
+
+### CannonHandheld_AimYRotationMax 
+- Description: Maximum Y, the  rotational a cannon can turn toward right. Too much will overlap player and look weird. But it would allow aiming left significantly more without needing to rotate body.
+- Default Value: 50
+
+### CannonHandheld_AimYRotationMin 
+- Description: Minimum Y rotational a cannon can turn, left. Too much will overlap player. But it would allow aiming left significantly more without needing to rotate body.
+- Default Value: -30
 
 ### CannonBarrelAimMaxTiltRotation 
 - Description: Maximum X rotation the barrel of the cannon can turn. Left to right
@@ -401,12 +465,34 @@
 - Description: Vehicle Protection Range of Cannons. This is added on top of the current vehicle Box bounds in X, Y, Z. NOT YET CONNECTED. ZONE SYSTEMS NEED TO BE SUPPORTED FOR THIS TO WORK.
 - Default Value: (1.00, 1.00, 1.00)
 
+## RecipeConfig: HullMaterial
+
+### IronRatio 
+- Description: For configuring hull size ratio. EG materialValue 2x2=4 but ratio 1/4 would get 1 of <itemName>. (rounds to lowets 0 or nearest int). This is meant for the default recipe. Customize the base recipe if you want to override things.
+- Default Value: 0.25
+
+### BronzeRatio 
+- Description: For configuring hull size ratio
+- Default Value: 0.25
+
+### WoodRatio 
+- Description: For configuring hull size ratio
+- Default Value: 2
+
+### YggdrasilWoodRatio 
+- Description: For configuring hull size ratio
+- Default Value: 1
+
+### NailsRatio 
+- Description: For configuring hull size ratio
+- Default Value: 1
+
 ## RecipeConfig
 
 ### ValheimVehicles_Cannonball_Explosive [,Recover]
 - Description: Recipe requirements for ValheimVehicles_Cannonball_Explosive.
 Format: ItemName,Amount[,Recover][,AmountPerLevel]|... (e.g., BlackPowder,2,true|Bronze,1,true)
-Recover is optional (defaults true). AmountPerLevel is optional (defaults 0).
+Recover is optional (defaults true). AmountPerLevel is optional (defaults 0). Amount is clamped between 0 and 100. No decimals are allowed.
 - Default Value: BlackMetal,1,true|Coal,1,true
 
 ### ValheimVehicles_Cannonball_Solid 
@@ -415,16 +501,40 @@ Recover is optional (defaults true). AmountPerLevel is optional (defaults 0).
 
 ### ValheimVehicles_Cannon_Fixed_Tier1 
 - Description: Recipe requirements for ValheimVehicles_Cannon_Fixed_Tier1.
-- Default Value: Bronze,1,true|Wood,6,true
+- Default Value: Bronze,4,true|Wood,6,true
 
 ### ValheimVehicles_Cannon_Turret_Tier1 
 - Description: Recipe requirements for ValheimVehicles_Cannon_Turret_Tier1.
 - Default Value: Bronze,4,true|Chain,1,true|Iron,2,true
 
+### ValheimVehicles_Cannon_Control_Center 
+- Description: Recipe requirements for ValheimVehicles_Cannon_Control_Center.
+- Default Value: Bronze,2,true
+
+### ValheimVehicles_Cannon_Handheld_Item 
+- Description: Recipe requirements for ValheimVehicles_Cannon_Handheld_Item.
+- Default Value: Bronze,4,true|Chain,1,true|Iron,2,true
+
+### ValheimVehicles_Powder_Barrel 
+- Description: Recipe requirements for ValheimVehicles_Powder_Barrel.
+- Default Value: Wood,4,true|Coal,20,true
+
+### hull_base_recipe_iron 
+- Description: Recipe requirements for hull_base_recipe_iron.
+- Default Value: Iron,1,true|Bronze,1,true|BronzeNails,2,true|YggdrasilWood,1,true
+
+### hull_base_recipe_wood 
+- Description: Recipe requirements for hull_base_recipe_wood.
+- Default Value: Wood,2,true
+
 ## Vehicle Debugging
 
 ### AllowDebugCommandsForNonAdmins 
-- Description: Will will allow all debug commands for non-admins. Turning this to false will only allow debug (cheat) commands if the user is an admin.
+- Description: Will allow all debug commands for non-admins. Turning this to false will only allow debug (cheat) commands if the user is an admin.
+- Default Value: True
+
+### HasDebugCannonTargets 
+- Description: Will allow debugging cannon targets.
 - Default Value: True
 
 ### AllowEditCommandsForNonAdmins 
@@ -768,15 +878,15 @@ Other methods removed after 2.5.0
 50% will be the very bottom of the vehicle's collider. This is just a default. Any vehicle can be configured directly via config menu.
 - Default Value: 0.65
 
-### flightDamping_3.6.0 
+### flightDamping_3.6.2 
 - Description: Controls how much the water pushes the boat upwards directly. This value may affect angular damping too. Recommended to keep the original value. But tweaking can remove or add additional jitter. Higher values likely will add more jitter.
 - Default Value: 1
 
-### flightSidewaysDamping_3.6.0 
+### flightSidewaysDamping_3.6.2 
 - Description: Controls how much the water pushes the boat sideways based on wind direction and velocity.
 - Default Value: 2
 
-### flightAngularDamping_3.6.0 
+### flightAngularDamping_3.6.2 
 - Description: Controls how much the water pushes the boat from a vertical angle based on water and velocity. Lower values will cause more rocking and allow better turn rates. Higher values will make the vehicle more stable, but less turning angle and possibly less realistic. If you get motion-sickness this can allow tweaking sway without disabling it all and also prevent rapid turning.
 - Default Value: 1
 
@@ -796,15 +906,15 @@ Other methods removed after 2.5.0
 - Description: Flight angular drag controls how much the vehicle slows down when turning.
 - Default Value: 1.2
 
-### force_3.6.0 
+### force_3.6.2 
 - Description: EXPERIMENTAL_FORCE. Lower values will not allow the vehicle to balance fast when tilted. Lower values can reduce bobbing, but must be below the forceDistance value.
 - Default Value: 2
 
-### forceDistance_3.6.0 
+### forceDistance_3.6.2 
 - Description: EXPERIMENTAL_FORCE_DISTANCE should always be above the value of force. Otherwise bobbing will occur. Lower values will not allow the vehicle to balance fast when tilted
 - Default Value: 10
 
-### backwardForce_3.6.0 
+### backwardForce_3.6.2 
 - Description: EXPERIMENTAL_BackwardFORCE
 - Default Value: 1
 
@@ -812,15 +922,15 @@ Other methods removed after 2.5.0
 - Description: Steer force controls how much the vehicle will resist steering when turning due to water pushing against it
 - Default Value: 1
 
-### waterDamping_3.6.0 
+### waterDamping_3.6.2 
 - Description: Controls how much the water pushes the boat upwards directly. This value may affect angular damping too. Recommended to keep the original value. But tweaking can remove or add additional jitter. Higher values likely will add more jitter.
 - Default Value: 1
 
-### waterSidewaysDamping_3.6.0 
+### waterSidewaysDamping_3.6.2 
 - Description: Controls how much the water pushes the boat sideways based on wind direction and velocity.
 - Default Value: 2
 
-### waterAngularDamping_3.6.0 
+### waterAngularDamping_3.6.2 
 - Description: Controls how much the water pushes the boat from a vertical angle based on water and velocity. Lower values will cause more rocking and allow better turn rates. Higher values will make the vehicle more stable, but less turning angle and possibly less realistic. If you get motion-sickness this can allow tweaking sway without disabling it all and also prevent rapid turning.
 - Default Value: 1
 
@@ -836,15 +946,15 @@ Other methods removed after 2.5.0
 - Description: rotation drag controls how much the vehicle slows down when turning.
 - Default Value: 0.8
 
-### submersibleDamping_3.6.0 
+### submersibleDamping_3.6.2 
 - Description: Controls how much the water pushes the boat upwards directly. This value may affect angular damping too. Recommended to keep the original value. But tweaking can remove or add additional jitter. Higher values likely will add more jitter.
 - Default Value: 1
 
-### submersibleSidewaysDamping_3.6.0 
+### submersibleSidewaysDamping_3.6.2 
 - Description: Controls how much the water pushes the boat sideways based on wind direction and velocity.
 - Default Value: 2
 
-### submersibleAngularDamping_3.6.0 
+### submersibleAngularDamping_3.6.2 
 - Description: Controls how much the water pushes the boat from a vertical angle based on water and velocity. Lower values will cause more rocking and allow better turn rates. Higher values will make the vehicle more stable, but less turning angle and possibly less realistic. If you get motion-sickness this can allow tweaking sway without disabling it all and also prevent rapid turning.
 - Default Value: 1
 
@@ -1011,6 +1121,14 @@ Other methods removed after 2.5.0
 - Default Value: 0.5
 
 ## Rendering
+
+### Experimental_CustomMaxCreatedObjectsPerFrame 
+- Description: Allows valheim's base engine for spawning objects to be customize. Original value was 10. Now it's 100. Makes it render 10x faster instead of 600 prefabs per second its 6000 prefabs per second.
+- Default Value: 100
+
+### Experimental_CustomMaxCreatedObjectsPerFrame_Enabled 
+- Description: Allows valheim's base engine for spawning objects to be customize. This will significantly boost speed of objects being rendered. It will build ships in near moments. Base game has this value set way too low for most PCs. Turning this off will disable the patch and require a restart of the game.
+- Default Value: True
 
 ### UNSTABLE_AllowVehiclePiecesToUseWorldPosition 
 - Description: WARNING UNSTABLE CONFIG do NOT set this to true unless you need to. All vehicles will no longer sync pieces in one position then offset them. It will sync pieces by their actual position. This means the vehicle could de-sync and lose pieces. Only use this for mods like <Planbuild> and want to copy the vehicle with position/rotation properly set.

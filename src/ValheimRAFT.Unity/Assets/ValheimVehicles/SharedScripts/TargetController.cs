@@ -6,10 +6,17 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using UnityEngine;
-using ValheimVehicles.Controllers;
+using ValheimVehicles.BepInExConfig;
 using ValheimVehicles.SharedScripts.Helpers;
+using ValheimVehicles.SharedScripts.Structs;
+#if VALHEIM
+using ValheimVehicles.Components;
+using ValheimVehicles.Controllers;
+using ValheimVehicles.RPC;
+#endif
 
 #endregion
 
@@ -34,11 +41,18 @@ namespace ValheimVehicles.SharedScripts
       // Future: AttackArea, AttackPlayer, Patrol, etc
     }
 
+    public enum CannonDetectionMode
+    {
+      Parent,
+      Cast // cast is better b/c colliders are not well setup for many pieces. Do 1 cast then only cast again on interaction. Cast should be stagged though so it runs every 30seconds.
+    }
+
+    public CannonDetectionMode cannonDetectionMode = CannonDetectionMode.Parent;
+
     public static float DEFEND_PLAYER_SAFE_RADIUS = 3f;
+    public static float CannonControlCenterDiscoveryRadius = 30f;
     public static float MAX_DEFEND_SEARCH_RADIUS = 30f;
     public static Vector3 MAX_DEFEND_AREA_SEARCH = new(30f, 40f, 30f);
-
-    public static Func<Transform, bool> IsHostileCharacter = transform1 => true;
 
     public static bool canShootPlayer = true;
 
@@ -60,9 +74,9 @@ namespace ValheimVehicles.SharedScripts
 
     [SerializeField] public int maxCannonsPerEnemy = 2;
     [SerializeField] public bool autoFire;
-    [SerializeField] public List<CannonController> allCannonControllers = new();
-    [SerializeField] public List<CannonController> autoTargetControllers = new();
-    [SerializeField] public List<CannonController> manualFireControllers = new();
+    public HashSet<CannonController> allCannonControllers = new();
+    public HashSet<CannonController> autoTargetCannonControllers = new();
+    public HashSet<CannonController> manualFireControllers = new();
 
     private readonly Collider[] _enemyBuffer = new Collider[32];
     private readonly Dictionary<int, CoroutineHandle> _manualFireCannonsRoutines = new();
@@ -73,23 +87,26 @@ namespace ValheimVehicles.SharedScripts
 
     private CoroutineHandle _acquireTargetsRoutine;
     private CoroutineHandle _autoFireCannonsRoutine;
+    private CoroutineHandle _cannonGroupSyncScheduler;
 
     public Action? OnCannonListUpdated;
 
-    private AmmoController _ammoController = null!;
+    public AmmoController ammoController = null!;
 
     // --- Direction Group Cache ---
-    private Dictionary<CannonDirectionGroup, List<CannonController>> _groupedCannons = null!;
-    public IReadOnlyDictionary<CannonDirectionGroup, List<CannonController>> GroupedCannons => _groupedCannons;
+    private Dictionary<CannonDirectionGroup, HashSet<CannonController>> _groupedCannons = null!;
+    public IReadOnlyDictionary<CannonDirectionGroup, HashSet<CannonController>> GroupedCannons => _groupedCannons;
 
-    private readonly Dictionary<CannonDirectionGroup, List<CannonController>> _manualCannonGroups =
+    private readonly Dictionary<CannonDirectionGroup, HashSet<CannonController>> _manualCannonGroups =
       new()
       {
-        { CannonDirectionGroup.Forward, new List<CannonController>() },
-        { CannonDirectionGroup.Right, new List<CannonController>() },
-        { CannonDirectionGroup.Back, new List<CannonController>() },
-        { CannonDirectionGroup.Left, new List<CannonController>() }
+        { CannonDirectionGroup.Forward, new HashSet<CannonController>() },
+        { CannonDirectionGroup.Right, new HashSet<CannonController>() },
+        { CannonDirectionGroup.Back, new HashSet<CannonController>() },
+        { CannonDirectionGroup.Left, new HashSet<CannonController>() }
       };
+    public HashSet<CannonDirectionGroup> groupsToSync = new();
+
     private readonly Dictionary<CannonDirectionGroup, float> _manualGroupTilt =
       new()
       {
@@ -98,60 +115,37 @@ namespace ValheimVehicles.SharedScripts
         { CannonDirectionGroup.Back, 0f },
         { CannonDirectionGroup.Left, 0f }
       };
+    public float cannonGroupMinPitch = -35f;
+    public float cannonGroupMaxPitch = 35f;
 
-    public IReadOnlyDictionary<CannonDirectionGroup, List<CannonController>> ManualCannonGroups => _manualCannonGroups;
+    public IReadOnlyDictionary<CannonDirectionGroup, HashSet<CannonController>> ManualCannonGroups => _manualCannonGroups;
     public IReadOnlyDictionary<CannonDirectionGroup, float> ManualGroupTilt => _manualGroupTilt;
-    public CannonFiringHotkeys _cannonFiringHotkeys;
 
-#if !UNITY_2022 && !UNITY_EDITOR
+#if VALHEIM
+    public CannonFiringHotkeys _cannonFiringHotkeys;
     private VehiclePiecesController _piecesController;
+    public static RPCEntity FireCannonGroup_RPC = null!;
+    public static RPCEntity SyncCannonGroup_RPC = null!;
+    public static RPCEntity AutoFireCannonGroup_RPC = null!;
+    public ZNetView m_nview;
 #endif
     public Transform _forwardTransform { get; set; }
 
     private void Awake()
     {
-      _autoFireCannonsRoutine = new CoroutineHandle(this);
-      _acquireTargetsRoutine = new CoroutineHandle(this);
-
-      _ammoController = gameObject.GetOrAddComponent<AmmoController>();
+      ammoController = gameObject.GetOrAddComponent<AmmoController>();
 
       SetupForwardTransform();
 
-      IsHostileCharacter = t =>
-      {
-#if !UNITY_EDITOR && !UNITY_2022
-        var character = t.GetComponent<Character>();
-        if (character == null) return false;
-        if (canShootPlayer && character.IsPlayer() && !character.IsDead()) return true;
-        return !character.IsPlayer() && !character.IsTamed(5f) && !character.IsDead();
-#else
-        if (!t) return false;
-        var tName = t.name;
-        var rootName = t.root.name;
-        if (rootName.StartsWith("player") || rootName.Contains("friendly") || tName.StartsWith("player_collider")) return false;
-        return true;
-#endif
-        return true;
-      };
-
 #if UNITY_EDITOR
       // mostly for local testing.
-      GetComponentsInChildren(false, allCannonControllers);
-      foreach (var allCannonController in allCannonControllers)
+      var controllers = GetComponentsInChildren<CannonController>(false);
+      foreach (var cannonController in controllers)
       {
-        switch (allCannonController.GetFiringMode())
-        {
-          case CannonFiringMode.Manual:
-            manualFireControllers.Add(allCannonController);
-            break;
-          case CannonFiringMode.Auto:
-            autoTargetControllers.Add(allCannonController);
-            break;
-          default:
-            throw new ArgumentOutOfRangeException();
-        }
+        AddCannon(cannonController);
       }
 #endif
+      UpdateCannonDetectionModeFromPrefabName();
 
       RefreshAllDefenseAreaTriggers();
       RefreshPlayerDefenseTriggers();
@@ -159,13 +153,97 @@ namespace ValheimVehicles.SharedScripts
       RecalculateCannonGroups(); // New: Build initial grouping
     }
 
+    public void UpdateCannonDetectionModeFromPrefabName()
+    {
+      cannonDetectionMode = gameObject.name.StartsWith(PrefabNames.CannonControlCenter) ? CannonDetectionMode.Cast : CannonDetectionMode.Parent;
+
+      OnDetectionModeChange();
+    }
+    /// <summary>
+    /// This is a guard. We can block most of the placement in onPlace patches
+    /// </summary>
+    public void OnTransformParentChanged()
+    {
+#if VALHEIM
+      if (!gameObject.name.StartsWith(PrefabNames.CannonControlCenter)) return;
+      if (transform.root == transform) return;
+
+      if (!m_nview) Destroy(this);
+      if (Player.m_localPlayer)
+      {
+        Player.m_localPlayer.Message(MessageHud.MessageType.Center, Localization.instance.Localize("$valheim_vehicles_cannon_control_center_placement_error"));
+      }
+
+      var wnt = m_nview.GetComponent<WearNTear>();
+      if (wnt)
+      {
+        wnt.Destroy();
+      }
+      else
+      {
+        Destroy(gameObject);
+      }
+#endif
+    }
+
+    public GameObject detectionAreaObj;
+
+    public void OnDetectionModeChange()
+    {
+#if VALHEIM
+      if (cannonDetectionMode == CannonDetectionMode.Cast)
+      {
+        if (CannonController.Instances.Count > 1000)
+        {
+          var colliders = Physics.OverlapSphere(transform.position, CannonControlCenterDiscoveryRadius, LayerHelpers.PieceLayerMask);
+
+          foreach (var collider in colliders)
+          {
+            var piece = collider.GetComponentInParent<Piece>();
+            if (piece == null) continue;
+            var isCannonPiece = piece.name.StartsWith(PrefabNames.CannonTurretTier1) || piece.name.StartsWith(PrefabNames.CannonFixedTier1);
+            if (!isCannonPiece) continue;
+
+            var cannonController = piece.GetComponentInParent<CannonController>();
+            if (cannonController == null) continue;
+            AddCannon(cannonController);
+          }
+        }
+        else
+        {
+          // Likely most optimal solution for < 1000 cannons in an area.
+          CannonController.Instances.Where(x => x != null && Vector3.Distance(x.transform.position, transform.position) < CannonControlCenterDiscoveryRadius).ToList().ForEach(AddCannon);
+        }
+      }
+      else
+      {
+        var rb = GetComponent<Rigidbody>();
+        if (rb)
+        {
+          Destroy(rb);
+        }
+        if (detectionAreaObj)
+        {
+          Destroy(detectionAreaObj);
+        }
+      }
+#endif
+    }
+
+    public void InitCoroutineHandlers()
+    {
+      _autoFireCannonsRoutine ??= new CoroutineHandle(this);
+      _cannonGroupSyncScheduler ??= new CoroutineHandle(this);
+      _acquireTargetsRoutine ??= new CoroutineHandle(this);
+    }
+
     public void SetupForwardTransform()
     {
-#if !UNITY_2022 && !UNITY_EDITOR
+#if VALHEIM
       _piecesController = GetComponent<VehiclePiecesController>();
       _forwardTransform = _piecesController != null && _piecesController.MovementController != null ? _piecesController.MovementController.ShipDirection : transform;
 #else
-      ForwardTransform = transform
+      _forwardTransform = transform;
 #endif
     }
 
@@ -174,50 +252,51 @@ namespace ValheimVehicles.SharedScripts
     /// </summary>
     protected internal virtual void OnDestroy()
     {
-      if (_ammoController != null)
+      if (ammoController != null)
       {
-        Destroy(_ammoController);
+        Destroy(ammoController);
       }
+
+#if VALHEIM
       if (_cannonFiringHotkeys != null)
       {
         Destroy(_cannonFiringHotkeys);
       }
+#endif
+
+      StopAllCoroutines();
     }
 
     private void FixedUpdate()
     {
-      if (autoTargetControllers.Count > 0)
+      if (autoTargetCannonControllers.Count > 0)
       {
         StartUpdatingAutoCannonTargets();
       }
 
+#if VALHEIM
+      if (autoFire && m_nview && m_nview.IsOwner())
+      {
+        Request_AutoFireCannons();
+      }
+#else
       if (autoFire)
       {
-        StartAutoFiring();
+        var data = CannonFireData.CreateListOfCannonFireDataFromTargetController(this, autoTargetCannonControllers, out _, out _);
+        StartAutoFiring(data);
       }
+#endif
     }
 
     public void OnEnable()
     {
-      _autoFireCannonsRoutine ??= new CoroutineHandle(this);
-      _acquireTargetsRoutine ??= new CoroutineHandle(this);
-
+      InitCoroutineHandlers();
 #if UNITY_EDITOR
       // mostly for local testing.
-      GetComponentsInChildren(false, allCannonControllers);
-      foreach (var allCannonController in allCannonControllers)
+      var cannons = gameObject.GetComponentsInChildren<CannonController>(false);
+      foreach (var allCannonController in cannons)
       {
-        switch (allCannonController.GetFiringMode())
-        {
-          case CannonFiringMode.Manual:
-            manualFireControllers.Add(allCannonController);
-            break;
-          case CannonFiringMode.Auto:
-            autoTargetControllers.Add(allCannonController);
-            break;
-          default:
-            throw new ArgumentOutOfRangeException();
-        }
+        AddCannon(allCannonController);
       }
 #endif
       RecalculateCannonGroups();
@@ -240,6 +319,24 @@ namespace ValheimVehicles.SharedScripts
       foreach (var area in defendAreas)
         Gizmos.DrawWireCube(area.center, area.size);
     }
+
+    public bool IsHostileCharacter(Transform t)
+    {
+#if VALHEIM
+      var character = t.GetComponent<Character>();
+      if (character == null) return false;
+      if (canShootPlayer && character.IsPlayer() && !character.IsDead()) return true;
+      return !character.IsPlayer() && !character.IsTamed(5f) && !character.IsDead();
+#else
+      if (!t) return false;
+      var tName = t.name;
+      var rootName = t.root.name;
+      if (rootName.StartsWith("player") || rootName.Contains("friendly") || tName.StartsWith("player_collider")) return false;
+      return true;
+#endif
+      return true;
+    }
+
 
     public void AddDefenseArea(Vector3 center, Vector3 size)
     {
@@ -333,76 +430,325 @@ namespace ValheimVehicles.SharedScripts
       }
     }
 
-    private IEnumerator FireCannonDelayed(CannonController cannon, float delay, bool isManualFire, Action<int> OnAmmoUpdate)
-    {
-      var ammoVariant = cannon.AmmoVariant;
-      var remainingAmmo = _ammoController.GetAmmoAmountFromCannonballVariant(ammoVariant);
+  #region RPC NETWORKING
 
-      // only yield if the cannon actually fires
-      if (cannon.Fire(isManualFire, remainingAmmo, out var deltaAmmo))
+#if VALHEIM
+    public void Request_AutoFireCannons()
+    {
+      if (autoTargetCannonControllers.Count < 1) return;
+      if (!m_nview)
       {
-        OnAmmoUpdate.Invoke(deltaAmmo);
+        m_nview = GetComponentInParent<ZNetView>();
+      }
+      if (!m_nview)
+      {
+        LoggerProvider.LogWarning("cannonController missing znetview!");
+        return;
+      }
+      if (!m_nview.IsValid()) return;
+      var zdo = m_nview.GetZDO();
+
+      var cannonFireDataList = CannonFireData.CreateListOfCannonFireDataFromTargetController(this, autoTargetCannonControllers, out var ammoSolidUsage, out var ammoExplosiveUsage);
+
+      if (cannonFireDataList.Count == 0) return;
+
+      var pkg = new ZPackage();
+      pkg.Write(zdo.m_uid);
+      CannonFireData.WriteListToPackage(pkg, cannonFireDataList);
+      AutoFireCannonGroup_RPC.SendNearby(pkg, zdo, 150f);
+
+      if (m_nview.IsOwner())
+      {
+        ammoController.OnAmmoChanged(ammoSolidUsage, ammoExplosiveUsage);
+      }
+      else
+      {
+        LoggerProvider.LogWarning("Attempted to decrement ammo but the user is not the owner.");
+      }
+    }
+
+    public void Request_ManualFireAllCannonGroups(CannonDirectionGroup[] cannonGroups)
+    {
+      foreach (var cannonGroup in cannonGroups)
+      {
+        Request_ManualFireCannonGroup(cannonGroup);
+      }
+    }
+
+    public ZNetView? GetNetView()
+    {
+      if (!m_nview)
+      {
+        if (_piecesController)
+        {
+          m_nview = _piecesController.Manager.m_nview;
+        }
+        else
+        {
+          m_nview = GetComponentInParent<ZNetView>();
+        }
+      }
+      if (!m_nview)
+      {
+        LoggerProvider.LogWarning("cannonController missing znetview!");
+      }
+
+      return m_nview;
+    }
+
+    public void Request_ManualFireCannonGroup(CannonDirectionGroup cannonGroupId)
+    {
+      if (ammoController.ExplosiveAmmo < 1 && ammoController.SolidAmmo < 1) return;
+      var nv = GetNetView();
+      if (nv == null || !nv.IsValid()) return;
+
+      var zdo = m_nview.GetZDO();
+      if (zdo == null) return;
+
+      var cannonTilt = _manualGroupTilt[cannonGroupId];
+      var firingCannonGroup = _manualCannonGroups[cannonGroupId];
+
+      var cannonFireDataList = CannonFireData.CreateListOfCannonFireDataFromTargetController(this, firingCannonGroup, out var ammoSolidUsage, out var ammoExplosiveUsage);
+      if (cannonFireDataList.Count == 0) return;
+
+      var pkg = new ZPackage();
+
+      pkg.Write(zdo.m_uid);
+      pkg.Write((int)cannonGroupId);
+      pkg.Write(cannonTilt);
+
+      CannonFireData.WriteListToPackage(pkg, cannonFireDataList);
+
+      FireCannonGroup_RPC.SendNearby(pkg, zdo, 150f);
+
+      if (m_nview.IsOwner())
+      {
+        ammoController.OnAmmoChanged(ammoSolidUsage, ammoExplosiveUsage);
+      }
+      else
+      {
+        LoggerProvider.LogWarning("Attempted to decrement ammo but the user is not the owner.");
+      }
+    }
+
+
+    public static void RegisterCannonControllerRPCs()
+    {
+      FireCannonGroup_RPC = RPCManager.RegisterRPC(nameof(RPC_FireAllCannonsInGroup), RPC_FireAllCannonsInGroup);
+      AutoFireCannonGroup_RPC = RPCManager.RegisterRPC(nameof(RPC_AutoFireAllCannons), RPC_AutoFireAllCannons);
+      SyncCannonGroup_RPC = RPCManager.RegisterRPC(nameof(RPC_SyncCannonGroup), RPC_SyncCannonGroup);
+    }
+
+
+    public void ScheduleGroupCannonSync(CannonDirectionGroup group)
+    {
+      groupsToSync.Add(group);
+
+      if (_cannonGroupSyncScheduler.IsRunning)
+      {
+        return;
+      }
+
+      _cannonGroupSyncScheduler.Start(ScheduleGroupCannonSync_Coroutine());
+    }
+
+    public IEnumerator ScheduleGroupCannonSync_Coroutine()
+    {
+      yield return new WaitForSeconds(0.2f);
+      if (ZNet.instance == null || groupsToSync.Count == 0 || m_nview == null || !m_nview.IsValid())
+      {
+        yield break;
+      }
+
+      var localGroups = groupsToSync.ToList();
+
+      // prevents access error.
+      groupsToSync.Clear();
+      var zdo = m_nview.GetZDO();
+
+      foreach (var cannonDirectionGroup in localGroups)
+      {
+        var pkg = new ZPackage();
+        pkg.Write(zdo.m_uid);
+        pkg.Write((int)cannonDirectionGroup);
+        pkg.Write(GetManualGroupTilt(cannonDirectionGroup));
+        SyncCannonGroup_RPC.SendNearby(pkg, zdo, 150f);
+      }
+
+      yield return null;
+    }
+
+    public static IEnumerator RPC_SyncCannonGroup(long senderId, ZPackage package)
+    {
+      package.SetPos(0);
+
+      var targetControllerZDOID = package.ReadZDOID();
+      var cannonGroupId = (CannonDirectionGroup)package.ReadInt();
+      var cannonTilt = package.ReadSingle();
+
+      GameObject? targetControllerObj = null;
+      yield return FindInstanceAsync(targetControllerZDOID, x => targetControllerObj = x);
+      if (targetControllerObj == null) yield break;
+
+
+      var targetController = GetTargetControllerFromNetViewRoot(targetControllerObj);
+
+      // can be a child for the handheld version.
+      if (targetController == null)
+      {
+        LoggerProvider.LogWarning($"targetController with zdoid: {targetControllerZDOID} not found on object {targetControllerObj.name}. CannonController should exist otherwise we cannot instantiate cannonball without collision issues");
+        yield break;
+      }
+
+      // for updates the group tilt from the host that requested to sync it to a client.
+      targetController.SetManualGroupTilt(cannonGroupId, cannonTilt);
+    }
+
+    public static IEnumerator RPC_AutoFireAllCannons(long senderId, ZPackage package)
+    {
+      package.SetPos(0);
+
+      var targetControllerZDOID = package.ReadZDOID();
+
+      GameObject? targetControllerObj = null;
+      yield return FindInstanceAsync(targetControllerZDOID, x => targetControllerObj = x);
+      if (targetControllerObj == null) yield break;
+
+      // allocate/read the rest of the package after finding object.
+      var cannonFireDataList = CannonFireData.ReadListFromPackage(package);
+
+      // can be a child for the handheld version.
+      var targetController = targetControllerObj.GetComponentInChildren<TargetController>();
+      if (!targetController)
+      {
+        LoggerProvider.LogWarning($"targetController with zdoid: {targetControllerZDOID} not found on object {targetControllerObj.name}. CannonController should exist otherwise we cannot instantiate cannonball without collision issues");
+        yield break;
+      }
+
+      // for updates the group tilt from the host that requested to sync it to a client.
+      targetController.StartAutoFiring(cannonFireDataList);
+    }
+
+    public static TargetController? GetTargetControllerFromNetViewRoot(GameObject obj)
+    {
+      TargetController? targetController = null;
+      // can be a child for the handheld version.
+      if (PrefabNames.IsVehicle(obj.name))
+      {
+        var vehicle = obj.GetComponent<VehicleManager>();
+        if (vehicle == null || vehicle.PiecesController == null) return null;
+        targetController = vehicle.PiecesController.targetController;
+      }
+      else
+      {
+        targetController = obj.GetComponentInChildren<TargetController>();
+      }
+
+      return targetController;
+    }
+
+    public static IEnumerator FindInstanceAsync(ZDOID zdoid, Action<GameObject> callback)
+    {
+      var obj = ZNetScene.instance.FindInstance(zdoid);
+      if (obj == null)
+      {
+        var stopwatch = Stopwatch.StartNew();
+        var lastUpdateTime = 0;
+        ZDOMan.instance.RequestZDO(zdoid);
+        while (stopwatch.ElapsedMilliseconds < 1000 && obj == null)
+        {
+          obj = ZNetScene.instance.FindInstance(zdoid);
+          if (stopwatch.ElapsedMilliseconds - lastUpdateTime > 10)
+          {
+            ZDOMan.instance.RequestZDO(zdoid);
+          }
+          yield return null;
+        }
+
+        if (obj == null)
+        {
+          LoggerProvider.LogError($"Could not find obj with ZDOID {zdoid}");
+          yield break;
+        }
+      }
+
+      callback.Invoke(obj);
+    }
+
+    public static IEnumerator RPC_FireAllCannonsInGroup(long senderId, ZPackage pkg)
+    {
+      pkg.SetPos(0);
+      var zdoid = pkg.ReadZDOID();
+
+      GameObject? targetControllerObj = null;
+      yield return FindInstanceAsync(zdoid, x => targetControllerObj = x);
+      if (targetControllerObj == null) yield break;
+
+      // allocate the other data if the zdo exists.
+      var cannonGroupId = (CannonDirectionGroup)pkg.ReadInt();
+      var cannonTilt = pkg.ReadSingle();
+      var firingDataList = CannonFireData.ReadListFromPackage(pkg);
+
+      var targetController = GetTargetControllerFromNetViewRoot(targetControllerObj);
+      if (targetController == null)
+      {
+        LoggerProvider.LogWarning($"targetController {zdoid} not found. CannonController should exist otherwise we cannot instantiate cannonball without collision issues");
+        yield break;
+      }
+
+      // for updates the group tilt from the host that requested to sync it to a client.
+      targetController.SetManualGroupTilt(cannonGroupId, cannonTilt);
+      targetController.StartManualGroupFiring(firingDataList, cannonGroupId);
+    }
+#endif
+
+  #endregion
+
+    private IEnumerator FireCannonDelayed(CannonController cannon, CannonFireData data, float delay, bool isManualFire)
+    {
+      // only yield if the cannon actually fires
+      if (cannon.Fire(data, ammoController.GetAmmoAmountFromCannonballVariant(data.ammoVariant), isManualFire))
+      {
         yield return new WaitForSeconds(delay);
       }
     }
 
-    private IEnumerator ManualFireCannons(int groupId)
+    private IEnumerator AutoFireCannons(List<CannonFireData> cannonFiringDataList)
     {
-      var totalAmmoDeltaExplosive = 0;
-      var totalAmmoDeltaSolid = 0;
+      var objToCannonControllerMap = autoTargetCannonControllers.ToDictionary(x => x.gameObject != null, x => x);
 
-      var list = manualFireControllers.ToList();
-      foreach (var cannonsController in list)
+      foreach (var cannonFireData in cannonFiringDataList)
       {
-        if (!cannonsController || cannonsController.ManualFiringGroupId != groupId) continue;
-        yield return FireCannonDelayed(cannonsController, FiringDelayPerCannon, true, (deltaAmmo) =>
+        var cannonControllerObj = cannonFireData.GetCannonControllerObj();
+        if (cannonControllerObj == null) continue;
+        // optimistic getter for cannonControllers. But possibly not valid.
+        if (!objToCannonControllerMap.TryGetValue(cannonControllerObj, out var cannonController))
         {
-          if (cannonsController.AmmoVariant == CannonballVariant.Solid)
+          cannonController = cannonControllerObj.GetComponent<CannonController>();
+          if (cannonController)
           {
-            totalAmmoDeltaSolid += deltaAmmo;
+            objToCannonControllerMap[cannonControllerObj] = cannonController;
           }
-          if (cannonsController.AmmoVariant == CannonballVariant.Explosive)
+          else
           {
-            totalAmmoDeltaExplosive += deltaAmmo;
+            objToCannonControllerMap.Remove(cannonControllerObj);
           }
-        });
-      }
-
-      if (list.Count > 0 && (totalAmmoDeltaExplosive > 0 || totalAmmoDeltaSolid > 0))
-      {
-        _ammoController.OnAmmoChanged(totalAmmoDeltaSolid, totalAmmoDeltaExplosive);
+        }
+        if (!cannonController) continue;
+        yield return FireCannonDelayed(cannonController, cannonFireData, FiringDelayPerCannon, false);
       }
 
       yield return new WaitForSeconds(FiringCooldown);
     }
 
-    private IEnumerator AutoFireCannons()
+    public bool CanUpdateAmmo(List<CannonFireData> cannonFiringDataList)
     {
-      var totalAmmoDeltaExplosive = 0;
-      var totalAmmoDeltaSolid = 0;
-      var list = autoTargetControllers.ToList();
-      foreach (var cannonsController in list)
-      {
-        if (!cannonsController) continue;
-        yield return FireCannonDelayed(cannonsController, FiringDelayPerCannon, false, (deltaAmmo) =>
-        {
-          if (cannonsController.AmmoVariant == CannonballVariant.Solid)
-          {
-            totalAmmoDeltaSolid += deltaAmmo;
-          }
-          if (cannonsController.AmmoVariant == CannonballVariant.Explosive)
-          {
-            totalAmmoDeltaExplosive += deltaAmmo;
-          }
-        });
-      }
-
-      if (list.Count > 0 && (totalAmmoDeltaExplosive > 0 || totalAmmoDeltaSolid > 0))
-      {
-        _ammoController.OnAmmoChanged(totalAmmoDeltaSolid, totalAmmoDeltaExplosive);
-      }
-
-      yield return new WaitForSeconds(FiringCooldown);
+#if VALHEIM
+      var canUpdateAmmo = cannonFiringDataList.Count > 0 && m_nview.IsOwner();
+#else
+      var canUpdateAmmo = cannonFiringDataList.Count > 0;
+#endif
+      return canUpdateAmmo;
     }
 
     private List<Transform> AcquireAllTargets_DefendArea()
@@ -554,14 +900,14 @@ namespace ValheimVehicles.SharedScripts
           _ => null
         };
 
-        allCannonControllers.RemoveAll(x => x == null);
-        autoTargetControllers.RemoveAll(x => x == null);
+        allCannonControllers.RemoveWhere(x => x == null);
+        autoTargetCannonControllers.RemoveWhere(x => x == null);
 
         targets?.RemoveAll(x => x == null);
 
-        if (targets != null && targets.Count > 0 && autoTargetControllers.Count > 0)
+        if (targets != null && targets.Count > 0 && autoTargetCannonControllers.Count > 0)
         {
-          AssignCannonsToTargets(autoTargetControllers.ToList(), targets, maxCannonsPerEnemy);
+          AssignCannonsToTargets(autoTargetCannonControllers.ToList(), targets, maxCannonsPerEnemy);
         }
         else
         {
@@ -578,20 +924,136 @@ namespace ValheimVehicles.SharedScripts
       }
     }
 
-    public void StartManualFiring(int groupId = 0)
+  #region ManualCannonControls
+
+    private readonly Dictionary<CannonDirectionGroup, float> manualGroupTilt = new()
     {
-      if (!_manualFireCannonsRoutines.TryGetValue(groupId, out var routine))
-      {
-        routine = new CoroutineHandle(this);
-      }
-      if (routine.IsRunning || manualFireControllers.Count == 0) return;
-      routine.Start(ManualFireCannons(groupId));
+      { CannonDirectionGroup.Forward, 15f },
+      { CannonDirectionGroup.Left, 15f },
+      { CannonDirectionGroup.Right, 15f },
+      { CannonDirectionGroup.Back, 15f }
+    };
+    public float tiltStep = 2f; // for scroll and DPad
+    public float tiltSpeed = 30f; // deg/sec for stick
+    public float holdToAdjustThreshold = 0.5f; // seconds
+    private static float _cachedCannonTiltLerp = 10f;
+    public CannonDirectionGroup lastManualGroup = CannonDirectionGroup.Forward;
+    private static readonly Vector3 Backward = -Vector3.forward;
+    private Vector3 _lastMoveDir = Vector3.zero;
+    private bool _lastBlock = false;
+    private float _lastStartBlockTime = 0f;
+    public static void UpdateCannonTiltSpeedLerp()
+    {
+#if VALHEIM
+      var tiltSpeed = PrefabConfig.CannonControlCenter_CannonTiltAdjustSpeed.Value;
+#else
+      var tiltSpeed = 0.5f;
+#endif
+      _cachedCannonTiltLerp = Time.fixedDeltaTime * Mathf.Lerp(5f, 50f, tiltSpeed);
+    }
+    public Action<CannonDirectionGroup>? OnCannonGroupChange;
+
+  #endregion
+
+    public void SetGroup(CannonDirectionGroup group)
+    {
+      if (lastManualGroup == group) return;
+      lastManualGroup = group;
+      OnCannonGroupChange?.Invoke(group);
     }
 
-    public void StartAutoFiring()
+    public CannonDirectionGroup GetNextGroup(int dir)
     {
-      if (_autoFireCannonsRoutine.IsRunning || autoTargetControllers.Count == 0) return;
-      _autoFireCannonsRoutine.Start(AutoFireCannons());
+      return dir switch
+      {
+        -1 => lastManualGroup switch
+        {
+          CannonDirectionGroup.Forward => CannonDirectionGroup.Right,
+          CannonDirectionGroup.Back => CannonDirectionGroup.Forward,
+          CannonDirectionGroup.Left => CannonDirectionGroup.Back,
+          CannonDirectionGroup.Right => CannonDirectionGroup.Left,
+          _ => throw new ArgumentOutOfRangeException()
+        },
+        1 => lastManualGroup switch
+        {
+          CannonDirectionGroup.Forward => CannonDirectionGroup.Back,
+          CannonDirectionGroup.Back => CannonDirectionGroup.Left,
+          CannonDirectionGroup.Left => CannonDirectionGroup.Right,
+          CannonDirectionGroup.Right => CannonDirectionGroup.Forward,
+          _ => throw new ArgumentOutOfRangeException()
+        },
+        _ => throw new Exception("Invalid dir. Must be -1 or 1")
+      };
+    }
+
+    /// <summary>
+    /// returning false will allow wheels to control direction.
+    /// Returning true will prevent vehicle wheel from using navigation updates
+    /// </summary>
+    public bool HandleManualCannonControls(Vector3 moveDir, Vector3 lookDir, bool run, bool autoRun, bool block)
+    {
+      // fire when not blocking but timer expired
+      if (!block && _lastStartBlockTime > Time.fixedTime)
+      {
+        Request_ManualFireCannonGroup(lastManualGroup);
+        _lastStartBlockTime = -1;
+        _lastBlock = block;
+        return true;
+      }
+
+      if (block && !_lastBlock)
+      {
+        _lastStartBlockTime = Time.fixedTime + holdToAdjustThreshold;
+      }
+
+      if (!block)
+      {
+        _lastBlock = block;
+        return false;
+      }
+
+      if (moveDir == Vector3.forward)
+      {
+        AdjustManualGroupTilt(lastManualGroup, +tiltStep * _cachedCannonTiltLerp);
+      }
+      else if (moveDir == Backward)
+      {
+        AdjustManualGroupTilt(lastManualGroup, -tiltStep * _cachedCannonTiltLerp);
+      }
+
+      // do not allow spam swapping cannon without input pause.
+      if (_lastMoveDir != moveDir)
+      {
+        if (moveDir == Vector3.left)
+        {
+          SetGroup(GetNextGroup(-1));
+        }
+        else if (moveDir == Vector3.right)
+        {
+          SetGroup(GetNextGroup(1));
+        }
+      }
+
+      _lastBlock = block;
+      _lastMoveDir = moveDir;
+
+      return true;
+    }
+
+    public void AdjustManualGroupTilt(CannonDirectionGroup group, float tiltDelta)
+    {
+      manualGroupTilt[group] = Mathf.Clamp(
+        manualGroupTilt[group] + tiltDelta,
+        cannonGroupMinPitch, cannonGroupMaxPitch
+      );
+      SetManualGroupTilt(group, manualGroupTilt[group]);
+      ScheduleGroupCannonSync(group);
+    }
+
+    public void StartAutoFiring(List<CannonFireData> cannonFireDataList)
+    {
+      if (_autoFireCannonsRoutine.IsRunning || autoTargetCannonControllers.Count == 0) return;
+      _autoFireCannonsRoutine.Start(AutoFireCannons(cannonFireDataList));
     }
 
     public void AddPlayer(Transform player)
@@ -600,16 +1062,47 @@ namespace ValheimVehicles.SharedScripts
       defendPlayers.Add(player);
       RefreshPlayerDefenseTriggers();
     }
+
     public void RemovePlayer(Transform player)
     {
       defendPlayers.Remove(player);
       RefreshPlayerDefenseTriggers();
     }
 
+    public HashSet<CannonController> GetCannonManualFiringGroup(CannonDirectionGroup group)
+    {
+      return _manualCannonGroups[group];
+    }
+
+    public int LastGroupSize => GetLastManualCannonGroupSize();
+
+    public int GetLastManualCannonGroupSize()
+    {
+      return GetCannonManualFiringGroup(lastManualGroup).Count;
+    }
+
     private void AddManualCannonToGroup(CannonController cannon)
     {
       var group = GetDirectionGroup(_forwardTransform, cannon.transform);
-      _manualCannonGroups[group].Add(cannon);
+
+      // Use TryGetValue for perf, don’t double index.
+      if (!_manualCannonGroups.TryGetValue(group, out var cannonGroup) || cannonGroup == null)
+      {
+        cannonGroup = new HashSet<CannonController>();
+        _manualCannonGroups[group] = cannonGroup;
+      }
+
+      cannonGroup.Add(cannon);
+
+      // Filter out nulls, then sort.
+      var sortedGroup = cannonGroup
+        .Where(x => x != null)
+        .OrderBy(c =>
+          (transform.InverseTransformPoint(c.transform.position).x,
+            transform.InverseTransformPoint(c.transform.position).z))
+        .ToHashSet();
+
+      _manualCannonGroups[group] = sortedGroup;
       cannon.CurrentManualDirectionGroup = group;
     }
 
@@ -642,60 +1135,58 @@ namespace ValheimVehicles.SharedScripts
     public void SetManualGroupTilt(CannonDirectionGroup group, float yaw)
     {
       _manualGroupTilt[group] = yaw;
-
-      foreach (var cannon in _manualCannonGroups[group])
+      var cannons = _manualCannonGroups[group];
+      foreach (var cannon in cannons)
       {
+        if (cannon == null) continue;
         cannon.SetManualTilt(yaw);
       }
     }
-    public float GetManualGroupYaw(CannonDirectionGroup group)
+
+    public float GetManualGroupTilt(CannonDirectionGroup group)
     {
       return _manualGroupTilt[group];
     }
 
-    public void StartManualGroupFiring(CannonDirectionGroup group)
+    public void StartManualGroupFiring(List<CannonFireData> cannonFireDataList, CannonDirectionGroup group)
     {
       if (!_manualFireCannonsRoutines.TryGetValue((int)group, out var routine))
         routine = new CoroutineHandle(this);
       if (routine.IsRunning || _manualCannonGroups[group].Count == 0) return;
-      routine.Start(ManualFireCannonsGroupCoroutine(group));
+      routine.Start(ManualFireCannonsGroupCoroutine(cannonFireDataList, group));
     }
 
     /// <summary>
     /// Coroutine: fires all cannons in the group in staggered sequence, tracks ammo usage, applies OnAmmoChanged at the end.
     /// </summary>
-    private IEnumerator ManualFireCannonsGroupCoroutine(CannonDirectionGroup group)
+    private IEnumerator ManualFireCannonsGroupCoroutine(List<CannonFireData> cannonFireDataList, CannonDirectionGroup group)
     {
-      var totalAmmoDeltaSolid = 0;
-      var totalAmmoDeltaExplosive = 0;
       var tilt = _manualGroupTilt[group];
-      var cannons = _manualCannonGroups[group].ToList();
 
-      foreach (var cannon in cannons)
+      for (var i = 0; i < cannonFireDataList.Count; i++)
       {
+        var data = cannonFireDataList[i];
+        var cannonControllerObj = data.GetCannonControllerObj();
+        if (!cannonControllerObj) continue;
+        var cannon = cannonControllerObj.GetComponent<CannonController>();
         if (!cannon) continue;
 
         cannon.SetManualTilt(tilt);
 
-        if (cannon.Fire(
-              true,
-              _ammoController.GetAmmoAmountFromCannonballVariant(cannon.AmmoVariant),
-              out var deltaAmmo))
+        if (cannon.Fire(data, data.allocatedAmmo, true)) // true = isManualFiring
         {
-          if (cannon.AmmoVariant == CannonballVariant.Solid)
-            totalAmmoDeltaSolid += deltaAmmo;
-          else if (cannon.AmmoVariant == CannonballVariant.Explosive)
-            totalAmmoDeltaExplosive += deltaAmmo;
-
-          // Stagger delay only if fired
+          // Ammo logic (optional, if ammo is spent inside CannonController now)
           yield return new WaitForSeconds(FiringDelayPerCannon);
         }
       }
 
-      if (cannons.Count > 0 && (totalAmmoDeltaSolid != 0 || totalAmmoDeltaExplosive != 0))
+#if UNITY_EDITOR
+      // prevents constant allocation with testing implementation.
+      foreach (var cannonFireData in cannonFireDataList)
       {
-        _ammoController.OnAmmoChanged(totalAmmoDeltaSolid, totalAmmoDeltaExplosive);
+        CannonFireData.CannonControllerMap.Remove(cannonFireData);
       }
+#endif
 
       yield return new WaitForSeconds(FiringCooldown);
     }
@@ -710,7 +1201,7 @@ namespace ValheimVehicles.SharedScripts
           AddManualCannonToGroup(controller);
           break;
         case CannonFiringMode.Auto:
-          autoTargetControllers.Add(controller);
+          autoTargetCannonControllers.Add(controller);
           break;
         default:
           throw new ArgumentOutOfRangeException();
@@ -728,7 +1219,7 @@ namespace ValheimVehicles.SharedScripts
           RemoveManualCannonFromGroup(controller);
           break;
         case CannonFiringMode.Auto:
-          autoTargetControllers.Remove(controller);
+          autoTargetCannonControllers.Remove(controller);
           break;
         default:
           throw new ArgumentOutOfRangeException();
@@ -765,12 +1256,12 @@ namespace ValheimVehicles.SharedScripts
     public void RecalculateCannonGroups()
     {
       // O(N) - Efficient, no allocations except per-list
-      _groupedCannons = new Dictionary<CannonDirectionGroup, List<CannonController>>
+      _groupedCannons = new Dictionary<CannonDirectionGroup, HashSet<CannonController>>
       {
-        { CannonDirectionGroup.Forward, new List<CannonController>() },
-        { CannonDirectionGroup.Right, new List<CannonController>() },
-        { CannonDirectionGroup.Back, new List<CannonController>() },
-        { CannonDirectionGroup.Left, new List<CannonController>() }
+        { CannonDirectionGroup.Forward, new HashSet<CannonController>() },
+        { CannonDirectionGroup.Right, new HashSet<CannonController>() },
+        { CannonDirectionGroup.Back, new HashSet<CannonController>() },
+        { CannonDirectionGroup.Left, new HashSet<CannonController>() }
       };
       foreach (var cannon in allCannonControllers)
       {
@@ -781,9 +1272,9 @@ namespace ValheimVehicles.SharedScripts
     }
 
     // Example public API for outside use (can expand to support N directions easily)
-    public IReadOnlyList<CannonController> GetCannonsByDirection(CannonDirectionGroup group)
+    public HashSet<CannonController>? GetCannonsByDirection(CannonDirectionGroup group)
     {
-      return _groupedCannons.TryGetValue(group, out var list) ? list : Array.Empty<CannonController>();
+      return _groupedCannons.TryGetValue(group, out var list) ? list : null;
     }
 
     [Serializable]

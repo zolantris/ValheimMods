@@ -35,20 +35,20 @@ public class VehicleCustomConfig : ISerializableConfig<VehicleCustomConfig, IVeh
   // Backing fields
   private string _version = ValheimRAFT_API.GetPluginVersion();
 
-#if !UNITY_EDITOR
+#if VALHEIM
   private float _treadDistance = PrefabConfig.VehicleLandMaxTreadWidth.Value;
 #else
   private float _treadDistance = 18f;
 #endif
 
   private float _treadHeight = 0f;
-#if !UNITY_EDITOR
+#if VALHEIM
   private float _treadLength = PrefabConfig.VehicleLandMaxTreadLength.Value;
 #else
   private float _treadLength = 18f;
 #endif
 
-#if !UNITY_EDITOR
+#if VALHEIM
   private float _treadScaleX = PrefabConfig.ExperimentalTreadScaleX.Value;
 #else
   private float _treadScaleX = 1f
@@ -57,7 +57,7 @@ public class VehicleCustomConfig : ISerializableConfig<VehicleCustomConfig, IVeh
   private bool _hasCustomFloatationHeight = false;
   private float _customFloatationHeight = 0f;
   private bool _forceDocked = false;
-#if !UNITY_EDITOR
+#if VALHEIM
   private float _centerOfMassOffset = PhysicsConfig.VehicleCenterOfMassOffset.Value;
 #else
   private float _centerOfMassOffset = 0f;

@@ -386,3 +386,8 @@ Logs/
 # src/ValheimRAFT/ValheimRAFT.Unity/Packages
 # src/ValheimRAFT/ValheimRAFT.Unity/.idea
 src/ValheimRAFT.Unity/Assets/SUIMONO - WATER SYSTEM 2
+
+# ModSync
+modSync.json5
+
+mod-releases

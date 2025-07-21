@@ -1,9 +1,7 @@
-using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using JetBrains.Annotations;
 using UnityEngine;
-using Logger = Jotunn.Logger;
+using ValheimVehicles.SharedScripts;
 
 namespace Zolantris.Shared.Debug;
 
@@ -106,7 +104,7 @@ public class DebugSafeTimer
     Reset();
     if (_listRef == null)
     {
-      Logger.LogDebug("Called delete but listRef did not exist");
+      LoggerProvider.LogDebug("Called delete but listRef did not exist");
       return;
     }
 

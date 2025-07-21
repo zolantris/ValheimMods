@@ -13,6 +13,7 @@ using ValheimVehicles.Controllers;
 using ValheimVehicles.Interfaces;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.SharedScripts;
+using ValheimVehicles.ValheimVehicles.Components;
 using Logger = Jotunn.Logger;
 
 #endregion
@@ -120,6 +121,7 @@ public class SteeringWheelComponent : MonoBehaviour, IAnimatorHandler, Hoverable
 
   private long? _currentOwner;
   private string? _currentPlayerName;
+  private bool hasTargetControlListener;
 
   /// <summary>
   /// Gets the owner name
@@ -194,6 +196,16 @@ public class SteeringWheelComponent : MonoBehaviour, IAnimatorHandler, Hoverable
     steeringWheelHoverText = steeringWheelHoverTransform.gameObject.AddComponent<HoverFadeText>();
   }
 
+  private void OnDestroy()
+  {
+    if (hasTargetControlListener && ControllersInstance.PiecesController != null)
+    {
+      var tgc = ControllersInstance.PiecesController.targetController;
+      tgc.OnCannonGroupChange -= (val) => TargetControlsInteractive.UpdateTextFromCannonDirectionGroup(steeringWheelHoverText, val, tgc.LastGroupSize);
+      hasTargetControlListener = false;
+    }
+  }
+
 
   public string GetHoverName()
   {
@@ -216,6 +228,13 @@ public class SteeringWheelComponent : MonoBehaviour, IAnimatorHandler, Hoverable
     if (hold || HasInvalidVehicle || !canUse) return false;
 
     SetLastUsedWheel();
+
+    if (!hasTargetControlListener && ControllersInstance.PiecesController != null)
+    {
+      var targetController = ControllersInstance.PiecesController.targetController;
+      targetController.OnCannonGroupChange += (val) => TargetControlsInteractive.UpdateTextFromCannonDirectionGroup(steeringWheelHoverText, val, targetController.LastGroupSize);
+      hasTargetControlListener = true;
+    }
 
     var player = user as Player;
 
@@ -279,12 +298,14 @@ public class SteeringWheelComponent : MonoBehaviour, IAnimatorHandler, Hoverable
   public void ApplyControlls(Vector3 moveDir, Vector3 lookDir, bool run,
     bool autoRun, bool block)
   {
-    if (ControllersInstance.Manager == null || ControllersInstance.Manager.MovementController == null)
+    if (ControllersInstance.PiecesController == null || ControllersInstance.Manager == null || ControllersInstance.Manager.MovementController == null)
     {
       return;
     }
 
-    ControllersInstance?.Manager.MovementController.ApplyControls(moveDir);
+    if (ControllersInstance.PiecesController.targetController.HandleManualCannonControls(moveDir, lookDir, run, autoRun, block))
+      return;
+    ControllersInstance.Manager.MovementController.ApplyControls(moveDir);
   }
 
   public Component? GetControlledComponent()

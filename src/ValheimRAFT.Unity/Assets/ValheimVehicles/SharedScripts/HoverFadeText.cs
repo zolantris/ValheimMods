@@ -1,9 +1,9 @@
 ﻿#region
 
-using System.Collections;
-using TMPro;
-using UnityEngine;
-using static System.String;
+  using System.Collections;
+  using TMPro;
+  using UnityEngine;
+  using static System.String;
 
 #endregion
 
@@ -88,7 +88,7 @@ using static System.String;
 
       public IEnumerator UpdateText()
       {
-        while (true)
+        while (isActiveAndEnabled)
         {
           if (!canUpdate) yield return new WaitForFixedUpdate();
           if (!Camera.main) yield return new WaitForFixedUpdate();

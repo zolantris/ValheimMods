@@ -16,7 +16,7 @@ public class PatchConfig : BepInExBaseConfig<PatchConfig>
   public static ConfigEntry<bool> ForceDisablePlanBuildPatches { get; set; }
 
   public static ConfigEntry<bool> MineRockPatch { get; set; }
-
+  public static ConfigEntry<bool> Experimental_SnappointRotationalPatch { get; set; }
 
   public static ConfigEntry<bool> ComfyGizmoPatchCreativeHasNoRotation
   {
@@ -50,6 +50,11 @@ public class PatchConfig : BepInExBaseConfig<PatchConfig>
       "ComfyGizmo - Vehicle Creative zero Y rotation", true,
       ConfigHelpers.CreateConfigDescription(
         "Vehicle/Raft Creative mode will set all axises to 0 for rotation instead keeping the turn axis. Gizmo has issues with rotated vehicles, so zeroing things out is much safer. Works regardless of patch if mod exists"));
+
+    Experimental_SnappointRotationalPatch = config.BindUnique("Patches",
+      "EXPERIMENTAL: Snappoint Rotational Patch", true,
+      ConfigHelpers.CreateConfigDescription(
+        "Some prefabs on ValheimRAFT have flipped/rotated snappoints. This will allow rotating based on rotated point transform. Eg pieces can be flipped upside down. Supports Rotating Cannons. It does not flip the actual snappoint though. So the collision point requires a bit of creativity.."));
 
     ShipPausePatch = config.BindUnique<bool>("Patches",
       "Vehicles Prevent Pausing", true,

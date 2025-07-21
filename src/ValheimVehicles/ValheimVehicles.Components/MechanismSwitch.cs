@@ -21,6 +21,7 @@ using ValheimVehicles.SharedScripts.Interfaces;
 using ValheimVehicles.SharedScripts.PowerSystem;
 using ValheimVehicles.UI;
 using ZdoWatcher;
+using Random = UnityEngine.Random;
 
 namespace ValheimVehicles.Components;
 
@@ -389,7 +390,7 @@ public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interac
       Player.m_localPlayer.Message(MessageHud.MessageType.Center, "No target controller. This must be used on a vehicle for now.");
       return;
     }
-    targetController.StartManualFiring(0);
+    targetController.Request_ManualFireAllCannonGroups([CannonDirectionGroup.Forward, CannonDirectionGroup.Back, CannonDirectionGroup.Left, CannonDirectionGroup.Right]);
   }
 
   public bool TriggerDockSequence()

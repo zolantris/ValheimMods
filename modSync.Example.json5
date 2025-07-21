@@ -1,0 +1,60 @@
+{
+  // example config. This can be used with ModSync. Whatever the current directory of modsync.exe is called from will resolve the file. Call directory (not file directory of modsync.exe)
+  "sharedTargets": {
+    shared_localAssets: {
+      inputPath: "C:/path/to/Assets",
+      outputPath: "C:/Users/%USERNAME%/AppData/Roaming/r2modmanPlus-local/Valheim/profiles/ashlands/BepInEx/plugins/zolantris-ValheimRAFT/Assets/",
+    },
+    shared_localClient: {
+      "inputPath": "src/ValheimRAFT/bin/Debug",
+      canGenerateDebugFiles: true,
+      generatedFilesRegexp: [
+        "ValheimRAFT",
+        "Shared",
+        "ValheimVehicles",
+        "ZdoWatcher",
+        "DynamicLocations"
+      ]
+    },
+  },
+  "syncTargets": {
+    localClient: {
+      "outputPath": "C:/Users/%USERNAME%/AppData/Roaming/r2modmanPlus-local/Valheim/profiles/ashlands/BepInEx/plugins/zolantris-ValheimRAFT",
+      dependsOn: [
+        "shared_localAssets",
+        "shared_localClient",
+      ]
+    },
+    vmClient: {
+      "outputPath": "C:/Users/%USERNAME%/AppData/Roaming/r2modmanPlus-local/Valheim/profiles/ashlands/BepInEx/plugins/zolantris-ValheimRAFT",
+      dependsOn: [
+        "shared_localAssets",
+        "shared_localClient",
+      ]
+    },
+    server: {
+      "targetName": "server",
+      "pluginFolderPath": "C:/steam/steamapps/common/Valheim/BepInEx/plugins",
+    }
+  },
+  "runTargets": {
+    vmClient: {
+      "name": "",
+      "binaryTarget": "C:/steam/steamapps/common/Valheim/valheim.exe",
+      "args": [
+        "-someArg",
+        "-nographics"
+      ],
+      "isConditional": true
+    },
+    localClient: {
+      "name": "",
+      "binaryTarget": "C:/steam/steamapps/common/Valheim/valheim.exe",
+      "args": [
+        "-someArg",
+        "-nographics"
+      ],
+      "isConditional": true,
+    }
+  }
+}

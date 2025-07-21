@@ -12,6 +12,27 @@ This mod has both a beta and a non-beta on Thunderstore. Please make sure you
 are using non-beta if you want a stable experience. If you want to test
 previews, swap to the beta variant.
 
+## Changes of 3.6.x
+
+- 3.6.x Adds cannons, hand cannons (item) and turret prefabs.
+- Adds manual standalone turret controls as well as ship controls
+- Adds prefab recipe configs for cannons and walls/floors. Allows for setting
+  all recipe ingredients and quantity.
+- Adds wood 2x8 walls (sleek) this will remain until we get new hull assets.
+- Significantly increases speed of rendering ships and entire valheim world with
+  `Experimental_CustomMaxCreatedObjectsPerFrame`. This was originally 600 items
+  per second. Now it's about 6000 items. Meaning ships render fast. Even on
+  respawn. Tweak it back to 10 if you want base game values.
+
+### Cannon Controls
+
+- Use the cannon
+- Hold block. W to tilt forward. S to tilt backwards.
+- Tap Block. To fire.
+- A/D to swap groups. Each group has a number representing the size.
+- Groups are based on the orientation of the vehicle or the placed vehicle
+  control center (telescope direction).
+
 ## Tutorials
 
 This document contains generic tutorials and information on configuring the mod.

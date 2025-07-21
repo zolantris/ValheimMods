@@ -77,7 +77,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3722565146695422278}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: snappoint_corner 1
   m_TagString: snappoint
   m_Icon: {fileID: 0}
@@ -310,7 +310,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1243068075131350363}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: snappoint_corner 2
   m_TagString: snappoint
   m_Icon: {fileID: 0}
@@ -341,7 +341,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3126195197221252066}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: snappoint_corner 4
   m_TagString: snappoint
   m_Icon: {fileID: 0}
@@ -24573,8 +24573,8 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: -0.7071068, y: -0, z: -0, w: 0.7071068}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
+  m_LocalScale: {x: 3, y: 3, z: 3}
+  m_ConstrainProportionsScale: 1
   m_Children:
   - {fileID: 6566059035385738933}
   - {fileID: 6566059033397928003}
@@ -38865,7 +38865,7 @@ BoxCollider:
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
-    m_Bits: 4195840
+    m_Bits: 0
   m_ExcludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -38885,7 +38885,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6208913160120118772}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: snappoint_corner 3
   m_TagString: snappoint
   m_Icon: {fileID: 0}
@@ -38916,7 +38916,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5204698125316128189}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: snappoint_center
   m_TagString: snappoint
   m_Icon: {fileID: 0}

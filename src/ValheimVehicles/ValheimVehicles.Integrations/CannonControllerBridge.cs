@@ -17,7 +17,7 @@ public class CannonControllerBridge : CannonController, Hoverable, Interactable,
 
   protected internal override sealed void Awake()
   {
-#if !UNITY_2022 && !UNITY_EDITOR
+#if VALHEIM
     CannonballSolidPrefab = CannonPrefabs.CannonballSolidProjectile;
     CannonballExplosivePrefab = CannonPrefabs.CannonballExplosiveProjectile;
 #endif
@@ -49,11 +49,13 @@ public class CannonControllerBridge : CannonController, Hoverable, Interactable,
 
   protected internal override sealed void OnEnable()
   {
+    base.OnEnable();
     OnAmmoChanged += OnAmmoUpdate;
   }
 
   protected internal override sealed void OnDisable()
   {
+    base.OnDisable();
     OnAmmoChanged -= OnAmmoUpdate;
   }
 
@@ -86,7 +88,7 @@ public class CannonControllerBridge : CannonController, Hoverable, Interactable,
   {
     // var s = $"{ModTranslations.PowerSource_Interact_AddOne} / {ModTranslations.SharedKeys_Hold} {ModTranslations.SharedKeys_AddMany}";
     var s = "";
-    s += $"\n{ModTranslations.SharedKeys_InteractAltAndPlace} {ModTranslations.VehicleCannon_SwapCannonBallType}";
+    s += $"\n{ModTranslations.SharedKeys_InteractAlt} {ModTranslations.VehicleCannon_SwapCannonBallType}";
 
     s += $"\n{ModTranslations.VehicleCannon_AmmoText}: {CannonballNameFromType()}";
 

@@ -1,8 +1,10 @@
 using BepInEx.Configuration;
+using UnityEngine;
 using ValheimVehicles.Controllers;
 using ValheimVehicles.SharedScripts;
 using ValheimVehicles.Components;
 using ValheimVehicles.Helpers;
+using ValheimVehicles.Patches;
 using ValheimVehicles.UI;
 using Zolantris.Shared;
 

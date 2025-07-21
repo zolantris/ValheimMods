@@ -18,12 +18,13 @@ namespace ValheimVehicles.SharedScripts
   {
 
     public const string BarrelExplosionColliderName = "barrel_explosion_collider";
-    [SerializeField] private float destroyDeactivationDelayTimeInMs;
+    [SerializeField] private float destroyDeactivationDelayTimeInMs = 0.25f;
     [Tooltip("Hides the barrel mesh when the explosion hits the destroy deactivation timer.")]
-    [SerializeField] public bool shouldHideBarrelMeshOnExplode = true;
+    [SerializeField] public bool shouldHideBarrelMeshImmediatelyOnExplode = false;
     [SerializeField] public bool CanDestroyOnExplode = true;
-    [SerializeField] public bool CanExplodeMultipleTimes;
+    [SerializeField] public bool CanExplodeMultipleTimes = false;
     private readonly Collider[] allocatedColliders = new Collider[100];
+    public static float BarrelExplosionChainDelay = 0.25f;
     private CoroutineHandle _aoeRoutine;
 
     private CoroutineHandle _explosionRoutine;
@@ -34,8 +35,10 @@ namespace ValheimVehicles.SharedScripts
     private Transform explosionTransform;
     private Transform meshesTransform;
 
+    public static HashSet<PowderBarrel> ExplodingBarrels = new();
+
     public static float LastBarrelPlaceTime;
-#if !UNITY_2022 && !UNITY_EDITOR
+#if VALHEIM
     public WearNTear wearNTear;
 #endif
 
@@ -55,7 +58,7 @@ namespace ValheimVehicles.SharedScripts
 
       explosionAudio = explosionTransform.GetComponent<AudioSource>();
       explosionFx = explosionFxTransform.GetComponent<ParticleSystem>();
-#if !UNITY_2022 && !UNITY_EDITOR
+#if VALHEIM
       wearNTear = GetComponent<WearNTear>();
 #endif
     }
@@ -67,7 +70,7 @@ namespace ValheimVehicles.SharedScripts
 
     public void OnEnable()
     {
-#if !UNITY_2022 && !UNITY_EDITOR
+#if VALHEIM
       wearNTear = GetComponent<WearNTear>();
       if (wearNTear != null)
       {
@@ -78,7 +81,7 @@ namespace ValheimVehicles.SharedScripts
 
     public void OnDisable()
     {
-#if !UNITY_2022 && !UNITY_EDITOR
+#if VALHEIM
       wearNTear = GetComponent<WearNTear>();
       if (wearNTear != null)
       {
@@ -89,7 +92,7 @@ namespace ValheimVehicles.SharedScripts
 
     public void OnExplodeDestroy()
     {
-#if !UNITY_2022 && !UNITY_EDITOR
+#if VALHEIM
       if (wearNTear == null) return;
       wearNTear.Destroy(null, true);
 #else
@@ -102,7 +105,7 @@ namespace ValheimVehicles.SharedScripts
     /// </summary>
     public void OnWearNTearDamage()
     {
-#if !UNITY_2022 && !UNITY_EDITOR
+#if VALHEIM
       if (wearNTear == null) return;
       if (_explosionRoutine.IsRunning) return;
       if (wearNTear.m_healthPercentage <= 75)
@@ -178,16 +181,21 @@ namespace ValheimVehicles.SharedScripts
         var dir = (hitPoint - explosionOrigin).normalized;
         var dist = Vector3.Distance(explosionOrigin, hitPoint);
 
-        CannonballHitScheduler.AddDamageToQueue(this, col, hitPoint, dir, Vector3.zero, 90f, true);
         if (col.name == BarrelExplosionColliderName)
         {
           var powderBarrel = col.GetComponentInParent<PowderBarrel>();
           if (powderBarrel != null)
           {
-            barrels.Add((powderBarrel, dist));
+            if (ExplodingBarrels.Add(powderBarrel))
+            {
+              barrels.Add((powderBarrel, dist));
+            }
           }
           continue;
         }
+
+        CannonballHitScheduler.AddDamageToQueue(col, hitPoint, dir, Vector3.zero, 90f, true);
+
         // Not a barrel, invoke fallback
         OnHitCollider?.Invoke(col);
       }
@@ -199,14 +207,20 @@ namespace ValheimVehicles.SharedScripts
       foreach (var (barrel, _) in barrels)
       {
         barrel.StartExplosion();
+#if DEBUG
         LoggerProvider.LogDev($"Triggered powder barrel explosion at {barrel.transform.position}");
-        yield return new WaitForSeconds(0.5f); // Adjust as needed
+#endif
+        yield return new WaitForSeconds(BarrelExplosionChainDelay); // Adjust as needed
+      }
+
+      foreach (var (barrel, _) in barrels)
+      {
+        ExplodingBarrels.Remove(barrel);
       }
     }
 
     private IEnumerator Explode()
     {
-      LoggerProvider.LogDev("Exploding");
       explosionFx.Play();
       explosionAudio.Play();
 
@@ -216,11 +230,25 @@ namespace ValheimVehicles.SharedScripts
       {
         yield return new WaitUntil(() => timer.ElapsedMilliseconds > destroyDeactivationDelayTimeInMs);
       }
-      if (shouldHideBarrelMeshOnExplode && !CanExplodeMultipleTimes)
+      if (shouldHideBarrelMeshImmediatelyOnExplode && !CanExplodeMultipleTimes)
       {
         meshesTransform.gameObject.SetActive(false);
       }
-      yield return new WaitUntil(() => timer.ElapsedMilliseconds > 10000f || explosionFx.isStopped && !explosionAudio.isPlaying);
+      else
+      {
+        meshesTransform.localScale = new Vector3(1f, 0.1f, 1f);
+      }
+
+      var maxEffectsTimeInMs = Mathf.Max(explosionFx.totalTime, explosionAudio.clip.length) * 1000;
+
+      // hide mesh transform (halfway through explosion.
+      if (!shouldHideBarrelMeshImmediatelyOnExplode && !CanExplodeMultipleTimes)
+      {
+        yield return new WaitUntil(() => timer.ElapsedMilliseconds > maxEffectsTimeInMs / 2f);
+        meshesTransform.gameObject.SetActive(false);
+      }
+
+      yield return new WaitUntil(() => timer.ElapsedMilliseconds > maxEffectsTimeInMs || !explosionFx.isPlaying && !explosionAudio.isPlaying);
       timer.Reset();
       OnExplodeDestroy();
       yield return null;

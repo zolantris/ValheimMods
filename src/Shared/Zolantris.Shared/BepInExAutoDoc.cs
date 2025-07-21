@@ -4,8 +4,8 @@ using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 using BepInEx.Configuration;
-using Jotunn;
 using Jotunn.Utils;
+using ValheimVehicles.SharedScripts;
 
 namespace Zolantris.Shared.BepInExAutoDoc;
 
@@ -27,9 +27,9 @@ public class BepInExConfigAutoDoc
     var executingAssemblyLocation =
       Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
 
-    Logger.LogDebug(
+    LoggerProvider.LogDebug(
       $"BepInExConfigAutoDoc: GetOutputFolderPath() {entryAssemblyDir}");
-    Logger.LogDebug(
+    LoggerProvider.LogDebug(
       $"BepInExConfigAutoDoc: GetOutputFolderPath() executingAssemblyLocation {executingAssemblyLocation}");
 
     if (executingAssemblyLocation == null)
@@ -50,8 +50,10 @@ public class BepInExConfigAutoDoc
 
 
   // Strip using the regex above from Config[x].Description.Description
-  private static string StripString(string x) =>
-    ConfigMatchRegExp.Match(x).Groups[1].Value;
+  private static string StripString(string x)
+  {
+    return ConfigMatchRegExp.Match(x).Groups[1].Value;
+  }
 
   private static void AutoWriteBepInExConfigDoc(PluginInfo plugin,
     ConfigFile Config, string documentName)

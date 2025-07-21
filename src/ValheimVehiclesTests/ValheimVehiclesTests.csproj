@@ -7,6 +7,8 @@
         <DefineConstants>TEST</DefineConstants>
         <IsPackable>false</IsPackable>
         <IsTestProject>true</IsTestProject>
+        <Configurations>Debug;Release;ModSyncOnly</Configurations>
+        <Platforms>AnyCPU</Platforms>
     </PropertyGroup>
 
     <ItemGroup>
@@ -15,7 +17,6 @@
         <PackageReference Include="NUnit3TestAdapter" Version="5.0.0"/>
         <PackageReference Include="NUnit.Analyzers" Version="3.6.1"/>
         <PackageReference Include="coverlet.collector" Version="6.0.0"/>
-        <PackageReference Include="StructLinq" Version="0.28.2"/>
     </ItemGroup>
 
     <ItemGroup Label="Mock APIs">

@@ -1,0 +1,35 @@
+<Project>
+    <PropertyGroup Label="Runnables and Project Booleans">
+        <!-- Runnable variants execute Valheim server or client process after building -->
+        <IsRunnableDebug Condition="'$(Configuration)' == 'Debug Run Client' or '$(Configuration)' == 'Debug Run Server' or '$(Configuration)' == 'Debug Run ClientServer'">true</IsRunnableDebug>
+        <IsRunnableRelease Condition="'$(Configuration)' == 'Release Run Client' or '$(Configuration)' == 'Release Run Server' or '$(Configuration)' == 'Release Run ClientServer'">true</IsRunnableRelease>
+        <IsRunnableClientServer Condition="'$(Configuration)' == 'Release Run ClientServer' or '$(Configuration)' == 'Debug Run ClientServer'">true</IsRunnableClientServer>
+        <IsRunnableServer Condition="'$(Configuration)' == 'Release Run Server' or '$(Configuration)' == 'Debug Run Server'">true</IsRunnableServer>
+        <IsRunnableClient Condition="'$(IsRunnableRelease)' == 'true' or '$(IsRunnableDebug)' == 'true'">true</IsRunnableClient>
+        <IsRunnable Condition="'$(IsRunnableRelease)' == 'true' or '$(IsRunnableDebug)' == 'true'">true</IsRunnable>
+        <!--        <IsRunnable Condition="'$(Configuration)' == 'Debug Run Client' or-->
+        <!--                          '$(Configuration)' == 'Debug Run Server' or-->
+        <!--                          '$(Configuration)' == 'Debug Run ClientServer' or-->
+        <!--                          '$(Configuration)' == 'Release Run Client' or-->
+        <!--                          '$(Configuration)' == 'Release Run Server' or-->
+        <!--                          '$(Configuration)' == 'Release Run ClientServer'">true-->
+        <!--        </IsRunnable>-->
+        <IsRunnable>true</IsRunnable>
+        <!--        <IsRunnable Condition="'$(IsRunnable)' != 'true'">false</IsRunnable>-->
+        <IsDebug Condition="'$(Configuration)' == 'Debug' or '$(IsRunnableDebug)' == 'true'">true</IsDebug>
+        <IsRelease Condition="'$(Configuration)' == 'Release' or '$(IsRunnableRelease)' == 'true'">true</IsRelease>
+        <IsNotArchive Condition="'$(Configuration)' != 'Release Archive' and '$(Configuration)' != 'ReleaseBETA Archive'">true</IsNotArchive>
+    </PropertyGroup>
+
+
+    <PropertyGroup Label="Directories">
+        <ProjectDir>$(SolutionDir)src\$(AssemblyName)</ProjectDir>
+        <ModOutputDir>$(SolutionDir)mod-releases\versions\</ModOutputDir>
+        <DLLFromRoot>$(ProjectDir)\bin\$(Configuration)\net8.0\$(AssemblyName).dll</DLLFromRoot>
+        <ModSyncDll>$(SolutionDir)src\ModSync\bin\Debug\net8.0\ModSync.dll</ModSyncDll>
+        <AssetsDir>$(SolutionDir)src\ValheimRAFT\Assets\</AssetsDir>
+    </PropertyGroup>
+    <PropertyGroup Label="Directories" Condition="'$(IsRelease)' == 'true'">
+        <ModSyncDll>$(SolutionDir)src\ModSync\bin\Release\net8.0\ModSync.dll</ModSyncDll>
+    </PropertyGroup>
+</Project>

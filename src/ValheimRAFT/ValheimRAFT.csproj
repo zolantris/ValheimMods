@@ -1,41 +1,28 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project Sdk="Microsoft.NET.Sdk" ToolsVersion="4.8" DefaultTargets="Build">
+<Project Sdk="Microsoft.NET.Sdk">
+    <Import Project="$(SolutionDir)build\base.props"/>
+    <Import Project="$(SolutionDir)build\valheim.props"/>
+
     <PropertyGroup>
         <Configuration Condition=" '$(Configuration)' == '' ">Debug;VALHEIM_RAFT</Configuration>
         <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
         <ProjectGuid>{6015B165-2627-40A7-8CA1-3E6B6CD7CB49}</ProjectGuid>
         <OutputType>Library</OutputType>
         <AssemblyName>ValheimRAFT</AssemblyName>
-        <TargetFramework>netstandard2.0</TargetFramework>
-        <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
-        <Platforms>AnyCPU</Platforms>
-        <PlatformTarget>AnyCPU</PlatformTarget>
-        <ApplicationVersion>3.6.1</ApplicationVersion>
+        <ApplicationVersion>3.6.2</ApplicationVersion>
         <FileAlignment>512</FileAlignment>
         <RootNamespace>ValheimRAFT</RootNamespace>
-        <LangVersion>latest</LangVersion>
-        <Nullable>enable</Nullable>
-        <Configurations>Debug;Release;Release Archive;Debug Run ClientServer;Debug Run Client;ReleaseBETA Archive;Debug Run Server;Release Run Server;Release Run ClientServer</Configurations>
+        <Configurations>Debug;Release;Release Archive;Debug Run ClientServer;Debug Run Client;ReleaseBETA Archive;Debug Run Server;Release Run Server;Release Run ClientServer;ModSyncOnly</Configurations>
+        <Platforms>AnyCPU</Platforms>
     </PropertyGroup>
-    <Import Project="..\..\base.targets"/>
-    <Import Project="..\..\valheim.targets"/>
 
-    <!-- Until ValheimVehicles is published, RAFT will directly pull in it's dependencies -->
-    <!--    <ItemGroup Label="Embedded Resources">-->
-    <!--    </ItemGroup>-->
-    <ItemGroup>
+    <ItemGroup Label="Local Dependencies">
+        <ProjectReference Include="..\Shared\Shared.csproj"/>
         <ProjectReference Include="..\DynamicLocations\DynamicLocations.csproj"/>
         <ProjectReference Include="..\ZdoWatcher\ZdoWatcher.csproj"/>
-    </ItemGroup>
-    <!-- Compiled Shared items  -->
-    <ItemGroup>
-        <ProjectReference Include="..\Shared\Shared.csproj"/>
-    </ItemGroup>
-    <ItemGroup Label="Embedded ValheimVehicles">
         <ProjectReference Include="..\ValheimVehicles\ValheimVehicles.csproj"/>
-        <!--        <Compile Include="..\ValheimVehicles\ValheimVehicles.*\**\*.cs"/>-->
     </ItemGroup>
-    <Import Project="..\..\gameLauncher.targets"/>
+
     <PropertyGroup>
         <SentryDSN>https://e720adb5b1a1fdb40d073635eb76817d@o243490.ingest.sentry.io/4506613652586496</SentryDSN>
     </PropertyGroup>
@@ -88,30 +75,6 @@
         <Folder Include="docs-images\"/>
         <Folder Include="ValheimRAFT.Patches\"/>
     </ItemGroup>
-
-    <!-- Debug Variants -->
-    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-        <OutputPath>bin\Debug\</OutputPath>
-        <DefineConstants>VALHEIM_RAFT;DEBUG;TRACE</DefineConstants>
-    </PropertyGroup>
-    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug Run ClientServer|AnyCPU' ">
-        <BaseConfiguration>Debug</BaseConfiguration>
-        <DefineConstants>$(DefineConstants);VALHEIM_RAFT;RUN_CLIENT</DefineConstants>
-        <OutputPath>bin\Debug</OutputPath>
-        <PlatformTarget>x64</PlatformTarget>
-    </PropertyGroup>
-    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug Run Client|AnyCPU' ">
-        <BaseConfiguration>Debug</BaseConfiguration>
-        <DefineConstants>$(DefineConstants);VALHEIM_RAFT;RUN_CLIENT</DefineConstants>
-        <OutputPath>bin\Debug</OutputPath>
-        <PlatformTarget>x64</PlatformTarget>
-    </PropertyGroup>
-    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug Run Server|AnyCPU' ">
-        <BaseConfiguration>Debug</BaseConfiguration>
-        <DefineConstants>$(DefineConstants);VALHEIM_RAFT;RUN_CLIENT</DefineConstants>
-        <OutputPath>bin\Debug</OutputPath>
-    </PropertyGroup>
-
     <!-- Releases -->
     <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release Archive|AnyCPU' ">
         <OutputPath>bin\Release Archive\</OutputPath>
@@ -125,7 +88,7 @@
         <DebugType>pdbonly</DebugType>
         <Optimize>true</Optimize>
         <OutputPath>bin\Release\</OutputPath>
-        <DefineConstants>TRACE</DefineConstants>
+        <DefineConstants>TRACE;VALHEIM;</DefineConstants>
         <ErrorReport>prompt</ErrorReport>
         <WarningLevel>4</WarningLevel>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>

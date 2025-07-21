@@ -3,7 +3,9 @@
 
 #region
 
+using System.Collections.Generic;
 using UnityEngine;
+using ValheimVehicles.SharedScripts.Structs;
 
 #endregion
 
@@ -11,12 +13,15 @@ namespace ValheimVehicles.SharedScripts
 {
   public class CannonTestInput : MonoBehaviour
   {
-    public TargetController TargetController;
-    [SerializeField] public int firingGroup;
+    public TargetController targetController;
+    [SerializeField] public CannonDirectionGroup firingGroup = CannonDirectionGroup.Forward;
+
+    public List<CannonFireData> cannonFireDataList = new();
 
     private void Start()
     {
       UpdateAllValues();
+      cannonFireDataList = CannonFireData.CreateListOfCannonFireDataFromTargetController(targetController, targetController.GetCannonManualFiringGroup(firingGroup), out _, out _);
     }
 
 
@@ -26,7 +31,7 @@ namespace ValheimVehicles.SharedScripts
       var isKey1MousePress = Input.GetMouseButtonDown(1);
       if (isSpacePressed || isKey1MousePress)
       {
-        TargetController.StartManualFiring(firingGroup);
+        targetController.StartManualGroupFiring(cannonFireDataList, firingGroup);
       }
     }
 
@@ -37,7 +42,7 @@ namespace ValheimVehicles.SharedScripts
 
     public void UpdateAllValues()
     {
-      TargetController= GetComponent<TargetController>();
+      targetController = GetComponent<TargetController>();
 
       var wanderers = FindObjectsOfType<RandomWanderer>(true);
       if (wanderers.Length > 0)
@@ -46,7 +51,7 @@ namespace ValheimVehicles.SharedScripts
         {
           if (randomWanderer.gameObject.name.Contains("player"))
           {
-            TargetController.AddPlayer(randomWanderer.transform);
+            targetController.AddPlayer(randomWanderer.transform);
           }
         }
       }
