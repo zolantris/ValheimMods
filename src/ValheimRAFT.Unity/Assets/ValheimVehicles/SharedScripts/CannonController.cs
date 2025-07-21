@@ -162,6 +162,8 @@ namespace ValheimVehicles.SharedScripts
     public static float ReloadTimeOverride = 0f;
     public static float CannonHandHeld_ReloadTime = 5f;
 
+    public static HashSet<CannonController> Instances = new();
+
 #if VALHEIM
     public VehiclePiecesController PiecesController;
 #endif
@@ -267,13 +269,19 @@ namespace ValheimVehicles.SharedScripts
 
     protected internal virtual void OnEnable()
     {
+      Instances.Add(this);
+#if DEBUG
       Application.logMessageReceived += OnLogMessageReceived;
+#endif
       InitCoroutines();
     }
 
     protected internal virtual void OnDisable()
     {
+      Instances.Remove(this);
+#if DEBUG
       Application.logMessageReceived -= OnLogMessageReceived;
+#endif
       CleanupPool();
     }
 

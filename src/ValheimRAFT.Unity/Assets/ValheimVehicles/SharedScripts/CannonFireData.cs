@@ -41,7 +41,7 @@ namespace ValheimVehicles.SharedScripts.Structs
 #endif
     }
 
-    public static List<CannonFireData> CreateListOfCannonFireDataFromTargetController(TargetController targetController, List<CannonController> firingGroup, out int ammoSolidUsage, out int ammoExplosiveUsage)
+    public static List<CannonFireData> CreateListOfCannonFireDataFromTargetController(TargetController targetController, HashSet<CannonController> firingGroup, out int ammoSolidUsage, out int ammoExplosiveUsage)
     {
       ammoSolidUsage = 0;
       ammoExplosiveUsage = 0;
@@ -75,7 +75,7 @@ namespace ValheimVehicles.SharedScripts.Structs
         }
 #endif
 
-        var data = CreateCannonFireData(cannonController);
+        var data = CreateCannonFireData(cannonController, deltaAmmoUsage);
         if (data.HasValue)
         {
           cannonFireDataList.Add(data.Value);
@@ -97,12 +97,12 @@ namespace ValheimVehicles.SharedScripts.Structs
       var ammoToUse = AmmoController.UpdateConsumedAmmo(cannonHandHeld.AmmoVariant, cannonHandHeld.GetBarrelCount(), ref ammoSolidUsage, ref ammoExplosiveUsage, ammoSolid, ammoExplosive);
       if (ammoToUse == 0) return null;
 
-      var fireData = CreateCannonFireData(cannonHandHeld);
+      var fireData = CreateCannonFireData(cannonHandHeld, ammoToUse);
       return fireData;
     }
 #endif
 
-    public static CannonFireData? CreateCannonFireData(CannonController cannonController)
+    public static CannonFireData? CreateCannonFireData(CannonController cannonController, int ammoToUse)
     {
       if (cannonController == null) return null;
 #if VALHEIM
@@ -128,6 +128,7 @@ namespace ValheimVehicles.SharedScripts.Structs
         randomVelocityValue = CannonController.GetRandomCannonVelocity,
         randomArcValue = CannonController.GetRandomCannonArc,
         ammoVariant = cannonController.AmmoVariant,
+        allocatedAmmo = ammoToUse,
         canApplyDamage = canApplyDamage,
         shootingDirection = cannonController.cannonShooterAimPoint.forward,
         cannonShootingPositions = cannonShootingPositions,

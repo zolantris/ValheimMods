@@ -442,6 +442,7 @@ namespace ValheimVehicles.SharedScripts
 
     private static bool CanPenetrateMaterial(float relativeVelocityMagnitude, HitMaterial hitMaterial, float randomValue)
     {
+      if (hitMaterial == HitMaterial.Terrain) return false;
       var velocityRandomizer = relativeVelocityMagnitude / 50f - randomValue;
       var canPenetrate = velocityRandomizer > 0.25f;
       return canPenetrate;

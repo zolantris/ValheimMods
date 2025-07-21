@@ -369,7 +369,7 @@
           {
             if (nearbyContainer == null) continue;
             if (!nearbyContainer.isActiveAndEnabled) continue;
-            if (currentAmmoToRemoveExplosive <= 0 && currentAmmoToRemoveExplosive <= 0) break;
+            if (currentAmmoToRemoveExplosive <= 0 && currentAmmoToRemoveSolid <= 0) break;
             var inventory = nearbyContainer.GetInventory();
             if (inventory == null) continue;
             var localSolidAmmo = inventory.CountItems(SolidAmmoToken);
