@@ -18,6 +18,10 @@ previews, swap to the beta variant.
 - Adds manual standalone turret controls as well as ship controls
 - Adds prefab recipe configs for cannons and walls/floors.
 - Adds wood 2x8 walls (sleek) this will remain until we get new hull assets.
+- Significantly increases speed of rendering ships and entire valheim world with
+  `Experimental_CustomMaxCreatedObjectsPerFrame`. This was originally 600 items
+  per second. Now it's about 6000 items. Meaning ships render fast. Even on
+  respawn. Tweak it back to 10 if you want base game values.
 
 ### Cannon Controls
 
