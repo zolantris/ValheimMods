@@ -1143,6 +1143,7 @@
     /// <param name="dir"></param>
     public void ApplyControls(Vector3 dir)
     {
+
       var isForward = dir.z > 0.5;
       var isBackward = dir.z < -0.5;
 
@@ -4484,10 +4485,6 @@
 
       EjectPreviousPlayerFromControls(previousPlayer);
 
-      // adds targeting controls to player when they take over vehicle.
-      var firingHotkeys = targetPlayer.gameObject.GetOrAddComponent<CannonFiringHotkeys>();
-      firingHotkeys.SetTargetController(PiecesController.targetController);
-
       UpdatePlayerOnShip(targetPlayer);
       UpdateVehicleSpeedThrottle();
       VehicleOnboardController.AddOrRemovePlayerBlockingCamera(targetPlayer);
@@ -4533,12 +4530,6 @@
     private void EjectPreviousPlayerFromControls(Player? player)
     {
       if (player == null) return;
-
-      var firingHotkeys = player.GetComponent<CannonFiringHotkeys>();
-      if (PiecesController != null && PiecesController.targetController != null && firingHotkeys != null && firingHotkeys.targetController == PiecesController.targetController)
-      {
-        Destroy(firingHotkeys);
-      }
 
       player.m_doodadController = null;
       player.AttachStop();

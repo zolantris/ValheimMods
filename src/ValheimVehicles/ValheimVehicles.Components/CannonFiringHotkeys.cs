@@ -132,7 +132,7 @@ namespace ValheimVehicles.SharedScripts
       {
         var held = Time.unscaledTime - groupHoldStartTime[group];
         if (held <= holdToAdjustThreshold)
-          FireManualGroup(group, key);
+          FireManualGroup(group);
         groupHoldStartTime[group] = -1f;
       }
     }
@@ -191,7 +191,7 @@ namespace ValheimVehicles.SharedScripts
       {
         var held = Time.unscaledTime - groupHoldStartTime[group];
         if (held <= holdToAdjustThreshold)
-          FireManualGroup(group, button);
+          FireManualGroup(group);
         groupHoldStartTime[group] = -1f;
       }
     }
@@ -241,7 +241,7 @@ namespace ValheimVehicles.SharedScripts
       OnCannonGroupChange?.Invoke(group);
     }
 
-    private void FireManualGroup(CannonDirectionGroup group, object key)
+    public void FireManualGroup(CannonDirectionGroup group)
     {
       if (!targetController)
       {

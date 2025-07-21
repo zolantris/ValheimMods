@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using UnityEngine;
+using ValheimVehicles.BepInExConfig;
 using ValheimVehicles.SharedScripts.Helpers;
 using ValheimVehicles.SharedScripts.Structs;
 #if VALHEIM
@@ -114,6 +115,8 @@ namespace ValheimVehicles.SharedScripts
         { CannonDirectionGroup.Back, 0f },
         { CannonDirectionGroup.Left, 0f }
       };
+    public float cannonGroupMinPitch = -35f;
+    public float cannonGroupMaxPitch = 35f;
 
     public IReadOnlyDictionary<CannonDirectionGroup, HashSet<CannonController>> ManualCannonGroups => _manualCannonGroups;
     public IReadOnlyDictionary<CannonDirectionGroup, float> ManualGroupTilt => _manualGroupTilt;
@@ -918,6 +921,132 @@ namespace ValheimVehicles.SharedScripts
       {
         LoggerProvider.LogDebugDebounced($"Error while updating auto cannon targets\n{e}");
       }
+    }
+
+  #region ManualCannonControls
+
+    private readonly Dictionary<CannonDirectionGroup, float> manualGroupTilt = new()
+    {
+      { CannonDirectionGroup.Forward, 15f },
+      { CannonDirectionGroup.Left, 15f },
+      { CannonDirectionGroup.Right, 15f },
+      { CannonDirectionGroup.Back, 15f }
+    };
+    public float tiltStep = 2f; // for scroll and DPad
+    public float tiltSpeed = 30f; // deg/sec for stick
+    public float holdToAdjustThreshold = 0.5f; // seconds
+    private static float _cachedCannonTiltLerp = 10f;
+    public CannonDirectionGroup lastManualGroup = CannonDirectionGroup.Forward;
+    private static readonly Vector3 Backward = -Vector3.forward;
+    private Vector3 _lastMoveDir = Vector3.zero;
+    private bool _lastBlock = false;
+    private float _lastStartBlockTime = 0f;
+    public static void UpdateCannonTiltSpeedLerp()
+    {
+#if VALHEIM
+      var tiltSpeed = PrefabConfig.CannonControlCenter_CannonTiltAdjustSpeed.Value;
+#else
+      var tiltSpeed = 0.5f;
+#endif
+      _cachedCannonTiltLerp = Time.fixedDeltaTime * Mathf.Lerp(5f, 50f, tiltSpeed);
+    }
+    public Action<CannonDirectionGroup>? OnCannonGroupChange;
+
+  #endregion
+
+    public void SetGroup(CannonDirectionGroup group)
+    {
+      if (lastManualGroup == group) return;
+      lastManualGroup = group;
+      OnCannonGroupChange?.Invoke(group);
+    }
+
+    public CannonDirectionGroup GetNextGroup(int dir)
+    {
+      return dir switch
+      {
+        -1 => lastManualGroup switch
+        {
+          CannonDirectionGroup.Forward => CannonDirectionGroup.Right,
+          CannonDirectionGroup.Back => CannonDirectionGroup.Forward,
+          CannonDirectionGroup.Left => CannonDirectionGroup.Back,
+          CannonDirectionGroup.Right => CannonDirectionGroup.Left,
+          _ => throw new ArgumentOutOfRangeException()
+        },
+        1 => lastManualGroup switch
+        {
+          CannonDirectionGroup.Forward => CannonDirectionGroup.Back,
+          CannonDirectionGroup.Back => CannonDirectionGroup.Left,
+          CannonDirectionGroup.Left => CannonDirectionGroup.Right,
+          CannonDirectionGroup.Right => CannonDirectionGroup.Forward,
+          _ => throw new ArgumentOutOfRangeException()
+        },
+        _ => throw new Exception("Invalid dir. Must be -1 or 1")
+      };
+    }
+
+    /// <summary>
+    /// returning false will allow wheels to control direction.
+    /// Returning true will prevent vehicle wheel from using navigation updates
+    /// </summary>
+    public bool HandleManualCannonControls(Vector3 moveDir, Vector3 lookDir, bool run, bool autoRun, bool block)
+    {
+      // fire when not blocking but timer expired
+      if (!block && _lastStartBlockTime > Time.fixedTime)
+      {
+        Request_ManualFireCannonGroup(lastManualGroup);
+        _lastStartBlockTime = -1;
+        _lastBlock = block;
+        return true;
+      }
+
+      if (block && !_lastBlock)
+      {
+        _lastStartBlockTime = Time.fixedTime + holdToAdjustThreshold;
+      }
+
+      if (!block)
+      {
+        _lastBlock = block;
+        return false;
+      }
+
+      if (moveDir == Vector3.forward)
+      {
+        AdjustManualGroupTilt(lastManualGroup, +tiltStep * _cachedCannonTiltLerp);
+      }
+      else if (moveDir == Backward)
+      {
+        AdjustManualGroupTilt(lastManualGroup, -tiltStep * _cachedCannonTiltLerp);
+      }
+
+      // do not allow spam swapping cannon without input pause.
+      if (_lastMoveDir != moveDir)
+      {
+        if (moveDir == Vector3.left)
+        {
+          SetGroup(GetNextGroup(-1));
+        }
+        else if (moveDir == Vector3.right)
+        {
+          SetGroup(GetNextGroup(1));
+        }
+      }
+
+      _lastBlock = block;
+      _lastMoveDir = moveDir;
+
+      return true;
+    }
+
+    public void AdjustManualGroupTilt(CannonDirectionGroup group, float tiltDelta)
+    {
+      manualGroupTilt[group] = Mathf.Clamp(
+        manualGroupTilt[group] + tiltDelta,
+        cannonGroupMinPitch, cannonGroupMaxPitch
+      );
+      SetManualGroupTilt(group, manualGroupTilt[group]);
+      ScheduleGroupCannonSync(group);
     }
 
     public void StartAutoFiring(List<CannonFireData> cannonFireDataList)

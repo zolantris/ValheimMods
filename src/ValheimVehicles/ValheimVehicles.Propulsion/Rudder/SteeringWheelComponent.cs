@@ -279,12 +279,14 @@ public class SteeringWheelComponent : MonoBehaviour, IAnimatorHandler, Hoverable
   public void ApplyControlls(Vector3 moveDir, Vector3 lookDir, bool run,
     bool autoRun, bool block)
   {
-    if (ControllersInstance.Manager == null || ControllersInstance.Manager.MovementController == null)
+    if (ControllersInstance.PiecesController == null || ControllersInstance.Manager == null || ControllersInstance.Manager.MovementController == null)
     {
       return;
     }
 
-    ControllersInstance?.Manager.MovementController.ApplyControls(moveDir);
+    if (ControllersInstance.PiecesController.targetController.HandleManualCannonControls(moveDir, lookDir, run, autoRun, block))
+      return;
+    ControllersInstance.Manager.MovementController.ApplyControls(moveDir);
   }
 
   public Component? GetControlledComponent()

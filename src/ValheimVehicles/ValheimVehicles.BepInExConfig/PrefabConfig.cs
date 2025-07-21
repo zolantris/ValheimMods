@@ -11,6 +11,7 @@ using ValheimVehicles.Prefabs.ValheimVehicles.Prefabs.Registry;
 using ValheimVehicles.SharedScripts;
 using ValheimVehicles.SharedScripts.PowerSystem;
 using ValheimVehicles.Storage.Serialization;
+using ValheimVehicles.ValheimVehicles.Components;
 using Zolantris.Shared;
 
 namespace ValheimVehicles.BepInExConfig;
@@ -59,6 +60,7 @@ public class PrefabConfig : BepInExBaseConfig<PrefabConfig>
 
   // cannon control center
   public static ConfigEntry<float> CannonControlCenter_DiscoveryRadius { get; set; } = null!;
+  public static ConfigEntry<float> CannonControlCenter_CannonTiltAdjustSpeed = null!;
 
   // left right rotation.
   public static ConfigEntry<float> CannonHandheld_AimYRotationMax { get; set; } = null!;
@@ -339,6 +341,14 @@ public class PrefabConfig : BepInExBaseConfig<PrefabConfig>
       TargetController.CannonControlCenterDiscoveryRadius = CannonControlCenter_DiscoveryRadius.Value;
     };
     TargetController.CannonControlCenterDiscoveryRadius = CannonControlCenter_DiscoveryRadius.Value;
+
+
+    CannonControlCenter_CannonTiltAdjustSpeed = config.BindUnique(CannonControlCenterSection, "CannonTiltAdjustSpeed", 0.5f, ConfigHelpers.CreateConfigDescription("Tilt adjust speed for the manual cannons while using the control center. This is a percentage 0% is 10x slower than 100%", true, false, new AcceptableValueRange<float>(0f, 1f)));
+    TargetController.UpdateCannonTiltSpeedLerp();
+    CannonControlCenter_CannonTiltAdjustSpeed.SettingChanged += (sender, args) =>
+    {
+      TargetController.UpdateCannonTiltSpeedLerp();
+    };
 
 
     CannonHandheld_AimYRotationMax = config.BindUnique(VehicleCannonsSection, "CannonHandheld_AimYRotationMax", CannonHandHeldController.maxYaw, ConfigHelpers.CreateConfigDescription("Maximum Y, the  rotational a cannon can turn toward right. Too much will overlap player and look weird. But it would allow aiming left significantly more without needing to rotate body.", true, false, new AcceptableValueRange<float>(30f, 180f)));
