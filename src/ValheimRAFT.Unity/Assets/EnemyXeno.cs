@@ -55,7 +55,7 @@ namespace ValheimVehicles.SharedScripts
         { 
             // find these easily with Gameobject -> Copy FullTransformPath from root.
             // You may need to adjust these paths to match your actual bone names/hierarchy
-            xenoRoot = transform.Find("alien_xenos_drone_SK_Xenos_Drone_skeleton/XenosBiped_TrajectorySHJnt/XenosBiped_ROOTSHJnt");
+            xenoRoot = transform.Find("Xenomorph Default/alien_xenos_drone_SK_Xenos_Drone_skeleton/XenosBiped_TrajectorySHJnt/XenosBiped_ROOTSHJnt");
             spine01 = xenoRoot.Find("XenosBiped_Spine_01SHJnt");
             spine02 = spine01.Find("XenosBiped_Spine_02SHJnt");
             spine03 = spine02.Find("XenosBiped_Spine_03SHJnt");
@@ -88,7 +88,7 @@ namespace ValheimVehicles.SharedScripts
 
         public void FixedUpdate()
         {
-            _rb.AddForceAtPosition(-Physics.gravity * GravityMultiplier, xenoRoot.transform.position);
+            // _rb.AddForceAtPosition(-Physics.gravity * GravityMultiplier, xenoRoot.transform.position);
         }
 
 
