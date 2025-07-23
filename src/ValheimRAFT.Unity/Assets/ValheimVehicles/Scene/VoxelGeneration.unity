@@ -225,8 +225,7 @@ GameObject:
   - component: {fileID: 310785787}
   - component: {fileID: 310785791}
   - component: {fileID: 310785790}
-  - component: {fileID: 310785789}
-  - component: {fileID: 310785788}
+  - component: {fileID: 310785792}
   m_Layer: 0
   m_Name: terrain-generation
   m_TagString: Untagged
@@ -249,40 +248,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &310785788
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 310785786}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4f122a9c7a5a4432927338b9686f7718, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  heightmapResolution: 129
-  terrainWorldSize: 128
-  maxHeight: 60
-  chunkSize: 16
-  terrainMaterial: {fileID: 2100000, guid: a25cdaf4f7d6a9a47be8f03ef6aee12b, type: 2}
-  cubeMaterial: {fileID: 7645760997826099049, guid: b6b4c26d01f9fe04c9c19aff719d54e4, type: 3}
-  fillerMaterial: {fileID: 8201614214622309535, guid: 867f95f407238a54eaac754b357f2ca5, type: 3}
---- !u!114 &310785789
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 310785786}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fb918380de7041d8b02efd2e46892a46, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  size: 16
-  fillerYOffset: 0
-  fillerMaterial: {fileID: 5763734741682273259, guid: b6b4c26d01f9fe04c9c19aff719d54e4, type: 3}
 --- !u!23 &310785790
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -333,6 +298,34 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 310785786}
   m_Mesh: {fileID: 0}
+--- !u!114 &310785792
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 310785786}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 675533d06f674625946d27fa4a233527, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  terrainConfig:
+    heightmapResolution: 129
+    terrainWorldSize: 64
+    maxHeight: 60
+    chunkSize: 16
+    worldSeed: 12345
+    generateUnityTerrain: 1
+    generateVoxelChunks: 1
+    generateSurfaceMesh: 1
+    canRegenerateOnChange: 1
+  activeRadius: 2
+  useBuildPositionOverride: 0
+  buildPositionOverride: {x: 0, y: 0, z: 0}
+  terrainMaterial: {fileID: -3661639628750336703, guid: d0d9200e8b1da1044ba7df4cc0bd31f6, type: 3}
+  cubeMaterial: {fileID: 8201614214622309535, guid: 867f95f407238a54eaac754b357f2ca5, type: 3}
+  fillerMaterial: {fileID: 8201614214622309535, guid: 867f95f407238a54eaac754b357f2ca5, type: 3}
 --- !u!1 &1356295818
 GameObject:
   m_ObjectHideFlags: 0

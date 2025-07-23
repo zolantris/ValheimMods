@@ -3,8 +3,10 @@
 
 #region
 
+using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 #endregion
 
@@ -34,44 +36,45 @@ namespace ValheimVehicles.SharedScripts
             Destroy(primitive);
         }
 
-        public void Generate(Vector3 worldOrigin, int chunkSize, float maxTerrainHeight)
+        public void GenerateFromHeights(float[,] heights, Vector3 chunkOrigin, int chunkSize, float maxHeight)
         {
+            // Read heights and generate voxel data (or mesh) accordingly.
+            // Only consider heights that fall within chunk bounds.
+        }
+
+        public void Generate(Vector3 chunkWorldOrigin, int chunkSize, float maxHeight, Func<Vector3, float> heightSampler)
+        {
+            int resolution = chunkSize; // 1:1 voxel per unit, adjust if needed
+            float voxelSize = 1f;
+
             _vertices.Clear();
             _triangles.Clear();
-            _fillerVertices.Clear();
-            _fillerTriangles.Clear();
 
             int index = 0;
 
-            for (int x = 0; x < chunkSize; x++)
-            for (int z = 0; z < chunkSize; z++)
+            for (int x = 0; x < resolution; x++)
+            for (int z = 0; z < resolution; z++)
             {
-                Vector3 worldXZ = worldOrigin + new Vector3(x + 0.5f, 0, z + 0.5f);
-                float terrainHeight = ZoneTerrainGenerator.SampleHeight(worldXZ);
+                Vector3 worldXZ = chunkWorldOrigin + new Vector3(x * voxelSize, 0f, z * voxelSize);
+                float height = heightSampler(worldXZ) * maxHeight; // <- Critical!
+                int voxelCount = Mathf.Max(1, Mathf.CeilToInt(height / voxelSize));
 
-                // Convert world Y height to local Y height
-                float localHeight = terrainHeight - worldOrigin.y;
-                int maxY = Mathf.FloorToInt(localHeight);
-                maxY = Mathf.Clamp(maxY, 0, chunkSize - 1);
-
-                for (int y = 0; y <= maxY; y++)
+                for (int y = 0; y < voxelCount; y++)
                 {
-                    Vector3 localVoxelPos = new Vector3(x, y, z);
-                    AddCube(localVoxelPos, ref index);
-
-                    // Add top filler quad slightly above each cube (for debug visualization)
-                    AddFillerQuad(new Vector3(x + 0.5f, y + 1f + fillerYOffset, z + 0.5f));
+                    Vector3 cubePos = new Vector3(x * voxelSize, y * voxelSize, z * voxelSize);
+                    AddCube(cubePos, ref index);
                 }
             }
 
-            _mesh.Clear();
-            _mesh.SetVertices(_vertices);
-            _mesh.SetTriangles(_triangles, 0);
-            _mesh.RecalculateNormals();
-            _meshFilter.sharedMesh = _mesh;
+            var mesh = new Mesh();
+            mesh.indexFormat = IndexFormat.UInt32;
+            mesh.SetVertices(_vertices);
+            mesh.SetTriangles(_triangles, 0);
+            mesh.RecalculateNormals();
 
-            CreateFillerMesh();
+            GetComponent<MeshFilter>().mesh = mesh;
         }
+
 
         private void AddCube(Vector3 offset, ref int index)
         {
