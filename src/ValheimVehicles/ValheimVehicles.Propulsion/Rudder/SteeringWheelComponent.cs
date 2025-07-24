@@ -10,6 +10,7 @@ using ValheimVehicles.Compat;
 using ValheimVehicles.BepInExConfig;
 using ValheimVehicles.Constants;
 using ValheimVehicles.Controllers;
+using ValheimVehicles.Helpers;
 using ValheimVehicles.Interfaces;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.SharedScripts;
@@ -21,7 +22,7 @@ using Logger = Jotunn.Logger;
 namespace ValheimVehicles.Propulsion.Rudder;
 
 public class SteeringWheelComponent : MonoBehaviour, IAnimatorHandler, Hoverable, Interactable,
-  IDoodadController
+  IDoodadController, INetView, 
 {
   private VehicleMovementController _controls;
   public VehicleMovementController? Controls => _controls;
@@ -61,6 +62,9 @@ public class SteeringWheelComponent : MonoBehaviour, IAnimatorHandler, Hoverable
   public Transform steeringWheelHoverTransform;
   public HoverFadeText steeringWheelHoverText;
 
+  public const string Key_ShowTutorial = "SteeringWheel_ShowTutorial";
+  public bool showTutorial = true;
+
   public string _cachedLocalizedWheelHoverText = "";
 
   /// <summary>
@@ -86,14 +90,11 @@ public class SteeringWheelComponent : MonoBehaviour, IAnimatorHandler, Hoverable
       $"{anchoredStatus}\n[<color=yellow><b>{anchorKeyString}</b></color>] <color=white>{anchorText}</color>";
   }
 
-  /// <summary>
-  /// Gets the hover text info for wheel
-  /// </summary>
-  public static string GetHoverTextFromShip(float sailArea, float totalMass,
+  public static string TryGetShipStats(float sailArea, float totalMass,
     float shipMass, float shipPropulsion, bool isAnchored,
-    string anchorKeyString)
+    string anchorKeyString, out string shipStatsText)
   {
-    var shipStatsText = "";
+    shipStatsText = "";
     if (PropulsionConfig.ShowShipStats.Value)
     {
       var shipMassToPush =
@@ -111,11 +112,36 @@ public class SteeringWheelComponent : MonoBehaviour, IAnimatorHandler, Hoverable
       /* final formatting */
       shipStatsText = $"<color=white>{shipStatsText}</color>";
     }
+  }
 
+  /// <summary>
+  /// Gets the hover text info for wheel
+  /// </summary>
+  public static string GetHoverTextFromShip(float sailArea, float totalMass,
+    float shipMass, float shipPropulsion, bool isAnchored,
+    string anchorKeyString)
+  {
     var anchorMessage = GetAnchorMessage(isAnchored, anchorKeyString);
+    var message = anchorMessage;
+
+    if (TryGetShipStats(piecesController.cachedTotalSailArea,
+          piecesController.TotalMass,
+          piecesController.ShipMass, piecesController.GetSailingForce(),
+          isAnchored,
+          anchorKeyString, out var statsMessage))
+    {
+      message += $"\n{statsMessage}";
+    }
+
+    if (showTutorial)
+    {
+      message += $"\n{Key_ShowTutorial}";
+    }
+
+    var blah = $"{ModTranslations.WithBoldText(ModTranslations.ValheimInput_KeyUse, 'yellow')}{ModTranslations.WithBoldText(ModTranslations.Anchor_WheelUse_UseText, 'white')}"
 
     return
-      $"[<color=yellow><b>{ModTranslations.ValheimInput_KeyUse}</b></color>]<color=white><b>{ModTranslations.Anchor_WheelUse_UseText}</b></color>\n{anchorMessage}\n{shipStatsText}";
+      $"\n{message}";
   }
 
 
@@ -188,6 +214,14 @@ public class SteeringWheelComponent : MonoBehaviour, IAnimatorHandler, Hoverable
 
   private void Awake()
   {
+    m_nview = GetComponent<ZNetView>();
+    if (!m_nview)
+    {
+      this.WaitForZNetView((nv) =>
+      {
+        m_nview = nv;
+      });
+    }
     AttachPoint = transform.Find("attachpoint");
     wheelTransform = transform.Find("controls/wheel");
     wheelLocalOffset = wheelTransform.position - transform.position;
@@ -218,9 +252,30 @@ public class SteeringWheelComponent : MonoBehaviour, IAnimatorHandler, Hoverable
       ControllersInstance.MovementController.lastUsedWheelComponent = this;
   }
 
+  public float lastToggleTime = 0f;
+
+  public void ToggleTutorial()
+  {
+    if (!this.IsNetViewValid(out var nv)) return;
+    if (Time.time < lastToggleTime + 1)
+      return;
+
+    var zdo = nv.GetZDO();
+    var nextValue = !showTutorial;
+    zdo.Set(Key_ShowTutorial, nextValue);
+    showTutorial = nextValue;
+  }
+
   public bool Interact(Humanoid user, bool hold, bool alt)
   {
     if (!isActiveAndEnabled) return false;
+    if (ControllersInstance.MovementController == null || ControllersInstance.OnboardController == null) return false;
+
+    if (alt && !hold)
+    {
+      ToggleTutorial();
+      return true;
+    }
 
     var canUse = InUseDistance(user);
 
@@ -248,7 +303,7 @@ public class SteeringWheelComponent : MonoBehaviour, IAnimatorHandler, Hoverable
     if (playerOnShipViaShipInstance?.Length == 0 ||
         playerOnShipViaShipInstance == null)
       playerOnShipViaShipInstance =
-        ControllersInstance?.Manager?.OnboardController?.m_localPlayers.ToArray() ??
+        ControllersInstance?.OnboardController?.m_localPlayers.ToArray() ??
         null;
 
     /*
@@ -261,6 +316,7 @@ public class SteeringWheelComponent : MonoBehaviour, IAnimatorHandler, Hoverable
         Logger.LogDebug(
           $"Interact PlayerId {playerInstance.GetPlayerID()}, currentPlayerId: {player.GetPlayerID()}");
         if (playerInstance.GetPlayerID() != player.GetPlayerID()) continue;
+        if (ControllersInstance == null || ControllersInstance.MovementController) continue;
         ControllersInstance?.Manager?.MovementController?.SendRequestControl(
           playerInstance.GetPlayerID());
         return true;
@@ -482,5 +538,10 @@ public class SteeringWheelComponent : MonoBehaviour, IAnimatorHandler, Hoverable
     if (AttachPoint == null) return false;
     return Vector3.Distance(human.transform.position, AttachPoint.position) <
            maxUseRange;
+  }
+  public ZNetView? m_nview
+  {
+    get;
+    set;
   }
 }

@@ -151,6 +151,8 @@ public partial class ModTranslations
     CannonGroup_Backward = SafeLocalize("$valheim_vehicles_cannon_control_center_select_group_backward");
     CannonGroup_Left = SafeLocalize("$valheim_vehicles_cannon_control_center_select_group_left");
     CannonGroup_Right = SafeLocalize("$valheim_vehicles_cannon_control_center_select_group_right");
+
+    Cannon_TutorialShort = SafeLocalize(WithBoldText("$valheim_vehicles_cannon_controls_tutorial_short"));
   }
 
   private static void UpdateVehicleConfigTranslations()

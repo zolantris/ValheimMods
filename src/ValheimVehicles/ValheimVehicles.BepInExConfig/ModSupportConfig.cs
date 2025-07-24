@@ -7,7 +7,7 @@ namespace ValheimVehicles.BepInExConfig;
 
 public class ModSupportConfig : BepInExBaseConfig<ModSupportConfig>
 {
-  public static ConfigEntry<bool> DynamicLocationsShouldSkipMovingPlayerToBed =
+  public static ConfigEntry<bool> DynamicLocationLoginMovesPlayerToBed =
     null!;
   public static ConfigEntry<bool> DebugRemoveStartMenuBackground { get; set; }
 
@@ -30,7 +30,7 @@ public class ModSupportConfig : BepInExBaseConfig<ModSupportConfig>
         false, false));
 
 
-    DynamicLocationsShouldSkipMovingPlayerToBed = config.BindUnique(
+    DynamicLocationLoginMovesPlayerToBed = config.BindUnique(
       ModSupportDynamicLocationsKey,
       "DynamicLocationLoginMovesPlayerToBed",
       true,

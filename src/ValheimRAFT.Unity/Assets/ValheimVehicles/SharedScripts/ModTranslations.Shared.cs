@@ -119,6 +119,7 @@ namespace ValheimVehicles.SharedScripts
     // generic/shared-keys
     public static string SharedKeys_Owner = null!;
     public static string SharedKeys_Hold = null!;
+    public static string SharedKeys_Block = null!;
     public static string SharedKeys_Reset = null!;
     public static string SharedKeys_AddMany = null!;
     public static string SharedKeys_InteractAlt = null!;
@@ -129,6 +130,8 @@ namespace ValheimVehicles.SharedScripts
     public static string CannonGroup_Backward = null!;
     public static string CannonGroup_Left = null!;
     public static string CannonGroup_Right = null!;
+
+    public static string Cannon_TutorialShort = null!;
 
     // vehicle config
     public static string VehicleConfig_Beached = null!;

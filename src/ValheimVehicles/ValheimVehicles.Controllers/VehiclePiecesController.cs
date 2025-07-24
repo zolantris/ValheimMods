@@ -26,6 +26,7 @@
   using ValheimVehicles.SharedScripts.Enums;
   using ValheimVehicles.SharedScripts.Helpers;
   using ValheimVehicles.Structs;
+  using ValheimVehicles.ValheimVehicles.Components;
   using ZdoWatcher;
   using ZdoWatcher.ZdoWatcher.Utils;
   using static ValheimVehicles.Propulsion.Sail.SailAreaForce;
@@ -373,11 +374,9 @@
       // must be called before base.awake()
       SetupJobHandlerOnZNetScene();
 
-      targetController = gameObject.AddComponent<TargetController>();
-      targetController.targetingMode = TargetController.TargetingMode.DefendPlayer;
-      targetController.autoFire = true;
-
       base.Awake();
+
+      AddTargetController();
 
       if (vehicleCenter == null)
       {
@@ -414,6 +413,13 @@
       _movingPiecesContainerTransform = CreateMovingPiecesContainer();
       m_localRigidbody = _piecesContainerTransform.GetComponent<Rigidbody>();
       InitializationTimer.Start();
+    }
+
+    public void AddTargetController()
+    {
+      targetController = gameObject.AddComponent<TargetController>();
+      targetController.targetingMode = TargetController.TargetingMode.DefendPlayer;
+      targetController.autoFire = true;
     }
 
 
@@ -561,13 +567,16 @@
             LoggerProvider.LogDev("Detected VehicleManager, setting parent to PiecesController.Manager");
             vehicleManager.MovementController.OnParentReady(PiecesController.Manager);
             break;
+          case TargetControlsInteractive prefabTargetControls:
+            prefabTargetControls.targetController = targetController;
+          case TargetController prefabTargetController:
+            Destroy(prefabTargetController);
           case CannonController cannonController:
             LoggerProvider.LogDebug("adding cannon to target controller");
             cannonController.AmmoVariant = AmmoVariantDefault;
             cannonController.maxAmmo = 50;
             targetController.AddCannon(cannonController);
             cannonController.AddIgnoredTransforms([transform, Manager!.transform]);
-            ;
             break;
           case SwivelComponentBridge swivelController:
             InitSwivelController(swivelController);

@@ -1,4 +1,5 @@
-﻿using BepInEx;
+﻿using System;
+using BepInEx;
 using BepInEx.Configuration;
 using Jotunn.Managers;
 using Jotunn.Utils;
@@ -264,28 +265,35 @@ public class ValheimRaftPlugin : BaseUnityPlugin
 
   private void LoadCustomTextures()
   {
-    var sails = CustomTextureGroup.Load("Sails");
-    foreach (var texture3 in sails.Textures)
+    try
     {
-      texture3.Texture.wrapMode = TextureWrapMode.Clamp;
-      if ((bool)texture3.Normal)
-        texture3.Normal.wrapMode = TextureWrapMode.Clamp;
-    }
+      var sails = CustomTextureGroup.Load("Sails");
+      foreach (var texture3 in sails.Textures)
+      {
+        texture3.Texture.wrapMode = TextureWrapMode.Clamp;
+        if ((bool)texture3.Normal)
+          texture3.Normal.wrapMode = TextureWrapMode.Clamp;
+      }
 
-    var patterns = CustomTextureGroup.Load("Patterns");
-    foreach (var texture2 in patterns.Textures)
-    {
-      texture2.Texture.filterMode = FilterMode.Point;
-      texture2.Texture.wrapMode = TextureWrapMode.Repeat;
-      if ((bool)texture2.Normal)
-        texture2.Normal.wrapMode = TextureWrapMode.Repeat;
-    }
+      var patterns = CustomTextureGroup.Load("Patterns");
+      foreach (var texture2 in patterns.Textures)
+      {
+        texture2.Texture.filterMode = FilterMode.Point;
+        texture2.Texture.wrapMode = TextureWrapMode.Repeat;
+        if ((bool)texture2.Normal)
+          texture2.Normal.wrapMode = TextureWrapMode.Repeat;
+      }
 
-    var logos = CustomTextureGroup.Load("Logos");
-    foreach (var texture in logos.Textures)
+      var logos = CustomTextureGroup.Load("Logos");
+      foreach (var texture in logos.Textures)
+      {
+        texture.Texture.wrapMode = TextureWrapMode.Clamp;
+        if ((bool)texture.Normal) texture.Normal.wrapMode = TextureWrapMode.Clamp;
+      }
+    }
+    catch (Exception e)
     {
-      texture.Texture.wrapMode = TextureWrapMode.Clamp;
-      if ((bool)texture.Normal) texture.Normal.wrapMode = TextureWrapMode.Clamp;
+      LoggerProvider.LogWarning($"Problem occurred when loading custom textures from the mod's Asset folder. Please ensure this folder exists. \n{e}");
     }
   }
 
