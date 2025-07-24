@@ -8,8 +8,10 @@ using System.Linq;
 using UnityEngine;
 using ValheimVehicles.Compat;
 using ValheimVehicles.BepInExConfig;
+using ValheimVehicles.Components;
 using ValheimVehicles.Constants;
 using ValheimVehicles.Controllers;
+using ValheimVehicles.Enums;
 using ValheimVehicles.Helpers;
 using ValheimVehicles.Interfaces;
 using ValheimVehicles.Prefabs;
@@ -130,8 +132,28 @@ public class SteeringWheelComponent : MonoBehaviour, IAnimatorHandler, Hoverable
 
     var interactMessage = $"{ModTranslations.SharedKeys_InteractPrimary} {ModTranslations.WithBoldText(ModTranslations.Anchor_WheelUse_UseText, "white")}";
 
-    interactMessage += $"\n{anchorMessage}anchorMessage";
-    interactMessage += $"\n{ModTranslations.WheelControls_FlightActivation}";
+    var variant = ControllersInstance.Manager.vehicleVariant;
+
+    // todo move these to booleans in VehicleManager static.
+    var isFlightCapable = VehicleManager.IsFlightCapable(variant);
+    var isBallastCapable = VehicleManager.IsBallastCapable(variant);
+
+    interactMessage += $"\n{anchorMessage}";
+
+    if (isFlightCapable || isBallastCapable)
+    {
+      interactMessage += "\n--------";
+    }
+
+    // propulsion messages
+    if (isFlightCapable)
+    {
+      interactMessage += $"\n{ModTranslations.WheelControls_FlightActivation}";
+    }
+    if (isBallastCapable)
+    {
+      interactMessage += $"\n{ModTranslations.WheelControls_BallastActivation}";
+    }
 
     var additionalMessages = "";
 
@@ -143,7 +165,11 @@ public class SteeringWheelComponent : MonoBehaviour, IAnimatorHandler, Hoverable
     if (showTutorial)
     {
       additionalMessages += $"\n{ModTranslations.Cannon_TutorialShort}";
-      additionalMessages += $"\n{ModTranslations.WheelControls_TutorialFlight}";
+
+      if (variant == VehicleVariant.All || variant == VehicleVariant.Air)
+      {
+        additionalMessages += $"\n{ModTranslations.WheelControls_TutorialFlight}";
+      }
     }
 
     if (TryGetShipStats(out var statsMessage))
@@ -151,7 +177,7 @@ public class SteeringWheelComponent : MonoBehaviour, IAnimatorHandler, Hoverable
       additionalMessages += $"\n{statsMessage}";
     }
 
-    var tutorialToggleMessage = $"{ModTranslations.SharedKeys_InteractAlt}{ModTranslations.WithBoldText(ModTranslations.SharedKeys_Tutorial, "white")}";
+    var tutorialToggleMessage = $"{ModTranslations.SharedKeys_InteractAlt} {ModTranslations.WithBoldText(ModTranslations.SharedKeys_Tutorial, "white")}";
 
     return
       $"{interactMessage}\n{tutorialToggleMessage}\n{additionalMessages}";

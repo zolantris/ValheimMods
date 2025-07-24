@@ -3796,10 +3796,14 @@
     public static void RemoveAllShipControls(
       VehicleMovementController? vehicleMovementController)
     {
-      if (vehicleMovementController == null) return;
-      foreach (var mPlayer in vehicleMovementController.OnboardController
-                 .m_localPlayers)
+      if (vehicleMovementController == null || vehicleMovementController.OnboardController == null) return;
+      var players = vehicleMovementController.OnboardController.GetLocalPlayersSafe();
+
+      foreach (var mPlayer in players)
+      {
         mPlayer.m_doodadController = null;
+        VehicleOnboardController.AddOrRemovePlayerBlockingCameraWhileControlling(mPlayer, false);
+      }
     }
 
     public void InitializeWheelWithShip(
@@ -4485,9 +4489,12 @@
 
       EjectPreviousPlayerFromControls(previousPlayer);
 
+
       UpdatePlayerOnShip(targetPlayer);
       UpdateVehicleSpeedThrottle();
-      VehicleOnboardController.AddOrRemovePlayerBlockingCamera(targetPlayer);
+
+      // allows looking through ship while controlling vehicle.
+      VehicleOnboardController.AddOrRemovePlayerBlockingCameraWhileControlling(targetPlayer, true);
 
       if (PiecesController)
       {
@@ -4536,6 +4543,7 @@
     private void EjectPreviousPlayerFromControls(Player? player)
     {
       if (player == null) return;
+      VehicleOnboardController.AddOrRemovePlayerBlockingCameraWhileControlling(player, false);
 
       player.m_doodadController = null;
       player.AttachStop();

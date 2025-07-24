@@ -221,7 +221,6 @@ public class VehicleCommands : ConsoleCommand
     public Vector3 lastLocalOffset;
     public Character character;
     public bool isDebugFlying;
-    public bool isKinematic;
   }
 
   public struct SafeMoveData
@@ -256,14 +255,10 @@ public class VehicleCommands : ConsoleCommand
       foreach (var character in charactersOnShip)
       {
         var isDebugFlying = character.IsDebugFlying();
-        var isKinematic = character.m_body.isKinematic;
-
         if (character.transform.parent)
         {
           character.transform.SetParent(null);
         }
-
-        if (!isKinematic && !isDebugFlying) character.m_body.isKinematic = true;
 
         var lastLocalOffset = vehicleOnboardController.PiecesController.transform.InverseTransformPoint(character.transform.position);
 
@@ -277,16 +272,15 @@ public class VehicleCommands : ConsoleCommand
         {
           character = character,
           isDebugFlying = isDebugFlying,
-          lastLocalOffset = lastLocalOffset,
-          isKinematic = isKinematic
+          lastLocalOffset = lastLocalOffset
         });
       }
 
     var wasDebugFlying = false;
+
     if (Player.m_localPlayer)
     {
       wasDebugFlying = Player.m_localPlayer.IsDebugFlying();
-      if (!wasDebugFlying) Player.m_localPlayer.m_body.isKinematic = true;
     }
 
     return new SafeMoveData
@@ -437,8 +431,6 @@ public class VehicleCommands : ConsoleCommand
               playerData.lastLocalOffset;
           }
         }
-
-        playerData.character.m_body.isKinematic = playerData.isKinematic;
 
         ResetPlayerVelocities(playerData.character);
       }
@@ -1058,6 +1050,45 @@ public class VehicleCommands : ConsoleCommand
   public static float rotationLerp = 1f;
   public static float positionLerp = 1f;
 
+  private static void SafeSyncSafeMovePlayerData(VehicleManager vehicleManager, SafeMoveData? safeMoveData)
+  {
+    if (!safeMoveData.HasValue) return;
+    var MovementController = vehicleManager.MovementController;
+    var PiecesController = vehicleManager.PiecesController;
+    if (MovementController == null || PiecesController == null) return;
+    foreach (var safeMoveCharacterData in safeMoveData.Value.charactersOnShip)
+    {
+      if (!safeMoveCharacterData.character) continue;
+      if (!safeMoveCharacterData.character.m_nview.IsValid()) continue;
+
+      var rb = safeMoveCharacterData.character.m_body;
+      var localPosition = MovementController.m_body.position + safeMoveCharacterData.lastLocalOffset;
+      if (rb.isKinematic)
+      {
+        rb.isKinematic = false;
+      }
+      else
+      {
+        rb.position = localPosition;
+        rb.velocity = Vector3.zero;
+        rb.angularVelocity = Vector3.zero;
+      }
+
+      rb.velocity = Vector3.zero;
+      rb.angularVelocity = Vector3.zero;
+      safeMoveCharacterData.character.m_nview.GetZDO()?.SetPosition(localPosition);
+      safeMoveCharacterData.character.SyncVelocity();
+
+      var colliders = safeMoveCharacterData.character.GetComponentsInChildren<Collider>();
+      foreach (var collider in colliders)
+      foreach (var collider1 in PiecesController.vehicleCollidersToIgnore)
+      {
+        if (!collider || !collider1) continue;
+        Physics.IgnoreCollision(collider, collider1, true);
+      }
+    }
+  }
+
   /// <summary>
   /// Safer way to move vehicle. This will keep players in vehicle as it animates to the position.
   /// </summary>
@@ -1082,38 +1113,13 @@ public class VehicleCommands : ConsoleCommand
 
       if (!isNearby)
       {
-        if (safeMoveData is
-            {
-              charactersOnShip.Count: > 0
-            })
-        {
-          foreach (var safeMoveCharacterData in safeMoveData.Value.charactersOnShip)
-          {
-            if (!safeMoveCharacterData.character) continue;
-            var rb = safeMoveCharacterData.character.m_body;
-            var localPosition = movementController.m_body.position + safeMoveCharacterData.lastLocalOffset;
-            if (rb.isKinematic)
-            {
-              rb.MovePosition(localPosition);
-            }
-            else
-            {
-              rb.position = localPosition;
-              rb.velocity = Vector3.zero;
-              rb.angularVelocity = Vector3.zero;
-            }
-            rb.isKinematic = false;
-            rb.velocity = Vector3.zero;
-            rb.angularVelocity = Vector3.zero;
-            safeMoveCharacterData.character.m_nview.GetZDO().SetPosition(localPosition);
-            safeMoveCharacterData.character.SyncVelocity();
-          }
-        }
+        SafeSyncSafeMovePlayerData(vehicleInstance, safeMoveData);
+        var lerpTimePos = currentDistance < 0.5f ? 0.15f : Time.deltaTime * positionLerp;
+        var lerpTimeRot = IsQuaternionNear(movementController.m_body.rotation, Quaternion.identity, 5f) ? 0.15f : Time.deltaTime * rotationLerp;
 
-        var lerpTimePos = currentDistance < 0.5f ? 0.5f : Time.deltaTime * positionLerp;
-        var lerpTimeRot = IsQuaternionNear(movementController.m_body.rotation, Quaternion.identity, 5f) ? 0.5f : Time.deltaTime * rotationLerp;
         var lerpPosition = Vector3.Lerp(movementController.m_body.position, newPosition, lerpTimePos);
         var lerpRotation = Quaternion.Lerp(movementController.m_body.rotation, Quaternion.identity, lerpTimeRot);
+
         movementController.m_body.Move(lerpPosition, lerpRotation);
         movementController.zsyncTransform.SyncNow();
         yield return null;
@@ -1132,42 +1138,7 @@ public class VehicleCommands : ConsoleCommand
     }
 
     yield return null;
-
-    if (safeMoveData.HasValue)
-    {
-      foreach (var safeMoveCharacterData in safeMoveData.Value.charactersOnShip)
-      {
-        if (!safeMoveCharacterData.character) continue;
-        var rb = safeMoveCharacterData.character.m_body;
-        var localPosition = movementController.m_body.position + safeMoveCharacterData.lastLocalOffset;
-        if (rb.isKinematic)
-        {
-          rb.MovePosition(localPosition);
-        }
-        else
-        {
-          rb.position = localPosition;
-          rb.velocity = Vector3.zero;
-          rb.angularVelocity = Vector3.zero;
-        }
-        rb.isKinematic = false;
-        rb.velocity = Vector3.zero;
-        rb.angularVelocity = Vector3.zero;
-        safeMoveCharacterData.character.m_nview.GetZDO().SetPosition(localPosition);
-        safeMoveCharacterData.character.SyncVelocity();
-
-        vehicleInstance.GetComponentsInChildren(vehicleInstance.PiecesController.vehicleCollidersToIgnore);
-
-        var colliders = safeMoveCharacterData.character.GetComponentsInChildren<Collider>();
-        foreach (var collider in colliders)
-        foreach (var collider1 in vehicleInstance.PiecesController.vehicleCollidersToIgnore)
-        {
-          if (!collider || !collider1) continue;
-          Physics.IgnoreCollision(collider, collider1, true);
-        }
-      }
-    }
-
+    SafeSyncSafeMovePlayerData(vehicleInstance, safeMoveData);
 
     yield return null;
   }

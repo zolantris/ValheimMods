@@ -57,6 +57,12 @@
 
     private Rigidbody onboardRigidbody;
 
+    public List<Player> GetLocalPlayersSafe()
+    {
+      m_localPlayers.RemoveAll(x => x == null);
+      return m_localPlayers;
+    }
+
     private void Awake()
     {
       OnboardController = this;
@@ -512,14 +518,21 @@
     /// <summary>
     /// Restores the blocking behavior if this mod is controlling / unblocking camera
     /// </summary>
-    /// <param name="player"></param>
-    public static void RestorePlayerBlockingCamera(Player player)
+    public static void RestorePlayerBlockingCamera(Player player, bool canBypass = false)
     {
-      if (!PhysicsConfig.removeCameraCollisionWithObjectsOnBoat.Value) return;
+      if (!canBypass && !PhysicsConfig.removeCameraCollisionWithObjectsOnBoat.Value) return;
       if (Player.m_localPlayer == player && GameCamera.instance != null &&
           GameCamera.instance.m_blockCameraMask == 0)
         GameCamera.instance.m_blockCameraMask =
           GameCamera_WaterPatches.BlockingWaterMask;
+    }
+
+    public static void AddOrRemovePlayerBlockingCameraWhileControlling(Player player, bool isControlling)
+    {
+      if (isControlling)
+        RemovePlayerBlockingCameraWhileOnboard(player, true);
+      else
+        RestorePlayerBlockingCamera(player, true);
     }
 
     public static void AddOrRemovePlayerBlockingCamera(Player player)
@@ -534,10 +547,9 @@
     /// Prevents jitters. Likely most people will want this feature enabled especially for complicated boats.
     /// </summary>
     /// Does not remove changes if the feature is disabled. Players will need to reload. This prevents breaking other mods that might mess with camera.
-    /// <param name="player"></param>
-    public static void RemovePlayerBlockingCameraWhileOnboard(Player player)
+    public static void RemovePlayerBlockingCameraWhileOnboard(Player player, bool canBypass = false)
     {
-      if (!PhysicsConfig.removeCameraCollisionWithObjectsOnBoat.Value) return;
+      if (!canBypass && !PhysicsConfig.removeCameraCollisionWithObjectsOnBoat.Value) return;
       if (Player.m_localPlayer == player && GameCamera.instance != null &&
           GameCamera.instance.m_blockCameraMask != 0)
         GameCamera.instance.m_blockCameraMask = 0;

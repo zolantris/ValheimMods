@@ -178,6 +178,7 @@ public partial class ModTranslations
     WheelControls_Name = SafeLocalize("$valheim_vehicles_wheel");
     WheelControls_Error = SafeLocalize("<color=white><b>$valheim_vehicles_wheel_use_error</b></color>");
     WheelControls_FlightActivation = SafeLocalize($"{SharedKeys_Hold} {WithBoldText("Jump", "yellow")} $valheim_vehicles_wheel_flight_controls");
+    WheelControls_BallastActivation = SafeLocalize($"{SharedKeys_Hold} [{WithBoldText("Jump", "yellow")}] [{WithBoldText("Crouch", "yellow")}] $valheim_vehicles_wheel_ballast_controls");
     WheelControls_TutorialFlight = SafeLocalize("$valheim_vehicles_wheel_tutorial_flight");
   }
 
@@ -189,7 +190,7 @@ public partial class ModTranslations
     SharedKeys_AddMany = SafeLocalize("$valheim_vehicles_mechanism_interact_add_many");
 
     SharedKeys_InteractPrimary = SafeLocalize($"[<color=yellow><b>{ValheimInput_KeyUse}</b></color>]");
-    SharedKeys_InteractAlt = SafeLocalize($"[<color=yellow><b>{ValheimInput_KeyAltPlace}+{ValheimInput_KeyUse}</b></color>]");
+    SharedKeys_InteractAlt = SafeLocalize($"[<color=yellow><b>{ValheimInput_KeyAltPlace} + {ValheimInput_KeyUse}</b></color>]");
     SharedKeys_Tutorial = SafeLocalize("$valheim_vehicles_shared_keys_tutorial");
   }
 

@@ -135,6 +135,7 @@ namespace ValheimVehicles.SharedScripts
 
     public static string WheelControls_TutorialFlight = null!;
     public static string WheelControls_FlightActivation = null!;
+    public static string WheelControls_BallastActivation = null!;
 
     // vehicle config
     public static string VehicleConfig_Beached = null!;
