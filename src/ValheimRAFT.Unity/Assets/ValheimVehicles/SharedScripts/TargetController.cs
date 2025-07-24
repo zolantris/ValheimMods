@@ -6,13 +6,13 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using UnityEngine;
-using ValheimVehicles.BepInExConfig;
 using ValheimVehicles.SharedScripts.Helpers;
 using ValheimVehicles.SharedScripts.Structs;
 #if VALHEIM
+using System.Diagnostics;
+using ValheimVehicles.BepInExConfig;
 using ValheimVehicles.Components;
 using ValheimVehicles.Controllers;
 using ValheimVehicles.RPC;
@@ -940,8 +940,8 @@ namespace ValheimVehicles.SharedScripts
     public CannonDirectionGroup lastManualGroup = CannonDirectionGroup.Forward;
     private static readonly Vector3 Backward = -Vector3.forward;
     private Vector3 _lastMoveDir = Vector3.zero;
-    private bool _lastBlock = false;
-    private float _lastStartBlockTime = 0f;
+    private bool _lastBlock;
+    private float _lastStartBlockTime;
     public static void UpdateCannonTiltSpeedLerp()
     {
 #if VALHEIM
@@ -995,7 +995,9 @@ namespace ValheimVehicles.SharedScripts
       // fire when not blocking but timer expired
       if (!block && _lastStartBlockTime > Time.fixedTime)
       {
+#if VALHEIM
         Request_ManualFireCannonGroup(lastManualGroup);
+#endif
         _lastStartBlockTime = -1;
         _lastBlock = block;
         return true;
@@ -1047,7 +1049,9 @@ namespace ValheimVehicles.SharedScripts
         cannonGroupMinPitch, cannonGroupMaxPitch
       );
       SetManualGroupTilt(group, manualGroupTilt[group]);
+#if VALHEIM
       ScheduleGroupCannonSync(group);
+#endif
     }
 
     public void StartAutoFiring(List<CannonFireData> cannonFireDataList)
