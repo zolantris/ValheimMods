@@ -22,7 +22,7 @@ using Logger = Jotunn.Logger;
 namespace ValheimVehicles.Propulsion.Rudder;
 
 public class SteeringWheelComponent : MonoBehaviour, IAnimatorHandler, Hoverable, Interactable,
-  IDoodadController, INetView, 
+  IDoodadController, INetView
 {
   private VehicleMovementController _controls;
   public VehicleMovementController? Controls => _controls;
@@ -90,58 +90,67 @@ public class SteeringWheelComponent : MonoBehaviour, IAnimatorHandler, Hoverable
       $"{anchoredStatus}\n[<color=yellow><b>{anchorKeyString}</b></color>] <color=white>{anchorText}</color>";
   }
 
-  public static string TryGetShipStats(float sailArea, float totalMass,
-    float shipMass, float shipPropulsion, bool isAnchored,
-    string anchorKeyString, out string shipStatsText)
+  public bool TryGetShipStats(out string shipStatsText)
   {
     shipStatsText = "";
-    if (PropulsionConfig.ShowShipStats.Value)
-    {
-      var shipMassToPush =
-        PropulsionConfig.SailingMassPercentageFactor.Value;
-      shipStatsText += $"\nsailArea: {sailArea}";
-      shipStatsText += $"\ntotalMass: {totalMass}";
-      shipStatsText +=
-        $"\nshipMass(no-containers): {shipMass}";
+    if (!PropulsionConfig.ShowShipStats.Value) return false;
+    if (ControllersInstance.PiecesController == null) return false;
 
-      shipStatsText +=
-        $"\ntotalMassToPush: {shipMassToPush}% * {totalMass} = {totalMass * shipMassToPush / 100f}";
-      shipStatsText +=
-        $"\nshipPropulsion: {shipPropulsion}";
+    var piecesController = ControllersInstance.PiecesController;
+    var sailArea = piecesController.cachedTotalSailArea;
+    var totalMass = piecesController.TotalMass;
+    var shipMass = piecesController.ShipMass;
+    var shipPropulsion = piecesController.GetSailingForce();
 
-      /* final formatting */
-      shipStatsText = $"<color=white>{shipStatsText}</color>";
-    }
+    var shipMassToPush =
+      PropulsionConfig.SailingMassPercentageFactor.Value;
+    shipStatsText += $"\nsailArea: {sailArea}";
+    shipStatsText += $"\ntotalMass: {totalMass}";
+    shipStatsText +=
+      $"\nshipMass(no-containers): {shipMass}";
+
+    shipStatsText +=
+      $"\ntotalMassToPush: {shipMassToPush}% * {totalMass} = {totalMass * shipMassToPush / 100f}";
+    shipStatsText +=
+      $"\nshipPropulsion: {shipPropulsion}";
+
+    /* final formatting */
+    shipStatsText = $"<color=white>{shipStatsText}</color>";
+
+    return true;
   }
 
   /// <summary>
   /// Gets the hover text info for wheel
   /// </summary>
-  public static string GetHoverTextFromShip(float sailArea, float totalMass,
-    float shipMass, float shipPropulsion, bool isAnchored,
+  public string GetHoverTextFromShip(bool isAnchored,
     string anchorKeyString)
   {
-    var anchorMessage = GetAnchorMessage(isAnchored, anchorKeyString);
-    var message = anchorMessage;
+    var interactMessage = $"{ModTranslations.SharedKeys_InteractPrimary} {ModTranslations.WithBoldText(ModTranslations.Anchor_WheelUse_UseText, "white")}";
+    var tutorialToggleMessage = $"{ModTranslations.SharedKeys_InteractAlt}{ModTranslations.WithBoldText(ModTranslations.SharedKeys_Tutorial, "white")}";
 
-    if (TryGetShipStats(piecesController.cachedTotalSailArea,
-          piecesController.TotalMass,
-          piecesController.ShipMass, piecesController.GetSailingForce(),
-          isAnchored,
-          anchorKeyString, out var statsMessage))
+    var additionalMessages = "";
+
+    if (this.IsNetViewValid(out var nv))
     {
-      message += $"\n{statsMessage}";
+      showTutorial = nv.GetZDO().GetBool(Key_ShowTutorial, showTutorial);
     }
 
     if (showTutorial)
     {
-      message += $"\n{Key_ShowTutorial}";
+      var anchorMessage = GetAnchorMessage(isAnchored, anchorKeyString);
+      additionalMessages += anchorMessage;
+
+      additionalMessages += ModTranslations.Cannon_TutorialShort;
     }
 
-    var blah = $"{ModTranslations.WithBoldText(ModTranslations.ValheimInput_KeyUse, 'yellow')}{ModTranslations.WithBoldText(ModTranslations.Anchor_WheelUse_UseText, 'white')}"
+    if (TryGetShipStats(out var statsMessage))
+    {
+      additionalMessages += $"\n{statsMessage}";
+    }
 
     return
-      $"\n{message}";
+      $"{interactMessage}\n{tutorialToggleMessage}\n{additionalMessages}";
   }
 
 
@@ -194,12 +203,8 @@ public class SteeringWheelComponent : MonoBehaviour, IAnimatorHandler, Hoverable
     }
 
     var isAnchored = VehicleMovementController.GetIsAnchoredSafe(ControllersInstance);
-
-
     var anchorKeyString = GetAnchorHotkeyString();
-    var hoverText = GetHoverTextFromShip(piecesController.cachedTotalSailArea,
-      piecesController.TotalMass,
-      piecesController.ShipMass, piecesController.GetSailingForce(),
+    var hoverText = GetHoverTextFromShip(
       isAnchored,
       anchorKeyString);
 

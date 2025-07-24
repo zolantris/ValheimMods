@@ -114,7 +114,7 @@ public class VehicleZSyncTransform : MonoBehaviour, IMonoUpdater
         transform.rotation = zdo.GetRotation();
         flag3 = true;
       }
-      if (m_syncBodyVelocity && (bool)(Object)m_body)
+      if (!m_isKinematicBody && m_syncBodyVelocity && (bool)(Object)m_body)
       {
         m_body.velocity = zdo.GetVec3(ZDOVars.s_bodyVelHash, Vector3.zero);
         m_body.angularVelocity = zdo.GetVec3(ZDOVars.s_bodyAVelHash, Vector3.zero);
@@ -124,7 +124,7 @@ public class VehicleZSyncTransform : MonoBehaviour, IMonoUpdater
     }
     if (transform.position.y < -5000.0)
     {
-      if ((bool)(Object)m_body)
+      if (!m_isKinematicBody && (bool)(Object)m_body)
         m_body.velocity = Vector3.zero;
       LoggerProvider.LogInfo("Object fell out of world:" + gameObject.name);
       var groundHeight = ZoneSystem.instance.GetGroundHeight(transform.position);
@@ -264,6 +264,12 @@ public class VehicleZSyncTransform : MonoBehaviour, IMonoUpdater
 
   public void NonKinematicSync(ZDO zdo, float dt)
   {
+    if (m_isKinematicBody)
+    {
+      LoggerProvider.LogDebugDebounced("Somehow called nonkinematic sync when rigidbody is kinematic. Bailing...");
+      return;
+    }
+
     var usedLocalRotation = false;
     if (m_syncPosition)
       SyncPosition(zdo, dt, out usedLocalRotation);

@@ -557,10 +557,15 @@
 
     public static CannonballVariant AmmoVariantDefault = CannonballVariant.Solid;
 
+
     public void AddPieceDataForComponents(ZNetView netView)
     {
       var components = netView.GetComponents<Component>();
+      if (components == null) return;
+      if (components.Length == 0) return;
       foreach (var component in components)
+      {
+        if (component == null) continue;
         switch (component)
         {
           case VehicleManager vehicleManager:
@@ -569,8 +574,10 @@
             break;
           case TargetControlsInteractive prefabTargetControls:
             prefabTargetControls.targetController = targetController;
+            break;
           case TargetController prefabTargetController:
             Destroy(prefabTargetController);
+            break;
           case CannonController cannonController:
             LoggerProvider.LogDebug("adding cannon to target controller");
             cannonController.AmmoVariant = AmmoVariantDefault;
@@ -642,6 +649,7 @@
             ladder.vehiclePiecesController = this;
             break;
         }
+      }
     }
 
     public void RemovePieceDataForComponents(ZNetView netView)
@@ -1351,6 +1359,7 @@
     {
       ForceUpdateAllPiecePositions(transform.position);
     }
+
     /// <summary>
     /// This should only be called directly in cases of force moving the vehicle with a command
     /// </summary>
