@@ -3186,6 +3186,14 @@
         Logger.LogError(e);
       }
     }
+
+
+    public void UpdateTrackedColliders()
+    {
+      // Update tracked VehicleColliders to ignore.
+      Manager.GetComponentsInChildren(vehicleCollidersToIgnore);
+    }
+
     /// <summary>
     /// A complete override of OnConvexHullGenerated.
     /// </summary>
@@ -3196,6 +3204,8 @@
         RequestBoundsRebuild();
         return;
       }
+
+      UpdateTrackedColliders();
 
       BaseControllerPieceBounds = convexHullComponent.GetConvexHullBounds(true);
 

@@ -42,6 +42,9 @@
       public bool m_shouldSync = true;
       public Vector3 convexAPIThresholdDistance = Vector3.one;
 
+      /// <summary>
+      /// TODO this might not be set.
+      /// </summary>
       public List<Collider> vehicleCollidersToIgnore = new();
       public ConvexHullAPI m_convexHullAPI;
       public MeshClusterController m_meshClusterComponent;

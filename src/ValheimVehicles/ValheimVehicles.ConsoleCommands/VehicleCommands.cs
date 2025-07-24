@@ -1064,75 +1064,61 @@ public class VehicleCommands : ConsoleCommand
   private static IEnumerator MoveVehicleToCreativeTarget(VehicleManager vehicleInstance, Vector3 newPosition, SafeMoveData? safeMoveData)
   {
     var movementController = vehicleInstance.MovementController;
-    if (movementController == null) yield break;
+    if (movementController == null || vehicleInstance.PiecesController == null) yield break;
 
     var isNearby = false;
 
-    var timer = Stopwatch.StartNew();
+    var timer = 0f;
 
-    while (!isNearby && timer.ElapsedMilliseconds < 10000)
+    while (!isNearby && timer < 5f)
     {
+      timer += Time.deltaTime;
       var currentDistance = Vector3.Distance(movementController.m_body.position, newPosition);
-      var isQuaternionNear = IsQuaternionNear(movementController.m_body.rotation, Quaternion.identity, 1f);
+      var isQuaternionNear = IsQuaternionNear(movementController.m_body.rotation, Quaternion.identity, 3f);
 
-      isNearby = currentDistance < 0.01f && isQuaternionNear;
+      isNearby = currentDistance < 0.1f && isQuaternionNear;
+
+      LoggerProvider.LogDebugDebounced($"Distance: {currentDistance} isQuaternionNear {isQuaternionNear} isNearby {isNearby}");
 
       if (!isNearby)
       {
-        var lerpTimePos = currentDistance < 0.5f ? 0.5f : Time.fixedDeltaTime * positionLerp * Mathf.Min(1, Mathf.Lerp(0, currentDistance, Time.fixedDeltaTime));
-        var lerpTimeRot = IsQuaternionNear(movementController.m_body.rotation, Quaternion.identity, 5f) ? 0.5f : Time.fixedDeltaTime * rotationLerp;
+        if (safeMoveData is
+            {
+              charactersOnShip.Count: > 0
+            })
+        {
+          foreach (var safeMoveCharacterData in safeMoveData.Value.charactersOnShip)
+          {
+            if (!safeMoveCharacterData.character) continue;
+            var rb = safeMoveCharacterData.character.m_body;
+            var localPosition = movementController.m_body.position + safeMoveCharacterData.lastLocalOffset;
+            if (rb.isKinematic)
+            {
+              rb.MovePosition(localPosition);
+            }
+            else
+            {
+              rb.position = localPosition;
+              rb.velocity = Vector3.zero;
+              rb.angularVelocity = Vector3.zero;
+            }
+            rb.isKinematic = false;
+            rb.velocity = Vector3.zero;
+            rb.angularVelocity = Vector3.zero;
+            safeMoveCharacterData.character.m_nview.GetZDO().SetPosition(localPosition);
+            safeMoveCharacterData.character.SyncVelocity();
+          }
+        }
+
+        var lerpTimePos = currentDistance < 0.5f ? 0.5f : Time.deltaTime * positionLerp;
+        var lerpTimeRot = IsQuaternionNear(movementController.m_body.rotation, Quaternion.identity, 5f) ? 0.5f : Time.deltaTime * rotationLerp;
         var lerpPosition = Vector3.Lerp(movementController.m_body.position, newPosition, lerpTimePos);
         var lerpRotation = Quaternion.Lerp(movementController.m_body.rotation, Quaternion.identity, lerpTimeRot);
         movementController.m_body.Move(lerpPosition, lerpRotation);
-
-        if (safeMoveData is
-            {
-              charactersOnShip.Count: > 0
-            })
-        {
-          foreach (var safeMoveCharacterData in safeMoveData.Value.charactersOnShip)
-          {
-            if (!safeMoveCharacterData.character) continue;
-            var rb = safeMoveCharacterData.character.m_body;
-            if (rb.isKinematic)
-            {
-              rb.MovePosition(movementController.m_body.position + safeMoveCharacterData.lastLocalOffset);
-            }
-            else
-            {
-              rb.position = movementController.m_body.position + safeMoveCharacterData.lastLocalOffset;
-              rb.velocity = Vector3.zero;
-              rb.angularVelocity = Vector3.zero;
-            }
-          }
-        }
-
-        yield return new WaitForFixedUpdate();
-        if (safeMoveData is
-            {
-              charactersOnShip.Count: > 0
-            })
-        {
-          foreach (var safeMoveCharacterData in safeMoveData.Value.charactersOnShip)
-          {
-            if (!safeMoveCharacterData.character) continue;
-            var rb = safeMoveCharacterData.character.m_body;
-            if (rb.isKinematic)
-            {
-              rb.MovePosition(movementController.m_body.position + safeMoveCharacterData.lastLocalOffset);
-            }
-            else
-            {
-              rb.position = movementController.m_body.position + safeMoveCharacterData.lastLocalOffset;
-              rb.velocity = Vector3.zero;
-              rb.angularVelocity = Vector3.zero;
-            }
-          }
-        }
+        movementController.zsyncTransform.SyncNow();
+        yield return null;
       }
     }
-
-    timer.Stop();
 
     // final movement.
     if (movementController.m_body.isKinematic)
@@ -1145,32 +1131,45 @@ public class VehicleCommands : ConsoleCommand
       movementController.m_body.velocity = Vector3.zero;
     }
 
-    yield return new WaitForFixedUpdate();
+    yield return null;
 
-    if (safeMoveData is
-        {
-          charactersOnShip.Count: > 0
-        })
+    if (safeMoveData.HasValue)
     {
       foreach (var safeMoveCharacterData in safeMoveData.Value.charactersOnShip)
       {
         if (!safeMoveCharacterData.character) continue;
         var rb = safeMoveCharacterData.character.m_body;
+        var localPosition = movementController.m_body.position + safeMoveCharacterData.lastLocalOffset;
         if (rb.isKinematic)
         {
-          rb.MovePosition(movementController.m_body.position + safeMoveCharacterData.lastLocalOffset);
+          rb.MovePosition(localPosition);
         }
         else
         {
-          rb.position = movementController.m_body.position + safeMoveCharacterData.lastLocalOffset;
+          rb.position = localPosition;
           rb.velocity = Vector3.zero;
           rb.angularVelocity = Vector3.zero;
         }
         rb.isKinematic = false;
+        rb.velocity = Vector3.zero;
+        rb.angularVelocity = Vector3.zero;
+        safeMoveCharacterData.character.m_nview.GetZDO().SetPosition(localPosition);
+        safeMoveCharacterData.character.SyncVelocity();
+
+        vehicleInstance.GetComponentsInChildren(vehicleInstance.PiecesController.vehicleCollidersToIgnore);
+
+        var colliders = safeMoveCharacterData.character.GetComponentsInChildren<Collider>();
+        foreach (var collider in colliders)
+        foreach (var collider1 in vehicleInstance.PiecesController.vehicleCollidersToIgnore)
+        {
+          if (!collider || !collider1) continue;
+          Physics.IgnoreCollision(collider, collider1, true);
+        }
       }
     }
 
-    yield return new WaitForFixedUpdate();
+
+    yield return null;
   }
 
   public static bool IsQuaternionNear(Quaternion a, Quaternion b, float maxAngleDegrees = 1f)
@@ -1216,7 +1215,6 @@ public class VehicleCommands : ConsoleCommand
 
     LoggerProvider.LogMessage("Completed destroy vehicle command.");
   }
-
   public override List<string> CommandOptionList()
   {
     return
@@ -1240,6 +1238,5 @@ public class VehicleCommands : ConsoleCommand
       VehicleCommandArgs.resetVehicleOwner
     ];
   }
-
   public override string Name => "vehicle";
 }
