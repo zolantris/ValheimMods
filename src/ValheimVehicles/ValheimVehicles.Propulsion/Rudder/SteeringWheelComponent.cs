@@ -134,7 +134,6 @@ public class SteeringWheelComponent : MonoBehaviour, IAnimatorHandler, Hoverable
 
     var variant = ControllersInstance.Manager.vehicleVariant;
 
-    // todo move these to booleans in VehicleManager static.
     var isFlightCapable = VehicleManager.IsFlightCapable(variant);
     var isBallastCapable = VehicleManager.IsBallastCapable(variant);
 
