@@ -177,6 +177,8 @@ public partial class ModTranslations
   {
     WheelControls_Name = SafeLocalize("$valheim_vehicles_wheel");
     WheelControls_Error = SafeLocalize("<color=white><b>$valheim_vehicles_wheel_use_error</b></color>");
+    WheelControls_FlightActivation = SafeLocalize($"{SharedKeys_Hold} {WithBoldText("Jump", "yellow")} $valheim_vehicles_wheel_flight_controls");
+    WheelControls_TutorialFlight = SafeLocalize("$valheim_vehicles_wheel_tutorial_flight");
   }
 
   public static void UpdateSharedTranslations()

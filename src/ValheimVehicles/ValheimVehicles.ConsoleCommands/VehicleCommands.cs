@@ -1030,17 +1030,154 @@ public class VehicleCommands : ConsoleCommand
       yield break;
     }
 
-    yield return SafeMovePlayer(vehicleInstance.OnboardController, true,
-      () =>
-      {
-        var newPosition = GetCreativeModeTargetPosition(vehicleInstance);
-        vehicleInstance.MovementController.m_body.MovePosition(newPosition);
-        return newPosition;
-      }, null, true);
+
+    var safeMoveData = SafeMovePlayerBefore(vehicleInstance.OnboardController);
+    yield return MoveVehicleToCreativeTarget(vehicleInstance, GetCreativeModeTargetPosition(vehicleInstance), safeMoveData);
+
+    // yield return SafeMovePlayer(vehicleInstance.OnboardController, true,
+    //   () =>
+    //   {
+    //     var newPosition = GetCreativeModeTargetPosition(vehicleInstance);
+    //     if (vehicleInstance.MovementController.m_body.isKinematic)
+    //     {
+    //       vehicleInstance.MovementController.m_body.MovePosition(newPosition);
+    //     }
+    //     else
+    //     {
+    //       vehicleInstance.MovementController.m_body.position = newPosition;
+    //       vehicleInstance.MovementController.m_body.velocity = Vector3.zero;
+    //     }
+    //     return newPosition;
+    //   }, null, true);
 
     _creativeModeCoroutineInstance = null;
     _creativeModeTimer.Reset();
     LoggerProvider.LogMessage("Completed creative mode commands.");
+  }
+
+  public static float rotationLerp = 1f;
+  public static float positionLerp = 1f;
+
+  /// <summary>
+  /// Safer way to move vehicle. This will keep players in vehicle as it animates to the position.
+  /// </summary>
+  private static IEnumerator MoveVehicleToCreativeTarget(VehicleManager vehicleInstance, Vector3 newPosition, SafeMoveData? safeMoveData)
+  {
+    var movementController = vehicleInstance.MovementController;
+    if (movementController == null) yield break;
+
+    var isNearby = false;
+
+    var timer = Stopwatch.StartNew();
+
+    while (!isNearby && timer.ElapsedMilliseconds < 10000)
+    {
+      var currentDistance = Vector3.Distance(movementController.m_body.position, newPosition);
+      var isQuaternionNear = IsQuaternionNear(movementController.m_body.rotation, Quaternion.identity, 1f);
+
+      isNearby = currentDistance < 0.01f && isQuaternionNear;
+
+      if (!isNearby)
+      {
+        var lerpTimePos = currentDistance < 0.5f ? 0.5f : Time.fixedDeltaTime * positionLerp * Mathf.Min(1, Mathf.Lerp(0, currentDistance, Time.fixedDeltaTime));
+        var lerpTimeRot = IsQuaternionNear(movementController.m_body.rotation, Quaternion.identity, 5f) ? 0.5f : Time.fixedDeltaTime * rotationLerp;
+        var lerpPosition = Vector3.Lerp(movementController.m_body.position, newPosition, lerpTimePos);
+        var lerpRotation = Quaternion.Lerp(movementController.m_body.rotation, Quaternion.identity, lerpTimeRot);
+        movementController.m_body.Move(lerpPosition, lerpRotation);
+
+        if (safeMoveData is
+            {
+              charactersOnShip.Count: > 0
+            })
+        {
+          foreach (var safeMoveCharacterData in safeMoveData.Value.charactersOnShip)
+          {
+            if (!safeMoveCharacterData.character) continue;
+            var rb = safeMoveCharacterData.character.m_body;
+            if (rb.isKinematic)
+            {
+              rb.MovePosition(movementController.m_body.position + safeMoveCharacterData.lastLocalOffset);
+            }
+            else
+            {
+              rb.position = movementController.m_body.position + safeMoveCharacterData.lastLocalOffset;
+              rb.velocity = Vector3.zero;
+              rb.angularVelocity = Vector3.zero;
+            }
+          }
+        }
+
+        yield return new WaitForFixedUpdate();
+        if (safeMoveData is
+            {
+              charactersOnShip.Count: > 0
+            })
+        {
+          foreach (var safeMoveCharacterData in safeMoveData.Value.charactersOnShip)
+          {
+            if (!safeMoveCharacterData.character) continue;
+            var rb = safeMoveCharacterData.character.m_body;
+            if (rb.isKinematic)
+            {
+              rb.MovePosition(movementController.m_body.position + safeMoveCharacterData.lastLocalOffset);
+            }
+            else
+            {
+              rb.position = movementController.m_body.position + safeMoveCharacterData.lastLocalOffset;
+              rb.velocity = Vector3.zero;
+              rb.angularVelocity = Vector3.zero;
+            }
+          }
+        }
+      }
+    }
+
+    timer.Stop();
+
+    // final movement.
+    if (movementController.m_body.isKinematic)
+    {
+      movementController.m_body.Move(newPosition, Quaternion.identity);
+    }
+    else
+    {
+      movementController.m_body.position = newPosition;
+      movementController.m_body.velocity = Vector3.zero;
+    }
+
+    yield return new WaitForFixedUpdate();
+
+    if (safeMoveData is
+        {
+          charactersOnShip.Count: > 0
+        })
+    {
+      foreach (var safeMoveCharacterData in safeMoveData.Value.charactersOnShip)
+      {
+        if (!safeMoveCharacterData.character) continue;
+        var rb = safeMoveCharacterData.character.m_body;
+        if (rb.isKinematic)
+        {
+          rb.MovePosition(movementController.m_body.position + safeMoveCharacterData.lastLocalOffset);
+        }
+        else
+        {
+          rb.position = movementController.m_body.position + safeMoveCharacterData.lastLocalOffset;
+          rb.velocity = Vector3.zero;
+          rb.angularVelocity = Vector3.zero;
+        }
+        rb.isKinematic = false;
+      }
+    }
+
+    yield return new WaitForFixedUpdate();
+  }
+
+  public static bool IsQuaternionNear(Quaternion a, Quaternion b, float maxAngleDegrees = 1f)
+  {
+    // Calculates the angle in degrees between two rotations
+    var angle = Quaternion.Angle(a, b);
+    return angle < maxAngleDegrees;
   }
 
   private static Vector3 GetCreativeModeTargetPosition(VehicleManager vehicleInstance)

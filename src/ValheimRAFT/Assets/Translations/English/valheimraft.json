@@ -69,6 +69,8 @@
   "valheim_vehicles_wheel_use_anchor_disable_detail": "To raise Anchor",
   "valheim_vehicles_wheel_use_anchor_enable_detail": "To lower Anchor",
   "valheim_vehicles_wheel_use_anchored": "anchored",
+  "valheim_vehicles_wheel_tutorial_flight": "In flight mode: [Jump] to ascend. [Crouch] to descend.",
+  "valheim_vehicles_wheel_flight_controls": "to enable flight",
   "valheim_vehicles_anchor_state_anchored": "Anchored",
   "valheim_vehicles_anchor_state_lowering": "Lowering",
   "valheim_vehicles_anchor_state_reeling": "Reeling",

@@ -126,8 +126,12 @@ public class SteeringWheelComponent : MonoBehaviour, IAnimatorHandler, Hoverable
   public string GetHoverTextFromShip(bool isAnchored,
     string anchorKeyString)
   {
+    var anchorMessage = GetAnchorMessage(isAnchored, anchorKeyString);
+
     var interactMessage = $"{ModTranslations.SharedKeys_InteractPrimary} {ModTranslations.WithBoldText(ModTranslations.Anchor_WheelUse_UseText, "white")}";
-    var tutorialToggleMessage = $"{ModTranslations.SharedKeys_InteractAlt}{ModTranslations.WithBoldText(ModTranslations.SharedKeys_Tutorial, "white")}";
+
+    interactMessage += $"\n{anchorMessage}anchorMessage";
+    interactMessage += $"\n{ModTranslations.WheelControls_FlightActivation}";
 
     var additionalMessages = "";
 
@@ -138,16 +142,16 @@ public class SteeringWheelComponent : MonoBehaviour, IAnimatorHandler, Hoverable
 
     if (showTutorial)
     {
-      var anchorMessage = GetAnchorMessage(isAnchored, anchorKeyString);
-      additionalMessages += anchorMessage;
-
-      additionalMessages += ModTranslations.Cannon_TutorialShort;
+      additionalMessages += $"\n{ModTranslations.Cannon_TutorialShort}";
+      additionalMessages += $"\n{ModTranslations.WheelControls_TutorialFlight}";
     }
 
     if (TryGetShipStats(out var statsMessage))
     {
       additionalMessages += $"\n{statsMessage}";
     }
+
+    var tutorialToggleMessage = $"{ModTranslations.SharedKeys_InteractAlt}{ModTranslations.WithBoldText(ModTranslations.SharedKeys_Tutorial, "white")}";
 
     return
       $"{interactMessage}\n{tutorialToggleMessage}\n{additionalMessages}";
