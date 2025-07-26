@@ -10,10 +10,6 @@ namespace ValheimVehicles.BepInExConfig;
 
 public class CannonPrefabConfig : BepInExBaseConfig<CannonPrefabConfig>
 {
-  private const string SectionName = "CannonPrefabConfig";
-
-  public static ConfigEntry<bool>? IsEnabled { get; private set; }
-
   public static ConfigEntry<bool> EnableCannons = null!;
 
   public static ConfigEntry<bool> Cannon_HasFireAudio = null!;
