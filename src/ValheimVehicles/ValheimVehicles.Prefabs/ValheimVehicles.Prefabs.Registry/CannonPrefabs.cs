@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Jotunn.Configs;
 using Jotunn.Entities;
 using Jotunn.Managers;
@@ -47,9 +48,9 @@ public class CannonPrefabs : RegisterPrefab<CannonPrefabs>
 
     PieceManager.Instance.AddPiece(new CustomPiece(prefab, true, new PieceConfig
     {
+      Enabled = CannonPrefabConfig.EnableCannons.Value,
       PieceTable = PrefabRegistryController.GetPieceTableName(),
       Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Tools),
-      Enabled = true,
       Requirements = PrefabRecipeConfig.GetRequirements(prefab.name)
     }));
   }
@@ -82,9 +83,9 @@ public class CannonPrefabs : RegisterPrefab<CannonPrefabs>
 
     PieceManager.Instance.AddPiece(new CustomPiece(prefab, true, new PieceConfig
     {
+      Enabled = CannonPrefabConfig.EnableCannons.Value,
       PieceTable = PrefabRegistryController.GetPieceTableName(),
       Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Tools),
-      Enabled = true,
       Requirements = PrefabRecipeConfig.GetRequirements(prefab.name)
     }));
   }
@@ -102,12 +103,6 @@ public class CannonPrefabs : RegisterPrefab<CannonPrefabs>
 
     var nv = PrefabRegistryHelpers.AddTempNetView(prefab, true);
     nv.m_distant = true;
-    // var zSyncTransform = prefab.AddComponent<VehicleZSyncTransform>();
-
-    // must have zsync transform in order to sync the projectile.
-    // zSyncTransform.m_syncBodyVelocity = true;
-    // zSyncTransform.m_syncRotation = true;
-    // zSyncTransform.m_syncPosition = true;
 
     var cannonBall = prefab.AddComponent<Cannonball>();
     cannonBall.cannonballVariant = CannonballVariant.Solid;
@@ -128,12 +123,6 @@ public class CannonPrefabs : RegisterPrefab<CannonPrefabs>
 
     var nv = PrefabRegistryHelpers.AddTempNetView(prefab, true);
     nv.m_distant = true;
-    // var zSyncTransform = prefab.AddComponent<VehicleZSyncTransform>();
-
-    // must have zsync transform in order to sync the projectile.
-    // zSyncTransform.m_syncBodyVelocity = true;
-    // zSyncTransform.m_syncRotation = true;
-    // zSyncTransform.m_syncPosition = true;
 
     var cannonBall = prefab.AddComponent<Cannonball>();
     cannonBall.cannonballVariant = CannonballVariant.Explosive;
@@ -196,6 +185,7 @@ public class CannonPrefabs : RegisterPrefab<CannonPrefabs>
 
     var customRecipe = new CustomRecipe(new RecipeConfig
     {
+      Enabled = CannonPrefabConfig.EnableCannons.Value,
       Name = "Recipe_CannonballSolid", // Unique name, can be arbitrary
       Item = PrefabNames.CannonballSolid, // The prefab name you registered above
       Amount = 10, // Number of items crafted per craft
@@ -255,6 +245,7 @@ public class CannonPrefabs : RegisterPrefab<CannonPrefabs>
       StackSize = 200,
       CraftingStation = "forge",
       RepairStation = "forge",
+      Enabled = CannonPrefabConfig.EnableCannons.Value,
       Requirements = PrefabRecipeConfig.GetRequirements(prefab.name),
       PieceTable = PrefabRegistryController.GetPieceTableName()
     };
@@ -352,6 +343,7 @@ public class CannonPrefabs : RegisterPrefab<CannonPrefabs>
       Icon = icon,
       CraftingStation = "forge",
       RepairStation = "forge",
+      Enabled = CannonPrefabConfig.EnableCannons.Value,
       Requirements = PrefabRecipeConfig.GetRequirements(prefab.name)
     };
 
@@ -427,6 +419,7 @@ public class CannonPrefabs : RegisterPrefab<CannonPrefabs>
       Icons = [icon],
       CraftingStation = "forge",
       RepairStation = "forge",
+      Enabled = CannonPrefabConfig.EnableCannons.Value,
       Requirements =
       [
         new RequirementConfig
@@ -481,12 +474,11 @@ public class CannonPrefabs : RegisterPrefab<CannonPrefabs>
     targetController.cannonDetectionMode = TargetController.CannonDetectionMode.Cast;
 
     prefab.AddComponent<TargetControlsInteractive>();
-
     PieceManager.Instance.AddPiece(new CustomPiece(prefab, true, new PieceConfig
     {
       PieceTable = PrefabRegistryController.GetPieceTableName(),
       Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Tools),
-      Enabled = true,
+      Enabled = CannonPrefabConfig.EnableCannons.Value,
       Requirements = PrefabRecipeConfig.GetRequirements(prefab.name)
     }));
   }
@@ -529,9 +521,40 @@ public class CannonPrefabs : RegisterPrefab<CannonPrefabs>
     {
       PieceTable = PrefabRegistryController.GetPieceTableName(),
       Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Tools),
-      Enabled = true,
+      Enabled = CannonPrefabConfig.EnableCannons.Value,
       Requirements = PrefabRecipeConfig.GetRequirements(prefab.name)
     }));
+  }
+
+  public static void OnEnabledChange()
+  {
+    UpdatePieceEnabledState(PrefabNames.CannonFixedTier1, CannonPrefabConfig.EnableCannons.Value);
+    UpdatePieceEnabledState(PrefabNames.CannonTurretTier1, CannonPrefabConfig.EnableCannons.Value);
+    UpdatePieceEnabledState(PrefabNames.PowderBarrel, CannonPrefabConfig.EnableCannons.Value);
+
+    UpdateRecipeEnabledState(PrefabNames.CannonballSolid, CannonPrefabConfig.EnableCannons.Value);
+    UpdateRecipeEnabledState(PrefabNames.CannonballExplosive, CannonPrefabConfig.EnableCannons.Value);
+    UpdateRecipeEnabledState(PrefabNames.CannonHandHeldItem, CannonPrefabConfig.EnableCannons.Value);
+  }
+
+  private static void UpdatePieceEnabledState(string prefabName, bool isEnabled)
+  {
+    var piece = PieceManager.Instance.GetPiece(prefabName);
+    if (piece?.Piece != null)
+    {
+      piece.Piece.m_enabled = isEnabled;
+      LoggerProvider.LogMessage($"Updated piece {prefabName} enabled: {isEnabled}");
+    }
+  }
+
+  private static void UpdateRecipeEnabledState(string recipeName, bool isEnabled)
+  {
+    var recipe = ItemManager.Instance.GetRecipe(recipeName);
+    if (recipe?.Recipe != null)
+    {
+      recipe.Recipe.m_enabled = isEnabled;
+      LoggerProvider.LogMessage($"Updated recipe {recipeName} enabled: {isEnabled}");
+    }
   }
 
 
