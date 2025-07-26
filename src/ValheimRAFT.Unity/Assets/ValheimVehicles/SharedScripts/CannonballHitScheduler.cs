@@ -119,6 +119,7 @@ namespace ValheimVehicles.SharedScripts
 
     public static void ScheduleUpdateShieldHit()
     {
+      if (!TryInit()) return;
       if (_applyShieldUpdate.IsRunning) return;
       _applyShieldUpdate.Start(UpdateShieldHitRoutine());
     }

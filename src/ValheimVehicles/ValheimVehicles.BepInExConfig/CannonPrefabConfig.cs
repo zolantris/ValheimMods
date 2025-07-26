@@ -16,6 +16,8 @@ public class CannonPrefabConfig : BepInExBaseConfig<CannonPrefabConfig>
   public static ConfigEntry<bool> Cannon_HasFireAudio = null!;
   public static ConfigEntry<float> Cannon_ReloadTime = null!;
   public static ConfigEntry<float> CannonHandHeld_ReloadTime = null!;
+  public static ConfigEntry<float> CannonHandHeld_ReloadStamina = null!;
+  public static ConfigEntry<float> CannonHandHeld_AttackStamina = null!;
   public static ConfigEntry<bool> Cannonball_HasExplosionAudio = null!;
   public static ConfigEntry<bool> HasCannonballWindAudio = null!;
   public static ConfigEntry<float> CannonballWindAudioVolume = null!;
@@ -53,8 +55,32 @@ public class CannonPrefabConfig : BepInExBaseConfig<CannonPrefabConfig>
 
 
   private const string VehicleCannonsSection = "PrefabConfig: VehicleCannons";
+  private const string CannonHandheldSection = "PrefabConfig: CannonHandheld";
   private const string CannonControlCenterSection = "PrefabConfig: CannonControlCenter";
   private const string PowderBarrelSection = "PrefabConfig: PowderBarrel";
+
+  public static void SyncHandheldItemData(ItemDrop.ItemData? itemData)
+  {
+    if (itemData == null) return;
+    if (itemData.m_shared.m_name != PrefabItemNameToken.CannonHandHeldName) return;
+    itemData.m_shared.m_attack.m_reloadTime = CannonHandHeld_ReloadTime.Value;
+    itemData.m_shared.m_attack.m_attackStamina = CannonHandHeld_AttackStamina.Value;
+    itemData.m_shared.m_attack.m_reloadStaminaDrain = CannonHandHeld_ReloadStamina.Value;
+  }
+
+  public static void OnCannonHandheldItemUpdate()
+  {
+    if (PrefabManager.Instance != null && ItemManager.Instance != null)
+    {
+      var cannonHandheld = ItemManager.Instance.GetItem(PrefabNames.CannonHandHeldItem);
+      if (cannonHandheld != null)
+      {
+        SyncHandheldItemData(cannonHandheld.ItemDrop.m_itemData);
+      }
+    }
+
+    CannonController.CannonHandHeld_ReloadTime = CannonHandHeld_ReloadTime.Value;
+  }
 
   public override void OnBindConfig(ConfigFile config)
   {
@@ -98,12 +124,17 @@ public class CannonPrefabConfig : BepInExBaseConfig<CannonPrefabConfig>
     };
     CannonController.ReloadTimeOverride = Cannon_ReloadTime.Value;
 
-    CannonHandHeld_ReloadTime = config.BindUnique(VehicleCannonsSection, "CannonHandHeld_ReloadTime", 6f, ConfigHelpers.CreateConfigDescription("Allows setting cannon-handheld reload delays. This makes cannons reload longer or shorter. Shortest value is 100ms highest is 60seconds", true, false, new AcceptableValueRange<float>(0.1f, 60f)));
-    CannonHandHeld_ReloadTime.SettingChanged += (sender, args) =>
-    {
-      CannonController.CannonHandHeld_ReloadTime = CannonHandHeld_ReloadTime.Value;
-    };
+
+    CannonHandHeld_ReloadTime = config.BindUnique(CannonHandheldSection, "ReloadTime", 6f, ConfigHelpers.CreateConfigDescription("Allows setting cannon-handheld reload delays. This makes cannons reload longer or shorter. Shortest value is 100ms highest is 60seconds", true, false, new AcceptableValueRange<float>(0.1f, 60f)));
     CannonController.CannonHandHeld_ReloadTime = CannonHandHeld_ReloadTime.Value;
+
+    CannonHandHeld_AttackStamina = config.BindUnique(CannonHandheldSection, "AttackStamina", 5f, ConfigHelpers.CreateConfigDescription("Allows setting cannon-handheld reload delays. This makes cannons reload longer or shorter. Shortest value is 100ms highest is 60seconds", true, false, new AcceptableValueRange<float>(0.1f, 60f)));
+
+    CannonHandHeld_ReloadStamina = config.BindUnique(CannonHandheldSection, "ReloadStaminaDrain", 5f, ConfigHelpers.CreateConfigDescription("Allows setting cannon-handheld reload delays. This makes cannons reload longer or shorter. Shortest value is 100ms highest is 60seconds", true, false, new AcceptableValueRange<float>(0.1f, 60f)));
+
+    CannonHandHeld_ReloadTime.SettingChanged += (sender, args) => OnCannonHandheldItemUpdate();
+    CannonHandHeld_ReloadStamina.SettingChanged += (sender, args) => OnCannonHandheldItemUpdate();
+    CannonHandHeld_AttackStamina.SettingChanged += (sender, args) => OnCannonHandheldItemUpdate();
 
     Cannon_ReloadAudioVolume = config.BindUnique(VehicleCannonsSection, "Cannon_ReloadAudioVolume", 1f, ConfigHelpers.CreateConfigDescription("Allows customizing cannon firing audio volume", false, false));
     Cannon_FireAudioVolume = config.BindUnique(VehicleCannonsSection, "Cannon_FireAudioVolume", 1f, ConfigHelpers.CreateConfigDescription("Allows customizing cannon reload audio volume", false, false));

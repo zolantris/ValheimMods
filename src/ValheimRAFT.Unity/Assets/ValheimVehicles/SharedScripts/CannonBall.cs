@@ -725,6 +725,12 @@ namespace ValheimVehicles.SharedScripts
       cannonball.HideCannonballMesh();
       cannonball.ForceStopCannonball();
 
+      // must be owner to damage fuel. 
+      if (!shieldGenerator.m_nview.IsOwner())
+      {
+        shieldGenerator.m_nview.ClaimOwnership();
+      }
+
       if (shieldGenerator.m_fuelPerDamage > 0f)
       {
         var num = shieldGenerator.m_fuelPerDamage * hitDamage;
