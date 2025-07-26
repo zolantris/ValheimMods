@@ -12,8 +12,9 @@ This mod has both a beta and a non-beta on Thunderstore. Please make sure you
 are using non-beta if you want a stable experience. If you want to test
 previews, swap to the beta variant.
 
-## Latest Updates 
-###  Changes of 3.6.x
+## Latest Updates
+
+### Changes of 3.6.x
 
 - 3.6.x Adds cannons, hand cannons (item) and turret prefabs.
 - Adds manual standalone turret controls as well as ship controls
@@ -161,6 +162,16 @@ discontain other mods.
       <td>Cannon (handheld)</td>
       <td><img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/cannon_handheld.png" width="50"/></td>
       <td>A mobile cannon that can be loaded by the player. Uses the same aiming mechanics as an auto turret. Fully multiplayer compatible. Uses it's own projectile system similar to cannons.</td>
+    </tr>
+    <tr>
+      <td>Cannonball (solid)</td>
+      <td><img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/cannon_ball_bronze.png" width="50"/></td>
+      <td>A cannonball that can hit hard and penetrate through prefabs based on the material. Can be equipped by handheld and fixed cannons.</td>
+    </tr>
+   <tr>
+      <td>Cannonball (explosive)</td>
+      <td><img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/cannon_ball_blackmetal.png" width="50"/></td>
+      <td>A blackmetal cannonball that can hit and explode delivering a powerful area effect blast. Can be equipped by handheld and fixed cannons.</td>
     </tr>
 </tbody>
 </table>
