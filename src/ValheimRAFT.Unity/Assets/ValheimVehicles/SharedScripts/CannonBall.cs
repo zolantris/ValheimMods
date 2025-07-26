@@ -202,6 +202,13 @@ namespace ValheimVehicles.SharedScripts
       OnHitHandler(other);
     }
 
+    public void ForceStopCannonball()
+    {
+      _lastVelocity = Vector3.zero;
+      if (m_body) m_body.velocity = Vector3.zero;
+      _canHit = false;
+    }
+
     private void InitCoroutines()
     {
       _firingCannonballCoroutine ??= new CoroutineHandle(this);
@@ -718,7 +725,7 @@ namespace ValheimVehicles.SharedScripts
       var hitDamage = CannonballHitScheduler.GetBaseDamageForHit(isExplosionHit, cannonballForce) * CannonPrefabConfig.Cannonball_ShieldGeneratorDamageMultiplier.Value;
 
       cannonball.HideCannonballMesh();
-      cannonball.m_body.velocity = Vector3.zero;
+      cannonball.ForceStopCannonball();
 
       if (shieldGenerator.m_fuelPerDamage > 0f)
       {
@@ -726,14 +733,13 @@ namespace ValheimVehicles.SharedScripts
         shieldGenerator.SetFuel(shieldGenerator.GetFuel() - num);
       }
 
-      cannonball._canHit = false;
       CannonballHitScheduler.AddShieldUpdate(cannonball, cannonballPosition, cannonballForce, shieldGenerator);
     }
 
     public void FixedUpdate_CheckForShieldGenerator()
     {
 #if VALHEIM
-      if (!IsInFlight || !_fireOrigin.HasValue) return;
+      if (!IsInFlight || !_fireOrigin.HasValue || !_canHit || _hasExploded || !_hasExitedMuzzle) return;
 
       foreach (var shield in ShieldGenerator.m_instances)
       {

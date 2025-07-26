@@ -110,9 +110,7 @@ namespace ValheimVehicles.SharedScripts
     public static IEnumerator UpdateShieldHitRoutine()
     {
       yield return new WaitForFixedUpdate();
-      // copies these values so there is no modification chance of original data (doesn't matter single threaded though)
-      var queuedHits = m_scheduledShieldUpdates.Values.ToList();
-      m_scheduledShieldUpdates.Clear();
+      var queuedHits = m_scheduledShieldUpdates.Values;
       foreach (var (cannonball, cannonballPosition, force, shieldGenerator) in queuedHits)
       {
         if (shieldGenerator == null || cannonball == null) continue;
@@ -123,6 +121,7 @@ namespace ValheimVehicles.SharedScripts
         // only impact effects regardless if the shell is an explosive.
         cannonball.StartImpactEffectAudio(force, true);
       }
+      m_scheduledShieldUpdates.Clear();
       yield return new WaitForSeconds(0.1f);
     }
 
