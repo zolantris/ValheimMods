@@ -479,6 +479,7 @@
       /// </summary>
       private void OnContainerChanged(Container container)
       {
+        if (!isActiveAndEnabled) return;
         if (!_canTriggerChangeUpdate) return;
         _queuedInventoryUpdates.Add(container);
         if (_hasAction)
