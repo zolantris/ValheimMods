@@ -27,6 +27,7 @@ on:
 
 jobs:
   build:
+    name: ✅ Release Build
     runs-on: windows-latest
 
     steps:
