@@ -201,8 +201,25 @@ namespace ValheimVehicles.SharedScripts
       StopAllCoroutines();
     }
 
+    private void OnCollisionHitShield(Collision other)
+    {
+      if (other == null) return;
+      var barrierInParent = other.collider.GetComponentInParent<ShieldGenerator>();
+      var barrierInChild = other.collider.GetComponentInChildren<ShieldGenerator>();
+      var seShieldChild = other.collider.GetComponentInChildren<SE_Shield>();
+      var seShieldParent = other.collider.GetComponentInParent<SE_Shield>();
+      if (barrierInParent || barrierInChild || seShieldParent || seShieldChild)
+      {
+        LoggerProvider.LogDebugDebounced($"Hit a shield barrier {other.collider.gameObject.name}");
+        return;
+      }
+    }
+
     private void OnCollisionEnter(Collision other)
     {
+#if DEBUG
+      OnCollisionHitShield(other);
+#endif
       OnHitHandler(other);
     }
 
@@ -667,6 +684,10 @@ namespace ValheimVehicles.SharedScripts
       if (_colliders.Count > 0) return _colliders;
       GetComponentsInChildren(true, _colliders);
       sphereCollider = GetComponentInChildren<SphereCollider>(true);
+      if (sphereCollider)
+      {
+        sphereCollider.gameObject.layer = LayerHelpers.CharacterLayer;
+      }
       return _colliders;
     }
 

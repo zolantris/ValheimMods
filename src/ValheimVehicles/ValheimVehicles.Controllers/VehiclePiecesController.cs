@@ -579,9 +579,6 @@
             Destroy(prefabTargetController);
             break;
           case CannonController cannonController:
-            LoggerProvider.LogDebug("adding cannon to target controller");
-            cannonController.AmmoVariant = AmmoVariantDefault;
-            cannonController.maxAmmo = 50;
             targetController.AddCannon(cannonController);
             cannonController.AddIgnoredTransforms([transform, Manager!.transform]);
             break;

@@ -306,7 +306,7 @@ namespace ValheimVehicles.SharedScripts
       }
     }
 
-    public CannonballVariant AmmoVariant
+    public virtual CannonballVariant AmmoVariant
     {
       get => ammoVariant;
       set

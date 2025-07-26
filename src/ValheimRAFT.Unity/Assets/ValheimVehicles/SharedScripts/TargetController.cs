@@ -519,7 +519,9 @@ namespace ValheimVehicles.SharedScripts
 
       CannonFireData.WriteListToPackage(pkg, cannonFireDataList);
 
-      FireCannonGroup_RPC.SendNearby(pkg, zdo, 150f);
+      // does not run server sided so it's inaccurate and fails.
+      // FireCannonGroup_RPC.SendNearby(pkg, zdo, 150f);
+      FireCannonGroup_RPC.Send(pkg);
 
       if (m_nview.IsOwner())
       {
@@ -529,6 +531,19 @@ namespace ValheimVehicles.SharedScripts
       {
         LoggerProvider.LogWarning("Attempted to decrement ammo but the user is not the owner.");
       }
+    }
+
+    // todo register rpc delegate then fire the RPC to hit server to delegate calls to clients.
+    // the server would match the registered rpc from a request and then find and invoke that routed rpcname. We could do this directly via zroutedrpc but might be easier to fire this from the rpcEntities that have registered names.
+    public void ServerDelegateCannonDataToPeers(long peer, ZPackage requestPkg)
+    {
+      // var zdoId = passthroughPkg.ReadZDOID();
+      // var zdo = ZDOMan.instance.GetZDO(zdoId);
+      // var request =
+      //   // main data
+      //   var pkg = passthroughPkg.ReadPackage();
+      //
+      // SendNearby(pkg, zdo, 150f);
     }
 
 
@@ -572,7 +587,8 @@ namespace ValheimVehicles.SharedScripts
         pkg.Write(zdo.m_uid);
         pkg.Write((int)cannonDirectionGroup);
         pkg.Write(GetManualGroupTilt(cannonDirectionGroup));
-        SyncCannonGroup_RPC.SendNearby(pkg, zdo, 150f);
+        // SyncCannonGroup_RPC.SendNearby(pkg, zdo, 150f);
+        SyncCannonGroup_RPC.Send(0, pkg);
       }
 
       yield return null;
@@ -1175,6 +1191,12 @@ namespace ValheimVehicles.SharedScripts
         var cannon = cannonControllerObj.GetComponent<CannonController>();
         if (!cannon) continue;
 
+        // prevents desync in ammo variant (firing client is always correct, but other clients will not have this synced in time sometimes).
+        if (data.ammoVariant != cannon.AmmoVariant)
+        {
+          cannon.AmmoVariant = data.ammoVariant;
+        }
+
         cannon.SetManualTilt(tilt);
 
         if (cannon.Fire(data, data.allocatedAmmo, true)) // true = isManualFiring
@@ -1215,7 +1237,6 @@ namespace ValheimVehicles.SharedScripts
 
     public void RemoveCannon(CannonController controller)
     {
-      allCannonControllers.Remove(controller);
       switch (controller.GetFiringMode())
       {
         case CannonFiringMode.Manual:
@@ -1228,6 +1249,7 @@ namespace ValheimVehicles.SharedScripts
         default:
           throw new ArgumentOutOfRangeException();
       }
+      allCannonControllers.Remove(controller);
       OnCannonListUpdated?.Invoke();
     }
 

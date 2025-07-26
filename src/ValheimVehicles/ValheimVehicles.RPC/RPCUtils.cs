@@ -95,7 +95,6 @@ public static class RPCUtils
       matchingPeers.Add(playerPeer);
       zdo.GetPosition();
     }
-
     var peers = ZNet.instance.GetPeers();
     foreach (var instanceMPeer in peers)
     {
@@ -111,9 +110,17 @@ public static class RPCUtils
 
   /// <summary>
   /// Runs if nearby. Requires the callback method to fire RPC to the peer or local player.
+  ///
+  /// Must be run on a dedicate server otherwise this is inaccurate.
   /// </summary>
   public static void RunIfNearby(ZDO zdo, float threshold, Action<long> action)
   {
+    if (!ZNet.instance.IsServer())
+    {
+      LoggerProvider.LogError("This call is not supported on non server clients due to it not being able to decide which peers to run the request on.");
+      return;
+    }
+
     if (ZNet.instance && Player.m_localPlayer && Vector3.Distance(zdo.GetPosition(), ZNet.instance.m_referencePosition) < threshold)
     {
       action(Player.m_localPlayer.GetOwner());

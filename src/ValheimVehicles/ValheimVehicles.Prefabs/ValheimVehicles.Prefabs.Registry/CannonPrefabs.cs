@@ -54,6 +54,7 @@ public class CannonPrefabs : RegisterPrefab<CannonPrefabs>
     }));
   }
 
+  // not ready for prod.
   private void RegisterCannonTurretPrefab()
   {
     var asset = LoadValheimVehicleAssets._bundle.LoadAsset<GameObject>("cannon_turret");
@@ -175,16 +176,18 @@ public class CannonPrefabs : RegisterPrefab<CannonPrefabs>
       m_maxStackSize = 200,
       m_weight = PrefabConfig.CannonBallInventoryWeight.Value, // this could be 12-24lbs...but that would make the game less fun
       m_skillType = Skills.SkillType.None,
-      m_ammoType = PrefabItemTranslations.CannonAmmoType,
+      m_ammoType = PrefabItemNameToken.CannonAmmoType,
       m_itemType = ItemDrop.ItemData.ItemType.Ammo
     };
 
     var itemConfig = new ItemConfig
     {
-      Name = "$valheim_vehicles_cannonball_solid",
-      Description = "$valheim_vehicles_cannonball_solid_desc",
+      Name = PrefabItemNameToken.CannonSolidAmmo,
+      Description = $"{PrefabItemNameToken.CannonSolidAmmo}_desc",
       Icon = icon,
       StackSize = 200,
+      CraftingStation = "forge",
+      RepairStation = "forge",
       PieceTable = PrefabRegistryController.GetPieceTableName()
     };
 
@@ -240,17 +243,18 @@ public class CannonPrefabs : RegisterPrefab<CannonPrefabs>
       m_maxStackSize = 200,
       m_weight = PrefabConfig.CannonBallInventoryWeight.Value, // this could be 12-24lbs...but that would make the game less fun
       m_skillType = Skills.SkillType.Bows,
-      m_ammoType = PrefabItemTranslations.CannonAmmoType,
+      m_ammoType = PrefabItemNameToken.CannonAmmoType,
       m_itemType = ItemDrop.ItemData.ItemType.Ammo
     };
 
     var itemConfig = new ItemConfig
     {
-      Name = "$valheim_vehicles_cannonball_explosive",
-      Description = "$valheim_vehicles_cannonball_explosive_desc",
+      Name = PrefabItemNameToken.CannonExplosiveAmmo,
+      Description = $"{PrefabItemNameToken.CannonExplosiveAmmo}_desc",
       Icon = icon,
       StackSize = 200,
       CraftingStation = "forge",
+      RepairStation = "forge",
       Requirements = PrefabRecipeConfig.GetRequirements(prefab.name),
       PieceTable = PrefabRegistryController.GetPieceTableName()
     };
@@ -313,7 +317,7 @@ public class CannonPrefabs : RegisterPrefab<CannonPrefabs>
       m_maxDurability = 300f,
       m_icons = [icon],
       m_toolTier = 50,
-      m_ammoType = PrefabItemTranslations.CannonAmmoType,
+      m_ammoType = PrefabItemNameToken.CannonAmmoType,
       m_animationState = ItemDrop.ItemData.AnimationState.Crossbow,
       m_equipDuration = 0,
       m_skillType = Skills.SkillType.Crossbows,
@@ -343,8 +347,8 @@ public class CannonPrefabs : RegisterPrefab<CannonPrefabs>
 
     var itemConfig = new ItemConfig
     {
-      Name = "$valheim_vehicles_item_cannon_handheld_item",
-      Description = "$valheim_vehicles_item_cannon_handheld_item_desc",
+      Name = PrefabItemNameToken.CannonHandHeldName,
+      Description = $"{PrefabItemNameToken.CannonHandHeldName}_desc",
       Icon = icon,
       CraftingStation = "forge",
       RepairStation = "forge",
@@ -417,11 +421,12 @@ public class CannonPrefabs : RegisterPrefab<CannonPrefabs>
 
     var itemConfig = new ItemConfig
     {
-      Name = "$valheim_vehicles_telescope",
-      Description = "$valheim_vehicles_telescope_desc",
+      Name = PrefabItemNameToken.TelescopeName,
+      Description = $"{PrefabItemNameToken.TelescopeName}_desc",
       Icon = icon,
       Icons = [icon],
-      RepairStation = "piece_workbench",
+      CraftingStation = "forge",
+      RepairStation = "forge",
       Requirements =
       [
         new RequirementConfig
@@ -535,14 +540,22 @@ public class CannonPrefabs : RegisterPrefab<CannonPrefabs>
     // persistent inventory items
     RegisterCannonballSolidItemPrefab();
     RegisterCannonballExplosiveItemPrefab();
-    RegisterTelescopeItemPrefab();
 
+#if DEBUG
+    // not ready for prod.
+    RegisterTelescopeItemPrefab();
+#endif
     // projectiles are not persistent.
     RegisterCannonballSolidProjectilePrefab();
     RegisterCannonballExplosiveProjectilePrefab();
 
     RegisterCannonFixedPrefab();
+
+#if DEBUG
+    // not ready for prod.
     RegisterCannonTurretPrefab();
+#endif
+
     RegisterPowderBarrelPrefab();
     RegisterCannonAreaControllerTelescopePrefab();
 

@@ -142,8 +142,10 @@ public partial class ModTranslations
     VehicleCannon_ToggleAutoFire = SafeLocalize("$valheim_vehicles_cannons_toggle_auto_fire");
     VehicleCannon_SwapCannonBallType = SafeLocalize("$valheim_vehicles_cannons_swap_cannonball_type");
     VehicleCannon_AmmoText = SafeLocalize("$valheim_vehicles_cannons_ammo_text");
-    VehicleCannon_CannonBallSolid = SafeLocalize("$valheim_vehicles_cannonball_solid");
-    VehicleCannon_CannonBallExplosive = SafeLocalize("$valheim_vehicles_cannonball_explosive");
+
+    VehicleCannon_CannonBallItemSolid = SafeLocalize(PrefabItemNameToken.CannonSolidAmmo);
+    VehicleCannon_CannonBallItemExplosive = SafeLocalize(PrefabItemNameToken.CannonExplosiveAmmo);
+
     VehicleCannon_CannonMissingNearbyPowderBarrel = SafeLocalize(WithBoldText("$valheim_vehicles_cannons_missing_nearby_powder_barrels", "red"));
     Vehicle_Cannon_Controls_Tutorial = SafeLocalize("$valheim_vehicles_cannon_control_center_tutorial");
 

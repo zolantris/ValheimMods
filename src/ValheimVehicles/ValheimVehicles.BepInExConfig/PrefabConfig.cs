@@ -265,15 +265,15 @@ public class PrefabConfig : BepInExBaseConfig<PrefabConfig>
     Cannon_HasReloadAudio = config.BindUnique(VehicleCannonsSection, "UNSTABLE_Cannon_HasReloadAudio", false, ConfigHelpers.CreateConfigDescription("Allows toggling the reload audio. Unstable b/c it does not sound great when many of these are fired together.", false, false));
     Cannonball_HasExplosionAudio = config.BindUnique(VehicleCannonsSection, "Cannonball_HasExplosionAudio", true, ConfigHelpers.CreateConfigDescription("Allows toggling the cannonball explosion/impact audio. Unstable b/c it does not sound great when many of these are fired together.", false, false));
 
-    Cannon_FiringDelayPerCannon = config.BindUnique(VehicleCannonsSection, "Cannon_FiringDelayPerCannon", 0.01f, ConfigHelpers.CreateConfigDescription("Allows setting cannon firing delays. This makes cannons fire in a order.", false, false, new AcceptableValueRange<float>(0, 0.3f)));
-    Cannon_ReloadTime = config.BindUnique(VehicleCannonsSection, "Cannon_ReloadTime", 6f, ConfigHelpers.CreateConfigDescription("Allows setting cannon reload delays. This makes cannons reload longer or shorter. Shortest value is 100ms highest is 60seconds", false, false, new AcceptableValueRange<float>(0.1f, 60f)));
+    Cannon_FiringDelayPerCannon = config.BindUnique(VehicleCannonsSection, "Cannon_FiringDelayPerCannon", 0.01f, ConfigHelpers.CreateConfigDescription("Allows setting cannon firing delays. This makes cannons fire in a order.", true, false, new AcceptableValueRange<float>(0, 0.3f)));
+    Cannon_ReloadTime = config.BindUnique(VehicleCannonsSection, "Cannon_ReloadTime", 6f, ConfigHelpers.CreateConfigDescription("Allows setting cannon reload delays. This makes cannons reload longer or shorter. Shortest value is 100ms highest is 60seconds", true, false, new AcceptableValueRange<float>(0.1f, 60f)));
     Cannon_ReloadTime.SettingChanged += (sender, args) =>
     {
       CannonController.ReloadTimeOverride = Cannon_ReloadTime.Value;
     };
     CannonController.ReloadTimeOverride = Cannon_ReloadTime.Value;
 
-    CannonHandHeld_ReloadTime = config.BindUnique(VehicleCannonsSection, "CannonHandHeld_ReloadTime", 6f, ConfigHelpers.CreateConfigDescription("Allows setting cannon-handheld reload delays. This makes cannons reload longer or shorter. Shortest value is 100ms highest is 60seconds", false, false, new AcceptableValueRange<float>(0.1f, 60f)));
+    CannonHandHeld_ReloadTime = config.BindUnique(VehicleCannonsSection, "CannonHandHeld_ReloadTime", 6f, ConfigHelpers.CreateConfigDescription("Allows setting cannon-handheld reload delays. This makes cannons reload longer or shorter. Shortest value is 100ms highest is 60seconds", true, false, new AcceptableValueRange<float>(0.1f, 60f)));
     CannonHandHeld_ReloadTime.SettingChanged += (sender, args) =>
     {
       CannonController.CannonHandHeld_ReloadTime = CannonHandHeld_ReloadTime.Value;

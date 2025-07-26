@@ -314,7 +314,7 @@ public class SteeringWheelComponent : MonoBehaviour, IAnimatorHandler, Hoverable
     var canUse = InUseDistance(user);
 
     var HasInvalidVehicle = ControllersInstance.Manager == null;
-    if (hold || HasInvalidVehicle || !canUse) return false;
+    if (HasInvalidVehicle || !canUse) return false;
 
     SetLastUsedWheel();
 
@@ -328,9 +328,8 @@ public class SteeringWheelComponent : MonoBehaviour, IAnimatorHandler, Hoverable
     var player = user as Player;
 
     var playerOnShipViaShipInstance =
-      ControllersInstance?.PiecesController
+      ControllersInstance.PiecesController
         ?.GetComponentsInChildren<Player>() ?? null;
-
     if (player != null)
       ControllersInstance?.MovementController?.UpdatePlayerOnShip(player);
 

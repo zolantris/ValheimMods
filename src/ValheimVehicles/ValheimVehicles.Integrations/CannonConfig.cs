@@ -60,6 +60,7 @@ namespace ValheimVehicles.SharedScripts
           break;
       }
     }
+
     public void Save(ZDO zdo, CannonPersistentConfig persistentConfig, string[]? filterKeys)
     {
       if (filterKeys == null || filterKeys.Length == 0)

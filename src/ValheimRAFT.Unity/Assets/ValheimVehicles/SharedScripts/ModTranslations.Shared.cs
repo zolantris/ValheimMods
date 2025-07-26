@@ -189,8 +189,8 @@ namespace ValheimVehicles.SharedScripts
     public static string Vehicle_Cannon_Controls_Tutorial;
     public static string VehicleCannon_SwapCannonBallType;
     public static string VehicleCannon_AmmoText;
-    public static string VehicleCannon_CannonBallExplosive;
-    public static string VehicleCannon_CannonBallSolid;
+    public static string VehicleCannon_CannonBallItemExplosive;
+    public static string VehicleCannon_CannonBallItemSolid;
     public static string VehicleCannon_CannonMissingNearbyPowderBarrel;
 
     // vehicle config

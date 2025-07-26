@@ -189,9 +189,16 @@ public class PrefabConfigSync<T, TComponentInterface> : MonoBehaviour, IPrefabCu
     if (controller == null) return;
     CustomConfig = Config.Load(zdo, controller, filterKeys);
   }
+
   public void Save(ZDO zdo, string[]? filterKeys = null)
   {
     CustomConfig.Save(zdo, Config, filterKeys);
+  }
+
+  public void Save(string[]? filterKeys = null)
+  {
+    if (!this.IsNetViewValid(out var nv)) return;
+    Save(nv.GetZDO(), filterKeys);
   }
 
   public virtual void OnLoad() {}

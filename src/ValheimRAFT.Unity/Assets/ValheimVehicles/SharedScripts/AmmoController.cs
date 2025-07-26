@@ -203,16 +203,13 @@
       }
 #endif
 
-      private const string ExplosiveAmmoToken = "$valheim_vehicles_cannonball_explosive";
-      private const string SolidAmmoToken = "$valheim_vehicles_cannonball_solid";
-
       public static CannonballVariant GetAmmoVariantFromToken(string tokenId)
       {
-        if (tokenId == SolidAmmoToken)
+        if (tokenId == PrefabItemNameToken.CannonSolidAmmo)
         {
           return CannonballVariant.Solid;
         }
-        if (tokenId == ExplosiveAmmoToken)
+        if (tokenId == PrefabItemNameToken.CannonExplosiveAmmo)
         {
           return CannonballVariant.Explosive;
         }
@@ -244,11 +241,11 @@
       //   if (ammoTypes == null) return;
       //   foreach (var ammoType in ammoTypes)
       //   {
-      //     if (ammoType.m_shared.m_name == ExplosiveAmmoToken)
+      //     if (ammoType.m_shared.m_name == PrefabItemNameToken.CannonExplosiveAmmo)
       //     {
       //       if (shouldRemove)
       //       {
-      //         ValheimInventoryCompat.RemoveItemWithRemainder(inventory, ExplosiveAmmoToken, currentSolidAmmo, out var remainder);
+      //         ValheimInventoryCompat.RemoveItemWithRemainder(inventory, PrefabItemNameToken.CannonExplosiveAmmo, currentSolidAmmo, out var remainder);
       //       }
       //       else
       //       {
@@ -256,11 +253,11 @@
       //       }
       //       continue;
       //     }
-      //     if (ammoType.m_shared.m_name == SolidAmmoToken)
+      //     if (ammoType.m_shared.m_name == PrefabItemNameToken.CannonSolidAmmo)
       //     {
       //       if (shouldRemove)
       //       {
-      //         ValheimInventoryCompat.RemoveItemWithRemainder(inventory, SolidAmmoToken, currentSolidAmmo, out var remainder);
+      //         ValheimInventoryCompat.RemoveItemWithRemainder(inventory, PrefabItemNameToken.CannonSolidAmmo, currentSolidAmmo, out var remainder);
       //       }
       //       else
       //       {
@@ -293,8 +290,8 @@
         if (!nearbyContainer.isActiveAndEnabled) return;
         var inventory = nearbyContainer.GetInventory();
         if (inventory == null) return;
-        var localSolidAmmo = inventory.CountItems(SolidAmmoToken);
-        var localExplosiveAmmo = inventory.CountItems(ExplosiveAmmoToken);
+        var localSolidAmmo = inventory.CountItems(PrefabItemNameToken.CannonSolidAmmo);
+        var localExplosiveAmmo = inventory.CountItems(PrefabItemNameToken.CannonExplosiveAmmo);
 
         if (isDiffUpdate)
         {
@@ -336,8 +333,8 @@
           if (player == null || player.IsDead() || player.IsTeleporting()) yield break;
           var inventory = player.GetInventory();
           if (inventory == null) yield break;
-          currentSolidAmmo += inventory.CountItems(SolidAmmoToken);
-          currentExplosiveAmmo += inventory.CountItems(ExplosiveAmmoToken);
+          currentSolidAmmo += inventory.CountItems(PrefabItemNameToken.CannonSolidAmmo);
+          currentExplosiveAmmo += inventory.CountItems(PrefabItemNameToken.CannonExplosiveAmmo);
         }
 
         _explosiveAmmo = currentExplosiveAmmo;
@@ -373,13 +370,13 @@
             if (currentAmmoToRemoveExplosive <= 0 && currentAmmoToRemoveSolid <= 0) break;
             var inventory = nearbyContainer.GetInventory();
             if (inventory == null) continue;
-            var localSolidAmmo = inventory.CountItems(SolidAmmoToken);
-            var localExplosiveAmmo = inventory.CountItems(ExplosiveAmmoToken);
+            var localSolidAmmo = inventory.CountItems(PrefabItemNameToken.CannonSolidAmmo);
+            var localExplosiveAmmo = inventory.CountItems(PrefabItemNameToken.CannonExplosiveAmmo);
 
             if (currentAmmoToRemoveSolid > 0 && localSolidAmmo > 0)
             {
               var amountToRemove = Math.Max(0, Math.Min(currentAmmoToRemoveSolid, localSolidAmmo));
-              ValheimInventoryCompat.RemoveItemWithRemainder(inventory, SolidAmmoToken, amountToRemove, out var remainder);
+              ValheimInventoryCompat.RemoveItemWithRemainder(inventory, PrefabItemNameToken.CannonSolidAmmo, amountToRemove, out var remainder);
               amountToRemove -= remainder;
               localSolidAmmo -= amountToRemove;
               currentAmmoToRemoveSolid -= amountToRemove;
@@ -388,7 +385,7 @@
             if (currentAmmoToRemoveExplosive > 0 && localExplosiveAmmo > 0)
             {
               var amountToRemove = Math.Max(0, Math.Min(currentAmmoToRemoveExplosive, localExplosiveAmmo));
-              ValheimInventoryCompat.RemoveItemWithRemainder(inventory, ExplosiveAmmoToken, amountToRemove, out var remainder);
+              ValheimInventoryCompat.RemoveItemWithRemainder(inventory, PrefabItemNameToken.CannonExplosiveAmmo, amountToRemove, out var remainder);
               amountToRemove -= remainder;
 
               localExplosiveAmmo -= amountToRemove;
@@ -405,13 +402,13 @@
           if (player == null || player.IsDead() || player.IsTeleporting()) return;
           var inventory = player.GetInventory();
           if (inventory == null) return;
-          var localSolidAmmo = inventory.CountItems(SolidAmmoToken);
-          var localExplosiveAmmo = inventory.CountItems(ExplosiveAmmoToken);
+          var localSolidAmmo = inventory.CountItems(PrefabItemNameToken.CannonSolidAmmo);
+          var localExplosiveAmmo = inventory.CountItems(PrefabItemNameToken.CannonExplosiveAmmo);
 
           if (currentAmmoToRemoveSolid > 0 && localSolidAmmo > 0)
           {
             var amountToRemove = Math.Min(currentAmmoToRemoveSolid, localSolidAmmo);
-            ValheimInventoryCompat.RemoveItemWithRemainder(inventory, SolidAmmoToken, amountToRemove, out var remainder);
+            ValheimInventoryCompat.RemoveItemWithRemainder(inventory, PrefabItemNameToken.CannonSolidAmmo, amountToRemove, out var remainder);
             amountToRemove -= remainder;
             localSolidAmmo -= amountToRemove;
             currentAmmoToRemoveSolid -= amountToRemove;
@@ -420,7 +417,7 @@
           if (currentAmmoToRemoveExplosive > 0 && localExplosiveAmmo > 0)
           {
             var amountToRemove = Math.Min(currentAmmoToRemoveExplosive, localExplosiveAmmo);
-            ValheimInventoryCompat.RemoveItemWithRemainder(inventory, ExplosiveAmmoToken, amountToRemove, out var remainder);
+            ValheimInventoryCompat.RemoveItemWithRemainder(inventory, PrefabItemNameToken.CannonExplosiveAmmo, amountToRemove, out var remainder);
             amountToRemove -= remainder;
             localExplosiveAmmo -= amountToRemove;
             currentAmmoToRemoveExplosive -= amountToRemove;
