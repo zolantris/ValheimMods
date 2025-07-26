@@ -97,6 +97,9 @@ public class CannonPrefabConfig : BepInExBaseConfig<CannonPrefabConfig>
 
     CannonHandHeld_ReloadStamina = config.BindUnique(CannonHandheldSection, "ReloadStaminaDrain", 5f, ConfigHelpers.CreateConfigDescription("Allows setting cannon-handheld reload delays. This makes cannons reload longer or shorter. Shortest value is 100ms highest is 60seconds", true, false, new AcceptableValueRange<float>(0.1f, 60f)));
 
+    CannonHandheld_AudioStartPosition = config.BindUnique(CannonHandheldSection, "AudioStartPosition", 0.25f, ConfigHelpers.CreateConfigDescription("Set set the audio start position. This will sound like a heavy flintlock if to close to 0f. Warning: the audio will be desynced it plays the click when the cannonball is already firing (0 - 0.15f)", false, true, new AcceptableValueRange<float>(0f, 1.5f)));
+
+
     CannonController.CannonHandHeld_ReloadTime = CannonHandHeld_ReloadTime.Value;
     CannonHandHeldController.maxYaw = CannonHandheld_AimYRotationMax.Value;
     CannonHandHeldController.minYaw = CannonHandheld_AimYRotationMin.Value;
@@ -107,8 +110,6 @@ public class CannonPrefabConfig : BepInExBaseConfig<CannonPrefabConfig>
     CannonHandHeld_ReloadTime.SettingChanged += (sender, args) => OnCannonHandheldItemUpdate();
     CannonHandHeld_ReloadStamina.SettingChanged += (sender, args) => OnCannonHandheldItemUpdate();
     CannonHandHeld_AttackStamina.SettingChanged += (sender, args) => OnCannonHandheldItemUpdate();
-
-    CannonHandheld_AudioStartPosition = config.BindUnique(CannonHandheldSection, "AudioStartPosition", 0.25f, ConfigHelpers.CreateConfigDescription("Set set the audio start position. This will sound like a heavy flintlock if to close to 0f. Warning: the audio will be desynced it plays the click when the cannonball is already firing (0 - 0.15f)", false, true, new AcceptableValueRange<float>(0f, 1.5f)));
     CannonHandheld_AudioStartPosition.SettingChanged += (sender, args) =>
     {
       CannonController.CannonHandheld_FireAudioStartTime = CannonHandheld_AudioStartPosition.Value;
@@ -220,7 +221,7 @@ public class CannonPrefabConfig : BepInExBaseConfig<CannonPrefabConfig>
     Cannonball_ExplosionAudio_Enabled = config.BindUnique(CannonballsSection, "ExplosionAudio_Enabled", true, ConfigHelpers.CreateConfigDescription("Allows toggling the cannonball explosion/impact audio. Unstable b/c it does not sound great when many of these are fired together.", false, false));
 
     // setters
-    CannonballHitScheduler.ExplosionShellRadius = Cannonball_ExplosiveRadius.Value;
+    Cannonball.ExplosionShellRadius = Cannonball_ExplosiveRadius.Value;
     CannonballHitScheduler.BaseDamageSolidCannonball = Cannonball_SolidBaseDamage.Value;
     CannonballHitScheduler.BaseDamageExplosiveCannonball = Cannonball_ExplosiveBaseDamage.Value;
 
@@ -229,7 +230,7 @@ public class CannonPrefabConfig : BepInExBaseConfig<CannonPrefabConfig>
     CannonBallInventoryWeight.SettingChanged += (sender, args) => OnCannonballItemChange();
     Cannonball_ExplosiveRadius.SettingChanged += (sender, args) =>
     {
-      CannonballHitScheduler.ExplosionShellRadius = Cannonball_ExplosiveRadius.Value;
+      Cannonball.ExplosionShellRadius = Cannonball_ExplosiveRadius.Value;
     };
     Cannonball_SolidBaseDamage.SettingChanged += (sender, args) =>
     {

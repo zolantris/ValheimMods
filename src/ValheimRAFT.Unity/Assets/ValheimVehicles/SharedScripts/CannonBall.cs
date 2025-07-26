@@ -86,7 +86,7 @@ namespace ValheimVehicles.SharedScripts
 
     private readonly Collider[] allocatedColliders = new Collider[100];
     private LayerMask explosionLayerMask = ~0;
-    private readonly float explosionRadius = 6f;
+    public static float ExplosionShellRadius = 5f;
     private bool _canHit = true;
 
     private bool _canUseEffect;
@@ -354,7 +354,7 @@ namespace ValheimVehicles.SharedScripts
     /// </summary>
     private void GetCollisionsFromExplosion(Vector3 explosionOrigin, float force)
     {
-      var count = Physics.OverlapSphereNonAlloc(explosionOrigin, explosionRadius, allocatedColliders, LayerHelpers.CannonHitLayers);
+      var count = Physics.OverlapSphereNonAlloc(explosionOrigin, ExplosionShellRadius, allocatedColliders, LayerHelpers.CannonHitLayers);
       var hasHitMineRock = false;
       for (var i = 0; i < count; i++)
       {

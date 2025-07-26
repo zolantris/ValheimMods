@@ -21,7 +21,6 @@ namespace ValheimVehicles.SharedScripts
     public Vector3 velocity;
     public Vector3 direction;
     public Vector3 hitPoint;
-    public float explosionRadius;
     public bool isExplosionHit;
     public bool isCharacterHit;
     public bool isMineRockHit;
@@ -47,7 +46,6 @@ namespace ValheimVehicles.SharedScripts
     // damage types.
     public static float BaseDamageExplosiveCannonball = 50f;
     public static float BaseDamageSolidCannonball = 80f;
-    public static float ExplosionShellRadius = 7.5f;
 
     public static Dictionary<ShieldGenerator, (Cannonball, float, ShieldGenerator)> m_scheduledShieldUpdates = new();
     public static Dictionary<ShieldGenerator, HashSet<(Vector3, Quaternion)>> m_scheduledShieldHitPoints = new();
@@ -327,7 +325,6 @@ namespace ValheimVehicles.SharedScripts
         isMineRock5Hit = isMineRock5Hit,
         isDestructibleHit = isDestructibleHit,
         isSelfHit = isSelfHit,
-        explosionRadius = (isMineRock5Hit || isMineRockHit) && isExplosionHit ? ExplosionShellRadius : 0f,
         damage = damage
       };
 #else
