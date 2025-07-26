@@ -723,12 +723,14 @@ namespace ValheimVehicles.SharedScripts
       var hitDamage = CannonballHitScheduler.GetBaseDamageForHit(isExplosionHit, cannonballForce) * CannonPrefabConfig.Cannonball_ShieldGeneratorDamageMultiplier.Value;
 
       cannonball.HideCannonballMesh();
+      cannonball.m_body.velocity = Vector3.zero;
 
       if (shieldGenerator.m_fuelPerDamage > 0f)
       {
         var num = shieldGenerator.m_fuelPerDamage * hitDamage;
         shieldGenerator.SetFuel(shieldGenerator.GetFuel() - num);
       }
+
 
       CannonballHitScheduler.AddShieldUpdate(cannonball, cannonballPosition, cannonballForce, shieldGenerator);
     }

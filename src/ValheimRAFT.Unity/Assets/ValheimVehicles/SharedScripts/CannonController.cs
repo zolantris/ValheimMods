@@ -130,10 +130,10 @@ namespace ValheimVehicles.SharedScripts
     // --- State ---
     private readonly Dictionary<BarrelPart, Cannonball> _loadedCannonballs = new();
     internal readonly List<Cannonball> _trackedLoadedCannonballs = new();
+    private Queue<Cannonball> _cannonballPool = new();
 
     public readonly List<BarrelPart> shootingBarrelParts = new();
     private bool _canAutoFire;
-    private Queue<Cannonball> _cannonballPool = new();
     private AudioSource _cannonFireAudioSource;
     public static float CannonHandheld_FireAudioStartTime = 0.5f;
     private AudioSource _cannonReloadAudioSource;
@@ -569,6 +569,13 @@ namespace ValheimVehicles.SharedScripts
 
     private void CleanupPool()
     {
+      _trackedLoadedCannonballs.RemoveAll(x => x == null);
+      foreach (var cannonball in _loadedCannonballs.Values)
+      {
+        if (cannonball == null) continue;
+        Destroy(cannonball);
+      }
+      _loadedCannonballs.Clear();
       if (_cannonballPool.Count > 0)
       {
         while (_cannonballPool.Count > 0)
@@ -578,7 +585,6 @@ namespace ValheimVehicles.SharedScripts
           Destroy(ball.gameObject);
         }
       }
-      _trackedLoadedCannonballs.RemoveAll(x => x == null);
     }
 
     private void SetupCannonballPrefab()
@@ -588,6 +594,8 @@ namespace ValheimVehicles.SharedScripts
       // must clean the pool if shooting new cannonballs.
       CleanupPool();
       InitCannonballPrefabAssets();
+
+
     }
 
     private void InitializePool()

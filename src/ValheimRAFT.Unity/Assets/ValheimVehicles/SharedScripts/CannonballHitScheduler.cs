@@ -85,11 +85,6 @@ namespace ValheimVehicles.SharedScripts
     }
 #endif
 
-    public void RunShieldHitUpdate()
-    {
-
-    }
-
     /// <summary>
     /// Only adds keys if they are not already scheduled.
     /// </summary>
@@ -115,7 +110,7 @@ namespace ValheimVehicles.SharedScripts
     public static IEnumerator UpdateShieldHitRoutine()
     {
       yield return new WaitForFixedUpdate();
-      // copies these values so we can immediately capture new ones
+      // copies these values so there is no modification chance of original data (doesn't matter single threaded though)
       var queuedHits = m_scheduledShieldUpdates.Values.ToList();
       m_scheduledShieldUpdates.Clear();
       foreach (var (cannonball, cannonballPosition, force, shieldGenerator) in queuedHits)
