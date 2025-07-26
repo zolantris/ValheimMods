@@ -99,7 +99,6 @@ namespace ValheimVehicles.SharedScripts
     private AudioSource _explosionAudioSource;
     private Transform _explosionParent;
     [CanBeNull] public Vector3? _fireOrigin;
-    private bool _hasExitedMuzzle;
     private bool _hasExploded;
     private CoroutineHandle _impactSoundCoroutine;
 
@@ -704,7 +703,6 @@ namespace ValheimVehicles.SharedScripts
         m_body = GetComponent<Rigidbody>();
       }
 
-      _hasExitedMuzzle = false;
       IsInFlight = false;
 
       ResetCannonball();
@@ -733,13 +731,14 @@ namespace ValheimVehicles.SharedScripts
         shieldGenerator.SetFuel(shieldGenerator.GetFuel() - num);
       }
 
-      CannonballHitScheduler.AddShieldUpdate(cannonball, cannonballPosition, cannonballForce, shieldGenerator);
+      CannonballHitScheduler.AddShieldUpdate(cannonball, cannonballForce, shieldGenerator);
     }
 
     public void FixedUpdate_CheckForShieldGenerator()
     {
 #if VALHEIM
-      if (!IsInFlight || !_fireOrigin.HasValue || !_canHit || _hasExploded || !_hasExitedMuzzle) return;
+      if (!IsInFlight || !_fireOrigin.HasValue || !_canHit || _hasExploded) return;
+      if (!CanApplyDamage) return;
 
       foreach (var shield in ShieldGenerator.m_instances)
       {
@@ -809,7 +808,6 @@ namespace ValheimVehicles.SharedScripts
 
       m_body.includeLayers = LayerHelpers.CannonHitLayers;
 
-      _hasExitedMuzzle = false;
       _despawnCoroutine.Start(AutoDespawnCoroutine());
     }
 
