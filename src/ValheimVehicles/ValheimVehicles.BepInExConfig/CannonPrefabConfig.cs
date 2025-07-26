@@ -35,8 +35,6 @@ public class CannonPrefabConfig : BepInExBaseConfig<CannonPrefabConfig>
   public static ConfigEntry<float> Cannon_FiringDelayPerCannon = null!;
   public static ConfigEntry<float> CannonHandheld_AudioStartPosition = null!;
   public static ConfigEntry<float> Cannon_FireAudioVolume = null!;
-  public static ConfigEntry<float> Cannonball_SolidDamage = null!;
-  public static ConfigEntry<float> Cannonball_ExplosiveDamage = null!;
   public static ConfigEntry<float> CannonAutoAimSpeed = null!;
   public static ConfigEntry<float> CannonAutoAimYOffset = null!;
   public static ConfigEntry<float> CannonAimMaxYRotation = null!;
@@ -209,15 +207,18 @@ public class CannonPrefabConfig : BepInExBaseConfig<CannonPrefabConfig>
   {
     Cannonball_ShieldGeneratorDamageMultiplier = config.BindUnique(CannonballsSection, "ShieldGeneratorDamageMultiplier", 0.25f, ConfigHelpers.CreateConfigDescription("Set the damage cannons do to shield generators. Shield generators should soak more damage to be balanced. So consider using a low number for cannonballs otherwise only ~3 hits can collapse a generator", true, false, new AcceptableValueRange<float>(0, 1)));
     CannonBallInventoryWeight = config.BindUnique(CannonballsSection, "InventoryWeight", 4f, ConfigHelpers.CreateConfigDescription("Set the weight of cannonballs. For realism 12-48lbs for these cannons.", true, false, new AcceptableValueRange<float>(0, 100)));
-    Cannonball_ExplosionAudioVolume = config.BindUnique(CannonballsSection, "ExplosionAudioVolume", 1f, ConfigHelpers.CreateConfigDescription("Allows customizing cannon reload audio volume", false, false));
-    Cannonball_ExplosiveRadius = config.BindUnique(CannonballsSection, "ExplosionRadius", 7.5f, ConfigHelpers.CreateConfigDescription("Allows customizing cannonball explosion radius/aoe. Large sizes will lag out objects like rocks", false, false, new AcceptableValueRange<float>(3f, 20f)));
-    Cannonball_SolidBaseDamage = config.BindUnique(CannonballsSection, "SolidShell_BaseDamage", 85f, ConfigHelpers.CreateConfigDescription("Allows customizing cannonball solid hit damage", false, false, new AcceptableValueRange<float>(25f, 500f)));
-    Cannonball_ExplosiveBaseDamage = config.BindUnique(CannonballsSection, "ExplosiveShell_BaseDamage", 50f, ConfigHelpers.CreateConfigDescription("Allows customizing cannonball explosion hit AOE damage. The damage is uniform across the entire radius.", false, false, new AcceptableValueRange<float>(25f, 500f)));
+
+    Cannonball_ExplosiveRadius = config.BindUnique(CannonballsSection, "ExplosionRadius", 7.5f, ConfigHelpers.CreateConfigDescription("Allows customizing cannonball explosion radius/aoe. Large sizes will lag out objects like rocks", true, false, new AcceptableValueRange<float>(3f, 20f)));
+
+    Cannonball_SolidBaseDamage = config.BindUnique(CannonballsSection, "SolidShell_BaseDamage", 85f, ConfigHelpers.CreateConfigDescription("Set the amount of damage a solid cannon ball does. This value is multiplied by the velocity of the cannonball around 90 at max speed decreasing to 20 m/s at lowest hit damage level.", true, false, new AcceptableValueRange<float>(25f, 500f)));
+    Cannonball_ExplosiveBaseDamage = config.BindUnique(CannonballsSection, "ExplosiveShell_BaseDamage", 50f, ConfigHelpers.CreateConfigDescription("Allows customizing cannonball explosion hit AOE damage. The damage is uniform across the entire radius.", true, false, new AcceptableValueRange<float>(25f, 500f)));
+
     DEBUG_Cannonball_UnlimitedAmmo = config.BindUnique(CannonballsSection, "DEBUG_UnlimitedAmmo", false, ConfigHelpers.CreateConfigDescription("Allows unlimited ammo for cannons. This is meant for testing cannons but not realistic.", true, false));
+
+
+    Cannonball_ExplosionAudioVolume = config.BindUnique(CannonballsSection, "ExplosionAudioVolume", 1f, ConfigHelpers.CreateConfigDescription("Allows customizing cannon reload audio volume", false, false));
     Cannonball_WindAudio_Enabled = config.BindUnique(CannonballsSection, "WindAudio_Enabled", true, ConfigHelpers.CreateConfigDescription("Allows enable cannonball wind audio - which can be heard if a cannonball passes nearby.", false, false));
     Cannonball_WindAudioVolume = config.BindUnique(CannonballsSection, "WindAudioVolume", 0.2f, ConfigHelpers.CreateConfigDescription("Allows customizing cannonball wind audio - which can be heard if a cannonball passes nearby. Recommended below 0.2f", false, false));
-    Cannonball_SolidDamage = config.BindUnique(CannonballsSection, "SolidDamage", 30f, ConfigHelpers.CreateConfigDescription("Set the amount of damage a solid cannon ball does. This value is multiplied by the velocity of the cannonball around 90 at max speed decreasing to 20 m/s at lowest hit damage level.", false, false));
-    Cannonball_ExplosiveDamage = config.BindUnique(CannonballsSection, "ExplosiveDamage", 30f, ConfigHelpers.CreateConfigDescription("Set the amount of damage a explosive cannon ball does. This damage includes both the AOE and hit. AOE will do same damage on top of the impact of the shot.", false, false));
     Cannonball_ExplosionAudio_Enabled = config.BindUnique(CannonballsSection, "ExplosionAudio_Enabled", true, ConfigHelpers.CreateConfigDescription("Allows toggling the cannonball explosion/impact audio. Unstable b/c it does not sound great when many of these are fired together.", false, false));
 
     // setters
@@ -244,8 +245,7 @@ public class CannonPrefabConfig : BepInExBaseConfig<CannonPrefabConfig>
     {
       AmmoController.HasUnlimitedAmmo = DEBUG_Cannonball_UnlimitedAmmo.Value;
     };
-    Cannonball_SolidDamage.SettingChanged += (sender, args) => CannonballHitScheduler.BaseDamageSolidCannonball = Cannonball_SolidDamage.Value;
-    Cannonball_ExplosiveDamage.SettingChanged += (sender, args) => CannonballHitScheduler.BaseDamageExplosiveCannonball = Cannonball_ExplosiveDamage.Value;
+
     Cannonball_WindAudioVolume.SettingChanged += (sender, args) => Cannonball.CannonballWindAudioVolume = Cannonball_WindAudioVolume.Value;
     Cannonball_ExplosionAudio_Enabled.SettingChanged += (sender, args) => Cannonball.HasExplosionAudio = Cannonball_ExplosionAudio_Enabled.Value;
     Cannonball_ExplosionAudioVolume.SettingChanged += (sender, args) => Cannonball.ExplosionAudioVolume = Cannonball_ExplosionAudioVolume.Value;
