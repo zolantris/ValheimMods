@@ -6,7 +6,6 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using JetBrains.Annotations;
 using UnityEngine;
 
@@ -47,9 +46,10 @@ namespace ValheimVehicles.SharedScripts
     public static float BaseDamageExplosiveCannonball = 50f;
     public static float BaseDamageSolidCannonball = 80f;
 
+#if VALHEIM
     public static Dictionary<ShieldGenerator, (Cannonball, float, ShieldGenerator)> m_scheduledShieldUpdates = new();
     public static Dictionary<ShieldGenerator, HashSet<(Vector3, Quaternion)>> m_scheduledShieldHitPoints = new();
-
+#endif
     public void OnEnable()
     {
       SetupCoroutines();
@@ -94,6 +94,7 @@ namespace ValheimVehicles.SharedScripts
     }
 #endif
 
+#if VALHEIM
     /// <summary>
     /// Only adds keys if they are not already scheduled.
     /// </summary>
@@ -114,8 +115,7 @@ namespace ValheimVehicles.SharedScripts
 
       ScheduleUpdateShieldHit();
     }
-
-    public static void ScheduleUpdateShieldHit()
+     public static void ScheduleUpdateShieldHit()
     {
       if (!TryInit()) return;
       if (_applyShieldUpdate.IsRunning) return;
@@ -154,6 +154,7 @@ namespace ValheimVehicles.SharedScripts
       m_scheduledShieldUpdates.Clear();
       yield return new WaitForSeconds(0.1f);
     }
+#endif
 
     private static void CommitDamage(DamageInfo damageInfo)
     {

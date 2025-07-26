@@ -3,13 +3,11 @@
 
 #region
 
-using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using JetBrains.Annotations;
 using UnityEngine;
-using ValheimVehicles.BepInExConfig;
 using ValheimVehicles.SharedScripts.Structs;
 # if VALHEIM
 using ValheimVehicles.Controllers;
@@ -713,6 +711,7 @@ namespace ValheimVehicles.SharedScripts
       meshGameObject.SetActive(false);
     }
 
+#if  VALHEIM
     public static void OnHitShieldGenerator(Cannonball cannonball, ShieldGenerator shieldGenerator)
     {
       if (!cannonball) return;
@@ -739,6 +738,7 @@ namespace ValheimVehicles.SharedScripts
 
       CannonballHitScheduler.AddShieldUpdate(cannonball, cannonballForce, shieldGenerator);
     }
+#endif
 
     public void FixedUpdate_CheckForShieldGenerator()
     {
