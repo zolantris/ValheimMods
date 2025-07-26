@@ -8,9 +8,10 @@ using System.Collections.Generic;
 using System.Linq;
 using JetBrains.Annotations;
 using UnityEngine;
-using ValheimVehicles.SharedScripts.Structs;
 # if VALHEIM
 using ValheimVehicles.Controllers;
+using ValheimVehicles.BepInExConfig;
+using ValheimVehicles.SharedScripts.Structs;
 #endif
 
 #endregion
@@ -711,7 +712,7 @@ namespace ValheimVehicles.SharedScripts
       meshGameObject.SetActive(false);
     }
 
-#if  VALHEIM
+#if VALHEIM
     public static void OnHitShieldGenerator(Cannonball cannonball, ShieldGenerator shieldGenerator)
     {
       if (!cannonball) return;

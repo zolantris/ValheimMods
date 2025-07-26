@@ -4,12 +4,16 @@
 #region
 
 using System.Collections;
-using System.Collections.Generic;
 using System.Diagnostics;
 using JetBrains.Annotations;
 using UnityEngine;
 
 #endregion
+
+#if VALHEIM
+using System.Collections.Generic;
+using System.Linq;
+#endif
 
 namespace ValheimVehicles.SharedScripts
 {
@@ -115,7 +119,7 @@ namespace ValheimVehicles.SharedScripts
 
       ScheduleUpdateShieldHit();
     }
-     public static void ScheduleUpdateShieldHit()
+    public static void ScheduleUpdateShieldHit()
     {
       if (!TryInit()) return;
       if (_applyShieldUpdate.IsRunning) return;
