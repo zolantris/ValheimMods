@@ -100,6 +100,7 @@ public class CannonPrefabConfig : BepInExBaseConfig<CannonPrefabConfig>
     CannonController.CannonHandHeld_ReloadTime = CannonHandHeld_ReloadTime.Value;
     CannonHandHeldController.maxYaw = CannonHandheld_AimYRotationMax.Value;
     CannonHandHeldController.minYaw = CannonHandheld_AimYRotationMin.Value;
+    CannonController.CannonHandheld_FireAudioStartTime = CannonHandheld_AudioStartPosition.Value;
 
     CannonHandheld_AimYRotationMax.SettingChanged += (sender, args) => CannonHandHeldController.maxYaw = CannonHandheld_AimYRotationMax.Value;
     CannonHandheld_AimYRotationMin.SettingChanged += (sender, args) => CannonHandHeldController.minYaw = CannonHandheld_AimYRotationMin.Value;
