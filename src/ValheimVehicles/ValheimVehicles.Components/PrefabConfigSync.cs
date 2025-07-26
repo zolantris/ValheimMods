@@ -195,6 +195,10 @@ public class PrefabConfigSync<T, TComponentInterface> : MonoBehaviour, IPrefabCu
     CustomConfig.Save(zdo, Config, filterKeys);
   }
 
+  /// <summary>
+  /// Todo consider calling request load after. This might need to be guarded by a update check to avoid infinite loops.
+  /// </summary>
+  /// <param name="filterKeys"></param>
   public void Save(string[]? filterKeys = null)
   {
     if (!this.IsNetViewValid(out var nv)) return;
@@ -202,6 +206,21 @@ public class PrefabConfigSync<T, TComponentInterface> : MonoBehaviour, IPrefabCu
   }
 
   public virtual void OnLoad() {}
+
+  public void Request_CommitConfigChange()
+  {
+    if (!this.IsNetViewValid(out var netView)) return;
+    if (netView.IsOwner())
+    {
+      CommitConfigChange(Config);
+    }
+    else
+    {
+      var pkg = new ZPackage();
+      Config.Serialize(pkg);
+      netView.InvokeRPC(netView.GetZDO().GetOwner(), nameof(RPC_CommitConfigChange), pkg);
+    }
+  }
 
   public void Request_CommitConfigChange(T newConfig)
   {
@@ -221,11 +240,7 @@ public class PrefabConfigSync<T, TComponentInterface> : MonoBehaviour, IPrefabCu
   private void RPC_CommitConfigChange(long sender, ZPackage pkg)
   {
     if (!this.IsNetViewValid(out var netView)) return;
-    if (!netView.IsOwner() || !ZNet.instance.IsServer()) return;
-    if (!netView.IsOwner())
-    {
-      netView.ClaimOwnership();
-    }
+    netView.ClaimOwnership();
 
     var newConfig = new T();
     newConfig.Deserialize(pkg);

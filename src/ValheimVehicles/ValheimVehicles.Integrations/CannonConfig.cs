@@ -16,7 +16,7 @@ namespace ValheimVehicles.SharedScripts
 {
   public partial class CannonPersistentConfig : ISerializableConfig<CannonPersistentConfig, ICannonPersistentConfig>, ICannonPersistentConfig
   {
-    public const string Key_AmmoType = "cannon_ammo_type";
+    public const string Key_AmmoVariant = "cannon_ammo_variant";
     public const string Key_CannonFiringMode = "cannon_firing_mode";
 
     public int GetStableHashCode()
@@ -32,8 +32,10 @@ namespace ValheimVehicles.SharedScripts
 
     public void Serialize(ZPackage pkg)
     {
-      throw new System.NotImplementedException();
+      pkg.Write((int)CannonFiringMode);
+      pkg.Write((int)AmmoVariant);
     }
+
     public CannonPersistentConfig Deserialize(ZPackage pkg)
     {
       pkg.SetPos(0); // Always reset read pointer otherwise we start at end and fail.
@@ -49,11 +51,11 @@ namespace ValheimVehicles.SharedScripts
     {
       switch (key)
       {
-        case Key_AmmoType:
-          persistentConfig.AmmoVariant = (CannonballVariant)zdo.GetInt(Key_AmmoType, (int)persistentConfig.AmmoVariant);
+        case Key_AmmoVariant:
+          persistentConfig.AmmoVariant = (CannonballVariant)zdo.GetInt(Key_AmmoVariant, (int)AmmoVariant);
           break;
         case Key_CannonFiringMode:
-          persistentConfig.CannonFiringMode = (CannonFiringMode)zdo.GetInt(Key_CannonFiringMode, (int)persistentConfig.CannonFiringMode);
+          persistentConfig.CannonFiringMode = (CannonFiringMode)zdo.GetInt(Key_CannonFiringMode, (int)CannonFiringMode);
           break;
         default:
           LoggerProvider.LogDebug($"CannonConfig: Unknown key: {key}");
@@ -77,16 +79,16 @@ namespace ValheimVehicles.SharedScripts
 
     public void SaveAll(ZDO zdo, CannonPersistentConfig persistentConfig)
     {
-      zdo.SetDelta(Key_AmmoType, (int)persistentConfig.AmmoVariant);
-      zdo.SetDelta(Key_CannonFiringMode, persistentConfig.CannonFiringMode);
+      zdo.SetDelta(Key_AmmoVariant, (int)persistentConfig.AmmoVariant);
+      zdo.SetDelta(Key_CannonFiringMode, (int)persistentConfig.CannonFiringMode);
     }
 
     public void SaveByKey(ZDO zdo, CannonPersistentConfig persistentConfig, string key)
     {
       switch (key)
       {
-        case Key_AmmoType:
-          zdo.Set(Key_AmmoType, (int)persistentConfig.AmmoVariant);
+        case Key_AmmoVariant:
+          zdo.Set(Key_AmmoVariant, (int)persistentConfig.AmmoVariant);
           break;
         case Key_CannonFiringMode:
           zdo.Set(Key_CannonFiringMode, (int)persistentConfig.CannonFiringMode);
@@ -102,7 +104,7 @@ namespace ValheimVehicles.SharedScripts
       var newConfig = new CannonPersistentConfig
       {
         CannonFiringMode = (CannonFiringMode)zdo.GetInt(Key_CannonFiringMode, (int)persistentConfigFromComponent.CannonFiringMode),
-        AmmoVariant = (CannonballVariant)zdo.GetInt(Key_AmmoType, (int)persistentConfigFromComponent.AmmoVariant)
+        AmmoVariant = (CannonballVariant)zdo.GetInt(Key_AmmoVariant, (int)persistentConfigFromComponent.AmmoVariant)
       };
       return newConfig;
     }

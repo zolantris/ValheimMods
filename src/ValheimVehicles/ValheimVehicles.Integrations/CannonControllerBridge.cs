@@ -24,12 +24,7 @@ public class CannonControllerBridge : CannonController, Hoverable, Interactable,
   public override void OnAmmoVariantUpdate(CannonballVariant variant)
   {
     base.OnAmmoVariantUpdate(variant);
-
     PersistentConfig.AmmoVariant = variant;
-    if (this.IsNetViewValid(out var nv))
-    {
-      prefabConfigSync.Save([CannonPersistentConfig.Key_AmmoType]);
-    }
   }
 
   protected internal override sealed void Awake()
@@ -56,7 +51,6 @@ public class CannonControllerBridge : CannonController, Hoverable, Interactable,
   protected internal override void Start()
   {
     base.Start();
-    prefabConfigSync.Load([]);
     ammoController = GetComponent<AmmoController>();
   }
 
@@ -79,8 +73,15 @@ public class CannonControllerBridge : CannonController, Hoverable, Interactable,
 
   public void ToggleAmmoVariant()
   {
+    prefabConfigSync.Load();
     var nextVariant = AmmoVariant == CannonballVariant.Explosive ? CannonballVariant.Solid : CannonballVariant.Explosive;
     AmmoVariant = nextVariant;
+
+    if (this.IsNetViewValid())
+    {
+      LoggerProvider.LogDebug($"Update PrefabConfig AmmoVariant {AmmoVariant} prefabConfigSync.Config {prefabConfigSync.Config.AmmoVariant} persistentConfig {PersistentConfig.AmmoVariant}");
+      prefabConfigSync.Request_CommitConfigChange();
+    }
   }
 
 
