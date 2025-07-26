@@ -18,13 +18,17 @@ public class CannonControllerBridge : CannonController, Hoverable, Interactable,
   public override CannonballVariant AmmoVariant
   {
     get => PersistentConfig.AmmoVariant;
-    set
+    set => OnAmmoVariantUpdate(value);
+  }
+
+  public override void OnAmmoVariantUpdate(CannonballVariant variant)
+  {
+    base.OnAmmoVariantUpdate(variant);
+
+    PersistentConfig.AmmoVariant = variant;
+    if (this.IsNetViewValid(out var nv))
     {
-      PersistentConfig.AmmoVariant = value;
-      if (this.IsNetViewValid(out var nv))
-      {
-        prefabConfigSync.Save([CannonPersistentConfig.Key_AmmoType]);
-      }
+      prefabConfigSync.Save([CannonPersistentConfig.Key_AmmoType]);
     }
   }
 
@@ -79,9 +83,9 @@ public class CannonControllerBridge : CannonController, Hoverable, Interactable,
     AmmoVariant = nextVariant;
   }
 
+
   public string GetHoverText()
   {
-    // var s = $"{ModTranslations.PowerSource_Interact_AddOne} / {ModTranslations.SharedKeys_Hold} {ModTranslations.SharedKeys_AddMany}";
     var s = "";
     s += $"\n{ModTranslations.SharedKeys_InteractAlt} {ModTranslations.VehicleCannon_SwapCannonBallType}";
 

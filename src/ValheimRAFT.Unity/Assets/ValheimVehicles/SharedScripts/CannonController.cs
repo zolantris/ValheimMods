@@ -74,7 +74,7 @@ namespace ValheimVehicles.SharedScripts
     [Tooltip("Automatically reload when fired?")]
     [SerializeField] private bool autoReload = true;
     [Tooltip("Ammunition type")]
-    [SerializeField] private CannonballVariant ammoVariant = CannonballVariant.Solid;
+    [SerializeField] private CannonballVariant _ammoVariant = CannonballVariant.Solid;
 
     [Header("Effects & Sounds")]
     [Tooltip("Sound when firing.")]
@@ -308,10 +308,10 @@ namespace ValheimVehicles.SharedScripts
 
     public virtual CannonballVariant AmmoVariant
     {
-      get => ammoVariant;
+      get => _ammoVariant;
       set
       {
-        ammoVariant = value;
+        _ammoVariant = value;
         SetupCannonballPrefab();
       }
     }
@@ -587,28 +587,33 @@ namespace ValheimVehicles.SharedScripts
       }
     }
 
-    private void SetupCannonballPrefab()
+    public virtual void OnAmmoVariantUpdate(CannonballVariant variant)
+    {
+      // ensures syncing in case override of AmmoVariant is not using correct keys.
+      _ammoVariant = variant;
+      CleanupPool();
+    }
+
+    internal void SetupCannonballPrefab()
     {
       hasRunSetup = true;
 
       // must clean the pool if shooting new cannonballs.
       CleanupPool();
       InitCannonballPrefabAssets();
-
-
     }
 
     private void InitializePool()
     {
       _cannonballPool = new Queue<Cannonball>(MinPoolSize);
-      var selectedCannonball = SelectCannonballType(ammoVariant);
+      var selectedCannonball = SelectCannonballType(AmmoVariant);
       if (!selectedCannonball) return;
       for (var i = 0; i < MinPoolSize; i++)
       {
         foreach (var shootingPart in shootingBarrelParts)
         {
           var go = Instantiate(selectedCannonball, shootingPart.projectileLoader.position, shootingPart.projectileLoader.rotation, null);
-          go.name = $"cannonball_queue_{ammoVariant}_{i}";
+          go.name = $"cannonball_queue_{AmmoVariant}_{i}";
           var obj = go.GetComponent<Cannonball>();
           IgnoreVehicleColliders(obj);
           IgnoreLocalColliders(obj);
@@ -694,13 +699,13 @@ namespace ValheimVehicles.SharedScripts
 
         if (ball)
         {
-          ball.gameObject.name = $"cannonball_{ammoVariant}_active_{_cannonballPool.Count}";
+          ball.gameObject.name = $"cannonball_{AmmoVariant}_active_{_cannonballPool.Count}";
           ball.gameObject.SetActive(true);
           _trackedLoadedCannonballs.Add(ball);
           return ball;
         }
       }
-      var selectedCannonball = SelectCannonballType(ammoVariant);
+      var selectedCannonball = SelectCannonballType(AmmoVariant);
       if (!selectedCannonball)
       {
         LoggerProvider.LogWarning("No cannonball prefab set. Please set one in CannonballSolidPrefab or CannonballExplosivePrefab.");
@@ -726,7 +731,7 @@ namespace ValheimVehicles.SharedScripts
       go.gameObject.SetActive(true);
 
       _trackedLoadedCannonballs.Add(localCannonball);
-      go.name = $"cannonball_{ammoVariant}_active_{_trackedLoadedCannonballs.Count}";
+      go.name = $"cannonball_{AmmoVariant}_active_{_trackedLoadedCannonballs.Count}";
       return localCannonball;
     }
 
@@ -1056,7 +1061,7 @@ namespace ValheimVehicles.SharedScripts
       IsFiring = true;
 
       // force updates the ammo variant.
-      ammoVariant = data.ammoVariant;
+      AmmoVariant = data.ammoVariant;
 
       var currentAmmo = data.allocatedAmmo;
       var hasFired = false;
