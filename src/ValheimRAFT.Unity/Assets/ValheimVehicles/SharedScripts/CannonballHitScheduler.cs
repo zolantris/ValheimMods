@@ -36,6 +36,7 @@ namespace ValheimVehicles.SharedScripts
   {
     private static CoroutineHandle _applyDamageCoroutine;
     private static CoroutineHandle _applyAudioCoroutine;
+    private static CoroutineHandle _applyShieldUpdate;
     private static readonly Queue<DamageInfo> _queuedDamageInfo = new();
     public static bool UseCharacterHit = false;
 
@@ -45,6 +46,8 @@ namespace ValheimVehicles.SharedScripts
     public static float BaseDamageExplosiveCannonball = 50f;
     public static float BaseDamageSolidCannonball = 80f;
     public static float ExplosionShellRadius = 7.5f;
+
+    public static Dictionary<ShieldGenerator, (Cannonball, Vector3, float, ShieldGenerator)> m_scheduledShieldUpdates = new();
 
     public void OnEnable()
     {
@@ -64,6 +67,7 @@ namespace ValheimVehicles.SharedScripts
     {
       _applyDamageCoroutine ??= new CoroutineHandle(Instance);
       _applyAudioCoroutine ??= new CoroutineHandle(Instance);
+      _applyShieldUpdate ??= new CoroutineHandle(Instance);
     }
 
 #if UNITY_EDITOR
@@ -79,6 +83,57 @@ namespace ValheimVehicles.SharedScripts
       }
     }
 #endif
+
+    public void RunShieldHitUpdate()
+    {
+
+    }
+
+    /// <summary>
+    /// Only adds keys if they are not already scheduled.
+    /// </summary>
+    public static void AddShieldUpdate(Cannonball cannonball, Vector3 cannonballPosition, float force, ShieldGenerator shieldGenerator)
+    {
+      if (!m_scheduledShieldUpdates.ContainsKey(shieldGenerator))
+      {
+        m_scheduledShieldUpdates.Add(shieldGenerator, (cannonball, cannonballPosition, force, shieldGenerator));
+      }
+
+      ScheduleUpdateShieldHit();
+    }
+
+    public static void ScheduleUpdateShieldHit()
+    {
+      if (_applyShieldUpdate.IsRunning) return;
+      _applyShieldUpdate.Start(UpdateShieldHitRoutine());
+    }
+
+    /// <summary>
+    /// This will prevent spamming the clients with hits.
+    /// </summary>
+    public static IEnumerator UpdateShieldHitRoutine()
+    {
+      yield return new WaitForFixedUpdate();
+      var queuedHits = m_scheduledShieldUpdates.Values;
+      m_scheduledShieldUpdates.Clear();
+      foreach (var (cannonball, cannonballPosition, force, shieldGenerator) in queuedHits)
+      {
+        if (shieldGenerator == null || cannonball == null) continue;
+        shieldGenerator.m_nview.InvokeRPC(ZNetView.Everybody, "RPC_HitNow");
+        shieldGenerator.m_shieldHitEffects.Create(cannonballPosition, Quaternion.LookRotation(shieldGenerator.transform.position.DirTo(cannonballPosition)));
+        shieldGenerator.UpdateShield();
+
+        if (cannonball.cannonballVariant == CannonballVariant.Explosive)
+        {
+          cannonball.TryStartExplosion(force);
+        }
+        else
+        {
+          cannonball.StartImpactEffectAudio(force, true);
+        }
+      }
+      yield return new WaitForFixedUpdate();
+    }
 
     private static void CommitDamage(DamageInfo damageInfo)
     {

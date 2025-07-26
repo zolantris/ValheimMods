@@ -456,7 +456,7 @@ namespace ValheimVehicles.SharedScripts
       return true;
     }
 
-    public IEnumerator ImpactEffectCoroutine(float impactVelocity)
+    public IEnumerator ImpactEffectCoroutine(float impactVelocity, bool shouldResetOnComplete = false)
     {
       var timer = _impactSoundStartTime;
       var lerpedVolume = Mathf.Lerp(0f, 0.3f, impactVelocity / 90f);
@@ -472,12 +472,17 @@ namespace ValheimVehicles.SharedScripts
         yield return null;
       }
       _explosionAudioSource.Stop();
+
+      if (shouldResetOnComplete)
+      {
+        ResetCannonball();
+      }
     }
 
     // to be called by CannonballHitScheduler
-    public void StartImpactEffectAudio(float impactVelocity)
+    public void StartImpactEffectAudio(float impactVelocity, bool shouldResetAfterSound = false)
     {
-      _impactSoundCoroutine.Start(ImpactEffectCoroutine(impactVelocity));
+      _impactSoundCoroutine.Start(ImpactEffectCoroutine(impactVelocity, shouldResetAfterSound));
     }
 
     public bool IsTrackedCannonball(Collision other)
@@ -703,19 +708,21 @@ namespace ValheimVehicles.SharedScripts
       ResetCannonball();
     }
 
+    public void HideCannonballMesh()
+    {
+      meshGameObject.SetActive(false);
+    }
+
     public static void OnHitShieldGenerator(Cannonball cannonball, ShieldGenerator shieldGenerator)
     {
       if (!cannonball) return;
 
       var cannonballPosition = cannonball.transform.position;
       var isExplosionHit = cannonball.cannonballVariant == CannonballVariant.Explosive;
-      var velocityMagnitude = cannonball._lastVelocity.magnitude;
-      var hitDamage = CannonballHitScheduler.GetBaseDamageForHit(isExplosionHit, velocityMagnitude) * CannonPrefabConfig.Cannonball_ShieldGeneratorDamageMultiplier.Value;
+      var cannonballForce = cannonball._lastVelocity.magnitude;
+      var hitDamage = CannonballHitScheduler.GetBaseDamageForHit(isExplosionHit, cannonballForce) * CannonPrefabConfig.Cannonball_ShieldGeneratorDamageMultiplier.Value;
 
-      if (isExplosionHit)
-      {
-        cannonball.TryStartExplosion(velocityMagnitude);
-      }
+      cannonball.HideCannonballMesh();
 
       if (shieldGenerator.m_fuelPerDamage > 0f)
       {
@@ -723,9 +730,7 @@ namespace ValheimVehicles.SharedScripts
         shieldGenerator.SetFuel(shieldGenerator.GetFuel() - num);
       }
 
-      shieldGenerator.m_nview.InvokeRPC(ZNetView.Everybody, "RPC_HitNow");
-      shieldGenerator.m_shieldHitEffects.Create(cannonballPosition, Quaternion.LookRotation(shieldGenerator.transform.position.DirTo(cannonballPosition)));
-      shieldGenerator.UpdateShield();
+      CannonballHitScheduler.AddShieldUpdate(cannonball, cannonballPosition, cannonballForce, shieldGenerator);
     }
 
     public void FixedUpdate_CheckForShieldGenerator()
