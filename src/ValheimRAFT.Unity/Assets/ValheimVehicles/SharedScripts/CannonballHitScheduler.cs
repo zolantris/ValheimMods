@@ -6,6 +6,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using JetBrains.Annotations;
 using UnityEngine;
 
@@ -114,7 +115,8 @@ namespace ValheimVehicles.SharedScripts
     public static IEnumerator UpdateShieldHitRoutine()
     {
       yield return new WaitForFixedUpdate();
-      var queuedHits = m_scheduledShieldUpdates.Values;
+      // copies these values so we can immediately capture new ones
+      var queuedHits = m_scheduledShieldUpdates.Values.ToList();
       m_scheduledShieldUpdates.Clear();
       foreach (var (cannonball, cannonballPosition, force, shieldGenerator) in queuedHits)
       {
