@@ -582,7 +582,7 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable, INetView
     m_logoColor = sailMaterial.GetColor(LogoColor);
     m_logoRotation = sailMaterial.GetFloat(LogoRotation);
 
-    if (VehicleDebugConfig.HasDebugSails.Value)
+    if (VehicleGuiMenuConfig.HasDebugSails.Value)
     {
       LoggerProvider.LogDebug($"m_lockedSailSides {m_lockedSailSides}");
       LoggerProvider.LogDebug($"m_lockedSailCorners {m_lockedSailCorners}");

@@ -73,7 +73,7 @@
       if (Instance != null)
       {
         Instance.InitPanel();
-        SetCommandsPanelState(VehicleDebugConfig.VehicleDebugMenuEnabled.Value);
+        SetCommandsPanelState(VehicleGuiMenuConfig.VehicleDebugMenuEnabled.Value);
       }
     }
 
@@ -139,8 +139,8 @@
 
     private void Start()
     {
-      buttonFontSize = VehicleDebugConfig.ButtonFontSize.Value;
-      titleFontSize = VehicleDebugConfig.TitleFontSize.Value;
+      buttonFontSize = VehicleGuiMenuConfig.ButtonFontSize.Value;
+      titleFontSize = VehicleGuiMenuConfig.TitleFontSize.Value;
       hasInitialized = false;
 
       GUIManager.OnCustomGUIAvailable += InitPanel;
@@ -684,7 +684,7 @@
     private static bool CanAddAdminCommand()
     {
       if (ZNet.instance == null) return false;
-      if (ZNet.instance.LocalPlayerIsAdminOrHost() || VehicleDebugConfig.AllowDebugCommandsForNonAdmins.Value) return true;
+      if (ZNet.instance.LocalPlayerIsAdminOrHost() || VehicleGuiMenuConfig.AllowDebugCommandsForNonAdmins.Value) return true;
       return false;
     }
 

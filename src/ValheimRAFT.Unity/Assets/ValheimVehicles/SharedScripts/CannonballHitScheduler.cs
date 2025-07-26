@@ -102,7 +102,7 @@ namespace ValheimVehicles.SharedScripts
       hitData.m_point = damageInfo.hitPoint;
       hitData.m_dir = damageInfo.direction;
       hitData.m_attacker = hitZdoid;
-      hitData.m_hitType = HitData.HitType.EnemyHit;
+      hitData.m_hitType = damageInfo.isSelfHit ? HitData.HitType.Self : HitData.HitType.EnemyHit;
       hitData.m_pushForce = 1f;
       hitData.m_staggerMultiplier = 12f;
       hitData.m_radius = 0; // do not use radius hits as these will do an additional raycast which is not necessary.
@@ -192,6 +192,14 @@ namespace ValheimVehicles.SharedScripts
       return Instance != null;
     }
 
+    public static float GetBaseDamageForHit(bool isExplosionHit, float force)
+    {
+      var baseDamage = isExplosionHit ? BaseDamageExplosiveCannonball : BaseDamageSolidCannonball;
+      // makes cannonball damage variable within specific bounds.
+      var lerpedForceDamage = Mathf.Lerp(0.1f, 1.5f, force / 90f);
+      var forceDamage = Mathf.Clamp(baseDamage * lerpedForceDamage, 10f, 300f);
+      return forceDamage;
+    }
 
     public static DamageInfo GetDamageInfoForHit(Collider otherCollider, Vector3 hitPoint, Vector3 dir, Vector3 velocity, float force, bool isExplosionHit)
     {
@@ -226,10 +234,8 @@ namespace ValheimVehicles.SharedScripts
       var isSelfHit = isCharacterHit && character as Player == Player.m_localPlayer;
 
 
-      var baseDamage = isExplosionHit ? BaseDamageExplosiveCannonball : BaseDamageSolidCannonball;
-      // makes cannonball damage variable within specific bounds.
-      var lerpedForceDamage = Mathf.Lerp(0.1f, 1.5f, force / 90f);
-      var forceDamage = Mathf.Clamp(baseDamage * lerpedForceDamage, 10f, 300f);
+      var damage = GetBaseDamageForHit(isExplosionHit, force);
+
 
       var damageInfo = new DamageInfo
       {
@@ -245,7 +251,7 @@ namespace ValheimVehicles.SharedScripts
         isDestructibleHit = isDestructibleHit,
         isSelfHit = isSelfHit,
         explosionRadius = (isMineRock5Hit || isMineRockHit) && isExplosionHit ? ExplosionShellRadius : 0f,
-        damage = forceDamage
+        damage = damage
       };
 #else
       var damageInfo = new DamageInfo();

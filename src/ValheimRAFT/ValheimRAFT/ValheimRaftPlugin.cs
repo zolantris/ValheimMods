@@ -219,6 +219,8 @@ public class ValheimRaftPlugin : BaseUnityPlugin
    */
   private void AddPhysicsSettings()
   {
+    LayerHelpers.PrintAllLayers();
+
     var layer = LayerMask.NameToLayer("vehicle");
 
     for (var index = 0; index < 32; ++index)

@@ -163,10 +163,16 @@ public class ValheimVehiclesPlugin : MonoBehaviour
     ModConfigSync = configSync;
 
     PatchConfig.BindConfig(config);
-    RamConfig.BindConfig(config);
+
+    // generic prefab config (catch all until these are specialized)
     PrefabConfig.BindConfig(config);
+    // prefab configs (all variants);
+    CannonPrefabConfig.BindConfig(config);
+
+    // other configs
+    RamConfig.BindConfig(config);
     PrefabRecipeConfig.BindConfig(config);
-    VehicleDebugConfig.BindConfig(config);
+    VehicleGuiMenuConfig.BindConfig(config);
     PropulsionConfig.BindConfig(config);
     ModSupportConfig.BindConfig(config);
     CustomMeshConfig.BindConfig(config);

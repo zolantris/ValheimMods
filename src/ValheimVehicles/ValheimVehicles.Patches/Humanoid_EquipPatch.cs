@@ -72,7 +72,7 @@ public static class Humanoid_EquipPatch
       return true;
     }
 
-    currentWeapon.m_shared.m_attack.m_reloadTime = PrefabConfig.CannonHandHeld_ReloadTime.Value;
+    currentWeapon.m_shared.m_attack.m_reloadTime = CannonPrefabConfig.CannonHandHeld_ReloadTime.Value;
 
     LogWeaponData(currentWeapon);
     var ammoItem = __instance.GetAmmoItem();

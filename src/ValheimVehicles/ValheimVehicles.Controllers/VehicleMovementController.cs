@@ -851,7 +851,7 @@
 
     public void GuardedFixedUpdate(float deltaTime)
     {
-      if (VehicleDebugConfig.AutoShowVehicleColliders.Value &&
+      if (VehicleGuiMenuConfig.AutoShowVehicleColliders.Value &&
           DebugTargetHeightObj != null)
       {
         DebugTargetHeightObj.transform.position =
@@ -3020,7 +3020,7 @@
 
       var hasOwner = m_nview.HasOwner();
       var owner = m_nview.IsOwner();
-      if (!VehicleDebugConfig.SyncShipPhysicsOnAllClients.Value && !owner && hasOwner ||
+      if (!VehicleGuiMenuConfig.SyncShipPhysicsOnAllClients.Value && !owner && hasOwner ||
           isBeached) return;
 
       _currentShipFloatation = GetShipFloatationObj();
@@ -3621,9 +3621,9 @@
     /// </summary>
     public void SendDelayedAnchor()
     {
-      if (VehicleDebugConfig.HasAutoAnchorDelay.Value)
+      if (VehicleGuiMenuConfig.HasAutoAnchorDelay.Value)
       {
-        var autoDelayInMS = VehicleDebugConfig.AutoAnchorDelayTime.Value * 1000f;
+        var autoDelayInMS = VehicleGuiMenuConfig.AutoAnchorDelayTime.Value * 1000f;
         Invoke(nameof(DelayedAnchor),
           autoDelayInMS);
         HasPendingAnchor = true;
@@ -4402,7 +4402,7 @@
 
       if (isNotAnchoredWithNobodyOnboard)
       {
-        if (VehicleDebugConfig.HasAutoAnchorDelay.Value) return;
+        if (VehicleGuiMenuConfig.HasAutoAnchorDelay.Value) return;
         SendSetAnchor(AnchorState.Anchored);
         return;
       }

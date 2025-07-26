@@ -467,7 +467,7 @@
       VehicleConfigSync = gameObject.GetOrAddComponent<VehicleConfigSyncComponent>();
       VehicleConfigSync.OnLoadSubscriptions += OnVehicleConfigChange;
       // this flag can be updated manually via VehicleCommands.
-      HasVehicleDebugger = VehicleDebugConfig.VehicleDebugMenuEnabled.Value;
+      HasVehicleDebugger = VehicleGuiMenuConfig.VehicleDebugMenuEnabled.Value;
 
       vehicleMovementCollidersTransform =
         GetVehicleMovementCollidersTransform(transform);

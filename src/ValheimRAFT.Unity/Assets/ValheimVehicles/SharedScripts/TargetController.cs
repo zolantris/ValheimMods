@@ -663,27 +663,36 @@ namespace ValheimVehicles.SharedScripts
       return targetController;
     }
 
+    public static float maxAsyncSearchTimeInSeconds = 2f;
+
     public static IEnumerator FindInstanceAsync(ZDOID zdoid, Action<GameObject> callback)
     {
       var obj = ZNetScene.instance.FindInstance(zdoid);
       if (obj == null)
       {
-        var stopwatch = Stopwatch.StartNew();
-        var lastUpdateTime = 0;
-        ZDOMan.instance.RequestZDO(zdoid);
-        while (stopwatch.ElapsedMilliseconds < 1000 && obj == null)
+        var lastUpdateTime = maxAsyncSearchTimeInSeconds;
+        var currentTime = 0f;
+        while (currentTime < maxAsyncSearchTimeInSeconds)
         {
-          obj = ZNetScene.instance.FindInstance(zdoid);
-          if (stopwatch.ElapsedMilliseconds - lastUpdateTime > 10)
+          if (lastUpdateTime > maxAsyncSearchTimeInSeconds / 5f)
           {
             ZDOMan.instance.RequestZDO(zdoid);
+            lastUpdateTime = 0;
           }
+          else
+          {
+            lastUpdateTime += Time.deltaTime;
+          }
+
+          obj = ZNetScene.instance.FindInstance(zdoid);
           yield return null;
+
+          currentTime += Time.deltaTime;
         }
 
         if (obj == null)
         {
-          LoggerProvider.LogError($"Could not find obj with ZDOID {zdoid}");
+          LoggerProvider.LogDebugDebounced($"Could not find obj with ZDOID {zdoid}");
           yield break;
         }
       }
@@ -961,7 +970,7 @@ namespace ValheimVehicles.SharedScripts
     public static void UpdateCannonTiltSpeedLerp()
     {
 #if VALHEIM
-      var tiltSpeed = PrefabConfig.CannonControlCenter_CannonTiltAdjustSpeed.Value;
+      var tiltSpeed = CannonPrefabConfig.CannonControlCenter_CannonTiltAdjustSpeed.Value;
 #else
       var tiltSpeed = 0.5f;
 #endif
@@ -1128,6 +1137,11 @@ namespace ValheimVehicles.SharedScripts
 
     private void RemoveManualCannonFromGroup(CannonController cannon)
     {
+      if (manualFireControllers.Contains(cannon))
+      {
+        manualFireControllers.Remove(cannon);
+      }
+
       if (cannon.CurrentManualDirectionGroup.HasValue)
       {
         var group = cannon.CurrentManualDirectionGroup.Value;
@@ -1240,7 +1254,6 @@ namespace ValheimVehicles.SharedScripts
       switch (controller.GetFiringMode())
       {
         case CannonFiringMode.Manual:
-          manualFireControllers.Remove(controller);
           RemoveManualCannonFromGroup(controller);
           break;
         case CannonFiringMode.Auto:

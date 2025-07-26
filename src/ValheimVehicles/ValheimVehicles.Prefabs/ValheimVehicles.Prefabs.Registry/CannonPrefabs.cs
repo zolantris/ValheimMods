@@ -174,7 +174,7 @@ public class CannonPrefabs : RegisterPrefab<CannonPrefabs>
       m_buildPieces = PrefabRegistryController.GetPieceTable(),
       m_toolTier = 50,
       m_maxStackSize = 200,
-      m_weight = PrefabConfig.CannonBallInventoryWeight.Value, // this could be 12-24lbs...but that would make the game less fun
+      m_weight = CannonPrefabConfig.CannonBallInventoryWeight.Value, // this could be 12-24lbs...but that would make the game less fun
       m_skillType = Skills.SkillType.None,
       m_ammoType = PrefabItemNameToken.CannonAmmoType,
       m_itemType = ItemDrop.ItemData.ItemType.Ammo
@@ -241,7 +241,7 @@ public class CannonPrefabs : RegisterPrefab<CannonPrefabs>
       m_buildPieces = PrefabRegistryController.GetPieceTable(),
       m_toolTier = 50,
       m_maxStackSize = 200,
-      m_weight = PrefabConfig.CannonBallInventoryWeight.Value, // this could be 12-24lbs...but that would make the game less fun
+      m_weight = CannonPrefabConfig.CannonBallInventoryWeight.Value, // this could be 12-24lbs...but that would make the game less fun
       m_skillType = Skills.SkillType.Bows,
       m_ammoType = PrefabItemNameToken.CannonAmmoType,
       m_itemType = ItemDrop.ItemData.ItemType.Ammo
@@ -338,7 +338,7 @@ public class CannonPrefabs : RegisterPrefab<CannonPrefabs>
     attack.m_attackHealth = 0;
     attack.m_hitTerrain = true;
     attack.m_requiresReload = true;
-    attack.m_reloadTime = PrefabConfig.CannonHandHeld_ReloadTime.Value;
+    attack.m_reloadTime = CannonPrefabConfig.CannonHandHeld_ReloadTime.Value;
     attack.m_reloadAnimation = "reload_crossbow";
     attack.m_speedFactor = 0.2f;
     attack.m_reloadStaminaDrain = 10f;

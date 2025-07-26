@@ -635,7 +635,7 @@ namespace ValheimVehicles.SharedScripts
       foreach (var allCollider in allColliders)
       {
         if (allCollider == null) continue;
-        Physics.IgnoreCollision(allCollider, selectedCannonball.sphereCollider, true);
+        Physics.IgnoreCollision(allCollider, selectedCannonball.sphereCollisionCollider, true);
       }
 #endif
     }

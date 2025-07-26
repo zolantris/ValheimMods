@@ -3,11 +3,13 @@
 
 #region
 
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using JetBrains.Annotations;
 using UnityEngine;
+using ValheimVehicles.BepInExConfig;
 using ValheimVehicles.SharedScripts.Structs;
 # if VALHEIM
 using ValheimVehicles.Controllers;
@@ -92,6 +94,7 @@ namespace ValheimVehicles.SharedScripts
     private readonly List<Collider> _colliders = new();
     private CoroutineHandle _despawnCoroutine;
     private CoroutineHandle _firingCannonballCoroutine;
+    private CoroutineHandle _explosionRoutine;
 
     private AudioSource _explosionAudioSource;
     private Transform _explosionParent;
@@ -105,7 +108,8 @@ namespace ValheimVehicles.SharedScripts
     private CannonFireData? _fireData;
     private float _syncedRandomValue;
     public HashSet<Transform> IgnoredTransformRoots = new();
-    public SphereCollider sphereCollider;
+    public SphereCollider sphereCollisionCollider;
+    public SphereCollider sphereTriggerCollider;
     private GameObject meshGameObject;
     public List<Collider> Colliders => TryGetColliders();
     [SerializeField] public bool CanApplyDamage = true;
@@ -113,6 +117,8 @@ namespace ValheimVehicles.SharedScripts
     public VehicleZSyncTransform m_customZSyncTransform;
     public ZNetView m_nview;
 #endif
+
+    public Vector3 LastVelocity => _lastVelocity;
 
     public bool CanHit => _canHit && _fireOrigin != null && isActiveAndEnabled;
 
@@ -177,18 +183,8 @@ namespace ValheimVehicles.SharedScripts
       {
         _lastVelocity = m_body.velocity;
       }
-      // if (m_customZSyncTransform)
-      // {
-      //   if (!m_nview.IsOwner())
-      //   {
-      //     var dt = Time.deltaTime;
-      //     m_customZSyncTransform.ClientSync(dt);
-      //   }
-      //   else
-      //   {
-      //     m_customZSyncTransform.OwnerSync();
-      //   }
-      // }
+
+      FixedUpdate_CheckForShieldGenerator();
     }
 
     private void OnEnable()
@@ -201,31 +197,15 @@ namespace ValheimVehicles.SharedScripts
       StopAllCoroutines();
     }
 
-    private void OnCollisionHitShield(Collision other)
-    {
-      if (other == null) return;
-      var barrierInParent = other.collider.GetComponentInParent<ShieldGenerator>();
-      var barrierInChild = other.collider.GetComponentInChildren<ShieldGenerator>();
-      var seShieldChild = other.collider.GetComponentInChildren<SE_Shield>();
-      var seShieldParent = other.collider.GetComponentInParent<SE_Shield>();
-      if (barrierInParent || barrierInChild || seShieldParent || seShieldChild)
-      {
-        LoggerProvider.LogDebugDebounced($"Hit a shield barrier {other.collider.gameObject.name}");
-        return;
-      }
-    }
-
     private void OnCollisionEnter(Collision other)
     {
-#if DEBUG
-      OnCollisionHitShield(other);
-#endif
       OnHitHandler(other);
     }
 
     private void InitCoroutines()
     {
       _firingCannonballCoroutine ??= new CoroutineHandle(this);
+      _explosionRoutine ??= new CoroutineHandle(this);
       _despawnCoroutine ??= new CoroutineHandle(this);
       _impactSoundCoroutine ??= new CoroutineHandle(this);
     }
@@ -503,7 +483,7 @@ namespace ValheimVehicles.SharedScripts
     public bool IsTrackedCannonball(Collision other)
     {
       if (_controller == null) return false;
-      return _controller._trackedLoadedCannonballs.Any(controllerTrackedLoadedCannonball => controllerTrackedLoadedCannonball.sphereCollider == other.collider);
+      return _controller._trackedLoadedCannonballs.Any(controllerTrackedLoadedCannonball => controllerTrackedLoadedCannonball.sphereCollisionCollider == other.collider);
     }
 
     public bool IsCollidingWithRoot(Transform colliderTransform)
@@ -565,20 +545,27 @@ namespace ValheimVehicles.SharedScripts
       return _fireData.HasValue && _fireData.Value.canApplyDamage;
     }
 
+    public void TryStartExplosion(float relativeVelocityMagnitude)
+    {
+      if (_hasExploded) return;
+      _hasExploded = true;
+      _explosionRoutine.Start(ActivateExplosionEffect(relativeVelocityMagnitude));
+    }
+
     /// <summary>
     /// Handles penetration of cannonball. Uses some randomization to determine if the structure is penetrated.
     /// </summary>
     private void OnHitHandler(Collision other)
     {
       if (!CanHit || _hasExploded || !IsInFlight || !_fireOrigin.HasValue) return;
-      if (!sphereCollider.gameObject.activeInHierarchy) return;
+      if (!sphereCollisionCollider.gameObject.activeInHierarchy) return;
       if (TryBailAndIgnoreCollider(other)) return;
 
       // do nothing at lastvelocity zero. This is a issue likely.
       if (_lastVelocity == Vector3.zero) return;
 
       var otherCollider = other.collider;
-      var hitPoint = sphereCollider.ClosestPoint(otherCollider.bounds.center);
+      var hitPoint = sphereCollisionCollider.ClosestPoint(otherCollider.bounds.center);
       var direction = (otherCollider.bounds.center - hitPoint).normalized;
 
       var relativeVelocity = other.relativeVelocity;
@@ -657,8 +644,8 @@ namespace ValheimVehicles.SharedScripts
             GetCollisionsFromExplosion(transform.position, relativeVelocityMagnitude);
           }
 
-          StartCoroutine(ActivateExplosionEffect(relativeVelocityMagnitude));
-          _hasExploded = true;
+          TryStartExplosion(relativeVelocityMagnitude);
+
           nextVelocity.x = 0f;
           nextVelocity.z = 0f;
 
@@ -683,10 +670,10 @@ namespace ValheimVehicles.SharedScripts
     {
       if (_colliders.Count > 0) return _colliders;
       GetComponentsInChildren(true, _colliders);
-      sphereCollider = GetComponentInChildren<SphereCollider>(true);
-      if (sphereCollider)
+      sphereCollisionCollider = GetComponentInChildren<SphereCollider>(true);
+      if (sphereCollisionCollider)
       {
-        sphereCollider.gameObject.layer = LayerHelpers.CharacterLayer;
+        sphereCollisionCollider.gameObject.layer = LayerHelpers.CharacterLayer;
       }
       return _colliders;
     }
@@ -714,6 +701,55 @@ namespace ValheimVehicles.SharedScripts
       IsInFlight = false;
 
       ResetCannonball();
+    }
+
+    public static void OnHitShieldGenerator(Cannonball cannonball, ShieldGenerator shieldGenerator)
+    {
+      if (!cannonball) return;
+
+      var cannonballPosition = cannonball.transform.position;
+      var isExplosionHit = cannonball.cannonballVariant == CannonballVariant.Explosive;
+      var velocityMagnitude = cannonball._lastVelocity.magnitude;
+      var hitDamage = CannonballHitScheduler.GetBaseDamageForHit(isExplosionHit, velocityMagnitude) * CannonPrefabConfig.Cannonball_ShieldGeneratorDamageMultiplier.Value;
+
+      if (isExplosionHit)
+      {
+        cannonball.TryStartExplosion(velocityMagnitude);
+      }
+
+      if (shieldGenerator.m_fuelPerDamage > 0f)
+      {
+        var num = shieldGenerator.m_fuelPerDamage * hitDamage;
+        shieldGenerator.SetFuel(shieldGenerator.GetFuel() - num);
+      }
+
+      shieldGenerator.m_nview.InvokeRPC(ZNetView.Everybody, "RPC_HitNow");
+      shieldGenerator.m_shieldHitEffects.Create(cannonballPosition, Quaternion.LookRotation(shieldGenerator.transform.position.DirTo(cannonballPosition)));
+      shieldGenerator.UpdateShield();
+    }
+
+    public void FixedUpdate_CheckForShieldGenerator()
+    {
+#if VALHEIM
+      if (!IsInFlight || !_fireOrigin.HasValue) return;
+
+      foreach (var shield in ShieldGenerator.m_instances)
+      {
+        if (!ShieldGenerator.CheckShield(shield) || !shield.m_shieldDome) continue;
+
+        var dome = shield.m_shieldDome.transform.position;
+        var radius = shield.m_radius;
+
+        var wasOutside = Vector3.Distance(dome, _fireOrigin.Value) > radius;
+        var isInside = Vector3.Distance(dome, transform.position) < radius;
+
+        if (wasOutside && isInside)
+        {
+          OnHitShieldGenerator(this, shield);
+          break;
+        }
+      }
+#endif
     }
 
     public IEnumerator FireCannonball(CannonFireData data, Vector3 velocity, int firingIndex)

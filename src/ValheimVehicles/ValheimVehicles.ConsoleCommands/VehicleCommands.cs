@@ -536,13 +536,13 @@ public class VehicleCommands : ConsoleCommand
   {
     try
     {
-      if (!VehicleDebugConfig.AllowDebugCommandsForNonAdmins.Value)
+      if (!VehicleGuiMenuConfig.AllowDebugCommandsForNonAdmins.Value)
       {
         if (Player.m_localPlayer == null || ZNet.instance == false) return false;
         var playerId = Player.m_localPlayer.GetPlayerID();
         if (!ZNet.instance.IsAdmin(playerId))
         {
-          Logger.LogMessage($"Player is not an admin. They cannot run this cheat command without setting configKeySection <{VehicleDebugConfig.AllowDebugCommandsForNonAdmins.Definition.Section}> ConfigKey: <{VehicleDebugConfig.AllowDebugCommandsForNonAdmins.Definition.Key}> to true in the raft config or being an Admin.");
+          Logger.LogMessage($"Player is not an admin. They cannot run this cheat command without setting configKeySection <{VehicleGuiMenuConfig.AllowDebugCommandsForNonAdmins.Definition.Section}> ConfigKey: <{VehicleGuiMenuConfig.AllowDebugCommandsForNonAdmins.Definition.Key}> to true in the raft config or being an Admin.");
           return false;
         }
       }
@@ -557,13 +557,13 @@ public class VehicleCommands : ConsoleCommand
 
   public static bool CanRunEditCommand()
   {
-    if (!VehicleDebugConfig.AllowDebugCommandsForNonAdmins.Value)
+    if (!VehicleGuiMenuConfig.AllowDebugCommandsForNonAdmins.Value)
     {
       if (Player.m_localPlayer == null || ZNet.instance == false) return false;
       var playerId = Player.m_localPlayer.GetPlayerID();
       if (!ZNet.instance.IsAdmin(playerId))
       {
-        Logger.LogMessage($"Player is not an admin. They cannot run this edit command without setting configKeySection <{VehicleDebugConfig.AllowEditCommandsForNonAdmins.Definition.Section}> ConfigKey: <{VehicleDebugConfig.AllowEditCommandsForNonAdmins.Definition.Key}> to true in the raft config or being an Admin.");
+        Logger.LogMessage($"Player is not an admin. They cannot run this edit command without setting configKeySection <{VehicleGuiMenuConfig.AllowEditCommandsForNonAdmins.Definition.Section}> ConfigKey: <{VehicleGuiMenuConfig.AllowEditCommandsForNonAdmins.Definition.Key}> to true in the raft config or being an Admin.");
         return false;
       }
     }
@@ -1155,7 +1155,7 @@ public class VehicleCommands : ConsoleCommand
     if (vehicleInstance == null || vehicleInstance.MovementController == null) return Vector3.zero;
 
     var position = vehicleInstance.MovementController.m_body.position;
-    var creativeHeightOffset = VehicleDebugConfig.VehicleCreativeHeight.Value;
+    var creativeHeightOffset = VehicleGuiMenuConfig.VehicleCreativeHeight.Value;
 
     return new Vector3(position.x, position.y + creativeHeightOffset, position.z);
   }
