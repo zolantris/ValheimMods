@@ -26,6 +26,7 @@
   using ValheimVehicles.SharedScripts.Enums;
   using ValheimVehicles.SharedScripts.Helpers;
   using ValheimVehicles.Structs;
+  using ValheimVehicles.ValheimVehicles.Components;
   using ZdoWatcher;
   using ZdoWatcher.ZdoWatcher.Utils;
   using static ValheimVehicles.Propulsion.Sail.SailAreaForce;
@@ -300,6 +301,7 @@
 
     internal List<ZNetView> m_portals = [];
     internal List<ZNetView> m_ramPieces = [];
+    internal List<ShieldGenerator> m_shieldGenerators = [];
 
 
     // ship rudders
@@ -347,7 +349,7 @@
       private set;
     } = PendingPieceStateEnum.Idle;
 
-    public static bool hasDebug => VehicleDebugConfig.HasDebugPieces.Value;
+    public static bool hasDebug => VehicleGuiMenuConfig.HasDebugPieces.Value;
 
     public float TotalMass => ShipMass;
 
@@ -373,11 +375,9 @@
       // must be called before base.awake()
       SetupJobHandlerOnZNetScene();
 
-      targetController = gameObject.AddComponent<TargetController>();
-      targetController.targetingMode = TargetController.TargetingMode.DefendPlayer;
-      targetController.autoFire = true;
-
       base.Awake();
+
+      AddTargetController();
 
       if (vehicleCenter == null)
       {
@@ -416,6 +416,13 @@
       InitializationTimer.Start();
     }
 
+    public void AddTargetController()
+    {
+      targetController = gameObject.AddComponent<TargetController>();
+      targetController.targetingMode = TargetController.TargetingMode.DefendPlayer;
+      targetController.autoFire = true;
+    }
+
 
     public void Start()
     {
@@ -423,9 +430,9 @@
       if (!(bool)ZNet.instance) return;
       if (hasDebug)
       {
-        Logger.LogInfo($"pieces {m_pieces.Count}");
-        Logger.LogInfo($"pendingPieces {m_pendingPieces.Count}");
-        Logger.LogInfo($"allPieces {m_allPieces.Count}");
+        LoggerProvider.LogInfo($"pieces {m_pieces.Count}");
+        LoggerProvider.LogInfo($"pendingPieces {m_pendingPieces.Count}");
+        LoggerProvider.LogInfo($"allPieces {m_allPieces.Count}");
       }
 
       InitializeBasePiecesControllerOverrides();
@@ -551,23 +558,33 @@
 
     public static CannonballVariant AmmoVariantDefault = CannonballVariant.Solid;
 
+
     public void AddPieceDataForComponents(ZNetView netView)
     {
       var components = netView.GetComponents<Component>();
+      if (components == null) return;
+      if (components.Length == 0) return;
       foreach (var component in components)
+      {
+        if (component == null) continue;
         switch (component)
         {
           case VehicleManager vehicleManager:
             LoggerProvider.LogDev("Detected VehicleManager, setting parent to PiecesController.Manager");
             vehicleManager.MovementController.OnParentReady(PiecesController.Manager);
             break;
+          case ShieldGenerator shieldGenerator:
+            m_shieldGenerators.Add(shieldGenerator);
+            break;
+          case TargetControlsInteractive prefabTargetControls:
+            prefabTargetControls.targetController = targetController;
+            break;
+          case TargetController prefabTargetController:
+            Destroy(prefabTargetController);
+            break;
           case CannonController cannonController:
-            LoggerProvider.LogDebug("adding cannon to target controller");
-            cannonController.AmmoVariant = AmmoVariantDefault;
-            cannonController.maxAmmo = 50;
             targetController.AddCannon(cannonController);
             cannonController.AddIgnoredTransforms([transform, Manager!.transform]);
-            ;
             break;
           case SwivelComponentBridge swivelController:
             InitSwivelController(swivelController);
@@ -633,6 +650,7 @@
             ladder.vehiclePiecesController = this;
             break;
         }
+      }
     }
 
     public void RemovePieceDataForComponents(ZNetView netView)
@@ -657,8 +675,10 @@
           case Fireplace fireplace:
             RemoveEffectAreaFromVehicle(netView);
             break;
+          case ShieldGenerator shieldGenerator:
+            m_shieldGenerators.Add(shieldGenerator);
+            break;
           case CannonController cannonController:
-            LoggerProvider.LogDebug("removing cannon from target controller");
             targetController.RemoveCannon(cannonController);
             break;
           case MastComponent mast:
@@ -752,7 +772,7 @@
       if (IsInvalid()) return;
       if (!(bool)netView)
       {
-        Logger.LogError("netView does not exist but somehow called AddPiece()");
+        LoggerProvider.LogError("netView does not exist but somehow called AddPiece()");
         return;
       }
 
@@ -786,7 +806,7 @@
         foreach (var rbsItem in rbs)
           if (!rbsItem.isKinematic && rbsItem != m_localRigidbody || rbsItem != m_syncRigidbody)
           {
-            Logger.LogWarning(
+            LoggerProvider.LogWarning(
               $"Destroying Rigidbody on netview <{netView.name}> for root object <{rbsItem.transform.root?.name ?? rbsItem.transform.name}>");
             Destroy(rbsItem);
           }
@@ -799,7 +819,7 @@
       RequestBoundsRebuild();
 
       if (hasDebug)
-        Logger.LogDebug(
+        LoggerProvider.LogDebug(
           $"After Adding Piece: {netView.name}, Ship Size calc is: m_bounds {BaseControllerPieceBounds} bounds size {BaseControllerPieceBounds.size}");
     }
 
@@ -842,7 +862,7 @@
       if (!m_nview || !Manager ||
           !MovementController)
       {
-        Logger.LogDebug(
+        LoggerProvider.LogDebug(
           $"Vehicle setting state to Pending as it is not ready, must have netview: {Manager.m_nview}, VehicleInstance {Manager}, MovementController {MovementController}");
         BaseVehicleInitState = InitializationState.Pending;
         return;
@@ -928,7 +948,7 @@
       }
 
       if (Manager == null)
-        Logger.LogError(
+        LoggerProvider.LogError(
           "No ShipInstance detected");
 
       yield return null;
@@ -1033,7 +1053,7 @@
           LoadValheimVehicleAssets.WaterHeightMaterial,
           PhysicsConfig.convexHullDebuggerColor.Value,
           WaterConfig.UnderwaterBubbleEffectColor.Value, PrefabNames.ConvexHull,
-          Logger.LogMessage);
+          (m) => LoggerProvider.LogDebug(m));
 
         // instance
         convexHullComponent.PreviewParent = transform;
@@ -1070,7 +1090,7 @@
       // vehicleInstance is the persistent ID, the pieceContainer only has a netView for syncing ship position
       if (vehicle.m_nview == null)
       {
-        Logger.LogWarning(
+        LoggerProvider.LogWarning(
           "Warning netview not detected on vehicle, this means any netview attached events will not bind correctly");
         return false;
       }
@@ -1102,10 +1122,10 @@
     {
       if (!(bool)ZNet.instance) return;
 
-      Logger.LogDebug($"IsDedicated : {ZNet.instance.IsDedicated()}");
+      LoggerProvider.LogDebug($"IsDedicated : {ZNet.instance.IsDedicated()}");
       if (ZNet.instance.IsDedicated() && _serverUpdatePiecesCoroutine == null)
       {
-        Logger.LogDebug("Calling UpdatePiecesInEachSectorWorker");
+        LoggerProvider.LogDebug("Calling UpdatePiecesInEachSectorWorker");
         _serverUpdatePiecesCoroutine =
           StartCoroutine(nameof(UpdatePiecesInEachSectorWorker));
       }
@@ -1134,7 +1154,7 @@
         StopCoroutine(_serverUpdatePiecesCoroutine);
 
       if (Manager == null)
-        Logger.LogError("Cleanup called but there is no valid VehicleInstance");
+        LoggerProvider.LogError("Cleanup called but there is no valid VehicleInstance");
 
       if (!ZNetScene.instance || PersistentZdoId == null ||
           PersistentZdoId == 0) return;
@@ -1342,6 +1362,7 @@
     {
       ForceUpdateAllPiecePositions(transform.position);
     }
+
     /// <summary>
     /// This should only be called directly in cases of force moving the vehicle with a command
     /// </summary>
@@ -1550,7 +1571,7 @@
      */
     private IEnumerator UpdatePiecesWorker(List<ZDO> list)
     {
-      Logger.LogDebug("called UpdatePiecesWorker");
+      LoggerProvider.LogDebug("called UpdatePiecesWorker");
       UpdatePieces(list);
       yield return new WaitForFixedUpdate();
     }
@@ -1567,7 +1588,7 @@
  */
     public IEnumerator UpdatePiecesInEachSectorWorker()
     {
-      Logger.LogMessage("UpdatePiecesInEachSectorWorker started");
+      LoggerProvider.LogMessage("UpdatePiecesInEachSectorWorker started");
       while (isActiveAndEnabled)
       {
         if (!m_nview)
@@ -1588,7 +1609,7 @@
         yield return new WaitForFixedUpdate();
       }
 
-      Logger.LogMessage("UpdatePiecesInEachSectorWorker finished");
+      LoggerProvider.LogMessage("UpdatePiecesInEachSectorWorker finished");
       // if we get here we need to restart this updater and this requires the coroutine to be null
       _serverUpdatePiecesCoroutine = null;
     }
@@ -1626,7 +1647,7 @@
       }
 
       if (hasDebug)
-        Logger.LogDebug($"addInactivePiece called with {id} for {netView.name}");
+        LoggerProvider.LogDebug($"addInactivePiece called with {id} for {netView.name}");
 
       if (instance != null)
       {
@@ -1659,7 +1680,7 @@
     {
       if (!netView)
       {
-        if (hasDebug) Logger.LogDebug("NetView is invalid skipping mass update");
+        if (hasDebug) LoggerProvider.LogDebug("NetView is invalid skipping mass update");
         return;
       }
 
@@ -1667,7 +1688,7 @@
       if (!piece)
       {
         if (hasDebug)
-          Logger.LogDebug(
+          LoggerProvider.LogDebug(
             "unable to fetch piece data from netViewPiece this could be a raft piece erroring.");
         return;
       }
@@ -1718,7 +1739,7 @@
                          piece.transform.localScale.y *
                          piece.transform.localScale.z;
         if (hasDebug)
-          Logger.LogDebug(
+          LoggerProvider.LogDebug(
             $"ValheimRAFT ComputeShipItemWeight() found piece that does not have a 1,1,1 local scale piece: {pieceName} scale: {piece.transform.localScale}, the 3d localScale will be multiplied by the area of this vector instead of 1x1x1");
       }
 
@@ -1877,7 +1898,7 @@
       if (!DEBUGAllowActivatePendingPieces) return;
 #endif
       if (hasDebug)
-        Logger.LogDebug(
+        LoggerProvider.LogDebug(
           $"ActivatePendingPiecesCoroutine(): pendingPieces count: {m_pendingPieces.Count}");
       if (!CanActivatePendingPieces) return;
 
@@ -1924,7 +1945,7 @@
 
 
       if (pieceStateEnum == PendingPieceStateEnum.Failure)
-        Logger.LogWarning(
+        LoggerProvider.LogWarning(
           $"ActivatePendingPieces did not complete correctly. Reason: {message}");
     }
 
@@ -2069,7 +2090,7 @@
     {
       if (!source.isActiveAndEnabled)
       {
-        Logger.LogDebug("Player source Not active");
+        LoggerProvider.LogDebug("Player source Not active");
         return;
       }
 
@@ -2090,7 +2111,7 @@
       if (netView == null) return false;
       if (!netView.isActiveAndEnabled)
       {
-        Logger.LogDebug("Player source Not active");
+        LoggerProvider.LogDebug("Player source Not active");
         return false;
       }
 
@@ -2223,7 +2244,7 @@
           if ((bool)sailComponent)
             customSailsArea += sailComponent.GetSailArea();
 
-        if (hasDebug) Logger.LogDebug($"CustomSailsArea {customSailsArea}");
+        if (hasDebug) LoggerProvider.LogDebug($"CustomSailsArea {customSailsArea}");
         var multiplier = PropulsionConfig.SailCustomAreaTier1Multiplier.Value;
         cachedTotalSailArea +=
           customSailsArea * Mathf.Max(0.1f,
@@ -2614,19 +2635,19 @@
       if (IsInvalid()) return;
       if (!(bool)piece)
       {
-        Logger.LogError("piece does not exist");
+        LoggerProvider.LogError("piece does not exist");
         return;
       }
       if (TryBailOnSameObject(piece.gameObject)) return;
       if (!(bool)piece.m_nview)
       {
-        Logger.LogError("m_nview does not exist on piece");
+        LoggerProvider.LogError("m_nview does not exist on piece");
         return;
       }
 
       var pieceGo = piece.gameObject;
 
-      if (hasDebug) Logger.LogDebug("Added new piece is valid");
+      if (hasDebug) LoggerProvider.LogDebug("Added new piece is valid");
       AddNewPiece(piece.m_nview);
     }
 
@@ -2642,7 +2663,7 @@
     {
       if (netView == null)
       {
-        Logger.LogError("netView does not exist");
+        LoggerProvider.LogError("netView does not exist");
         return;
       }
       if (TryBailOnSameObject(netView.gameObject)) return;
@@ -2689,7 +2710,7 @@
             Manager.PersistentZdoId);
         else
           // We should not reach this, but this would be a critical issue and should be tracked.
-          Logger.LogError(
+          LoggerProvider.LogError(
             "Potential update error detected: Ship parent ZDO is invalid but added a Piece to the ship");
 
         netView.m_zdo.Set(VehicleZdoVars.MBRotationVecHash,
@@ -3165,9 +3186,17 @@
       }
       catch (Exception e)
       {
-        Logger.LogError(e);
+        LoggerProvider.LogError($"{e}");
       }
     }
+
+
+    public void UpdateTrackedColliders()
+    {
+      // Update tracked VehicleColliders to ignore.
+      Manager.GetComponentsInChildren(vehicleCollidersToIgnore);
+    }
+
     /// <summary>
     /// A complete override of OnConvexHullGenerated.
     /// </summary>
@@ -3178,6 +3207,8 @@
         RequestBoundsRebuild();
         return;
       }
+
+      UpdateTrackedColliders();
 
       BaseControllerPieceBounds = convexHullComponent.GetConvexHullBounds(true);
 
@@ -3190,7 +3221,7 @@
       }
       catch (Exception e)
       {
-        Logger.LogError(e);
+        LoggerProvider.LogError($"{e}");
       }
 
       if (RenderingConfig.EnableVehicleClusterMeshRendering.Value && m_pieces.Count >= RenderingConfig.ClusterRenderingPieceThreshold.Value)
@@ -3202,7 +3233,7 @@
         }
         catch (Exception e)
         {
-          Logger.LogError(e);
+          LoggerProvider.LogError($"{e}");
         }
       }
 
@@ -3245,7 +3276,7 @@
     {
       if (FloatCollider == null || OnboardCollider == null)
       {
-        Logger.LogWarning(
+        LoggerProvider.LogWarning(
           "Ship colliders updated but the ship was unable to access colliders on ship object. Likely cause is ZoneSystem destroying the ship");
         return;
       }
@@ -3253,7 +3284,7 @@
 
       if (convexHullBounds == null)
       {
-        Logger.LogWarning(
+        LoggerProvider.LogWarning(
           "Cached convexHullBounds is null this is like a problem with collider setup. Make sure to use custom colliders if other settings are not working");
         return;
       }

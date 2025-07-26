@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Jotunn.Configs;
 using Jotunn.Entities;
 using Jotunn.Managers;
@@ -47,13 +48,14 @@ public class CannonPrefabs : RegisterPrefab<CannonPrefabs>
 
     PieceManager.Instance.AddPiece(new CustomPiece(prefab, true, new PieceConfig
     {
+      Enabled = CannonPrefabConfig.EnableCannons.Value,
       PieceTable = PrefabRegistryController.GetPieceTableName(),
       Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Tools),
-      Enabled = true,
       Requirements = PrefabRecipeConfig.GetRequirements(prefab.name)
     }));
   }
 
+  // not ready for prod.
   private void RegisterCannonTurretPrefab()
   {
     var asset = LoadValheimVehicleAssets._bundle.LoadAsset<GameObject>("cannon_turret");
@@ -81,9 +83,9 @@ public class CannonPrefabs : RegisterPrefab<CannonPrefabs>
 
     PieceManager.Instance.AddPiece(new CustomPiece(prefab, true, new PieceConfig
     {
+      Enabled = CannonPrefabConfig.EnableCannons.Value,
       PieceTable = PrefabRegistryController.GetPieceTableName(),
       Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Tools),
-      Enabled = true,
       Requirements = PrefabRecipeConfig.GetRequirements(prefab.name)
     }));
   }
@@ -101,12 +103,6 @@ public class CannonPrefabs : RegisterPrefab<CannonPrefabs>
 
     var nv = PrefabRegistryHelpers.AddTempNetView(prefab, true);
     nv.m_distant = true;
-    // var zSyncTransform = prefab.AddComponent<VehicleZSyncTransform>();
-
-    // must have zsync transform in order to sync the projectile.
-    // zSyncTransform.m_syncBodyVelocity = true;
-    // zSyncTransform.m_syncRotation = true;
-    // zSyncTransform.m_syncPosition = true;
 
     var cannonBall = prefab.AddComponent<Cannonball>();
     cannonBall.cannonballVariant = CannonballVariant.Solid;
@@ -127,12 +123,6 @@ public class CannonPrefabs : RegisterPrefab<CannonPrefabs>
 
     var nv = PrefabRegistryHelpers.AddTempNetView(prefab, true);
     nv.m_distant = true;
-    // var zSyncTransform = prefab.AddComponent<VehicleZSyncTransform>();
-
-    // must have zsync transform in order to sync the projectile.
-    // zSyncTransform.m_syncBodyVelocity = true;
-    // zSyncTransform.m_syncRotation = true;
-    // zSyncTransform.m_syncPosition = true;
 
     var cannonBall = prefab.AddComponent<Cannonball>();
     cannonBall.cannonballVariant = CannonballVariant.Explosive;
@@ -173,18 +163,20 @@ public class CannonPrefabs : RegisterPrefab<CannonPrefabs>
       m_buildPieces = PrefabRegistryController.GetPieceTable(),
       m_toolTier = 50,
       m_maxStackSize = 200,
-      m_weight = PrefabConfig.CannonBallInventoryWeight.Value, // this could be 12-24lbs...but that would make the game less fun
+      m_weight = CannonPrefabConfig.CannonBallInventoryWeight.Value, // this could be 12-24lbs...but that would make the game less fun
       m_skillType = Skills.SkillType.None,
-      m_ammoType = PrefabItemTranslations.CannonAmmoType,
+      m_ammoType = PrefabItemNameToken.CannonAmmoType,
       m_itemType = ItemDrop.ItemData.ItemType.Ammo
     };
 
     var itemConfig = new ItemConfig
     {
-      Name = "$valheim_vehicles_cannonball_solid",
-      Description = "$valheim_vehicles_cannonball_solid_desc",
+      Name = PrefabItemNameToken.CannonSolidAmmo,
+      Description = $"{PrefabItemNameToken.CannonSolidAmmo}_desc",
       Icon = icon,
       StackSize = 200,
+      CraftingStation = "forge",
+      RepairStation = "forge",
       PieceTable = PrefabRegistryController.GetPieceTableName()
     };
 
@@ -193,6 +185,7 @@ public class CannonPrefabs : RegisterPrefab<CannonPrefabs>
 
     var customRecipe = new CustomRecipe(new RecipeConfig
     {
+      Enabled = CannonPrefabConfig.EnableCannons.Value,
       Name = "Recipe_CannonballSolid", // Unique name, can be arbitrary
       Item = PrefabNames.CannonballSolid, // The prefab name you registered above
       Amount = 10, // Number of items crafted per craft
@@ -238,19 +231,21 @@ public class CannonPrefabs : RegisterPrefab<CannonPrefabs>
       m_buildPieces = PrefabRegistryController.GetPieceTable(),
       m_toolTier = 50,
       m_maxStackSize = 200,
-      m_weight = PrefabConfig.CannonBallInventoryWeight.Value, // this could be 12-24lbs...but that would make the game less fun
+      m_weight = CannonPrefabConfig.CannonBallInventoryWeight.Value, // this could be 12-24lbs...but that would make the game less fun
       m_skillType = Skills.SkillType.Bows,
-      m_ammoType = PrefabItemTranslations.CannonAmmoType,
+      m_ammoType = PrefabItemNameToken.CannonAmmoType,
       m_itemType = ItemDrop.ItemData.ItemType.Ammo
     };
 
     var itemConfig = new ItemConfig
     {
-      Name = "$valheim_vehicles_cannonball_explosive",
-      Description = "$valheim_vehicles_cannonball_explosive_desc",
+      Name = PrefabItemNameToken.CannonExplosiveAmmo,
+      Description = $"{PrefabItemNameToken.CannonExplosiveAmmo}_desc",
       Icon = icon,
       StackSize = 200,
       CraftingStation = "forge",
+      RepairStation = "forge",
+      Enabled = CannonPrefabConfig.EnableCannons.Value,
       Requirements = PrefabRecipeConfig.GetRequirements(prefab.name),
       PieceTable = PrefabRegistryController.GetPieceTableName()
     };
@@ -313,7 +308,7 @@ public class CannonPrefabs : RegisterPrefab<CannonPrefabs>
       m_maxDurability = 300f,
       m_icons = [icon],
       m_toolTier = 50,
-      m_ammoType = PrefabItemTranslations.CannonAmmoType,
+      m_ammoType = PrefabItemNameToken.CannonAmmoType,
       m_animationState = ItemDrop.ItemData.AnimationState.Crossbow,
       m_equipDuration = 0,
       m_skillType = Skills.SkillType.Crossbows,
@@ -334,7 +329,7 @@ public class CannonPrefabs : RegisterPrefab<CannonPrefabs>
     attack.m_attackHealth = 0;
     attack.m_hitTerrain = true;
     attack.m_requiresReload = true;
-    attack.m_reloadTime = PrefabConfig.CannonHandHeld_ReloadTime.Value;
+    attack.m_reloadTime = CannonPrefabConfig.CannonHandHeld_ReloadTime.Value;
     attack.m_reloadAnimation = "reload_crossbow";
     attack.m_speedFactor = 0.2f;
     attack.m_reloadStaminaDrain = 10f;
@@ -343,11 +338,12 @@ public class CannonPrefabs : RegisterPrefab<CannonPrefabs>
 
     var itemConfig = new ItemConfig
     {
-      Name = "$valheim_vehicles_item_cannon_handheld_item",
-      Description = "$valheim_vehicles_item_cannon_handheld_item_desc",
+      Name = PrefabItemNameToken.CannonHandHeldName,
+      Description = $"{PrefabItemNameToken.CannonHandHeldName}_desc",
       Icon = icon,
       CraftingStation = "forge",
       RepairStation = "forge",
+      Enabled = CannonPrefabConfig.EnableCannons.Value,
       Requirements = PrefabRecipeConfig.GetRequirements(prefab.name)
     };
 
@@ -417,11 +413,13 @@ public class CannonPrefabs : RegisterPrefab<CannonPrefabs>
 
     var itemConfig = new ItemConfig
     {
-      Name = "$valheim_vehicles_telescope",
-      Description = "$valheim_vehicles_telescope_desc",
+      Name = PrefabItemNameToken.TelescopeName,
+      Description = $"{PrefabItemNameToken.TelescopeName}_desc",
       Icon = icon,
       Icons = [icon],
-      RepairStation = "piece_workbench",
+      CraftingStation = "forge",
+      RepairStation = "forge",
+      Enabled = CannonPrefabConfig.EnableCannons.Value,
       Requirements =
       [
         new RequirementConfig
@@ -476,12 +474,11 @@ public class CannonPrefabs : RegisterPrefab<CannonPrefabs>
     targetController.cannonDetectionMode = TargetController.CannonDetectionMode.Cast;
 
     prefab.AddComponent<TargetControlsInteractive>();
-
     PieceManager.Instance.AddPiece(new CustomPiece(prefab, true, new PieceConfig
     {
       PieceTable = PrefabRegistryController.GetPieceTableName(),
       Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Tools),
-      Enabled = true,
+      Enabled = CannonPrefabConfig.EnableCannons.Value,
       Requirements = PrefabRecipeConfig.GetRequirements(prefab.name)
     }));
   }
@@ -524,9 +521,40 @@ public class CannonPrefabs : RegisterPrefab<CannonPrefabs>
     {
       PieceTable = PrefabRegistryController.GetPieceTableName(),
       Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Tools),
-      Enabled = true,
+      Enabled = CannonPrefabConfig.EnableCannons.Value,
       Requirements = PrefabRecipeConfig.GetRequirements(prefab.name)
     }));
+  }
+
+  public static void OnEnabledChange()
+  {
+    UpdatePieceEnabledState(PrefabNames.CannonFixedTier1, CannonPrefabConfig.EnableCannons.Value);
+    UpdatePieceEnabledState(PrefabNames.CannonTurretTier1, CannonPrefabConfig.EnableCannons.Value);
+    UpdatePieceEnabledState(PrefabNames.PowderBarrel, CannonPrefabConfig.EnableCannons.Value);
+
+    UpdateRecipeEnabledState(PrefabNames.CannonballSolid, CannonPrefabConfig.EnableCannons.Value);
+    UpdateRecipeEnabledState(PrefabNames.CannonballExplosive, CannonPrefabConfig.EnableCannons.Value);
+    UpdateRecipeEnabledState(PrefabNames.CannonHandHeldItem, CannonPrefabConfig.EnableCannons.Value);
+  }
+
+  private static void UpdatePieceEnabledState(string prefabName, bool isEnabled)
+  {
+    var piece = PieceManager.Instance.GetPiece(prefabName);
+    if (piece?.Piece != null)
+    {
+      piece.Piece.m_enabled = isEnabled;
+      LoggerProvider.LogMessage($"Updated piece {prefabName} enabled: {isEnabled}");
+    }
+  }
+
+  private static void UpdateRecipeEnabledState(string recipeName, bool isEnabled)
+  {
+    var recipe = ItemManager.Instance.GetRecipe(recipeName);
+    if (recipe?.Recipe != null)
+    {
+      recipe.Recipe.m_enabled = isEnabled;
+      LoggerProvider.LogMessage($"Updated recipe {recipeName} enabled: {isEnabled}");
+    }
   }
 
 
@@ -535,14 +563,22 @@ public class CannonPrefabs : RegisterPrefab<CannonPrefabs>
     // persistent inventory items
     RegisterCannonballSolidItemPrefab();
     RegisterCannonballExplosiveItemPrefab();
-    RegisterTelescopeItemPrefab();
 
+#if DEBUG
+    // not ready for prod.
+    RegisterTelescopeItemPrefab();
+#endif
     // projectiles are not persistent.
     RegisterCannonballSolidProjectilePrefab();
     RegisterCannonballExplosiveProjectilePrefab();
 
     RegisterCannonFixedPrefab();
+
+#if DEBUG
+    // not ready for prod.
     RegisterCannonTurretPrefab();
+#endif
+
     RegisterPowderBarrelPrefab();
     RegisterCannonAreaControllerTelescopePrefab();
 

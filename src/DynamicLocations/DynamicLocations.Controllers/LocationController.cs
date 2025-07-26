@@ -87,9 +87,17 @@ public class LocationController : MonoBehaviour
   /// <summary>
   /// Allows for overriding the world if attempting to query other world data.
   /// </summary>
-  private static long CurrentWorldId => WorldIdOverride != 0
-    ? WorldIdOverride
-    : ZNet.instance?.GetWorldUID() ?? 0;
+  private static long CurrentWorldId => GetCurrentWorldId();
+
+  public static long GetCurrentWorldId()
+  {
+    if (WorldIdOverride != 0)
+    {
+      return WorldIdOverride;
+    }
+    if (ZNet.instance == null) return 0L;
+    return ZNet.instance.GetWorldUID();
+  }
 
   internal static long WorldIdOverride = 0;
 

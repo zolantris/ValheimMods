@@ -37,7 +37,7 @@ public class CustomTextureGroup
     return m_textureLookUp.TryGetValue(name, out texture) ? texture : null;
   }
 
-  public static CustomTextureGroup Get(string groupName)
+  public static CustomTextureGroup? Get(string groupName)
   {
     if (m_groups.TryGetValue(groupName, out var group)) return group;
 

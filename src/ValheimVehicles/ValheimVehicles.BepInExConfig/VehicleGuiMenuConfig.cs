@@ -10,7 +10,7 @@ using Zolantris.Shared;
 
 namespace ValheimVehicles.BepInExConfig;
 
-public class VehicleDebugConfig : BepInExBaseConfig<VehicleDebugConfig>
+public class VehicleGuiMenuConfig : BepInExBaseConfig<VehicleGuiMenuConfig>
 {
   public static ConfigFile? Config { get; private set; }
 

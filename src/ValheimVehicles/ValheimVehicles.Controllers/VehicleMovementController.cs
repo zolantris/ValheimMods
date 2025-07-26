@@ -851,7 +851,7 @@
 
     public void GuardedFixedUpdate(float deltaTime)
     {
-      if (VehicleDebugConfig.AutoShowVehicleColliders.Value &&
+      if (VehicleGuiMenuConfig.AutoShowVehicleColliders.Value &&
           DebugTargetHeightObj != null)
       {
         DebugTargetHeightObj.transform.position =
@@ -3020,7 +3020,7 @@
 
       var hasOwner = m_nview.HasOwner();
       var owner = m_nview.IsOwner();
-      if (!VehicleDebugConfig.SyncShipPhysicsOnAllClients.Value && !owner && hasOwner ||
+      if (!VehicleGuiMenuConfig.SyncShipPhysicsOnAllClients.Value && !owner && hasOwner ||
           isBeached) return;
 
       _currentShipFloatation = GetShipFloatationObj();
@@ -3621,9 +3621,9 @@
     /// </summary>
     public void SendDelayedAnchor()
     {
-      if (VehicleDebugConfig.HasAutoAnchorDelay.Value)
+      if (VehicleGuiMenuConfig.HasAutoAnchorDelay.Value)
       {
-        var autoDelayInMS = VehicleDebugConfig.AutoAnchorDelayTime.Value * 1000f;
+        var autoDelayInMS = VehicleGuiMenuConfig.AutoAnchorDelayTime.Value * 1000f;
         Invoke(nameof(DelayedAnchor),
           autoDelayInMS);
         HasPendingAnchor = true;
@@ -3796,10 +3796,14 @@
     public static void RemoveAllShipControls(
       VehicleMovementController? vehicleMovementController)
     {
-      if (vehicleMovementController == null) return;
-      foreach (var mPlayer in vehicleMovementController.OnboardController
-                 .m_localPlayers)
+      if (vehicleMovementController == null || vehicleMovementController.OnboardController == null) return;
+      var players = vehicleMovementController.OnboardController.GetLocalPlayersSafe();
+
+      foreach (var mPlayer in players)
+      {
         mPlayer.m_doodadController = null;
+        VehicleOnboardController.AddOrRemovePlayerBlockingCameraWhileControlling(mPlayer, false);
+      }
     }
 
     public void InitializeWheelWithShip(
@@ -4398,7 +4402,7 @@
 
       if (isNotAnchoredWithNobodyOnboard)
       {
-        if (VehicleDebugConfig.HasAutoAnchorDelay.Value) return;
+        if (VehicleGuiMenuConfig.HasAutoAnchorDelay.Value) return;
         SendSetAnchor(AnchorState.Anchored);
         return;
       }
@@ -4485,9 +4489,12 @@
 
       EjectPreviousPlayerFromControls(previousPlayer);
 
+
       UpdatePlayerOnShip(targetPlayer);
       UpdateVehicleSpeedThrottle();
-      VehicleOnboardController.AddOrRemovePlayerBlockingCamera(targetPlayer);
+
+      // allows looking through ship while controlling vehicle.
+      VehicleOnboardController.AddOrRemovePlayerBlockingCameraWhileControlling(targetPlayer, true);
 
       if (PiecesController)
       {
@@ -4536,6 +4543,7 @@
     private void EjectPreviousPlayerFromControls(Player? player)
     {
       if (player == null) return;
+      VehicleOnboardController.AddOrRemovePlayerBlockingCameraWhileControlling(player, false);
 
       player.m_doodadController = null;
       player.AttachStop();

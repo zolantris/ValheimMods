@@ -64,7 +64,7 @@ namespace ValheimVehicles.SharedScripts.Structs
         var barrelCount = cannonController.GetBarrelCount();
 
         var deltaAmmoUsage = AmmoController.UpdateConsumedAmmo(cannonController.AmmoVariant, barrelCount, ref ammoSolidUsage, ref ammoExplosiveUsage, totalAmmoSolid, totalAmmoExplosive);
-
+        if (!cannonController.CanFire(true, deltaAmmoUsage)) continue;
         // skip cannons that cannot fire due to ammo not being available.
         if (deltaAmmoUsage == 0) continue;
 

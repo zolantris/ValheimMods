@@ -94,9 +94,7 @@ public class PrefabConfigSync<T, TComponentInterface> : MonoBehaviour, IPrefabCu
   public void CommitConfigChange(T newConfig)
   {
     if (!this.IsNetViewValid(out var netView)) return;
-    if (!netView.IsOwner() && netView.HasOwner() && !ZNet.instance.IsServer()) return;
-
-    if (!netView.HasOwner())
+    if (!netView.IsOwner())
     {
       netView.ClaimOwnership();
     }
@@ -106,23 +104,44 @@ public class PrefabConfigSync<T, TComponentInterface> : MonoBehaviour, IPrefabCu
     CustomConfig = newConfig;
     CustomConfig.Save(netView.GetZDO(), CustomConfig);
 
-    netView.InvokeRPC(ZRoutedRpc.Everybody, nameof(RPC_Load));
+    // load for self
     Load();
+
+    // load for everyone else
+    Request_Load();
   }
 
   public void Request_Load()
   {
     if (!this.IsNetViewValid(out var netView)) return;
-    netView.InvokeRPC(ZRoutedRpc.Everybody, nameof(RPC_Load));
+    var pkg = new ZPackage();
+    CustomConfig.Serialize(pkg);
+    netView.InvokeRPC(ZRoutedRpc.Everybody, nameof(RPC_Load), pkg);
   }
 
   /// <summary>
   /// Tells all clients they need to update their local config as a value has been updated.
   /// </summary>
-  /// <param name="sender"></param>
-  public void RPC_Load(long sender)
+  public void RPC_Load(long sender, ZPackage pkg)
   {
-    Load();
+    if (pkg.Size() == 0)
+    {
+      Load();
+      return;
+    }
+
+    pkg.SetPos(0);
+
+    try
+    {
+      var config = Config.Deserialize(pkg);
+      CustomConfig = config;
+    }
+    catch (Exception e)
+    {
+      LoggerProvider.LogError($"Error with deserialization {e}");
+      Load();
+    }
   }
 
   /// <summary>
@@ -189,17 +208,43 @@ public class PrefabConfigSync<T, TComponentInterface> : MonoBehaviour, IPrefabCu
     if (controller == null) return;
     CustomConfig = Config.Load(zdo, controller, filterKeys);
   }
+
   public void Save(ZDO zdo, string[]? filterKeys = null)
   {
     CustomConfig.Save(zdo, Config, filterKeys);
   }
 
+  /// <summary>
+  /// Todo consider calling request load after. This might need to be guarded by a update check to avoid infinite loops.
+  /// </summary>
+  /// <param name="filterKeys"></param>
+  public void Save(string[]? filterKeys = null)
+  {
+    if (!this.IsNetViewValid(out var nv)) return;
+    Save(nv.GetZDO(), filterKeys);
+  }
+
   public virtual void OnLoad() {}
+
+  public void Request_CommitConfigChange()
+  {
+    if (!this.IsNetViewValid(out var netView)) return;
+    if (netView.IsOwner())
+    {
+      CommitConfigChange(Config);
+    }
+    else
+    {
+      var pkg = new ZPackage();
+      Config.Serialize(pkg);
+      netView.InvokeRPC(netView.GetZDO().GetOwner(), nameof(RPC_CommitConfigChange), pkg);
+    }
+  }
 
   public void Request_CommitConfigChange(T newConfig)
   {
     if (!this.IsNetViewValid(out var netView)) return;
-    if (netView.IsOwner())
+    if (netView.IsOwner() || !netView.HasOwner())
     {
       CommitConfigChange(newConfig);
     }
@@ -214,20 +259,15 @@ public class PrefabConfigSync<T, TComponentInterface> : MonoBehaviour, IPrefabCu
   private void RPC_CommitConfigChange(long sender, ZPackage pkg)
   {
     if (!this.IsNetViewValid(out var netView)) return;
-    if (!netView.IsOwner() || !ZNet.instance.IsServer()) return;
-    if (!netView.IsOwner())
-    {
-      netView.ClaimOwnership();
-    }
+    if (!netView.IsOwner()) netView.ClaimOwnership();
 
-    var newConfig = new T();
-    newConfig.Deserialize(pkg);
+    var newConfig = new T().Deserialize(pkg);
     CommitConfigChange(newConfig);
   }
 
   public virtual void RegisterRPCListeners()
   {
-    rpcHandler?.Register(nameof(RPC_Load), RPC_Load);
+    rpcHandler?.Register<ZPackage>(nameof(RPC_Load), RPC_Load);
     rpcHandler?.Register<ZPackage>(nameof(RPC_CommitConfigChange), RPC_CommitConfigChange);
   }
 

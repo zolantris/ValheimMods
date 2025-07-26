@@ -142,8 +142,10 @@ public partial class ModTranslations
     VehicleCannon_ToggleAutoFire = SafeLocalize("$valheim_vehicles_cannons_toggle_auto_fire");
     VehicleCannon_SwapCannonBallType = SafeLocalize("$valheim_vehicles_cannons_swap_cannonball_type");
     VehicleCannon_AmmoText = SafeLocalize("$valheim_vehicles_cannons_ammo_text");
-    VehicleCannon_CannonBallSolid = SafeLocalize("$valheim_vehicles_cannonball_solid");
-    VehicleCannon_CannonBallExplosive = SafeLocalize("$valheim_vehicles_cannonball_explosive");
+
+    VehicleCannon_CannonBallItemSolid = SafeLocalize(PrefabItemNameToken.CannonSolidAmmo);
+    VehicleCannon_CannonBallItemExplosive = SafeLocalize(PrefabItemNameToken.CannonExplosiveAmmo);
+
     VehicleCannon_CannonMissingNearbyPowderBarrel = SafeLocalize(WithBoldText("$valheim_vehicles_cannons_missing_nearby_powder_barrels", "red"));
     Vehicle_Cannon_Controls_Tutorial = SafeLocalize("$valheim_vehicles_cannon_control_center_tutorial");
 
@@ -151,6 +153,8 @@ public partial class ModTranslations
     CannonGroup_Backward = SafeLocalize("$valheim_vehicles_cannon_control_center_select_group_backward");
     CannonGroup_Left = SafeLocalize("$valheim_vehicles_cannon_control_center_select_group_left");
     CannonGroup_Right = SafeLocalize("$valheim_vehicles_cannon_control_center_select_group_right");
+
+    Cannon_TutorialShort = SafeLocalize(WithBoldText("$valheim_vehicles_cannon_controls_tutorial_short"));
   }
 
   private static void UpdateVehicleConfigTranslations()
@@ -175,6 +179,9 @@ public partial class ModTranslations
   {
     WheelControls_Name = SafeLocalize("$valheim_vehicles_wheel");
     WheelControls_Error = SafeLocalize("<color=white><b>$valheim_vehicles_wheel_use_error</b></color>");
+    WheelControls_FlightActivation = SafeLocalize($"{SharedKeys_Hold} {WithBoldText("Jump", "yellow")} $valheim_vehicles_wheel_flight_controls");
+    WheelControls_BallastActivation = SafeLocalize($"{SharedKeys_Hold} [{WithBoldText("Jump", "yellow")}] [{WithBoldText("Crouch", "yellow")}] $valheim_vehicles_wheel_ballast_controls");
+    WheelControls_TutorialFlight = SafeLocalize("$valheim_vehicles_wheel_tutorial_flight");
   }
 
   public static void UpdateSharedTranslations()
@@ -185,7 +192,7 @@ public partial class ModTranslations
     SharedKeys_AddMany = SafeLocalize("$valheim_vehicles_mechanism_interact_add_many");
 
     SharedKeys_InteractPrimary = SafeLocalize($"[<color=yellow><b>{ValheimInput_KeyUse}</b></color>]");
-    SharedKeys_InteractAlt = SafeLocalize($"[<color=yellow><b>{ValheimInput_KeyAltPlace}+{ValheimInput_KeyUse}</b></color>]");
+    SharedKeys_InteractAlt = SafeLocalize($"[<color=yellow><b>{ValheimInput_KeyAltPlace} + {ValheimInput_KeyUse}</b></color>]");
     SharedKeys_Tutorial = SafeLocalize("$valheim_vehicles_shared_keys_tutorial");
   }
 

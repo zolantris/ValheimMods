@@ -94,7 +94,7 @@ public class VehicleDebugHelpers : MonoBehaviour
   {
     if (!isActiveAndEnabled) return;
     if (autoUpdateColliders ||
-        VehicleDebugConfig.AutoShowVehicleColliders.Value)
+        VehicleGuiMenuConfig.AutoShowVehicleColliders.Value)
     {
       RenderDebugCubes();
       DrawAllColliders();

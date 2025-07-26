@@ -103,6 +103,16 @@
     public GameObject? ShipEffectsObj;
     public VehicleShipEffects? ShipEffects;
 
+    public static bool IsBallastCapable(VehicleVariant variant)
+    {
+      return WaterConfig.WaterBallastEnabled.Value && variant == VehicleVariant.All || variant == VehicleVariant.Sub || variant == VehicleVariant.Water;
+    }
+
+    public static bool IsFlightCapable(VehicleVariant variant)
+    {
+      return PropulsionConfig.AllowFlight.Value && variant == VehicleVariant.All || variant == VehicleVariant.Air || variant == VehicleVariant.Water;
+    }
+
   #region IVehicleSharedProperties
 
     // setters are added here for VehicleManager only
@@ -457,7 +467,7 @@
       VehicleConfigSync = gameObject.GetOrAddComponent<VehicleConfigSyncComponent>();
       VehicleConfigSync.OnLoadSubscriptions += OnVehicleConfigChange;
       // this flag can be updated manually via VehicleCommands.
-      HasVehicleDebugger = VehicleDebugConfig.VehicleDebugMenuEnabled.Value;
+      HasVehicleDebugger = VehicleGuiMenuConfig.VehicleDebugMenuEnabled.Value;
 
       vehicleMovementCollidersTransform =
         GetVehicleMovementCollidersTransform(transform);

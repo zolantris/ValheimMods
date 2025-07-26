@@ -110,6 +110,20 @@
         return activeLayers;
       }
 
+      [UsedImplicitly]
+      public static void PrintAllLayers()
+      {
+        LoggerProvider.LogDebug("Listing All Runtime game layers");
+        for (var i = 0; i < 32; i++)
+        {
+          var layerName = LayerMask.LayerToName(i);
+          if (!string.IsNullOrEmpty(layerName))
+          {
+            LoggerProvider.LogDebugDebounced($"Layer {i}: {layerName}");
+          }
+        }
+      }
+
       /// <summary>
       ///   Shortcut to combining masks
       /// </summary>

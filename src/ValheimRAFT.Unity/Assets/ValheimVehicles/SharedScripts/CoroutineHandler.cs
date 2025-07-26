@@ -20,6 +20,14 @@ namespace ValheimVehicles.SharedScripts
       _owner = owner;
     }
 
+    public bool IsValid(MonoBehaviour? instance)
+    {
+      if (instance == null) return false;
+      if (!_owner) return false;
+      if (instance != _owner) return false;
+      return true;
+    }
+
     public bool IsRunning => Instance != null;
 
     public Coroutine Instance
@@ -51,7 +59,7 @@ namespace ValheimVehicles.SharedScripts
     {
       if (Instance != null)
       {
-        if (_owner!= null)
+        if (_owner != null)
         {
           _owner.StopCoroutine(Instance);
         }

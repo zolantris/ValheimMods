@@ -358,6 +358,12 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable, INetView
 
   public void ApplyLoadedSailData(StoredSailData data)
   {
+    if (data == null)
+    {
+      LoggerProvider.LogError("Sail data sync is corrupt.");
+      return;
+    }
+
     m_sailCorners = data.SailCorners.Select(corner => corner.ToVector3()).ToList();
     m_lockedSailSides = (SailLockedSide)data.LockedSides;
     m_lockedSailCorners = (SailLockedSide)data.LockedCorners;
@@ -543,26 +549,40 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable, INetView
     if (m_materialVariant != MaterialVariant.Custom) return;
 
     var patternTex = sailMaterial.GetTexture(PatternTex);
-    var patternGroup = CustomTextureGroup.Get("Patterns")
+    var patternGroup = CustomTextureGroup.Get("Patterns")?
       .GetTextureByHash(patternTex.name.GetStableHashCode());
     if (patternGroup != null)
+    {
       m_patternHash = patternTex.name.GetStableHashCode();
+    }
+    else
+    {
+      LoggerProvider.LogWarning("Error pattern group not found. Ensure you have the assets folder under this mod.");
+    }
 
     m_patternScale = sailMaterial.GetTextureScale(PatternTex);
     m_patternOffset = sailMaterial.GetTextureOffset(PatternTex);
     m_patternColor = sailMaterial.GetColor(PatternColor);
     m_patternRotation = sailMaterial.GetFloat(PatternRotation);
     var logoTex = sailMaterial.GetTexture(LogoTex);
-    var logoGroup = CustomTextureGroup.Get("Logos")
+    var logoGroup = CustomTextureGroup.Get("Logos")?
       .GetTextureByHash(logoTex.name.GetStableHashCode());
-    if (logoGroup != null) m_logoHash = logoTex.name.GetStableHashCode();
+    if (logoGroup != null)
+    {
+      m_logoHash = logoTex.name.GetStableHashCode();
+    }
+    else
+    {
+      LoggerProvider.LogWarning("Error pattern group not found. Ensure you have the assets folder under this mod.");
+    }
+
 
     m_logoScale = sailMaterial.GetTextureScale(LogoTex);
     m_logoOffset = sailMaterial.GetTextureOffset(LogoTex);
     m_logoColor = sailMaterial.GetColor(LogoColor);
     m_logoRotation = sailMaterial.GetFloat(LogoRotation);
 
-    if (VehicleDebugConfig.HasDebugSails.Value)
+    if (VehicleGuiMenuConfig.HasDebugSails.Value)
     {
       LoggerProvider.LogDebug($"m_lockedSailSides {m_lockedSailSides}");
       LoggerProvider.LogDebug($"m_lockedSailCorners {m_lockedSailCorners}");
@@ -1218,10 +1238,15 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable, INetView
   {
     if (m_materialVariant != MaterialVariant.Custom) return;
     m_mainHash = hash;
-    var customtexture =
-      CustomTextureGroup.Get("Sails").GetTextureByHash(hash);
-    var sailTexture = customtexture.Texture;
-    var sailNormal = customtexture.Normal;
+    var sailCustomGroup = CustomTextureGroup.Get("Sails");
+    if (sailCustomGroup == null)
+    {
+      LoggerProvider.LogDebug("sailCustomGroup (from assets) error. Textures not set correctly. This means your sails will be using built-in mod textures only.");
+      return;
+    }
+    var textureGroupFromHash = sailCustomGroup.GetTextureByHash(hash);
+    var sailTexture = textureGroupFromHash.Texture;
+    var sailNormal = textureGroupFromHash.Normal;
     if (!(bool)sailTexture) return;
     m_mesh.material.SetTexture(MainTex, sailTexture);
     if ((bool)sailNormal)

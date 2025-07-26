@@ -221,7 +221,6 @@ public class VehicleCommands : ConsoleCommand
     public Vector3 lastLocalOffset;
     public Character character;
     public bool isDebugFlying;
-    public bool isKinematic;
   }
 
   public struct SafeMoveData
@@ -256,14 +255,10 @@ public class VehicleCommands : ConsoleCommand
       foreach (var character in charactersOnShip)
       {
         var isDebugFlying = character.IsDebugFlying();
-        var isKinematic = character.m_body.isKinematic;
-
         if (character.transform.parent)
         {
           character.transform.SetParent(null);
         }
-
-        if (!isKinematic && !isDebugFlying) character.m_body.isKinematic = true;
 
         var lastLocalOffset = vehicleOnboardController.PiecesController.transform.InverseTransformPoint(character.transform.position);
 
@@ -277,16 +272,15 @@ public class VehicleCommands : ConsoleCommand
         {
           character = character,
           isDebugFlying = isDebugFlying,
-          lastLocalOffset = lastLocalOffset,
-          isKinematic = isKinematic
+          lastLocalOffset = lastLocalOffset
         });
       }
 
     var wasDebugFlying = false;
+
     if (Player.m_localPlayer)
     {
       wasDebugFlying = Player.m_localPlayer.IsDebugFlying();
-      if (!wasDebugFlying) Player.m_localPlayer.m_body.isKinematic = true;
     }
 
     return new SafeMoveData
@@ -438,8 +432,6 @@ public class VehicleCommands : ConsoleCommand
           }
         }
 
-        playerData.character.m_body.isKinematic = playerData.isKinematic;
-
         ResetPlayerVelocities(playerData.character);
       }
 
@@ -544,13 +536,13 @@ public class VehicleCommands : ConsoleCommand
   {
     try
     {
-      if (!VehicleDebugConfig.AllowDebugCommandsForNonAdmins.Value)
+      if (!VehicleGuiMenuConfig.AllowDebugCommandsForNonAdmins.Value)
       {
         if (Player.m_localPlayer == null || ZNet.instance == false) return false;
         var playerId = Player.m_localPlayer.GetPlayerID();
         if (!ZNet.instance.IsAdmin(playerId))
         {
-          Logger.LogMessage($"Player is not an admin. They cannot run this cheat command without setting configKeySection <{VehicleDebugConfig.AllowDebugCommandsForNonAdmins.Definition.Section}> ConfigKey: <{VehicleDebugConfig.AllowDebugCommandsForNonAdmins.Definition.Key}> to true in the raft config or being an Admin.");
+          Logger.LogMessage($"Player is not an admin. They cannot run this cheat command without setting configKeySection <{VehicleGuiMenuConfig.AllowDebugCommandsForNonAdmins.Definition.Section}> ConfigKey: <{VehicleGuiMenuConfig.AllowDebugCommandsForNonAdmins.Definition.Key}> to true in the raft config or being an Admin.");
           return false;
         }
       }
@@ -565,13 +557,13 @@ public class VehicleCommands : ConsoleCommand
 
   public static bool CanRunEditCommand()
   {
-    if (!VehicleDebugConfig.AllowDebugCommandsForNonAdmins.Value)
+    if (!VehicleGuiMenuConfig.AllowDebugCommandsForNonAdmins.Value)
     {
       if (Player.m_localPlayer == null || ZNet.instance == false) return false;
       var playerId = Player.m_localPlayer.GetPlayerID();
       if (!ZNet.instance.IsAdmin(playerId))
       {
-        Logger.LogMessage($"Player is not an admin. They cannot run this edit command without setting configKeySection <{VehicleDebugConfig.AllowEditCommandsForNonAdmins.Definition.Section}> ConfigKey: <{VehicleDebugConfig.AllowEditCommandsForNonAdmins.Definition.Key}> to true in the raft config or being an Admin.");
+        Logger.LogMessage($"Player is not an admin. They cannot run this edit command without setting configKeySection <{VehicleGuiMenuConfig.AllowEditCommandsForNonAdmins.Definition.Section}> ConfigKey: <{VehicleGuiMenuConfig.AllowEditCommandsForNonAdmins.Definition.Key}> to true in the raft config or being an Admin.");
         return false;
       }
     }
@@ -1030,17 +1022,132 @@ public class VehicleCommands : ConsoleCommand
       yield break;
     }
 
-    yield return SafeMovePlayer(vehicleInstance.OnboardController, true,
-      () =>
-      {
-        var newPosition = GetCreativeModeTargetPosition(vehicleInstance);
-        vehicleInstance.MovementController.m_body.MovePosition(newPosition);
-        return newPosition;
-      }, null, true);
+
+    var safeMoveData = SafeMovePlayerBefore(vehicleInstance.OnboardController);
+    yield return MoveVehicleToCreativeTarget(vehicleInstance, GetCreativeModeTargetPosition(vehicleInstance), safeMoveData);
+
+    // yield return SafeMovePlayer(vehicleInstance.OnboardController, true,
+    //   () =>
+    //   {
+    //     var newPosition = GetCreativeModeTargetPosition(vehicleInstance);
+    //     if (vehicleInstance.MovementController.m_body.isKinematic)
+    //     {
+    //       vehicleInstance.MovementController.m_body.MovePosition(newPosition);
+    //     }
+    //     else
+    //     {
+    //       vehicleInstance.MovementController.m_body.position = newPosition;
+    //       vehicleInstance.MovementController.m_body.velocity = Vector3.zero;
+    //     }
+    //     return newPosition;
+    //   }, null, true);
 
     _creativeModeCoroutineInstance = null;
     _creativeModeTimer.Reset();
     LoggerProvider.LogMessage("Completed creative mode commands.");
+  }
+
+  public static float rotationLerp = 1f;
+  public static float positionLerp = 1f;
+
+  private static void SafeSyncSafeMovePlayerData(VehicleManager vehicleManager, SafeMoveData? safeMoveData)
+  {
+    if (!safeMoveData.HasValue) return;
+    var MovementController = vehicleManager.MovementController;
+    var PiecesController = vehicleManager.PiecesController;
+    if (MovementController == null || PiecesController == null) return;
+    foreach (var safeMoveCharacterData in safeMoveData.Value.charactersOnShip)
+    {
+      if (!safeMoveCharacterData.character) continue;
+      if (!safeMoveCharacterData.character.m_nview.IsValid()) continue;
+
+      var rb = safeMoveCharacterData.character.m_body;
+      var localPosition = MovementController.m_body.position + safeMoveCharacterData.lastLocalOffset;
+      if (rb.isKinematic)
+      {
+        rb.isKinematic = false;
+      }
+      else
+      {
+        rb.position = localPosition;
+        rb.velocity = Vector3.zero;
+        rb.angularVelocity = Vector3.zero;
+      }
+
+      rb.velocity = Vector3.zero;
+      rb.angularVelocity = Vector3.zero;
+      safeMoveCharacterData.character.m_nview.GetZDO()?.SetPosition(localPosition);
+      safeMoveCharacterData.character.SyncVelocity();
+
+      var colliders = safeMoveCharacterData.character.GetComponentsInChildren<Collider>();
+      foreach (var collider in colliders)
+      foreach (var collider1 in PiecesController.vehicleCollidersToIgnore)
+      {
+        if (!collider || !collider1) continue;
+        Physics.IgnoreCollision(collider, collider1, true);
+      }
+    }
+  }
+
+  /// <summary>
+  /// Safer way to move vehicle. This will keep players in vehicle as it animates to the position.
+  /// </summary>
+  private static IEnumerator MoveVehicleToCreativeTarget(VehicleManager vehicleInstance, Vector3 newPosition, SafeMoveData? safeMoveData)
+  {
+    var movementController = vehicleInstance.MovementController;
+    if (movementController == null || vehicleInstance.PiecesController == null) yield break;
+
+    var isNearby = false;
+
+    var timer = 0f;
+
+    while (!isNearby && timer < 5f)
+    {
+      timer += Time.deltaTime;
+      var currentDistance = Vector3.Distance(movementController.m_body.position, newPosition);
+      var isQuaternionNear = IsQuaternionNear(movementController.m_body.rotation, Quaternion.identity, 3f);
+
+      isNearby = currentDistance < 0.1f && isQuaternionNear;
+
+      LoggerProvider.LogDebugDebounced($"Distance: {currentDistance} isQuaternionNear {isQuaternionNear} isNearby {isNearby}");
+
+      if (!isNearby)
+      {
+        SafeSyncSafeMovePlayerData(vehicleInstance, safeMoveData);
+        var lerpTimePos = currentDistance < 0.5f ? 0.15f : Time.deltaTime * positionLerp;
+        var lerpTimeRot = IsQuaternionNear(movementController.m_body.rotation, Quaternion.identity, 5f) ? 0.15f : Time.deltaTime * rotationLerp;
+
+        var lerpPosition = Vector3.Lerp(movementController.m_body.position, newPosition, lerpTimePos);
+        var lerpRotation = Quaternion.Lerp(movementController.m_body.rotation, Quaternion.identity, lerpTimeRot);
+
+        movementController.m_body.Move(lerpPosition, lerpRotation);
+        movementController.zsyncTransform.SyncNow();
+        yield return null;
+      }
+    }
+
+    // final movement.
+    if (movementController.m_body.isKinematic)
+    {
+      movementController.m_body.Move(newPosition, Quaternion.identity);
+    }
+    else
+    {
+      movementController.m_body.position = newPosition;
+      movementController.m_body.velocity = Vector3.zero;
+    }
+
+    yield return null;
+    SafeSyncSafeMovePlayerData(vehicleInstance, safeMoveData);
+
+    yield return null;
+  }
+
+  public static bool IsQuaternionNear(Quaternion a, Quaternion b, float maxAngleDegrees = 1f)
+  {
+    // Calculates the angle in degrees between two rotations
+    var angle = Quaternion.Angle(a, b);
+    return angle < maxAngleDegrees;
   }
 
   private static Vector3 GetCreativeModeTargetPosition(VehicleManager vehicleInstance)
@@ -1048,7 +1155,7 @@ public class VehicleCommands : ConsoleCommand
     if (vehicleInstance == null || vehicleInstance.MovementController == null) return Vector3.zero;
 
     var position = vehicleInstance.MovementController.m_body.position;
-    var creativeHeightOffset = VehicleDebugConfig.VehicleCreativeHeight.Value;
+    var creativeHeightOffset = VehicleGuiMenuConfig.VehicleCreativeHeight.Value;
 
     return new Vector3(position.x, position.y + creativeHeightOffset, position.z);
   }
@@ -1079,7 +1186,6 @@ public class VehicleCommands : ConsoleCommand
 
     LoggerProvider.LogMessage("Completed destroy vehicle command.");
   }
-
   public override List<string> CommandOptionList()
   {
     return
@@ -1103,6 +1209,5 @@ public class VehicleCommands : ConsoleCommand
       VehicleCommandArgs.resetVehicleOwner
     ];
   }
-
   public override string Name => "vehicle";
 }

@@ -6,6 +6,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using JetBrains.Annotations;
 using UnityEngine;
 
@@ -20,7 +21,6 @@ namespace ValheimVehicles.SharedScripts
     public Vector3 velocity;
     public Vector3 direction;
     public Vector3 hitPoint;
-    public float explosionRadius;
     public bool isExplosionHit;
     public bool isCharacterHit;
     public bool isMineRockHit;
@@ -36,6 +36,8 @@ namespace ValheimVehicles.SharedScripts
   {
     private static CoroutineHandle _applyDamageCoroutine;
     private static CoroutineHandle _applyAudioCoroutine;
+    private static CoroutineHandle _applyShieldUpdate;
+
     private static readonly Queue<DamageInfo> _queuedDamageInfo = new();
     public static bool UseCharacterHit = false;
 
@@ -44,7 +46,9 @@ namespace ValheimVehicles.SharedScripts
     // damage types.
     public static float BaseDamageExplosiveCannonball = 50f;
     public static float BaseDamageSolidCannonball = 80f;
-    public static float ExplosionShellRadius = 7.5f;
+
+    public static Dictionary<ShieldGenerator, (Cannonball, float, ShieldGenerator)> m_scheduledShieldUpdates = new();
+    public static Dictionary<ShieldGenerator, HashSet<(Vector3, Quaternion)>> m_scheduledShieldHitPoints = new();
 
     public void OnEnable()
     {
@@ -60,10 +64,20 @@ namespace ValheimVehicles.SharedScripts
       SetupCoroutines();
     }
 
+    /// <summary>
+    /// These are static but they must match the current instance so force updating these is required per instance update.
+    /// </summary>
     public static void SetupCoroutines()
     {
+      if (Instance == null) return;
+
       _applyDamageCoroutine ??= new CoroutineHandle(Instance);
       _applyAudioCoroutine ??= new CoroutineHandle(Instance);
+      _applyShieldUpdate ??= new CoroutineHandle(Instance);
+
+      if (!_applyDamageCoroutine.IsValid(Instance)) _applyDamageCoroutine = new CoroutineHandle(Instance);
+      if (!_applyAudioCoroutine.IsValid(Instance)) _applyAudioCoroutine = new CoroutineHandle(Instance);
+      if (!_applyShieldUpdate.IsValid(Instance)) _applyShieldUpdate = new CoroutineHandle(Instance);
     }
 
 #if UNITY_EDITOR
@@ -79,6 +93,67 @@ namespace ValheimVehicles.SharedScripts
       }
     }
 #endif
+
+    /// <summary>
+    /// Only adds keys if they are not already scheduled.
+    /// </summary>
+    public static void AddShieldUpdate(Cannonball cannonball, float force, ShieldGenerator shieldGenerator)
+    {
+      if (!m_scheduledShieldUpdates.ContainsKey(shieldGenerator))
+      {
+        m_scheduledShieldUpdates.Add(shieldGenerator, (cannonball, force, shieldGenerator));
+      }
+
+      if (!m_scheduledShieldHitPoints.TryGetValue(shieldGenerator, out var hitPoints))
+      {
+        hitPoints = new HashSet<(Vector3, Quaternion)>();
+        m_scheduledShieldHitPoints[shieldGenerator] = hitPoints;
+      }
+      var cannonballPosition = cannonball.transform.position;
+      hitPoints.Add((cannonballPosition, Quaternion.LookRotation(shieldGenerator.transform.position.DirTo(cannonballPosition))));
+
+      ScheduleUpdateShieldHit();
+    }
+
+    public static void ScheduleUpdateShieldHit()
+    {
+      if (!TryInit()) return;
+      if (_applyShieldUpdate.IsRunning) return;
+      _applyShieldUpdate.Start(UpdateShieldHitRoutine());
+    }
+
+    /// <summary>
+    /// This will prevent spamming the clients with hits.
+    /// </summary>
+    public static IEnumerator UpdateShieldHitRoutine()
+    {
+      yield return new WaitForFixedUpdate();
+      var queuedHits = m_scheduledShieldUpdates.Values.ToList();
+
+      foreach (var (cannonball, force, shieldGenerator) in queuedHits)
+      {
+        if (shieldGenerator == null || cannonball == null) continue;
+        if (!m_scheduledShieldHitPoints.TryGetValue(shieldGenerator, out var hits))
+        {
+          continue;
+        }
+
+        foreach (var (pos, dir) in hits)
+        {
+          shieldGenerator.m_shieldHitEffects.Create(pos, dir);
+        }
+
+        shieldGenerator.m_nview.InvokeRPC(ZNetView.Everybody, "RPC_HitNow");
+        shieldGenerator.UpdateShield();
+        // only impact effects regardless if the shell is an explosive.
+        cannonball.StartImpactEffectAudio(force, true);
+        yield return null;
+      }
+
+      m_scheduledShieldHitPoints.Clear();
+      m_scheduledShieldUpdates.Clear();
+      yield return new WaitForSeconds(0.1f);
+    }
 
     private static void CommitDamage(DamageInfo damageInfo)
     {
@@ -102,7 +177,7 @@ namespace ValheimVehicles.SharedScripts
       hitData.m_point = damageInfo.hitPoint;
       hitData.m_dir = damageInfo.direction;
       hitData.m_attacker = hitZdoid;
-      hitData.m_hitType = HitData.HitType.EnemyHit;
+      hitData.m_hitType = damageInfo.isSelfHit ? HitData.HitType.Self : HitData.HitType.EnemyHit;
       hitData.m_pushForce = 1f;
       hitData.m_staggerMultiplier = 12f;
       hitData.m_radius = 0; // do not use radius hits as these will do an additional raycast which is not necessary.
@@ -192,6 +267,14 @@ namespace ValheimVehicles.SharedScripts
       return Instance != null;
     }
 
+    public static float GetBaseDamageForHit(bool isExplosionHit, float force)
+    {
+      var baseDamage = isExplosionHit ? BaseDamageExplosiveCannonball : BaseDamageSolidCannonball;
+      // makes cannonball damage variable within specific bounds.
+      var lerpedForceDamage = Mathf.Lerp(0.1f, 1.5f, force / 90f);
+      var forceDamage = Mathf.Clamp(baseDamage * lerpedForceDamage, 10f, 300f);
+      return forceDamage;
+    }
 
     public static DamageInfo GetDamageInfoForHit(Collider otherCollider, Vector3 hitPoint, Vector3 dir, Vector3 velocity, float force, bool isExplosionHit)
     {
@@ -226,10 +309,8 @@ namespace ValheimVehicles.SharedScripts
       var isSelfHit = isCharacterHit && character as Player == Player.m_localPlayer;
 
 
-      var baseDamage = isExplosionHit ? BaseDamageExplosiveCannonball : BaseDamageSolidCannonball;
-      // makes cannonball damage variable within specific bounds.
-      var lerpedForceDamage = Mathf.Lerp(0.1f, 1.5f, force / 90f);
-      var forceDamage = Mathf.Clamp(baseDamage * lerpedForceDamage, 10f, 300f);
+      var damage = GetBaseDamageForHit(isExplosionHit, force);
+
 
       var damageInfo = new DamageInfo
       {
@@ -244,8 +325,7 @@ namespace ValheimVehicles.SharedScripts
         isMineRock5Hit = isMineRock5Hit,
         isDestructibleHit = isDestructibleHit,
         isSelfHit = isSelfHit,
-        explosionRadius = (isMineRock5Hit || isMineRockHit) && isExplosionHit ? ExplosionShellRadius : 0f,
-        damage = forceDamage
+        damage = damage
       };
 #else
       var damageInfo = new DamageInfo();

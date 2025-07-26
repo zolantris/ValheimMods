@@ -15,6 +15,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using ValheimVehicles.BepInExConfig;
 using ValheimVehicles.Controllers;
+using ValheimVehicles.Shared.Constants;
 using Zolantris.Shared.Debug;
 using Logger = Jotunn.Logger;
 
@@ -68,7 +69,7 @@ public class DynamicLocationsLoginIntegration : DynamicLoginIntegration
                                        vehicle.Instance.PiecesController.IsActivationComplete) ||
                                      localTimer.ElapsedMilliseconds > 2000);
 
-    if (ModSupportConfig.DynamicLocationsShouldSkipMovingPlayerToBed.Value)
+    if (ModSupportConfig.DynamicLocationLoginMovesPlayerToBed.Value)
     {
       MovePlayerToBedOnShip(vehicle);
     }
@@ -87,11 +88,6 @@ public class DynamicLocationsLoginIntegration : DynamicLoginIntegration
   private static void PlayerMoveToTransformSafe(Transform bedTransform)
   {
     if (Player.m_localPlayer == null) return;
-    if (Player.m_localPlayer.IsDebugFlying())
-    {
-      Player.m_localPlayer.ToggleDebugFly();
-    }
-
     var offset = bedTransform.position + Vector3.up * 1.5f;
 
     if (PlayerSpawnController.Instance != null)
@@ -101,9 +97,25 @@ public class DynamicLocationsLoginIntegration : DynamicLoginIntegration
     }
   }
 
+  private static void PlayerMoveToNetViewSafe(Player player, ZNetView netView)
+  {
+    if (netView == null) return;
+    var piecePos = netView.GetZDO().GetPosition();
+    var pieceOffset = netView.GetZDO().GetVec3(VehicleZdoVars.MBPositionHash, Vector3.zero);
+    var heightOffset = Vector3.up * 1.5f;
+    var finalPos = piecePos + pieceOffset + heightOffset;
+
+    if (PlayerSpawnController.Instance != null)
+    {
+      PlayerSpawnController.Instance.DynamicTeleport(finalPos,
+        player.transform.rotation);
+    }
+  }
+
   private bool MovePlayerToBedOnShip(VehicleManager vehicle)
   {
-    var bedPieces = vehicle.Instance.PiecesController.GetBedPieces();
+    if (vehicle.PiecesController == null || Player.m_localPlayer == null) return false;
+    var bedPieces = vehicle.PiecesController.GetBedPieces();
     if (bedPieces.Count < 1) return false;
     if (bedPieces.Count == 1)
     {
@@ -117,7 +129,7 @@ public class DynamicLocationsLoginIntegration : DynamicLoginIntegration
       : bedPieces.First();
     if (selectedPiece == null) return false;
 
-    PlayerMoveToTransformSafe(selectedPiece.transform);
+    PlayerMoveToNetViewSafe(Player.m_localPlayer, selectedPiece.m_nview);
     return true;
   }
 

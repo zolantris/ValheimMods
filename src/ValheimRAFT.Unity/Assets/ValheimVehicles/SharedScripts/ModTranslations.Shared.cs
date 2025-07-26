@@ -119,6 +119,7 @@ namespace ValheimVehicles.SharedScripts
     // generic/shared-keys
     public static string SharedKeys_Owner = null!;
     public static string SharedKeys_Hold = null!;
+    public static string SharedKeys_Block = null!;
     public static string SharedKeys_Reset = null!;
     public static string SharedKeys_AddMany = null!;
     public static string SharedKeys_InteractAlt = null!;
@@ -129,6 +130,12 @@ namespace ValheimVehicles.SharedScripts
     public static string CannonGroup_Backward = null!;
     public static string CannonGroup_Left = null!;
     public static string CannonGroup_Right = null!;
+
+    public static string Cannon_TutorialShort = null!;
+
+    public static string WheelControls_TutorialFlight = null!;
+    public static string WheelControls_FlightActivation = null!;
+    public static string WheelControls_BallastActivation = null!;
 
     // vehicle config
     public static string VehicleConfig_Beached = null!;
@@ -182,8 +189,8 @@ namespace ValheimVehicles.SharedScripts
     public static string Vehicle_Cannon_Controls_Tutorial;
     public static string VehicleCannon_SwapCannonBallType;
     public static string VehicleCannon_AmmoText;
-    public static string VehicleCannon_CannonBallExplosive;
-    public static string VehicleCannon_CannonBallSolid;
+    public static string VehicleCannon_CannonBallItemExplosive;
+    public static string VehicleCannon_CannonBallItemSolid;
     public static string VehicleCannon_CannonMissingNearbyPowderBarrel;
 
     // vehicle config

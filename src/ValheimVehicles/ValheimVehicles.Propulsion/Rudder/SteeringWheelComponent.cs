@@ -8,8 +8,11 @@ using System.Linq;
 using UnityEngine;
 using ValheimVehicles.Compat;
 using ValheimVehicles.BepInExConfig;
+using ValheimVehicles.Components;
 using ValheimVehicles.Constants;
 using ValheimVehicles.Controllers;
+using ValheimVehicles.Enums;
+using ValheimVehicles.Helpers;
 using ValheimVehicles.Interfaces;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.SharedScripts;
@@ -21,7 +24,7 @@ using Logger = Jotunn.Logger;
 namespace ValheimVehicles.Propulsion.Rudder;
 
 public class SteeringWheelComponent : MonoBehaviour, IAnimatorHandler, Hoverable, Interactable,
-  IDoodadController
+  IDoodadController, INetView
 {
   private VehicleMovementController _controls;
   public VehicleMovementController? Controls => _controls;
@@ -61,6 +64,9 @@ public class SteeringWheelComponent : MonoBehaviour, IAnimatorHandler, Hoverable
   public Transform steeringWheelHoverTransform;
   public HoverFadeText steeringWheelHoverText;
 
+  public const string Key_ShowTutorial = "SteeringWheel_ShowTutorial";
+  public bool showTutorial = true;
+
   public string _cachedLocalizedWheelHoverText = "";
 
   /// <summary>
@@ -86,36 +92,94 @@ public class SteeringWheelComponent : MonoBehaviour, IAnimatorHandler, Hoverable
       $"{anchoredStatus}\n[<color=yellow><b>{anchorKeyString}</b></color>] <color=white>{anchorText}</color>";
   }
 
+  public bool TryGetShipStats(out string shipStatsText)
+  {
+    shipStatsText = "";
+    if (!PropulsionConfig.ShowShipStats.Value) return false;
+    if (ControllersInstance.PiecesController == null) return false;
+
+    var piecesController = ControllersInstance.PiecesController;
+    var sailArea = piecesController.cachedTotalSailArea;
+    var totalMass = piecesController.TotalMass;
+    var shipMass = piecesController.ShipMass;
+    var shipPropulsion = piecesController.GetSailingForce();
+
+    var shipMassToPush =
+      PropulsionConfig.SailingMassPercentageFactor.Value;
+    shipStatsText += $"\nsailArea: {sailArea}";
+    shipStatsText += $"\ntotalMass: {totalMass}";
+    shipStatsText +=
+      $"\nshipMass(no-containers): {shipMass}";
+
+    shipStatsText +=
+      $"\ntotalMassToPush: {shipMassToPush}% * {totalMass} = {totalMass * shipMassToPush / 100f}";
+    shipStatsText +=
+      $"\nshipPropulsion: {shipPropulsion}";
+
+    /* final formatting */
+    shipStatsText = $"<color=white>{shipStatsText}</color>";
+
+    return true;
+  }
+
   /// <summary>
   /// Gets the hover text info for wheel
   /// </summary>
-  public static string GetHoverTextFromShip(float sailArea, float totalMass,
-    float shipMass, float shipPropulsion, bool isAnchored,
+  public string GetHoverTextFromShip(bool isAnchored,
     string anchorKeyString)
   {
-    var shipStatsText = "";
-    if (PropulsionConfig.ShowShipStats.Value)
-    {
-      var shipMassToPush =
-        PropulsionConfig.SailingMassPercentageFactor.Value;
-      shipStatsText += $"\nsailArea: {sailArea}";
-      shipStatsText += $"\ntotalMass: {totalMass}";
-      shipStatsText +=
-        $"\nshipMass(no-containers): {shipMass}";
-
-      shipStatsText +=
-        $"\ntotalMassToPush: {shipMassToPush}% * {totalMass} = {totalMass * shipMassToPush / 100f}";
-      shipStatsText +=
-        $"\nshipPropulsion: {shipPropulsion}";
-
-      /* final formatting */
-      shipStatsText = $"<color=white>{shipStatsText}</color>";
-    }
-
     var anchorMessage = GetAnchorMessage(isAnchored, anchorKeyString);
 
+    var interactMessage = $"{ModTranslations.SharedKeys_InteractPrimary} {ModTranslations.WithBoldText(ModTranslations.Anchor_WheelUse_UseText, "white")}";
+
+    var variant = ControllersInstance.Manager.vehicleVariant;
+
+    var isFlightCapable = VehicleManager.IsFlightCapable(variant);
+    var isBallastCapable = VehicleManager.IsBallastCapable(variant);
+
+    interactMessage += $"\n{anchorMessage}";
+
+    if (isFlightCapable || isBallastCapable)
+    {
+      interactMessage += "\n--------";
+    }
+
+    // propulsion messages
+    if (isFlightCapable)
+    {
+      interactMessage += $"\n{ModTranslations.WheelControls_FlightActivation}";
+    }
+    if (isBallastCapable)
+    {
+      interactMessage += $"\n{ModTranslations.WheelControls_BallastActivation}";
+    }
+
+    var additionalMessages = "";
+
+    if (this.IsNetViewValid(out var nv))
+    {
+      showTutorial = nv.GetZDO().GetBool(Key_ShowTutorial, showTutorial);
+    }
+
+    if (showTutorial)
+    {
+      additionalMessages += $"\n{ModTranslations.Cannon_TutorialShort}";
+
+      if (variant == VehicleVariant.All || variant == VehicleVariant.Air)
+      {
+        additionalMessages += $"\n{ModTranslations.WheelControls_TutorialFlight}";
+      }
+    }
+
+    if (TryGetShipStats(out var statsMessage))
+    {
+      additionalMessages += $"\n{statsMessage}";
+    }
+
+    var tutorialToggleMessage = $"{ModTranslations.SharedKeys_InteractAlt} {ModTranslations.WithBoldText(ModTranslations.SharedKeys_Tutorial, "white")}";
+
     return
-      $"[<color=yellow><b>{ModTranslations.ValheimInput_KeyUse}</b></color>]<color=white><b>{ModTranslations.Anchor_WheelUse_UseText}</b></color>\n{anchorMessage}\n{shipStatsText}";
+      $"{interactMessage}\n{tutorialToggleMessage}\n{additionalMessages}";
   }
 
 
@@ -168,12 +232,8 @@ public class SteeringWheelComponent : MonoBehaviour, IAnimatorHandler, Hoverable
     }
 
     var isAnchored = VehicleMovementController.GetIsAnchoredSafe(ControllersInstance);
-
-
     var anchorKeyString = GetAnchorHotkeyString();
-    var hoverText = GetHoverTextFromShip(piecesController.cachedTotalSailArea,
-      piecesController.TotalMass,
-      piecesController.ShipMass, piecesController.GetSailingForce(),
+    var hoverText = GetHoverTextFromShip(
       isAnchored,
       anchorKeyString);
 
@@ -188,6 +248,14 @@ public class SteeringWheelComponent : MonoBehaviour, IAnimatorHandler, Hoverable
 
   private void Awake()
   {
+    m_nview = GetComponent<ZNetView>();
+    if (!m_nview)
+    {
+      this.WaitForZNetView((nv) =>
+      {
+        m_nview = nv;
+      });
+    }
     AttachPoint = transform.Find("attachpoint");
     wheelTransform = transform.Find("controls/wheel");
     wheelLocalOffset = wheelTransform.position - transform.position;
@@ -218,14 +286,35 @@ public class SteeringWheelComponent : MonoBehaviour, IAnimatorHandler, Hoverable
       ControllersInstance.MovementController.lastUsedWheelComponent = this;
   }
 
+  public float lastToggleTime = 0f;
+
+  public void ToggleTutorial()
+  {
+    if (!this.IsNetViewValid(out var nv)) return;
+    if (Time.time < lastToggleTime + 1)
+      return;
+
+    var zdo = nv.GetZDO();
+    var nextValue = !showTutorial;
+    zdo.Set(Key_ShowTutorial, nextValue);
+    showTutorial = nextValue;
+  }
+
   public bool Interact(Humanoid user, bool hold, bool alt)
   {
     if (!isActiveAndEnabled) return false;
+    if (ControllersInstance.MovementController == null || ControllersInstance.OnboardController == null) return false;
+
+    if (alt && !hold)
+    {
+      ToggleTutorial();
+      return true;
+    }
 
     var canUse = InUseDistance(user);
 
     var HasInvalidVehicle = ControllersInstance.Manager == null;
-    if (hold || HasInvalidVehicle || !canUse) return false;
+    if (HasInvalidVehicle || !canUse) return false;
 
     SetLastUsedWheel();
 
@@ -239,16 +328,15 @@ public class SteeringWheelComponent : MonoBehaviour, IAnimatorHandler, Hoverable
     var player = user as Player;
 
     var playerOnShipViaShipInstance =
-      ControllersInstance?.PiecesController
+      ControllersInstance.PiecesController
         ?.GetComponentsInChildren<Player>() ?? null;
-
     if (player != null)
       ControllersInstance?.MovementController?.UpdatePlayerOnShip(player);
 
     if (playerOnShipViaShipInstance?.Length == 0 ||
         playerOnShipViaShipInstance == null)
       playerOnShipViaShipInstance =
-        ControllersInstance?.Manager?.OnboardController?.m_localPlayers.ToArray() ??
+        ControllersInstance?.OnboardController?.m_localPlayers.ToArray() ??
         null;
 
     /*
@@ -261,6 +349,7 @@ public class SteeringWheelComponent : MonoBehaviour, IAnimatorHandler, Hoverable
         Logger.LogDebug(
           $"Interact PlayerId {playerInstance.GetPlayerID()}, currentPlayerId: {player.GetPlayerID()}");
         if (playerInstance.GetPlayerID() != player.GetPlayerID()) continue;
+        if (ControllersInstance == null || ControllersInstance.MovementController) continue;
         ControllersInstance?.Manager?.MovementController?.SendRequestControl(
           playerInstance.GetPlayerID());
         return true;
@@ -482,5 +571,10 @@ public class SteeringWheelComponent : MonoBehaviour, IAnimatorHandler, Hoverable
     if (AttachPoint == null) return false;
     return Vector3.Distance(human.transform.position, AttachPoint.position) <
            maxUseRange;
+  }
+  public ZNetView? m_nview
+  {
+    get;
+    set;
   }
 }

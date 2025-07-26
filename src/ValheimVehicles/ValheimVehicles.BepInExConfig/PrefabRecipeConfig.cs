@@ -88,18 +88,13 @@ public class PrefabRecipeConfig : BepInExBaseConfig<PrefabRecipeConfig>
         {
           Amount = 4,
           Item = "Bronze",
-          Recover = true
+          Recover = true,
+          AmountPerLevel = 1
         },
         new RequirementConfig
         {
           Amount = 1,
           Item = "Chain",
-          Recover = true
-        },
-        new RequirementConfig
-        {
-          Amount = 2,
-          Item = "Iron",
           Recover = true
         }
       ]
