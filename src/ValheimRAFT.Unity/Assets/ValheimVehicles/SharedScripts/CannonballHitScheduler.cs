@@ -120,16 +120,10 @@ namespace ValheimVehicles.SharedScripts
         shieldGenerator.m_shieldHitEffects.Create(cannonballPosition, Quaternion.LookRotation(shieldGenerator.transform.position.DirTo(cannonballPosition)));
         shieldGenerator.UpdateShield();
 
-        if (cannonball.cannonballVariant == CannonballVariant.Explosive)
-        {
-          cannonball.TryStartExplosion(force);
-        }
-        else
-        {
-          cannonball.StartImpactEffectAudio(force, true);
-        }
+        // only impact effects regardless if the shell is an explosive.
+        cannonball.StartImpactEffectAudio(force, true);
       }
-      yield return new WaitForFixedUpdate();
+      yield return new WaitForSeconds(0.1f);
     }
 
     private static void CommitDamage(DamageInfo damageInfo)

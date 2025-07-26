@@ -625,13 +625,8 @@ namespace ValheimVehicles.SharedScripts
               CannonballHitScheduler.AddDamageToQueue(other.collider, hitPoint, direction, nextVelocity, relativeVelocityMagnitude, false);
             }
           }
-          // clamp velocity but allow physics for downwards velocity.
-          // var velocity = m_body.velocity;
-          // nextVelocity.y = velocity.y;
-          // nextVelocity.x = Mathf.Clamp(velocity.x * 0.05f, -1f, 1f);
-          // nextVelocity.z = Mathf.Clamp(m_body.velocity.z * 0.05f, -1f, 1f);
+
           m_body.velocity = Vector3.zero;
-          // bail and prevent hits.
           IsInFlight = false;
           _canHit = false;
           return;
@@ -731,7 +726,7 @@ namespace ValheimVehicles.SharedScripts
         shieldGenerator.SetFuel(shieldGenerator.GetFuel() - num);
       }
 
-
+      cannonball._canHit = false;
       CannonballHitScheduler.AddShieldUpdate(cannonball, cannonballPosition, cannonballForce, shieldGenerator);
     }
 
