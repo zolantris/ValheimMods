@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using ValheimVehicles.BepInExConfig;
 using ValheimVehicles.Helpers;
 using ValheimVehicles.Interfaces;
 using ValheimVehicles.Prefabs.Registry;
@@ -52,6 +53,11 @@ public class CannonControllerBridge : CannonController, Hoverable, Interactable,
   {
     base.Start();
     ammoController = GetComponent<AmmoController>();
+
+    this.WaitForZNetView(() =>
+    {
+      prefabConfigSync.Load();
+    });
   }
 
   protected internal override sealed void OnEnable()
@@ -75,12 +81,14 @@ public class CannonControllerBridge : CannonController, Hoverable, Interactable,
   {
     prefabConfigSync.Load();
     var nextVariant = AmmoVariant == CannonballVariant.Explosive ? CannonballVariant.Solid : CannonballVariant.Explosive;
-    AmmoVariant = nextVariant;
 
     if (this.IsNetViewValid())
     {
       LoggerProvider.LogDebug($"Update PrefabConfig AmmoVariant {AmmoVariant} prefabConfigSync.Config {prefabConfigSync.Config.AmmoVariant} persistentConfig {PersistentConfig.AmmoVariant}");
-      prefabConfigSync.Request_CommitConfigChange();
+      var newConfig = new CannonPersistentConfig();
+      newConfig.ApplyFrom(prefabConfigSync.Config);
+      newConfig.AmmoVariant = nextVariant;
+      prefabConfigSync.Request_CommitConfigChange(newConfig);
     }
   }
 

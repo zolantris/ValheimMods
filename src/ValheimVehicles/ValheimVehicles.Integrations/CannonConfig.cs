@@ -32,8 +32,15 @@ namespace ValheimVehicles.SharedScripts
 
     public void Serialize(ZPackage pkg)
     {
+      if (pkg == null)
+      {
+        LoggerProvider.LogError("No package provided");
+        return;
+      }
       pkg.Write((int)CannonFiringMode);
       pkg.Write((int)AmmoVariant);
+
+      pkg.SetPos(0);
     }
 
     public CannonPersistentConfig Deserialize(ZPackage pkg)

@@ -4,7 +4,7 @@ namespace ValheimVehicles.Interfaces;
 public interface IPrefabCustomConfigRPCSync<T> : IPrefabConfig<T>, INetView, ISuppressableConfigReceiver, IPrefabSyncRPCSubscribeActions
 {
   // SyncPrefabConfig is called after the SetPrefabConfig RPC is called.
-  internal void RPC_Load(long sender);
+  internal void RPC_Load(long sender, ZPackage pkg);
 
 
   void CommitConfigChange(T newConfig);
