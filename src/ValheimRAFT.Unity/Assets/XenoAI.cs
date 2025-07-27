@@ -1,6 +1,8 @@
 #region
 // ReSharper disable ArrangeNamespaceBody
 // ReSharper disable NamespaceStyle
+using System;
+using System.Collections;
 using System.Collections.Generic;
 using JetBrains.Annotations;
 using Unity.VisualScripting;
@@ -14,7 +16,7 @@ namespace ValheimVehicles.SharedScripts
     public class XenoDroneAI : MonoBehaviour
     {
 
-        public enum XenoAIState { Idle, Hunt, Attack, Flee, Dead }
+        public enum XenoAIState { Idle, Hunt, Attack, Flee, Dead, Sleeping }
 
         public static readonly HashSet<XenoDroneAI> Instances = new();
         [Header("Movement Tuning")]
@@ -56,23 +58,34 @@ namespace ValheimVehicles.SharedScripts
         public float health;
         public float maxHealth = 100f;
         public int packId; // Assign this per-Xeno, maybe via spawn system or prefab
+        public bool hasCamouflage;
 
         public Vector3 maxRunRange = new Vector3(20f, 0f, 20f); // Editable in Inspector, e.g., limits to a 20x20 area
         public XenoAIState CurrentState = XenoAIState.Idle;
 
         [CanBeNull] public XenoDroneAI cachedPrimaryTargetXeno;
 
+        [Header("Textures")] 
+        public Material TransparentMaterial;
+        private readonly HashSet<Collider> activeColliders = new();
+
         private readonly HashSet<Collider> allColliders = new();
 
         private readonly float walkThreshold = 1.0f; // speed to trigger run (above this = run)
         private Animator _animator;
+        private bool _lastCamouflageState;
         private Rigidbody _rb;
 
         public HashSet<(HashSet<Transform>,Transform)> allLists = new HashSet<(HashSet<Transform>,Transform)>();
+        private Material BodyMaterial;
 
         public AnimatorStateInfo CurrentAnimation;
+        private Material HeadMaterial;
+
         public HashSet<Transform> leftArmJoints = new HashSet<Transform>();
         public HashSet<Transform> leftLeftJoints = new HashSet<Transform>();
+
+        private SkinnedMeshRenderer modelSkinRenderer;
 
         private float moveLerpVel;
         public HashSet<Transform> rightArmJoints = new HashSet<Transform>();
@@ -92,7 +105,7 @@ namespace ValheimVehicles.SharedScripts
             health = maxHealth;
             // find these easily with Gameobject -> Copy FullTransformPath from root.
             // You may need to adjust these paths to match your actual bone names/hierarchy
-            xenoAnimatorRoot = transform.Find("Xenomorph Default");
+            xenoAnimatorRoot = transform.Find("xenomorph");
             xenoRoot = xenoAnimatorRoot.Find("alien_xenos_drone_SK_Xenos_Drone_skeleton/XenosBiped_TrajectorySHJnt/XenosBiped_ROOTSHJnt");
             spine01 = xenoRoot.Find("XenosBiped_Spine_01SHJnt");
             spine02 = spine01.Find("XenosBiped_Spine_02SHJnt");
@@ -116,6 +129,17 @@ namespace ValheimVehicles.SharedScripts
 
             var colliders = GetComponentsInChildren<Collider>();
             allColliders.AddRange(colliders);
+            activeColliders.AddRange(colliders);
+
+            modelSkinRenderer = GetComponentInChildren<SkinnedMeshRenderer>();
+            var materials = modelSkinRenderer.materials;
+            if (materials.Length == 2)
+            {
+                BodyMaterial = materials[0];
+                HeadMaterial = materials[1];
+            }
+            
+            
 
             CollectAllBodyJoints();
             AddCapsuleCollidersToAllJoints();
@@ -143,6 +167,7 @@ namespace ValheimVehicles.SharedScripts
 
         public void FixedUpdate()
         {
+            if (IsDead()) return;
             canPlayEffectOnFrame = !BloodEffects.isPlaying;
             UpdateTargetData();
             UpdateBehavior();
@@ -151,6 +176,7 @@ namespace ValheimVehicles.SharedScripts
 
         void LateUpdate()
         {
+            if (IsDead()) return;
             if (isHiding)
             {
                 // Crouch the spine forward
@@ -186,7 +212,9 @@ namespace ValheimVehicles.SharedScripts
 
         public void OnCollisionEnter(Collision other)
         {
+            if (IsDead()) return;
             if (!canPlayEffectOnFrame) return;
+            // todo only damage when hit with collider while the collider is being used to attack.
             if (other.collider.gameObject.layer == LayerHelpers.HitboxLayer && other.contacts.Length > 0)
             {
                 BloodEffects.transform.position = other.GetContact(0).point;
@@ -194,6 +222,10 @@ namespace ValheimVehicles.SharedScripts
                 canPlayEffectOnFrame = false;
                 var randomHit = Random.Range(2f, 10f);
                 health = Mathf.Max(health - randomHit, 0f);
+                if (health <= 0.1f)
+                {
+                    SetDead();
+                }
             }
         }
 
@@ -431,14 +463,26 @@ namespace ValheimVehicles.SharedScripts
             }
         }
 
+        public bool IsSleeping() => CurrentState == XenoAIState.Sleeping;
+
         public void SetDead()
         {
             CancelInvoke(nameof(RegenerateHealthOverTime));
             
-            CurrentState = XenoAIState.Dead;
+            // stop other animations etc
             Stop_Attack();
+            _animator.SetBool(XenoBooleans.Movement, false);
             
-            _animator.SetBool(XenoBooleans.Die, true);
+            // have to swap to kinematic due to colliders causing the xeno to rotate
+            _rb.isKinematic = true;
+            
+            CurrentState = XenoAIState.Dead;
+            _animator.SetTrigger(XenoTriggers.Die);
+            
+            StartCoroutine(WaitForAnimationToEnd("die", () =>
+            {
+                _rb.isKinematic = true;
+            }));
         }
 
         public bool IsDead()
@@ -461,10 +505,86 @@ namespace ValheimVehicles.SharedScripts
             }
         }
 
+        public void SetSleeping()
+        {
+            foreach (var activeCollider in activeColliders)
+            {
+                activeCollider.enabled = false;
+            }
+            
+            CurrentState = XenoAIState.Sleeping;
+            _animator.SetTrigger(XenoTriggers.Sleep);
+            
+            StartCoroutine(WaitForAnimationToEnd("sleep", () =>
+            {
+                _rb.isKinematic = true;
+                ActivateCamouflage();
+            }));
+        }
+
+        public void StopSleeping()
+        {
+            _rb.isKinematic = false;
+            foreach (var activeCollider in activeColliders)
+            {
+                activeCollider.enabled = false;
+            }
+            
+            StartCoroutine(WaitForAnimationToEnd("awake", () =>
+            {
+                _rb.isKinematic = true;
+                DeactivateCamouflage();
+            }));
+        }
+
+        public IEnumerator WaitForAnimationToEnd(string stateName, Action onComplete)
+        {
+            var animatorState = _animator.GetCurrentAnimatorStateInfo(0);
+            // Wait for the animation to start
+            while (!animatorState.IsName(stateName))
+            {
+                yield return null;
+                animatorState = _animator.GetCurrentAnimatorStateInfo(0);
+            }
+            // Wait for the animation to finish
+            while (_animator.GetCurrentAnimatorStateInfo(0).normalizedTime < 1f)
+            {
+                yield return null;
+            }
+            onComplete?.Invoke();
+        }
+
+        public void ActivateCamouflage()
+        {
+            if (!hasCamouflage) return;
+            if (!modelSkinRenderer || modelSkinRenderer.materials == null || modelSkinRenderer.materials.Length != 2) return;
+            _lastCamouflageState = true;
+            Material[] materials = { TransparentMaterial, TransparentMaterial };
+            modelSkinRenderer.materials = materials;
+        }
+
+        public void DeactivateCamouflage()
+        {
+          if (!_lastCamouflageState) return;
+          if (!modelSkinRenderer || modelSkinRenderer.materials == null || modelSkinRenderer.materials.Length != 2) return;
+          Material[] materials = { BodyMaterial, HeadMaterial };
+          modelSkinRenderer.materials = materials;
+        }
+
         public void UpdateBehavior()
         {
             UpdatePrimaryTarget();
-            
+
+            if (PrimaryTarget == null || !PrimaryTarget.gameObject.activeInHierarchy)
+            {
+                SetSleeping();
+                return;
+            }
+            if (IsSleeping())
+            {
+                StopSleeping();
+            }
+
             if (CurrentState == XenoAIState.Dead) return;
             if (health <= 0.1f)
             {
@@ -664,6 +784,13 @@ namespace ValheimVehicles.SharedScripts
             public static readonly int AttackMode = Animator.StringToHash("attackMode");
         }
 
+        public static class XenoTriggers
+        {
+            public static readonly int Die = Animator.StringToHash("die"); // should only be run once
+            public static readonly int Awake = Animator.StringToHash("awake"); // should only be run once
+            public static readonly int Sleep = Animator.StringToHash("sleep"); // should only be run once
+        }
+
         public static class XenoBooleans
         {
             public static readonly int AttackArms = Animator.StringToHash("attack_arms");
@@ -671,8 +798,7 @@ namespace ValheimVehicles.SharedScripts
             public static readonly int Walk = Animator.StringToHash("walk");
             public static readonly int Run = Animator.StringToHash("run");
             public static readonly int Idle = Animator.StringToHash("idle");
-            public static readonly int Die = Animator.StringToHash("die"); // should only be run once
-            public static readonly int Movement = Animator.StringToHash("die"); // should only be run once
+            public static readonly int Movement = Animator.StringToHash("movement"); // should only be run once
         }
 
         #region Xeno Transforms
