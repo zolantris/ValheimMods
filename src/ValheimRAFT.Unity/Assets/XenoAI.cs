@@ -2,6 +2,7 @@
 // ReSharper disable ArrangeNamespaceBody
 // ReSharper disable NamespaceStyle
 using System.Collections.Generic;
+using JetBrains.Annotations;
 using Unity.VisualScripting;
 using UnityEngine;
 using Random = UnityEngine.Random;
@@ -13,7 +14,9 @@ namespace ValheimVehicles.SharedScripts
     public class XenoDroneAI : MonoBehaviour
     {
 
-        public static readonly HashSet<XenoDroneAI> AllXenos = new();
+        public enum XenoAIState { Idle, Hunt, Attack, Flee, Dead }
+
+        public static readonly HashSet<XenoDroneAI> Instances = new();
         [Header("Movement Tuning")]
         public float moveSpeed = 1f;                // Normal approach speed
         public float closeMoveSpeed = 0.3f;         // Slower speed near target
@@ -26,6 +29,7 @@ namespace ValheimVehicles.SharedScripts
         public float closeTurnSpeed = 540f;
 
         [Header("Targeting Controls")]
+        public bool hasRandomTarget;
         public float cachedDeltaPrimaryTarget = -1;
         public Transform PrimaryTarget;
         [Header("Assign the tail root joint (e.g. XenosBiped_TailRoot_SHJnt)")]
@@ -50,9 +54,13 @@ namespace ValheimVehicles.SharedScripts
 
         [Header("Character Attributes")]
         public float health;
-        public float maxHeight = 100f;
+        public float maxHealth = 100f;
+        public int packId; // Assign this per-Xeno, maybe via spawn system or prefab
 
         public Vector3 maxRunRange = new Vector3(20f, 0f, 20f); // Editable in Inspector, e.g., limits to a 20x20 area
+        public XenoAIState CurrentState = XenoAIState.Idle;
+
+        [CanBeNull] public XenoDroneAI cachedPrimaryTargetXeno;
 
         private readonly HashSet<Collider> allColliders = new();
 
@@ -81,7 +89,7 @@ namespace ValheimVehicles.SharedScripts
 
         void Awake()
         {
-            health = maxHeight;
+            health = maxHealth;
             // find these easily with Gameobject -> Copy FullTransformPath from root.
             // You may need to adjust these paths to match your actual bone names/hierarchy
             xenoAnimatorRoot = transform.Find("Xenomorph Default");
@@ -112,6 +120,20 @@ namespace ValheimVehicles.SharedScripts
             CollectAllBodyJoints();
             AddCapsuleCollidersToAllJoints();
             IgnoreAllColliders();
+            
+            // mainly for debugging but this will be useful as a coroutine later.
+            InvokeRepeating(nameof(RegenerateHealthOverTime), 5f, 5f);
+
+            if (hasRandomTarget)
+            {
+                PrimaryTarget = null;
+            }
+
+            if (PrimaryTarget)
+            { 
+                cachedPrimaryTargetXeno = PrimaryTarget.GetComponent<XenoDroneAI>();
+            }
+            
         }
 
         void Update()
@@ -152,13 +174,13 @@ namespace ValheimVehicles.SharedScripts
 
         void OnEnable()
         {
-            AllXenos.Add(this);
+            Instances.Add(this);
             EnemyRegistry.ActiveEnemies.Add(gameObject);
         }
 
         void OnDisable()
         {
-            AllXenos.Remove(this);
+            Instances.Remove(this);
             EnemyRegistry.ActiveEnemies.Remove(gameObject);
         }
 
@@ -173,24 +195,6 @@ namespace ValheimVehicles.SharedScripts
                 var randomHit = Random.Range(2f, 10f);
                 health = Mathf.Max(health - randomHit, 0f);
             }
-        }
-
-        private XenoDroneAI FindNearestFriendly()
-        {
-            XenoDroneAI best = null;
-            float bestDist = float.MaxValue;
-            foreach (var xeno in AllXenos)
-            {
-                if (xeno == this) continue;
-                // Optionally: if (xeno.team != this.team) continue;
-                float dist = Vector3.Distance(transform.position, xeno.transform.position);
-                if (dist < bestDist)
-                {
-                    best = xeno;
-                    bestDist = dist;
-                }
-            }
-            return best;
         }
 
         public void UpdateCurrentAnimationState()
@@ -287,72 +291,196 @@ namespace ValheimVehicles.SharedScripts
             return false;
         }
 
-        public void MoveToAllyWhileAvoidingEnemies()
+        public XenoDroneAI GetClosestTargetDifferentPack()
         {
-            XenoDroneAI friend = FindNearestFriendly();
-            if (friend == null) return; // fallback
+            XenoDroneAI closest = null;
+            float closestDist = float.MaxValue;
 
-            // Sample directions toward friend within a radius, but away from enemies and not off the map
-            Vector3 toAlly = (friend.transform.position - transform.position).normalized;
+            foreach (var xeno in Instances)
+            {
+                if (xeno == this) continue;
+                if (xeno.health <= 0.1f) continue; // must be alive
+                if (xeno.packId == packId) continue; // skip same pack
 
-            // Check ground below, avoid direct path if enemies are too close
-            Vector3 candidatePos = transform.position + toAlly * 4f; // 4m in that direction
-            bool safe = IsGroundBelow(candidatePos, 1.5f);
+                float dist = Vector3.Distance(transform.position, xeno.transform.position);
+                if (dist < closestDist)
+                {
+                    closestDist = dist;
+                    closest = xeno;
+                }
+            }
+            return closest;
+        }
 
-            // Also, check for hostiles within "danger" radius (e.g., 4m) of that candidate point
-            bool enemyNearby = false;
+        public bool IsFleeing() => CurrentState == XenoAIState.Flee;
+
+        public XenoDroneAI FindNearestAlly()
+        {
+            XenoDroneAI closest = null;
+            float closestDist = float.MaxValue;
+
+            foreach (var xeno in Instances)
+            {
+                if (xeno == this) continue;
+                if (xeno.health <= 0.1f) continue;
+                if (xeno.IsFleeing()) continue;
+                if (xeno.packId != packId) continue; // ONLY same pack
+
+                float dist = Vector3.Distance(transform.position, xeno.transform.position);
+                if (dist < closestDist)
+                {
+                    closestDist = dist;
+                    closest = xeno;
+                }
+            }
+            return closest;
+        }
+
+        public void FleeTowardSafeAllyOrRunAway()
+        {
+            // Try to find a nearby friendly not targeting us
+            var friendly = FindNearestAlly();
+
+            // Gather enemy positions (from registry)
+            List<Vector3> hostilePositions = new();
             foreach (var enemyGO in EnemyRegistry.ActiveEnemies)
             {
                 if (enemyGO == gameObject) continue;
-                float edist = Vector3.Distance(candidatePos, enemyGO.transform.position);
-                if (edist < 4f) // or whatever is "too close"
+                if (enemyGO == null) continue;
+                hostilePositions.Add(enemyGO.transform.position);
+            }
+
+            // Direction logic
+            Vector3 bestDir = Vector3.zero;
+            float bestScore = float.MinValue;
+
+            // Sample directions around the player
+            int directionSamples = 12;
+            for (int i = 0; i < directionSamples; i++)
+            {
+                float angle = (360f / directionSamples) * i;
+                Vector3 dir = Quaternion.Euler(0, angle, 0) * Vector3.forward;
+
+                // If we have a safe ally, bias toward them
+                float allyBias = 0f;
+                if (friendly != null)
                 {
-                    enemyNearby = true;
-                    break;
+                    Vector3 toAlly = (friendly.transform.position - transform.position).normalized;
+                    allyBias = Vector3.Dot(dir, toAlly) * 8f; // The higher, the more it prefers ally direction
+                }
+
+                // Sum distances from hostiles (the further from all, the better)
+                Vector3 candidatePos = transform.position + dir * 5f;
+                float enemyPenalty = 0f;
+                foreach (var hostile in hostilePositions)
+                {
+                    float dist = Vector3.Distance(candidatePos, hostile);
+                    enemyPenalty -= 1f / Mathf.Max(dist, 0.1f); // The closer an enemy, the bigger the penalty
+                }
+
+                // Is ground below?
+                bool safe = IsGroundBelow(candidatePos, 1.5f);
+                if (!safe)
+                    continue;
+
+                float score = allyBias + enemyPenalty;
+                if (score > bestScore)
+                {
+                    bestScore = score;
+                    bestDir = dir;
                 }
             }
 
-            // Only move if it's a safe, non-dangerous spot
-            if (safe && !enemyNearby)
+            // If no valid direction (cornered!), fallback to run away from enemies only
+            if (bestDir == Vector3.zero)
             {
-                Vector3 runDir = (candidatePos - transform.position).normalized;
-
-                float speed = moveSpeed * 1.25f;
-                float accel = AccelerationForceSpeed * 1.1f;
-                moveLerpVel = Mathf.MoveTowards(moveLerpVel, speed, accel * Time.deltaTime);
-                _rb.AddForce(runDir * moveLerpVel, ForceMode.Acceleration);
-
-                // Rotate to face direction
-                Quaternion targetRot = Quaternion.LookRotation(runDir, Vector3.up);
-                float turn = turnSpeed * Mathf.Deg2Rad * Time.deltaTime;
-                transform.rotation = Quaternion.Slerp(transform.rotation, targetRot, Mathf.Clamp01(turn));
-            }
-            else
-            {
-                // If unsafe, fallback to "move away from enemies"
                 MoveAwayFromEnemies();
+                return;
             }
 
-            // Optionally: If already close to ally (e.g., within 2m), slow down/stay close
-            if (friend != null && Vector3.Distance(transform.position, friend.transform.position) < 2f)
-            {
-                moveLerpVel = Mathf.MoveTowards(moveLerpVel, 0f, AccelerationForceSpeed * Time.deltaTime);
-            }
+            // Move and rotate as before
+            float speed = moveSpeed * 1.25f;
+            float accel = AccelerationForceSpeed * 1.1f;
+            moveLerpVel = Mathf.MoveTowards(moveLerpVel, speed, accel * Time.deltaTime);
+            _rb.AddForce(bestDir.normalized * moveLerpVel, ForceMode.Acceleration);
 
-            // Animate
+            Quaternion targetRot = Quaternion.LookRotation(bestDir, Vector3.up);
+            float turn = turnSpeed * Mathf.Deg2Rad * Time.deltaTime;
+            transform.rotation = Quaternion.Slerp(transform.rotation, targetRot, Mathf.Clamp01(turn));
+
             float normalized = Mathf.InverseLerp(0f, 8f, _rb.velocity.magnitude);
             _animator.SetFloat(XenoParams.MoveSpeed, normalized);
         }
 
+        public void Flee()
+        {
+            CurrentState = XenoAIState.Flee;
+        }
+
+        public void StopFleeing()
+        {
+            CurrentState = XenoAIState.Idle; // Or Hunt/Attack as needed
+        }
+
+
+        public void RegenerateHealthOverTime()
+        {
+            if (health < maxHealth)
+            {
+                health = Mathf.Min(health + 5f, maxHealth);
+            }
+        }
+
+        public void SetDead()
+        {
+            CancelInvoke(nameof(RegenerateHealthOverTime));
+            
+            CurrentState = XenoAIState.Dead;
+            Stop_Attack();
+            
+            _animator.SetBool(XenoBooleans.Die, true);
+        }
+
+        public bool IsDead()
+        {
+            return CurrentState == XenoAIState.Dead;
+        }
+
+        public void UpdatePrimaryTarget()
+        {
+            if (cachedPrimaryTargetXeno && cachedPrimaryTargetXeno.IsDead())
+            {
+                PrimaryTarget = null;
+                cachedPrimaryTargetXeno = null;
+            }
+            var target = GetClosestTargetDifferentPack();
+            if (target)
+            {
+                PrimaryTarget = target.transform;
+                cachedPrimaryTargetXeno = target;
+            }
+        }
+
         public void UpdateBehavior()
         {
+            UpdatePrimaryTarget();
+            
+            if (CurrentState == XenoAIState.Dead) return;
+            if (health <= 0.1f)
+            {
+                SetDead();
+                return;
+            }
+            
             if (health < 30f)
             {
-                // MoveAwayFromEnemies();
-                MoveToAllyWhileAvoidingEnemies();
+                Flee();
+                FleeTowardSafeAllyOrRunAway();
                 Stop_Attack();
                 return;
             }
+            
+            StopFleeing();
             
             if (PrimaryTarget)
             {
