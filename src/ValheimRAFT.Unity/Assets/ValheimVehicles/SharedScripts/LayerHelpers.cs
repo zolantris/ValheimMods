@@ -1,9 +1,9 @@
 #region
 
-  using System;
-  using System.Collections.Generic;
-  using JetBrains.Annotations;
-  using UnityEngine;
+using System;
+using System.Collections.Generic;
+using JetBrains.Annotations;
+using UnityEngine;
 
 #endregion
 
@@ -24,6 +24,7 @@
       public static int DefaultLayer = LayerMask.NameToLayer("Default");
       public static int DefaultSmallLayer = LayerMask.NameToLayer("Default_small");
       public static int ItemLayer = LayerMask.NameToLayer("item"); // should be 12
+      public static int HitboxLayer = LayerMask.NameToLayer("hitbox"); // should be 12
 
       public static LayerMask CustomRaftLayerMask =
         LayerMask.GetMask(LayerMask.LayerToName(CustomRaftLayer));
