@@ -19,6 +19,8 @@ namespace ValheimVehicles.SharedScripts
         public enum XenoAIState { Idle, Hunt, Attack, Flee, Dead, Sleeping }
 
         public static readonly HashSet<XenoDroneAI> Instances = new();
+
+        public static Quaternion SleepNeckZRotation = Quaternion.Euler(0, 0, 80f);
         [Header("Movement Tuning")]
         public float moveSpeed = 1f;                // Normal approach speed
         public float closeMoveSpeed = 0.3f;         // Slower speed near target
@@ -67,9 +69,24 @@ namespace ValheimVehicles.SharedScripts
 
         [Header("Textures")] 
         public Material TransparentMaterial;
-        private readonly HashSet<Collider> activeColliders = new();
+
+        public Collider HeadCollider;
+        public Transform HeadColliderTransform;
+
+        public float sleepMoveUpdateTilt;
+        public float lastSleepMoveUpdate;
+
+
+        [Header("AnimationTimers")]
+        [SerializeField] public float timeUntilSleep = 5f;
+        [SerializeField] public float timeUntilWake = 50f;
+
+        public Quaternion SleepLeftArmRotation = Quaternion.Euler(36.1819992f,323.176208f,251.765549f);
+
+        public bool canSleepAnimate;
 
         private readonly HashSet<Collider> allColliders = new();
+        private readonly HashSet<Collider> attackColliders = new();
 
         private readonly float walkThreshold = 1.0f; // speed to trigger run (above this = run)
         private Animator _animator;
@@ -88,6 +105,9 @@ namespace ValheimVehicles.SharedScripts
         private SkinnedMeshRenderer modelSkinRenderer;
 
         private float moveLerpVel;
+
+        private float nextSleepUpdate;
+        [CanBeNull] Rigidbody PrimaryTargetRB;
         public HashSet<Transform> rightArmJoints = new HashSet<Transform>();
         public HashSet<Transform> rightLegJoints = new HashSet<Transform>();
         private float runStart = 0.75f;     // start blending to run at this speed
@@ -96,7 +116,6 @@ namespace ValheimVehicles.SharedScripts
         public HashSet<Transform> tailJoints = new HashSet<Transform>();
 
         private float velocity;
-
         // getters
         public float DeltaPrimaryTarget => cachedDeltaPrimaryTarget;
 
@@ -110,6 +129,9 @@ namespace ValheimVehicles.SharedScripts
             spine01 = xenoRoot.Find("XenosBiped_Spine_01SHJnt");
             spine02 = spine01.Find("XenosBiped_Spine_02SHJnt");
             spine03 = spine02.Find("XenosBiped_Spine_03SHJnt");
+            spineTop = spine03.Find("XenosBiped_Spine_TopSHJnt");
+            neckUpDown = spineTop.Find("XenosBiped_Neck_01SHJnt");
+            neckPivot = neckUpDown.Find("XenosBiped_Neck_TopSHJnt");
             
             leftHip = xenoRoot.Find("XenosBiped_l_Leg_HipSHJnt");
             rightHip = xenoRoot.Find("XenosBiped_r_Leg_HipSHJnt");
@@ -128,8 +150,21 @@ namespace ValheimVehicles.SharedScripts
             allLists = new HashSet<(HashSet<Transform>, Transform)> { (rightArmJoints, rightArm), (leftArmJoints, leftArm), (leftLeftJoints, leftHip), (rightLegJoints, rightHip), (tailJoints, tailRoot) };
 
             var colliders = GetComponentsInChildren<Collider>();
+
+            const string headColliderName = "head_collider";
+            foreach (var col in colliders)
+            {
+                if (col.name == headColliderName)
+                {
+                    HeadCollider = col;
+                    HeadColliderTransform = col.transform;
+                }
+            }
+
+            if (!HeadColliderTransform) throw new Exception("No HeadColliderTransform");
+            
             allColliders.AddRange(colliders);
-            activeColliders.AddRange(colliders);
+            attackColliders.AddRange(colliders);
 
             modelSkinRenderer = GetComponentInChildren<SkinnedMeshRenderer>();
             var materials = modelSkinRenderer.materials;
@@ -141,9 +176,9 @@ namespace ValheimVehicles.SharedScripts
             
             
 
-            CollectAllBodyJoints();
-            AddCapsuleCollidersToAllJoints();
-            IgnoreAllColliders();
+            // CollectAllBodyJoints();
+            // AddCapsuleCollidersToAllJoints();
+            // IgnoreAllColliders();
             
             // mainly for debugging but this will be useful as a coroutine later.
             InvokeRepeating(nameof(RegenerateHealthOverTime), 5f, 5f);
@@ -157,7 +192,8 @@ namespace ValheimVehicles.SharedScripts
             { 
                 cachedPrimaryTargetXeno = PrimaryTarget.GetComponent<XenoDroneAI>();
             }
-            
+
+            InitCoroutineHandles();
         }
 
         void Update()
@@ -167,16 +203,31 @@ namespace ValheimVehicles.SharedScripts
 
         public void FixedUpdate()
         {
+            var rot = _rb.rotation.eulerAngles;
+            rot.x = 0f;
+            rot.z = 0f;
+            _rb.rotation = Quaternion.Euler(rot);
+            
             if (IsDead()) return;
             canPlayEffectOnFrame = !BloodEffects.isPlaying;
             UpdateTargetData();
             UpdateBehavior();
         }
 
-
         void LateUpdate()
         {
-            if (IsDead()) return;
+                // neckUpDown.localRotation = Quaternion.identity;
+                // spineTop.localRotation = Quaternion.identity;
+                // neckPivot.localRotation = Quaternion.identity;
+            if (IsAsleep())
+            {
+                SleepingCustomAnimations();
+            }
+            else
+            {
+                PointHeadTowardTarget();
+            }
+            
             if (isHiding)
             {
                 // Crouch the spine forward
@@ -202,6 +253,7 @@ namespace ValheimVehicles.SharedScripts
         {
             Instances.Add(this);
             EnemyRegistry.ActiveEnemies.Add(gameObject);
+            InitCoroutineHandles();
         }
 
         void OnDisable()
@@ -210,23 +262,140 @@ namespace ValheimVehicles.SharedScripts
             EnemyRegistry.ActiveEnemies.Remove(gameObject);
         }
 
-        public void OnCollisionEnter(Collision other)
+        // public void OnCollisionEnter(Collision other)
+        // {
+        //     if (IsDead()) return;
+        //     if (!canPlayEffectOnFrame) return;
+        //     if (other.body == _rb || other.transform.root == transform.root)
+        //     {
+        //         foreach (var otherContact in other.contacts)
+        //         {
+        //             Physics.IgnoreCollision(otherContact.otherCollider, otherContact.thisCollider, true);
+        //         }
+        //         return;
+        //     }
+        //     var layer =  other.gameObject.layer;
+        //     if (layer != LayerHelpers.HitboxLayer) return;
+        //     
+        //     // var contactsHasHitbox = other.contacts.Any(x => x.otherCollider.gameObject.layer == LayerHelpers.HitboxLayer || x.thisCollider.gameObject.layer == LayerHelpers.HitboxLayer);
+        //     if (layer == LayerHelpers.HitboxLayer)
+        //     {
+        //         LoggerProvider.LogDebugDebounced("Hit layer");
+        //     }
+        // }
+
+        public void OnTriggerEnter(Collider other)
         {
             if (IsDead()) return;
             if (!canPlayEffectOnFrame) return;
-            // todo only damage when hit with collider while the collider is being used to attack.
-            if (other.collider.gameObject.layer == LayerHelpers.HitboxLayer && other.contacts.Length > 0)
+            if (other.transform.root == transform.root)
             {
-                BloodEffects.transform.position = other.GetContact(0).point;
-                BloodEffects.Play();
-                canPlayEffectOnFrame = false;
-                var randomHit = Random.Range(2f, 10f);
-                health = Mathf.Max(health - randomHit, 0f);
-                if (health <= 0.1f)
-                {
-                    SetDead();
-                }
+                LoggerProvider.LogDebugDebounced($"Hit self {other.transform}");
+                return;
             }
+            var layer =  other.gameObject.layer;
+            if (layer != LayerHelpers.HitboxLayer) return;
+            
+            // var contactsHasHitbox = other.contacts.Any(x => x.otherCollider.gameObject.layer == LayerHelpers.HitboxLayer || x.thisCollider.gameObject.layer == LayerHelpers.HitboxLayer);
+            if (layer == LayerHelpers.HitboxLayer)
+            {
+                LoggerProvider.LogDebugDebounced("Hit layer");
+            }
+            
+            ApplyDamage(other);
+        }
+
+        public void PointHeadTowardTarget()
+        {
+            if (!PrimaryTarget) return;
+            Vector3 toTarget = PrimaryTarget.position - neckPivot.position;
+            toTarget.y = 0; // Flatten for Y-only tracking
+
+            Vector3 localDir = transform.InverseTransformDirection(toTarget.normalized);
+
+            // Calculate desired yaw (Y) and roll (Z)
+            float yaw = Mathf.Atan2(localDir.x, localDir.z) * Mathf.Rad2Deg;
+            yaw = Mathf.Clamp(yaw, -40f, 40f);
+
+            float roll = Mathf.Lerp(40f, 90f, Mathf.Abs(yaw / 40f));
+            roll = Mathf.Clamp(roll, 40f, 90f);
+
+            Vector3 currentEuler = neckPivot.localEulerAngles;
+
+            // Normalize
+            if (currentEuler.y > 180f) currentEuler.y -= 360f;
+            if (currentEuler.z > 180f) currentEuler.z -= 360f;
+
+            // Smoothly rotate toward look direction
+            currentEuler.y = Mathf.MoveTowards(currentEuler.y, yaw, Time.deltaTime * 120f);
+            currentEuler.z = Mathf.MoveTowards(currentEuler.z, roll, Time.deltaTime * 60f);
+
+            neckPivot.localEulerAngles = currentEuler;
+        }
+
+        /// <summary>
+/// Animations like rotating head or moving arms to better spot
+/// </summary>
+        public void SleepingCustomAnimations()
+        {
+            if (!canSleepAnimate) return;
+            if (lastSleepMoveUpdate < Time.time)
+            {
+                var wasPositive = sleepMoveUpdateTilt > 0;
+                var baseChange = wasPositive ? -2f : 2f;
+                sleepMoveUpdateTilt = Random.Range(-10f, 10f) + baseChange;
+                lastSleepMoveUpdate = Time.time + 10f; 
+            }
+            
+            rightArm.localRotation = Quaternion.Lerp(rightArm.localRotation, SleepLeftArmRotation, Time.deltaTime * 30f);
+            leftArm.localRotation = Quaternion.Lerp(leftArm.localRotation, SleepLeftArmRotation, Time.deltaTime * 30f);
+
+            Vector3 currentEuler = neckPivot.localEulerAngles;
+
+// Normalize angles to avoid 360 wrap issues
+            if (currentEuler.y > 180f) currentEuler.y -= 360f;
+            if (currentEuler.z > 180f) currentEuler.z -= 360f;
+
+// Smoothly move Y toward tilt
+            currentEuler.y = Mathf.MoveTowards(currentEuler.y, sleepMoveUpdateTilt, Time.deltaTime * 30f);
+
+// Smoothly move Z toward sleep pose (90°)
+            currentEuler.z = Mathf.MoveTowards(currentEuler.z, 90f, Time.deltaTime * 60f);
+
+            neckPivot.localEulerAngles = currentEuler;
+        }
+
+        public void ApplyDamage(Collider other)
+        {
+            // BloodEffects.transform.position = ;
+            BloodEffects.Play();
+            canPlayEffectOnFrame = false;
+            var randomHit = Random.Range(2f, 10f);
+            health = Mathf.Max(health - randomHit, 0f);
+            if (health <= 0.1f)
+            {
+                SetDead();
+            }
+        }
+
+        private XenoMovementParams GetMovementParams(bool isCloseToTarget, bool isFleeing = false)
+        {
+            float speed = isCloseToTarget ? closeMoveSpeed : moveSpeed;
+            float accel = isCloseToTarget ? closeAccelForce : AccelerationForceSpeed;
+            float turn = isCloseToTarget ? closeTurnSpeed : turnSpeed;
+
+            if (isFleeing)
+            {
+                speed *= 1.5f;
+                accel *= 1.25f;
+            }
+
+            return new XenoMovementParams
+            {
+                Speed = speed,
+                Acceleration = accel,
+                TurnSpeed = turn
+            };
         }
 
         public void UpdateCurrentAnimationState()
@@ -236,7 +405,20 @@ namespace ValheimVehicles.SharedScripts
 
         public void UpdateTargetData()
         {
-            cachedDeltaPrimaryTarget = PrimaryTarget == null ? -1 : Vector3.Distance(transform.position, PrimaryTarget.position);
+            if (PrimaryTarget == null)
+            {
+                cachedDeltaPrimaryTarget = -1;
+                return;
+            }
+            
+            if (PrimaryTargetRB)
+            {
+                var closestPoint = PrimaryTargetRB.ClosestPointOnBounds(HeadColliderTransform.transform.position);
+                cachedDeltaPrimaryTarget= Vector3.Distance(HeadColliderTransform.position, closestPoint);
+                return;
+            }
+            
+            cachedDeltaPrimaryTarget = Vector3.Distance(HeadColliderTransform.position, PrimaryTarget.position);
         }
 
         public void MoveAwayFromEnemies()
@@ -294,28 +476,25 @@ namespace ValheimVehicles.SharedScripts
             }
 
             // 5. Actually move in the chosen direction (accelerate)
-            float speed = moveSpeed * 1.5f; // Make running away a bit faster if desired
-            float accel = AccelerationForceSpeed * 1.25f;
-            moveLerpVel = Mathf.MoveTowards(moveLerpVel, speed, accel * Time.deltaTime);
-
+            var movement = GetMovementParams(false, true);
+            moveLerpVel = Mathf.MoveTowards(moveLerpVel, movement.Speed, movement.Acceleration * Time.deltaTime);
             _rb.AddForce(bestDir.normalized * moveLerpVel, ForceMode.Acceleration);
-            _rb.maxLinearVelocity = 5f;
-
+            
             // 6. Rotate to face run direction
             Quaternion targetRot = Quaternion.LookRotation(bestDir, Vector3.up);
-            float runAwayTurn = turnSpeed * Mathf.Deg2Rad * Time.deltaTime;
+            float runAwayTurn = movement.TurnSpeed * Mathf.Deg2Rad * Time.deltaTime;
             transform.rotation = Quaternion.Slerp(transform.rotation, targetRot, Mathf.Clamp01(runAwayTurn));
 
             // 7. Update blend tree
             float normalized = Mathf.InverseLerp(0f, 8f, _rb.velocity.magnitude);
-            _animator.SetFloat(XenoParams.MoveSpeed, normalized);
+            _animator.SetFloat(XenoParams.MoveSpeed, normalized < 0.001f ? -1f : normalized);
         }
 
         private bool IsGroundBelow(Vector3 position, float maxDrop)
         {
             // Check for ground within maxDrop meters below the position
             Ray ray = new Ray(position + Vector3.up * 0.5f, Vector3.down);
-            if (Physics.Raycast(ray, out RaycastHit hit, maxDrop + 0.5f, LayerMask.GetMask("Default", "Ground")))
+            if (Physics.Raycast(ray, out RaycastHit hit, maxDrop + 0.5f, LayerMask.GetMask("Default", "terrain")))
             {
                 // Optional: You can check for slope angle here, or walkable surface tag
                 return true;
@@ -331,7 +510,7 @@ namespace ValheimVehicles.SharedScripts
             foreach (var xeno in Instances)
             {
                 if (xeno == this) continue;
-                if (xeno.health <= 0.1f) continue; // must be alive
+                if (xeno.IsDead()) continue; // must be alive
                 if (xeno.packId == packId) continue; // skip same pack
 
                 float dist = Vector3.Distance(transform.position, xeno.transform.position);
@@ -441,7 +620,7 @@ namespace ValheimVehicles.SharedScripts
             transform.rotation = Quaternion.Slerp(transform.rotation, targetRot, Mathf.Clamp01(turn));
 
             float normalized = Mathf.InverseLerp(0f, 8f, _rb.velocity.magnitude);
-            _animator.SetFloat(XenoParams.MoveSpeed, normalized);
+            _animator.SetFloat(XenoParams.MoveSpeed, normalized < 0.001f ? -1f : normalized);
         }
 
         public void Flee()
@@ -479,10 +658,15 @@ namespace ValheimVehicles.SharedScripts
             CurrentState = XenoAIState.Dead;
             _animator.SetTrigger(XenoTriggers.Die);
             
-            StartCoroutine(WaitForAnimationToEnd("die", () =>
+            StartCoroutine(WaitForAnimationToEnd("die", 0, () =>
             {
                 _rb.isKinematic = true;
             }));
+        }
+
+        public bool IsAsleep()
+        {
+            return CurrentState == XenoAIState.Sleeping;
         }
 
         public bool IsDead()
@@ -501,56 +685,113 @@ namespace ValheimVehicles.SharedScripts
             if (target)
             {
                 PrimaryTarget = target.transform;
+                PrimaryTargetRB = target.GetComponentInChildren<Rigidbody>();
                 cachedPrimaryTargetXeno = target;
+            }
+        }
+
+        public void DisableAttackColliders()
+        {
+            foreach (var activeCollider in attackColliders)
+            {
+                if (!activeCollider) continue;
+                if (activeCollider.gameObject.layer == LayerHelpers.HitboxLayer)
+                {
+                    activeCollider.enabled = false;
+                }
+            }
+        }
+
+        public void EnableAttackColliders()
+        {
+            foreach (var activeCollider in attackColliders)
+            {
+                if (!activeCollider) continue;
+                if (activeCollider.gameObject.layer == LayerHelpers.HitboxLayer)
+                {
+                    activeCollider.enabled = true;
+                }           
             }
         }
 
         public void SetSleeping()
         {
-            foreach (var activeCollider in activeColliders)
-            {
-                activeCollider.enabled = false;
-            }
-            
+            if (nextSleepUpdate > Time.fixedTime) return;
+            if (IsSleeping()) return;
+            canSleepAnimate = false;
             CurrentState = XenoAIState.Sleeping;
+            // _animator.Play("sleep", 0, 1);
             _animator.SetTrigger(XenoTriggers.Sleep);
-            
-            StartCoroutine(WaitForAnimationToEnd("sleep", () =>
+            _animator.SetBool(XenoBooleans.Movement, false);
+
+            // _animator.Play(XenoTriggers.Sleep,0, 1f);
+            Stop_Attack();
+            if (_animationCompletionHandler.IsRunning)
             {
-                _rb.isKinematic = true;
+                _animationCompletionHandler.Stop();
+            }
+            _rb.isKinematic = true;
+            _animationCompletionHandler.Start(WaitForAnimationToEnd("sleep", 2, () =>
+            {
+                // _rb.isKinematic = true;
                 ActivateCamouflage();
+                _animator.enabled = false;
+                _rb.isKinematic = true;
+                canSleepAnimate = true;
             }));
         }
 
         public void StopSleeping()
         {
             _rb.isKinematic = false;
-            foreach (var activeCollider in activeColliders)
+            foreach (var activeCollider in attackColliders)
             {
                 activeCollider.enabled = false;
             }
             
-            StartCoroutine(WaitForAnimationToEnd("awake", () =>
+            if (_animationCompletionHandler.IsRunning)
+            {
+                _animationCompletionHandler.Stop();
+            }
+            _animationCompletionHandler.Start(WaitForAnimationToEnd("awake",2, () =>
             {
                 _rb.isKinematic = true;
                 DeactivateCamouflage();
             }));
         }
 
-        public IEnumerator WaitForAnimationToEnd(string stateName, Action onComplete)
+        public IEnumerator WaitForAnimationToEnd(string stateName,int layerIndex,  Action onComplete)
         {
-            var animatorState = _animator.GetCurrentAnimatorStateInfo(0);
+            var animatorState = _animator.GetCurrentAnimatorStateInfo(layerIndex);
             // Wait for the animation to start
-            while (!animatorState.IsName(stateName))
+            const float maxBailSeconds = 10f;
+            var currentSeconds = 0f;
+            while (!animatorState.IsName(stateName) || currentSeconds > maxBailSeconds)
             {
+                currentSeconds += Time.deltaTime;
                 yield return null;
                 animatorState = _animator.GetCurrentAnimatorStateInfo(0);
             }
-            // Wait for the animation to finish
-            while (_animator.GetCurrentAnimatorStateInfo(0).normalizedTime < 1f)
+
+            if (currentSeconds > maxBailSeconds)
             {
+                LoggerProvider.LogDev($"Error did not find {stateName}"); 
+                yield break;
+            }
+            
+            // Wait for the animation to finish
+            while (_animator.GetCurrentAnimatorStateInfo(0).normalizedTime < 1f || currentSeconds > maxBailSeconds)
+            {
+                currentSeconds += Time.deltaTime;
                 yield return null;
             }
+            
+            if (currentSeconds > maxBailSeconds)
+            {
+                LoggerProvider.LogDev($"Error did not find {stateName}"); 
+                yield break;
+            }
+            
             onComplete?.Invoke();
         }
 
@@ -571,21 +812,50 @@ namespace ValheimVehicles.SharedScripts
           modelSkinRenderer.materials = materials;
         }
 
-        public void UpdateBehavior()
+
+        private IEnumerator ScheduleWakeup()
         {
+            yield return new WaitForSeconds(timeUntilWake);
+            CurrentState = XenoAIState.Idle;
+            _animator.enabled = true;
+            _animator.SetTrigger(XenoTriggers.Awake);
+            _animator.SetTrigger(XenoTriggers.Move);
+        }
+
+        private IEnumerator ScheduleSleep()
+        { 
+            _animator.SetBool(XenoBooleans.Idle, true);
+            yield return new WaitForSeconds(timeUntilSleep);
+            _animator.SetBool(XenoBooleans.Idle, false);
+            SetSleeping();
+            _sleepCoroutineHandler.Start(ScheduleWakeup());
+        }
+
+        public void UpdateBehavior()
+        { 
+            if (IsDead() || IsSleeping()) return;
+
             UpdatePrimaryTarget();
 
             if (PrimaryTarget == null || !PrimaryTarget.gameObject.activeInHierarchy)
             {
-                SetSleeping();
+                if (_sleepCoroutineHandler.IsRunning) return;
+                _sleepCoroutineHandler.Start(ScheduleSleep());
+                CurrentState = XenoAIState.Idle;
+                Stop_Attack();
                 return;
             }
+            
+            if (_sleepCoroutineHandler.IsRunning)
+            {
+                _sleepCoroutineHandler.Stop();
+            }
+        
             if (IsSleeping())
             {
                 StopSleeping();
             }
 
-            if (CurrentState == XenoAIState.Dead) return;
             if (health <= 0.1f)
             {
                 SetDead();
@@ -599,16 +869,19 @@ namespace ValheimVehicles.SharedScripts
                 Stop_Attack();
                 return;
             }
-            
-            StopFleeing();
+
+            if (IsFleeing())
+            {
+                StopFleeing();
+            }
             
             if (PrimaryTarget)
             {
                 var isInAttackRange = DeltaPrimaryTarget < closeRange;
                 if (isInAttackRange)
                 {
+                    MoveTowardsTarget();
                     Start_Attack();
-                    // MoveTowardsTarget();
                 }
                 
                 // todo add a lunge attack at less than 5f...random chance should be checked every X seconds.
@@ -623,19 +896,8 @@ namespace ValheimVehicles.SharedScripts
                 // {
                 //     Start_HuntTarget();
                 // }
-                
-                return;
-            }
-            
-            if (!TryFindTarget())
-            {
-                Start_Idle();
-            };
-        }
 
-        public bool TryFindTarget()
-        {
-            return false;
+            }
         }
 
         public void Start_Idle()
@@ -654,23 +916,15 @@ namespace ValheimVehicles.SharedScripts
         public void MoveTowardsTarget()
         {
             if (!PrimaryTarget) return;
-            
-            // Adaptive movement and rotation
-            float speed = (DeltaPrimaryTarget > closeRange) ? moveSpeed : closeMoveSpeed;
-            float accel = (DeltaPrimaryTarget > closeRange) ? AccelerationForceSpeed : closeAccelForce;
-            float turn = (DeltaPrimaryTarget > closeRange) ? turnSpeed : closeTurnSpeed;
 
-            // Set rotation speed for this frame
-            RotateTowardsTarget(turn);
+            var movement = GetMovementParams(DeltaPrimaryTarget < closeRange);
+            RotateTowardsTarget(movement.TurnSpeed);
 
-            // Physically accelerate toward target
-            var forward = transform.forward;
-            moveLerpVel = Mathf.MoveTowards(moveLerpVel, speed, accel * Time.deltaTime);
-            _rb.AddForce(forward * moveLerpVel, ForceMode.Acceleration);
+            moveLerpVel = Mathf.MoveTowards(moveLerpVel, movement.Speed, movement.Acceleration * Time.deltaTime);
+            _rb.AddForce(transform.forward * moveLerpVel, ForceMode.Acceleration);
 
-            // Animation blending
             float normalized = Mathf.InverseLerp(0f, 8f, _rb.velocity.magnitude);
-            _animator.SetFloat(XenoParams.MoveSpeed, normalized);
+            _animator.SetFloat(XenoParams.MoveSpeed, normalized < 0.001f ? -1f : normalized);
         }
 
         private void RotateTowardsTarget(float customTurnSpeed)
@@ -694,6 +948,7 @@ namespace ValheimVehicles.SharedScripts
 
         public void Start_Attack()
         {
+            EnableAttackColliders();
             UpdateAttackMode();
             _animator.SetBool(XenoParams.MoveAttack, true);
             _animator.SetFloat(XenoParams.AttackMode, cachedAttackMode);
@@ -701,6 +956,7 @@ namespace ValheimVehicles.SharedScripts
 
         public void Stop_Attack()
         {
+            DisableAttackColliders();
             _animator.SetBool(XenoParams.MoveAttack, false);
         }
 
@@ -734,21 +990,6 @@ namespace ValheimVehicles.SharedScripts
             }
         }
 
-
-        /// <summary>
-        /// Recursively collects all child joints under the assigned tail root.
-        /// </summary>
-        public void CollectTailJoints()
-        {
-            tailJoints.Clear();
-            if (tailRoot == null)
-            {
-                Debug.LogWarning("XenoTailJointsCollector: No tailRoot assigned.");
-                return;
-            }
-            RecursiveCollect(tailJoints, tailRoot, true);
-        }
-
         public void AddCapsuleColliderToListObjs(HashSet<Transform> list)
         {
             foreach (var bone in list)
@@ -777,6 +1018,13 @@ namespace ValheimVehicles.SharedScripts
             }
         }
 
+        public struct XenoMovementParams
+        {
+            public float Speed;
+            public float Acceleration;
+            public float TurnSpeed;
+        }
+
         public static class XenoParams
         {
             public static readonly int MoveSpeed = Animator.StringToHash("moveSpeed");
@@ -789,6 +1037,7 @@ namespace ValheimVehicles.SharedScripts
             public static readonly int Die = Animator.StringToHash("die"); // should only be run once
             public static readonly int Awake = Animator.StringToHash("awake"); // should only be run once
             public static readonly int Sleep = Animator.StringToHash("sleep"); // should only be run once
+            public static readonly int Move = Animator.StringToHash("move"); // should only be run once
         }
 
         public static class XenoBooleans
@@ -799,7 +1048,23 @@ namespace ValheimVehicles.SharedScripts
             public static readonly int Run = Animator.StringToHash("run");
             public static readonly int Idle = Animator.StringToHash("idle");
             public static readonly int Movement = Animator.StringToHash("movement"); // should only be run once
+            public static readonly int Nothing = Animator.StringToHash("nothing"); // for triggers that do nothing after completing.
         }
+
+        #region Coroutines
+
+        private CoroutineHandle _sleepCoroutineHandler;
+        private CoroutineHandle _wakeCoroutineHandler;
+        private CoroutineHandle _animationCompletionHandler;
+
+        private void InitCoroutineHandles()
+        {
+            _sleepCoroutineHandler ??= new CoroutineHandle(this);
+            _wakeCoroutineHandler ??= new CoroutineHandle(this);
+            _animationCompletionHandler ??= new CoroutineHandle(this);
+        }
+
+        #endregion
 
         #region Xeno Transforms
 
@@ -809,6 +1074,9 @@ namespace ValheimVehicles.SharedScripts
         private Transform spine01;
         private Transform spine02;
         private Transform spine03;
+        private Transform spineTop;
+        private Transform neckUpDown;
+        private Transform neckPivot;
         private Transform leftHip;
         private Transform rightHip;
         private Transform leftArm;

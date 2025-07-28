@@ -65,7 +65,7 @@ GameObject:
   m_Component:
   - component: {fileID: 7647103122477242823}
   m_Layer: 0
-  m_Name: XenoPrefab 1
+  m_Name: XenoPrefab_backup
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
