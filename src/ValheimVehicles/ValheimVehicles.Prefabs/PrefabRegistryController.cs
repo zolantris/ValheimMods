@@ -13,6 +13,7 @@ using ValheimVehicles.BepInExConfig;
 using ValheimVehicles.Prefabs.Registry;
 using ValheimVehicles.Prefabs.ValheimVehicles.Prefabs.Registry;
 using ValheimVehicles.SharedScripts;
+using Zolantris.Shared;
 using Logger = Jotunn.Logger;
 using Object = UnityEngine.Object;
 

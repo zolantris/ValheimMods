@@ -3,6 +3,7 @@ using System.Diagnostics.CodeAnalysis;
 using ValheimVehicles.BepInExConfig;
 using ValheimVehicles.Helpers;
 using ValheimVehicles.Shared.Constants;
+using Zolantris.Shared;
 
 // must be same namespace to override.
 namespace ValheimVehicles.SharedScripts.PowerSystem.Compute;

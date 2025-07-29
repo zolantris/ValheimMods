@@ -1,0 +1,17 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+    <Import Project="$(SolutionDir)build\base.props"/>
+    <Import Project="$(SolutionDir)build\unity_libs_2022.props"/>
+
+    <PropertyGroup>
+        <AssemblyName>Eldritch.Core</AssemblyName>
+        <RootNamespace>Eldritch.Core</RootNamespace>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Shared\Shared.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <Folder Include="AI\"/>
+    </ItemGroup>
+</Project>

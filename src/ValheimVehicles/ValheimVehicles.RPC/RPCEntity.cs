@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using UnityEngine;
 using ValheimVehicles.SharedScripts;
+using Zolantris.Shared;
 
 namespace ValheimVehicles.RPC;
 

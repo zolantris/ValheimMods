@@ -8,6 +8,7 @@ using UnityEngine;
 using ValheimVehicles.Helpers;
 using ValheimVehicles.SharedScripts;
 using ValheimVehicles.SharedScripts.PowerSystem.Compute;
+using Zolantris.Shared;
 namespace ValheimVehicles.Integrations.PowerSystem;
 
 /// <summary>

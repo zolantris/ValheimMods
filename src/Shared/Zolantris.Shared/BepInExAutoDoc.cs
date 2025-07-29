@@ -4,8 +4,6 @@ using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 using BepInEx.Configuration;
-using Jotunn.Utils;
-using ValheimVehicles.SharedScripts;
 
 namespace Zolantris.Shared.BepInExAutoDoc;
 
@@ -89,15 +87,7 @@ public class BepInExConfigAutoDoc
   public void Generate(BaseUnityPlugin plugin, ConfigFile configFile,
     string documentName)
   {
-    var pluginInfo = BepInExUtils.GetPluginInfoFromType(plugin.GetType());
-    Generate(pluginInfo, configFile, documentName);
-  }
-
-  public void Generate(FileInfo pluginPath, ConfigFile configFile,
-    string documentName)
-  {
-    var pluginInfo = BepInExUtils.GetPluginInfoFromPath(pluginPath);
-    Generate(pluginInfo, configFile, documentName);
+    Generate(plugin, configFile, documentName);
   }
 
   /// <summary>

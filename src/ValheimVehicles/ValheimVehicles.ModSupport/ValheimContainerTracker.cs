@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using ValheimVehicles.SharedScripts;
+using Zolantris.Shared;
 namespace ValheimVehicles.ModSupport;
 
 public static class ValheimContainerTracker

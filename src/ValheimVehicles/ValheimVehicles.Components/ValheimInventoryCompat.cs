@@ -1,6 +1,7 @@
 using System;
 using UnityEngine;
 using ValheimVehicles.SharedScripts;
+using Zolantris.Shared;
 namespace ValheimVehicles.Components;
 
 /// <summary>

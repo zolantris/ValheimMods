@@ -1,5 +1,6 @@
 using HarmonyLib;
 using ValheimVehicles.SharedScripts;
+using Zolantris.Shared;
 
 namespace ValheimVehicles.Patches;
 

@@ -6,6 +6,7 @@ using System.Collections;
 using ValheimVehicles.Helpers;
 using ValheimVehicles.Interfaces;
 using ValheimVehicles.SharedScripts;
+using Zolantris.Shared;
 
 namespace ValheimVehicles.Integrations
 {

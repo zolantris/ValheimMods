@@ -6,6 +6,7 @@ using ValheimVehicles.BepInExConfig;
 using ValheimVehicles.Constants;
 using ValheimVehicles.Interfaces;
 using ValheimVehicles.SharedScripts;
+using Zolantris.Shared;
 namespace ValheimVehicles.RPC;
 
 public static class PrefabConfigRPC

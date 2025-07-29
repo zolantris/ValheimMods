@@ -12,6 +12,7 @@ using ValheimVehicles.Prefabs.Registry;
 using ValheimVehicles.SharedScripts;
 using ValheimVehicles.SharedScripts.Enums;
 using ValheimVehicles.SharedScripts.Prefabs;
+using Zolantris.Shared;
 using Logger = Jotunn.Logger;
 using Object = UnityEngine.Object;
 

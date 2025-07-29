@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Reflection.Emit;
 using HarmonyLib;
 using ValheimVehicles.SharedScripts;
+using Zolantris.Shared;
 namespace ValheimVehicles.Patches;
 
 [HarmonyPatch(typeof(ZNetScene), nameof(ZNetScene.CreateObjects))]

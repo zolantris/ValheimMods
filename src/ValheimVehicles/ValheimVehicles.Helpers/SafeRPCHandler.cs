@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using ValheimVehicles.Interfaces;
 using ValheimVehicles.SharedScripts;
+using Zolantris.Shared;
 namespace ValheimVehicles.Helpers;
 
 public class SafeRPCHandler : INetView

@@ -6,6 +6,7 @@ using Jotunn.Managers;
 using UnityEngine;
 using ValheimVehicles.SharedScripts;
 using ValheimVehicles.SharedScripts.Validation;
+using Zolantris.Shared;
 namespace ValheimVehicles.Prefabs.Registry;
 
 public class VehicleHammerTableRegistry : GuardedRegistry<VehicleHammerTableRegistry>

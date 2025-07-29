@@ -4,6 +4,7 @@ using ValheimVehicles.Components;
 using ValheimVehicles.Helpers;
 using ValheimVehicles.Interfaces;
 using ValheimVehicles.SharedScripts;
+using Zolantris.Shared;
 
 namespace ValheimVehicles.BepInExConfig;
 

@@ -1,42 +1,15 @@
 <Project>
-    <PropertyGroup Label="Runnables and Project Booleans">
-        <!-- Runnable variants execute Valheim server or client process after building -->
-        <IsRunnableDebug Condition="'$(Configuration)' == 'Debug Run Client' or '$(Configuration)' == 'Debug Run Server' or '$(Configuration)' == 'Debug Run ClientServer'">true</IsRunnableDebug>
-        <IsRunnableRelease Condition="'$(Configuration)' == 'Release Run Client' or '$(Configuration)' == 'Release Run Server' or '$(Configuration)' == 'Release Run ClientServer'">true</IsRunnableRelease>
-        <IsRunnableClientServer Condition="'$(Configuration)' == 'Release Run ClientServer' or '$(Configuration)' == 'Debug Run ClientServer'">true</IsRunnableClientServer>
-        <IsRunnableServer Condition="'$(Configuration)' == 'Release Run Server' or '$(Configuration)' == 'Debug Run Server'">true</IsRunnableServer>
-        <IsRunnableClient Condition="'$(IsRunnableRelease)' == 'true' or '$(IsRunnableDebug)' == 'true'">true</IsRunnableClient>
-        <IsRunnable Condition="'$(IsRunnableRelease)' == 'true' or '$(IsRunnableDebug)' == 'true'">true</IsRunnable>
-        <IsRunnable>true</IsRunnable>
-        <IsDebug Condition="'$(Configuration)' == 'Debug' or '$(IsRunnableDebug)' == 'true'">true</IsDebug>
-        <IsRelease Condition="'$(Configuration)' == 'Release' or '$(Configuration)' == 'Release Archive' or '$(Configuration)' == 'ReleaseBeta Archive' or '$(IsRunnableRelease)' == 'true'">true</IsRelease>
-        <IsNotArchive Condition="'$(Configuration)' != 'Release Archive' and '$(Configuration)' != 'ReleaseBETA Archive'">true</IsNotArchive>
-    </PropertyGroup>
-    <!-- Default   -->
-    <PropertyGroup Condition="'$(IsDebug)' == 'true'">
-        <PlatformTarget>AnyCPU</PlatformTarget>
-        <DebugSymbols>true</DebugSymbols>
-        <DebugType>full</DebugType>
-        <Optimize>false</Optimize>
-        <OutputPath>bin\Debug\</OutputPath>
-        <DefineConstants>DEBUG;TRACE;VALHEIM</DefineConstants>
-        <ErrorReport>prompt</ErrorReport>
-        <WarningLevel>4</WarningLevel>
-        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    </PropertyGroup>
-    <PropertyGroup Condition="'$(IsRelease)' == 'true'">
-        <PlatformTarget>AnyCPU</PlatformTarget>
-        <DebugType>pdbonly</DebugType>
-        <Optimize>true</Optimize>
-        <OutputPath>bin\Release\</OutputPath>
-        <DefineConstants>TRACE;VALHEIM</DefineConstants>
-        <ErrorReport>prompt</ErrorReport>
-        <WarningLevel>4</WarningLevel>
-        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    </PropertyGroup>
     <PropertyGroup Condition="!Exists('$(SolutionDir)build\.props')">
         <BepInExPath>$(SolutionDir)libs</BepInExPath>
         <ManagedDataPath>$(SolutionDir)libs</ManagedDataPath>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="'$(IsDebug)' == 'true'">
+        <DefineConstants>$(DefineConstants);VALHEIM</DefineConstants>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(IsRelease)' == 'true'">
+        <OutputPath>bin\Release\</OutputPath>
+        <DefineConstants>$(DefineConstants);VALHEIM</DefineConstants>
     </PropertyGroup>
 
     <PropertyGroup Label="VM properties">
@@ -79,18 +52,7 @@
     </PropertyGroup>
 
     <!-- Add BepInEx references -->
-    <ItemGroup Label="BepInEx">
-        <Reference Include="0Harmony">
-            <SpecificVersion>False</SpecificVersion>
-            <HintPath>$(BepInExPath)\0Harmony.dll</HintPath>
-            <Private>False</Private>
-        </Reference>
-        <Reference Include="BepInEx">
-            <SpecificVersion>False</SpecificVersion>
-            <HintPath>$(BepInExPath)\BepInEx.dll</HintPath>
-            <Private>False</Private>
-        </Reference>
-    </ItemGroup>
+    <Import Project="$(SolutionDir)build\bepinex_libs.props"/>
 
     <!-- Add valheim_data references -->
     <ItemGroup Label="Valheim_Data">
@@ -154,149 +116,8 @@
         <!--        <Reference Include="System.Collections.Immutable"/>-->
     </ItemGroup>
 
-    <!-- Add Unity references -->
-    <ItemGroup Label="Unity">
-        <Reference Include="UnityEngine">
-            <SpecificVersion>False</SpecificVersion>
-            <HintPath>$(ManagedDataPath)\UnityEngine.dll</HintPath>
-            <Private>False</Private>
-        </Reference>
-        <Reference Include="UnityEngine.AccessibilityModule">
-            <SpecificVersion>False</SpecificVersion>
-            <HintPath>$(ManagedDataPath)\UnityEngine.AccessibilityModule.dll</HintPath>
-            <Private>False</Private>
-        </Reference>
-        <Reference Include="UnityEngine.AIModule">
-            <SpecificVersion>False</SpecificVersion>
-            <HintPath>$(ManagedDataPath)\UnityEngine.AIModule.dll</HintPath>
-            <Private>False</Private>
-        </Reference>
-        <Reference Include="UnityEngine.AnimationModule">
-            <SpecificVersion>False</SpecificVersion>
-            <HintPath>$(ManagedDataPath)\UnityEngine.AnimationModule.dll</HintPath>
-            <Private>False</Private>
-        </Reference>
-        <Reference Include="UnityEngine.AudioModule">
-            <SpecificVersion>False</SpecificVersion>
-            <HintPath>$(ManagedDataPath)\UnityEngine.AudioModule.dll</HintPath>
-            <Private>False</Private>
-        </Reference>
-        <Reference Include="UnityEngine.ClothModule">
-            <SpecificVersion>False</SpecificVersion>
-            <HintPath>$(ManagedDataPath)\UnityEngine.ClothModule.dll</HintPath>
-            <Private>False</Private>
-        </Reference>
-        <Reference Include="UnityEngine.CoreModule">
-            <SpecificVersion>False</SpecificVersion>
-            <HintPath>$(ManagedDataPath)\UnityEngine.CoreModule.dll</HintPath>
-            <Private>False</Private>
-        </Reference>
-        <Reference Include="UnityEngine.InputLegacyModule">
-            <SpecificVersion>False</SpecificVersion>
-            <HintPath>$(ManagedDataPath)\UnityEngine.InputLegacyModule.dll</HintPath>
-            <Private>False</Private>
-        </Reference>
-        <Reference Include="UnityEngine.ParticleSystemModule">
-            <SpecificVersion>False</SpecificVersion>
-            <HintPath>$(ManagedDataPath)\UnityEngine.ParticleSystemModule.dll</HintPath>
-            <Private>False</Private>
-        </Reference>
-        <Reference Include="UnityEngine.PhysicsModule">
-            <SpecificVersion>False</SpecificVersion>
-            <HintPath>$(ManagedDataPath)\UnityEngine.PhysicsModule.dll</HintPath>
-            <Private>False</Private>
-        </Reference>
-        <Reference Include="UnityEngine.ScreenCaptureModule">
-            <SpecificVersion>False</SpecificVersion>
-            <HintPath>$(ManagedDataPath)\UnityEngine.ScreenCaptureModule.dll</HintPath>
-            <Private>False</Private>
-        </Reference>
-        <Reference Include="Unity.TextMeshPro">
-            <SpecificVersion>False</SpecificVersion>
-            <HintPath>$(ManagedDataPath)\Unity.TextMeshPro.dll</HintPath>
-            <Private>False</Private>
-        </Reference>
-        <Reference Include="Unity.VehiclesModule">
-            <SpecificVersion>False</SpecificVersion>
-            <HintPath>$(ManagedDataPath)\UnityEngine.VehiclesModule.dll</HintPath>
-            <Private>False</Private>
-        </Reference>
-        <Reference Include="UnityEngine.UI">
-            <SpecificVersion>False</SpecificVersion>
-            <HintPath>$(ManagedDataPath)\UnityEngine.UI.dll</HintPath>
-            <Private>False</Private>
-        </Reference>
-        <Reference Include="UnityEngine.UIModule">
-            <SpecificVersion>False</SpecificVersion>
-            <HintPath>$(ManagedDataPath)\UnityEngine.UIModule.dll</HintPath>
-            <Private>False</Private>
-        </Reference>
-        <Reference Include="UnityEngine.UIElementsModule">
-            <SpecificVersion>False</SpecificVersion>
-            <HintPath>$(ManagedDataPath)\UnityEngine.UIElementsModule.dll</HintPath>
-            <Private>False</Private>
-        </Reference>
-        <Reference Include="UnityEngine.InputModule">
-            <SpecificVersion>False</SpecificVersion>
-            <HintPath>$(ManagedDataPath)\UnityEngine.InputModule.dll</HintPath>
-            <Private>False</Private>
-        </Reference>
-        <Reference Include="UnityEngine.JSONSerializeModule">
-            <SpecificVersion>False</SpecificVersion>
-            <HintPath>$(ManagedDataPath)\UnityEngine.JSONSerializeModule.dll</HintPath>
-            <Private>False</Private>
-        </Reference>
-        <Reference Include="UnityEngine.IMGUIModule">
-            <SpecificVersion>False</SpecificVersion>
-            <HintPath>$(ManagedDataPath)\UnityEngine.IMGUIModule.dll</HintPath>
-            <Private>False</Private>
-        </Reference>
-        <Reference Include="UnityEngine.ImageConversionModule">
-            <SpecificVersion>False</SpecificVersion>
-            <HintPath>$(ManagedDataPath)\UnityEngine.ImageConversionModule.dll</HintPath>
-            <Private>False</Private>
-        </Reference>
-        <Reference Include="UnityEngine.TerrainModule">
-            <SpecificVersion>False</SpecificVersion>
-            <HintPath>$(ManagedDataPath)\UnityEngine.TerrainModule.dll</HintPath>
-            <Private>False</Private>
-        </Reference>
-        <Reference Condition="Exists('$(ManagedDataPath)\UnityEngine.TextCoreModule.dll')" Include="UnityEngine.TextCoreModule">
-            <SpecificVersion>False</SpecificVersion>
-            <HintPath>$(ManagedDataPath)\UnityEngine.TextCoreModule.dll</HintPath>
-            <Private>False</Private>
-        </Reference>
-        <Reference Include="UnityEngine.TextRenderingModule">
-            <SpecificVersion>False</SpecificVersion>
-            <HintPath>$(ManagedDataPath)\UnityEngine.TextRenderingModule.dll</HintPath>
-            <Private>False</Private>
-        </Reference>
-        <Reference Include="UnityEngine.UnityWebRequestAudioModule">
-            <SpecificVersion>False</SpecificVersion>
-            <HintPath>$(ManagedDataPath)\UnityEngine.UnityWebRequestAudioModule.dll</HintPath>
-            <Private>False</Private>
-        </Reference>
-        <Reference Include="UnityEngine.UnityWebRequestModule">
-            <SpecificVersion>False</SpecificVersion>
-            <HintPath>$(ManagedDataPath)\UnityEngine.UnityWebRequestModule.dll</HintPath>
-            <Private>False</Private>
-        </Reference>
-        <Reference Include="UnityEngine.UnityWebRequestWWWModule">
-            <SpecificVersion>False</SpecificVersion>
-            <HintPath>$(ManagedDataPath)\UnityEngine.UnityWebRequestWWWModule.dll</HintPath>
-            <Private>False</Private>
-        </Reference>
-        <Reference Include="UnityEngine.UnityWebRequestTextureModule">
-            <SpecificVersion>False</SpecificVersion>
-            <HintPath>$(ManagedDataPath)\UnityEngine.UnityWebRequestTextureModule.dll</HintPath>
-            <Private>False</Private>
-        </Reference>
-        <Reference Include="UnityEngine.AssetBundleModule">
-            <SpecificVersion>False</SpecificVersion>
-            <HintPath>$(ManagedDataPath)\UnityEngine.AssetBundleModule.dll</HintPath>
-            <Private>False</Private>
-        </Reference>
-    </ItemGroup>
+    <!--  UnityLibs  -->
+    <Import Project="$(SolutionDir)build\unity_libs_2022.props"/>
 
     <ItemGroup Label="required-mods">
         <Reference Include="Jotunn">
@@ -328,6 +149,4 @@
             <Private>False</Private>
         </Reference>
     </ItemGroup>
-
-    <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets"/>
 </Project>

@@ -5,6 +5,7 @@ using UnityEngine;
 using ValheimVehicles.Components;
 using ValheimVehicles.Integrations;
 using ValheimVehicles.SharedScripts;
+using Zolantris.Shared;
 
 namespace ValheimVehicles.Prefabs.Registry;
 

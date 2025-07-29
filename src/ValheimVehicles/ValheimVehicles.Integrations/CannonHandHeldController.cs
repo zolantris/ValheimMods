@@ -6,6 +6,7 @@ using ValheimVehicles.RPC;
 using ValheimVehicles.SharedScripts;
 using ValheimVehicles.SharedScripts.Structs;
 using ValheimVehicles.Structs;
+using Zolantris.Shared;
 using Random = UnityEngine.Random;
 
 public class CannonHandHeldController : CannonController, Hoverable

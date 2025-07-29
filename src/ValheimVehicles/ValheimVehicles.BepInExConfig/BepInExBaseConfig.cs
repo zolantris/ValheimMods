@@ -4,6 +4,7 @@ using BepInEx.Configuration;
 using ValheimVehicles.SharedScripts;
 using ValheimVehicles.SharedScripts.Validation;
 using ValheimVehicles.ValheimVehicles.Plugins;
+using Zolantris.Shared;
 namespace ValheimVehicles.BepInExConfig;
 
 public interface IBepInExBaseConfig

@@ -6,6 +6,7 @@ using ValheimVehicles.Interfaces;
 using ValheimVehicles.Prefabs.Registry;
 using ValheimVehicles.SharedScripts;
 using ValheimVehicles.SharedScripts.Helpers;
+using Zolantris.Shared;
 namespace ValheimVehicles.Integrations;
 
 public class CannonControllerBridge : CannonController, Hoverable, Interactable, INetView

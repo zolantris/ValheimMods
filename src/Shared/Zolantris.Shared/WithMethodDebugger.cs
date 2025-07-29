@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Reflection;
 using JetBrains.Annotations;
-using ValheimVehicles.SharedScripts;
 
 namespace Zolantris.Shared;
 

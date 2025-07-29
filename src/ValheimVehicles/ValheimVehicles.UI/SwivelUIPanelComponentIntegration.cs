@@ -7,6 +7,7 @@ using ValheimVehicles.Helpers;
 using ValheimVehicles.Integrations;
 using ValheimVehicles.SharedScripts;
 using ValheimVehicles.SharedScripts.UI;
+using Zolantris.Shared;
 namespace ValheimVehicles.UI;
 
 public class SwivelUIPanelComponentIntegration : SwivelUIPanelComponent

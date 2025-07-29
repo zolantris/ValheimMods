@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using HarmonyLib;
 using ValheimVehicles.RPC;
 using ValheimVehicles.SharedScripts;
+using Zolantris.Shared;
 namespace ValheimVehicles.Patches;
 
 public class RPCRegistryDebugger_Patches

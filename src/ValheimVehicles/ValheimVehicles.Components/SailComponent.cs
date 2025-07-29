@@ -17,6 +17,7 @@ using ValheimVehicles.SharedScripts;
 using ValheimVehicles.Storage.Serialization;
 using ValheimVehicles.UI;
 using ZdoWatcher;
+using Zolantris.Shared;
 using Zolantris.Shared.Debug;
 using Logger = Jotunn.Logger;
 

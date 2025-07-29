@@ -8,6 +8,7 @@ using ValheimVehicles.Integrations.PowerSystem;
 using ValheimVehicles.SharedScripts;
 using ValheimVehicles.SharedScripts.PowerSystem;
 using ValheimVehicles.SharedScripts.PowerSystem.Compute;
+using Zolantris.Shared;
 namespace ValheimVehicles.RPC;
 
 /// <summary>

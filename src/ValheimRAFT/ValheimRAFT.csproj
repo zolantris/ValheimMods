@@ -1,7 +1,7 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
     <Import Project="$(SolutionDir)build\base.props"/>
     <Import Project="$(SolutionDir)build\valheim.props"/>
+    <Import Project="$(SolutionDir)build\valheimvehicles_version.props"/>
 
     <PropertyGroup>
         <Configuration Condition=" '$(Configuration)' == '' ">Debug;VALHEIM_RAFT</Configuration>
@@ -9,9 +9,8 @@
         <ProjectGuid>{6015B165-2627-40A7-8CA1-3E6B6CD7CB49}</ProjectGuid>
         <OutputType>Library</OutputType>
         <AssemblyName>ValheimRAFT</AssemblyName>
-        <ApplicationVersion>3.6.4</ApplicationVersion>
-        <FileAlignment>512</FileAlignment>
         <RootNamespace>ValheimRAFT</RootNamespace>
+        <FileAlignment>512</FileAlignment>
         <Configurations>Debug;Release;Release Archive;Debug Run ClientServer;Debug Run Client;ReleaseBETA Archive;Debug Run Server;Release Run Server;Release Run ClientServer;ModSyncOnly</Configurations>
         <Platforms>AnyCPU</Platforms>
     </PropertyGroup>
@@ -93,5 +92,4 @@
         <WarningLevel>4</WarningLevel>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     </PropertyGroup>
-    <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets"/>
 </Project>

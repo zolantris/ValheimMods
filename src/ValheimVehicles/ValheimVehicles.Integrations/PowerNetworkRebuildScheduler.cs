@@ -2,6 +2,7 @@ using System.Collections;
 using UnityEngine;
 using ValheimVehicles.SharedScripts;
 using ValheimVehicles.SharedScripts.PowerSystem;
+using Zolantris.Shared;
 namespace ValheimVehicles.Integrations;
 
 public static class PowerNetworkRebuildScheduler

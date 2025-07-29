@@ -7,6 +7,7 @@ using System.Reflection;
 using BepInEx.Configuration;
 using ServerSync;
 using ValheimVehicles.SharedScripts;
+using Zolantris.Shared;
 
 namespace ValheimVehicles.ValheimVehicles.Plugins
 {

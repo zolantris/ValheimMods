@@ -10,6 +10,7 @@ using ValheimVehicles.BepInExConfig;
 using ValheimVehicles.SharedScripts;
 using ValheimVehicles.SharedScripts.Enums;
 using ValheimVehicles.SharedScripts.Prefabs;
+using Zolantris.Shared;
 using Logger = Jotunn.Logger;
 
 namespace ValheimVehicles.Prefabs.Registry;

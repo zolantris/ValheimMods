@@ -21,6 +21,7 @@ using ValheimVehicles.Providers;
 using ValheimVehicles.Controllers;
 using ValheimVehicles.Integrations;
 using ZdoWatcher;
+using Zolantris.Shared;
 using Zolantris.Shared.BepInExAutoDoc;
 namespace ValheimRAFT;
 

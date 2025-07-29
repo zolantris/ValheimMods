@@ -7,6 +7,7 @@ using ValheimVehicles.Interfaces;
 using ValheimVehicles.SharedScripts;
 using ValheimVehicles.SharedScripts.PowerSystem;
 using ValheimVehicles.SharedScripts.PowerSystem.Interfaces;
+using Zolantris.Shared;
 namespace ValheimVehicles.Integrations;
 
 #if DEBUG

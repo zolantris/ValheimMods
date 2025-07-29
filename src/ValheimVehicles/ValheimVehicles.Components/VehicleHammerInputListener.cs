@@ -2,6 +2,7 @@ using System;
 using UnityEngine;
 using ValheimVehicles.ConsoleCommands;
 using ValheimVehicles.SharedScripts;
+using Zolantris.Shared;
 namespace ValheimVehicles.Components;
 
 public class VehicleHammerInputListener : MonoBehaviour

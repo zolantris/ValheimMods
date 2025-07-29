@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using ValheimVehicles.Patches;
+using Zolantris.Shared;
 using Random = UnityEngine.Random;
 
 namespace ValheimVehicles.SharedScripts

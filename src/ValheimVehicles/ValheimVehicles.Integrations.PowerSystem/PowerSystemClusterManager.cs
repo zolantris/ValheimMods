@@ -12,6 +12,7 @@ using ValheimVehicles.SharedScripts;
 using ValheimVehicles.SharedScripts.PowerSystem.Compute;
 using ValheimVehicles.Structs;
 using ZdoWatcher;
+using Zolantris.Shared;
 
 namespace ValheimVehicles.Integrations
 {

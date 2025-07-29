@@ -21,6 +21,7 @@ using ValheimVehicles.SharedScripts.Interfaces;
 using ValheimVehicles.SharedScripts.PowerSystem;
 using ValheimVehicles.UI;
 using ZdoWatcher;
+using Zolantris.Shared;
 using Random = UnityEngine.Random;
 
 namespace ValheimVehicles.Components;

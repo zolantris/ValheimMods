@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using JetBrains.Annotations;
 using UnityEngine;
-using ValheimVehicles.SharedScripts;
 
 namespace Zolantris.Shared.Debug;
 

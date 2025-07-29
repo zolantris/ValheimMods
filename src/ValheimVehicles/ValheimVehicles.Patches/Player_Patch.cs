@@ -18,6 +18,7 @@
   using ValheimVehicles.Prefabs;
   using ValheimVehicles.Propulsion.Rudder;
   using ValheimVehicles.SharedScripts;
+  using Zolantris.Shared;
   using Logger = Jotunn.Logger;
   using Object = UnityEngine.Object;
 

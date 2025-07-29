@@ -10,6 +10,7 @@ using ValheimVehicles.SharedScripts;
 using ValheimVehicles.Structs;
 using ZdoWatcher;
 using ZdoWatcher.ZdoWatcher.Utils;
+using Zolantris.Shared;
 using Logger = Jotunn.Logger;
 
 namespace ValheimVehicles.Components;

@@ -8,6 +8,7 @@ using ValheimVehicles.Controllers;
 using ValheimVehicles.Integrations;
 using ValheimVehicles.SharedScripts;
 using ValheimVehicles.ValheimVehicles.Components;
+using Zolantris.Shared;
 using Logger = Jotunn.Logger;
 
 namespace ValheimVehicles.Prefabs.Registry;
