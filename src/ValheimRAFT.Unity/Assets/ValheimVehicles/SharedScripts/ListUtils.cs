@@ -4,6 +4,7 @@
 #region
 
 using System.Collections.Generic;
+using Zolantris.Shared;
 
 #endregion
 

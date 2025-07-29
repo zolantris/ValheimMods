@@ -10,6 +10,7 @@ using System.Linq;
 using UnityEngine;
 using ValheimVehicles.SharedScripts.Helpers;
 using ValheimVehicles.SharedScripts.Structs;
+using Zolantris.Shared;
 #if VALHEIM
 using System.Diagnostics;
 using ValheimVehicles.BepInExConfig;

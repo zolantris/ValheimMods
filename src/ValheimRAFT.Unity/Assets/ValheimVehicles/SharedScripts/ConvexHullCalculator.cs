@@ -6,6 +6,7 @@
   using System.Runtime.CompilerServices;
   using UnityEngine;
   using UnityEngine.Assertions;
+  using Zolantris.Shared;
   using Debug = UnityEngine.Debug;
 
 #endregion

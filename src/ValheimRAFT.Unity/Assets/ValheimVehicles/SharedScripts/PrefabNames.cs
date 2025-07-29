@@ -4,6 +4,7 @@
   using UnityEngine;
   using ValheimVehicles.Shared.Constants;
   using ValheimVehicles.SharedScripts.Enums;
+  using Zolantris.Shared;
 
 #endregion
 

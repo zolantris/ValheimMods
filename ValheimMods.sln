@@ -245,6 +245,7 @@ Global
 		{1E73028C-3D9A-4306-B46E-206D37F9E47E}.ModSyncOnly|Any CPU.ActiveCfg = ModSyncOnly|Any CPU
 		{1E73028C-3D9A-4306-B46E-206D37F9E47E}.Release Run Client|Any CPU.ActiveCfg = Release Run Client|Any CPU
 		{1E73028C-3D9A-4306-B46E-206D37F9E47E}.Release Run Client|Any CPU.Build.0 = Release Run Client|Any CPU
+		{1E73028C-3D9A-4306-B46E-206D37F9E47E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{73FBE77B-3DD5-49C6-B355-CB44EDA701C3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{73FBE77B-3DD5-49C6-B355-CB44EDA701C3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{73FBE77B-3DD5-49C6-B355-CB44EDA701C3}.Release|Any CPU.ActiveCfg = Release|Any CPU

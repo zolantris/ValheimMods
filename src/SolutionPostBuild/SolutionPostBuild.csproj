@@ -16,6 +16,7 @@
     </ItemGroup>
 
     <PropertyGroup>
+        <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
         <PostInstallerEnabled>true</PostInstallerEnabled>
         <Configurations>Debug;Release;Debug Run ClientServer;Debug Run Client;Release Archive;ReleaseBeta Archive;ModSyncOnly;Release Run Client</Configurations>
         <TargetFramework>Net8.0</TargetFramework>
