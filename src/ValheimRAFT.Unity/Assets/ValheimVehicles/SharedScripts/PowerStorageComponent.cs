@@ -6,6 +6,7 @@ using System.ComponentModel;
 using UnityEngine;
 using ValheimVehicles.Interfaces;
 using ValheimVehicles.SharedScripts.PowerSystem.Compute;
+using Zolantris.Shared;
 
 namespace ValheimVehicles.SharedScripts.PowerSystem
 {

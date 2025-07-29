@@ -8,6 +8,7 @@
   using JetBrains.Annotations;
   using UnityEngine;
   using UnityEngine.Rendering;
+  using Zolantris.Shared;
 
 #endregion
 

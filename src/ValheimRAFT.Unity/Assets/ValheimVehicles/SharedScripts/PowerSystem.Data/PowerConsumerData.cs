@@ -4,6 +4,7 @@
 using System;
 using UnityEngine;
 using ValheimVehicles.Shared.Constants;
+using Zolantris.Shared;
 namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
 {
   // ReSharper disable once PartialTypeWithSinglePart

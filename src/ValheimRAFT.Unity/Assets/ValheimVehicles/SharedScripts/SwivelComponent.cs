@@ -9,6 +9,7 @@ using System.ComponentModel;
 using UnityEngine;
 using ValheimVehicles.SharedScripts.PowerSystem;
 using ValheimVehicles.SharedScripts.UI;
+using Zolantris.Shared;
 
 #endregion
 
@@ -727,7 +728,7 @@ namespace ValheimVehicles.SharedScripts
       UpdatePowerConsumer();
     }
 
-    #region ISwivelConfig
+  #region ISwivelConfig
 
     public float InterpolationSpeed
     {
@@ -777,7 +778,7 @@ namespace ValheimVehicles.SharedScripts
       set => SetMode(value);
     }
 
-    #endregion
+  #endregion
 
   }
 }
