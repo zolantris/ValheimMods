@@ -1,40 +1,44 @@
 using System;
 using HarmonyLib;
-namespace Zolantris.Shared;
+// ReSharper disable ArrangeNamespaceBody
+// ReSharper disable NamespaceStyle
 
-public static class HarmonyHelper
+namespace Zolantris.Shared
 {
+  public static class HarmonyHelper
+  {
 #if DEBUG
-  private const bool IsDebug = true;
+    private const bool IsDebug = true;
 #else
   private const bool IsDebug = false;
 #endif
-  /// <summary>
-  /// Safely patches all annotated methods in the specified class. This will ensure the mod does not
-  /// </summary>
-  /// <param name="harmonyInstance">Harmony instance.</param>
-  /// <param name="type">Class containing Harmony patch methods.</param>
-  public static void TryPatchAll(Harmony harmonyInstance, Type type)
-  {
-    try
+    /// <summary>
+    /// Safely patches all annotated methods in the specified class. This will ensure the mod does not
+    /// </summary>
+    /// <param name="harmonyInstance">Harmony instance.</param>
+    /// <param name="type">Class containing Harmony patch methods.</param>
+    public static void TryPatchAll(Harmony harmonyInstance, Type type)
     {
-      harmonyInstance.PatchAll(type);
-      if (IsDebug)
+      try
       {
-        LoggerProvider.LogDebug($"[Harmony] Successfully patched: {type.Name}");
+        harmonyInstance.PatchAll(type);
+        if (IsDebug)
+        {
+          LoggerProvider.LogDebug($"[Harmony] Successfully patched: {type.Name}");
+        }
+      }
+      catch (Exception ex)
+      {
+        LoggerProvider.LogError($"[Harmony] Failed to patch: {type.Name}\n{ex}");
       }
     }
-    catch (Exception ex)
-    {
-      LoggerProvider.LogError($"[Harmony] Failed to patch: {type.Name}\n{ex}");
-    }
-  }
 
-  public static void TryPatchAll(Harmony harmonyInstance, params Type[] patchTypes)
-  {
-    foreach (var type in patchTypes)
+    public static void TryPatchAll(Harmony harmonyInstance, params Type[] patchTypes)
     {
-      TryPatchAll(harmonyInstance, type);
+      foreach (var type in patchTypes)
+      {
+        TryPatchAll(harmonyInstance, type);
+      }
     }
   }
 }

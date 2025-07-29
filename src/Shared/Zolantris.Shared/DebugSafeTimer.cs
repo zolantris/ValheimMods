@@ -2,7 +2,10 @@ using System.Collections.Generic;
 using JetBrains.Annotations;
 using UnityEngine;
 
-namespace Zolantris.Shared.Debug;
+// ReSharper disable ArrangeNamespaceBody
+// ReSharper disable NamespaceStyle
+namespace Zolantris.Shared.Debug
+{
 
 /// <summary>
 /// Work around for debugging timeouts
@@ -132,4 +135,5 @@ public class DebugSafeTimer
 
     OnUpdateAutoExpire();
   }
+}
 }

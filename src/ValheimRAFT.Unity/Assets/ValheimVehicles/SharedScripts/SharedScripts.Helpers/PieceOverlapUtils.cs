@@ -4,7 +4,6 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using Zolantris.Shared;
 
 namespace ValheimVehicles.SharedScripts
 {

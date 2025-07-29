@@ -1,43 +1,36 @@
 using System;
-
-namespace Zolantris.Shared.ModIntegrations;
-
-public interface IModIntegrationApi
+// ReSharper disable ArrangeNamespaceBody
+// ReSharper disable NamespaceStyle
+namespace Zolantris.Shared.ModIntegrations
 {
-  public void RunIntegration();
-}
-
-public static class ConditionalImporter
-{
-  public static bool ImportConditionally(string modGuid, string targetClass)
+  public interface IModIntegrationApi
   {
-    var _parentType = Type.GetType("Namespace.ParentClassName");
+    public void RunIntegration();
+  }
 
-    if (_parentType != null)
+  public static class ConditionalImporter
+  {
+    public static bool ImportConditionally(string modGuid, string targetClass)
     {
-      // Parent class exists, you can safely use it
-      LoggerProvider.LogDebug(
-        $"Conditional {modGuid} found. {targetClass} will now run");
-      var conditionalClass =
-        Activator.CreateInstance(_parentType) as IModIntegrationApi;
-      conditionalClass?.RunIntegration();
-      return true;
-    }
+      var _parentType = Type.GetType("Namespace.ParentClassName");
 
-    else
-    {
-      LoggerProvider.LogDebug(
-        $"Conditional {modGuid} not found. Exiting");
-      return false;
+      if (_parentType != null)
+      {
+        // Parent class exists, you can safely use it
+        LoggerProvider.LogDebug(
+          $"Conditional {modGuid} found. {targetClass} will now run");
+        var conditionalClass =
+          Activator.CreateInstance(_parentType) as IModIntegrationApi;
+        conditionalClass?.RunIntegration();
+        return true;
+      }
+
+      else
+      {
+        LoggerProvider.LogDebug(
+          $"Conditional {modGuid} not found. Exiting");
+        return false;
+      }
     }
   }
 }
-
-// private void ImportClass()
-// {
-//   // Assuming ParentClass is in the same namespace, you can instantiate or use it here
-//   var parentInstance = Activator.CreateInstance(_parentType);
-//   // Perform operations with parentInstance
-// }
-//
-// }

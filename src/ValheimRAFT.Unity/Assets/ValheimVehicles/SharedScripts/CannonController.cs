@@ -16,7 +16,6 @@ using JetBrains.Annotations;
 using UnityEngine;
 using ValheimVehicles.SharedScripts.Structs;
 using ValheimVehicles.SharedScripts.UI;
-using Zolantris.Shared;
 
 // assignments
 using Random = UnityEngine.Random;

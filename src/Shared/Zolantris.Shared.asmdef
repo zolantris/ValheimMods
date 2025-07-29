@@ -1,15 +1,15 @@
 {
-    "name": "Eldritch.Core",
-    "rootNamespace": "Eldritch.Core",
+    "name": "Zolantris.Shared",
+    "rootNamespace": "Zolantris.Shared",
     "references": [],
     "includePlatforms": [],
     "excludePlatforms": [],
-    "allowUnsafeCode": false,
-    "overrideReferences": false,
+    "allowUnsafeCode": true,
+    "overrideReferences": true,
     "precompiledReferences": [
-        "Eldritch.Core.dll"
+        "Shared.dll"
     ],
-    "autoReferenced": true,
+    "autoReferenced": false,
     "defineConstraints": [],
     "versionDefines": [],
     "noEngineReferences": false

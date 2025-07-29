@@ -1,8 +1,6 @@
 ﻿// ReSharper disable ArrangeNamespaceBody
 // ReSharper disable NamespaceStyle
 
-
-using Zolantris.Shared;
 #if !UNITY_2022
 using System;
 using System.Collections.Generic;

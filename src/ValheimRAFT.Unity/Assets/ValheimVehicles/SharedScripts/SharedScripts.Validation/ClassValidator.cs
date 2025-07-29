@@ -7,7 +7,6 @@ using System;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
-using Zolantris.Shared;
 
 #endregion
 

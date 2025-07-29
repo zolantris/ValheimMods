@@ -1,9 +1,6 @@
 // ReSharper disable ArrangeNamespaceBody
 // ReSharper disable NamespaceStyle
 
-
-using Zolantris.Shared;
-
 #region
 
 using System.Collections;

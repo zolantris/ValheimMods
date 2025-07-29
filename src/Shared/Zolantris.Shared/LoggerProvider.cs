@@ -159,7 +159,7 @@
                 break;
               case LogLevel.Debug:
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
-            Debug.Log("[DEBUG] " + message);
+            UnityEngine.Debug.Log("[DEBUG] " + message);
 #endif
                 break;
               default:
