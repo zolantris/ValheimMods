@@ -1321,7 +1321,7 @@
   Any vehicle can be configured directly via config menu.
 - Default Value: 0.65
 
-### flightDamping_3.6.5
+### flightDamping_3.6.6
 
 - Description: Controls how much the water pushes the boat upwards directly.
   This value may affect angular damping too. Recommended to keep the original
@@ -1329,13 +1329,13 @@
   will add more jitter.
 - Default Value: 1
 
-### flightSidewaysDamping_3.6.5
+### flightSidewaysDamping_3.6.6
 
 - Description: Controls how much the water pushes the boat sideways based on
   wind direction and velocity.
 - Default Value: 2
 
-### flightAngularDamping_3.6.5
+### flightAngularDamping_3.6.6
 
 - Description: Controls how much the water pushes the boat from a vertical angle
   based on water and velocity. Lower values will cause more rocking and allow
@@ -1369,21 +1369,21 @@
   turning.
 - Default Value: 1.2
 
-### force_3.6.5
+### force_3.6.6
 
 - Description: EXPERIMENTAL_FORCE. Lower values will not allow the vehicle to
   balance fast when tilted. Lower values can reduce bobbing, but must be below
   the forceDistance value.
 - Default Value: 2
 
-### forceDistance_3.6.5
+### forceDistance_3.6.6
 
 - Description: EXPERIMENTAL_FORCE_DISTANCE should always be above the value of
   force. Otherwise bobbing will occur. Lower values will not allow the vehicle
   to balance fast when tilted
 - Default Value: 10
 
-### backwardForce_3.6.5
+### backwardForce_3.6.6
 
 - Description: EXPERIMENTAL_BackwardFORCE
 - Default Value: 1
@@ -1394,7 +1394,7 @@
   when turning due to water pushing against it
 - Default Value: 1
 
-### waterDamping_3.6.5
+### waterDamping_3.6.6
 
 - Description: Controls how much the water pushes the boat upwards directly.
   This value may affect angular damping too. Recommended to keep the original
@@ -1402,13 +1402,13 @@
   will add more jitter.
 - Default Value: 1
 
-### waterSidewaysDamping_3.6.5
+### waterSidewaysDamping_3.6.6
 
 - Description: Controls how much the water pushes the boat sideways based on
   wind direction and velocity.
 - Default Value: 2
 
-### waterAngularDamping_3.6.5
+### waterAngularDamping_3.6.6
 
 - Description: Controls how much the water pushes the boat from a vertical angle
   based on water and velocity. Lower values will cause more rocking and allow
@@ -1435,7 +1435,7 @@
   turning.
 - Default Value: 0.8
 
-### submersibleDamping_3.6.5
+### submersibleDamping_3.6.6
 
 - Description: Controls how much the water pushes the boat upwards directly.
   This value may affect angular damping too. Recommended to keep the original
@@ -1443,13 +1443,13 @@
   will add more jitter.
 - Default Value: 1
 
-### submersibleSidewaysDamping_3.6.5
+### submersibleSidewaysDamping_3.6.6
 
 - Description: Controls how much the water pushes the boat sideways based on
   wind direction and velocity.
 - Default Value: 2
 
-### submersibleAngularDamping_3.6.5
+### submersibleAngularDamping_3.6.6
 
 - Description: Controls how much the water pushes the boat from a vertical angle
   based on water and velocity. Lower values will cause more rocking and allow
