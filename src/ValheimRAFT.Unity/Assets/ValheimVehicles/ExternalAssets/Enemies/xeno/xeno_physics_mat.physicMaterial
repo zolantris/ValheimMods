@@ -8,7 +8,7 @@ PhysicMaterial:
   m_PrefabAsset: {fileID: 0}
   m_Name: xeno_physics_mat
   dynamicFriction: 0.6
-  staticFriction: 0.9
+  staticFriction: 1
   bounciness: 0
   frictionCombine: 0
   bounceCombine: 0

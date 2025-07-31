@@ -4,6 +4,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using JetBrains.Annotations;
 using Unity.VisualScripting;
 using UnityEngine;
@@ -21,6 +22,8 @@ namespace ValheimVehicles.SharedScripts
         public static readonly HashSet<XenoDroneAI> Instances = new();
 
         public static Quaternion SleepNeckZRotation = Quaternion.Euler(0, 0, 80f);
+
+        public static readonly float IdleThresholdTime = 0.0001f;
         [Header("Movement Tuning")]
         public float moveSpeed = 1f;                // Normal approach speed
         public float closeMoveSpeed = 0.3f;         // Slower speed near target
@@ -124,26 +127,14 @@ namespace ValheimVehicles.SharedScripts
             health = maxHealth;
             // find these easily with Gameobject -> Copy FullTransformPath from root.
             // You may need to adjust these paths to match your actual bone names/hierarchy
-            xenoAnimatorRoot = transform.Find("xenomorph");
-            xenoRoot = xenoAnimatorRoot.Find("alien_xenos_drone_SK_Xenos_Drone_skeleton/XenosBiped_TrajectorySHJnt/XenosBiped_ROOTSHJnt");
-            spine01 = xenoRoot.Find("XenosBiped_Spine_01SHJnt");
-            spine02 = spine01.Find("XenosBiped_Spine_02SHJnt");
-            spine03 = spine02.Find("XenosBiped_Spine_03SHJnt");
-            spineTop = spine03.Find("XenosBiped_Spine_TopSHJnt");
-            neckUpDown = spineTop.Find("XenosBiped_Neck_01SHJnt");
-            neckPivot = neckUpDown.Find("XenosBiped_Neck_TopSHJnt");
+
+
+            BindUnOptimizedRoots();
             
-            leftHip = xenoRoot.Find("XenosBiped_l_Leg_HipSHJnt");
-            rightHip = xenoRoot.Find("XenosBiped_r_Leg_HipSHJnt");
-            
-            leftArm = spine03.Find("XenosBiped_l_Arm_ClavicleSHJnt/XenosBiped_l_Arm_ShoulderSHJnt");
-            rightArm = spine03.Find("XenosBiped_r_Arm_ClavicleSHJnt/XenosBiped_r_Arm_ShoulderSHJnt");
-            
-            tailRoot = xenoRoot.Find("XenosBiped_TailRoot_SHJnt");
             _animator = xenoAnimatorRoot.GetComponent<Animator>();
             _rb = GetComponent<Rigidbody>();
-            _rb.maxLinearVelocity = 5f;
-            _rb.maxAngularVelocity = 5f;
+            _rb.maxLinearVelocity = 15f;
+            _rb.maxAngularVelocity = 1f;
 
             BloodEffects = GetComponentInChildren<ParticleSystem>();
 
@@ -219,7 +210,7 @@ namespace ValheimVehicles.SharedScripts
                 // neckUpDown.localRotation = Quaternion.identity;
                 // spineTop.localRotation = Quaternion.identity;
                 // neckPivot.localRotation = Quaternion.identity;
-            if (IsAsleep())
+            if (IsSleeping())
             {
                 SleepingCustomAnimations();
             }
@@ -305,6 +296,42 @@ namespace ValheimVehicles.SharedScripts
             ApplyDamage(other);
         }
 
+        public void BindOptimizedRoots()
+        {
+            xenoAnimatorRoot = transform.Find("model");
+            xenoRoot = xenoAnimatorRoot;
+            spine01 = xenoRoot.Find("XenosBiped_Spine_01SHJnt");
+            spine02 = xenoRoot.Find("XenosBiped_Spine_02SHJnt");
+            spine03 = xenoRoot.Find("XenosBiped_Spine_03SHJnt");
+            spineTop = xenoRoot.Find("XenosBiped_Spine_TopSHJnt");
+            neckUpDown = xenoRoot.Find("XenosBiped_Neck_01SHJnt");
+            neckPivot = xenoRoot.Find("XenosBiped_Neck_TopSHJnt");
+            
+            tailRoot = xenoRoot.Find("XenosBiped_TailRoot_SHJnt");
+            
+            leftArm = xenoRoot.Find("XenosBiped_l_Arm_ShoulderSHJnt");
+            rightArm = xenoRoot.Find("XenosBiped_r_Arm_ShoulderSHJnt");
+        }
+
+        public void BindUnOptimizedRoots()
+        {
+            xenoAnimatorRoot = transform.Find("model");
+            xenoRoot = xenoAnimatorRoot.Find("alien_xenos_drone_SK_Xenos_Drone_skeleton/XenosBiped_TrajectorySHJnt/XenosBiped_ROOTSHJnt");
+            spine01 = xenoRoot.Find("XenosBiped_Spine_01SHJnt");
+            spine02 = spine01.Find("XenosBiped_Spine_02SHJnt");
+            spine03 = spine02.Find("XenosBiped_Spine_03SHJnt");
+            spineTop = spine03.Find("XenosBiped_Spine_TopSHJnt");
+            neckUpDown = spineTop.Find("XenosBiped_Neck_01SHJnt");
+            neckPivot = neckUpDown.Find("XenosBiped_Neck_TopSHJnt");
+            
+            leftHip = xenoRoot.Find("XenosBiped_l_Leg_HipSHJnt");
+            rightHip = xenoRoot.Find("XenosBiped_r_Leg_HipSHJnt");
+            
+            tailRoot = xenoRoot.Find("XenosBiped_TailRoot_SHJnt");
+            leftArm = spine03.Find("XenosBiped_l_Arm_ClavicleSHJnt/XenosBiped_l_Arm_ShoulderSHJnt");
+            rightArm = spine03.Find("XenosBiped_r_Arm_ClavicleSHJnt/XenosBiped_r_Arm_ShoulderSHJnt");
+        }
+
         public void PointHeadTowardTarget()
         {
             if (!PrimaryTarget) return;
@@ -347,8 +374,10 @@ namespace ValheimVehicles.SharedScripts
                 lastSleepMoveUpdate = Time.time + 10f; 
             }
             
-            rightArm.localRotation = Quaternion.Lerp(rightArm.localRotation, SleepLeftArmRotation, Time.deltaTime * 30f);
-            leftArm.localRotation = Quaternion.Lerp(leftArm.localRotation, SleepLeftArmRotation, Time.deltaTime * 30f);
+            LoggerProvider.LogDebugDebounced("SleepingCustomAnimations");
+            
+            // rightArm.localRotation = Quaternion.Lerp(rightArm.localRotation, SleepLeftArmRotation, Time.deltaTime * 30f);
+            // leftArm.localRotation = Quaternion.Lerp(leftArm.localRotation, SleepLeftArmRotation, Time.deltaTime * 30f);
 
             Vector3 currentEuler = neckPivot.localEulerAngles;
 
@@ -365,9 +394,62 @@ namespace ValheimVehicles.SharedScripts
             neckPivot.localEulerAngles = currentEuler;
         }
 
+        public IEnumerator SleepingCustomAnimationsRoutine()
+        {
+            var timer = Stopwatch.StartNew();
+            while (timer.ElapsedMilliseconds < 50000)
+            {
+                if (timer.ElapsedMilliseconds > 2000)
+                {
+                    _animator.enabled = false;
+                }
+                else
+                {
+                    yield return null;
+                    continue;
+                }
+                
+                // zero out the other spine values.
+                spineTop.localRotation = Quaternion.Lerp(spineTop.localRotation, Quaternion.identity, Time.deltaTime * 30f);
+                spine03.localRotation = Quaternion.Lerp(spine03.localRotation, Quaternion.identity, Time.deltaTime * 30f);
+                neckUpDown.localRotation = Quaternion.Lerp(neckUpDown.localRotation, Quaternion.identity, Time.deltaTime * 30f);
+                
+                if (lastSleepMoveUpdate < Time.time)
+                {
+                    var wasPositive = sleepMoveUpdateTilt > 0;
+                    var baseChange = wasPositive ? -2f : 2f;
+                    sleepMoveUpdateTilt = baseChange * 10f + Random.Range(-1f, 1f) * 5f;
+                    lastSleepMoveUpdate = Time.time + 3f * Random.Range(-1f, 1f); 
+                }
+                
+                // rightArm.localRotation = Quaternion.Lerp(rightArm.localRotation, SleepLeftArmRotation, Time.deltaTime * 30f);
+                // leftArm.localRotation = Quaternion.Lerp(leftArm.localRotation, SleepLeftArmRotation, Time.deltaTime * 30f);
+
+                Vector3 currentEuler = neckPivot.localEulerAngles;
+
+// Normalize angles to avoid 360 wrap issues
+                if (currentEuler.y > 180f) currentEuler.y -= 360f;
+                if (currentEuler.z > 180f) currentEuler.z -= 360f;
+
+// Smoothly move Y toward tilt
+                currentEuler.y = Mathf.MoveTowards(currentEuler.y, sleepMoveUpdateTilt, Time.deltaTime * 30f);
+
+// Smoothly move Z toward sleep pose (90°)
+                currentEuler.z = Mathf.MoveTowards(currentEuler.z, 90f, Time.deltaTime * 60f);
+
+                neckPivot.localEulerAngles = currentEuler;
+                
+                yield return null;
+            }
+            
+            StopSleeping();
+        }
+
         public void ApplyDamage(Collider other)
         {
             // BloodEffects.transform.position = ;
+            // var closestPoint = other.ClosestPoint(transform.position);
+            // BloodEffects.transform.position = closestPoint;
             BloodEffects.Play();
             canPlayEffectOnFrame = false;
             var randomHit = Random.Range(2f, 10f);
@@ -487,7 +569,7 @@ namespace ValheimVehicles.SharedScripts
 
             // 7. Update blend tree
             float normalized = Mathf.InverseLerp(0f, 8f, _rb.velocity.magnitude);
-            _animator.SetFloat(XenoParams.MoveSpeed, normalized < 0.001f ? -1f : normalized);
+            _animator.SetFloat(XenoParams.MoveSpeed, normalized < IdleThresholdTime ? -1f : normalized);
         }
 
         private bool IsGroundBelow(Vector3 position, float maxDrop)
@@ -620,7 +702,7 @@ namespace ValheimVehicles.SharedScripts
             transform.rotation = Quaternion.Slerp(transform.rotation, targetRot, Mathf.Clamp01(turn));
 
             float normalized = Mathf.InverseLerp(0f, 8f, _rb.velocity.magnitude);
-            _animator.SetFloat(XenoParams.MoveSpeed, normalized < 0.001f ? -1f : normalized);
+            _animator.SetFloat(XenoParams.MoveSpeed, normalized < IdleThresholdTime ? -1f : normalized);
         }
 
         public void Flee()
@@ -662,11 +744,6 @@ namespace ValheimVehicles.SharedScripts
             {
                 _rb.isKinematic = true;
             }));
-        }
-
-        public bool IsAsleep()
-        {
-            return CurrentState == XenoAIState.Sleeping;
         }
 
         public bool IsDead()
@@ -731,19 +808,26 @@ namespace ValheimVehicles.SharedScripts
                 _animationCompletionHandler.Stop();
             }
             _rb.isKinematic = true;
-            _animationCompletionHandler.Start(WaitForAnimationToEnd("sleep", 2, () =>
-            {
-                // _rb.isKinematic = true;
-                ActivateCamouflage();
-                _animator.enabled = false;
-                _rb.isKinematic = true;
-                canSleepAnimate = true;
-            }));
+            // _animator.enabled = false;
+            // _rb.isKinematic = true;
+            canSleepAnimate = false;
+            
+            _animationCompletionHandler.Start(SleepingCustomAnimationsRoutine());
+            // _animationCompletionHandler.Start(WaitForAnimationToEnd("sleep", 2, () =>
+            // {
+            //     // _rb.isKinematic = true;
+            //     ActivateCamouflage();
+            //     _animator.enabled = false;
+            //     _rb.isKinematic = true;
+            //     canSleepAnimate = true;
+            // }));
         }
 
         public void StopSleeping()
         {
             _rb.isKinematic = false;
+            _animator.enabled = true;
+            
             foreach (var activeCollider in attackColliders)
             {
                 activeCollider.enabled = false;
@@ -880,7 +964,7 @@ namespace ValheimVehicles.SharedScripts
                 var isInAttackRange = DeltaPrimaryTarget < closeRange;
                 if (isInAttackRange)
                 {
-                    MoveTowardsTarget();
+                    // MoveTowardsTarget();
                     Start_Attack();
                 }
                 
@@ -924,7 +1008,7 @@ namespace ValheimVehicles.SharedScripts
             _rb.AddForce(transform.forward * moveLerpVel, ForceMode.Acceleration);
 
             float normalized = Mathf.InverseLerp(0f, 8f, _rb.velocity.magnitude);
-            _animator.SetFloat(XenoParams.MoveSpeed, normalized < 0.001f ? -1f : normalized);
+            _animator.SetFloat(XenoParams.MoveSpeed, normalized < IdleThresholdTime ? -1f : normalized);
         }
 
         private void RotateTowardsTarget(float customTurnSpeed)
@@ -1000,7 +1084,7 @@ namespace ValheimVehicles.SharedScripts
                 var capsule = bone.gameObject.AddComponent<CapsuleCollider>();
                 allColliders.Add(capsule);
                 // Adjust collider size/orientation as needed for your model
-                capsule.radius = 0.05f;
+                capsule.radius = 0.5f;
                 capsule.height = 0.2f;
                 capsule.direction = 2; // 0=X, 1=Y, 2=Z
             }

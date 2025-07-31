@@ -1,16 +1,20 @@
 {
-  "name": "Zolantris.Shared",
-  "rootNamespace": "Zolantris.Shared",
-  "references": [],
-  "includePlatforms": [],
-  "excludePlatforms": [],
-  "allowUnsafeCode": true,
-  "overrideReferences": true,
-  "precompiledReferences": [
-    "Zolantris.Shared.dll"
-  ],
-  "autoReferenced": false,
-  "defineConstraints": [],
-  "versionDefines": [],
-  "noEngineReferences": false
+    "name": "Zolantris.Shared",
+    "rootNamespace": "Zolantris.Shared",
+    "references": [
+        "GUID:f0e515f624256bf43aac308ee1ba1a2c"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": true,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "Zolantris.Shared.dll",
+        "0Harmony.dll",
+        "BepInEx.dll"
+    ],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
 }

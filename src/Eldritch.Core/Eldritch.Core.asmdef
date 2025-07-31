@@ -6,9 +6,6 @@
     "excludePlatforms": [],
     "allowUnsafeCode": false,
     "overrideReferences": false,
-    "precompiledReferences": [
-        "Eldritch.Core.dll"
-    ],
     "autoReferenced": true,
     "defineConstraints": [],
     "versionDefines": [],
