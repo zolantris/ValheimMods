@@ -53,8 +53,8 @@
     <Target KeepDuplicateOutputs="false" Name="Generate_Mod_Archive" AfterTargets="RunPostInstaller" Condition=" '$(Configuration)|$(Platform)' == 'ReleaseBETA Archive|AnyCPU' or  '$(Configuration)|$(Platform)' == 'Release Archive|AnyCPU' ">
         <PropertyGroup Label="Shared Release Properties">
             <ReleaseName>ValheimRAFT</ReleaseName>
-            <ApplicationVersion>3.6.4</ApplicationVersion>
-            <ReleaseVersion>3.6.4</ReleaseVersion>
+            <ApplicationVersion>3.6.5</ApplicationVersion>
+            <ReleaseVersion>3.6.5</ReleaseVersion>
             <RepoDir>$(SolutionDir)src\ValheimRAFT\</RepoDir>
             <ThunderStoreName>Thunderstore</ThunderStoreName>
             <TmpDir>$(ModOutputDir)tmp\</TmpDir>

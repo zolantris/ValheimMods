@@ -60,7 +60,12 @@ public class CannonPrefabConfig : BepInExBaseConfig<CannonPrefabConfig>
   public static void SyncHandheldItemData(ItemDrop.ItemData? itemData)
   {
     if (itemData == null) return;
+    if (itemData.m_shared == null) return;
     if (itemData.m_shared.m_name != PrefabItemNameToken.CannonHandHeldName) return;
+    if (itemData.m_shared.m_attack == null)
+    {
+      itemData.m_shared.m_attack = new Attack();
+    }
     itemData.m_shared.m_attack.m_reloadTime = CannonHandHeld_ReloadTime.Value;
     itemData.m_shared.m_attack.m_attackStamina = CannonHandHeld_AttackStamina.Value;
     itemData.m_shared.m_attack.m_reloadStaminaDrain = CannonHandHeld_ReloadStamina.Value;
@@ -71,7 +76,7 @@ public class CannonPrefabConfig : BepInExBaseConfig<CannonPrefabConfig>
     if (PrefabManager.Instance != null && ItemManager.Instance != null)
     {
       var cannonHandheld = ItemManager.Instance.GetItem(PrefabNames.CannonHandHeldItem);
-      if (cannonHandheld != null)
+      if (cannonHandheld != null && cannonHandheld.ItemDrop != null && cannonHandheld.ItemDrop.m_itemData != null)
       {
         SyncHandheldItemData(cannonHandheld.ItemDrop.m_itemData);
       }
