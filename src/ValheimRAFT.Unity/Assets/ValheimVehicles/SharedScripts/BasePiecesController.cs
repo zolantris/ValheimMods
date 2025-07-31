@@ -268,6 +268,7 @@
         if (!hasSucceeded)
         {
           RequestBoundsRebuild();
+          return;
         }
 
         var items = m_prefabPieceDataItems.Keys.Where(x => x != null).ToArray();

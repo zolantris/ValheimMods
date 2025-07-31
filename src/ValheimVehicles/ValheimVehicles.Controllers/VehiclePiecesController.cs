@@ -189,43 +189,6 @@
 
     public bool _isInvalid = true;
 
-    // public void RebuildConvexHull()
-    // {
-    //   if (BaseController == null || MovementController == null) return;
-    //   var vehicleMovementCollidersTransform =
-    //     BaseController.vehicleMovementCollidersTransform;
-    //   var nvChildGameObjects = m_nviewPieces.Select(x => x.gameObject)
-    //     .Where(x => !IsExcludedBoundsItem(x.gameObject.name)).ToList();
-    //   if (WaterConfig.HasUnderwaterHullBubbleEffect.Value)
-    //     // Makes it slightly larger extended out from the ship
-    //     convexHullComponent.previewScale = new Vector3(1.05f, 1.05f, 1.05f);
-    //
-    //   convexHullComponent
-    //     .GenerateMeshesFromChildColliders(
-    //       vehicleMovementCollidersTransform.gameObject, Vector3.zero,
-    //       PhysicsConfig.convexHullJoinDistanceThreshold.Value,
-    //       nvChildGameObjects, MovementController.DamageColliders);
-    //
-    //   vehicleCenter.transform.localPosition = convexHullComponent.GetConvexHullBounds(true).center;
-    //
-    //   // convexHullColliders.Clear();
-    //   // convexHullMeshColliders.Clear();
-    //   //
-    //   // convexHullMeshes.ForEach((x) =>
-    //   // {
-    //   //   var meshCollider = x.GetComponent<MeshCollider>();
-    //   //   var collider = x.GetComponent<Collider>();
-    //   //
-    //   //   if (meshCollider != null) convexHullMeshColliders.Add(meshCollider);
-    //   //   if (collider != null) convexHullColliders.Add(collider);
-    //   // });
-    //
-    //   // convexHullTriggerColliders = MovementController.DamageColliders
-    //   //   .GetComponentsInChildren<Collider>(true).ToList();
-    //   // convexHullTriggerMeshColliders = MovementController.DamageColliders
-    //   //   .GetComponentsInChildren<MeshCollider>(true).ToList();
-    // }
-
     public List<Collider> tempVehicleColliders = new();
     public List<Collider> tempPieceColliders = new();
 
