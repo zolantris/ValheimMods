@@ -890,15 +890,15 @@ Other methods removed after 2.5.0
 50% will be the very bottom of the vehicle's collider. This is just a default. Any vehicle can be configured directly via config menu.
 - Default Value: 0.65
 
-### flightDamping_3.6.4 
+### flightDamping_3.6.5 
 - Description: Controls how much the water pushes the boat upwards directly. This value may affect angular damping too. Recommended to keep the original value. But tweaking can remove or add additional jitter. Higher values likely will add more jitter.
 - Default Value: 1
 
-### flightSidewaysDamping_3.6.4 
+### flightSidewaysDamping_3.6.5 
 - Description: Controls how much the water pushes the boat sideways based on wind direction and velocity.
 - Default Value: 2
 
-### flightAngularDamping_3.6.4 
+### flightAngularDamping_3.6.5 
 - Description: Controls how much the water pushes the boat from a vertical angle based on water and velocity. Lower values will cause more rocking and allow better turn rates. Higher values will make the vehicle more stable, but less turning angle and possibly less realistic. If you get motion-sickness this can allow tweaking sway without disabling it all and also prevent rapid turning.
 - Default Value: 1
 
@@ -918,15 +918,15 @@ Other methods removed after 2.5.0
 - Description: Flight angular drag controls how much the vehicle slows down when turning.
 - Default Value: 1.2
 
-### force_3.6.4 
+### force_3.6.5 
 - Description: EXPERIMENTAL_FORCE. Lower values will not allow the vehicle to balance fast when tilted. Lower values can reduce bobbing, but must be below the forceDistance value.
 - Default Value: 2
 
-### forceDistance_3.6.4 
+### forceDistance_3.6.5 
 - Description: EXPERIMENTAL_FORCE_DISTANCE should always be above the value of force. Otherwise bobbing will occur. Lower values will not allow the vehicle to balance fast when tilted
 - Default Value: 10
 
-### backwardForce_3.6.4 
+### backwardForce_3.6.5 
 - Description: EXPERIMENTAL_BackwardFORCE
 - Default Value: 1
 
@@ -934,15 +934,15 @@ Other methods removed after 2.5.0
 - Description: Steer force controls how much the vehicle will resist steering when turning due to water pushing against it
 - Default Value: 1
 
-### waterDamping_3.6.4 
+### waterDamping_3.6.5 
 - Description: Controls how much the water pushes the boat upwards directly. This value may affect angular damping too. Recommended to keep the original value. But tweaking can remove or add additional jitter. Higher values likely will add more jitter.
 - Default Value: 1
 
-### waterSidewaysDamping_3.6.4 
+### waterSidewaysDamping_3.6.5 
 - Description: Controls how much the water pushes the boat sideways based on wind direction and velocity.
 - Default Value: 2
 
-### waterAngularDamping_3.6.4 
+### waterAngularDamping_3.6.5 
 - Description: Controls how much the water pushes the boat from a vertical angle based on water and velocity. Lower values will cause more rocking and allow better turn rates. Higher values will make the vehicle more stable, but less turning angle and possibly less realistic. If you get motion-sickness this can allow tweaking sway without disabling it all and also prevent rapid turning.
 - Default Value: 1
 
@@ -958,15 +958,15 @@ Other methods removed after 2.5.0
 - Description: rotation drag controls how much the vehicle slows down when turning.
 - Default Value: 0.8
 
-### submersibleDamping_3.6.4 
+### submersibleDamping_3.6.5 
 - Description: Controls how much the water pushes the boat upwards directly. This value may affect angular damping too. Recommended to keep the original value. But tweaking can remove or add additional jitter. Higher values likely will add more jitter.
 - Default Value: 1
 
-### submersibleSidewaysDamping_3.6.4 
+### submersibleSidewaysDamping_3.6.5 
 - Description: Controls how much the water pushes the boat sideways based on wind direction and velocity.
 - Default Value: 2
 
-### submersibleAngularDamping_3.6.4 
+### submersibleAngularDamping_3.6.5 
 - Description: Controls how much the water pushes the boat from a vertical angle based on water and velocity. Lower values will cause more rocking and allow better turn rates. Higher values will make the vehicle more stable, but less turning angle and possibly less realistic. If you get motion-sickness this can allow tweaking sway without disabling it all and also prevent rapid turning.
 - Default Value: 1
 

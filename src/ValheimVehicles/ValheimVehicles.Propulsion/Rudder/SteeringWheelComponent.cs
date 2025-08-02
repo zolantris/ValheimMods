@@ -303,7 +303,7 @@ public class SteeringWheelComponent : MonoBehaviour, IAnimatorHandler, Hoverable
   public bool Interact(Humanoid user, bool hold, bool alt)
   {
     if (!isActiveAndEnabled) return false;
-    if (ControllersInstance.MovementController == null || ControllersInstance.OnboardController == null) return false;
+    if (ControllersInstance == null || ControllersInstance.MovementController == null || ControllersInstance.OnboardController == null || ControllersInstance.PiecesController == null) return false;
 
     if (alt && !hold)
     {
@@ -328,17 +328,17 @@ public class SteeringWheelComponent : MonoBehaviour, IAnimatorHandler, Hoverable
     var player = user as Player;
 
     var playerOnShipViaShipInstance =
-      ControllersInstance.PiecesController
-        ?.GetComponentsInChildren<Player>() ?? null;
+      ControllersInstance.PiecesController?.GetComponentsInChildren<Player>();
     if (player != null)
-      ControllersInstance?.MovementController?.UpdatePlayerOnShip(player);
+      ControllersInstance.MovementController.UpdatePlayerOnShip(player);
 
     if (playerOnShipViaShipInstance?.Length == 0 ||
         playerOnShipViaShipInstance == null)
       playerOnShipViaShipInstance =
-        ControllersInstance?.OnboardController?.m_localPlayers.ToArray() ??
+        ControllersInstance.OnboardController.m_localPlayers.ToArray() ??
         null;
 
+    if (player == null || player.IsEncumbered()) return false;
     /*
      * <note /> This logic allows for the player to just look at the Raft and see if the player is a child within it.
      */
@@ -350,26 +350,23 @@ public class SteeringWheelComponent : MonoBehaviour, IAnimatorHandler, Hoverable
           $"Interact PlayerId {playerInstance.GetPlayerID()}, currentPlayerId: {player.GetPlayerID()}");
         if (playerInstance.GetPlayerID() != player.GetPlayerID()) continue;
         if (ControllersInstance == null || ControllersInstance.MovementController) continue;
-        ControllersInstance?.Manager?.MovementController?.SendRequestControl(
+        ControllersInstance.MovementController.SendRequestControl(
           playerInstance.GetPlayerID());
         return true;
       }
     }
 
-    if (player == null || player.IsEncumbered()) return false;
-
     var playerOnShip =
       VehicleControllersCompat.InitFromUnknown(player.GetStandingOnShip());
 
-    if (playerOnShip == null)
+    if (playerOnShip == null && !WaterZoneUtils.IsOnboard(player))
     {
       Logger.LogDebug("Player is not on Ship");
       return false;
     }
 
-    if (!ControllersInstance?.Manager?.MovementController) return false;
 
-    ControllersInstance.Manager.MovementController?.SendRequestControl(
+    ControllersInstance?.MovementController.SendRequestControl(
       player.GetPlayerID());
     return true;
   }
