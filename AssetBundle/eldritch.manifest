@@ -1,0 +1,61 @@
+ManifestFileVersion: 0
+CRC: 2203914416
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 9ddf0b9efcd48d1c10e4961c787e5448
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 295e82fa7576f495f95c3658e11569a4
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: 9ddf0b9efcd48d1c10e4961c787e5448
+HashAppended: 0
+ClassTypes:
+- Class: 1
+  Script: {instanceID: 0}
+- Class: 4
+  Script: {instanceID: 0}
+- Class: 21
+  Script: {instanceID: 0}
+- Class: 28
+  Script: {instanceID: 0}
+- Class: 43
+  Script: {instanceID: 0}
+- Class: 48
+  Script: {instanceID: 0}
+- Class: 54
+  Script: {instanceID: 0}
+- Class: 74
+  Script: {instanceID: 0}
+- Class: 90
+  Script: {instanceID: 0}
+- Class: 91
+  Script: {instanceID: 0}
+- Class: 95
+  Script: {instanceID: 0}
+- Class: 114
+  Script: {fileID: 11500000, guid: 05f7819b0da0d2f4ba6335a5bb19d929, type: 3}
+- Class: 114
+  Script: {fileID: 867332515, guid: 886b1d72cb70d864e88de6bf55c88afb, type: 3}
+- Class: 115
+  Script: {instanceID: 0}
+- Class: 134
+  Script: {instanceID: 0}
+- Class: 136
+  Script: {instanceID: 0}
+- Class: 137
+  Script: {instanceID: 0}
+- Class: 198
+  Script: {instanceID: 0}
+- Class: 199
+  Script: {instanceID: 0}
+- Class: 213
+  Script: {instanceID: 0}
+- Class: 687078895
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/Plugins/Eldritch.Core/Assets/AlienTest.prefab
+- Assets/Plugins/EldritchAssets/icons.spriteatlasv2
+Dependencies: []

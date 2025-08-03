@@ -1,4 +1,4 @@
-﻿<Project>
+﻿<Project Sdk="Microsoft.NET.Sdk">
     <Import Project="$(SolutionDir)build\base.props"/>
     <Import Project="$(SolutionDir)build\valheim.props"/>
 
@@ -12,7 +12,7 @@
     </PropertyGroup>
 
     <ItemGroup Label="Core Deps">
-        <ProjectReference Include="..\Shared\Shared.csproj"/>
-        <ProjectReference Include="..\Eldritch.Core\EldritchCore.csproj"/>
+        <ProjectReference Include="$(SolutionDir)src\Shared\Shared.csproj"/>
+        <ProjectReference Include="$(SolutionDir)src\Eldritch.Core\EldritchCore.csproj"/>
     </ItemGroup>
 </Project>

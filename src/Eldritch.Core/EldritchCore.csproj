@@ -2,13 +2,23 @@
     <Import Project="$(SolutionDir)build\base.props"/>
     <Import Project="$(SolutionDir)build\unity_libs_2022.props"/>
 
+    <!--  TODO this might have to be embedded in the integration package  -->
+    <ItemGroup Label="Assembly Assets">
+        <None Remove="$(SolutionDir)AssetBundle\eldritch"/>
+        <None Remove="$(SolutionDir)AssetBundle\eldritch.manifest"/>
+        <EmbeddedResource Include="$(SolutionDir)AssetBundle\eldritch" LogicalName="eldritch"/>
+        <EmbeddedResource Include="$(SolutionDir)AssetBundle\eldritch.manifest" LogicalName="eldritch.manifest"/>
+    </ItemGroup>
+
     <PropertyGroup>
         <AssemblyName>Eldritch.Core</AssemblyName>
         <RootNamespace>Eldritch.Core</RootNamespace>
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\Shared\Shared.csproj"/>
+        <ProjectReference Include="..\Shared\Shared.csproj">
+            <Private>False</Private>
+        </ProjectReference>
     </ItemGroup>
 
     <ItemGroup>

@@ -2,7 +2,6 @@
     <Import Project="$(SolutionDir)build\base.props"/>
     <Import Project="$(SolutionDir)build\unity_libs_2022.props"/>
     <Import Project="$(SolutionDir)build\bepinex_libs.props"/>
-
     <PropertyGroup>
         <AssemblyName>Zolantris.Shared</AssemblyName>
         <RootNamespace>Zolantris.Shared</RootNamespace>

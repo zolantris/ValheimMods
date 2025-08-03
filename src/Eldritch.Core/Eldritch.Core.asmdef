@@ -1,11 +1,14 @@
 {
     "name": "Eldritch.Core",
     "rootNamespace": "Eldritch.Core",
-    "references": [],
+    "references": [
+        "GUID:76e1dcaa849456440a1409bce5ddbdf7"
+    ],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
     "overrideReferences": false,
+    "precompiledReferences": [],
     "autoReferenced": true,
     "defineConstraints": [],
     "versionDefines": [],

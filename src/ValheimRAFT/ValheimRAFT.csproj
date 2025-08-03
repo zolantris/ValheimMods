@@ -31,21 +31,15 @@
         </AssemblyAttribute>
     </ItemGroup>
     <ItemGroup>
-        <None Remove="AssetBundle\AssetBundle"/>
-        <None Remove="AssetBundle\valheim-vehicles-shared"/>
-        <None Remove="AssetBundle\valheim-raft"/>
-        <None Remove="AssetBundle\valheim-vehicles"/>
-        <None Remove="AssetBundle\valheim-raft.manifest"/>
-        <None Remove="AssetBundle\valheim-vehicles.manifest"/>
-        <None Remove="AssetBundle\valheim-vehicles-shared.manifest"/>
-        <None Remove="AssetBundle\AssetBundle.manifest"/>
+        <None Remove="$(SolutionDir)AssetBundle\valheim-vehicles"/>
+        <None Remove="$(SolutionDir)AssetBundle\valheim-vehicles.manifest"/>
 
         <!--  TODO to embed assets, but this needs a refactor and inflates dll size, not worth adding now      -->
         <!--        <EmbeddedResource Include="Assets\**"/>-->
-        <EmbeddedResource Include="AssetBundle\AssetBundle" LogicalName="AssetBundle"/>
-        <EmbeddedResource Include="AssetBundle\AssetBundle.manifest" LogicalName="AssetBundle.manifest"/>
-        <EmbeddedResource Include="AssetBundle\valheim-vehicles" LogicalName="valheim-vehicles"/>
-        <EmbeddedResource Include="AssetBundle\valheim-vehicles.manifest" LogicalName="valheim-vehicles.manifest"/>
+        <!--        <EmbeddedResource Include="$(SolutionDir)AssetBundle\AssetBundle" LogicalName="AssetBundle"/>-->
+        <!--        <EmbeddedResource Include="$(SolutionDir)AssetBundle\AssetBundle.manifest" LogicalName="AssetBundle.manifest"/>-->
+        <EmbeddedResource Include="$(SolutionDir)AssetBundle\valheim-vehicles" LogicalName="valheim-vehicles"/>
+        <EmbeddedResource Include="$(SolutionDir)AssetBundle\valheim-vehicles.manifest" LogicalName="valheim-vehicles.manifest"/>
         <!--        TODO import assets this way-->
         <!--        <EmbeddedResources Include="Assets\**.png" /> -->
     </ItemGroup>
