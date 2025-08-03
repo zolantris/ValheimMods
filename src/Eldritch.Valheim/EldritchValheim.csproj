@@ -4,6 +4,7 @@
 
     <PropertyGroup>
         <RootNamespace>Eldritch.Valheim</RootNamespace>
+        <AssemblyName>Eldritch.Valheim</AssemblyName>
         <AssemblyType>Library</AssemblyType>
     </PropertyGroup>
 

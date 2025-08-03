@@ -42,6 +42,9 @@ public class EldritchValheimPlugin : BaseUnityPlugin
     var originalComponents = prefabAsset.GetComponents<Component>();
     var clonedPrefab = PrefabManager.Instance.CreateClonedPrefab(XenoAdultName, prefabAsset);
 
+    clonedPrefab.AddComponent<ZNetView>();
+    clonedPrefab.AddComponent<XenoDroneSpawnHandler>();
+
     var components = clonedPrefab.GetComponents<Component>();
     foreach (var component in components)
     {

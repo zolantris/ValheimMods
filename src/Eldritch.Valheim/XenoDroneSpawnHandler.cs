@@ -4,7 +4,7 @@ using Eldritch.Core;
 using ValheimVehicles.SharedScripts;
 namespace Eldritch.Valheim;
 
-public class XenoAIOnSpawn : MonoBehaviour
+public class XenoDroneSpawnHandler : MonoBehaviour
 {
   public XenoDroneAI droneAi;
   public bool HasRandomizedPackId = false;
