@@ -39,9 +39,72 @@ namespace Eldritch.Core
         public Vector3 currentWanderTarget;
         public bool HasRoamTarget => currentWanderTarget != Vector3.zero;
 
+        public bool IsGrounded => GroundContacts.Count > 0;
+        public Vector3 GroundPoint = Vector3.zero; 
+
         public void Awake()
         {
             if (!_rb) _rb = GetComponent<Rigidbody>();
+        }
+
+        public readonly HashSet<Collider> GroundContacts = new HashSet<Collider>();
+
+        public void GetGroundPoint()
+        {
+            if (!OwnerAI) return;
+            if (Physics.Raycast(OwnerAI.xenoRoot.position, -OwnerAI.xenoRoot.up, out RaycastHit hit, 40f,LayerHelpers.GroundLayers))
+            {
+                GroundPoint = hit.point;
+            }
+            else
+            {
+                GroundPoint = Vector3.negativeInfinity;
+            };
+        }
+       
+        public void OnTriggerEnter(Collider other)
+        {
+            if (other.gameObject.layer == LayerHelpers.TerrainLayer)
+            {
+                GroundContacts.Add(other);
+            }
+        }
+        public void OnTriggerExit(Collider other)
+        {
+            if (other.gameObject.layer == LayerHelpers.TerrainLayer)
+            {
+                GroundContacts.Remove(other);
+            }
+        }
+
+        [SerializeField] public float CounterGravity = 0.1f; 
+
+        public void FixedUpdate()
+        {
+            if (!OwnerAI) return;
+            var vel = _rb.velocity;
+            _rb.useGravity = !IsGrounded;
+
+            
+            GetGroundPoint();
+            
+            foreach (var animationFootCollider in OwnerAI.Animation.footColliders)
+            {
+                if (animationFootCollider.bounds.min.y < GroundPoint.y)
+                {
+                    vel.y = Mathf.Max(vel.y, GroundPoint.y - animationFootCollider.bounds.min.y, 0f);
+                }
+            }
+
+           
+            _rb.velocity = vel;
+            
+            // if (IsGrounded)
+            // {
+            //     // vel.y = Mathf.Abs(Physics.gravity.y);
+            //     vel.y = CounterGravity;
+            //     _rb.velocity = vel;
+            // }
         }
 
         // --- Core Movement ---

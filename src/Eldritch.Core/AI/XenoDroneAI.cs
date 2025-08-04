@@ -242,11 +242,6 @@ namespace Eldritch.Core
         {
             UpdateLastTouchGround(other.collider);
         }
-        
-        private void OnTriggerEnter(Collider other)
-        {
-            
-        }
 
         public bool IsGrounded()
         {

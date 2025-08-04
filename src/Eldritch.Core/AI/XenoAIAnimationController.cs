@@ -4,11 +4,12 @@ using System.Collections.Generic;
 using HarmonyLib;
 using UnityEngine;
 using Zolantris.Shared;
+using Zolantris.Shared.Interfaces;
 using Random = UnityEngine.Random;
 
 namespace Eldritch.Core
 {
-    public class XenoAIAnimationController : MonoBehaviour
+    public class XenoAIAnimationController : MonoBehaviour, IAnimatorIKRelayReceiver
     {
         [Header("Animator/Bones")]
         [SerializeField] private Animator _animator;
@@ -53,6 +54,7 @@ namespace Eldritch.Core
         public HashSet<Transform> tailJoints = new();
         public HashSet<Collider> allColliders = new();
         public HashSet<Collider> attackColliders = new();
+        public HashSet<Collider> footColliders = new();
 
         [Header("Animation Updaters")]
         private int _cachedAttackMode = 0;
@@ -68,6 +70,18 @@ namespace Eldritch.Core
         public string armAttackObjName = "xeno_arm_attack_collider";
         public string tailAttackObjName = "xeno_tail_attack_collider";
         private CoroutineHandle _sleepAnimationRoute;
+        
+        [SerializeField] private Vector3 _leftFootIKPos, _rightFootIKPos;
+        private Quaternion _leftFootIKRot, _rightFootIKRot;
+        private float _leftFootIKWeight = 1f, _rightFootIKWeight = 1f; // Usually always 1, or blend if needed
+
+        public LayerMask groundLayer;          // Assign in inspector or at runtime
+        public float footRaycastHeight = 0.5f; // Height above toe to start ray
+        public float footRaycastDistance = 1.5f;
+        public float footOffset = 0.01f;       // Offset so foot doesn’t clip ground
+
+        private AnimatorIKRelay ikRelay;
+        
         private void Awake()
         {
             InitCoroutineHandlers();
@@ -77,21 +91,79 @@ namespace Eldritch.Core
             
 
             BindUnOptimizedRoots();
+            SetupIKRelayReceiver();
 
             AddCapsuleCollidersToAllJoints();
             
             var preGeneratedColliders = GetComponentsInChildren<Collider>();
             
             AssignAttackColliders(preGeneratedColliders);
-
+            AssignFootColliders(preGeneratedColliders);
+            
             CollectAllBodyJoints();
             RecursiveCollectAllJoints(xenoRoot);
+        }
+
+        public void SetupIKRelayReceiver()
+        {
+            ikRelay = xenoAnimatorRoot.gameObject.AddComponent<AnimatorIKRelay>();
+            ikRelay.SetReceiver(this);
         }
 
         private void OnEnable()
         {
             InitCoroutineHandlers();
         }
+        
+        private void LateUpdate()
+        {
+            UpdateFootIK();
+            // ...any other animation/pose code
+        }
+
+        public void OnAnimatorIKRelay(int layerIndex)
+        {
+            UpdateFootIK();
+            LoggerProvider.LogDebugDebounced("called IK event");
+            _animator.SetIKPositionWeight(AvatarIKGoal.LeftFoot, _leftFootIKWeight);
+            _animator.SetIKPosition(AvatarIKGoal.LeftFoot, _leftFootIKPos);
+            _animator.SetIKRotationWeight(AvatarIKGoal.LeftFoot, _leftFootIKWeight);
+            _animator.SetIKRotation(AvatarIKGoal.LeftFoot, _leftFootIKRot);
+
+            _animator.SetIKPositionWeight(AvatarIKGoal.RightFoot, _rightFootIKWeight);
+            _animator.SetIKPosition(AvatarIKGoal.RightFoot, _rightFootIKPos);
+            _animator.SetIKRotationWeight(AvatarIKGoal.RightFoot, _rightFootIKWeight);
+            _animator.SetIKRotation(AvatarIKGoal.RightFoot, _rightFootIKRot);
+        }
+
+        private void UpdateFootIK()
+        {
+            // Use your toe or ankle bones (assign in inspector or bind in code)
+            var leftFootT = leftToeTransform;
+            var rightFootT = rightToeTransform;
+
+            _leftFootIKPos = GetFootIKPosition(leftFootT.position);
+            _rightFootIKPos = GetFootIKPosition(rightFootT.position);
+
+            _leftFootIKRot = GetFootIKRotation(leftFootT, _leftFootIKPos);
+            _rightFootIKRot = GetFootIKRotation(rightFootT, _rightFootIKPos);
+        }
+
+        private Vector3 GetFootIKPosition(Vector3 footWorldPos)
+        {
+            Vector3 rayOrigin = footWorldPos + Vector3.up * footRaycastHeight;
+            if (Physics.Raycast(rayOrigin, Vector3.down, out var hit, footRaycastDistance + footRaycastHeight, groundLayer))
+                return hit.point + Vector3.up * footOffset;
+            return footWorldPos;
+        }
+
+        private Quaternion GetFootIKRotation(Transform foot, Vector3 targetPos)
+        {
+            if (Physics.Raycast(targetPos + Vector3.up * 0.1f, Vector3.down, out var hit, 0.3f, groundLayer))
+                return Quaternion.FromToRotation(Vector3.up, hit.normal) * foot.rotation;
+            return foot.rotation;
+        }
+
 
         private void InitCoroutineHandlers()
         {
@@ -99,6 +171,17 @@ namespace Eldritch.Core
         }
 
         #region Colliders
+        
+        public void AssignFootColliders(IEnumerable<Collider> colliders)
+        {
+            foreach (var col in colliders)
+            {
+                if (col.name.StartsWith("foot_pad_collider"))
+                {
+                    footColliders.Add(col);
+                }
+            }
+        }
 
         public void AssignAttackColliders(IEnumerable<Collider> colliders)
         {

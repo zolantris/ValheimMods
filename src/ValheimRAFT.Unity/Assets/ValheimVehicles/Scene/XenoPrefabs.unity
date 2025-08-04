@@ -774,6 +774,7 @@ MonoBehaviour:
   wanderCooldown: 5
   wanderMinDistance: 3
   currentWanderTarget: {x: 0, y: 0, z: 0}
+  CounterGravity: 1
 --- !u!114 &1576106300
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -787,6 +788,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _animator: {fileID: 0}
+  _ai: {fileID: 0}
   _bloodEffects: {fileID: 0}
   _skinRenderer: {fileID: 0}
   _transparentMaterial: {fileID: 0}
@@ -813,9 +815,21 @@ MonoBehaviour:
   leftToeTransform: {fileID: 0}
   rightToeTransform: {fileID: 0}
   UpdatePauseTime: 2
-  nextUpdateTime: 0
+  attack_nextUpdateTime: 0
+  nextUpdateInterval: 0.25
+  moveSpeed_nextUpdateTime: 0
+  SleepMoveUpdateTilt: 0
+  LastSleepMoveUpdate: 0
   armAttackObjName: xeno_arm_attack_collider
   tailAttackObjName: xeno_tail_attack_collider
+  _leftFootIKPos: {x: 0, y: 0, z: 0}
+  _rightFootIKPos: {x: 0, y: 0, z: 0}
+  groundLayer:
+    serializedVersion: 2
+    m_Bits: 0
+  footRaycastHeight: 0.5
+  footRaycastDistance: 1.5
+  footOffset: 0.01
 --- !u!114 &1576106304
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -830,7 +844,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   moveSpeed: 5
   jumpForce: 7
-  turnSpeed: 10
+  turnSpeed: 3
 --- !u!1 &1669353209
 GameObject:
   m_ObjectHideFlags: 0
@@ -1053,9 +1067,41 @@ PrefabInstance:
       propertyPath: m_CullingMode
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 1182357079615145994, guid: a417d5d793a34c14ba1c3b0db2707da5, type: 3}
+      propertyPath: m_WarningMessage
+      value: "\nBinding warning: Some generic clip(s) animate transforms that are
+        already bound by a Humanoid avatar. These transforms can only be changed
+        by Humanoid clips.\n\tTransform 'XenosBiped_l_Thumb_01_01SHJnt'\n\tTransform
+        'XenosBiped_Spine_TopSHJnt'\n\tTransform 'XenosBiped_l_Finger_03_01SHJnt'\n\tTransform
+        'XenosBiped_l_Finger_01_02SHJnt'\n\tTransform 'XenosBiped_l_Finger_03_03SHJnt'\n\tTransform
+        'XenosBiped_l_Arm_WristSHJnt'\n\tTransform 'XenosBiped_l_Arm_ClavicleSHJnt'\n\tTransform
+        'XenosBiped_l_Finger_02_02SHJnt'\n\tTransform 'XenosBiped_l_Finger_02_01SHJnt'\n\tTransform
+        'XenosBiped_l_Finger_01_01SHJnt'\n\tand more ...\n\tFrom animation clip 'attack_tail'\n\tFrom
+        animation clip 'attack_arms'"
+      objectReference: {fileID: 0}
+    - target: {fileID: 1182357079615145994, guid: a417d5d793a34c14ba1c3b0db2707da5, type: 3}
+      propertyPath: m_ApplyRootMotion
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 1804562743132318347, guid: a417d5d793a34c14ba1c3b0db2707da5, type: 3}
       propertyPath: m_Name
       value: xeno_tail_attack_collider
+      objectReference: {fileID: 0}
+    - target: {fileID: 2250810803428099457, guid: a417d5d793a34c14ba1c3b0db2707da5, type: 3}
+      propertyPath: m_IsTrigger
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2250810803428099457, guid: a417d5d793a34c14ba1c3b0db2707da5, type: 3}
+      propertyPath: m_IncludeLayers.m_Bits
+      value: 1052161
+      objectReference: {fileID: 0}
+    - target: {fileID: 2764922720299662572, guid: a417d5d793a34c14ba1c3b0db2707da5, type: 3}
+      propertyPath: m_IsTrigger
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2764922720299662572, guid: a417d5d793a34c14ba1c3b0db2707da5, type: 3}
+      propertyPath: m_IncludeLayers.m_Bits
+      value: 1052161
       objectReference: {fileID: 0}
     - target: {fileID: 4549294898845741948, guid: a417d5d793a34c14ba1c3b0db2707da5, type: 3}
       propertyPath: m_Name
@@ -1067,11 +1113,11 @@ PrefabInstance:
       objectReference: {fileID: 694000013}
     - target: {fileID: 5059553072509418606, guid: a417d5d793a34c14ba1c3b0db2707da5, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -0.8065109
+      value: -4.48
       objectReference: {fileID: 0}
     - target: {fileID: 5059553072509418606, guid: a417d5d793a34c14ba1c3b0db2707da5, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0.02
+      value: 4
       objectReference: {fileID: 0}
     - target: {fileID: 5059553072509418606, guid: a417d5d793a34c14ba1c3b0db2707da5, type: 3}
       propertyPath: m_LocalPosition.z
@@ -1105,6 +1151,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 5082522922348499568, guid: a417d5d793a34c14ba1c3b0db2707da5, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -1.31
+      objectReference: {fileID: 0}
     - target: {fileID: 5260315706940403340, guid: a417d5d793a34c14ba1c3b0db2707da5, type: 3}
       propertyPath: m_Name
       value: xeno_arm_attack_collider
@@ -1115,7 +1165,9 @@ PrefabInstance:
       objectReference: {fileID: 0}
     m_RemovedComponents:
     - {fileID: 1042631527070573210, guid: a417d5d793a34c14ba1c3b0db2707da5, type: 3}
-    m_RemovedGameObjects: []
+    m_RemovedGameObjects:
+    - {fileID: 4762239242381777692, guid: a417d5d793a34c14ba1c3b0db2707da5, type: 3}
+    - {fileID: 7402637483451227765, guid: a417d5d793a34c14ba1c3b0db2707da5, type: 3}
     m_AddedGameObjects: []
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 8190138394633468527, guid: a417d5d793a34c14ba1c3b0db2707da5, type: 3}

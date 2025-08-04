@@ -10,7 +10,7 @@ namespace Eldritch.Core
         [Header("Movement Settings")]
         public float moveSpeed = 5f;
         public float jumpForce = 7f;
-        public float turnSpeed = 1f;
+        public float turnSpeed = 10f;
 
         private XenoAIMovementController movement;
         private XenoAIAnimationController animationController;
