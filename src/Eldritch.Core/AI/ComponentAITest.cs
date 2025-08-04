@@ -3,7 +3,7 @@ using Zolantris.Shared;
 
 namespace Eldritch.Core
 {
-  public class XenoAITest : MonoBehaviour
+  public class ComponentAITest : MonoBehaviour
   {
     public void Update()
     {

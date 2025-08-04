@@ -13,7 +13,7 @@ using Zolantris.Shared;
 // ReSharper disable ArrangeNamespaceBody
 
 // ReSharper disable NamespaceStyle
-  namespace  Eldritch.Core.AI
+  namespace  Eldritch.Core
   {
     public static class LayerHelpers
     {
@@ -38,7 +38,7 @@ using Zolantris.Shared;
         "static_solid", "Default_small",
         "character_net", "vehicle",
         LayerMask.LayerToName(CustomRaftLayer));
-      public static LayerMask LandLayers = LayerMask.GetMask("Default", "piece","terrain",
+      public static LayerMask GroundLayers = LayerMask.GetMask("Default", "piece","terrain",
         "static_solid", "Default_small");
 
       public static LayerMask OnboardLayers = LayerMask.GetMask("item", "character");

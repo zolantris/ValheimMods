@@ -1,7 +1,7 @@
-﻿// ReSharper disable ArrangeNamespaceBody
-// ReSharper disable NamespaceStyle
-using System.Collections;
+﻿using System;
+using System.Collections.Generic;
 using UnityEngine;
+using Random = UnityEngine.Random;
 
 namespace Eldritch.Core
 {
@@ -9,113 +9,245 @@ namespace Eldritch.Core
     {
         [Header("References")]
         [SerializeField] private Rigidbody _rb;
-        [SerializeField] private Transform _leftToe;
-        [SerializeField] private Transform _rightToe;
-        [SerializeField] private Transform _groundCheck;
+        public Rigidbody Rb => _rb;
 
-        [Header("Movement Parameters")]
-        public float MoveSpeed = 1f;
-        public float CloseMoveSpeed = 0.3f;
-        public float Acceleration = 90f;
-        public float CloseAcceleration = 20f;
-        public float TurnSpeed = 720f;
-        public float CloseTurnSpeed = 540f;
-        public float CloseRange = 3f;
-        public float WanderSpeed = 0.5f;
-        public float WanderRadius = 8f;
-        public float WanderCooldown = 5f;
-        public float WanderMinDistance = 3f;
+        public Animator Anim;
+        public Collider HeadCollider;
+        public Transform HeadColliderTransform;
+        public XenoDroneAI OwnerAI;
 
-        [Header("Jump Parameters")]
-        public float MaxJumpDistance = 4f;
-        public float MaxJumpHeightArc = 2.5f;
-        public float JumpCooldown = 0.5f;
+        [Header("Movement Tuning")]
+        public float moveSpeed = 1f;
+        public float closeMoveSpeed = 0.3f;
+        public float AccelerationForceSpeed = 90f;
+        public float closeAccelForce = 20f;
+        public float closeRange = 3f;
+        public float turnSpeed = 720f;
+        public float closeTurnSpeed = 540f;
+        public float wanderSpeed = 0.5f;
+        public float maxJumpDistance = 4f;
+        public float maxJumpHeightArc = 2.5f;
+        public Vector3 maxRunRange = new(20f, 0f, 20f);
+        public float moveLerpVel { get; private set; }
 
-        [Header("Grounding")]
-        public LayerMask GroundMask = ~0;
-        public float GroundedThreshold = 0.5f;
-        public float MaxStepHeight = 2f;
-        public float MaxDrop = 3f;
+        // Wander state
+        public float wanderRadius = 8f;
+        public float wanderCooldown = 5f;
+        public float wanderMinDistance = 3f;
 
-        // Internal state
-        private float _moveLerpVel;
-        private float _lastJumpTime;
-        private float _lastTouchedLand;
-        private float _lastLowestPointCheck;
-        private Vector3 _cachedLowestPoint;
-        private float _nextWanderTime;
-        private Vector3 _currentWanderTarget;
-        private bool _hasWanderTarget;
+        private float nextWanderTime = 0;
+        public Vector3 currentWanderTarget;
+        public bool HasRoamTarget => currentWanderTarget != Vector3.zero;
 
-        private void Awake()
+        public void Awake()
         {
             if (!_rb) _rb = GetComponent<Rigidbody>();
         }
 
-        // ---- Movement Core ----
-        public void MoveTowards(Vector3 targetPos, float speed, float accel, float turnSpeed)
+        // --- Core Movement ---
+        public void MoveTowardsTarget(Vector3 targetPos, float speed, float accel, float turnSpeed)
         {
-            Vector3 toTarget = targetPos - transform.position;
-            float distance = toTarget.magnitude;
+            var toTarget = targetPos - transform.position;
+            RotateTowardsDirection(toTarget, turnSpeed);
+            moveLerpVel = Mathf.MoveTowards(moveLerpVel, speed, accel * Time.deltaTime);
+            Rb.AddForce(transform.forward * moveLerpVel, ForceMode.Acceleration);
+        }
 
-            // Always rotate
+        public void MoveChaseTarget(Vector3 targetPos, Vector3? targetVelocity, float closeRange, float moveSpeed, float closeMoveSpeed, float accel, float closeAccel, float turnSpeed, float closeTurnSpeed)
+        {
+            var predictedTarget = targetPos + (targetVelocity ?? Vector3.zero) * 0.5f;
+            var toTarget = predictedTarget - transform.position;
+            var distance = toTarget.magnitude;
+
             RotateTowardsDirection(toTarget, turnSpeed);
 
-            // Check for gap ahead, jump if needed
-            if (distance > 2f && IsGapAhead())
+            if (IsGapAhead(1.0f, 3f, 5f))
             {
                 if (FindJumpableLanding(out var jumpTarget))
                 {
                     JumpTo(jumpTarget);
-                    _hasWanderTarget = false;
                     return;
                 }
                 else
                 {
                     BrakeHard();
-                    _hasWanderTarget = false;
                     return;
                 }
             }
 
-            // Move forward
-            _moveLerpVel = Mathf.MoveTowards(_moveLerpVel, speed, accel * 0.5f * Time.deltaTime);
-            _rb.AddForce(transform.forward * _moveLerpVel, ForceMode.Acceleration);
+            var targetAngle = Vector3.SignedAngle(transform.forward, toTarget, Vector3.up);
+            var shouldMove = Mathf.Abs(targetAngle) < 120f;
+            var slowDownStart = 6f;
+            var speedFactor = Mathf.Clamp01(distance / slowDownStart);
+            var targetSpeed = Mathf.Lerp(closeMoveSpeed, moveSpeed, speedFactor);
+            var targetAccel = Mathf.Lerp(closeAccel, accel, speedFactor);
+
+            if (shouldMove)
+            {
+                moveLerpVel = Mathf.MoveTowards(moveLerpVel, targetSpeed, targetAccel * Time.deltaTime);
+                Rb.AddForce(transform.forward * moveLerpVel, ForceMode.Acceleration);
+            }
+            else
+            {
+                moveLerpVel = Mathf.MoveTowards(moveLerpVel, 0f, targetAccel * 2f * Time.deltaTime);
+            }
+        }
+
+        public void MoveAwayFromEnemies(HashSet<GameObject> enemySet, float maxRange)
+        {
+            var hostilePositions = new List<Vector3>();
+            foreach (var enemyGO in enemySet)
+            {
+                if (enemyGO == null || enemyGO == gameObject) continue;
+                var dist = Vector3.Distance(transform.position, enemyGO.transform.position);
+                if (dist > maxRange) continue;
+                hostilePositions.Add(enemyGO.transform.position);
+            }
+            if (hostilePositions.Count == 0) return;
+
+            var bestScore = float.MinValue;
+            var bestDir = Vector3.zero;
+            var samples = 12;
+            for (int i = 0; i < samples; i++)
+            {
+                var angle = 360f / samples * i;
+                var dir = Quaternion.Euler(0, angle, 0) * Vector3.forward;
+                var candidate = transform.position + dir * 5f;
+                if (!IsGroundBelow(candidate, 1.5f)) continue;
+
+                var score = 0f;
+                foreach (var pos in hostilePositions)
+                    score += Vector3.Distance(candidate, pos);
+
+                var localOffset = candidate - transform.position;
+                if (Mathf.Abs(localOffset.x) > maxRunRange.x || Mathf.Abs(localOffset.z) > maxRunRange.z)
+                    score -= 10000f;
+
+                if (score > bestScore)
+                {
+                    bestScore = score;
+                    bestDir = dir;
+                }
+            }
+
+            if (bestDir == Vector3.zero) return;
+            MoveTowardsTarget(transform.position + bestDir * 4f, moveSpeed, AccelerationForceSpeed, turnSpeed);
+        }
+
+        public void MoveFleeWithAllyBias(XenoDroneAI friendly, HashSet<GameObject> enemies)
+        {
+            var hostilePositions = new List<Vector3>();
+            foreach (var enemyGO in enemies)
+            {
+                if (enemyGO == null || enemyGO == gameObject) continue;
+                hostilePositions.Add(enemyGO.transform.position);
+            }
+            var bestDir = Vector3.zero;
+            var bestScore = float.MinValue;
+            var samples = 12;
+            for (var i = 0; i < samples; i++)
+            {
+                var angle = 360f / samples * i;
+                var dir = Quaternion.Euler(0, angle, 0) * Vector3.forward;
+                var allyBias = 0f;
+                if (friendly != null)
+                {
+                    var toAlly = (friendly.transform.position - transform.position).normalized;
+                    allyBias = Vector3.Dot(dir, toAlly) * 8f;
+                }
+                var candidate = transform.position + dir * 5f;
+                var enemyPenalty = 0f;
+                foreach (var hostile in hostilePositions)
+                {
+                    var dist = Vector3.Distance(candidate, hostile);
+                    enemyPenalty -= 1f / Mathf.Max(dist, 0.1f);
+                }
+                if (!IsGroundBelow(candidate, 1.5f)) continue;
+                var score = allyBias + enemyPenalty;
+                if (score > bestScore)
+                {
+                    bestScore = score;
+                    bestDir = dir;
+                }
+            }
+            if (bestDir == Vector3.zero)
+            {
+                MoveAwayFromEnemies(enemies, 40f);
+                return;
+            }
+            MoveTowardsTarget(transform.position + bestDir * 4f, moveSpeed * 1.25f, AccelerationForceSpeed * 1.1f, turnSpeed);
+        }
+
+        public void MoveWander()
+        {
+            if (Time.time < nextWanderTime) return;
+            if (!HasRoamTarget || Vector3.Distance(transform.position, currentWanderTarget) < 1.2f)
+            {
+                if (TryPickRandomWanderTarget(out currentWanderTarget))
+                {
+                    nextWanderTime = Time.time + wanderCooldown;
+                }
+                else
+                {
+                    nextWanderTime = Time.time + 2f;
+                    return;
+                }
+            }
+            var toTarget = currentWanderTarget - transform.position;
+            float distance = toTarget.magnitude;
+            RotateTowardsDirection(toTarget, turnSpeed);
+
+            if (distance > 2f && IsGapAhead(1.0f, 3f, 5f))
+            {
+                if (FindJumpableLanding(out var jumpTarget))
+                {
+                    JumpTo(jumpTarget);
+                    return;
+                }
+                else
+                {
+                    BrakeHard();
+                    return;
+                }
+            }
+
+            moveLerpVel = Mathf.MoveTowards(moveLerpVel, wanderSpeed, AccelerationForceSpeed * 0.5f * Time.deltaTime);
+            Rb.AddForce(transform.forward * moveLerpVel, ForceMode.Acceleration);
         }
 
         public void BrakeHard()
         {
-            if (!IsGrounded()) return;
-            var v = _rb.velocity;
+            var v = Rb.velocity;
             v.x = 0f;
             v.z = 0f;
-            _rb.velocity = v;
-            _rb.angularVelocity = Vector3.zero;
+            Rb.velocity = v;
+            Rb.angularVelocity = Vector3.zero;
         }
 
-        // ---- Gap/Jump Logic ----
-        public bool IsGapAhead(float distance = 1.0f, float maxStepHeight = -1, float maxDrop = -1)
+        // --- Jumping & Grounding ---
+        public bool IsGapAhead(float distance = 1.0f, float maxStepHeight = 2f, float maxDrop = 3.0f)
         {
-            if (!IsGrounded()) return false;
-            if (maxStepHeight < 0) maxStepHeight = MaxStepHeight;
-            if (maxDrop < 0) maxDrop = MaxDrop;
-            var checkOrigin = GetFurthestToe();
-            if (!checkOrigin) return false;
-            if (Physics.Raycast(checkOrigin.position + Vector3.up, Vector3.down, out var hit, maxDrop + 1.2f, GroundMask))
+            if (OwnerAI == null || !OwnerAI.CanJump || !OwnerAI.IsGrounded()) return false;
+            // Use OwnerAI.GetFurthestToe() or equivalent foot transform
+            // For demo: just check ahead
+            var checkOrigin = transform.position + transform.forward * distance;
+            if (Physics.Raycast(checkOrigin + Vector3.up, Vector3.down, out var hit, maxDrop + 1.2f, LayerMask.GetMask("Default", "terrain")))
             {
-                var yDiff = checkOrigin.position.y - hit.point.y;
+                var yDiff = checkOrigin.y - hit.point.y;
                 if (yDiff < maxStepHeight) return false;
             }
             return true;
         }
-
-        public bool FindJumpableLanding(out Vector3 landingPoint, float maxDrop = -1, float fanAngle = 60f, int numChecks = 7)
+        public bool IsGroundBelow(Vector3 position, float maxDrop)
         {
-            if (maxDrop < 0) maxDrop = MaxDrop;
+            var ray = new Ray(position + Vector3.up * 0.5f, Vector3.down);
+            return Physics.Raycast(ray, out _, maxDrop + 0.5f, LayerMask.GetMask("Default", "terrain"));
+        }
+        public bool FindJumpableLanding(out Vector3 landingPoint, float maxDrop = 2.5f, float fanAngle = 60f, int numChecks = 7)
+        {
             landingPoint = Vector3.zero;
-            if (!CanJump() || !IsGrounded()) return false;
-
-            var jumpOrigin = GetFurthestToe()?.position ?? transform.position;
+            if (OwnerAI == null || !OwnerAI.CanJump || !OwnerAI.IsGrounded()) return false;
+            var jumpOrigin = transform.position;
             float bestDistance = 0f;
             Vector3 bestLanding = Vector3.zero;
             bool found = false;
@@ -125,17 +257,16 @@ namespace Eldritch.Core
                 float angle = -fanAngle / 2f + fanAngle / (numChecks - 1) * i;
                 Vector3 dir = Quaternion.Euler(0, angle, 0) * transform.forward;
                 var checkStart = jumpOrigin + dir;
-                for (float dist = 1.0f; dist <= MaxJumpDistance; dist += 0.5f)
+                for (float dist = 1.0f; dist <= maxJumpDistance; dist += 0.5f)
                 {
                     Vector3 rayOrigin = checkStart + dir * dist;
-                    Debug.DrawRay(rayOrigin, Vector3.down * (maxDrop + 0.5f), Color.cyan, 2f);
                     Ray downRay = new Ray(rayOrigin, Vector3.down);
-                    if (Physics.Raycast(downRay, out var hit, maxDrop + 0.5f, GroundMask))
+                    if (Physics.Raycast(downRay, out var hit, maxDrop + 0.5f, LayerMask.GetMask("Default", "terrain")))
                     {
                         float verticalDrop = jumpOrigin.y - hit.point.y;
                         float slope = Vector3.Angle(hit.normal, Vector3.up);
                         float landingDist = Vector3.Distance(jumpOrigin, hit.point);
-                        if (verticalDrop < maxDrop && slope < 40f && landingDist <= MaxJumpDistance)
+                        if (verticalDrop < maxDrop && slope < 40f && landingDist <= maxJumpDistance)
                         {
                             if (!found || landingDist > bestDistance)
                             {
@@ -143,114 +274,57 @@ namespace Eldritch.Core
                                 bestLanding = hit.point;
                                 found = true;
                             }
-                            Debug.DrawLine(rayOrigin, hit.point, Color.magenta, 2f);
                         }
                     }
                 }
             }
-
             if (found)
             {
                 landingPoint = bestLanding;
-                Debug.DrawLine(jumpOrigin + Vector3.up * 0.2f, bestLanding + Vector3.up * 0.2f, Color.green, 2f);
                 return true;
             }
             return false;
         }
-
         public void JumpTo(Vector3 landingPoint)
         {
-            if (_lastJumpTime > Time.fixedTime) return;
-            _lastJumpTime = Time.fixedTime + JumpCooldown;
-            Vector3 origin = GetLowestPointOnRigidbody();
+            Vector3 origin = transform.position;
             Vector3 jumpVec = landingPoint - origin;
             float dist = jumpVec.magnitude;
-            if (dist > MaxJumpDistance)
+            if (dist > maxJumpDistance)
             {
-                jumpVec = jumpVec.normalized * MaxJumpDistance;
+                jumpVec = jumpVec.normalized * maxJumpDistance;
                 landingPoint = origin + jumpVec;
+                dist = maxJumpDistance;
             }
-            Debug.DrawLine(origin + Vector3.up * 0.2f, landingPoint + Vector3.up * 0.2f, Color.red, 2f);
 
             float gravity = Mathf.Abs(Physics.gravity.y);
-            float timeToApex = Mathf.Sqrt(2 * MaxJumpHeightArc / gravity);
-            float vy = Mathf.Sqrt(2 * gravity * MaxJumpHeightArc);
+            float timeToApex = Mathf.Sqrt(2 * maxJumpHeightArc / gravity);
+            float vy = Mathf.Sqrt(2 * gravity * maxJumpHeightArc);
             float timeTotal = timeToApex + Mathf.Sqrt(2 * Mathf.Max(0, (landingPoint.y - origin.y)) / gravity);
-            Vector3 horiz = jumpVec; horiz.y = 0;
+            Vector3 horiz = jumpVec;
+            horiz.y = 0;
             Vector3 vxz = horiz / Mathf.Max(0.01f, timeTotal);
-            _rb.velocity = vxz + Vector3.up * vy;
+            Rb.velocity = vxz + Vector3.up * vy;
         }
 
-        public bool CanJump() => true;
-
-        // ---- Ground/Lowest Point ----
-        public bool IsGrounded()
+        public bool TryUpdateCurrentWanderTarget()
         {
-            if (_groundCheck)
-            {
-                return Physics.Raycast(_groundCheck.position, Vector3.down, GroundedThreshold, GroundMask);
-            }
-            // fallback: check by rigidbody y-velocity small and low y delta
-            return Mathf.Abs(_rb.velocity.y) < 0.1f;
+            TryPickRandomWanderTarget(out currentWanderTarget);
+            return HasRoamTarget;
         }
 
-        public Vector3 GetLowestPointOnRigidbody()
-        {
-            if (_lastLowestPointCheck > Time.fixedTime)
-            {
-                return _cachedLowestPoint;
-            }
-            _lastLowestPointCheck = Time.fixedTime + 0.5f;
-            float minY = float.MaxValue;
-            foreach (var col in GetComponentsInChildren<Collider>())
-            {
-                if (!col) continue;
-                var bounds = col.bounds;
-                if (bounds.min.y < minY)
-                    minY = bounds.min.y;
-            }
-            var pos = transform.position;
-            _cachedLowestPoint = new Vector3(pos.x, minY, pos.z);
-            return _cachedLowestPoint;
-        }
-
-        // ---- Wandering Logic ----
-        public void StartWander()
-        {
-            _hasWanderTarget = false;
-        }
-
-        public void UpdateWander()
-        {
-            if (Time.time < _nextWanderTime) return;
-            if (!_hasWanderTarget || Vector3.Distance(transform.position, _currentWanderTarget) < 1.2f)
-            {
-                if (TryPickRandomWanderTarget(out _currentWanderTarget))
-                {
-                    _hasWanderTarget = true;
-                    _nextWanderTime = Time.time + WanderCooldown;
-                }
-                else
-                {
-                    _hasWanderTarget = false;
-                    _nextWanderTime = Time.time + 2f;
-                    return;
-                }
-            }
-            MoveTowards(_currentWanderTarget, WanderSpeed, Acceleration, TurnSpeed);
-        }
-
+        // --- Wander Helpers ---
         public bool TryPickRandomWanderTarget(out Vector3 wanderTarget)
         {
             var origin = transform.position;
             for (int attempts = 0; attempts < 12; attempts++)
             {
-                float angle = UnityEngine.Random.Range(0, 360f);
-                float dist = UnityEngine.Random.Range(WanderMinDistance, WanderRadius);
+                float angle = Random.Range(0, 360f);
+                float dist = Random.Range(wanderMinDistance, wanderRadius);
                 Vector3 dir = Quaternion.Euler(0, angle, 0) * Vector3.forward;
                 Vector3 candidate = origin + dir * dist;
                 Ray down = new Ray(candidate + Vector3.up * 3f, Vector3.down);
-                if (Physics.Raycast(down, out var hit, 10f, GroundMask))
+                if (Physics.Raycast(down, out var hit, 10f, LayerMask.GetMask("Default", "terrain")))
                 {
                     if (Vector3.Angle(hit.normal, Vector3.up) < 45f)
                     {
@@ -263,34 +337,13 @@ namespace Eldritch.Core
             return false;
         }
 
-        // ---- Helper: Furthest Toe ----
-        public Transform GetFurthestToe()
-        {
-            if (!_leftToe && !_rightToe) return null;
-            if (_leftToe && !_rightToe) return _leftToe;
-            if (_rightToe && !_leftToe) return _rightToe;
-            Vector3 forward = transform.forward.normalized;
-            float leftProj = Vector3.Dot(_leftToe.position - transform.position, forward);
-            float rightProj = Vector3.Dot(_rightToe.position - transform.position, forward);
-            return leftProj > rightProj ? _leftToe : _rightToe;
-        }
-
-        // ---- Rotation ----
+        // --- Rotation ---
         public void RotateTowardsDirection(Vector3 dir, float customTurnSpeed)
         {
             dir.y = 0;
-            if (dir.sqrMagnitude < 0.001f) return;
-            var targetRot = Quaternion.LookRotation(dir);
-            var turnLerp = customTurnSpeed * Mathf.Deg2Rad * Time.deltaTime;
-            var angle = Vector3.SignedAngle(transform.forward, dir, Vector3.up);
-            if (Mathf.Abs(angle) > 170f)
-            {
-                transform.rotation = targetRot;
-            }
-            else
-            {
-                transform.rotation = Quaternion.Slerp(transform.rotation, targetRot, Mathf.Clamp01(turnLerp));
-            }
+            if (dir == Vector3.zero) return;
+            var targetRotation = Quaternion.LookRotation(dir, Vector3.up);
+            transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRotation, customTurnSpeed * Time.deltaTime);
         }
     }
 }

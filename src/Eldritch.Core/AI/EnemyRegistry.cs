@@ -5,7 +5,7 @@ using UnityEngine;
 
 #endregion
 
-namespace ValheimVehicles.SharedScripts
+namespace Eldritch.Core
 {
   public static class EnemyRegistry
   {

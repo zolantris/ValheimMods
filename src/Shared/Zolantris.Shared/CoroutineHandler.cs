@@ -9,7 +9,7 @@ using UnityEngine;
 
 #endregion
 
-namespace ValheimVehicles.SharedScripts
+namespace Zolantris.Shared
 {
   public class CoroutineHandle
   {
