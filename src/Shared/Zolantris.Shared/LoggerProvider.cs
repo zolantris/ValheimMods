@@ -215,11 +215,20 @@
 
         return $"{logType}:{callerInfo} {message}";
       }
+      
+      public static void LogDevDebounced(string val, float debounceSeconds = 5f,
+        [CallerFilePath] string file = "", [CallerLineNumber] int line = 0)
+      {
+        if (!IsLevelEnabled(LogLevel.Debug)) return;
+        var key = $"Dev:{file}:{line}:{val.GetHashCode()}";
+        if (ShouldDebounce(key, debounceSeconds)) return;
+        SafeLog(LogLevel.Info, Format("Dev", val, file, line));
+      }
 
       public static void LogDebugDebounced(string val, float debounceSeconds = 5f,
         [CallerFilePath] string file = "", [CallerLineNumber] int line = 0)
       {
-        if (!IsLevelEnabled(LogLevel.Info)) return;
+        if (!IsLevelEnabled(LogLevel.Debug)) return;
         var key = $"Debug:{file}:{line}:{val.GetHashCode()}";
         if (ShouldDebounce(key, debounceSeconds)) return;
         SafeLog(LogLevel.Info, Format("Debug", val, file, line));

@@ -6,15 +6,17 @@
   using System.Collections;
   using System.Collections.Generic;
   using System.Diagnostics;
+  using System.Linq;
   using Eldritch.Core.AI;
   using JetBrains.Annotations;
   using UnityEngine;
   using Zolantris.Shared;
+  using Debug = UnityEngine.Debug;
   using Random = UnityEngine.Random;
 
 #endregion
 
-  namespace ValheimVehicles.SharedScripts
+  namespace Eldritch.Core
   {
     public class XenoDroneAI : MonoBehaviour
     {
@@ -76,7 +78,22 @@
       public bool hasCamouflage;
 
       public Vector3 maxRunRange = new(20f, 0f, 20f); // Editable in Inspector, e.g., limits to a 20x20 area
-      public XenoAIState CurrentState = XenoAIState.Idle;
+      private XenoAIState _currentState = XenoAIState.Idle;
+
+      public XenoAIState CurrentState
+      {
+        get => _currentState;
+        set
+        {
+          if (value == _currentState) return;
+          OnStateUpdate(_currentState, value);
+          _currentState = value;
+        }
+      }
+
+
+      // For all behaviors. Any behavior returns true it will bail next evaluation
+      private List<Func<bool>> _behaviorUpdaters = new();
 
       [CanBeNull] public XenoDroneAI cachedPrimaryTargetXeno;
 
@@ -105,6 +122,7 @@
       private Animator _animator;
       private bool _lastCamouflageState;
       private Rigidbody _rb;
+      public bool CanJump = true;
 
       public HashSet<(HashSet<Transform>, Transform)> allLists = new();
       private Material BodyMaterial;
@@ -132,8 +150,41 @@
       // getters
       public float DeltaPrimaryTarget => cachedDeltaPrimaryTarget;
 
+      private Transform cachedAnklePosition;
+
+      public float lastCacheClear = 0;
+
+      public float lastTouchedLand;
+      
+      public float lastLowestPointCheck;
+      
+      private Vector3 cachedLowestPoint = Vector3.zero;
+
+      public Vector3 GetLowestPointOnRigidbody()
+      {
+        if (lastLowestPointCheck > Time.fixedTime)
+        {
+          return cachedLowestPoint;
+        }
+        lastLowestPointCheck = Time.fixedTime + 0.5f;
+        
+        float minY = float.MaxValue;
+        foreach (var col in allColliders)
+        {
+          if (col == null) continue;
+          var bounds = col.bounds;
+          if (bounds.min.y < minY)
+            minY = bounds.min.y;
+        }
+        var position = transform.position;
+        cachedLowestPoint = new Vector3(position.x, minY, position.z);
+        return cachedLowestPoint;
+      }
+
       private void Awake()
       {
+        _behaviorUpdaters = new List<Func<bool>>{Update_Death, Update_Flee, Update_Roam, Update_AttackTargetBehavior, Update_SleepBehavior};
+
         health = maxHealth;
         // find these easily with Gameobject -> Copy FullTransformPath from root.
         // You may need to adjust these paths to match your actual bone names/hierarchy
@@ -143,8 +194,8 @@
 
         _animator = xenoAnimatorRoot.GetComponent<Animator>();
         _rb = GetComponent<Rigidbody>();
-        _rb.maxLinearVelocity = 15f;
-        _rb.maxAngularVelocity = 1f;
+        // _rb.maxLinearVelocity = 15f;
+        // _rb.maxAngularVelocity = 1f;
 
         BloodEffects = GetComponentInChildren<ParticleSystem>();
 
@@ -177,7 +228,7 @@
 
 
 
-        // CollectAllBodyJoints();
+        CollectAllBodyJoints();
         // AddCapsuleCollidersToAllJoints();
         // IgnoreAllColliders();
 
@@ -202,12 +253,29 @@
         UpdateCurrentAnimationState();
       }
 
+      public bool IsGrounded()
+      {
+        return lastTouchedLand < 0.5f;
+      }
+
       public void FixedUpdate()
       {
+        if (!IsGrounded())
+        {
+          Stop_Attack();
+          return;
+        }
+        lastTouchedLand += Time.fixedDeltaTime;
+        if (!_rb) return;
         var rot = _rb.rotation.eulerAngles;
         rot.x = 0f;
         rot.z = 0f;
         _rb.rotation = Quaternion.Euler(rot);
+
+        if (CurrentState == XenoAIState.Attack)
+        {
+          UpdateAttackMode();
+        }
 
         if (IsDead()) return;
         canPlayEffectOnFrame = !BloodEffects.isPlaying;
@@ -263,27 +331,34 @@
         EnemyRegistry.ActiveEnemies.Remove(gameObject);
       }
 
-      // public void OnCollisionEnter(Collision other)
-      // {
-      //     if (IsDead()) return;
-      //     if (!canPlayEffectOnFrame) return;
-      //     if (other.body == _rb || other.transform.root == transform.root)
-      //     {
-      //         foreach (var otherContact in other.contacts)
-      //         {
-      //             Physics.IgnoreCollision(otherContact.otherCollider, otherContact.thisCollider, true);
-      //         }
-      //         return;
-      //     }
-      //     var layer =  other.gameObject.layer;
-      //     if (layer != LayerHelpers.HitboxLayer) return;
-      //     
-      //     // var contactsHasHitbox = other.contacts.Any(x => x.otherCollider.gameObject.layer == LayerHelpers.HitboxLayer || x.thisCollider.gameObject.layer == LayerHelpers.HitboxLayer);
-      //     if (layer == LayerHelpers.HitboxLayer)
-      //     {
-      //         LoggerProvider.LogDebugDebounced("Hit layer");
-      //     }
-      // }
+      public void OnCollisionEnter(Collision other)
+      {
+        if (IsDead()) return;
+        if (!canPlayEffectOnFrame) return;
+        if (other.body == _rb || other.transform.root == transform.root)
+        {
+          foreach (var otherContact in other.contacts)
+          {
+            Physics.IgnoreCollision(otherContact.otherCollider, otherContact.thisCollider, true);
+          }
+          return;
+        }
+        var layer = other.gameObject.layer;
+        if (LayerHelpers.IsContainedWithinLayerMask(layer, LayerHelpers.LandLayers))
+        {
+          lastTouchedLand = 0f;
+        }
+        
+        if (layer != LayerHelpers.ItemLayer) return;
+
+        // var contactsHasHitbox = other.contacts.Any(x => x.otherCollider.gameObject.layer == LayerHelpers.HitboxLayer || x.thisCollider.gameObject.layer == LayerHelpers.HitboxLayer);
+        if (layer == LayerHelpers.ItemLayer)
+        {
+          LoggerProvider.LogDebugDebounced("Hit layer");
+        }
+
+        ApplyDamage(other.collider);
+      }
 
       public void OnTriggerEnter(Collider other)
       {
@@ -295,12 +370,12 @@
           return;
         }
         var layer = other.gameObject.layer;
-        if (layer != LayerHelpers.CharacterLayer) return;
+        if (layer != LayerHelpers.ItemLayer) return;
 
         // var contactsHasHitbox = other.contacts.Any(x => x.otherCollider.gameObject.layer == LayerHelpers.HitboxLayer || x.thisCollider.gameObject.layer == LayerHelpers.HitboxLayer);
-        if (layer == LayerHelpers.HitboxLayer)
+        if (layer == LayerHelpers.ItemLayer)
         {
-          LoggerProvider.LogDebugDebounced("Hit layer");
+          LoggerProvider.LogDebugDebounced("Hit by item");
         }
 
         ApplyDamage(other);
@@ -403,11 +478,47 @@
 
         neckPivot.localEulerAngles = currentEuler;
       }
+      private Vector3? roamTarget = null; // Null = not currently wandering
+      private void MoveTowards(Vector3 targetPos, float speed)
+      {
+        var toTarget = targetPos - transform.position;
+        float distance = toTarget.magnitude;
+
+        // Always turn to face target
+        RotateTowardsDirection(toTarget, turnSpeed);
+
+        // Check for gap ahead, jump if needed
+        if (distance > 2f && IsGapAhead(1.0f, 3f, 5f))
+        {
+          Vector3 jumpTarget;
+          if (FindJumpableLanding(out jumpTarget))
+          {
+            JumpTo(jumpTarget);
+            if (_animator) _animator.SetTrigger("Jump");
+            roamTarget = null; // After a jump, pick a new wander target
+            return;
+          }
+          else
+          {
+            BrakeHard();
+            roamTarget = null;
+            return;
+          }
+        }
+
+        // Move forward
+        moveLerpVel = Mathf.MoveTowards(moveLerpVel, speed, AccelerationForceSpeed * 0.5f * Time.deltaTime);
+        _rb.AddForce(transform.forward * moveLerpVel, ForceMode.Acceleration);
+
+        var normalized = Mathf.InverseLerp(0f, 8f, _rb.velocity.magnitude);
+        _animator.SetFloat(XenoParams.MoveSpeed, normalized < IdleThresholdTime ? -1f : normalized);
+      }
 
       public IEnumerator SleepingCustomAnimationsRoutine()
       {
         var timer = Stopwatch.StartNew();
-        while (timer.ElapsedMilliseconds < 50000)
+        var timeUntilWakeInMS = timeUntilWake * 1000;
+        while (timer.ElapsedMilliseconds < timeUntilWakeInMS)
         {
           if (timer.ElapsedMilliseconds > 2000)
           {
@@ -567,6 +678,23 @@
           }
         }
 
+        if (IsGapAhead(1.0f, 0.6f, 2.0f)) // Only jump if there is a real gap
+        {
+          Vector3 jumpTarget;
+          if (FindJumpableLanding(out jumpTarget))
+          {
+            JumpTo(jumpTarget);
+            if (_animator) _animator.SetTrigger("Jump");
+            return;
+          }
+          else
+          {
+            BrakeHard();
+            moveLerpVel = 0f;
+            return;
+          }
+        }
+
         // 5. Actually move in the chosen direction (accelerate)
         var movement = GetMovementParams(false, true);
         moveLerpVel = Mathf.MoveTowards(moveLerpVel, movement.Speed, movement.Acceleration * Time.deltaTime);
@@ -582,6 +710,20 @@
         _animator.SetFloat(XenoParams.MoveSpeed, normalized < IdleThresholdTime ? -1f : normalized);
       }
 
+      private bool IsGapAhead(float distance = 1.0f, float maxStepHeight = 2f, float maxDrop = 3.0f)
+      {
+        if (!IsGrounded()) return false;
+        var checkOrigin = GetFurthestToe();
+        if (Physics.Raycast(checkOrigin.position + Vector3.up, Vector3.down, out var hit, maxDrop + 1.2f, LayerMask.GetMask("Default", "terrain")))
+        {
+          var yDiff = checkOrigin.position.y - hit.point.y;
+          // Is the drop small enough to step down? If so, not a gap!
+          if (yDiff < maxStepHeight) return false;
+        }
+        // No ground, or ground too far down = gap
+        return true;
+      }
+
       private bool IsGroundBelow(Vector3 position, float maxDrop)
       {
         // Check for ground within maxDrop meters below the position
@@ -592,6 +734,23 @@
           return true;
         }
         return false;
+      }
+      
+      /// <summary>
+      /// Returns the toe (left or right) that's furthest in the character's forward direction.
+      /// </summary>
+      public Transform GetFurthestToe()
+      {
+        if (leftToeTransform == null && rightToeTransform == null) return null;
+        if (leftToeTransform != null && rightToeTransform == null) return leftToeTransform;
+        if (rightToeTransform != null && leftToeTransform == null) return rightToeTransform;
+
+        // Project both toe positions onto the forward axis
+        Vector3 forward = transform.forward.normalized;
+        float leftProj = Vector3.Dot(leftToeTransform.position - transform.position, forward);
+        float rightProj = Vector3.Dot(rightToeTransform.position - transform.position, forward);
+
+        return leftProj > rightProj ? leftToeTransform : rightToeTransform;
       }
 
       public XenoDroneAI GetClosestTargetDifferentPack()
@@ -615,10 +774,29 @@
         return closest;
       }
 
+      #region State Booleans
+      
+      
+      public bool IsSleeping()
+      {
+        return CurrentState == XenoAIState.Sleeping;
+      }
+      
+      public bool IsDead()
+      {
+        return CurrentState == XenoAIState.Dead;
+      }
+      
       public bool IsFleeing()
       {
         return CurrentState == XenoAIState.Flee;
       }
+      public bool IsAttacking()
+      {
+        return CurrentState == XenoAIState.Attack;
+      }
+
+      #endregion
 
       public XenoDroneAI FindNearestAlly()
       {
@@ -704,6 +882,23 @@
           return;
         }
 
+        if (IsGapAhead(1.0f, 3f, 5f)) // Only jump if there is a real gap
+        {
+          Vector3 jumpTarget;
+          if (FindJumpableLanding(out jumpTarget))
+          {
+            JumpTo(jumpTarget);
+            if (_animator) _animator.SetTrigger("Jump");
+            return;
+          }
+          else
+          {
+            BrakeHard();
+            moveLerpVel = 0f;
+            return;
+          }
+        }
+
         // Move and rotate as before
         var speed = moveSpeed * 1.25f;
         var accel = AccelerationForceSpeed * 1.1f;
@@ -718,9 +913,54 @@
         _animator.SetFloat(XenoParams.MoveSpeed, normalized < IdleThresholdTime ? -1f : normalized);
       }
 
-      public void Flee()
+      private bool TryJumpAheadIfPossible()
+      {
+        Vector3 landingPoint;
+        if (FindJumpableLanding(out landingPoint))
+        {
+          JumpTo(landingPoint);
+          if (_animator) _animator.SetTrigger("Jump");
+          return true;
+        }
+        return false;
+      }
+
+      public void Start_Flee()
       {
         CurrentState = XenoAIState.Flee;
+      }
+
+      public bool Update_Death()
+      {
+        if (health <= 0.1f)
+        {
+          SetDead();
+          return true;
+        }
+        
+        return false;
+      }
+
+      public bool Update_Flee()
+      {
+        var isFleeing = IsFleeing();
+        var shouldFlee = health < 30f;
+        if (shouldFlee)
+        {
+          if (!isFleeing)
+          {
+            Start_Flee();
+          }
+          FleeTowardSafeAllyOrRunAway();
+          return true;
+        }
+
+        if (isFleeing)
+        {
+          StopFleeing();
+        }
+
+        return false;
       }
 
       public void StopFleeing()
@@ -735,11 +975,6 @@
         {
           health = Mathf.Min(health + 5f, maxHealth);
         }
-      }
-
-      public bool IsSleeping()
-      {
-        return CurrentState == XenoAIState.Sleeping;
       }
 
       public void SetDead()
@@ -762,10 +997,7 @@
         }));
       }
 
-      public bool IsDead()
-      {
-        return CurrentState == XenoAIState.Dead;
-      }
+    
 
       public void UpdatePrimaryTarget()
       {
@@ -773,6 +1005,7 @@
         {
           PrimaryTarget = null;
           cachedPrimaryTargetXeno = null;
+          roamTarget = null;
         }
         var target = GetClosestTargetDifferentPack();
         if (target)
@@ -780,7 +1013,19 @@
           PrimaryTarget = target.transform;
           PrimaryTargetRB = target.GetComponentInChildren<Rigidbody>();
           cachedPrimaryTargetXeno = target;
+          roamTarget = PrimaryTarget.position;
         }
+      }
+
+      public bool IsArmAttack()
+      {
+        var moveAttack = _animator.GetFloat(XenoParams.AttackMode);
+        if (moveAttack == 0.5f) throw new Exception("Move attack should never be exactly 0.5f");
+        if (moveAttack > 0.5f)
+        {
+          return true;
+        }
+        return false;
       }
 
       public void DisableAttackColliders()
@@ -788,7 +1033,7 @@
         foreach (var activeCollider in attackColliders)
         {
           if (!activeCollider) continue;
-          if (activeCollider.gameObject.layer == LayerHelpers.HitboxLayer)
+          if (activeCollider.gameObject.layer == LayerHelpers.ItemLayer)
           {
             activeCollider.enabled = false;
           }
@@ -797,10 +1042,18 @@
 
       public void EnableAttackColliders()
       {
+        var isArmAttack = IsArmAttack();
+        const string handAttackObjName = "xeno_arm_attack_collider";
+        const string tailAttackObjName = "xeno_tail_attack_collider";
+        
         foreach (var activeCollider in attackColliders)
         {
           if (!activeCollider) continue;
-          if (activeCollider.gameObject.layer == LayerHelpers.HitboxLayer)
+          var go = activeCollider.gameObject;
+          if (isArmAttack && go.name != handAttackObjName) continue;
+          if (!isArmAttack && go.name != tailAttackObjName) continue;
+          
+          if (activeCollider.gameObject.layer == LayerHelpers.ItemLayer)
           {
             activeCollider.enabled = true;
           }
@@ -813,12 +1066,8 @@
         if (IsSleeping()) return;
         canSleepAnimate = false;
         CurrentState = XenoAIState.Sleeping;
-        // _animator.Play("sleep", 0, 1);
-        _animator.SetTrigger(XenoTriggers.Sleep);
-        _animator.SetBool(XenoBooleans.Movement, false);
 
         // _animator.Play(XenoTriggers.Sleep,0, 1f);
-        Stop_Attack();
         if (_animationCompletionHandler.IsRunning)
         {
           _animationCompletionHandler.Stop();
@@ -858,6 +1107,8 @@
           _rb.isKinematic = true;
           DeactivateCamouflage();
         }));
+
+        CurrentState = XenoAIState.Idle;
       }
 
       public IEnumerator WaitForAnimationToEnd(string stateName, int layerIndex, Action onComplete)
@@ -921,6 +1172,16 @@
         _animator.SetTrigger(XenoTriggers.Awake);
         _animator.SetTrigger(XenoTriggers.Move);
       }
+      
+      [Header("Wander Settings")]
+      public float wanderRadius = 8f;
+      public float wanderCooldown = 5f;
+      public float wanderMinDistance = 3f;
+      public float wanderSpeed = 0.5f; // Slow
+
+      private float nextWanderTime = 0;
+      private Vector3 currentWanderTarget;
+      private bool hasWanderTarget = false;
 
       private IEnumerator ScheduleSleep()
       {
@@ -930,6 +1191,165 @@
         SetSleeping();
         _sleepCoroutineHandler.Start(ScheduleWakeup());
       }
+      public void StartWander()
+      {
+        CurrentState = XenoAIState.Hunt;
+        hasWanderTarget = false;
+      }
+      private void UpdateWander()
+      {
+        if (Time.time < nextWanderTime) return;
+
+        // If no target or reached, pick a new one
+        if (!hasWanderTarget || Vector3.Distance(transform.position, currentWanderTarget) < 1.2f)
+        {
+          if (TryPickRandomWanderTarget(out currentWanderTarget))
+          {
+            hasWanderTarget = true;
+            nextWanderTime = Time.time + wanderCooldown;
+          }
+          else
+          {
+            hasWanderTarget = false;
+            nextWanderTime = Time.time + 2f;
+            return;
+          }
+        }
+
+        var toTarget = currentWanderTarget - transform.position;
+        float distance = toTarget.magnitude;
+
+        // Turn to face wander target
+        RotateTowardsDirection(toTarget, turnSpeed);
+
+        // Check for gaps ahead, jump if needed!
+        if (distance > 2f && IsGapAhead(1.0f, 3f, 5f))
+        {
+          Vector3 jumpTarget;
+          if (FindJumpableLanding(out jumpTarget))
+          {
+            JumpTo(jumpTarget);
+            if (_animator) _animator.SetTrigger("Jump");
+            hasWanderTarget = false; // After a jump, pick a new target next
+            return;
+          }
+          else
+          {
+            BrakeHard();
+            hasWanderTarget = false;
+            return;
+          }
+        }
+
+        // Walk toward wander target
+        var targetSpeed = wanderSpeed;
+        moveLerpVel = Mathf.MoveTowards(moveLerpVel, targetSpeed, AccelerationForceSpeed * 0.5f * Time.deltaTime);
+        _rb.AddForce(transform.forward * moveLerpVel, ForceMode.Acceleration);
+
+        var normalized = Mathf.InverseLerp(0f, 8f, _rb.velocity.magnitude);
+        _animator.SetFloat(XenoParams.MoveSpeed, normalized < IdleThresholdTime ? -1f : normalized);
+      }
+      
+      private bool TryPickRandomWanderTarget(out Vector3 wanderTarget)
+      {
+        var origin = transform.position;
+        for (int attempts = 0; attempts < 12; attempts++)
+        {
+          // Pick random angle/distance
+          float angle = Random.Range(0, 360f);
+          float dist = Random.Range(wanderMinDistance, wanderRadius);
+          Vector3 dir = Quaternion.Euler(0, angle, 0) * Vector3.forward;
+          Vector3 candidate = origin + dir * dist;
+
+          // Raycast down to ground
+          Ray down = new Ray(candidate + Vector3.up * 3f, Vector3.down);
+          if (Physics.Raycast(down, out var hit, 10f, LayerMask.GetMask("Default", "terrain")))
+          {
+            // Optional: only accept if slope not too steep
+            if (Vector3.Angle(hit.normal, Vector3.up) < 45f)
+            {
+              wanderTarget = hit.point;
+              return true;
+            }
+          }
+        }
+        wanderTarget = Vector3.zero;
+        return false; // No valid spot found
+      }
+
+      public void OnStateUpdate(XenoAIState previousState, XenoAIState nextState)
+      {
+        if (nextState != XenoAIState.Sleeping)
+        {
+          if (_sleepCoroutineHandler.IsRunning)
+          {
+            _sleepCoroutineHandler.Stop();
+          }
+          _animator.SetTrigger(XenoTriggers.Awake);
+        }
+
+        if (nextState == XenoAIState.Sleeping)
+        {
+          _animator.SetTrigger(XenoTriggers.Sleep);
+          _animator.SetBool(XenoBooleans.Movement, false);
+        }
+
+        if (!PrimaryTarget || nextState != XenoAIState.Attack)
+        {
+          Stop_Attack();
+        }
+      }
+
+      public void Start_Sleep()
+      {
+        if (_sleepCoroutineHandler.IsRunning) return;
+        _sleepCoroutineHandler.Start(ScheduleSleep());
+        CurrentState = XenoAIState.Idle;
+      }
+
+      public bool Update_Roam()
+      {
+        if (roamTarget == null || Vector3.Distance(transform.position, roamTarget.Value) < 1.2f)
+        {
+          Vector3 newWander;
+          if (TryPickRandomWanderTarget(out newWander))
+            roamTarget = newWander;
+          else
+            roamTarget = null;
+        }
+        if (roamTarget != null)
+          MoveTowards(roamTarget.Value, wanderSpeed); // Wander speed
+
+        return roamTarget != null;
+      }
+
+      public bool Update_AttackTargetBehavior()
+      {
+        if (!PrimaryTarget) return false;
+        var isInAttackRange = DeltaPrimaryTarget < closeRange;
+        if (isInAttackRange)
+        {
+          Start_Attack();
+        }
+        else
+        {
+          Stop_Attack();
+        }
+        return true;
+      }
+
+      public void Update_Position()
+      {
+        if (IsFleeing())
+          MoveTowardsTarget();
+      }
+
+      public bool Update_SleepBehavior()
+      {
+        if (roamTarget != null || PrimaryTarget != null && PrimaryTarget.gameObject.activeInHierarchy) return false;
+        Start_Sleep();
+        return true;
+      }
 
       public void UpdateBehavior()
       {
@@ -937,67 +1357,17 @@
 
         UpdatePrimaryTarget();
 
-        if (PrimaryTarget == null || !PrimaryTarget.gameObject.activeInHierarchy)
+        // This iterator invokes all methods until a behavior returns true to bail.
+        var hasBailed = false;
+        foreach (var behaviorUpdater in _behaviorUpdaters)
         {
-          if (_sleepCoroutineHandler.IsRunning) return;
-          _sleepCoroutineHandler.Start(ScheduleSleep());
-          CurrentState = XenoAIState.Idle;
-          Stop_Attack();
-          return;
+          var result = behaviorUpdater.Invoke();
+          if (!result) continue;
+          LoggerProvider.LogDevDebounced($"Bailed on {behaviorUpdater.Method.Name}");
+          hasBailed = true;
+          break;
         }
-
-        if (_sleepCoroutineHandler.IsRunning)
-        {
-          _sleepCoroutineHandler.Stop();
-        }
-
-        if (IsSleeping())
-        {
-          StopSleeping();
-        }
-
-        if (health <= 0.1f)
-        {
-          SetDead();
-          return;
-        }
-
-        if (health < 30f)
-        {
-          Flee();
-          FleeTowardSafeAllyOrRunAway();
-          Stop_Attack();
-          return;
-        }
-
-        if (IsFleeing())
-        {
-          StopFleeing();
-        }
-
-        if (PrimaryTarget)
-        {
-          var isInAttackRange = DeltaPrimaryTarget < closeRange;
-          if (isInAttackRange)
-          {
-            // MoveTowardsTarget();
-            Start_Attack();
-          }
-
-          // todo add a lunge attack at less than 5f...random chance should be checked every X seconds.
-
-          if (!isInAttackRange && DeltaPrimaryTarget < 100f)
-          {
-            Stop_Attack();
-            MoveTowardsTarget();
-          }
-
-          // if (DeltaPrimaryTarget >= 10f)
-          // {
-          //     Start_HuntTarget();
-          // }
-
-        }
+        if (hasBailed) return;
       }
 
       public void Start_Idle()
@@ -1013,30 +1383,217 @@
         _animator.SetBool(XenoBooleans.Walk, true);
       }
 
+      private float GetTargetAngle(Vector3 toTarget)
+      {
+        var forward = transform.forward;
+        toTarget.y = 0;
+        forward.y = 0;
+        return Vector3.SignedAngle(forward, toTarget, Vector3.up); // degrees: -180 to +180
+      }
+
       public void MoveTowardsTarget()
       {
         if (!PrimaryTarget) return;
 
-        var movement = GetMovementParams(DeltaPrimaryTarget < closeRange);
-        RotateTowardsTarget(movement.TurnSpeed);
+        // Predict target's future position
+        var predictedTarget = PredictTargetPosition();
+        var toTarget = predictedTarget - transform.position;
+        var distance = toTarget.magnitude;
 
-        moveLerpVel = Mathf.MoveTowards(moveLerpVel, movement.Speed, movement.Acceleration * Time.deltaTime);
-        _rb.AddForce(transform.forward * moveLerpVel, ForceMode.Acceleration);
+        // Always rotate toward target
+        RotateTowardsDirection(toTarget, turnSpeed);
+
+        // Only move forward if:
+        // - The target is not far behind (optional), AND
+        // - There is safe ground ahead (not a ledge)
+
+        if (IsGapAhead(1.0f, 3f, 5f)) // Only jump if there is a real gap
+        {
+          Vector3 jumpTarget;
+          if (FindJumpableLanding(out jumpTarget))
+          {
+            JumpTo(jumpTarget);
+            if (_animator) _animator.SetTrigger("Jump");
+            return;
+          }
+          else
+          {
+            BrakeHard();
+            // if (_animator) _animator.SetFloat(XenoParams.MoveSpeed, 0f);
+            // moveLerpVel = 0f;
+            return;
+          }
+        }
+
+        // Optionally, do not move if target is very far behind you
+        var targetAngle = Vector3.SignedAngle(transform.forward, toTarget, Vector3.up);
+        var shouldMove = Mathf.Abs(targetAngle) < 120f; // or any threshold
+
+        var slowDownStart = 6f;
+        var speedFactor = Mathf.Clamp01(distance / slowDownStart);
+        var targetSpeed = Mathf.Lerp(closeMoveSpeed, moveSpeed, speedFactor);
+        var targetAccel = Mathf.Lerp(closeAccelForce, AccelerationForceSpeed, speedFactor);
+
+        if (shouldMove)
+        {
+          moveLerpVel = Mathf.MoveTowards(moveLerpVel, targetSpeed, targetAccel * Time.deltaTime);
+          _rb.AddForce(transform.forward * moveLerpVel, ForceMode.Acceleration);
+        }
+        else
+        {
+          moveLerpVel = Mathf.MoveTowards(moveLerpVel, 0f, targetAccel * 2f * Time.deltaTime);
+          // Optionally: trigger "turn in place" animation if angle > 90°
+        }
 
         var normalized = Mathf.InverseLerp(0f, 8f, _rb.velocity.magnitude);
         _animator.SetFloat(XenoParams.MoveSpeed, normalized < IdleThresholdTime ? -1f : normalized);
       }
 
-      private void RotateTowardsTarget(float customTurnSpeed)
+    public float MaxJumpDistance = 4f; // Exposed in Inspector, tweak as desired
+    public float MaxJumpHeightArc = 2.5f; // Exposed in Inspector, tweak as desired
+
+    public float lastJumpTime = 0f;
+    
+    // --- Find a safe jump landing, never exceeding MaxJumpDistance ---
+    private bool FindJumpableLanding(out Vector3 landingPoint, float maxDrop = 2.5f, float fanAngle = 60f, int numChecks = 7)
+{
+    landingPoint = Vector3.zero;
+    if (!CanJump || !IsGrounded()) return false;
+
+    var jumpOrigin = GetFurthestToe()?.position ?? transform.position;
+
+
+    float bestDistance = 0f;
+    Vector3 bestLanding = Vector3.zero;
+    bool found = false;
+
+    for (int i = 0; i < numChecks; i++)
+    {
+        float angle = -fanAngle / 2f + fanAngle / (numChecks - 1) * i;
+        Vector3 dir = Quaternion.Euler(0, angle, 0) * transform.forward;
+        // Use the actual edge of the collider + a small fudge
+        var checkStart = jumpOrigin + dir;
+
+        for (float dist = 1.0f; dist <= MaxJumpDistance; dist += 0.5f)
+        {
+            Vector3 rayOrigin = checkStart + dir * dist;
+            Debug.DrawRay(rayOrigin, Vector3.down * (maxDrop + 0.5f), Color.cyan, 2f);
+
+            Ray downRay = new Ray(rayOrigin, Vector3.down);
+            if (Physics.Raycast(downRay, out var hit, maxDrop + 0.5f, LayerMask.GetMask("Default", "terrain")))
+            {
+                float verticalDrop = jumpOrigin.y - hit.point.y;
+                float slope = Vector3.Angle(hit.normal, Vector3.up);
+                float landingDist = Vector3.Distance(jumpOrigin, hit.point);
+
+                if (verticalDrop < maxDrop && slope < 40f && landingDist <= MaxJumpDistance)
+                {
+                    if (!found || landingDist > bestDistance)
+                    {
+                        bestDistance = landingDist;
+                        bestLanding = hit.point;
+                        found = true;
+                    }
+                    Debug.DrawLine(rayOrigin, hit.point, Color.magenta, 2f);
+                }
+            }
+        }
+    }
+
+    if (found)
+    {
+        landingPoint = bestLanding;
+        Debug.DrawLine(jumpOrigin + Vector3.up * 0.2f, bestLanding + Vector3.up * 0.2f, Color.green, 2f);
+        return true;
+    }
+    return false;
+}
+          
+    private void JumpTo(Vector3 landingPoint)
+    {
+      if (lastJumpTime > Time.fixedTime) return;
+      lastJumpTime = Time.fixedTime + 0.5f;
+      Vector3 origin = GetLowestPointOnRigidbody();
+
+      // Clamp landing point if somehow it's out of range
+      Vector3 jumpVec = landingPoint - origin;
+      float dist = jumpVec.magnitude;
+      if (dist > MaxJumpDistance)
       {
-        if (!PrimaryTarget) return;
-        var dir = PrimaryTarget.position - transform.position;
+        jumpVec = jumpVec.normalized * MaxJumpDistance;
+        landingPoint = origin + jumpVec;
+        dist = MaxJumpDistance;
+      }
+
+      // Draw debug line in editor
+      Debug.DrawLine(origin + Vector3.up * 0.2f, landingPoint + Vector3.up * 0.2f, Color.red, 2f);
+
+      // --- Disable animator for physics jump (if desired)
+      if (_animator && _animator.enabled)
+        _animator.enabled = false;
+
+      // --- Ballistic calculation
+      // Force Y jump to reach arc height
+      float gravity = Mathf.Abs(Physics.gravity.y);
+      float timeToApex = Mathf.Sqrt(2 * MaxJumpHeightArc / gravity);
+      float vy = Mathf.Sqrt(2 * gravity * MaxJumpHeightArc);
+      float timeTotal = timeToApex + Mathf.Sqrt(2 * Mathf.Max(0, (landingPoint.y - origin.y)) / gravity);
+
+      // Horizontal velocity to cover distance in total time
+      Vector3 horiz = jumpVec;
+      horiz.y = 0;
+      Vector3 vxz = horiz / Mathf.Max(0.01f, timeTotal);
+
+      // Set rigidbody velocity
+      _rb.velocity = vxz + Vector3.up * vy;
+
+      // --- Re-enable animator after delay (or on landing)
+      StartCoroutine(ReenableAnimatorAfter(0.7f)); // You can tune this delay!
+    }
+      
+      
+
+      private IEnumerator ReenableAnimatorAfter(float seconds)
+      {
+        var timePassed = 0f;
+        while (timePassed < 0.5f && !IsGrounded() || timePassed > seconds)
+        {
+          timePassed += Time.deltaTime;
+          yield return new WaitForFixedUpdate();
+        }
+        if (_animator)
+          _animator.enabled = true;
+      }
+      
+      private void BrakeHard()
+      {
+        if (!IsGrounded()) return;
+        var v = _rb.velocity;
+        v.x = 0f;
+        v.z = 0f;
+        _rb.velocity = v;
+        _rb.angularVelocity = Vector3.zero;
+      }
+
+      private void RotateTowardsDirection(Vector3 dir, float customTurnSpeed)
+      {
         dir.y = 0;
         if (dir.sqrMagnitude < 0.001f) return;
 
         var targetRot = Quaternion.LookRotation(dir);
         var turnLerp = customTurnSpeed * Mathf.Deg2Rad * Time.deltaTime;
-        transform.rotation = Quaternion.Slerp(transform.rotation, targetRot, Mathf.Clamp01(turnLerp));
+
+        // Instantly set rotation if angle is very large (target is behind)
+        var angle = Vector3.SignedAngle(transform.forward, dir, Vector3.up);
+        if (Mathf.Abs(angle) > 170f)
+        {
+          // Prevents "stalling" when facing directly away from the target
+          transform.rotation = targetRot;
+        }
+        else
+        {
+          transform.rotation = Quaternion.Slerp(transform.rotation, targetRot, Mathf.Clamp01(turnLerp));
+        }
       }
 
       public void UpdateAttackMode()
@@ -1052,6 +1609,20 @@
         UpdateAttackMode();
         _animator.SetBool(XenoParams.MoveAttack, true);
         _animator.SetFloat(XenoParams.AttackMode, cachedAttackMode);
+      }
+
+      private Vector3 PredictTargetPosition(float predictionTime = 0.5f)
+      {
+        if (!PrimaryTarget) return transform.position;
+
+        // Try to get the target's velocity (via Rigidbody)
+        var targetRb = PrimaryTargetRB ?? PrimaryTarget.GetComponent<Rigidbody>();
+        if (targetRb)
+        {
+          return PrimaryTarget.position + targetRb.velocity * predictionTime;
+        }
+        // Fallback: just use their current position (not ideal)
+        return PrimaryTarget.position;
       }
 
       public void Stop_Attack()
@@ -1099,6 +1670,7 @@
           if (boneName.Contains("Toe") || boneName.Contains("Finger") || boneName.Contains("Thumb")) continue;
           if (bone.GetComponent<Collider>() != null) continue;
           var capsule = bone.gameObject.AddComponent<CapsuleCollider>();
+          bone.gameObject.layer = LayerHelpers.PieceLayer;
           allColliders.Add(capsule);
           // Adjust collider size/orientation as needed for your model
           capsule.radius = 0.5f;
@@ -1112,6 +1684,14 @@
         if (!skip)
         {
           list.Add(joint);
+        }
+        if (joint.name.Contains("XenosBiped_r_Toe02_Base_SHJnt"))
+        {
+          rightToeTransform = joint;
+        } 
+        if (joint.name.Contains("XenosBiped_l_Toe02_Base_SHJnt"))
+        {
+          leftToeTransform = joint;
         }
         foreach (Transform child in joint)
         {
@@ -1182,7 +1762,8 @@
       private Transform rightHip;
       private Transform leftArm;
       private Transform rightArm;
-
+      public Transform leftToeTransform;   // Assign to left foot/toe bone
+      public Transform rightToeTransform;  // Assign to right foot/toe bone
     #endregion
 
     }

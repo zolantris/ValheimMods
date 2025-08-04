@@ -1,4 +1,5 @@
-﻿using BepInEx;
+﻿using System;
+using BepInEx;
 using Eldritch.Core;
 using Jotunn.Configs;
 using Jotunn.Entities;
@@ -9,6 +10,7 @@ using Zolantris.Shared;
 
 namespace Eldritch.Valheim;
 
+[BepInDependency(Jotunn.Main.ModGuid)]
 [BepInPlugin(ModGuid, ModName, Version)]
 public class EldritchValheimPlugin : BaseUnityPlugin
 {
@@ -22,7 +24,10 @@ public class EldritchValheimPlugin : BaseUnityPlugin
 
   public void Awake()
   {
+    LoggerProvider.Setup(Logger);
     LoggerProvider.LogDebug("Eldritchcore initialized");
+
+    InvokeRepeating(nameof(DebugCheckinMethod), 3f, 5f);
 
     PrefabManager.OnVanillaPrefabsAvailable += () =>
     {
@@ -30,11 +35,17 @@ public class EldritchValheimPlugin : BaseUnityPlugin
     };
   }
 
+  public void DebugCheckinMethod()
+  {
+    LoggerProvider.LogDebug("Checkin called");
+  }
+
   public void InjectAlienPrefab()
   {
     if (assetBundle == null) return;
+    LoggerProvider.LogDebug($"Starting InjectAlienPrefab");
     const string XenoAdultName = "Eldritch_XenoAdult";
-    const string assetName = "AlienTest";
+    const string assetName = "alientest";
 
     var prefabAsset = assetBundle.LoadAsset<GameObject>(assetName);
     if (prefabAsset == null) return;
@@ -44,15 +55,28 @@ public class EldritchValheimPlugin : BaseUnityPlugin
 
     clonedPrefab.AddComponent<ZNetView>();
     clonedPrefab.AddComponent<XenoDroneSpawnHandler>();
+    var piece = clonedPrefab.AddComponent<Piece>();
+    piece.m_name = XenoAdultName;
+    piece.m_icon = Sprites.GetSprite("anchor");
 
     var components = clonedPrefab.GetComponents<Component>();
     foreach (var component in components)
     {
+      if (component == null)
+      {
+        LoggerProvider.LogError("Got null component");
+        continue;
+      }
       LoggerProvider.LogDebug(component.GetType().ToString());
     }
 
     foreach (var component in originalComponents)
     {
+      if (component == null)
+      {
+        LoggerProvider.LogError("Got null component");
+        continue;
+      }
       LoggerProvider.LogDebug(component.GetType().ToString());
     }
 
@@ -60,6 +84,7 @@ public class EldritchValheimPlugin : BaseUnityPlugin
       new PieceConfig
       {
         PieceTable = "Hammer", // for now.
+        Name = "XENO",
         Description = "Xenos....they're everywhere...",
         Icon = Sprites.GetSprite("anchor"), // for testing.
         Category = "Eldritch",
@@ -74,6 +99,8 @@ public class EldritchValheimPlugin : BaseUnityPlugin
           }
         ]
       }));
+
+    LoggerProvider.LogDebug($"Added {piece}");
   }
 
   /// <summary>
@@ -81,12 +108,23 @@ public class EldritchValheimPlugin : BaseUnityPlugin
   /// </summary>
   public void LoadAssemblies()
   {
-    assetBundle = Entry.LoadAssembly();
+    if (!assetBundle)
+    {
+      assetBundle = Entry.LoadAssembly();
+    }
 
     if (assetBundle == null) return;
 
     Sprites = assetBundle.LoadAsset<SpriteAtlas>("icons");
 
-    InjectAlienPrefab();
+    try
+    {
+
+      InjectAlienPrefab();
+    }
+    catch (Exception e)
+    {
+      LoggerProvider.LogError($"Failed to load alien prefab {e}");
+    }
   }
 }

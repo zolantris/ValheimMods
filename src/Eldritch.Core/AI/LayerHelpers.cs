@@ -38,6 +38,8 @@ using Zolantris.Shared;
         "static_solid", "Default_small",
         "character_net", "vehicle",
         LayerMask.LayerToName(CustomRaftLayer));
+      public static LayerMask LandLayers = LayerMask.GetMask("Default", "piece","terrain",
+        "static_solid", "Default_small");
 
       public static LayerMask OnboardLayers = LayerMask.GetMask("item", "character");
 

@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using ValheimVehicles.Interfaces;
 using ValheimVehicles.SharedScripts.PowerSystem.Interfaces;
+using Zolantris.Shared;
 using Debug = UnityEngine.Debug;
 
 #endregion
