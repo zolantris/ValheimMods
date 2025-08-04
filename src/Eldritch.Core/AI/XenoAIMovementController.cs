@@ -87,15 +87,22 @@ namespace Eldritch.Core
 
             
             GetGroundPoint();
+
+            var isUnderground = false;
             
             foreach (var animationFootCollider in OwnerAI.Animation.footColliders)
             {
                 if (animationFootCollider.bounds.min.y < GroundPoint.y)
                 {
+                    isUnderground = true;
                     vel.y = Mathf.Max(vel.y, GroundPoint.y - animationFootCollider.bounds.min.y, 0f);
                 }
             }
 
+            if (IsGrounded || isUnderground)
+            {
+                OwnerAI.lastTouchedLand = 0f;
+            }
            
             _rb.velocity = vel;
             
@@ -306,11 +313,13 @@ namespace Eldritch.Core
             var ray = new Ray(position + Vector3.up * 0.5f, Vector3.down);
             return Physics.Raycast(ray, out _, maxDrop + 0.5f, LayerMask.GetMask("Default", "terrain"));
         }
-        public bool FindJumpableLanding(out Vector3 landingPoint, float maxDrop = 2.5f, float fanAngle = 60f, int numChecks = 7)
+        private bool FindJumpableLanding(out Vector3 landingPoint, float maxDrop = 2.5f, float fanAngle = 60f, int numChecks = 7)
         {
             landingPoint = Vector3.zero;
-            if (OwnerAI == null || !OwnerAI.CanJump || !OwnerAI.IsGrounded()) return false;
-            var jumpOrigin = transform.position;
+            if (!IsGrounded) return false;
+
+            var jumpOrigin = OwnerAI.Animation.GetFurthestToe().position;
+
             float bestDistance = 0f;
             Vector3 bestLanding = Vector3.zero;
             bool found = false;
@@ -319,16 +328,21 @@ namespace Eldritch.Core
             {
                 float angle = -fanAngle / 2f + fanAngle / (numChecks - 1) * i;
                 Vector3 dir = Quaternion.Euler(0, angle, 0) * transform.forward;
+                // Use the actual edge of the collider + a small fudge
                 var checkStart = jumpOrigin + dir;
+
                 for (float dist = 1.0f; dist <= maxJumpDistance; dist += 0.5f)
                 {
                     Vector3 rayOrigin = checkStart + dir * dist;
+                    Debug.DrawRay(rayOrigin, Vector3.down * (maxDrop + 0.5f), Color.cyan, 2f);
+
                     Ray downRay = new Ray(rayOrigin, Vector3.down);
-                    if (Physics.Raycast(downRay, out var hit, maxDrop + 0.5f, LayerMask.GetMask("Default", "terrain")))
+                    if (Physics.Raycast(downRay, out var hit, maxDrop + 0.5f, LayerHelpers.GroundLayers))
                     {
                         float verticalDrop = jumpOrigin.y - hit.point.y;
                         float slope = Vector3.Angle(hit.normal, Vector3.up);
                         float landingDist = Vector3.Distance(jumpOrigin, hit.point);
+
                         if (verticalDrop < maxDrop && slope < 40f && landingDist <= maxJumpDistance)
                         {
                             if (!found || landingDist > bestDistance)
@@ -337,13 +351,16 @@ namespace Eldritch.Core
                                 bestLanding = hit.point;
                                 found = true;
                             }
+                            Debug.DrawLine(rayOrigin, hit.point, Color.magenta, 2f);
                         }
                     }
                 }
             }
+
             if (found)
             {
                 landingPoint = bestLanding;
+                Debug.DrawLine(jumpOrigin + Vector3.up * 0.2f, bestLanding + Vector3.up * 0.2f, Color.green, 2f);
                 return true;
             }
             return false;

@@ -123,6 +123,7 @@ namespace Eldritch.Core
                 return;
             }
             TryUpdateAIState();
+            UpdateAIMovement();
         }
 
         #region Behavior Updates
@@ -172,10 +173,10 @@ namespace Eldritch.Core
         }
         public bool Update_Roam()
         {
-            if (!PrimaryTarget)
-            {
-                CurrentState = XenoAIState.Roam;
-            }
+            // if (!PrimaryTarget)
+            // {
+            // }
+            CurrentState = XenoAIState.Roam;
             if (Movement.HasRoamTarget) return true;
             return Movement.TryUpdateCurrentWanderTarget();
         }
