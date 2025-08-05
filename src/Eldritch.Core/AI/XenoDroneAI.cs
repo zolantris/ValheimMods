@@ -27,7 +27,7 @@ namespace Eldritch.Core
 
     [Header("Controller References")]
     [SerializeField] public XenoAIMovementController Movement;
-    [SerializeField] public XenoAIAnimationController Animation;
+    [SerializeField] public XenoAnimationController Animation;
     // State
     public XenoAIState CurrentState = XenoAIState.Idle;
     public Transform PrimaryTarget;
@@ -62,13 +62,10 @@ namespace Eldritch.Core
       InitCoroutineHandlers();
       Instances.Add(this);
       if (!Movement) Movement = GetComponent<XenoAIMovementController>();
-      if (!Animation) Animation = GetComponentInChildren<XenoAIAnimationController>();
+      if (!Animation) Animation = GetComponentInChildren<XenoAnimationController>();
       Health = MaxHealth;
       if (Movement) Movement.OwnerAI = this;
       if (Animation) Animation.OwnerAI = this;
-
-      allColliders.UnionWith(GetComponentsInChildren<Collider>());
-      attackColliders.UnionWith(allColliders); // Can filter specific attack colliders here if needed
 
       BindBehaviors();
     }
@@ -343,7 +340,6 @@ namespace Eldritch.Core
     public HashSet<Transform> rightArmJoints => Animation?.rightArmJoints;
     public HashSet<Transform> tailJoints => Animation?.tailJoints;
     public HashSet<Collider> allColliders => Animation?.allColliders;
-    public HashSet<Collider> attackColliders => Animation?.attackColliders;
 
 // Optional: attack collider names
     public string ARMAttackObjName => Animation?.armAttackObjName;

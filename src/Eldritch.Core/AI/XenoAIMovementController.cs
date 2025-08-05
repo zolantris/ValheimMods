@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using Eldritch.Core.Abilities;
 using UnityEngine;
 using Random = UnityEngine.Random;
@@ -42,16 +43,6 @@ namespace Eldritch.Core
 
     [SerializeField] public float CounterGravity = 0.1f;
 
-    public DodgeAbilityConfig dodgeAbilityConfig = new()
-    {
-      forwardDistance = 6f,
-      backwardDistance = 3f,
-      sideDistance = 4.5f,
-      jumpHeight = 1f,
-      dodgeDuration = 0.18f,
-      cooldown = 1f
-    };
-
     public readonly HashSet<Collider> GroundContacts = new();
     public DodgeAbility dodgeAbility;
     private float dodgeElapsed;
@@ -69,7 +60,6 @@ namespace Eldritch.Core
 
     public void Awake()
     {
-      dodgeAbility = new DodgeAbility(this, dodgeAbilityConfig, transform);
       if (!_rb) _rb = GetComponent<Rigidbody>();
     }
 
@@ -134,8 +124,16 @@ namespace Eldritch.Core
       {
         GroundPoint = Vector3.negativeInfinity;
       }
-      ;
     }
+
+    #region Abilities
+
+    public bool TryDodge(Vector3 direction, Action onDodgeComplete)
+    {
+      return dodgeAbility.TryDodge(direction, onDodgeComplete);
+    }
+
+    #endregion
 
     // --- Core Movement ---
     public void MoveTowardsTarget(Vector3 targetPos, float speed, float accel, float turnSpeed)
@@ -384,7 +382,7 @@ namespace Eldritch.Core
     }
     public void JumpTo(Vector3 landingPoint)
     {
-      OwnerAI.Animation.RequestJump();
+      OwnerAI.Animation.PlayJump();
 
       var origin = transform.position;
       var jumpVec = landingPoint - origin;

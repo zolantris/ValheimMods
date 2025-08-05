@@ -12,7 +12,7 @@ namespace Eldritch.Core
     public float jumpForce = 7f;
     public float turnSpeed = 10f;
     private XenoDroneAI aiController;
-    private XenoAIAnimationController animationController;
+    private XenoAnimationController animationController;
     private bool jumpRequested;
 
     private XenoAIMovementController movement;
@@ -23,7 +23,7 @@ namespace Eldritch.Core
     private void Awake()
     {
       movement = GetComponent<XenoAIMovementController>();
-      animationController = GetComponentInChildren<XenoAIAnimationController>();
+      animationController = GetComponentInChildren<XenoAnimationController>();
       aiController = GetComponentInParent<XenoDroneAI>();
       rb = GetComponentInParent<Rigidbody>();
     }
@@ -70,7 +70,7 @@ namespace Eldritch.Core
       // Jump input
       if (Input.GetKeyDown(KeyCode.Space) && aiController != null && aiController.IsGrounded())
       {
-        animationController.RequestJump();
+        animationController.PlayJump();
         jumpRequested = true;
       }
     }
@@ -111,11 +111,13 @@ namespace Eldritch.Core
 
     private void FireDodge(Vector3 move)
     {
+      animationController.SetAttackMode(1);
+      animationController.PlayAttack(1);
       // Use input direction if pressed, otherwise lunge forward
       var dodgeDir = move.sqrMagnitude > 0.01f ? move.normalized : transform.forward;
 
       if (aiController?.Movement?.dodgeAbility != null)
-        aiController.Movement.dodgeAbility.TryDodge(dodgeDir);
+        aiController.Movement.dodgeAbility.TryDodge(dodgeDir, () => {});
 
       Debug.Log($"Dodge triggered! Direction: {dodgeDir}");
     }
@@ -163,7 +165,7 @@ namespace Eldritch.Core
 
     private void TriggerBehavior1()
     {
-      animationController.RequestJump();
+      animationController.PlayJump();
       Debug.Log("Behavior 1 jump triggered!");
     }
     private void TriggerBehavior2()
