@@ -1,7 +1,6 @@
 using System;
 using UnityEngine;
 using Eldritch.Core;
-using ValheimVehicles.SharedScripts;
 namespace Eldritch.Valheim;
 
 public class XenoDroneSpawnHandler : MonoBehaviour
@@ -23,7 +22,7 @@ public class XenoDroneSpawnHandler : MonoBehaviour
     var randomInt = UnityEngine.Random.Range(1, 5);
 
     // guard in case it doesn't work.
-    droneAi.packId = Mathf.RoundToInt(randomInt);
+    droneAi.PackId = Mathf.RoundToInt(randomInt);
     HasRandomizedPackId = true;
   }
 

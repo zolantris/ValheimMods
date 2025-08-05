@@ -1,4 +1,12 @@
 <Project>
+    <!--  Done for compatibility with unity mklink so projects can keep structure but not have bin or obj folders  -->
+    <PropertyGroup Label="Overrides for MSBuild">
+        <BaseOutputPath>$(SolutionDir)Build\bin\</BaseOutputPath>
+        <BaseIntermediateOutputPath>$(SolutionDir)Build\obj\</BaseIntermediateOutputPath>
+        <OutputPath>$(BaseOutputPath)$(MSBuildProjectName)\$(Configuration)\</OutputPath>
+        <IntermediateOutputPath>$(BaseIntermediateOutputPath)$(MSBuildProjectName)\$(Configuration)\</IntermediateOutputPath>
+    </PropertyGroup>
+
     <Import Project="$(SolutionDir)build\.props" Condition="Exists('$(SolutionDir)build\.props')"/>
     <Import Project="$(SolutionDir)build\build_variables.props" Condition="Exists('$(SolutionDir)build\build_variables.props')"/>
 
@@ -24,7 +32,6 @@
         <Nullable>enable</Nullable>
         <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
         <Configurations>Debug;Release</Configurations>
-        <OutputPath>bin\Debug</OutputPath>
         <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     </PropertyGroup>
 
@@ -32,7 +39,6 @@
         <DebugSymbols>true</DebugSymbols>
         <DebugType>full</DebugType>
         <Optimize>false</Optimize>
-        <OutputPath>bin\Debug\</OutputPath>
         <DefineConstants>DEBUG;TRACE;</DefineConstants>
         <ErrorReport>prompt</ErrorReport>
         <WarningLevel>4</WarningLevel>
@@ -41,7 +47,6 @@
     <PropertyGroup Condition="'$(IsRelease)' == 'true'">
         <DebugType>pdbonly</DebugType>
         <Optimize>true</Optimize>
-        <OutputPath>bin\Release\</OutputPath>
         <DefineConstants>TRACE;VALHEIM</DefineConstants>
         <ErrorReport>prompt</ErrorReport>
         <WarningLevel>4</WarningLevel>
@@ -55,15 +60,9 @@
         <PlatformTarget>AnyCPU</PlatformTarget>
         <DebugType>pdbonly</DebugType>
         <Optimize>true</Optimize>
-        <OutputPath>bin\Release\</OutputPath>
         <DefineConstants>TRACE</DefineConstants>
         <ErrorReport>prompt</ErrorReport>
         <WarningLevel>4</WarningLevel>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     </PropertyGroup>
-
-    <ItemGroup>
-        <Compile Include="$(AssemblyDir)\.*cs"/>
-        <Compile Include="$(AssemblyDir)\Properties\.*cs"/>
-    </ItemGroup>
 </Project>

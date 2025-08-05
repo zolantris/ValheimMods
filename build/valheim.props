@@ -8,16 +8,11 @@
         <DefineConstants>$(DefineConstants);VALHEIM</DefineConstants>
     </PropertyGroup>
     <PropertyGroup Condition="'$(IsRelease)' == 'true'">
-        <OutputPath>bin\Release\</OutputPath>
         <DefineConstants>$(DefineConstants);VALHEIM</DefineConstants>
     </PropertyGroup>
 
     <PropertyGroup Label="VM properties">
         <SandboxieVMExists Condition="Exists('$(SandboxiePluginDeployPath)')">true</SandboxieVMExists>
-    </PropertyGroup>
-
-    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Test|AnyCPU' ">
-        <OutputPath>bin\Test\</OutputPath>
     </PropertyGroup>
 
     <!--  disables cache which can prevent building or running stuff  -->
