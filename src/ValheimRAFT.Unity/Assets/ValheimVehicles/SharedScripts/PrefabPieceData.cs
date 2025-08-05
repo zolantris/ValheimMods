@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Unity.Collections;
 using UnityEngine;
+using Zolantris.Shared;
 
 #endregion
 
@@ -35,7 +36,8 @@ namespace ValheimVehicles.SharedScripts
     }
 
     /// <summary>
-    /// called within the constructor in order to mutate the original data before it's returned.
+    ///   called within the constructor in order to mutate the original data before
+    ///   it's returned.
     /// </summary>
     /// <param name="prefab"></param>
     private void InitComponentProperties(GameObject prefab)
@@ -46,7 +48,8 @@ namespace ValheimVehicles.SharedScripts
     }
 
     /// <summary>
-    /// called within the constructor in order to mutate the original data before it's returned.
+    ///   called within the constructor in order to mutate the original data before
+    ///   it's returned.
     /// </summary>
     /// <param name="root"></param>
     /// <param name="allocator"></param>
