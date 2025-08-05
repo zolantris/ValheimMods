@@ -394,5 +394,5 @@ mod-releases
 
 # Ignore plugins files which are junction linked (copied to unity) but exist in other dirs.
 # Ignore the whole symlinked folder
-/src/ValheimRAFT.Unity/Assets/Plugins/Eldritch.Core/
-/src/ValheimRAFT.Unity/Assets/Plugins/Zolantris.Shared/
+src/ValheimRAFT.Unity/Assets/Plugins/Eldritch.Core/
+src/ValheimRAFT.Unity/Assets/Plugins/Zolantris.Shared/

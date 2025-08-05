@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using HarmonyLib;
 using UnityEngine;
 using Zolantris.Shared;
@@ -81,6 +82,8 @@ namespace Eldritch.Core
         public float footOffset = 0.01f;       // Offset so foot doesn’t clip ground
 
         private AnimatorIKRelay ikRelay;
+        public readonly Dictionary<string, Transform> allAnimationJoints = new();
+        public Dictionary<string, JointPose> poseSnapshot;
         
         private void Awake()
         {
@@ -89,12 +92,16 @@ namespace Eldritch.Core
             if (!_skinRenderer) _skinRenderer = GetComponentInChildren<SkinnedMeshRenderer>();
             if (_bloodEffects == null) _bloodEffects = GetComponentInChildren<ParticleSystem>();
             
-
-            BindUnOptimizedRoots();
+            SetupXenoTransforms();
             SetupIKRelayReceiver();
+            // AddCapsuleCollidersToAllJoints();
+        }
 
-            AddCapsuleCollidersToAllJoints();
-            
+        [ContextMenu("Run SetupXenoTransforms")]
+        public void SetupXenoTransforms()
+        {
+            BindUnOptimizedRoots();
+
             var preGeneratedColliders = GetComponentsInChildren<Collider>();
             
             AssignAttackColliders(preGeneratedColliders);
@@ -215,7 +222,11 @@ namespace Eldritch.Core
             if (!t) return;
             var col = t.GetComponent<Collider>();
             if (!col)
-                col = t.gameObject.AddComponent<CapsuleCollider>();
+            {
+                var capsuleCol = t.gameObject.AddComponent<SphereCollider>();
+                capsuleCol.radius = 0.1f;
+                col = capsuleCol;
+            }
             allColliders.Add(col);
         }
 
@@ -272,8 +283,6 @@ namespace Eldritch.Core
             leftToeTransform = leftHip.Find("XenosBiped_l_Leg_Knee1SHJnt/XenosBiped_l_Leg_Knee2_CurveSHJnt/XenosBiped_l_Leg_AnkleSHJnt/XenosBiped_l_Toe02_Base_SHJnt"); // Update to match your rig
             rightToeTransform = rightHip.Find("XenosBiped_r_Leg_Knee1SHJnt/XenosBiped_r_Leg_Knee2_CurveSHJnt/XenosBiped_r_Leg_AnkleSHJnt/XenosBiped_r_Toe02_Base_SHJnt");
         }
-        
-        private readonly Dictionary<string, Transform> allAnimationJoints = new();
 
         public void DisableAnimator()
         {
@@ -295,23 +304,31 @@ namespace Eldritch.Core
                 RecursiveCollectAllJoints(child);
         }
         
-        private Dictionary<string, (Vector3 position, Quaternion rotation)> poseSnapshot;
+        [ContextMenu("Dump PoseSnapshot as C# (to dated file)")]
+        public void DumpCurrentPoseAsCSharpToFile()
+        {
+            SetupXenoTransforms();
+            SnapshotCurrentPose();
+            JointPoseDumpUtility.DumpPoseToFile(poseSnapshot, "Xeno_IdlePose");
+        }
 
+        [ContextMenu("Run SnapshotCurrentPose")]
         public void SnapshotCurrentPose()
         {
-            poseSnapshot = new Dictionary<string, (Vector3, Quaternion)>();
+            poseSnapshot = new Dictionary<string, JointPose>();
             foreach (var kvp in allAnimationJoints)
-                poseSnapshot[kvp.Key] = (kvp.Value.localPosition, kvp.Value.localRotation);
+                poseSnapshot[kvp.Key] = new JointPose(kvp.Value.localPosition, kvp.Value.localRotation);
         }
-        public void RestorePose()
+        
+        [ContextMenu("Run RestorePose")]
+        public void RestorePoseFrom(Dictionary<string, JointPose> poseDict)
         {
-            if (poseSnapshot == null) return;
-            foreach (var kvp in poseSnapshot)
+            foreach (var kvp in poseDict)
             {
                 if (allAnimationJoints.TryGetValue(kvp.Key, out var t) && t != null)
                 {
-                    t.localPosition = kvp.Value.position;
-                    t.localRotation = kvp.Value.rotation;
+                    t.localPosition = kvp.Value.Position;
+                    t.localRotation = kvp.Value.Rotation;
                 }
             }
         }
@@ -472,6 +489,71 @@ namespace Eldritch.Core
             if (!canSleepAnimate) return;
             if (_sleepAnimationRoute.IsRunning) return;
             _sleepAnimationRoute.Start(SleepingAnimationCoroutine());
+        }
+        
+        public IEnumerator SimulateJumpWithPoseLerp(
+            Dictionary<string, Transform> allJoints,
+            Dictionary<string, JointPose> idlePose,
+            Dictionary<string, JointPose> crouchPose,
+            float crouchDuration,
+            float airWaitTime,
+            float standDuration,
+            System.Action onComplete = null)
+        {
+            // 1. Disable animator
+            if (_animator) _animator.enabled = false;
+
+            // 2. Idle → Crouch
+            yield return LerpToPose(allJoints, idlePose, crouchPose, crouchDuration);
+
+            // 3. Stay crouched during "air time" (simulate jump apex)
+            yield return new WaitForSeconds(airWaitTime);
+
+            // Optionally: Wait until IsGrounded() returns true, instead of WaitForSeconds:
+            // while (!_ai.IsGrounded()) yield return null;
+
+            // 4. Crouch → Idle
+            yield return LerpToPose(allJoints, crouchPose, idlePose, standDuration);
+
+            // 5. Re-enable animator
+            if (_animator) _animator.enabled = true;
+
+            onComplete?.Invoke();
+        }
+        
+        public IEnumerator LerpToPose(
+            Dictionary<string, Transform> allJoints,
+            Dictionary<string, JointPose> startPose,
+            Dictionary<string, JointPose> endPose,
+            float duration)
+        {
+            float time = 0f;
+            while (time < duration)
+            {
+                float t = time / duration;
+                foreach (var kvp in allJoints)
+                {
+                    var jointName = kvp.Key;
+                    var joint = kvp.Value;
+                    if (!startPose.TryGetValue(jointName, out var poseA) || !endPose.TryGetValue(jointName, out var poseB))
+                        continue;
+
+                    joint.localPosition = Vector3.Lerp(poseA.Position, poseB.Position, t);
+                    joint.localRotation = Quaternion.Slerp(poseA.Rotation, poseB.Rotation, t);
+                }
+                time += Time.deltaTime;
+                yield return null;
+            }
+            // Ensure the end pose is set at the end
+            foreach (var kvp in allJoints)
+            {
+                var jointName = kvp.Key;
+                var joint = kvp.Value;
+                if (!endPose.TryGetValue(jointName, out var poseB))
+                    continue;
+                joint.localPosition = poseB.Position;
+                joint.localRotation = poseB.Rotation;
+            }
         }
 
         public IEnumerator SleepingAnimationCoroutine()
