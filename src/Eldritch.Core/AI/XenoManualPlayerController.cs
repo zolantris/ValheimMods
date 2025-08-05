@@ -11,6 +11,7 @@ namespace Eldritch.Core
     public float moveSpeed = 5f;
     public float jumpForce = 7f;
     public float turnSpeed = 10f;
+    private AbilityManager abilityManager;
     private XenoDroneAI aiController;
     private XenoAnimationController animationController;
     private bool jumpRequested;
@@ -18,12 +19,13 @@ namespace Eldritch.Core
     private XenoAIMovementController movement;
     private Rigidbody rb;
 
-    public bool IsDodging => aiController.Movement.IsDodging;
+    public bool IsDodging => abilityManager.IsDodging;
 
     private void Awake()
     {
       movement = GetComponent<XenoAIMovementController>();
       animationController = GetComponentInChildren<XenoAnimationController>();
+      abilityManager = GetComponent<AbilityManager>();
       aiController = GetComponentInParent<XenoDroneAI>();
       rb = GetComponentInParent<Rigidbody>();
     }
@@ -54,10 +56,14 @@ namespace Eldritch.Core
       var v = Input.GetAxis("Vertical");
       var move = new Vector3(h, 0f, v);
 
-      if (Input.GetKeyDown(KeyCode.LeftShift) || Input.GetKeyDown(KeyCode.RightShift))
+      if (!IsDodging && IsShiftModifierHeld())
       {
-        // Only dodge if not currently dodging, etc.
-        FireDodge(move);
+        if (move == Vector3.zero)
+        {
+          return;
+        }
+
+        FireDodge(new Vector2(move.x, move.z));
         return;
       }
 
@@ -78,6 +84,7 @@ namespace Eldritch.Core
     private void FixedUpdate()
     {
       if (!aiController.IsManualControlling) return;
+      if (IsShiftModifierHeld()) return;
       var h = Input.GetAxis("Horizontal");
       var v = Input.GetAxis("Vertical");
 
@@ -94,7 +101,7 @@ namespace Eldritch.Core
         rb.velocity = velocity;
       }
 
-      if (move.sqrMagnitude > 0.01f)
+      if (!IsDodging && !jumpRequested && move.sqrMagnitude > 0.01f)
       {
         var targetRot = Quaternion.LookRotation(moveWorld, Vector3.up);
         transform.rotation = Quaternion.Slerp(transform.rotation, targetRot, Time.fixedDeltaTime * turnSpeed);
@@ -109,17 +116,15 @@ namespace Eldritch.Core
       }
     }
 
-    private void FireDodge(Vector3 move)
+    public bool IsShiftModifierHeld()
     {
-      animationController.SetAttackMode(1);
-      animationController.PlayAttack(1);
-      // Use input direction if pressed, otherwise lunge forward
-      var dodgeDir = move.sqrMagnitude > 0.01f ? move.normalized : transform.forward;
+      return Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
+    }
 
-      if (aiController?.Movement?.dodgeAbility != null)
-        aiController.Movement.dodgeAbility.TryDodge(dodgeDir, () => {});
-
-      Debug.Log($"Dodge triggered! Direction: {dodgeDir}");
+    private void FireDodge(Vector2 move)
+    {
+      abilityManager.RequestDodge(move);
+      LoggerProvider.LogDebug($"Dodge triggered! Direction: {move}");
     }
 
     /// <summary>

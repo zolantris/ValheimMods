@@ -4,7 +4,7 @@ namespace Eldritch.Core
   public interface IXenoAnimationController
   {
     void SetMoveSpeed(float speed);
-    void PlayJump();
+    void PlayJump(string[] skipTransformNames = null);
     void PlaySleepingAnimation(bool isSleeping);
     void PlayDodgeAnimation(Vector3 dodgeDir);
     void StopDodgeAnimation();

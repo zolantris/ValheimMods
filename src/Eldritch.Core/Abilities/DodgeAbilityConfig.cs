@@ -1,8 +1,10 @@
 ﻿using System;
+using UnityEngine;
 namespace Eldritch.Core.Abilities
 {
+  // class for now to debug the object data live without requiring full ref refresh
   [Serializable]
-  public struct DodgeAbilityConfig
+  public class DodgeAbilityConfig
   {
     public float forwardDistance;
     public float backwardDistance;
@@ -10,16 +12,6 @@ namespace Eldritch.Core.Abilities
     public float jumpHeight;
     public float dodgeDuration;
     public float cooldown;
-
-    // Optional: constructor for easy runtime init
-    public DodgeAbilityConfig(float f, float b, float s, float j, float d, float c)
-    {
-      forwardDistance = f;
-      backwardDistance = b;
-      sideDistance = s;
-      jumpHeight = j;
-      dodgeDuration = d;
-      cooldown = c;
-    }
+    public Vector3 defaultDodgeDirection;
   }
 }

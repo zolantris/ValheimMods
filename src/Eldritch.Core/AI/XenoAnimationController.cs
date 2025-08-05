@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 using UnityEngine;
 using Zolantris.Shared;
 using Random = UnityEngine.Random;
@@ -12,12 +13,14 @@ namespace Eldritch.Core
 
     // Animation hashes
     public static readonly int MoveSpeed = Animator.StringToHash("moveSpeed");
-    public static readonly int MoveAttack = Animator.StringToHash("attack"); // boolean
+    public static readonly int Attack = Animator.StringToHash("attack"); // boolean
+    public static readonly int AttackSingle = Animator.StringToHash("attackSingle"); // trigger
     public static readonly int AttackMode = Animator.StringToHash("attackMode"); // int
+    public static readonly int AttackSpeed = Animator.StringToHash("attackSpeed"); // float
     public static readonly int Die = Animator.StringToHash("die"); // trigger
     public static readonly int AwakeTrigger = Animator.StringToHash("awake"); // trigger
-    public static readonly int Sleep = Animator.StringToHash("sleep"); // trigger
     public static readonly int Move = Animator.StringToHash("move"); // trigger
+    public static readonly int Sleep = Animator.StringToHash("sleep"); // trigger
     public static readonly int Idle = Animator.StringToHash("idle"); // trigger
     public static readonly int JumpTrigger = Animator.StringToHash("jump"); // bool (this can be used to disable other animations)
     [Header("Animator Poses")]
@@ -149,19 +152,6 @@ namespace Eldritch.Core
       animator.SetFloat(MoveSpeed, normalized);
     }
 
-    public void PlayJump()
-    {
-      if (_jumpAnimationRoutine.IsRunning) return;
-
-      _jumpAnimationRoutine.Start(SimulateJumpWithPoseLerp(
-        allAnimationJoints,
-        XenoAnimationPoses.Idle, // Idle or standing pose
-        XenoAnimationPoses.Crouch,
-        0.18f, // crouch time (down)
-        0.25f, // air time (wait)
-        0.24f));
-    }
-
     public void PlaySleepingAnimation(bool canSleepAnimate)
     {
       if (!canSleepAnimate) return;
@@ -176,6 +166,19 @@ namespace Eldritch.Core
     public void StopDodgeAnimation()
     {
       _jumpAnimationRoutine.Stop();
+    }
+
+    public void PlayJump(string[] skipTransformNames = null)
+    {
+      if (_jumpAnimationRoutine.IsRunning) return;
+
+      _jumpAnimationRoutine.Start(SimulateJumpWithPoseLerp(
+        allAnimationJoints,
+        XenoAnimationPoses.Idle, // Idle or standing pose
+        XenoAnimationPoses.Crouch,
+        0.18f, // crouch time (down)
+        0.25f, // air time (wait)
+        0.24f, skipTransformNames));
     }
 
     [ContextMenu("Run SetupXenoTransforms")]
@@ -405,24 +408,49 @@ namespace Eldritch.Core
       PlayAttack(_cachedAttackMode, canRandomize);
     }
 
+    public float GetAttackSpeed()
+    {
+      return animator.GetFloat(AttackSpeed);
+    }
+
+    public void SetAttackSpeed(float val, bool skipValidation)
+    {
+      if (skipValidation || !Mathf.Approximately(GetAttackSpeed(), val))
+      {
+        animator.SetFloat(AttackSpeed, Mathf.Clamp(val, 0.5f, 2f));
+      }
+    }
+
     /// <summary>
     ///   Set the attack type. Otherwise use it without an arg to get a randomize
     ///   version.
     /// </summary>
-    public void PlayAttack(int attackMode, bool canRandomize = false)
+    public void PlayAttack(int attackMode, bool canRandomize = false, bool isSingle = false)
     {
       EnableAttackColliders(attackMode);
       if (canRandomize)
       {
         TryRandomizeAttackMode();
       }
-      animator.SetBool(MoveAttack, true);
+      else
+      {
+        SetAttackMode(attackMode);
+      }
+
+      if (isSingle)
+      {
+        animator.SetTrigger(AttackSingle);
+      }
+      else
+      {
+        animator.SetBool(Attack, true);
+      }
     }
 
     public void StopAttack()
     {
       DisableAttackColliders();
-      animator.SetBool(MoveAttack, false);
+      animator.SetBool(Attack, false);
     }
 
     public void SetAttackMode(int mode)
@@ -435,7 +463,9 @@ namespace Eldritch.Core
     public void TryRandomizeAttackMode()
     {
       if (attack_nextUpdateTime > Time.fixedTime) return;
+      var attackSpeed = Random.Range(0.8f, 1.2f);
       var nextMode = Mathf.RoundToInt(Random.Range(0, 1));
+      SetAttackSpeed(attackSpeed, true);
       SetAttackMode(nextMode);
     }
 
@@ -532,27 +562,31 @@ namespace Eldritch.Core
       // neckUpDown.localRotation = Quaternion.Euler(x, yaw, ztilt);
     }
 
-
-    private static HashSet<string> GetPoseIntersectionKeys(Dictionary<string, JointPose> a, Dictionary<string, JointPose> b)
+    public static string[] GetCommonKeys(Dictionary<string, JointPose> a, Dictionary<string, JointPose> b, string[] skipTransformNames = null)
     {
-      var set = new HashSet<string>(a.Keys);
-      set.IntersectWith(b.Keys);
-      return set;
-    }
+      Regex skipRegexp = null;
+      if (skipTransformNames != null && skipTransformNames.Length > 0)
+      {
+        // No anchors: pattern is e.g. "spine|neck|tail", so any name containing any of those will match
+        var pattern = string.Join("|", skipTransformNames);
+        skipRegexp = new Regex(pattern, RegexOptions.IgnoreCase | RegexOptions.Compiled);
+      }
 
-    public static string[] GetCommonKeys(Dictionary<string, JointPose> a, Dictionary<string, JointPose> b)
-    {
       var keys = new List<string>();
       foreach (var key in a.Keys)
-        if (b.ContainsKey(key))
-          keys.Add(key);
+      {
+        if (!b.ContainsKey(key)) continue;
+        if (skipRegexp != null && skipRegexp.IsMatch(key)) continue; // <--- contains match
+        keys.Add(key);
+      }
+
       return keys.ToArray();
     }
 
     public IEnumerator LerpBetweenPoses(Dictionary<string, JointPose> a,
-      Dictionary<string, JointPose> b, float? timeout = null)
+      Dictionary<string, JointPose> b, float? timeout = null, string[] skipTransformNames = null)
     {
-      var commonKeys = GetCommonKeys(a, b);
+      var commonKeys = GetCommonKeys(a, b, skipTransformNames);
       var currentTime = 0f;
       var endTime = Time.time + timeout != null ? (float?)Time.time : null;
       while (isActiveAndEnabled && (timeout == null || endTime > currentTime))
@@ -573,6 +607,7 @@ namespace Eldritch.Core
       float crouchDuration,
       float airMinWaitTime,
       float standDuration,
+      string[] skipTransformNames = null,
       Action onComplete = null)
     {
       animator.SetBool(JumpTrigger, true);
@@ -580,9 +615,9 @@ namespace Eldritch.Core
       if (animator) animator.enabled = false;
 
       // 2. Idle → Crouch
-      yield return LerpToPose(allJoints, idlePose, crouchPose, null, crouchDuration);
+      yield return LerpToPose(allJoints, idlePose, crouchPose, null, skipTransformNames, crouchDuration);
 
-      var lerpPoseCoroutine = StartCoroutine(LerpBetweenPoses(crouchPose, XenoAnimationPoses.CrouchHeadRight));
+      var lerpPoseCoroutine = StartCoroutine(LerpBetweenPoses(crouchPose, XenoAnimationPoses.CrouchHeadRight, null, skipTransformNames));
 
       // 3. Stay crouched during "air time" (simulate jump apex)
       var timePassed = 0f;
@@ -597,10 +632,10 @@ namespace Eldritch.Core
       // while (!_ai.IsGrounded()) yield return null;
 
       SnapshotCurrentPose();
-      yield return LerpToPose(allJoints, poseSnapshot, idlePose, null, 0.1f);
+      yield return LerpToPose(allJoints, poseSnapshot, idlePose, null, skipTransformNames, 0.1f);
 
       // 4. Crouch → Idle
-      yield return LerpToPose(allJoints, crouchPose, idlePose, null, standDuration);
+      yield return LerpToPose(allJoints, crouchPose, idlePose, null, skipTransformNames, standDuration);
 
       // 5. Re-enable animator
       if (animator) animator.enabled = true;
@@ -619,22 +654,17 @@ namespace Eldritch.Core
       Dictionary<string, Transform> allJoints,
       Dictionary<string, JointPose> startPose,
       Dictionary<string, JointPose> endPose,
+      string[] skipTransformNames,
       string[] commonKeys = null,
       float duration = 0.25f)
     {
       // Compute keys if not provided
-      if (commonKeys == null)
-      {
-        var list = new List<string>();
-        foreach (var k in startPose.Keys)
-          if (endPose.ContainsKey(k))
-            list.Add(k);
-        commonKeys = list.ToArray();
-      }
+      commonKeys ??= GetCommonKeys(startPose, endPose, skipTransformNames);
 
       var time = 0f;
       while (time < duration)
       {
+        yield return new WaitForEndOfFrame();
         var t = time / duration;
         foreach (var jointName in commonKeys)
         {
@@ -646,7 +676,6 @@ namespace Eldritch.Core
           joint.localRotation = Quaternion.Slerp(poseA.Rotation, poseB.Rotation, t);
         }
         time += Time.deltaTime;
-        yield return null;
       }
       // Snap to end pose
       foreach (var jointName in commonKeys)

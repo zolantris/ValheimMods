@@ -26,8 +26,8 @@ namespace Eldritch.Core
     public static RigidbodyConstraints FreezeXZ = (RigidbodyConstraints)80;
 
     [Header("Controller References")]
-    [SerializeField] public XenoAIMovementController Movement;
-    [SerializeField] public XenoAnimationController Animation;
+    [SerializeField] public XenoAIMovementController movementController;
+    [SerializeField] public XenoAnimationController animationController;
     // State
     public XenoAIState CurrentState = XenoAIState.Idle;
     public Transform PrimaryTarget;
@@ -52,6 +52,7 @@ namespace Eldritch.Core
     [SerializeField] public bool IsManualControlling;
 
     public float closeRange = 1f;
+    public AbilityManager abilityManager;
     private CoroutineHandle _aiStateUpdateRoutine;
     private List<Func<bool>> _behaviorUpdaters = new();
     private CoroutineHandle _sleepRoutine;
@@ -61,18 +62,20 @@ namespace Eldritch.Core
     {
       InitCoroutineHandlers();
       Instances.Add(this);
-      if (!Movement) Movement = GetComponent<XenoAIMovementController>();
-      if (!Animation) Animation = GetComponentInChildren<XenoAnimationController>();
+      if (!abilityManager) abilityManager = GetComponent<AbilityManager>();
+      if (!movementController) movementController = GetComponent<XenoAIMovementController>();
+      if (!animationController) animationController = GetComponentInChildren<XenoAnimationController>();
+      if (movementController) movementController.OwnerAI = this;
+      if (animationController) animationController.OwnerAI = this;
+
       Health = MaxHealth;
-      if (Movement) Movement.OwnerAI = this;
-      if (Animation) Animation.OwnerAI = this;
 
       BindBehaviors();
     }
 
     private void Update()
     {
-      Animation.ResetBloodCooldown();
+      animationController.ResetBloodCooldown();
     }
 
     private void FixedUpdate()
@@ -153,32 +156,32 @@ namespace Eldritch.Core
         case XenoAIState.Dead:
           break;
         case XenoAIState.Flee:
-          Movement?.MoveFleeWithAllyBias(FindNearestAlly(), GetAllEnemies());
+          movementController?.MoveFleeWithAllyBias(FindNearestAlly(), GetAllEnemies());
           break;
         case XenoAIState.Roam:
           if (PrimaryTarget)
-            Movement?.MoveChaseTarget(
+            movementController?.MoveChaseTarget(
               PrimaryTarget.position,
               null,
-              Movement.closeRange,
-              Movement.moveSpeed,
-              Movement.closeMoveSpeed,
-              Movement.AccelerationForceSpeed,
-              Movement.closeAccelForce,
-              Movement.turnSpeed,
-              Movement.closeTurnSpeed
+              movementController.closeRange,
+              movementController.moveSpeed,
+              movementController.closeMoveSpeed,
+              movementController.AccelerationForceSpeed,
+              movementController.closeAccelForce,
+              movementController.turnSpeed,
+              movementController.closeTurnSpeed
             );
           else
-            Movement?.MoveWander();
+            movementController?.MoveWander();
           break;
         case XenoAIState.Attack:
           break;
         case XenoAIState.Sleeping:
-          Animation.PlaySleepingAnimation(CanSleepAnimate);
+          animationController.PlaySleepingAnimation(CanSleepAnimate);
           break;
         case XenoAIState.Idle:
         default:
-          Movement?.MoveWander();
+          movementController?.MoveWander();
           break;
       }
     }
@@ -188,13 +191,13 @@ namespace Eldritch.Core
     {
       if (CurrentState == XenoAIState.Dead) return;
       CurrentState = XenoAIState.Dead;
-      Animation?.PlayDead();
-      if (Movement && Movement.Rb) Movement.Rb.isKinematic = true;
+      animationController?.PlayDead();
+      if (movementController && movementController.Rb) movementController.Rb.isKinematic = true;
     }
     public void StartSleeping()
     {
       CurrentState = XenoAIState.Sleeping;
-      Movement.Rb.constraints = RigidbodyConstraints.FreezeRotation;
+      movementController.Rb.constraints = RigidbodyConstraints.FreezeRotation;
     }
 
     public void StopSleeping()
@@ -205,33 +208,33 @@ namespace Eldritch.Core
         _sleepRoutine.Stop();
       }
       CurrentState = XenoAIState.Idle;
-      Animation.EnableAnimator();
-      Animation.PlayAwake();
-      if (Movement && Movement.Rb)
+      animationController.EnableAnimator();
+      animationController.PlayAwake();
+      if (movementController && movementController.Rb)
       {
-        Movement.Rb.rotation = Quaternion.Euler(0, Movement.Rb.rotation.eulerAngles.y, 0);
-        Movement.Rb.constraints = FreezeXZ;
-        Movement.Rb.isKinematic = false;
+        movementController.Rb.rotation = Quaternion.Euler(0, movementController.Rb.rotation.eulerAngles.y, 0);
+        movementController.Rb.constraints = FreezeXZ;
+        movementController.Rb.isKinematic = false;
       }
     }
     public void StartAttackBehavior()
     {
       if (CurrentState == XenoAIState.Dead) return;
       CurrentState = XenoAIState.Attack;
-      Animation.PlayAttack();
+      animationController.PlayAttack();
     }
     public void StopAttackBehavior()
     {
       if (CurrentState == XenoAIState.Dead) return;
       if (CurrentState == XenoAIState.Attack)
       {
-        Animation?.StopAttack();
+        animationController?.StopAttack();
         CurrentState = XenoAIState.Roam;
       }
     }
     public void ApplyDamage(float damage)
     {
-      Animation?.PlayBloodEffect();
+      animationController?.PlayBloodEffect();
       Health = Mathf.Max(Health - damage, 0f);
       if (Health <= 0.1f) SetDead();
     }
@@ -299,9 +302,9 @@ namespace Eldritch.Core
     // --- Sleep Coroutine Logic ---
     private IEnumerator SleepCoroutine()
     {
-      Animation.PlaySleep();
+      animationController.PlaySleep();
       yield return new WaitForSeconds(2f);
-      Animation.DisableAnimator();
+      animationController.DisableAnimator();
       yield return new WaitForSeconds(TimeUntilWake);
       StopSleeping();
     }
@@ -309,41 +312,41 @@ namespace Eldritch.Core
     // --- Utility ---
     public void ActivateCamouflage()
     {
-      Animation?.ActivateCamouflage();
+      animationController?.ActivateCamouflage();
     }
     public void DeactivateCamouflage()
     {
-      Animation?.DeactivateCamouflage();
+      animationController?.DeactivateCamouflage();
     }
 
     #region Animation getters
 
     // Animator/Bones
-    public Transform xenoAnimatorRoot => Animation?.xenoAnimatorRoot;
-    public Transform xenoRoot => Animation?.xenoRoot;
-    public Transform spine01 => Animation?.spine01;
-    public Transform spine02 => Animation?.spine02;
-    public Transform spine03 => Animation?.spine03;
-    public Transform spineTop => Animation?.spineTop;
-    public Transform neckUpDown => Animation?.neckUpDown;
-    public Transform neckPivot => Animation?.neckPivot;
-    public Transform leftHip => Animation?.leftHip;
-    public Transform rightHip => Animation?.rightHip;
-    public Transform tailRoot => Animation?.tailRoot;
-    public Transform leftArm => Animation?.leftArm;
-    public Transform rightArm => Animation?.rightArm;
-    public Transform leftToeTransform => Animation?.leftToeTransform;
-    public Transform rightToeTransform => Animation?.rightToeTransform;
+    public Transform xenoAnimatorRoot => animationController?.xenoAnimatorRoot;
+    public Transform xenoRoot => animationController?.xenoRoot;
+    public Transform spine01 => animationController?.spine01;
+    public Transform spine02 => animationController?.spine02;
+    public Transform spine03 => animationController?.spine03;
+    public Transform spineTop => animationController?.spineTop;
+    public Transform neckUpDown => animationController?.neckUpDown;
+    public Transform neckPivot => animationController?.neckPivot;
+    public Transform leftHip => animationController?.leftHip;
+    public Transform rightHip => animationController?.rightHip;
+    public Transform tailRoot => animationController?.tailRoot;
+    public Transform leftArm => animationController?.leftArm;
+    public Transform rightArm => animationController?.rightArm;
+    public Transform leftToeTransform => animationController?.leftToeTransform;
+    public Transform rightToeTransform => animationController?.rightToeTransform;
 
 // Collections
-    public HashSet<Transform> leftArmJoints => Animation?.leftArmJoints;
-    public HashSet<Transform> rightArmJoints => Animation?.rightArmJoints;
-    public HashSet<Transform> tailJoints => Animation?.tailJoints;
-    public HashSet<Collider> allColliders => Animation?.allColliders;
+    public HashSet<Transform> leftArmJoints => animationController?.leftArmJoints;
+    public HashSet<Transform> rightArmJoints => animationController?.rightArmJoints;
+    public HashSet<Transform> tailJoints => animationController?.tailJoints;
+    public HashSet<Collider> allColliders => animationController?.allColliders;
 
 // Optional: attack collider names
-    public string ARMAttackObjName => Animation?.armAttackObjName;
-    public string tailAttackObjName => Animation?.tailAttackObjName;
+    public string ARMAttackObjName => animationController?.armAttackObjName;
+    public string tailAttackObjName => animationController?.tailAttackObjName;
 
     #endregion
 
@@ -398,8 +401,8 @@ namespace Eldritch.Core
       // {
       // }
       CurrentState = XenoAIState.Roam;
-      if (Movement.HasRoamTarget) return true;
-      return Movement.TryUpdateCurrentWanderTarget();
+      if (movementController.HasRoamTarget) return true;
+      return movementController.TryUpdateCurrentWanderTarget();
     }
 
     public bool Update_AttackTargetBehavior()
@@ -420,7 +423,7 @@ namespace Eldritch.Core
 
     public bool Update_SleepBehavior()
     {
-      if (Movement.HasRoamTarget || PrimaryTarget != null && PrimaryTarget.gameObject.activeInHierarchy) return false;
+      if (movementController.HasRoamTarget || PrimaryTarget != null && PrimaryTarget.gameObject.activeInHierarchy) return false;
       StartSleeping();
       return true;
     }

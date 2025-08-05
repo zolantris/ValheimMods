@@ -3,21 +3,21 @@ using System.IO;
 using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
-using BepInEx.Configuration;
 using BepInEx;
-
+using BepInEx.Configuration;
 namespace Zolantris.Shared.BepInExAutoDoc
 {
   public class BepInExConfigAutoDoc
   {
-    public bool runOnRelease = false;
+
+    // Store Regex to get all characters after a [
+    private static readonly Regex ConfigMatchRegExp = new(@"\[(.*?)\]");
     public bool runOnDebug = true;
+    public bool runOnRelease = false;
 
     private static string? GetOutputFolderPath(PluginInfo plugin,
       string autoDocName)
     {
-      // string assemblyName = System.Reflection.Assembly.GetExecutingAssembly()
-      //   .GetName().Name
       var entryAssemblyDir =
         Path.GetDirectoryName(Assembly.GetEntryAssembly()?.Location);
 
@@ -41,9 +41,6 @@ namespace Zolantris.Shared.BepInExAutoDoc
 
       return bepinExPluginDir;
     }
-
-    // Store Regex to get all characters after a [
-    private static readonly Regex ConfigMatchRegExp = new(@"\[(.*?)\]");
 
 
     // Strip using the regex above from Config[x].Description.Description
@@ -90,8 +87,10 @@ namespace Zolantris.Shared.BepInExAutoDoc
     }
 
     /// <summary>
-    /// Generates a document for bepinex.Config, should only be ran in debug mode, auto-doc is not meant for end-users
-    /// todo detect executing assembly and run based on environment flags being in debug mode
+    ///   Generates a document for bepinex.Config, should only be ran in debug mode,
+    ///   auto-doc is not meant for end-users
+    ///   todo detect executing assembly and run based on environment flags being in
+    ///   debug mode
     /// </summary>
     /// <returns></returns>
     public void Generate(PluginInfo pluginInfo, ConfigFile configFile,

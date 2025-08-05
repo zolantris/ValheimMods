@@ -1,14 +1,7 @@
-// ReSharper disable ArrangeNamespaceBody
-// ReSharper disable NamespaceStyle
-
-#region
-
+using System;
 using System.Collections;
 using JetBrains.Annotations;
 using UnityEngine;
-
-#endregion
-
 namespace Zolantris.Shared
 {
   public class CoroutineHandle
@@ -20,6 +13,10 @@ namespace Zolantris.Shared
       _owner = owner;
     }
 
+    public bool IsRunning => Instance != null;
+
+    public Coroutine Instance { get; private set; }
+
     public bool IsValid(MonoBehaviour? instance)
     {
       if (instance == null) return false;
@@ -28,16 +25,9 @@ namespace Zolantris.Shared
       return true;
     }
 
-    public bool IsRunning => Instance != null;
-
-    public Coroutine Instance
-    {
-      get;
-      private set;
-    }
-
     /// <summary>
-    /// Only allow a single instance of the routine to run. By default it will restart the current routine.
+    ///   Only allow a single instance of the routine to run. By default it will
+    ///   restart the current routine.
     /// </summary>
     public void Start(IEnumerator routine, bool shouldStop = true)
     {
@@ -71,7 +61,20 @@ namespace Zolantris.Shared
     {
       try
       {
-        yield return routine;
+        while (true)
+        {
+          try
+          {
+            if (!routine.MoveNext())
+              break;
+          }
+          catch (Exception ex)
+          {
+            LoggerProvider.LogError($"[CoroutineHandle] Exception in coroutine: {ex}");
+            break;
+          }
+          yield return routine.Current;
+        }
       }
       finally
       {

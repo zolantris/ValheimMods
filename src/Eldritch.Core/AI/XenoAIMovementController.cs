@@ -1,7 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Eldritch.Core.Abilities;
 using UnityEngine;
+using Zolantris.Shared;
 using Random = UnityEngine.Random;
 
 namespace Eldritch.Core
@@ -42,6 +42,7 @@ namespace Eldritch.Core
     public Vector3 GroundPoint = Vector3.zero;
 
     [SerializeField] public float CounterGravity = 0.1f;
+    public AbilityManager abilityManager;
 
     public readonly HashSet<Collider> GroundContacts = new();
     public DodgeAbility dodgeAbility;
@@ -51,15 +52,14 @@ namespace Eldritch.Core
     private float lastDodgeTime = -Mathf.Infinity;
 
     private float nextWanderTime;
-    public bool IsDodging => dodgeAbility.IsDodging;
     public Rigidbody Rb => _rb;
     public float moveLerpVel { get; private set; }
     public bool HasRoamTarget => currentWanderTarget != Vector3.zero;
 
     public bool IsGrounded => GroundContacts.Count > 0;
-
     public void Awake()
     {
+      if (!abilityManager) abilityManager = GetComponent<AbilityManager>();
       if (!_rb) _rb = GetComponent<Rigidbody>();
     }
 
@@ -74,7 +74,7 @@ namespace Eldritch.Core
 
       var isUnderground = false;
 
-      foreach (var animationFootCollider in OwnerAI.Animation.footColliders)
+      foreach (var animationFootCollider in OwnerAI.animationController.footColliders)
       {
         if (animationFootCollider.bounds.min.y < GroundPoint.y)
         {
@@ -125,15 +125,6 @@ namespace Eldritch.Core
         GroundPoint = Vector3.negativeInfinity;
       }
     }
-
-    #region Abilities
-
-    public bool TryDodge(Vector3 direction, Action onDodgeComplete)
-    {
-      return dodgeAbility.TryDodge(direction, onDodgeComplete);
-    }
-
-    #endregion
 
     // --- Core Movement ---
     public void MoveTowardsTarget(Vector3 targetPos, float speed, float accel, float turnSpeed)
@@ -333,7 +324,7 @@ namespace Eldritch.Core
       landingPoint = Vector3.zero;
       if (!IsGrounded) return false;
 
-      var jumpOrigin = OwnerAI.Animation.GetFurthestToe().position;
+      var jumpOrigin = OwnerAI.animationController.GetFurthestToe().position;
 
       var bestDistance = 0f;
       var bestLanding = Vector3.zero;
@@ -382,7 +373,7 @@ namespace Eldritch.Core
     }
     public void JumpTo(Vector3 landingPoint)
     {
-      OwnerAI.Animation.PlayJump();
+      OwnerAI.animationController.PlayJump();
 
       var origin = transform.position;
       var jumpVec = landingPoint - origin;

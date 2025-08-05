@@ -13240,8 +13240,6 @@ MonoBehaviour:
   _transparentMaterial: {fileID: 0}
   _bodyMaterial: {fileID: 0}
   _headMaterial: {fileID: 0}
-  attackTailColliders: []
-  attackArmColliders: []
   _handAttackObjName: xeno_arm_attack_collider
   _tailAttackObjName: xeno_tail_attack_collider
   xenoAnimatorRoot: {fileID: 6442151844074803035}
@@ -13292,10 +13290,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cdfae84e02924731b17bd74de3d20973, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  neck: {fileID: 0}
-  angleA: {x: 0, y: -45, z: 0}
-  angleB: {x: 0, y: 45, z: 0}
-  speed: 1
 --- !u!1 &4408396736754950635
 GameObject:
   m_ObjectHideFlags: 0
@@ -16386,10 +16380,11 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5059553072509418606}
-  - component: {fileID: 4678002196957688360}
   - component: {fileID: 5170455730052162183}
+  - component: {fileID: 4678002196957688360}
   - component: {fileID: 1812349534389666146}
   - component: {fileID: 766667270174999036}
+  - component: {fileID: 6374318684615537092}
   m_Layer: 0
   m_Name: AlienTest
   m_TagString: Untagged
@@ -16413,37 +16408,6 @@ Transform:
   - {fileID: 6442151844074803035}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &4678002196957688360
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8190138394633468527}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 05f7819b0da0d2f4ba6335a5bb19d929, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  Movement: {fileID: 0}
-  Animation: {fileID: 0}
-  CurrentState: 0
-  PrimaryTarget: {fileID: 0}
-  CachedPrimaryTargetXeno: {fileID: 0}
-  PackId: 0
-  Health: 0
-  MaxHealth: 100
-  TimeUntilSleep: 5
-  TimeUntilWake: 50
-  HasCamouflage: 0
-  CanSleepAnimate: 0
-  CanJump: 1
-  DeltaPrimaryTarget: 0
-  IsHiding: 1
-  lastTouchedLand: 0
-  lastLowestPointCheck: 0
-  IsManualControlling: 0
-  closeRange: 1
 --- !u!54 &5170455730052162183
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -16471,6 +16435,38 @@ Rigidbody:
   m_Interpolate: 1
   m_Constraints: 80
   m_CollisionDetection: 0
+--- !u!114 &4678002196957688360
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8190138394633468527}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 05f7819b0da0d2f4ba6335a5bb19d929, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  movementController: {fileID: 0}
+  animationController: {fileID: 0}
+  CurrentState: 0
+  PrimaryTarget: {fileID: 0}
+  CachedPrimaryTargetXeno: {fileID: 0}
+  PackId: 0
+  Health: 0
+  MaxHealth: 100
+  TimeUntilSleep: 5
+  TimeUntilWake: 50
+  HasCamouflage: 0
+  CanSleepAnimate: 0
+  CanJump: 1
+  DeltaPrimaryTarget: 0
+  IsHiding: 1
+  lastTouchedLand: 0
+  lastLowestPointCheck: 0
+  IsManualControlling: 0
+  closeRange: 1
+  abilityManager: {fileID: 0}
 --- !u!114 &1812349534389666146
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -16510,7 +16506,7 @@ MonoBehaviour:
   currentWanderTarget: {x: 0, y: 0, z: 0}
   GroundPoint: {x: 0, y: 0, z: 0}
   CounterGravity: 1
-  dodgeAbilityConfig: {fileID: 0}
+  abilityManager: {fileID: 0}
 --- !u!114 &766667270174999036
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -16526,6 +16522,30 @@ MonoBehaviour:
   moveSpeed: 5
   jumpForce: 7
   turnSpeed: 3
+--- !u!114 &6374318684615537092
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8190138394633468527}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f41eb774c5ba4185a5e22e387876cd03, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  dodgeAbilityConfig:
+    forwardDistance: 6
+    backwardDistance: 3
+    sideDistance: 4.5
+    jumpHeight: 1
+    dodgeDuration: 0.18
+    cooldown: 1
+    defaultDodgeDirection: {x: 0, y: 0, z: 1}
+  movementController: {fileID: 0}
+  AnimationController: {fileID: 0}
+  AI: {fileID: 0}
+  _rb: {fileID: 0}
 --- !u!1 &8197241834602136873
 GameObject:
   m_ObjectHideFlags: 0
