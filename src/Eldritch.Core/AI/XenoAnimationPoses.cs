@@ -6,6 +6,16 @@ namespace Eldritch.Core
 {
   public static class XenoAnimationPoses
   {
+    public enum Variants
+    {
+      Crouch,
+      Idle
+    }
+    public static readonly Dictionary<string, JointPose> CrouchHeadRight = new()
+    {
+      ["XenosBiped_Neck_TopSHJnt"] = new JointPose(new Vector3(-0.1686603f, -5.270541E-07f, -4.291534E-08f), new Quaternion(0.1088774f, -0.1555385f, 0.5076341f, 0.8403935f)),
+      ["XenosBiped_Head_JawSHJnt"] = new JointPose(new Vector3(-0.2834754f, 3.612041E-07f, -7.152557E-09f), new Quaternion(1.862644E-08f, -7.450578E-09f, 0.1790351f, 0.9838427f)),
+    };
     public static readonly Dictionary<string, JointPose> Crouch = new() {
     ["XenosBiped_ROOTSHJnt"] = new JointPose(new Vector3(9.393352E-14f, 0.09015334f, 2.338809f), new Quaternion(0.2170087f, 0.6533238f, 0.3165481f, 0.6525891f)),
     ["XenosBiped_l_Leg_HipSHJnt"] = new JointPose(new Vector3(0.07648359f, -0.03199194f, -0.1976965f), new Quaternion(0.02057803f, -0.2370326f, 0.453926f, 0.858687f)),
@@ -223,7 +233,7 @@ namespace Eldritch.Core
     ["XenosBiped_TailBlade_SHJnt_end"] = new JointPose(new Vector3(0f, 0.01611202f, 2.861023E-07f), new Quaternion(-1.303852E-08f, -2.220435E-16f, -1.409557E-06f, 1f)),
     ["XenosBiped_TailBlade_SHJnt_end_end"] = new JointPose(new Vector3(0f, 0.01611202f, 0f), new Quaternion(0f, 0f, 0f, 1f)),
 };
-    public static readonly Dictionary<string, JointPose> ExamplePose = new() {
+    public static readonly Dictionary<string, JointPose> Idle = new() {
     ["XenosBiped_ROOTSHJnt"] = new JointPose(new Vector3(0.04460107f, 0.05833979f, 2.492908f), new Quaternion(0.1552296f, 0.6967065f, 0.1460617f, 0.6849597f)),
     ["XenosBiped_l_Leg_HipSHJnt"] = new JointPose(new Vector3(0.07648359f, -0.03199194f, -0.1976965f), new Quaternion(-0.01190586f, -0.07621348f, 0.7362171f, 0.6723348f)),
     ["XenosBiped_l_Leg_Knee1SHJnt"] = new JointPose(new Vector3(-0.9795134f, 5.010366E-05f, 9.845495E-06f), new Quaternion(0.7396476f, 0.6595399f, 0.02499701f, -0.1315437f)),
@@ -447,5 +457,17 @@ namespace Eldritch.Core
     ["head_collider"] = new JointPose(new Vector3(0.06f, -0.171f, 0.01f), new Quaternion(-0.03491452f, -0.002993331f, 0.8770035f, -0.4792045f)),
     ["xeno_tail_attack_collider"] = new JointPose(new Vector3(0f, -0.053f, 0f), new Quaternion(0.003865513f, 0.006584018f, 0.02020091f, 0.9997668f)),
 };
+    
+    public static Dictionary<string, JointPose> GetPose(Variants variant)
+    {
+      switch (variant)
+      {
+        case Variants.Crouch: return Crouch;
+        case Variants.Idle:   return Idle;
+        // Add more cases as you add more poses
+        default:
+          throw new System.ArgumentException("Unknown pose variant: " + variant);
+      }
+    }
   }
 }
