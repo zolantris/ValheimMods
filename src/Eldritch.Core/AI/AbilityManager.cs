@@ -60,11 +60,14 @@ namespace Eldritch.Core
 
         if (hasRun)
         {
+          // todo rig jump + tail attack. Otherwise we have to use running animation + attack
+
           var skipTransforms = new[] { "Tail" };
           animationController.PlayJump(skipTransforms);
+          // animationController.StopMovement()
           if (IsForwardDodge(dir))
           {
-            RequestAttack(1, true, 2f, Mathf.Max(0f, dodgeAbilityConfig.dodgeDuration - 0.25f));
+            RequestAttack(1, true, 2f, Mathf.Max(0f, dodgeAbilityConfig.dodgeDuration - 1f));
           }
         }
       }

@@ -21,8 +21,8 @@ namespace Eldritch.Core
     public float AccelerationForceSpeed = 90f;
     public float closeAccelForce = 20f;
     public float closeRange = 3f;
-    public float turnSpeed = 720f;
-    public float closeTurnSpeed = 540f;
+    public float turnSpeed = 50f;
+    public float closeTurnSpeed = 50f;
     public float wanderSpeed = 0.5f;
     public float maxJumpDistance = 4f;
     public float maxJumpHeightArc = 2.5f;
@@ -44,10 +44,15 @@ namespace Eldritch.Core
     [SerializeField] public float CounterGravity = 0.1f;
     public AbilityManager abilityManager;
 
+    public float arrivalThreshold = 5f;
+
     public readonly HashSet<Collider> GroundContacts = new();
+    private XenoAnimationController animationController;
     public DodgeAbility dodgeAbility;
     private float dodgeElapsed;
     private Vector3 dodgeStart, dodgeEnd;
+
+    private bool hasArrivedAtWanderPoint;
 
     private float lastDodgeTime = -Mathf.Infinity;
 
@@ -55,10 +60,10 @@ namespace Eldritch.Core
     public Rigidbody Rb => _rb;
     public float moveLerpVel { get; private set; }
     public bool HasRoamTarget => currentWanderTarget != Vector3.zero;
-
     public bool IsGrounded => GroundContacts.Count > 0;
     public void Awake()
     {
+      if (!animationController) animationController = GetComponentInChildren<XenoAnimationController>();
       if (!abilityManager) abilityManager = GetComponent<AbilityManager>();
       if (!_rb) _rb = GetComponent<Rigidbody>();
     }
@@ -66,9 +71,17 @@ namespace Eldritch.Core
     public void FixedUpdate()
     {
       if (!OwnerAI) return;
+      if (!Rb) return;
       var vel = _rb.velocity;
       _rb.useGravity = !IsGrounded;
 
+      SyncVelocityWithMovementSpeed(vel);
+
+      // animations desync rotation alot.
+      if (!Rb.isKinematic)
+      {
+        transform.rotation = Quaternion.Lerp(transform.rotation, Quaternion.Euler(0, transform.eulerAngles.y, 0), Time.fixedTime);
+      }
 
       GetGroundPoint();
 
@@ -88,7 +101,10 @@ namespace Eldritch.Core
         OwnerAI.lastTouchedLand = 0f;
       }
 
-      _rb.velocity = vel;
+      if (!Rb.isKinematic)
+      {
+        _rb.velocity = vel;
+      }
 
       // if (IsGrounded)
       // {
@@ -113,6 +129,20 @@ namespace Eldritch.Core
       }
     }
 
+    // todo coroutine or debounce animation setter (but this is done in SetMoveSpeed so it's just a call cost here.
+    public void SyncVelocityWithMovementSpeed(Vector3 velocity)
+    {
+      if (Rb.isKinematic) animationController.SetMoveSpeed(0);
+      var velocityXZ = Mathf.Abs(velocity.x) + Mathf.Abs(velocity.z);
+
+      var velocityLerp = Mathf.Lerp(0, 1, Mathf.Clamp01(velocityXZ / moveSpeed));
+      if (velocityLerp < 0.01f)
+      {
+        velocityLerp = 0f;
+      }
+      animationController.SetMoveSpeed(velocityLerp);
+    }
+
     public void GetGroundPoint()
     {
       if (!OwnerAI) return;
@@ -133,6 +163,29 @@ namespace Eldritch.Core
       RotateTowardsDirection(toTarget, turnSpeed);
       moveLerpVel = Mathf.MoveTowards(moveLerpVel, speed, accel * Time.deltaTime);
       Rb.AddForce(transform.forward * moveLerpVel, ForceMode.Acceleration);
+    }
+
+    public void MoveInDirection(Vector3 direction, float speed, float accel, float turnSpeed)
+    {
+      direction.y = 0;
+      if (direction == Vector3.zero) return;
+
+      RotateTowardsDirection(direction, turnSpeed);
+      moveLerpVel = Mathf.MoveTowards(moveLerpVel, speed, accel * Time.deltaTime);
+
+      // Direct force along the creep direction (not transform.forward)
+      Rb.AddForce(direction.normalized * moveLerpVel, ForceMode.Acceleration);
+    }
+
+    public void MoveAwayFromTarget(Vector3 awayFrom, float speed, float accel, float turnSpeed)
+    {
+      var awayDir = (transform.position - awayFrom).normalized;
+      awayDir.y = 0f;
+      var retreatTarget = transform.position + awayDir * speed * Time.deltaTime;
+
+      // Face the target while backing away for maximum creep factor
+      RotateTowardsDirection(awayFrom - transform.position, turnSpeed);
+      MoveTowardsTarget(retreatTarget, speed, accel, turnSpeed);
     }
 
     public void MoveChaseTarget(Vector3 targetPos, Vector3? targetVelocity, float closeRange, float moveSpeed, float closeMoveSpeed, float accel, float closeAccel, float turnSpeed, float closeTurnSpeed)
@@ -257,39 +310,80 @@ namespace Eldritch.Core
       MoveTowardsTarget(transform.position + bestDir * 4f, moveSpeed * 1.25f, AccelerationForceSpeed * 1.1f, turnSpeed);
     }
 
+    private float GetXZDistance(Vector3 a, Vector3 b)
+    {
+      return Vector2.Distance(new Vector2(a.x, a.z), new Vector2(b.x, b.z));
+    }
+
     public void MoveWander()
     {
-      if (Time.time < nextWanderTime) return;
-      if (!HasRoamTarget || Vector3.Distance(transform.position, currentWanderTarget) < 1.2f)
-      {
-        if (TryPickRandomWanderTarget(out currentWanderTarget))
-        {
-          nextWanderTime = Time.time + wanderCooldown;
-        }
-        else
-        {
-          nextWanderTime = Time.time + 2f;
-          return;
-        }
-      }
-      var toTarget = currentWanderTarget - transform.position;
-      var distance = toTarget.magnitude;
-      RotateTowardsDirection(toTarget, turnSpeed);
+      // Don't move or rotate until wanderCooldown expires
+      if (Time.time < nextWanderTime)
+        return;
+      // Compute distance to current wander target
+      var distance = HasRoamTarget ? GetXZDistance(transform.position, currentWanderTarget) : Mathf.Infinity;
 
-      if (distance > 2f && IsGapAhead(1.0f, 3f, 5f))
+      // ARRIVAL: If we've arrived, or don't have a target, fully stop and do not rotate!
+      if (!HasRoamTarget || distance < arrivalThreshold || hasArrivedAtWanderPoint)
       {
-        if (FindJumpableLanding(out var jumpTarget))
+        if (!hasArrivedAtWanderPoint)
         {
-          JumpTo(jumpTarget);
-          return;
+          BrakeHard();
+          moveLerpVel = 0f;
+          hasArrivedAtWanderPoint = true;
         }
-        BrakeHard();
+        // Do not rotate, do not apply movement!
+
+        // Time to pick next point?
+        if (Time.time >= nextWanderTime)
+        {
+          if (TryPickRandomWanderTarget(out currentWanderTarget))
+          {
+            nextWanderTime = Time.time + wanderCooldown;
+            hasArrivedAtWanderPoint = false; // allow moving/rotating again
+          }
+          else
+          {
+            nextWanderTime = Time.time + 2f; // try again soon
+          }
+        }
         return;
       }
 
-      moveLerpVel = Mathf.MoveTowards(moveLerpVel, wanderSpeed, AccelerationForceSpeed * 0.5f * Time.deltaTime);
-      Rb.AddForce(transform.forward * moveLerpVel, ForceMode.Acceleration);
+      // --- ONLY RUN BELOW IF WE HAVE NOT ARRIVED ---
+
+      // Calculate movement vector
+      var toTarget = currentWanderTarget - transform.position;
+
+      // Only rotate if far enough from target (avoid chasing micro-deltas)
+      if (distance > arrivalThreshold)
+      {
+        RotateTowardsDirection(toTarget, turnSpeed);
+
+        // Optional: gap/jump check as before
+        if (distance > 2f && IsGapAhead(1.0f, 3f, 5f))
+        {
+          if (FindJumpableLanding(out var jumpTarget))
+          {
+            JumpTo(jumpTarget);
+            return;
+          }
+          BrakeHard();
+          return;
+        }
+
+        // Rapid, realistic slowdown as we approach
+        var slowDownDist = 5f; // start slowing 3 units out
+        var approachT = Mathf.Clamp01(distance / slowDownDist);
+        var targetSpeed = Mathf.Lerp(0f, wanderSpeed, approachT);
+        var targetAccel = Mathf.Lerp(0f, AccelerationForceSpeed * 0.5f, approachT);
+
+        moveLerpVel = Mathf.MoveTowards(moveLerpVel, targetSpeed, targetAccel * Time.deltaTime);
+
+        Rb.AddForce(transform.forward * moveLerpVel, ForceMode.Acceleration);
+      }
     }
+
 
     public void BrakeHard()
     {
@@ -412,10 +506,11 @@ namespace Eldritch.Core
         var dir = Quaternion.Euler(0, angle, 0) * Vector3.forward;
         var candidate = origin + dir * dist;
         var down = new Ray(candidate + Vector3.up * 3f, Vector3.down);
-        if (Physics.Raycast(down, out var hit, 10f, LayerMask.GetMask("Default", "terrain")))
+        if (Physics.Raycast(down, out var hit, 10f, LayerHelpers.GroundLayers))
         {
           if (Vector3.Angle(hit.normal, Vector3.up) < 45f)
           {
+            Debug.DrawRay(hit.point, Vector3.up, Color.blue, 10f);
             wanderTarget = hit.point;
             return true;
           }
@@ -432,6 +527,36 @@ namespace Eldritch.Core
       if (dir == Vector3.zero) return;
       var targetRotation = Quaternion.LookRotation(dir, Vector3.up);
       transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRotation, customTurnSpeed * Time.deltaTime);
+    }
+
+    public void CircleAroundTarget(Transform target, int direction, float circleRadius, float circleSpeed)
+    {
+      if (!target) return;
+
+      var toTarget = target.position - transform.position;
+      toTarget.y = 0f;
+      var dist = toTarget.magnitude;
+      if (dist < 0.01f) return;
+
+      var tangent = Quaternion.Euler(0, 90f * direction, 0) * toTarget.normalized;
+      var radiusError = dist - circleRadius;
+      var correction = toTarget.normalized * radiusError * 2.0f;
+      correction = Vector3.ClampMagnitude(correction, circleSpeed * 0.8f);
+
+      var desiredVelocity = tangent * circleSpeed + correction;
+
+      var flatVel = new Vector3(_rb.velocity.x, 0f, _rb.velocity.z);
+      var velocityDelta = desiredVelocity - flatVel;
+      velocityDelta = Vector3.ClampMagnitude(velocityDelta, circleSpeed * 0.7f);
+
+      _rb.AddForce(velocityDelta, ForceMode.VelocityChange);
+
+      // Only rotate toward the tangent, NOT toward the target!
+      if (velocityDelta.sqrMagnitude > 0.001f)
+        RotateTowardsDirection(desiredVelocity, turnSpeed * 0.5f);
+
+      // Head always looks at target
+      animationController?.PointHeadTowardTarget(transform, target);
     }
   }
 }

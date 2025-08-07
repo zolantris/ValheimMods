@@ -7,10 +7,10 @@ namespace Eldritch.Core.Abilities
 {
   public class DodgeAbility
   {
-    private readonly DodgeAbilityConfig _config;
     private readonly CoroutineHandle _dodgeCoroutine;
     private readonly Transform _owner;
     private readonly Rigidbody _rb;
+    public readonly DodgeAbilityConfig config;
     private float _lastDodgeTime = -Mathf.Infinity;
     private bool _prevIsKinematic;
     private bool _prevUseGravity;
@@ -24,13 +24,13 @@ namespace Eldritch.Core.Abilities
         throw new Exception($"Invalid monoBehaviour {monoBehaviour} or owner object {owner}, or rigidbody {rb}");
       }
 
-      _config = config;
+      this.config = config;
       _owner = owner;
       _rb = rb;
       _dodgeCoroutine = new CoroutineHandle(monoBehaviour);
     }
 
-    public bool CanDodge => !IsDodging && !_rb.isKinematic && Time.time > _lastDodgeTime + _config.cooldown;
+    public bool CanDodge => !IsDodging && !_rb.isKinematic && Time.time > _lastDodgeTime + config.cooldown;
 
     public bool IsDodging => _dodgeCoroutine.IsRunning;
 
@@ -44,11 +44,11 @@ namespace Eldritch.Core.Abilities
         worldDir.Normalize();
 
       var angle = Vector3.SignedAngle(_owner.forward, worldDir, Vector3.up);
-      var dist = _config.sideDistance;
+      var dist = config.sideDistance;
       if (Mathf.Abs(angle) < 45f)
-        dist = _config.forwardDistance;
+        dist = config.forwardDistance;
       else if (Mathf.Abs(angle) > 135f)
-        dist = _config.backwardDistance;
+        dist = config.backwardDistance;
 
       _start = _owner.position;
       _end = _start + worldDir * dist;
@@ -59,7 +59,7 @@ namespace Eldritch.Core.Abilities
       for (var i = 1; i <= arcSegments; i++)
       {
         var t = i / (float)arcSegments;
-        var arc = Mathf.Sin(Mathf.PI * t) * _config.jumpHeight;
+        var arc = Mathf.Sin(Mathf.PI * t) * config.jumpHeight;
         var point = Vector3.Lerp(_start, _end, t);
         point.y += arc;
         Debug.DrawLine(prevPoint, point, Color.yellow, 10.0f);
@@ -92,12 +92,12 @@ namespace Eldritch.Core.Abilities
       _rb.isKinematic = true;
 
       var elapsed = 0f;
-      var duration = _config.dodgeDuration;
+      var duration = config.dodgeDuration;
 
       while (elapsed < duration)
       {
         var t = elapsed / duration;
-        var arc = Mathf.Sin(Mathf.PI * t) * _config.jumpHeight;
+        var arc = Mathf.Sin(Mathf.PI * t) * config.jumpHeight;
         var basePos = Vector3.Lerp(start, end, t);
         basePos.y += arc;
         _rb.MovePosition(basePos);

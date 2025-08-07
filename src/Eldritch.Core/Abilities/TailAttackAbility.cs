@@ -24,7 +24,10 @@ namespace Eldritch.Core.Abilities
 
     public IEnumerator Attack(int attackType = 0, bool isSingle = true, float attackSpeed = 1f, float delay = 0f)
     {
-      yield return new WaitForSeconds(delay);
+      if (delay > 0f)
+      {
+        yield return new WaitForSeconds(delay);
+      }
       if (!Mathf.Approximately(attackSpeed, 1f))
       {
         _animationController.SetAttackSpeed(attackSpeed, true);

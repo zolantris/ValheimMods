@@ -72,6 +72,8 @@ namespace Eldritch.Core
 
     [Header("Animation Updaters")]
     private int _cachedAttackMode;
+
+    private float _cachedMoveSpeed;
     private bool _canPlayEffectOnFrame = true;
     private CoroutineHandle _jumpAnimationRoutine;
 
@@ -142,16 +144,6 @@ namespace Eldritch.Core
       InitAnimators();
     }
 
-    // --- ANIMATION API ---
-    public void SetMoveSpeed(float normalized)
-    {
-      if (!animator) return;
-      if (moveSpeed_nextUpdateTime > Time.fixedTime) return;
-      moveSpeed_nextUpdateTime = Time.fixedTime + nextUpdateInterval;
-
-      animator.SetFloat(MoveSpeed, normalized);
-    }
-
     public void PlaySleepingAnimation(bool canSleepAnimate)
     {
       if (!canSleepAnimate) return;
@@ -179,6 +171,18 @@ namespace Eldritch.Core
         0.18f, // crouch time (down)
         0.25f, // air time (wait)
         0.24f, skipTransformNames));
+    }
+
+    // --- ANIMATION API ---
+    public void SetMoveSpeed(float normalized, bool shouldBypass = false)
+    {
+      if (!animator) return;
+      shouldBypass = shouldBypass || _cachedMoveSpeed == 0f && normalized > 0f;
+      if (!shouldBypass && moveSpeed_nextUpdateTime > Time.fixedTime) return;
+      moveSpeed_nextUpdateTime = Time.fixedTime + nextUpdateInterval;
+
+      _cachedMoveSpeed = normalized;
+      animator.SetFloat(MoveSpeed, normalized);
     }
 
     [ContextMenu("Run SetupXenoTransforms")]
@@ -529,7 +533,18 @@ namespace Eldritch.Core
       if (_transparentMaterial)
       {
         var mats = new Material[_skinRenderer.materials.Length];
-        for (var i = 0; i < mats.Length; i++) mats[i] = _transparentMaterial;
+        for (var i = 0; i < mats.Length; i++)
+        {
+          if (_bodyMaterial == null && i == 0)
+          {
+            _bodyMaterial = _skinRenderer.materials[i];
+          }
+          if (_headMaterial == null && i == 1)
+          {
+            _headMaterial = _skinRenderer.materials[i];
+          }
+          mats[i] = _transparentMaterial;
+        }
         _skinRenderer.materials = mats;
       }
     }
@@ -591,8 +606,8 @@ namespace Eldritch.Core
       var endTime = Time.time + timeout != null ? (float?)Time.time : null;
       while (isActiveAndEnabled && (timeout == null || endTime > currentTime))
       {
-        yield return LerpToPose(allAnimationJoints, a, b, commonKeys);
-        yield return LerpToPose(allAnimationJoints, b, a, commonKeys);
+        yield return LerpToPose(allAnimationJoints, a, b, null, commonKeys);
+        yield return LerpToPose(allAnimationJoints, b, a, null, commonKeys);
         if (endTime != null)
         {
           currentTime = Time.time;
@@ -612,10 +627,10 @@ namespace Eldritch.Core
     {
       animator.SetBool(JumpTrigger, true);
       // 1. Disable animator (todo might not have to do this with animator order fixed)
-      if (animator) animator.enabled = false;
+      DisableAnimator();
 
       // 2. Idle → Crouch
-      yield return LerpToPose(allJoints, idlePose, crouchPose, null, skipTransformNames, crouchDuration);
+      yield return LerpToPose(allJoints, idlePose, crouchPose, skipTransformNames, null, crouchDuration);
 
       var lerpPoseCoroutine = StartCoroutine(LerpBetweenPoses(crouchPose, XenoAnimationPoses.CrouchHeadRight, null, skipTransformNames));
 
@@ -628,18 +643,15 @@ namespace Eldritch.Core
       }
 
       StopCoroutine(lerpPoseCoroutine);
-      // Optionally: Wait until IsGrounded() returns true, instead of WaitForSeconds:
-      // while (!_ai.IsGrounded()) yield return null;
 
       SnapshotCurrentPose();
-      yield return LerpToPose(allJoints, poseSnapshot, idlePose, null, skipTransformNames, 0.1f);
+      yield return LerpToPose(allJoints, poseSnapshot, idlePose, skipTransformNames, null, 0.1f);
 
       // 4. Crouch → Idle
-      yield return LerpToPose(allJoints, crouchPose, idlePose, null, skipTransformNames, standDuration);
+      yield return LerpToPose(allJoints, crouchPose, idlePose, skipTransformNames, null, standDuration);
 
       // 5. Re-enable animator
-      if (animator) animator.enabled = true;
-
+      EnableAnimator();
       onComplete?.Invoke();
 
       animator.SetBool(JumpTrigger, false);
@@ -654,7 +666,7 @@ namespace Eldritch.Core
       Dictionary<string, Transform> allJoints,
       Dictionary<string, JointPose> startPose,
       Dictionary<string, JointPose> endPose,
-      string[] skipTransformNames,
+      string[] skipTransformNames = null,
       string[] commonKeys = null,
       float duration = 0.25f)
     {
@@ -715,7 +727,7 @@ namespace Eldritch.Core
       if (!target || neckPivot == null) return;
       var toTarget = target.position - neckPivot.position;
       toTarget.y = 0;
-      var localDir = owner.InverseTransformDirection(toTarget.normalized);
+      var localDir = neckPivot.InverseTransformDirection(toTarget.normalized);
 
       var yaw = Mathf.Atan2(localDir.x, localDir.z) * Mathf.Rad2Deg;
       yaw = Mathf.Clamp(yaw, -40f, 40f);

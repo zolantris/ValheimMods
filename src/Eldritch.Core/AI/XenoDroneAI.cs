@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using JetBrains.Annotations;
 using UnityEngine;
 using Zolantris.Shared;
+using Random = UnityEngine.Random;
 namespace Eldritch.Core
 {
   public class XenoDroneAI : MonoBehaviour
@@ -15,6 +16,7 @@ namespace Eldritch.Core
     {
       Idle,
       Roam,
+      Hunt,
       Attack,
       Flee,
       Dead,
@@ -31,6 +33,7 @@ namespace Eldritch.Core
     // State
     public XenoAIState CurrentState = XenoAIState.Idle;
     public Transform PrimaryTarget;
+    public Rigidbody PrimaryTargetRB;
     [CanBeNull] public XenoDroneAI CachedPrimaryTargetXeno;
     public int PackId;
     public float Health, MaxHealth = 100f;
@@ -53,8 +56,17 @@ namespace Eldritch.Core
 
     public float closeRange = 1f;
     public AbilityManager abilityManager;
+
+    [SerializeField]
+    public XenoHuntBehaviorConfig huntBehaviorConfig = new();
+    private readonly float _circleDecisionInterval = 3f;
     private CoroutineHandle _aiStateUpdateRoutine;
     private List<Func<bool>> _behaviorUpdaters = new();
+
+    private float _circleStateTimer;
+    private bool _isCreeping;
+    private bool _isMovingAway;
+    private bool _isPausingToTurn;
     private CoroutineHandle _sleepRoutine;
     private Vector3 cachedLowestPoint = Vector3.zero;
 
@@ -82,10 +94,12 @@ namespace Eldritch.Core
     {
       lastTouchedLand += Time.fixedDeltaTime;
       if (CurrentState == XenoAIState.Dead) return;
+      if (!IsGrounded()) return;
       if (IsManualControlling)
       {
         return;
       }
+      UpdateDeltaPrimaryTarget();
       TryUpdateAIState();
       UpdateAIMovement();
     }
@@ -143,7 +157,7 @@ namespace Eldritch.Core
     }
     public IEnumerator UpdateAIStateRoutine()
     {
-      UpdateBehavior();
+      UpdateAllBehaviors();
       yield return new WaitForSeconds(0.5f);
     }
 
@@ -156,32 +170,35 @@ namespace Eldritch.Core
         case XenoAIState.Dead:
           break;
         case XenoAIState.Flee:
-          movementController?.MoveFleeWithAllyBias(FindNearestAlly(), GetAllEnemies());
+          movementController.MoveFleeWithAllyBias(FindNearestAlly(), GetAllEnemies());
           break;
         case XenoAIState.Roam:
-          if (PrimaryTarget)
-            movementController?.MoveChaseTarget(
-              PrimaryTarget.position,
-              null,
-              movementController.closeRange,
-              movementController.moveSpeed,
-              movementController.closeMoveSpeed,
-              movementController.AccelerationForceSpeed,
-              movementController.closeAccelForce,
-              movementController.turnSpeed,
-              movementController.closeTurnSpeed
-            );
-          else
-            movementController?.MoveWander();
+          movementController.MoveWander();
+          break;
+        case XenoAIState.Hunt:
+          UpdateHuntCircleMovement(); // Only moves, does not pick sub-state!
           break;
         case XenoAIState.Attack:
+          if (!PrimaryTarget) return;
+          movementController.MoveChaseTarget(
+            PrimaryTarget.position,
+            null,
+            movementController.closeRange,
+            movementController.moveSpeed,
+            movementController.closeMoveSpeed,
+            movementController.AccelerationForceSpeed,
+            movementController.closeAccelForce,
+            movementController.turnSpeed,
+            movementController.closeTurnSpeed
+          );
           break;
         case XenoAIState.Sleeping:
           animationController.PlaySleepingAnimation(CanSleepAnimate);
           break;
         case XenoAIState.Idle:
+          break;
         default:
-          movementController?.MoveWander();
+          LoggerProvider.LogDebugDebounced("Invalid movement state");
           break;
       }
     }
@@ -221,15 +238,29 @@ namespace Eldritch.Core
     {
       if (CurrentState == XenoAIState.Dead) return;
       CurrentState = XenoAIState.Attack;
+      DeactivateCamouflage();
       animationController.PlayAttack();
     }
     public void StopAttackBehavior()
     {
       if (CurrentState == XenoAIState.Dead) return;
+      if (CurrentState != XenoAIState.Attack)
+      {
+        animationController.StopAttack();
+        return;
+      }
+
       if (CurrentState == XenoAIState.Attack)
       {
-        animationController?.StopAttack();
-        CurrentState = XenoAIState.Roam;
+        animationController.StopAttack();
+        if (PrimaryTarget)
+        {
+          CurrentState = XenoAIState.Hunt;
+        }
+        else
+        {
+          CurrentState = XenoAIState.Roam;
+        }
       }
     }
     public void ApplyDamage(float damage)
@@ -247,12 +278,27 @@ namespace Eldritch.Core
         PrimaryTarget = null;
         CachedPrimaryTargetXeno = null;
       }
-      var target = GetClosestTargetDifferentPack();
-      if (target)
+      if (!PrimaryTarget)
       {
-        PrimaryTarget = target.transform;
-        CachedPrimaryTargetXeno = target;
+        PrimaryTarget = null;
+        CachedPrimaryTargetXeno = null;
       }
+
+      if (!EnemyRegistry.TryGetClosestEnemy(transform, huntBehaviorConfig.maxTargetDistance, out var primaryTargetTransform))
+      {
+        return;
+      }
+
+      PrimaryTarget = primaryTargetTransform;
+      PrimaryTargetRB = primaryTargetTransform.GetComponent<Rigidbody>();
+
+      CurrentState = XenoAIState.Hunt;
+      // var target = GetClosestTargetDifferentPack();
+      // if (target)
+      // {
+      //   PrimaryTarget = target.transform;
+      //   CachedPrimaryTargetXeno = target;
+      // }
     }
     public XenoDroneAI GetClosestTargetDifferentPack()
     {
@@ -319,6 +365,125 @@ namespace Eldritch.Core
       animationController?.DeactivateCamouflage();
     }
 
+    private void UpdateDeltaPrimaryTarget()
+    {
+      if (!PrimaryTarget) return;
+      var position = transform.position;
+      if (PrimaryTargetRB)
+      {
+        var closestPrimaryTargetPoint = PrimaryTargetRB.ClosestPointOnBounds(position);
+        var closestCurrentTargetPoint = movementController.Rb.ClosestPointOnBounds(closestPrimaryTargetPoint);
+        DeltaPrimaryTarget = Vector3.Distance(closestCurrentTargetPoint, closestPrimaryTargetPoint);
+      }
+      else
+      {
+        var primaryTargetPosition = PrimaryTarget.position;
+        var closestPointOnCurrentTransform = movementController.Rb.ClosestPointOnBounds(primaryTargetPosition);
+        DeltaPrimaryTarget = Vector3.Distance(closestPointOnCurrentTransform, primaryTargetPosition);
+      }
+    }
+
+
+    #region FixedUpdates / Per fixed frame logic
+
+    public void UpdateHuntCircleMovement()
+    {
+      if (!PrimaryTarget) return;
+      if (abilityManager.IsDodging) return;
+      _circleSubStateTimer -= Time.fixedDeltaTime;
+      // Always point head at the target for creep factor
+      animationController.PointHeadTowardTarget(transform, PrimaryTarget);
+
+      if (IsOutOfHuntRange())
+      {
+        UpdateAllBehaviors();
+        return;
+      }
+
+      // --- OVERRIDE: Retreat if in leap range and being looked at ---
+      var inLeapRange = IsInLeapRange();
+
+      var beingWatched = TargetingUtil.IsTargetLookingAtMe(PrimaryTarget, transform);
+
+
+      // If within leap range and NOT being watched
+      if (inLeapRange && huntBehaviorConfig.enableLeaping)
+      {
+        if (!beingWatched)
+        {
+          // 1. Lerp-rotate toward target (not snap!)
+          var toTarget = PrimaryTarget.position - transform.position;
+          toTarget.y = 0f;
+          var angleToTarget = Vector3.Angle(transform.forward, toTarget.normalized);
+          movementController.RotateTowardsDirection(toTarget, movementController.turnSpeed * 1.25f);
+
+          // 2. Only leap if *almost* facing the target
+          if (angleToTarget < _attackYawThreshold)
+          {
+            abilityManager?.RequestDodge(new Vector2(0, 1)); // Leap forward
+          }
+        }
+        else
+        {
+          RetreatFromPrimaryTarget();
+        }
+        return;
+      }
+
+      switch (_circleSubState)
+      {
+        case HuntCircleSubState.MovingAway:
+          if (!huntBehaviorConfig.enableRetreating) return;
+          RetreatFromPrimaryTarget();
+          return;
+
+        case HuntCircleSubState.PausingToTurn:
+          var toEnemy = PrimaryTarget.position - transform.position;
+          toEnemy.y = 0f;
+          movementController.RotateTowardsDirection(toEnemy, movementController.turnSpeed);
+          movementController.BrakeHard();
+          return;
+
+        case HuntCircleSubState.Creeping:
+          if (!huntBehaviorConfig.enableRetreating) return;
+          var isInCloseRange = DeltaPrimaryTarget < closeRange;
+          if (!isInCloseRange || !huntBehaviorConfig.enableAttack)
+          {
+            // Continue creeping toward target as normal
+            var targetLookingAtMe = TargetingUtil.IsTargetLookingAtMe(PrimaryTarget, transform);
+            var isNearCloseRange = DeltaPrimaryTarget - 2f < closeRange;
+            var speedFluxCreep = Random.Range(0.75f, 1.25f);
+
+            // retreat if closerange or being stared down.
+            var creepDir = targetLookingAtMe || isNearCloseRange ? -1f : 1f;
+            var creepVec = (PrimaryTarget.position - transform.position).normalized * creepDir;
+            var creepSpeed = huntBehaviorConfig.creepingMoveSpeed * speedFluxCreep;
+
+            movementController.RotateTowardsDirection((PrimaryTarget.position - transform.position).normalized, movementController.turnSpeed);
+            movementController.MoveInDirection(creepVec, creepSpeed, movementController.AccelerationForceSpeed * 0.4f, movementController.turnSpeed);
+          }
+          else
+          {
+            // INSTANTLY EXIT CREEP/TRANSITION TO ATTACK
+            // Option 1: Set state to attack and break out of switch
+            _circleSubState = HuntCircleSubState.Circling; // or a real Attack state if you have one
+            _circleSubStateTimer = 0f; // force immediate state pick
+            // Optionally: Call your attack/charge logic here
+            Update_AttackTargetBehavior();
+          }
+          return;
+
+        case HuntCircleSubState.Circling:
+        default:
+          if (!huntBehaviorConfig.enableCircling) return;
+          var speedFluxCircling = Random.Range(0.75f, 1.25f);
+          movementController.CircleAroundTarget(PrimaryTarget, _circleDirection, huntBehaviorConfig.circleRadius, huntBehaviorConfig.circleMoveSpeed * speedFluxCircling);
+          return;
+      }
+    }
+
+    #endregion
+
     #region Animation getters
 
     // Animator/Bones
@@ -358,11 +523,33 @@ namespace Eldritch.Core
       {
         Update_Death,
         Update_Flee,
-        Update_Roam,
+        Update_HuntBehavior,
         Update_AttackTargetBehavior,
+        Update_Roam,
         Update_SleepBehavior
       };
     }
+
+    public void UpdateAllBehaviors()
+    {
+      if (IsDead() || IsSleeping()) return;
+
+      UpdatePrimaryTarget();
+
+      // Call each updater until one returns true (bail).
+      var hasBailed = false;
+      foreach (var behaviorUpdater in _behaviorUpdaters)
+      {
+        var result = behaviorUpdater.Invoke();
+        if (!result) continue;
+        // (Optional) Log bailing for dev debugging
+        LoggerProvider.LogDevDebounced($"Bailed on {behaviorUpdater.Method.Name}");
+        hasBailed = true;
+        break;
+      }
+      if (hasBailed) return;
+    }
+
 
     public bool Update_Death()
     {
@@ -395,20 +582,134 @@ namespace Eldritch.Core
 
       return false;
     }
+
+    public bool Update_HuntBehavior()
+    {
+      var isWithinHuntRange = IsWithinHuntingRange();
+      if (!isWithinHuntRange) return false;
+
+      if (CurrentState == XenoAIState.Attack)
+      {
+        StopAttackBehavior();
+      }
+
+      CurrentState = XenoAIState.Hunt;
+
+      if (_circleSubStateTimer > 0)
+      {
+        return true;
+      }
+
+      GetNextHuntCircleBehavior();
+      // 3. Check for leap opportunity
+      // if (CanLeapAtTarget())
+      // {
+      //   StartLeapAttack(); // Play leap animation, set state, timers, etc.
+      //   return true;
+      // }
+
+      // 4. After attack, maybe retreat (flavor/creepiness logic)
+      // if (ShouldRetreatAfterAttack())
+      // {
+      //   StartRetreat(); // Run through or away from enemy
+      //   return true;
+      // }
+      // RetreatFromPrimaryTarget();
+
+      return true;
+    }
+
+    private enum HuntCircleSubState
+    {
+      Circling,
+      MovingAway,
+      PausingToTurn,
+      Creeping
+    }
+
+    private HuntCircleSubState _circleSubState = HuntCircleSubState.Circling;
+    private float _circleSubStateTimer;
+
+// Circle parameters
+    private int _circleDirection = 1;
+    private const float _circleDecisionIntervalMin = 2.2f;
+    private const float _circleDecisionIntervalMax = 3.4f;
+
+    public void RetreatFromPrimaryTarget()
+    {
+      if (!PrimaryTarget) return;
+      // Option 1: Back away while facing target
+      movementController.MoveAwayFromTarget(
+        PrimaryTarget.position,
+        movementController.moveSpeed,
+        movementController.AccelerationForceSpeed * 0.5f,
+        movementController.turnSpeed
+      );
+      animationController.PointHeadTowardTarget(transform, PrimaryTarget);
+    }
+
     public bool Update_Roam()
     {
-      // if (!PrimaryTarget)
-      // {
-      // }
-      CurrentState = XenoAIState.Roam;
-      if (movementController.HasRoamTarget) return true;
-      return movementController.TryUpdateCurrentWanderTarget();
+      if (movementController.HasRoamTarget || movementController.TryUpdateCurrentWanderTarget())
+      {
+        CurrentState = XenoAIState.Roam;
+        return true;
+      }
+
+      return false;
+    }
+
+    private readonly float _attackYawThreshold = 10f; // Degrees allowed for facing before leaping
+
+    private void GetNextHuntCircleBehavior()
+    {
+      var rand = Random.value;
+      if (huntBehaviorConfig.FORCE_Circling)
+      {
+        _circleDirection *= rand < 0.40f ? -1 : 1;
+        _circleSubState = HuntCircleSubState.Circling;
+        _circleSubStateTimer = Random.Range(_circleDecisionIntervalMin, _circleDecisionIntervalMax);
+        return;
+      }
+
+      var cursor = 0f;
+
+      if (rand < huntBehaviorConfig.probCamouflage)
+      {
+        ActivateCamouflage();
+      }
+      else
+      {
+        DeactivateCamouflage();
+      }
+
+      if (rand < (cursor += huntBehaviorConfig.probMovingAway))
+      {
+        _circleSubState = HuntCircleSubState.MovingAway;
+        _circleSubStateTimer = Random.Range(huntBehaviorConfig.movingAwayTimeRange.x, huntBehaviorConfig.movingAwayTimeRange.y);
+      }
+      else if (rand < (cursor += huntBehaviorConfig.probPausingToTurn))
+      {
+        _circleSubState = HuntCircleSubState.PausingToTurn;
+        _circleDirection *= -1;
+        _circleSubStateTimer = Random.Range(huntBehaviorConfig.pausingToTurnTimeRange.x, huntBehaviorConfig.pausingToTurnTimeRange.y);
+      }
+      else if (rand < (cursor += huntBehaviorConfig.probCreeping))
+      {
+        _circleSubState = HuntCircleSubState.Creeping;
+        _circleSubStateTimer = Random.Range(huntBehaviorConfig.creepingTimeRange.x, huntBehaviorConfig.creepingTimeRange.y);
+      }
+      else
+      {
+        _circleSubState = HuntCircleSubState.Circling;
+        _circleSubStateTimer = Random.Range(huntBehaviorConfig.circlingTimeRange.x, huntBehaviorConfig.circlingTimeRange.y);
+      }
     }
 
     public bool Update_AttackTargetBehavior()
     {
       if (!PrimaryTarget) return false;
-      var isInAttackRange = DeltaPrimaryTarget < closeRange;
+      var isInAttackRange = IsInAttackRange();
       if (isInAttackRange)
       {
         StartAttackBehavior();
@@ -416,7 +717,6 @@ namespace Eldritch.Core
       else
       {
         StopAttackBehavior();
-        // Stop_Attack();
       }
       return true;
     }
@@ -428,32 +728,33 @@ namespace Eldritch.Core
       return true;
     }
 
-    public void UpdateBehavior()
-    {
-      if (IsDead() || IsSleeping()) return;
-
-      UpdatePrimaryTarget();
-
-      // Call each updater until one returns true (bail).
-      var hasBailed = false;
-      foreach (var behaviorUpdater in _behaviorUpdaters)
-      {
-        var result = behaviorUpdater.Invoke();
-        if (!result) continue;
-        // (Optional) Log bailing for dev debugging
-        LoggerProvider.LogDevDebounced($"Bailed on {behaviorUpdater.Method.Name}");
-        hasBailed = true;
-        break;
-      }
-      if (hasBailed) return;
-    }
-
     #endregion
 
 
     #region State Booleans
 
-    #region State Booleans
+    public bool IsOutOfHuntRange()
+    {
+      return DeltaPrimaryTarget > huntBehaviorConfig.maxTargetDistance;
+    }
+
+    public bool IsWithinHuntingRange()
+    {
+      if (!PrimaryTarget) return false;
+      return DeltaPrimaryTarget >= huntBehaviorConfig.minHuntDistance && DeltaPrimaryTarget <= huntBehaviorConfig.maxTargetDistance;
+    }
+
+    public bool IsInLeapRange()
+    {
+      var minDodgeDistance = abilityManager.dodgeAbility.config.forwardDistance / 3f;
+      return DeltaPrimaryTarget < minDodgeDistance && DeltaPrimaryTarget < abilityManager.dodgeAbility.config.forwardDistance;
+    }
+
+    public bool IsInAttackRange()
+    {
+      if (PrimaryTarget == null) return false;
+      return DeltaPrimaryTarget < closeRange;
+    }
 
     public bool IsSleeping()
     {
@@ -473,8 +774,6 @@ namespace Eldritch.Core
     {
       return CurrentState == XenoAIState.Attack;
     }
-
-    #endregion
 
     #endregion
 
