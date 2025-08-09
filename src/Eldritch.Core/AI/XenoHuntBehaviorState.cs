@@ -93,7 +93,7 @@ namespace Eldritch.Core
     private void UpdateCirclingBehavior(float rand)
     {
       State = HuntBehaviorState.Circling;
-      circleDirection = rand < 0.40f ? -1 : 1;
+      circleDirection = rand < 0.10f ? -1 : 1;
       DecisionTimer = Random.Range(behaviorConfig.circlingTimeRange.x, behaviorConfig.circlingTimeRange.y);
     }
 
@@ -106,6 +106,7 @@ namespace Eldritch.Core
     private void UpdatePauseBehavior(float rand)
     {
       State = HuntBehaviorState.Pausing;
+      circleDirection = rand < 0.6f ? -1 : 1;
       DecisionTimer = Random.Range(behaviorConfig.pausingTimeRange.x, behaviorConfig.pausingTimeRange.y);
     }
 

@@ -452,29 +452,17 @@ namespace Eldritch.Core
 
         case HuntBehaviorState.Creeping:
           if (!huntBehaviorConfig.enableCreeping) return;
+
+          var to = PrimaryTarget.position - transform.position;
+          to.y = 0f;
+
+          // Only try to climb if **actually** blocked in the forward direction
+          if (movementController.IsForwardBlocked() &&
+              movementController.TryWallClimbWhenBlocked(to))
+            return;
+
           FollowPathOrChase(PrimaryTarget.position);
 
-          // var isInCloseRange = DeltaPrimaryTarget < closeRange;
-          // if (!isInCloseRange || !huntBehaviorConfig.enableAttack)
-          // {
-          //   // Continue creeping toward target as normal
-          //   var speedFluxCreep = Random.Range(0.75f, 1.25f);
-          //
-          //   // retreat if closerange or being stared down.
-          //   var deltaVec = (PrimaryTarget.position - transform.position).normalized;
-          //
-          //   movementController.RotateTowardsDirection(deltaVec, movementController.turnSpeed);
-          //
-          //   var creepVec = deltaVec * huntBehaviorState.creepDirection;
-          //   var creepSpeedMult = huntBehaviorState.creepSpeedMultiplier;
-          //   var creepSpeed = huntBehaviorConfig.creepingMoveSpeed * speedFluxCreep * creepSpeedMult;
-          //
-          //   movementController.MoveInDirection(creepVec, creepSpeed, movementController.AccelerationForceSpeed * 0.4f, movementController.turnSpeed);
-          // }
-          // else
-          // {
-          //   Update_AttackTargetBehavior();
-          // }
           return;
 
         case HuntBehaviorState.Circling:
@@ -609,7 +597,7 @@ namespace Eldritch.Core
     public bool Update_HuntBehavior()
     {
       // early bail if we are in range and can attack.
-      if (IsInAttackRange())
+      if (huntBehaviorConfig.enableAttack && IsInAttackRange())
       {
         var percentage = Random.value;
         if (percentage > huntBehaviorConfig.probAttackInRange) return false;
@@ -728,6 +716,7 @@ namespace Eldritch.Core
     public bool IsInAttackRange()
     {
       if (PrimaryTarget == null) return false;
+      if (!HasClearLOS(PrimaryTarget.position)) return false;
       return DeltaPrimaryTarget < closeRange;
     }
 
@@ -770,7 +759,7 @@ namespace Eldritch.Core
 
     private void FollowPathOrChase(Vector3 targetPos)
     {
-      // If we can see it directly, keep your existing chase motor
+      // 0) If we have line of sight, keep the fast chase
       if (HasClearLOS(targetPos))
       {
         movementController.MoveChaseTarget(
@@ -784,13 +773,43 @@ namespace Eldritch.Core
           movementController.turnSpeed,
           movementController.closeTurnSpeed
         );
-        _nav.Clear(); // drop any stale path
+        _nav.Clear();
         return;
       }
 
-      var pathStart = transform.position + transform.forward;
-      Debug.DrawRay(pathStart, Vector3.down, Color.magenta);
-      // Otherwise get a short path and step toward the next corner
+      // 1) If there’s vertical separation, look for ingress to target’s floor
+      var verticalSep = Mathf.Abs(transform.position.y - targetPos.y);
+      if (verticalSep > 1.25f) // tweak threshold for your building heights
+      {
+        if (movementController.TryFindIngressToTargetFloor(
+              targetPos,
+              out var ingressMovePoint,
+              out var landingPoint,
+              10f, // slightly larger for buildings
+              1.25f,
+              6f,
+              20,
+              0.75f))
+        {
+          // Move to the opening
+          movementController.MoveTowardsTarget(
+            ingressMovePoint,
+            movementController.moveSpeed,
+            movementController.AccelerationForceSpeed,
+            movementController.turnSpeed
+          );
+
+          // If we’re at the hole, perform the drop/jump
+          if (movementController.TryExecuteIngressJump(ingressMovePoint, landingPoint))
+            return;
+
+          return; // keep driving toward ingress until we jump
+        }
+        // If we didn't find an ingress, keep going to pathing fallback below.
+      }
+
+      // 2) Short pathing toward target (same as before)
+      var pathStart = transform.position;
       if (_nav.EnsurePath(pathStart, targetPos, navAgentType, 0.5f)
           && _nav.TryStep(transform.position, 0.75f, out var corner))
       {
@@ -803,7 +822,7 @@ namespace Eldritch.Core
       }
       else
       {
-        movementController.BrakeHard(); // stuck moment—don’t ram the wall
+        movementController.BrakeHard(); // don’t ram walls when stuck
       }
     }
 

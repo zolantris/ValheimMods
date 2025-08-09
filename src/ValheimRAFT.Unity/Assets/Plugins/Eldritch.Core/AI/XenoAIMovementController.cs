@@ -27,12 +27,6 @@ namespace Eldritch.Core
     public float maxJumpDistance = 4f;
     public float maxJumpHeightArc = 2.5f;
     public Vector3 maxRunRange = new(20f, 0f, 20f);
-    [SerializeField] private float dodgeForwardDistance = 6f;
-    [SerializeField] private float dodgeBackwardDistance = 3f;
-    [SerializeField] private float dodgeSideDistance = 4.5f;
-    [SerializeField] private float dodgeJumpHeight = 1f;
-    [SerializeField] private float dodgeDuration = 0.18f; // time for the dodge movement
-    [SerializeField] private float dodgeCooldown = 1f; // time between dodges
 
     // Wander state
     public float wanderRadius = 8f;
@@ -58,17 +52,22 @@ namespace Eldritch.Core
 
     private float nextWanderTime;
     public Rigidbody Rb => _rb;
+
     public float moveLerpVel { get; private set; }
     public bool HasRoamTarget => currentWanderTarget != Vector3.zero;
     public bool IsGrounded => GroundContacts.Count > 0;
 
     public bool HasMovedInFrame = false;
 
+    [SerializeField] private SurfaceClimbingState climbingState = new();
+
     public void Awake()
     {
       if (!animationController) animationController = GetComponentInChildren<XenoAnimationController>();
       if (!abilityManager) abilityManager = GetComponent<AbilityManager>();
       if (!_rb) _rb = GetComponent<Rigidbody>();
+
+      climbingState.Init(this, _rb, transform);
     }
 
     public void FixedUpdate()
@@ -76,7 +75,10 @@ namespace Eldritch.Core
       if (!OwnerAI) return;
       if (!Rb) return;
       var vel = _rb.velocity;
-      _rb.useGravity = !IsGrounded;
+      if (OwnerAI.IsManualControlling)
+      {
+        _rb.useGravity = !IsGrounded;
+      }
 
       SyncVelocityWithMovementSpeed(vel);
 
@@ -139,21 +141,22 @@ namespace Eldritch.Core
       const float runThreshold = 2f;
 
       if (localForwardSpeed < -idleThreshold)
-        return -1f; // walk backward
+        return Mathf.Lerp(localForwardSpeed, -1f, Time.fixedDeltaTime); // idle
 
       if (Mathf.Abs(localForwardSpeed) < idleThreshold)
-        return 0f; // idle
+        return Mathf.Lerp(localForwardSpeed, 0f, Time.fixedDeltaTime); // idle
 
-      if (Mathf.Abs(localForwardSpeed) < creepThreshold)
-        return 0.25f; // creep (unique animation)
-
-      if (localForwardSpeed > creepThreshold && localForwardSpeed < walkThreshold)
-        return 1f; // walk
-
-      if (localForwardSpeed >= walkThreshold)
-        return 2f; // run
-
-      return 0f;
+      return Mathf.Clamp(localForwardSpeed, -1f, 2f);
+      // if (Mathf.Abs(localForwardSpeed) < creepThreshold)
+      //   return localForwardSpeed; // creep (unique animation)
+      //
+      // if (localForwardSpeed > creepThreshold && localForwardSpeed < walkThreshold)
+      //   return 1f; // walk
+      //
+      // if (localForwardSpeed >= walkThreshold)
+      //   return 2f; // run
+      //
+      // return 0f;
     }
     private float _smoothedAnimSpeed = 0f;
     [SerializeField] private float animatedMovementLerpSpeed = 12f;
@@ -163,7 +166,7 @@ namespace Eldritch.Core
     {
       if (Rb.isKinematic)
       {
-        animationController.SetMoveSpeed(0);
+        // animationController.SetMoveSpeed(0);
         return;
       }
 
@@ -599,6 +602,27 @@ namespace Eldritch.Core
       transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRotation, customTurnSpeed * Time.deltaTime);
     }
 
+    #region Circling Logic
+
+    private readonly List<Vector3> _orbitTmpPath = new();
+    [SerializeField] private float orbitAheadDegrees = 45f;
+
+    private enum OrbitState
+    {
+      Orbit,
+      Detour
+    }
+
+    [SerializeField] private float orbitProbeLen = 2.0f;
+    [SerializeField] private float orbitClearance = 0.35f;
+    [SerializeField] private float orbitRejoinAheadDeg = 35f; // arc angle ahead to check for rejoin
+    [SerializeField] private float orbitRejoinLoS = 6f; // LoS distance to rejoin point
+    [SerializeField] private float orbitRadiusSlack = 0.6f; // how close to ring before rejoin
+    [SerializeField] private float detourMaxSeconds = 2.0f; // safety exit
+
+    private OrbitState _orbitState = OrbitState.Orbit;
+    private Vector3 _detourLastNormal;
+    private float _detourTimer;
     public void CircleAroundTarget(Transform target, int direction, float baseCircleSpeed)
     {
       if (!target) return;
@@ -606,69 +630,237 @@ namespace Eldritch.Core
       var toTarget = target.position - transform.position;
       toTarget.y = 0f;
       var dist = toTarget.magnitude;
+      if (dist < 0.05f) return;
 
-      // --- Dynamic circle radius ---
-      var config = OwnerAI.huntBehaviorConfig;
-      var minRadius = config.minCircleRadius;
-      var maxRadius = config.maxCircleRadius;
-      var scaling = config.circleRadiusFactor;
+      // --- dynamic radius (your config) ---
+      var cfg = OwnerAI.huntBehaviorConfig;
+      var desiredRadius = Mathf.Clamp(dist * cfg.circleRadiusFactor, cfg.minCircleRadius, cfg.maxCircleRadius);
 
-      // As AI gets closer, shrink the radius, but don't let it go below min
-      var dynamicRadius = Mathf.Clamp(dist * scaling, minRadius, maxRadius);
-
-      // --- Rest of circle logic uses dynamicRadius ---
       var tangent = Quaternion.Euler(0, 90f * direction, 0) * toTarget.normalized;
-      var radiusError = dist - dynamicRadius;
-      var correction = toTarget.normalized * radiusError * 2.0f;
-      correction = Vector3.ClampMagnitude(correction, baseCircleSpeed * 0.8f);
+      var radiusError = dist - desiredRadius;
+      var correction = toTarget.normalized * Mathf.Clamp(radiusError * 2.0f, -baseCircleSpeed, baseCircleSpeed);
 
-      var desiredVelocity = tangent * baseCircleSpeed + correction;
+      var desiredVel = tangent * baseCircleSpeed + correction;
+      var desiredDir = desiredVel.sqrMagnitude > 0.001f ? desiredVel.normalized : tangent;
 
-      var flatVel = new Vector3(_rb.velocity.x, 0f, _rb.velocity.z);
-      var velocityDelta = desiredVelocity - flatVel;
-      velocityDelta = Vector3.ClampMagnitude(velocityDelta, baseCircleSpeed * 0.7f);
+      // Common probe
+      var probeOrigin = transform.position + Vector3.up * 0.6f;
+      var blocked = Physics.SphereCast(probeOrigin, orbitClearance, desiredDir,
+        out var hit, orbitProbeLen, LayerHelpers.GroundLayers);
 
-      _rb.AddForce(velocityDelta, ForceMode.VelocityChange);
+      // Compute a point on the ring ahead we want to get to (for rejoin checks)
+      var aheadDir = Quaternion.Euler(0, orbitRejoinAheadDeg * direction, 0) * toTarget.normalized;
+      var rejoinPoint = target.position + aheadDir * desiredRadius;
 
-      HasMovedInFrame = true;
+      switch (_orbitState)
+      {
+        case OrbitState.Orbit:
+        {
+          if (blocked)
+          {
+            // Enter detour: remember normal and reset timer
+            _detourLastNormal = hit.normal;
+            _detourTimer = 0f;
+            _orbitState = OrbitState.Detour;
+            // Fall through to Detour behavior this frame
+          }
+          else
+          {
+            ApplyDesired(desiredVel);
+            return;
+          }
+          goto case OrbitState.Detour;
+        }
 
-      // Only rotate toward the tangent, NOT toward the target!
-      if (velocityDelta.sqrMagnitude > 0.001f)
-        RotateTowardsDirection(desiredVelocity, turnSpeed * 0.5f);
+        case OrbitState.Detour:
+        {
+          _detourTimer += Time.deltaTime;
 
-      // Head always looks at target
-      animationController?.PointHeadTowardTarget(transform, target);
+          // Keep sampling; if we have a contact, use its normal. If not, keep last.
+          if (blocked) _detourLastNormal = hit.normal;
+
+          // Slide tangent to obstacle, but choose the sign that preserves orbit direction
+          var slide = Vector3.Cross(_detourLastNormal, Vector3.up).normalized;
+          if (Vector3.Dot(slide, tangent) < 0f) slide = -slide;
+
+          // Stay roughly on the ring while sliding
+          var detourVel = slide * baseCircleSpeed * 0.95f + correction * 0.6f;
+
+          // Check if we can rejoin the circle **ahead**:
+          // 1) we’re close to the ring,
+          // 2) there’s line-of-sight from us to the rejoin point,
+          // 3) not blocked in the desired tangent direction.
+          var closeToRing = Mathf.Abs(radiusError) <= orbitRadiusSlack;
+
+          var losToRejoin = !Physics.Linecast(
+            transform.position + Vector3.up * 0.4f,
+            rejoinPoint + Vector3.up * 0.4f,
+            LayerHelpers.GroundLayers
+          ) && Vector3.Distance(transform.position, rejoinPoint) <= orbitRejoinLoS;
+
+          // also not blocked if we try to step toward the rejoin direction
+          var rejoinStepDir = (rejoinPoint - transform.position).normalized;
+          var rejoinBlocked = Physics.SphereCast(probeOrigin, orbitClearance, rejoinStepDir,
+            out _, orbitProbeLen * 0.75f, LayerHelpers.GroundLayers);
+
+          if (closeToRing && losToRejoin && !rejoinBlocked)
+          {
+            _orbitState = OrbitState.Orbit;
+            // nudge toward rejoin point to lock back onto the arc
+            var nudge = rejoinPoint - transform.position;
+            nudge.y = 0f;
+            var nudgeVel = nudge.normalized * baseCircleSpeed * 0.8f + correction * 0.5f;
+            ApplyDesired(nudgeVel);
+            return;
+          }
+
+          // Safety: don't get stuck forever — bail back to Orbit after timeout if no obstruction now
+          if (_detourTimer > detourMaxSeconds && !blocked)
+          {
+            _orbitState = OrbitState.Orbit;
+            ApplyDesired(desiredVel);
+            return;
+          }
+
+          // Continue sliding around the obstacle
+          ApplyDesired(detourVel);
+          return;
+        }
+      }
+
+      void ApplyDesired(Vector3 vel)
+      {
+        var flatVel = new Vector3(_rb.velocity.x, 0f, _rb.velocity.z);
+        var delta = vel - flatVel;
+        delta = Vector3.ClampMagnitude(delta, baseCircleSpeed * 0.7f);
+        _rb.AddForce(delta, ForceMode.VelocityChange);
+        HasMovedInFrame = true;
+
+        if (delta.sqrMagnitude > 0.001f)
+          RotateTowardsDirection(vel, turnSpeed * 0.6f);
+
+        animationController?.PointHeadTowardTarget(transform, target);
+      }
     }
-    // public void CircleAroundTarget(Transform target, int direction, float circleRadius, float circleSpeed)
-    // {
-    //   if (!target) return;
-    //
-    //   var toTarget = target.position - transform.position;
-    //   toTarget.y = 0f;
-    //   var dist = toTarget.magnitude;
-    //   if (dist < 0.01f) return;
-    //
-    //   var tangent = Quaternion.Euler(0, 90f * direction, 0) * toTarget.normalized;
-    //   var radiusError = dist - circleRadius;
-    //   var correction = toTarget.normalized * radiusError * 2.0f;
-    //   correction = Vector3.ClampMagnitude(correction, circleSpeed * 0.8f);
-    //
-    //   var desiredVelocity = tangent * circleSpeed + correction;
-    //
-    //   var flatVel = new Vector3(_rb.velocity.x, 0f, _rb.velocity.z);
-    //   var velocityDelta = desiredVelocity - flatVel;
-    //   velocityDelta = Vector3.ClampMagnitude(velocityDelta, circleSpeed * 0.7f);
-    //
-    //   _rb.AddForce(velocityDelta, ForceMode.VelocityChange);
-    //
-    //   HasMovedInFrame = true;
-    //
-    //   // Only rotate toward the tangent, NOT toward the target!
-    //   if (velocityDelta.sqrMagnitude > 0.001f)
-    //     RotateTowardsDirection(desiredVelocity, turnSpeed * 0.5f);
-    //
-    //   // Head always looks at target
-    //   animationController?.PointHeadTowardTarget(transform, target);
-    // }
+
+    #endregion
+
+    #region Climbing Movement
+
+    public bool TryFindIngressToTargetFloor(
+      Vector3 targetPos,
+      out Vector3 ingressMovePoint,
+      out Vector3 landingPoint,
+      float searchRadius = 8f,
+      float minDrop = 1.25f,
+      float maxDrop = 6f,
+      int directionSamples = 16,
+      float step = 0.75f)
+    {
+      ingressMovePoint = Vector3.zero;
+      landingPoint = Vector3.zero;
+
+      if (!IsGrounded) return false;
+
+      var selfPos = transform.position;
+      var bestScore = float.NegativeInfinity;
+      var found = false;
+
+      // Helper: score candidate (bigger is better)
+      float Score(Vector3 probe, Vector3 land)
+      {
+        // how much closer to the target's Y we get
+        var beforeY = Mathf.Abs(selfPos.y - targetPos.y);
+        var afterY = Mathf.Abs(land.y - targetPos.y);
+        var yGain = beforeY - afterY; // positive = improvement
+
+        // planar closeness to target after landing
+        var planarAfter = Vector2.Distance(new Vector2(land.x, land.z), new Vector2(targetPos.x, targetPos.z));
+
+        // prefer closer ingress points too
+        var toProbe = Vector3.Distance(selfPos, probe);
+
+        // weights tuned for sensible behavior
+        return yGain * 2.0f - planarAfter * 0.12f - toProbe * 0.05f;
+      }
+
+      for (var i = 0; i < directionSamples; i++)
+      {
+        var yaw = 360f / directionSamples * i;
+        var dir = Quaternion.Euler(0, yaw, 0) * Vector3.forward;
+
+        for (var dist = step; dist <= searchRadius; dist += step)
+        {
+          var probe = selfPos + dir * dist;
+
+          // Ensure the probe is on navigable ground (don’t walk into nothing)
+          if (!IsGroundBelow(probe, 1.5f)) continue;
+
+          // Check for a drop (gap) beyond the probe (like stepping off the hole)
+          var dropOrigin = probe + Vector3.up * 0.5f;
+          if (!Physics.Raycast(dropOrigin, Vector3.down, out var hit, maxDrop + 0.6f, LayerHelpers.GroundLayers))
+            continue;
+
+          var drop = probe.y - hit.point.y;
+          if (drop < minDrop || drop > maxDrop) continue;
+
+          // Landing slope sanity
+          if (Vector3.Angle(hit.normal, Vector3.up) > 45f) continue;
+
+          // Optional: line-of-walk to probe (avoid walls right in front)
+          var walkBlocked = Physics.SphereCast(
+            selfPos + Vector3.up * 0.4f,
+            0.25f,
+            (probe - selfPos).normalized,
+            out _,
+            Mathf.Max(0.1f, dist - 0.1f),
+            LayerHelpers.GroundLayers
+          );
+          if (walkBlocked) continue;
+
+          // Score this ingress
+          var s = Score(probe, hit.point);
+          if (s > bestScore)
+          {
+            bestScore = s;
+            ingressMovePoint = probe;
+            landingPoint = hit.point;
+            found = true;
+          }
+        }
+      }
+
+      return found;
+    }
+
+    // in XenoAIMovementController (helper you can reuse anywhere)
+    public bool IsForwardBlocked(float checkDist = 0.9f, float radiusScale = 0.9f)
+    {
+      var feetY = OwnerAI ? OwnerAI.movementController.GroundPoint.y : transform.position.y;
+      var chest = new Vector3(transform.position.x, feetY + 1.0f, transform.position.z);
+      var r = Mathf.Max(0.25f, 0.9f * 0.35f);
+      return Physics.CapsuleCast(chest, chest + Vector3.up * 0.01f, r * radiusScale, transform.forward,
+        out _, checkDist, LayerHelpers.GroundLayers, QueryTriggerInteraction.Ignore);
+    }
+
+    public bool TryExecuteIngressJump(Vector3 ingressMovePoint, Vector3 landingPoint, float near = 0.75f)
+    {
+      // Close enough to the hole? Jump/drop.
+      var planarSelf = new Vector2(transform.position.x, transform.position.z);
+      var planarIngress = new Vector2(ingressMovePoint.x, ingressMovePoint.z);
+      if (Vector2.Distance(planarSelf, planarIngress) > near) return false;
+
+      // Use your existing JumpTo logic (works for both up and down arcs).
+      JumpTo(landingPoint);
+      return true;
+    }
+
+    public bool TryWallClimbWhenBlocked(Vector3 moveDir)
+    {
+      return climbingState.TryWallClimbWhenBlocked(moveDir);
+    }
+
+    #endregion
+
   }
 }
