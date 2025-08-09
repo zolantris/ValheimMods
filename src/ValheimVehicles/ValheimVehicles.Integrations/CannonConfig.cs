@@ -9,6 +9,7 @@ using ValheimVehicles.Integrations;
 using ValheimVehicles.Interfaces;
 using ValheimVehicles.SharedScripts.UI;
 using ValheimVehicles.Storage.Serialization;
+using Zolantris.Shared;
 
 #endregion
 

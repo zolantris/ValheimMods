@@ -29,6 +29,7 @@
   using ValheimVehicles.ValheimVehicles.Components;
   using ZdoWatcher;
   using ZdoWatcher.ZdoWatcher.Utils;
+  using Zolantris.Shared;
   using static ValheimVehicles.Propulsion.Sail.SailAreaForce;
   using Component = UnityEngine.Component;
   using Logger = Jotunn.Logger;

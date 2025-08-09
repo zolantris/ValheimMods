@@ -1,6 +1,7 @@
 using System;
 using Jotunn.Managers;
 using ValheimVehicles.SharedScripts;
+using Zolantris.Shared;
 namespace ValheimVehicles.Prefabs.Registry;
 
 internal interface IGuardedRegistryInternal

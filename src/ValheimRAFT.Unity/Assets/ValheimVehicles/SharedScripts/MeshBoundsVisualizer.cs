@@ -2,6 +2,7 @@
 using System.Linq;
 using JetBrains.Annotations;
 using UnityEngine;
+using Zolantris.Shared;
 // ReSharper disable ArrangeNamespaceBody
 
 // ReSharper disable NamespaceStyle

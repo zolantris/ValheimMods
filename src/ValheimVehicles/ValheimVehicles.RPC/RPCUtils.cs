@@ -5,6 +5,7 @@ using System.Diagnostics;
 using UnityEngine;
 using ValheimVehicles.Integrations.PowerSystem;
 using ValheimVehicles.SharedScripts;
+using Zolantris.Shared;
 using Zolantris.Shared.Debug;
 namespace ValheimVehicles.RPC;
 

@@ -1,5 +1,6 @@
 using System.Collections;
 using ValheimVehicles.SharedScripts;
+using Zolantris.Shared;
 namespace ValheimVehicles.RPC;
 
 public static class PlayerEitrRPC

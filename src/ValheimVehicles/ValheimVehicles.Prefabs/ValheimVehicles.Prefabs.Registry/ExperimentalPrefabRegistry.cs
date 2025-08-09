@@ -5,6 +5,7 @@ using Jotunn.Managers;
 using ValheimVehicles.BepInExConfig;
 using ValheimVehicles.Prefabs.Registry;
 using ValheimVehicles.SharedScripts;
+using Zolantris.Shared;
 namespace ValheimVehicles.Prefabs.ValheimVehicles.Prefabs.Registry;
 
 public class ExperimentalPrefabRegistry : RegisterPrefab<ExperimentalPrefabRegistry>

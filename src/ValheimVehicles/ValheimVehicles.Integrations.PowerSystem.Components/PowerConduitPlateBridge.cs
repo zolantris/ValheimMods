@@ -14,6 +14,7 @@ using ValheimVehicles.SharedScripts;
 using ValheimVehicles.SharedScripts.PowerSystem;
 using ValheimVehicles.SharedScripts.PowerSystem.Compute;
 using ValheimVehicles.SharedScripts.PowerSystem.Interfaces;
+using Zolantris.Shared;
 
 public class PowerConduitPlateBridge :
   PowerNetworkDataEntity<PowerConduitPlateBridge, PowerConduitPlateComponent, PowerConduitData>,

@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using UnityEngine;
 using ValheimVehicles.SharedScripts;
+using Zolantris.Shared;
 namespace ValheimVehicles.UI;
 
 public class ScreenSizeWatcher : SingletonBehaviour<ScreenSizeWatcher>

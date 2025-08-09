@@ -9,6 +9,7 @@ using System.ComponentModel;
 using UnityEngine;
 using ValheimVehicles.SharedScripts.PowerSystem;
 using ValheimVehicles.SharedScripts.UI;
+using Zolantris.Shared;
 
 #endregion
 

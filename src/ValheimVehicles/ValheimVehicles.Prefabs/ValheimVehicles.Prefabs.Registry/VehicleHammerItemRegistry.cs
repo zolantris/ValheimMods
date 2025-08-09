@@ -5,6 +5,7 @@ using UnityEngine;
 using Valheim.UI;
 using ValheimVehicles.Components;
 using ValheimVehicles.SharedScripts;
+using Zolantris.Shared;
 namespace ValheimVehicles.Prefabs.Registry;
 
 public class VehicleHammerItemRegistry : GuardedRegistry<VehicleHammerItemRegistry>

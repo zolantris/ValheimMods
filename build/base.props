@@ -1,21 +1,58 @@
 <Project>
-    <!--    <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props"-->
-    <!--            Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')"/>-->
-    <!--  critical for local variables, can affect any project in this repo reliant on it  -->
+    <!--  Done for compatibility with unity mklink so projects can keep structure but not have bin or obj folders  -->
+    <PropertyGroup Label="Overrides for MSBuild">
+        <BaseOutputPath>$(SolutionDir)Build\bin\</BaseOutputPath>
+        <BaseIntermediateOutputPath>$(SolutionDir)Build\obj\</BaseIntermediateOutputPath>
+        <OutputPath>$(BaseOutputPath)$(MSBuildProjectName)\$(Configuration)\</OutputPath>
+        <IntermediateOutputPath>$(BaseIntermediateOutputPath)$(MSBuildProjectName)\$(Configuration)\</IntermediateOutputPath>
+    </PropertyGroup>
+
     <Import Project="$(SolutionDir)build\.props" Condition="Exists('$(SolutionDir)build\.props')"/>
     <Import Project="$(SolutionDir)build\build_variables.props" Condition="Exists('$(SolutionDir)build\build_variables.props')"/>
 
+    <PropertyGroup Label="Runnables and Project Booleans">
+        <!-- Runnable variants execute Valheim server or client process after building -->
+        <IsRunnableDebug Condition="'$(Configuration)' == 'Debug Run Client' or '$(Configuration)' == 'Debug Run Server' or '$(Configuration)' == 'Debug Run ClientServer'">true</IsRunnableDebug>
+        <IsRunnableRelease Condition="'$(Configuration)' == 'Release Run Client' or '$(Configuration)' == 'Release Run Server' or '$(Configuration)' == 'Release Run ClientServer'">true</IsRunnableRelease>
+        <IsRunnableClientServer Condition="'$(Configuration)' == 'Release Run ClientServer' or '$(Configuration)' == 'Debug Run ClientServer'">true</IsRunnableClientServer>
+        <IsRunnableServer Condition="'$(Configuration)' == 'Release Run Server' or '$(Configuration)' == 'Debug Run Server'">true</IsRunnableServer>
+        <IsRunnableClient Condition="'$(IsRunnableRelease)' == 'true' or '$(IsRunnableDebug)' == 'true'">true</IsRunnableClient>
+        <IsRunnable Condition="'$(IsRunnableRelease)' == 'true' or '$(IsRunnableDebug)' == 'true'">true</IsRunnable>
+        <IsRunnable>true</IsRunnable>
+        <IsDebug Condition="'$(Configuration)' == 'Debug' or '$(IsRunnableDebug)' == 'true'">true</IsDebug>
+        <IsRelease Condition="'$(Configuration)' == 'Release' or '$(Configuration)' == 'Release Archive' or '$(Configuration)' == 'ReleaseBeta Archive' or '$(IsRunnableRelease)' == 'true'">true</IsRelease>
+        <IsNotArchive Condition="'$(Configuration)' != 'Release Archive' and '$(Configuration)' != 'ReleaseBETA Archive'">true</IsNotArchive>
+    </PropertyGroup>
+    <!-- Default   -->
     <PropertyGroup>
         <TargetFramework>netstandard2.1</TargetFramework>
-        <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
         <Platforms>AnyCPU</Platforms>
         <PlatformTarget>AnyCPU</PlatformTarget>
         <LangVersion>12</LangVersion>
         <Nullable>enable</Nullable>
         <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
         <Configurations>Debug;Release</Configurations>
-        <OutputPath>bin\Debug</OutputPath>
+        <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     </PropertyGroup>
+
+    <PropertyGroup Condition="'$(IsDebug)' == 'true'">
+        <DebugSymbols>true</DebugSymbols>
+        <DebugType>full</DebugType>
+        <Optimize>false</Optimize>
+        <DefineConstants>DEBUG;TRACE;</DefineConstants>
+        <ErrorReport>prompt</ErrorReport>
+        <WarningLevel>4</WarningLevel>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(IsRelease)' == 'true'">
+        <DebugType>pdbonly</DebugType>
+        <Optimize>true</Optimize>
+        <DefineConstants>TRACE;VALHEIM</DefineConstants>
+        <ErrorReport>prompt</ErrorReport>
+        <WarningLevel>4</WarningLevel>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    </PropertyGroup>
+
     <PropertyGroup Label="Code Preferences">
         <Nullable>enable</Nullable>
     </PropertyGroup>
@@ -23,15 +60,9 @@
         <PlatformTarget>AnyCPU</PlatformTarget>
         <DebugType>pdbonly</DebugType>
         <Optimize>true</Optimize>
-        <OutputPath>bin\Release\</OutputPath>
         <DefineConstants>TRACE</DefineConstants>
         <ErrorReport>prompt</ErrorReport>
         <WarningLevel>4</WarningLevel>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     </PropertyGroup>
-
-    <ItemGroup>
-        <Compile Include="$(AssemblyDir)\.*cs"/>
-        <Compile Include="$(AssemblyDir)\Properties\.*cs"/>
-    </ItemGroup>
 </Project>

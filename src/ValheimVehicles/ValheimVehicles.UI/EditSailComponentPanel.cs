@@ -10,6 +10,7 @@ using ValheimVehicles.Injections;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.SharedScripts;
 using ValheimVehicles.SharedScripts.UI;
+using Zolantris.Shared;
 using Object = UnityEngine.Object;
 
 namespace ValheimVehicles.UI;

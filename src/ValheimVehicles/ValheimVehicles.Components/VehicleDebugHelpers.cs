@@ -9,6 +9,7 @@ using ValheimVehicles.BepInExConfig;
 using ValheimVehicles.ConsoleCommands;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.SharedScripts;
+using Zolantris.Shared;
 
 namespace ValheimVehicles.Components;
 

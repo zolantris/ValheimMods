@@ -18,6 +18,7 @@
   using ValheimVehicles.SharedScripts.Enums;
   using ValheimVehicles.SharedScripts.Helpers;
   using ValheimVehicles.SharedScripts.PowerSystem.Compute;
+  using Zolantris.Shared;
   using static ValheimVehicles.BepInExConfig.PrefabConfig;
   using Logger = Jotunn.Logger;
 

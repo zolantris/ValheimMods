@@ -1,12 +1,10 @@
 using System;
 using System.Collections.Generic;
 using HarmonyLib;
-using UnityEngine;
 using ValheimVehicles.BepInExConfig;
-using ValheimVehicles.Integrations;
 using ValheimVehicles.SharedScripts;
 using ValheimVehicles.SharedScripts.Helpers;
-using Object = UnityEngine.Object;
+using Zolantris.Shared;
 namespace ValheimVehicles.Patches;
 
 public static class Humanoid_EquipPatch

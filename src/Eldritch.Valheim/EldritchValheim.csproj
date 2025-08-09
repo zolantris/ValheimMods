@@ -1,0 +1,19 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+    <Import Project="$(SolutionDir)build\base.props"/>
+    <Import Project="$(SolutionDir)build\valheim.props"/>
+
+    <PropertyGroup>
+        <RootNamespace>Eldritch.Valheim</RootNamespace>
+        <AssemblyName>Eldritch.Valheim</AssemblyName>
+        <AssemblyType>Library</AssemblyType>
+    </PropertyGroup>
+
+    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+        <OutputPath>bin\Debug\</OutputPath>
+    </PropertyGroup>
+
+    <ItemGroup Label="Core Deps">
+        <ProjectReference Include="$(SolutionDir)src\Shared\Shared.csproj"/>
+        <ProjectReference Include="$(SolutionDir)src\Eldritch.Core\EldritchCore.csproj"/>
+    </ItemGroup>
+</Project>

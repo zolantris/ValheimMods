@@ -1,6 +1,7 @@
 ﻿using HarmonyLib;
 using UnityEngine;
 using ValheimVehicles.SharedScripts;
+using Zolantris.Shared;
 namespace ValheimVehicles.Patches;
 
 public class MineRock_Patches

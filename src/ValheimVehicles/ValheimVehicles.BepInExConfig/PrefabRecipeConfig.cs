@@ -6,6 +6,7 @@ using UnityEngine;
 using ValheimVehicles.SharedScripts;
 using ValheimVehicles.SharedScripts.Enums;
 using ValheimVehicles.SharedScripts.Modules;
+using Zolantris.Shared;
 
 namespace ValheimVehicles.BepInExConfig;
 

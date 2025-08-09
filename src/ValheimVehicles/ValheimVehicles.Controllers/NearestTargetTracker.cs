@@ -1,6 +1,7 @@
 using UnityEngine;
 using System.Collections.Generic;
 using ValheimVehicles.SharedScripts;
+using Zolantris.Shared;
 
 /// <summary>
 /// Mostly for characters but could apply to inanimate objects and other layers.

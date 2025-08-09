@@ -10,12 +10,15 @@
         <ProjectReference Include="..\ZdoWatcher\ZdoWatcher.csproj"/>
         <ProjectReference Include="..\DynamicLocations\DynamicLocations.csproj"/>
         <ProjectReference Include="..\ValheimVehicles\ValheimVehicles.csproj"/>
+        <ProjectReference Include="..\Eldritch.Core\EldritchCore.csproj"/>
+        <ProjectReference Include="..\Eldritch.Valheim\EldritchValheim.csproj"/>
         <ProjectReference Include="..\ModSync\ModSync.csproj">
             <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
         </ProjectReference>
     </ItemGroup>
 
     <PropertyGroup>
+        <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
         <PostInstallerEnabled>true</PostInstallerEnabled>
         <Configurations>Debug;Release;Debug Run ClientServer;Debug Run Client;Release Archive;ReleaseBeta Archive;ModSyncOnly;Release Run Client</Configurations>
         <TargetFramework>Net8.0</TargetFramework>
@@ -24,9 +27,9 @@
 
     <PropertyGroup Label="For target args generation">
         <SyncTargets Condition="'$(IsRunnableServer)' == 'true'">server</SyncTargets>
-        <SyncTargets Condition="'$(IsRunnableClient)' == 'true'">localClient</SyncTargets>
+        <SyncTargets Condition="'$(IsRunnableClient)' == 'true'">localClientEldritch</SyncTargets>
         <!--  This overrides server or client config -->
-        <SyncTargets Condition="'$(IsRunnableClientServer)' == 'true'">localClient,vmClient,server</SyncTargets>
+        <SyncTargets Condition="'$(IsRunnableClientServer)' == 'true'">localClient,localClientEldritch,vmClient,server</SyncTargets>
 
         <SyncEnvFlags>--env-debug=true</SyncEnvFlags>
         <SyncEnvFlags Condition="'$(IsRelease)' == 'true'">--env-release</SyncEnvFlags>

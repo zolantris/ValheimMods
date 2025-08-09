@@ -4,6 +4,7 @@ using UnityEngine.U2D;
 using ValheimVehicles.SharedScripts;
 using ValheimVehicles.SharedScripts.PowerSystem;
 using ValheimVehicles.SharedScripts.Validation;
+using Zolantris.Shared;
 
 namespace ValheimVehicles.Prefabs;
 

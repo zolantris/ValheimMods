@@ -17,6 +17,7 @@ using ValheimVehicles.SharedScripts.PowerSystem;
 using ValheimVehicles.SharedScripts.UI;
 using ValheimVehicles.UI;
 using ValheimVehicles.ValheimVehicles.Plugins;
+using Zolantris.Shared;
 using Zolantris.Shared.Debug;
 
 namespace ValheimVehicles;

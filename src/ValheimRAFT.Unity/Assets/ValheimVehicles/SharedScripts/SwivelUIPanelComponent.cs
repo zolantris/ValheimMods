@@ -10,6 +10,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using ValheimVehicles.SharedScripts.Helpers;
+using Zolantris.Shared;
 
 #endregion
 

@@ -5,7 +5,6 @@
   using System.Collections.Generic;
   using System.Diagnostics;
   using System.Linq;
-  using Jotunn;
   using UnityEngine;
   using UnityEngine.Serialization;
   using ValheimVehicles.Components;
@@ -21,7 +20,7 @@
   using ValheimVehicles.Shared.Constants;
   using ValheimVehicles.SharedScripts;
   using ValheimVehicles.Structs;
-  using ZdoWatcher;
+  using Zolantris.Shared;
   using Logger = Jotunn.Logger;
 
 #endregion

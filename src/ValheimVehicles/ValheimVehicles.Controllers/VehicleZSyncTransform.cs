@@ -2,6 +2,7 @@
 using UnityEngine;
 using ValheimVehicles.Helpers;
 using ValheimVehicles.SharedScripts;
+using Zolantris.Shared;
 using Object = UnityEngine.Object;
 
 namespace ValheimVehicles.Controllers;

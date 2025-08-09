@@ -1,7 +1,7 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
     <Import Project="$(SolutionDir)build\base.props"/>
     <Import Project="$(SolutionDir)build\valheim.props"/>
+    <Import Project="$(SolutionDir)build\valheimvehicles_version.props"/>
 
     <PropertyGroup>
         <Configuration Condition=" '$(Configuration)' == '' ">Debug;VALHEIM_RAFT</Configuration>
@@ -9,9 +9,8 @@
         <ProjectGuid>{6015B165-2627-40A7-8CA1-3E6B6CD7CB49}</ProjectGuid>
         <OutputType>Library</OutputType>
         <AssemblyName>ValheimRAFT</AssemblyName>
-        <ApplicationVersion>3.6.6</ApplicationVersion>
-        <FileAlignment>512</FileAlignment>
         <RootNamespace>ValheimRAFT</RootNamespace>
+        <FileAlignment>512</FileAlignment>
         <Configurations>Debug;Release;Release Archive;Debug Run ClientServer;Debug Run Client;ReleaseBETA Archive;Debug Run Server;Release Run Server;Release Run ClientServer;ModSyncOnly</Configurations>
         <Platforms>AnyCPU</Platforms>
     </PropertyGroup>
@@ -32,21 +31,15 @@
         </AssemblyAttribute>
     </ItemGroup>
     <ItemGroup>
-        <None Remove="AssetBundle\AssetBundle"/>
-        <None Remove="AssetBundle\valheim-vehicles-shared"/>
-        <None Remove="AssetBundle\valheim-raft"/>
-        <None Remove="AssetBundle\valheim-vehicles"/>
-        <None Remove="AssetBundle\valheim-raft.manifest"/>
-        <None Remove="AssetBundle\valheim-vehicles.manifest"/>
-        <None Remove="AssetBundle\valheim-vehicles-shared.manifest"/>
-        <None Remove="AssetBundle\AssetBundle.manifest"/>
+        <None Remove="$(SolutionDir)AssetBundle\valheim-vehicles"/>
+        <None Remove="$(SolutionDir)AssetBundle\valheim-vehicles.manifest"/>
 
         <!--  TODO to embed assets, but this needs a refactor and inflates dll size, not worth adding now      -->
         <!--        <EmbeddedResource Include="Assets\**"/>-->
-        <EmbeddedResource Include="AssetBundle\AssetBundle" LogicalName="AssetBundle"/>
-        <EmbeddedResource Include="AssetBundle\AssetBundle.manifest" LogicalName="AssetBundle.manifest"/>
-        <EmbeddedResource Include="AssetBundle\valheim-vehicles" LogicalName="valheim-vehicles"/>
-        <EmbeddedResource Include="AssetBundle\valheim-vehicles.manifest" LogicalName="valheim-vehicles.manifest"/>
+        <!--        <EmbeddedResource Include="$(SolutionDir)AssetBundle\AssetBundle" LogicalName="AssetBundle"/>-->
+        <!--        <EmbeddedResource Include="$(SolutionDir)AssetBundle\AssetBundle.manifest" LogicalName="AssetBundle.manifest"/>-->
+        <EmbeddedResource Include="$(SolutionDir)AssetBundle\valheim-vehicles" LogicalName="valheim-vehicles"/>
+        <EmbeddedResource Include="$(SolutionDir)AssetBundle\valheim-vehicles.manifest" LogicalName="valheim-vehicles.manifest"/>
         <!--        TODO import assets this way-->
         <!--        <EmbeddedResources Include="Assets\**.png" /> -->
     </ItemGroup>
@@ -93,5 +86,4 @@
         <WarningLevel>4</WarningLevel>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     </PropertyGroup>
-    <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets"/>
 </Project>

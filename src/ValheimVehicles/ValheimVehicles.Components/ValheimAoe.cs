@@ -8,6 +8,7 @@ using UnityEngine;
 using UnityEngine.Serialization;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.SharedScripts;
+using Zolantris.Shared;
 
 namespace ValheimVehicles.Components;
 

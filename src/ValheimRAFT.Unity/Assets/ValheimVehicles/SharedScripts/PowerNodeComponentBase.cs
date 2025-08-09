@@ -5,6 +5,7 @@
 
 using System.Collections.Generic;
 using UnityEngine;
+using Zolantris.Shared;
 
 #endregion
 

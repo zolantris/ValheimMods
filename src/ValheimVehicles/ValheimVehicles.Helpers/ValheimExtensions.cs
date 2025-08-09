@@ -7,6 +7,7 @@ using JetBrains.Annotations;
 using UnityEngine;
 using ValheimVehicles.Interfaces;
 using ValheimVehicles.SharedScripts;
+using Zolantris.Shared;
 namespace ValheimVehicles.Helpers;
 
 public static class ValheimExtensions

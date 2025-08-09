@@ -12,6 +12,7 @@ using ValheimVehicles.RPC;
 using ValheimVehicles.SharedScripts;
 using ValheimVehicles.SharedScripts.PowerSystem;
 using ValheimVehicles.SharedScripts.PowerSystem.Compute;
+using Zolantris.Shared;
 using Logger = HarmonyLib.Tools.Logger;
 
 namespace ValheimVehicles.Integrations;

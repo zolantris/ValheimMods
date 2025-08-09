@@ -6,6 +6,7 @@ using ValheimVehicles.Constants;
 using ValheimVehicles.Helpers;
 using ValheimVehicles.SharedScripts;
 using ValheimVehicles.SharedScripts.Helpers;
+using Zolantris.Shared;
 namespace ValheimVehicles.ValheimVehicles.Components;
 
 public class TargetControlsInteractive : MonoBehaviour, Hoverable, Interactable,

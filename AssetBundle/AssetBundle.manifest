@@ -1,0 +1,10 @@
+ManifestFileVersion: 0
+CRC: 3804375300
+AssetBundleManifest:
+  AssetBundleInfos:
+    Info_0:
+      Name: valheim-vehicles
+      Dependencies: {}
+    Info_1:
+      Name: eldritch
+      Dependencies: {}

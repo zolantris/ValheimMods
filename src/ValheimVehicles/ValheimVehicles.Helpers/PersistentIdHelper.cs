@@ -1,5 +1,6 @@
 using ValheimVehicles.SharedScripts;
 using ZdoWatcher;
+using Zolantris.Shared;
 namespace ValheimVehicles.Helpers;
 
 public static class PersistentIdHelper

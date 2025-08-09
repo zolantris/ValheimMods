@@ -1,5 +1,6 @@
 using System;
 using ValheimVehicles.SharedScripts.Validation;
+using Zolantris.Shared;
 namespace ValheimVehicles.SharedScripts;
 
 /// <summary>

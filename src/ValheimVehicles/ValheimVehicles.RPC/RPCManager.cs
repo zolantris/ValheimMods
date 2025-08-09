@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using ValheimVehicles.Integrations;
 using ValheimVehicles.SharedScripts;
 using ValheimVehicles.SharedScripts.PowerSystem;
+using Zolantris.Shared;
 
 namespace ValheimVehicles.RPC;
 

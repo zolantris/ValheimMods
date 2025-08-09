@@ -1,13 +1,14 @@
-<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
     <Import Project="$(SolutionDir)build\base.props"/>
     <Import Project="$(SolutionDir)build\valheim.props"/>
+    <Import Project="$(SolutionDir)build\valheimvehicles_version.props"/>
 
     <PropertyGroup>
         <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
         <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
         <ProjectGuid>{E9B48BE9-4D8E-44DB-961A-D7C279B2CA2B}</ProjectGuid>
         <OutputType>Library</OutputType>
+        <!--        <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>-->
         <AppDesignerFolder>Properties</AppDesignerFolder>
         <RootNamespace>ValheimVehicles</RootNamespace>
         <AssemblyName>ValheimVehicles</AssemblyName>
@@ -29,7 +30,6 @@
     <ItemGroup Label="ValheimVehicle.SharedScripts Unity testable scripts">
         <!--  Allows for both sharing and testing these scripts within unity. Best of both worlds.      -->
         <Compile Include="..\ValheimRAFT.Unity\Assets\ValheimVehicles\SharedScripts\**\*.cs"/>
-        <Compile Remove="..\ValheimRAFT.Unity\Assets\ValheimVehicles\SharedScripts\LoggerProvider.cs"/>
     </ItemGroup>
     <ItemGroup Label="Internal ValheimVehicles scripts">
         <!-- Includes all namespace folders -->
@@ -41,5 +41,4 @@
         <ProjectReference Include="..\DynamicLocations\DynamicLocations.csproj"/>
         <ProjectReference Include="..\ZdoWatcher\ZdoWatcher.csproj"/>
     </ItemGroup>
-    <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets"/>
 </Project>

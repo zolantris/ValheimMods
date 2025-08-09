@@ -14,6 +14,7 @@
   using ValheimVehicles.SharedScripts;
   using ValheimVehicles.SharedScripts.Helpers;
   using ValheimVehicles.SharedScripts.PowerSystem.Compute;
+  using Zolantris.Shared;
 
 #endregion
 

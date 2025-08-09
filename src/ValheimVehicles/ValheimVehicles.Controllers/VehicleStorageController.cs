@@ -21,6 +21,7 @@
   using ValheimVehicles.Shared.Constants;
   using ValheimVehicles.SharedScripts;
   using ValheimVehicles.Storage.Serialization;
+  using Zolantris.Shared;
   // Assume you want the shared scripts style.
   using Object = UnityEngine.Object;
 

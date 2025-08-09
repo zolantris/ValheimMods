@@ -3,6 +3,7 @@ using Jotunn.Entities;
 using Jotunn.Managers;
 using UnityEngine;
 using ValheimVehicles.SharedScripts;
+using Zolantris.Shared;
 namespace ValheimVehicles.Prefabs.Registry;
 
 public class CommandsPieceRegistry : GuardedRegistry<CommandsPieceRegistry>

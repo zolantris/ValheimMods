@@ -7,6 +7,7 @@ using System;
 using System.Collections;
 using UnityEngine;
 using ValheimVehicles.SharedScripts.ValheimVehicles.SharedScripts;
+using Zolantris.Shared;
 
 #endregion
 

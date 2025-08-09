@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using ValheimVehicles.SharedScripts.Modules;
+using Zolantris.Shared;
 
 namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
 {

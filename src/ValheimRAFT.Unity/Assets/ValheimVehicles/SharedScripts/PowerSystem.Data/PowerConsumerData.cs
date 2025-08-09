@@ -1,9 +1,15 @@
 // ReSharper disable ArrangeNamespaceBody
 // ReSharper disable NamespaceStyle
 
+
 using System;
 using UnityEngine;
 using ValheimVehicles.Shared.Constants;
+
+#if !TEST
+using Zolantris.Shared;
+#endif
+
 namespace ValheimVehicles.SharedScripts.PowerSystem.Compute
 {
   // ReSharper disable once PartialTypeWithSinglePart

@@ -1,16 +1,13 @@
 <Project Sdk="Microsoft.NET.Sdk">
+    <Import Project="$(SolutionDir)build\base.props"/>
+    <Import Project="$(SolutionDir)build\unity_libs_2022.props"/>
+    <Import Project="$(SolutionDir)build\bepinex_libs.props"/>
     <PropertyGroup>
+        <AssemblyName>Zolantris.Shared</AssemblyName>
+        <RootNamespace>Zolantris.Shared</RootNamespace>
         <Configurations>Debug;Release;ReleaseBETA Archive;ModSyncOnly</Configurations>
         <Platforms>AnyCPU</Platforms>
     </PropertyGroup>
-    <Import Project="$(SolutionDir)build\base.props"/>
-    <Import Project="$(SolutionDir)build\valheim.props"/>
-
-    <ItemGroup Label="ValheimVehicle.SharedScripts Unity testable scripts">
-        <!--  Allows for both sharing and testing these scripts within unity. Best of both worlds.      -->
-        <Compile Include="$(SolutionDir)src\ValheimRAFT.Unity\Assets\ValheimVehicles\SharedScripts\LoggerProvider.cs"/>
-    </ItemGroup>
-
     <!--  Converts valheim to a unity debug build  -->
-    <Import Project="..\..\build\unity-debug-build-converter.targets"/>
+    <!--    <Import Project="..\..\build\unity-debug-build-converter.targets"/>-->
 </Project>

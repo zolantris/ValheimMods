@@ -13,6 +13,7 @@
   using ValheimVehicles.Patches;
   using ValheimVehicles.SharedScripts;
   using ValheimVehicles.UI;
+  using Zolantris.Shared;
   using Logger = Jotunn.Logger;
 
 #endregion

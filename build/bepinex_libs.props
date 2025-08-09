@@ -1,0 +1,18 @@
+<Project>
+    <PropertyGroup Condition="!Exists('$(SolutionDir)build\.props')">
+        <BepInExPath>$(SolutionDir)libs</BepInExPath>
+        <ManagedDataPath>$(SolutionDir)libs</ManagedDataPath>
+    </PropertyGroup>
+    <ItemGroup Label="BepInEx">
+        <Reference Include="0Harmony">
+            <SpecificVersion>False</SpecificVersion>
+            <HintPath>$(BepInExPath)\0Harmony.dll</HintPath>
+            <Private>False</Private>
+        </Reference>
+        <Reference Include="BepInEx">
+            <SpecificVersion>False</SpecificVersion>
+            <HintPath>$(BepInExPath)\BepInEx.dll</HintPath>
+            <Private>False</Private>
+        </Reference>
+    </ItemGroup>
+</Project>

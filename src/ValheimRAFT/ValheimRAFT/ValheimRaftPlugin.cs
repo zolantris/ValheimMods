@@ -7,6 +7,7 @@ using DynamicLocations;
 using DynamicLocations.API;
 using DynamicLocations.Controllers;
 using JetBrains.Annotations;
+using Jotunn;
 using ServerSync;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -21,12 +22,13 @@ using ValheimVehicles.Providers;
 using ValheimVehicles.Controllers;
 using ValheimVehicles.Integrations;
 using ZdoWatcher;
+using Zolantris.Shared;
 using Zolantris.Shared.BepInExAutoDoc;
 namespace ValheimRAFT;
 
 internal abstract class PluginDependencies
 {
-  public const string JotunnModGuid = Jotunn.Main.ModGuid;
+  public const string JotunnModGuid = Main.ModGuid;
 }
 
 /// <summary>
@@ -136,7 +138,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
     PrefabManager.OnVanillaPrefabsAvailable += () =>
     {
       // do not load custom textures on a dedicated server. This will do nothing but cause an error.
-      if (ZNet.instance == null || ZNet.instance.IsDedicated() == false)
+      if (ZNet.instance == null || ZNet.instance.IsLocalInstance() || ZNet.instance.IsClientInstance() || ZNet.instance.IsDedicated() == false)
       {
         LoadCustomTextures();
       }

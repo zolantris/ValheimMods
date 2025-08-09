@@ -7,6 +7,7 @@
   using System.Linq;
   using Unity.Collections;
   using UnityEngine;
+  using Zolantris.Shared;
   using Debug = UnityEngine.Debug;
 
 #endregion
