@@ -140,6 +140,29 @@ namespace Eldritch.Core
       m_path = new NavMeshPath();
     }
 
+    #region NEW CODE
+
+    public bool TrySnapToNav(Vector3 center, AgentType agentType, out Vector3 snapped)
+    {
+      var p = center;
+      var ok = SnapToNavMesh(ref p, true, GetSettings(agentType));
+      snapped = p;
+      return ok;
+    }
+
+    public bool IsPositionOnNavMesh(Vector3 center, float radius, AgentType agentType, out Vector3 snapped)
+    {
+      if (FindValidPoint(out var p, center, radius, agentType))
+      {
+        snapped = p;
+        return true;
+      }
+      snapped = center;
+      return false;
+    }
+
+    #endregion
+
     public void ClearAgentSettings()
     {
       var list = new List<NavMeshBuildSettings>();

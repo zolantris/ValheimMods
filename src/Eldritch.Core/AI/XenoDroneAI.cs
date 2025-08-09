@@ -456,10 +456,12 @@ namespace Eldritch.Core
           var to = PrimaryTarget.position - transform.position;
           to.y = 0f;
 
+          // movementController.DebugSimRouteTo(PrimaryTarget.position);
+
           // Only try to climb if **actually** blocked in the forward direction
-          if (movementController.IsForwardBlocked() &&
-              movementController.TryWallClimbWhenBlocked(to))
-            return;
+          // if (movementController.IsForwardBlocked() &&
+          //     movementController.TryWallClimbWhenBlocked(to))
+          //   return;
 
           FollowPathOrChase(PrimaryTarget.position);
 

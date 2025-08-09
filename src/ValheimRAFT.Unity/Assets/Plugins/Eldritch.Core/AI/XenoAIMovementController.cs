@@ -63,6 +63,10 @@ namespace Eldritch.Core
 
     public void Awake()
     {
+      if (!portalScanner)
+      {
+        portalScanner = gameObject.AddComponent<RuntimeLinkVisualizer>();
+      }
       if (!animationController) animationController = GetComponentInChildren<XenoAnimationController>();
       if (!abilityManager) abilityManager = GetComponent<AbilityManager>();
       if (!_rb) _rb = GetComponent<Rigidbody>();
@@ -70,10 +74,24 @@ namespace Eldritch.Core
       climbingState.Init(this, _rb, transform);
     }
 
+    public RuntimeLinkVisualizer portalScanner; // assign in inspector
+    public float rescanInterval = 2f;
+    private float _nextScanTime;
+
     public void FixedUpdate()
     {
       if (!OwnerAI) return;
       if (!Rb) return;
+
+      if (Time.time >= _nextScanTime)
+      {
+        if (ValheimPathfinding.instance != null)
+        {
+          var center = OwnerAI ? OwnerAI.transform.position : transform.position;
+          portalScanner.ScanFrom(center);
+          _nextScanTime = Time.time + rescanInterval;
+        }
+      }
       var vel = _rb.velocity;
       if (OwnerAI.IsManualControlling)
       {
@@ -855,10 +873,10 @@ namespace Eldritch.Core
       return true;
     }
 
-    public bool TryWallClimbWhenBlocked(Vector3 moveDir)
-    {
-      return climbingState.TryWallClimbWhenBlocked(moveDir);
-    }
+    // public bool TryWallClimbWhenBlocked(Vector3 moveDir)
+    // {
+    //   return climbingState.TryWallClimbWhenBlocked(moveDir);
+    // }
 
     #endregion
 
