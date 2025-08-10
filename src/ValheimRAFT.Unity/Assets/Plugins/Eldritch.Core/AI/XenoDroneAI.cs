@@ -460,15 +460,15 @@ namespace Eldritch.Core
     {
       if (!PrimaryTarget) return;
       if (abilityManager.IsDodging) return;
-
-      // Always point head at the target for creep factor
-      animationController.PointHeadTowardTarget(transform, PrimaryTarget);
-
       if (IsOutOfHuntRange())
       {
         UpdateAllBehaviors();
         return;
       }
+
+      // Always point head at the target for creep factor
+      animationController.PointHeadTowardTarget(PrimaryTarget);
+
 
       // --- OVERRIDE: Retreat if in leap range and being looked at ---
       var inLeapRange = IsInLeapRange();
@@ -490,7 +490,8 @@ namespace Eldritch.Core
           // 2. Only leap if *almost* facing the target
           if (angleToTarget < _attackYawThreshold)
           {
-            abilityManager?.RequestDodge(new Vector2(0, 1)); // Leap forward
+            abilityManager.RequestLeapTowardEnemy();
+            // abilityManager?.RequestDodge(new Vector2(0, 1)); // Leap forward
           }
         }
         else
@@ -730,7 +731,7 @@ namespace Eldritch.Core
         movementController.AccelerationForceSpeed * 0.5f,
         movementController.turnSpeed
       );
-      animationController.PointHeadTowardTarget(transform, PrimaryTarget);
+      animationController.PointHeadTowardTarget(PrimaryTarget);
     }
 
     public bool Update_Roam()

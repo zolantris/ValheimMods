@@ -969,7 +969,7 @@ AnimatorController:
   - serializedVersion: 5
     m_Name: Base Layer
     m_StateMachine: {fileID: -52797784836251586}
-    m_Mask: {fileID: 31900000, guid: 51929fd3b0530ce42ad00e10f4ab1fd3, type: 2}
+    m_Mask: {fileID: 0}
     m_Motions: []
     m_Behaviours: []
     m_BlendingMode: 0
@@ -981,7 +981,7 @@ AnimatorController:
   - serializedVersion: 5
     m_Name: MoveAttack
     m_StateMachine: {fileID: 5040867173606972401}
-    m_Mask: {fileID: 0}
+    m_Mask: {fileID: 31900000, guid: 51929fd3b0530ce42ad00e10f4ab1fd3, type: 2}
     m_Motions: []
     m_Behaviours: []
     m_BlendingMode: 0

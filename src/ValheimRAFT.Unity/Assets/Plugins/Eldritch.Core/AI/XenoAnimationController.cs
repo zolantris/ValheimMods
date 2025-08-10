@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
+using JetBrains.Annotations;
 using UnityEngine;
 using Zolantris.Shared;
 using Random = UnityEngine.Random;
@@ -76,15 +77,14 @@ namespace Eldritch.Core
     private float _cachedMoveSpeed;
     private bool _canPlayEffectOnFrame = true;
     private CoroutineHandle _jumpAnimationRoutine;
+    private CoroutineHandle _headTurnRoutine;
 
 
     // State
     private bool _lastCamouflageState;
     private Quaternion _leftFootIKRot, _rightFootIKRot;
     private float _leftFootIKWeight = 1f, _rightFootIKWeight = 1f; // Usually always 1, or blend if needed
-    private CoroutineHandle _sleepAnimationRoute;
-    private Coroutine _sleepRoutine;
-    private Coroutine _waitAnimRoutine;
+    private CoroutineHandle _sleepAnimationRoutine;
 
     private float baseY; // Set this to your starting Y angle (e.g. for sleep pose)
     private float baseZ; // Set this to your starting Z angle
@@ -101,6 +101,14 @@ namespace Eldritch.Core
     // --- Sleeping Animation "Twitch" ---
     private Quaternion targetNeckRotation = Quaternion.identity;
 
+    [SerializeField] private Vector3 neckPivotAngle;
+    [SerializeField] private Vector3 neckUpDownAngle;
+
+    public Vector2 neckRangeX = new(-40f, 40f);
+    public Vector2 neckRotationZRange = new(-40f, 40f);
+    public Vector3 neckPivotStartRotation = new(0f, 0f, 65f);
+    public Vector3 neckUpDownStartRotation = new(0f, 0f, 40f);
+
     private void Awake()
     {
       if (!animator) animator = GetComponentInChildren<Animator>();
@@ -113,8 +121,16 @@ namespace Eldritch.Core
       // AddCapsuleCollidersToAllJoints();
     }
 
+    private bool _hasRunHeadUpdate = false;
+
     private void LateUpdate()
     {
+      _hasRunHeadUpdate = false;
+      if (neckPivot && neckUpDown)
+      {
+        neckPivot.localRotation = Quaternion.Euler(neckPivotAngle);
+        neckUpDown.localRotation = Quaternion.Euler(neckUpDownAngle);
+      }
       // UpdateFootIK();
       // sleepAnimation.LateUpdate_MoveHeadAround(neckPivot);
       // PlaySleepingCustomAnimations();
@@ -147,8 +163,8 @@ namespace Eldritch.Core
     public void PlaySleepingAnimation(bool canSleepAnimate)
     {
       if (!canSleepAnimate) return;
-      if (_sleepAnimationRoute.IsRunning) return;
-      _sleepAnimationRoute.Start(SleepingAnimationCoroutine());
+      if (_sleepAnimationRoutine.IsRunning) return;
+      _sleepAnimationRoutine.Start(SleepingAnimationCoroutine());
     }
 
     public void PlayDodgeAnimation(Vector3 dodgeDir)
@@ -199,6 +215,12 @@ namespace Eldritch.Core
 
       CollectAllBodyJoints();
       RecursiveCollectAllJoints(xenoRoot);
+
+      // initial values.
+      // neckPivotAngle = neckPivot.localEulerAngles;
+      // neckUpDownAngle = neckUpDown.localEulerAngles;
+      neckPivotAngle = neckPivotStartRotation;
+      neckUpDownAngle = neckUpDownStartRotation;
     }
 
     public void ApplyPose(XenoAnimationPoses.Variants variant)
@@ -273,7 +295,8 @@ namespace Eldritch.Core
 
     private void InitCoroutineHandlers()
     {
-      _sleepAnimationRoute ??= new CoroutineHandle(this);
+      _sleepAnimationRoutine ??= new CoroutineHandle(this);
+      _headTurnRoutine ??= new CoroutineHandle(this);
       _jumpAnimationRoutine ??= new CoroutineHandle(this);
     }
 
@@ -628,7 +651,7 @@ namespace Eldritch.Core
 
     public void StartSleepAnimation()
     {
-      _sleepAnimationRoute.Start(SleepingAnimationCoroutine());
+      _sleepAnimationRoutine.Start(SleepingAnimationCoroutine());
     }
 
     public IEnumerator LerpToPose(
@@ -691,27 +714,74 @@ namespace Eldritch.Core
       return leftProj > rightProj ? leftToeTransform : rightToeTransform;
     }
 
-    public void PointHeadTowardTarget(Transform owner, Transform target)
+    #region Head Rotation
+
+    [SerializeField] private float yawMaxDeg = 40f;
+    [SerializeField] private float yawSpeedDegPerSec = 540f;
+
+    [SerializeField] private float pitchDownMaxDeg = 40f; // your +40 at feet
+    [SerializeField] private float pitchSpeedDegPerSec = 360f;
+    [SerializeField] private float lookDownHeightThreshold = 0.25f; // meters below neck before we start pitching down
+
+    private static float UnwrapSigned(float deg)
     {
-      if (!target || neckPivot == null) return;
-      var toTarget = target.position - neckPivot.position;
-      toTarget.y = 0;
-      var localDir = neckPivot.InverseTransformDirection(toTarget.normalized);
+      return deg > 180f ? deg - 360f : deg;
+    }
+    private static float MoveTowardsSigned(float current, float target, float maxDelta)
+    {
+      current = UnwrapSigned(current);
+      target = UnwrapSigned(target);
+      return Mathf.MoveTowards(current, target, maxDelta);
+    }
+    // Call from LateUpdate while aiming
+    // Call from LateUpdate while aiming
+    private void UpdateHeadAnglesToward(Transform target)
+    {
+      if (!target || !neckUpDown) return;
+      var forwardYaw = transform.forward;
 
-      var yaw = Mathf.Atan2(localDir.x, localDir.z) * Mathf.Rad2Deg;
-      yaw = Mathf.Clamp(yaw, -40f, 40f);
+      var up = transform.up;
 
-      var roll = Mathf.Lerp(40f, 90f, Mathf.Abs(yaw / 40f));
-      roll = Mathf.Clamp(roll, 40f, 90f);
+      // Vector to target
+      var to = target.position - neckUpDown.position;
+      var toNorm = to.normalized;
 
-      var currentEuler = neckPivot.localEulerAngles;
-      if (currentEuler.y > 180f) currentEuler.y -= 360f;
-      if (currentEuler.z > 180f) currentEuler.z -= 360f;
+      // ===== YAW (left/right) on horizontal plane =====
+      var toPlane = Vector3.ProjectOnPlane(toNorm, up);
+      if (toPlane.sqrMagnitude < 1e-8f) return;
 
-      currentEuler.y = Mathf.MoveTowards(currentEuler.y, yaw, Time.deltaTime * 120f);
-      currentEuler.z = Mathf.MoveTowards(currentEuler.z, roll, Time.deltaTime * 60f);
+      var fwdPlane = Vector3.ProjectOnPlane(forwardYaw, up).normalized;
+      var yawDeg = Mathf.Clamp(Vector3.SignedAngle(fwdPlane, toPlane, up), -yawMaxDeg, yawMaxDeg);
 
-      neckPivot.localEulerAngles = currentEuler;
+      neckUpDownAngle.y = MoveTowardsSigned(neckUpDownAngle.y, yawDeg, yawSpeedDegPerSec * Time.deltaTime);
+
+      // ===== PITCH (down only) using heading-based right axis =====
+      // Right axis tied to *heading* not current neck rotation → stable pitch sign.
+      var rightHeading = Vector3.Cross(up, toPlane).normalized;
+
+      // Elevation relative to heading plane (+up, -down)
+      var pitchDegHeading = Vector3.SignedAngle(toPlane, toNorm, rightHeading);
+
+      // Only look down if target is sufficiently below by height threshold.
+      var verticalDelta = Vector3.Dot(to, up); // +above, -below
+      var desiredZ = -pitchDownMaxDeg; // -40 = forward
+      if (verticalDelta < -lookDownHeightThreshold)
+      {
+        // Map downward elevation to [-40 .. +40]
+        var downDeg = Mathf.Clamp(-pitchDegHeading, 0f, 90f); // 0=level/up, 90=straight down
+        var t = downDeg / 90f;
+        desiredZ = Mathf.Lerp(-pitchDownMaxDeg, +pitchDownMaxDeg, t);
+      }
+
+      neckUpDownAngle.z = MoveTowardsSigned(neckUpDownAngle.z, desiredZ, pitchSpeedDegPerSec * Time.deltaTime);
+    }
+
+    #endregion
+
+    public void PointHeadTowardTarget(Transform target)
+    {
+      if (!_hasRunHeadUpdate)
+        UpdateHeadAnglesToward(target);
     }
 
     #region Colliders

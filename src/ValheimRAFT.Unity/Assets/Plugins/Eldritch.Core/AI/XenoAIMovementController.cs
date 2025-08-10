@@ -788,7 +788,7 @@ namespace Eldritch.Core
         if (delta.sqrMagnitude > 0.001f)
           RotateTowardsDirection(vel, turnSpeed * 0.6f);
 
-        animationController?.PointHeadTowardTarget(transform, target);
+        animationController?.PointHeadTowardTarget(target);
       }
     }
 

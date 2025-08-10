@@ -125,5 +125,156 @@ namespace Eldritch.Core.Abilities
       _rb.useGravity = _prevUseGravity;
       _rb.isKinematic = _prevIsKinematic;
     }
+    
+    /// <summary>
+    /// Leap toward a target RB/colliders and land with a safe gap so we don't collide with the target.
+    /// </summary>
+    public bool TryLeapAt(
+      Rigidbody targetRb,
+      IEnumerable<Collider> targetColliders,
+      Rigidbody selfRb,
+      IEnumerable<Collider> selfColliders,
+      float? minGapOverride = null)
+    {
+      if (!CanDodge || selfRb == null) return false;
+
+      // 1) Find the point on the target hull nearest to us
+      var from = selfRb.position;
+      var enemyClosest = ClosestPointOn(targetRb, targetColliders, from);
+
+      // 2) Direction of travel toward the target on XZ
+      var dir = enemyClosest - from;
+      dir.y = 0f;
+      if (dir.sqrMagnitude < 1e-6f) dir = _rb.transform.forward; // fallback
+      var toward = dir.normalized;
+
+      // 3) Estimate our half-extent along the travel direction, so our bounds don't overlap at landing
+      var halfExtent = EstimateHalfExtentAlong(selfRb, selfColliders, toward);
+
+      // 4) Choose landing center so that (our bounds) end up just in front of the enemy’s bounds
+      var gap = Mathf.Max(0.05f, minGapOverride ?? (config?.minGapFromTarget ?? 0.35f));
+      var landingCenter = enemyClosest - toward * (halfExtent + gap);
+
+      // Keep height roughly level with current body center (tune if you prefer ground plane)
+      landingCenter.y = selfRb.position.y;
+
+      // 5) Safety: ensure we’re not trying to land inside static geometry; small nudge if occupied
+      var probe = Mathf.Max(0.05f, config?.landingClearanceProbe ?? 0.4f);
+      if (Physics.CheckSphere(landingCenter, probe, Physics.AllLayers, QueryTriggerInteraction.Ignore))
+      {
+        landingCenter -= toward * 0.25f; // nudge back slightly
+      }
+
+      // 6) Clamp leap distance to your forward dodge distance (short, snappy hop)
+      var toLanding = landingCenter - from;
+      var maxDist = Mathf.Max(0.1f, config.forwardDistance);
+      var end = (toLanding.magnitude > maxDist)
+        ? from + toLanding.normalized * maxDist
+        : landingCenter;
+
+      // 7) Fire the leap using your existing dodge runner (parabolic step)
+      return StartDodge(from, end, config.dodgeDuration, Mathf.Max(config.jumpHeight, 0.6f));
+    }
+
+    /// <summary>
+    /// Leap toward a world-space point and stop short so our bounds do not collide with that point’s hull.
+    /// Useful if you already computed a "contact point" externally.
+    /// </summary>
+    public bool TryLeapAt(
+      Vector3 targetPoint,
+      Rigidbody selfRb,
+      IEnumerable<Collider> selfColliders,
+      float? minGapOverride = null)
+    {
+      if (!CanDodge || selfRb == null) return false;
+
+      var from = selfRb.position;
+      var dir = targetPoint - from;
+      dir.y = 0f;
+      if (dir.sqrMagnitude < 1e-6f) return false;
+      var toward = dir.normalized;
+
+      var halfExtent = EstimateHalfExtentAlong(selfRb, selfColliders, toward);
+      var gap = Mathf.Max(0.05f, minGapOverride ?? (config?.minGapFromTarget ?? 0.35f));
+
+      var landingCenter = targetPoint - toward * (halfExtent + gap);
+      landingCenter.y = selfRb.position.y;
+
+      var probe = Mathf.Max(0.05f, config?.landingClearanceProbe ?? 0.4f);
+      if (Physics.CheckSphere(landingCenter, probe, Physics.AllLayers, QueryTriggerInteraction.Ignore))
+      {
+        landingCenter -= toward * 0.25f;
+      }
+
+      var toLanding = landingCenter - from;
+      var maxDist = Mathf.Max(0.1f, config.forwardDistance);
+      var end = (toLanding.magnitude > maxDist)
+        ? from + toLanding.normalized * maxDist
+        : landingCenter;
+
+      return StartDodge(from, end, config.dodgeDuration, Mathf.Max(config.jumpHeight, 0.6f));
+    }
+
+    // ---------- helpers (safe to share with existing class) ----------
+
+    private static Vector3 ClosestPointOn(Rigidbody rb, IEnumerable<Collider> cols, Vector3 to)
+    {
+      if (rb) return rb.ClosestPointOnBounds(to);
+      var best = to;
+      var bestDist = float.PositiveInfinity;
+      if (cols != null)
+      {
+        foreach (var c in cols)
+        {
+          if (!c || !c.enabled) continue;
+          var p = c.ClosestPoint(to);
+          var d = (p - to).sqrMagnitude;
+          if (d < bestDist) { bestDist = d; best = p; }
+        }
+      }
+      return best;
+    }
+
+    private static float EstimateHalfExtentAlong(Rigidbody rb, IEnumerable<Collider> cols, Vector3 dir)
+    {
+      dir.y = 0f;
+      if (dir.sqrMagnitude < 1e-6f) return 0.4f;
+      dir.Normalize();
+
+      var origin = rb ? rb.worldCenterOfMass : Vector3.zero;
+      var minProj = float.PositiveInfinity;
+      var maxProj = float.NegativeInfinity;
+      var any = false;
+
+      if (cols != null)
+      {
+        foreach (var c in cols)
+        {
+          if (!c || !c.enabled) continue;
+          any = true;
+          var b = c.bounds;
+          var min = b.min; var max = b.max;
+
+          // Project the 8 AABB corners along dir for a cheap directional size estimate
+          for (int xi = 0; xi < 2; xi++)
+          for (int yi = 0; yi < 2; yi++)
+          for (int zi = 0; zi < 2; zi++)
+          {
+            var p = new Vector3(
+              xi == 0 ? min.x : max.x,
+              yi == 0 ? min.y : max.y,
+              zi == 0 ? min.z : max.z);
+            var v = p - origin;
+            v.y = 0f;
+            var proj = Vector3.Dot(v, dir);
+            if (proj < minProj) minProj = proj;
+            if (proj > maxProj) maxProj = proj;
+          }
+        }
+      }
+
+      if (!any) return 0.4f;
+      return Mathf.Max(0.25f, (maxProj - minProj) * 0.5f);
+    }
   }
 }
