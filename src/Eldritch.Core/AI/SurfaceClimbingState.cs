@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using Eldritch.Core.Nav;
 using UnityEngine;
 using Zolantris.Shared;
 
@@ -60,7 +61,7 @@ namespace Eldritch.Core
 
     // ---------------------------------------------------------------
 
-    #region Planner
+  #region Planner
 
     private struct Portal
     {
@@ -188,9 +189,9 @@ namespace Eldritch.Core
       return path;
     }
 
-    #endregion
+  #endregion
 
-    #region Queries / building blocks
+  #region Queries / building blocks
 
     private readonly List<Portal> _tmpPortals = new(12);
     private readonly Dictionary<(int, int), List<Vector3>> _walkCorners = new();
@@ -298,9 +299,7 @@ namespace Eldritch.Core
     {
       corners = _cornersPool;
       corners.Clear();
-      var pf = ValheimPathfinding.instance;
-      if (pf == null) return false;
-      if (!pf.GetPath(a, b, corners, ValheimPathfinding.AgentType.HumanoidBig)) return false;
+      if (!Pathfinding.GetPath(a, b, corners, (int)PathfindingAgentType.Humanoid)) return false;
       if (corners.Count < 2) return false;
       return true;
     }
@@ -339,9 +338,9 @@ namespace Eldritch.Core
       }
     }
 
-    #endregion
+  #endregion
 
-    #region A* over tiny graph
+  #region A* over tiny graph
 
     private static bool AStar(List<Node> nodes,
       Dictionary<(int, int), (float, bool, PortalType?)> edges,
@@ -418,9 +417,9 @@ namespace Eldritch.Core
       }
     }
 
-    #endregion
+  #endregion
 
-    #region Drawing
+  #region Drawing
 
     private static readonly Color WalkCol = new(0.2f, 1f, 1f); // cyan
     private static readonly Color MantleCol = new(1f, 1f, 0.2f); // yellow
@@ -447,7 +446,7 @@ namespace Eldritch.Core
       }
     }
 
-    #endregion
+  #endregion
 
   }
 }

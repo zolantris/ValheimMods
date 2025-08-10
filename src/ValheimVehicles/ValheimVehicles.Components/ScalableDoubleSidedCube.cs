@@ -6,6 +6,7 @@ using ValheimVehicles.Prefabs;
 using ValheimVehicles.Shared.Constants;
 using ValheimVehicles.SharedScripts;
 using ValheimVehicles.Structs;
+using Zolantris.Shared;
 
 namespace ValheimVehicles.Components;
 

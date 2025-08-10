@@ -1,13 +1,16 @@
 ﻿// RuntimeLinkVisualizer.cs (replace your scanner with this)
+// ReSharper disable ArrangeNamespaceBody
+// ReSharper disable NamespaceStyle
 
 using UnityEngine;
 using System.Collections.Generic;
 using Eldritch.Core;
+using Eldritch.Core.Nav;
 
 [ExecuteAlways]
 public class RuntimeLinkVisualizer : MonoBehaviour
 {
-  public ValheimPathfinding.AgentType agent = ValheimPathfinding.AgentType.HumanoidBig;
+  public PathfindingAgentType agent = PathfindingAgentType.HumanoidBig;
 
   [Header("Sampling")]
   public float ringRadius = 40f; // default; override per-call if you like
@@ -54,11 +57,8 @@ public class RuntimeLinkVisualizer : MonoBehaviour
     links.Clear();
     samplesTried = onNav = wallHits = mantlesAccepted = holeCandidates = holesAccepted = 0;
 
-    var pf = ValheimPathfinding.instance;
-    if (!pf) return;
-
     // Early: ensure nav exists near center
-    if (!pf.TrySnapToNav(center, agent, out var centerOnNav)) return;
+    if (!Pathfinding.TrySnapToNav(center, (int)agent, out var centerOnNav)) return;
 
     for (float ang = 0; ang < 360f; ang += angleStep)
     {
@@ -70,7 +70,7 @@ public class RuntimeLinkVisualizer : MonoBehaviour
         var probe = centerOnNav + dir * r;
 
         // Snap each probe to runtime nav
-        if (!pf.TrySnapToNav(probe, agent, out probe)) continue;
+        if (!Pathfinding.TrySnapToNav(probe, (int)agent, out probe)) continue;
         onNav++;
 
         if (drawProbes)
@@ -133,7 +133,7 @@ public class RuntimeLinkVisualizer : MonoBehaviour
           if (landingHit.HasValue)
           {
             var landing = landingHit.Value.point;
-            if (pf.FindValidPoint(out var snapped, landing, 1.0f, agent))
+            if (Pathfinding.FindValidPoint(out var snapped, landing, 1.0f, (int)agent))
               landing = snapped;
 
             links.Add((probe, landing, false));

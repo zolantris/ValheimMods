@@ -12,9 +12,12 @@ namespace Eldritch.Core
     public const string name = "EldritchCore";
     public const string version = "1.0.0";
 
+    public static AssetBundle assetBundle = null!;
+
     public static AssetBundle LoadAssembly()
     {
-      var assetBundle = LoadAssetBundleFromResources("eldritch", Assembly.GetExecutingAssembly());
+      if (assetBundle != null) return assetBundle;
+      assetBundle = LoadAssetBundleFromResources("eldritch", Assembly.GetExecutingAssembly());
       return assetBundle;
     }
 

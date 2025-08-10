@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.SharedScripts;
+using Zolantris.Shared;
 
 namespace ValheimVehicles.Components;
 

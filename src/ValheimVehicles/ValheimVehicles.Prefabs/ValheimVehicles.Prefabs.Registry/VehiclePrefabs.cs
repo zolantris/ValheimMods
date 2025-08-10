@@ -8,6 +8,7 @@
   using ValheimVehicles.BepInExConfig;
   using ValheimVehicles.Enums;
   using ValheimVehicles.SharedScripts;
+  using Zolantris.Shared;
   using Object = UnityEngine.Object;
 
 #endregion

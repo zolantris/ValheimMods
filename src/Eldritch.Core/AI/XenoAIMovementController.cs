@@ -1,11 +1,14 @@
 ﻿using System.Collections.Generic;
 using Eldritch.Core.Abilities;
+using Eldritch.Core.Nav;
 using UnityEngine;
 using Zolantris.Shared;
 using Random = UnityEngine.Random;
-
+// ReSharper disable ArrangeNamespaceBody
+// ReSharper disable NamespaceStyle
 namespace Eldritch.Core
 {
+
   public class XenoAIMovementController : MonoBehaviour
   {
     [Header("References")]
@@ -83,15 +86,15 @@ namespace Eldritch.Core
       if (!OwnerAI) return;
       if (!Rb) return;
 
-      if (Time.time >= _nextScanTime)
-      {
-        if (ValheimPathfinding.instance != null)
-        {
-          var center = OwnerAI ? OwnerAI.transform.position : transform.position;
-          portalScanner.ScanFrom(center);
-          _nextScanTime = Time.time + rescanInterval;
-        }
-      }
+      // if (Time.time >= _nextScanTime)
+      // {
+      //   if (Pathfinding.IsValid())
+      //   {
+      //     var center = OwnerAI ? OwnerAI.transform.position : transform.position;
+      //     // portalScanner.ScanFrom(center);
+      //     _nextScanTime = Time.time + rescanInterval;
+      //   }
+      // }
       var vel = _rb.velocity;
       if (OwnerAI.IsManualControlling)
       {

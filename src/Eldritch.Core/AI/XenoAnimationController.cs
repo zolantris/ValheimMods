@@ -5,7 +5,8 @@ using System.Text.RegularExpressions;
 using UnityEngine;
 using Zolantris.Shared;
 using Random = UnityEngine.Random;
-
+// ReSharper disable ArrangeNamespaceBody
+// ReSharper disable NamespaceStyle
 namespace Eldritch.Core
 {
   public class XenoAnimationController : MonoBehaviour, IXenoAnimationController
@@ -311,7 +312,7 @@ namespace Eldritch.Core
 
     public void BindUnOptimizedRoots()
     {
-      xenoAnimatorRoot = transform.Find("model") ?? transform;
+      xenoAnimatorRoot = transform.Find("Visual") ?? transform;
       xenoMeshSkin = xenoAnimatorRoot.Find("alien_xenos_drone_SK_Xenos_Drone");
       xenoRoot = xenoAnimatorRoot.Find("alien_xenos_drone_SK_Xenos_Drone_skeleton/XenosBiped_TrajectorySHJnt/XenosBiped_ROOTSHJnt");
       spine01 = xenoRoot.Find("XenosBiped_Spine_01SHJnt");

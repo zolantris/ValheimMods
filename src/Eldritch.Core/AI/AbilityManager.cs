@@ -1,5 +1,7 @@
 ﻿using Eldritch.Core.Abilities;
 using UnityEngine;
+// ReSharper disable ArrangeNamespaceBody
+// ReSharper disable NamespaceStyle
 namespace Eldritch.Core
 {
   public class AbilityManager : MonoBehaviour, IAbilityManager
@@ -109,7 +111,7 @@ namespace Eldritch.Core
 
       dodgeAbility ??= new DodgeAbility(this, dodgeAbilityConfig, transform, _rb);
       tailAttackAbility ??= new TailAttackAbility(this, animationController);
-      camouflageAbility ??= new CamouflageAbility(this, camouflageAbilityConfig, camouflageMat, animationController.xenoSkinnedMeshRenderer);
+      camouflageAbility ??= new CamouflageAbility(this, camouflageAbilityConfig, camouflageMat, animationController);
     }
 
     // Add more orchestration: combo windows, cancels, priorities, etc.

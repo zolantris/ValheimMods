@@ -208,7 +208,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
   private void GenerateAutoDocs()
   {
     if (ModEnvironment.IsDebug)
-      new BepInExConfigAutoDoc().Generate(this, Config, "ValheimRAFT");
+      new BepInExConfigAutoDoc().Generate(Info, Config, "ValheimRAFT");
   }
 
   /**

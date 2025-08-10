@@ -5,6 +5,8 @@ using System.Text;
 using System.Text.RegularExpressions;
 using BepInEx;
 using BepInEx.Configuration;
+// ReSharper disable ArrangeNamespaceBody
+// ReSharper disable NamespaceStyle
 namespace Zolantris.Shared.BepInExAutoDoc
 {
   public class BepInExConfigAutoDoc
@@ -79,12 +81,6 @@ namespace Zolantris.Shared.BepInExAutoDoc
         sb.ToString());
     }
 
-
-    public void Generate(BaseUnityPlugin plugin, ConfigFile configFile,
-      string documentName)
-    {
-      Generate(plugin, configFile, documentName);
-    }
 
     /// <summary>
     ///   Generates a document for bepinex.Config, should only be ran in debug mode,

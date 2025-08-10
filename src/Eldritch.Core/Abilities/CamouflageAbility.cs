@@ -2,6 +2,8 @@
 using System.Collections;
 using UnityEngine;
 using Zolantris.Shared;
+// ReSharper disable ArrangeNamespaceBody
+// ReSharper disable NamespaceStyle
 namespace Eldritch.Core.Abilities
 {
   [Serializable]
@@ -26,20 +28,22 @@ namespace Eldritch.Core.Abilities
     private float cooldown = 1f;
     private float currentDuration = 0f;
     private float currentCooldown = 0f;
-    private SkinnedMeshRenderer skinnedMeshRenderer;
+    private XenoAnimationController animationController;
+    private SkinnedMeshRenderer skinnedMeshRenderer => animationController.xenoSkinnedMeshRenderer;
     private bool _lastCamouflageState = false;
 
     private Material camouflageMaterial;
     private Material bodyMaterial;
     private Material headMaterial;
+    private MonoBehaviour monoBehavior;
 
-
-    public CamouflageAbility(MonoBehaviour mb, CamouflageAbilityConfig camouflageAbilityConfig, Material camouflageMat, SkinnedMeshRenderer xenoSkinnedMeshRenderer)
+    public CamouflageAbility(MonoBehaviour mb, CamouflageAbilityConfig camouflageAbilityConfig, Material camouflageMat, XenoAnimationController xenoAnimationController)
     {
+      monoBehavior = mb;
       config = camouflageAbilityConfig;
       abilityRoutine = new CoroutineHandle(mb);
       camouflageMaterial = camouflageMat;
-      skinnedMeshRenderer = xenoSkinnedMeshRenderer;
+      animationController = xenoAnimationController;
     }
 
     public IEnumerator RunAbility()

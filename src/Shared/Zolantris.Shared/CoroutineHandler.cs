@@ -2,6 +2,8 @@ using System;
 using System.Collections;
 using JetBrains.Annotations;
 using UnityEngine;
+// ReSharper disable ArrangeNamespaceBody
+// ReSharper disable NamespaceStyle
 namespace Zolantris.Shared
 {
   public class CoroutineHandle
@@ -11,6 +13,11 @@ namespace Zolantris.Shared
     public CoroutineHandle(MonoBehaviour owner)
     {
       _owner = owner;
+    }
+
+    public MonoBehaviour GetOwner()
+    {
+      return _owner;
     }
 
     public bool IsRunning => Instance != null;

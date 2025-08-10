@@ -4,6 +4,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Eldritch.Core.Nav;
 using JetBrains.Annotations;
 using UnityEngine;
 using Zolantris.Shared;
@@ -76,8 +77,8 @@ namespace Eldritch.Core
     private float _nextRepathTime = 0f;
 
     // Expose this in inspector if you want different body sizes
-    // --- Navigation (direct ValheimPathfinding) ---
-    [SerializeField] private ValheimPathfinding.AgentType navAgentType = ValheimPathfinding.AgentType.HumanoidBig;
+    // --- Navigation (direct PathfindingAdapter) ---
+    [SerializeField] private PathfindingAgentType navAgentType = PathfindingAgentType.Humanoid;
     private readonly PathRunner _nav = new();
     private readonly OrbitRunner _orbit = new();
 
@@ -85,6 +86,8 @@ namespace Eldritch.Core
     {
       InitCoroutineHandlers();
       Instances.Add(this);
+
+      navAgentType = PathfindingAgentType.Humanoid;
 
       huntBehaviorState.behaviorConfig = huntBehaviorConfig;
 
@@ -106,6 +109,8 @@ namespace Eldritch.Core
 
     private void FixedUpdate()
     {
+      if (!movementController || !movementController.Rb) return;
+
       lastTouchedLand += Time.fixedDeltaTime;
       if (CurrentState == XenoAIState.Dead) return;
       if (!IsGrounded()) return;
@@ -373,6 +378,7 @@ namespace Eldritch.Core
 
     private void UpdateDeltaPrimaryTarget()
     {
+      if (!movementController || !movementController.Rb) return;
       if (!PrimaryTarget) return;
       var position = transform.position;
       if (PrimaryTargetRB)
@@ -390,7 +396,7 @@ namespace Eldritch.Core
     }
 
 
-    #region FixedUpdates / Per fixed frame logic
+  #region FixedUpdates / Per fixed frame logic
 
     public void Update_HuntMovement()
     {
@@ -495,9 +501,9 @@ namespace Eldritch.Core
       }
     }
 
-    #endregion
+  #endregion
 
-    #region Animation getters
+  #region Animation getters
 
     // Animator/Bones
     public Transform xenoAnimatorRoot => animationController?.xenoAnimatorRoot;
@@ -526,9 +532,9 @@ namespace Eldritch.Core
     public string ARMAttackObjName => animationController?.armAttackObjName;
     public string tailAttackObjName => animationController?.tailAttackObjName;
 
-    #endregion
+  #endregion
 
-    #region Behavior Updates
+  #region Behavior Updates
 
     private void BindBehaviors()
     {
@@ -693,10 +699,10 @@ namespace Eldritch.Core
       return true;
     }
 
-    #endregion
+  #endregion
 
 
-    #region State Booleans
+  #region State Booleans
 
     public bool IsOutOfHuntRange()
     {
@@ -741,11 +747,11 @@ namespace Eldritch.Core
       return CurrentState == XenoAIState.Attack;
     }
 
-    #endregion
+  #endregion
 
     // Put these inside XenoDroneAI (e.g., near bottom) to avoid new files.
 
-    #region Nav Runners (direct ValheimPathfinding)
+  #region Nav Runners (direct PathfindingAdapter)
 
     private bool HasClearLOS(Vector3 to)
     {
@@ -834,12 +840,12 @@ namespace Eldritch.Core
       private int _i;
       private float _nextRepathAt;
 
-      public bool EnsurePath(Vector3 from, Vector3 to, ValheimPathfinding.AgentType agent, float cooldown = 0.5f)
+      public bool EnsurePath(Vector3 from, Vector3 to, PathfindingAgentType agent, float cooldown = 0.5f)
       {
         if (Time.time < _nextRepathAt && _i < _corners.Count) return true;
         _corners.Clear();
         _i = 0;
-        var ok = ValheimPathfinding.instance.GetPath(from, to, _corners, agent);
+        var ok = Pathfinding.GetPath(from, to, _corners, (int)agent);
         _nextRepathAt = Time.time + cooldown;
         return ok && _corners.Count > 0;
       }
@@ -871,7 +877,7 @@ namespace Eldritch.Core
       private bool _haveAnchor;
       private float _nextPlanAt;
 
-      public ValheimPathfinding.AgentType agent = ValheimPathfinding.AgentType.Humanoid;
+      public PathfindingAgentType agent = PathfindingAgentType.Humanoid;
       public float cornerReach = 0.75f;
       public float arcDeg = 30f;
       public int samples = 8;
@@ -910,7 +916,7 @@ namespace Eldritch.Core
         if (_path.Count == 0 && Time.time >= _nextPlanAt)
         {
           _nextPlanAt = Time.time + 0.35f;
-          if (!ValheimPathfinding.instance.GetPath(self.position, _anchor, _path, agent))
+          if (!Pathfinding.GetPath(self.position, _anchor, _path, (int)agent))
           {
             _haveAnchor = false;
             fallbackMove?.Invoke();
@@ -954,7 +960,7 @@ namespace Eldritch.Core
           var rad = yaw * Mathf.Deg2Rad;
           var raw = new Vector3(Mathf.Cos(rad), 0, Mathf.Sin(rad)) * r + tgt;
 
-          if (!ValheimPathfinding.instance.FindValidPoint(out var candidate, raw, 2.5f, agent))
+          if (!Pathfinding.FindValidPoint(out var candidate, raw, 2.5f, (int)agent))
             continue;
 
           var toA = candidate - tgt;
@@ -962,7 +968,7 @@ namespace Eldritch.Core
           var tangent = Quaternion.Euler(0, 90f * dir, 0) * toA.normalized;
           var progress = Vector3.Dot(tangent, (candidate - self).normalized);
 
-          var reachable = ValheimPathfinding.instance.HavePath(self, candidate, agent);
+          var reachable = Pathfinding.HavePath(self, candidate, (int)agent);
           var reachBonus = reachable ? 1f : -2f;
           var distScore = -Vector3.Distance(self, candidate) * 0.1f;
 
@@ -986,7 +992,7 @@ namespace Eldritch.Core
       }
     }
 
-    #endregion
+  #endregion
 
 
   }

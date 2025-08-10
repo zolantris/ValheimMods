@@ -3,6 +3,8 @@ using System.Collections;
 using UnityEngine;
 using Zolantris.Shared;
 using Random = UnityEngine.Random;
+// ReSharper disable ArrangeNamespaceBody
+// ReSharper disable NamespaceStyle
 namespace Eldritch.Core
 {
   public enum HuntBehaviorState

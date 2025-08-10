@@ -14,6 +14,7 @@ using ValheimVehicles.Structs;
 using ValheimVehicles.Components;
 using ValheimVehicles.Shared.Constants;
 using ValheimVehicles.SharedScripts.Helpers;
+using Zolantris.Shared;
 using Logger = Jotunn.Logger;
 
 namespace ValheimVehicles.Helpers;
