@@ -1,14 +1,12 @@
 {
-    "name": "BepinEx",
-    "rootNamespace": "BepinEx",
+    "name": "HarmonyLib",
+    "rootNamespace": "HarmonyLib",
     "references": [],
     "includePlatforms": [],
     "excludePlatforms": [],
-    "allowUnsafeCode": false,
-    "overrideReferences": true,
-    "precompiledReferences": [
-        "BepInEx.dll"
-    ],
+    "allowUnsafeCode": true,
+    "overrideReferences": false,
+    "precompiledReferences": [],
     "autoReferenced": true,
     "defineConstraints": [],
     "versionDefines": [],

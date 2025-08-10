@@ -1,10 +1,27 @@
+using Eldritch.Core;
 using UnityEngine;
 namespace Eldritch.Valheim;
 
-public class XenoDroneMonsterAI : MonsterAI
+public class XenoDrone_MonsterAI : MonsterAI
 {
+  public XenoDroneAI DroneAI;
+  public XenoAIMovementController MovementController;
+
+  public bool ShouldSkipAiMovement = false;
+
+  public override void Awake()
+  {
+    DroneAI = GetComponent<XenoDroneAI>();
+    MovementController = GetComponent<XenoAIMovementController>();
+    base.Awake();
+  }
+
   public bool MonsterUpdateAIMethod(float dt)
   {
+    if (ShouldSkipAiMovement) return true;
+    if (DroneAI.abilityManager.IsDodging) return true;
+    if (DroneAI.CurrentState == XenoDroneAI.XenoAIState.Idle) return true;
+    if (DroneAI.CurrentState == XenoDroneAI.XenoAIState.Hunt) return true;
     if (!base.UpdateAI(dt))
       return false;
     if (IsSleeping())

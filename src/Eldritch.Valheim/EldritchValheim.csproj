@@ -14,7 +14,7 @@
 
     <!--    translations-->
     <ItemGroup>
-        <Content Include="Assets\Translations\English\valheimraft.json"/>
+        <Content Include="Assets\Translations\English\eldritch.json"/>
     </ItemGroup>
 
     <ItemGroup Label="Core Deps">

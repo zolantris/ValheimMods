@@ -25,7 +25,7 @@ public static class PrefabRegistry
     Sprites = assetBundle.LoadAsset<SpriteAtlas>("icons");
   }
 
-  public static void InjectAlienPrefab()
+  public static void RegisterPlaceableAlien()
   {
     if (assetBundle == null) return;
     LoggerProvider.LogDebug($"Starting InjectAlienPrefab");
@@ -121,20 +121,41 @@ public static class PrefabRegistry
 
     var animator = xenoPrefab.GetComponentInChildren<Animator>();
     // must be on animator gameobject
-    animator.gameObject.AddComponent<CharacterAnimEvent>();
+    var animEvent = animator.gameObject.AddComponent<CharacterAnimEvent>();
 
     // todo might need to patch this significantly for alien AI...or use BaseAI.
     // todo might have to add FootStep and VisEquipment
 
-    var monsterAI = xenoPrefab.AddComponent<XenoDroneMonsterAI>();
+    var monsterAI = xenoPrefab.AddComponent<XenoDrone_MonsterAI>();
     // todo determine if monsters that do not use human rigs can use humanoid
     // var humanoid = xenoPrefab.AddComponent<Humanoid>();
     var humanoid = xenoPrefab.AddComponent<Humanoid>();
     humanoid.m_animator = animator;
     var xenoAnimationController = xenoPrefab.GetComponentInChildren<XenoAnimationController>();
 
+    monsterAI.m_huntPlayer = true;
+
     humanoid.m_eye = xenoAnimationController.neckPivot;
     humanoid.m_head = xenoAnimationController.neckPivot;
+    humanoid.m_unarmedWeapon = xenoPrefab.AddComponent<ItemDrop>();
+
+    humanoid.m_unarmedWeapon.m_itemData = new ItemDrop.ItemData
+    {
+      m_shared =
+      {
+        m_attack = new Attack
+        {
+          m_animEvent = animEvent,
+          m_attackType = Attack.AttackType.Horizontal
+        },
+        m_secondaryAttack = new Attack
+        {
+          m_animEvent = animEvent,
+          m_attackType = Attack.AttackType.Vertical
+        }
+      }
+    };
+
 
     // todo setup character better
     humanoid.m_health = 150f;
@@ -176,7 +197,7 @@ public static class PrefabRegistry
   public static void RegisterAllPrefabs()
   {
     LoadAssemblies();
-    InjectAlienPrefab();
+    RegisterPlaceableAlien();
     RegisterXenoSpawn();
   }
 }
