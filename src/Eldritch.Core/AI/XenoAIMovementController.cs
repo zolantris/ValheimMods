@@ -20,19 +20,19 @@ namespace Eldritch.Core
 
     [Header("Movement Tuning")]
     public float distanceMoveSpeed = 1f;
-    public float closeMoveSpeed = 0.3f;
+    public float closeMoveSpeed = 5f;
     public float distantAccelForce = 90f;
-    public float closeAccelForce = 20f;
-    public float closeRange = 3f;
-    public float distantTurnSpeed = 50f;
-    public float closeTurnSpeed = 50f;
-    public float wanderSpeed = 0.5f;
+    public float closeAccelForce = 90f;
+    public float closeRange = 2f;
+    public float distantTurnSpeed = 500f;
+    public float closeTurnSpeed = 500f;
+    public float wanderSpeed = 15f;
     public float maxJumpDistance = 4f;
     public float maxJumpHeightArc = 2.5f;
     public Vector3 maxRunRange = new(20f, 0f, 20f);
 
     // Wander state
-    public float wanderRadius = 8f;
+    public float wanderRadius = 60f;
     public float wanderCooldown = 5f;
     public float wanderMinDistance = 3f;
     public Vector3 currentWanderTarget;
@@ -103,9 +103,14 @@ namespace Eldritch.Core
       // SyncVelocityWithMovementSpeed(vel);
 
       // animations desync rotation alot.
+      // if (!Rb.isKinematic)
+      // {
+      //   transform.rotation = Quaternion.Lerp(transform.rotation, Quaternion.Euler(0, transform.eulerAngles.y, 0), Time.fixedTime);
+      // }
       if (!Rb.isKinematic)
       {
-        transform.rotation = Quaternion.Lerp(transform.rotation, Quaternion.Euler(0, transform.eulerAngles.y, 0), Time.fixedTime);
+        var yaw = transform.eulerAngles.y;
+        transform.rotation = Quaternion.Euler(0f, yaw, 0f);
       }
 
       UpdateGroundPoint();
@@ -298,36 +303,44 @@ namespace Eldritch.Core
       var toTarget = predictedTarget - transform.position;
       var distance = toTarget.magnitude;
 
-      RotateTowardsDirection(toTarget, turnRate);
+      // compute target speed/accel (your logic)
+      var slowDownStart = 6f;
+      var t = Mathf.Clamp01(distance / slowDownStart);
+      var targetSpeed = Mathf.Lerp(closeMoveSpeed, distanceMoveSpeed, t);
+      var targetAccel = Mathf.Lerp(closeAccelForce, distantAccelForce, t);
 
-      if (IsGapAhead(1.0f, 3f, 5f))
+      // When creeping (slow), set velocity directly instead of pushing acceleration
+      var planarVel = new Vector3(Rb.velocity.x, 0f, Rb.velocity.z);
+      if (targetSpeed <= closeMoveSpeed * 1.15f) // creep band
       {
-        if (FindJumpableLanding(out var jumpTarget))
-        {
-          JumpTo(jumpTarget);
-          return;
-        }
-        BrakeHard();
+        // face actual motion (or the target dir if we’re nearly stopped)
+        var face = planarVel.sqrMagnitude > 0.01f ? planarVel : toTarget;
+        RotateTowardsDirection(face, turnRate);
+
+        var desiredPlanar = transform.forward.normalized * targetSpeed;
+        var delta = desiredPlanar - planarVel;
+        // limit “snap” using your close accel (frame-rate independent)
+        delta = Vector3.ClampMagnitude(delta, targetAccel * Time.fixedDeltaTime);
+        Rb.AddForce(delta, ForceMode.VelocityChange);
+        HasMovedInFrame = true;
         return;
       }
 
+      // --- normal chase (faster than creep) ---
+      RotateTowardsDirection(toTarget, turnRate);
+
+      // optional: bail if we're facing away too far
       var targetAngle = Vector3.SignedAngle(transform.forward, toTarget, Vector3.up);
       var shouldMove = Mathf.Abs(targetAngle) < 120f;
-      var slowDownStart = 6f;
-      var speedFactor = Mathf.Clamp01(distance / slowDownStart);
-      var targetSpeed = Mathf.Lerp(closeMoveSpeed, distanceMoveSpeed, speedFactor);
-      var targetAccel = Mathf.Lerp(closeAccelForce, distantAccelForce, speedFactor);
-
-      if (shouldMove)
-      {
-        moveLerpVel = Mathf.MoveTowards(moveLerpVel, targetSpeed, targetAccel * Time.deltaTime);
-        Rb.AddForce(transform.forward * moveLerpVel, ForceMode.Acceleration);
-        HasMovedInFrame = true;
-      }
-      else
+      if (!shouldMove)
       {
         moveLerpVel = Mathf.MoveTowards(moveLerpVel, 0f, targetAccel * 2f * Time.deltaTime);
+        return;
       }
+
+      moveLerpVel = Mathf.MoveTowards(moveLerpVel, targetSpeed, targetAccel * Time.deltaTime);
+      Rb.AddForce(transform.forward * moveLerpVel, ForceMode.Acceleration);
+      HasMovedInFrame = true;
     }
 
     public void MoveAwayFromEnemies(HashSet<GameObject> enemySet, float maxRange)
@@ -630,15 +643,27 @@ namespace Eldritch.Core
     }
 
     // --- Rotation ---
-    public void RotateTowardsDirection(Vector3 dir, float customTurnSpeed)
+    public void RotateTowardsDirection(Vector3 dir, float turnSpeed)
     {
-      dir.y = 0;
-      if (dir == Vector3.zero) return;
-      var targetRotation = Quaternion.LookRotation(dir, Vector3.up);
-      transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRotation, customTurnSpeed * Time.deltaTime);
+      dir.y = 0f;
+      if (dir.sqrMagnitude < 1e-6f) return;
+
+      // Hard-snap if we're wildly off to kill in-place spinning
+      var ang = Vector3.Angle(transform.forward, dir);
+      if (ang > 140f)
+      {
+        transform.rotation = Quaternion.LookRotation(dir, Vector3.up);
+        return;
+      }
+
+      var target = Quaternion.LookRotation(dir, Vector3.up);
+      transform.rotation = Quaternion.RotateTowards(
+        transform.rotation, target,
+        turnSpeed * Time.fixedDeltaTime // <-- fixed timestep
+      );
     }
 
-    #region hunt creeping logic
+  #region hunt creeping logic
 
     // Move along 'moveDir' but keep the body facing 'facePoint' (produces negative signed speed when backing up)
     // Move along a direction but keep facing a given point (produces negative signed speed when backing up)
@@ -666,9 +691,9 @@ namespace Eldritch.Core
       HasMovedInFrame = true;
     }
 
-    #endregion
+  #endregion
 
-    #region Circling Logic
+  #region Circling Logic
 
     private readonly List<Vector3> _orbitTmpPath = new();
     [SerializeField] private float orbitAheadDegrees = 45f;
@@ -797,21 +822,24 @@ namespace Eldritch.Core
       void ApplyDesired(Vector3 vel)
       {
         var flatVel = new Vector3(_rb.velocity.x, 0f, _rb.velocity.z);
-        var delta = vel - flatVel;
+
+        var delta = vel - new Vector3(_rb.velocity.x, 0f, _rb.velocity.z);
         delta = Vector3.ClampMagnitude(delta, baseCircleSpeed * 0.7f);
         _rb.AddForce(delta, ForceMode.VelocityChange);
         HasMovedInFrame = true;
 
-        if (delta.sqrMagnitude > 0.001f)
-          RotateTowardsDirection(vel, distantTurnSpeed * 0.6f);
+        // Face where we’re actually moving; if too small, face intended vel
+        var face = flatVel.sqrMagnitude > 0.01f ? flatVel : vel;
+        if (face.sqrMagnitude > 1e-4f)
+          RotateTowardsDirection(face, distantTurnSpeed * 0.6f);
 
         animationController?.PointHeadTowardTarget(target);
       }
     }
 
-    #endregion
+  #endregion
 
-    #region Climbing Movement
+  #region Climbing Movement
 
     public bool TryFindIngressToTargetFloor(
       Vector3 targetPos,
@@ -926,7 +954,7 @@ namespace Eldritch.Core
     //   return climbingState.TryWallClimbWhenBlocked(moveDir);
     // }
 
-    #endregion
+  #endregion
 
   }
 }

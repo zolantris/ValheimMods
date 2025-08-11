@@ -476,6 +476,11 @@ namespace Eldritch.Core
       }
     }
 
+    public bool IsRunningAttack()
+    {
+      return animator.GetBool(Attack);
+    }
+
     public void StopAttack()
     {
       DisableAttackColliders();

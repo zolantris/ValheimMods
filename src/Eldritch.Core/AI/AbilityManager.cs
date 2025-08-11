@@ -74,7 +74,7 @@ namespace Eldritch.Core
       var target = AI.PrimaryTarget;
 
       // Prefer RB; only fetch colliders if NO rigidbody is available.
-      var targetRB = AI.PrimaryTargetRB ? AI.PrimaryTargetRB : target.GetComponent<Rigidbody>();
+      var targetRB = AI.PrimaryTargetRB ? AI.PrimaryTargetRB : target.GetComponentInChildren<Rigidbody>();
       Collider[] targetCols = null;
       if (!targetRB)
       {

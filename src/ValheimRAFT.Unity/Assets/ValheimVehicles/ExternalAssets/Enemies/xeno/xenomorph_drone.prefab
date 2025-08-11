@@ -9,7 +9,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 630633708927312453}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_r_Toe01_Base_SHJnt_end_end
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -40,7 +40,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6687240442859277215}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_l_Toe01_Base_SHJnt_end
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -72,7 +72,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 741153356019155469}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_r_Arm_ShoulderSHJnt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -105,7 +105,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3201042941220804120}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_l_Leg_Lower_Curve1SHJnt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -137,7 +137,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1516450004069624845}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_Tail01_SHJnt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -169,7 +169,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2736974685077735934}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_Tail12_SHJnt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -201,7 +201,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1770423302509916760}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_Tail17_SHJnt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -234,7 +234,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1187676341234343138}
   - component: {fileID: 34627010849491102}
-  m_Layer: 12
+  m_Layer: 9
   m_Name: xeno_arm_attack_collider
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -288,7 +288,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5738836031603997129}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_l_Toe02_Base_SHJnt_end
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -320,7 +320,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1356646028660847764}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_r_Leg_Lower_Curve1SHJnt_end_end
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -351,7 +351,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5577069061437467731}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_Tail04_SHJnt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -383,7 +383,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8950447944105322371}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_l_Toe03_Base_SHJnt_end
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -415,7 +415,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7135148066265823145}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_l_UpperLip_AuxSHJnt_end_end
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -446,7 +446,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5474844963534454120}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_l_UpperLip_AuxSHJnt_end
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -478,7 +478,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8705961580277397920}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_r_Toe01_Base_SHJnt_end
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -510,7 +510,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 9187783124321560469}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_Spine_02SHJnt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -545,7 +545,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8689303864801514698}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_Spine_03SHJnt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -581,7 +581,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4982342959112662524}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_l_Finger_03_02SHJnt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -613,7 +613,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5578022935475597108}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_r_Finger_02_03SHJnt_end_end
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -644,7 +644,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4278283612168365679}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_l_Leg_Lower_Curve1SHJnt_end_end
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -675,7 +675,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8409967788451437514}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_l_Leg_Knee1SHJnt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -708,7 +708,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3265857619143118322}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_Spine_TopSHJnt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -740,7 +740,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2625448820571830097}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_l_UpperLip_Outer_AuxSHJnt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -772,7 +772,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3589995854076816700}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_r_LipCorner_AuxSHJnt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -805,7 +805,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3790699028804327126}
   - component: {fileID: 4570735509364032521}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: leg_right_lower_collider
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -859,7 +859,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 773235066046037104}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_r_Finger_03_02SHJnt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -891,7 +891,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5880828879627801386}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_l_Toe01_Base_SHJnt_end_end
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -922,7 +922,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2909253776731854441}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_Tail13_SHJnt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -954,7 +954,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5315416649077956501}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_l_Finger_03_03SHJnt_end_end
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -985,7 +985,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 202250079295121309}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_r_LowerBackTube01_AuxSHJnt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1017,7 +1017,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8579827574452751043}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_r_LowerLip_Outer_AuxSHJnt_end
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1051,7 +1051,7 @@ GameObject:
   - component: {fileID: 6692537029043917764}
   - component: {fileID: 8508025596622134983}
   - component: {fileID: 4321519433998825999}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: foot_pad_collider
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1111,7 +1111,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8002123001762919384}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_Tail08_SHJnt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1143,7 +1143,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2519902348585831578}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_l_Toe01_Base_SHJnt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1175,7 +1175,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7577505270955333639}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_r_UpperLip_AuxSHJnt_end_end
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1206,7 +1206,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3457890301089216182}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_l_Finger_02_01SHJnt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1238,7 +1238,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7813315034482915157}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_r_UpperBackTube01_AuxSHJnt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1270,7 +1270,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 492723624606374313}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_r_Toe00_Base_SHJnt_end_end
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1301,7 +1301,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 50924419145795702}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_l_Arm_WristSHJnt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1336,7 +1336,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4177993350448040355}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_r_Arm_Lower_Curve1SHJnt_end_end
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1367,7 +1367,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8446141769695076536}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_LowerLip_mid_AuxSHJnt_end
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1401,7 +1401,7 @@ GameObject:
   - component: {fileID: 1187194401999286177}
   - component: {fileID: 5240490972263731920}
   - component: {fileID: 8958878442807082678}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: Camera
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1491,7 +1491,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8109635460558412486}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_Tail09_SHJnt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1523,7 +1523,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2632811023812190997}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_r_Thumb_01_03SHJnt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1555,7 +1555,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5411761385350971545}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_r_Toe03_Base_SHJnt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1587,7 +1587,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7850002925154988627}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_TailBlade_SHJnt_end_end
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1619,7 +1619,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2628957664994814946}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_r_Leg_Knee1SHJnt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1652,7 +1652,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3543146708691613994}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_r_Arm_Elbow_CurveSHJnt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1685,7 +1685,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5125698280092492682}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_r_Arm_Lower_Curve1SHJnt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1717,7 +1717,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8625348232581960196}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_l_LowerBackTube02_AuxSHJnt_end
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1749,7 +1749,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1512597502664150111}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_r_Finger_01_01SHJnt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1781,7 +1781,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8222218196849616657}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_l_Leg_Middle_Curve1SHJnt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1814,7 +1814,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5258925484793064775}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_l_Finger_02_03SHJnt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1846,7 +1846,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7542662208592431711}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_l_LowerLip_Outer_AuxSHJnt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1878,7 +1878,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8719177066534019933}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_l_Finger_02_03SHJnt_end_end
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1909,7 +1909,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5094721885865812852}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_Spine_01SHJnt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1941,7 +1941,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3540306471151043068}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_l_Thumb_01_01SHJnt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1973,7 +1973,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8797807760590491607}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_l_Toe04_Base_SHJnt_end_end
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2004,7 +2004,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2307147529809964856}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_r_Finger_02_03SHJnt_end
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2036,7 +2036,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8169458675177048105}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_r_Thumb_01_02SHJnt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2068,7 +2068,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1130367679139274849}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_l_Leg_Middle_Curve1SHJnt_end
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2100,7 +2100,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 9053152969578062343}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_l_Arm_Lower_Curve1SHJnt_end_end
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2131,7 +2131,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3481580590955186141}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_l_Arm_ClavicleSHJnt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2163,7 +2163,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5499745896880687673}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_l_Arm_ShoulderSHJnt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2196,7 +2196,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7001229926081563210}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_l_Toe00_Base_SHJnt_end_end
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2227,7 +2227,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3297046398937056375}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_r_LowerBackTube02_AuxSHJnt_end_end
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2258,7 +2258,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8501052681285629991}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_r_Finger_02_02SHJnt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2290,7 +2290,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 767544228038113905}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_Tail24_SHJnt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2322,7 +2322,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5387729121868011304}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_r_UpperLip_Outer_AuxSHJnt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2354,7 +2354,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5238629786434877299}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_TailBlade_SHJnt_end
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2386,7 +2386,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6683558029184835738}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_l_Finger_03_03SHJnt_end
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2418,7 +2418,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1059534199032416367}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_l_UpperBackTube01_AuxSHJnt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2450,7 +2450,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7439443428162845519}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_Tail02_SHJnt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2482,7 +2482,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8423108533157473408}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_l_Leg_Middle_Curve1SHJnt_end_end
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2513,7 +2513,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4514068965069022170}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_l_LowerLip_AuxSHJnt_end
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2545,7 +2545,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6567736491470982056}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_r_Thumb_01_01SHJnt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2577,7 +2577,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4352133113565067445}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_r_UpperLip_Outer_AuxSHJnt_end_end
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2609,7 +2609,7 @@ GameObject:
   m_Component:
   - component: {fileID: 8134778799263178514}
   - component: {fileID: 3358173610584992448}
-  m_Layer: 12
+  m_Layer: 9
   m_Name: xeno_tail_attack_collider
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2663,7 +2663,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6022467623038229266}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_r_LowerLip_Outer_AuxSHJnt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2695,7 +2695,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4568879086466336332}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_r_Arm_WristSHJnt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2730,7 +2730,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 477253468309633049}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_l_Toe00_Base_SHJnt_end
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2762,7 +2762,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6364427700129201719}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_l_Toe02_Base_SHJnt_end_end
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2793,7 +2793,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1197846722653566344}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_l_Leg_Upper_Curve1SHJnt_end_end
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2824,7 +2824,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6256954650467503299}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_TailEnd_SHJnt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2856,7 +2856,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2852597513478768599}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_l_LowerBackTube02_AuxSHJnt_end_end
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2887,7 +2887,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7674786348274478044}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_Tail16_SHJnt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2919,7 +2919,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 9139948714807081362}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_l_Arm_Upper_Curve1SHJnt_end
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2951,7 +2951,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4246309422604550910}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_ProboscisBot_AuxSHJnt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2983,7 +2983,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4436990838463839354}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_l_LowerBackTube01_AuxSHJnt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3015,7 +3015,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5983937033581380865}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_r_Finger_02_03SHJnt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3102,7 +3102,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6976769020865727066}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_Tail07_SHJnt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3134,7 +3134,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 765204397660442591}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_r_Leg_AnkleSHJnt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3226,7 +3226,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3195750052960087489}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_Tail14_SHJnt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3258,7 +3258,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7184489949008034988}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_r_LowerLip_Outer_AuxSHJnt_end_end
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3289,7 +3289,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3319863043653447625}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_r_Leg_Lower_Curve1SHJnt_end
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3321,7 +3321,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7883536697805767349}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_l_Toe04_Base_SHJnt_end
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3353,7 +3353,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8883214236980852185}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_l_Leg_Upper_Curve1SHJnt_end
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3385,7 +3385,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4371244422805888693}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_Tail19_SHJnt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3417,7 +3417,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 291618680792418508}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_r_LowerBackTube_AuxSHJnt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3449,7 +3449,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4882704992432760573}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_r_Arm_Upper_Curve1SHJnt_end_end
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3481,7 +3481,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6361969947711402657}
   - component: {fileID: 4423087238900729596}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: leg_left_mid_collider
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3535,7 +3535,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 141086719274567800}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_r_UpperBackTube02_AuxSHJnt_end
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3567,7 +3567,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3591551019400863909}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_r_Leg_Middle_Curve1SHJnt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -8259,7 +8259,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4924865060028772045}
   - component: {fileID: 8788477668205429678}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: leg_left_lower_collider
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -8318,7 +8318,7 @@ GameObject:
   - component: {fileID: 6512191468278395479}
   - component: {fileID: 1608421932429101648}
   - component: {fileID: 7927877361032134505}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: xenomorph_drone
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -8341,6 +8341,7 @@ Transform:
   - {fileID: 7030811142008377099}
   - {fileID: 6889181656888554394}
   - {fileID: 1187194401999286177}
+  - {fileID: 5877361986595697928}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: -61.539, y: 180, z: 0}
 --- !u!54 &3528895855015212872
@@ -8351,7 +8352,7 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4164397278980954186}
   serializedVersion: 4
-  m_Mass: 500
+  m_Mass: 200
   m_Drag: 1
   m_AngularDrag: 1
   m_CenterOfMass: {x: 0, y: -5, z: 0}
@@ -8442,33 +8443,33 @@ MonoBehaviour:
   huntBehaviorConfig:
     enableCircling: 1
     enableCreeping: 1
-    enableAttack: 0
+    enableAttack: 1
     enableLeaping: 1
     enableRetreating: 1
-    enableRandomCamouflage: 0
+    enableRandomCamouflage: 1
     FORCE_Circling: 0
-    FORCE_Creeping: 1
+    FORCE_Creeping: 0
     maxTargetDistance: 50
-    minHuntDistance: 0.5
+    minHuntDistance: 3
     minCreepDistance: 3
     circleMoveSpeed: 10
     creepingMoveSpeed: 1
-    movingSpeedFlux: 1
+    movingSpeedFlux: 0
     minCircleRadius: 5
     maxCircleRadius: 10
     circleRadiusFactor: 1
     leapingCooldown: 10
-    probCircling: 0.175
-    probMovingAway: 0.05
+    probCircling: 0.5
+    probMovingAway: 0.1
     probPausing: 0.25
-    probCreeping: 0.5
-    probCamouflage: 0
-    probAttackInRange: 0
+    probCreeping: 0.25
+    probCamouflage: 0.5
+    probAttackInRange: 0.173
     probLeapRetreat: 0.301
-    circlingTimeRange: {x: 1, y: 1}
-    movingAwayTimeRange: {x: 1, y: 1}
-    pausingTimeRange: {x: 1, y: 1}
-    creepingTimeRange: {x: 4, y: 4}
+    circlingTimeRange: {x: 3, y: 6}
+    movingAwayTimeRange: {x: 2, y: 2}
+    pausingTimeRange: {x: 3, y: 3}
+    creepingTimeRange: {x: 4, y: 8}
   navAgentType: 1
 --- !u!114 &6512191468278395479
 MonoBehaviour:
@@ -8486,12 +8487,12 @@ MonoBehaviour:
   HeadCollider: {fileID: 0}
   HeadColliderTransform: {fileID: 0}
   OwnerAI: {fileID: 5133866510785171013}
-  moveSpeed: 15
+  distanceMoveSpeed: 10
   closeMoveSpeed: 10
-  AccelerationForceSpeed: 90
+  distantAccelForce: 90
   closeAccelForce: 90
   closeRange: 3
-  turnSpeed: 200
+  distantTurnSpeed: 200
   closeTurnSpeed: 200
   wanderSpeed: 10
   maxJumpDistance: 4
@@ -8587,7 +8588,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6601680229520678869}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_l_Finger_01_02SHJnt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -8619,7 +8620,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7684614828222191968}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_l_Leg_HipSHJnt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -8652,7 +8653,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4757941854695421592}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_LowerLip_mid_AuxSHJnt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -8684,7 +8685,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8535112652558883992}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_Tail18_SHJnt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -8716,7 +8717,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4778517183765844639}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_r_Toe00_Base_SHJnt_end
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -8748,7 +8749,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 9096994245370798648}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_r_LowerLip_AuxSHJnt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -8780,7 +8781,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8073529690394650012}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_Tail05_SHJnt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -8812,7 +8813,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 9102025325372374582}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_r_UpperBackTube_AuxSHJnt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -8844,7 +8845,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8346870434041216706}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_TailBlade_SHJnt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -8876,7 +8877,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1503362489727716060}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_r_Finger_03_03SHJnt_end
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -8908,7 +8909,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1222565114821545469}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_r_Toe02_Base_SHJnt_end
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -8940,7 +8941,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6006697345201383915}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_l_LowerLip_AuxSHJnt_end_end
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -8971,7 +8972,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 9198052943197559346}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_r_LipCorner_AuxSHJnt_end_end
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -9002,7 +9003,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 9192775457207831497}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_l_Toe02_Base_SHJnt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -9034,7 +9035,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3904501851047853579}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_r_LipCorner_AuxSHJnt_end
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -9066,7 +9067,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2392593611628784926}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_l_Leg_Lower_Curve1SHJnt_end
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -9102,7 +9103,7 @@ GameObject:
   - component: {fileID: 8709153586707512297}
   - component: {fileID: 189576645687756202}
   - component: {fileID: 8510470789825342711}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: Visual
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -9137,9 +9138,9 @@ Animator:
   m_Enabled: 1
   m_Avatar: {fileID: 9000000, guid: 595cee29b9912f04d9294bb4511d96bb, type: 3}
   m_Controller: {fileID: 9100000, guid: 22acfcfb222d3d349b003bc506564b6c, type: 2}
-  m_CullingMode: 0
+  m_CullingMode: 1
   m_UpdateMode: 0
-  m_ApplyRootMotion: 0
+  m_ApplyRootMotion: 1
   m_LinearVelocityBlending: 0
   m_StabilizeFeet: 0
   m_WarningMessage: 
@@ -9203,7 +9204,6 @@ MonoBehaviour:
   zAngleRange: {x: -10, y: 10}
   scanPeriod: 8
   randomizeAmount: 0.3
-  camouflageMaterial: {fileID: 0}
   neckPivotAngle: {x: 0, y: 0, z: 0}
   neckUpDownAngle: {x: 0, y: 0, z: 0}
   neckRangeX: {x: -40, y: 40}
@@ -9255,7 +9255,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7911801469008146037}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_l_UpperLip_Outer_AuxSHJnt_end_end
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -9286,7 +9286,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4311622402379424766}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_r_Leg_Upper_Curve1SHJnt_end_end
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -9317,7 +9317,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5126110377172013927}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_r_Arm_Lower_Curve1SHJnt_end
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -9349,7 +9349,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 800533362752357227}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_l_LowerLip_Outer_AuxSHJnt_end_end
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -9380,7 +9380,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3540030791265746258}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_r_Leg_Upper_Curve1SHJnt_end
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -9412,7 +9412,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3845445999910327316}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_l_Toe03_Base_SHJnt_end_end
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -9443,7 +9443,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6527378907683058957}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_r_Finger_01_03SHJnt_end_end
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -9474,7 +9474,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5036194660941174328}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_LowerLip_mid_AuxSHJnt_end_end
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -9505,7 +9505,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7353575014191563053}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_l_Thumb_01_03SHJnt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -9537,7 +9537,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6094368252272935603}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_Tail20_SHJnt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -9569,7 +9569,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6659697418518579509}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_r_Toe04_Base_SHJnt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -9601,7 +9601,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8584079625636741648}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_TailRoot_SHJnt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -9633,7 +9633,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 463375391097675227}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_l_Finger_03_01SHJnt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -9665,7 +9665,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1491231860744852137}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_l_UpperBackTube02_AuxSHJnt_end
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -9697,7 +9697,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8218832747830895219}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_Tail15_SHJnt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -9730,7 +9730,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5421739699144021562}
   - component: {fileID: 4368597415694660042}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: leg_left_upper_collider
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -9784,7 +9784,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2454233607840709914}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_r_Leg_Middle_Curve1SHJnt_end
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -9816,7 +9816,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7842115669632842033}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_l_LowerLip_AuxSHJnt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -9848,7 +9848,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6866474417169935803}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_r_Thumb_01_03SHJnt_end_end
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -9879,7 +9879,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8433899415915651224}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_Tail11_SHJnt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -9911,7 +9911,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3298829319916068669}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_l_Toe00_Base_SHJnt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -9943,7 +9943,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8552690204385011234}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_r_Leg_Knee2_CurveSHJnt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -9976,7 +9976,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7138532901835510327}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_r_Toe02_Base_SHJnt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -10008,7 +10008,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1496808478497896655}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_Proboscis_AuxSHJnt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -10041,7 +10041,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7416751675448623906}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_UpperLip_mid_AuxSHJnt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -10073,7 +10073,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7285746588780243252}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_l_Finger_01_03SHJnt_end
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -10105,7 +10105,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6141719916227180814}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_r_Finger_02_01SHJnt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -10138,7 +10138,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4345575783992983137}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_l_Finger_01_01SHJnt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -10170,7 +10170,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2440829458095747919}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_ProboscisTop_AuxSHJnt_end_end
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -10201,7 +10201,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 814658877955069690}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_r_Leg_HipSHJnt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -10234,7 +10234,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8657910391705958775}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_UpperLip_mid_AuxSHJnt_end_end
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -10265,7 +10265,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5572183341615897726}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_l_LowerLip_Outer_AuxSHJnt_end
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -10297,7 +10297,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7298374897638964003}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_Neck_TopSHJnt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -10331,7 +10331,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 426902058818219529}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_l_Thumb_01_02SHJnt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -10363,7 +10363,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4666400743325849360}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_r_UpperLip_AuxSHJnt_end
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -10397,7 +10397,7 @@ GameObject:
   - component: {fileID: 6037134890145135459}
   - component: {fileID: 5077567475417630740}
   - component: {fileID: 7904829356775492125}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: foot_pad_collider
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -10457,7 +10457,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3118273214109533696}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_l_UpperBackTube02_AuxSHJnt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -10489,7 +10489,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3356086323089548938}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_l_Finger_01_03SHJnt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -10521,7 +10521,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4749342555661382935}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_r_Arm_Upper_Curve1SHJnt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -10553,7 +10553,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 9053818182728002354}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_r_Toe04_Base_SHJnt_end_end
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -10584,7 +10584,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2464066655895415761}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_l_Thumb_01_03SHJnt_end_end
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -10615,7 +10615,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 333623939019093646}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_l_UpperLip_Outer_AuxSHJnt_end
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -10647,7 +10647,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 566932001028281196}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_l_Finger_03_03SHJnt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -10679,7 +10679,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2766756279138791605}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_r_Toe04_Base_SHJnt_end
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -10711,7 +10711,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3221880487003562995}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_r_Thumb_01_03SHJnt_end
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -10743,7 +10743,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5919824415435994484}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_Head_JawSHJnt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -10775,7 +10775,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4522181132897715760}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: alien_xenos_drone_SK_Xenos_Drone_skeleton
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -10807,7 +10807,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3876530139332325171}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_l_UpperBackTube_AuxSHJnt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -10839,7 +10839,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5107011040096996241}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_UpperLip_mid_AuxSHJnt_end
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -10871,7 +10871,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6256338638763151289}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_l_Arm_Elbow_CurveSHJnt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -10904,7 +10904,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2761823755912272786}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_r_UpperBackTube02_AuxSHJnt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -10936,7 +10936,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3095253262667619359}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_Head_TopSHJnt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -10973,7 +10973,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2539527223074957795}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_r_Leg_Lower_Curve1SHJnt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -11006,7 +11006,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3397772682999339419}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_r_Toe00_Base_SHJnt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -11038,7 +11038,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3346699215106500283}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_r_LowerLip_AuxSHJnt_end_end
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -11069,7 +11069,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4435923539053918646}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_l_UpperBackTube02_AuxSHJnt_end_end
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -11100,7 +11100,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8682607094100022970}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_r_Toe03_Base_SHJnt_end_end
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -11131,7 +11131,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 696889682552716997}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_ProboscisBot_AuxSHJnt_end_end
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -11162,7 +11162,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7355890361936056445}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_l_Finger_02_02SHJnt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -11195,7 +11195,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 902161302174136663}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_r_Finger_01_02SHJnt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -11227,7 +11227,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1832427915045340079}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_r_Toe01_Base_SHJnt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -11259,7 +11259,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2240624562581990481}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_Tail06_SHJnt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -11300,7 +11300,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &7030811142008377099
 Transform:
   m_ObjectHideFlags: 0
@@ -11396,7 +11396,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6631282596869740867}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_l_Toe04_Base_SHJnt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -11428,7 +11428,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8373497992714208888}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_l_Toe03_Base_SHJnt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -11460,7 +11460,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1373182322718701823}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_Tail22_SHJnt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -11492,7 +11492,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1117277783043766258}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_l_Arm_Upper_Curve1SHJnt_end_end
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -11523,7 +11523,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8220777122061905736}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_TrajectorySHJnt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -11555,7 +11555,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2808078855526226756}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_r_Finger_03_03SHJnt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -11587,7 +11587,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 9174704370660118719}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_r_Finger_01_03SHJnt_end
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -11619,7 +11619,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 395875338856548546}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_l_Arm_Lower_Curve1SHJnt_end
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -11651,7 +11651,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1895565389186387838}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_r_LowerLip_AuxSHJnt_end
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -11683,7 +11683,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1028990862703447277}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_r_Leg_Upper_Curve1SHJnt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -11716,7 +11716,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 194455652893371525}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_ProboscisTop_AuxSHJnt_end
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -11748,7 +11748,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 39500568310578415}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_r_UpperBackTube02_AuxSHJnt_end_end
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -11779,7 +11779,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6289215841713668265}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_l_Finger_01_03SHJnt_end_end
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -11810,7 +11810,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4447348741472437819}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_l_Finger_02_03SHJnt_end
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -11842,7 +11842,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3327245496018632529}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_l_Arm_Upper_Curve1SHJnt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -11875,7 +11875,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3643065133025164712}
   - component: {fileID: 446945141789528176}
-  m_Layer: 12
+  m_Layer: 9
   m_Name: xeno_arm_attack_collider
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -11929,7 +11929,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 512804268060997207}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_r_Leg_Middle_Curve1SHJnt_end_end
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -11960,7 +11960,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3544823423328486032}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_Tail21_SHJnt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -11992,7 +11992,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2185208030829141355}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_l_Leg_Knee2_CurveSHJnt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -12026,7 +12026,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5293374696246389876}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_ROOTSHJnt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -12062,7 +12062,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8487388444113317489}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_r_Arm_Upper_Curve1SHJnt_end
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -12094,7 +12094,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6392800733425193440}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_ProboscisTop_AuxSHJnt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -12126,7 +12126,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3296190300269694726}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_l_Leg_Upper_Curve1SHJnt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -12159,7 +12159,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1517956185254687391}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_r_Finger_03_01SHJnt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -12191,7 +12191,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3079712479131406677}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_Tail10_SHJnt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -12224,7 +12224,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1790872978474246754}
   - component: {fileID: 8226341593808228915}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: leg_right_mid_collider
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -12278,7 +12278,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2578731248357626734}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_Tail23_SHJnt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -16918,7 +16918,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 9202998614303350004}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_r_UpperLip_AuxSHJnt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -16950,7 +16950,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8624114614372226165}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_ProboscisBot_AuxSHJnt_end
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -16982,7 +16982,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7001188913136237090}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_r_Arm_ClavicleSHJnt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -17014,7 +17014,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3650483280842603134}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_r_Toe02_Base_SHJnt_end_end
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -17045,7 +17045,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1273283551043366060}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_l_LowerBackTube_AuxSHJnt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -17077,7 +17077,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7710754740519841123}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_r_Finger_01_03SHJnt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -17109,7 +17109,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4716459229050585270}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_r_Finger_03_03SHJnt_end_end
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -17140,7 +17140,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7868192956935568006}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_l_Leg_AnkleSHJnt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -17178,7 +17178,7 @@ GameObject:
   m_Component:
   - component: {fileID: 7971043844683199886}
   - component: {fileID: 8227145604271453253}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: leg_right_upper_collider
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -17232,7 +17232,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7331304589709342503}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_l_Arm_Lower_Curve1SHJnt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -17264,7 +17264,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2633904163327972497}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_Head_JawEndSHJnt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -17300,7 +17300,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3501581459853469726}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_l_Thumb_01_03SHJnt_end
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -17332,7 +17332,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6269797050528712899}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_r_Toe03_Base_SHJnt_end
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -17364,7 +17364,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8937632086614867581}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_l_UpperLip_AuxSHJnt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -17396,7 +17396,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7567307674996911248}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_Tail03_SHJnt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -17419,6 +17419,37 @@ Transform:
   - {fileID: 5577069061437467731}
   m_Father: {fileID: 7439443428162845519}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &8896607928245245723
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 5877361986595697928}
+  m_Layer: 10
+  m_Name: snappoint
+  m_TagString: snappoint
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &5877361986595697928
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8896607928245245723}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: -2.36, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1406097776614791804}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &8902759569067312205
 GameObject:
   m_ObjectHideFlags: 0
@@ -17428,7 +17459,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3748280197074606888}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_r_LowerBackTube02_AuxSHJnt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -17460,7 +17491,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1043817475686454934}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_Neck_01SHJnt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -17493,7 +17524,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1427130714816490648}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_r_LowerBackTube02_AuxSHJnt_end
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -17526,7 +17557,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2244011556732207684}
   - component: {fileID: 3159352043691367906}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: alien_xenos_drone_SK_Xenos_Drone
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -17827,7 +17858,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5348060344495206388}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_r_UpperLip_Outer_AuxSHJnt_end
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -17859,7 +17890,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3201398243081150502}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: XenosBiped_l_LowerBackTube02_AuxSHJnt
   m_TagString: Untagged
   m_Icon: {fileID: 0}

@@ -291,6 +291,16 @@ namespace Eldritch.Core
       if (Health <= 0.1f) SetDead();
     }
 
+    public void SetPrimaryTarget(Transform target)
+    {
+      SetPrimaryTarget(target, target.GetComponent<Rigidbody>());
+    }
+    public void SetPrimaryTarget(Transform target, Rigidbody rigidbody)
+    {
+      PrimaryTarget = target;
+      PrimaryTargetRB = rigidbody;
+    }
+
     // --- Targeting helpers ---
     public void UpdatePrimaryTarget()
     {
@@ -454,7 +464,7 @@ namespace Eldritch.Core
     }
 
 
-    #region FixedUpdates / Per fixed frame logic
+  #region FixedUpdates / Per fixed frame logic
 
     public void RotateTowardPrimaryTarget()
     {
@@ -472,6 +482,11 @@ namespace Eldritch.Core
       {
         UpdateAllBehaviors();
         return;
+      }
+
+      if (animationController.IsRunningAttack())
+      {
+        animationController.StopAttack();
       }
 
       // Always point head at the target for creep factor
@@ -506,22 +521,19 @@ namespace Eldritch.Core
       }
 
       // If within leap range and NOT being watched
-      if (inLeapRange && huntBehaviorConfig.enableLeaping)
+      if (inLeapRange && !abilityManager.IsDodging && huntBehaviorConfig.enableLeaping && !beingWatched)
       {
-        if (!beingWatched)
-        {
-          // 1. Lerp-rotate toward target (not snap!)
-          var toTarget = PrimaryTarget.position - transform.position;
-          toTarget.y = 0f;
-          var angleToTarget = Vector3.Angle(transform.forward, toTarget.normalized);
-          movementController.RotateTowardsDirection(toTarget, movementController.GetTurnSpeed());
+        // 1. Lerp-rotate toward target (not snap!)
+        var toTarget = PrimaryTarget.position - transform.position;
+        toTarget.y = 0f;
+        var angleToTarget = Vector3.Angle(transform.forward, toTarget.normalized);
+        movementController.RotateTowardsDirection(toTarget, movementController.GetTurnSpeed());
 
-          // 2. Only leap if *almost* facing the target
-          if (angleToTarget < _attackYawThreshold)
-          {
-            abilityManager.RequestLeapTowardEnemy();
-            // abilityManager?.RequestDodge(new Vector2(0, 1)); // Leap forward
-          }
+        // 2. Only leap if *almost* facing the target
+        if (angleToTarget < _attackYawThreshold)
+        {
+          abilityManager.RequestLeapTowardEnemy();
+          // abilityManager?.RequestDodge(new Vector2(0, 1)); // Leap forward
         }
         return;
       }
@@ -552,7 +564,8 @@ namespace Eldritch.Core
           var tgtPos = PrimaryTarget.position;
           var to = tgtPos - transform.position;
           to.y = 0f;
-          if (to.magnitude < 0.1f) return;
+
+          movementController.RotateTowardsDirection(to, movementController.GetTurnSpeed());
           // movementController.DebugSimRouteTo(PrimaryTarget.position);
 
           // Only try to climb if **actually** blocked in the forward direction
@@ -615,9 +628,9 @@ namespace Eldritch.Core
       }
     }
 
-    #endregion
+  #endregion
 
-    #region Animation getters
+  #region Animation getters
 
     // Animator/Bones
     public Transform xenoAnimatorRoot => animationController?.xenoAnimatorRoot;
@@ -646,9 +659,9 @@ namespace Eldritch.Core
     public string ARMAttackObjName => animationController?.armAttackObjName;
     public string tailAttackObjName => animationController?.tailAttackObjName;
 
-    #endregion
+  #endregion
 
-    #region Behavior Updates
+  #region Behavior Updates
 
     private void BindBehaviors()
     {
@@ -719,9 +732,9 @@ namespace Eldritch.Core
     public bool Update_HuntBehavior()
     {
       var canAttack = huntBehaviorConfig.enableAttack && IsInAttackRange();
-      if (!canAttack && IsAttacking())
+      if (!canAttack && animationController.IsRunningAttack())
       {
-        StopAttackBehavior();
+        animationController.StopAttack();
       }
       // early bail if we are in range and can attack.
       if (canAttack)
@@ -828,10 +841,10 @@ namespace Eldritch.Core
       return true;
     }
 
-    #endregion
+  #endregion
 
 
-    #region State Booleans
+  #region State Booleans
 
     public bool IsOutOfHuntRange()
     {
@@ -876,22 +889,48 @@ namespace Eldritch.Core
       return CurrentState == XenoAIState.Attack;
     }
 
-    #endregion
+  #endregion
 
     // Put these inside XenoDroneAI (e.g., near bottom) to avoid new files.
 
-    #region Nav Runners (direct PathfindingAdapter)
+  #region Nav Runners (direct PathfindingAdapter)
 
+    private bool _losCached;
+    private float _losStableUntil;
     private bool HasClearLOS(Vector3 to)
     {
-      var from = transform.position + Vector3.up * 0.2f + transform.forward * 1f;
+      // use head if available, else chest height
+      var from = animationController && animationController.neckUpDown
+        ? animationController.neckUpDown.position
+        : transform.position + Vector3.up * 0.9f;
 
       var dir = to - from;
-      var result = !Physics.Raycast(from, dir.normalized, out var hit, dir.magnitude,
-        LayerMask.GetMask("Default", "static_solid", "piece", "terrain"));
-      Debug.DrawLine(from, to, result ? Color.green : Color.red);
+      var dist = dir.magnitude;
+      if (dist < 0.001f) return true;
 
-      return result;
+      var hit = Physics.SphereCast(from, 0.2f, dir.normalized, out _, dist,
+        LayerHelpers.GroundLayers);
+
+      var sensed = !hit;
+      var now = Time.time;
+      // 0.2s hysteresis to avoid mode thrash
+      const float hysteresis = 0.2f;
+
+      if (sensed != _losCached)
+      {
+        if (now >= _losStableUntil)
+        {
+          _losCached = sensed;
+          _losStableUntil = now + hysteresis;
+        }
+      }
+      else
+      {
+        _losStableUntil = now + hysteresis;
+      }
+
+      Debug.DrawLine(from, to, _losCached ? Color.green : Color.red);
+      return _losCached;
     }
 
 
@@ -1116,7 +1155,7 @@ namespace Eldritch.Core
       }
     }
 
-    #endregion
+  #endregion
 
 
   }

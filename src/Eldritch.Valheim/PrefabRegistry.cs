@@ -137,24 +137,24 @@ public static class PrefabRegistry
 
     humanoid.m_eye = xenoAnimationController.neckPivot;
     humanoid.m_head = xenoAnimationController.neckPivot;
-    humanoid.m_unarmedWeapon = xenoPrefab.AddComponent<ItemDrop>();
+    // humanoid.m_unarmedWeapon = xenoPrefab.AddComponent<ItemDrop>();
 
-    humanoid.m_unarmedWeapon.m_itemData = new ItemDrop.ItemData
-    {
-      m_shared =
-      {
-        m_attack = new Attack
-        {
-          m_animEvent = animEvent,
-          m_attackType = Attack.AttackType.Horizontal
-        },
-        m_secondaryAttack = new Attack
-        {
-          m_animEvent = animEvent,
-          m_attackType = Attack.AttackType.Vertical
-        }
-      }
-    };
+    // humanoid.m_unarmedWeapon.m_itemData = new ItemDrop.ItemData
+    // {
+    //   m_shared =
+    //   {
+    //     m_attack = new Attack
+    //     {
+    //       m_animEvent = animEvent,
+    //       m_attackType = Attack.AttackType.Horizontal
+    //     },
+    //     m_secondaryAttack = new Attack
+    //     {
+    //       m_animEvent = animEvent,
+    //       m_attackType = Attack.AttackType.Vertical
+    //     }
+    //   }
+    // };
 
 
     // todo setup character better
