@@ -3085,7 +3085,7 @@ CapsuleCollider:
     serializedVersion: 2
     m_Bits: 0
   m_LayerOverridePriority: 0
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 2
@@ -3213,10 +3213,10 @@ CapsuleCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 2
-  m_Radius: 0.36595884
-  m_Height: 1.8643019
+  m_Radius: 0.23711067
+  m_Height: 1.6133821
   m_Direction: 0
-  m_Center: {x: -0.59359765, y: -0.064219855, z: 0.019271135}
+  m_Center: {x: -0.7190572, y: 0.06462896, z: 0.019271152}
 --- !u!1 &3708315464517330170
 GameObject:
   m_ObjectHideFlags: 0
@@ -8407,6 +8407,7 @@ MonoBehaviour:
     creepDirection: 1
     circleDirection: 1
     _decisionTimer: 0
+    FORCE_CreepRetreat: 0
     behaviorConfig:
       enableCircling: 1
       enableCreeping: 1
@@ -8442,19 +8443,19 @@ MonoBehaviour:
     enableCircling: 1
     enableCreeping: 1
     enableAttack: 0
-    enableLeaping: 0
+    enableLeaping: 1
     enableRetreating: 1
     enableRandomCamouflage: 0
     FORCE_Circling: 0
     FORCE_Creeping: 1
     maxTargetDistance: 50
     minHuntDistance: 0.5
-    minCreepDistance: 2
-    circleMoveSpeed: 15
+    minCreepDistance: 3
+    circleMoveSpeed: 10
     creepingMoveSpeed: 1
     movingSpeedFlux: 1
     minCircleRadius: 5
-    maxCircleRadius: 15
+    maxCircleRadius: 10
     circleRadiusFactor: 1
     leapingCooldown: 10
     probCircling: 0.175
@@ -8467,7 +8468,7 @@ MonoBehaviour:
     circlingTimeRange: {x: 1, y: 1}
     movingAwayTimeRange: {x: 1, y: 1}
     pausingTimeRange: {x: 1, y: 1}
-    creepingTimeRange: {x: 1, y: 1}
+    creepingTimeRange: {x: 4, y: 4}
   navAgentType: 1
 --- !u!114 &6512191468278395479
 MonoBehaviour:
@@ -8485,14 +8486,14 @@ MonoBehaviour:
   HeadCollider: {fileID: 0}
   HeadColliderTransform: {fileID: 0}
   OwnerAI: {fileID: 5133866510785171013}
-  moveSpeed: 20
-  closeMoveSpeed: 15
+  moveSpeed: 15
+  closeMoveSpeed: 10
   AccelerationForceSpeed: 90
   closeAccelForce: 90
   closeRange: 3
-  turnSpeed: 500
-  closeTurnSpeed: 500
-  wanderSpeed: 15
+  turnSpeed: 200
+  closeTurnSpeed: 200
+  wanderSpeed: 10
   maxJumpDistance: 4
   maxJumpHeightArc: 2.5
   maxRunRange: {x: 20, y: 0, z: 20}
@@ -8565,11 +8566,13 @@ MonoBehaviour:
     sideDistance: 8
     jumpHeight: 1
     dodgeDuration: 0.5
-    cooldown: 1
-    defaultDodgeDirection: {x: 0, y: 0, z: 1}
+    cooldown: 5
+    minGapFromTarget: 0.35
+    landingClearanceProbe: 0.4
+    defaultDodgeDirection: {x: 0, y: 0}
   camouflageAbilityConfig:
-    cooldown: 10
-    duration: 5
+    cooldown: 5
+    duration: 10
   camouflageMat: {fileID: 2100000, guid: c0bf5a719764f614ab3310a7c751a541, type: 2}
   movementController: {fileID: 6512191468278395479}
   animationController: {fileID: 8709153586707512297}
@@ -9098,6 +9101,7 @@ GameObject:
   - component: {fileID: 2696584758499083884}
   - component: {fileID: 8709153586707512297}
   - component: {fileID: 189576645687756202}
+  - component: {fileID: 8510470789825342711}
   m_Layer: 0
   m_Name: Visual
   m_TagString: Untagged
@@ -9114,7 +9118,7 @@ Transform:
   m_GameObject: {fileID: 4891374557615117784}
   serializedVersion: 2
   m_LocalRotation: {x: 2.7755573e-16, y: -0, z: 6.8212097e-13, w: 1}
-  m_LocalPosition: {x: 0.00000028782068, y: -2.97, z: -0.312}
+  m_LocalPosition: {x: 0.00000028782068, y: -2.97, z: -1.186}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -9135,7 +9139,7 @@ Animator:
   m_Controller: {fileID: 9100000, guid: 22acfcfb222d3d349b003bc506564b6c, type: 2}
   m_CullingMode: 0
   m_UpdateMode: 0
-  m_ApplyRootMotion: 1
+  m_ApplyRootMotion: 0
   m_LinearVelocityBlending: 0
   m_StabilizeFeet: 0
   m_WarningMessage: 
@@ -9200,6 +9204,17 @@ MonoBehaviour:
   scanPeriod: 8
   randomizeAmount: 0.3
   camouflageMaterial: {fileID: 0}
+  neckPivotAngle: {x: 0, y: 0, z: 0}
+  neckUpDownAngle: {x: 0, y: 0, z: 0}
+  neckRangeX: {x: -40, y: 40}
+  neckRotationZRange: {x: -40, y: 40}
+  neckPivotStartRotation: {x: 0, y: 0, z: 65}
+  neckUpDownStartRotation: {x: 0, y: 0, z: 40}
+  yawMaxDeg: 40
+  yawSpeedDegPerSec: 540
+  pitchDownMaxDeg: 40
+  pitchSpeedDegPerSec: 360
+  lookDownHeightThreshold: 0.25
 --- !u!114 &189576645687756202
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -9212,6 +9227,25 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cdfae84e02924731b17bd74de3d20973, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &8510470789825342711
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4891374557615117784}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1bf99c47ee254956981c32774ccaca00, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  motionRoot: {fileID: 0}
+  autoBindRigidbodyRoot: 1
+  maxForwardSpeed: 6
+  deadzoneSpeed: 0.05
+  smoothingTau: 0.08
+  teleportDistance: 2
+  turnInPlaceDegPerSec: 20
 --- !u!1 &5009839970308467756
 GameObject:
   m_ObjectHideFlags: 0
@@ -11266,7 +11300,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &7030811142008377099
 Transform:
   m_ObjectHideFlags: 0

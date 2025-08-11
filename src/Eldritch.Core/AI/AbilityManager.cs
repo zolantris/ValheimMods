@@ -1,4 +1,6 @@
-﻿using Eldritch.Core.Abilities;
+﻿using System.Collections.Generic;
+using System.Linq;
+using Eldritch.Core.Abilities;
 using UnityEngine;
 // ReSharper disable ArrangeNamespaceBody
 // ReSharper disable NamespaceStyle
@@ -9,9 +11,9 @@ namespace Eldritch.Core
 
     public DodgeAbilityConfig dodgeAbilityConfig = new()
     {
-      forwardDistance = 6f,
-      backwardDistance = 3f,
-      sideDistance = 4.5f,
+      forwardDistance = 6.5f,
+      backwardDistance = 5f,
+      sideDistance = 5f,
       jumpHeight = 1f,
       dodgeDuration = 0.18f,
       cooldown = 1f
@@ -35,6 +37,7 @@ namespace Eldritch.Core
     public DodgeAbility dodgeAbility { get; private set; }
     public TailAttackAbility tailAttackAbility { get; private set; }
     public bool IsDodging => dodgeAbility.IsDodging;
+    public bool IsTailAttacking => tailAttackAbility.IsAttacking;
     private void Awake()
     {
       _rb = GetComponent<Rigidbody>();
@@ -56,8 +59,53 @@ namespace Eldritch.Core
       InitAbilities();
     }
 
+    /// <summary>
+    /// Leap toward AI.PrimaryTarget and land just in front (no collision with target).
+    /// Returns true if a leap was started.
+    /// </summary>
+    public bool RequestLeapTowardEnemy(float minGapOverride = -0.1f)
+    {
+      if (tailAttackAbility.IsAttacking) return false;
+      if (!dodgeAbility.CanDodge || AI == null || !AI.PrimaryTarget) return false;
+
+      if (AI.IsAttacking())
+        animationController.StopAttack();
+
+      var target = AI.PrimaryTarget;
+
+      // Prefer RB; only fetch colliders if NO rigidbody is available.
+      var targetRB = AI.PrimaryTargetRB ? AI.PrimaryTargetRB : target.GetComponent<Rigidbody>();
+      Collider[] targetCols = null;
+      if (!targetRB)
+      {
+        targetCols = target.GetComponentsInChildren<Collider>().Where(x => x && !x.isTrigger).ToArray();
+      }
+
+      // Our hull (keep this – we use colliders to estimate our half-extent along travel dir)
+      var selfCols =
+        animationController.allColliders != null && animationController.allColliders.Count > 0
+          ? new List<Collider>(animationController.allColliders).Where(x => x && !x.isTrigger).ToArray()
+          : GetComponentsInChildren<Collider>()?.Where(x => x && !x.isTrigger);
+
+      var ok = dodgeAbility.TryLeapAt(
+        targetRB,
+        _rb
+      );
+
+      if (!ok) return false;
+
+      var skip = new[] { "Tail" };
+      animationController.PlayJump(skip);
+
+
+      RequestAttack(1, true, 2f, Mathf.Max(0f, dodgeAbilityConfig.dodgeDuration - 1f));
+
+      return true;
+    }
+
     public void RequestDodge(Vector2 dir)
     {
+      if (tailAttackAbility.IsAttacking) return;
       // High-level orchestration logic
       if (dodgeAbility.CanDodge)
       {
@@ -74,7 +122,6 @@ namespace Eldritch.Core
           // todo rig jump + tail attack. Otherwise we have to use running animation + attack
           var skipTransforms = new[] { "Tail" };
           animationController.PlayJump(skipTransforms);
-          // animationController.StopMovement()
           if (IsForwardDodge(dir))
           {
             RequestAttack(1, true, 2f, Mathf.Max(0f, dodgeAbilityConfig.dodgeDuration - 1f));
@@ -87,6 +134,10 @@ namespace Eldritch.Core
     {
       if (attackType == 1)
       {
+        if (camouflageAbility.IsActive)
+        {
+          camouflageAbility.Deactivate();
+        }
         tailAttackAbility.StartAttack(attackType, isSingle, attackSpeed, delay);
       }
     }
@@ -109,9 +160,24 @@ namespace Eldritch.Core
         camouflageMat = camouflageMat_Static;
       }
 
+      if (!_rb)
+      {
+        _rb = GetComponent<Rigidbody>();
+      }
+
+      if (!AI)
+      {
+        AI = GetComponent<XenoDroneAI>();
+      }
+
       dodgeAbility ??= new DodgeAbility(this, dodgeAbilityConfig, transform, _rb);
-      tailAttackAbility ??= new TailAttackAbility(this, animationController);
+      dodgeAbility.config ??= dodgeAbilityConfig;
+
+      tailAttackAbility ??= new TailAttackAbility(this, AI, animationController);
+
+
       camouflageAbility ??= new CamouflageAbility(this, camouflageAbilityConfig, camouflageMat, animationController);
+      camouflageAbility.config ??= camouflageAbilityConfig;
     }
 
     // Add more orchestration: combo windows, cancels, priorities, etc.

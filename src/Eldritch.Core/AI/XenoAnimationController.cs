@@ -96,7 +96,6 @@ namespace Eldritch.Core
     private float randomOffsetZ;
     public HashSet<Transform> rightArmJoints = new();
     public HashSet<Transform> tailJoints = new();
-    public Material camouflageMaterial;
 
     // --- Sleeping Animation "Twitch" ---
     private Quaternion targetNeckRotation = Quaternion.identity;

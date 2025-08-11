@@ -27,6 +27,10 @@ namespace Eldritch.Core.Abilities
       coroutineHandle = new CoroutineHandle(mono);
     }
 
+    public void Bind(MonoBehaviour mono, IXenoAI ai, IMovementController movement, Core.IAbilityManager abilityManager, IXenoAnimationController anim)
+    {
+      throw new System.NotImplementedException();
+    }
     public virtual void Unbind()
     {
       coroutineHandle?.Stop();

@@ -209,7 +209,7 @@ namespace Eldritch.Core
           //   movementController.closeMoveSpeed,
           //   movementController.AccelerationForceSpeed,
           //   movementController.closeAccelForce,
-          //   movementController.turnSpeed,
+          //   GetTurnSpeed()),
           //   movementController.closeTurnSpeed
           // );
           break;
@@ -456,6 +456,14 @@ namespace Eldritch.Core
 
     #region FixedUpdates / Per fixed frame logic
 
+    public void RotateTowardPrimaryTarget()
+    {
+      if (PrimaryTarget == null) return;
+      var toTarget = PrimaryTarget.position - transform.position;
+      toTarget.y = 0f;
+      movementController.RotateTowardsDirection(toTarget, movementController.GetTurnSpeed());
+    }
+
     public void Update_HuntMovement()
     {
       if (!PrimaryTarget) return;
@@ -468,6 +476,7 @@ namespace Eldritch.Core
 
       // Always point head at the target for creep factor
       animationController.PointHeadTowardTarget(PrimaryTarget);
+      if (abilityManager.IsDodging || abilityManager.IsTailAttacking) return;
 
 
       // --- OVERRIDE: Retreat if in leap range and being looked at ---
@@ -475,6 +484,26 @@ namespace Eldritch.Core
 
       var beingWatched = TargetingUtil.IsTargetLookingAtMe(PrimaryTarget, transform);
 
+      if (!IsAttacking() && !inLeapRange && DeltaPrimaryTarget < huntBehaviorConfig.minCreepDistance && beingWatched)
+      {
+        if (CanJump)
+        {
+          var toTarget = PrimaryTarget.position - transform.position;
+          toTarget.y = 0f;
+          movementController.RotateTowardsDirection(toTarget, movementController.GetTurnSpeed());
+
+          var angleToTarget = Vector3.Angle(transform.forward, toTarget.normalized);
+          if (angleToTarget < _attackYawThreshold)
+          {
+            abilityManager.RequestDodge(-Vector2.up);
+          }
+        }
+        else
+        {
+          RetreatFromPrimaryTarget();
+        }
+        return;
+      }
 
       // If within leap range and NOT being watched
       if (inLeapRange && huntBehaviorConfig.enableLeaping)
@@ -485,7 +514,7 @@ namespace Eldritch.Core
           var toTarget = PrimaryTarget.position - transform.position;
           toTarget.y = 0f;
           var angleToTarget = Vector3.Angle(transform.forward, toTarget.normalized);
-          movementController.RotateTowardsDirection(toTarget, movementController.turnSpeed * 1.25f);
+          movementController.RotateTowardsDirection(toTarget, movementController.GetTurnSpeed());
 
           // 2. Only leap if *almost* facing the target
           if (angleToTarget < _attackYawThreshold)
@@ -493,10 +522,6 @@ namespace Eldritch.Core
             abilityManager.RequestLeapTowardEnemy();
             // abilityManager?.RequestDodge(new Vector2(0, 1)); // Leap forward
           }
-        }
-        else
-        {
-          RetreatFromPrimaryTarget();
         }
         return;
       }
@@ -511,14 +536,17 @@ namespace Eldritch.Core
         case HuntBehaviorState.Pausing:
           var toEnemy = PrimaryTarget.position - transform.position;
           toEnemy.y = 0f;
-          movementController.RotateTowardsDirection(toEnemy, movementController.turnSpeed);
+          movementController.RotateTowardsDirection(toEnemy, movementController.GetTurnSpeed());
           movementController.BrakeHard();
           return;
 
         case HuntBehaviorState.Creeping:
           if (!huntBehaviorConfig.enableCreeping) return;
           if (PrimaryTarget == null) return;
-          if (DeltaPrimaryTarget < huntBehaviorConfig.minCreepDistance && huntBehaviorState.creepDirection != -1) return;
+          if (DeltaPrimaryTarget < huntBehaviorConfig.minCreepDistance)
+          {
+            huntBehaviorState.creepDirection = -1;
+          }
 
 
           var tgtPos = PrimaryTarget.position;
@@ -547,11 +575,12 @@ namespace Eldritch.Core
               // but *only* if we’re still inside the ring.
               if (DeltaPrimaryTarget < ringR - 0.05f)
                 movementController.MoveAwayFromTarget(
-                  tgtPos,
-                  movementController.closeMoveSpeed * huntBehaviorState.creepSpeedMultiplier,
-                  movementController.closeAccelForce * 0.6f,
-                  movementController.turnSpeed
-                );
+                    tgtPos,
+                    movementController.closeMoveSpeed * huntBehaviorState.creepSpeedMultiplier,
+                    movementController.closeAccelForce * 0.6f,
+                    movementController.GetTurnSpeed()
+                  )
+                  ;
               else
                 movementController.BrakeHard();
             }
@@ -574,11 +603,10 @@ namespace Eldritch.Core
             cfg.circleRadiusFactor,
             (corner) => movementController.MoveTowardsTarget(
               corner,
-              movementController.moveSpeed,
-              movementController.AccelerationForceSpeed,
-              movementController.turnSpeed),
+              movementController.GetMoveSpeed(),
+              movementController.GetAccelForce(), movementController.GetTurnSpeed()),
             () =>
-              movementController.CircleAroundTarget(PrimaryTarget, huntBehaviorState.circleDirection, cfg.circleMoveSpeed)
+              movementController.CircleAroundTarget(PrimaryTarget, huntBehaviorState.circleDirection, huntBehaviorConfig.circleMoveSpeed)
           );
 
           // var speedFluxCircling = Random.Range(0.75f, 1.25f);
@@ -691,6 +719,10 @@ namespace Eldritch.Core
     public bool Update_HuntBehavior()
     {
       var canAttack = huntBehaviorConfig.enableAttack && IsInAttackRange();
+      if (!canAttack && IsAttacking())
+      {
+        StopAttackBehavior();
+      }
       // early bail if we are in range and can attack.
       if (canAttack)
       {
@@ -727,9 +759,9 @@ namespace Eldritch.Core
       // Option 1: Back away while facing target
       movementController.MoveAwayFromTarget(
         PrimaryTarget.position,
-        movementController.moveSpeed,
-        movementController.AccelerationForceSpeed * 0.5f,
-        movementController.turnSpeed
+        movementController.GetMoveSpeed(),
+        movementController.GetAccelForce() * 0.5f,
+        movementController.GetTurnSpeed()
       );
       animationController.PointHeadTowardTarget(PrimaryTarget);
     }
@@ -753,6 +785,12 @@ namespace Eldritch.Core
     public void TryTriggerCamouflage()
     {
       if (!huntBehaviorConfig.enableRandomCamouflage) return;
+
+      var beingWatched = TargetingUtil.IsTargetLookingAtMe(PrimaryTarget, transform);
+
+      // do not activate camo when being observed by primary target.
+      if (beingWatched) return;
+
       var rand = Random.value;
       if (rand < huntBehaviorConfig.probCamouflage)
       {
@@ -809,7 +847,7 @@ namespace Eldritch.Core
     public bool IsInLeapRange()
     {
       var minDodgeDistance = abilityManager.dodgeAbility.config.forwardDistance / 3f;
-      return DeltaPrimaryTarget < minDodgeDistance && DeltaPrimaryTarget < abilityManager.dodgeAbility.config.forwardDistance;
+      return DeltaPrimaryTarget > minDodgeDistance && DeltaPrimaryTarget < abilityManager.dodgeAbility.config.forwardDistance;
     }
 
     public bool IsInAttackRange()
@@ -856,6 +894,7 @@ namespace Eldritch.Core
       return result;
     }
 
+
     private void FollowPathOrChase(Vector3 targetPos)
     {
       // 0) If we have line of sight, keep the fast chase
@@ -864,13 +903,7 @@ namespace Eldritch.Core
         movementController.MoveChaseTarget(
           targetPos,
           null,
-          movementController.closeRange,
-          movementController.moveSpeed,
-          movementController.closeMoveSpeed,
-          movementController.AccelerationForceSpeed,
-          movementController.closeAccelForce,
-          movementController.turnSpeed,
-          movementController.closeTurnSpeed
+          movementController.GetTurnSpeed()
         );
         _nav.Clear();
         return;
@@ -893,9 +926,9 @@ namespace Eldritch.Core
           // Move to the opening
           movementController.MoveTowardsTarget(
             ingressMovePoint,
-            movementController.moveSpeed,
-            movementController.AccelerationForceSpeed,
-            movementController.turnSpeed
+            movementController.GetMoveSpeed(),
+            movementController.GetAccelForce(),
+            movementController.GetTurnSpeed()
           );
 
           // If we’re at the hole, perform the drop/jump
@@ -914,13 +947,13 @@ namespace Eldritch.Core
       {
         movementController.MoveTowardsTarget(
           corner,
-          movementController.moveSpeed,
-          movementController.AccelerationForceSpeed,
-          movementController.turnSpeed
-        );
+          movementController.distanceMoveSpeed,
+          movementController.distantAccelForce,
+          movementController.GetTurnSpeed());
       }
       else
       {
+
         movementController.BrakeHard(); // don’t ram walls when stuck
       }
     }

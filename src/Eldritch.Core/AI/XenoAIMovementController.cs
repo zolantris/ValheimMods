@@ -19,12 +19,12 @@ namespace Eldritch.Core
     public XenoDroneAI OwnerAI;
 
     [Header("Movement Tuning")]
-    public float moveSpeed = 1f;
+    public float distanceMoveSpeed = 1f;
     public float closeMoveSpeed = 0.3f;
-    public float AccelerationForceSpeed = 90f;
+    public float distantAccelForce = 90f;
     public float closeAccelForce = 20f;
     public float closeRange = 3f;
-    public float turnSpeed = 50f;
+    public float distantTurnSpeed = 50f;
     public float closeTurnSpeed = 50f;
     public float wanderSpeed = 0.5f;
     public float maxJumpDistance = 4f;
@@ -45,7 +45,6 @@ namespace Eldritch.Core
 
     public readonly HashSet<Collider> GroundContacts = new();
     private XenoAnimationController animationController;
-    public DodgeAbility dodgeAbility;
     private float dodgeElapsed;
     private Vector3 dodgeStart, dodgeEnd;
 
@@ -228,10 +227,12 @@ namespace Eldritch.Core
     }
 
     // --- Core Movement ---
-    public void MoveTowardsTarget(Vector3 targetPos, float speed, float accel, float turnSpeed)
+    public void MoveTowardsTarget(Vector3 targetPos, float speed, float accel, float? turnSpeed)
     {
+      // todo might want to lerp this.
+      turnSpeed ??= GetTurnSpeed();
       var toTarget = targetPos - transform.position;
-      RotateTowardsDirection(toTarget, turnSpeed);
+      RotateTowardsDirection(toTarget, turnSpeed.Value);
       moveLerpVel = Mathf.MoveTowards(moveLerpVel, speed, accel * Time.deltaTime);
       Rb.AddForce(transform.forward * moveLerpVel, ForceMode.Acceleration);
 
@@ -264,24 +265,40 @@ namespace Eldritch.Core
       HasMovedInFrame = true;
     }
 
-    public void MoveAwayFromTarget(Vector3 awayFrom, float speed, float accel, float turnSpeed)
+    public void MoveAwayFromTarget(Vector3 awayFrom, float speed, float accel, float? turnRate)
     {
+      turnRate ??= distantTurnSpeed;
       // Direction to move = away from enemy
       var moveDir = transform.position - awayFrom;
       moveDir.y = 0f;
       if (moveDir.sqrMagnitude < 0.0001f) return;
 
       // Move backward while facing the enemy (no auto-rotate toward moveDir)
-      MoveAlongDirectionWhileFacing(moveDir, awayFrom, speed, accel, turnSpeed);
+      MoveAlongDirectionWhileFacing(moveDir, awayFrom, speed, accel, turnRate.Value);
     }
 
-    public void MoveChaseTarget(Vector3 targetPos, Vector3? targetVelocity, float closeRange, float moveSpeed, float closeMoveSpeed, float accel, float closeAccel, float turnSpeed, float closeTurnSpeed)
+    public float GetTurnSpeed()
+    {
+      return OwnerAI.DeltaPrimaryTarget > closeRange ? distantTurnSpeed : closeTurnSpeed;
+    }
+
+    public float GetMoveSpeed()
+    {
+      return OwnerAI.DeltaPrimaryTarget > closeRange ? distanceMoveSpeed : closeMoveSpeed;
+    }
+
+    public float GetAccelForce()
+    {
+      return OwnerAI.DeltaPrimaryTarget > closeRange ? distantAccelForce : closeAccelForce;
+    }
+
+    public void MoveChaseTarget(Vector3 targetPos, Vector3? targetVelocity, float turnRate)
     {
       var predictedTarget = targetPos + (targetVelocity ?? Vector3.zero) * 0.5f;
       var toTarget = predictedTarget - transform.position;
       var distance = toTarget.magnitude;
 
-      RotateTowardsDirection(toTarget, turnSpeed);
+      RotateTowardsDirection(toTarget, turnRate);
 
       if (IsGapAhead(1.0f, 3f, 5f))
       {
@@ -298,8 +315,8 @@ namespace Eldritch.Core
       var shouldMove = Mathf.Abs(targetAngle) < 120f;
       var slowDownStart = 6f;
       var speedFactor = Mathf.Clamp01(distance / slowDownStart);
-      var targetSpeed = Mathf.Lerp(closeMoveSpeed, moveSpeed, speedFactor);
-      var targetAccel = Mathf.Lerp(closeAccel, accel, speedFactor);
+      var targetSpeed = Mathf.Lerp(closeMoveSpeed, distanceMoveSpeed, speedFactor);
+      var targetAccel = Mathf.Lerp(closeAccelForce, distantAccelForce, speedFactor);
 
       if (shouldMove)
       {
@@ -351,7 +368,7 @@ namespace Eldritch.Core
       }
 
       if (bestDir == Vector3.zero) return;
-      MoveTowardsTarget(transform.position + bestDir * 4f, moveSpeed, AccelerationForceSpeed, turnSpeed);
+      MoveTowardsTarget(transform.position + bestDir * 4f, distanceMoveSpeed, distantAccelForce, distantTurnSpeed);
     }
 
     public void MoveFleeWithAllyBias(XenoDroneAI friendly, HashSet<GameObject> enemies)
@@ -395,7 +412,7 @@ namespace Eldritch.Core
         MoveAwayFromEnemies(enemies, 40f);
         return;
       }
-      MoveTowardsTarget(transform.position + bestDir * 4f, moveSpeed * 1.25f, AccelerationForceSpeed * 1.1f, turnSpeed);
+      MoveTowardsTarget(transform.position + bestDir * 4f, distanceMoveSpeed * 1.25f, distantAccelForce * 1.1f, distantTurnSpeed);
     }
 
     private float GetXZDistance(Vector3 a, Vector3 b)
@@ -446,7 +463,7 @@ namespace Eldritch.Core
       // Only rotate if far enough from target (avoid chasing micro-deltas)
       if (distance > arrivalThreshold)
       {
-        RotateTowardsDirection(toTarget, turnSpeed);
+        RotateTowardsDirection(toTarget, distantTurnSpeed);
 
         // Optional: gap/jump check as before
         if (distance > 2f && IsGapAhead(1.0f, 3f, 5f))
@@ -464,7 +481,7 @@ namespace Eldritch.Core
         var slowDownDist = 5f; // start slowing 3 units out
         var approachT = Mathf.Clamp01(distance / slowDownDist);
         var targetSpeed = Mathf.Lerp(0f, wanderSpeed, approachT);
-        var targetAccel = Mathf.Lerp(0f, AccelerationForceSpeed * 0.5f, approachT);
+        var targetAccel = Mathf.Lerp(0f, distantAccelForce * 0.5f, approachT);
 
         moveLerpVel = Mathf.MoveTowards(moveLerpVel, targetSpeed, targetAccel * Time.deltaTime);
 
@@ -786,7 +803,7 @@ namespace Eldritch.Core
         HasMovedInFrame = true;
 
         if (delta.sqrMagnitude > 0.001f)
-          RotateTowardsDirection(vel, turnSpeed * 0.6f);
+          RotateTowardsDirection(vel, distantTurnSpeed * 0.6f);
 
         animationController?.PointHeadTowardTarget(target);
       }

@@ -13,18 +13,10 @@ namespace Eldritch.Core.Abilities
     public float duration = 10f;
   }
 
-  public interface IAbilityBase
-  {
-    public void OnActivate(); // public
-    public void OnDeactivate(); // public
-    public void Activate(); // method clal from other apis
-    public void Deactivate(); // method call from other apis
-  }
-
   public class CamouflageAbility : IAbilityBase
   {
     private CoroutineHandle abilityRoutine;
-    private CamouflageAbilityConfig config;
+    public CamouflageAbilityConfig config;
     private float cooldown = 1f;
     private float currentDuration = 0f;
     private float currentCooldown = 0f;
@@ -36,6 +28,8 @@ namespace Eldritch.Core.Abilities
     private Material bodyMaterial;
     private Material headMaterial;
     private MonoBehaviour monoBehavior;
+
+    public bool IsActive => currentDuration > 0f;
 
     public CamouflageAbility(MonoBehaviour mb, CamouflageAbilityConfig camouflageAbilityConfig, Material camouflageMat, XenoAnimationController xenoAnimationController)
     {
@@ -106,7 +100,7 @@ namespace Eldritch.Core.Abilities
     }
 
     // --- CAMOUFLAGE ---
-    public void ActivateCamouflage()
+    private void ActivateCamouflage()
     {
       if (skinnedMeshRenderer == null) return;
       _lastCamouflageState = true;
@@ -128,7 +122,7 @@ namespace Eldritch.Core.Abilities
         skinnedMeshRenderer.materials = mats;
       }
     }
-    public void DeactivateCamouflage()
+    private void DeactivateCamouflage()
     {
       if (!_lastCamouflageState || skinnedMeshRenderer == null) return;
       if (bodyMaterial && headMaterial && skinnedMeshRenderer.materials.Length == 2)
