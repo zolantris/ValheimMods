@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using HarmonyLib;
 using Jotunn.Configs;
@@ -125,6 +126,46 @@ public class ShipHullPrefab : IRegisterPrefab
         materialCount,
         sizeVariant);
     }
+
+
+    var v4Hulls = new List<string>
+    {
+      "hull_bow_center_wood",
+      "hull_bow_curved_left_iron",
+      "hull_bow_curved_left_wood",
+      "hull_bow_curved_right_iron",
+      "hull_bow_curved_right_wood",
+      "hull_bow_tri_left_iron",
+      "hull_bow_tri_left_wood",
+      "hull_bow_tri_right_iron",
+      "hull_bow_tri_right_wood",
+      "hull_rib_aft_center_iron",
+      "hull_rib_aft_center_wood",
+      "hull_rib_aft_left_iron",
+      "hull_rib_aft_left_wood",
+      "hull_rib_aft_right_iron",
+      "hull_rib_aft_right_wood",
+      "hull_rib_expand_left_iron",
+      "hull_rib_expand_left_wood",
+      "hull_rib_expand_right_iron",
+      "hull_rib_expand_right_wood",
+      "hull_rib_iron",
+      "hull_rib_wood",
+      "hull_seal_bow_left_iron",
+      "hull_seal_bow_left_wood",
+      "hull_seal_bow_right_iron",
+      "hull_seal_bow_right_wood",
+      "hull_seal_corner_left_wood",
+      "hull_seal_corner_left_wood_iron",
+      "hull_seal_corner_right_iron",
+      "hull_seal_corner_right_wood",
+      "hull_top_expander_left_iron",
+      "hull_top_expander_left_wood",
+      "hull_top_expander_right_iron",
+      "hull_top_expander_right_wood"
+    };
+
+    v4Hulls.ForEach(x => RegisterHullV4Prefab(x, x.Contains("wood") ? "wood" : "iron", PrefabNames.PrefabSizeVariant.FourByFour));
   }
 
   public static void RegisterHullProwSeal()
@@ -427,6 +468,137 @@ public class ShipHullPrefab : IRegisterPrefab
       materialCount);
 
     LoggerProvider.LogDebug("Successfully registered double hull prow");
+  }
+
+  public static ConvexHullCalculator convexHullCalculator;
+
+  public void GenerateConvexHullMeshFromMeshFilters(GameObject prefab, GameObject meshObject, Vector3 offset)
+  {
+    var points = new List<Vector3>();
+    var visualMeshes = prefab.GetComponentsInChildren<MeshFilter>();
+    foreach (var visualMesh in visualMeshes)
+    {
+      if (!visualMesh.sharedMesh) continue;
+      points.AddRange(visualMesh.sharedMesh.vertices);
+    }
+    var prefabTransform = prefab.transform;
+
+    var localPoints = points
+      .Select(x => prefabTransform.InverseTransformPoint(x) + offset).ToList();
+
+    // Prepare output containers
+    var verts = new List<Vector3>();
+    var tris = new List<int>();
+    var normals = new List<Vector3>();
+
+    // Generate convex hull and export the mesh
+    // let this calculator garbage collect if the parentTransform is different.
+    convexHullCalculator.GenerateHull(localPoints, false, ref verts,
+      ref tris,
+      ref normals, out var hasBailed);
+
+    
+    GenerateMeshFromConvexOutput(meshObject, verts.ToArray(), tris.ToArray(), normals.ToArray());
+  }
+
+  public void GenerateMeshFromConvexOutput(GameObject meshObject, Vector3[] vertices, int[] triangles, Vector3[] normals)
+  {
+    // First step is to either update previous mesh or generate a new one.
+    var mesh = meshObject != null
+      ? meshObject.GetComponent<MeshCollider>().sharedMesh
+      : new Mesh
+      {
+        vertices = vertices,
+        triangles = triangles,
+        normals = normals,
+        name =
+          $"{MeshNamePrefix}_{convexHullMeshes.Count}_mesh"
+      };
+
+    // Update the mesh instead of creating a new one (which could cause memory problems)
+    if (meshObject != null)
+    {
+      mesh.vertices = vertices;
+      mesh.triangles = triangles;
+      mesh.normals = normals;
+    }
+
+    // always recalculate to avoid Physics issues. Low perf cost
+    mesh.RecalculateNormals();
+    mesh.RecalculateBounds();
+
+    // todo we get this twice. Possibly optimize this better.
+    var meshCollider = meshObject.GetComponent<MeshCollider>();
+    if (!meshCollider)
+    {
+      meshCollider = meshObject.AddComponent<MeshCollider>();
+      meshCollider.sharedMesh = mesh;
+    }
+
+    meshCollider.sharedMesh = mesh;
+    meshCollider.convex = true;
+    // meshCollider.excludeLayers = LayerHelpers.BlockingColliderExcludeLayers;
+    // meshCollider.includeLayers = LayerHelpers.PhysicalLayerMask;
+    meshCollider.transform.localRotation = Quaternion.identity;
+  }
+
+  public void RegisterHullV4Prefab(string assetName, string hullMaterial,
+    PrefabNames.PrefabSizeVariant sizeVariant)
+  {
+    var prefabName = assetName;
+    try
+    {
+      var prefabAsset =
+        LoadValheimVehicleAssets._bundle.LoadAsset<GameObject>($"{assetName}.prefab");
+
+      if (!prefabAsset)
+      {
+        LoggerProvider.LogWarning($"Failed to find prefab asset of assetName: {assetName} prefabName: {prefabName}");
+        return;
+      }
+
+      var icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(assetName);
+
+      if (!icon)
+      {
+        icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
+          .ErrorIcon);
+      }
+
+      if (!PrefabRegistryHelpers.PieceDataDictionary.ContainsKey(prefabName))
+      {
+        PrefabRegistryHelpers.PieceDataDictionary.Add(prefabName, new PrefabRegistryHelpers.PieceData
+        {
+          Name = $"{prefabName}",
+          Description = $"{prefabName}",
+          Icon = icon
+        });
+      }
+      else
+      {
+        LoggerProvider.LogWarning($"Already registered {assetName} prefabName: {prefabName}");
+        return;
+      }
+
+      var prefab =
+        PrefabManager.Instance.CreateClonedPrefab(
+          prefabName, prefabAsset);
+
+      if (prefab.GetComponentsInChildren<Collider>() == null)
+      {
+        GenerateConvexHullMeshFromMeshFilters(prefab, prefab.tranform.Find("Visual").gameObject);
+      }
+
+      var materialCount = PrefabNames.GetPrefabSizeArea(sizeVariant);
+
+      SetupHullPrefab(prefab, prefabName,
+        hullMaterial,
+        materialCount);
+    }
+    catch (Exception e)
+    {
+      LoggerProvider.LogError($"Error while registering for HullRibProw {assetName} prefabName: {prefabName} {e}");
+    }
   }
 
   public void RegisterHullProwSpecialVariant(

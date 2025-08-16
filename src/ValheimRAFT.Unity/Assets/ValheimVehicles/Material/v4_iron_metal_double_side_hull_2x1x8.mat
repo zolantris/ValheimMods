@@ -7,7 +7,7 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: iron_metal_double_side_v3_hull_2x1x8 Variant
+  m_Name: v4_iron_metal_double_side_hull_2x1x8
   m_Shader: {fileID: 46, guid: 0000000000000000f000000000000000, type: 0}
   m_Parent: {fileID: 2100000, guid: fbc20ef5e8854104ababfcac4718b0be, type: 2}
   m_ModifiedSerializedProperties: 0

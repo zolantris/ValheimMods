@@ -3,6 +3,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using JetBrains.Annotations;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -31,14 +32,15 @@ public class PrefabThumbnailGenerator : EditorWindow
 
   public static string lastScenePath = "";
 
-  [FormerlySerializedAs("excludedContainsPrefabNames")] public List<string> excludeContainsPrefabNames = new()
-    { "shared_", "steering_wheel", "rope_ladder", "dirt_floor", "dirtfloor_icon","cannon_shoot_part", "chain_link", "rope_anchor", "keel", "rudder_basic", "custom_sail", "mechanism_swivel", "_old", "_test_variant", "tank_tread_icon", "vehicle_hammer", "_backup", "_deprecated" };
+  [FormerlySerializedAs("excludedContainsPrefabNames")]
+  public List<string> excludeContainsPrefabNames = new()
+    { "shared_", "steering_wheel", "rope_ladder", "dirt_floor", "dirtfloor_icon", "cannon_shoot_part", "chain_link", "rope_anchor", "keel", "rudder_basic", "custom_sail", "mechanism_swivel", "_old", "_test_variant", "tank_tread_icon", "vehicle_hammer", "_backup", "_deprecated" };
   public List<string> excludeExactPrefabNames = new()
     { "shared_", "steering_wheel", "rope_ladder", "dirt_floor", "dirtfloor_icon", "rope_anchor", "keel", "rudder_basic", "custom_sail", "mechanism_swivel", "_old", "_test_variant", "tank_tread_icon", "vehicle_hammer" };
 
   public Object searchDirectory;
   public Object targetSpriteAtlas;
-  public string searchDirectoryPath = "Assets/ValheimVehicles/Prefabs/";
+  public List<string> searchDirectoryPaths = new() { "Assets/ValheimVehicles/Prefabs/", "Assets/ValheimVehicles/Prefabs/hulls-v4" };
   public string targetSpriteAtlasPath = "Assets/ValheimVehicles/vehicle_icons.spriteatlasv2";
   private readonly List<GameObject> objList = new();
 
@@ -70,14 +72,14 @@ public class PrefabThumbnailGenerator : EditorWindow
         isRunning = false;
       }
     }
-    
+
     GUILayout.BeginHorizontal();
     var dynamicStatus = isRunning ? "Running" : "Idle";
-    var status =$"Status: {dynamicStatus}";
+    var status = $"Status: {dynamicStatus}";
     GUILayout.Label(status, GUILayout.Width(GuiWidth));
     GUILayout.EndHorizontal();
     EditorGUILayout.Space();
-    
+
     GUILayout.BeginHorizontal();
     GUILayout.Label("Sprite Atlas To Pack", GUILayout.Width(GuiWidth));
     targetSpriteAtlas = EditorGUILayout.ObjectField(targetSpriteAtlas, typeof(SpriteAtlas), false);
@@ -107,17 +109,17 @@ public class PrefabThumbnailGenerator : EditorWindow
     height = EditorGUILayout.IntField(height);
     GUILayout.EndHorizontal();
     EditorGUILayout.Space();
-    
-    
+
+
     GUILayout.BeginHorizontal();
     GUILayout.Label("ExcludeContains PrefabNames", GUILayout.Width(GuiWidth));
-    GUILayout.TextArea(string.Join( ",\n", excludeContainsPrefabNames));
+    GUILayout.TextArea(string.Join(",\n", excludeContainsPrefabNames));
     GUILayout.EndHorizontal();
     EditorGUILayout.Space();
-    
+
     GUILayout.BeginHorizontal();
     GUILayout.Label("ExcludeExact PrefabNames", GUILayout.Width(GuiWidth));
-    GUILayout.TextArea(string.Join( ",\n", excludeExactPrefabNames));
+    GUILayout.TextArea(string.Join(",\n", excludeExactPrefabNames));
     GUILayout.EndHorizontal();
     EditorGUILayout.Space();
   }
@@ -156,7 +158,8 @@ public class PrefabThumbnailGenerator : EditorWindow
       {
         EditorSceneManager.OpenScene(lastScenePath, OpenSceneMode.Single);
       }
-    }catch(Exception e)
+    }
+    catch (Exception e)
     {
       Debug.LogError($"Failed to open scene at {PrefabGenScenePath}");
     }
@@ -167,7 +170,7 @@ public class PrefabThumbnailGenerator : EditorWindow
     var activeScene = SceneManager.GetActiveScene();
     var isGenerationScene = activeScene.path.EndsWith("GeneratePrefabIcons.unity");
     lastScenePath = isGenerationScene ? "" : activeScene.path;
-    
+
     if (!isGenerationScene && activeScene.isDirty)
     {
       if (!EditorSceneManager.SaveScene(activeScene))
@@ -190,8 +193,34 @@ public class PrefabThumbnailGenerator : EditorWindow
   private List<GameObject> GetFilesFromSearchPath()
   {
     objList.Clear();
-    var replaceDirectoryPath = searchDirectory ? AssetDatabase.GetAssetPath(searchDirectory) : searchDirectoryPath;
-    var filePaths = Directory.GetFiles(replaceDirectoryPath, "*.*");
+    var replaceDirectoryPath = searchDirectory ? new List<string> { AssetDatabase.GetAssetPath(searchDirectory) } : searchDirectoryPaths;
+    var pathType = searchDirectory != null ? "SearchDirectory" : "SearchDirectoryPaths";
+    Debug.Log($"Using {pathType}");
+    var filePaths = replaceDirectoryPath.SelectMany(x =>
+    {
+      var filesInDir = Directory.GetFiles(x, "*.prefab");
+
+      // todo may need to call Debug.Log in batches to avoid truncation
+      var currentLogIndex = 0;
+      const int maxBatchLogLines = 20;
+      var hasLoggedOverFileDirLength = false;
+      while (hasLoggedOverFileDirLength == false)
+      {
+        var filesMessage = string.Join(",\n", filesInDir.Skip(currentLogIndex).Take(Math.Min(maxBatchLogLines, filesInDir.Length)));
+        if (filesMessage.Length > 0)
+        {
+          Debug.Log($"found files in dir {x} {filesMessage} \n({currentLogIndex} / {filesInDir.Length})");
+        }
+
+        if (currentLogIndex >= filesInDir.Length)
+        {
+          hasLoggedOverFileDirLength = true;
+        }
+        // force bump by 1 or remaining logs. Will eventually bail
+        currentLogIndex += Math.Max(1, Math.Min(filesInDir.Length - currentLogIndex, maxBatchLogLines));
+      }
+      return filesInDir;
+    });
     List<GameObject> localList = new();
     foreach (var filePath in filePaths)
     {
@@ -237,7 +266,7 @@ public class PrefabThumbnailGenerator : EditorWindow
       Debug.Log("OBJ :  " + obj.name);
 
       // todo this all could be a regexp.
-      
+
       var shouldExit = false;
       foreach (var excludedName in excludeContainsPrefabNames)
       {
@@ -247,7 +276,7 @@ public class PrefabThumbnailGenerator : EditorWindow
           break;
         }
       }
-      
+
       foreach (var excludedName in excludeExactPrefabNames)
       {
         if (obj.name == excludedName)
@@ -256,7 +285,7 @@ public class PrefabThumbnailGenerator : EditorWindow
           break;
         }
       }
-      
+
       if (shouldExit) continue;
       try
       {

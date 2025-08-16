@@ -6,7 +6,7 @@
       outputPath: "C:/Users/%USERNAME%/AppData/Roaming/r2modmanPlus-local/Valheim/profiles/ashlands/BepInEx/plugins/zolantris-ValheimRAFT/Assets/",
     },
     shared_localClient: {
-      "inputPath": "src/ValheimRAFT/bin/Debug",
+      "inputPath": "build/bin/ValheimRAFT/Debug",
       canGenerateDebugFiles: true,
       generatedFilesRegexp: [
         "ValheimRAFT",

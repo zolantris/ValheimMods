@@ -13,6 +13,7 @@
         <FileAlignment>512</FileAlignment>
         <Configurations>Debug;Release;Release Archive;Debug Run ClientServer;Debug Run Client;ReleaseBETA Archive;Debug Run Server;Release Run Server;Release Run ClientServer;ModSyncOnly</Configurations>
         <Platforms>AnyCPU</Platforms>
+        <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     </PropertyGroup>
 
     <ItemGroup Label="Local Dependencies">

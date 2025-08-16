@@ -17,7 +17,7 @@
         <RootNamespace>ModTesting</RootNamespace>
         <AssemblyName>ModTesting</AssemblyName>
         <TargetFramework>netstandard2.0</TargetFramework>
-<!--        <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>-->
+        <!--        <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>-->
         <FileAlignment>512</FileAlignment>
     </PropertyGroup>
     <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Test|AnyCPU' ">
@@ -58,7 +58,7 @@
     <!--  ValheimRAFT  -->
     <ItemGroup>
         <Reference Include="ValheimRAFT">
-            <HintPath>$(SolutionDir)\src\ValheimRAFT\bin\Debug\ValheimRAFT.dll</HintPath>
+            <HintPath>$(SolutionDir)\build\bin\ValheimRAFT\\Debug\ValheimRAFT.dll</HintPath>
             <Private>False</Private>
         </Reference>
     </ItemGroup>

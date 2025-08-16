@@ -1,5 +1,5 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-    <Import Project="$(SolutionDir)build\base.props"/>
+    <!--    <Import Project="$(SolutionDir)build\base.props"/>-->
     <Import Project="$(SolutionDir)build\build_variables.props"/>
 
     <PropertyGroup>
@@ -10,7 +10,7 @@
         <DefineConstants>DEBUG;TRACE;</DefineConstants>
     </PropertyGroup>
     <ItemGroup>
-        <PackageReference Include="System.Core"/>
+        <!--        <PackageReference Include="System.Core"/>-->
         <PackageReference Include="Json5Core" Version="1.0.12"/>
     </ItemGroup>
 </Project>

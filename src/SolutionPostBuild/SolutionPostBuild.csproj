@@ -27,7 +27,8 @@
 
     <PropertyGroup Label="For target args generation">
         <SyncTargets Condition="'$(IsRunnableServer)' == 'true'">server</SyncTargets>
-        <SyncTargets Condition="'$(IsRunnableClient)' == 'true'">localClientEldritch</SyncTargets>
+        <!--        <SyncTargets Condition="'$(IsRunnableClient)' == 'true'">localClientEldritch</SyncTargets>-->
+        <SyncTargets Condition="'$(IsRunnableClient)' == 'true'">localClient</SyncTargets>
         <!--  This overrides server or client config -->
         <SyncTargets Condition="'$(IsRunnableClientServer)' == 'true'">localClient,localClientEldritch,vmClient,server</SyncTargets>
 
@@ -94,7 +95,7 @@
         <Exec Command="if exist $&quot;$(AssetsDir)&quot; del &quot;$(TmpDir)plugins\Assets\*.png.meta&quot;"/>
 
         <!--   copy all files from outputdir, anything included is something that does not exist in the base game dependencies...this copies too many things, including dev only deps fyi. dont use it for production     -->
-        <Exec Command="xcopy &quot;$(SolutionDir)src/ValheimRAFT/bin/Release&quot; &quot;$(TmpDir)plugins\&quot; /q /s /y /i"/>
+        <Exec Command="xcopy &quot;$(SolutionDir)build/bin/ValheimRAFT/Release&quot; &quot;$(TmpDir)plugins\&quot; /q /s /y /i"/>
 
         <Exec Command="xcopy /d &quot;$(ThunderStoreDir)&quot; &quot;$(TmpDir)&quot; /E/H"/>
         <!-- delete duplicate mod version-->
