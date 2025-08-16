@@ -107,6 +107,7 @@ GameObject:
   - component: {fileID: 8393283544388286268}
   - component: {fileID: 8800145157010667365}
   - component: {fileID: 310749328570780607}
+  - component: {fileID: 5814512291325121969}
   m_Layer: 10
   m_Name: Visual
   m_TagString: Untagged
@@ -123,7 +124,7 @@ Transform:
   m_GameObject: {fileID: 5604377320865861274}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 1, z: 0, w: 0}
-  m_LocalPosition: {x: 2, y: -2.6, z: 5}
+  m_LocalPosition: {x: 2, y: -2.62, z: 5}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -179,6 +180,28 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!64 &5814512291325121969
+MeshCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5604377320865861274}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 5
+  m_Convex: 1
+  m_CookingOptions: 30
+  m_Mesh: {fileID: -8295922049011600888, guid: 5a8d520f3f664ae44a5d4e344ee9d166, type: 3}
 --- !u!1 &6301625787820454427
 GameObject:
   m_ObjectHideFlags: 0
@@ -189,7 +212,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4276921956757745286}
   m_Layer: 10
-  m_Name: hull_tri_bow_seal_top_right_wood
+  m_Name: hull_seal_tri_bow_right_wood
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

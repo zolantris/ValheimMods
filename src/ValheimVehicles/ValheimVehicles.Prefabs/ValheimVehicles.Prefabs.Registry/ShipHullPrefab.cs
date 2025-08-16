@@ -131,38 +131,42 @@ public class ShipHullPrefab : IRegisterPrefab
     var v4Hulls = new List<string>
     {
       "hull_bow_center_wood",
-      "hull_bow_curved_left_iron",
       "hull_bow_curved_left_wood",
-      "hull_bow_curved_right_iron",
       "hull_bow_curved_right_wood",
-      "hull_bow_tri_left_iron",
+      "hull_bow_curved_left_iron",
+      "hull_bow_curved_right_iron",
       "hull_bow_tri_left_wood",
-      "hull_bow_tri_right_iron",
       "hull_bow_tri_right_wood",
+      "hull_bow_tri_left_iron",
+      "hull_bow_tri_right_iron",
       "hull_rib_aft_center_iron",
       "hull_rib_aft_center_wood",
-      "hull_rib_aft_left_iron",
       "hull_rib_aft_left_wood",
-      "hull_rib_aft_right_iron",
       "hull_rib_aft_right_wood",
-      "hull_rib_expand_left_iron",
+      "hull_rib_aft_left_iron",
+      "hull_rib_aft_right_iron",
       "hull_rib_expand_left_wood",
-      "hull_rib_expand_right_iron",
       "hull_rib_expand_right_wood",
-      "hull_rib_iron",
+      "hull_rib_expand_left_iron",
+      "hull_rib_expand_right_iron",
       "hull_rib_wood",
-      "hull_seal_bow_left_iron",
+      "hull_rib_iron",
       "hull_seal_bow_left_wood",
-      "hull_seal_bow_right_iron",
       "hull_seal_bow_right_wood",
+      "hull_seal_bow_left_iron",
+      "hull_seal_bow_right_iron",
       "hull_seal_corner_left_wood",
-      "hull_seal_corner_left_wood_iron",
-      "hull_seal_corner_right_iron",
       "hull_seal_corner_right_wood",
-      "hull_top_expander_left_iron",
-      "hull_top_expander_left_wood",
-      "hull_top_expander_right_iron",
-      "hull_top_expander_right_wood"
+      "hull_seal_corner_left_iron",
+      "hull_seal_corner_right_iron",
+      "hull_seal_expander_left_iron",
+      "hull_seal_expander_right_iron",
+      "hull_seal_expander_left_wood",
+      "hull_seal_expander_right_wood",
+      "hull_seal_tri_bow_left_wood",
+      "hull_seal_tri_bow_right_wood",
+      "hull_seal_tri_bow_seal_left_iron",
+      "hull_seal_tri_bow_seal_right_iron"
     };
 
     v4Hulls.ForEach(x => RegisterHullV4Prefab(x, x.Contains("wood") ? "wood" : "iron", PrefabNames.PrefabSizeVariant.FourByFour));
@@ -470,12 +474,12 @@ public class ShipHullPrefab : IRegisterPrefab
     LoggerProvider.LogDebug("Successfully registered double hull prow");
   }
 
-  public static ConvexHullCalculator convexHullCalculator;
+  public static ConvexHullCalculator convexHullCalculator = new();
 
-  public void GenerateConvexHullMeshFromMeshFilters(GameObject prefab, GameObject meshObject, Vector3 offset)
+  public void GenerateConvexHullMeshFromMeshFilters(GameObject prefab, GameObject meshObject)
   {
     var points = new List<Vector3>();
-    var visualMeshes = prefab.GetComponentsInChildren<MeshFilter>();
+    var visualMeshes = meshObject.GetComponentsInChildren<MeshFilter>();
     foreach (var visualMesh in visualMeshes)
     {
       if (!visualMesh.sharedMesh) continue;
@@ -483,8 +487,10 @@ public class ShipHullPrefab : IRegisterPrefab
     }
     var prefabTransform = prefab.transform;
 
+    if (points.Count <= 0) return;
+
     var localPoints = points
-      .Select(x => prefabTransform.InverseTransformPoint(x) + offset).ToList();
+      .Select(x => prefabTransform.InverseTransformPoint(x)).ToList();
 
     // Prepare output containers
     var verts = new List<Vector3>();
@@ -493,35 +499,37 @@ public class ShipHullPrefab : IRegisterPrefab
 
     // Generate convex hull and export the mesh
     // let this calculator garbage collect if the parentTransform is different.
-    convexHullCalculator.GenerateHull(localPoints, false, ref verts,
-      ref tris,
-      ref normals, out var hasBailed);
+    try
+    {
+      convexHullCalculator.GenerateHull(localPoints, false, ref verts,
+        ref tris,
+        ref normals, out var hasBailed);
+    }
+    catch (Exception e)
+    {
+      LoggerProvider.LogError($"Error with generating convex hull for prefab hull name: <{prefab.name}> \n{e}");
+    }
 
-    
     GenerateMeshFromConvexOutput(meshObject, verts.ToArray(), tris.ToArray(), normals.ToArray());
   }
 
   public void GenerateMeshFromConvexOutput(GameObject meshObject, Vector3[] vertices, int[] triangles, Vector3[] normals)
   {
-    // First step is to either update previous mesh or generate a new one.
-    var mesh = meshObject != null
-      ? meshObject.GetComponent<MeshCollider>().sharedMesh
-      : new Mesh
-      {
-        vertices = vertices,
-        triangles = triangles,
-        normals = normals,
-        name =
-          $"{MeshNamePrefix}_{convexHullMeshes.Count}_mesh"
-      };
+    if (meshObject == null) return;
 
-    // Update the mesh instead of creating a new one (which could cause memory problems)
-    if (meshObject != null)
+    // First step is to either update previous mesh or generate a new one.
+    var mesh = new Mesh
     {
-      mesh.vertices = vertices;
-      mesh.triangles = triangles;
-      mesh.normals = normals;
-    }
+      vertices = vertices,
+      triangles = triangles,
+      normals = normals,
+      name =
+        $"generated_mesh_{meshObject.transform.root.name}"
+    };
+
+    mesh.vertices = vertices;
+    mesh.triangles = triangles;
+    mesh.normals = normals;
 
     // always recalculate to avoid Physics issues. Low perf cost
     mesh.RecalculateNormals();
@@ -532,14 +540,13 @@ public class ShipHullPrefab : IRegisterPrefab
     if (!meshCollider)
     {
       meshCollider = meshObject.AddComponent<MeshCollider>();
-      meshCollider.sharedMesh = mesh;
     }
 
     meshCollider.sharedMesh = mesh;
-    meshCollider.convex = true;
+    // convex means it would be inaccurate the whole point of generating the mesh is so I can be an optimize concave collider.
+    meshCollider.convex = false;
     // meshCollider.excludeLayers = LayerHelpers.BlockingColliderExcludeLayers;
     // meshCollider.includeLayers = LayerHelpers.PhysicalLayerMask;
-    meshCollider.transform.localRotation = Quaternion.identity;
   }
 
   public void RegisterHullV4Prefab(string assetName, string hullMaterial,
@@ -584,9 +591,18 @@ public class ShipHullPrefab : IRegisterPrefab
         PrefabManager.Instance.CreateClonedPrefab(
           prefabName, prefabAsset);
 
-      if (prefab.GetComponentsInChildren<Collider>() == null)
+      var colliders = prefab.GetComponentsInChildren<Collider>();
+      if (colliders == null || colliders.Length == 0)
       {
-        GenerateConvexHullMeshFromMeshFilters(prefab, prefab.tranform.Find("Visual").gameObject);
+        var visual = prefab.transform.Find("Visual");
+        if (!visual)
+        {
+          LoggerProvider.LogDebug("Failed to find visual to add collider to");
+        }
+        else
+        {
+          GenerateConvexHullMeshFromMeshFilters(prefab, visual.gameObject);
+        }
       }
 
       var materialCount = PrefabNames.GetPrefabSizeArea(sizeVariant);

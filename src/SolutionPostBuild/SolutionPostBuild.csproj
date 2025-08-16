@@ -23,6 +23,8 @@
         <Configurations>Debug;Release;Debug Run ClientServer;Debug Run Client;Release Archive;ReleaseBeta Archive;ModSyncOnly;Release Run Client</Configurations>
         <TargetFramework>Net8.0</TargetFramework>
         <Platforms>AnyCPU</Platforms>
+        <!--   prevents caching of build     -->
+        <DisableFastUpToDateCheck>true</DisableFastUpToDateCheck>
     </PropertyGroup>
 
     <PropertyGroup Label="For target args generation">
@@ -36,15 +38,17 @@
         <SyncEnvFlags Condition="'$(IsRelease)' == 'true'">--env-release</SyncEnvFlags>
     </PropertyGroup>
 
+    <Target KeepDuplicateOutputs="false" Name="Logger" AfterTargets="Build">
+        <Message Text="IsRunnableServer is: $(IsRunnableServer)" Importance="high"/>
+        <Message Text="IsRunnableClient is: $(IsRunnableClient)" Importance="high"/>
+        <Message Text="IsRunnableClientServer is: $(IsRunnableClientServer)" Importance="high"/>
+    </Target>
     <!-- Consolidated RunPostInstaller target -->
     <!--    KeepDuplicateOutputs prevents caching of this        -->
     <Target Name="RunPostInstaller"
             KeepDuplicateOutputs="false"
             AfterTargets="Build"
             Condition=" '$(PostInstallerEnabled)' == 'true' AND '$(SyncTargets)' != '' ">
-        <Message Text="IsRunnableServer is: $(IsRunnableServer)" Importance="high"/>
-        <Message Text="IsRunnableClient is: $(IsRunnableClient)" Importance="high"/>
-        <Message Text="IsRunnableClientServer is: $(IsRunnableClientServer)" Importance="high"/>
         <Message Text="SyncTargets is: $(SyncTargets)" Importance="high"/>
         <Exec
                 Command="dotnet &quot;$(ModSyncDll)&quot; sync --targets=&quot;$(SyncTargets)&quot; $(SyncEnvFlags)"

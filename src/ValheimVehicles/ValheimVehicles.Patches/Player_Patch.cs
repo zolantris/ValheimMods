@@ -210,6 +210,7 @@
       return gameObject;
     }
 
+#if DEBUG
     /// <summary>
     /// Controls snappoint alignment with rotationals that can flip a snappoint.
     ///
@@ -238,6 +239,7 @@
         __instance.m_placementGhost.transform.rotation = quaternion * snappointTransform.localRotation;
       }
     }
+#endif
 
     public static void TryFixPieceOverlap(GameObject gameObject)
     {
