@@ -69,22 +69,4 @@
         <Folder Include="docs-images\"/>
         <Folder Include="ValheimRAFT.Patches\"/>
     </ItemGroup>
-    <!-- Releases -->
-    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release Archive|AnyCPU' ">
-        <OutputPath>bin\Release Archive\</OutputPath>
-    </PropertyGroup>
-    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-        <OutputPath>bin\Release\</OutputPath>
-    </PropertyGroup>
-    <PropertyGroup Condition=" '$(Configuration)' == 'ReleaseBETA Archive' ">
-        <OutputPath>bin\Release Archive\</OutputPath>
-        <PlatformTarget>AnyCPU</PlatformTarget>
-        <DebugType>pdbonly</DebugType>
-        <Optimize>true</Optimize>
-        <OutputPath>bin\Release\</OutputPath>
-        <DefineConstants>TRACE;VALHEIM;</DefineConstants>
-        <ErrorReport>prompt</ErrorReport>
-        <WarningLevel>4</WarningLevel>
-        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    </PropertyGroup>
 </Project>
