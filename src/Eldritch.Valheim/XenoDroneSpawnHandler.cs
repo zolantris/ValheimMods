@@ -30,7 +30,8 @@ public class XenoDroneSpawnHandler : MonoBehaviour
   {
     if (!shouldAssignPrimaryTargetToPlayer) return;
     if (Player.m_localPlayer == null) return;
-    droneAi.PrimaryTarget = Player.m_localPlayer.transform;
+    droneAi.SetPrimaryTarget(Player.m_localPlayer.transform);
+
   }
 
   public void UpdateXeno()

@@ -397,6 +397,32 @@
         return $"{HullProw}_{materialVariantName}_{sizeVariant}";
       }
 
+      /// <summary>
+      /// Todo determine if we want to use full assetbundle string instead
+      /// </summary>
+      public static string GetHullPrefabV4Name(string baseName, string materialVariant, PrefabSizeVariant? prefabSizeVariant, DirectionVariant? directionVariant)
+      {
+        var prefabRegistryName = $"{baseName}";
+
+        if (directionVariant.HasValue)
+        {
+          // var sizeVariant = GetPrefabSizeVariantName(prefabSizeVariant);
+          var directionName = GetDirectionName(directionVariant.Value);
+          prefabRegistryName += $"_{directionName}";
+        }
+
+        var materialVariantName = GetMaterialVariantName(materialVariant);
+        prefabRegistryName += $"_{materialVariantName}";
+
+        if (directionVariant.HasValue)
+        {
+          var directionName = GetDirectionName(directionVariant.Value);
+          prefabRegistryName += $"_{directionName}";
+        }
+
+        return prefabRegistryName;
+      }
+
 
       public static string GetHullProwRibVariants(string materialVariant,
         PrefabSizeVariant prefabSizeVariant, DirectionVariant? directionVariant, string prefabVariant)

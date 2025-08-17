@@ -58,6 +58,8 @@ public class SteeringWheelComponent : MonoBehaviour, IAnimatorHandler, Hoverable
   private Transform? m_targetRightHand;
 
   public string m_hoverText { get; set; }
+  public Humanoid? m_lastAttachedHumanoid;
+
 
   private const float maxUseRange = 10f;
   public Transform AttachPoint { get; set; }
@@ -300,21 +302,35 @@ public class SteeringWheelComponent : MonoBehaviour, IAnimatorHandler, Hoverable
     showTutorial = nextValue;
   }
 
+
   public bool Interact(Humanoid user, bool hold, bool alt)
   {
     if (!isActiveAndEnabled) return false;
     if (ControllersInstance == null || ControllersInstance.MovementController == null || ControllersInstance.OnboardController == null || ControllersInstance.PiecesController == null) return false;
+
+    // prevent interacting with same wheel while already controlling wheel and leaving controls
+    if (user == m_lastAttachedHumanoid)
+    {
+      m_lastAttachedHumanoid = null;
+      return false;
+    }
+    m_lastAttachedHumanoid = user;
 
     if (alt && !hold)
     {
       ToggleTutorial();
       return true;
     }
-
     var canUse = InUseDistance(user);
 
     var HasInvalidVehicle = ControllersInstance.Manager == null;
     if (HasInvalidVehicle || !canUse) return false;
+
+    if (user.IsAttached() || user.IsAttachedToShip())
+    {
+      user.AttachStop();
+      return true;
+    }
 
     SetLastUsedWheel();
 

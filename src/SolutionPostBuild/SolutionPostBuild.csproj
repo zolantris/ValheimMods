@@ -23,11 +23,14 @@
         <Configurations>Debug;Release;Debug Run ClientServer;Debug Run Client;Release Archive;ReleaseBeta Archive;ModSyncOnly;Release Run Client</Configurations>
         <TargetFramework>Net8.0</TargetFramework>
         <Platforms>AnyCPU</Platforms>
+        <!--   prevents caching of build     -->
+        <DisableFastUpToDateCheck>true</DisableFastUpToDateCheck>
     </PropertyGroup>
 
     <PropertyGroup Label="For target args generation">
         <SyncTargets Condition="'$(IsRunnableServer)' == 'true'">server</SyncTargets>
-        <SyncTargets Condition="'$(IsRunnableClient)' == 'true'">localClientEldritch</SyncTargets>
+        <!--        <SyncTargets Condition="'$(IsRunnableClient)' == 'true'">localClientEldritch</SyncTargets>-->
+        <SyncTargets Condition="'$(IsRunnableClient)' == 'true'">localClient</SyncTargets>
         <!--  This overrides server or client config -->
         <SyncTargets Condition="'$(IsRunnableClientServer)' == 'true'">localClient,localClientEldritch,vmClient,server</SyncTargets>
 
@@ -35,15 +38,17 @@
         <SyncEnvFlags Condition="'$(IsRelease)' == 'true'">--env-release</SyncEnvFlags>
     </PropertyGroup>
 
+    <Target KeepDuplicateOutputs="false" Name="Logger" AfterTargets="Build">
+        <Message Text="IsRunnableServer is: $(IsRunnableServer)" Importance="high"/>
+        <Message Text="IsRunnableClient is: $(IsRunnableClient)" Importance="high"/>
+        <Message Text="IsRunnableClientServer is: $(IsRunnableClientServer)" Importance="high"/>
+    </Target>
     <!-- Consolidated RunPostInstaller target -->
     <!--    KeepDuplicateOutputs prevents caching of this        -->
     <Target Name="RunPostInstaller"
             KeepDuplicateOutputs="false"
             AfterTargets="Build"
             Condition=" '$(PostInstallerEnabled)' == 'true' AND '$(SyncTargets)' != '' ">
-        <Message Text="IsRunnableServer is: $(IsRunnableServer)" Importance="high"/>
-        <Message Text="IsRunnableClient is: $(IsRunnableClient)" Importance="high"/>
-        <Message Text="IsRunnableClientServer is: $(IsRunnableClientServer)" Importance="high"/>
         <Message Text="SyncTargets is: $(SyncTargets)" Importance="high"/>
         <Exec
                 Command="dotnet &quot;$(ModSyncDll)&quot; sync --targets=&quot;$(SyncTargets)&quot; $(SyncEnvFlags)"
@@ -56,8 +61,8 @@
     <Target KeepDuplicateOutputs="false" Name="Generate_Mod_Archive" AfterTargets="RunPostInstaller" Condition=" '$(Configuration)|$(Platform)' == 'ReleaseBETA Archive|AnyCPU' or  '$(Configuration)|$(Platform)' == 'Release Archive|AnyCPU' ">
         <PropertyGroup Label="Shared Release Properties">
             <ReleaseName>ValheimRAFT</ReleaseName>
-            <ApplicationVersion>3.6.5</ApplicationVersion>
-            <ReleaseVersion>3.6.5</ReleaseVersion>
+            <ApplicationVersion>3.7.1</ApplicationVersion>
+            <ReleaseVersion>3.7.1</ReleaseVersion>
             <RepoDir>$(SolutionDir)src\ValheimRAFT\</RepoDir>
             <ThunderStoreName>Thunderstore</ThunderStoreName>
             <TmpDir>$(ModOutputDir)tmp\</TmpDir>
@@ -94,7 +99,7 @@
         <Exec Command="if exist $&quot;$(AssetsDir)&quot; del &quot;$(TmpDir)plugins\Assets\*.png.meta&quot;"/>
 
         <!--   copy all files from outputdir, anything included is something that does not exist in the base game dependencies...this copies too many things, including dev only deps fyi. dont use it for production     -->
-        <Exec Command="xcopy &quot;$(SolutionDir)src/ValheimRAFT/bin/Release&quot; &quot;$(TmpDir)plugins\&quot; /q /s /y /i"/>
+        <Exec Command="xcopy &quot;$(SolutionDir)build/bin/ValheimRAFT/Release&quot; &quot;$(TmpDir)plugins\&quot; /q /s /y /i"/>
 
         <Exec Command="xcopy /d &quot;$(ThunderStoreDir)&quot; &quot;$(TmpDir)&quot; /E/H"/>
         <!-- delete duplicate mod version-->

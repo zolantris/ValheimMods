@@ -12,8 +12,17 @@
         <OutputPath>bin\Debug\</OutputPath>
     </PropertyGroup>
 
+    <!--    translations-->
+    <ItemGroup>
+        <Content Include="Assets\Translations\English\eldritch.json"/>
+    </ItemGroup>
+
     <ItemGroup Label="Core Deps">
         <ProjectReference Include="$(SolutionDir)src\Shared\Shared.csproj"/>
         <ProjectReference Include="$(SolutionDir)src\Eldritch.Core\EldritchCore.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <Folder Include="thunderstore\"/>
     </ItemGroup>
 </Project>

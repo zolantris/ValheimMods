@@ -1,24 +1,30 @@
 ManifestFileVersion: 0
-CRC: 1798007356
+CRC: 3939193015
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: a03d287683c18eb7bda0a736f9f4750c
+    Hash: 34fd761145b6a0bb8fbbbcd8feb1933b
   TypeTreeHash:
     serializedVersion: 2
-    Hash: 5af80051fd9d28f74d769dd5d6f39163
+    Hash: 0a3b5e6d4a3fcc93f4c31017bd2e1d01
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: a03d287683c18eb7bda0a736f9f4750c
+    Hash: 34fd761145b6a0bb8fbbbcd8feb1933b
 HashAppended: 0
 ClassTypes:
 - Class: 1
   Script: {instanceID: 0}
 - Class: 4
   Script: {instanceID: 0}
+- Class: 20
+  Script: {instanceID: 0}
 - Class: 21
   Script: {instanceID: 0}
+- Class: 23
+  Script: {instanceID: 0}
 - Class: 28
+  Script: {instanceID: 0}
+- Class: 33
   Script: {instanceID: 0}
 - Class: 43
   Script: {instanceID: 0}
@@ -26,7 +32,11 @@ ClassTypes:
   Script: {instanceID: 0}
 - Class: 54
   Script: {instanceID: 0}
+- Class: 65
+  Script: {instanceID: 0}
 - Class: 74
+  Script: {instanceID: 0}
+- Class: 81
   Script: {instanceID: 0}
 - Class: 90
   Script: {instanceID: 0}
@@ -35,9 +45,19 @@ ClassTypes:
 - Class: 95
   Script: {instanceID: 0}
 - Class: 114
+  Script: {fileID: 11500000, guid: cdfae84e02924731b17bd74de3d20973, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 1bf99c47ee254956981c32774ccaca00, type: 3}
+- Class: 114
   Script: {fileID: 11500000, guid: 05f7819b0da0d2f4ba6335a5bb19d929, type: 3}
 - Class: 114
-  Script: {fileID: 867332515, guid: 886b1d72cb70d864e88de6bf55c88afb, type: 3}
+  Script: {fileID: 11500000, guid: c12c46f8f3c74171a1c87c2cd50c92eb, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 9f61eb9c251f494cbf7b9f0787a663c6, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: f41eb774c5ba4185a5e22e387876cd03, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 6d08ca6ba1ea4835a2a64ea2ca7ef994, type: 3}
 - Class: 115
   Script: {instanceID: 0}
 - Class: 134
@@ -54,8 +74,18 @@ ClassTypes:
   Script: {instanceID: 0}
 - Class: 687078895
   Script: {instanceID: 0}
-SerializeReferenceClassIdentifiers: []
+SerializeReferenceClassIdentifiers:
+- AssemblyName: Eldritch.Core
+  ClassName: Eldritch.Core.Abilities.CamouflageAbilityConfig
+- AssemblyName: Eldritch.Core
+  ClassName: Eldritch.Core.Abilities.DodgeAbilityConfig
+- AssemblyName: Eldritch.Core
+  ClassName: Eldritch.Core.SurfaceClimbingState
+- AssemblyName: Eldritch.Core
+  ClassName: Eldritch.Core.XenoHuntBehaviorConfig
+- AssemblyName: Eldritch.Core
+  ClassName: Eldritch.Core.XenoHuntBehaviorState
 Assets:
-- Assets/Plugins/Eldritch.Core/Assets/AlienTest.prefab
+- Assets/ValheimVehicles/ExternalAssets/Enemies/xeno/xenomorph_drone.prefab
 - Assets/Plugins/EldritchAssets/icons.spriteatlasv2
 Dependencies: []

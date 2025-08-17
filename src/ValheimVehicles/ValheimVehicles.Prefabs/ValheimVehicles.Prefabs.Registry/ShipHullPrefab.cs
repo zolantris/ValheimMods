@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using HarmonyLib;
 using Jotunn.Configs;
@@ -125,6 +126,62 @@ public class ShipHullPrefab : IRegisterPrefab
         materialCount,
         sizeVariant);
     }
+
+
+    var v4Hulls = new List<string>
+    {
+      "hull_bow_center_wood",
+      "hull_bow_curved_left_wood",
+      "hull_bow_curved_right_wood",
+      "hull_bow_curved_left_iron",
+      "hull_bow_curved_right_iron",
+      "hull_bow_tri_left_wood",
+      "hull_bow_tri_right_wood",
+      "hull_bow_tri_left_iron",
+      "hull_bow_tri_right_iron",
+      "hull_rib_aft_center_iron",
+      "hull_rib_aft_center_wood",
+      "hull_rib_aft_left_wood",
+      "hull_rib_aft_right_wood",
+      "hull_rib_aft_left_iron",
+      "hull_rib_aft_right_iron",
+      "hull_rib_expand_left_wood",
+      "hull_rib_expand_right_wood",
+      "hull_rib_expand_left_iron",
+      "hull_rib_expand_right_iron",
+      "hull_rib_wood",
+      "hull_rib_iron",
+      "hull_seal_bow_left_wood",
+      "hull_seal_bow_right_wood",
+      "hull_seal_bow_left_iron",
+      "hull_seal_bow_right_iron",
+      "hull_seal_corner_left_wood",
+      "hull_seal_corner_right_wood",
+      "hull_seal_corner_left_iron",
+      "hull_seal_corner_right_iron",
+      "hull_seal_expander_left_iron",
+      "hull_seal_expander_right_iron",
+      "hull_seal_expander_left_wood",
+      "hull_seal_expander_right_wood",
+      "hull_seal_tri_bow_left_wood",
+      "hull_seal_tri_bow_right_wood",
+      "hull_seal_tri_bow_seal_left_iron",
+      "hull_seal_tri_bow_seal_right_iron",
+      "hull_rail_straight_wood",
+      "hull_rail_connector_wood",
+      "hull_rail_25deg_wood",
+      "hull_rail_45deg_wood",
+      "hull_rail_corner_wood",
+      "hull_rail_prow_corner_wood",
+      "hull_rail_straight_iron",
+      "hull_rail_connector_iron",
+      "hull_rail_25deg_iron",
+      "hull_rail_45deg_iron",
+      "hull_rail_corner_iron",
+      "hull_rail_prow_corner_iron"
+    };
+
+    v4Hulls.ForEach(x => RegisterHullV4Prefab(x, x.Contains("wood") ? "wood" : "iron", x.Contains("rail") ? PrefabNames.PrefabSizeVariant.TwoByTwo : PrefabNames.PrefabSizeVariant.FourByFour));
   }
 
   public static void RegisterHullProwSeal()
@@ -427,6 +484,149 @@ public class ShipHullPrefab : IRegisterPrefab
       materialCount);
 
     LoggerProvider.LogDebug("Successfully registered double hull prow");
+  }
+
+  public static ConvexHullCalculator convexHullCalculator = new();
+
+  public void GenerateConvexHullMeshFromMeshFilters(GameObject prefab, GameObject meshObject)
+  {
+    var points = new List<Vector3>();
+    var visualMeshes = meshObject.GetComponentsInChildren<MeshFilter>();
+    foreach (var visualMesh in visualMeshes)
+    {
+      if (!visualMesh.sharedMesh) continue;
+      points.AddRange(visualMesh.sharedMesh.vertices);
+    }
+    var prefabTransform = prefab.transform;
+
+    if (points.Count <= 0) return;
+
+    var localPoints = points
+      .Select(x => prefabTransform.InverseTransformPoint(x)).ToList();
+
+    // Prepare output containers
+    var verts = new List<Vector3>();
+    var tris = new List<int>();
+    var normals = new List<Vector3>();
+
+    // Generate convex hull and export the mesh
+    // let this calculator garbage collect if the parentTransform is different.
+    try
+    {
+      convexHullCalculator.GenerateHull(localPoints, false, ref verts,
+        ref tris,
+        ref normals, out var hasBailed);
+    }
+    catch (Exception e)
+    {
+      LoggerProvider.LogError($"Error with generating convex hull for prefab hull name: <{prefab.name}> \n{e}");
+    }
+
+    GenerateMeshFromConvexOutput(meshObject, verts.ToArray(), tris.ToArray(), normals.ToArray());
+  }
+
+  public void GenerateMeshFromConvexOutput(GameObject meshObject, Vector3[] vertices, int[] triangles, Vector3[] normals)
+  {
+    if (meshObject == null) return;
+
+    // First step is to either update previous mesh or generate a new one.
+    var mesh = new Mesh
+    {
+      vertices = vertices,
+      triangles = triangles,
+      normals = normals,
+      name =
+        $"generated_mesh_{meshObject.transform.root.name}"
+    };
+
+    mesh.vertices = vertices;
+    mesh.triangles = triangles;
+    mesh.normals = normals;
+
+    // always recalculate to avoid Physics issues. Low perf cost
+    mesh.RecalculateNormals();
+    mesh.RecalculateBounds();
+
+    // todo we get this twice. Possibly optimize this better.
+    var meshCollider = meshObject.GetComponent<MeshCollider>();
+    if (!meshCollider)
+    {
+      meshCollider = meshObject.AddComponent<MeshCollider>();
+    }
+
+    meshCollider.sharedMesh = mesh;
+    // convex means it would be inaccurate the whole point of generating the mesh is so I can be an optimize concave collider.
+    meshCollider.convex = false;
+    // meshCollider.excludeLayers = LayerHelpers.BlockingColliderExcludeLayers;
+    // meshCollider.includeLayers = LayerHelpers.PhysicalLayerMask;
+  }
+
+  public void RegisterHullV4Prefab(string assetName, string hullMaterial,
+    PrefabNames.PrefabSizeVariant sizeVariant)
+  {
+    var prefabName = assetName;
+    try
+    {
+      var prefabAsset =
+        LoadValheimVehicleAssets._bundle.LoadAsset<GameObject>($"{assetName}.prefab");
+
+      if (!prefabAsset)
+      {
+        LoggerProvider.LogWarning($"Failed to find prefab asset of assetName: {assetName} prefabName: {prefabName}");
+        return;
+      }
+
+      var icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(assetName);
+
+      if (!icon)
+      {
+        icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
+          .ErrorIcon);
+      }
+
+      if (!PrefabRegistryHelpers.PieceDataDictionary.ContainsKey(prefabName))
+      {
+        PrefabRegistryHelpers.PieceDataDictionary.Add(prefabName, new PrefabRegistryHelpers.PieceData
+        {
+          Name = $"{prefabName}",
+          Description = $"{prefabName}",
+          Icon = icon
+        });
+      }
+      else
+      {
+        LoggerProvider.LogWarning($"Already registered {assetName} prefabName: {prefabName}");
+        return;
+      }
+
+      var prefab =
+        PrefabManager.Instance.CreateClonedPrefab(
+          prefabName, prefabAsset);
+
+      var colliders = prefab.GetComponentsInChildren<Collider>();
+      if (colliders == null || colliders.Length == 0)
+      {
+        var visual = prefab.transform.Find("Visual");
+        if (!visual)
+        {
+          LoggerProvider.LogDebug("Failed to find visual to add collider to");
+        }
+        else
+        {
+          GenerateConvexHullMeshFromMeshFilters(prefab, visual.gameObject);
+        }
+      }
+
+      var materialCount = PrefabNames.GetPrefabSizeArea(sizeVariant);
+
+      SetupHullPrefab(prefab, prefabName,
+        hullMaterial,
+        materialCount);
+    }
+    catch (Exception e)
+    {
+      LoggerProvider.LogError($"Error while registering for HullRibProw {assetName} prefabName: {prefabName} {e}");
+    }
   }
 
   public void RegisterHullProwSpecialVariant(

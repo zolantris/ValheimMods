@@ -8,6 +8,7 @@ using UnityEngine.Rendering;
 using ValheimVehicles.BepInExConfig;
 using ValheimVehicles.SharedScripts;
 using ValheimVehicles.Components;
+using Zolantris.Shared;
 using Logger = Jotunn.Logger;
 
 namespace ValheimVehicles.Prefabs.Registry;
