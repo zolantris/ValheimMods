@@ -303,7 +303,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2963110678505812470}
   m_Layer: 10
-  m_Name: hud_snappoint_bottom 2
+  m_Name: $hud_snappoint_bottom 2
   m_TagString: snappoint
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -334,7 +334,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3333969654586575087}
   m_Layer: 10
-  m_Name: hud_snappoint_top 2
+  m_Name: $hud_snappoint_top 2
   m_TagString: snappoint
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -365,7 +365,7 @@ GameObject:
   m_Component:
   - component: {fileID: 482446978233003334}
   m_Layer: 10
-  m_Name: hud_snappoint_top 1
+  m_Name: $hud_snappoint_top 1
   m_TagString: snappoint
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -396,7 +396,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2704362324643143835}
   m_Layer: 10
-  m_Name: hud_snappoint_bottom 1
+  m_Name: $hud_snappoint_bottom 1
   m_TagString: snappoint
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

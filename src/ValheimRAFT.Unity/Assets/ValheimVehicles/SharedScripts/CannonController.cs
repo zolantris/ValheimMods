@@ -61,7 +61,7 @@ namespace ValheimVehicles.SharedScripts
     [SerializeField] public Transform cannonShooterAimPoint;
     [SerializeField] public Transform cannonRotationalTransform;
     [Tooltip("Speed (m/s) for cannonball launch.")]
-    [SerializeField] private float cannonballSpeed = 90f; // 90m/s is standard.
+    public static float cannonballSpeed = 90f; // 90m/s is standard.
 
     [Header("Ammunition")]
     [Tooltip("Maximum shells this cannon can hold.")]
