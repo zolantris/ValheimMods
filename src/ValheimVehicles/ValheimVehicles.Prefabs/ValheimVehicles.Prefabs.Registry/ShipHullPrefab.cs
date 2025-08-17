@@ -166,10 +166,21 @@ public class ShipHullPrefab : IRegisterPrefab
       "hull_seal_tri_bow_left_wood",
       "hull_seal_tri_bow_right_wood",
       "hull_seal_tri_bow_seal_left_iron",
-      "hull_seal_tri_bow_seal_right_iron"
+      "hull_seal_tri_bow_seal_right_iron",
+      "hull_rail_straight_wood",
+      "hull_rail_connector_wood",
+      "hull_rail_25deg_wood",
+      "hull_rail_45deg_wood",
+      "hull_rail_corner_wood",
+      "hull_rail_prow_corner_wood",
+      "hull_rail_connector_iron",
+      "hull_rail_25deg_iron",
+      "hull_rail_45deg_iron",
+      "hull_rail_corner_iron",
+      "hull_rail_prow_corner_iron"
     };
 
-    v4Hulls.ForEach(x => RegisterHullV4Prefab(x, x.Contains("wood") ? "wood" : "iron", PrefabNames.PrefabSizeVariant.FourByFour));
+    v4Hulls.ForEach(x => RegisterHullV4Prefab(x, x.Contains("wood") ? "wood" : "iron", x.Contains("rail") ? PrefabNames.PrefabSizeVariant.TwoByTwo : PrefabNames.PrefabSizeVariant.FourByFour));
   }
 
   public static void RegisterHullProwSeal()
