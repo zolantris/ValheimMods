@@ -173,6 +173,7 @@ public class ShipHullPrefab : IRegisterPrefab
       "hull_rail_45deg_wood",
       "hull_rail_corner_wood",
       "hull_rail_prow_corner_wood",
+      "hull_rail_straight_iron",
       "hull_rail_connector_iron",
       "hull_rail_25deg_iron",
       "hull_rail_45deg_iron",
