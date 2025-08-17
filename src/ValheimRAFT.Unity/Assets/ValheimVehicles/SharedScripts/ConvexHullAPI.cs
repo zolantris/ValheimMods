@@ -1029,7 +1029,8 @@
           vertices = sourceMesh.vertices,
           triangles = sourceMesh.triangles,
           normals = sourceMesh.normals,
-          uv = sourceMesh.uv
+          uv = sourceMesh.uv,
+          indexFormat = sourceMesh.indexFormat
         };
         readableMesh.RecalculateBounds();
         return readableMesh;
