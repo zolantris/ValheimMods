@@ -34,6 +34,7 @@ public class CannonPrefabConfig : BepInExBaseConfig<CannonPrefabConfig>
   public static ConfigEntry<float> CannonAutoAimSpeed = null!;
   public static ConfigEntry<float> CannonAutoAimYOffset = null!;
   public static ConfigEntry<float> CannonAimMaxYRotation = null!;
+  public static ConfigEntry<float> Cannon_FireVelocity = null!;
 
   // cannon control center
   public static ConfigEntry<float> CannonControlCenter_DiscoveryRadius = null!;
@@ -120,7 +121,15 @@ public class CannonPrefabConfig : BepInExBaseConfig<CannonPrefabConfig>
     Cannon_HasFireAudio = config.BindUnique(VehicleCannonsSection, "Cannon_HasFireAudio", true, ConfigHelpers.CreateConfigDescription("Allows toggling the cannon fire audio", false, false));
     Cannon_HasReloadAudio = config.BindUnique(VehicleCannonsSection, "UNSTABLE_Cannon_HasReloadAudio", false, ConfigHelpers.CreateConfigDescription("Allows toggling the reload audio. Unstable b/c it does not sound great when many of these are fired together.", false, false));
 
-    Cannon_FiringDelayPerCannon = config.BindUnique(VehicleCannonsSection, "Cannon_FiringDelayPerCannon", 0.01f, ConfigHelpers.CreateConfigDescription("Allows setting cannon firing delays. This makes cannons fire in a order.", true, false, new AcceptableValueRange<float>(0, 0.3f)));
+    Cannon_FireVelocity = config.BindUnique(VehicleCannonsSection, "Cannon_FireVelocity", 90f, ConfigHelpers.CreateConfigDescription("Allows setting cannon firing velocity", true, false, new AcceptableValueRange<float>(90f, 300f)));
+
+    CannonController.cannonballSpeed = Cannon_FireVelocity.Value;
+    Cannon_FireVelocity.SettingChanged += (sender, args) =>
+    {
+      CannonController.cannonballSpeed = Cannon_FireVelocity.Value;
+    };
+
+    Cannon_FiringDelayPerCannon = config.BindUnique(VehicleCannonsSection, "Cannon_FiringDelayPerCannon", 0.1f, ConfigHelpers.CreateConfigDescription("Allows customizing cannon firing delays. This makes cannons fire in a order.", true, false, new AcceptableValueRange<float>(0.05f, 0.3f)));
     Cannon_ReloadTime = config.BindUnique(VehicleCannonsSection, "Cannon_ReloadTime", 6f, ConfigHelpers.CreateConfigDescription("Allows setting cannon reload delays. This makes cannons reload longer or shorter. Shortest value is 100ms highest is 60seconds", true, false, new AcceptableValueRange<float>(0.1f, 60f)));
 
     CannonAutoAimYOffset = config.BindUnique(VehicleCannonsSection, "CannonAutoAimYOffset", 1f, ConfigHelpers.CreateConfigDescription("Set the Y offset where the cannonball attempt to hit. 0 will aim deadcenter, but it could miss due to gravity. Using above 0 will aim from center to top (1).", true, false, new AcceptableValueRange<float>(-1f, 1f)));

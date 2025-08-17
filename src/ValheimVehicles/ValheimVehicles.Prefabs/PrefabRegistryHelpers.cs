@@ -867,6 +867,15 @@ public abstract class PrefabRegistryHelpers
     HoistSnapPointsToPrefab(prefab, prefab.transform);
   }
 
+  public static void TryFixSnappointName(Transform t)
+  {
+    if (t.name.StartsWith("$")) return;
+    if (t.name.StartsWith("hud") && !t.name.Contains("$"))
+    {
+      t.name = t.name.Replace("hud", "$hud");
+    }
+  }
+
   /// <summary>
   /// Recursive.
   /// </summary>
@@ -882,6 +891,7 @@ public abstract class PrefabRegistryHelpers
       {
         continue;
       }
+      TryFixSnappointName(transformObj);
       if (transformObj.childCount > 0)
       {
         HoistSnappointChildren(prefabRoot, transformObj);
