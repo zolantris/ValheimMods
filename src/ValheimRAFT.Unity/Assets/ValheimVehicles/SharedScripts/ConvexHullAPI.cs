@@ -939,30 +939,27 @@
 
       public void DestroyRemainingColliders(int clusterCount)
       {
-        // deletes the mesh and associated meshCollider if the next hull clusters is smaller than the current one.
-        var meshesToAddDifference = clusterCount - convexHullMeshes.Count;
-        if (meshesToAddDifference > 0 && convexHullMeshes.Count > 0)
+        // If we have MORE meshes than required clusters, delete the extras.
+        var extras = convexHullMeshes.Count - clusterCount;
+        if (extras <= 0) return;
+
+        for (var i = convexHullMeshes.Count - 1; i >= clusterCount; i--)
         {
-          var startIndex = convexHullMeshes.Count + meshesToAddDifference;
-          for (var i = startIndex; i < convexHullMeshes.Count; i++)
+          var go = convexHullMeshes[i];
+          if (go == null)
           {
-            var go = convexHullMeshes[i];
-            if (go == null)
-            {
-              continue;
-            }
-
-            var meshCollider = go.GetComponent<MeshCollider>();
-            if (convexHullMeshColliders.Contains(meshCollider))
-            {
-              convexHullMeshColliders.Remove(meshCollider);
-            }
-
-            Destroy(go);
             convexHullMeshes.RemoveAt(i);
-            // subtract 1 as the array will increment without this.
-            i--;
+            continue;
           }
+
+          var meshCollider = go.GetComponent<MeshCollider>();
+          if (meshCollider && convexHullMeshColliders.Contains(meshCollider))
+          {
+            convexHullMeshColliders.Remove(meshCollider);
+          }
+
+          Destroy(go);
+          convexHullMeshes.RemoveAt(i);
         }
       }
 
@@ -1300,8 +1297,6 @@
           ref tris,
           ref normals, out var hasBailed);
 
-
-
         GenerateMeshFromConvexOutput(verts.ToArray(), tris.ToArray(), normals.ToArray(), meshIndex);
       }
 
@@ -1310,43 +1305,98 @@
         var meshObject = convexHullMeshes.Count > meshIndex ? convexHullMeshes[meshIndex] : null;
 
         // First step is to either update previous mesh or generate a new one.
-        var mesh = meshObject != null
-          ? meshObject.GetComponent<MeshCollider>().sharedMesh
-          : new Mesh
+        Mesh mesh;
+
+        if (meshObject != null)
+        {
+          var existingCollider = meshObject.GetComponent<MeshCollider>();
+          mesh = existingCollider && existingCollider.sharedMesh != null
+            ? existingCollider.sharedMesh
+            : new Mesh { name = $"{MeshNamePrefix}_{meshIndex}_mesh" };
+        }
+        else
+        {
+          mesh = new Mesh { name = $"{MeshNamePrefix}_{meshIndex}_mesh" };
+        }
+
+        // Ensure index format handles large meshes
+        mesh.indexFormat = vertices != null && vertices.Length > 65535
+          ? IndexFormat.UInt32
+          : IndexFormat.UInt16;
+
+        // Clear previous data to avoid stale geometry when counts shrink/grow
+        mesh.Clear(false);
+
+        // Defensive: triangles must be a multiple of 3
+        if (triangles != null && triangles.Length % 3 != 0)
+        {
+          var valid = triangles.Length / 3 * 3;
+          if (valid == 0)
           {
-            name =
-              $"{MeshNamePrefix}_{convexHullMeshes.Count}_mesh"
-          };
+            // Avoid setting any triangles; let it be empty
+            triangles = Array.Empty<int>();
+          }
+          else
+          {
+            Array.Resize(ref triangles, valid);
+          }
+        }
 
-        mesh.vertices = vertices;
-        mesh.triangles = triangles;
-        mesh.normals = normals;
+        // Assign data
+        if (vertices != null && vertices.Length > 0)
+        {
+          // Using SetVertices/SetNormals is generally safer for dynamic data,
+          // but array properties are fine too; keep it simple:
+          mesh.SetVertices(vertices);
 
-        // always recalculate to avoid Physics issues. Low perf cost
-        mesh.RecalculateNormals();
+          if (normals != null && normals.Length == vertices.Length)
+            mesh.SetNormals(normals);
+          else
+            mesh.RecalculateNormals(); // fallback if normals missing/mismatched
+        }
+        else
+        {
+          mesh.SetVertices(Array.Empty<Vector3>());
+          mesh.SetNormals(Array.Empty<Vector3>());
+        }
+
+        if (triangles != null && triangles.Length > 0)
+        {
+          mesh.SetTriangles(triangles, 0, true);
+        }
+        else
+        {
+          mesh.SetTriangles(Array.Empty<int>(), 0, true);
+        }
+
         mesh.RecalculateBounds();
 
         // Do not create another mesh instance if it already exists. Doing this require every collider to be ignored.
         if (meshObject == null)
         {
-
           // Create a new GameObject to display the mesh
           meshObject =
-            new GameObject(
-              $"{MeshNamePrefix}_{convexHullMeshes.Count}")
+            new GameObject($"{MeshNamePrefix}_{meshIndex}")
             {
               layer = LayerHelpers.CustomRaftLayer,
-              transform = { parent = parentTransform, position = parentTransform.transform.position }
+              transform =
+              {
+                parent = parentTransform,
+                position = parentTransform.transform.position
+              }
             };
+
+          // this mesh will be updated frequently
+          mesh.MarkDynamic();
+
           convexHullMeshes.Add(meshObject);
         }
 
-        // todo we get this twice. Possibly optimize this better.
+        // Add/Find the MeshCollider
         var meshCollider = meshObject.GetComponent<MeshCollider>();
         if (!meshCollider)
         {
           meshCollider = meshObject.AddComponent<MeshCollider>();
-          meshCollider.sharedMesh = mesh;
         }
 
         if (HasPhysicMaterial)
@@ -1359,11 +1409,27 @@
           convexHullMeshColliders.Add(meshCollider);
         }
 
-        meshCollider.sharedMesh = mesh;
+        // Cooking options that help stability when geometry changes a lot
+        try
+        {
+          meshCollider.cookingOptions =
+            MeshColliderCookingOptions.EnableMeshCleaning
+            | MeshColliderCookingOptions.WeldColocatedVertices
+            | MeshColliderCookingOptions.UseFastMidphase; // Unity 2022+
+        }
+        catch
+        {
+          // Some platforms may not support all flags; ignore
+        }
+
         meshCollider.convex = true;
         meshCollider.excludeLayers = LayerHelpers.BlockingColliderExcludeLayers;
         meshCollider.includeLayers = LayerHelpers.PhysicalLayerMask;
         meshCollider.transform.localRotation = Quaternion.identity;
+
+        // Force a clean recook: reassign sharedMesh
+        meshCollider.sharedMesh = null;
+        meshCollider.sharedMesh = mesh;
       }
 
       /// <summary>

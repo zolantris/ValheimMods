@@ -874,7 +874,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &183025644
 Transform:
   m_ObjectHideFlags: 0
@@ -5154,6 +5154,18 @@ PrefabInstance:
       propertyPath: m_Name
       value: hull_rib_expand_right_iron
       objectReference: {fileID: 0}
+    - target: {fileID: 8172112888780048913, guid: 9e275479b91471340a684d5f8e8fb7c9, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8172112888780048913, guid: 9e275479b91471340a684d5f8e8fb7c9, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8172112888780048913, guid: 9e275479b91471340a684d5f8e8fb7c9, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -6468,7 +6480,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &1064202173
 Transform:
   m_ObjectHideFlags: 0
@@ -7055,7 +7067,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: 105e33b51a729074a996c08855fdc47a, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 2574596645576324636, guid: 105e33b51a729074a996c08855fdc47a, type: 3}
       propertyPath: m_LocalPosition.x
@@ -12274,7 +12286,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: 105e33b51a729074a996c08855fdc47a, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 2574596645576324636, guid: 105e33b51a729074a996c08855fdc47a, type: 3}
       propertyPath: m_LocalPosition.x
