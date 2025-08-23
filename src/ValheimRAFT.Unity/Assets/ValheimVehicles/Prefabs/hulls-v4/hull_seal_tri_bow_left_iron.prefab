@@ -11,18 +11,18 @@ PrefabInstance:
     - target: {fileID: 1561466197137644199, guid: fbe7435a0106d5748a2cf80da4f762c9, type: 3}
       propertyPath: m_Materials.Array.data[0]
       value: 
-      objectReference: {fileID: 2100000, guid: 297f395a9b1b409468e726491a6a0478, type: 2}
+      objectReference: {fileID: 2100000, guid: 96a23f743a56d384799541d09a9abec8, type: 2}
     - target: {fileID: 4276921956757745286, guid: fbe7435a0106d5748a2cf80da4f762c9, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4276921956757745286, guid: fbe7435a0106d5748a2cf80da4f762c9, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0
+      value: -0.00078201294
       objectReference: {fileID: 0}
     - target: {fileID: 4276921956757745286, guid: fbe7435a0106d5748a2cf80da4f762c9, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 0
+      value: 4
       objectReference: {fileID: 0}
     - target: {fileID: 4276921956757745286, guid: fbe7435a0106d5748a2cf80da4f762c9, type: 3}
       propertyPath: m_LocalRotation.w
@@ -30,15 +30,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4276921956757745286, guid: fbe7435a0106d5748a2cf80da4f762c9, type: 3}
       propertyPath: m_LocalRotation.x
-      value: 0
+      value: -0
       objectReference: {fileID: 0}
     - target: {fileID: 4276921956757745286, guid: fbe7435a0106d5748a2cf80da4f762c9, type: 3}
       propertyPath: m_LocalRotation.y
-      value: 0
+      value: -0
       objectReference: {fileID: 0}
     - target: {fileID: 4276921956757745286, guid: fbe7435a0106d5748a2cf80da4f762c9, type: 3}
       propertyPath: m_LocalRotation.z
-      value: 0
+      value: -0
       objectReference: {fileID: 0}
     - target: {fileID: 4276921956757745286, guid: fbe7435a0106d5748a2cf80da4f762c9, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -54,7 +54,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6301625787820454427, guid: fbe7435a0106d5748a2cf80da4f762c9, type: 3}
       propertyPath: m_Name
-      value: hull_tri_bow_seal_top_left_iron
+      value: hull_seal_tri_bow_left_iron
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

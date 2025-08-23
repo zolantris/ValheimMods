@@ -29,12 +29,13 @@ Material:
     - _EmissionMap:
         m_Texture: {fileID: 0}
         m_Scale: {x: 0.00064, y: 0.0005}
-        m_Offset: {x: 0.287, y: 0}
+        m_Offset: {x: 0.505, y: 0.606}
     - _MainTex:
         m_Texture: {fileID: 2800000, guid: 60b953494c87c124a87210c11a09e931, type: 3}
         m_Scale: {x: 0.00064, y: 0.0005}
-        m_Offset: {x: 0.287, y: 0}
+        m_Offset: {x: 0.505, y: 0.606}
     m_Ints: []
-    m_Floats: []
+    m_Floats:
+    - _GlossMapScale: 1
     m_Colors: []
   m_BuildTextureStacks: []

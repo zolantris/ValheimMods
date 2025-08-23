@@ -18,7 +18,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2370478043978964315, guid: 72cd53f25e310274e80cd9d7ca19a850, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 0
+      value: -8
       objectReference: {fileID: 0}
     - target: {fileID: 2370478043978964315, guid: 72cd53f25e310274e80cd9d7ca19a850, type: 3}
       propertyPath: m_LocalRotation.w
@@ -26,15 +26,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2370478043978964315, guid: 72cd53f25e310274e80cd9d7ca19a850, type: 3}
       propertyPath: m_LocalRotation.x
-      value: 0
+      value: -0
       objectReference: {fileID: 0}
     - target: {fileID: 2370478043978964315, guid: 72cd53f25e310274e80cd9d7ca19a850, type: 3}
       propertyPath: m_LocalRotation.y
-      value: 0
+      value: -0
       objectReference: {fileID: 0}
     - target: {fileID: 2370478043978964315, guid: 72cd53f25e310274e80cd9d7ca19a850, type: 3}
       propertyPath: m_LocalRotation.z
-      value: 0
+      value: -0
       objectReference: {fileID: 0}
     - target: {fileID: 2370478043978964315, guid: 72cd53f25e310274e80cd9d7ca19a850, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -51,7 +51,7 @@ PrefabInstance:
     - target: {fileID: 6303603425619101620, guid: 72cd53f25e310274e80cd9d7ca19a850, type: 3}
       propertyPath: m_Materials.Array.data[0]
       value: 
-      objectReference: {fileID: 2100000, guid: 3f4f4dbcea1ec7b45b9a4232c60fca23, type: 2}
+      objectReference: {fileID: 2100000, guid: fc7a4bbb3f575934ea290f83a7d8f6e3, type: 2}
     - target: {fileID: 7646379334473273849, guid: 72cd53f25e310274e80cd9d7ca19a850, type: 3}
       propertyPath: m_Name
       value: hull_seal_expander_right_iron

@@ -15,7 +15,7 @@ using Zolantris.Shared;
 
 namespace ValheimVehicles.Prefabs.Registry;
 
-public class ShipHullPrefab : RegisterPrefab<ShipHullPrefab>
+public class ShipHullPrefabRegistry : RegisterPrefab<ShipHullPrefabRegistry>
 {
 
   public override void OnRegister()
@@ -120,9 +120,10 @@ public class ShipHullPrefab : RegisterPrefab<ShipHullPrefab>
         sizeVariant);
     }
 
-
     var v4Hulls = new List<string>
     {
+      "hull_floor_4x4_wood",
+      "hull_floor_4x4_iron",
       "hull_bow_center_wood",
       "hull_bow_curved_left_wood",
       "hull_bow_curved_right_wood",
@@ -158,21 +159,23 @@ public class ShipHullPrefab : RegisterPrefab<ShipHullPrefab>
       "hull_seal_expander_right_wood",
       "hull_seal_tri_bow_left_wood",
       "hull_seal_tri_bow_right_wood",
-      "hull_seal_tri_bow_seal_left_iron",
-      "hull_seal_tri_bow_seal_right_iron",
+      "hull_seal_tri_bow_left_iron",
+      "hull_seal_tri_bow_right_iron",
       "hull_rail_straight_wood",
       "hull_rail_connector_wood",
       "hull_rail_25deg_wood",
       "hull_rail_45deg_wood",
       "hull_rail_corner_wood",
-      "hull_rail_prow_corner_wood",
+      "hull_rail_prow_corner_left_wood",
+      "hull_rail_prow_corner_right_wood",
       "hull_rail_straight_iron",
       "hull_rail_connector_iron",
       "hull_rail_25deg_iron",
       "hull_rail_45deg_iron",
       "hull_rail_corner_iron",
-      "hull_rail_prow_corner_iron"
-    }.Select(x => $"{PrefabNames.ValheimVehiclesPrefix}_{x}").ToList();
+      "hull_rail_prow_corner_left_iron",
+      "hull_rail_prow_corner_right_iron"
+    };
 
     v4Hulls.ForEach(x => RegisterHullV4Prefab(x, x.Contains("wood") ? "wood" : "iron", x.Contains("rail") ? PrefabNames.PrefabSizeVariant.TwoByTwo : PrefabNames.PrefabSizeVariant.FourByFour));
   }
@@ -557,7 +560,7 @@ public class ShipHullPrefab : RegisterPrefab<ShipHullPrefab>
   public void RegisterHullV4Prefab(string assetName, string hullMaterial,
     PrefabNames.PrefabSizeVariant sizeVariant)
   {
-    var prefabName = assetName;
+    var prefabName = $"{PrefabNames.ValheimVehiclesPrefix}_{assetName}";
     try
     {
       var prefabAsset =
@@ -568,6 +571,9 @@ public class ShipHullPrefab : RegisterPrefab<ShipHullPrefab>
         LoggerProvider.LogWarning($"Failed to find prefab asset of assetName: {assetName} prefabName: {prefabName}");
         return;
       }
+
+      // TODO After 3.8.0 remove this. It was added for beta compatibility to 3.7.x
+      PrefabRegistryController.AddPrefabAlias(assetName, prefabName);
 
       var icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(assetName);
 

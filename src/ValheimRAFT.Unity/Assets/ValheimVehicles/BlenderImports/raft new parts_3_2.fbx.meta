@@ -71,11 +71,11 @@ ModelImporter:
     strictVertexDataChecks: 1
   tangentSpace:
     normalSmoothAngle: 81
-    normalImportMode: 0
+    normalImportMode: 1
     tangentImportMode: 3
     normalCalculationMode: 1
     legacyComputeAllNormalsFromSmoothingGroupsWhenMeshHasBlendShapes: 0
-    blendShapeNormalImportMode: 0
+    blendShapeNormalImportMode: 1
     normalSmoothingSource: 2
   referencedClips: []
   importAnimation: 0

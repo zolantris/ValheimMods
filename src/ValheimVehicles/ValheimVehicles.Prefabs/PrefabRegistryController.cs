@@ -4,6 +4,7 @@
 #region Usings
 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -100,7 +101,7 @@ namespace ValheimVehicles.Prefabs
       public string Name = "";
       public bool DefaultEnabled = true;
       public bool Configurable = true;
-      public readonly WeakReference<Piece> PieceRef = new(null!);
+      public WeakReference<Piece> PieceRef = new(null!);
       public bool? FinalEnabled; // resolved at finalize
       public ConfigEntry<bool> EnabledConfig; // created if configurable
       public int SnapshotHash;
@@ -185,6 +186,77 @@ namespace ValheimVehicles.Prefabs
       }
     }
 
+    // Hash→Hash for fast runtime resolution
+    private static readonly ConcurrentDictionary<int, int> _prefabAliasMap = new();
+
+    // Keep human-friendly metadata for debugging/logging
+    private sealed class AliasInfo
+    {
+      public string OldName;
+      public string NewName;
+      public int OldHash;
+      public int NewHash;
+    }
+
+    // OldHash→AliasInfo
+    private static readonly ConcurrentDictionary<int, AliasInfo> _aliasInfoMap = new();
+
+    public static void AddPrefabAlias(string oldName, string newName)
+    {
+      if (string.IsNullOrWhiteSpace(oldName) || string.IsNullOrWhiteSpace(newName))
+        return;
+
+      var oldHash = oldName.GetStableHashCode();
+      var newHash = newName.GetStableHashCode();
+
+      var info = new AliasInfo
+      {
+        OldName = oldName,
+        NewName = newName,
+        OldHash = oldHash,
+        NewHash = newHash
+      };
+
+      _prefabAliasMap[oldHash] = newHash;
+      _aliasInfoMap[oldHash] = info;
+
+      LoggerProvider.LogDebug($"[Alias] {oldName} (0x{oldHash:X8}) → {newName} (0x{newHash:X8})");
+    }
+
+    public static void AddPrefabAliases(IEnumerable<(string oldName, string newName)> pairs)
+    {
+      foreach (var (oldName, newName) in pairs)
+        AddPrefabAlias(oldName, newName);
+    }
+
+    public static int ResolveAliasedHash(int hash)
+    {
+      return _prefabAliasMap.TryGetValue(hash, out var mapped) ? mapped : hash;
+    }
+
+    // Debug-friendly listing
+    public static IReadOnlyCollection<string> GetAliasSummaries()
+    {
+      return _aliasInfoMap.Values
+        .OrderBy(x => x.OldName, StringComparer.Ordinal)
+        .Select(x => $"{x.OldName} (0x{x.OldHash:X8}) → {x.NewName} (0x{x.NewHash:X8})")
+        .ToList();
+    }
+
+    // Optional raw info lookup
+    public static bool TryGetAliasInfo(int oldHash, out string oldName, out string newName)
+    {
+      if (_aliasInfoMap.TryGetValue(oldHash, out var info))
+      {
+        oldName = info.OldName;
+        newName = info.NewName;
+        return true;
+      }
+      oldName = null;
+      newName = null;
+      return false;
+    }
+
   #endregion
 
   #region Public: Delegates (preferred call sites)
@@ -200,6 +272,7 @@ namespace ValheimVehicles.Prefabs
       // 1) Original behavior
       if (!PieceManager.Instance.AddPiece(customPiece))
       {
+        LoggerProvider.LogWarning($"[PrefabRegistryController.AddPiece] track failed: {customPiece.Piece.name}");
         return false;
       }
 
@@ -209,7 +282,7 @@ namespace ValheimVehicles.Prefabs
         var pieceName = ResolvePieceName(customPiece);
         if (!string.IsNullOrEmpty(pieceName))
         {
-          RegisterPiece(pieceName, defaultEnabled);
+          RegisterPiece(customPiece, defaultEnabled);
         }
         return true;
       }
@@ -683,7 +756,7 @@ namespace ValheimVehicles.Prefabs
       CannonPrefabs.Register();
 
       // Raft Structure
-      ShipHullPrefab.Register();
+      ShipHullPrefabRegistry.Register();
 
       // VehiclePrefabs
       VehiclePiecesPrefab.Register();
@@ -701,7 +774,6 @@ namespace ValheimVehicles.Prefabs
 
       // Rope items
       RopeAnchorPrefabRegistry.Register();
-      RopeLadderPrefabRegistry.Register();
       AnchorPrefabs.Register();
 
       // pier components
@@ -857,7 +929,9 @@ namespace ValheimVehicles.Prefabs
       foreach (var p in table.m_pieces)
       {
         if (p == null) continue;
-        RegisterPiece(p.name, true);
+        var piece = p.GetComponent<CustomPiece>();
+        if (piece == null) continue;
+        RegisterPiece(piece, true);
       }
     }
 
