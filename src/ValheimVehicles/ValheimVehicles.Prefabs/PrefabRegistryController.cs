@@ -608,7 +608,7 @@ namespace ValheimVehicles.Prefabs
         LoadValheimVehicleAssets.Instance.Init(vehicleAssetBundle);
 
         // ValheimVehicle HammerTab, must be done before items and prefab generic registrations
-        new VehicleHammerTableRegistry().Register();
+        VehicleHammerTableRegistry.Register();
 
         // must be called after assets are loaded
         PrefabRegistryHelpers.Init();
@@ -648,7 +648,7 @@ namespace ValheimVehicles.Prefabs
     public static void RegisterAllItemPrefabs()
     {
       // main hammer for opening the custom vehicle build menu.
-      new VehicleHammerItemRegistry().Register();
+      VehicleHammerItemRegistry.Register();
     }
 
     public static void RegisterAllPiecePrefabs()

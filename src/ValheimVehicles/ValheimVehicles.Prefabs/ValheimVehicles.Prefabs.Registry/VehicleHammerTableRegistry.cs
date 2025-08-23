@@ -9,7 +9,7 @@ using ValheimVehicles.SharedScripts.Validation;
 using Zolantris.Shared;
 namespace ValheimVehicles.Prefabs.Registry;
 
-public class VehicleHammerTableRegistry : GuardedRegistry<VehicleHammerTableRegistry>
+public class VehicleHammerTableRegistry : RegisterPrefab<VehicleHammerTableRegistry>
 {
   public static CustomPieceTable? VehicleHammerTable { get; private set; }
 

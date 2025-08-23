@@ -67,7 +67,7 @@ public static class PrefabRegistry
       LoggerProvider.LogDebug(component.GetType().ToString());
     }
 
-    PrefabRegistryController.AddPiece(new CustomPiece(clonedPrefab, true,
+    PieceManager.Instance.AddPiece(new CustomPiece(clonedPrefab, true,
       new PieceConfig
       {
         PieceTable = "Hammer", // for now.
