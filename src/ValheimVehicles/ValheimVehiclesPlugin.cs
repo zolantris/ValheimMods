@@ -51,7 +51,6 @@ public class ValheimVehiclesPlugin : MonoBehaviour
 
   private void Awake()
   {
-    LoggerProvider.LogInfo("Plugin ValheimVehicles (AWAKE) called on server.");
     Instance = this;
     _languageRetry = new RetryGuard(Instance);
   }

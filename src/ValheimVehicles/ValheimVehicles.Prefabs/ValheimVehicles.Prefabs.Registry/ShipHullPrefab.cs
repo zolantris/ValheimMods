@@ -16,16 +16,10 @@ using Logger = Jotunn.Logger;
 
 namespace ValheimVehicles.Prefabs.Registry;
 
-public class ShipHullPrefab : IRegisterPrefab
+public class ShipHullPrefab : RegisterPrefab<ShipHullPrefab>
 {
-  public static readonly ShipHullPrefab Instance = new();
 
-  /// <summary>
-  /// Main method for all hull registry. This method is not efficient for iteration however, it keeps all hull variants together instead of spacing them everywhere.
-  /// </summary>
-  /// <param name="prefabManager"></param>
-  /// <param name="pieceManager"></param>
-  public void Register(PrefabManager prefabManager, PieceManager pieceManager)
+  public override void OnRegister()
   {
     var sizeVariants = new[]
     {
@@ -879,7 +873,7 @@ public class ShipHullPrefab : IRegisterPrefab
       piece.m_allowRotatedOverlap = true;
       piece.m_noClipping = false;
 
-      PieceManager.Instance.AddPiece(new CustomPiece(prefab, false,
+      PrefabRegistryController.AddPiece(new CustomPiece(prefab, false,
         new PieceConfig
         {
           PieceTable = PrefabRegistryController.GetPieceTableName(),

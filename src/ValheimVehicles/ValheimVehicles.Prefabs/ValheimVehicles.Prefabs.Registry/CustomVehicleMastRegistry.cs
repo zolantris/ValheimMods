@@ -26,7 +26,7 @@ public class CustomVehicleMastRegistry : RegisterPrefab<CustomVehicleMastRegistr
     mastComponent.m_allowSailShrinking = false;
     mastComponent.m_rotationTransform = prefab.transform.Find("rotational_yard");
 
-    PieceManager.Instance.AddPiece(new CustomPiece(prefab, true,
+    PrefabRegistryController.AddPiece(new CustomPiece(prefab, true,
       new PieceConfig
       {
         PieceTable = PrefabRegistryController.GetPieceTableName(),

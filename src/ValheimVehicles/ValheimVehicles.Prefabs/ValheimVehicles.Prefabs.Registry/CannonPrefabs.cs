@@ -47,7 +47,7 @@ public class CannonPrefabs : RegisterPrefab<CannonPrefabs>
     cannonController.cannonFiringMode = CannonFiringMode.Manual;
     cannonController.canRotateFiringRangeY = false;
 
-    PieceManager.Instance.AddPiece(new CustomPiece(prefab, true, new PieceConfig
+    PrefabRegistryController.AddPiece(new CustomPiece(prefab, true, new PieceConfig
     {
       Enabled = CannonPrefabConfig.EnableCannons.Value,
       PieceTable = PrefabRegistryController.GetPieceTableName(),
@@ -82,7 +82,7 @@ public class CannonPrefabs : RegisterPrefab<CannonPrefabs>
     cannonController.cannonFiringMode = CannonFiringMode.Auto;
     cannonController.canRotateFiringRangeY = true;
 
-    PieceManager.Instance.AddPiece(new CustomPiece(prefab, true, new PieceConfig
+    PrefabRegistryController.AddPiece(new CustomPiece(prefab, true, new PieceConfig
     {
       Enabled = CannonPrefabConfig.EnableCannons.Value,
       PieceTable = PrefabRegistryController.GetPieceTableName(),
@@ -475,7 +475,7 @@ public class CannonPrefabs : RegisterPrefab<CannonPrefabs>
     targetController.cannonDetectionMode = TargetController.CannonDetectionMode.Cast;
 
     prefab.AddComponent<TargetControlsInteractive>();
-    PieceManager.Instance.AddPiece(new CustomPiece(prefab, true, new PieceConfig
+    PrefabRegistryController.AddPiece(new CustomPiece(prefab, true, new PieceConfig
     {
       PieceTable = PrefabRegistryController.GetPieceTableName(),
       Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Tools),
@@ -518,7 +518,7 @@ public class CannonPrefabs : RegisterPrefab<CannonPrefabs>
     // main toggle switch.
     var powderBarrel = prefab.AddComponent<PowderBarrel>();
 
-    PieceManager.Instance.AddPiece(new CustomPiece(prefab, true, new PieceConfig
+    PrefabRegistryController.AddPiece(new CustomPiece(prefab, true, new PieceConfig
     {
       PieceTable = PrefabRegistryController.GetPieceTableName(),
       Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Tools),

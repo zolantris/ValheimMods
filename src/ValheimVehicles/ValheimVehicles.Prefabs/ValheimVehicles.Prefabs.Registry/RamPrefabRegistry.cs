@@ -14,10 +14,8 @@ namespace ValheimVehicles.Prefabs.Registry;
 /**
  * example registry of a prefab
  */
-public class RamPrefabs : IRegisterPrefab
+public class RamPrefabRegistry : RegisterPrefab<RamPrefabRegistry>
 {
-  public static readonly RamPrefabs Instance = new();
-
   public enum RamType
   {
     Stake,
@@ -64,28 +62,28 @@ public class RamPrefabs : IRegisterPrefab
   {
     RamVariant[] loadedAssets =
     [
-      new RamVariant()
+      new()
       {
         asset = LoadValheimVehicleAssets.RamStakeWood1X2,
         prefabName = "1x2",
         material = PrefabTiers.Tier1,
         size = 1
       },
-      new RamVariant()
+      new()
       {
         asset = LoadValheimVehicleAssets.RamStakeWood2X4,
         prefabName = "2x4",
         material = PrefabTiers.Tier1,
         size = 2
       },
-      new RamVariant()
+      new()
       {
         asset = LoadValheimVehicleAssets.RamStakeIron1X2,
         prefabName = "1x2",
         material = PrefabTiers.Tier3,
         size = 1
       },
-      new RamVariant()
+      new()
       {
         asset = LoadValheimVehicleAssets.RamStakeIron2X4,
         prefabName = "2x4",
@@ -126,7 +124,7 @@ public class RamPrefabs : IRegisterPrefab
           "Could not found damage_colliders within ram prefab, this likely means that rams are broken");
       }
 
-      PieceManager.Instance.AddPiece(new CustomPiece(prefab, false,
+      PrefabRegistryController.AddPiece(new CustomPiece(prefab, false,
         new PieceConfig
         {
           PieceTable = PrefabRegistryController.GetPieceTableName(),
@@ -155,22 +153,22 @@ public class RamPrefabs : IRegisterPrefab
   {
     RamVariant[] loadedAssets =
     [
-      new RamVariant()
+      new()
       {
         asset = LoadValheimVehicleAssets.RamBladeTop,
         prefabName = "top"
       },
-      new RamVariant()
+      new()
       {
         asset = LoadValheimVehicleAssets.RamBladeBottom,
         prefabName = "bottom"
       },
-      new RamVariant()
+      new()
       {
         asset = LoadValheimVehicleAssets.RamBladeLeft,
         prefabName = "left"
       },
-      new RamVariant()
+      new()
       {
         asset = LoadValheimVehicleAssets.RamBladeRight,
         prefabName = "right"
@@ -203,7 +201,7 @@ public class RamPrefabs : IRegisterPrefab
           "Could not found damage_colliders within ram prefab, this likely means that rams are broken");
       }
 
-      PieceManager.Instance.AddPiece(new CustomPiece(prefab, false,
+      PrefabRegistryController.AddPiece(new CustomPiece(prefab, false,
         new PieceConfig
         {
           PieceTable = PrefabRegistryController.GetPieceTableName(),
@@ -234,7 +232,7 @@ public class RamPrefabs : IRegisterPrefab
     }
   }
 
-  public void Register(PrefabManager prefabManager, PieceManager pieceManager)
+  public override void OnRegister()
   {
     RegisterRamStake();
     RegisterRamBlade();

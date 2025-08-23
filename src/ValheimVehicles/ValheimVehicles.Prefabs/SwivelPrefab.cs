@@ -30,7 +30,7 @@ public class SwivelPrefab : RegisterPrefab<SwivelPrefab>
     prefab.AddComponent<SwivelComponentBridge>();
     PrefabRegistryHelpers.AddPieceForPrefab(PrefabNames.SwivelPrefabName, prefab);
 
-    PieceManager.Instance.AddPiece(new CustomPiece(prefab, true,
+    PrefabRegistryController.AddPiece(new CustomPiece(prefab, true,
       new PieceConfig
       {
         PieceTable = PrefabRegistryController.GetPieceTableName(),

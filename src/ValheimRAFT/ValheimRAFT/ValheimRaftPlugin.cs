@@ -302,6 +302,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
 
   private void AddCustomItemsAndPieces()
   {
+    PrefabRegistryController.Initialize(Config, ModGuid, Version);
     PrefabRegistryController.InitAfterVanillaItemsAndPrefabsAreAvailable();
   }
 }

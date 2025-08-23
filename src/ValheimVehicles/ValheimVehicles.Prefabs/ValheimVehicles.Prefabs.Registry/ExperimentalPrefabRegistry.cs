@@ -46,7 +46,7 @@ public class ExperimentalPrefabRegistry : RegisterPrefab<ExperimentalPrefabRegis
       //   m_fire = HitData.DamageModifier.Resistant,
       // };
 
-      PieceManager.Instance.AddPiece(new CustomPiece(prefab, true, new PieceConfig
+      PrefabRegistryController.AddPiece(new CustomPiece(prefab, true, new PieceConfig
       {
         PieceTable = PrefabRegistryController.GetPieceTableName(),
         Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Structure),

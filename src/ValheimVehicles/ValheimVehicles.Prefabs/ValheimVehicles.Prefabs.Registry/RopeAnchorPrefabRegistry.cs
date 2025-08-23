@@ -49,7 +49,7 @@ public class RopeAnchorPrefabRegistry : RegisterPrefab<RopeLadderPrefabRegistry>
      * @todo ropeAnchor recipe may need to be tweaked to require flax or some fiber
      * Maybe a weaker rope could be made as a lower tier with much lower health
      */
-    PieceManager.Instance.AddPiece(new CustomPiece(prefab, false, new PieceConfig
+    PrefabRegistryController.AddPiece(new CustomPiece(prefab, false, new PieceConfig
     {
       PieceTable = PrefabRegistryController.GetPieceTableName(),
       Description = "$mb_rope_anchor_desc",

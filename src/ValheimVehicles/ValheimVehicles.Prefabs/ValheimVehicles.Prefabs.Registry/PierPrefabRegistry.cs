@@ -66,7 +66,7 @@ public class PierPrefabRegistry : RegisterPrefab<PierPrefabRegistry>
       ]
     });
 
-    PieceManager.Instance.AddPiece(customPiece);
+    PrefabRegistryController.AddPiece(customPiece);
   }
 
   private static void RegisterPierWall()
@@ -112,6 +112,6 @@ public class PierPrefabRegistry : RegisterPrefab<PierPrefabRegistry>
       ]
     });
 
-    PieceManager.Instance.AddPiece(customPiece);
+    PrefabRegistryController.AddPiece(customPiece);
   }
 }

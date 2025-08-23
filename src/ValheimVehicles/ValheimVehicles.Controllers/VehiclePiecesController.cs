@@ -516,7 +516,7 @@
 
       if (PrefabNames.IsHull(netView.gameObject)) m_hullPieces.Remove(netView);
 
-      var isRam = RamPrefabs.IsRam(netView.name);
+      var isRam = RamPrefabRegistry.IsRam(netView.name);
       if (isRam) m_ramPieces.Remove(netView);
     }
 
@@ -727,7 +727,7 @@
 
     public static bool CanRemoveRigidbodyFromChild(string name)
     {
-      return !RamPrefabs.IsRam(name) &&
+      return !RamPrefabRegistry.IsRam(name) &&
              !name.Contains(PrefabNames.ShipAnchorWood) && !PrefabNames.IsVehicle(name) && !PrefabNames.IsVehiclePiecesContainer(name) && !name.StartsWith(PrefabNames.SwivelPrefabName);
     }
 
@@ -755,7 +755,7 @@
       AddPieceDataForComponents(netView);
 
 
-      if (RamPrefabs.IsRam(netView.name))
+      if (RamPrefabRegistry.IsRam(netView.name))
       {
         m_ramPieces.Add(netView);
         var vehicleRamAoe = netView.GetComponentInChildren<VehicleRamAoe>();
@@ -2503,7 +2503,7 @@
         return;
       }
 
-      if (RamPrefabs.IsRam(prefab.name))
+      if (RamPrefabRegistry.IsRam(prefab.name))
       {
         if (Manager != null && Manager != null)
         {
@@ -3445,7 +3445,7 @@
       var isRope = go.name.Equals(PrefabNames.MBRopeLadder);
 
       if (!door && !ladder && !isRope && !SailPrefabs.IsSail(go.name)
-          && !RamPrefabs.IsRam(go.name))
+          && !RamPrefabRegistry.IsRam(go.name))
       {
         var newBounds =
           EncapsulateColliders(tempBounds.center, tempBounds.size,

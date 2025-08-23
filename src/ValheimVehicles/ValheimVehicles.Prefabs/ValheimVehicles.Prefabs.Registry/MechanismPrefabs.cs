@@ -34,7 +34,7 @@ public class MechanismPrefabs : RegisterPrefab<MechanismPrefabs>
     prefab.AddComponent<PowerStorageBridge>();
     prefab.AddComponent<PowerHoverComponent>();
 
-    PieceManager.Instance.AddPiece(new CustomPiece(prefab, true, new PieceConfig
+    PrefabRegistryController.AddPiece(new CustomPiece(prefab, true, new PieceConfig
     {
       PieceTable = PrefabRegistryController.GetPieceTableName(),
       Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Power),
@@ -86,7 +86,7 @@ public class MechanismPrefabs : RegisterPrefab<MechanismPrefabs>
     // powerSource.Logic.IsStorage = true;
     // powerStorage.Logic.IsSource = true;
 
-    PieceManager.Instance.AddPiece(new CustomPiece(prefab, true, new PieceConfig
+    PrefabRegistryController.AddPiece(new CustomPiece(prefab, true, new PieceConfig
     {
       PieceTable = PrefabRegistryController.GetPieceTableName(),
       Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Power),
@@ -134,7 +134,7 @@ public class MechanismPrefabs : RegisterPrefab<MechanismPrefabs>
     prefab.AddComponent<PowerConduitPlateBridge>();
     prefab.AddComponent<PowerConduitHover>();
 
-    PieceManager.Instance.AddPiece(new CustomPiece(prefab, true, new PieceConfig
+    PrefabRegistryController.AddPiece(new CustomPiece(prefab, true, new PieceConfig
     {
       PieceTable = PrefabRegistryController.GetPieceTableName(),
       Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Power),
@@ -177,7 +177,7 @@ public class MechanismPrefabs : RegisterPrefab<MechanismPrefabs>
     prefab.AddComponent<PowerConduitPlateBridge>();
     prefab.AddComponent<PowerConduitHover>();
 
-    PieceManager.Instance.AddPiece(new CustomPiece(prefab, true, new PieceConfig
+    PrefabRegistryController.AddPiece(new CustomPiece(prefab, true, new PieceConfig
     {
       PieceTable = PrefabRegistryController.GetPieceTableName(),
       Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Power),
@@ -219,7 +219,7 @@ public class MechanismPrefabs : RegisterPrefab<MechanismPrefabs>
   //   // main toggle switch.
   //   prefab.AddComponent<VehicleEngineIntegration>();
   //
-  //   PieceManager.Instance.AddPiece(new CustomPiece(prefab, true, new PieceConfig
+  //   PrefabRegistryController.AddPiece(new CustomPiece(prefab, true, new PieceConfig
   //   {
   //     PieceTable = PrefabRegistryController.GetPieceTableName(),
   //     Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Propulsion),
@@ -275,7 +275,7 @@ public class MechanismPrefabs : RegisterPrefab<MechanismPrefabs>
     // main toggle switch.
     prefab.AddComponent<PowerPylonComponentIntegration>();
 
-    PieceManager.Instance.AddPiece(new CustomPiece(prefab, true, new PieceConfig
+    PrefabRegistryController.AddPiece(new CustomPiece(prefab, true, new PieceConfig
     {
       PieceTable = PrefabRegistryController.GetPieceTableName(),
       Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Power),
@@ -323,7 +323,7 @@ public class MechanismPrefabs : RegisterPrefab<MechanismPrefabs>
     // main toggle switch.
     prefab.AddComponent<MechanismSwitch>();
 
-    PieceManager.Instance.AddPiece(new CustomPiece(prefab, true, new PieceConfig
+    PrefabRegistryController.AddPiece(new CustomPiece(prefab, true, new PieceConfig
     {
       PieceTable = PrefabRegistryController.GetPieceTableName(),
       Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Power),

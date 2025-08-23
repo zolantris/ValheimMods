@@ -16,7 +16,7 @@
   using ValheimVehicles.Structs;
   using ZdoWatcher;
   using Zolantris.Shared;
-  using static ValheimVehicles.Prefabs.Registry.RamPrefabs;
+  using static ValheimVehicles.Prefabs.Registry.RamPrefabRegistry;
 
 #endregion
 

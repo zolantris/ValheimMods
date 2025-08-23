@@ -16,11 +16,9 @@ namespace ValheimVehicles.Prefabs.Registry;
 /**
  * example registry of a prefab
  */
-public class CustomMeshPrefabs : IRegisterPrefab
+public class CustomMeshPrefabs : RegisterPrefab<CustomMeshPrefabs>
 {
-  public static readonly CustomMeshPrefabs Instance = new();
-
-  public void Register(PrefabManager prefabManager, PieceManager pieceManager)
+  public override void OnRegister()
   {
     RegisterWaterMaskCreator();
     RegisterWaterMaskPrefab();
@@ -59,7 +57,7 @@ public class CustomMeshPrefabs : IRegisterPrefab
   //     prefab);
   //   piece.m_canRotate = true;
   //
-  //   PieceManager.Instance.AddPiece(new CustomPiece(prefab, true,
+  //   PrefabRegistryController.AddPiece(new CustomPiece(prefab, true,
   //     new PieceConfig
   //     {
   //       PieceTable = PrefabRegistryController.GetPieceTableName(),
@@ -95,7 +93,7 @@ public class CustomMeshPrefabs : IRegisterPrefab
   //     prefab);
   //   piece.m_canRotate = true;
   //
-  //   PieceManager.Instance.AddPiece(new CustomPiece(prefab, true,
+  //   PrefabRegistryController.AddPiece(new CustomPiece(prefab, true,
   //     new PieceConfig
   //     {
   //       PieceTable = PrefabRegistryController.GetPieceTableName(),
@@ -131,7 +129,7 @@ public class CustomMeshPrefabs : IRegisterPrefab
       PrefabNames.CustomWaterFloatation,
       prefab);
 
-    PieceManager.Instance.AddPiece(new CustomPiece(prefab, true,
+    PrefabRegistryController.AddPiece(new CustomPiece(prefab, true,
       new PieceConfig
       {
         PieceTable = PrefabRegistryController.GetPieceTableName(),
@@ -167,7 +165,7 @@ public class CustomMeshPrefabs : IRegisterPrefab
       prefab);
     piece.m_canRotate = true;
 
-    PieceManager.Instance.AddPiece(new CustomPiece(prefab, true,
+    PrefabRegistryController.AddPiece(new CustomPiece(prefab, true,
       new PieceConfig
       {
         PieceTable = PrefabRegistryController.GetPieceTableName(),
@@ -222,7 +220,7 @@ public class CustomMeshPrefabs : IRegisterPrefab
     var waterMaskComponent = prefab.AddComponent<WaterZoneController>();
     waterMaskComponent.defaultScale = size;
 
-    PieceManager.Instance.AddPiece(new CustomPiece(prefab, true,
+    PrefabRegistryController.AddPiece(new CustomPiece(prefab, true,
       new PieceConfig
       {
         Name = piece.name,
@@ -272,7 +270,7 @@ public class CustomMeshPrefabs : IRegisterPrefab
       prefab.AddComponent<ScalableDoubleSidedCube>();
     }
 
-    PieceManager.Instance.AddPiece(new CustomPiece(prefab, true,
+    PrefabRegistryController.AddPiece(new CustomPiece(prefab, true,
       new PieceConfig
       {
         Name = "Vehicle Water Mask Test",

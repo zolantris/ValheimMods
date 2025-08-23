@@ -15,19 +15,17 @@ namespace ValheimVehicles.Prefabs.Registry;
 /**
  * example registry of a prefab
  */
-public class SailPrefabs : IRegisterPrefab
+public class SailPrefabs : RegisterPrefab<SailPrefabs>
 {
-  public static readonly SailPrefabs Instance = new();
-
-  public void Register(PrefabManager prefabManager, PieceManager pieceManager)
+  public override void OnRegister()
   {
-    RegisterRaftMast(prefabManager, pieceManager);
-    RegisterKarveMast(prefabManager, pieceManager);
-    RegisterVikingMast(prefabManager, pieceManager);
-    RegisterDrakkalMast(prefabManager, pieceManager);
-    RegisterCustomSail(prefabManager, pieceManager);
-    RegisterCustomSailCreator(prefabManager, pieceManager, 3);
-    RegisterCustomSailCreator(prefabManager, pieceManager, 4);
+    RegisterRaftMast();
+    RegisterKarveMast();
+    RegisterVikingMast();
+    RegisterDrakkalMast();
+    RegisterCustomSail();
+    RegisterCustomSailCreator(3);
+    RegisterCustomSailCreator(4);
   }
 
   public static bool IsSail(string objName)
@@ -40,14 +38,13 @@ public class SailPrefabs : IRegisterPrefab
            objName.StartsWith(PrefabNames.Tier4RaftMastName);
   }
 
-  private void RegisterVikingMast(PrefabManager prefabManager,
-    PieceManager pieceManager)
+  private void RegisterVikingMast()
   {
     var vikingShipMast = LoadValheimAssets.vikingShipPrefab.transform
       .Find("ship/visual/Mast")
       .gameObject;
     var vikingShipMastPrefab =
-      prefabManager.CreateClonedPrefab(PrefabNames.Tier3RaftMastName,
+      PrefabManager.Instance.CreateClonedPrefab(PrefabNames.Tier3RaftMastName,
         vikingShipMast);
     var vikingShipMastPrefabPiece = vikingShipMastPrefab.AddComponent<Piece>();
 
@@ -58,7 +55,6 @@ public class SailPrefabs : IRegisterPrefab
     vikingShipMastPrefabPiece.m_description = GetTieredSailAreaText(3);
     vikingShipMastPrefabPiece.m_placeEffect =
       LoadValheimAssets.woodFloorPiece.m_placeEffect;
-    PrefabRegistryController.AddToRaftPrefabPieces(vikingShipMastPrefabPiece);
 
     PrefabRegistryHelpers.AddNetViewWithPersistence(vikingShipMastPrefab);
 
@@ -82,7 +78,7 @@ public class SailPrefabs : IRegisterPrefab
     PrefabRegistryHelpers.FixRopes(vikingShipMastPrefab);
     PrefabRegistryHelpers.FixCollisionLayers(vikingShipMastPrefab);
 
-    pieceManager.AddPiece(new CustomPiece(vikingShipMastPrefab, true,
+    PrefabRegistryController.AddPiece(new CustomPiece(vikingShipMastPrefab, true,
       new PieceConfig
       {
         PieceTable = PrefabRegistryController.GetPieceTableName(),
@@ -114,15 +110,14 @@ public class SailPrefabs : IRegisterPrefab
       }));
   }
 
-  private void RegisterDrakkalMast(PrefabManager prefabManager,
-    PieceManager pieceManager)
+  private void RegisterDrakkalMast()
   {
     var drakkalMast = LoadValheimAssets.drakkarPrefab.transform
       .Find("ship/visual/Mast")
       .gameObject;
 
     var prefab =
-      prefabManager.CreateClonedPrefab(PrefabNames.Tier4RaftMastName,
+      PrefabManager.Instance.CreateClonedPrefab(PrefabNames.Tier4RaftMastName,
         drakkalMast);
     var vikingShipMastPrefabPiece = prefab.AddComponent<Piece>();
 
@@ -131,7 +126,6 @@ public class SailPrefabs : IRegisterPrefab
     vikingShipMastPrefabPiece.m_description = GetTieredSailAreaText(4);
     vikingShipMastPrefabPiece.m_placeEffect =
       LoadValheimAssets.woodFloorPiece.m_placeEffect;
-    PrefabRegistryController.AddToRaftPrefabPieces(vikingShipMastPrefabPiece);
     PrefabRegistryHelpers.AddNetViewWithPersistence(prefab);
 
     var mastComponent = prefab.AddComponent<MastComponent>();
@@ -151,7 +145,7 @@ public class SailPrefabs : IRegisterPrefab
     PrefabRegistryHelpers.FixRopes(prefab);
     PrefabRegistryHelpers.FixCollisionLayers(prefab);
 
-    pieceManager.AddPiece(new CustomPiece(prefab, true, new PieceConfig
+    PrefabRegistryController.AddPiece(new CustomPiece(prefab, true, new PieceConfig
     {
       PieceTable = PrefabRegistryController.GetPieceTableName(),
       Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
@@ -177,10 +171,9 @@ public class SailPrefabs : IRegisterPrefab
   }
 
 
-  private void RegisterCustomSail(PrefabManager prefabManager,
-    PieceManager pieceManager)
+  private void RegisterCustomSail()
   {
-    var prefab = prefabManager.CreateClonedPrefab(
+    var prefab = PrefabManager.Instance.CreateClonedPrefab(
       PrefabNames.Tier1CustomSailName,
       LoadValheimVehicleAssets.CustomSail);
 
@@ -190,7 +183,6 @@ public class SailPrefabs : IRegisterPrefab
     mbSailPrefabPiece.m_placeEffect =
       LoadValheimAssets.woodFloorPiece.m_placeEffect;
 
-    PrefabRegistryController.AddToRaftPrefabPieces(mbSailPrefabPiece);
     PrefabRegistryHelpers.AddNetViewWithPersistence(prefab);
 
     var sail = prefab.AddComponent<SailComponent>();
@@ -214,9 +206,7 @@ public class SailPrefabs : IRegisterPrefab
   /**
    * this allows for registering N types of sails. Maybe in the future there will be more vertices supported
    */
-  public void RegisterCustomSailCreator(PrefabManager prefabManager,
-    PieceManager pieceManager,
-    int sailCount)
+  private void RegisterCustomSailCreator(int sailCount)
   {
     if (sailCount is not (3 or 4))
     {
@@ -226,7 +216,7 @@ public class SailPrefabs : IRegisterPrefab
     }
 
     var prefab =
-      prefabManager.CreateEmptyPrefab($"{PrefabNames.SailCreator}_{sailCount}", false);
+      PrefabManager.Instance.CreateEmptyPrefab($"{PrefabNames.SailCreator}_{sailCount}", false);
     prefab.layer = LayerMask.NameToLayer("piece_nonsolid");
 
     var piece = prefab.AddComponent<Piece>();
@@ -235,7 +225,6 @@ public class SailPrefabs : IRegisterPrefab
     piece.m_description = $"$mb_sail_{sailCount}_desc";
     piece.m_placeEffect = LoadValheimAssets.woodFloorPiece.m_placeEffect;
 
-    PrefabRegistryController.AddToRaftPrefabPieces(piece);
 
     var sailCreatorComponent = prefab.AddComponent<SailCreatorComponent>();
     sailCreatorComponent.m_sailSize = sailCount;
@@ -252,7 +241,7 @@ public class SailPrefabs : IRegisterPrefab
       ? LoadValheimVehicleAssets.VehicleSprites.GetSprite("customsail_tri")
       : LoadValheimVehicleAssets.VehicleSprites.GetSprite("customsail");
 
-    pieceManager.AddPiece(new CustomPiece(prefab, true, new PieceConfig
+    PrefabRegistryController.AddPiece(new CustomPiece(prefab, true, new PieceConfig
     {
       PieceTable = PrefabRegistryController.GetPieceTableName(),
       Description = $"$mb_sail_{sailCount}_desc",
@@ -280,11 +269,10 @@ public class SailPrefabs : IRegisterPrefab
     return description;
   }
 
-  private void RegisterRaftMast(PrefabManager prefabManager,
-    PieceManager pieceManager)
+  private void RegisterRaftMast()
   {
     var mbRaftMastPrefab =
-      prefabManager.CreateClonedPrefab(PrefabNames.Tier1RaftMastName,
+      PrefabManager.Instance.CreateClonedPrefab(PrefabNames.Tier1RaftMastName,
         LoadValheimAssets.raftMast);
 
     var mbRaftMastPrefabPiece = mbRaftMastPrefab.AddComponent<Piece>();
@@ -292,9 +280,7 @@ public class SailPrefabs : IRegisterPrefab
     mbRaftMastPrefabPiece.m_description = "$mb_raft_mast_desc";
     mbRaftMastPrefabPiece.m_placeEffect =
       LoadValheimAssets.woodFloorPiece.m_placeEffect;
-    // PrefabRegistryHelpers.AddBoundsToAllChildren(mbRaftMastPrefab, mbRaftMastPrefab);
 
-    PrefabRegistryController.AddToRaftPrefabPieces(mbRaftMastPrefabPiece);
     PrefabRegistryHelpers.AddNetViewWithPersistence(mbRaftMastPrefab);
 
     var mastComponent = mbRaftMastPrefab.AddComponent<MastComponent>();
@@ -312,7 +298,7 @@ public class SailPrefabs : IRegisterPrefab
 
     PrefabRegistryHelpers.FixRopes(mbRaftMastPrefab);
     PrefabRegistryHelpers.FixCollisionLayers(mbRaftMastPrefab);
-    pieceManager.AddPiece(new CustomPiece(mbRaftMastPrefab, true,
+    PrefabRegistryController.AddPiece(new CustomPiece(mbRaftMastPrefab, true,
       new PieceConfig
       {
         PieceTable = PrefabRegistryController.GetPieceTableName(),
@@ -339,13 +325,12 @@ public class SailPrefabs : IRegisterPrefab
       }));
   }
 
-  public void RegisterKarveMast(PrefabManager prefabManager,
-    PieceManager pieceManager)
+  public void RegisterKarveMast()
   {
-    var karve = prefabManager.GetPrefab("Karve");
+    var karve = PrefabManager.Instance.GetPrefab("Karve");
     var karveMast = karve.transform.Find("ship/mast").gameObject;
     var mbKarveMastPrefab =
-      prefabManager.CreateClonedPrefab(PrefabNames.Tier2RaftMastName,
+      PrefabManager.Instance.CreateClonedPrefab(PrefabNames.Tier2RaftMastName,
         karveMast);
 
     var mbKarveMastPiece = mbKarveMastPrefab.AddComponent<Piece>();
@@ -355,7 +340,6 @@ public class SailPrefabs : IRegisterPrefab
       LoadValheimAssets.woodFloorPiece.m_placeEffect;
 
     // PrefabRegistryHelpers.AddBoundsToAllChildren(mbKarveMastPrefab, mbKarveMastPrefab);
-    PrefabRegistryController.AddToRaftPrefabPieces(mbKarveMastPiece);
     PrefabRegistryHelpers.AddNetViewWithPersistence(mbKarveMastPrefab);
 
     // tweak the mast
@@ -375,7 +359,7 @@ public class SailPrefabs : IRegisterPrefab
     PrefabRegistryHelpers.FixRopes(mbKarveMastPrefab);
     PrefabRegistryHelpers.FixCollisionLayers(mbKarveMastPrefab);
 
-    pieceManager.AddPiece(new CustomPiece(mbKarveMastPrefab, true,
+    PrefabRegistryController.AddPiece(new CustomPiece(mbKarveMastPrefab, true,
       new PieceConfig
       {
         PieceTable = PrefabRegistryController.GetPieceTableName(),

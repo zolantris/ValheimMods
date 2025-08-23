@@ -57,7 +57,7 @@ public class AnchorPrefabs : RegisterPrefab<AnchorPrefabs>
     PrefabRegistryHelpers.FixCollisionLayers(prefab);
     PrefabRegistryHelpers.HoistSnapPointsToPrefab(prefab);
 
-    PieceManager.Instance.AddPiece(new CustomPiece(prefab, false, new PieceConfig
+    PrefabRegistryController.AddPiece(new CustomPiece(prefab, false, new PieceConfig
     {
       PieceTable = PrefabRegistryController.GetPieceTableName(),
       Name = "$valheim_vehicles_dock_anchor_point",
@@ -113,7 +113,7 @@ public class AnchorPrefabs : RegisterPrefab<AnchorPrefabs>
       PrefabRegistryHelpers.AddPieceForPrefab(PrefabNames.ShipAnchorWood,
         prefab);
 
-    PieceManager.Instance.AddPiece(new CustomPiece(prefab, false,
+    PrefabRegistryController.AddPiece(new CustomPiece(prefab, false,
       new PieceConfig
       {
         Name = piece.name,

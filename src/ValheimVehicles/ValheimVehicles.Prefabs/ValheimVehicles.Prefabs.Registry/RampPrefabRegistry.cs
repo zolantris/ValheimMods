@@ -85,7 +85,7 @@ public class RampPrefabRegistry : RegisterPrefab<RampPrefabRegistry>
 
     PrefabRegistryHelpers.FixCollisionLayers(mbBoardingRamp);
 
-    PieceManager.Instance.AddPiece(new CustomPiece(mbBoardingRamp, false, new PieceConfig
+    PrefabRegistryController.AddPiece(new CustomPiece(mbBoardingRamp, false, new PieceConfig
     {
       PieceTable = PrefabRegistryController.GetPieceTableName(),
       Description = "$mb_boarding_ramp_desc",
@@ -133,7 +133,7 @@ public class RampPrefabRegistry : RegisterPrefab<RampPrefabRegistry>
     PrefabRegistryHelpers.FixSnapPoints(mbBoardingRampWide);
 
 
-    PieceManager.Instance.AddPiece(new CustomPiece(mbBoardingRampWide, false,
+    PrefabRegistryController.AddPiece(new CustomPiece(mbBoardingRampWide, false,
       new PieceConfig
       {
         PieceTable = PrefabRegistryController.GetPieceTableName(),

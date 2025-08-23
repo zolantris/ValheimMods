@@ -42,7 +42,7 @@ public class CommandsPieceRegistry : GuardedRegistry<CommandsPieceRegistry>
     };
 
     var piece = new CustomPiece(pieceObj, false, config);
-    var success = PieceManager.Instance.AddPiece(piece);
+    var success = PrefabRegistryController.AddPiece(piece);
 
     if (!success)
     {

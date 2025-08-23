@@ -57,7 +57,7 @@ public class RopeLadderPrefabRegistry : RegisterPrefab<RopeLadderPrefabRegistry>
     mbRopeLadderPrefabWearNTear.m_supports = false;
 
     PrefabRegistryHelpers.FixCollisionLayers(mbRopeLadderPrefab);
-    PieceManager.Instance.AddPiece(new CustomPiece(mbRopeLadderPrefab, false,
+    PrefabRegistryController.AddPiece(new CustomPiece(mbRopeLadderPrefab, false,
       new PieceConfig
       {
         PieceTable = PrefabRegistryController.GetPieceTableName(),

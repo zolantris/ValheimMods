@@ -7,21 +7,18 @@ using Object = UnityEngine.Object;
 
 namespace ValheimVehicles.Prefabs.Registry;
 
-public class ShipSteeringWheelPrefab : IRegisterPrefab
+public class ShipSteeringWheelPrefab : RegisterPrefab<ShipSteeringWheelPrefab>
 {
-  public static readonly ShipSteeringWheelPrefab Instance = new();
-
-  public void Register(PrefabManager prefabManager, PieceManager pieceManager)
+  public override void OnRegister()
   {
     var prefab =
-      prefabManager.CreateClonedPrefab(PrefabNames.ShipSteeringWheel,
+      PrefabManager.Instance.CreateClonedPrefab(PrefabNames.ShipSteeringWheel,
         LoadValheimVehicleAssets.SteeringWheel);
 
     var mbRudderPrefabPiece =
       PrefabRegistryHelpers.AddPieceForPrefab(PrefabNames.ShipSteeringWheel, prefab);
     mbRudderPrefabPiece.m_placeEffect = LoadValheimAssets.woodFloorPiece.m_placeEffect;
 
-    PrefabRegistryController.AddToRaftPrefabPieces(mbRudderPrefabPiece);
     PrefabRegistryHelpers.AddNetViewWithPersistence(prefab);
 
     var rudderWheelComponent = prefab.AddComponent<SteeringWheelComponent>();
@@ -33,7 +30,7 @@ public class ShipSteeringWheelPrefab : IRegisterPrefab
     PrefabRegistryHelpers.HoistSnapPointsToPrefab(prefab);
     PrefabRegistryHelpers.FixCollisionLayers(prefab);
 
-    pieceManager.AddPiece(new CustomPiece(prefab, false, new PieceConfig
+    PrefabRegistryController.AddPiece(new CustomPiece(prefab, false, new PieceConfig
     {
       PieceTable = PrefabRegistryController.GetPieceTableName(),
       Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Propulsion),

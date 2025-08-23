@@ -18,10 +18,8 @@
   /**
    * example registry of a prefab
    */
-  public class VehiclePrefabs : IRegisterPrefab
+  public class VehiclePrefabs : RegisterPrefab<VehiclePrefabs>
   {
-    public static readonly VehiclePrefabs Instance = new();
-
     /**
      * todo it's possible this all needs to be done in the Awake method to safely load valheim.
      * Should test this in development build of valheim
@@ -119,7 +117,7 @@
       piece.m_noClipping = true;
       piece.m_canRotate = true;
 
-      PieceManager.Instance.AddPiece(new CustomPiece(waterVehiclePrefab, true,
+      PrefabRegistryController.AddPiece(new CustomPiece(waterVehiclePrefab, true,
         new PieceConfig
         {
           PieceTable = PrefabRegistryController.GetPieceTableName(),
@@ -160,7 +158,7 @@
       piece.m_canRotate = true;
 
 
-      PieceManager.Instance.AddPiece(new CustomPiece(landVehiclePrefab, true,
+      PrefabRegistryController.AddPiece(new CustomPiece(landVehiclePrefab, true,
         new PieceConfig
         {
           PieceTable = PrefabRegistryController.GetPieceTableName(),
@@ -190,7 +188,7 @@
         }));
     }
 
-    public void Register(PrefabManager prefabManager, PieceManager pieceManager)
+    public override void OnRegister()
     {
       RegisterWaterVehicleShipPrefab();
       RegisterLandVehiclePrefab();

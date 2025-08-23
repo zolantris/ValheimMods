@@ -43,7 +43,7 @@ public class DirtFloorPrefabRegistry : RegisterPrefab<DirtFloorPrefabRegistry>
     PrefabRegistryHelpers.FixCollisionLayers(mbDirtFloorPrefab);
     PrefabRegistryHelpers.FixSnapPoints(mbDirtFloorPrefab);
 
-    PieceManager.Instance.AddPiece(new CustomPiece(mbDirtFloorPrefab, false,
+    PrefabRegistryController.AddPiece(new CustomPiece(mbDirtFloorPrefab, false,
       new PieceConfig
       {
         PieceTable = PrefabRegistryController.GetPieceTableName(),
