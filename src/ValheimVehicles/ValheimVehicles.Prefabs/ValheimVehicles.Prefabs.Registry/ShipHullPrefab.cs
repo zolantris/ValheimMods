@@ -172,7 +172,7 @@ public class ShipHullPrefab : RegisterPrefab<ShipHullPrefab>
       "hull_rail_45deg_iron",
       "hull_rail_corner_iron",
       "hull_rail_prow_corner_iron"
-    };
+    }.Select(x => $"{PrefabNames.ValheimVehiclesPrefix}_{x}").ToList();
 
     v4Hulls.ForEach(x => RegisterHullV4Prefab(x, x.Contains("wood") ? "wood" : "iron", x.Contains("rail") ? PrefabNames.PrefabSizeVariant.TwoByTwo : PrefabNames.PrefabSizeVariant.FourByFour));
   }

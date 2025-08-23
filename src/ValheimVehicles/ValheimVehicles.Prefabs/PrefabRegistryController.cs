@@ -100,6 +100,7 @@ namespace ValheimVehicles.Prefabs
       public string Name = "";
       public bool DefaultEnabled = true;
       public bool Configurable = true;
+      public readonly WeakReference<Piece> PieceRef = new(null!);
       public bool? FinalEnabled; // resolved at finalize
       public ConfigEntry<bool> EnabledConfig; // created if configurable
       public int SnapshotHash;
@@ -306,18 +307,22 @@ namespace ValheimVehicles.Prefabs
     /// <summary>
     /// Track a piece by name so we can create a config toggle and include it in the snapshot.
     /// </summary>
-    public static void RegisterPiece(string pieceName, bool defaultEnabled = true)
+    public static void RegisterPiece(CustomPiece customPiece, bool defaultEnabled = true)
     {
-      if (string.IsNullOrWhiteSpace(pieceName)) throw new ArgumentException("pieceName is required.", nameof(pieceName));
+      if (customPiece == null) throw new ArgumentNullException(nameof(customPiece));
+      var name = ResolvePieceName(customPiece);
+      if (string.IsNullOrWhiteSpace(name)) throw new ArgumentException("Could not resolve piece name from CustomPiece.");
+
       EnsureLayerInitialized();
       lock (_lock)
       {
         ThrowIfFinalized();
-        var key = pieceName.Trim();
-        _pieceEntries[key] = new PieceEntry
+
+        _pieceEntries[name] = new PieceEntry
         {
-          Name = key,
-          DefaultEnabled = defaultEnabled
+          Name = name,
+          DefaultEnabled = defaultEnabled,
+          PieceRef = new WeakReference<Piece>(customPiece.Piece)
         };
       }
     }
@@ -346,8 +351,7 @@ namespace ValheimVehicles.Prefabs
         foreach (var e in _prefabEntries.Values)
         {
           if (!e.Configurable) continue;
-          var group = GetAlphaGroup(e.Name);
-          var section = $"Prefabs/{group}";
+          const string section = "Prefabs";
           e.EnabledConfig = _config.Bind(
             new ConfigDefinition(section, e.Name),
             e.DefaultEnabled,
@@ -359,8 +363,7 @@ namespace ValheimVehicles.Prefabs
         foreach (var e in _pieceEntries.Values)
         {
           if (!e.Configurable) continue;
-          var group = GetAlphaGroup(e.Name);
-          var section = $"Pieces/{group}";
+          const string section = "Pieces";
           e.EnabledConfig = _config.Bind(
             new ConfigDefinition(section, e.Name),
             e.DefaultEnabled,
@@ -391,13 +394,25 @@ namespace ValheimVehicles.Prefabs
           e.FinalEnabled = enabled;
           e.SnapshotHash = ComputeStableHash(e.Name);
 
-          var pmPiece = pieceManager?.GetPiece(e.Name);
-          if (pmPiece?.Piece != null)
+          Piece? pieceComp = null;
+
+          // Prefer the tracked live reference
+          if (e.PieceRef.TryGetTarget(out var tracked))
+            pieceComp = tracked;
+
+          // Fallback: look it up from PieceManager if we didn't have a ref (or it got GC’d)
+          if (pieceComp == null)
+            pieceComp = pieceManager?.GetPiece(e.Name)?.Piece;
+
+          if (pieceComp != null)
           {
-            pmPiece.Piece.m_enabled = enabled;
+            pieceComp.m_enabled = enabled;
+          }
+          else
+          {
+            LoggerProvider.LogWarning($"[FinalizeRegistration] Piece '{e.Name}' not found to apply enabled={enabled}");
           }
         }
-
         // Emit snapshot (single mixed array, alpha-sorted)
         WriteSnapshot(sortedPrefabs, sortedPieces);
 
@@ -746,13 +761,6 @@ namespace ValheimVehicles.Prefabs
         if (rx.IsMatch(name)) return true;
       }
       return false;
-    }
-
-    private static string GetAlphaGroup(string name)
-    {
-      var c = name.Length > 0 ? name[0] : '_';
-      if (char.IsLetter(c)) return char.ToUpperInvariant(c).ToString();
-      return "_";
     }
 
     private static int ComputeStableHash(string s)
