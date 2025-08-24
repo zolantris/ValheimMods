@@ -14,7 +14,7 @@ namespace ValheimVehicles.scripts
     private static readonly string outputDirPath = "Assets/ValheimVehicles/GeneratedIcons/"; // output dir
 
     private static readonly List<string> excludedNames = new()
-      { "shared_", "steering_wheel", "rope_ladder", "dirt_floor", "dirtfloor_icon", "rope_anchor", "keel", "rudder_basic", "custom_sail" };
+      { "shared_", "steering_wheel", "rope_ladder", "dirt_floor", "dirtfloor_icon", "rope_anchor", "rudder_basic", "custom_sail" };
     public Object searchDirectory;
     public Object targetSpriteAtlas;
     public string searchDirectoryPath = "Assets/ValheimVehicles/Prefabs/";

@@ -8,6 +8,7 @@ using JetBrains.Annotations;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEditor.U2D;
+using UnityEditorInternal;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.Serialization;
@@ -22,7 +23,6 @@ using Object = UnityEngine.Object;
 /// </summary>
 public class PrefabThumbnailGenerator : EditorWindow
 {
-
   private const int GuiWidth = 150;
 
   private const string PrefabGenScenePath = "Assets/ValheimVehicles/Scene/GeneratePrefabIcons.unity";
@@ -33,10 +33,20 @@ public class PrefabThumbnailGenerator : EditorWindow
   public static string lastScenePath = "";
 
   [FormerlySerializedAs("excludedContainsPrefabNames")]
-  public List<string> excludeContainsPrefabNames = new()
-    { "shared_", "steering_wheel", "rope_ladder", "dirt_floor", "dirtfloor_icon", "cannon_shoot_part", "chain_link", "rope_anchor", "keel", "rudder_basic", "custom_sail", "mechanism_swivel", "_old", "_test_variant", "tank_tread_icon", "vehicle_hammer", "_backup", "_deprecated" };
-  public List<string> excludeExactPrefabNames = new()
-    { "shared_", "steering_wheel", "rope_ladder", "dirt_floor", "dirtfloor_icon", "rope_anchor", "keel", "rudder_basic", "custom_sail", "mechanism_swivel", "_old", "_test_variant", "tank_tread_icon", "vehicle_hammer" };
+  [SerializeField] private List<string> excludeContainsPrefabNames = new()
+  {
+    "shared_", "steering_wheel", "rope_ladder", "dirt_floor", "dirtfloor_icon",
+    "cannon_shoot_part", "chain_link", "rope_anchor", "keel", "rudder_basic",
+    "custom_sail", "mechanism_swivel", "_old", "_test_variant", "tank_tread_icon",
+    "vehicle_hammer", "_backup", "_deprecated"
+  };
+
+  [SerializeField] private List<string> excludeExactPrefabNames = new()
+  {
+    "shared_", "steering_wheel", "rope_ladder", "dirt_floor", "dirtfloor_icon",
+    "rope_anchor", "keel", "rudder_basic", "custom_sail", "mechanism_swivel",
+    "_old", "_test_variant", "tank_tread_icon", "vehicle_hammer"
+  };
 
   public Object searchDirectory;
   public Object targetSpriteAtlas;
@@ -55,9 +65,69 @@ public class PrefabThumbnailGenerator : EditorWindow
   private Camera previewCamera;
   private int width = 100; // image width
 
+  // --- Serialized binding for lists ---
+  private SerializedObject _so;
+  private SerializedProperty _spExcludeContains;
+  private SerializedProperty _spExcludeExact;
+  private ReorderableList _rlExcludeContains;
+  private ReorderableList _rlExcludeExact;
+
   private GUIContent CaptureRunButtonText => new(isRunning ? "Generating icons...please wait" : "Generate New Sprite Icons");
+
+  private void OnEnable()
+  {
+    // Bind EditorWindow fields to a SerializedObject so list edits persist & apply
+    _so = new SerializedObject(this);
+    _spExcludeContains = _so.FindProperty("excludeContainsPrefabNames");
+    _spExcludeExact = _so.FindProperty("excludeExactPrefabNames");
+
+    _rlExcludeContains = BuildStringReorderableList(
+      _spExcludeContains,
+      "ExcludeContains PrefabNames",
+      "Names that, if contained in a prefab name, will be skipped."
+    );
+
+    _rlExcludeExact = BuildStringReorderableList(
+      _spExcludeExact,
+      "ExcludeExact PrefabNames",
+      "Names that, if exactly matching a prefab name, will be skipped."
+    );
+  }
+
+  private static ReorderableList BuildStringReorderableList(SerializedProperty prop, string header, string tooltip)
+  {
+    var rl = new ReorderableList(prop.serializedObject, prop, true, true, true, true)
+    {
+      drawHeaderCallback = rect =>
+      {
+        EditorGUI.LabelField(rect, new GUIContent(header, tooltip));
+      },
+      elementHeight = EditorGUIUtility.singleLineHeight + 6
+    };
+
+    rl.drawElementCallback = (rect, index, active, focused) =>
+    {
+      var element = prop.GetArrayElementAtIndex(index);
+      rect.y += 2;
+      rect.height = EditorGUIUtility.singleLineHeight;
+      element.stringValue = EditorGUI.TextField(rect, element.stringValue);
+    };
+
+    rl.onAddCallback = list =>
+    {
+      prop.arraySize++;
+      var el = prop.GetArrayElementAtIndex(prop.arraySize - 1);
+      el.stringValue = string.Empty;
+    };
+
+    return rl;
+  }
+
   private void OnGUI()
   {
+    // Ensure serialized view is current
+    _so.Update();
+
     var runCaptureGuiContent = CaptureRunButtonText;
     if (GUILayout.Button(runCaptureGuiContent))
     {
@@ -110,18 +180,14 @@ public class PrefabThumbnailGenerator : EditorWindow
     GUILayout.EndHorizontal();
     EditorGUILayout.Space();
 
-
-    GUILayout.BeginHorizontal();
-    GUILayout.Label("ExcludeContains PrefabNames", GUILayout.Width(GuiWidth));
-    GUILayout.TextArea(string.Join(",\n", excludeContainsPrefabNames));
-    GUILayout.EndHorizontal();
+    // --- Reorderable, editable lists bound to the actual fields ---
+    _rlExcludeContains.DoLayoutList();
+    EditorGUILayout.Space();
+    _rlExcludeExact.DoLayoutList();
     EditorGUILayout.Space();
 
-    GUILayout.BeginHorizontal();
-    GUILayout.Label("ExcludeExact PrefabNames", GUILayout.Width(GuiWidth));
-    GUILayout.TextArea(string.Join(",\n", excludeExactPrefabNames));
-    GUILayout.EndHorizontal();
-    EditorGUILayout.Space();
+    // Apply edits back to the instance
+    _so.ApplyModifiedProperties();
   }
 
   [MenuItem("Window/PrefabThumbnailGenerator")]
@@ -159,7 +225,7 @@ public class PrefabThumbnailGenerator : EditorWindow
         EditorSceneManager.OpenScene(lastScenePath, OpenSceneMode.Single);
       }
     }
-    catch (Exception e)
+    catch (Exception)
     {
       Debug.LogError($"Failed to open scene at {PrefabGenScenePath}");
     }
@@ -189,7 +255,6 @@ public class PrefabThumbnailGenerator : EditorWindow
     return true;
   }
 
-
   private List<GameObject> GetFilesFromSearchPath()
   {
     objList.Clear();
@@ -206,7 +271,8 @@ public class PrefabThumbnailGenerator : EditorWindow
       var hasLoggedOverFileDirLength = false;
       while (hasLoggedOverFileDirLength == false)
       {
-        var filesMessage = string.Join(",\n", filesInDir.Skip(currentLogIndex).Take(Math.Min(maxBatchLogLines, filesInDir.Length)));
+        var filesMessage = string.Join(",\n", filesInDir.Skip(currentLogIndex)
+          .Take(Math.Min(maxBatchLogLines, filesInDir.Length)));
         if (filesMessage.Length > 0)
         {
           Debug.Log($"found files in dir {x} {filesMessage} \n({currentLogIndex} / {filesInDir.Length})");
@@ -252,37 +318,35 @@ public class PrefabThumbnailGenerator : EditorWindow
     DeleteAllFilesInOutputFolder();
     // DeleteCurrentSpritesInTargetAtlas();
 
-    // for (int i = 0; i < tempObjList.Count; i++)
-    // {
-    //     var tmpObj = tempObjList[i];
-    //     Debug.Log($"TEMP OBJ ITEM, {tmpObj}");
-    //     // Capture(tmpObj);
-    // }
-
     lastPosition = Vector3.zero;
 
     foreach (var obj in tempObjList.ToArray())
     {
       Debug.Log("OBJ :  " + obj.name);
 
-      // todo this all could be a regexp.
-
       var shouldExit = false;
-      foreach (var excludedName in excludeContainsPrefabNames)
+
+      // live values come from the serialized lists you edit in the UI
+      for (var i = 0; i < excludeContainsPrefabNames.Count; i++)
       {
-        if (obj.name.Contains(excludedName))
+        var excludedName = excludeContainsPrefabNames[i];
+        if (!string.IsNullOrEmpty(excludedName) && obj.name.Contains(excludedName))
         {
           shouldExit = true;
           break;
         }
       }
 
-      foreach (var excludedName in excludeExactPrefabNames)
+      if (!shouldExit)
       {
-        if (obj.name == excludedName)
+        for (var i = 0; i < excludeExactPrefabNames.Count; i++)
         {
-          shouldExit = true;
-          break;
+          var excludedName = excludeExactPrefabNames[i];
+          if (!string.IsNullOrEmpty(excludedName) && obj.name == excludedName)
+          {
+            shouldExit = true;
+            break;
+          }
         }
       }
 
@@ -302,7 +366,6 @@ public class PrefabThumbnailGenerator : EditorWindow
     // UpdateSpriteAtlas();
     if (sceneLight != null)
     {
-
       DestroyImmediate(sceneLight);
       sceneLight = null;
     }
@@ -404,12 +467,9 @@ public class PrefabThumbnailGenerator : EditorWindow
     // DestroyImmediate(renderTexture);
   }
 
-
   /// <summary>
   /// Uses RuntimePreviewGenerator to generate assets, does not require injecting in game. Can be run in editor mode
   /// </summary>
-  ///
-  /// Previously used AssetPreview.GetAssetPreview but this did not allow for transparency so ShippedIcons that were using the default gray background
   /// <param name="obj"></param>
   private void Capture(GameObject obj)
   {
@@ -434,7 +494,6 @@ public class PrefabThumbnailGenerator : EditorWindow
 
     // Generate the preview
     RuntimePreviewGenerator.BackgroundColor = new Color(1, 1, 1, 0); // White background with transparency
-    // RuntimePreviewGenerator.BackgroundColor = new Color(0.5f, 0.5f, 0.5f, 0); // Light gray
 
     var objClone = Instantiate(obj, lastPosition, Quaternion.identity);
     var pg = RuntimePreviewGenerator.GenerateModelPreview(objClone.transform, width, height);
@@ -468,9 +527,6 @@ public class PrefabThumbnailGenerator : EditorWindow
     previewCamera.backgroundColor = Color.white; // Background color (optional, can be transparent)
     previewCamera.transform.position = new Vector3(0, 1, -5); // Position the camera
     previewCamera.transform.LookAt(Vector3.zero); // Ensure it looks at the object
-
-    // Set up the camera's exposure settings (if you're using post-processing)
-    // previewCamera.exposure = 0.5f; // Adjust as necessary (if you're using post-processing exposure settings)
   }
 
   [UsedImplicitly]
@@ -503,7 +559,6 @@ public class PrefabThumbnailGenerator : EditorWindow
 
     if (sceneLight != null)
     {
-
       DestroyImmediate(sceneLight);
       sceneLight = null;
     }

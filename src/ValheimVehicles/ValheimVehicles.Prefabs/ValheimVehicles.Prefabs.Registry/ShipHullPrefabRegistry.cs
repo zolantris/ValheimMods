@@ -124,6 +124,12 @@ public class ShipHullPrefabRegistry : RegisterPrefab<ShipHullPrefabRegistry>
     {
       "hull_floor_4x4_wood",
       "hull_floor_4x4_iron",
+      "hull_floor_keel_4x2_left_wood",
+      "hull_floor_keel_4x2_right_wood",
+      "hull_floor_keel_4x2_left_iron",
+      "hull_floor_keel_4x2_right_iron",
+      "hull_rib_wood",
+      "hull_rib_iron",
       "hull_bow_center_wood",
       "hull_bow_curved_left_wood",
       "hull_bow_curved_right_wood",
@@ -143,8 +149,6 @@ public class ShipHullPrefabRegistry : RegisterPrefab<ShipHullPrefabRegistry>
       "hull_rib_expand_right_wood",
       "hull_rib_expand_left_iron",
       "hull_rib_expand_right_iron",
-      "hull_rib_wood",
-      "hull_rib_iron",
       "hull_seal_bow_left_wood",
       "hull_seal_bow_right_wood",
       "hull_seal_bow_left_iron",
@@ -177,7 +181,11 @@ public class ShipHullPrefabRegistry : RegisterPrefab<ShipHullPrefabRegistry>
       "hull_rail_prow_corner_right_iron"
     };
 
-    v4Hulls.ForEach(x => RegisterHullV4Prefab(x, x.Contains("wood") ? "wood" : "iron", x.Contains("rail") ? PrefabNames.PrefabSizeVariant.TwoByTwo : PrefabNames.PrefabSizeVariant.FourByFour));
+    // Custom future material order (e.g., wood -> iron -> eitr/flametal?)
+    var priority = new[] { "wood", "iron" };
+    var sortedCustom = PieceMenuSortUtil.MaybeSortByMaterial(v4Hulls, priority);
+
+    sortedCustom.ForEach(x => RegisterHullV4Prefab(x, x.Contains("wood") ? "wood" : "iron", x.Contains("rail") ? PrefabNames.PrefabSizeVariant.TwoByTwo : PrefabNames.PrefabSizeVariant.FourByFour));
   }
 
   public static void RegisterHullProwSeal()

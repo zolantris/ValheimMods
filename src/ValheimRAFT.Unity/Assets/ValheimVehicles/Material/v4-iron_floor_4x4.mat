@@ -10,7 +10,7 @@ Material:
   m_Name: v4-iron_floor_4x4
   m_Shader: {fileID: 46, guid: 0000000000000000f000000000000000, type: 0}
   m_Parent: {fileID: 2100000, guid: 297f395a9b1b409468e726491a6a0478, type: 2}
-  m_ModifiedSerializedProperties: 0
+  m_ModifiedSerializedProperties: 16
   m_ValidKeywords:
   - _METALLICGLOSSMAP
   - _NORMALMAP
@@ -22,23 +22,33 @@ Material:
   m_CustomRenderQueue: -1
   stringTagMap: {}
   disabledShaderPasses: []
-  m_LockedProperties: 
+  m_LockedProperties: _BumpMap _BumpScale
   m_SavedProperties:
     serializedVersion: 3
     m_TexEnvs:
     - _DetailAlbedoMap:
         m_Texture: {fileID: 0}
+        m_Scale: {x: 0.001, y: 0.0001}
+        m_Offset: {x: 0, y: 0}
+    - _DetailNormalMap:
+        m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _EmissionMap:
         m_Texture: {fileID: 0}
-        m_Scale: {x: 0.00064, y: 0.0005}
-        m_Offset: {x: 0, y: 1}
+        m_Scale: {x: 0.00064, y: 0.00064}
+        m_Offset: {x: 0, y: 0}
     - _MainTex:
-        m_Texture: {fileID: 2800000, guid: 60b953494c87c124a87210c11a09e931, type: 3}
-        m_Scale: {x: 0.00064, y: 0.0005}
-        m_Offset: {x: 0, y: 1}
+        m_Texture: {fileID: 2800000, guid: bca01db5a5890ee47959468ce4de5aad, type: 3}
+        m_Scale: {x: 0.00064, y: 0.00064}
+        m_Offset: {x: 0, y: 0}
     m_Ints: []
-    m_Floats: []
+    m_Floats:
+    - _DetailNormalMapScale: 1
+    - _GlossyReflections: 1
+    - _Mode: 0
+    - _OcclusionStrength: 1
+    - _SpecularHighlights: 1
+    - _UVSec: 0
     m_Colors: []
   m_BuildTextureStacks: []

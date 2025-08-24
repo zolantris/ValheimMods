@@ -29,6 +29,9 @@ public class PrefabConfig : BepInExBaseConfig<PrefabConfig>
     get;
     set;
   }
+
+  public static ConfigEntry<bool> SortModePieceMenuItemsByMaterial = null!;
+
   public static ConfigEntry<int> VehicleLandMaxTreadWidth = null!;
   public static ConfigEntry<int> VehicleLandMaxTreadLength = null!;
   public static ConfigEntry<float> VehicleDockVerticalHeight = null!;
@@ -82,6 +85,7 @@ public class PrefabConfig : BepInExBaseConfig<PrefabConfig>
 
   public override void OnBindConfig(ConfigFile config)
   {
+    SortModePieceMenuItemsByMaterial = config.BindUnique(PrefabConfigKey, "SortModePieceMenuItemsByMaterial", false, "Sorts by material instead of type. This means all wood pieces come before iron pieces.");
 
 
     AllowTieredMastToRotate = config.BindUnique(PrefabConfigKey, "AllowTieredMastToRotateInWind", true, "allows the tiered mast to rotate in wind");

@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 673817824
+CRC: 1767655861
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 7df4fda844a869d8c17ed51f96502e18
+    Hash: b2a952c752861a99543411b893ee8030
   TypeTreeHash:
     serializedVersion: 2
     Hash: a08d3a0029c4d097a3bf65e5f043195b
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 7df4fda844a869d8c17ed51f96502e18
+    Hash: b2a952c752861a99543411b893ee8030
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -180,6 +180,7 @@ Assets:
 - Assets/ValheimVehicles/Prefabs/hull_wall_window_square_wood_2x2.prefab
 - Assets/ValheimVehicles/Prefabs/cannon_turret.prefab
 - Assets/ValheimVehicles/ExternalAssets/Sounds/incoming-motar-4.mp3
+- Assets/ValheimVehicles/Prefabs/hulls-v4/hull_floor_keel_4x2_right_wood.prefab
 - Assets/ValheimVehicles/Prefabs/Backups/shared_hull_slab_iron_4x4_new.prefab
 - Assets/ValheimVehicles/Prefabs/hull_rib_2x1x2_wood.prefab
 - Assets/ValheimVehicles/Prefabs/hulls-v4/hull_bow_center_iron.prefab
@@ -198,8 +199,10 @@ Assets:
 - Assets/ValheimVehicles/Prefabs/hulls-v4/hull_bow_tri_left_iron.prefab
 - Assets/ValheimVehicles/Prefabs/hull_corner_floor_2x4_left_wood.prefab
 - Assets/ValheimVehicles/Prefabs/hull_rib_2x2x2_iron.prefab
+- Assets/ValheimVehicles/Prefabs/hulls-v4/hull_floor_keel_4x2_right_iron.prefab
 - Assets/ValheimVehicles/Prefabs/steering_wheel.prefab
 - Assets/ValheimVehicles/Prefabs/wheel_single_2.prefab
+- Assets/ValheimVehicles/Prefabs/hulls-v4/hull_floor_keel_4x2_left_iron.prefab
 - Assets/ValheimVehicles/Material/bronze_nautilus_metal Variant.mat
 - Assets/ValheimVehicles/Prefabs/GUI/edit_ramp_panel 1.prefab
 - Assets/ValheimVehicles/Prefabs/hull_wall_angular_45_seal_inverse.prefab
@@ -333,6 +336,7 @@ Assets:
 - Assets/ValheimVehicles/Prefabs/hulls-v4/hull_rib_expand_right_wood.prefab
 - Assets/ValheimVehicles/Material/Dirtfloor 1.mat
 - Assets/ValheimVehicles/Prefabs/hulls-v4/hull_rail_prow_corner_left_wood.prefab
+- Assets/ValheimVehicles/Prefabs/hulls-v4/hull_floor_keel_4x2_left_wood.prefab
 - Assets/ValheimVehicles/ExternalAssets/Sounds/explosion-fx.mp3
 - Assets/ValheimVehicles/Prefabs/hull_rib_double_glass.prefab
 - Assets/ValheimVehicles/Prefabs/hull_prow_2x2x4_wood.prefab
