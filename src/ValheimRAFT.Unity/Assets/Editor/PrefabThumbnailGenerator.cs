@@ -1,3 +1,6 @@
+// ReSharper disable ArrangeNamespaceBody
+// ReSharper disable NamespaceStyle
+
 #region
 
 using System;
@@ -18,25 +21,32 @@ using Object = UnityEngine.Object;
 #endregion
 
 /// <summary>
-/// Add this Class to the Assets/Editor folder in Unity project
-/// Find the component within Window > PrefabThumbnailGenerator
+/// Window: Window > PrefabThumbnailGenerator
+/// Full batch + single-runner; writes PNGs first, then does ONE import at the end.
+/// Importer settings are applied by an AssetPostprocessor for the output folder.
+/// Sprite Packer is disabled during that import, then we pack ONCE at the end,
+/// without touching atlas packables (non-invasive).
 /// </summary>
 public class PrefabThumbnailGenerator : EditorWindow
 {
   private const int GuiWidth = 150;
 
   private const string PrefabGenScenePath = "Assets/ValheimVehicles/Scene/GeneratePrefabIcons.unity";
+
+  // Public so the postprocessor can access it
+  public static string OutputDirPath => outputDirPath.TrimEnd('/', '\\') + "/";
+
+  // You can change this from the UI
   private static string outputDirPath = "Assets/ValheimVehicles/GeneratedIcons/"; // output dir
 
   private static GameObject sceneLight;
 
   public static string lastScenePath = "";
 
-  [FormerlySerializedAs("excludedContainsPrefabNames")]
   [SerializeField] private List<string> excludeContainsPrefabNames = new()
   {
     "shared_", "steering_wheel", "rope_ladder", "dirt_floor", "dirtfloor_icon",
-    "cannon_shoot_part", "chain_link", "rope_anchor", "keel", "rudder_basic",
+    "cannon_shoot_part", "chain_link", "rope_anchor", "rudder_basic",
     "custom_sail", "mechanism_swivel", "_old", "_test_variant", "tank_tread_icon",
     "vehicle_hammer", "_backup", "_deprecated"
   };
@@ -44,7 +54,7 @@ public class PrefabThumbnailGenerator : EditorWindow
   [SerializeField] private List<string> excludeExactPrefabNames = new()
   {
     "shared_", "steering_wheel", "rope_ladder", "dirt_floor", "dirtfloor_icon",
-    "rope_anchor", "keel", "rudder_basic", "custom_sail", "mechanism_swivel",
+    "rope_anchor", "rudder_basic", "custom_sail", "mechanism_swivel",
     "_old", "_test_variant", "tank_tread_icon", "vehicle_hammer"
   };
 
@@ -52,18 +62,22 @@ public class PrefabThumbnailGenerator : EditorWindow
   public Object targetSpriteAtlas;
   public List<string> searchDirectoryPaths = new() { "Assets/ValheimVehicles/Prefabs/", "Assets/ValheimVehicles/Prefabs/hulls-v4" };
   public string targetSpriteAtlasPath = "Assets/ValheimVehicles/vehicle_icons.spriteatlasv2";
+
   private readonly List<GameObject> objList = new();
 
-  private readonly List<string> spritePaths = new();
-  private int height = 100; // image height
+  // Collected during capture pass
+  private readonly List<string> spritePaths = new(); // generated png paths
+  private readonly List<string> pendingImportPaths = new(); // imported once at end
 
+  private int height = 100;
+  private int width = 100;
   private bool isRunning;
 
-  private Vector3 lastPosition = Vector3.zero;
-  private Object outputDirObj;
-
   private Camera previewCamera;
-  private int width = 100; // image width
+
+  // Camera config: Pitch (X), Yaw (Y). Roll locked to 0.
+  [SerializeField] private float cameraPitchDegrees = 25f; // look downward
+  [SerializeField] private float cameraYawDegrees = 15f; // look slightly from right
 
   // --- Serialized binding for lists ---
   private SerializedObject _so;
@@ -71,12 +85,21 @@ public class PrefabThumbnailGenerator : EditorWindow
   private SerializedProperty _spExcludeExact;
   private ReorderableList _rlExcludeContains;
   private ReorderableList _rlExcludeExact;
+  private static GameObject _previewRoot;
+
+  // Global sprite packer suppression (Unity 2022)
+  private SpritePackerMode _prevPackerMode;
+  private bool _packerToggled;
+
+  private Vector2 _scroll;
+
+  // Optional: repack atlas at the end (non-invasive)
+  [SerializeField] private bool repackAtlasAtEnd = true;
 
   private GUIContent CaptureRunButtonText => new(isRunning ? "Generating icons...please wait" : "Generate New Sprite Icons");
 
   private void OnEnable()
   {
-    // Bind EditorWindow fields to a SerializedObject so list edits persist & apply
     _so = new SerializedObject(this);
     _spExcludeContains = _so.FindProperty("excludeContainsPrefabNames");
     _spExcludeExact = _so.FindProperty("excludeExactPrefabNames");
@@ -92,6 +115,32 @@ public class PrefabThumbnailGenerator : EditorWindow
       "ExcludeExact PrefabNames",
       "Names that, if exactly matching a prefab name, will be skipped."
     );
+  }
+
+  // Add this helper anywhere in the class
+  private void EnsureExclusionUIBindings()
+  {
+    if (_so == null) _so = new SerializedObject(this);
+
+    if (_spExcludeContains == null)
+      _spExcludeContains = _so.FindProperty("excludeContainsPrefabNames");
+
+    if (_spExcludeExact == null)
+      _spExcludeExact = _so.FindProperty("excludeExactPrefabNames");
+
+    if (_rlExcludeContains == null)
+      _rlExcludeContains = BuildStringReorderableList(
+        _spExcludeContains,
+        "ExcludeContains PrefabNames",
+        "Names that, if contained in a prefab name, will be skipped."
+      );
+
+    if (_rlExcludeExact == null)
+      _rlExcludeExact = BuildStringReorderableList(
+        _spExcludeExact,
+        "ExcludeExact PrefabNames",
+        "Names that, if exactly matching a prefab name, will be skipped."
+      );
   }
 
   private static ReorderableList BuildStringReorderableList(SerializedProperty prop, string header, string tooltip)
@@ -123,70 +172,87 @@ public class PrefabThumbnailGenerator : EditorWindow
     return rl;
   }
 
+  private Vector2 _scrollPos;
+  [SerializeField] private GameObject testPrefab; // single-runner target
+  [SerializeField] private bool deleteOutputOnFullRun = true;
+  [SerializeField] private bool deleteOutputOnTestRun = false;
+
   private void OnGUI()
   {
-    // Ensure serialized view is current
+    EnsureExclusionUIBindings(); // <— ensures lists are always bound
     _so.Update();
+    var oldLabelWidth = EditorGUIUtility.labelWidth;
+    EditorGUIUtility.labelWidth = GuiWidth;
 
-    var runCaptureGuiContent = CaptureRunButtonText;
-    if (GUILayout.Button(runCaptureGuiContent))
+    _scrollPos = EditorGUILayout.BeginScrollView(_scrollPos);
+
+    using (new EditorGUILayout.HorizontalScope())
     {
-      isRunning = true;
-      if (TrySwitchToPrefabGenerationScene())
+      if (GUILayout.Button("Generate New Sprite Icons (Full Run)"))
       {
-        // Defer to next Editor update loop so the scene/cameras/lights are all valid
-        EditorApplication.delayCall += RunGenerationAfterSceneLoad;
+        isRunning = true;
+        if (TrySwitchToPrefabGenerationScene())
+          EditorApplication.delayCall += RunGenerationAfterSceneLoad;
+        else
+          isRunning = false;
       }
-      else
+
+      if (GUILayout.Button("Test Run (1 Prefab)"))
       {
-        isRunning = false;
+        isRunning = true;
+        if (TrySwitchToPrefabGenerationScene())
+          EditorApplication.delayCall += RunSingleAfterSceneLoad;
+        else
+          isRunning = false;
       }
     }
 
-    GUILayout.BeginHorizontal();
-    var dynamicStatus = isRunning ? "Running" : "Idle";
-    var status = $"Status: {dynamicStatus}";
-    GUILayout.Label(status, GUILayout.Width(GuiWidth));
-    GUILayout.EndHorizontal();
+    using (new EditorGUILayout.HorizontalScope())
+    {
+      EditorGUILayout.LabelField($"Status: {(isRunning ? "Running" : "Idle")}");
+    }
     EditorGUILayout.Space();
 
-    GUILayout.BeginHorizontal();
-    GUILayout.Label("Sprite Atlas To Pack", GUILayout.Width(GuiWidth));
-    targetSpriteAtlas = EditorGUILayout.ObjectField(targetSpriteAtlas, typeof(SpriteAtlas), false);
-    GUILayout.EndHorizontal();
+    using (new EditorGUILayout.VerticalScope("box"))
+    {
+      testPrefab = (GameObject)EditorGUILayout.ObjectField("Test Prefab (optional):", testPrefab, typeof(GameObject), false);
+      deleteOutputOnFullRun = EditorGUILayout.Toggle("Delete Output (Full Run):", deleteOutputOnFullRun);
+      deleteOutputOnTestRun = EditorGUILayout.Toggle("Delete Output (Test Run):", deleteOutputOnTestRun);
+    }
     EditorGUILayout.Space();
 
-    GUILayout.BeginHorizontal();
-    GUILayout.Label("Search Directory : ", GUILayout.Width(GuiWidth));
-    searchDirectory = EditorGUILayout.ObjectField(searchDirectory, typeof(Object), true);
-    GUILayout.EndHorizontal();
+    using (new EditorGUILayout.VerticalScope("box"))
+    {
+      cameraPitchDegrees = EditorGUILayout.Slider("Camera Pitch X (deg):", cameraPitchDegrees, -60f, 60f);
+      cameraYawDegrees = EditorGUILayout.Slider("Camera Yaw Y (deg):", cameraYawDegrees, -180f, 180f);
+      EditorGUILayout.HelpBox("Pitch looks down/up. Yaw rotates around the prefab. Roll is locked to 0° (upright sprites).", MessageType.None);
+    }
     EditorGUILayout.Space();
 
-    GUILayout.BeginHorizontal();
-    GUILayout.Label("Save directory : ", GUILayout.Width(GuiWidth));
-    outputDirPath = EditorGUILayout.TextField(outputDirPath);
-    GUILayout.EndHorizontal();
+    using (new EditorGUILayout.VerticalScope("box"))
+    {
+      targetSpriteAtlas = (SpriteAtlas)EditorGUILayout.ObjectField("Sprite Atlas (pack only)", targetSpriteAtlas, typeof(SpriteAtlas), false);
+      repackAtlasAtEnd = EditorGUILayout.Toggle("Repack Atlas At End (non-invasive)", repackAtlasAtEnd);
+      searchDirectory = EditorGUILayout.ObjectField("Search Directory :", searchDirectory, typeof(Object), true);
+      outputDirPath = EditorGUILayout.TextField("Save directory :", outputDirPath);
+    }
     EditorGUILayout.Space();
 
-    GUILayout.BeginHorizontal();
-    GUILayout.Label("Width : ", GUILayout.Width(GuiWidth));
-    width = EditorGUILayout.IntField(width);
-    GUILayout.EndHorizontal();
+    using (new EditorGUILayout.HorizontalScope())
+    {
+      width = EditorGUILayout.IntField("Width :", width);
+      height = EditorGUILayout.IntField("Height :", height);
+    }
     EditorGUILayout.Space();
 
-    GUILayout.BeginHorizontal();
-    GUILayout.Label("Height : ", GUILayout.Width(GuiWidth));
-    height = EditorGUILayout.IntField(height);
-    GUILayout.EndHorizontal();
-    EditorGUILayout.Space();
-
-    // --- Reorderable, editable lists bound to the actual fields ---
     _rlExcludeContains.DoLayoutList();
-    EditorGUILayout.Space();
+    EditorGUILayout.Space(6);
     _rlExcludeExact.DoLayoutList();
     EditorGUILayout.Space();
 
-    // Apply edits back to the instance
+    EditorGUILayout.EndScrollView();
+    EditorGUIUtility.labelWidth = oldLabelWidth;
+
     _so.ApplyModifiedProperties();
   }
 
@@ -196,9 +262,196 @@ public class PrefabThumbnailGenerator : EditorWindow
     GetWindow(typeof(PrefabThumbnailGenerator));
   }
 
+  private bool ShouldSkip(GameObject obj)
+  {
+    for (var i = 0; i < excludeContainsPrefabNames.Count; i++)
+    {
+      var s = excludeContainsPrefabNames[i];
+      if (!string.IsNullOrEmpty(s) && obj.name.Contains(s)) return true;
+    }
+    for (var i = 0; i < excludeExactPrefabNames.Count; i++)
+    {
+      var s = excludeExactPrefabNames[i];
+      if (!string.IsNullOrEmpty(s) && obj.name == s) return true;
+    }
+    return false;
+  }
+
+  private void CaptureSpecificPrefabs(IEnumerable<GameObject> prefabs, bool deleteOutputFirst)
+  {
+    AssetDatabase.DisallowAutoRefresh();
+    try
+    {
+      spritePaths.Clear();
+      pendingImportPaths.Clear();
+
+      if (!Directory.Exists(OutputDirPath))
+        Directory.CreateDirectory(OutputDirPath);
+
+      if (deleteOutputFirst)
+        DeleteAllPngsInOutputFolder();
+
+      foreach (var obj in prefabs)
+      {
+        if (obj == null) continue;
+        if (ShouldSkip(obj)) continue;
+
+        try
+        {
+          Capture(obj); // write PNG + enqueue
+        }
+        catch (Exception e)
+        {
+          Debug.LogWarning($"Issue occurred while snapshotting {obj.name}: {e.Message}");
+        }
+      }
+
+      // One single import at the end
+      FinalizeCapturedSprites();
+    }
+    finally
+    {
+      AssetDatabase.AllowAutoRefresh();
+      EditorUtility.UnloadUnusedAssetsImmediate();
+      GC.Collect();
+
+      if (sceneLight != null)
+      {
+        SafeDestroy(sceneLight);
+        sceneLight = null;
+      }
+    }
+  }
+
+  /// <summary>
+  /// Imports all pending PNGs in one batch.
+  /// Disables the global Sprite Packer to avoid per-import packing,
+  /// then restores it. Importer settings applied by AssetPostprocessor.
+  /// </summary>
+  private void FinalizeCapturedSprites()
+  {
+    if (pendingImportPaths.Count == 0) return;
+
+    DisableSpritePackerForBatch();
+
+    try
+    {
+      AssetDatabase.StartAssetEditing();
+      AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
+
+      // Sanity: ensure sprites exist
+      foreach (var path in pendingImportPaths)
+      {
+        var sprite = AssetDatabase.LoadAssetAtPath<Sprite>(path);
+        if (sprite == null)
+          Debug.LogWarning($"FinalizeCapturedSprites: Sprite missing after import for {path}");
+      }
+    }
+    catch (Exception e)
+    {
+      Debug.LogWarning($"FinalizeCapturedSprites error: {e.Message}");
+    }
+    finally
+    {
+      AssetDatabase.StopAssetEditing();
+      RestoreSpritePacker();
+      AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
+    }
+  }
+
+  private void DisableSpritePackerForBatch()
+  {
+    try
+    {
+      _prevPackerMode = EditorSettings.spritePackerMode;
+      if (_prevPackerMode != SpritePackerMode.Disabled)
+      {
+        EditorSettings.spritePackerMode = SpritePackerMode.Disabled;
+        _packerToggled = true;
+      }
+    }
+    catch (Exception e)
+    {
+      Debug.LogWarning($"Could not disable SpritePacker: {e.Message}");
+    }
+  }
+
+  private void RestoreSpritePacker()
+  {
+    try
+    {
+      if (_packerToggled)
+      {
+        EditorSettings.spritePackerMode = _prevPackerMode;
+        _packerToggled = false;
+      }
+    }
+    catch (Exception e)
+    {
+      Debug.LogWarning($"Could not restore SpritePacker: {e.Message}");
+    }
+  }
+
+  private void CaptureTexturesForPrefabs()
+  {
+    var all = GetFilesFromSearchPath();
+    CaptureSpecificPrefabs(all, deleteOutputOnFullRun);
+  }
+
+  private void RunSingleAfterSceneLoad()
+  {
+    EditorApplication.delayCall -= RunSingleAfterSceneLoad;
+
+    var activeScene = SceneManager.GetActiveScene();
+    if (!activeScene.path.EndsWith("GeneratePrefabIcons.unity"))
+    {
+      Debug.LogError("Scene not loaded as expected!");
+      isRunning = false;
+      return;
+    }
+
+    try
+    {
+      GameObject target = null;
+
+      if (testPrefab != null)
+      {
+        target = testPrefab;
+      }
+      else
+      {
+        var list = GetFilesFromSearchPath();
+        target = list.FirstOrDefault(go => go != null && !ShouldSkip(go));
+        if (target == null)
+        {
+          Debug.LogWarning("Test Run: No suitable prefab found (all excluded or none discovered).");
+        }
+      }
+
+      if (target != null)
+      {
+        CaptureSpecificPrefabs(new[] { target }, deleteOutputOnTestRun);
+        RequestAtlasRepackNonInvasive(); // pack-only
+      }
+    }
+    finally
+    {
+      isRunning = false;
+    }
+
+    try
+    {
+      if (!string.IsNullOrEmpty(lastScenePath))
+        EditorSceneManager.OpenScene(lastScenePath, OpenSceneMode.Single);
+    }
+    catch
+    {
+      Debug.LogError($"Failed to open scene at {PrefabGenScenePath}");
+    }
+  }
+
   private void RunGenerationAfterSceneLoad()
   {
-    // Only run ONCE
     EditorApplication.delayCall -= RunGenerationAfterSceneLoad;
 
     var activeScene = SceneManager.GetActiveScene();
@@ -212,6 +465,7 @@ public class PrefabThumbnailGenerator : EditorWindow
     try
     {
       CaptureTexturesForPrefabs();
+      RequestAtlasRepackNonInvasive(); // pack-only
     }
     finally
     {
@@ -259,128 +513,44 @@ public class PrefabThumbnailGenerator : EditorWindow
   {
     objList.Clear();
     var replaceDirectoryPath = searchDirectory ? new List<string> { AssetDatabase.GetAssetPath(searchDirectory) } : searchDirectoryPaths;
-    var pathType = searchDirectory != null ? "SearchDirectory" : "SearchDirectoryPaths";
-    Debug.Log($"Using {pathType}");
-    var filePaths = replaceDirectoryPath.SelectMany(x =>
-    {
-      var filesInDir = Directory.GetFiles(x, "*.prefab");
+    var filePaths = replaceDirectoryPath.SelectMany(x => Directory.GetFiles(x, "*.prefab"));
 
-      // todo may need to call Debug.Log in batches to avoid truncation
-      var currentLogIndex = 0;
-      const int maxBatchLogLines = 20;
-      var hasLoggedOverFileDirLength = false;
-      while (hasLoggedOverFileDirLength == false)
-      {
-        var filesMessage = string.Join(",\n", filesInDir.Skip(currentLogIndex)
-          .Take(Math.Min(maxBatchLogLines, filesInDir.Length)));
-        if (filesMessage.Length > 0)
-        {
-          Debug.Log($"found files in dir {x} {filesMessage} \n({currentLogIndex} / {filesInDir.Length})");
-        }
-
-        if (currentLogIndex >= filesInDir.Length)
-        {
-          hasLoggedOverFileDirLength = true;
-        }
-        // force bump by 1 or remaining logs. Will eventually bail
-        currentLogIndex += Math.Max(1, Math.Min(filesInDir.Length - currentLogIndex, maxBatchLogLines));
-      }
-      return filesInDir;
-    });
     List<GameObject> localList = new();
     foreach (var filePath in filePaths)
     {
       var obj = AssetDatabase.LoadAssetAtPath(filePath, typeof(GameObject)) as GameObject;
-      var isTruthy = obj != null;
-      Debug.Log($"filePath {filePath}, obj {obj} isTruthy{isTruthy}");
       if (obj != null)
       {
         objList.Add(obj);
         localList.Add(obj);
       }
     }
-
-    Debug.Log($"localList count {localList.Count}, objList count {objList.Count}");
     return localList;
   }
 
-  private void CaptureTexturesForPrefabs()
+  // ===== Atlas: non-invasive repack only =====
+
+  private void RequestAtlasRepackNonInvasive()
   {
-    AssetDatabase.DisallowAutoRefresh();
-    spritePaths.Clear();
+    if (!repackAtlasAtEnd) return; // optional toggle
 
-    if (!Directory.Exists(outputDirPath))
+    var atlasPath = GetSpriteAtlasPath();
+    var atlasObj = AssetDatabase.LoadAssetAtPath<SpriteAtlas>(atlasPath);
+    if (!atlasObj)
     {
-      Directory.CreateDirectory(outputDirPath);
+      Debug.LogWarning($"SpriteAtlas not found at {atlasPath}");
+      return;
     }
 
-    var tempObjList = GetFilesFromSearchPath();
-    DeleteAllFilesInOutputFolder();
-    // DeleteCurrentSpritesInTargetAtlas();
-
-    lastPosition = Vector3.zero;
-
-    foreach (var obj in tempObjList.ToArray())
+    try
     {
-      Debug.Log("OBJ :  " + obj.name);
-
-      var shouldExit = false;
-
-      // live values come from the serialized lists you edit in the UI
-      for (var i = 0; i < excludeContainsPrefabNames.Count; i++)
-      {
-        var excludedName = excludeContainsPrefabNames[i];
-        if (!string.IsNullOrEmpty(excludedName) && obj.name.Contains(excludedName))
-        {
-          shouldExit = true;
-          break;
-        }
-      }
-
-      if (!shouldExit)
-      {
-        for (var i = 0; i < excludeExactPrefabNames.Count; i++)
-        {
-          var excludedName = excludeExactPrefabNames[i];
-          if (!string.IsNullOrEmpty(excludedName) && obj.name == excludedName)
-          {
-            shouldExit = true;
-            break;
-          }
-        }
-      }
-
-      if (shouldExit) continue;
-      try
-      {
-        Capture(obj);
-      }
-      catch (Exception)
-      {
-        Debug.LogWarning($"Issue occurred while snapshotting {obj.name}");
-      }
+      SpriteAtlasUtility.PackAtlases(new[] { atlasObj }, EditorUserBuildSettings.activeBuildTarget);
+      Debug.Log("SpriteAtlas repacked (non-invasive).");
     }
-    AssetDatabase.AllowAutoRefresh();
-
-    // AddAllIconsToSpriteAtlas();
-    // UpdateSpriteAtlas();
-    if (sceneLight != null)
+    catch (Exception e)
     {
-      DestroyImmediate(sceneLight);
-      sceneLight = null;
+      Debug.LogWarning($"PackAtlases failed: {e.Message}");
     }
-  }
-
-  private void DeleteCurrentSpritesInTargetAtlas()
-  {
-    var spriteAtlasPath = GetSpriteAtlasPath();
-    var spriteAtlas = SpriteAtlasAsset.Load(spriteAtlasPath);
-    var spriteAtlasObj = AssetDatabase.LoadAssetAtPath<SpriteAtlas>(spriteAtlasPath);
-    if (!spriteAtlasObj) return;
-
-    var currentSprites = spriteAtlasObj.GetPackables();
-    spriteAtlas.Remove(currentSprites);
-    SpriteAtlasAsset.Save(spriteAtlas, spriteAtlasPath);
   }
 
   private string GetSpriteAtlasPath()
@@ -388,179 +558,247 @@ public class PrefabThumbnailGenerator : EditorWindow
     return targetSpriteAtlas ? AssetDatabase.GetAssetPath(targetSpriteAtlas) : targetSpriteAtlasPath;
   }
 
-  // must use the AssetDatabase get the current sprites and nuke them
-  private void UpdateSpriteAtlas()
+  private static void DeleteAllPngsInOutputFolder()
   {
-    AssetDatabase.Refresh();
-    Debug.Log($"AssetPath: {spritePaths.Count}");
-    var spriteAtlasPath = GetSpriteAtlasPath();
-    var spriteAtlas = SpriteAtlasAsset.Load(spriteAtlasPath);
-
-    if (targetSpriteAtlasPath == null) return;
-
-    var spritesList = new List<Object>();
-
-    if (!spriteAtlas)
+    string[] folders = { OutputDirPath };
+    foreach (var guid in AssetDatabase.FindAssets("t:Texture2D", folders))
     {
-      Debug.LogWarning("No sprite atlas");
-      return;
-    }
-
-    foreach (var spritePath in spritePaths)
-    {
-      var obj = AssetDatabase.LoadAssetAtPath<Sprite>(spritePath);
-      if (obj == null) continue;
-      spritesList.Add(obj);
-    }
-
-    Debug.Log($"Called UpdateSpriteAtlas {spritesList.Count}");
-
-    spriteAtlas.Add(spritesList.ToArray());
-    SpriteAtlasAsset.Save(spriteAtlas, GetSpriteAtlasPath());
-    AssetDatabase.Refresh();
-  }
-
-  private void AddAllIconsToSpriteAtlas()
-  {
-    var iconAssets = AssetDatabase.FindAssets("", new[] { "Assets/ValheimVehicles/Icons" });
-    foreach (var assetGuid in iconAssets)
-    {
-      var assetPath = AssetDatabase.GUIDToAssetPath(assetGuid);
-      spritePaths.Add(assetPath);
-    }
-  }
-
-  private static void DeleteAllFilesInOutputFolder()
-  {
-    string[] trashFolders = { outputDirPath };
-    foreach (var asset in AssetDatabase.FindAssets("", trashFolders))
-    {
-      var path = AssetDatabase.GUIDToAssetPath(asset);
-      if (path.Contains(".png"))
+      var path = AssetDatabase.GUIDToAssetPath(guid);
+      if (path.EndsWith(".png", StringComparison.OrdinalIgnoreCase))
       {
         AssetDatabase.DeleteAsset(path);
       }
     }
   }
 
-  private static void WriteTextureToFile(Texture textureToRead, string texturePath)
+  // ===== Camera / capture =====
+
+  private RenderTexture _rt;
+  private const int RtDepth = 24;
+  private const float CamFov = 35f;
+  private const float Margin = 1.12f;
+
+  private static GameObject CreateOrGetPreviewRoot()
   {
-    if (textureToRead == null) return;
-    var readableTexture = new Texture2D(textureToRead.width, textureToRead.height);
-    var renderTexture = RenderTexture.GetTemporary(textureToRead.width, textureToRead.height);
+    var active = SceneManager.GetActiveScene();
 
-    Graphics.Blit(textureToRead, renderTexture);
+    if (_previewRoot != null)
+    {
+      if (_previewRoot.scene != active)
+        SceneManager.MoveGameObjectToScene(_previewRoot, active);
 
-    var previous = RenderTexture.active;
-    RenderTexture.active = renderTexture;
+      _previewRoot.hideFlags = HideFlags.HideInHierarchy | HideFlags.DontSaveInEditor | HideFlags.DontSaveInBuild;
+      return _previewRoot;
+    }
 
-    readableTexture.ReadPixels(new Rect(0, 0, renderTexture.width, renderTexture.height), 0, 0);
-    readableTexture.Apply();
+    _previewRoot = new GameObject("__PreviewRoot");
+    _previewRoot.hideFlags = HideFlags.HideInHierarchy | HideFlags.DontSaveInEditor | HideFlags.DontSaveInBuild;
 
-    RenderTexture.active = previous;
-    RenderTexture.ReleaseTemporary(renderTexture);
+    SceneManager.MoveGameObjectToScene(_previewRoot, active);
+    return _previewRoot;
+  }
 
-    // Encode to PNG
-    var bytes = readableTexture.EncodeToPNG();
-    File.WriteAllBytes(texturePath, bytes);
-    // DestroyImmediate(readableTexture);
-    // DestroyImmediate(renderTexture);
+  private void Capture(GameObject prefab)
+  {
+    EnsurePreviewCamera(width, height);
+
+    GameObject instance = null;
+    Texture2D tex = null;
+    var prevActive = RenderTexture.active;
+    var prevTarget = previewCamera.targetTexture;
+
+    try
+    {
+      var root = CreateOrGetPreviewRoot();
+
+      // 1) Clone
+      instance = Instantiate(prefab);
+      instance.name = prefab.name + "_PreviewClone";
+      instance.transform.SetParent(root.transform, false);
+      instance.hideFlags = HideFlags.HideInHierarchy | HideFlags.DontSaveInEditor | HideFlags.DontSaveInBuild;
+      instance.transform.position = Vector3.zero;
+      instance.transform.rotation = Quaternion.identity;
+      instance.transform.localScale = Vector3.one;
+
+      // 2) Bounds & framing
+      var b = GetRenderableBounds(instance);
+      if (b.size == Vector3.zero)
+      {
+        Debug.LogWarning($"No renderers found on {prefab.name}, skipping.");
+        return;
+      }
+
+      var target = b.center;
+      var radius = b.extents.magnitude; // bounding-sphere radius
+      var aspect = (float)width / Mathf.Max(1, height);
+
+      var camRot = Quaternion.Euler(cameraPitchDegrees, cameraYawDegrees, 0f);
+      var forward = camRot * Vector3.forward;
+
+      var distance = ComputeDistanceForBounds(radius, previewCamera.fieldOfView, aspect) * Margin;
+
+      var camPos = target - forward * distance;
+      previewCamera.transform.SetPositionAndRotation(camPos, camRot);
+
+      previewCamera.nearClipPlane = Mathf.Min(0.01f, Mathf.Max(0.001f, distance - radius * 1.05f));
+      previewCamera.farClipPlane = Mathf.Max(previewCamera.farClipPlane, distance + radius * 4f);
+
+      // 3) Shared light
+      if (sceneLight == null)
+      {
+        sceneLight = new GameObject("PreviewLight");
+        sceneLight.transform.SetParent(root.transform, false);
+        sceneLight.hideFlags = HideFlags.HideInHierarchy | HideFlags.DontSaveInEditor | HideFlags.DontSaveInBuild;
+
+        var light = sceneLight.AddComponent<Light>();
+        light.type = LightType.Directional;
+        light.intensity = 1.0f;
+        light.color = Color.white;
+        light.shadows = LightShadows.None;
+        sceneLight.transform.rotation = Quaternion.Euler(50, -30, 0);
+      }
+
+      // 4) Render
+      previewCamera.targetTexture = _rt;
+      previewCamera.Render();
+
+      // 5) Save PNG
+      tex = new Texture2D(width, height, TextureFormat.RGBA32, false);
+      RenderTexture.active = _rt;
+      tex.ReadPixels(new Rect(0, 0, width, height), 0, 0);
+      tex.Apply();
+
+      var texturePath = $"{OutputDirPath}{prefab.name}.png";
+      File.WriteAllBytes(texturePath, tex.EncodeToPNG());
+
+      spritePaths.Add(texturePath);
+      pendingImportPaths.Add(texturePath);
+    }
+    finally
+    {
+      RenderTexture.active = prevActive;
+      previewCamera.targetTexture = prevTarget;
+
+      SafeDestroy(tex);
+      SafeDestroy(instance);
+    }
   }
 
   /// <summary>
-  /// Uses RuntimePreviewGenerator to generate assets, does not require injecting in game. Can be run in editor mode
+  /// Distance so a sphere of radius 'r' fits the frustum considering aspect.
+  /// Uses the tighter of vertical/horizontal FOV constraints.
   /// </summary>
-  /// <param name="obj"></param>
-  private void Capture(GameObject obj)
+  private static float ComputeDistanceForBounds(float r, float fovDeg, float aspect)
   {
-    Debug.Log($"called capture for obj {obj.name}");
+    var fovRad = Mathf.Deg2Rad * fovDeg;
+    var distV = r / Mathf.Sin(fovRad * 0.5f);
 
-    // Create a new directional light in the scene
-    if (sceneLight == null)
-    {
-      sceneLight = new GameObject("PreviewLight");
-    }
-    var light = sceneLight.GetComponent<Light>();
-    if (light == null)
-      light = sceneLight.AddComponent<Light>();
+    var tanV = Mathf.Tan(fovRad * 0.5f);
+    var tanH = tanV * aspect;
+    var fovH = 2f * Mathf.Atan(tanH);
+    var distH = r / Mathf.Sin(fovH * 0.5f);
 
-    lastPosition += Vector3.right * 10;
-
-    light.type = LightType.Directional;
-    light.intensity = 1.0f; // You can tweak the intensity
-    light.color = Color.white; // White light
-    light.transform.rotation = Quaternion.Euler(50, -30, 0); // Set the light angle
-    light.shadows = LightShadows.None; // Optional, disable shadows for the preview
-
-    // Generate the preview
-    RuntimePreviewGenerator.BackgroundColor = new Color(1, 1, 1, 0); // White background with transparency
-
-    var objClone = Instantiate(obj, lastPosition, Quaternion.identity);
-    var pg = RuntimePreviewGenerator.GenerateModelPreview(objClone.transform, width, height);
-    var texturePath = $"{outputDirPath}{obj.name}.png";
-    WriteTextureToFile(pg, texturePath);
-
-    AssetDatabase.ImportAsset(texturePath);
-    var importer = AssetImporter.GetAtPath(texturePath) as TextureImporter;
-    if (importer != null)
-    {
-      importer.textureType = TextureImporterType.Sprite;
-      importer.textureCompression = TextureImporterCompression.Uncompressed;
-    }
-    else
-    {
-      Debug.LogWarning("No importer, this will result in the GeneratedIcons not being written as Sprites");
-    }
-
-    AssetDatabase.WriteImportSettingsIfDirty(texturePath);
-    DestroyImmediate(pg);
-    DestroyImmediate(objClone);
+    return Mathf.Max(distV, distH);
   }
 
-  private void SetupPreviewCamera()
+  private void OnDisable()
   {
-    // Create a new camera for preview generation
-    var cameraGO = new GameObject("PreviewCamera");
-    previewCamera = cameraGO.AddComponent<Camera>();
-    previewCamera.orthographic = true; // Optional: Use orthographic projection for a flat view
-    previewCamera.clearFlags = CameraClearFlags.SolidColor;
-    previewCamera.backgroundColor = Color.white; // Background color (optional, can be transparent)
-    previewCamera.transform.position = new Vector3(0, 1, -5); // Position the camera
-    previewCamera.transform.LookAt(Vector3.zero); // Ensure it looks at the object
+    if (_rt != null)
+    {
+      _rt.Release();
+      _rt = null;
+    }
+
+    if (_previewRoot != null)
+    {
+      SafeDestroy(_previewRoot);
+      _previewRoot = null;
+    }
+    sceneLight = null;
+  }
+
+  private void EnsurePreviewCamera(int w, int h)
+  {
+    var root = CreateOrGetPreviewRoot();
+
+    if (previewCamera == null)
+    {
+      var go = new GameObject("PreviewCamera");
+      go.transform.SetParent(root.transform, false);
+      go.hideFlags = HideFlags.HideInHierarchy | HideFlags.DontSaveInEditor | HideFlags.DontSaveInBuild;
+
+      previewCamera = go.AddComponent<Camera>();
+      previewCamera.clearFlags = CameraClearFlags.SolidColor;
+      previewCamera.backgroundColor = new Color(0, 0, 0, 0);
+      previewCamera.orthographic = false;
+      previewCamera.fieldOfView = CamFov;
+      previewCamera.nearClipPlane = 0.01f;
+      previewCamera.farClipPlane = 1000f;
+      previewCamera.enabled = false; // manual renders only
+    }
+
+    // (Re)make RT if size changed
+    if (_rt == null || _rt.width != w || _rt.height != h)
+    {
+      if (_rt != null) _rt.Release();
+      _rt = new RenderTexture(w, h, RtDepth, RenderTextureFormat.ARGB32)
+      {
+        antiAliasing = 4
+      };
+      _rt.Create();
+    }
+  }
+
+  private static Bounds GetRenderableBounds(GameObject root)
+  {
+    var renderers = root.GetComponentsInChildren<Renderer>();
+    if (renderers == null || renderers.Length == 0) return new Bounds(root.transform.position, Vector3.zero);
+
+    var b = renderers[0].bounds;
+    for (var i = 1; i < renderers.Length; i++)
+      b.Encapsulate(renderers[i].bounds);
+    return b;
+  }
+
+  private static void SafeDestroy(Object obj)
+  {
+    if (obj == null) return;
+    DestroyImmediate(obj);
   }
 
   [UsedImplicitly]
   private void CaptureWithCustomCamera(GameObject obj)
   {
-    // Setup the preview camera
-    SetupPreviewCamera();
+    // Legacy helper; unused in the new pipeline
+  }
+}
 
-    // Render the object with the custom camera settings
-    var renderTexture = new RenderTexture(width, height, 24);
-    previewCamera.targetTexture = renderTexture;
-    previewCamera.Render();
+/// <summary>
+/// Applies sprite importer settings automatically for icons generated under OutputDirPath.
+/// This guarantees correct settings without per-file SaveAndReimport spam.
+/// </summary>
+public class PrefabIconImportPostprocessor : AssetPostprocessor
+{
+  private void OnPreprocessTexture()
+  {
+    if (!(assetImporter is TextureImporter ti)) return;
 
-    // Capture the texture from the render texture
-    var texture = new Texture2D(width, height, TextureFormat.RGB24, false);
-    RenderTexture.active = renderTexture;
-    texture.ReadPixels(new Rect(0, 0, width, height), 0, 0);
-    texture.Apply();
+    var outDir = PrefabThumbnailGenerator.OutputDirPath;
+    if (string.IsNullOrEmpty(outDir)) return;
 
-    // Save the texture as a PNG
-    var texturePath = $"{outputDirPath}{obj.name}.png";
-    var bytes = texture.EncodeToPNG();
-    File.WriteAllBytes(texturePath, bytes);
+    // Normalize separators and compare prefix
+    var path = assetPath.Replace('\\', '/');
+    var dir = outDir.Replace('\\', '/');
 
-    // Clean up
-    RenderTexture.active = null;
-    DestroyImmediate(previewCamera.gameObject);
-    DestroyImmediate(renderTexture);
-    DestroyImmediate(texture);
+    if (!path.StartsWith(dir, StringComparison.OrdinalIgnoreCase))
+      return;
 
-    if (sceneLight != null)
-    {
-      DestroyImmediate(sceneLight);
-      sceneLight = null;
-    }
+    ti.textureType = TextureImporterType.Sprite;
+    ti.spriteImportMode = SpriteImportMode.Single;
+    ti.alphaIsTransparency = true;
+    ti.textureCompression = TextureImporterCompression.Uncompressed;
+    ti.mipmapEnabled = false;
+    ti.sRGBTexture = true;
+    ti.npotScale = TextureImporterNPOTScale.None;
   }
 }

@@ -85,7 +85,7 @@ public class PrefabConfig : BepInExBaseConfig<PrefabConfig>
 
   public override void OnBindConfig(ConfigFile config)
   {
-    SortModePieceMenuItemsByMaterial = config.BindUnique(PrefabConfigKey, "SortModePieceMenuItemsByMaterial", false, "Sorts by material instead of type. This means all wood pieces come before iron pieces.");
+    SortModePieceMenuItemsByMaterial = config.BindUnique(PrefabConfigKey, "SortModePieceMenuItemsByMaterial", true, "Sorts by material instead of type. This means all wood pieces come before iron pieces. The other approach is each prefab type is cluster together alongside other material variants in same type.");
 
 
     AllowTieredMastToRotate = config.BindUnique(PrefabConfigKey, "AllowTieredMastToRotateInWind", true, "allows the tiered mast to rotate in wind");
