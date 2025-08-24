@@ -141,6 +141,10 @@ namespace ValheimVehicles.Prefabs
     /// </summary>
     public static void Initialize(ConfigFile config, string modGuid, string modVersion, string snapshotSubdirName = "PrefabSnapshots")
     {
+#if !DEBUG
+      _layerInitialized = true;
+      return;
+#else
       if (config == null) throw new ArgumentNullException(nameof(config));
       if (string.IsNullOrWhiteSpace(modGuid)) throw new ArgumentException("modGuid is required.", nameof(modGuid));
       if (string.IsNullOrWhiteSpace(modVersion)) throw new ArgumentException("modVersion is required.", nameof(modVersion));
@@ -170,6 +174,7 @@ namespace ValheimVehicles.Prefabs
         ParseExclusions();
 
         _layerInitialized = true;
+#endif
       }
     }
 
@@ -459,6 +464,7 @@ namespace ValheimVehicles.Prefabs
           }
         }
 
+#if DEBUG
         // Pieces: resolve enabled + flip m_enabled in the table
         var sortedPieces = _pieceEntries.Values.OrderBy(v => v.Name, StringComparer.Ordinal).ToList();
         foreach (var e in sortedPieces)
@@ -488,6 +494,7 @@ namespace ValheimVehicles.Prefabs
         }
         // Emit snapshot (single mixed array, alpha-sorted)
         WriteSnapshot(sortedPrefabs, sortedPieces);
+#endif
 
         _finalized = true;
       }
@@ -848,6 +855,7 @@ namespace ValheimVehicles.Prefabs
 
     private static void WriteSnapshot(List<PrefabEntry> sortedPrefabs, List<PieceEntry> sortedPieces)
     {
+#if DEBUG
       var items = new List<SnapshotItem>(sortedPrefabs.Count + sortedPieces.Count);
 
       foreach (var e in sortedPrefabs)
@@ -893,6 +901,7 @@ namespace ValheimVehicles.Prefabs
 
       var json = JsonConvert.SerializeObject(snapshot, Formatting.Indented);
       File.WriteAllText(path, json, Encoding.UTF8);
+#endif
     }
 
     private static string SanitizeForFile(string s)

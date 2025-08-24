@@ -79,6 +79,20 @@ public class PrefabThumbnailGenerator : EditorWindow
   [SerializeField] private float cameraPitchDegrees = 25f; // look downward
   [SerializeField] private float cameraYawDegrees = 15f; // look slightly from right
 
+  // Ensure tiny assets fill the frame (0.5..0.98). Used by OBB-fit distance calc.
+  [SerializeField] private float minFrameFill = 0.85f;
+
+  // ===== NEW: Bounds controls to avoid AOE / ghost geometry =====
+  [Header("Bounds Filtering")]
+  [SerializeField] private bool useCollidersForBounds = false; // if true, use colliders instead of renderers
+  [SerializeField] private bool ignoreTriggerColliders = true; // skip isTrigger colliders (AOE / ranges)
+  [SerializeField] private bool rejectFarOutliers = true; // remove far-away children from bounds
+  [SerializeField] private float outlierFactor = 3.0f; // how aggressively to drop far nodes (2–5)
+  [SerializeField] private List<string> boundsExcludeContains = new() // names to ignore when computing bounds
+  {
+    "aoe", "explosion", "range", "gizmo"
+  };
+
   // --- Serialized binding for lists ---
   private SerializedObject _so;
   private SerializedProperty _spExcludeContains;
@@ -225,7 +239,8 @@ public class PrefabThumbnailGenerator : EditorWindow
     {
       cameraPitchDegrees = EditorGUILayout.Slider("Camera Pitch X (deg):", cameraPitchDegrees, -60f, 60f);
       cameraYawDegrees = EditorGUILayout.Slider("Camera Yaw Y (deg):", cameraYawDegrees, -180f, 180f);
-      EditorGUILayout.HelpBox("Pitch looks down/up. Yaw rotates around the prefab. Roll is locked to 0° (upright sprites).", MessageType.None);
+      minFrameFill = EditorGUILayout.Slider("Min Frame Fill:", minFrameFill, 0.50f, 0.98f);
+      EditorGUILayout.HelpBox("Pitch looks down/up. Yaw rotates around the prefab. Roll is locked to 0° (upright sprites). Min Frame Fill ensures small prefabs are not tiny dots.", MessageType.None);
     }
     EditorGUILayout.Space();
 
@@ -242,6 +257,37 @@ public class PrefabThumbnailGenerator : EditorWindow
     {
       width = EditorGUILayout.IntField("Width :", width);
       height = EditorGUILayout.IntField("Height :", height);
+    }
+    EditorGUILayout.Space();
+
+    // ===== NEW: Bounds filtering UI =====
+    using (new EditorGUILayout.VerticalScope("box"))
+    {
+      EditorGUILayout.LabelField("Bounds Filtering", EditorStyles.boldLabel);
+      useCollidersForBounds = EditorGUILayout.Toggle("Use Colliders For Bounds", useCollidersForBounds);
+      ignoreTriggerColliders = EditorGUILayout.Toggle("Ignore Trigger Colliders", ignoreTriggerColliders);
+      rejectFarOutliers = EditorGUILayout.Toggle("Reject Far Outliers", rejectFarOutliers);
+      outlierFactor = EditorGUILayout.Slider("Outlier Factor", outlierFactor, 1.5f, 6f);
+      EditorGUILayout.HelpBox("Use colliders (non-trigger) to avoid huge AOEs/ranges; or keep renderer mode to use visible meshes. 'Reject Far Outliers' drops children that are far from the cluster.", MessageType.None);
+
+      // simple list editor for boundsExcludeContains
+      EditorGUILayout.LabelField("Bounds Exclude Contains (names)", EditorStyles.miniBoldLabel);
+      for (var i = 0; i < boundsExcludeContains.Count; i++)
+      {
+        using (new EditorGUILayout.HorizontalScope())
+        {
+          boundsExcludeContains[i] = EditorGUILayout.TextField(boundsExcludeContains[i]);
+          if (GUILayout.Button("-", GUILayout.Width(22)))
+          {
+            boundsExcludeContains.RemoveAt(i);
+            i--;
+          }
+        }
+      }
+      if (GUILayout.Button("+ Add Term", GUILayout.Width(100)))
+      {
+        boundsExcludeContains.Add(string.Empty);
+      }
     }
     EditorGUILayout.Space();
 
@@ -576,7 +622,6 @@ public class PrefabThumbnailGenerator : EditorWindow
   private RenderTexture _rt;
   private const int RtDepth = 24;
   private const float CamFov = 35f;
-  private const float Margin = 1.12f;
 
   private static GameObject CreateOrGetPreviewRoot()
   {
@@ -620,28 +665,35 @@ public class PrefabThumbnailGenerator : EditorWindow
       instance.transform.rotation = Quaternion.identity;
       instance.transform.localScale = Vector3.one;
 
-      // 2) Bounds & framing
-      var b = GetRenderableBounds(instance);
+      // 2) Bounds & framing (NEW: robust bounds)
+      var b = GetIconBounds(instance, useCollidersForBounds, ignoreTriggerColliders, rejectFarOutliers, outlierFactor, boundsExcludeContains);
       if (b.size == Vector3.zero)
       {
-        Debug.LogWarning($"No renderers found on {prefab.name}, skipping.");
-        return;
+        // Fall back to renderer bounds if custom filtering found nothing
+        b = GetRenderableBounds(instance);
+        if (b.size == Vector3.zero)
+        {
+          Debug.LogWarning($"No visible bounds found on {prefab.name}, skipping.");
+          return;
+        }
       }
 
-      var target = b.center;
-      var radius = b.extents.magnitude; // bounding-sphere radius
       var aspect = (float)width / Mathf.Max(1, height);
 
+      // Camera orientation: pitch/yaw, roll locked to 0
       var camRot = Quaternion.Euler(cameraPitchDegrees, cameraYawDegrees, 0f);
       var forward = camRot * Vector3.forward;
 
-      var distance = ComputeDistanceForBounds(radius, previewCamera.fieldOfView, aspect) * Margin;
+      // Tight OBB-fit distance so the object fills at least 'minFrameFill' of the frame
+      var distance = ComputeDistanceOBBFit(b, camRot, previewCamera.fieldOfView, aspect, minFrameFill) * 1.02f; // tiny guard band
 
-      var camPos = target - forward * distance;
+      var camPos = b.center - forward * distance;
       previewCamera.transform.SetPositionAndRotation(camPos, camRot);
 
-      previewCamera.nearClipPlane = Mathf.Min(0.01f, Mathf.Max(0.001f, distance - radius * 1.05f));
-      previewCamera.farClipPlane = Mathf.Max(previewCamera.farClipPlane, distance + radius * 4f);
+      // Near/Far clip safety
+      var extMag = b.extents.magnitude;
+      previewCamera.nearClipPlane = Mathf.Max(0.001f, distance - extMag * 2f);
+      previewCamera.farClipPlane = Mathf.Max(previewCamera.farClipPlane, distance + extMag * 4f);
 
       // 3) Shared light
       if (sceneLight == null)
@@ -685,20 +737,165 @@ public class PrefabThumbnailGenerator : EditorWindow
   }
 
   /// <summary>
-  /// Distance so a sphere of radius 'r' fits the frustum considering aspect.
-  /// Uses the tighter of vertical/horizontal FOV constraints.
+  /// Compute camera distance so the camera-space AABB of the prefab fills the frame
+  /// by at least 'minFill' in both axes (perspective camera).
   /// </summary>
-  private static float ComputeDistanceForBounds(float r, float fovDeg, float aspect)
+  private static float ComputeDistanceOBBFit(Bounds worldBounds, Quaternion camRot, float fovDeg, float aspect, float minFill)
   {
-    var fovRad = Mathf.Deg2Rad * fovDeg;
-    var distV = r / Mathf.Sin(fovRad * 0.5f);
+    // World-space half-sizes of the AABB
+    var e = worldBounds.extents;
 
-    var tanV = Mathf.Tan(fovRad * 0.5f);
+    // Camera basis in world space
+    var r = camRot * Vector3.right;
+    var u = camRot * Vector3.up;
+    var f = camRot * Vector3.forward;
+
+    // Per-axis absolute dot products to project the AABB onto camera axes
+    var ex = new Vector3(Mathf.Abs(Vector3.Dot(Vector3.right, r)),
+      Mathf.Abs(Vector3.Dot(Vector3.up, r)),
+      Mathf.Abs(Vector3.Dot(Vector3.forward, r)));
+    var ey = new Vector3(Mathf.Abs(Vector3.Dot(Vector3.right, u)),
+      Mathf.Abs(Vector3.Dot(Vector3.up, u)),
+      Mathf.Abs(Vector3.Dot(Vector3.forward, u)));
+    var ez = new Vector3(Mathf.Abs(Vector3.Dot(Vector3.right, f)),
+      Mathf.Abs(Vector3.Dot(Vector3.up, f)),
+      Mathf.Abs(Vector3.Dot(Vector3.forward, f)));
+
+    // Camera-space half-sizes
+    var halfX = ex.x * e.x + ex.y * e.y + ex.z * e.z; // horizontal
+    var halfY = ey.x * e.x + ey.y * e.y + ey.z * e.z; // vertical
+    var halfZ = ez.x * e.x + ez.y * e.y + ez.z * e.z; // depth (for near safety)
+
+    // FOVs
+    var fovV = fovDeg * Mathf.Deg2Rad;
+    var tanV = Mathf.Tan(0.5f * fovV);
     var tanH = tanV * aspect;
-    var fovH = 2f * Mathf.Atan(tanH);
-    var distH = r / Mathf.Sin(fovH * 0.5f);
 
-    return Mathf.Max(distV, distH);
+    // Ensure the object occupies at least 'minFill' of the view
+    minFill = Mathf.Clamp(minFill, 0.01f, 0.98f);
+    var distX = halfX / (tanH * minFill);
+    var distY = halfY / (tanV * minFill);
+
+    // Choose the limiting axis and ensure we're in front of the geometry by a hair
+    var dist = Mathf.Max(distX, distY);
+    return Mathf.Max(dist, halfZ * 1.05f);
+  }
+
+  /// <summary>
+  /// Robust bounds for icon: prefers colliders (optionally skipping triggers) or visible mesh renderers,
+  /// ignores particle/VFX renderers, and drops far-out children by cluster distance.
+  /// </summary>
+  private static Bounds GetIconBounds(GameObject root, bool useColliders, bool skipTriggers, bool dropOutliers, float outlierMul, List<string> nameExcludes)
+  {
+    nameExcludes ??= new List<string>();
+    var excludes = nameExcludes.Where(s => !string.IsNullOrEmpty(s)).Select(s => s.ToLowerInvariant()).ToList();
+
+    var boundsList = new List<Bounds>();
+    var centers = new List<Vector3>();
+
+    if (useColliders)
+    {
+      var cols = root.GetComponentsInChildren<Collider>(includeInactive: false);
+      foreach (var c in cols)
+      {
+        if (skipTriggers && c.isTrigger) continue;
+        if (!c.enabled) continue;
+        if (IsNameExcluded(c.gameObject.name, excludes)) continue;
+
+        // Only colliders with positive size
+        var b = c.bounds;
+        if (b.size == Vector3.zero) continue;
+
+        boundsList.Add(b);
+        centers.Add(b.center);
+      }
+    }
+    else
+    {
+      // Mesh + Skinned renderers only; ignore particle/VFX, trail, line, etc.
+      var mrs = root.GetComponentsInChildren<Renderer>(includeInactive: false);
+      foreach (var r in mrs)
+      {
+        if (!r.enabled) continue;
+        if (r is ParticleSystemRenderer) continue; // ignore VFX shells
+        if (IsNameExcluded(r.gameObject.name, excludes)) continue;
+
+        // Skip "editor only" layers if you use them; example (optional):
+        // if (r.gameObject.layer == LayerMask.NameToLayer("EditorOnly")) continue;
+
+        var b = r.bounds;
+        if (b.size == Vector3.zero) continue;
+
+        boundsList.Add(b);
+        centers.Add(b.center);
+      }
+    }
+
+    if (boundsList.Count == 0)
+      return new Bounds(root.transform.position, Vector3.zero);
+
+    // Optional outlier rejection (robust to one child far away)
+    if (dropOutliers && boundsList.Count > 1)
+    {
+      var centroid = Vector3.zero;
+      for (var i = 0; i < centers.Count; i++) centroid += centers[i];
+      centroid /= centers.Count;
+
+      // distances of centers from centroid
+      var dists = centers.Select(c => (c - centroid).magnitude).ToArray();
+      var median = QuickMedian(dists);
+      var mad = QuickMedian(dists.Select(d => Mathf.Abs(d - median)).ToArray());
+      var thresh = median + outlierMul * (mad <= 1e-5f ? 1f : mad);
+
+      var kept = new List<Bounds>();
+      for (var i = 0; i < boundsList.Count; i++)
+      {
+        if (dists[i] <= thresh) kept.Add(boundsList[i]);
+      }
+      if (kept.Count > 0) boundsList = kept;
+    }
+
+    // Merge remaining bounds
+    var merged = boundsList[0];
+    for (var i = 1; i < boundsList.Count; i++) merged.Encapsulate(boundsList[i]);
+    return merged;
+  }
+
+  private static bool IsNameExcluded(string name, List<string> excludes)
+  {
+    if (excludes == null || excludes.Count == 0) return false;
+    var lower = name.ToLowerInvariant();
+    for (var i = 0; i < excludes.Count; i++)
+    {
+      var t = excludes[i];
+      if (string.IsNullOrEmpty(t)) continue;
+      if (lower.Contains(t)) return true;
+    }
+    return false;
+  }
+
+  private static float QuickMedian(IList<float> arr)
+  {
+    if (arr == null || arr.Count == 0) return 0f;
+    var tmp = new List<float>(arr);
+    tmp.Sort();
+    var n = tmp.Count;
+    if (n % 2 == 1) return tmp[n / 2];
+    return 0.5f * (tmp[n / 2 - 1] + tmp[n / 2]);
+  }
+
+  /// <summary>
+  /// Legacy simple renderer-bounds (kept as fallback).
+  /// </summary>
+  private static Bounds GetRenderableBounds(GameObject root)
+  {
+    var renderers = root.GetComponentsInChildren<Renderer>();
+    if (renderers == null || renderers.Length == 0) return new Bounds(root.transform.position, Vector3.zero);
+
+    var b = renderers[0].bounds;
+    for (var i = 1; i < renderers.Length; i++)
+      b.Encapsulate(renderers[i].bounds);
+    return b;
   }
 
   private void OnDisable()
@@ -747,17 +944,6 @@ public class PrefabThumbnailGenerator : EditorWindow
       };
       _rt.Create();
     }
-  }
-
-  private static Bounds GetRenderableBounds(GameObject root)
-  {
-    var renderers = root.GetComponentsInChildren<Renderer>();
-    if (renderers == null || renderers.Length == 0) return new Bounds(root.transform.position, Vector3.zero);
-
-    var b = renderers[0].bounds;
-    for (var i = 1; i < renderers.Length; i++)
-      b.Encapsulate(renderers[i].bounds);
-    return b;
   }
 
   private static void SafeDestroy(Object obj)

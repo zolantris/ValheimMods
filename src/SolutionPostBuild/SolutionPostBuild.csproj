@@ -68,8 +68,10 @@
             <TmpDir>$(ModOutputDir)tmp\</TmpDir>
             <NexusName>Nexus</NexusName>
             <AutoDocName>$(ReleaseName)_AutoDoc.md</AutoDocName>
-            <AutoDocPath>$(PluginDeployPath)/$(AutoDocName)</AutoDocPath>
+            <AutoDocPath>$(PluginDeployPath)\$(AutoDocName)</AutoDocPath>
+            <PrefabSnapshotPath>$(PluginDeployPath)\PrefabSnapshots\prefabs-$(ReleaseVersion).json</PrefabSnapshotPath>
             <LocalAutoDocPath>$(SolutionDir)src\$(ReleaseName)\docs\$(AutoDocName)</LocalAutoDocPath>
+            <LocalPrefabSnapshotPath>$(SolutionDir)src\$(ReleaseName)\docs\prefabs-$(ReleaseVersion).json</LocalPrefabSnapshotPath>
         </PropertyGroup>
 
         <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release Archive|AnyCPU'">
