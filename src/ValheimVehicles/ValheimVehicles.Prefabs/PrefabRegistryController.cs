@@ -23,6 +23,7 @@ using UnityEngine;
 using UnityEngine.U2D;
 using ValheimVehicles.BepInExConfig;
 using ValheimVehicles.Components;
+using ValheimVehicles.Constants;
 using ValheimVehicles.Prefabs.Registry;
 using ValheimVehicles.Prefabs.ValheimVehicles.Prefabs.Registry;
 using ValheimVehicles.SharedScripts;
@@ -141,10 +142,6 @@ namespace ValheimVehicles.Prefabs
     /// </summary>
     public static void Initialize(ConfigFile config, string modGuid, string modVersion, string snapshotSubdirName = "PrefabSnapshots")
     {
-#if !DEBUG
-      _layerInitialized = true;
-      return;
-#else
       if (config == null) throw new ArgumentNullException(nameof(config));
       if (string.IsNullOrWhiteSpace(modGuid)) throw new ArgumentException("modGuid is required.", nameof(modGuid));
       if (string.IsNullOrWhiteSpace(modVersion)) throw new ArgumentException("modVersion is required.", nameof(modVersion));
@@ -157,9 +154,13 @@ namespace ValheimVehicles.Prefabs
         _modGuid = modGuid.Trim();
         _modVersion = modVersion.Trim();
 
-        var baseDir = BepInEx.Paths.PluginPath;
-        _snapshotDir = Path.Combine(baseDir, _modGuid, snapshotSubdirName);
-        Directory.CreateDirectory(_snapshotDir);
+        // kept in release but not executed.
+        if (ModEnvironment.IsDebug)
+        {
+          var baseDir = BepInEx.Paths.PluginPath;
+          _snapshotDir = Path.Combine(baseDir, _modGuid, snapshotSubdirName);
+          Directory.CreateDirectory(_snapshotDir);
+        }
 
         _excludedPrefabNamesCsv = _config.Bind(
           new ConfigDefinition("PrefabRegistry", "ExcludedPrefabs"),
@@ -174,7 +175,6 @@ namespace ValheimVehicles.Prefabs
         ParseExclusions();
 
         _layerInitialized = true;
-#endif
       }
     }
 
@@ -464,7 +464,6 @@ namespace ValheimVehicles.Prefabs
           }
         }
 
-#if DEBUG
         // Pieces: resolve enabled + flip m_enabled in the table
         var sortedPieces = _pieceEntries.Values.OrderBy(v => v.Name, StringComparer.Ordinal).ToList();
         foreach (var e in sortedPieces)
@@ -492,9 +491,12 @@ namespace ValheimVehicles.Prefabs
             LoggerProvider.LogWarning($"[FinalizeRegistration] Piece '{e.Name}' not found to apply enabled={enabled}");
           }
         }
-        // Emit snapshot (single mixed array, alpha-sorted)
-        WriteSnapshot(sortedPrefabs, sortedPieces);
-#endif
+
+        if (ModEnvironment.IsDebug)
+        {
+          // Emit snapshot (single mixed array, alpha-sorted)
+          WriteSnapshot(sortedPrefabs, sortedPieces);
+        }
 
         _finalized = true;
       }
@@ -684,7 +686,6 @@ namespace ValheimVehicles.Prefabs
     {
       if (HasRunInitSuccessfully)
       {
-        LoggerProvider.LogInfo("skipping PrefabRegistryController.Init as it has already been done.");
         return;
       }
 
@@ -855,7 +856,6 @@ namespace ValheimVehicles.Prefabs
 
     private static void WriteSnapshot(List<PrefabEntry> sortedPrefabs, List<PieceEntry> sortedPieces)
     {
-#if DEBUG
       var items = new List<SnapshotItem>(sortedPrefabs.Count + sortedPieces.Count);
 
       foreach (var e in sortedPrefabs)
@@ -901,7 +901,6 @@ namespace ValheimVehicles.Prefabs
 
       var json = JsonConvert.SerializeObject(snapshot, Formatting.Indented);
       File.WriteAllText(path, json, Encoding.UTF8);
-#endif
     }
 
     private static string SanitizeForFile(string s)
