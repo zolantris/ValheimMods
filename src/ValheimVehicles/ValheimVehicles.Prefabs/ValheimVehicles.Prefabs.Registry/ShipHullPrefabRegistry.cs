@@ -33,10 +33,17 @@ public class ShipHullPrefabRegistry : RegisterPrefab<ShipHullPrefabRegistry>
     if (prefabName.Contains("seal_expander")) return PrefabNames.PrefabSizeVariant.FourByFour;
     if (prefabName.Contains("seal") || prefabName.Contains("aft")) return PrefabNames.PrefabSizeVariant.TwoByThree;
 
-    if (prefabName.Contains("hull_rib_expand_") || prefabName.Contains("hull_bow_")) return PrefabNames.PrefabSizeVariant.FourByEight;
+    if (prefabName.Contains("hull_rib_expander_") || prefabName.Contains("hull_bow_")) return PrefabNames.PrefabSizeVariant.FourByEight;
     if (prefabName.Contains("rib") || prefabName.Contains("corner")) return PrefabNames.PrefabSizeVariant.FourByFour;
 
     return PrefabNames.PrefabSizeVariant.None;
+  }
+
+
+  public struct TranslationData
+  {
+    public string Name;
+    public string Description;
   }
 
   public override void OnRegister()
@@ -67,10 +74,10 @@ public class ShipHullPrefabRegistry : RegisterPrefab<ShipHullPrefabRegistry>
       "hull_rib_aft_right_wood",
       "hull_rib_aft_left_iron",
       "hull_rib_aft_right_iron",
-      "hull_rib_expand_left_wood",
-      "hull_rib_expand_right_wood",
-      "hull_rib_expand_left_iron",
-      "hull_rib_expand_right_iron",
+      "hull_rib_expander_left_wood",
+      "hull_rib_expander_right_wood",
+      "hull_rib_expander_left_iron",
+      "hull_rib_expander_right_iron",
       "hull_seal_bow_left_wood",
       "hull_seal_bow_right_wood",
       "hull_seal_bow_left_iron",
@@ -103,11 +110,415 @@ public class ShipHullPrefabRegistry : RegisterPrefab<ShipHullPrefabRegistry>
       "hull_rail_prow_corner_right_iron"
     };
 
+    var v4HullsTranslations = new Dictionary<string, TranslationData>
+    {
+      {
+        "hull_floor_4x4_wood", new TranslationData
+        {
+          Name = "$valheim_vehicles_hull_slab $valheim_vehicles_material_wood 4x4",
+          Description = "$valheim_vehicles_hull_slab_desc"
+        }
+      },
+      {
+        "hull_floor_4x4_iron", new TranslationData
+        {
+          Name = "$valheim_vehicles_hull_slab $valheim_vehicles_material_iron 4x4",
+          Description = "$valheim_vehicles_hull_slab_desc"
+        }
+      },
+      {
+        "hull_floor_keel_4x2_left_wood", new TranslationData
+        {
+          Name = "$valheim_vehicles_hull_with_keel $valheim_vehicles_direction_left $valheim_vehicles_material_wood 4x2",
+          Description = "$valheim_vehicles_hull_with_keel_desc"
+        }
+      },
+      {
+        "hull_floor_keel_4x2_right_wood", new TranslationData
+        {
+          Name = "$valheim_vehicles_hull_with_keel $valheim_vehicles_direction_right $valheim_vehicles_material_wood 4x2",
+          Description = "$valheim_vehicles_hull_with_keel_desc"
+        }
+      },
+      {
+        "hull_floor_keel_4x2_left_iron", new TranslationData
+        {
+          Name = "$valheim_vehicles_hull_with_keel $valheim_vehicles_direction_left $valheim_vehicles_material_iron 4x2",
+          Description = "$valheim_vehicles_hull_with_keel_desc"
+        }
+      },
+      {
+        "hull_floor_keel_4x2_right_iron", new TranslationData
+        {
+          Name = "$valheim_vehicles_hull_with_keel $valheim_vehicles_direction_right $valheim_vehicles_material_iron 4x2",
+          Description = "$valheim_vehicles_hull_with_keel_desc"
+        }
+      },
+      {
+        "hull_rib_wood", new TranslationData
+        {
+          Name = "$valheim_vehicles_hull_rib_side $valheim_vehicles_material_wood",
+          Description = "$valheim_vehicles_hull_rib_side_desc"
+        }
+      },
+      {
+        "hull_rib_iron", new TranslationData
+        {
+          Name = "$valheim_vehicles_hull_rib_side $valheim_vehicles_material_iron",
+          Description = "$valheim_vehicles_hull_rib_side_desc"
+        }
+      },
+      {
+        "hull_bow_center_wood", new TranslationData
+        {
+          Name = "$valheim_vehicles_hull_rib_prow $valheim_vehicles_direction_center $valheim_vehicles_material_wood",
+          Description = "$valheim_vehicles_hull_rib_prow_desc"
+        }
+      },
+      {
+        "hull_bow_curved_left_wood", new TranslationData
+        {
+          Name = "$valheim_vehicles_hull_rib_prow $valheim_vehicles_hull_variant_curved $valheim_vehicles_direction_left $valheim_vehicles_material_wood",
+          Description = "$valheim_vehicles_hull_rib_prow_desc"
+        }
+      },
+      {
+        "hull_bow_curved_right_wood", new TranslationData
+        {
+          Name = "$valheim_vehicles_hull_rib_prow $valheim_vehicles_hull_variant_curved $valheim_vehicles_direction_right $valheim_vehicles_material_wood",
+          Description = "$valheim_vehicles_hull_rib_prow_desc"
+        }
+      },
+      {
+        "hull_bow_curved_left_iron", new TranslationData
+        {
+          Name = "$valheim_vehicles_hull_rib_prow $valheim_vehicles_hull_variant_curved $valheim_vehicles_direction_left $valheim_vehicles_material_iron",
+          Description = "$valheim_vehicles_hull_rib_prow_desc"
+        }
+      },
+      {
+        "hull_bow_curved_right_iron", new TranslationData
+        {
+          Name = "$valheim_vehicles_hull_rib_prow $valheim_vehicles_hull_variant_curved $valheim_vehicles_direction_right $valheim_vehicles_material_iron",
+          Description = "$valheim_vehicles_hull_rib_prow_desc"
+        }
+      },
+      {
+        "hull_bow_tri_left_wood", new TranslationData
+        {
+          Name = "$valheim_vehicles_hull_rib_prow $valheim_vehicles_hull_variant_triangular $valheim_vehicles_direction_left $valheim_vehicles_material_wood",
+          Description = "$valheim_vehicles_hull_rib_prow_desc"
+        }
+      },
+      {
+        "hull_bow_tri_right_wood", new TranslationData
+        {
+          Name = "$valheim_vehicles_hull_rib_prow $valheim_vehicles_hull_variant_triangular $valheim_vehicles_direction_right $valheim_vehicles_material_wood",
+          Description = "$valheim_vehicles_hull_rib_prow_desc"
+        }
+      },
+      {
+        "hull_bow_tri_left_iron", new TranslationData
+        {
+          Name = "$valheim_vehicles_hull_rib_prow $valheim_vehicles_hull_variant_triangular $valheim_vehicles_direction_left $valheim_vehicles_material_iron",
+          Description = "$valheim_vehicles_hull_rib_prow_desc"
+        }
+      },
+      {
+        "hull_bow_tri_right_iron", new TranslationData
+        {
+          Name = "$valheim_vehicles_hull_rib_prow $valheim_vehicles_hull_variant_triangular $valheim_vehicles_direction_right $valheim_vehicles_material_iron",
+          Description = "$valheim_vehicles_hull_rib_prow_desc"
+        }
+      },
+      {
+        "hull_rib_aft_center_wood", new TranslationData
+        {
+          Name = "$valheim_vehicles_hull_rib_prow $valheim_vehicles_direction_center $valheim_vehicles_material_wood",
+          Description = "$valheim_vehicles_hull_rib_aft_desc"
+        }
+      },
+      {
+        "hull_rib_aft_left_wood", new TranslationData
+        {
+          Name = "$valheim_vehicles_hull_rib_prow $valheim_vehicles_direction_left $valheim_vehicles_material_wood",
+          Description = "$valheim_vehicles_hull_rib_aft_desc"
+        }
+      },
+      {
+        "hull_rib_aft_right_wood", new TranslationData
+        {
+          Name = "$valheim_vehicles_hull_rib_prow $valheim_vehicles_direction_right $valheim_vehicles_material_wood",
+          Description = "$valheim_vehicles_hull_rib_aft_desc"
+        }
+      },
+      {
+        "hull_rib_aft_center_iron", new TranslationData
+        {
+          Name = "$valheim_vehicles_hull_rib_prow $valheim_vehicles_direction_center $valheim_vehicles_material_iron",
+          Description = "$valheim_vehicles_hull_rib_aft_desc"
+        }
+      },
+      {
+        "hull_rib_aft_left_iron", new TranslationData
+        {
+          Name = "$valheim_vehicles_hull_rib_prow $valheim_vehicles_direction_left $valheim_vehicles_material_iron",
+          Description = "$valheim_vehicles_hull_rib_aft_desc"
+        }
+      },
+      {
+        "hull_rib_aft_right_iron", new TranslationData
+        {
+          Name = "$valheim_vehicles_hull_rib_prow $valheim_vehicles_direction_right $valheim_vehicles_material_iron",
+          Description = "$valheim_vehicles_hull_rib_aft_desc"
+        }
+      },
+      {
+        "hull_rib_expander_left_wood", new TranslationData
+        {
+          Name = "$valheim_vehicles_hull_rib_expander $valheim_vehicles_direction_left $valheim_vehicles_material_wood",
+          Description = "$valheim_vehicles_hull_rib_expander_desc"
+        }
+      },
+      {
+        "hull_rib_expander_right_wood", new TranslationData
+        {
+          Name = "$valheim_vehicles_hull_rib_expander $valheim_vehicles_direction_right $valheim_vehicles_material_wood",
+          Description = "$valheim_vehicles_hull_rib_expander_desc"
+        }
+      },
+      {
+        "hull_rib_expander_left_iron", new TranslationData
+        {
+          Name = "$valheim_vehicles_hull_rib_expander $valheim_vehicles_direction_left $valheim_vehicles_material_iron",
+          Description = "$valheim_vehicles_hull_rib_expander_desc"
+        }
+      },
+      {
+        "hull_rib_expander_right_iron", new TranslationData
+        {
+          Name = "$valheim_vehicles_hull_rib_expander $valheim_vehicles_direction_right $valheim_vehicles_material_iron",
+          Description = "$valheim_vehicles_hull_rib_expander_desc"
+        }
+      },
+      {
+        "hull_seal_bow_left_wood", new TranslationData
+        {
+          Name = "$valheim_vehicles_hull_prow_seal $valheim_vehicles_hull_variant_curved $valheim_vehicles_direction_left $valheim_vehicles_material_wood",
+          Description = "$valheim_vehicles_hull_prow_seal_desc"
+        }
+      },
+      {
+        "hull_seal_bow_right_wood", new TranslationData
+        {
+          Name = "$valheim_vehicles_hull_prow_seal $valheim_vehicles_hull_variant_curved $valheim_vehicles_direction_right $valheim_vehicles_material_wood",
+          Description = "$valheim_vehicles_hull_prow_seal_desc"
+        }
+      },
+      {
+        "hull_seal_bow_left_iron", new TranslationData
+        {
+          Name = "$valheim_vehicles_hull_prow_seal $valheim_vehicles_hull_variant_curved $valheim_vehicles_direction_left $valheim_vehicles_material_iron",
+          Description = "$valheim_vehicles_hull_prow_seal_desc"
+        }
+      },
+      {
+        "hull_seal_bow_right_iron", new TranslationData
+        {
+          Name = "$valheim_vehicles_hull_prow_seal $valheim_vehicles_hull_variant_curved $valheim_vehicles_direction_right $valheim_vehicles_material_iron",
+          Description = "$valheim_vehicles_hull_prow_seal_desc"
+        }
+      },
+      {
+        "hull_seal_corner_left_wood", new TranslationData
+        {
+          Name = "$valheim_vehicles_hull_aft_seal $valheim_vehicles_direction_left $valheim_vehicles_material_wood",
+          Description = "$valheim_vehicles_hull_aft_seal_desc"
+        }
+      },
+      {
+        "hull_seal_corner_right_wood", new TranslationData
+        {
+          Name = "$valheim_vehicles_hull_aft_seal $valheim_vehicles_direction_right $valheim_vehicles_material_wood",
+          Description = "$valheim_vehicles_hull_aft_seal_desc"
+        }
+      },
+      {
+        "hull_seal_corner_left_iron", new TranslationData
+        {
+          Name = "$valheim_vehicles_hull_aft_seal $valheim_vehicles_direction_left $valheim_vehicles_material_iron",
+          Description = "$valheim_vehicles_hull_aft_seal_desc"
+        }
+      },
+      {
+        "hull_seal_corner_right_iron", new TranslationData
+        {
+          Name = "$valheim_vehicles_hull_aft_seal $valheim_vehicles_direction_right $valheim_vehicles_material_iron",
+          Description = "$valheim_vehicles_hull_aft_seal_desc"
+        }
+      },
+      {
+        "hull_seal_expander_left_wood", new TranslationData
+        {
+          Name = "$valheim_vehicles_hull_seal_expander $valheim_vehicles_direction_left $valheim_vehicles_material_wood",
+          Description = "$valheim_vehicles_hull_seal_expander_desc"
+        }
+      },
+      {
+        "hull_seal_expander_right_wood", new TranslationData
+        {
+          Name = "$valheim_vehicles_hull_seal_expander $valheim_vehicles_direction_right $valheim_vehicles_material_wood",
+          Description = "$valheim_vehicles_hull_seal_expander_desc"
+        }
+      },
+      {
+        "hull_seal_expander_left_iron", new TranslationData
+        {
+          Name = "$valheim_vehicles_hull_seal_expander $valheim_vehicles_direction_left $valheim_vehicles_material_iron",
+          Description = "$valheim_vehicles_hull_seal_expander_desc"
+        }
+      },
+      {
+        "hull_seal_expander_right_iron", new TranslationData
+        {
+          Name = "$valheim_vehicles_hull_seal_expander $valheim_vehicles_direction_right $valheim_vehicles_material_iron",
+          Description = "$valheim_vehicles_hull_seal_expander_desc"
+        }
+      },
+      {
+        "hull_seal_tri_bow_left_wood", new TranslationData
+        {
+          Name = "$valheim_vehicles_hull_prow_seal $valheim_vehicles_hull_variant_triangular $valheim_vehicles_direction_left $valheim_vehicles_material_wood",
+          Description = "$valheim_vehicles_hull_prow_seal_desc"
+        }
+      },
+      {
+        "hull_seal_tri_bow_right_wood", new TranslationData
+        {
+          Name = "$valheim_vehicles_hull_prow_seal $valheim_vehicles_hull_variant_triangular $valheim_vehicles_direction_right $valheim_vehicles_material_wood",
+          Description = "$valheim_vehicles_hull_prow_seal_desc"
+        }
+      },
+      {
+        "hull_seal_tri_bow_left_iron", new TranslationData
+        {
+          Name = "$valheim_vehicles_hull_prow_seal $valheim_vehicles_hull_variant_triangular $valheim_vehicles_direction_left $valheim_vehicles_material_iron",
+          Description = "$valheim_vehicles_hull_prow_seal_desc"
+        }
+      },
+      {
+        "hull_seal_tri_bow_right_iron", new TranslationData
+        {
+          Name = "$valheim_vehicles_hull_prow_seal $valheim_vehicles_hull_variant_triangular $valheim_vehicles_direction_right $valheim_vehicles_material_iron",
+          Description = "$valheim_vehicles_hull_prow_seal_desc"
+        }
+      },
+      {
+        "hull_rail_straight_wood", new TranslationData
+        {
+          Name = "$valheim_vehicles_hull_rail_variant_straight $valheim_vehicles_material_wood",
+          Description = "$valheim_vehicles_hull_rail_desc"
+        }
+      },
+      {
+        "hull_rail_connector_wood", new TranslationData
+        {
+          Name = "$valheim_vehicles_hull_rail_variant_connector $valheim_vehicles_material_wood",
+          Description = "$valheim_vehicles_hull_rail_desc"
+        }
+      },
+      {
+        "hull_rail_25deg_wood", new TranslationData
+        {
+          Name = "$valheim_vehicles_hull_rail_variant_25 $valheim_vehicles_material_wood",
+          Description = "$valheim_vehicles_hull_rail_desc"
+        }
+      },
+      {
+        "hull_rail_45deg_wood", new TranslationData
+        {
+          Name = "$valheim_vehicles_hull_rail_variant_45 $valheim_vehicles_material_wood",
+          Description = "$valheim_vehicles_hull_rail_desc"
+        }
+      },
+      {
+        "hull_rail_corner_wood", new TranslationData
+        {
+          Name = "$valheim_vehicles_hull_rail_variant_aft_corner $valheim_vehicles_material_wood",
+          Description = "$valheim_vehicles_hull_rail_desc"
+        }
+      },
+      {
+        "hull_rail_prow_corner_left_wood", new TranslationData
+        {
+          Name = "$valheim_vehicles_hull_rail_variant_prow_corner $valheim_vehicles_direction_left $valheim_vehicles_material_wood",
+          Description = "$valheim_vehicles_hull_rail_desc"
+        }
+      },
+      {
+        "hull_rail_prow_corner_right_wood", new TranslationData
+        {
+          Name = "$valheim_vehicles_hull_rail_variant_prow_corner $valheim_vehicles_direction_right $valheim_vehicles_material_wood",
+          Description = "$valheim_vehicles_hull_rail_desc"
+        }
+      },
+      {
+        "hull_rail_straight_iron", new TranslationData
+        {
+          Name = "$valheim_vehicles_hull_rail_variant_straight $valheim_vehicles_material_iron",
+          Description = "$valheim_vehicles_hull_rail_desc"
+        }
+      },
+      {
+        "hull_rail_connector_iron", new TranslationData
+        {
+          Name = "$valheim_vehicles_hull_rail_variant_connector $valheim_vehicles_material_iron",
+          Description = "$valheim_vehicles_hull_rail_desc"
+        }
+      },
+      {
+        "hull_rail_25deg_iron", new TranslationData
+        {
+          Name = "$valheim_vehicles_hull_rail_variant_25 $valheim_vehicles_material_iron",
+          Description = "$valheim_vehicles_hull_rail_desc"
+        }
+      },
+      {
+        "hull_rail_45deg_iron", new TranslationData
+        {
+          Name = "$valheim_vehicles_hull_rail_variant_45 $valheim_vehicles_material_iron",
+          Description = "$valheim_vehicles_hull_rail_desc"
+        }
+      },
+      {
+        "hull_rail_corner_iron", new TranslationData
+        {
+          Name = "$valheim_vehicles_hull_rail_variant_aft_corner $valheim_vehicles_material_iron",
+          Description = "$valheim_vehicles_hull_rail_desc"
+        }
+      },
+      {
+        "hull_rail_prow_corner_left_iron", new TranslationData
+        {
+          Name = "$valheim_vehicles_hull_rail_variant_prow_corner $valheim_vehicles_direction_left $valheim_vehicles_material_iron",
+          Description = "$valheim_vehicles_hull_rail_desc"
+        }
+      },
+      {
+        "hull_rail_prow_corner_right_iron", new TranslationData
+        {
+          Name = "$valheim_vehicles_hull_rail_variant_prow_corner $valheim_vehicles_direction_right $valheim_vehicles_material_iron",
+          Description = "$valheim_vehicles_hull_rail_desc"
+        }
+      }
+    };
+
+
     // Custom future material order (e.g., wood -> iron -> eitr/flametal?)
     var priority = new[] { "wood", "iron" };
     var sortedCustom = PieceMenuSortUtil.MaybeSortByMaterial(v4Hulls, priority);
 
-    sortedCustom.ForEach(x => RegisterHullV4Prefab(x, x.Contains("wood") ? "wood" : "iron", GetV4PrefabSizeVariant(x)));
+    sortedCustom.ForEach(x => RegisterHullV4Prefab(x, v4HullsTranslations.GetValueSafe(x), x.Contains("wood") ? "wood" : "iron", GetV4PrefabSizeVariant(x)));
 
     RegisterV3Prefabs();
     RegisterDeprecatedHulls();
@@ -600,7 +1011,7 @@ public class ShipHullPrefabRegistry : RegisterPrefab<ShipHullPrefabRegistry>
     // meshCollider.includeLayers = LayerHelpers.PhysicalLayerMask;
   }
 
-  public void RegisterHullV4Prefab(string assetName, string hullMaterial,
+  public void RegisterHullV4Prefab(string assetName, TranslationData translationData, string hullMaterial,
     PrefabNames.PrefabSizeVariant sizeVariant)
   {
     var prefabName = $"{PrefabNames.ValheimVehiclesPrefix}_{assetName}";
@@ -630,8 +1041,8 @@ public class ShipHullPrefabRegistry : RegisterPrefab<ShipHullPrefabRegistry>
       {
         PrefabRegistryHelpers.PieceDataDictionary.Add(prefabName, new PrefabRegistryHelpers.PieceData
         {
-          Name = $"{prefabName}",
-          Description = $"{prefabName}",
+          Name = translationData.Name,
+          Description = translationData.Description,
           Icon = icon
         });
       }

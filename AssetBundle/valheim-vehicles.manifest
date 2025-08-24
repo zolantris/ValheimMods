@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 2333596266
+CRC: 534584090
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 501b32a38be5b848da68e67305f5ddc7
+    Hash: fc054a223a5b283904628ef80f43c56a
   TypeTreeHash:
     serializedVersion: 2
     Hash: 43df64f5a9539054451d8ab8c0583bca
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 501b32a38be5b848da68e67305f5ddc7
+    Hash: fc054a223a5b283904628ef80f43c56a
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -245,7 +245,7 @@ Assets:
 - Assets/ValheimVehicles/Material/wood_alt_piece_bg_rib Variant.mat
 - Assets/ValheimVehicles/Prefabs/cannon_handheld.prefab
 - Assets/ValheimVehicles/Prefabs/hull_slab_iron_4x4.prefab
-- Assets/ValheimVehicles/Prefabs/hulls-v4/hull_rib_expand_right_iron.prefab
+- Assets/ValheimVehicles/Prefabs/hulls-v4/hull_rib_expander_left_iron.prefab
 - Assets/ValheimVehicles/Prefabs/hull_rib_corner_2x2x4_left_wood.prefab
 - Assets/ValheimVehicles/Prefabs/hull_rib_corner_2x2x4_left_iron.prefab
 - Assets/ValheimVehicles/Prefabs/hull_rib_prow_cutter_2x2x8_right_iron.prefab
@@ -333,7 +333,7 @@ Assets:
 - Assets/ValheimVehicles/Prefabs/hull_wall_window_porthole_iron_4x4.prefab
 - Assets/ValheimVehicles/Prefabs/ram_stake_tier1_2x4.prefab
 - Assets/ValheimVehicles/Material/StandardStencilCutout.shader
-- Assets/ValheimVehicles/Prefabs/hulls-v4/hull_rib_expand_right_wood.prefab
+- Assets/ValheimVehicles/Prefabs/hulls-v4/hull_rib_expander_left_wood.prefab
 - Assets/ValheimVehicles/Material/Dirtfloor 1.mat
 - Assets/ValheimVehicles/Prefabs/hulls-v4/hull_rail_prow_corner_left_wood.prefab
 - Assets/ValheimVehicles/Prefabs/hulls-v4/hull_floor_keel_4x2_left_wood.prefab
@@ -371,10 +371,10 @@ Assets:
 - Assets/ValheimVehicles/Prefabs/hulls-v4/hull_rail_prow_corner_right_iron.prefab
 - Assets/ValheimVehicles/Prefabs/hull_wall_wood_4x4.prefab
 - Assets/ValheimVehicles/Prefabs/hull_corner_floor_2x8_right_wood.prefab
-- Assets/ValheimVehicles/Prefabs/hulls-v4/hull_rib_expand_left_iron.prefab
+- Assets/ValheimVehicles/Prefabs/hulls-v4/hull_rib_expander_right_iron.prefab
 - Assets/ValheimVehicles/Material/wood_alt_piece_bg_rib_8x4.mat
 - Assets/ValheimVehicles/Prefabs/hull_prow_seal_iron.prefab
-- Assets/ValheimVehicles/Prefabs/hulls-v4/hull_rib_expand_left_wood.prefab
+- Assets/ValheimVehicles/Prefabs/hulls-v4/hull_rib_expander_right_wood.prefab
 - Assets/ValheimVehicles/Prefabs/hulls-v4/hull_rail_prow_corner_right_wood.prefab
 - Assets/ValheimVehicles/Prefabs/hull_rib_corner_2x2x4_right_iron.prefab
 - Assets/ValheimVehicles/Prefabs/custom_sail.prefab
