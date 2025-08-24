@@ -117,6 +117,7 @@ public class ShipHullPrefabRegistry : RegisterPrefab<ShipHullPrefabRegistry>
   {
     RegisterWindowWallPorthole2x2Iron();
     RegisterWindowWallPorthole4x4Iron();
+    RegisterWindowWallPorthole6x4Iron();
     RegisterWindowWallPorthole8x4Iron();
     RegisterWindowFloorPorthole4x4Iron();
 
@@ -268,7 +269,7 @@ public class ShipHullPrefabRegistry : RegisterPrefab<ShipHullPrefabRegistry>
         LoadValheimVehicleAssets.ShipWindowPortholeWall2x2);
 
     SetupHullPrefab(prefab, PrefabNames.WindowWallPorthole2x2Prefab,
-      HullMaterial.Iron, 3, null, null, VehicleHammerTableCategories.Structure);
+      HullMaterial.Iron, 2, null, null, VehicleHammerTableCategories.Structure);
   }
 
   public static void RegisterWindowWallPorthole4x4Iron()
@@ -279,8 +280,20 @@ public class ShipHullPrefabRegistry : RegisterPrefab<ShipHullPrefabRegistry>
         LoadValheimVehicleAssets.ShipWindowPortholeWall4x4);
 
     SetupHullPrefab(prefab, PrefabNames.WindowWallPorthole4x4Prefab,
+      HullMaterial.Iron, 4, null, null, VehicleHammerTableCategories.Structure);
+  }
+
+  public static void RegisterWindowWallPorthole6x4Iron()
+  {
+    var prefab =
+      PrefabManager.Instance.CreateClonedPrefab(
+        PrefabNames.WindowWallPorthole6x4Prefab,
+        LoadValheimVehicleAssets.ShipWindowPortholeWall6x4);
+
+    SetupHullPrefab(prefab, PrefabNames.WindowWallPorthole6x4Prefab,
       HullMaterial.Iron, 6, null, null, VehicleHammerTableCategories.Structure);
   }
+
 
   public static void RegisterWindowWallPorthole8x4Iron()
   {

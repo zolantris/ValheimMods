@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 3819232491
+CRC: 2333596266
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 17faf5f97355a65d04fbf73d69501fe3
+    Hash: 501b32a38be5b848da68e67305f5ddc7
   TypeTreeHash:
     serializedVersion: 2
     Hash: 43df64f5a9539054451d8ab8c0583bca
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 17faf5f97355a65d04fbf73d69501fe3
+    Hash: 501b32a38be5b848da68e67305f5ddc7
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -396,8 +396,9 @@ Assets:
 - Assets/ValheimVehicles/Prefabs/ram_blade_right.prefab
 - Assets/ValheimVehicles/Material/bronze_nautilus_metal_rib.mat
 - Assets/ValheimVehicles/Material/wood_piece_rib.mat
-- Assets/ValheimVehicles/Prefabs/test/corner_windows.prefab
+- Assets/ValheimVehicles/Prefabs/hull_wall_window_porthole_iron_6x4.prefab
 - Assets/ValheimVehicles/Prefabs/mast_level_3.prefab
+- Assets/ValheimVehicles/Prefabs/test/corner_windows.prefab
 - Assets/ValheimVehicles/Prefabs/shared_hull_slab_wood_2x2_worn.prefab
 - Assets/ValheimVehicles/Material/SailMat.mat
 - Assets/ValheimVehicles/Material/wood_piece_valheim_2x4.mat
