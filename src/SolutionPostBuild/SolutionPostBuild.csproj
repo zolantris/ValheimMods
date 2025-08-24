@@ -61,15 +61,17 @@
     <Target KeepDuplicateOutputs="false" Name="Generate_Mod_Archive" AfterTargets="RunPostInstaller" Condition=" '$(Configuration)|$(Platform)' == 'ReleaseBETA Archive|AnyCPU' or  '$(Configuration)|$(Platform)' == 'Release Archive|AnyCPU' ">
         <PropertyGroup Label="Shared Release Properties">
             <ReleaseName>ValheimRAFT</ReleaseName>
-            <ApplicationVersion>3.7.1</ApplicationVersion>
-            <ReleaseVersion>3.7.1</ReleaseVersion>
+            <ApplicationVersion>3.7.2</ApplicationVersion>
+            <ReleaseVersion>3.7.2</ReleaseVersion>
             <RepoDir>$(SolutionDir)src\ValheimRAFT\</RepoDir>
             <ThunderStoreName>Thunderstore</ThunderStoreName>
             <TmpDir>$(ModOutputDir)tmp\</TmpDir>
             <NexusName>Nexus</NexusName>
             <AutoDocName>$(ReleaseName)_AutoDoc.md</AutoDocName>
-            <AutoDocPath>$(PluginDeployPath)/$(AutoDocName)</AutoDocPath>
+            <AutoDocPath>$(PluginDeployPath)\$(AutoDocName)</AutoDocPath>
+            <PrefabSnapshotPath>$(PluginDeployPath)\PrefabSnapshots\prefabs-$(ReleaseVersion).json</PrefabSnapshotPath>
             <LocalAutoDocPath>$(SolutionDir)src\$(ReleaseName)\docs\$(AutoDocName)</LocalAutoDocPath>
+            <LocalPrefabSnapshotPath>$(SolutionDir)src\$(ReleaseName)\docs\prefabs-$(ReleaseVersion).json</LocalPrefabSnapshotPath>
         </PropertyGroup>
 
         <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release Archive|AnyCPU'">

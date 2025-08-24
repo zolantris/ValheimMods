@@ -9,26 +9,23 @@ using ValheimVehicles.SharedScripts;
 
 namespace ValheimVehicles.Prefabs;
 
-public class ShipRudderPrefabs : IRegisterPrefab
+public class ShipRudderPrefabs : RegisterPrefab<ShipRudderPrefabs>
 {
-  public static readonly ShipRudderPrefabs Instance = new();
-
-  public void Register(PrefabManager prefabManager, PieceManager pieceManager)
+  public override void OnRegister()
   {
-    RegisterShipRudderBasic(prefabManager, pieceManager);
+    RegisterShipRudderBasic();
     RegisterShipRudderAdvanced();
   }
 
-  private static void RegisterShipRudderBasic(PrefabManager prefabManager,
-    PieceManager pieceManager)
+  private static void RegisterShipRudderBasic()
   {
     var prefab =
-      prefabManager.CreateClonedPrefab(
+      PrefabManager.Instance.CreateClonedPrefab(
         PrefabNames.ShipRudderBasic, LoadValheimVehicleAssets.ShipRudderBasicAsset);
 
     SharedSetup(prefab);
 
-    pieceManager.AddPiece(new CustomPiece(prefab, false, new PieceConfig
+    PrefabRegistryController.AddPiece(new CustomPiece(prefab, false, new PieceConfig
     {
       PieceTable = PrefabRegistryController.GetPieceTableName(),
       Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Propulsion),
@@ -65,7 +62,7 @@ public class ShipRudderPrefabs : IRegisterPrefab
         variantName, prefabAsset);
     SharedSetup(prefab);
 
-    PieceManager.Instance.AddPiece(new CustomPiece(prefab, false, new PieceConfig
+    PrefabRegistryController.AddPiece(new CustomPiece(prefab, false, new PieceConfig
     {
       PieceTable = PrefabRegistryController.GetPieceTableName(),
       Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Propulsion),
@@ -77,7 +74,7 @@ public class ShipRudderPrefabs : IRegisterPrefab
           Amount = 20,
           Item = "FineWood",
           Recover = true
-        },
+        }
       ]
     }));
   }

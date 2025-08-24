@@ -1,4 +1,5 @@
 using HarmonyLib;
+using ValheimVehicles.Prefabs;
 using ValheimVehicles.SharedScripts;
 using Zolantris.Shared;
 

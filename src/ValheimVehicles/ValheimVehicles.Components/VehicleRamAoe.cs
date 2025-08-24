@@ -31,7 +31,7 @@ public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
   public float MinimumVelocityToTriggerHit = 0.5f;
 
   public VehicleManager? m_vehicle;
-  public RamPrefabs.RamType m_RamType;
+  public RamPrefabRegistry.RamType m_RamType;
 
   [FormerlySerializedAs("m_isVehicleRam")]
   public bool IsVehicleRamType = false;
@@ -101,13 +101,13 @@ public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
   public float GetMinimumVelocityToTriggerRam()
   {
     var val = IsVehicleRamType ? RamConfig.VehicleMinimumVelocityToTriggerHit.Value : RamConfig.MinimumVelocityToTriggerHit.Value;
-    var variantMultiplier = m_RamType == RamPrefabs.RamType.Stake ? 0.5f : 1f;
+    var variantMultiplier = m_RamType == RamPrefabRegistry.RamType.Stake ? 0.5f : 1f;
     return val * variantMultiplier;
   }
 
   public float GetPercentageDamageToVehicle()
   {
-    if (m_RamType is RamPrefabs.RamType.LandVehicle or RamPrefabs.RamType.WaterVehicle)
+    if (m_RamType is RamPrefabRegistry.RamType.LandVehicle or RamPrefabRegistry.RamType.WaterVehicle)
     {
       return RamConfig.VehiclePercentageDamageToCollisionArea.Value;
     }
@@ -116,11 +116,11 @@ public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
 
   public int GetToolTier()
   {
-    if (m_RamType == RamPrefabs.RamType.LandVehicle)
+    if (m_RamType == RamPrefabRegistry.RamType.LandVehicle)
     {
       return RamConfig.LandVehicleRamToolTier.Value;
     }
-    if (m_RamType == RamPrefabs.RamType.WaterVehicle)
+    if (m_RamType == RamPrefabRegistry.RamType.WaterVehicle)
     {
       return RamConfig.WaterVehicleRamToolTier.Value;
     }
@@ -132,7 +132,7 @@ public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
   public void InitializeFromConfig()
   {
     // must set this first.
-    IsVehicleRamType = m_RamType is RamPrefabs.RamType.LandVehicle or RamPrefabs.RamType.WaterVehicle;
+    IsVehicleRamType = m_RamType is RamPrefabRegistry.RamType.LandVehicle or RamPrefabRegistry.RamType.WaterVehicle;
     // local config values
     MinimumVelocityToTriggerHit = GetMinimumVelocityToTriggerRam();
     DamageIncreasePercentagePerTier = RamConfig.DamageIncreasePercentagePerTier.Value;
@@ -143,8 +143,8 @@ public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
 
     switch (m_RamType)
     {
-      case RamPrefabs.RamType.LandVehicle:
-      case RamPrefabs.RamType.WaterVehicle:
+      case RamPrefabRegistry.RamType.LandVehicle:
+      case RamPrefabRegistry.RamType.WaterVehicle:
         RamBaseMaximumDamage = RamConfig.RamBaseMaximumDamage.Value;
         MaxVelocityMultiplier = RamConfig.VehicleMaxVelocityMultiplier.Value;
         RamBaseSlashDamage = RamConfig.VehicleRamBaseSlashDamage.Value;
@@ -160,8 +160,8 @@ public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
         m_hitParent = RamConfig.VehicleRamCanDamageSelf.Value;
         m_attackForce = VehicleHitForce;
         break;
-      case RamPrefabs.RamType.Stake:
-      case RamPrefabs.RamType.Blade:
+      case RamPrefabRegistry.RamType.Stake:
+      case RamPrefabRegistry.RamType.Blade:
         RamBaseMaximumDamage = RamConfig.VehicleRamBaseMaximumDamage.Value;
         MaxVelocityMultiplier = RamConfig.MaxVelocityMultiplier.Value;
         RamBaseSlashDamage = RamConfig.RamBaseSlashDamage.Value;
@@ -192,7 +192,7 @@ public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
     m_attackForce = 5;
 
     m_radius = Mathf.Clamp(IsVehicleRamType ? RamConfig.VehicleRamHitRadius.Value : RamConfig.HitRadius.Value, 0.1f, 50f);
-    m_radius *= m_RamType == RamPrefabs.RamType.Stake ? 0.5f : 1f;
+    m_radius *= m_RamType == RamPrefabRegistry.RamType.Stake ? 0.5f : 1f;
 
     m_useTriggers = true;
     m_triggerEnterOnly = !IsVehicleRamType && RamConfig.AllowContinuousDamage.Value;
@@ -364,10 +364,10 @@ public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
     float chopDamage = 0;
     float pierceDamage = 0;
 
-    if (m_RamType == RamPrefabs.RamType.Stake)
+    if (m_RamType == RamPrefabRegistry.RamType.Stake)
       pierceDamage = baseDamage.m_pierce * multiplier;
 
-    if (m_RamType == RamPrefabs.RamType.Blade)
+    if (m_RamType == RamPrefabRegistry.RamType.Blade)
     {
       slashDamage = baseDamage.m_slash * multiplier;
       chopDamage = baseDamage.m_chop * multiplier;
@@ -444,7 +444,7 @@ public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
     };
 
     // do not damage self for land vehicles, instead we apply damage directly to the area.
-    if (!CanDamageSelf || m_RamType == RamPrefabs.RamType.LandVehicle || m_RamType == RamPrefabs.RamType.WaterVehicle)
+    if (!CanDamageSelf || m_RamType == RamPrefabRegistry.RamType.LandVehicle || m_RamType == RamPrefabRegistry.RamType.WaterVehicle)
     {
       m_damageSelf = 0;
     }

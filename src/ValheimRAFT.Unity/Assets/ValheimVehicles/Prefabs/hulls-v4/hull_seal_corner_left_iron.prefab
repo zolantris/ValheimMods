@@ -10,19 +10,19 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 6627436292883093, guid: 1dc015aa523de1e4f9e897784d55063e, type: 3}
       propertyPath: m_Name
-      value: hull_seal_corner_left_wood_iron
+      value: hull_seal_corner_left_iron
       objectReference: {fileID: 0}
     - target: {fileID: 2760785897604870557, guid: 1dc015aa523de1e4f9e897784d55063e, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 0
+      value: -200.47131
       objectReference: {fileID: 0}
     - target: {fileID: 2760785897604870557, guid: 1dc015aa523de1e4f9e897784d55063e, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0
+      value: -0.0000038146973
       objectReference: {fileID: 0}
     - target: {fileID: 2760785897604870557, guid: 1dc015aa523de1e4f9e897784d55063e, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 0
+      value: -50.820652
       objectReference: {fileID: 0}
     - target: {fileID: 2760785897604870557, guid: 1dc015aa523de1e4f9e897784d55063e, type: 3}
       propertyPath: m_LocalRotation.w
@@ -55,9 +55,10 @@ PrefabInstance:
     - target: {fileID: 6427458440134289380, guid: 1dc015aa523de1e4f9e897784d55063e, type: 3}
       propertyPath: m_Materials.Array.data[0]
       value: 
-      objectReference: {fileID: 2100000, guid: 297f395a9b1b409468e726491a6a0478, type: 2}
+      objectReference: {fileID: 2100000, guid: 565ae1542ffef964f9c6f0fe96b2d570, type: 2}
     m_RemovedComponents: []
-    m_RemovedGameObjects: []
+    m_RemovedGameObjects:
+    - {fileID: 2113479359848261884, guid: 1dc015aa523de1e4f9e897784d55063e, type: 3}
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 1dc015aa523de1e4f9e897784d55063e, type: 3}

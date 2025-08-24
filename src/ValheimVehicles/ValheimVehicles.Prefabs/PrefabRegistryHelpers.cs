@@ -567,6 +567,15 @@ public abstract class PrefabRegistryHelpers
           .WindowWallPorthole4x4)
       });
 
+    PieceDataDictionary.Add(PrefabNames.WindowWallPorthole6x4Prefab,
+      new PieceData
+      {
+        Name = "$valheim_vehicles_window_wall_porthole 6x4",
+        Description = "$valheim_vehicles_window_wall_porthole_desc 8x4",
+        Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
+          .WindowWallPorthole6x4)
+      });
+
     PieceDataDictionary.Add(PrefabNames.WindowWallPorthole8x4Prefab,
       new PieceData
       {

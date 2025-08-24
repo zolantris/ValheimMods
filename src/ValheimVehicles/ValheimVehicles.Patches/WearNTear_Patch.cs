@@ -48,7 +48,7 @@
     private static bool WearNTear_Repair(WearNTear __instance, ref bool __result)
     {
       if (RamConfig.CanRepairRams.Value ||
-          !RamPrefabs.IsRam(__instance.gameObject.name)) return true;
+          !RamPrefabRegistry.IsRam(__instance.gameObject.name)) return true;
 
       __result = false;
       return false;
@@ -97,7 +97,7 @@
 
       var pieceController = __instance.GetComponentInParent<IPieceController>();
 
-      if (pieceController == null && RamPrefabs.IsRam(__instance.name))
+      if (pieceController == null && RamPrefabRegistry.IsRam(__instance.name))
       {
         var vehicle = __instance.GetComponentInParent<VehicleManager>();
         if (vehicle != null && vehicle.PiecesController != null)

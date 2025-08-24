@@ -8,7 +8,7 @@ using ValheimVehicles.SharedScripts;
 using Zolantris.Shared;
 namespace ValheimVehicles.Prefabs.Registry;
 
-public class VehicleHammerItemRegistry : GuardedRegistry<VehicleHammerItemRegistry>
+public class VehicleHammerItemRegistry : RegisterPrefab<VehicleHammerItemRegistry>
 {
   public class VehicleBuildHammer : MonoBehaviour, Interactable
   {

@@ -8,14 +8,12 @@ using ValheimVehicles.SharedScripts;
 
 namespace Registry;
 
-public class ShipKeelPrefab : IRegisterPrefab
+public class ShipKeelPrefab : RegisterPrefab<ShipKeelPrefab>
 {
-  public static readonly ShipKeelPrefab Instance = new();
-
-  public void Register(PrefabManager prefabManager, PieceManager pieceManager)
+  public override void OnRegister()
   {
     var prefab =
-      prefabManager.CreateClonedPrefab(PrefabNames.ShipKeel,
+      PrefabManager.Instance.CreateClonedPrefab(PrefabNames.ShipKeel,
         LoadValheimVehicleAssets.ShipKeelAsset);
     PrefabRegistryHelpers.HoistSnapPointsToPrefab(prefab, prefab.transform);
 
@@ -27,7 +25,7 @@ public class ShipKeelPrefab : IRegisterPrefab
       PrefabRegistryHelpers.PieceDataDictionary.GetValueSafe(PrefabNames.ShipKeel);
 
 
-    pieceManager.AddPiece(new CustomPiece(prefab, false, new PieceConfig
+    PrefabRegistryController.AddPiece(new CustomPiece(prefab, false, new PieceConfig
     {
       PieceTable = PrefabRegistryController.GetPieceTableName(),
       Description = pieceTranslations.Description,

@@ -6,7 +6,7 @@ using ValheimVehicles.SharedScripts;
 using Zolantris.Shared;
 namespace ValheimVehicles.Prefabs.Registry;
 
-public class CommandsPieceRegistry : GuardedRegistry<CommandsPieceRegistry>
+public class CommandsPieceRegistry : RegisterPrefab<CommandsPieceRegistry>
 {
   private static GameObject CreateToggleObj(string objName)
   {
@@ -42,7 +42,7 @@ public class CommandsPieceRegistry : GuardedRegistry<CommandsPieceRegistry>
     };
 
     var piece = new CustomPiece(pieceObj, false, config);
-    var success = PieceManager.Instance.AddPiece(piece);
+    var success = PrefabRegistryController.AddPiece(piece);
 
     if (!success)
     {

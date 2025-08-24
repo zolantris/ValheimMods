@@ -3426,7 +3426,7 @@
       if (vehicleRam == null) return;
       if (vehicleRam.m_nview == null) vehicleRam.m_nview = m_nview;
 
-      vehicleRam.m_RamType = isLandVehicle ? RamPrefabs.RamType.LandVehicle : RamPrefabs.RamType.WaterVehicle;
+      vehicleRam.m_RamType = isLandVehicle ? RamPrefabRegistry.RamType.LandVehicle : RamPrefabRegistry.RamType.WaterVehicle;
       vehicleRam.m_vehicle = Manager;
     }
 

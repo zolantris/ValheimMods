@@ -188,6 +188,9 @@
       public static readonly string WindowWallPorthole4x4Prefab =
         $"{ValheimVehiclesPrefix}_ShipWindow_Wall_Porthole_4x4";
 
+      public static readonly string WindowWallPorthole6x4Prefab =
+        $"{ValheimVehiclesPrefix}_ShipWindow_Wall_Porthole_6x4";
+
       public static readonly string WindowWallPorthole8x4Prefab =
         $"{ValheimVehiclesPrefix}_ShipWindow_Wall_Porthole_8x4";
 

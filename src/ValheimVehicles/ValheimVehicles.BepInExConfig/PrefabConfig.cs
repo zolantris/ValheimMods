@@ -1,4 +1,7 @@
+using System;
+using System.Collections.Generic;
 using System.Collections.Specialized;
+using System.Linq;
 using BepInEx.Configuration;
 using Jotunn.Managers;
 using UnityEngine;
@@ -29,6 +32,9 @@ public class PrefabConfig : BepInExBaseConfig<PrefabConfig>
     get;
     set;
   }
+
+  public static ConfigEntry<bool> SortModePieceMenuItemsByMaterial = null!;
+
   public static ConfigEntry<int> VehicleLandMaxTreadWidth = null!;
   public static ConfigEntry<int> VehicleLandMaxTreadLength = null!;
   public static ConfigEntry<float> VehicleDockVerticalHeight = null!;
@@ -79,9 +85,163 @@ public class PrefabConfig : BepInExBaseConfig<PrefabConfig>
     prefab.Piece.m_enabled = enabled;
   }
 
+  /// <summary>
+  /// Handles user-configurable hammer category ordering via a single CSV string.
+  /// </summary>
+  public static class VehicleHammerOrder
+  {
+    // Canonical default order (frozen snapshot) to preserve default append behavior.
+    public static readonly string[] DefaultOrder =
+      VehicleHammerTableCategories.AllVehicleHammerCategoriesFallbackNames.ToArray();
+
+    /// <summary>The effective, validated order after parsing user CSV.</summary>
+    public static IReadOnlyList<string> EffectiveOrder => _effectiveOrder;
+
+    /// <summary>Raised whenever the effective order changes (initial bind or user edit).</summary>
+    public static event Action<IReadOnlyList<string>> OnOrderChanged;
+
+    /// <summary>CSV config entry (string only for maximum compatibility with BepInEx).</summary>
+    public static ConfigEntry<string> VehicleHammerCategoryOrderCsv { get; private set; }
+
+    /// <summary>An IComparer you can feed into LINQ or sort APIs.</summary>
+    public static IComparer<string> CategoryComparer { get; } = new CategoryIndexComparer();
+
+    private static List<string> _effectiveOrder = new(DefaultOrder);
+
+    /// <summary>Bind the CSV config and wire SettingChanged. Must be called during config bind.</summary>
+    public static void Bind(ConfigFile config, string sectionName, string keyName = "VehicleHammerCategoryOrder")
+    {
+      var defaultCsv = string.Join(",", DefaultOrder);
+      VehicleHammerCategoryOrderCsv = config.Bind(
+        sectionName,
+        keyName,
+        defaultCsv,
+        "Custom order for the Valheim Vehicles hammer categories. " +
+        "Comma/semicolon/pipe separated. Unknown values are ignored; missing categories are appended."
+      );
+
+      // Compute once at bind.
+      RecomputeEffectiveOrder(writeBackNormalizedCsv: true);
+
+      // React to user edits hot.
+      VehicleHammerCategoryOrderCsv.SettingChanged += (_, __) =>
+      {
+        RecomputeEffectiveOrder(writeBackNormalizedCsv: false);
+      };
+    }
+
+    /// <summary>Return a stable index for a category (unknown -> large index so they sort last).</summary>
+    public static int GetIndex(string category)
+    {
+      var idx = _effectiveOrder.IndexOf(category);
+      return idx < 0 ? int.MaxValue : idx;
+    }
+
+    /// <summary>Sorts a list of categories in-place per the effective order.</summary>
+    public static void SortInPlace(List<string> categories)
+    {
+      categories.Sort(CategoryComparer);
+    }
+
+    /// <summary>Produces a normalized CSV string of the current effective order.</summary>
+    public static string GetNormalizedCsv()
+    {
+      return string.Join(",", _effectiveOrder);
+    }
+
+    /// <summary>Parse, validate, dedupe, append-missing, and publish.</summary>
+    private static void RecomputeEffectiveOrder(bool writeBackNormalizedCsv)
+    {
+      var parsed = ParseCsv(VehicleHammerCategoryOrderCsv.Value);
+
+      // Keep only known categories, preserving user order, removing duplicates
+      var knownSet = new HashSet<string>();
+      var cleaned = new List<string>(parsed.Count);
+      foreach (var c in parsed)
+      {
+        if (!VehicleHammerTableCategories.IsHammerTableCategory(c)) continue;
+        if (knownSet.Add(c)) cleaned.Add(c);
+      }
+
+      // Append any missing ones in default order
+      foreach (var c in DefaultOrder)
+      {
+        if (!knownSet.Contains(c)) cleaned.Add(c);
+      }
+
+      // Publish if changed
+      var changed = !SequenceEqual(_effectiveOrder, cleaned);
+      if (changed)
+      {
+        _effectiveOrder = cleaned;
+        OnOrderChanged?.Invoke(_effectiveOrder);
+      }
+
+      // Optionally normalize the CSV in the config file to keep it tidy
+      if (writeBackNormalizedCsv)
+      {
+        var normalized = string.Join(",", _effectiveOrder);
+        if (!string.Equals(VehicleHammerCategoryOrderCsv.Value, normalized, StringComparison.Ordinal))
+        {
+          VehicleHammerCategoryOrderCsv.Value = normalized;
+        }
+      }
+    }
+
+    private static List<string> ParseCsv(string raw)
+    {
+      if (string.IsNullOrWhiteSpace(raw))
+        return new List<string>(DefaultOrder);
+
+      // Accept commas, semicolons, pipes as separators
+      var parts = raw.Split(new[] { ',', ';', '|' }, StringSplitOptions.RemoveEmptyEntries);
+      var list = new List<string>(parts.Length);
+      foreach (var p in parts)
+      {
+        var s = p.Trim();
+        if (s.Length > 0) list.Add(s);
+      }
+      return list;
+    }
+
+    private static bool SequenceEqual(List<string> a, List<string> b)
+    {
+      if (a.Count != b.Count) return false;
+      for (var i = 0; i < a.Count; i++)
+        if (!string.Equals(a[i], b[i], StringComparison.Ordinal))
+          return false;
+      return true;
+    }
+
+    private sealed class CategoryIndexComparer : IComparer<string>
+    {
+      public int Compare(string x, string y)
+      {
+        // Unknowns sort last but maintain relative order by name
+        var ix = GetIndex(x);
+        var iy = GetIndex(y);
+        if (ix == iy) return string.CompareOrdinal(x, y);
+        return ix.CompareTo(iy);
+      }
+    }
+  }
+
+  /// <summary>
+  /// Expose the current normalized order list to consumers (UI builders, sorters, etc.).
+  /// </summary>
+  public static IReadOnlyList<string> GetVehicleHammerCategoryOrder()
+  {
+    return VehicleHammerOrder.EffectiveOrder;
+  }
+
 
   public override void OnBindConfig(ConfigFile config)
   {
+    SortModePieceMenuItemsByMaterial = config.BindUnique(PrefabConfigKey, "SortModePieceMenuItemsByMaterial", true, "Sorts by material instead of type. This means all wood pieces come before iron pieces. The other approach is each prefab type is cluster together alongside other material variants in same type.");
+
+
+    VehicleHammerOrder.Bind(config, PrefabConfigKey, "VehicleHammerCategoryOrder");
+
 
 
     AllowTieredMastToRotate = config.BindUnique(PrefabConfigKey, "AllowTieredMastToRotateInWind", true, "allows the tiered mast to rotate in wind");

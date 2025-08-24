@@ -137,6 +137,8 @@
 
         <!-- Overrites the auto-doc -->
         <Copy Condition="Exists('$(AutoDocPath)') and Exists('$(LocalAutoDocPath)')" SourceFiles="$(AutoDocPath)" DestinationFolder="$(SolutionDir)src\$(AssemblyName)\docs\"/>
+        <!--  snapshots for prefabs      -->
+        <Copy Condition="Exists('$(PrefabSnapshotPath)') and Exists('$(SolutionDir)src\$(AssemblyName)\docs\')" SourceFiles="$(PrefabSnapshotPath)" DestinationFolder="$(SolutionDir)src\$(AssemblyName)\docs\"/>
 
         <!-- Copy Assets -->
         <Exec Command="if exist &quot;$(AssetsDir)&quot; xcopy /d &quot;$(AssetsDir)&quot; &quot;$(TmpDir)plugins\Assets\&quot; /E/H"/>
@@ -187,6 +189,8 @@
 
         <!-- Overrites the auto-doc -->
         <Copy Condition="Exists('$(AutoDocPath)') and Exists('$(LocalAutoDocPath)')" SourceFiles="$(AutoDocPath)" DestinationFolder="$(SolutionDir)src\$(AssemblyName)\docs\"/>
+        <!--  Copy the PrefabSnapshotPath to local docs to track regressions and aliases needed -->
+        <Copy Condition="Exists('$(PrefabSnapshotPath)') and Exists('$(SolutionDir)src\$(AssemblyName)\docs\')" SourceFiles="$(PrefabSnapshotPath)" DestinationFolder="$(SolutionDir)src\$(AssemblyName)\docs\"/>
 
         <!-- Copy Assets -->
         <Exec Command="if exist &quot;$(AssetsDir)&quot; xcopy /d &quot;$(AssetsDir)&quot; &quot;$(TmpDir)plugins\Assets\&quot; /E/H"/>

@@ -1,4 +1,5 @@
 using System;
+using ValheimVehicles.Prefabs.Registry;
 using ValheimVehicles.SharedScripts.Validation;
 using Zolantris.Shared;
 namespace ValheimVehicles.SharedScripts;

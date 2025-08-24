@@ -63,6 +63,9 @@ public abstract class SpriteNames
   public const string WindowWallPorthole4x4 =
     "hull_wall_window_porthole_iron_4x4";
 
+  public const string WindowWallPorthole6x4 =
+    "hull_wall_window_porthole_iron_6x4";
+
   public const string WindowWallPorthole8x4 =
     "hull_wall_window_porthole_iron_8x4";
 

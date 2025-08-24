@@ -6,6 +6,7 @@ using Jotunn;
 using ValheimVehicles.BepInExConfig;
 using ValheimVehicles.Patches;
 using ValheimVehicles.QuickStartWorld.Patches;
+using ValheimVehicles.ValheimVehicles.Patches;
 using Zolantris.Shared;
 
 namespace ValheimVehicles.Controllers;
@@ -41,6 +42,7 @@ public static class PatchController
       typeof(Character_WaterPatches),
       typeof(Fireplace_WaterPatches),
       typeof(Minimap_VehicleIcons),
+      typeof(ZDO_Patch),
 #if DEBUG
       typeof(RPCRegistryDebugger_Patches),
 #endif
