@@ -4,6 +4,6 @@
   "website_url": "https://github.com/zolantris/ValheimMods/tree/main/src/ValheimRAFT",
   "description": "ValheimRAFT (BETA) - a vehicles mod for valheim. Build a ship, build a land vehicle (3.0.0). Explore valheim! This is a BETA release channel. Please use the non-beta for stable versions.",
   "dependencies": [
-    "ValheimModding-Jotunn-2.23.0"
+    "ValheimModding-Jotunn-2.26.0"
   ]
 }
