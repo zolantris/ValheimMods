@@ -1,16 +1,16 @@
 ManifestFileVersion: 0
 UnityVersion: 6000.1.8f1
-CRC: 1754889096
+CRC: 1181001481
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 49dbb8c3535517dbef1a5dc0bf9d36d4
+    Hash: db1a21b29ec67b20a9d1ff83624829dd
   TypeTreeHash:
     serializedVersion: 2
-    Hash: 2e8275ee648a519ec7cb5c1cb3f33da4
+    Hash: 046705445df0deb317cffae170f85c6d
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: ed56e47862d63d81915f4de5b2d0e5c5
+    Hash: a1b670338cab2ab7559841a81495ab60
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -74,6 +74,8 @@ ClassTypes:
 - Class: 114
   Script: {fileID: 11500000, guid: f44587a585f05c540ad46e160444cf0c, type: 3}
 - Class: 114
+  Script: {fileID: 11500000, guid: 71c1514a6bd24e1e882cebbe1904ce04, type: 3}
+- Class: 114
   Script: {fileID: 11500000, guid: 9085046f02f69544eb97fd06b6048fe2, type: 3}
 - Class: 114
   Script: {fileID: 11500000, guid: 19bf60ab5c953fe4ba1db2f29c51ad1b, type: 3}
@@ -116,10 +118,36 @@ ClassTypes:
 - Class: 687078895
   Script: {instanceID: 0}
 SerializeReferenceClassIdentifiers:
+- AssemblyName: Unity.TextMeshPro
+  ClassName: TMPro.FaceInfo_Legacy
+- AssemblyName: Unity.TextMeshPro
+  ClassName: TMPro.FontAssetCreationSettings
+- AssemblyName: Unity.TextMeshPro
+  ClassName: TMPro.KerningTable
+- AssemblyName: Unity.TextMeshPro
+  ClassName: TMPro.TMP_Character
+- AssemblyName: Unity.TextMeshPro
+  ClassName: TMPro.TMP_FontFeatureTable
+- AssemblyName: Unity.TextMeshPro
+  ClassName: TMPro.TMP_FontWeightPair
 - AssemblyName: UnityEngine.CoreModule
   ClassName: UnityEngine.Events.PersistentCallGroup
 - AssemblyName: UnityEngine.CoreModule
   ClassName: UnityEngine.RectOffset
+- AssemblyName: UnityEngine.TextCoreFontEngineModule
+  ClassName: UnityEngine.TextCore.FaceInfo
+- AssemblyName: UnityEngine.TextCoreFontEngineModule
+  ClassName: UnityEngine.TextCore.Glyph
+- AssemblyName: UnityEngine.TextCoreFontEngineModule
+  ClassName: UnityEngine.TextCore.GlyphMetrics
+- AssemblyName: UnityEngine.TextCoreFontEngineModule
+  ClassName: UnityEngine.TextCore.GlyphRect
+- AssemblyName: UnityEngine.TextCoreFontEngineModule
+  ClassName: UnityEngine.TextCore.LowLevel.GlyphAdjustmentRecord
+- AssemblyName: UnityEngine.TextCoreFontEngineModule
+  ClassName: UnityEngine.TextCore.LowLevel.GlyphPairAdjustmentRecord
+- AssemblyName: UnityEngine.TextCoreFontEngineModule
+  ClassName: UnityEngine.TextCore.LowLevel.GlyphValueRecord
 - AssemblyName: UnityEngine.UI
   ClassName: UnityEngine.UI.AnimationTriggers
 - AssemblyName: UnityEngine.UI
@@ -212,6 +240,7 @@ Assets:
 - Assets/ValheimVehicles/Material/iron_hull.mat
 - Assets/ValheimVehicles/Material/wood_alt_piece_pole_horizontal.mat
 - Assets/ValheimVehicles/Prefabs/Backups/shared_hull_slab_4x4_new.prefab
+- Assets/TextMesh Pro/Resources/Fonts & Materials/LiberationSans SDF.asset
 - Assets/ValheimVehicles/Material/iron.mat
 - Assets/ValheimVehicles/Prefabs/shared_hull_rib_corner.prefab
 - Assets/ValheimVehicles/Prefabs/cannon_fixed.prefab

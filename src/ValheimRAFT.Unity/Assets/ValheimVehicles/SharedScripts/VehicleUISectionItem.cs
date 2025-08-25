@@ -1,22 +1,22 @@
 ﻿#region
 
-using System;
-using System.Globalization;
-using TMPro;
-using UnityEngine;
-using UnityEngine.EventSystems;
-using UnityEngine.UI;
+  using System;
+  using System.Globalization;
+  using TMPro;
+  using UnityEngine;
+  using UnityEngine.EventSystems;
+  using UnityEngine.UI;
 
 #endregion
 
 // ReSharper disable NamespaceStyle
-namespace ValheimVehicles.SharedScripts
-{
+  namespace ValheimVehicles.SharedScripts;
+
   public class VehicleUIMenuSectionItem : MonoBehaviour, IPointerEnterHandler, IPointerClickHandler, IPointerExitHandler
   {
-    public TextMeshProUGUI TitleText;
-    public TextMeshProUGUI DescriptionText;
-    public TextMeshProUGUI SavedValueText;
+    public TMP_Text TitleText;
+    public TMP_Text DescriptionText;
+    public TMP_Text SavedValueText;
     public GameObject DescriptionRow;
     public Button SaveButton;
     public Button ResetButton;
@@ -24,15 +24,15 @@ namespace ValheimVehicles.SharedScripts
 
     // todo may add support for this.
     public GameObject Tooltip;
-    public TextMeshProUGUI TooltipText;
+    public TMP_Text TooltipText;
 
     public TMP_InputField InputField;
     public Toggle Toggle;
 
     public Slider Slider;
-    public TextMeshProUGUI SliderMaxValueText;
-    public TextMeshProUGUI SliderCurrentValueText;
-    public TextMeshProUGUI SliderMinValueText;
+    public TMP_Text SliderMaxValueText;
+    public TMP_Text SliderCurrentValueText;
+    public TMP_Text SliderMinValueText;
 
     public Transform ContentParent;
     public Transform EditRow;
@@ -80,12 +80,12 @@ namespace ValheimVehicles.SharedScripts
 
       if (!DescriptionText)
       {
-        DescriptionText = DescriptionRow.transform.Find("text").GetComponent<TextMeshProUGUI>();
+        DescriptionText = DescriptionRow.transform.Find("text").GetComponent<TMP_Text>();
       }
 
       if (!TitleText)
       {
-        TitleText = MainRow.Find("title").GetComponent<TextMeshProUGUI>();
+        TitleText = MainRow.Find("title").GetComponent<TMP_Text>();
       }
 
       if (!Toggle)
@@ -109,7 +109,7 @@ namespace ValheimVehicles.SharedScripts
 
       if (!SavedValueText)
       {
-        SavedValueText = MainRow.Find("info_section/value_field/value").GetComponent<TextMeshProUGUI>();
+        SavedValueText = MainRow.Find("info_section/value_field/value").GetComponent<TMP_Text>();
       }
 
       if (!Slider)
@@ -119,17 +119,17 @@ namespace ValheimVehicles.SharedScripts
 
       if (!SliderMinValueText)
       {
-        SliderMinValueText = Slider.transform.Find("minValueText").GetComponent<TextMeshProUGUI>();
+        SliderMinValueText = Slider.transform.Find("minValueText").GetComponent<TMP_Text>();
       }
 
       if (!SliderMaxValueText)
       {
-        SliderMaxValueText = Slider.transform.Find("maxValueText").GetComponent<TextMeshProUGUI>();
+        SliderMaxValueText = Slider.transform.Find("maxValueText").GetComponent<TMP_Text>();
       }
 
       if (!SliderCurrentValueText)
       {
-        SliderCurrentValueText = Slider.transform.Find("Handle Slide Area/Handle/currentValueText").GetComponent<TextMeshProUGUI>();
+        SliderCurrentValueText = Slider.transform.Find("Handle Slide Area/Handle/currentValueText").GetComponent<TMP_Text>();
       }
 
       if (!InputField)
@@ -231,4 +231,3 @@ namespace ValheimVehicles.SharedScripts
       LayoutRebuilder.ForceRebuildLayoutImmediate((RectTransform)transform.parent);
     }
   }
-}

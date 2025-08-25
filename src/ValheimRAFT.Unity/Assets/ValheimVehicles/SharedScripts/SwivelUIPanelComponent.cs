@@ -40,7 +40,7 @@ namespace ValheimVehicles.SharedScripts.UI
     private bool _hasCreatedUI;
 
     private float _lastPanelUpdateTime = -999f;
-    private TextMeshProUGUI _saveStatus;
+    private TMP_Text _saveStatus;
 
     internal TMP_Dropdown modeDropdown;
     internal TMP_Dropdown motionStateDropdown;

@@ -3,6 +3,9 @@
   using System.Collections;
   using TMPro;
   using UnityEngine;
+#if VALHEIM
+  using ValheimVehicles.Prefabs;
+#endif
   using static System.String;
 
 #endregion
@@ -11,7 +14,6 @@
 // ReSharper disable NamespaceStyle
   namespace ValheimVehicles.SharedScripts
   {
-
 
     public class HoverFadeText : MonoBehaviour
     {
@@ -24,10 +26,27 @@
       public bool canUpdate = true;
       private float messageFadeValue = 255f;
       private Coroutine? UpdateTextCoroutine;
+      private static TMP_FontAsset s_DefaultArialSdf;
+      [SerializeField] public TMP_FontAsset fontAsset;
+
 
       public void Awake()
       {
         textMeshPro = gameObject.AddComponent<TextMeshPro>();
+
+#if VALHEIM
+        if (fontAsset == null)
+        {
+          fontAsset = LoadValheimVehicleAssets.LiberationSansFontAsset;
+        }
+#endif
+
+        if (fontAsset != null)
+        {
+          textMeshPro.font = fontAsset;
+          textMeshPro.UpdateMeshPadding();
+        }
+
         textMeshPro.color = messageColor;
         textMeshPro.fontStyle = FontStyles.Bold | FontStyles.SmallCaps;
         textMeshPro.alignment = TextAlignmentOptions.Center;
@@ -43,6 +62,42 @@
         };
         var hoverFadeText = hoverFadeGameObject.AddComponent<HoverFadeText>();
         return hoverFadeText;
+      }
+
+      private static void EnsureDefaultTmpFont(TMP_Text label)
+      {
+        if (!label) return;
+        if (label.font) return; // already assigned elsewhere
+
+        // Try project-wide TMP default first
+        var font = TMP_Settings.defaultFontAsset;
+
+        // If none, create once from built-in Arial (Valheim ships this)
+        if (!font)
+        {
+          if (!s_DefaultArialSdf)
+          {
+            var arial = Resources.GetBuiltinResource<Font>("Arial.ttf");
+            if (arial)
+            {
+              s_DefaultArialSdf = TMP_FontAsset.CreateFontAsset(arial);
+              // Make sure material is usable
+              if (s_DefaultArialSdf && s_DefaultArialSdf.material)
+                s_DefaultArialSdf.material.enableInstancing = true;
+            }
+          }
+          font = s_DefaultArialSdf;
+        }
+
+        if (font)
+        {
+          label.font = font;
+          if (font.material) label.fontMaterial = font.material;
+        }
+        else
+        {
+          Debug.LogWarning("[HoverFadeText] Could not resolve a TMP_FontAsset. Text may not render.");
+        }
       }
 
       public bool ShouldHideAfterLastStateUpdate()

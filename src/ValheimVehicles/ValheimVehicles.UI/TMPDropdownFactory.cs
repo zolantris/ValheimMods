@@ -24,7 +24,7 @@ public static class TMPDropdownFactory
     dropdownRT.anchoredPosition = anchoredPosition;
 
     // Create Label
-    var labelGO = new GameObject("Label", typeof(RectTransform), typeof(TextMeshProUGUI));
+    var labelGO = new GameObject("Label", typeof(RectTransform), typeof(TMP_Text));
     labelGO.transform.SetParent(dropdownGO.transform, false);
 
     var labelRT = labelGO.GetComponent<RectTransform>();
@@ -33,7 +33,7 @@ public static class TMPDropdownFactory
     labelRT.offsetMin = new Vector2(10f, 6f);
     labelRT.offsetMax = new Vector2(-25f, -7f);
 
-    var labelText = labelGO.GetComponent<TextMeshProUGUI>();
+    var labelText = labelGO.GetComponent<TMP_Text>();
     labelText.font = TMP_Settings.defaultFontAsset;
     labelText.text = captionText ?? "";
     labelText.alignment = TextAlignmentOptions.MidlineLeft;
@@ -126,7 +126,7 @@ public static class TMPDropdownFactory
     toggle.targetGraphic = itemBackground;
 
     // Item label
-    var itemLabelGO = new GameObject("Item Label", typeof(RectTransform), typeof(TextMeshProUGUI));
+    var itemLabelGO = new GameObject("Item Label", typeof(RectTransform), typeof(TMP_Text));
     itemLabelGO.transform.SetParent(itemGO.transform, false);
 
     var itemLabelRT = itemLabelGO.GetComponent<RectTransform>();
@@ -135,7 +135,7 @@ public static class TMPDropdownFactory
     itemLabelRT.offsetMin = new Vector2(10f, 0f);
     itemLabelRT.offsetMax = new Vector2(-10f, 0f);
 
-    var itemLabelText = itemLabelGO.GetComponent<TextMeshProUGUI>();
+    var itemLabelText = itemLabelGO.GetComponent<TMP_Text>();
     itemLabelText.font = TMP_Settings.defaultFontAsset;
     itemLabelText.text = itemPrototypeText ?? "Option";
     itemLabelText.alignment = TextAlignmentOptions.MidlineLeft;

@@ -17,7 +17,7 @@
         var labelGO = new GameObject("Label", typeof(RectTransform));
         labelGO.transform.SetParent(parent, false);
 
-        var label = labelGO.AddComponent<TextMeshProUGUI>();
+        var label = labelGO.AddComponent<TMP_Text>();
         label.text = text;
         label.fontSize = viewStyles.FontSizeSectionLabel;
         label.color = Color.white;

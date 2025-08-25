@@ -14,7 +14,7 @@ namespace ValheimVehicles.SharedScripts.UI
 
   public static partial class SwivelUIHelpers
   {
-    public static GameObject CreateRow(Transform parent, SwivelUISharedStyles viewStyles, string? label, out TextMeshProUGUI? labelText, bool hasForceExpandWidth = true)
+    public static GameObject CreateRow(Transform parent, SwivelUISharedStyles viewStyles, string? label, out TMP_Text? labelText, bool hasForceExpandWidth = true)
     {
       // === Horizontal layout container ===
       var rowGO = new GameObject($"{label}_Row", typeof(RectTransform), typeof(HorizontalLayoutGroup));
@@ -32,10 +32,10 @@ namespace ValheimVehicles.SharedScripts.UI
       if (label != null)
       {
         // === Label ===
-        var labelGO = new GameObject("Label", typeof(TextMeshProUGUI), typeof(LayoutElement));
+        var labelGO = new GameObject("Label", typeof(TMP_Text), typeof(LayoutElement));
         labelGO.transform.SetParent(rowGO.transform, false);
 
-        labelText = labelGO.GetComponent<TextMeshProUGUI>();
+        labelText = labelGO.GetComponent<TMP_Text>();
         labelText.text = label;
         labelText.fontSize = viewStyles.FontSizeRowLabel;
         labelText.color = viewStyles.LabelColor;

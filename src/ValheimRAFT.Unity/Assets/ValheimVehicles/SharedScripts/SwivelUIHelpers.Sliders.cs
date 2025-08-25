@@ -147,9 +147,9 @@ namespace ValheimVehicles.SharedScripts.UI
       localSlider.handleRect = handleRT;
 
       // === Value Label ===
-      var valueLabelGO = new GameObject("ValueLabel", typeof(RectTransform), typeof(TextMeshProUGUI));
+      var valueLabelGO = new GameObject("ValueLabel", typeof(RectTransform), typeof(TMP_Text));
       valueLabelGO.transform.SetParent(sliderGO.transform, false);
-      var valueLabel = valueLabelGO.GetComponent<TextMeshProUGUI>();
+      var valueLabel = valueLabelGO.GetComponent<TMP_Text>();
       valueLabel.fontSize = viewStyles.FontSizeRowLabel;
       valueLabel.color = viewStyles.InputTextColor;
       valueLabel.alignment = TextAlignmentOptions.MidlineRight;
