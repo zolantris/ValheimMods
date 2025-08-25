@@ -1,6 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
     <Import Project="$(SolutionDir)build\base.props"/>
     <Import Project="$(SolutionDir)build\build_variables.props"/>
+    <Import Project="$(SolutionDir)build\valheimraft_version.props"/>
     <Import Project="$(SolutionDir)\build\game_launcher.targets"/>
 
     <ItemGroup>
@@ -61,9 +62,9 @@
     <Target KeepDuplicateOutputs="false" Name="Generate_Mod_Archive" AfterTargets="RunPostInstaller" Condition=" '$(Configuration)|$(Platform)' == 'ReleaseBETA Archive|AnyCPU' or  '$(Configuration)|$(Platform)' == 'Release Archive|AnyCPU' ">
         <PropertyGroup Label="Shared Release Properties">
             <ReleaseName>ValheimRAFT</ReleaseName>
-            <ApplicationVersion>3.7.2</ApplicationVersion>
-            <ReleaseVersion>3.7.2</ReleaseVersion>
             <RepoDir>$(SolutionDir)src\ValheimRAFT\</RepoDir>
+            <!--    From ValheimRAFT        -->
+            <ReleaseVersion>$(Version)</ReleaseVersion>
             <ThunderStoreName>Thunderstore</ThunderStoreName>
             <TmpDir>$(ModOutputDir)tmp\</TmpDir>
             <NexusName>Nexus</NexusName>
