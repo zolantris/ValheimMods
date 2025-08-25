@@ -1,0 +1,10 @@
+<Project>
+    <Target Name="ModSync_UpdateThunderstore" AfterTargets="Build">
+        <PropertyGroup>
+            <ModSyncExe>$(SolutionDir)tools\ModSync\ModSync.exe</ModSyncExe>
+            <ModSyncConfig>$(SolutionDir)modSync.json5</ModSyncConfig>
+        </PropertyGroup>
+
+        <!--        <Exec Command="&quot;$(ModSyncExe)&quot; syncJson &#45;&#45;config=&quot;$(ModSyncConfig)&quot; &#45;&#45;targets=thunderstore-release,thunderstore-beta &#45;&#45;syncJsonKey=version_number &#45;&#45;syncJsonValue=$(Version)"/>-->
+    </Target>
+</Project>

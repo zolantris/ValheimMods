@@ -35,7 +35,7 @@ internal abstract class PluginDependencies
 /// ValheimRAFTPlugin is mostly a wrapper around ValheimVehicles which was added >=2.0.0. As of 3.2.0 ValheimVehicles contains 99% of the code.
 /// </summary>
 // [SentryDSN()]
-[BepInPlugin(ModGuid, ModName, Version)]
+[BepInPlugin(ModGuid, ModName, BuildInfo.Version)]
 [BepInDependency(ZdoWatcherPlugin.ModGuid)]
 [BepInDependency(DynamicLocationsPlugin.BepInGuid,
   DynamicLocationsPlugin.Version)]
@@ -46,9 +46,9 @@ public class ValheimRaftPlugin : BaseUnityPlugin
 {
   // ReSharper disable MemberCanBePrivate.Global
   public const string Author = "zolantris";
-  public const string Version = "3.7.2";
   public const string ModName = "ValheimRAFT";
   public const string ModGuid = $"{Author}.{ModName}";
+  public static string Version => BuildInfo.Version;
   public static string HarmonyGuid => ModGuid;
   public const string ModDescription =
     "Valheim Mod for building on the sea, requires Jotunn to be installed.";

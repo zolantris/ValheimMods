@@ -36,6 +36,7 @@ internal static class ModSyncConfig
     public Dictionary<string, SyncTargetShared>? syncTargets = null;
     public Dictionary<string, SyncTargetShared>? sharedTargets = null;
     public Dictionary<string, RunTargetItem>? runTargets = null;
+    public Dictionary<string, JsonSyncTarget>? syncJsonTargets = null;
   }
 
   /// <summary>

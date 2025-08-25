@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
     <Import Project="$(SolutionDir)build\base.props"/>
     <Import Project="$(SolutionDir)build\valheim.props"/>
-    <Import Project="$(SolutionDir)build\valheimvehicles_version.props"/>
+    <Import Project="$(SolutionDir)build\valheimraft_version.props"/>
 
     <PropertyGroup>
         <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -31,10 +31,11 @@
         <!--  Allows for both sharing and testing these scripts within unity. Best of both worlds.      -->
         <Compile Include="..\ValheimRAFT.Unity\Assets\ValheimVehicles\SharedScripts\**\*.cs"/>
     </ItemGroup>
-    <ItemGroup Label="Internal ValheimVehicles scripts">
-        <!-- Includes all namespace folders -->
+    <ItemGroup Label="Internal ValheimVehicles scripts"><!-- Includes all namespace folders -->
         <!--        <Compile Include="ValheimVehicles.*\**\*.cs"/>-->
         <!--        <Compile Include="ValheimVehiclesPlugin.cs"/>-->
+
+        <Folder Include="Generated\"/>
     </ItemGroup>
     <ItemGroup>
         <ProjectReference Include="..\Shared\Shared.csproj"/>

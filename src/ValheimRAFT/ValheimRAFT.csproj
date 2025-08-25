@@ -1,7 +1,9 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
     <Import Project="$(SolutionDir)build\base.props"/>
     <Import Project="$(SolutionDir)build\valheim.props"/>
-    <Import Project="$(SolutionDir)build\valheimvehicles_version.props"/>
+    <Import Project="$(SolutionDir)build\valheimraft_version.props"/>
+    <Import Project="$(SolutionDir)build\static_version_generator.targets"/>
+    <Import Project="$(SolutionDir)build\thunderstore_manifest_update.targets"/>
 
     <PropertyGroup>
         <Configuration Condition=" '$(Configuration)' == '' ">Debug;VALHEIM_RAFT</Configuration>
@@ -67,6 +69,7 @@
     </ItemGroup>
     <ItemGroup>
         <Folder Include="docs-images\"/>
+        <Folder Include="Generated\"/>
         <Folder Include="ValheimRAFT.Patches\"/>
     </ItemGroup>
 </Project>
