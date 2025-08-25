@@ -178,11 +178,11 @@ namespace ValheimVehicles.SharedScripts
 
       public RigidbodyData(Rigidbody rb)
       {
-        Velocity = rb.velocity;
+        Velocity = rb.linearVelocity;
         AngularVelocity = rb.angularVelocity;
         Mass = rb.mass;
-        Drag = rb.drag;
-        AngularDrag = rb.angularDrag;
+        Drag = rb.linearDamping;
+        AngularDrag = rb.angularDamping;
         UseGravity = rb.useGravity;
         Constraints = rb.constraints;
         CollisionMode = rb.collisionDetectionMode;
@@ -193,11 +193,11 @@ namespace ValheimVehicles.SharedScripts
 
       public void ApplyTo(Rigidbody rb)
       {
-        rb.velocity = Velocity;
+        rb.linearVelocity = Velocity;
         rb.angularVelocity = AngularVelocity;
         rb.mass = Mass;
-        rb.drag = Drag;
-        rb.angularDrag = AngularDrag;
+        rb.linearDamping = Drag;
+        rb.angularDamping = AngularDrag;
         rb.useGravity = UseGravity;
         rb.constraints = Constraints;
         rb.collisionDetectionMode = CollisionMode;

@@ -1,15 +1,19 @@
 // ReSharper disable ArrangeNamespaceBody
 // ReSharper disable NamespaceStyle
 
-#if !TEST && !UNITY_2022
+#if !TEST && VALHEIM
 using System.Collections.Generic;
 #endif
 namespace ValheimVehicles.Shared.Constants
 {
 
-#if UNITY_2022
-  public static class StringExtensions {
-    public static int GetStableHashCode(this string str) => str.GetHashCode();
+#if !VALHEIM
+  public static class StringExtensions
+  {
+    public static int GetStableHashCode(this string str)
+    {
+      return str.GetHashCode();
+    }
   }
 #endif
   /// <summary>
@@ -103,7 +107,7 @@ namespace ValheimVehicles.Shared.Constants
     public static readonly int MBPieceCount = "MBPieceCount".GetStableHashCode();
 
 
-#if !TEST && !UNITY_2022
+#if !TEST && VALHEIM
     // todo ZDO.GetHashZDOID is likely deprecated.
     public static readonly KeyValuePair<int, int> MBCultivatableParentHash =
       ZDO.GetHashZDOID("MBCultivatableParent");

@@ -20,7 +20,7 @@ namespace ValheimVehicles.SharedScripts
     public static Func<GameObject?, IWearNTearStub?> GetWearNTearComponent = gameObject =>
     {
       if (gameObject == null) return null;
-#if !UNITY_2022
+#if VALHEIM
       Debug.Log("WearNTearProviderBase.Resolver default method called. This should never happen outside of unity Environment");
 #endif
 

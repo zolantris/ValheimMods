@@ -134,7 +134,7 @@ namespace ValheimVehicles.Controllers
 
       if (m_syncBodyVelocity && m_body && !m_isKinematic)
       {
-        m_body.velocity = zdo.GetVec3(VehicleZdoVars.SwivelSyncVelocity, Vector3.zero);
+        m_body.linearVelocity = zdo.GetVec3(VehicleZdoVars.SwivelSyncVelocity, Vector3.zero);
         m_body.angularVelocity = zdo.GetVec3(VehicleZdoVars.SwivelSyncAngularVelocity, Vector3.zero);
       }
     }
@@ -165,7 +165,7 @@ namespace ValheimVehicles.Controllers
 
       if (m_syncBodyVelocity && m_body && !m_isKinematic)
       {
-        var vel = m_body.velocity;
+        var vel = m_body.linearVelocity;
         var angVel = m_body.angularVelocity;
 
         if (vel != m_cachedVelocity)

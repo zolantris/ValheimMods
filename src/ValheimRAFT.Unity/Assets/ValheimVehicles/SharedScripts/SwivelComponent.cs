@@ -295,7 +295,7 @@ namespace ValheimVehicles.SharedScripts
 
       try
       {
-        if (parentRigidbody && parentRigidbody!.velocity.magnitude > ParentVelocityThreshold)
+        if (parentRigidbody && parentRigidbody!.linearVelocity.magnitude > ParentVelocityThreshold)
         {
           CanRunSwivelDuringUpdate = true;
           return true;

@@ -522,8 +522,8 @@ namespace ValheimVehicles.SharedScripts
       }
       rb.mass = 20f;
       // rb.constraints = RigidbodyConstraints.FreezePositionX;
-      rb.drag = 0f;
-      rb.angularDrag = 0f;
+      rb.linearDamping = 0f;
+      rb.angularDamping = 0f;
       rb.useGravity = false;
       rb.isKinematic = true;
       return rb;
