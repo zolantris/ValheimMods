@@ -26,29 +26,24 @@ using Zolantris.Shared;
 using Zolantris.Shared.BepInExAutoDoc;
 namespace ValheimRAFT;
 
-internal abstract class PluginDependencies
-{
-  public const string JotunnModGuid = Main.ModGuid;
-}
-
 /// <summary>
 /// ValheimRAFTPlugin is mostly a wrapper around ValheimVehicles which was added >=2.0.0. As of 3.2.0 ValheimVehicles contains 99% of the code.
 /// </summary>
 // [SentryDSN()]
-[BepInPlugin(ModGuid, ModName, Version)]
+[BepInPlugin(ModGuid, ModName, BuildInfo.Version)]
 [BepInDependency(ZdoWatcherPlugin.ModGuid)]
-[BepInDependency(DynamicLocationsPlugin.BepInGuid,
-  DynamicLocationsPlugin.Version)]
-[BepInDependency(PluginDependencies.JotunnModGuid)]
+[BepInDependency(DynamicLocationsPlugin.BepInGuid, DynamicLocationsPlugin.Version)]
+// ReSharper disable once RedundantNameQualifier
+[BepInDependency(Jotunn.Main.ModGuid)]
 [NetworkCompatibility(CompatibilityLevel.EveryoneMustHaveMod,
   VersionStrictness.Minor)]
 public class ValheimRaftPlugin : BaseUnityPlugin
 {
   // ReSharper disable MemberCanBePrivate.Global
   public const string Author = "zolantris";
-  public const string Version = "3.7.2";
   public const string ModName = "ValheimRAFT";
   public const string ModGuid = $"{Author}.{ModName}";
+  public static string Version => BuildInfo.Version;
   public static string HarmonyGuid => ModGuid;
   public const string ModDescription =
     "Valheim Mod for building on the sea, requires Jotunn to be installed.";
@@ -124,6 +119,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
     // must be done before any other services that require LoggerProvider otherwise it will not work.
     ProviderInitializers.InitProviders(Logger, gameObject);
     ValheimVehicles.Compat.ValheimRAFT_API.RegisterHost(Instance);
+    PrefabRegistryController.InitValheimVehiclesAssetBundle();
     ValheimVehiclesPlugin.CreateConfigFromValheimRAFTPluginConfig(ModConfigSync, Config);
 
     // @warning patch controller must be called after CreateConfig.

@@ -44,7 +44,7 @@ namespace ValheimVehicles.SharedScripts
 
     private void Update()
     {
-#if UNITY_2022
+#if !VALHEIM
       HandleEditorInput();
 #endif
     }
@@ -75,7 +75,7 @@ namespace ValheimVehicles.SharedScripts
       };
     }
 
-#if UNITY_2022
+#if !VALHEIM
     private void HandleEditorInput()
     {
       foreach (var sectionItem in _sectionItems)

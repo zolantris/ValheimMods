@@ -107,7 +107,7 @@ public class PhysicsTank : MonoBehaviour
     {
       // To create a top speed for the tank, the motor torque just
       // cuts out when the tank starts moving fast enough.
-      if (rigid.velocity.magnitude <= topSpeed)
+      if (rigid.linearVelocity.magnitude <= topSpeed)
         wheel.motorTorque = forwardInput * motorTorque;
       else
         wheel.motorTorque = 0.0f;

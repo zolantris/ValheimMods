@@ -92,13 +92,13 @@ namespace Eldritch.Core
       if (move.magnitude > 1f) move.Normalize();
 
       var moveWorld = transform.TransformDirection(move) * moveSpeed;
-      var velocity = rb.velocity;
+      var velocity = rb.linearVelocity;
       velocity.x = moveWorld.x;
       velocity.z = moveWorld.z;
 
       if (!IsDodging)
       {
-        rb.velocity = velocity;
+        rb.linearVelocity = velocity;
       }
 
       if (!IsDodging && !jumpRequested && move.sqrMagnitude > 0.01f)
@@ -109,7 +109,7 @@ namespace Eldritch.Core
 
       if (jumpRequested)
       {
-        rb.velocity = new Vector3(rb.velocity.x, 0f, rb.velocity.z);
+        rb.linearVelocity = new Vector3(rb.linearVelocity.x, 0f, rb.linearVelocity.z);
         rb.AddForce(Vector3.up * jumpForce, ForceMode.VelocityChange);
         jumpRequested = false;
         animationController.PlayJump();

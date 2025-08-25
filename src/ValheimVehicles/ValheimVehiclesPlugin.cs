@@ -1,34 +1,31 @@
-﻿using System;
-using System.Collections;
+﻿using System.Collections;
 using System.Diagnostics;
+using BepInEx;
 using BepInEx.Configuration;
 using JetBrains.Annotations;
 using ServerSync;
 using UnityEngine;
-using ValheimVehicles.Compat;
 using ValheimVehicles.Components;
 using ValheimVehicles.BepInExConfig;
-using ValheimVehicles.Constants;
 using ValheimVehicles.Controllers;
 using ValheimVehicles.Integrations;
+using ValheimVehicles.Prefabs;
 using ValheimVehicles.QuickStartWorld.Config;
 using ValheimVehicles.SharedScripts;
-using ValheimVehicles.SharedScripts.PowerSystem;
-using ValheimVehicles.SharedScripts.UI;
 using ValheimVehicles.UI;
-using ValheimVehicles.ValheimVehicles.Plugins;
 using Zolantris.Shared;
-using Zolantris.Shared.Debug;
+using DynamicLocations;
+using ValheimVehicles.ValheimVehicles.Integrations;
+using ZdoWatcher;
 
 namespace ValheimVehicles;
 
 // todo make this a full plugin
-// [BepInPlugin(Guid, ModName, Version)]
-// [BepInDependency(Jotunn.Main.ModGuid)]
 
 /// <summary>
-/// This is an internal plugin of ValheimRAFT. ValheimVehicles is the modern API for ValheimRAFT and should never directly reference ValheimRAFT.
+/// This is an internal plugin of ValheimRAFT and just mounts as a MonoBehavior within ValheimRAFT. ValheimVehicles is the modern API for ValheimRAFT and should never directly reference ValheimRAFT.
 /// </summary>
+// [BepInPlugin(ModGuid, ModName, BuildInfo.Version)]
 public class ValheimVehiclesPlugin : MonoBehaviour
 {
   public const string Author = "zolantris";
@@ -36,7 +33,7 @@ public class ValheimVehiclesPlugin : MonoBehaviour
   internal const string ModName = "ValheimVehicles";
 
   // not to be used. This GUID is for internal usage only. The real GUID is in ValheimRAFTPlugin.
-  public const string Guid = $"{Author}.{ModName}";
+  public const string ModGuid = $"{Author}.{ModName}";
   public static bool HasRunSetup;
   private static bool HasCreatedConfig = false;
   private RetryGuard _languageRetry;
@@ -53,6 +50,14 @@ public class ValheimVehiclesPlugin : MonoBehaviour
   {
     Instance = this;
     _languageRetry = new RetryGuard(Instance);
+
+    if (!LoadValheimVehicleAssets._bundle)
+    {
+      PrefabRegistryController.InitValheimVehiclesAssetBundle();
+    }
+
+    // critical for tmp pro to work. Default fonts are not set or resolved without this.
+    TMPProHelpers.Init();
   }
 
   private IEnumerator UpdateTranslationsRoutine()

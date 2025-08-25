@@ -1,17 +1,17 @@
 ﻿#region
 
-using System;
-using System.Globalization;
-using TMPro;
-using UnityEngine;
-using UnityEngine.EventSystems;
-using UnityEngine.UI;
+  using System;
+  using System.Globalization;
+  using TMPro;
+  using UnityEngine;
+  using UnityEngine.EventSystems;
+  using UnityEngine.UI;
 
 #endregion
 
 // ReSharper disable NamespaceStyle
-namespace ValheimVehicles.SharedScripts
-{
+  namespace ValheimVehicles.SharedScripts;
+
   public class VehicleUIMenuSectionItem : MonoBehaviour, IPointerEnterHandler, IPointerClickHandler, IPointerExitHandler
   {
     public TextMeshProUGUI TitleText;
@@ -231,4 +231,3 @@ namespace ValheimVehicles.SharedScripts
       LayoutRebuilder.ForceRebuildLayoutImmediate((RectTransform)transform.parent);
     }
   }
-}

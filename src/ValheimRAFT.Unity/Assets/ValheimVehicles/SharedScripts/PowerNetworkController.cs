@@ -36,10 +36,10 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
 
     public override void Awake()
     {
-#if UNITY_2022
+#if !VALHEIM
       if (WireMaterial == null)
       {
-        Shader shader = Shader.Find("Sprites/Default");
+        var shader = Shader.Find("Sprites/Default");
         if (shader)
         {
           WireMaterial = new Material(shader)
@@ -130,7 +130,7 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
     //
     // }
 
-// #if UNITY_2022
+// #if !VALHEIM
 //     [InitializeOnLoadMethod]
 // private static void ClearPowerListsOnReload()
 // {

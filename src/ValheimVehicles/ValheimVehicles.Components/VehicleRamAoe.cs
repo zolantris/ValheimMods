@@ -305,12 +305,12 @@ public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
 
   public float GetRelativeVelocity(Collider collider)
   {
-    var colliderVelocity = collider.attachedRigidbody != null ? collider.attachedRigidbody.velocity : Vector3.zero;
+    var colliderVelocity = collider.attachedRigidbody != null ? collider.attachedRigidbody.linearVelocity : Vector3.zero;
     if (m_vehicle == null || m_vehicle.MovementController == null)
       return colliderVelocity.magnitude;
 
     var vehicleVelocity = m_vehicle.MovementController.m_body
-      .velocity;
+      .linearVelocity;
     var relativeVelocity = Vector3.Magnitude(colliderVelocity - vehicleVelocity);
 
     return relativeVelocity;

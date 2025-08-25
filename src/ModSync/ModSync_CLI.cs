@@ -18,6 +18,7 @@ public static class ModSyncCli
 
   // Arg types
   public const string Arg_Sync = "sync";
+  public const string Arg_SyncJson = "syncJson";
   public const string Arg_Deploy = "deploy";
   public const string Arg_Run = "run";
 
@@ -30,6 +31,9 @@ public static class ModSyncCli
 
   public const string configFileName = "modSync.json5";
 
+  internal const string Opt_SyncJsonKey = "syncJsonKey";
+  internal const string Opt_SyncJsonValue = "syncJsonValue";
+
   public static int Main(string[] args)
   {
     if (args.Length == 0 || args.Length == 1 && (args[0] == Opt_Help || args[0] == "-h"))
@@ -39,7 +43,7 @@ public static class ModSyncCli
     }
 
 
-    var mode = args[0].ToLower();
+    var mode = args[0];
     var options = ParseArgs(args);
 
     if (!TryGetConfigPath(options, out var configPath)) return 1;
@@ -67,6 +71,12 @@ public static class ModSyncCli
     // Dispatch command
     switch (mode)
     {
+      case Arg_SyncJson:
+      {
+        if (!options.TryGetValue(Opt_SyncJsonKey, out var syncKey) || !options.TryGetValue(Opt_SyncJsonValue, out var syncValue)) return 1;
+        JsonFieldSyncer.HandleJsonSync(targets, syncKey, syncValue);
+        break;
+      }
       case Arg_Sync:
         SyncToTarget.HandleSync(targets);
         break;

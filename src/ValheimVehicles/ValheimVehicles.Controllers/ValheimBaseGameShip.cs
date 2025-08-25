@@ -320,7 +320,7 @@ public class ValheimBaseGameShip : MonoBehaviour
 
   public float GetSpeed()
   {
-    return Vector3.Dot(m_body.velocity, transform.forward);
+    return Vector3.Dot(m_body.linearVelocity, transform.forward);
   }
 
   public float GetShipYawAngle()

@@ -54,7 +54,7 @@
       public static string MeshNameTriggerPrefix = $"{MeshNamePrefix}_Preview";
 
       // shared across all instances, but not created immediately
-      public PhysicMaterial localPhysicMaterial;
+      public PhysicsMaterial localPhysicMaterial;
 
       public PreviewModes PreviewMode = PreviewModes.Bubble;
 
@@ -604,7 +604,7 @@
         return false;
       }
 
-      public void AddLocalPhysicMaterial(PhysicMaterial material)
+      public void AddLocalPhysicMaterial(PhysicsMaterial material)
       {
         localPhysicMaterial = material;
         HasPhysicMaterial = true;
@@ -621,15 +621,15 @@
         AddLocalPhysicMaterial(CreatePhysicMaterial());
       }
 
-      private PhysicMaterial CreatePhysicMaterial()
+      private PhysicsMaterial CreatePhysicMaterial()
       {
         if (localPhysicMaterial != null) return localPhysicMaterial;
-        var physicsMaterial = new PhysicMaterial("ConvexHullAPI_local_PhysicMaterial")
+        var physicsMaterial = new PhysicsMaterial("ConvexHullAPI_local_PhysicMaterial")
         {
           dynamicFriction = PhysicMaterialDynamicFriction, // Low friction so it slides over objects
           staticFriction = PhysicMaterialStaticFriction, // Prevents excessive sticking
           bounciness = 0.0f, // No bounce effect
-          frictionCombine = PhysicMaterialCombine.Multiply // Ensures friction rapidly increases as we slow down.
+          frictionCombine = PhysicsMaterialCombine.Multiply // Ensures friction rapidly increases as we slow down.
         };
         return physicsMaterial;
       }

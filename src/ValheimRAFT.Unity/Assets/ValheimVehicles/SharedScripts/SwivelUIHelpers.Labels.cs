@@ -3,6 +3,7 @@
   using TMPro;
   using UnityEngine;
   using UnityEngine.UI;
+  using ValheimVehicles.Prefabs;
 
 #endregion
 
@@ -18,6 +19,14 @@
         labelGO.transform.SetParent(parent, false);
 
         var label = labelGO.AddComponent<TextMeshProUGUI>();
+
+        var fontAsset = TMP_Settings.defaultFontAsset;
+        if (fontAsset)
+        {
+          label.font = fontAsset;
+          label.fontSharedMaterial = fontAsset.material;
+          label.UpdateMeshPadding();
+        }
         label.text = text;
         label.fontSize = viewStyles.FontSizeSectionLabel;
         label.color = Color.white;

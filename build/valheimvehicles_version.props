@@ -1,8 +1,0 @@
-<Project>
-    <PropertyGroup Label="ValheimRAFT/ValheimVehicles Version">
-        <Version>3.7.2</Version>
-        <AssemblyVersion>3.7.2.0</AssemblyVersion>
-        <FileVersion>3.7.2.0</FileVersion>
-        <PackageVersion>3.7.2</PackageVersion>
-    </PropertyGroup>
-</Project>

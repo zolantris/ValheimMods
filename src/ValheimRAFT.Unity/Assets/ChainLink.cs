@@ -89,8 +89,8 @@ public class ChainLink : MonoBehaviour
             // Apply constraints to rigidbody to prevent rotation or movement in unwanted directions
             Rigidbody linkRb = chainLinks[i].GetComponent<Rigidbody>();
             linkRb.mass = 5f;  // Make chain links lightweight
-            linkRb.drag = 10f;    // Reduce drag for a more stable chain
-            linkRb.angularDrag = 10f;
+            linkRb.linearDamping = 10f;    // Reduce drag for a more stable chain
+            linkRb.angularDamping = 10f;
         }
 
         // Create the anchor and attach it to the bottom of the chain

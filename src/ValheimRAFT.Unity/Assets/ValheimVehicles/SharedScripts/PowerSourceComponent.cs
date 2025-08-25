@@ -43,7 +43,7 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
     {
       base.Awake();
 
-#if UNITY_2022
+#if !VALHEIM
       // todo make a simplified unity method for registering and testing these consumers with our PowerManager.
       //
       // if (canSelfRegisterToNetwork)

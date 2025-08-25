@@ -10,7 +10,7 @@ namespace ValheimVehicles.SharedScripts
   {
     public static void AdaptiveDestroy(Object gameObject)
     {
-#if UNITY_2022
+#if !VALHEIM
       Object.DestroyImmediate(gameObject);
 #else
       Object.Destroy(gameObject);

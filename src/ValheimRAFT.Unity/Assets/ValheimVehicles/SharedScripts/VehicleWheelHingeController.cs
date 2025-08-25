@@ -297,8 +297,8 @@ namespace ValheimVehicles.SharedScripts
 
       if (index == 0 || index == totalWheelsets - 1)
       {
-        wheelLeftRb.drag = 0.1f;
-        wheelRightRb.drag = 0.1f;
+        wheelLeftRb.linearDamping = 0.1f;
+        wheelRightRb.linearDamping = 0.1f;
       }
 
       if (!WheelHingeJointMap.ContainsKey(wheelRightHinge))
@@ -409,7 +409,7 @@ namespace ValheimVehicles.SharedScripts
         var motor = wheel.motor;
         var isBackward = forwardInput < 0;
         wheel.axis = isBackward ? Vector3.down : Vector3.up;
-        if (rigid.velocity.magnitude <= topSpeed)
+        if (rigid.linearVelocity.magnitude <= topSpeed)
         {
           motor.force = forwardInput * motorTorque;
           motor.targetVelocity = topSpeed;
@@ -448,10 +448,10 @@ namespace ValheimVehicles.SharedScripts
     {
       // Calculate the new rotation angle
       // Calculate the rotation increment
-      float deltaRotation = forwardInput * 3 * Time.fixedDeltaTime;
+      var deltaRotation = forwardInput * 3 * Time.fixedDeltaTime;
 
       // Create a quaternion for the X-axis rotation
-      Quaternion xRotation = Quaternion.Euler(deltaRotation, 0f, 0f);
+      var xRotation = Quaternion.Euler(deltaRotation, 0f, 0f);
 
       // Apply the rotation to the current transform without affecting other axes
       wheelTransform.rotation = xRotation * wheelTransform.rotation;
@@ -478,7 +478,7 @@ namespace ValheimVehicles.SharedScripts
         var motor = wheel.motor;
 
         wheel.axis = Vector3.up;
-        if (rigid.velocity.magnitude <= topSpeed)
+        if (rigid.linearVelocity.magnitude <= topSpeed)
         {
           motor.force = forwardInput * motorTorque;
         }
@@ -535,7 +535,7 @@ namespace ValheimVehicles.SharedScripts
     }
 
     // We run this only in Unity Editor
-#if UNITY_2022
+#if !VALHEIM
     private void Start()
     {
       if (!Application.isPlaying) return;

@@ -1,4 +1,5 @@
 using Jotunn;
+using TMPro;
 using UnityEngine;
 using UnityEngine.U2D;
 using ValheimVehicles.SharedScripts;
@@ -15,6 +16,8 @@ public class LoadValheimVehicleAssets : ILoadAssets
 {
   // CustomSail
   public static GameObject CustomSail = null!;
+
+  public static TMP_FontAsset LiberationSansFontAsset = null!;
 
   public static Material DoubleSidedTransparentMat = null!;
   public static Material DebugLineMat = null!;
@@ -373,6 +376,8 @@ public class LoadValheimVehicleAssets : ILoadAssets
     VehicleLand =
       assetBundle.LoadAsset<GameObject>(
         $"vehicle_land.prefab");
+
+    LiberationSansFontAsset = assetBundle.LoadAsset<TMP_FontAsset>("LiberationSans SDF.asset");
 
     VehicleHammer = assetBundle.LoadAsset<GameObject>("vehicle_hammer.prefab");
 

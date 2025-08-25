@@ -200,7 +200,7 @@ namespace ValheimVehicles.SharedScripts
 
     public float dynamicFriction = 0.01f;
     public float staticFriction = 0.05f;
-    public PhysicMaterial treadPhysicMaterial;
+    public PhysicsMaterial treadPhysicMaterial;
 
     public bool IsOnGround;
     public float dampingDuration = 0.5f; // Time to fully eliminate sideways velocity
@@ -303,7 +303,7 @@ namespace ValheimVehicles.SharedScripts
 
     private void Awake()
     {
-#if UNITY_2022
+#if !VALHEIM
       var ghostContainer = transform.Find("ghostContainer");
       if (ghostContainer) ghostContainer.gameObject.SetActive(false);
 #endif
@@ -349,7 +349,7 @@ namespace ValheimVehicles.SharedScripts
         _lastTerrainTouchDeltaTime = 0f;
       }
 
-#if VALHEIM_RAFT
+#if VALHEIM && DEBUG
       if (collision.collider.GetComponentInParent<Character>() != null)
       {
         Debug.Log("ValheimVehicles.WheelController Hit a character!");
@@ -546,7 +546,7 @@ namespace ValheimVehicles.SharedScripts
     }
     private void DampenSidewaysVelocity()
     {
-      var velocity = vehicleRootBody.velocity;
+      var velocity = vehicleRootBody.linearVelocity;
       var forward = transform.forward;
 
       // Ensure forward direction is only in XZ plane
@@ -564,14 +564,14 @@ namespace ValheimVehicles.SharedScripts
       var newSidewaysVelocity = Vector3.SmoothDamp(sidewaysVelocity, Vector3.zero, ref lateralVelocitySmoothDamp, dampingDuration);
 
       // Preserve Y velocity (gravity & jumps)
-      vehicleRootBody.velocity = new Vector3(forwardVelocity.x + newSidewaysVelocity.x, velocity.y, forwardVelocity.z + newSidewaysVelocity.z);
+      vehicleRootBody.linearVelocity = new Vector3(forwardVelocity.x + newSidewaysVelocity.x, velocity.y, forwardVelocity.z + newSidewaysVelocity.z);
     }
     private void ApplyDecreasingForce()
     {
       var smoothTime = IsBraking ? 2f : 6f;
       if (Mathf.Abs(currentSpeed) > 0)
       {
-        vehicleRootBody.velocity = Vector3.SmoothDamp(vehicleRootBody.velocity, Vector3.zero, ref m_velocitySmoothSpeed, smoothTime);
+        vehicleRootBody.linearVelocity = Vector3.SmoothDamp(vehicleRootBody.linearVelocity, Vector3.zero, ref m_velocitySmoothSpeed, smoothTime);
       }
       else
       {
@@ -584,7 +584,7 @@ namespace ValheimVehicles.SharedScripts
     {
       if (!rb) return;
 
-      var velocity = rb.velocity;
+      var velocity = rb.linearVelocity;
       var forwardDir = rb.transform.forward * Mathf.Clamp(inputMovement, -1, 1);
 
       // Project velocity onto forward direction
@@ -632,7 +632,7 @@ namespace ValheimVehicles.SharedScripts
       var leftTreadPos = treadsLeftTransform.position;
       var rightTreadPos = treadsRightTransform.position;
 
-      if (vehicleRootBody.velocity.magnitude > maxSpeed)
+      if (vehicleRootBody.linearVelocity.magnitude > maxSpeed)
       {
         return;
       }
@@ -712,9 +712,9 @@ namespace ValheimVehicles.SharedScripts
       if (IsTurningInPlace && IsOnGround)
       {
         // Only preserve Y angular velocity (turning)
-        var vel = vehicleRootBody.velocity;
+        var vel = vehicleRootBody.linearVelocity;
         // Optionally preserve Y to allow height
-        vehicleRootBody.velocity = Vector3.Slerp(vel, new Vector3(0, vel.y, 0), Time.fixedDeltaTime * rotatingInPlaceTimeMultiplierVelocity);
+        vehicleRootBody.linearVelocity = Vector3.Slerp(vel, new Vector3(0, vel.y, 0), Time.fixedDeltaTime * rotatingInPlaceTimeMultiplierVelocity);
         // Make sure only Y angular velocity is kept (for yaw turn)
         var angVel = vehicleRootBody.angularVelocity;
         vehicleRootBody.angularVelocity = Vector3.Slerp(angVel, new Vector3(0, angVel.y, 0), Time.fixedDeltaTime * rotatingInPlaceTimeMultiplierAngularVelocity);
@@ -769,13 +769,13 @@ namespace ValheimVehicles.SharedScripts
       if (!treadPhysicMaterial)
       {
         // shared dynamic physicMaterial. This can be different per vehicle used.
-        treadPhysicMaterial = new PhysicMaterial("TreadPhysicMaterial")
+        treadPhysicMaterial = new PhysicsMaterial("TreadPhysicMaterial")
         {
           dynamicFriction = IsBraking ? 1f : dynamicFriction,
           staticFriction = IsBraking ? 0.5f : staticFriction,
           bounciness = 0.01f,
-          bounceCombine = PhysicMaterialCombine.Minimum,
-          frictionCombine = PhysicMaterialCombine.Minimum
+          bounceCombine = PhysicsMaterialCombine.Minimum,
+          frictionCombine = PhysicsMaterialCombine.Minimum
         };
       }
 
@@ -1556,7 +1556,7 @@ namespace ValheimVehicles.SharedScripts
 
     private float GetTankSpeed()
     {
-      return Vector3.Dot(vehicleRootBody.velocity, transform.forward);
+      return Vector3.Dot(vehicleRootBody.linearVelocity, transform.forward);
     }
 
 
@@ -1617,7 +1617,7 @@ namespace ValheimVehicles.SharedScripts
     private void AdjustSuspensionForTank()
     {
       var isApplyingForce = Mathf.Abs(inputMovement) > 0.1f || Mathf.Abs(inputTurnForce) > 0.1f;
-      var isMoving = vehicleRootBody.velocity.magnitude > 0.5f;
+      var isMoving = vehicleRootBody.linearVelocity.magnitude > 0.5f;
 
       // If the tank is applying force but isn't moving, increase stuck timer
       if (isApplyingForce && !isMoving)
@@ -1638,7 +1638,7 @@ namespace ValheimVehicles.SharedScripts
         // wheel.transform.localPosition = Vector3.Lerp(wheel.transform.localPosition, new Vector3(0, Mathf.Lerp(0, -0.5f, stuckMultiplier), 0), Time.fixedDeltaTime); // Move wheels down slightly
         // Adjust spring force dynamically based on mass
         suspensionSpring.spring = Mathf.Clamp(vehicleRootBody.mass * 10f, 35000f, 50000f);
-        suspensionSpring.damper = Mathf.Lerp(1500f, 1500f, Mathf.Clamp01(vehicleRootBody.velocity.magnitude / maxSpeed));
+        suspensionSpring.damper = Mathf.Lerp(1500f, 1500f, Mathf.Clamp01(vehicleRootBody.linearVelocity.magnitude / maxSpeed));
 
         // Lower targetPosition when stuck to push wheels down for more grip
         // suspensionSpring.targetPosition = Mathf.Lerp(suspensionSpring.targetPosition, Mathf.Lerp(0.1f, 0.5f, stuckMultiplier), Time.fixedDeltaTime);
@@ -1671,13 +1671,13 @@ namespace ValheimVehicles.SharedScripts
     //   }
     //
     //   var lerpedTurnFactor = Mathf.Lerp(lerpedTurnFactor, Mathf.Abs(turn), Time.fixedDeltaTime * 5f);
-    //   var speed = vehicleRootBody.velocity.magnitude;
+    //   var speed = vehicleRootBody.linearVelocity.magnitude;
     //   var angularSpeed = Mathf.Abs(vehicleRootBody.angularVelocity.y); // Get current rotation speed
     //
     //   var targetSpeed = move * maxSpeed;
     //   var torqueBoost = hillFactor * uphillTorqueMultiplier;
     //
-    //   // if (move > 0 && Vector3.Dot(vehicleRootBody.velocity, transform.forward) < 0)
+    //   // if (move > 0 && Vector3.Dot(vehicleRootBody.linearVelocity, transform.forward) < 0)
     //   // {
     //   //   torqueBoost += downhillResistance;
     //   // }
@@ -1845,7 +1845,7 @@ namespace ValheimVehicles.SharedScripts
     {
       if (!UseInputControls) return;
 
-#if UNITY_2022
+#if !VALHEIM
       var isBrakingPressed = Input.GetKeyDown(KeyCode.Space);
       if (!isBrakingPressed && isBrakePressedDown)
       {
@@ -1870,7 +1870,7 @@ namespace ValheimVehicles.SharedScripts
     }
 
     // We run this only in Unity Editor
-#if UNITY_2022
+#if !VALHEIM
     private void Update()
     {
       if (!Application.isPlaying) return;

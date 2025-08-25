@@ -323,7 +323,7 @@ public class VehicleCommands : ConsoleCommand
     if (player.m_body.isKinematic) player.m_body.isKinematic = false;
 
     player.m_body.angularVelocity = Vector3.zero;
-    player.m_body.velocity = Vector3.zero;
+    player.m_body.linearVelocity = Vector3.zero;
     player.m_fallTimer = 0f;
     player.m_maxAirAltitude = -10000f;
   }
@@ -1038,7 +1038,7 @@ public class VehicleCommands : ConsoleCommand
     //     else
     //     {
     //       vehicleInstance.MovementController.m_body.position = newPosition;
-    //       vehicleInstance.MovementController.m_body.velocity = Vector3.zero;
+    //       vehicleInstance.MovementController.m_body.linearVelocity = Vector3.zero;
     //     }
     //     return newPosition;
     //   }, null, true);
@@ -1071,11 +1071,11 @@ public class VehicleCommands : ConsoleCommand
       else
       {
         rb.position = localPosition;
-        rb.velocity = Vector3.zero;
+        rb.linearVelocity = Vector3.zero;
         rb.angularVelocity = Vector3.zero;
       }
 
-      rb.velocity = Vector3.zero;
+      rb.linearVelocity = Vector3.zero;
       rb.angularVelocity = Vector3.zero;
       safeMoveCharacterData.character.m_nview.GetZDO()?.SetPosition(localPosition);
       safeMoveCharacterData.character.SyncVelocity();
@@ -1135,7 +1135,7 @@ public class VehicleCommands : ConsoleCommand
     else
     {
       movementController.m_body.position = newPosition;
-      movementController.m_body.velocity = Vector3.zero;
+      movementController.m_body.linearVelocity = Vector3.zero;
     }
 
     yield return null;

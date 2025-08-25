@@ -581,7 +581,7 @@ namespace ValheimVehicles.Scene
 
     private static void AdaptiveDestroy(GameObject gameObject)
     {
-#if UNITY_2022
+#if !VALHEIM
       DestroyImmediate(gameObject);
 #else
             UnityEngine.Object.Destroy(gameObject);

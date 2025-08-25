@@ -142,7 +142,7 @@ public class VehicleShipEffects : MonoBehaviour, IMonoUpdater
     }
 
     m_shadow.gameObject.SetActive(true);
-    var flag = m_body.velocity.magnitude > m_minimumWakeVel;
+    var flag = m_body.linearVelocity.magnitude > m_minimumWakeVel;
     FadeSounds(m_inWaterSounds, true, deltaTime);
 
     // flying and submerged states should never have a wake.

@@ -3,7 +3,7 @@
 
 
 using Zolantris.Shared;
-#if !UNITY_2022
+#if VALHEIM
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,7 +15,7 @@ namespace ValheimVehicles.SharedScripts.UI
 {
   public class MechanismSelectorPanel : SingletonBehaviour<MechanismSelectorPanel>
   {
-#if !UNITY_2022
+#if VALHEIM
     [Header("UI Settings")]
     [SerializeField] public float MaxUIWidth = 400f;
 
@@ -43,6 +43,7 @@ namespace ValheimVehicles.SharedScripts.UI
       mechanismAction = mechanismActionSetter;
       _currentPanelConfig = new MechanismSwitchCustomConfig();
       _currentPanelConfig.ApplyFrom(mechanismAction);
+
 
       var isFirstCreate = !panelRoot;
       if (isFirstCreate)

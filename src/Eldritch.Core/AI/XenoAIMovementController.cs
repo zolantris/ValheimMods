@@ -94,7 +94,7 @@ namespace Eldritch.Core
       //     _nextScanTime = Time.time + rescanInterval;
       //   }
       // }
-      var vel = _rb.velocity;
+      var vel = _rb.linearVelocity;
       if (OwnerAI.IsManualControlling)
       {
         _rb.useGravity = !IsGrounded;
@@ -130,7 +130,7 @@ namespace Eldritch.Core
       // {
       //   if (!Rb.isKinematic)
       //   {
-      //     _rb.velocity = vel;
+      //     _rb.linearVelocity = vel;
       //   }
       //   OwnerAI.lastTouchedLand = 0f;
       // }
@@ -139,7 +139,7 @@ namespace Eldritch.Core
       // {
       //     // vel.y = Mathf.Abs(Physics.gravity.y);
       //     vel.y = CounterGravity;
-      //     _rb.velocity = vel;
+      //     _rb.linearVelocity = vel;
       // }
     }
 
@@ -253,7 +253,7 @@ namespace Eldritch.Core
 
       // Compute target velocity on XZ
       var targetVel = direction.normalized * speed;
-      var currentVel = Rb.velocity;
+      var currentVel = Rb.linearVelocity;
       currentVel.y = 0; // Only care about XZ
 
       // Lerp velocity for smooth acceleration/deceleration
@@ -310,7 +310,7 @@ namespace Eldritch.Core
       var targetAccel = Mathf.Lerp(closeAccelForce, distantAccelForce, t);
 
       // When creeping (slow), set velocity directly instead of pushing acceleration
-      var planarVel = new Vector3(Rb.velocity.x, 0f, Rb.velocity.z);
+      var planarVel = new Vector3(Rb.linearVelocity.x, 0f, Rb.linearVelocity.z);
       if (targetSpeed <= closeMoveSpeed * 1.15f) // creep band
       {
         // face actual motion (or the target dir if we’re nearly stopped)
@@ -507,10 +507,10 @@ namespace Eldritch.Core
 
     public void BrakeHard()
     {
-      var v = Rb.velocity;
+      var v = Rb.linearVelocity;
       v.x = 0f;
       v.z = 0f;
-      Rb.velocity = v;
+      Rb.linearVelocity = v;
       Rb.angularVelocity = Vector3.zero;
 
       HasMovedInFrame = false;
@@ -608,7 +608,7 @@ namespace Eldritch.Core
       var horiz = jumpVec;
       horiz.y = 0;
       var vxz = horiz / Mathf.Max(0.01f, timeTotal);
-      Rb.velocity = vxz + Vector3.up * vy;
+      Rb.linearVelocity = vxz + Vector3.up * vy;
     }
 
     public bool TryUpdateCurrentWanderTarget()
@@ -679,7 +679,7 @@ namespace Eldritch.Core
       moveDir.y = 0f;
       if (moveDir.sqrMagnitude < 0.0001f) return;
 
-      var currentVel = Rb.velocity;
+      var currentVel = Rb.linearVelocity;
       currentVel.y = 0f;
       var targetVel = moveDir.normalized * speed;
 
@@ -821,9 +821,9 @@ namespace Eldritch.Core
 
       void ApplyDesired(Vector3 vel)
       {
-        var flatVel = new Vector3(_rb.velocity.x, 0f, _rb.velocity.z);
+        var flatVel = new Vector3(_rb.linearVelocity.x, 0f, _rb.linearVelocity.z);
 
-        var delta = vel - new Vector3(_rb.velocity.x, 0f, _rb.velocity.z);
+        var delta = vel - new Vector3(_rb.linearVelocity.x, 0f, _rb.linearVelocity.z);
         delta = Vector3.ClampMagnitude(delta, baseCircleSpeed * 0.7f);
         _rb.AddForce(delta, ForceMode.VelocityChange);
         HasMovedInFrame = true;

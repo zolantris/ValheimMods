@@ -1,0 +1,12 @@
+<Project>
+    <!--  This auto syncs the current project's version to the current project's thunderstore -->
+    <Target KeepDuplicateOutputs="false" Name="ModSync_UpdateThunderstore" AfterTargets="BeforeCompile">
+        <PropertyGroup>
+            <ModSyncExe>$(SolutionDir)build/bin/ModSync/Release/ModSync.exe</ModSyncExe>
+            <ModSyncConfig>$(SolutionDir)modSync.json5</ModSyncConfig>
+        </PropertyGroup>
+
+
+        <Exec Condition="Exists('$(ModSyncExe)')" Command="&quot;$(ModSyncExe)&quot; syncJson --config=&quot;$(ModSyncConfig)&quot; --targets=thunderstore-release,thunderstore-beta --syncJsonKey=version_number --syncJsonValue=$(Version)"/>
+    </Target>
+</Project>

@@ -16,7 +16,7 @@
         <AppDesignerFolder>Properties</AppDesignerFolder>
         <RootNamespace>ModTesting</RootNamespace>
         <AssemblyName>ModTesting</AssemblyName>
-        <TargetFramework>netstandard2.0</TargetFramework>
+        <TargetFramework>netstandard2.1</TargetFramework>
         <!--        <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>-->
         <FileAlignment>512</FileAlignment>
     </PropertyGroup>

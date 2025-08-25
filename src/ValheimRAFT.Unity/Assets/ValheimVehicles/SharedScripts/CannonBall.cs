@@ -146,8 +146,8 @@ namespace ValheimVehicles.SharedScripts
       meshGameObject = transform.Find("cannonball_mesh").gameObject;
       m_body = GetComponent<Rigidbody>();
       m_body.mass = CannonballMass;
-      m_body.drag = CannonBallDrag;
-      m_body.angularDrag = CannonBallDrag;
+      m_body.linearDamping = CannonBallDrag;
+      m_body.angularDamping = CannonBallDrag;
       TryGetColliders();
 
       _explosionParent = transform.Find("explosion");
@@ -178,9 +178,9 @@ namespace ValheimVehicles.SharedScripts
 
     private void FixedUpdate()
     {
-      if (!m_body.isKinematic && m_body.velocity != Vector3.zero)
+      if (!m_body.isKinematic && m_body.linearVelocity != Vector3.zero)
       {
-        _lastVelocity = m_body.velocity;
+        _lastVelocity = m_body.linearVelocity;
       }
 
       FixedUpdate_CheckForShieldGenerator();
@@ -204,7 +204,7 @@ namespace ValheimVehicles.SharedScripts
     public void ForceStopCannonball()
     {
       _lastVelocity = Vector3.zero;
-      if (m_body) m_body.velocity = Vector3.zero;
+      if (m_body) m_body.linearVelocity = Vector3.zero;
       _canHit = false;
     }
 
@@ -543,7 +543,7 @@ namespace ValheimVehicles.SharedScripts
         }
         if (_lastVelocity != Vector3.zero)
         {
-          m_body.velocity = _lastVelocity;
+          m_body.linearVelocity = _lastVelocity;
         }
         return true;
       }
@@ -632,7 +632,7 @@ namespace ValheimVehicles.SharedScripts
             }
           }
 
-          m_body.velocity = Vector3.zero;
+          m_body.linearVelocity = Vector3.zero;
           IsInFlight = false;
           _canHit = false;
           return;
@@ -668,7 +668,7 @@ namespace ValheimVehicles.SharedScripts
 
       if (canMutateVelocity)
       {
-        m_body.velocity = nextVelocity;
+        m_body.linearVelocity = nextVelocity;
       }
     }
 
@@ -799,7 +799,7 @@ namespace ValheimVehicles.SharedScripts
 
       if (!m_body.isKinematic)
       {
-        m_body.velocity = Vector3.zero;
+        m_body.linearVelocity = Vector3.zero;
         m_body.angularVelocity = Vector3.zero;
       }
 
@@ -904,7 +904,7 @@ namespace ValheimVehicles.SharedScripts
         m_body.collisionDetectionMode = CollisionDetectionMode.Discrete;
         if (!m_body.isKinematic)
         {
-          m_body.velocity = Vector3.zero;
+          m_body.linearVelocity = Vector3.zero;
           m_body.angularVelocity = Vector3.zero;
         }
         m_body.isKinematic = true;

@@ -81,7 +81,7 @@ public class VehicleZSyncTransform : MonoBehaviour, IMonoUpdater
   public Vector3 GetVelocity()
   {
     if (m_body != null)
-      return m_body.velocity;
+      return m_body.linearVelocity;
     return m_projectile != null ? m_projectile.GetVelocity() : Vector3.zero;
   }
 
@@ -117,7 +117,7 @@ public class VehicleZSyncTransform : MonoBehaviour, IMonoUpdater
       }
       if (!m_isKinematicBody && m_syncBodyVelocity && (bool)(Object)m_body)
       {
-        m_body.velocity = zdo.GetVec3(ZDOVars.s_bodyVelHash, Vector3.zero);
+        m_body.linearVelocity = zdo.GetVec3(ZDOVars.s_bodyVelHash, Vector3.zero);
         m_body.angularVelocity = zdo.GetVec3(ZDOVars.s_bodyAVelHash, Vector3.zero);
       }
       if (flag3 && (bool)(Object)m_body)
@@ -126,7 +126,7 @@ public class VehicleZSyncTransform : MonoBehaviour, IMonoUpdater
     if (transform.position.y < -5000.0)
     {
       if (!m_isKinematicBody && (bool)(Object)m_body)
-        m_body.velocity = Vector3.zero;
+        m_body.linearVelocity = Vector3.zero;
       LoggerProvider.LogInfo("Object fell out of world:" + gameObject.name);
       var groundHeight = ZoneSystem.instance.GetGroundHeight(transform.position);
       transform.position = transform.position with
@@ -172,7 +172,7 @@ public class VehicleZSyncTransform : MonoBehaviour, IMonoUpdater
       {
         if (m_syncBodyVelocity)
         {
-          m_nview.GetZDO().Set(ZDOVars.s_bodyVelHash, m_body.velocity);
+          m_nview.GetZDO().Set(ZDOVars.s_bodyVelHash, m_body.linearVelocity);
           m_nview.GetZDO().Set(ZDOVars.s_bodyAVelHash, m_body.angularVelocity);
         }
         m_body.useGravity = m_useGravity;
@@ -289,7 +289,7 @@ public class VehicleZSyncTransform : MonoBehaviour, IMonoUpdater
         var vec3_2 = zdo.GetVec3(ZDOVars.s_bodyAVelHash, Vector3.zero);
         if (vec3_1.magnitude > 0.009999999776482582 || vec3_2.magnitude > 0.009999999776482582)
         {
-          m_body.velocity = vec3_1;
+          m_body.linearVelocity = vec3_1;
           m_body.angularVelocity = vec3_2;
         }
         else
@@ -297,7 +297,7 @@ public class VehicleZSyncTransform : MonoBehaviour, IMonoUpdater
       }
       else if (!m_body.IsSleeping())
       {
-        m_body.velocity = Vector3.zero;
+        m_body.linearVelocity = Vector3.zero;
         m_body.angularVelocity = Vector3.zero;
         m_body.Sleep();
       }

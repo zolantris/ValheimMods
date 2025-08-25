@@ -25,6 +25,7 @@
     </PropertyGroup>
     <!-- Default   -->
     <PropertyGroup>
+        <!--   Unity6 requires netstandard 2.1     -->
         <TargetFramework>netstandard2.1</TargetFramework>
         <Platforms>AnyCPU</Platforms>
         <PlatformTarget>AnyCPU</PlatformTarget>

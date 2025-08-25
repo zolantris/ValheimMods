@@ -1,7 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
     <Import Project="$(SolutionDir)build\base.props"/>
     <Import Project="$(SolutionDir)build\valheim.props"/>
-    <Import Project="$(SolutionDir)build\valheimvehicles_version.props"/>
+    <Import Project="$(SolutionDir)build\valheimraft_version.props"/>
+    <Import Project="$(SolutionDir)build\static_version_generator.targets"/>
 
     <PropertyGroup>
         <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -17,6 +18,20 @@
         <Platforms>AnyCPU</Platforms>
     </PropertyGroup>
 
+    <ItemGroup>
+        <None Remove="$(SolutionDir)AssetBundle\valheim-vehicles"/>
+        <None Remove="$(SolutionDir)AssetBundle\valheim-vehicles.manifest"/>
+
+        <!--  TODO to embed assets, but this needs a refactor and inflates dll size, not worth adding now      -->
+        <!--        <EmbeddedResource Include="Assets\**"/>-->
+        <!--        <EmbeddedResource Include="$(SolutionDir)AssetBundle\AssetBundle" LogicalName="AssetBundle"/>-->
+        <!--        <EmbeddedResource Include="$(SolutionDir)AssetBundle\AssetBundle.manifest" LogicalName="AssetBundle.manifest"/>-->
+        <EmbeddedResource Include="$(SolutionDir)AssetBundle\valheim-vehicles" LogicalName="valheim-vehicles"/>
+        <EmbeddedResource Include="$(SolutionDir)AssetBundle\valheim-vehicles.manifest" LogicalName="valheim-vehicles.manifest"/>
+        <!--        TODO import assets this way-->
+        <!--        <EmbeddedResources Include="Assets\**.png" /> -->
+    </ItemGroup>
+
     <!--    <Import Project="$(SolutionDir)\build\valheim.targets"/>-->
     <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'ReleaseBETA Archive|AnyCPU' ">
         <OutputPath>bin\ReleaseBETA Archive\</OutputPath>
@@ -31,10 +46,11 @@
         <!--  Allows for both sharing and testing these scripts within unity. Best of both worlds.      -->
         <Compile Include="..\ValheimRAFT.Unity\Assets\ValheimVehicles\SharedScripts\**\*.cs"/>
     </ItemGroup>
-    <ItemGroup Label="Internal ValheimVehicles scripts">
-        <!-- Includes all namespace folders -->
+    <ItemGroup Label="Internal ValheimVehicles scripts"><!-- Includes all namespace folders -->
         <!--        <Compile Include="ValheimVehicles.*\**\*.cs"/>-->
         <!--        <Compile Include="ValheimVehiclesPlugin.cs"/>-->
+
+        <Folder Include="Generated\"/>
     </ItemGroup>
     <ItemGroup>
         <ProjectReference Include="..\Shared\Shared.csproj"/>

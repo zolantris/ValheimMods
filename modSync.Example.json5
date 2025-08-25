@@ -1,4 +1,7 @@
 {
+  variables: {
+    "SolutionDir": "path/to/repo/solution",
+  },
   // example config. This can be used with ModSync. Whatever the current directory of modsync.exe is called from will resolve the file. Call directory (not file directory of modsync.exe)
   "sharedTargets": {
     shared_localAssets: {
@@ -16,6 +19,22 @@
         "DynamicLocations"
       ]
     },
+  },
+  syncJsonTargets: {
+    // call with:  ModSync sync --targets=thunderstore-release
+    "thunderstore-release": {
+      inputFilePath: "${SolutionDir}/src/ValheimRAFT/Thunderstore/manifest.json",
+      setFields: {
+        version_number: "1.2.3"
+      }
+    },
+    // call with:  ModSync sync --targets=thunderstore-beta
+    "thunderstore-beta": {
+      inputFilePath: "${SolutionDir}/src/ValheimRAFT/ThunderstoreBeta/manifest.json",
+      setFields: {
+        version_number: "1.2.3"
+      }
+    }
   },
   "syncTargets": {
     localClient: {

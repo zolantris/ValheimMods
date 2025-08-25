@@ -70,7 +70,7 @@ namespace ValheimVehicles.SharedScripts
             }
 
             // Otherwise, only nudge randomly if inside normal bounds
-            if (Time.time >= _nextWanderTime && _body.velocity.sqrMagnitude < MaxWanderVelocity * MaxWanderVelocity)
+            if (Time.time >= _nextWanderTime && _body.linearVelocity.sqrMagnitude < MaxWanderVelocity * MaxWanderVelocity)
             {
                 // If we're at edge of area, bias force back inward
                 Vector3 randomDir = Random.onUnitSphere;
@@ -107,7 +107,7 @@ namespace ValheimVehicles.SharedScripts
         public void DelayedRespawn()
         {
             _body.position = _spawnPosition; // Reset position if too far away
-            _body.velocity = Vector3.zero; // Reset velocity
+            _body.linearVelocity = Vector3.zero; // Reset velocity
             _body.angularVelocity = Vector3.zero; // Reset angular velocity
         }
     }

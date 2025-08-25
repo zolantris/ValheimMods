@@ -141,7 +141,7 @@
         if (vehicleLandMovementController.transform.position.y < 0f)
         {
           vehicleLandMovementController.vehicleRootBody.MovePosition(startPosition);
-          vehicleLandMovementController.vehicleRootBody.velocity = Vector3.zero;
+          vehicleLandMovementController.vehicleRootBody.linearVelocity = Vector3.zero;
           vehicleLandMovementController.vehicleRootBody.angularVelocity = Vector3.zero;
         }
 

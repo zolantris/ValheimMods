@@ -1,7 +1,9 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
     <Import Project="$(SolutionDir)build\base.props"/>
     <Import Project="$(SolutionDir)build\valheim.props"/>
-    <Import Project="$(SolutionDir)build\valheimvehicles_version.props"/>
+    <Import Project="$(SolutionDir)build\valheimraft_version.props"/>
+    <Import Project="$(SolutionDir)build\static_version_generator.targets"/>
+    <Import Project="$(SolutionDir)build\thunderstore_manifest_update.targets"/>
 
     <PropertyGroup>
         <Configuration Condition=" '$(Configuration)' == '' ">Debug;VALHEIM_RAFT</Configuration>
@@ -32,19 +34,6 @@
         </AssemblyAttribute>
     </ItemGroup>
     <ItemGroup>
-        <None Remove="$(SolutionDir)AssetBundle\valheim-vehicles"/>
-        <None Remove="$(SolutionDir)AssetBundle\valheim-vehicles.manifest"/>
-
-        <!--  TODO to embed assets, but this needs a refactor and inflates dll size, not worth adding now      -->
-        <!--        <EmbeddedResource Include="Assets\**"/>-->
-        <!--        <EmbeddedResource Include="$(SolutionDir)AssetBundle\AssetBundle" LogicalName="AssetBundle"/>-->
-        <!--        <EmbeddedResource Include="$(SolutionDir)AssetBundle\AssetBundle.manifest" LogicalName="AssetBundle.manifest"/>-->
-        <EmbeddedResource Include="$(SolutionDir)AssetBundle\valheim-vehicles" LogicalName="valheim-vehicles"/>
-        <EmbeddedResource Include="$(SolutionDir)AssetBundle\valheim-vehicles.manifest" LogicalName="valheim-vehicles.manifest"/>
-        <!--        TODO import assets this way-->
-        <!--        <EmbeddedResources Include="Assets\**.png" /> -->
-    </ItemGroup>
-    <ItemGroup>
         <Content Include=".gitignore"/>
         <Content Include="Assets\Translations\English\valheimraft.json"/>
         <Content Include="docs\ValheimRAFT_AutoDoc.md"/>
@@ -67,6 +56,7 @@
     </ItemGroup>
     <ItemGroup>
         <Folder Include="docs-images\"/>
+        <Folder Include="Generated\"/>
         <Folder Include="ValheimRAFT.Patches\"/>
     </ItemGroup>
 </Project>

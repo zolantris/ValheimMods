@@ -434,7 +434,7 @@
         if (otherManager == null || otherManager.PiecesController == null || otherManager.MovementController == null || Manager.PiecesController == null || PiecesController == null) return false;
         otherManager.MovementController.isWaitingForParentVehicleToBeReady = true;
         otherManager.MovementController.m_body.isKinematic = true;
-        m_body.velocity = Vector3.zero;
+        m_body.linearVelocity = Vector3.zero;
         m_body.angularVelocity = Vector3.zero;
         // nest the vehicle. This will not parent it, but it will bind the piece to the parent position, ensuring things are accurately synced.
         // Manager.PiecesController.AddNewPiece(otherManager.Manager.m_nview);
@@ -458,7 +458,7 @@
             Physics.IgnoreCollision(thisPieceCollider, otherPieceCollider, true);
           }
         }
-        m_body.velocity = Vector3.zero;
+        m_body.linearVelocity = Vector3.zero;
         m_body.angularVelocity = Vector3.zero;
         foreach (var disabledCollider in disabledColliders)
         {
@@ -789,7 +789,7 @@
 
       // docked vehicles are always frozen
       // freeze automatically if going fast.
-      var isAboveKinematicThreshold = m_frozenSync.m_targetBody.velocity.magnitude > velocityFreezeTarget;
+      var isAboveKinematicThreshold = m_frozenSync.m_targetBody.linearVelocity.magnitude > velocityFreezeTarget;
       var shouldFreeze = Manager.ForceDocked;
 
       if (!m_frozenSync.isFrozen && shouldFreeze)
@@ -1405,7 +1405,7 @@
     /// </summary>
     public void ClampVehicleAcceleration()
     {
-      var currentVelocity = m_body.velocity;
+      var currentVelocity = m_body.linearVelocity;
 
       // if anchored the vehicle will not raise/lower as much.
       var dynamicYLinearVelocity =
@@ -1415,7 +1415,7 @@
       // Clamp Y velocity while keeping X and Z unaffected
       currentVelocity.y = Mathf.Sign(currentVelocity.y) * dynamicYLinearVelocity;
 
-      m_body.velocity = currentVelocity;
+      m_body.linearVelocity = currentVelocity;
     }
 
     /// <summary>
@@ -1538,19 +1538,19 @@
       }
       transform.rotation =
         Quaternion.Euler(transformedX, eulerY, transformedZ);
-      m_body.velocity = Vector3.zero;
+      m_body.linearVelocity = Vector3.zero;
       m_body.angularVelocity = Vector3.zero;
 
 
       Physics.SyncTransforms();
-      m_body.velocity = Vector3.zero;
+      m_body.linearVelocity = Vector3.zero;
       m_body.angularVelocity = Vector3.zero;
 
       foreach (var modifiedKinematicPlayer in modifiedKinematicPlayers)
         if (modifiedKinematicPlayer.m_body.isKinematic)
         {
           modifiedKinematicPlayer.m_body.isKinematic = false;
-          modifiedKinematicPlayer.m_body.velocity = Vector3.zero;
+          modifiedKinematicPlayer.m_body.linearVelocity = Vector3.zero;
         }
 
       onboardPlayers.Clear();
@@ -1897,7 +1897,7 @@
         right.y + rightForce.y, m_balanceForce);
       var centerUpwardsForce = GetUpwardsForce(
         flyingTargetHeight,
-        centerPosition.y + m_body.velocity.y, m_liftForce);
+        centerPosition.y + m_body.linearVelocity.y, m_liftForce);
 
       // Smooth time must always be greater than 3f
       var smoothValue = 3f + PropulsionConfig.VerticalSmoothingSpeed.Value * 10f;
@@ -1936,7 +1936,7 @@
     /// <returns></returns>
     public float GetForwardVelocity()
     {
-      var velocity = m_body.velocity;
+      var velocity = m_body.linearVelocity;
 
       // Convert the velocity from world space to the local space of ShipDirection
       var localVelocity = ShipDirection.InverseTransformDirection(velocity);
@@ -2081,7 +2081,7 @@
 
         // var lerpedMovement = Mathf.Lerp(OnboardCollider.bounds.min.y, ShipFloatationObj.AverageGroundLevel, Time.fixedDeltaTime);
         m_body.MovePosition(new Vector3(position.x, ShipFloatationObj.AverageGroundLevel + 3f, position.z));
-        m_body.velocity = Vector3.zero;
+        m_body.linearVelocity = Vector3.zero;
         m_body.angularVelocity = Vector3.zero;
       }
     }
@@ -2295,10 +2295,10 @@
       // todo rename variables for this section to something meaningful
       // todo abstract this to a method
       var forward = ShipDirection.forward;
-      var deltaForward = Vector3.Dot(m_body.velocity, forward);
+      var deltaForward = Vector3.Dot(m_body.linearVelocity, forward);
       var right = ShipDirection.right;
-      var deltaRight = Vector3.Dot(m_body.velocity, right);
-      var velocity = m_body.velocity;
+      var deltaRight = Vector3.Dot(m_body.linearVelocity, right);
+      var velocity = m_body.linearVelocity;
       var deltaUp = velocity.y * velocity.y * Mathf.Sign(velocity.y) * m_damping *
                     currentDepthForceMultiplier;
 
@@ -2318,10 +2318,10 @@
       velocity -= forward * Mathf.Clamp(deltaForwardClamp, -1f, 1f);
       velocity -= right * Mathf.Clamp(deltaRightClamp, -1f, 1f);
 
-      if (velocity.magnitude > m_body.velocity.magnitude)
-        velocity = velocity.normalized * m_body.velocity.magnitude;
+      if (velocity.magnitude > m_body.linearVelocity.magnitude)
+        velocity = velocity.normalized * m_body.linearVelocity.magnitude;
 
-      m_body.velocity = velocity;
+      m_body.linearVelocity = velocity;
       var angularVelocity = m_body.angularVelocity;
       angularVelocity -=
         angularVelocity * m_angularDamping * currentDepthForceMultiplier;
@@ -2408,11 +2408,11 @@
       if (OnboardController.m_localPlayers.Count != 0 &&
           !isAnchored) return false;
 
-      var anchoredVelocity = CalculateAnchorStopVelocity(m_body.velocity);
+      var anchoredVelocity = CalculateAnchorStopVelocity(m_body.linearVelocity);
       var anchoredAngularVelocity =
         CalculateAnchorStopVelocity(m_body.angularVelocity);
 
-      m_body.velocity = anchoredVelocity;
+      m_body.linearVelocity = anchoredVelocity;
       m_body.angularVelocity = anchoredAngularVelocity;
       return true;
     }
@@ -3462,7 +3462,7 @@
         return;
 
       var forward = ShipDirection.forward;
-      var direction = Vector3.Dot(m_body.velocity, forward);
+      var direction = Vector3.Dot(m_body.linearVelocity, forward);
       var rudderForce = GetRudderForcePerSpeed();
       // steer offset will need to be size x or size z depending on location of rotation.
       // todo GetFloatSizeFromDirection may not be needed anymore.

@@ -4,6 +4,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 using ValheimRAFT;
+using ValheimVehicles.SharedScripts;
 
 [assembly: AssemblyTitle(ValheimRaftPlugin.ModName)]
 [assembly: AssemblyDescription(ValheimRaftPlugin.ModDescription)]
@@ -12,5 +13,5 @@ using ValheimRAFT;
 [assembly: AssemblyProduct(ValheimRaftPlugin.ModName)]
 [assembly: AssemblyCopyright(ValheimRaftPlugin.CopyRight)]
 [assembly: Guid("6015B165-2627-40A7-8CA1-3E6B6CD7CB49")]
-[assembly: AssemblyFileVersion(ValheimRaftPlugin.Version)]
-[assembly: AssemblyVersion(ValheimRaftPlugin.Version)]
+[assembly: AssemblyFileVersion(BuildInfo.FileVersion)]
+[assembly: AssemblyVersion(BuildInfo.AssemblyVersion)]
