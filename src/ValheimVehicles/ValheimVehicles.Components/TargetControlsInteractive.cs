@@ -191,6 +191,9 @@ public class TargetControlsInteractive : MonoBehaviour, Hoverable, Interactable,
     };
     if (hoverFadeText.currentText == text) return;
     hoverFadeText.currentText = $"{text} ({groupSize})";
+
+    // must manually reset as show does not reset without coroutine expiring.
+    hoverFadeText.ResetHoverTimer();
     hoverFadeText.Show();
   }
 

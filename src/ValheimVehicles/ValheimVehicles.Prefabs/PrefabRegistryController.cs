@@ -678,6 +678,65 @@ namespace ValheimVehicles.Prefabs
     }
 #endif
 
+    public static AssetBundle LoadAssetBundleFromResources(string bundleName, Assembly resourceAssembly)
+    {
+      if (vehicleAssetBundle != null) return vehicleAssetBundle;
+      if (resourceAssembly == null)
+      {
+        throw new ArgumentNullException("Parameter resourceAssembly can not be null.");
+      }
+
+      string resourceName = null;
+      try
+      {
+        resourceName = resourceAssembly.GetManifestResourceNames().Single(str => str.EndsWith(bundleName));
+      }
+      catch (Exception) {}
+
+      if (resourceName == null)
+      {
+        Logger.LogError($"AssetBundle {bundleName} not found in assembly manifest");
+        return null;
+      }
+
+      AssetBundle ret;
+      using (var stream = resourceAssembly.GetManifestResourceStream(resourceName))
+      {
+        ret = AssetBundle.LoadFromStream(stream);
+      }
+
+      return ret;
+    }
+
+    /// <summary>
+    /// Must be called from valheim-vehicles plugin
+    /// </summary>
+    public static void InitValheimVehiclesAssetBundle()
+    {
+      if (vehicleAssetBundle != null) return;
+      try
+      {
+        var assembly = Assembly.GetExecutingAssembly();
+        if (!assembly.FullName.Contains("ValheimVehicles"))
+        {
+          LoggerProvider.LogDebug($"Error finding correct assembly expected ValheimVehicles got {assembly.FullName}");
+          assembly = Assembly.GetCallingAssembly();
+        }
+
+        // vehicleAssetBundle = AssetUtils.LoadAssetBundleFromResources("valheim-vehicles", assembly);
+        vehicleAssetBundle = LoadAssetBundleFromResources("valheim-vehicles", assembly);
+
+        // dependent on ValheimVehiclesShared
+        LoadValheimRaftAssets.Instance.Init(vehicleAssetBundle);
+        // dependent on ValheimVehiclesShared and RaftAssetBundle
+        LoadValheimVehicleAssets.Instance.Init(vehicleAssetBundle);
+      }
+      catch (Exception e)
+      {
+        LoggerProvider.LogError($"Critical error while loading asset bundle {e.Message}");
+      }
+    }
+
     /// <summary>
     /// Initializes the bundle for ValheimVehicles and performs your existing registration pipeline.
     /// If Initialize(...) was called earlier, this will also call FinalizeRegistration() at the end.
@@ -691,17 +750,16 @@ namespace ValheimVehicles.Prefabs
 
       try
       {
-        vehicleAssetBundle = AssetUtils.LoadAssetBundleFromResources("valheim-vehicles", Assembly.GetCallingAssembly());
+
+        if (!vehicleAssetBundle)
+        {
+          InitValheimVehiclesAssetBundle();
+        }
 
         prefabManager = PrefabManager.Instance;
         pieceManager = PieceManager.Instance;
 
         LoadValheimAssets.Instance.Init(prefabManager);
-
-        // dependent on ValheimVehiclesShared
-        LoadValheimRaftAssets.Instance.Init(vehicleAssetBundle);
-        // dependent on ValheimVehiclesShared and RaftAssetBundle
-        LoadValheimVehicleAssets.Instance.Init(vehicleAssetBundle);
 
         // ValheimVehicle HammerTab, must be done before items and prefab generic registrations
         VehicleHammerTableRegistry.Register();

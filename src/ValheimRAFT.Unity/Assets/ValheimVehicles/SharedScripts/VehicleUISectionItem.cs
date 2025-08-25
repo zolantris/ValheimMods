@@ -14,9 +14,9 @@
 
   public class VehicleUIMenuSectionItem : MonoBehaviour, IPointerEnterHandler, IPointerClickHandler, IPointerExitHandler
   {
-    public TMP_Text TitleText;
-    public TMP_Text DescriptionText;
-    public TMP_Text SavedValueText;
+    public TextMeshProUGUI TitleText;
+    public TextMeshProUGUI DescriptionText;
+    public TextMeshProUGUI SavedValueText;
     public GameObject DescriptionRow;
     public Button SaveButton;
     public Button ResetButton;
@@ -24,15 +24,15 @@
 
     // todo may add support for this.
     public GameObject Tooltip;
-    public TMP_Text TooltipText;
+    public TextMeshProUGUI TooltipText;
 
     public TMP_InputField InputField;
     public Toggle Toggle;
 
     public Slider Slider;
-    public TMP_Text SliderMaxValueText;
-    public TMP_Text SliderCurrentValueText;
-    public TMP_Text SliderMinValueText;
+    public TextMeshProUGUI SliderMaxValueText;
+    public TextMeshProUGUI SliderCurrentValueText;
+    public TextMeshProUGUI SliderMinValueText;
 
     public Transform ContentParent;
     public Transform EditRow;
@@ -80,12 +80,12 @@
 
       if (!DescriptionText)
       {
-        DescriptionText = DescriptionRow.transform.Find("text").GetComponent<TMP_Text>();
+        DescriptionText = DescriptionRow.transform.Find("text").GetComponent<TextMeshProUGUI>();
       }
 
       if (!TitleText)
       {
-        TitleText = MainRow.Find("title").GetComponent<TMP_Text>();
+        TitleText = MainRow.Find("title").GetComponent<TextMeshProUGUI>();
       }
 
       if (!Toggle)
@@ -109,7 +109,7 @@
 
       if (!SavedValueText)
       {
-        SavedValueText = MainRow.Find("info_section/value_field/value").GetComponent<TMP_Text>();
+        SavedValueText = MainRow.Find("info_section/value_field/value").GetComponent<TextMeshProUGUI>();
       }
 
       if (!Slider)
@@ -119,17 +119,17 @@
 
       if (!SliderMinValueText)
       {
-        SliderMinValueText = Slider.transform.Find("minValueText").GetComponent<TMP_Text>();
+        SliderMinValueText = Slider.transform.Find("minValueText").GetComponent<TextMeshProUGUI>();
       }
 
       if (!SliderMaxValueText)
       {
-        SliderMaxValueText = Slider.transform.Find("maxValueText").GetComponent<TMP_Text>();
+        SliderMaxValueText = Slider.transform.Find("maxValueText").GetComponent<TextMeshProUGUI>();
       }
 
       if (!SliderCurrentValueText)
       {
-        SliderCurrentValueText = Slider.transform.Find("Handle Slide Area/Handle/currentValueText").GetComponent<TMP_Text>();
+        SliderCurrentValueText = Slider.transform.Find("Handle Slide Area/Handle/currentValueText").GetComponent<TextMeshProUGUI>();
       }
 
       if (!InputField)

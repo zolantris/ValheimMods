@@ -500,6 +500,15 @@ public class VehicleDebugHelpers : MonoBehaviour
       var textObj = new GameObject($"{boxCollider.gameObject.name}_label");
       var textMeshPro = textObj.AddComponent<TextMeshPro>();
 
+#if VALHEIM
+      var fontAsset = LoadValheimVehicleAssets.LiberationSansFontAsset;
+      if (fontAsset != null)
+      {
+        textMeshPro.font = fontAsset;
+        textMeshPro.fontSharedMaterial = fontAsset.material;
+      }
+#endif
+
       // Set text properties
       textMeshPro.text = textTitle;
       textMeshPro.fontSize = 10;

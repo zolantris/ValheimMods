@@ -81,7 +81,7 @@ public abstract class PrefabRegistryHelpers
     var netView = obj.GetComponent<ZNetView>();
     if (netView == null)
       netView = obj.AddComponent<ZNetView>();
-    if (prioritized) netView.m_type = ZDO.ObjectType.Prioritized;
+    // if (prioritized) netView.m_type = ZDO.ObjectType.Prioritized;
 
     netView.m_persistent = false;
     return netView;

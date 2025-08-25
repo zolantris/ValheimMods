@@ -26,7 +26,7 @@ namespace ValheimVehicles.SharedScripts.UI
     public List<SwivelComponent> nearestSwivels = new();
 
     internal MechanismSwitchCustomConfig _currentPanelConfig = new();
-    private TMP_Text _saveStatus;
+    private TextMeshProUGUI _saveStatus;
     internal TMP_Dropdown actionDropdown;
     public IMechanismActionSetter? mechanismAction;
 

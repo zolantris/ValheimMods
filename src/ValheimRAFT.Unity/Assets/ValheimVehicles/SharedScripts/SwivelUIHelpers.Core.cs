@@ -16,7 +16,7 @@
       // for all interactions
       public static bool CanNavigatorInteractWithPanel = true;
 
-      public static GameObject AddButton(Transform parent, SwivelUISharedStyles viewStyles, string buttonText, float buttonWidth, float buttonHeight, out Button button, out TMP_Text statusTextOut, UnityAction onClick)
+      public static GameObject AddButton(Transform parent, SwivelUISharedStyles viewStyles, string buttonText, float buttonWidth, float buttonHeight, out Button button, out TextMeshProUGUI statusTextOut, UnityAction onClick)
       {
         var buttonGO = new GameObject("ActionButton", typeof(RectTransform), typeof(Button), typeof(Image), typeof(LayoutElement));
         buttonGO.transform.SetParent(parent.transform, false);
@@ -42,9 +42,9 @@
         layoutElement.preferredHeight = buttonHeight;
         layoutElement.flexibleWidth = 0;
 
-        var textGO = new GameObject("ButtonText", typeof(TMP_Text));
+        var textGO = new GameObject("ButtonText", typeof(TextMeshProUGUI));
         textGO.transform.SetParent(buttonGO.transform, false);
-        var btnText = textGO.GetComponent<TMP_Text>();
+        var btnText = textGO.GetComponent<TextMeshProUGUI>();
         btnText.text = buttonText;
         btnText.fontSize = 24;
         btnText.color = Color.white;
@@ -63,7 +63,7 @@
         return buttonGO;
       }
 
-      public static GameObject AddRowWithButton(Transform parent, SwivelUISharedStyles viewStyles, string? label, string buttonText, float buttonWidth, float buttonHeight, out TMP_Text statusTextOut, UnityAction onClick)
+      public static GameObject AddRowWithButton(Transform parent, SwivelUISharedStyles viewStyles, string? label, string buttonText, float buttonWidth, float buttonHeight, out TextMeshProUGUI statusTextOut, UnityAction onClick)
       {
         var row = new GameObject("RowWithButton", typeof(RectTransform), typeof(HorizontalLayoutGroup));
         row.transform.SetParent(parent, false);
@@ -77,10 +77,10 @@
 
         if (!string.IsNullOrEmpty(label))
         {
-          var labelGO = new GameObject("HeaderLabel", typeof(TMP_Text), typeof(LayoutElement));
+          var labelGO = new GameObject("HeaderLabel", typeof(TextMeshProUGUI), typeof(LayoutElement));
           labelGO.transform.SetParent(row.transform, false);
 
-          var labelText = labelGO.GetComponent<TMP_Text>();
+          var labelText = labelGO.GetComponent<TextMeshProUGUI>();
           labelText.text = label;
           labelText.fontSize = viewStyles.FontSizeSectionLabel;
           labelText.color = viewStyles.LabelColor;
@@ -109,14 +109,14 @@
         return spacer;
       }
 
-      public static void ApplyLabelStyle(TMP_Text label, SwivelUISharedStyles viewStyles)
+      public static void ApplyLabelStyle(TextMeshProUGUI label, SwivelUISharedStyles viewStyles)
       {
         label.fontSize = viewStyles.FontSizeRowLabel;
         label.color = viewStyles.LabelColor;
         label.alignment = TextAlignmentOptions.Left;
       }
 
-      public static void ApplyInputStyle(TMP_Text label, SwivelUISharedStyles viewStyles)
+      public static void ApplyInputStyle(TextMeshProUGUI label, SwivelUISharedStyles viewStyles)
       {
         label.fontSize = viewStyles.FontSizeDropdownLabel;
         label.color = viewStyles.LabelColor;

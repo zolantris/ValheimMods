@@ -483,7 +483,7 @@
 
 
     public static bool IsEditing = false;
-    private static TMP_Text _saveStatus;
+    private static TextMeshProUGUI _saveStatus;
     private static Button _resetButton;
 
     public virtual void SetSavedState()

@@ -84,9 +84,9 @@
           toggles[i] = toggle;
 
           // Add label below toggle
-          var labelGO = new GameObject($"{toggleLabels[i]}Label", typeof(TMP_Text));
+          var labelGO = new GameObject($"{toggleLabels[i]}Label", typeof(TextMeshProUGUI));
           labelGO.transform.SetParent(toggleWrapper.transform, false);
-          var labelText = labelGO.GetComponent<TMP_Text>();
+          var labelText = labelGO.GetComponent<TextMeshProUGUI>();
           labelText.text = toggleLabels[i];
           labelText.fontSize = viewStyles.FontSizeRowLabel;
           labelText.color = viewStyles.LabelColor;

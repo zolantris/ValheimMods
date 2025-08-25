@@ -37,9 +37,9 @@
         layout.spacing = 2f;
 
         // === Label ===
-        var labelGO = new GameObject("Label", typeof(TMP_Text));
+        var labelGO = new GameObject("Label", typeof(TextMeshProUGUI));
         labelGO.transform.SetParent(root.transform, false);
-        var labelText = labelGO.GetComponent<TMP_Text>();
+        var labelText = labelGO.GetComponent<TextMeshProUGUI>();
         labelText.text = label;
         labelText.fontSize = viewStyles.FontSizeRowLabel;
         labelText.color = viewStyles.LabelColor;
@@ -69,7 +69,7 @@
         dropdownGO.GetComponent<Image>().color = new Color(0.9f, 0.9f, 0.9f, 1f); // Light gray background
 
         // === Caption ===
-        var captionGO = new GameObject("Caption", typeof(TMP_Text));
+        var captionGO = new GameObject("Caption", typeof(TextMeshProUGUI));
         var captionRect = captionGO.GetComponent<RectTransform>();
         captionRect.anchorMin = new Vector2(0, 0.5f);
         captionRect.anchorMax = new Vector2(1, 0.5f);
@@ -78,7 +78,7 @@
         captionRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, 40);
 
         captionGO.transform.SetParent(dropdownGO.transform, false);
-        var caption = captionGO.GetComponent<TMP_Text>();
+        var caption = captionGO.GetComponent<TextMeshProUGUI>();
         caption.text = GetCaptionText(selectedOption, options);
         caption.color = viewStyles.InputTextColor;
         caption.alignment = TextAlignmentOptions.Left;
@@ -158,7 +158,7 @@
         itemLayout.minHeight = viewStyles.DropdownItemHeight;
         itemLayout.preferredHeight = viewStyles.DropdownItemHeight;
 
-        var itemLabelGO = new GameObject("Item Label", typeof(TMP_Text));
+        var itemLabelGO = new GameObject("Item Label", typeof(TextMeshProUGUI));
         itemLabelGO.transform.SetParent(itemGO.transform, false);
 
         var itemLabelRT = itemLabelGO.GetComponent<RectTransform>();
@@ -167,7 +167,7 @@
         itemLabelRT.pivot = new Vector2(0, 0.5f);
         itemLabelRT.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, 0);
 
-        var itemLabel = itemLabelGO.GetComponent<TMP_Text>();
+        var itemLabel = itemLabelGO.GetComponent<TextMeshProUGUI>();
         itemLabel.text = "Option";
         itemLabel.color = viewStyles.InputTextColor;
         itemLabel.alignment = TextAlignmentOptions.Left;
