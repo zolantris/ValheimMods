@@ -1,4 +1,5 @@
 <Project>
+    <!--  This auto syncs the current project's version to the current project's thunderstore -->
     <Target KeepDuplicateOutputs="false" Name="ModSync_UpdateThunderstore" AfterTargets="BeforeCompile">
         <PropertyGroup>
             <ModSyncExe>$(SolutionDir)build/bin/ModSync/Release/ModSync.exe</ModSyncExe>
