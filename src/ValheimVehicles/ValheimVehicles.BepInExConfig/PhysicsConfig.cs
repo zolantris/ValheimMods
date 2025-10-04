@@ -304,11 +304,11 @@ public class PhysicsConfig : BepInExBaseConfig<PhysicsConfig>
         "Sets the absolute max speed a vehicle can ever move in vertical direction. This can significantly reduce vertical sway when lowered. This will limit the ship capability to launch into space. Lower values are safer. Too low and the vehicle will not recover fast from being underwater if falling into the water. Flight vehicles will not be affected by this value.",
         true, false, maxLinearYVelocityAcceptableValues));
 
-    MaxAngularVelocity = config.BindUnique(SectionKey, "MaxVehicleAngularVelocity",
-      5f,
+    MaxAngularVelocity = config.BindUnique(SectionKey, $"MaxVehicleAngularVelocity_{VersionedConfigUtil.GetDynamicMinorVersionKey()}",
+      0.1f,
       ConfigHelpers.CreateConfigDescription(
         "Sets the absolute max speed a vehicle can ROTATE in. Having a high value means the vehicle can spin out of control.",
-        true, false, new AcceptableValueRange<float>(0.1f, 10f)));
+        true, false, new AcceptableValueRange<float>(0.05f, 3f)));
 
     HullFloatationColliderLocation = config.BindUnique(FloatationPhysicsSectionKey,
       "HullFloatationColliderLocation",

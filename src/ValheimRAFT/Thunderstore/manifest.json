@@ -1,6 +1,6 @@
 {
   "name": "ValheimRAFT",
-  "version_number": "4.0.0",
+  "version_number": "4.0.1",
   "website_url": "https://github.com/zolantris/ValheimMods/tree/main/src/ValheimRAFT",
   "description": "ValheimRAFT - a vehicles mod for valheim. Build a ship, build a land vehicle. Explore valheim! This is release channel. Features should be released slower and should be more stable. Use the beta channel if you want to see new features sooner.",
   "dependencies": [
