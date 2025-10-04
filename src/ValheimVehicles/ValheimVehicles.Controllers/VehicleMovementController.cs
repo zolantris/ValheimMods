@@ -506,7 +506,19 @@
       return collision.rigidbody && collision.rigidbody.name.StartsWith("animated") && collision.rigidbody.transform.parent.name.StartsWith(PrefabNames.SwivelPrefabName);
     }
 
-//     private void OnCollisionStay(Collision collision)
+    private void OnCollisionStay(Collision other)
+    {
+      var otherCollider = other.collider;
+      var currentCollider = other.contactCount;
+
+      foreach (var contactPoint in other.contacts)
+      {
+        LoggerProvider.LogDebugDebounced(contactPoint.thisCollider.name);
+        LoggerProvider.LogDebugDebounced(contactPoint.otherCollider.name);
+      }
+    }
+
+    //     private void OnCollisionStay(Collision collision)
 //     {
 //       if (PiecesController == null) return;
 //       if (IsSwivelCollision(collision))
@@ -1860,75 +1872,37 @@
       // return BlockingCollider.transform.position.y;
     }
 
+    public float frontUpForceVel, backUpForceVel, leftUpForceVel, rightUpForceVel, centerUpForceVel;
+    private float _rudderSmoothed;
+
+    // ReSharper disable ArrangeNamespaceBody
+// ReSharper disable NamespaceStyle
     public void Flying_UpdateShipBalancingForce()
     {
-      var centerPosition = ShipDirection.position;
-      var shipForward = ShipDirection.forward;
-      var shipRight = ShipDirection.right;
+      // --- Hardcoded simple constants ---
+      const float maxClimbSpeed = 6f; // m/s cap for up/down speed
+      const float accel = 20f; // m/s^2 rate to reach desired vertical speed
+      const float deadzone = 0.03f; // meters where we stop moving vertically
 
-      var front = centerPosition +
-                  shipForward * GetFloatSizeFromDirection(shipForward);
-      var back = centerPosition -
-                 shipForward * GetFloatSizeFromDirection(shipForward);
-      var left = centerPosition -
-                 shipRight * GetFloatSizeFromDirection(shipRight);
-      var right = centerPosition +
-                  shipRight * GetFloatSizeFromDirection(shipRight);
+      // === 1) Vertical control: set Y velocity toward target height ===
+      var targetH = GetFlyingTargetHeight();
+      var pos = ShipDirection.position;
 
-      var frontForce = m_body.GetPointVelocity(front);
-      var backForce = m_body.GetPointVelocity(back);
-      var leftForce = m_body.GetPointVelocity(left);
-      var rightForce = m_body.GetPointVelocity(right);
+      var err = targetH - pos.y;
 
-      var flyingTargetHeight = GetFlyingTargetHeight();
+      // Desired vertical speed (very simple proportional -> clamped)
+      // If we're close enough, stop moving vertically.
+      var desiredVy = Mathf.Abs(err) < deadzone
+        ? 0f
+        : Mathf.Clamp(err, -maxClimbSpeed, maxClimbSpeed);
 
-      // Calculate the target upwards forces for each position
-      var frontUpwardsForce = GetUpwardsForce(
-        flyingTargetHeight,
-        front.y + frontForce.y, m_balanceForce);
-      var backUpwardsForce = GetUpwardsForce(
-        flyingTargetHeight,
-        back.y + backForce.y, m_balanceForce);
-      var leftUpwardsForce = GetUpwardsForce(
-        flyingTargetHeight,
-        left.y + leftForce.y, m_balanceForce);
-      var rightUpwardsForce = GetUpwardsForce(
-        flyingTargetHeight,
-        right.y + rightForce.y, m_balanceForce);
-      var centerUpwardsForce = GetUpwardsForce(
-        flyingTargetHeight,
-        centerPosition.y + m_body.linearVelocity.y, m_liftForce);
-
-      // Smooth time must always be greater than 3f
-      var smoothValue = 3f + PropulsionConfig.VerticalSmoothingSpeed.Value * 10f;
-
-      // Smoothly transition the forces towards the target values using SmoothDamp
-      frontUpwardsForce = Mathf.SmoothDamp(prevFrontUpwardForce,
-        frontUpwardsForce, ref prevFrontUpwardForce,
-        smoothValue);
-      backUpwardsForce = Mathf.SmoothDamp(prevBackUpwardsForce, backUpwardsForce,
-        ref prevBackUpwardsForce, smoothValue);
-      leftUpwardsForce = Mathf.SmoothDamp(prevLeftUpwardsForce, leftUpwardsForce,
-        ref prevLeftUpwardsForce, smoothValue);
-      rightUpwardsForce = Mathf.SmoothDamp(prevRightUpwardsForce,
-        rightUpwardsForce, ref prevRightUpwardsForce,
-        smoothValue);
-      centerUpwardsForce = Mathf.SmoothDamp(prevCenterUpwardsForce,
-        centerUpwardsForce, ref prevCenterUpwardsForce,
-        smoothValue);
-
-      // Apply the smoothed forces at the corresponding positions
-      AddForceAtPosition(Vector3.up * frontUpwardsForce, front,
-        PhysicsConfig.flyingVelocityMode.Value);
-      AddForceAtPosition(Vector3.up * backUpwardsForce, back,
-        PhysicsConfig.flyingVelocityMode.Value);
-      AddForceAtPosition(Vector3.up * leftUpwardsForce, left,
-        PhysicsConfig.flyingVelocityMode.Value);
-      AddForceAtPosition(Vector3.up * rightUpwardsForce, right,
-        PhysicsConfig.flyingVelocityMode.Value);
-      AddForceAtPosition(Vector3.up * centerUpwardsForce, centerPosition,
-        PhysicsConfig.flyingVelocityMode.Value);
+      // Move current vertical velocity toward desired at a fixed acceleration
+      var v = m_body.linearVelocity; // use .linearVelocity if that's your field, but .velocity is standard
+      var newVy = Mathf.MoveTowards(v.y, desiredVy, accel * Time.fixedDeltaTime);
+      v.y = newVy;
+      m_body.linearVelocity = v;
     }
+
 
     /// <summary>
     ///   Forward velocity relative to the ShipDirection instead of the rigidbody
@@ -1961,6 +1935,8 @@
       if (m_body.constraints != FreezeBothXZ) m_body.constraints = FreezeBothXZ;
     }
 
+    public static bool FLIGHT_SkipBalancingForce = false;
+
     public void UpdateFlyingVehicle()
     {
       UpdateVehicleStats(VehiclePhysicsState.Air);
@@ -1969,7 +1945,11 @@
       if (UpdateAnchorVelocity()) return;
 
       m_body.WakeUp();
-      Flying_UpdateShipBalancingForce();
+
+      if (!FLIGHT_SkipBalancingForce)
+      {
+        Flying_UpdateShipBalancingForce();
+      }
 
       if (!PropulsionConfig.FlightHasRudderOnly.Value)
         ApplySailForce(this, true);
@@ -3055,9 +3035,35 @@
       else if (PrefabConfig.EnableLandVehicles.Value && Manager.IsLandVehicle)
         UpdateVehicleLandSpeed();
 
+      if (isAnchored)
+      {
+        ApplyAnchorAngularBrake();
+        // You can early-out here if you want *no* steering while anchored:
+        // return;
+      }
+
       // both flying and floatation use this
-      ApplyRudderForce();
+      ApplyRudderRotationForce();
+      ApplyTurnStability();
+      ApplyRudderLinearForce();
       ClampVehicleAcceleration();
+    }
+
+    // Call this once per FixedUpdate when anchored (before any AddForce/AddTorque)
+    private void ApplyAnchorAngularBrake()
+    {
+      // hardcoded, simple
+      const float brake = 25f; // how fast we kill pitch/roll spin (rad/s^2)
+      const float brakeYaw = 10f; // how fast we kill yaw spin (rad/s^2)
+
+      var w = m_body.angularVelocity;
+
+      // Critically damp pitch & roll quickly; yaw more gently (so the boat can settle)
+      w.x = Mathf.MoveTowards(w.x, 0f, brake * Time.fixedDeltaTime);
+      w.z = Mathf.MoveTowards(w.z, 0f, brake * Time.fixedDeltaTime);
+      w.y = Mathf.MoveTowards(w.y, 0f, brakeYaw * Time.fixedDeltaTime);
+
+      m_body.angularVelocity = w;
     }
 
     public bool IsSailUp()
@@ -3446,75 +3452,142 @@
              _currentShipFloatation.Value.AverageWaterHeight;
     }
 
-    /// <summary>
-    ///   Sets the speed of the ship with rudder speed added to it.
-    /// </summary>
-    /// Does not apply for stopped or anchored states
-    private void ApplyRudderForce()
+
+    public float YawTorqueStrength = 20000f; // default, try 5k .. 200k depending on mass/scale
+
+    private float GetEffectiveYawInertia()
     {
-      if (VehicleSpeed == Ship.Speed.Stop ||
-          isAnchored) return;
+      // Approximate inertia around world up using the diagonal tensor
+      // and Rigidbody.inertiaTensorRotation (handles non-uniform colliders)
+      var q = Quaternion.Inverse(m_body.inertiaTensorRotation) * Quaternion.Inverse(m_body.transform.rotation);
+      var upInInertiaSpace = q * Vector3.up;
+      var I = m_body.inertiaTensor; // principal moments
+      // I_eff = u^T * diag(I) * u
+      return upInInertiaSpace.x * upInInertiaSpace.x * I.x
+             + upInInertiaSpace.y * upInInertiaSpace.y * I.y
+             + upInInertiaSpace.z * upInInertiaSpace.z * I.z;
+    }
+
+    public float YawAccelPerError = 3.0f; // rad/s^2 per rad/s error (same meaning as above)
+
+    private void ApplyRudderRotationForce()
+    {
+      if (VehicleSpeed == Ship.Speed.Stop || isAnchored)
+        return;
 
       var flying = IsFlying();
+
+      var fwd = ShipDirection.forward;
+      var vFwd = Vector3.Dot(m_body.linearVelocity, fwd); // signed forward m/s
+
+      // Smooth rudder input to prevent jitter
+      const float rudderSlew = 5f; // units per sec
+      _rudderSmoothed = Mathf.MoveTowards(_rudderSmoothed, m_rudderValue * 0.95f, rudderSlew * Time.fixedDeltaTime);
+
+      // Desired yaw rate (rad/s). Flip when going backwards.
+      const float maxYawRate = 2.0f; // target spin rate cap
+      var speedFactor = 0.2f + 0.8f * Mathf.Clamp01(Mathf.Abs(vFwd) / 5f);
+      var dir = vFwd >= 0f ? 1f : -1f;
+      var desiredYaw = _rudderSmoothed * maxYawRate * speedFactor * dir;
+
+      // Current yaw rate
+      var yawNow = Vector3.Dot(m_body.angularVelocity, Vector3.up);
+
+      // Error term
+      var yawError = desiredYaw - yawNow;
+
+      // Apply proportional torque based on error * your strength variable
+      var torque = Vector3.up * (YawTorqueStrength * yawError);
+
+      var Ieff = Mathf.Max(1f, GetEffectiveYawInertia());
+      var yawAccelCmd = YawAccelPerError * (desiredYaw - yawNow);
+      var torqueNeeded = Ieff * yawAccelCmd; // τ = I * α
+      m_body.AddTorque(Vector3.up * torqueNeeded, ForceMode.Force);
+    }
+
+    public float SideSlipDamping = 6f; // m/s^2 toward zero lateral speed
+    public float VelocityAlignRate = 4f; // rad/s that we rotate velocity toward heading at |rudder|=1
+
+    private void ApplyTurnStability()
+    {
+      var up = Vector3.up;
+      var fwd = ShipDirection.forward;
+      var right = ShipDirection.right;
+
+      // horizontal velocity only
+      var v = m_body.linearVelocity;
+      var vh = Vector3.ProjectOnPlane(v, up);
+
+      if (vh.sqrMagnitude < 1e-6f) return;
+
+      var steerMag = Mathf.Abs(m_rudderValue); // 0..1
+
+      // 1) Bleed lateral (side-slip) proportional to steering
+      var vSide = Vector3.Dot(vh, right);
+      var bleedPerSec = SideSlipDamping * steerMag; // m/s per second
+      var vSideNew = Mathf.MoveTowards(vSide, 0f, bleedPerSec * Time.fixedDeltaTime);
+      vh += right * (vSideNew - vSide);
+
+      // 2) Gently rotate the velocity vector toward the hull forward (centripetal "bite")
+      var fwdH = Vector3.ProjectOnPlane(fwd, up).normalized;
+      if (fwdH.sqrMagnitude > 1e-6f && vh.sqrMagnitude > 1e-6f)
+      {
+        // signed angle between current horizontal velocity and forward around up
+        var angle = Vector3.SignedAngle(vh, fwdH, up) * Mathf.Deg2Rad;
+        var maxStep = VelocityAlignRate * steerMag * Time.fixedDeltaTime; // rad this frame
+        var step = Mathf.Clamp(angle, -maxStep, maxStep);
+
+        var q = Quaternion.AngleAxis(step * Mathf.Rad2Deg, up);
+        vh = q * vh;
+      }
+
+      // write back (keep original vertical component)
+      v.x = vh.x;
+      v.z = vh.z;
+      m_body.linearVelocity = v;
+    }
+
+    // Speed push along forward.No rotation writes.Apply at CoM.No dt multiply.
+    private void ApplyRudderLinearForce()
+    {
+      if (VehicleSpeed == Ship.Speed.Stop || isAnchored)
+        return;
+
+      var flying = IsFlying();
+
       // Stop steering when above the water. Applying force is bad...
-      if (!flying && !IsSubmerged() &&
-          ShipFloatationObj.IsAboveBuoyantLevel)
+      if (!flying && !IsSubmerged() && ShipFloatationObj.IsAboveBuoyantLevel)
         return;
 
       var forward = ShipDirection.forward;
-      var direction = Vector3.Dot(m_body.linearVelocity, forward);
       var rudderForce = GetRudderForcePerSpeed();
-      // steer offset will need to be size x or size z depending on location of rotation.
-      // todo GetFloatSizeFromDirection may not be needed anymore.
-      // This needs to use blocking collider otherwise the float collider pushes the vehicle upwards but the blocking collider cannot push downwards.
-      // todo set this to the rudder point
-      // rear steering is size z. Center steering is size.z/2
-      var steerOffset = m_body.worldCenterOfMass -
-                        forward * GetFloatSizeFromDirection(Vector3.forward);
 
-      var steeringVelocityDirectionFactor = direction * m_stearVelForceFactor;
-      var steerOffsetForce = ShipDirection.right *
-                             (steeringVelocityDirectionFactor *
-                              (0f - m_rudderValue) *
-                              Time.fixedDeltaTime);
-
-      // add a buoyancy force multiplier for when near stuck to slow down velocity.
-      if (!flying)
-      {
-        steerOffsetForce *= ShipFloatationObj.BuoyancySpeedMultiplier;
-      }
-
-      AddForceAtPosition(
-        steerOffsetForce,
-        steerOffset, PhysicsConfig.rudderVelocityMode.Value);
-
-      // needs to always be 1 otherwise nothing happens when setting rudder defaults to 0 speed. Alternative is clamping GetRudderForcePerSpeed to 1. But this could be inaccurate for stopping and other steering values.
+      // Always >= 1 or nothing happens when rudder defaults to 0 speed
       var steerSpeed = Mathf.Max(rudderForce, 1f);
-      var steerForce = forward *
-                       (m_backwardForce * steerSpeed *
-                        (1f - Mathf.Abs(m_rudderValue)));
 
-      var directionMultiplier =
-        VehicleSpeed != Ship.Speed.Back ? 1 : -1;
+      // Base forward push scales down as rudder deflects
+      var steerForce = forward * (m_backwardForce * steerSpeed * (1f - Mathf.Abs(m_rudderValue)));
+
+      // Reverse flips sign
+      var directionMultiplier = VehicleSpeed != Ship.Speed.Back ? 1 : -1;
       steerForce *= directionMultiplier;
 
-      // additional speed added to the vehicle
+      // Additional speed added to the vehicle (your helper)
       steerForce += GetAdditiveSteerForce(directionMultiplier);
 
-      switch (flying)
-      {
-        case true:
-          transform.rotation =
-            Quaternion.Euler(0, transform.rotation.eulerAngles.y, 0);
-          break;
-        case false:
-          // add a buoyancy force multiplier for when near stuck to slow down velocity.
-          steerForce *= _currentShipFloatation.Value.BuoyancySpeedMultiplier;
-          break;
-      }
+      // Water-only damping from buoyancy system
+      if (!flying && _currentShipFloatation != null)
+        steerForce *= _currentShipFloatation.Value.BuoyancySpeedMultiplier;
 
-      AddForceAtPosition(steerForce * Time.fixedDeltaTime, steerOffset,
-        PhysicsConfig.turningVelocityMode.Value);
+      // --- CRUCIAL CHANGES ---
+      // 1) Do NOT set transform.rotation here (that caused stutter).
+      // 2) Apply at CoM to avoid unintended torque.
+      // 3) Use Acceleration and DO NOT multiply by fixedDeltaTime.
+      AddForceAtPosition(
+        steerForce,
+        m_body.worldCenterOfMass,
+        ForceMode.Acceleration // or PhysicsConfig.turningVelocityMode.Value, but ensure it's Acceleration/Force without dt
+      );
     }
 
     private static void ApplySailForce(VehicleMovementController instance,

@@ -169,7 +169,12 @@ namespace ValheimVehicles.SharedScripts
       if (!gameObject.name.StartsWith(PrefabNames.CannonControlCenter)) return;
       if (transform.root == transform) return;
 
-      if (!m_nview) Destroy(this);
+      if (!m_nview)
+      {
+        Destroy(this);
+        return;
+      }
+
       if (Player.m_localPlayer)
       {
         Player.m_localPlayer.Message(MessageHud.MessageType.Center, Localization.instance.Localize("$valheim_vehicles_cannon_control_center_placement_error"));
