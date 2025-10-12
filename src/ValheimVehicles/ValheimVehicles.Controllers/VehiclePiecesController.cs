@@ -3144,6 +3144,9 @@
       m_tempPieces.RemoveAll(nv =>
         !nv || !nv.gameObject || !nv.gameObject.activeInHierarchy ||
         !nv.transform || !nv.transform.IsChildOf(GetPiecesContainer()));
+
+      // This is a safety check to ensure we do not have stale prefab entries. This may need to be run on generation of convex hull as well.
+      m_prefabPieceDataItems.RemoveNullKeys();
     }
     /// <summary>
     /// An override of RebuildBounds scoped towards valheim integration instead of unity-only.

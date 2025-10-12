@@ -223,10 +223,10 @@ public class PhysicsConfig : BepInExBaseConfig<PhysicsConfig>
     flightAngularDrag = config.BindUnique(SectionKey, "flightAngularDrag", 1.2f, ConfigHelpers.CreateConfigDescription("Flight angular drag controls how much the vehicle slows down when turning."));
 
     force = config.BindUnique(SectionKey,
-      $"force_{versionResetKey}", 2f,
+      $"force_{versionResetKey}", 1f,
       "EXPERIMENTAL_FORCE. Lower values will not allow the vehicle to balance fast when tilted. Lower values can reduce bobbing, but must be below the forceDistance value.");
     forceDistance = config.BindUnique(SectionKey,
-      $"forceDistance_{versionResetKey}", 10f,
+      $"forceDistance_{versionResetKey}", 2f,
       "EXPERIMENTAL_FORCE_DISTANCE should always be above the value of force. Otherwise bobbing will occur. Lower values will not allow the vehicle to balance fast when tilted");
 
     backwardForce = config.BindUnique(SectionKey,

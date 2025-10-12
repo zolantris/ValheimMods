@@ -9,6 +9,11 @@ public static class VectorUtils
     return new Vector3(a.x + b.x, a.y + b.y, a.z + b.z);
   }
 
+  public static Vector3 MultiplyVectors(Vector3 a, Vector3 b)
+  {
+    return new Vector3(a.x * b.x, a.y * b.y, a.z * b.z);
+  }
+
   /// <summary>
   /// Clamps the components of a vector between specified minimum and maximum values.
   /// </summary>

@@ -8,6 +8,7 @@ using Jotunn.Managers;
 using UnityEngine;
 using ValheimVehicles.BepInExConfig;
 using ValheimVehicles.Controllers;
+using ValheimVehicles.Helpers;
 using ValheimVehicles.Prefabs.Registry;
 using ValheimVehicles.SharedScripts;
 using ValheimVehicles.SharedScripts.Enums;
@@ -868,6 +869,17 @@ public abstract class PrefabRegistryHelpers
     foreach (var t1 in t)
       if (t1.name.StartsWith($"_{SnappointTag}"))
         t1.tag = SnappointTag;
+  }
+
+  public static void UpdateSnappointsPosition(GameObject r, Vector3 scalar)
+  {
+    var t = r.GetComponentsInChildren<Transform>(true);
+    foreach (var t1 in t)
+      if (t1.name.Contains("snappoint"))
+      {
+        t1.transform.localScale = Vector3.one;
+        t1.transform.position = VectorUtils.MultiplyVectors(t1.transform.position, scalar);
+      }
   }
 
 
