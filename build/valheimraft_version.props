@@ -1,6 +1,6 @@
 <Project>
     <PropertyGroup Label="ValheimRAFT Version">
-        <Version>4.0.3</Version>
+        <Version>4.0.4</Version>
         <AssemblyVersion>$(Version).0</AssemblyVersion>
         <FileVersion>$(Version).0</FileVersion>
         <PackageVersion>$(Version)</PackageVersion>

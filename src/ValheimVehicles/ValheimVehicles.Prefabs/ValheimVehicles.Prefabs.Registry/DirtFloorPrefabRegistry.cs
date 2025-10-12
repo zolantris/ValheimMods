@@ -14,7 +14,6 @@ public class DirtFloorPrefabRegistry : RegisterPrefab<DirtFloorPrefabRegistry>
   {
     RegisterDirtFloor(1);
     RegisterDirtFloor(2);
-    RegisterDirtFloor(4);
   }
 
   private static void RegisterDirtFloor(int size)
