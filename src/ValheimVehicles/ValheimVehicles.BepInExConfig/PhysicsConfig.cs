@@ -368,7 +368,7 @@ public class PhysicsConfig : BepInExBaseConfig<PhysicsConfig>
         true, true));
 
     floatationVelocityMode = config.BindUnique(VelocityModeSectionKey,
-      "floatationVelocityMode", ForceMode.Acceleration,
+      "floatationVelocityMode", ForceMode.VelocityChange,
       ConfigHelpers.CreateConfigDescription(
         "EXPERIMENTAL VelocityMode changeable in debug only. Override so mass and vehicle size are accounted for",
         true, true));

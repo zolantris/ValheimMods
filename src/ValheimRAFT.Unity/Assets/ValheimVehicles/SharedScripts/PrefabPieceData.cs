@@ -32,7 +32,26 @@ namespace ValheimVehicles.SharedScripts
       IsSwivelChild = false;
 
       InitComponentProperties(prefab);
-      InitColliders(prefab.transform.root, allocator);
+
+      if (CanAddColliders(prefab))
+      {
+        InitColliders(prefab.transform.root, allocator);
+      }
+
+      if (ColliderPointData == null)
+      {
+        InitDefaultColliderPointData(allocator);
+      }
+    }
+
+    private bool CanAddColliders(GameObject prefab)
+    {
+      if (prefab.name.Contains(PrefabNames.VehicleSail)) return false;
+      if (prefab.name.Contains(PrefabNames.VehicleSailCloth)) return false;
+      if (prefab.name.Contains("fire")) return false;
+      if (prefab.name.Contains("smoke")) return false;
+      if (prefab.name.Contains("vfx")) return false;
+      return true;
     }
 
     /// <summary>
@@ -55,30 +74,49 @@ namespace ValheimVehicles.SharedScripts
     /// <param name="allocator"></param>
     private void InitColliders(Transform root, Allocator allocator)
     {
-      Prefab.GetComponentsInChildren(true, AllColliders);
+      // inactive excluded as inactive might not be syncing position well
+      Prefab.GetComponentsInChildren(false, AllColliders);
+
+      var allPoints = new List<Vector3>();
 
       foreach (var collider in AllColliders)
       {
         if (!collider.gameObject.activeInHierarchy || !LayerHelpers.IsContainedWithinLayerMask(collider.gameObject.layer, LayerHelpers.PhysicalLayerMask))
           continue;
 
+        var isValid = true;
+        var currentParent = collider.transform;
+        while (isValid && currentParent != null)
+        {
+          isValid = CanAddColliders(currentParent.gameObject);
+          if (currentParent == root) break;
+          currentParent = currentParent.parent;
+        }
+
+        if (!isValid) continue;
+
         HullColliders.Add(collider); // ✅ Only store relevant colliders
 
-        var points = ConvexHullAPI.GetColliderPointsGlobal(collider)
+        var localPoints = ConvexHullAPI.GetColliderPointsGlobal(collider)
           .Select(root.InverseTransformPoint)
           .ToArray(); // ✅ Convert to array
 
-        if (points.Length > 0)
-        {
-          ColliderPointData = new PrefabColliderPointData(
-            Prefab.transform.localPosition,
-            points, // ✅ Pass array directly
-            allocator
-          );
-
-          break; // ✅ Store only the first valid collider's points
-        }
+        allPoints.AddRange(localPoints);
       }
+
+      if (allPoints.Count > 0)
+      {
+        ColliderPointData = new PrefabColliderPointData(
+          Prefab.transform.localPosition,
+          allPoints.ToArray(), // ✅ Pass array directly
+          allocator
+        );
+      }
+    }
+
+    private void InitDefaultColliderPointData(Allocator allocator)
+    {
+      ColliderPointData = new PrefabColliderPointData(Prefab.transform.localPosition, [], allocator);
     }
 
     // public void Dispose()

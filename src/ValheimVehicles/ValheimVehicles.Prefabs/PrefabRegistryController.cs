@@ -840,6 +840,7 @@ namespace ValheimVehicles.Prefabs
 
       // Rope items
       RopeAnchorPrefabRegistry.Register();
+      RopeLadderPrefabRegistry.Register();
       AnchorPrefabs.Register();
 
       // pier components
