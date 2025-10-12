@@ -8,7 +8,7 @@ using ValheimVehicles.Prefabs.Registry;
 using ValheimVehicles.SharedScripts;
 namespace ValheimVehicles.ValheimVehicles.Prefabs.ValheimVehicles.Prefabs.Registry;
 
-public class RopeAnchorPrefabRegistry : RegisterPrefab<RopeLadderPrefabRegistry>
+public class RopeAnchorPrefabRegistry : RegisterPrefab<RopeAnchorPrefabRegistry>
 {
   public override void OnRegister()
   {

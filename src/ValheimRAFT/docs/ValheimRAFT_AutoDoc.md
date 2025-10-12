@@ -13,9 +13,9 @@
 - Description: Vehicle/Raft Creative mode will set all axises to 0 for rotation instead keeping the turn axis. Gizmo has issues with rotated vehicles, so zeroing things out is much safer. Works regardless of patch if mod exists
 - Default Value: True
 
-### EXPERIMENTAL: Snappoint Rotational Patch 
+### UNSTABLE_EXPERIMENTAL Snappoint Rotational Patch 
 - Description: Some prefabs on ValheimRAFT have flipped/rotated snappoints. This will allow rotating based on rotated point transform. Eg pieces can be flipped upside down. Supports Rotating Cannons. It does not flip the actual snappoint though. So the collision point requires a bit of creativity..
-- Default Value: True
+- Default Value: False
 
 ### Vehicles Prevent Pausing 
 - Description: Prevents pausing on a boat, pausing causes a TON of desync problems and can make your boat crash or other players crash
@@ -34,6 +34,14 @@
 - Default Value: True
 
 ## PrefabConfig
+
+### SortModePieceMenuItemsByMaterial 
+- Description: Sorts by material instead of type. This means all wood pieces come before iron pieces. The other approach is each prefab type is cluster together alongside other material variants in same type.
+- Default Value: True
+
+### VehicleHammerCategoryOrder 
+- Description: Custom order for the Valheim Vehicles hammer categories. Comma/semicolon/pipe separated. Unknown values are ignored; missing categories are appended.
+- Default Value: Tools,Hull,Structure,Power,Propulsion,Vehicles,Deprecated
 
 ### AllowTieredMastToRotateInWind 
 - Description: allows the tiered mast to rotate in wind
@@ -135,9 +143,13 @@
 - Description: Allows toggling the reload audio. Unstable b/c it does not sound great when many of these are fired together.
 - Default Value: False
 
+### Cannon_FireVelocity 
+- Description: Allows setting cannon firing velocity
+- Default Value: 90
+
 ### Cannon_FiringDelayPerCannon 
-- Description: Allows setting cannon firing delays. This makes cannons fire in a order.
-- Default Value: 0.01
+- Description: Allows customizing cannon firing delays. This makes cannons fire in a order.
+- Default Value: 0.1
 
 ### Cannon_ReloadTime 
 - Description: Allows setting cannon reload delays. This makes cannons reload longer or shorter. Shortest value is 100ms highest is 60seconds
@@ -890,15 +902,15 @@ Other methods removed after 2.5.0
 50% will be the very bottom of the vehicle's collider. This is just a default. Any vehicle can be configured directly via config menu.
 - Default Value: 0.65
 
-### flightDamping_3.6.5 
+### flightDamping_4.0.1 
 - Description: Controls how much the water pushes the boat upwards directly. This value may affect angular damping too. Recommended to keep the original value. But tweaking can remove or add additional jitter. Higher values likely will add more jitter.
 - Default Value: 1
 
-### flightSidewaysDamping_3.6.5 
+### flightSidewaysDamping_4.0.1 
 - Description: Controls how much the water pushes the boat sideways based on wind direction and velocity.
 - Default Value: 2
 
-### flightAngularDamping_3.6.5 
+### flightAngularDamping_4.0.1 
 - Description: Controls how much the water pushes the boat from a vertical angle based on water and velocity. Lower values will cause more rocking and allow better turn rates. Higher values will make the vehicle more stable, but less turning angle and possibly less realistic. If you get motion-sickness this can allow tweaking sway without disabling it all and also prevent rapid turning.
 - Default Value: 1
 
@@ -918,15 +930,15 @@ Other methods removed after 2.5.0
 - Description: Flight angular drag controls how much the vehicle slows down when turning.
 - Default Value: 1.2
 
-### force_3.6.5 
+### force_4.0.1 
 - Description: EXPERIMENTAL_FORCE. Lower values will not allow the vehicle to balance fast when tilted. Lower values can reduce bobbing, but must be below the forceDistance value.
+- Default Value: 1
+
+### forceDistance_4.0.1 
+- Description: EXPERIMENTAL_FORCE_DISTANCE should always be above the value of force. Otherwise bobbing will occur. Lower values will not allow the vehicle to balance fast when tilted
 - Default Value: 2
 
-### forceDistance_3.6.5 
-- Description: EXPERIMENTAL_FORCE_DISTANCE should always be above the value of force. Otherwise bobbing will occur. Lower values will not allow the vehicle to balance fast when tilted
-- Default Value: 10
-
-### backwardForce_3.6.5 
+### backwardForce_4.0.1 
 - Description: EXPERIMENTAL_BackwardFORCE
 - Default Value: 1
 
@@ -934,15 +946,15 @@ Other methods removed after 2.5.0
 - Description: Steer force controls how much the vehicle will resist steering when turning due to water pushing against it
 - Default Value: 1
 
-### waterDamping_3.6.5 
+### waterDamping_4.0.1 
 - Description: Controls how much the water pushes the boat upwards directly. This value may affect angular damping too. Recommended to keep the original value. But tweaking can remove or add additional jitter. Higher values likely will add more jitter.
 - Default Value: 1
 
-### waterSidewaysDamping_3.6.5 
+### waterSidewaysDamping_4.0.1 
 - Description: Controls how much the water pushes the boat sideways based on wind direction and velocity.
 - Default Value: 2
 
-### waterAngularDamping_3.6.5 
+### waterAngularDamping_4.0.1 
 - Description: Controls how much the water pushes the boat from a vertical angle based on water and velocity. Lower values will cause more rocking and allow better turn rates. Higher values will make the vehicle more stable, but less turning angle and possibly less realistic. If you get motion-sickness this can allow tweaking sway without disabling it all and also prevent rapid turning.
 - Default Value: 1
 
@@ -958,15 +970,15 @@ Other methods removed after 2.5.0
 - Description: rotation drag controls how much the vehicle slows down when turning.
 - Default Value: 0.8
 
-### submersibleDamping_3.6.5 
+### submersibleDamping_4.0.1 
 - Description: Controls how much the water pushes the boat upwards directly. This value may affect angular damping too. Recommended to keep the original value. But tweaking can remove or add additional jitter. Higher values likely will add more jitter.
 - Default Value: 1
 
-### submersibleSidewaysDamping_3.6.5 
+### submersibleSidewaysDamping_4.0.1 
 - Description: Controls how much the water pushes the boat sideways based on wind direction and velocity.
 - Default Value: 2
 
-### submersibleAngularDamping_3.6.5 
+### submersibleAngularDamping_4.0.1 
 - Description: Controls how much the water pushes the boat from a vertical angle based on water and velocity. Lower values will cause more rocking and allow better turn rates. Higher values will make the vehicle more stable, but less turning angle and possibly less realistic. If you get motion-sickness this can allow tweaking sway without disabling it all and also prevent rapid turning.
 - Default Value: 1
 
@@ -998,17 +1010,17 @@ Other methods removed after 2.5.0
 - Description: Wheel offset for Y position. Allowing for raising the treads higher. May require increasing suspension distance so the treads spawn then push the vehicle upwards. Negative lowers the wheels. Positive raises the treads. This value will not override custom config vehicles.
 - Default Value: -1
 
-### MaxVehicleLinearVelocity_3.6.x 
+### MaxVehicleLinearVelocity_4.0.x 
 - Description: Sets the absolute max speed a vehicle can ever move in. This is X Y Z directions. This will prevent the ship from rapidly flying away. Try staying between 5 and 100. Higher values will increase potential of vehicle flying off to space or rapidly accelerating through objects before physics can apply to an unloaded zone.
 - Default Value: 100
 
-### MaxVehicleLinearYVelocity_3.6.x 
+### MaxVehicleLinearYVelocity_4.0.x 
 - Description: Sets the absolute max speed a vehicle can ever move in vertical direction. This can significantly reduce vertical sway when lowered. This will limit the ship capability to launch into space. Lower values are safer. Too low and the vehicle will not recover fast from being underwater if falling into the water. Flight vehicles will not be affected by this value.
 - Default Value: 5
 
-### MaxVehicleAngularVelocity 
+### MaxVehicleAngularVelocity_4.0.x 
 - Description: Sets the absolute max speed a vehicle can ROTATE in. Having a high value means the vehicle can spin out of control.
-- Default Value: 5
+- Default Value: 0.1
 
 ## Vehicle Physics: Floatation
 

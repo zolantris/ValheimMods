@@ -109,7 +109,7 @@ namespace ValheimVehicles.SharedScripts
 #if VALHEIM
       if (wearNTear == null) return;
       if (_explosionRoutine.IsRunning) return;
-      if (wearNTear.m_healthPercentage <= 75)
+      if (wearNTear.m_healthPercentage <= 0.75f)
       {
         StartExplosion();
       }

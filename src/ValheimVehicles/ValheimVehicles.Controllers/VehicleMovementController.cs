@@ -2272,41 +2272,6 @@
 
       if (!CanRunSidewaysWaterForceUpdate) return;
 
-      // todo rename variables for this section to something meaningful
-      // todo abstract this to a method
-      var forward = ShipDirection.forward;
-      var deltaForward = Vector3.Dot(m_body.linearVelocity, forward);
-      var right = ShipDirection.right;
-      var deltaRight = Vector3.Dot(m_body.linearVelocity, right);
-      var velocity = m_body.linearVelocity;
-      var deltaUp = velocity.y * velocity.y * Mathf.Sign(velocity.y) * m_damping *
-                    currentDepthForceMultiplier;
-
-      var deltaForwardClamp = deltaForward * deltaForward *
-                              Mathf.Sign(deltaForward) *
-                              m_dampingForward *
-                              currentDepthForceMultiplier;
-
-      // the water pushes the boat in the direction of the wind (sort of). Higher multipliers of m_dampingSideway will actually decrease this effect.
-      var deltaRightClamp = deltaRight * deltaRight * Mathf.Sign(deltaRight) *
-                            m_dampingSideway *
-                            currentDepthForceMultiplier;
-
-      // todo might want to remove this clamp as it could throttle things too much.
-      velocity.y -= Mathf.Clamp(deltaUp, -1f, 1f);
-
-      velocity -= forward * Mathf.Clamp(deltaForwardClamp, -1f, 1f);
-      velocity -= right * Mathf.Clamp(deltaRightClamp, -1f, 1f);
-
-      if (velocity.magnitude > m_body.linearVelocity.magnitude)
-        velocity = velocity.normalized * m_body.linearVelocity.magnitude;
-
-      m_body.linearVelocity = velocity;
-      var angularVelocity = m_body.angularVelocity;
-      angularVelocity -=
-        angularVelocity * m_angularDamping * currentDepthForceMultiplier;
-      m_body.angularVelocity = angularVelocity;
-
 
       var forwardUpwardForce = Mathf.Clamp(
         (forwardForce.y - shipForward.y) * GetDirectionalForce(), 0f - maxForce,
@@ -2335,24 +2300,21 @@
       if (CanRunForwardWaterForce)
         AddForceAtPosition(Vector3.up * forwardUpwardForce * deltaForceMultiplier,
           shipForward - centerOffMassDifference,
-          PhysicsConfig.rudderVelocityMode.Value);
+          ForceMode.Acceleration);
 
       if (CanRunBackWaterForce)
         AddForceAtPosition(
           Vector3.up * backwardsUpwardForce * deltaForceMultiplier, shipBack - centerOffMassDifference,
-          PhysicsConfig.rudderVelocityMode.Value);
+          ForceMode.Acceleration);
 
       if (CanRunLeftWaterForce)
         AddForceAtPosition(Vector3.up * leftUpwardForce * deltaForceMultiplier,
           shipLeft - centerOffMassDifference,
-          PhysicsConfig.rudderVelocityMode.Value);
+          ForceMode.Acceleration);
       if (CanRunRightWaterForce)
         AddForceAtPosition(Vector3.up * rightUpwardForce * deltaForceMultiplier,
           shipRight - centerOffMassDifference,
-          PhysicsConfig.rudderVelocityMode.Value);
-
-      // likely for balancing vehicle more.
-      ApplyEdgeForce(Time.fixedDeltaTime);
+          ForceMode.Acceleration);
     }
 
     public void UpdateShipFloatation(ShipFloatation shipFloatation)
@@ -2361,8 +2323,6 @@
       UpdateVehicleStats(vehicleState);
 
       UpdateWaterForce(shipFloatation);
-
-      if (CanApplyWaterEdgeForce) ApplyEdgeForce(Time.fixedDeltaTime);
 
       if (HasOceanSwayDisabled)
       {
@@ -3359,13 +3319,18 @@
         : EnvMan.instance.GetWindDir();
       var windAngleFactorInterpolated = GetInterpolatedWindAngleFactor();
 
-      Vector3 target;
-      if (isFlying)
-        target = Vector3.Normalize(ShipDirection.forward) *
-                 (windAngleFactorInterpolated * m_sailForceFactor * sailSize);
-      else
-        target = Vector3.Normalize(windDir + ShipDirection.forward) *
-                 GetSailForceEnergy(sailSize, windAngleFactorInterpolated);
+      var target = Vector3.Normalize(ShipDirection.forward) *
+                   (windAngleFactorInterpolated * m_sailForceFactor * sailSize);
+
+      // TODO determine if we ever want to use this winddirection force again.
+      // Vector3 target;
+
+      // if (isFlying)
+      //   target = Vector3.Normalize(ShipDirection.forward) *
+      //            (windAngleFactorInterpolated * m_sailForceFactor * sailSize);
+      // else
+      //   target = Vector3.Normalize(windDir + ShipDirection.forward) *
+      //            GetSailForceEnergy(sailSize, windAngleFactorInterpolated);
 
       m_sailForce = Vector3.SmoothDamp(m_sailForce, target,
         ref m_windChangeVelocity, 1f, 99f);

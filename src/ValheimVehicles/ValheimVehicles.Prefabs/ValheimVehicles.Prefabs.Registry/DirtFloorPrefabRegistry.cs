@@ -14,6 +14,7 @@ public class DirtFloorPrefabRegistry : RegisterPrefab<DirtFloorPrefabRegistry>
   {
     RegisterDirtFloor(1);
     RegisterDirtFloor(2);
+    RegisterDirtFloor(4);
   }
 
   private static void RegisterDirtFloor(int size)
@@ -24,7 +25,9 @@ public class DirtFloorPrefabRegistry : RegisterPrefab<DirtFloorPrefabRegistry>
       PrefabManager.Instance.CreateClonedPrefab(prefabName,
         LoadValheimRaftAssets.dirtFloor);
 
-    mbDirtFloorPrefab.transform.localScale = new Vector3(size, 1f, size);
+    var scaleFactor = new Vector3(size, 1f, size);
+
+    mbDirtFloorPrefab.transform.localScale = scaleFactor;
 
     var mbDirtFloorPrefabPiece = mbDirtFloorPrefab.AddComponent<Piece>();
     mbDirtFloorPrefabPiece.m_placeEffect =
@@ -42,6 +45,7 @@ public class DirtFloorPrefabRegistry : RegisterPrefab<DirtFloorPrefabRegistry>
 
     PrefabRegistryHelpers.FixCollisionLayers(mbDirtFloorPrefab);
     PrefabRegistryHelpers.FixSnapPoints(mbDirtFloorPrefab);
+    PrefabRegistryHelpers.UpdateSnappointsPosition(mbDirtFloorPrefab, scaleFactor);
 
     PrefabRegistryController.AddPiece(new CustomPiece(mbDirtFloorPrefab, false,
       new PieceConfig
