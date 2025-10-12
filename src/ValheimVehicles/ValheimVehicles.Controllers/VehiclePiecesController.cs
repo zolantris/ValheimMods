@@ -768,14 +768,23 @@
       {
         var rbs = netView.GetComponentsInChildren<Rigidbody>();
         foreach (var rbsItem in rbs)
+        {
           if (!rbsItem.isKinematic && rbsItem != m_localRigidbody || rbsItem != m_syncRigidbody)
           {
-            LoggerProvider.LogWarning(
-              $"Destroying Rigidbody on netview <{netView.name}> for root object <{rbsItem.transform.root?.name ?? rbsItem.transform.name}>");
+            var fixedJoint = rbsItem.GetComponent<FixedJoint>();
+            var destroyMessage = $"Destroying Rigidbody on netview <{netView.name}> for rigidbody GameObject Name <{rbsItem.name}>";
+
+            if (fixedJoint != null)
+            {
+              destroyMessage += $"\nDestroying FixedJoint detected on {fixedJoint.name}";
+              Destroy(fixedJoint);
+            }
+
+            LoggerProvider.LogWarning(destroyMessage);
             Destroy(rbsItem);
           }
+        }
       }
-
 
       UpdateMass(netView);
 
@@ -1501,6 +1510,16 @@
     /// <param name="vehiclePosition"></param>
     private void UpdatePieceZdoPosition(ZDO zdo, Vector3 vehiclePosition, bool isBed = false)
     {
+      if (zdo == null) return;
+      if (!zdo.IsValid()) return;
+      // Skip non-persistent and detached objects
+      if (!zdo.Persistent) return;
+
+      var go = ZNetScene.instance?.FindInstance(zdo);
+      if (!go) return;
+      if (!go.transform || !go.transform.IsChildOf(GetPiecesContainer()))
+        return;
+
       if (zdo.m_prefab == PrefabNameHashes.LandVehicle)
       {
         // do not set position for vehicle. Instead keep in sync the relative position of it's parent.
@@ -3114,8 +3133,20 @@
       cachedSailForce = -1;
       cachedTotalSailArea = -1;
     }
+
+    private void PruneStalePieces()
+    {
+      // Remove destroyed or detached entries so they can't affect bounds or ZDO sync
+      m_pieces.RemoveAll(nv =>
+        !nv || !nv.gameObject || !nv.gameObject.activeInHierarchy ||
+        !nv.transform || !nv.transform.IsChildOf(GetPiecesContainer()));
+
+      m_tempPieces.RemoveAll(nv =>
+        !nv || !nv.gameObject || !nv.gameObject.activeInHierarchy ||
+        !nv.transform || !nv.transform.IsChildOf(GetPiecesContainer()));
+    }
     /// <summary>
-    /// A override of RebuildBounds scoped towards valheim integration instead of unity-only.
+    /// An override of RebuildBounds scoped towards valheim integration instead of unity-only.
     /// - Must be wrapped in a delay/coroutine to prevent spamming on unmounting bounds
     /// - cannot be de-encapsulated by default so regenerating it seems prudent on piece removal
     /// </summary>
@@ -3126,6 +3157,8 @@
       if (!isActiveAndEnabled || ZNetView.m_forceDisableInit || !isInitialPieceActivationComplete) return;
       if (FloatCollider == null || OnboardCollider == null)
         return;
+
+      PruneStalePieces();
 
       // methods related to VehiclePiecesController
       // todo Physics sync might not be required, but it ensures accuracy.
@@ -3411,8 +3444,14 @@
       return [..netView.GetComponentsInChildren<Collider>(includeInactive)];
     }
 
+    /// <summary>
+    /// Allows getting combined bounds of all colliders within a piece. If InactiveIsIncluded this can be extremelyh inaccurate if the colliders have not synced nearby to the object's position.
+    /// </summary>
+    /// <param name="netView"></param>
+    /// <param name="includeInactive"></param>
+    /// <returns></returns>
     public Bounds GetCombinedColliderBoundsInPiece(GameObject netView,
-      bool includeInactive = true)
+      bool includeInactive = false)
     {
       if (m_prefabPieceDataItems.TryGetValue(netView.gameObject, out var data) && data.ColliderPointData.HasValue)
       {
