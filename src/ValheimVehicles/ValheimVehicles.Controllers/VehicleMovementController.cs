@@ -106,7 +106,7 @@
     public Vector3 currentUpwardsForce = Vector3.zero;
     public Vector3 currentUpwardsForceVelocity = Vector3.zero;
 
-    public bool CanApplyWaterEdgeForce = false;
+    public bool CanApplyWaterEdgeForce = true;
     public bool CanAnchor;
 
     public float lastFlyingDt;
@@ -2224,392 +2224,278 @@
       return directionalForceAnchored;
     }
 
-    [SerializeField] private BuoyancyConfig buoyancy = BuoyancyConfig.Default();
-    private readonly List<Vector3> _buoyancyLocalPoints = new();
-    private readonly List<BuoyancyPointForce> _buoyancyForces = new();
-    private BuoyancyRuntimeState _buoyancyRuntime = new();
-    private Bounds _buoyancyHullBounds;
+    // --- Righting torque tunables (hook to BepInEx later if you want) ---
+// Replace previous torqueKp/Kd/Max with these (smaller, consistent numbers)
+    [SerializeField] private float aKp = 6f; // rad/s^2 per rad   (stiffness)
+    [SerializeField] private float aKd = 2.5f; // rad/s^2 per (rad/s) (damping)
+    [SerializeField] private float aMax = 30f; // clamp per-axis, rad/s^2
+    [SerializeField] private float alphaSlewPerSec = 0f; // rad/s^2 per sec, 0 = off
+    [SerializeField] private float forceToTorqueScale = 1.0f; // keep if you want to scale wave contribution
+    private Vector3 _lastAlpha; // for slew (angular acceleration history)
 
-// once when hull changes (or on start):
-    private void RebuildBuoyancyPoints(Bounds localHullBounds)
+    private Vector3 _lastWaterRightingTorque; // for slew limiting
+    [SerializeField] private UprightTorqueConfig upright = UprightTorqueConfig.Default();
+    private readonly UprightTorqueRuntime _uprightRt = new();
+    private Bounds _hullLocalBounds;
+
+    /// Accumulates torque from 4 vertical “virtual forces” without actually applying them.
+    private Vector3 ComputeTorqueFromFourPoints(
+      Vector3 worldCoM,
+      in Vector3 shipLeft, float upForceLeft,
+      in Vector3 shipRight, float upForceRight,
+      in Vector3 shipFwd, float upForceFwd,
+      in Vector3 shipBack, float upForceBack)
     {
-      _buoyancyHullBounds = localHullBounds;
-      BuoyancySolver.BuildLocalSamplePoints(localHullBounds, buoyancy, _buoyancyLocalPoints);
-      _buoyancyRuntime.Clear();
-      _buoyancyRuntime.EnsureSize(_buoyancyLocalPoints.Count);
+      var tau = Vector3.zero;
+
+      void Acc(Vector3 p, float fUp)
+      {
+        if (Mathf.Abs(fUp) <= 1e-6f) return;
+        var r = p - worldCoM;
+        var F = Vector3.up * (fUp * forceToTorqueScale); // keep your sign & squaring before
+        tau += Vector3.Cross(r, F);
+      }
+
+      Acc(shipLeft, upForceLeft);
+      Acc(shipRight, upForceRight);
+      Acc(shipFwd, upForceFwd);
+      Acc(shipBack, upForceBack);
+
+      return tau;
     }
 
-    /// Balances up-forces to generate a righting torque (roll/pitch) without changing net lift.
-    /// Keeps sum(dF)=0, but matches desired τx, τz by solving a tiny 2x2 system.
-    /// - Kp: torque per radian of tilt
-    /// - Kd: torque per rad/s of angular velocity
-    private void ApplyRightingBalance(
-      List<BuoyancyPointForce> forces,
-      float Kp = 800f, // start here; scale with boat size/mass
-      float Kd = 120f, // damping on roll/pitch
-      float perPointAccelClamp = 10f // extra accel cap per point (m/s^2)
-    )
+    // Convert a world-space torque to world-space angular acceleration using the rigidbody's inertia tensor.
+    private Vector3 TorqueToAngularAccel(Vector3 tauWorld)
     {
-      if (forces == null || forces.Count == 0 || m_body == null) return;
-
-      // 1) Desired righting torque (world space)
-      var upW = Vector3.up;
-      var upB = transform.up;
-      var tilt = Vector3.Cross(upB, upW); // dir to rotate upB->upW; |tilt| ~ sin(angle)
-      var angW = m_body.angularVelocity; // world angular vel
-      // Only care about roll/pitch (components orthogonal to world up)
-      var angNoYaw = Vector3.ProjectOnPlane(angW, upW);
-
-      // PD torque target (world)
-      var tauDesWorld = Kp * tilt - Kd * angNoYaw;
-
-      // We will generate torque only via vertical forces: τ = Σ r × (F_y * upW) = Σ F_y * (r × upW)
-      // With upW=(0,1,0), τx = Σ F_y * r.z, τz = Σ F_y * (-r.x)
-      // So we solve for ΔF_y at each point that achieves target τx, τz and keeps ΣΔF_y = 0.
-
-      var com = m_body.worldCenterOfMass;
-
-      // Build lever arrays
-      var n = forces.Count;
-      var rx = new float[n];
-      var rz = new float[n];
-
-      for (var i = 0; i < n; i++)
-      {
-        var r = forces[i].WorldPosition - com;
-        rx[i] = r.x;
-        rz[i] = r.z;
-      }
-
-      // Accumulate matrix terms
-      // We assume ΔF_i = a * rz_i + b * (-rx_i)
-      // Then:
-      //   Σ ΔF_i * rz_i     = a*Σ(rz^2)  + b*Σ(-rx*rz) = τx
-      //   Σ ΔF_i * (-rx_i)  = a*Σ(-rz*rx) + b*Σ(rx^2)  = τz
-      double Szz = 0, Sxx = 0, Szx = 0;
-      for (var i = 0; i < n; i++)
-      {
-        Szz += rz[i] * rz[i];
-        Sxx += rx[i] * rx[i];
-        Szx += rz[i] * -rx[i]; // = -rz*rx
-      }
-
-      // Desired world torque components about X and Z (roll & pitch)
-      // Project tauDesWorld onto world X and Z axes
-      var tauX = Vector3.Dot(tauDesWorld, Vector3.right);
-      var tauZ = Vector3.Dot(tauDesWorld, Vector3.forward);
-
-      // Solve 2x2:
-      // [ Szz   Szx ] [ a ] = [ tauX ]
-      // [ Szx   Sxx ] [ b ]   [ tauZ ]
-      var det = Szz * Sxx - Szx * Szx;
-      float a = 0f, b = 0f;
-      if (Mathf.Abs((float)det) > 1e-6f)
-      {
-        a = (float)((Sxx * tauX - Szx * tauZ) / det);
-        b = (float)((-Szx * tauX + Szz * tauZ) / det);
-      }
-
-      // Compute ΔF_i and make ΣΔF_i = 0 (don’t change net lift)
-      var deltaF = new float[n];
-      var sumDeltaF = 0f;
-      for (var i = 0; i < n; i++)
-      {
-        var dF = a * rz[i] + b * -rx[i];
-        deltaF[i] = dF;
-        sumDeltaF += dF;
-      }
-      var mean = sumDeltaF / Mathf.Max(1, n);
-      for (var i = 0; i < n; i++) deltaF[i] -= mean;
-
-      // Convert to acceleration increments and apply + clamp per-point
-      var invMass = 1f / Mathf.Max(1f, m_body.mass);
-      for (var i = 0; i < n; i++)
-      {
-        var f = forces[i];
-        // only vertical force from this balancing term (to avoid lateral shove)
-        var addAy = deltaF[i] * invMass; // F/m = accel
-        // clamp for safety
-        addAy = Mathf.Clamp(addAy, -perPointAccelClamp, perPointAccelClamp);
-        f.Acceleration += new Vector3(0f, addAy, 0f);
-        forces[i] = f;
-      }
-    }
-
-    /// Distribute a single net upward acceleration across submerged points with caps & redistribution.
-    /// Call this AFTER you populate _buoyancyForces.WorldPosition (vels via rb.GetPointVelocity)
-    private void DistributeBalancedLift(
-      List<BuoyancyPointForce> forces,
-      BuoyancyRuntimeState runtime,
-      Bounds localHullBounds,
-      float targetUpAccel, // e.g., g or heave-damped target
-      float maxPerPointAccel = 5.0f, // hard per-point cap (m/s^2) – start 4..6
-      float bottomBias = 1.4f, // >1 biases lift to deeper/keel-side points
-      float verticalDampingPerSec = 3.5f // up/down damping (1/s) scaled by submergence
-    )
-    {
-      if (forces == null || forces.Count == 0) return;
-
-      var n = forces.Count;
-      var minY = localHullBounds.min.y;
-      var invH = 1f / Mathf.Max(0.001f, localHullBounds.size.y);
-      var maxDepth = Mathf.Max(0.001f, buoyancy.MaxDepthPerPoint);
-
-      // --- 1) Build weights for submerged points ---
-      var w = new float[n];
-      var sumW = 0f;
-
-      for (var i = 0; i < n; i++)
-      {
-        if (i >= runtime.SmoothedDepths.Count || !runtime.IsSubmerged[i])
-        {
-          w[i] = 0f;
-          continue;
-        }
-
-        var d = Mathf.Min(runtime.SmoothedDepths[i], maxDepth);
-        var liftK = Mathf.SmoothStep(0f, 1f, d / maxDepth); // soft curve
-        // bottom bias (local Y: bottom=0 .. top=1)
-        var ty = Mathf.Clamp01((transform.InverseTransformPoint(forces[i].WorldPosition).y - minY) * invH);
-        var bias = 1f + Mathf.Max(0f, bottomBias - 1f) * (1f - ty);
-
-        var wi = d * liftK * bias; // depth-weighted
-        w[i] = wi;
-        sumW += wi;
-      }
-
-      if (sumW <= 1e-6f)
-      {
-        // Nothing submerged: clear vertical accel to avoid spikes
-        for (var i = 0; i < n; i++)
-        {
-          var f = forces[i];
-          f.Acceleration.y = 0f;
-          forces[i] = f;
-        }
-        return;
-      }
-
-      // --- 2) Base allocation (no caps) ---
-      var alloc = new float[n];
-      for (var i = 0; i < n; i++) alloc[i] = w[i] / sumW * targetUpAccel;
-
-      // --- 3) Cap & redistribute overflow iteratively ---
-      var remaining = targetUpAccel;
-      var active = new bool[n];
-      var activeCount = 0;
-      for (var i = 0; i < n; i++)
-      {
-        active[i] = w[i] > 0f;
-        if (active[i]) activeCount++;
-      }
-
-      // initial clamp + compute remaining budget
-      for (var i = 0; i < n; i++)
-      {
-        if (!active[i])
-        {
-          alloc[i] = 0f;
-          continue;
-        }
-        if (alloc[i] > maxPerPointAccel)
-        {
-          remaining -= maxPerPointAccel;
-          alloc[i] = maxPerPointAccel;
-          active[i] = false;
-          activeCount--;
-        }
-        else remaining -= alloc[i];
-      }
-
-      // redistribute any leftover to still-active points by their weights
-      var guard = 0;
-      while (remaining > 1e-4f && activeCount > 0 && guard++ < 8)
-      {
-        var sumWActive = 0f;
-        for (var i = 0; i < n; i++)
-          if (active[i])
-            sumWActive += w[i];
-        if (sumWActive <= 1e-6f) break;
-
-        var gave = 0f;
-        for (var i = 0; i < n; i++)
-        {
-          if (!active[i]) continue;
-          var give = remaining * (w[i] / sumWActive);
-          var room = maxPerPointAccel - alloc[i];
-          if (give >= room)
-          {
-            give = room;
-            active[i] = false;
-            activeCount--;
-          }
-          alloc[i] += give;
-          gave += give;
-        }
-        remaining -= gave;
-      }
-
-      // --- 4) Add vertical damping (opposes up/down velocity), then re-hit target ---
-      var sumUp = 0f;
-      for (var i = 0; i < n; i++)
-      {
-        var f = forces[i];
-        var baseUp = alloc[i];
-
-        // estimate point velocity (caller used m_body.GetPointVelocity when building forces)
-        // if you still have f.Acceleration from a previous step, zero its Y now:
-        f.Acceleration.y = 0f;
-
-        // damping scales with submergence factor (reuse weight proxy)
-        var subK = Mathf.Clamp01(w[i] / (maxDepth * bottomBias + 1e-3f));
-        var dampY = 0f;
-        if (subK > 0f)
-        {
-          // getPointVelocity again would be extra call; if you cached it, use it; else approximate with rb.linearVelocity.y
-          var vY = m_body.linearVelocity.y;
-          dampY = -verticalDampingPerSec * subK * vY; // (m/s^2)
-        }
-
-        var ay = baseUp + dampY;
-
-        // keep per-point cap after damping too
-        ay = Mathf.Clamp(ay, -maxPerPointAccel, maxPerPointAccel);
-        f.Acceleration += new Vector3(0f, ay, 0f);
-        forces[i] = f;
-        if (ay > 0f) sumUp += ay;
-      }
-
-      // --- 5) Final small rescale so net up = target ---
-      if (sumUp > 1e-4f)
-      {
-        var scale = targetUpAccel / sumUp;
-        if (scale < 0.99f || scale > 1.01f)
-        {
-          for (var i = 0; i < n; i++)
-          {
-            var f = forces[i];
-            if (f.Acceleration.y > 0f)
-            {
-              f.Acceleration *= scale; // scale all components to preserve moments
-              forces[i] = f;
-            }
-          }
-        }
-      }
-    }
-
-
-// in FixedUpdate water branch:
-    private void ApplyWaterBuoyancy()
-    {
-      if (PiecesController == null || PiecesController.convexHullComponent == null || m_body == null) return;
-
-      var hullBounds = PiecesController.convexHullComponent.GetConvexHullBounds(true); // local bounds
-      if (_buoyancyLocalPoints.Count == 0 || !_buoyancyHullBounds.Equals(hullBounds))
-        RebuildBuoyancyPoints(hullBounds);
-
-      var g = Physics.gravity.magnitude;
-      var vCoM = m_body.linearVelocity.y; // Unity 6
-      var targetUp = g;
-
-      float SampleWater(Vector3 wp)
-      {
-        return ZoneSystem.instance.m_waterLevel;
-      } // plug waves later
-
-      Vector3 PointVelocity(Vector3 wp)
-      {
-        return m_body.GetPointVelocity(wp);
-      }
-
-      var scalar = _currentShipFloatation.HasValue
-        ? Mathf.Max(0.25f, _currentShipFloatation.Value.BuoyancySpeedMultiplier)
-        : 1f;
-
-      BuoyancySolver.ComputePointForces(
-        buoyancy,
-        Time.fixedDeltaTime,
-        transform,
-        _buoyancyLocalPoints,
-        _buoyancyHullBounds,
-        SampleWater, // worldPos -> waterY
-        PointVelocity, // worldPos -> rb.GetPointVelocity(worldPos)
-        m_body.worldCenterOfMass,
-        m_body.angularVelocity,
-        Mathf.Max(1f, m_body.mass),
-        scalar, // your BuoyancySpeedMultiplier-ish factor
-        _buoyancyRuntime,
-        _buoyancyForces,
-        vCoM // <- NEW (already in earlier patch)
+      // principal frame rotation (world) ~ R = rotation * inertiaTensorRotation
+      var q = m_body.rotation * m_body.inertiaTensorRotation;
+      // to principal space
+      var tauP = Quaternion.Inverse(q) * tauWorld;
+      var I = m_body.inertiaTensor;
+      // element-wise divide (avoid div-by-zero)
+      var alphaP = new Vector3(
+        tauP.x / Mathf.Max(I.x, 1e-3f),
+        tauP.y / Mathf.Max(I.y, 1e-3f),
+        tauP.z / Mathf.Max(I.z, 1e-3f)
       );
-
-      DistributeBalancedLift(
-        _buoyancyForces,
-        _buoyancyRuntime,
-        _buoyancyHullBounds,
-        targetUp,
-        5.0f, // try 4–6 for small craft; 6–9 larger craft
-        1.4f, // 1.2–1.7 typical
-        3.5f // 2.5–5 typical
-      );
-
-
-      ApplyRightingBalance(_buoyancyForces, 800f, 120f, 10f);
-
-      for (var i = 0; i < _buoyancyForces.Count; i++)
-      {
-        var f = _buoyancyForces[i];
-        m_body.AddForceAtPosition(f.Acceleration, f.WorldPosition, ForceMode.Acceleration);
-      }
-
-      if (CanDebugBouyancyForces && _buoyancyForces.Count > 0)
-      {
-        DebugBuoyancyForces(_buoyancyForces, _buoyancyRuntime);
-      }
+      // back to world
+      return q * alphaP;
     }
-
-    public static bool CanDebugBouyancyForces = false;
-
-#if DEBUG
-    private void DebugBuoyancyForces(
-      IReadOnlyList<BuoyancyPointForce> forces,
-      BuoyancyRuntimeState runtime)
+    public void UpdateWaterForce(ShipFloatation shipFloatation)
     {
-      if (forces == null || forces.Count == 0) return;
+      var shipLeft = shipFloatation.ShipLeft;
+      var shipForward = shipFloatation.ShipForward;
+      var shipBack = shipFloatation.ShipBack;
+      var shipRight = shipFloatation.ShipRight;
+      var waterLevelLeft = shipFloatation.WaterLevelLeft;
+      var waterLevelRight = shipFloatation.WaterLevelRight;
+      var waterLevelForward = shipFloatation.WaterLevelForward;
+      var waterLevelBack = shipFloatation.WaterLevelBack;
+      var currentDepth = shipFloatation.CurrentDepth;
+      var worldCenterOfMass = m_body.worldCenterOfMass;
 
-      var sb = new System.Text.StringBuilder(256);
-      sb.AppendLine($"[Buoyancy Debug] Points={forces.Count}");
+      if (shipFloatation.IsAboveBuoyantLevel) return;
 
-      var totalUp = 0f;
+      m_body.WakeUp();
 
-      for (var i = 0; i < forces.Count; i++)
+      // TODO swap with damage from environment such as ashlands
+      // if (m_waterImpactDamage > 0f)
+      //   UpdateWaterImpactForce(currentDepth, Time.fixedDeltaTime);
+
+      // Calculate the forces for left, right, forward, and backward directions
+      var leftForce = new Vector3(shipLeft.x, waterLevelLeft, shipLeft.z);
+      var rightForce = new Vector3(shipRight.x, waterLevelRight, shipRight.z);
+      var forwardForce =
+        new Vector3(shipForward.x, waterLevelForward, shipForward.z);
+      var backwardForce = new Vector3(shipBack.x, waterLevelBack, shipBack.z);
+
+      // Get fixedDeltaTime and the delta force multiplier
+      var deltaForceMultiplier =
+        Time.fixedDeltaTime * PhysicsConfig.waterDeltaForceMultiplier.Value;
+
+      // Calculate the current depth force multiplier
+      var currentDepthForceMultiplier =
+        Mathf.Clamp01(currentDepth /
+                      PhysicsConfig.forceDistance.Value);
+
+      // Calculate the target upwards force based on the current depth
+      var upwardForceVector = Vector3.up * PhysicsConfig.force.Value *
+                              currentDepthForceMultiplier;
+
+      // Apply the smoothed upwards force
+      AddForceAtPosition(upwardForceVector, worldCenterOfMass,
+        PhysicsConfig.floatationVelocityMode.Value);
+
+      // sideways force
+
+      if (!CanRunSidewaysWaterForceUpdate) return;
+
+
+      var forwardUpwardForce = Mathf.Clamp(
+        (forwardForce.y - shipForward.y) * GetDirectionalForce(), 0f - maxForce,
+        maxForce);
+      var backwardsUpwardForce = Mathf.Clamp(
+        (backwardForce.y - shipBack.y) * GetDirectionalForce(), 0f - maxForce,
+        maxForce);
+      var leftUpwardForce =
+        Mathf.Clamp((leftForce.y - shipLeft.y) * GetDirectionalForce(),
+          0f - maxForce, maxForce);
+      var rightUpwardForce = Mathf.Clamp(
+        (rightForce.y - shipRight.y) * GetDirectionalForce(),
+        0f - maxForce, maxForce);
+
+      forwardUpwardForce = Mathf.Sign(forwardUpwardForce) *
+                           Mathf.Abs(Mathf.Pow(forwardUpwardForce, 2f));
+      backwardsUpwardForce = Mathf.Sign(backwardsUpwardForce) *
+                             Mathf.Abs(Mathf.Pow(backwardsUpwardForce, 2f));
+      leftUpwardForce = Mathf.Sign(leftUpwardForce) *
+                        Mathf.Abs(Mathf.Pow(leftUpwardForce, 2f));
+      rightUpwardForce = Mathf.Sign(rightUpwardForce) *
+                         Mathf.Abs(Mathf.Pow(rightUpwardForce, 2f));
+
+      var centerOffMassDifference = Vector3.up * localCenterOfMassOffset * centerOfMassForceOffsetDifferenceMultiplier;
+
+      if (CanRunForwardWaterForce)
+        AddForceAtPosition(Vector3.up * forwardUpwardForce * deltaForceMultiplier,
+          shipForward - centerOffMassDifference,
+          ForceMode.Acceleration);
+
+      if (CanRunBackWaterForce)
+        AddForceAtPosition(
+          Vector3.up * backwardsUpwardForce * deltaForceMultiplier, shipBack - centerOffMassDifference,
+          ForceMode.Acceleration);
+
+      if (CanRunLeftWaterForce)
+        AddForceAtPosition(Vector3.up * leftUpwardForce * deltaForceMultiplier,
+          shipLeft - centerOffMassDifference,
+          ForceMode.Acceleration);
+      if (CanRunRightWaterForce)
+        AddForceAtPosition(Vector3.up * rightUpwardForce * deltaForceMultiplier,
+          shipRight - centerOffMassDifference,
+          ForceMode.Acceleration);
+    }
+
+
+    public void UpdateWaterForceNew(ShipFloatation shipFloatation)
+    {
+      var currentDepth = shipFloatation.CurrentDepth;
+      var worldCenterOfMass = m_body.worldCenterOfMass;
+      var shipLeft = shipFloatation.ShipLeft;
+      var shipForward = shipFloatation.ShipForward;
+      var shipBack = shipFloatation.ShipBack;
+      var shipRight = shipFloatation.ShipRight;
+      var waterLevelLeft = shipFloatation.WaterLevelLeft;
+      var waterLevelRight = shipFloatation.WaterLevelRight;
+      var waterLevelForward = shipFloatation.WaterLevelForward;
+      var waterLevelBack = shipFloatation.WaterLevelBack;
+      var worldCoM = m_body.worldCenterOfMass;
+
+      if (shipFloatation.IsAboveBuoyantLevel) return;
+
+      m_body.WakeUp();
+
+      // Calculate the current depth force multiplier
+      var currentDepthForceMultiplier =
+        Mathf.Clamp01(currentDepth /
+                      PhysicsConfig.forceDistance.Value);
+
+      // Calculate the target upwards force based on the current depth
+      var upwardForceVector = Vector3.up * PhysicsConfig.force.Value *
+                              currentDepthForceMultiplier;
+
+      // Apply the smoothed upwards force
+      AddForceAtPosition(upwardForceVector, worldCenterOfMass,
+        PhysicsConfig.floatationVelocityMode.Value);
+
+      // --- Build the same virtual up-forces from your four points (exactly as you already do) ---
+      var leftForceVec = new Vector3(shipLeft.x, waterLevelLeft, shipLeft.z);
+      var rightForceVec = new Vector3(shipRight.x, waterLevelRight, shipRight.z);
+      var fwdForceVec = new Vector3(shipForward.x, waterLevelForward, shipForward.z);
+      var backForceVec = new Vector3(shipBack.x, waterLevelBack, shipBack.z);
+
+      float DirForce(float waterY, float shipY)
       {
-        var f = forces[i];
-        var depth = i < runtime.SmoothedDepths.Count ? runtime.SmoothedDepths[i] : 0f;
-        var accel = f.Acceleration;
-        totalUp += accel.y;
-
-        // Compact JSON-style output for easy copy/paste
-        sb.AppendLine(
-          $"{{i:{i}, depth:{depth:F3}, accelY:{accel.y:F3}, accelMag:{accel.magnitude:F3}, pos:({f.WorldPosition.x:F2},{f.WorldPosition.y:F2},{f.WorldPosition.z:F2})}}");
+        // keep your clamp & sign (you can include the squaring if you like the feel)
+        var f = Mathf.Clamp((waterY - shipY) * GetDirectionalForce(), -maxForce, maxForce);
+        return Mathf.Sign(f) * Mathf.Abs(f * f);
       }
 
-      var avgUp = totalUp / forces.Count;
-      sb.AppendLine($"totalUp:{totalUp:F3} avgUp:{avgUp:F3}");
-      LoggerProvider.LogDebug(sb.ToString());
-    }
-#endif
+      var upL = DirForce(leftForceVec.y, shipLeft.y);
+      var upR = DirForce(rightForceVec.y, shipRight.y);
+      var upF = DirForce(fwdForceVec.y, shipForward.y);
+      var upB = DirForce(backForceVec.y, shipBack.y);
 
+// Optionally time-scale the contribution if you want to mimic your force path
+      var waveScale = forceToTorqueScale; // (try 1..10); usually you DO NOT multiply by deltaTime here for accelerations
+
+// --- Accumulate WAVE torque, then convert to angular acceleration ---
+      var tauWave = Vector3.zero;
+
+      void Acc(Vector3 p, float fUp)
+      {
+        if (Mathf.Abs(fUp) <= 1e-6f) return;
+        var r = p - worldCoM;
+        var F = Vector3.up * (fUp * waveScale);
+        tauWave += Vector3.Cross(r, F);
+      }
+
+      Acc(shipLeft, upL);
+      Acc(shipRight, upR);
+      Acc(shipForward, upF);
+      Acc(shipBack, upB);
+
+// Convert that torque to angular acceleration in world space
+      var alphaWave = TorqueToAngularAccel(tauWave);
+
+// --- PD stabilizer directly in angular-acceleration space (independent of inertia) ---
+      var upHull = transform.up;
+      var c = Vector3.Cross(upHull, Vector3.up);
+      var sinT = c.magnitude;
+      var cosT = Mathf.Clamp(Vector3.Dot(upHull, Vector3.up), -1f, 1f);
+      var angle = Mathf.Atan2(sinT, cosT); // radians
+      var axisN = sinT > 1e-6f ? c / sinT : Vector3.right;
+
+// Damping: only roll/pitch (remove yaw so we don't fight steering)
+      var angNoYaw = Vector3.ProjectOnPlane(m_body.angularVelocity, Vector3.up);
+
+// PD angular acceleration
+      var kp = aKp > 0f ? aKp : 6f;
+      var kd = aKd >= 0f ? aKd : 2.5f;
+      var alphaPD = axisN * (kp * angle) - kd * angNoYaw;
+
+// --- Combine, remove yaw, clamp per-axis (in angular-accel space), slew, apply ---
+      var alpha = alphaWave + alphaPD;
+
+// remove any yaw component
+      alpha -= Vector3.Project(alpha, Vector3.up);
+
+// in-plane clamp (about two orthonormal axes in the roll/pitch plane)
+      var a1 = Vector3.ProjectOnPlane(transform.right, Vector3.up).normalized;
+      if (a1.sqrMagnitude < 1e-4f) a1 = Vector3.ProjectOnPlane(transform.forward, Vector3.up).normalized;
+      var a2 = Vector3.Cross(Vector3.up, a1).normalized;
+
+      var c1 = Mathf.Clamp(Vector3.Dot(alpha, a1), -aMax, aMax);
+      var c2 = Mathf.Clamp(Vector3.Dot(alpha, a2), -aMax, aMax);
+      alpha = a1 * c1 + a2 * c2;
+
+// optional slew (smooth changes in angular acceleration request)
+      if (alphaSlewPerSec > 0f)
+      {
+        var step = alphaSlewPerSec * Time.fixedDeltaTime;
+        alpha = Vector3.MoveTowards(_lastAlpha, alpha, step);
+      }
+      _lastAlpha = alpha;
+
+// Apply as ANGULAR ACCELERATION (mass/inertia independent)
+      m_body.AddTorque(alpha, ForceMode.Acceleration);
+    }
 
     public void UpdateShipFloatation(ShipFloatation shipFloatation)
     {
       var vehicleState = IsSubmerged() ? VehiclePhysicsState.Sea : VehiclePhysicsState.Submerged;
       UpdateVehicleStats(vehicleState);
 
-      ApplyWaterBuoyancy();
-
-      if (CanApplyWaterEdgeForce) ApplyEdgeForce(Time.fixedDeltaTime);
+      UpdateWaterForce(shipFloatation);
 
       if (HasOceanSwayDisabled)
       {
@@ -3606,13 +3492,18 @@
         : EnvMan.instance.GetWindDir();
       var windAngleFactorInterpolated = GetInterpolatedWindAngleFactor();
 
-      Vector3 target;
-      if (isFlying)
-        target = Vector3.Normalize(ShipDirection.forward) *
-                 (windAngleFactorInterpolated * m_sailForceFactor * sailSize);
-      else
-        target = Vector3.Normalize(windDir + ShipDirection.forward) *
-                 GetSailForceEnergy(sailSize, windAngleFactorInterpolated);
+      var target = Vector3.Normalize(ShipDirection.forward) *
+                   (windAngleFactorInterpolated * m_sailForceFactor * sailSize);
+
+      // TODO determine if we ever want to use this winddirection force again.
+      // Vector3 target;
+
+      // if (isFlying)
+      //   target = Vector3.Normalize(ShipDirection.forward) *
+      //            (windAngleFactorInterpolated * m_sailForceFactor * sailSize);
+      // else
+      //   target = Vector3.Normalize(windDir + ShipDirection.forward) *
+      //            GetSailForceEnergy(sailSize, windAngleFactorInterpolated);
 
       m_sailForce = Vector3.SmoothDamp(m_sailForce, target,
         ref m_windChangeVelocity, 1f, 99f);
