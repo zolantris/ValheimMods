@@ -149,9 +149,12 @@ public class PhysicsConfig : BepInExBaseConfig<PhysicsConfig>
   /// </summary>
   private static void ForceSetVehiclePhysics(ConfigEntry<ForceMode> entry)
   {
-    if (ModEnvironment.IsRelease) return;
-    if (entry.Value != ForceMode.VelocityChange)
-      entry.Value = ForceMode.VelocityChange;
+    if (ModEnvironment.IsRelease)
+    {
+      if (entry.Value != ForceMode.VelocityChange)
+        entry.Value = ForceMode.VelocityChange;
+      return;
+    }
   }
 
   private static void ForceSetAllVehiclePhysics()
@@ -365,7 +368,7 @@ public class PhysicsConfig : BepInExBaseConfig<PhysicsConfig>
         true, true));
 
     floatationVelocityMode = config.BindUnique(VelocityModeSectionKey,
-      "floatationVelocityMode", ForceMode.VelocityChange,
+      "floatationVelocityMode", ForceMode.Acceleration,
       ConfigHelpers.CreateConfigDescription(
         "EXPERIMENTAL VelocityMode changeable in debug only. Override so mass and vehicle size are accounted for",
         true, true));
