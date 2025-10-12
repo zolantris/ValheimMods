@@ -2240,120 +2240,108 @@
 
       m_body.WakeUp();
 
-      // TODO swap with damage from environment such as ashlands
-      // if (m_waterImpactDamage > 0f)
-      //   UpdateWaterImpactForce(currentDepth, Time.fixedDeltaTime);
+      // Calculate depth-based force multiplier for smooth transitions
+      var currentDepthForceMultiplier = Mathf.Clamp01(currentDepth / PhysicsConfig.forceDistance.Value);
+      var deltaForceMultiplier = Time.fixedDeltaTime * PhysicsConfig.waterDeltaForceMultiplier.Value;
 
-      // Calculate the forces for left, right, forward, and backward directions
-      var leftForce = new Vector3(shipLeft.x, waterLevelLeft, shipLeft.z);
-      var rightForce = new Vector3(shipRight.x, waterLevelRight, shipRight.z);
-      var forwardForce =
-        new Vector3(shipForward.x, waterLevelForward, shipForward.z);
-      var backwardForce = new Vector3(shipBack.x, waterLevelBack, shipBack.z);
-
-      // Get fixedDeltaTime and the delta force multiplier
-      var deltaForceMultiplier =
-        Time.fixedDeltaTime * PhysicsConfig.waterDeltaForceMultiplier.Value;
-
-      // Calculate the current depth force multiplier
-      var currentDepthForceMultiplier =
-        Mathf.Clamp01(currentDepth /
-                      PhysicsConfig.forceDistance.Value);
-
-      // Calculate the target upwards force based on the current depth
-      var upwardForceVector = Vector3.up * PhysicsConfig.force.Value *
-                              currentDepthForceMultiplier;
-
-      // Apply the smoothed upwards force
-      AddForceAtPosition(upwardForceVector, worldCenterOfMass,
-        PhysicsConfig.floatationVelocityMode.Value);
-
-      // sideways force
+      // === Central Buoyancy Force ===
+      // Apply smooth upward force based on submersion depth
+      var upwardForceVector = Vector3.up * PhysicsConfig.force.Value * currentDepthForceMultiplier;
+      AddForceAtPosition(upwardForceVector, worldCenterOfMass, PhysicsConfig.floatationVelocityMode.Value);
 
       if (!CanRunSidewaysWaterForceUpdate) return;
 
-      // todo rename variables for this section to something meaningful
-      // todo abstract this to a method
-      var forward = ShipDirection.forward;
-      var deltaForward = Vector3.Dot(m_body.linearVelocity, forward);
-      var right = ShipDirection.right;
-      var deltaRight = Vector3.Dot(m_body.linearVelocity, right);
+      // === Velocity Damping (Water Resistance) ===
+      // Use AddForce instead of direct velocity manipulation for proper physics
       var velocity = m_body.linearVelocity;
-      var deltaUp = velocity.y * velocity.y * Mathf.Sign(velocity.y) * m_damping *
-                    currentDepthForceMultiplier;
+      var forward = ShipDirection.forward;
+      var right = ShipDirection.right;
 
-      var deltaForwardClamp = deltaForward * deltaForward *
-                              Mathf.Sign(deltaForward) *
-                              m_dampingForward *
-                              currentDepthForceMultiplier;
+      // Calculate velocity-based damping forces (water resistance)
+      var forwardVelocity = Vector3.Dot(velocity, forward);
+      var rightVelocity = Vector3.Dot(velocity, right);
+      var upwardVelocity = velocity.y;
 
-      // the water pushes the boat in the direction of the wind (sort of). Higher multipliers of m_dampingSideway will actually decrease this effect.
-      var deltaRightClamp = deltaRight * deltaRight * Mathf.Sign(deltaRight) *
-                            m_dampingSideway *
-                            currentDepthForceMultiplier;
+      // Apply quadratic damping for realistic water resistance
+      var forwardDampingForce = -forward * (forwardVelocity * Mathf.Abs(forwardVelocity) * m_dampingForward * currentDepthForceMultiplier);
+      var sidewaysDampingForce = -right * (rightVelocity * Mathf.Abs(rightVelocity) * m_dampingSideway * currentDepthForceMultiplier);
+      var upwardDampingForce = -Vector3.up * (upwardVelocity * Mathf.Abs(upwardVelocity) * m_damping * currentDepthForceMultiplier);
 
-      // todo might want to remove this clamp as it could throttle things too much.
-      velocity.y -= Mathf.Clamp(deltaUp, -1f, 1f);
+      // Apply damping forces using physics (not direct velocity manipulation)
+      m_body.AddForce(forwardDampingForce, ForceMode.Acceleration);
+      m_body.AddForce(sidewaysDampingForce, ForceMode.Acceleration);
+      m_body.AddForce(upwardDampingForce, ForceMode.Acceleration);
 
-      velocity -= forward * Mathf.Clamp(deltaForwardClamp, -1f, 1f);
-      velocity -= right * Mathf.Clamp(deltaRightClamp, -1f, 1f);
+      // === Angular Damping (Rotation Resistance) with Sway Reduction ===
+      var swayMultiplier = PhysicsConfig.waterSwayDampingMultiplier.Value;
+      var angularDampingForce = -m_body.angularVelocity * m_angularDamping * currentDepthForceMultiplier * swayMultiplier;
+      m_body.AddTorque(angularDampingForce, ForceMode.Acceleration);
 
-      if (velocity.magnitude > m_body.linearVelocity.magnitude)
-        velocity = velocity.normalized * m_body.linearVelocity.magnitude;
+      // === Directional Balancing Forces with Tapering ===
+      // Calculate water level differences (how far each corner is from equilibrium)
+      var forwardDiff = waterLevelForward - shipForward.y;
+      var backDiff = waterLevelBack - shipBack.y;
+      var leftDiff = waterLevelLeft - shipLeft.y;
+      var rightDiff = waterLevelRight - shipRight.y;
 
-      m_body.linearVelocity = velocity;
-      var angularVelocity = m_body.angularVelocity;
-      angularVelocity -=
-        angularVelocity * m_angularDamping * currentDepthForceMultiplier;
-      m_body.angularVelocity = angularVelocity;
+      // Apply force tapering near equilibrium to prevent jitter
+      var threshold = PhysicsConfig.waterBalancingForceThreshold.Value;
+      var taperRange = PhysicsConfig.waterBalancingForceTaperRange.Value;
 
+      var forwardTaper = CalculateForceTaper(Mathf.Abs(forwardDiff), threshold, taperRange);
+      var backTaper = CalculateForceTaper(Mathf.Abs(backDiff), threshold, taperRange);
+      var leftTaper = CalculateForceTaper(Mathf.Abs(leftDiff), threshold, taperRange);
+      var rightTaper = CalculateForceTaper(Mathf.Abs(rightDiff), threshold, taperRange);
 
-      var forwardUpwardForce = Mathf.Clamp(
-        (forwardForce.y - shipForward.y) * GetDirectionalForce(), 0f - maxForce,
-        maxForce);
-      var backwardsUpwardForce = Mathf.Clamp(
-        (backwardForce.y - shipBack.y) * GetDirectionalForce(), 0f - maxForce,
-        maxForce);
-      var leftUpwardForce =
-        Mathf.Clamp((leftForce.y - shipLeft.y) * GetDirectionalForce(),
-          0f - maxForce, maxForce);
-      var rightUpwardForce = Mathf.Clamp(
-        (rightForce.y - shipRight.y) * GetDirectionalForce(),
-        0f - maxForce, maxForce);
+      // Calculate base forces with clamping to prevent extreme values
+      var directionalForce = GetDirectionalForce();
+      var forwardForce = Mathf.Clamp(forwardDiff * directionalForce * forwardTaper, -maxForce, maxForce);
+      var backForce = Mathf.Clamp(backDiff * directionalForce * backTaper, -maxForce, maxForce);
+      var leftForce = Mathf.Clamp(leftDiff * directionalForce * leftTaper, -maxForce, maxForce);
+      var rightForce = Mathf.Clamp(rightDiff * directionalForce * rightTaper, -maxForce, maxForce);
 
-      forwardUpwardForce = Mathf.Sign(forwardUpwardForce) *
-                           Mathf.Abs(Mathf.Pow(forwardUpwardForce, 2f));
-      backwardsUpwardForce = Mathf.Sign(backwardsUpwardForce) *
-                             Mathf.Abs(Mathf.Pow(backwardsUpwardForce, 2f));
-      leftUpwardForce = Mathf.Sign(leftUpwardForce) *
-                        Mathf.Abs(Mathf.Pow(leftUpwardForce, 2f));
-      rightUpwardForce = Mathf.Sign(rightUpwardForce) *
-                         Mathf.Abs(Mathf.Pow(rightUpwardForce, 2f));
+      // Apply sway reduction to balancing forces (reduces rotational component)
+      var balancingSwayReduction = Mathf.Lerp(1.0f, 0.3f, 1.0f - swayMultiplier);
+      forwardForce *= balancingSwayReduction;
+      backForce *= balancingSwayReduction;
+      leftForce *= balancingSwayReduction;
+      rightForce *= balancingSwayReduction;
 
+      // Center of mass offset for force application
       var centerOffMassDifference = Vector3.up * localCenterOfMassOffset * centerOfMassForceOffsetDifferenceMultiplier;
 
+      // Apply balancing forces at corner positions (creates torque for self-righting)
       if (CanRunForwardWaterForce)
-        AddForceAtPosition(Vector3.up * forwardUpwardForce * deltaForceMultiplier,
-          shipForward - centerOffMassDifference,
-          PhysicsConfig.rudderVelocityMode.Value);
+        AddForceAtPosition(Vector3.up * forwardForce * deltaForceMultiplier,
+          shipForward - centerOffMassDifference, PhysicsConfig.rudderVelocityMode.Value);
 
       if (CanRunBackWaterForce)
-        AddForceAtPosition(
-          Vector3.up * backwardsUpwardForce * deltaForceMultiplier, shipBack - centerOffMassDifference,
-          PhysicsConfig.rudderVelocityMode.Value);
+        AddForceAtPosition(Vector3.up * backForce * deltaForceMultiplier,
+          shipBack - centerOffMassDifference, PhysicsConfig.rudderVelocityMode.Value);
 
       if (CanRunLeftWaterForce)
-        AddForceAtPosition(Vector3.up * leftUpwardForce * deltaForceMultiplier,
-          shipLeft - centerOffMassDifference,
-          PhysicsConfig.rudderVelocityMode.Value);
-      if (CanRunRightWaterForce)
-        AddForceAtPosition(Vector3.up * rightUpwardForce * deltaForceMultiplier,
-          shipRight - centerOffMassDifference,
-          PhysicsConfig.rudderVelocityMode.Value);
+        AddForceAtPosition(Vector3.up * leftForce * deltaForceMultiplier,
+          shipLeft - centerOffMassDifference, PhysicsConfig.rudderVelocityMode.Value);
 
-      // likely for balancing vehicle more.
-      ApplyEdgeForce(Time.fixedDeltaTime);
+      if (CanRunRightWaterForce)
+        AddForceAtPosition(Vector3.up * rightForce * deltaForceMultiplier,
+          shipRight - centerOffMassDifference, PhysicsConfig.rudderVelocityMode.Value);
     }
+    /// <summary>
+    /// Calculates force tapering multiplier based on distance from equilibrium.
+    /// Returns 1.0 at full range, 0.0 at threshold, with smooth interpolation between.
+    /// Prevents jitter by reducing forces as vehicle approaches balanced state.
+    /// </summary>
+    private float CalculateForceTaper(float distance, float threshold, float taperRange)
+    {
+      if (distance < threshold) return 0f; // Within dead zone, no force
+      if (distance > threshold + taperRange) return 1f; // Beyond taper range, full force
+
+      // Smooth interpolation within taper range
+      var taperProgress = (distance - threshold) / taperRange;
+      return Mathf.SmoothStep(0f, 1f, taperProgress);
+    }
+
 
     public void UpdateShipFloatation(ShipFloatation shipFloatation)
     {

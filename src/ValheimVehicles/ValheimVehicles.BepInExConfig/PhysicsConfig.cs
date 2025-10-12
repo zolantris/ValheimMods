@@ -50,6 +50,11 @@ public class PhysicsConfig : BepInExBaseConfig<PhysicsConfig>
   public static ConfigEntry<float> waterAngularDrag = null!;
   public static ConfigEntry<float> waterDeltaForceMultiplier = null!;
 
+  // Sway reduction configs
+  public static ConfigEntry<float> waterSwayDampingMultiplier = null!;
+  public static ConfigEntry<float> waterBalancingForceThreshold = null!;
+  public static ConfigEntry<float> waterBalancingForceTaperRange = null!;
+
   public static ConfigEntry<float> submersibleAngularDamping = null!;
   public static ConfigEntry<float> submersibleSidewaysDamping = null!;
   public static ConfigEntry<float> submersibleDamping = null!;
@@ -403,6 +408,29 @@ public class PhysicsConfig : BepInExBaseConfig<PhysicsConfig>
       "waterDeltaForceMultiplier", 50f,
       ConfigHelpers.CreateConfigDescription("Water delta force multiplier",
         true, true, waterForceDeltaMultiplierRange));
+
+    // Sway reduction and stabilization configs
+    waterSwayDampingMultiplier = config.BindUnique(SectionKey,
+      "waterSwayDampingMultiplier", 1.0f,
+      ConfigHelpers.CreateConfigDescription(
+        "Reduces rotational sway (rocking/tilting) without disabling ocean sway entirely. Lower values (0.1-0.5) significantly reduce sway while maintaining upward buoyancy. Higher values (1.5-3.0) increase sway for debugging. Default 1.0 = normal sway. Works independently from HasOceanSwayDisabled.",
+        true, true, new AcceptableValueRange<float>(0.1f, 5.0f)));
+
+    waterBalancingForceThreshold = config.BindUnique(SectionKey,
+      "waterBalancingForceThreshold", 0.15f,
+      ConfigHelpers.CreateConfigDescription(
+        "Distance threshold (in meters) where balancing forces start tapering off as vehicle approaches equilibrium. Prevents jitter when vehicle is nearly balanced. Lower values = smoother but slower balancing. Higher values = faster balancing but more oscillation. Recommended: 0.1-0.3",
+        true, true, new AcceptableValueRange<float>(0.05f, 1.0f)));
+
+    waterBalancingForceTaperRange = config.BindUnique(SectionKey,
+      "waterBalancingForceTaperRange", 0.5f,
+      ConfigHelpers.CreateConfigDescription(
+        "Range (in meters) over which balancing forces gradually taper from full strength to zero. Creates smooth force reduction near equilibrium. Higher values = more gradual tapering (smoother). Lower values = steeper tapering (more responsive). Recommended: 0.3-0.8",
+        true, true, new AcceptableValueRange<float>(0.1f, 2.0f)));
+
+    waterSwayDampingMultiplier.SettingChanged += OnPhysicsChangeForceUpdateAllVehiclePhysics;
+    waterBalancingForceThreshold.SettingChanged += OnPhysicsChangeForceUpdateAllVehiclePhysics;
+    waterBalancingForceTaperRange.SettingChanged += OnPhysicsChangeForceUpdateAllVehiclePhysics;
 
     MaxAngularVelocity.SettingChanged += (sender, args) =>
       VehicleMovementController.Instances.ForEach(x =>
