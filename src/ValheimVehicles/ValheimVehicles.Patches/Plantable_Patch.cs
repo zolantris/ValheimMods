@@ -147,6 +147,10 @@ public class Plantable_Patch
     return false;
   }
 
+#region DEBUG ONLY CODE - REMOVE FOR RELEASE related to instant plant growth
+
+#if DEBUG
+
   public static bool AllowNearInstantGrowTime = true;
   public static bool EnablePlantUpdateDebugLogging = true;
 
@@ -198,4 +202,9 @@ public class Plantable_Patch
       __result = 3600.0;
     }
   }
+
+#endif
+
+#endregion
+
 }
