@@ -2169,7 +2169,7 @@
       }
     }
 
-    public void TryWriteChunkBoundsData()
+    public void TryWriteChunkBoundsData(HashSet<VehicleChunkController.VehicleChunkSizeData>? currentData)
     {
       if (m_nview == null) return;
       if (!m_nview.HasOwner())
@@ -2180,9 +2180,8 @@
       var zdo = m_nview.GetZDO();
       if (zdo == null) return;
 
-      var currentData = ReadChunkBoundsData(zdo);
-
-      // if (currentData)
+      // always ensure we do not lose data
+      currentData ??= ReadChunkBoundsData(zdo);
 
       var stream = new MemoryStream();
       var writer = new BinaryWriter(stream);
@@ -2201,13 +2200,12 @@
       zdo.Set(VehicleZdoVars.VehicleChunkBounds, stream.ToArray());
     }
 
-    public static List<VehicleChunkController.VehicleChunkSizeData> ReadChunkBoundsData(ZDO zdo)
+    public static HashSet<VehicleChunkController.VehicleChunkSizeData> ReadChunkBoundsData(ZDO zdo)
     {
       var byteArray = zdo.GetByteArray(VehicleZdoVars.VehicleChunkBounds);
       if (byteArray == null)
       {
-        LoggerProvider.LogDebug($"ReadChunkBoundsData no byteArray fo: {version}");
-
+        LoggerProvider.LogDebug("ReadChunkBoundsData as no byte array.");
         return [];
       }
       var stream = new MemoryStream(byteArray);
@@ -2221,7 +2219,7 @@
       var count = reader.ReadInt32();
       if (count == 0) return [];
 
-      var output = new List<VehicleChunkController.VehicleChunkSizeData>();
+      var output = new HashSet<VehicleChunkController.VehicleChunkSizeData>();
 
       for (var i = 0; i < count; i++)
       {
@@ -2254,18 +2252,11 @@
       var zdo = m_nview.GetZDO();
       if (zdo == null) return;
       var data = ReadChunkBoundsData(zdo);
-      if (pendingChunkData.HasValue) data.RemoveAll(x => x.position == pendingChunkData.Value.position);
-
-      // Regenerate boundary constraint mesh if pieces were added/removed
-      _boundaryConstraint.Clear();
-
-      data.ForEach(x =>
-      {
-        _boundaryConstraint.AddBoundaryPiecePoints(x.position.ToVector3(), x.chunkSize * Vector3.one);
-      });
+      if (pendingChunkData.HasValue) data.RemoveWhere(x => x.position.Equals(pendingChunkData.Value.position));
+      UpdateChunkBoundsData();
     }
 
-    public void AddChunkBoundsData(VehicleChunkController.VehicleChunkSizeData? pendingChunkData)
+    public void AddChunkBoundsData(VehicleChunkController.VehicleChunkSizeData data)
     {
       if (m_nview == null) return;
       if (!m_nview.HasOwner())
@@ -2273,9 +2264,15 @@
         m_nview.ClaimOwnership();
       }
       if (!m_nview.IsOwner()) return;
+      var zdo = m_nview.GetZDO();
+      if (zdo == null) return;
+
+      var currentData = ReadChunkBoundsData(zdo).ToHashSet();
+      currentData.Add(data);
+      TryWriteChunkBoundsData(currentData);
     }
 
-    public void UpdateChunkBoundsData(VehicleChunkController.VehicleChunkSizeData? pendingChunkData)
+    public void UpdateChunkBoundsData()
     {
       if (m_nview == null) return;
       var zdo = m_nview.GetZDO();
@@ -2283,26 +2280,13 @@
 
       var data = ReadChunkBoundsData(zdo);
 
-      if (pendingChunkData.HasValue)
-      {
-        if (m_nview.IsOwner())
-        {
-          AddChunkBoundsData(pendingChunkData.Value);
-        }
-        else
-        {
-          // optimistically update.
-          data.Add(pendingChunkData.Value);
-        }
-      }
-
       // Regenerate boundary constraint mesh if pieces were added/removed
       _boundaryConstraint.Clear();
 
-      data.ForEach(x =>
+      foreach (var x in data)
       {
         _boundaryConstraint.AddBoundaryPiecePoints(x.position.ToVector3(), x.chunkSize * Vector3.one);
-      });
+      }
 
       // Generate boundary constrain mesh now.
       TryGenerateBoundaryConstraintMesh();
@@ -2802,19 +2786,18 @@
       // Check if this is a ship chunk boundary piece
       if (VehicleChunkController.IsShipChunkBoundaryPiece(netView.name))
       {
-        var chunkController = netView.GetComponent<VehicleChunkController>();
-        if (!chunkController)
-        {
-          LoggerProvider.LogWarning("No chunk controller detected");
-          return;
-        }
-        LoggerProvider.LogDebug($"Added ship chunkPiece boundary netView {netView.name}.");
 
-        TryWriteChunkBoundsData();
+        var localPosition = transform.InverseTransformPoint(netView.transform.position);
+        var chunkData = VehicleChunkController.ToChunkSizeData(netView.name, localPosition);
+
+        LoggerProvider.LogDebug($"Added ship chunkPiece boundary netView {netView.name} at localPosition: {localPosition}.");
+
+        // try to update data if applicable
+        AddChunkBoundsData(chunkData);
+        TryWriteChunkBoundsData(null);
 
         // always optimistically update.
-        var chunkData = VehicleChunkController.ToChunkSizeData(chunkController);
-        UpdateChunkBoundsData(chunkData);
+        UpdateChunkBoundsData();
         return;
       }
 
@@ -2921,7 +2904,7 @@
     protected override List<Vector3> ApplyBoundaryConstraints(List<Vector3> points)
     {
       // If no boundary pieces are placed, skip constraint application
-      if (_boundaryConstraint.Count == 0 || !_boundaryConstraint.IsInitialized)
+      if (!_boundaryConstraint.IsInitialized)
       {
         return points;
       }

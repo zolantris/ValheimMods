@@ -3,13 +3,13 @@ using ValheimVehicles.SharedScripts;
 using ValheimVehicles.Storage.Serialization;
 namespace ValheimVehicles.Controllers;
 
-public class VehicleChunkController : MonoBehaviour
+public class VehicleChunkController
 {
   private int chunkSize = 1;
 
   public int ChunkSize => chunkSize;
 
-  public int GetChunkSizeFromPrefabName(string prefabName)
+  public static int GetChunkSizeFromPrefabName(string prefabName)
   {
     if (prefabName.Contains(PrefabNames.ShipChunkBoundary1x1x1))
     {
@@ -61,23 +61,18 @@ public class VehicleChunkController : MonoBehaviour
     return Vector3.one;
   }
 
-  public struct VehicleChunkSizeData
+  public record struct VehicleChunkSizeData
   {
     public SerializableVector3 position;
     public int chunkSize;
   }
 
-  public static VehicleChunkSizeData ToChunkSizeData(VehicleChunkController controller)
+  public static VehicleChunkSizeData ToChunkSizeData(string name, Vector3 localPosition)
   {
     return new VehicleChunkSizeData
     {
-      position = new SerializableVector3(controller.transform.position),
-      chunkSize = controller.GetChunkSizeFromPrefabName(controller.gameObject.name)
+      position = new SerializableVector3(localPosition),
+      chunkSize = GetChunkSizeFromPrefabName(name)
     };
-  }
-
-  public void Awake()
-  {
-    chunkSize = GetChunkSizeFromPrefabName(gameObject.name);
   }
 }
