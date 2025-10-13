@@ -1,10 +1,6 @@
 ﻿#region
 
-  using System;
-  using UnityEngine;
-  using ValheimVehicles.Shared.Constants;
   using ValheimVehicles.SharedScripts.Enums;
-  using Zolantris.Shared;
 
 #endregion
 
@@ -95,6 +91,18 @@
 
       public static readonly string CustomWaterFloatation =
         $"{ValheimVehiclesPrefix}_CustomWaterFloatation";
+
+      public static readonly string ShipChunkBoundary1x1x1 =
+        $"{ValheimVehiclesPrefix}_ShipChunkBoundary1x1x1";
+
+      public static readonly string ShipChunkBoundary4x4x4 =
+        $"{ValheimVehiclesPrefix}_ShipChunkBoundary4x4x4";
+
+      public static readonly string ShipChunkBoundary8x8x8 =
+        $"{ValheimVehiclesPrefix}_ShipChunkBoundary8x8x8";
+
+      public static readonly string ShipChunkBoundary16x16x16 =
+        $"{ValheimVehiclesPrefix}_ShipChunkBoundary16x16x16";
 
       public static readonly string CustomWaterMask =
         $"{ValheimVehiclesPrefix}_CustomWaterMask";
