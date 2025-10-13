@@ -54,6 +54,8 @@ public class VehicleDebugHelpers : MonoBehaviour
   private GameObject? rightCube;
   private GameObject? leftCube;
 
+  private List<GameObject?> hullChunkBoundaryCubes = new();
+
   public static Color OrangeColor = new(1f, 0.647f, 0);
 
   // todo check if there is a conflicting textmesh and push the current one upwards. Recurse until finding a unique point of a specific increment in height.
@@ -66,6 +68,37 @@ public class VehicleDebugHelpers : MonoBehaviour
 
     var shipFloatation = vehicleManagerInstance
       .MovementController.GetShipFloatation();
+
+    var hullBoundaryConstraint = vehicleManagerInstance.PiecesController
+      .HullBoundaryConstraint;
+
+    if (hullBoundaryConstraint.GetObjectsCount > 1)
+    {
+      if (hullBoundaryConstraint.GetObjectsCount != hullChunkBoundaryCubes.Count)
+      {
+        foreach (var cube in hullChunkBoundaryCubes)
+          Destroy(cube);
+        hullChunkBoundaryCubes.Clear();
+
+        // must make list same size
+        for (var i = 0; i < hullBoundaryConstraint.cachedChunkSizeDataItems.Count; i++)
+        {
+          hullChunkBoundaryCubes.Add(null);
+        }
+      }
+      var cubeDataList = hullBoundaryConstraint.cachedChunkSizeDataItems;
+
+      var cubeRenderChunkIndex = 0;
+      foreach (var vehicleChunkSizeData in cubeDataList)
+      {
+
+        var position = vehicleManagerInstance.MovementController.transform.position; // your logic
+        var size = vehicleChunkSizeData.chunkSize * Vector3.one; // your logic for size
+        var listItem = hullChunkBoundaryCubes[cubeRenderChunkIndex];
+        hullChunkBoundaryCubes[cubeRenderChunkIndex] = UpdateDebugCube(listItem, position, size, $"chunk_{cubeRenderChunkIndex}", new Color(0, 1, 0, 0.25f), Vector3.zero);
+        cubeRenderChunkIndex++;
+      }
+    }
 
     // physics should be orange
     if (shipFloatation != null)
@@ -89,6 +122,61 @@ public class VehicleDebugHelpers : MonoBehaviour
     RenderDebugCube(ref vehicleMovementCenterCube, vehicleManagerInstance.MovementController.transform.position, "vehicle_movement_center", Color.green, Vector3.up * 4);
 
     RenderDebugCube(ref vehiclePieceCenterPoint, vehicleManagerInstance.PiecesController.vehicleCenter.transform.position, "piece_vehicle_center_point", Color.red, Vector3.up * 5);
+  }
+
+  private GameObject? UpdateDebugCube(GameObject? cube, Vector3 position, Vector3 size, string title, Color color, Vector3 textOffset)
+  {
+    if (!autoUpdateColliders || vehicleManagerInstance.MovementController == null)
+    {
+      if (cube != null) Destroy(cube);
+      return null;
+    }
+
+    if (cube == null)
+    {
+      cube = GameObject.CreatePrimitive(PrimitiveType.Cube);
+      cube.name = $"debug_cube_{title}";
+      var collider = cube.GetComponent<BoxCollider>();
+      if (collider) Destroy(collider);
+      var meshRenderer = cube.GetComponent<MeshRenderer>();
+      meshRenderer.material = new Material(LoadValheimVehicleAssets.DoubleSidedTransparentMat) { color = color };
+      cube.layer = LayerMask.NameToLayer("Ignore Raycast");
+
+      // Add the text element as a child
+      var textObj = new GameObject("CubeText");
+      textObj.transform.SetParent(cube.transform);
+      textObj.transform.localPosition =
+        new Vector3(0, 1.2f, 0) + textOffset; // Adjust height as needed
+      var textMesh = textObj.AddComponent<TextMesh>();
+      var text = SplitCamelCase(title.Replace("_", " "));
+      textMesh.text = text; // Set desired text
+      textMesh.fontSize = 32;
+      textMesh.characterSize = 0.1f; // Adjust size as needed
+      textMesh.anchor = TextAnchor.MiddleCenter;
+      textMesh.alignment = TextAlignment.Center;
+      textMesh.color = Color.yellow;
+    }
+    // update size (for hull chunks)
+    cube.transform.localScale = size;
+
+    // same as RenderDebugCube
+    cube.transform.position = position;
+    cube.transform.SetParent(
+      vehicleManagerInstance.PiecesController.transform,
+      true);
+
+    // Ensure the text always faces the camera
+    var textTransform = cube.transform.Find("CubeText");
+    if (textTransform != null && Camera.main != null)
+    {
+      textTransform.LookAt(Camera.main.transform);
+      textTransform.rotation =
+        QuaternionExtensions.LookRotationSafe(textTransform.forward *
+                                              -1); // Flip to face correctly
+    }
+
+    // Update text, etc.
+    return cube;
   }
 
   private void FixedUpdate()
@@ -183,13 +271,11 @@ public class VehicleDebugHelpers : MonoBehaviour
   public void RenderDebugCube(ref GameObject? cube, Vector3 position,
     string cubeTitle, Color color, Vector3 textOffset)
   {
-    if (!autoUpdateColliders)
+    if (!autoUpdateColliders || vehicleManagerInstance.MovementController == null)
     {
       if (cube != null) Destroy(cube);
       return;
     }
-
-    if (vehicleManagerInstance.MovementController == null) return;
 
     if (cube == null)
     {

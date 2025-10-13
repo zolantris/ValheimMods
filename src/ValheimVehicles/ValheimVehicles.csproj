@@ -45,6 +45,9 @@
     <ItemGroup Label="ValheimVehicle.SharedScripts Unity testable scripts">
         <!--  Allows for both sharing and testing these scripts within unity. Best of both worlds.      -->
         <Compile Include="..\ValheimRAFT.Unity\Assets\ValheimVehicles\SharedScripts\**\*.cs"/>
+        <Compile Update="..\ValheimRAFT.Unity\Assets\ValheimVehicles\SharedScripts\ConvexHullBoundaryConstraint.cs">
+            <Link>ValheimVehicles.Helpers\ConvexHullBoundaryConstraint.cs</Link>
+        </Compile>
     </ItemGroup>
     <ItemGroup Label="Internal ValheimVehicles scripts"><!-- Includes all namespace folders -->
         <!--        <Compile Include="ValheimVehicles.*\**\*.cs"/>-->

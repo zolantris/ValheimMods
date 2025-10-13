@@ -3,6 +3,7 @@
   using System;
   using ValheimVehicles.SharedScripts.Enums;
   using UnityEngine;
+  using ValheimVehicles.Shared.Constants;
 #if !TEST
   using Zolantris.Shared;
 #endif

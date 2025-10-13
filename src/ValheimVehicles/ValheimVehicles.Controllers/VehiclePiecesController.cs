@@ -29,6 +29,7 @@
   using ValheimVehicles.Storage.Serialization;
   using ValheimVehicles.Structs;
   using ValheimVehicles.ValheimVehicles.Components;
+  using ValheimVehicles.ValheimVehicles.Structs;
   using ZdoWatcher;
   using ZdoWatcher.ZdoWatcher.Utils;
   using Zolantris.Shared;
@@ -234,8 +235,7 @@
     private Bounds BaseControllerPieceBounds;
     private Transform floatColliderTransform;
 
-    private ConvexHullBoundaryConstraint _boundaryConstraint = new();
-    internal List<Vector3> m_shipChunkBoundaryPoints = [];
+    public ConvexHullBoundaryConstraint HullBoundaryConstraint = new();
 
     internal Stopwatch InitializationTimer = new();
 
@@ -2169,7 +2169,7 @@
       }
     }
 
-    public void TryWriteChunkBoundsData(HashSet<VehicleChunkController.VehicleChunkSizeData>? currentData)
+    public void TryWriteChunkBoundsData(HashSet<VehicleChunkSizeData>? currentData)
     {
       if (m_nview == null) return;
       if (!m_nview.HasOwner())
@@ -2200,15 +2200,25 @@
       zdo.Set(VehicleZdoVars.VehicleChunkBounds, stream.ToArray());
     }
 
-    public static HashSet<VehicleChunkController.VehicleChunkSizeData> ReadChunkBoundsData(ZDO zdo)
+    /// <summary>
+    /// Reader and writter must always have same order for readingbytes and any changes to structure will cause a breaking change to how things are parsed.
+    /// </summary>
+    /// <param name="zdo"></param>
+    /// <returns></returns>
+    public static HashSet<VehicleChunkSizeData> ReadChunkBoundsData(ZDO zdo)
     {
       var byteArray = zdo.GetByteArray(VehicleZdoVars.VehicleChunkBounds);
-      if (byteArray == null)
+      if (byteArray == null || byteArray.Length == 0)
       {
-        LoggerProvider.LogDebug("ReadChunkBoundsData as no byte array.");
+        LoggerProvider.LogDebug($"ReadChunkBoundsData as no byte or empty array. <{byteArray}>");
         return [];
       }
       var stream = new MemoryStream(byteArray);
+      if (!stream.CanRead)
+      {
+        LoggerProvider.LogDebug("ReadChunkBoundsData stream cannot be read");
+        return [];
+      }
       var reader = new BinaryReader(stream);
       var version = reader.ReadByte();
 
@@ -2219,13 +2229,13 @@
       var count = reader.ReadInt32();
       if (count == 0) return [];
 
-      var output = new HashSet<VehicleChunkController.VehicleChunkSizeData>();
+      var output = new HashSet<VehicleChunkSizeData>();
 
       for (var i = 0; i < count; i++)
       {
         var position = new SerializableVector3(reader.ReadVector3());
         var chunkSize = reader.ReadInt32();
-        var chunkData = new VehicleChunkController.VehicleChunkSizeData
+        var chunkData = new VehicleChunkSizeData
         {
           position = position,
           chunkSize = chunkSize
@@ -2240,7 +2250,7 @@
     /// Must be owner
     /// </summary>
     /// <param name="pendingChunkData"></param>
-    public void RemoveChunkBoundsData(VehicleChunkController.VehicleChunkSizeData? pendingChunkData)
+    public void RemoveChunkBoundsData(VehicleChunkSizeData? pendingChunkData)
     {
       if (m_nview == null) return;
       if (!m_nview.HasOwner())
@@ -2256,7 +2266,7 @@
       UpdateChunkBoundsData();
     }
 
-    public void AddChunkBoundsData(VehicleChunkController.VehicleChunkSizeData data)
+    public void AddChunkBoundsData(VehicleChunkSizeData data)
     {
       if (m_nview == null) return;
       if (!m_nview.HasOwner())
@@ -2278,15 +2288,10 @@
       var zdo = m_nview.GetZDO();
       if (zdo == null) return;
 
-      var data = ReadChunkBoundsData(zdo);
-
       // Regenerate boundary constraint mesh if pieces were added/removed
-      _boundaryConstraint.Clear();
-
-      foreach (var x in data)
-      {
-        _boundaryConstraint.AddBoundaryPiecePoints(x.position.ToVector3(), x.chunkSize * Vector3.one);
-      }
+      HullBoundaryConstraint.Clear();
+      HullBoundaryConstraint.SetChunkSizeDataItems(ReadChunkBoundsData(zdo));
+      HullBoundaryConstraint.UpdateAllBoundaryPoints();
 
       // Generate boundary constrain mesh now.
       TryGenerateBoundaryConstraintMesh();
@@ -2904,7 +2909,7 @@
     protected override List<Vector3> ApplyBoundaryConstraints(List<Vector3> points)
     {
       // If no boundary pieces are placed, skip constraint application
-      if (!_boundaryConstraint.IsInitialized)
+      if (!HullBoundaryConstraint.IsInitialized)
       {
         return points;
       }
@@ -2912,7 +2917,7 @@
       // Apply constraints to all points
       for (var i = 0; i < points.Count; i++)
       {
-        points[i] = _boundaryConstraint.ConstrainPoint(points[i]);
+        points[i] = HullBoundaryConstraint.ConstrainPoint(points[i]);
       }
 
       return points;
@@ -3442,9 +3447,9 @@
     private void TryGenerateBoundaryConstraintMesh()
     {
       // Generate the mesh collider for efficient constraint checking
-      if (_boundaryConstraint.GenerateBoundaryMesh(transform))
+      if (HullBoundaryConstraint.GenerateBoundaryMesh(transform))
       {
-        LoggerProvider.LogInfo($"✅ Ship boundary constraint mesh generated with vertices: {_boundaryConstraint.GetVerticesCount} and boundary objects: {_boundaryConstraint.GetObjectsCount}");
+        LoggerProvider.LogInfo($"✅ Ship boundary constraint mesh generated with vertices: {HullBoundaryConstraint.GetVerticesCount} and boundary objects: {HullBoundaryConstraint.GetObjectsCount}");
       }
     }
 

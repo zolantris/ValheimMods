@@ -1,6 +1,7 @@
 using UnityEngine;
 using ValheimVehicles.SharedScripts;
 using ValheimVehicles.Storage.Serialization;
+using ValheimVehicles.ValheimVehicles.Structs;
 namespace ValheimVehicles.Controllers;
 
 public class VehicleChunkController
@@ -59,12 +60,6 @@ public class VehicleChunkController
       return Vector3.one * 16f;
 
     return Vector3.one;
-  }
-
-  public record struct VehicleChunkSizeData
-  {
-    public SerializableVector3 position;
-    public int chunkSize;
   }
 
   public static VehicleChunkSizeData ToChunkSizeData(string name, Vector3 localPosition)

@@ -18,6 +18,8 @@ namespace ValheimVehicles.Prefabs.Registry;
  */
 public class CustomMeshPrefabs : RegisterPrefab<CustomMeshPrefabs>
 {
+  public static Color CachedBoundaryColor = new(0, 1, 0, 0.25f);
+
   public override void OnRegister()
   {
     RegisterWaterMaskCreator();
@@ -110,7 +112,7 @@ public class CustomMeshPrefabs : RegisterPrefab<CustomMeshPrefabs>
     var prefab =
       PrefabManager.Instance.CreateEmptyPrefab(PrefabNames.CustomWaterFloatation, false);
     var meshRenderer = prefab.GetComponent<MeshRenderer>();
-    var material = new Material(LoadValheimAssets.CustomPieceShader)
+    var material = new Material(LoadValheimVehicleAssets.DoubleSidedTransparentMat)
     {
       color = new Color(0.5f, 0.4f, 0.5f, 0.8f)
     };
@@ -150,7 +152,7 @@ public class CustomMeshPrefabs : RegisterPrefab<CustomMeshPrefabs>
         false);
 
     var mesh = prefab.GetComponent<MeshRenderer>();
-    var material = new Material(LoadValheimAssets.CustomPieceShader)
+    var material = new Material(LoadValheimVehicleAssets.DoubleSidedTransparentMat)
     {
       color = new Color(0.3f, 0.4f, 1, 0.8f)
     };
@@ -286,21 +288,46 @@ public class CustomMeshPrefabs : RegisterPrefab<CustomMeshPrefabs>
       }));
   }
 
-  private static void RegisterShipChunkBoundary1x1()
+  private static Material? cachedBoundaryMaterial = null;
+
+  public static void UpdateMaterial(GameObject prefab, Vector3 scale, Color color)
   {
-    var prefab =
-      PrefabManager.Instance.CreateEmptyPrefab(PrefabNames.ShipChunkBoundary1x1x1);
-
     var meshRenderer = prefab.GetComponent<MeshRenderer>();
+    meshRenderer.transform.localScale = scale;
 
-    // No special effects etc. Should be completely empty area invisible.
+    if (cachedBoundaryMaterial == null)
+    {
+      cachedBoundaryMaterial = new Material(LoadValheimVehicleAssets.DoubleSidedTransparentMat)
+      {
+        color = new Color(0.3f, 0.4f, 1, 0.8f)
+      };
+    }
+
+    meshRenderer.sharedMaterial = cachedBoundaryMaterial;
+
+    if (color != meshRenderer.material.color)
+    {
+      meshRenderer.material.color = color;
+    }
+
+    meshRenderer.material.renderQueue = 3000;
+
     meshRenderer.lightProbeUsage = LightProbeUsage.Off;
     meshRenderer.receiveShadows = false;
     meshRenderer.shadowCastingMode = ShadowCastingMode.Off;
     meshRenderer.rayTracingMode = RayTracingMode.Off;
     meshRenderer.reflectionProbeUsage = ReflectionProbeUsage.Off;
+  }
 
-    PrefabRegistryHelpers.AddNetViewWithPersistence(prefab);
+
+  private static void RegisterShipChunkBoundary1x1()
+  {
+    var prefab =
+      PrefabManager.Instance.CreateEmptyPrefab(PrefabNames.ShipChunkBoundary1x1x1);
+
+    UpdateMaterial(prefab, Vector3.one, CachedBoundaryColor);
+
+    PrefabRegistryHelpers.AddTempNetView(prefab);
 
     var piece = prefab.AddComponent<Piece>();
     piece.m_name = "Ship Chunk Boundary 1x1";
@@ -308,8 +335,15 @@ public class CustomMeshPrefabs : RegisterPrefab<CustomMeshPrefabs>
       "Vehicle Ship Chunk Boundary 1x1 component, used to define the boundaries of the ship's collision mesh.";
     piece.m_placeEffect =
       LoadValheimAssets.woodFloorPiece.m_placeEffect;
-    prefab.AddComponent<VehicleChunkController>();
-    PrefabManager.Instance.AddPrefab(prefab);
+    PrefabRegistryController.AddPiece(new CustomPiece(prefab, true,
+      new PieceConfig
+      {
+        PieceTable = PrefabRegistryController.GetPieceTableName(),
+        Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
+          .VehicleBorder),
+        Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Tools),
+        Enabled = true
+      }));
   }
 
   private static void RegisterShipChunkBoundary4x4()
@@ -317,14 +351,7 @@ public class CustomMeshPrefabs : RegisterPrefab<CustomMeshPrefabs>
     var prefab =
       PrefabManager.Instance.CreateEmptyPrefab(PrefabNames.ShipChunkBoundary4x4x4);
 
-    var meshRenderer = prefab.GetComponent<MeshRenderer>();
-
-    // No special effects etc. Should be completely empty area invisible.
-    meshRenderer.lightProbeUsage = LightProbeUsage.Off;
-    meshRenderer.receiveShadows = false;
-    meshRenderer.shadowCastingMode = ShadowCastingMode.Off;
-    meshRenderer.rayTracingMode = RayTracingMode.Off;
-    meshRenderer.reflectionProbeUsage = ReflectionProbeUsage.Off;
+    UpdateMaterial(prefab, Vector3.one * 4, CachedBoundaryColor);
 
     PrefabRegistryHelpers.AddNetViewWithPersistence(prefab);
 
@@ -334,8 +361,15 @@ public class CustomMeshPrefabs : RegisterPrefab<CustomMeshPrefabs>
       "Vehicle Ship Chunk Boundary 4x4 component, used to define the boundaries of the ship's collision mesh.";
     piece.m_placeEffect =
       LoadValheimAssets.woodFloorPiece.m_placeEffect;
-    prefab.AddComponent<VehicleChunkController>();
-    PrefabManager.Instance.AddPrefab(prefab);
+    PrefabRegistryController.AddPiece(new CustomPiece(prefab, true,
+      new PieceConfig
+      {
+        PieceTable = PrefabRegistryController.GetPieceTableName(),
+        Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
+          .VehicleBorder),
+        Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Tools),
+        Enabled = true
+      }));
   }
 
   private static void RegisterShipChunkBoundary8x8()
@@ -343,14 +377,7 @@ public class CustomMeshPrefabs : RegisterPrefab<CustomMeshPrefabs>
     var prefab =
       PrefabManager.Instance.CreateEmptyPrefab(PrefabNames.ShipChunkBoundary8x8x8);
 
-    var meshRenderer = prefab.GetComponent<MeshRenderer>();
-
-    // No special effects etc. Should be completely empty area invisible.
-    meshRenderer.lightProbeUsage = LightProbeUsage.Off;
-    meshRenderer.receiveShadows = false;
-    meshRenderer.shadowCastingMode = ShadowCastingMode.Off;
-    meshRenderer.rayTracingMode = RayTracingMode.Off;
-    meshRenderer.reflectionProbeUsage = ReflectionProbeUsage.Off;
+    UpdateMaterial(prefab, Vector3.one * 8, CachedBoundaryColor);
 
     PrefabRegistryHelpers.AddNetViewWithPersistence(prefab);
 
@@ -360,8 +387,15 @@ public class CustomMeshPrefabs : RegisterPrefab<CustomMeshPrefabs>
       "Vehicle Ship Chunk Boundary 8x8 component, used to define the boundaries of the ship's collision mesh.";
     piece.m_placeEffect =
       LoadValheimAssets.woodFloorPiece.m_placeEffect;
-    prefab.AddComponent<VehicleChunkController>();
-    PrefabManager.Instance.AddPrefab(prefab);
+    PrefabRegistryController.AddPiece(new CustomPiece(prefab, true,
+      new PieceConfig
+      {
+        PieceTable = PrefabRegistryController.GetPieceTableName(),
+        Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
+          .VehicleBorder),
+        Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Tools),
+        Enabled = true
+      }));
   }
 
   private static void RegisterShipChunkBoundary16x16()
@@ -369,14 +403,7 @@ public class CustomMeshPrefabs : RegisterPrefab<CustomMeshPrefabs>
     var prefab =
       PrefabManager.Instance.CreateEmptyPrefab(PrefabNames.ShipChunkBoundary16x16x16);
 
-    var meshRenderer = prefab.GetComponent<MeshRenderer>();
-
-    // No special effects etc. Should be completely empty area invisible.
-    meshRenderer.lightProbeUsage = LightProbeUsage.Off;
-    meshRenderer.receiveShadows = false;
-    meshRenderer.shadowCastingMode = ShadowCastingMode.Off;
-    meshRenderer.rayTracingMode = RayTracingMode.Off;
-    meshRenderer.reflectionProbeUsage = ReflectionProbeUsage.Off;
+    UpdateMaterial(prefab, Vector3.one * 8, CachedBoundaryColor);
 
     PrefabRegistryHelpers.AddNetViewWithPersistence(prefab);
 
@@ -386,7 +413,14 @@ public class CustomMeshPrefabs : RegisterPrefab<CustomMeshPrefabs>
       "Vehicle Ship Chunk Boundary 16x16 component, used to define the boundaries of the ship's collision mesh.";
     piece.m_placeEffect =
       LoadValheimAssets.woodFloorPiece.m_placeEffect;
-    prefab.AddComponent<VehicleChunkController>();
-    PrefabManager.Instance.AddPrefab(prefab);
+    PrefabRegistryController.AddPiece(new CustomPiece(prefab, true,
+      new PieceConfig
+      {
+        PieceTable = PrefabRegistryController.GetPieceTableName(),
+        Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
+          .VehicleBorder),
+        Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Tools),
+        Enabled = true
+      }));
   }
 }
