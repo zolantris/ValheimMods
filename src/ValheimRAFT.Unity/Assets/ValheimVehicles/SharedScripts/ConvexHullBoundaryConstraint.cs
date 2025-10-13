@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using ValheimVehicles.Controllers;
 using ValheimVehicles.SharedScripts;
 using Zolantris.Shared;
 
@@ -21,14 +22,19 @@ public class ConvexHullBoundaryConstraint
   /// List of all boundary cube vertices collected from placed ship chunk boundary pieces
   /// </summary>
   private List<Vector3> boundaryVertices = new();
+  private int _boundaryObjects = 0;
+
+  public int GetVerticesCount => boundaryVertices.Count;
+  public int GetObjectsCount => _boundaryObjects;
 
   public bool IsInitialized => isInitialized && boundaryCollider != null;
 
   /// <summary>
   /// Adds boundary points from a ship chunk boundary piece (cube with 8 vertices)
   /// </summary>
-  public void AddBoundaryPiecePoints(Transform pieceTransform, Vector3 scale)
+  public void AddBoundaryPiecePoints(Vector3 localPosition, Vector3 scale)
   {
+    _boundaryObjects++;
     // Get the 8 vertices of a cube in local space
     var halfScale = scale * 0.5f;
     var cubeVertices = new Vector3[]
@@ -43,10 +49,11 @@ public class ConvexHullBoundaryConstraint
       new(halfScale.x, halfScale.y, halfScale.z)
     };
 
-    // Transform to world space
+    // each point must be relative to the localPosition of the boundary piece in relation to the vehicle
     foreach (var vertex in cubeVertices)
     {
-      boundaryVertices.Add(pieceTransform.TransformPoint(vertex));
+      var localVertex = localPosition + vertex;
+      boundaryVertices.Add(localVertex);
     }
   }
 
@@ -56,6 +63,8 @@ public class ConvexHullBoundaryConstraint
   public void Clear()
   {
     boundaryVertices.Clear();
+    _boundaryObjects = 0;
+
     isInitialized = false;
 
     if (boundaryObject != null)

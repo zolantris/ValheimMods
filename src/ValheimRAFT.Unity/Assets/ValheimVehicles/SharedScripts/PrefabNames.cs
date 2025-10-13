@@ -1,6 +1,11 @@
 ﻿#region
 
+  using System;
   using ValheimVehicles.SharedScripts.Enums;
+  using UnityEngine;
+#if !TEST
+  using Zolantris.Shared;
+#endif
 
 #endregion
 

@@ -1,5 +1,6 @@
 using UnityEngine;
 using ValheimVehicles.SharedScripts;
+using ValheimVehicles.Storage.Serialization;
 namespace ValheimVehicles.Controllers;
 
 public class VehicleChunkController : MonoBehaviour
@@ -58,6 +59,21 @@ public class VehicleChunkController : MonoBehaviour
       return Vector3.one * 16f;
 
     return Vector3.one;
+  }
+
+  public struct VehicleChunkSizeData
+  {
+    public SerializableVector3 position;
+    public int chunkSize;
+  }
+
+  public static VehicleChunkSizeData ToChunkSizeData(VehicleChunkController controller)
+  {
+    return new VehicleChunkSizeData
+    {
+      position = new SerializableVector3(controller.transform.position),
+      chunkSize = controller.GetChunkSizeFromPrefabName(controller.gameObject.name)
+    };
   }
 
   public void Awake()

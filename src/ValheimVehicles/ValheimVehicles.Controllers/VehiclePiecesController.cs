@@ -4,6 +4,7 @@
   using System.Collections;
   using System.Collections.Generic;
   using System.Diagnostics;
+  using System.IO;
   using System.Linq;
   using System.Text.RegularExpressions;
   using HarmonyLib;
@@ -25,6 +26,7 @@
   using ValheimVehicles.SharedScripts;
   using ValheimVehicles.SharedScripts.Enums;
   using ValheimVehicles.SharedScripts.Helpers;
+  using ValheimVehicles.Storage.Serialization;
   using ValheimVehicles.Structs;
   using ValheimVehicles.ValheimVehicles.Components;
   using ZdoWatcher;
@@ -231,6 +233,9 @@
 
     private Bounds BaseControllerPieceBounds;
     private Transform floatColliderTransform;
+
+    private ConvexHullBoundaryConstraint _boundaryConstraint = new();
+    internal List<Vector3> m_shipChunkBoundaryPoints = [];
 
     internal Stopwatch InitializationTimer = new();
 
@@ -2164,6 +2169,74 @@
       }
     }
 
+    public static void WriteChunkBoundsData(ZDO zdo)
+    {
+      var stream = new MemoryStream();
+      var writer = new BinaryWriter(stream);
+
+      // size must be read first to determine number of iterations
+      // var size = m_chunk
+
+
+
+
+      // m_nview.m_zdo.Set(VehicleZdoVars.VehicleChunkBounds, stream.ToArray());
+
+      var byteArray = zdo.GetByteArray(VehicleZdoVars.VehicleChunkBounds);
+      if (byteArray == null) return;
+
+    }
+
+    public static List<VehicleChunkController.VehicleChunkSizeData> ReadChunkBoundsData(ZDO zdo)
+    {
+      var byteArray = zdo.GetByteArray(VehicleZdoVars.VehicleChunkBounds);
+      if (byteArray == null) return [];
+      var stream = new MemoryStream(byteArray);
+      var reader = new BinaryReader(stream);
+      var version = reader.ReadByte();
+
+#if DEBUG
+      LoggerProvider.LogDebug($"ReadChunkBoundsData version: {version}");
+#endif
+
+      var count = reader.ReadInt32();
+      if (count == 0) return [];
+
+      var output = new List<VehicleChunkController.VehicleChunkSizeData>();
+
+      for (var i = 0; i < count; i++)
+      {
+        var chunkData = new VehicleChunkController.VehicleChunkSizeData
+        {
+          position = new SerializableVector3(reader.ReadVector3()),
+          chunkSize = reader.ReadInt32()
+        };
+        output.Add(chunkData);
+      }
+
+      return output;
+    }
+
+    public void UpdateChunkBoundsData(VehicleChunkController.VehicleChunkSizeData? pendingChunkData)
+    {
+      if (m_nview == null) return;
+      var zdo = m_nview.GetZDO();
+      if (zdo == null) return;
+      var data = ReadChunkBoundsData(zdo);
+      if (pendingChunkData.HasValue) data.Add(pendingChunkData.Value);
+
+      // Regenerate boundary constraint mesh if pieces were added/removed
+      _boundaryConstraint.Clear();
+
+      data.ForEach(x =>
+      {
+        _boundaryConstraint.AddBoundaryPiecePoints(x.position.ToVector3(), x.chunkSize * Vector3.one);
+      });
+
+      // Generate boundary constrain mesh now.
+      TryGenerateBoundaryConstraintMesh();
+    }
+
     /**
      * A cached getter for sail size. Cache invalidates when a piece is added or removed
      *
@@ -2274,6 +2347,9 @@
 
         list.Add(zdo);
       }
+
+      // get the constraining chunk data.
+      ReadChunkBoundsData(zdo);
 
       var cid = zdo.GetInt(VehicleZdoVars.TempPieceParentId);
       if (cid != 0)
@@ -2628,7 +2704,34 @@
         return;
       }
 
-      var pieceGo = piece.gameObject;
+      // Check if this is a ship chunk boundary piece
+      if (VehicleChunkController.IsShipChunkBoundaryPiece(piece.name))
+      {
+        var chunkController = piece.GetComponent<VehicleChunkController>();
+        if (!chunkController)
+        {
+          LoggerProvider.LogWarning("No chunk controller detected");
+          return;
+        }
+        LoggerProvider.LogDebug($"Added ship chunkPiece boundary piece {piece.name}.");
+
+        var zdo = m_nview!.GetZDO();
+        if (!zdo.HasOwner())
+        {
+          zdo.TryClaimOwnership();
+        }
+
+        // only host can/should mutate zdo data
+        if (zdo.IsOwner())
+        {
+          WriteChunkBoundsData(zdo);
+        }
+
+        // always optimistically update.
+        var chunkData = VehicleChunkController.ToChunkSizeData(chunkController);
+        UpdateChunkBoundsData(chunkData);
+        return;
+      }
 
       if (hasDebug) LoggerProvider.LogDebug("Added new piece is valid");
       AddNewPiece(piece.m_nview);
@@ -2751,6 +2854,27 @@
       {
         wnt.Destroy();
       }
+    }
+
+    /// <summary>
+    /// Override to apply boundary constraints to convex hull points.
+    /// This ensures that piece collider points stay within the ship chunk boundaries.
+    /// </summary>
+    protected override List<Vector3> ApplyBoundaryConstraints(List<Vector3> points)
+    {
+      // If no boundary pieces are placed, skip constraint application
+      if (m_shipChunkBoundaryPieces.Count == 0 || !_boundaryConstraint.IsInitialized)
+      {
+        return points;
+      }
+
+      // Apply constraints to all points
+      for (var i = 0; i < points.Count; i++)
+      {
+        points[i] = _boundaryConstraint.ConstrainPoint(points[i]);
+      }
+
+      return points;
     }
 
     /// <summary>
@@ -3270,6 +3394,19 @@
       }
     }
 
+    /// <summary>
+    /// Generates the boundary constraint mesh from placed ship chunk boundary pieces.
+    /// Should be called during RebuildBounds before convex hull generation.
+    /// </summary>
+    private void TryGenerateBoundaryConstraintMesh()
+    {
+      // Generate the mesh collider for efficient constraint checking
+      if (_boundaryConstraint.GenerateBoundaryMesh(transform))
+      {
+        LoggerProvider.LogInfo($"✅ Ship boundary constraint mesh generated with vertices: {_boundaryConstraint.GetVerticesCount} and boundary objects: {_boundaryConstraint.GetObjectsCount}");
+      }
+    }
+
 // todo move this logic to a file that can be tested
 // todo compute the float colliderY transform so it aligns with bounds if player builds underneath boat
     public void OnBoundsChangeUpdateShipColliders()
@@ -3288,6 +3425,8 @@
           "Cached convexHullBounds is null this is like a problem with collider setup. Make sure to use custom colliders if other settings are not working");
         return;
       }
+
+
 
       /*
        * @description float collider logic
