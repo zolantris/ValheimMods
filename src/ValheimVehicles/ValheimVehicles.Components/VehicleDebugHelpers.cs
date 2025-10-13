@@ -95,10 +95,10 @@ public class VehicleDebugHelpers : MonoBehaviour
       foreach (var vehicleChunkSizeData in cubeDataList)
       {
 
-        var position = vehicleManagerInstance.MovementController.transform.position + vehicleChunkSizeData.position.ToVector3(); // your logic
+        var localPosition = vehicleChunkSizeData.position.ToVector3(); // your logic
         var size = vehicleChunkSizeData.chunkSize * Vector3.one; // your logic for size
         var listItem = hullChunkBoundaryCubes[cubeRenderChunkIndex];
-        hullChunkBoundaryCubes[cubeRenderChunkIndex] = UpdateDebugCube(listItem, position, size, $"chunk_{cubeRenderChunkIndex}", BuildBoundaryColor, Vector3.zero);
+        hullChunkBoundaryCubes[cubeRenderChunkIndex] = UpdateDebugCube(listItem, localPosition, size, $"chunk_{cubeRenderChunkIndex}", BuildBoundaryColor, Vector3.zero);
         cubeRenderChunkIndex++;
       }
     }
@@ -135,6 +135,12 @@ public class VehicleDebugHelpers : MonoBehaviour
       return null;
     }
 
+    var parentTransform = vehicleManagerInstance.PiecesController.transform;
+    // If position is world, use world transform; if local, use local transform
+    var isWorldPosition = false; // Set this based on your data source
+    // Example: if position.magnitude > 1000, treat as world position (customize as needed)
+    if (Mathf.Abs(position.x) > 1000 || Mathf.Abs(position.z) > 1000) isWorldPosition = true;
+
     if (cube == null)
     {
       cube = GameObject.CreatePrimitive(PrimitiveType.Cube);
@@ -144,10 +150,6 @@ public class VehicleDebugHelpers : MonoBehaviour
       var meshRenderer = cube.GetComponent<MeshRenderer>();
       meshRenderer.material = new Material(LoadValheimVehicleAssets.DoubleSidedTransparentMat) { color = color };
       cube.layer = LayerMask.NameToLayer("Ignore Raycast");
-      // Set parent and local position
-      cube.transform.SetParent(vehicleManagerInstance.PiecesController.transform, false);
-      cube.transform.localPosition = vehicleManagerInstance.PiecesController.transform.InverseTransformPoint(position);
-      // Do not set localRotation to identity; let it inherit parent's rotation
       // Add the text element as a child
       var textObj = new GameObject("CubeText");
       textObj.transform.SetParent(cube.transform);
@@ -161,10 +163,22 @@ public class VehicleDebugHelpers : MonoBehaviour
       textMesh.alignment = TextAlignment.Center;
       textMesh.color = Color.yellow;
     }
-    // update size (for hull chunks)
-    cube.transform.localScale = size;
-    cube.transform.localPosition = vehicleManagerInstance.PiecesController.transform.InverseTransformPoint(position);
-    // Do not set localRotation to identity; let it inherit parent's rotation
+    if (isWorldPosition)
+    {
+      // Treat position as world position
+      cube.transform.position = position;
+      cube.transform.localScale = size;
+      cube.transform.localRotation = Quaternion.identity;
+      cube.transform.SetParent(parentTransform, true); // preserve world transform
+    }
+    else
+    {
+      // Treat position as local position
+      cube.transform.SetParent(parentTransform, false);
+      cube.transform.localPosition = position;
+      cube.transform.localScale = size;
+      cube.transform.localRotation = Quaternion.identity;
+    }
 
     // same as RenderDebugCube
 

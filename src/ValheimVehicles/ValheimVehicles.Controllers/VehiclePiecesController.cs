@@ -385,7 +385,7 @@
       InitializationTimer.Start();
 
       // Look for any existing data for the vehicle.
-      UpdateChunkBoundsData();
+      UpdateChunkBoundsData(false);
     }
 
     public void AddTargetController()
@@ -2287,7 +2287,7 @@
       TryWriteChunkBoundsData(currentData);
     }
 
-    public void UpdateChunkBoundsData()
+    public void UpdateChunkBoundsData(bool canRebuildBounds = true)
     {
       if (m_nview == null) return;
       var zdo = m_nview.GetZDO();
@@ -2300,6 +2300,11 @@
 
       // Generate boundary constrain mesh now.
       TryGenerateBoundaryConstraintMesh();
+
+      if (canRebuildBounds)
+      {
+        ForceRebuildBounds();
+      }
     }
 
     /**
@@ -2778,6 +2783,21 @@
       AddNewPiece(nv);
     }
 
+    private bool IsEraserCubeOverlappingChunk(Bounds chunkBounds, Bounds eraserCubeBounds)
+    {
+      var eraserCenter = eraserCubeBounds.center;
+      var halfSize = eraserCubeBounds.size * 0.5f;
+      for (var x = -1; x <= 1; x += 2)
+      for (var y = -1; y <= 1; y += 2)
+      for (var z = -1; z <= 1; z += 2)
+      {
+        var corner = eraserCenter + new Vector3(x * halfSize.x, y * halfSize.y, z * halfSize.z);
+        if (chunkBounds.Contains(corner))
+          return true;
+      }
+      return false;
+    }
+
     public void AddNewPiece(ZNetView netView)
     {
       if (netView == null)
@@ -2820,7 +2840,10 @@
             VehicleChunkController.eraserCubeSize * 1.1f // Vector3 size of the eraser cube (plus a bit more to allow for collisions
           );
 
-          if (chunkBounds.Intersects(eraserCubeBounds))
+          var isOverlapping = IsEraserCubeOverlappingChunk(chunkBounds, eraserCubeBounds);
+          var intersects = isOverlapping || chunkBounds.Intersects(eraserCubeBounds);
+
+          if (isOverlapping || intersects)
           {
             LoggerProvider.LogDebug($"Removed ship chunkPiece boundary netView {prefabName} at localPosition: {cachedChunkSizeDataItem.position}.");
             RemoveChunkBoundsData(cachedChunkSizeDataItem);
@@ -2830,7 +2853,7 @@
         }
         if (hasRemovedData)
         {
-          UpdateChunkBoundsData();
+          UpdateChunkBoundsData(true);
         }
 
         // destroy the now unused piece.
@@ -2851,7 +2874,7 @@
         AddChunkBoundsData(chunkData);
 
         // always optimistically update.
-        UpdateChunkBoundsData();
+        UpdateChunkBoundsData(true);
 
         // for clarity (we must be vehicle owner and then destroy the piece after the vehicle owner detects the new piece added)
         var vehicleNv = m_nview;
@@ -2967,7 +2990,7 @@
     protected override List<Vector3> ApplyBoundaryConstraints(List<Vector3> points)
     {
       // If no boundary pieces are placed, skip constraint application
-      if (!HullBoundaryConstraint.IsInitialized)
+      if (!HullBoundaryConstraint.IsInitialized && HullBoundaryConstraint.cachedChunkSizeDataItems.Count > 0)
       {
         return points;
       }

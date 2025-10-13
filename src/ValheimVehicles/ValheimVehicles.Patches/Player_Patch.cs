@@ -380,6 +380,10 @@
       ref Collider waterSurface,
       bool water)
     {
+#if DEBUG
+      var pieceName = piece == null ? "null" : piece.name;
+      LoggerProvider.LogDebugDebounced($"piece raycast: {pieceName}");
+#endif
       PatchSharedData.PlayerLastRayPiece = piece;
     }
 
