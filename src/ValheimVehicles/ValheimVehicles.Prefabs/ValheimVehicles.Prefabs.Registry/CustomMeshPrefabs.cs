@@ -8,6 +8,7 @@ using UnityEngine.Rendering;
 using ValheimVehicles.BepInExConfig;
 using ValheimVehicles.SharedScripts;
 using ValheimVehicles.Components;
+using ValheimVehicles.ValheimVehicles.Controllers;
 using Zolantris.Shared;
 using Logger = Jotunn.Logger;
 
@@ -23,6 +24,10 @@ public class CustomMeshPrefabs : RegisterPrefab<CustomMeshPrefabs>
     RegisterWaterMaskCreator();
     RegisterWaterMaskPrefab();
     RegisterCustomFloatationPrefab();
+    RegisterShipChunkBoundary1x1();
+    RegisterShipChunkBoundary4x4();
+    RegisterShipChunkBoundary8x8();
+    RegisterShipChunkBoundary16x16();
 
     if (CustomMeshConfig.EnableCustomWaterMeshTestPrefabs.Value)
     {
@@ -280,5 +285,109 @@ public class CustomMeshPrefabs : RegisterPrefab<CustomMeshPrefabs>
         Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Tools),
         Enabled = true
       }));
+  }
+
+  private static void RegisterShipChunkBoundary1x1()
+  {
+    var prefab =
+      PrefabManager.Instance.CreateEmptyPrefab(PrefabNames.ShipChunkBoundary1x1x1);
+
+    var meshRenderer = prefab.GetComponent<MeshRenderer>();
+
+    // No special effects etc. Should be completely empty area invisible.
+    meshRenderer.lightProbeUsage = LightProbeUsage.Off;
+    meshRenderer.receiveShadows = false;
+    meshRenderer.shadowCastingMode = ShadowCastingMode.Off;
+    meshRenderer.rayTracingMode = RayTracingMode.Off;
+    meshRenderer.reflectionProbeUsage = ReflectionProbeUsage.Off;
+
+    PrefabRegistryHelpers.AddNetViewWithPersistence(prefab);
+
+    var piece = prefab.AddComponent<Piece>();
+    piece.m_name = "Ship Chunk Boundary 1x1";
+    piece.m_description =
+      "Vehicle Ship Chunk Boundary 1x1 component, used to define the boundaries of the ship's collision mesh.";
+    piece.m_placeEffect =
+      LoadValheimAssets.woodFloorPiece.m_placeEffect;
+    prefab.AddComponent<VehicleChunkController>();
+    PrefabManager.Instance.AddPrefab(prefab);
+  }
+
+  private static void RegisterShipChunkBoundary4x4()
+  {
+    var prefab =
+      PrefabManager.Instance.CreateEmptyPrefab(PrefabNames.ShipChunkBoundary4x4x4);
+
+    var meshRenderer = prefab.GetComponent<MeshRenderer>();
+
+    // No special effects etc. Should be completely empty area invisible.
+    meshRenderer.lightProbeUsage = LightProbeUsage.Off;
+    meshRenderer.receiveShadows = false;
+    meshRenderer.shadowCastingMode = ShadowCastingMode.Off;
+    meshRenderer.rayTracingMode = RayTracingMode.Off;
+    meshRenderer.reflectionProbeUsage = ReflectionProbeUsage.Off;
+
+    PrefabRegistryHelpers.AddNetViewWithPersistence(prefab);
+
+    var piece = prefab.AddComponent<Piece>();
+    piece.m_name = "Ship Chunk Boundary 4x4";
+    piece.m_description =
+      "Vehicle Ship Chunk Boundary 4x4 component, used to define the boundaries of the ship's collision mesh.";
+    piece.m_placeEffect =
+      LoadValheimAssets.woodFloorPiece.m_placeEffect;
+    prefab.AddComponent<VehicleChunkController>();
+    PrefabManager.Instance.AddPrefab(prefab);
+  }
+
+  private static void RegisterShipChunkBoundary8x8()
+  {
+    var prefab =
+      PrefabManager.Instance.CreateEmptyPrefab(PrefabNames.ShipChunkBoundary8x8x8);
+
+    var meshRenderer = prefab.GetComponent<MeshRenderer>();
+
+    // No special effects etc. Should be completely empty area invisible.
+    meshRenderer.lightProbeUsage = LightProbeUsage.Off;
+    meshRenderer.receiveShadows = false;
+    meshRenderer.shadowCastingMode = ShadowCastingMode.Off;
+    meshRenderer.rayTracingMode = RayTracingMode.Off;
+    meshRenderer.reflectionProbeUsage = ReflectionProbeUsage.Off;
+
+    PrefabRegistryHelpers.AddNetViewWithPersistence(prefab);
+
+    var piece = prefab.AddComponent<Piece>();
+    piece.m_name = "Ship Chunk Boundary 8x8";
+    piece.m_description =
+      "Vehicle Ship Chunk Boundary 8x8 component, used to define the boundaries of the ship's collision mesh.";
+    piece.m_placeEffect =
+      LoadValheimAssets.woodFloorPiece.m_placeEffect;
+    prefab.AddComponent<VehicleChunkController>();
+    PrefabManager.Instance.AddPrefab(prefab);
+  }
+
+  private static void RegisterShipChunkBoundary16x16()
+  {
+    var prefab =
+      PrefabManager.Instance.CreateEmptyPrefab(PrefabNames.ShipChunkBoundary16x16x16);
+
+    var meshRenderer = prefab.GetComponent<MeshRenderer>();
+
+    // No special effects etc. Should be completely empty area invisible.
+    meshRenderer.lightProbeUsage = LightProbeUsage.Off;
+    meshRenderer.receiveShadows = false;
+    meshRenderer.shadowCastingMode = ShadowCastingMode.Off;
+    meshRenderer.rayTracingMode = RayTracingMode.Off;
+    meshRenderer.reflectionProbeUsage = ReflectionProbeUsage.Off;
+
+    PrefabRegistryHelpers.AddNetViewWithPersistence(prefab);
+
+    var piece = prefab.AddComponent<Piece>();
+    piece.m_name = "Ship Chunk Boundary 16x16";
+    piece.m_description =
+      "Vehicle Ship Chunk Boundary 16x16 component, used to define the boundaries of the ship's collision mesh.";
+    piece.m_placeEffect =
+      LoadValheimAssets.woodFloorPiece.m_placeEffect;
+    prefab.AddComponent<VehicleChunkController>();
+    PrefabManager.Instance.AddPrefab(prefab);
   }
 }
