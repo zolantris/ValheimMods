@@ -514,7 +514,7 @@
 
       OnPieceRemoved(netView.gameObject);
 
-      if (PrefabNames.IsHull(netView.gameObject)) m_hullPieces.Remove(netView);
+      if (PrefabNames.IsHull(netView.gameObject.name)) m_hullPieces.Remove(netView);
 
       var isRam = RamPrefabRegistry.IsRam(netView.name);
       if (isRam) m_ramPieces.Remove(netView);
