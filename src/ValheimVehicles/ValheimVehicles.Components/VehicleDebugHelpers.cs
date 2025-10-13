@@ -61,6 +61,8 @@ public class VehicleDebugHelpers : MonoBehaviour
   // todo check if there is a conflicting textmesh and push the current one upwards. Recurse until finding a unique point of a specific increment in height.
   private Dictionary<GameObject, Vector3> localPositions = new();
 
+  public static Color BuildBoundaryColor = new(1, 1, 1, 0.15f);
+
   private void RenderDebugCubes()
   {
     if (vehicleManagerInstance == null ||
@@ -72,30 +74,31 @@ public class VehicleDebugHelpers : MonoBehaviour
     var hullBoundaryConstraint = vehicleManagerInstance.PiecesController
       .HullBoundaryConstraint;
 
+    if (hullBoundaryConstraint.GetObjectsCount != hullChunkBoundaryCubes.Count)
+    {
+      foreach (var cube in hullChunkBoundaryCubes)
+        Destroy(cube);
+      hullChunkBoundaryCubes.Clear();
+
+      // must make list same size
+      for (var i = 0; i < hullBoundaryConstraint.cachedChunkSizeDataItems.Count; i++)
+      {
+        hullChunkBoundaryCubes.Add(null);
+      }
+    }
+
     if (hullBoundaryConstraint.GetObjectsCount > 1)
     {
-      if (hullBoundaryConstraint.GetObjectsCount != hullChunkBoundaryCubes.Count)
-      {
-        foreach (var cube in hullChunkBoundaryCubes)
-          Destroy(cube);
-        hullChunkBoundaryCubes.Clear();
-
-        // must make list same size
-        for (var i = 0; i < hullBoundaryConstraint.cachedChunkSizeDataItems.Count; i++)
-        {
-          hullChunkBoundaryCubes.Add(null);
-        }
-      }
       var cubeDataList = hullBoundaryConstraint.cachedChunkSizeDataItems;
 
       var cubeRenderChunkIndex = 0;
       foreach (var vehicleChunkSizeData in cubeDataList)
       {
 
-        var position = vehicleManagerInstance.MovementController.transform.position; // your logic
+        var position = vehicleManagerInstance.MovementController.transform.position + vehicleChunkSizeData.position.ToVector3(); // your logic
         var size = vehicleChunkSizeData.chunkSize * Vector3.one; // your logic for size
         var listItem = hullChunkBoundaryCubes[cubeRenderChunkIndex];
-        hullChunkBoundaryCubes[cubeRenderChunkIndex] = UpdateDebugCube(listItem, position, size, $"chunk_{cubeRenderChunkIndex}", new Color(0, 1, 0, 0.25f), Vector3.zero);
+        hullChunkBoundaryCubes[cubeRenderChunkIndex] = UpdateDebugCube(listItem, position, size, $"chunk_{cubeRenderChunkIndex}", BuildBoundaryColor, Vector3.zero);
         cubeRenderChunkIndex++;
       }
     }
@@ -126,7 +129,7 @@ public class VehicleDebugHelpers : MonoBehaviour
 
   private GameObject? UpdateDebugCube(GameObject? cube, Vector3 position, Vector3 size, string title, Color color, Vector3 textOffset)
   {
-    if (!autoUpdateColliders || vehicleManagerInstance.MovementController == null)
+    if (!autoUpdateColliders || vehicleManagerInstance.PiecesController == null || vehicleManagerInstance.MovementController == null)
     {
       if (cube != null) Destroy(cube);
       return null;
@@ -141,29 +144,29 @@ public class VehicleDebugHelpers : MonoBehaviour
       var meshRenderer = cube.GetComponent<MeshRenderer>();
       meshRenderer.material = new Material(LoadValheimVehicleAssets.DoubleSidedTransparentMat) { color = color };
       cube.layer = LayerMask.NameToLayer("Ignore Raycast");
-
+      // Set parent and local position
+      cube.transform.SetParent(vehicleManagerInstance.PiecesController.transform, false);
+      cube.transform.localPosition = vehicleManagerInstance.PiecesController.transform.InverseTransformPoint(position);
+      // Do not set localRotation to identity; let it inherit parent's rotation
       // Add the text element as a child
       var textObj = new GameObject("CubeText");
       textObj.transform.SetParent(cube.transform);
-      textObj.transform.localPosition =
-        new Vector3(0, 1.2f, 0) + textOffset; // Adjust height as needed
+      textObj.transform.localPosition = new Vector3(0, 1.2f, 0) + textOffset;
       var textMesh = textObj.AddComponent<TextMesh>();
       var text = SplitCamelCase(title.Replace("_", " "));
-      textMesh.text = text; // Set desired text
+      textMesh.text = text;
       textMesh.fontSize = 32;
-      textMesh.characterSize = 0.1f; // Adjust size as needed
+      textMesh.characterSize = 0.1f;
       textMesh.anchor = TextAnchor.MiddleCenter;
       textMesh.alignment = TextAlignment.Center;
       textMesh.color = Color.yellow;
     }
     // update size (for hull chunks)
     cube.transform.localScale = size;
+    cube.transform.localPosition = vehicleManagerInstance.PiecesController.transform.InverseTransformPoint(position);
+    // Do not set localRotation to identity; let it inherit parent's rotation
 
     // same as RenderDebugCube
-    cube.transform.position = position;
-    cube.transform.SetParent(
-      vehicleManagerInstance.PiecesController.transform,
-      true);
 
     // Ensure the text always faces the camera
     var textTransform = cube.transform.Find("CubeText");
@@ -196,6 +199,11 @@ public class VehicleDebugHelpers : MonoBehaviour
     lines.Values.ToList()
       .ForEach(x => x.ForEach(Destroy));
     lines.Clear();
+
+    foreach (var hullChunkBoundaryCube in hullChunkBoundaryCubes)
+    {
+      Destroy(hullChunkBoundaryCube);
+    }
 
     Destroy(worldCenterOfMassCube);
     Destroy(vehicleMovementAutomaticCenterOfMassCube);
@@ -475,13 +483,12 @@ public class VehicleDebugHelpers : MonoBehaviour
     var forwardDir = boxColliderTransform.forward.normalized;
     var upDir = boxColliderTransform.up.normalized;
     var center = boxColliderTransform.position + boxCollider.center;
-    var size = boxCollider.size;
-
     var lossyScale = boxColliderTransform.lossyScale;
-
-    size.x *= lossyScale.x;
-    size.y *= lossyScale.y;
-    size.z *= lossyScale.z;
+    var size = new Vector3(
+      boxCollider.size.x * lossyScale.x,
+      boxCollider.size.y * lossyScale.y,
+      boxCollider.size.z * lossyScale.z
+    );
     var extents = size / 2f;
 
     var topMostDir = upDir * extents.y;

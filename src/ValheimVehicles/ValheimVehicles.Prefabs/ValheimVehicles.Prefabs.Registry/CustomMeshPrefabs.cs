@@ -8,6 +8,7 @@ using ValheimVehicles.BepInExConfig;
 using ValheimVehicles.SharedScripts;
 using ValheimVehicles.Components;
 using ValheimVehicles.Controllers;
+using ValheimVehicles.Helpers;
 using Zolantris.Shared;
 using Logger = Jotunn.Logger;
 
@@ -18,7 +19,8 @@ namespace ValheimVehicles.Prefabs.Registry;
  */
 public class CustomMeshPrefabs : RegisterPrefab<CustomMeshPrefabs>
 {
-  public static Color CachedBoundaryColor = new(0, 1, 0, 0.25f);
+  public static Color CachedBoundaryAdderColor = new(0, 1, 0, 0.25f);
+  public static Color CachedBoundaryEraserColor = new(1, 0, 0, 0.25f);
 
   public override void OnRegister()
   {
@@ -29,6 +31,7 @@ public class CustomMeshPrefabs : RegisterPrefab<CustomMeshPrefabs>
     RegisterShipChunkBoundary4x4();
     RegisterShipChunkBoundary8x8();
     RegisterShipChunkBoundary16x16();
+    RegisterShipChunkBoundaryEraser();
 
     if (CustomMeshConfig.EnableCustomWaterMeshTestPrefabs.Value)
     {
@@ -290,10 +293,46 @@ public class CustomMeshPrefabs : RegisterPrefab<CustomMeshPrefabs>
 
   private static Material? cachedBoundaryMaterial = null;
 
-  public static void UpdateMaterial(GameObject prefab, Vector3 scale, Color color)
+  public static void ChunkPrefabSharedSetup(GameObject prefab, Vector3 scale, Color color)
   {
     var meshRenderer = prefab.GetComponent<MeshRenderer>();
-    meshRenderer.transform.localScale = scale;
+    var piece = prefab.AddComponent<Piece>();
+
+    prefab.transform.rotation = Quaternion.identity;
+
+
+    prefab.AddComponent<DelayedSelfDeletingComponent>();
+    PrefabRegistryHelpers.AddNetViewWithPersistence(prefab);
+
+    piece.m_canRotate = true;
+    piece.m_allowRotatedOverlap = true;
+    piece.m_noClipping = false;
+
+    // injects snappoints per each transform and scales them properly.
+    var convexHullBoundary = new ConvexHullBoundaryConstraint();
+    convexHullBoundary.AddBoundaryPiecePoints(prefab.transform.localPosition, scale);
+    var snappoints = convexHullBoundary.boundaryVertices;
+    var count = 1;
+
+    var collider = prefab.GetComponent<BoxCollider>();
+    collider.includeLayers = LayerMask.GetMask("piece_nonsolid");
+
+    prefab.transform.localScale = scale;
+
+    foreach (var position in snappoints)
+    {
+      var go = new GameObject($"$hud_snappoint_corner ${count}")
+      {
+        transform =
+        {
+          position = position,
+          parent = prefab.transform
+        },
+        tag = "snappoint",
+        layer = LayerHelpers.PieceLayer
+      };
+      count++;
+    }
 
     if (cachedBoundaryMaterial == null)
     {
@@ -325,9 +364,8 @@ public class CustomMeshPrefabs : RegisterPrefab<CustomMeshPrefabs>
     var prefab =
       PrefabManager.Instance.CreateEmptyPrefab(PrefabNames.ShipChunkBoundary1x1x1);
 
-    UpdateMaterial(prefab, Vector3.one, CachedBoundaryColor);
+    ChunkPrefabSharedSetup(prefab, Vector3.one, CachedBoundaryAdderColor);
 
-    PrefabRegistryHelpers.AddTempNetView(prefab);
 
     var piece = prefab.AddComponent<Piece>();
     piece.m_name = "Ship Chunk Boundary 1x1";
@@ -351,9 +389,7 @@ public class CustomMeshPrefabs : RegisterPrefab<CustomMeshPrefabs>
     var prefab =
       PrefabManager.Instance.CreateEmptyPrefab(PrefabNames.ShipChunkBoundary4x4x4);
 
-    UpdateMaterial(prefab, Vector3.one * 4, CachedBoundaryColor);
-
-    PrefabRegistryHelpers.AddNetViewWithPersistence(prefab);
+    ChunkPrefabSharedSetup(prefab, Vector3.one * 4, CachedBoundaryAdderColor);
 
     var piece = prefab.AddComponent<Piece>();
     piece.m_name = "Ship Chunk Boundary 4x4";
@@ -377,9 +413,7 @@ public class CustomMeshPrefabs : RegisterPrefab<CustomMeshPrefabs>
     var prefab =
       PrefabManager.Instance.CreateEmptyPrefab(PrefabNames.ShipChunkBoundary8x8x8);
 
-    UpdateMaterial(prefab, Vector3.one * 8, CachedBoundaryColor);
-
-    PrefabRegistryHelpers.AddNetViewWithPersistence(prefab);
+    ChunkPrefabSharedSetup(prefab, Vector3.one * 8, CachedBoundaryAdderColor);
 
     var piece = prefab.AddComponent<Piece>();
     piece.m_name = "Ship Chunk Boundary 8x8";
@@ -403,9 +437,7 @@ public class CustomMeshPrefabs : RegisterPrefab<CustomMeshPrefabs>
     var prefab =
       PrefabManager.Instance.CreateEmptyPrefab(PrefabNames.ShipChunkBoundary16x16x16);
 
-    UpdateMaterial(prefab, Vector3.one * 8, CachedBoundaryColor);
-
-    PrefabRegistryHelpers.AddNetViewWithPersistence(prefab);
+    ChunkPrefabSharedSetup(prefab, Vector3.one * 16, CachedBoundaryAdderColor);
 
     var piece = prefab.AddComponent<Piece>();
     piece.m_name = "Ship Chunk Boundary 16x16";
@@ -419,6 +451,31 @@ public class CustomMeshPrefabs : RegisterPrefab<CustomMeshPrefabs>
         PieceTable = PrefabRegistryController.GetPieceTableName(),
         Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
           .VehicleBorder),
+        Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Tools),
+        Enabled = true
+      }));
+  }
+
+  private static void RegisterShipChunkBoundaryEraser()
+  {
+    var prefab =
+      PrefabManager.Instance.CreateEmptyPrefab(PrefabNames.ShipChunkBoundaryEraser);
+
+    ChunkPrefabSharedSetup(prefab, Vector3.one, CachedBoundaryEraserColor);
+
+    var piece = prefab.AddComponent<Piece>();
+    piece.m_name = "Chunk (Eraser)";
+    piece.m_description =
+      "Vehicle Ship Chunk (Eraser), placing this will delete any chunk overlapping chunks in the area.";
+    piece.m_placeEffect =
+      LoadValheimAssets.woodFloorPiece.m_placeEffect;
+    piece.m_canRotate = true;
+    PrefabRegistryController.AddPiece(new CustomPiece(prefab, true,
+      new PieceConfig
+      {
+        PieceTable = PrefabRegistryController.GetPieceTableName(),
+        Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
+          .ExperimentIcon),
         Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Tools),
         Enabled = true
       }));

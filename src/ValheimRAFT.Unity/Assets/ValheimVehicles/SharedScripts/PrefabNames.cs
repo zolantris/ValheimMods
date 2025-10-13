@@ -110,6 +110,9 @@
       public static readonly string ShipChunkBoundary16x16x16 =
         $"{ValheimVehiclesPrefix}_ShipChunkBoundary16x16x16";
 
+      public static readonly string ShipChunkBoundaryEraser =
+        $"{ValheimVehiclesPrefix}_ShipChunkBoundaryEraser";
+
       public static readonly string CustomWaterMask =
         $"{ValheimVehiclesPrefix}_CustomWaterMask";
 

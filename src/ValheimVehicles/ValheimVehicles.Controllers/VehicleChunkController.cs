@@ -7,6 +7,7 @@ namespace ValheimVehicles.Controllers;
 public class VehicleChunkController
 {
   private int chunkSize = 1;
+  public static Vector3 eraserCubeSize = Vector3.one * 0.25f;
 
   public int ChunkSize => chunkSize;
 
@@ -43,6 +44,11 @@ public class VehicleChunkController
            name.StartsWith(PrefabNames.ShipChunkBoundary4x4x4) ||
            name.StartsWith(PrefabNames.ShipChunkBoundary8x8x8) ||
            name.StartsWith(PrefabNames.ShipChunkBoundary16x16x16);
+  }
+
+  public static bool IsShipChunkBoundaryEraser(string name)
+  {
+    return name.StartsWith(PrefabNames.ShipChunkBoundaryEraser);
   }
 
   /**

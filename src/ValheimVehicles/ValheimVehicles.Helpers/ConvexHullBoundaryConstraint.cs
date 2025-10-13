@@ -24,7 +24,7 @@ public class ConvexHullBoundaryConstraint
   /// <summary>
   /// List of all boundary cube vertices collected from placed ship chunk boundary pieces
   /// </summary>
-  private List<Vector3> boundaryVertices = new();
+  public List<Vector3> boundaryVertices = new();
 
   public int GetVerticesCount => boundaryVertices.Count;
   public int GetObjectsCount => cachedChunkSizeDataItems.Count;
@@ -48,12 +48,8 @@ public class ConvexHullBoundaryConstraint
     cachedChunkSizeDataItems = items;
   }
 
-  /// <summary>
-  /// Adds boundary points from a ship chunk boundary piece (cube with 8 vertices)
-  /// </summary>
-  public void AddBoundaryPiecePoints(Vector3 localPosition, Vector3 scale)
+  public static Vector3[] GetBoundaryVerticesArray(Vector3 localPosition, Vector3 scale)
   {
-    // Get the 8 vertices of a cube in local space
     var halfScale = scale * 0.5f;
     var cubeVertices = new Vector3[]
     {
@@ -66,11 +62,43 @@ public class ConvexHullBoundaryConstraint
       new(-halfScale.x, halfScale.y, halfScale.z),
       new(halfScale.x, halfScale.y, halfScale.z)
     };
+    var relativeVertices = cubeVertices.Select(x => localPosition + x);
 
-    // each point must be relative to the localPosition of the boundary piece in relation to the vehicle
-    foreach (var vertex in cubeVertices)
+    return relativeVertices.ToArray();
+  }
+
+  public static Bounds GetChunkBounds(Vector3 localPosition, Vector3 scale)
+  {
+    var vertices = GetBoundaryVerticesArray(localPosition, scale);
+    var bounds = new Bounds();
+    var first = true;
+
+    foreach (var vertice in vertices)
     {
-      var localVertex = localPosition + vertex;
+      // always use first index otherwise it's inaccurate if coordinates are not near localposition.
+      if (first)
+      {
+        bounds = new Bounds(vertice, Vector3.zero);
+        first = false;
+      }
+      else
+      {
+        bounds.Encapsulate(vertice);
+      }
+    }
+
+    return bounds;
+  }
+
+  /// <summary>
+  /// Adds boundary points from a ship chunk boundary piece (cube with 8 vertices)
+  /// </summary>
+  public void AddBoundaryPiecePoints(Vector3 localPosition, Vector3 scale)
+  {
+    // Get the 8 vertices of a cube in local space
+    var vertices = GetBoundaryVerticesArray(localPosition, scale);
+    foreach (var localVertex in vertices)
+    {
       boundaryVertices.Add(localVertex);
     }
   }
@@ -108,15 +136,12 @@ public class ConvexHullBoundaryConstraint
 
     try
     {
-      // Convert world space points to local space relative to parent
-      var localPoints = boundaryVertices.Select(p => parentTransform.InverseTransformPoint(p)).ToList();
-
       var verts = new List<Vector3>();
       var tris = new List<int>();
       var normals = new List<Vector3>();
 
       var calculator = new ConvexHullCalculator();
-      if (!calculator.GenerateHull(localPoints, false, ref verts, ref tris, ref normals, out _))
+      if (!calculator.GenerateHull(boundaryVertices, false, ref verts, ref tris, ref normals, out _))
       {
         LoggerProvider.LogWarning("Failed to generate boundary hull");
         return false;
@@ -132,7 +157,7 @@ public class ConvexHullBoundaryConstraint
       boundaryMesh.RecalculateBounds();
 
       // Create GameObject with MeshCollider for efficient point-in-mesh and closest-point queries
-      boundaryObject = new GameObject("ShipBoundaryConstraint");
+      boundaryObject = new GameObject("VehicleBoundaryCollider");
       boundaryObject.transform.SetParent(parentTransform);
       boundaryObject.transform.localPosition = Vector3.zero;
       boundaryObject.transform.localRotation = Quaternion.identity;

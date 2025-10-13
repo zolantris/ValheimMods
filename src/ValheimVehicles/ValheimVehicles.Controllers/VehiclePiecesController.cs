@@ -383,6 +383,9 @@
       _movingPiecesContainerTransform = CreateMovingPiecesContainer();
       m_localRigidbody = _piecesContainerTransform.GetComponent<Rigidbody>();
       InitializationTimer.Start();
+
+      // Look for any existing data for the vehicle.
+      UpdateChunkBoundsData();
     }
 
     public void AddTargetController()
@@ -2186,6 +2189,8 @@
       var stream = new MemoryStream();
       var writer = new BinaryWriter(stream);
 
+      writer.Write(VersionedConfigUtil.GetDynamicMinorVersionKey());
+
       // size must be read first to determine number of iterations
       var size = currentData.Count;
       writer.Write(size);
@@ -2220,18 +2225,18 @@
         return [];
       }
       var reader = new BinaryReader(stream);
-      var version = reader.ReadByte();
+      var version = reader.ReadString();
 
 #if DEBUG
       LoggerProvider.LogDebug($"ReadChunkBoundsData version: {version}");
 #endif
 
-      var count = reader.ReadInt32();
-      if (count == 0) return [];
+      var size = reader.ReadInt32();
+      if (size == 0) return [];
 
       var output = new HashSet<VehicleChunkSizeData>();
 
-      for (var i = 0; i < count; i++)
+      for (var i = 0; i < size; i++)
       {
         var position = new SerializableVector3(reader.ReadVector3());
         var chunkSize = reader.ReadInt32();
@@ -2261,9 +2266,9 @@
 
       var zdo = m_nview.GetZDO();
       if (zdo == null) return;
-      var data = ReadChunkBoundsData(zdo);
-      if (pendingChunkData.HasValue) data.RemoveWhere(x => x.position.Equals(pendingChunkData.Value.position));
-      UpdateChunkBoundsData();
+      var currentData = ReadChunkBoundsData(zdo);
+      if (pendingChunkData.HasValue) currentData.RemoveWhere(x => x.position.Equals(pendingChunkData.Value.position));
+      TryWriteChunkBoundsData(currentData);
     }
 
     public void AddChunkBoundsData(VehicleChunkSizeData data)
@@ -2277,7 +2282,7 @@
       var zdo = m_nview.GetZDO();
       if (zdo == null) return;
 
-      var currentData = ReadChunkBoundsData(zdo).ToHashSet();
+      var currentData = ReadChunkBoundsData(zdo);
       currentData.Add(data);
       TryWriteChunkBoundsData(currentData);
     }
@@ -2782,33 +2787,86 @@
       }
       if (TryBailOnSameObject(netView.gameObject)) return;
       var zdo = netView.GetZDO();
+      var prefabName = netView.name;
+
       if (zdo == null)
       {
-        LoggerProvider.LogError($"NetView <{netView.name}> has no valid ZDO returning");
+        LoggerProvider.LogError($"NetView <{prefabName}> has no valid ZDO returning");
+        return;
+      }
+
+
+      if (VehicleChunkController.IsShipChunkBoundaryEraser(prefabName))
+      {
+        if (m_nview.IsOwner())
+        {
+          netView.ClaimOwnership();
+        }
+        else
+        {
+          return;
+        }
+
+        var hasRemovedData = false;
+
+        foreach (var cachedChunkSizeDataItem in HullBoundaryConstraint.cachedChunkSizeDataItems)
+        {
+          // Get chunk bounds (assuming you have a method to get bounds from chunk data)
+          var chunkBounds = ConvexHullBoundaryConstraint.GetChunkBounds(cachedChunkSizeDataItem.position.ToVector3(), cachedChunkSizeDataItem.chunkSize * Vector3.one);
+
+          // Get eraser cube bounds (assuming eraser cube is at netView.transform.position and has known size)
+          var eraserCubeBounds = new Bounds(
+            transform.InverseTransformPoint(netView.transform.position),
+            VehicleChunkController.eraserCubeSize * 1.1f // Vector3 size of the eraser cube (plus a bit more to allow for collisions
+          );
+
+          if (chunkBounds.Intersects(eraserCubeBounds))
+          {
+            LoggerProvider.LogDebug($"Removed ship chunkPiece boundary netView {prefabName} at localPosition: {cachedChunkSizeDataItem.position}.");
+            RemoveChunkBoundsData(cachedChunkSizeDataItem);
+            // Optionally, do not break to remove all intersecting chunks
+            hasRemovedData = true;
+          }
+        }
+        if (hasRemovedData)
+        {
+          UpdateChunkBoundsData();
+        }
+
+        // destroy the now unused piece.
+        ZNetScene.instance.Destroy(netView.gameObject);
         return;
       }
 
       // Check if this is a ship chunk boundary piece
-      if (VehicleChunkController.IsShipChunkBoundaryPiece(netView.name))
+      if (VehicleChunkController.IsShipChunkBoundaryPiece(prefabName))
       {
 
         var localPosition = transform.InverseTransformPoint(netView.transform.position);
-        var chunkData = VehicleChunkController.ToChunkSizeData(netView.name, localPosition);
+        var chunkData = VehicleChunkController.ToChunkSizeData(prefabName, localPosition);
 
-        LoggerProvider.LogDebug($"Added ship chunkPiece boundary netView {netView.name} at localPosition: {localPosition}.");
+        LoggerProvider.LogDebug($"Added ship chunkPiece boundary netView {prefabName} at localPosition: {localPosition}.");
 
         // try to update data if applicable
         AddChunkBoundsData(chunkData);
-        TryWriteChunkBoundsData(null);
 
         // always optimistically update.
         UpdateChunkBoundsData();
+
+        // for clarity (we must be vehicle owner and then destroy the piece after the vehicle owner detects the new piece added)
+        var vehicleNv = m_nview;
+        if (vehicleNv && vehicleNv.IsOwner())
+        {
+          netView.ClaimOwnership();
+          // destroy the now unused piece.
+          ZNetScene.instance.Destroy(netView.gameObject);
+        }
         return;
       }
 
       if (zdo.m_prefab == PrefabNameHashes.WaterVehicleShip)
       {
-        LoggerProvider.LogWarning($"Attempted to add a piece to a water vehicle. This is not allowed. NetView <{netView.name}>");
+        LoggerProvider.LogWarning($"Attempted to add a piece to a water vehicle. This is not allowed. NetView <{prefabName}>");
         return;
       }
 
@@ -2828,7 +2886,7 @@
 
       if (m_pieces.Contains(netView))
       {
-        LoggerProvider.LogDev($"NetView already is added. name: {netView.name}");
+        LoggerProvider.LogDev($"NetView already is added. name: {prefabName}");
       }
       else
       {
