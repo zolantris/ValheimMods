@@ -176,22 +176,22 @@ public class VehicleDebugHelpers : MonoBehaviour
         new()
         {
           position = shipFloatation.Value.ShipForward - centerOffMassDifference,
-          name = "water_forward"
+          name = "force_forward"
         },
         new()
         {
           position = shipFloatation.Value.ShipBack - centerOffMassDifference,
-          name = "water_backward"
+          name = "force_backward"
         },
         new()
         {
           position = shipFloatation.Value.ShipRight - centerOffMassDifference,
-          name = "water_right"
+          name = "force_right"
         },
         new()
         {
           position = shipFloatation.Value.ShipLeft - centerOffMassDifference,
-          name = "water_left"
+          name = "force_left"
         }
       };
 

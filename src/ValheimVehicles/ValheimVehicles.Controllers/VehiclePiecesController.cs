@@ -1579,7 +1579,7 @@
  */
     public IEnumerator UpdatePiecesInEachSectorWorker()
     {
-      LoggerProvider.LogMessage("UpdatePiecesInEachSectorWorker started");
+      LoggerProvider.LogDebug("UpdatePiecesInEachSectorWorker started");
       while (isActiveAndEnabled)
       {
         if (!m_nview)
@@ -1600,7 +1600,7 @@
         yield return new WaitForFixedUpdate();
       }
 
-      LoggerProvider.LogMessage("UpdatePiecesInEachSectorWorker finished");
+      LoggerProvider.LogDebug("UpdatePiecesInEachSectorWorker finished");
       // if we get here we need to restart this updater and this requires the coroutine to be null
       _serverUpdatePiecesCoroutine = null;
     }
@@ -1699,8 +1699,6 @@
     {
       if (!isActiveAndEnabled || ZNetView.m_forceDisableInit || !isInitialPieceActivationComplete) return;
 
-      // chunks must be updated in case the vehicle bounds chunks have been mutated.
-      UpdateChunkBoundsData(true);
       base.RequestBoundsRebuild();
     }
 
@@ -2168,12 +2166,6 @@
       {
         if (anchorState != anchorComponent.currentState)
           anchorComponent.UpdateAnchorState(anchorState, currentWheelStateText);
-
-        // drop anchor on first load otherwise it will not spawn / return to anchor state.
-        if (lastAnchorState == AnchorState.Idle && anchorState == AnchorState.Anchored)
-        {
-          anchorComponent.StartDropping();
-        }
       }
 
       if (_steeringWheelPiece)
@@ -2241,6 +2233,11 @@
       }
 
       zdo.Set(VehicleZdoVars.VehicleChunkBounds, stream.ToArray());
+
+      if (VehicleConfigSync)
+      {
+        VehicleConfigSync.SendSyncBounds();
+      }
     }
 
     /// <summary>

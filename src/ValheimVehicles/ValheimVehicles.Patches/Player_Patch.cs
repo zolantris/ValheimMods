@@ -372,7 +372,11 @@
       return shouldRunOriginalMethod;
     }
 
+#if DEBUG
+    [HarmonyPatch(typeof(Player), nameof(Player.PieceRayTest))]
+#else
     [HarmonyPatch(typeof(Player), "PieceRayTest")]
+#endif
     [HarmonyPostfix]
     public static void PieceRayTestPostfix(Player __instance, ref bool __result,
       ref Vector3 point,
@@ -382,9 +386,65 @@
     {
 #if DEBUG
       var pieceName = piece == null ? "null" : piece.name;
-      LoggerProvider.LogDebugDebounced($"piece raycast: {pieceName}");
+      LoggerProvider.LogDebugDebounced($"piece raycast: {pieceName} water: {water}");
+      if (piece == null)
+      {
+        PieceRayTest(__instance, out var p, out var n, out var pc, out var h, out var w, water);
+        if (pc == null)
+        {
+          LoggerProvider.LogDebugDebounced("  Recheck: piece is still null");
+        }
+        else
+        {
+          LoggerProvider.LogDebugDebounced($"  Recheck: piece is {pc.name}");
+          piece = pc;
+          __result = true;
+        }
+      }
 #endif
       PatchSharedData.PlayerLastRayPiece = piece;
+    }
+
+    public static float RaycastDistance = 150f;
+
+    public static bool PieceRayTest(
+      Player __instance,
+      out Vector3 point,
+      out Vector3 normal,
+      out Piece piece,
+      out Heightmap heightmap,
+      out Collider waterSurface,
+      bool water)
+    {
+      var layerMask = __instance.m_placeRayMask;
+      if (water)
+        layerMask = __instance.m_placeWaterRayMask;
+      RaycastHit hitInfo;
+      if (Physics.Raycast(GameCamera.instance.transform.position, GameCamera.instance.transform.forward, out hitInfo, RaycastDistance, layerMask))
+      {
+        var maxPlaceDistance = __instance.m_maxPlaceDistance;
+        if ((bool)(Object)__instance.m_placementGhost)
+        {
+          var component = __instance.m_placementGhost.GetComponent<Piece>();
+          if (component != null)
+            maxPlaceDistance += (float)component.m_extraPlacementDistance;
+        }
+        if ((bool)(Object)hitInfo.collider && !(bool)(Object)hitInfo.collider.attachedRigidbody && (double)Vector3.Distance(__instance.m_eye.position, hitInfo.point) < (double)maxPlaceDistance)
+        {
+          point = hitInfo.point;
+          normal = hitInfo.normal;
+          piece = hitInfo.collider.GetComponentInParent<Piece>();
+          heightmap = hitInfo.collider.GetComponent<Heightmap>();
+          waterSurface = hitInfo.collider.gameObject.layer != LayerMask.NameToLayer("Water") ? (Collider)null : hitInfo.collider;
+          return true;
+        }
+      }
+      point = Vector3.zero;
+      normal = Vector3.zero;
+      piece = (Piece)null;
+      heightmap = (Heightmap)null;
+      waterSurface = (Collider)null;
+      return false;
     }
 
 

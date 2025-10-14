@@ -75,6 +75,9 @@ public class PhysicsConfig : BepInExBaseConfig<PhysicsConfig>
   public static ConfigEntry<float> forceDistance = null!;
   public static ConfigEntry<float> force = null!;
   public static ConfigEntry<float> backwardForce = null!;
+  public static ConfigEntry<float> waterRockForceUnanchored = null!;
+  public static ConfigEntry<float> waterRockForceAnchored = null!;
+  public static ConfigEntry<float> waterRockForceSubmarine = null!;
 
   // Camera (does not belong here)
   public static ConfigEntry<bool>
@@ -225,9 +228,21 @@ public class PhysicsConfig : BepInExBaseConfig<PhysicsConfig>
     flightDrag = config.BindUnique(SectionKey, "flightDrag", 1.2f, ConfigHelpers.CreateConfigDescription("Flight Drag value controls how much the vehicle will slow down when moving. Higher values will make the vehicle slower. Lower values will make the vehicle faster."));
     flightAngularDrag = config.BindUnique(SectionKey, "flightAngularDrag", 1.2f, ConfigHelpers.CreateConfigDescription("Flight angular drag controls how much the vehicle slows down when turning."));
 
+    waterRockForceSubmarine = config.BindUnique(SectionKey,
+      $"waterRockForce_submarine_{versionResetKey}", 0.04f,
+      ConfigHelpers.CreateConfigDescription("Configure the rocking force while submerged/in submarine underwater mode. This required water ballasting to be enabled and the vehicle to be underwater.", true, false, new AcceptableValueRange<float>(0f, 0.075f)));
+
+    waterRockForceAnchored = config.BindUnique(SectionKey,
+      $"waterRockForce_anchored_{versionResetKey}", 0.04f,
+      ConfigHelpers.CreateConfigDescription("Configure the rocking force while anchored at sea. Requires the vehicle anchor to be deployed. At 0, the vehicle will still attempt to right itself, and will no longer sway. This should be a lower number than waterRockForceUnanchored.", true, false, new AcceptableValueRange<float>(0f, 0.075f)));
+
+    waterRockForceUnanchored = config.BindUnique(SectionKey,
+      $"waterRockForce_unanchored_{versionResetKey}", 0.075f,
+      ConfigHelpers.CreateConfigDescription("Configure the rocking/sway force while at sea. At 0, the vehicle will still attempt to right itself, and will no longer sway. Higher values will make the vehicle much less stable and cause sea sickness. Recommended to stay within 0.075f and 0.10f but allows up to 0.15f.", true, false, new AcceptableValueRange<float>(0f, 0.15f)));
+
     force = config.BindUnique(SectionKey,
-      $"force_{versionResetKey}", 1f,
-      "EXPERIMENTAL_FORCE. Lower values will not allow the vehicle to balance fast when tilted. Lower values can reduce bobbing, but must be below the forceDistance value.");
+      $"force_{versionResetKey}", 0.5f,
+      "EXPERIMENTAL_FORCE. Lower values will not allow the vehicle to balance fast when tilted. Lower values than 0.5f will make vehicle sink. Lower values can reduce bobbing, but must be below the forceDistance value.");
     forceDistance = config.BindUnique(SectionKey,
       $"forceDistance_{versionResetKey}", 2f,
       "EXPERIMENTAL_FORCE_DISTANCE should always be above the value of force. Otherwise bobbing will occur. Lower values will not allow the vehicle to balance fast when tilted");

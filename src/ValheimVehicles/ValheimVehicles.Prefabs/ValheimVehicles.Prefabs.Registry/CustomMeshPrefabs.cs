@@ -19,16 +19,14 @@ namespace ValheimVehicles.Prefabs.Registry;
  */
 public class CustomMeshPrefabs : RegisterPrefab<CustomMeshPrefabs>
 {
-  public static Color CachedBoundaryAdderColor = new(0, 1, 0, 0.25f);
-  public static Color CachedBoundaryEraserColor = new(1, 0, 0, 0.25f);
+  public static Color CachedBoundaryAdderColor = new(0, 1f, 0, 0.15f);
+  public static Color CachedBoundaryEraserColor = new(1f, 0, 0, 0.15f);
 
   public override void OnRegister()
   {
     RegisterWaterMaskCreator();
     RegisterWaterMaskPrefab();
     RegisterCustomFloatationPrefab();
-    RegisterShipChunkBoundary1x1();
-    RegisterShipChunkBoundary4x4();
     RegisterShipChunkBoundary8x8();
     RegisterShipChunkBoundary16x16();
     RegisterShipChunkBoundaryEraser();
@@ -293,10 +291,12 @@ public class CustomMeshPrefabs : RegisterPrefab<CustomMeshPrefabs>
 
   private static Material? cachedBoundaryMaterial = null;
 
-  public static void ChunkPrefabSharedSetup(GameObject prefab, Vector3 scale, Color color)
+  public static void ChunkPrefabSharedSetup(GameObject prefab, Piece piece, Vector3 scale, Color color)
   {
     var meshRenderer = prefab.GetComponent<MeshRenderer>();
-    var piece = prefab.AddComponent<Piece>();
+
+    // allow placing further.
+    piece.m_extraPlacementDistance = 10;
 
     prefab.transform.rotation = Quaternion.identity;
 
@@ -359,50 +359,62 @@ public class CustomMeshPrefabs : RegisterPrefab<CustomMeshPrefabs>
   }
 
 
+  /// <summary>
+  /// Unused, too small IMO
+  /// </summary>
   private static void RegisterShipChunkBoundary1x1()
   {
     var prefab =
       PrefabManager.Instance.CreateEmptyPrefab(PrefabNames.ShipChunkBoundary1x1x1);
 
-    ChunkPrefabSharedSetup(prefab, Vector3.one, CachedBoundaryAdderColor);
-
 
     var piece = prefab.AddComponent<Piece>();
-    piece.m_name = "Ship Chunk Boundary 1x1";
+    piece.m_name = "$valheim_vehicles_boundary_mesh 1x1";
     piece.m_description =
-      "Vehicle Ship Chunk Boundary 1x1 component, used to define the boundaries of the ship's collision mesh.";
+      "$valheim_vehicles_boundary_mesh_desc";
     piece.m_placeEffect =
       LoadValheimAssets.woodFloorPiece.m_placeEffect;
-    PrefabRegistryController.AddPiece(new CustomPiece(prefab, true,
+
+    ChunkPrefabSharedSetup(prefab, piece, Vector3.one * 8, CachedBoundaryAdderColor);
+
+
+    PrefabRegistryController.AddPiece(new CustomPiece(prefab, false,
       new PieceConfig
       {
         PieceTable = PrefabRegistryController.GetPieceTableName(),
         Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
-          .VehicleBorder),
+          .VehicleBorderAdd),
         Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Tools),
         Enabled = true
       }));
   }
 
+  /// <summary>
+  /// Unused, too small IMO
+  /// </summary>
   private static void RegisterShipChunkBoundary4x4()
   {
     var prefab =
       PrefabManager.Instance.CreateEmptyPrefab(PrefabNames.ShipChunkBoundary4x4x4);
 
-    ChunkPrefabSharedSetup(prefab, Vector3.one * 4, CachedBoundaryAdderColor);
 
     var piece = prefab.AddComponent<Piece>();
-    piece.m_name = "Ship Chunk Boundary 4x4";
+    piece.m_name = "$valheim_vehicles_boundary_mesh 4x4";
     piece.m_description =
-      "Vehicle Ship Chunk Boundary 4x4 component, used to define the boundaries of the ship's collision mesh.";
+      "$valheim_vehicles_boundary_mesh_desc";
+    piece.m_icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
+      .VehicleBorderAdd);
+
     piece.m_placeEffect =
       LoadValheimAssets.woodFloorPiece.m_placeEffect;
-    PrefabRegistryController.AddPiece(new CustomPiece(prefab, true,
+
+    ChunkPrefabSharedSetup(prefab, piece, Vector3.one * 8, CachedBoundaryAdderColor);
+
+
+    PrefabRegistryController.AddPiece(new CustomPiece(prefab, false,
       new PieceConfig
       {
         PieceTable = PrefabRegistryController.GetPieceTableName(),
-        Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
-          .VehicleBorder),
         Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Tools),
         Enabled = true
       }));
@@ -413,20 +425,22 @@ public class CustomMeshPrefabs : RegisterPrefab<CustomMeshPrefabs>
     var prefab =
       PrefabManager.Instance.CreateEmptyPrefab(PrefabNames.ShipChunkBoundary8x8x8);
 
-    ChunkPrefabSharedSetup(prefab, Vector3.one * 8, CachedBoundaryAdderColor);
 
     var piece = prefab.AddComponent<Piece>();
-    piece.m_name = "Ship Chunk Boundary 8x8";
+    piece.m_name = "$valheim_vehicles_boundary_mesh 8x8";
     piece.m_description =
-      "Vehicle Ship Chunk Boundary 8x8 component, used to define the boundaries of the ship's collision mesh.";
+      "$valheim_vehicles_boundary_mesh_desc";
     piece.m_placeEffect =
       LoadValheimAssets.woodFloorPiece.m_placeEffect;
-    PrefabRegistryController.AddPiece(new CustomPiece(prefab, true,
+    piece.m_icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
+      .VehicleBorderAdd);
+
+    ChunkPrefabSharedSetup(prefab, piece, Vector3.one * 8, CachedBoundaryAdderColor);
+
+    PrefabRegistryController.AddPiece(new CustomPiece(prefab, false,
       new PieceConfig
       {
         PieceTable = PrefabRegistryController.GetPieceTableName(),
-        Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
-          .VehicleBorder),
         Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Tools),
         Enabled = true
       }));
@@ -437,20 +451,22 @@ public class CustomMeshPrefabs : RegisterPrefab<CustomMeshPrefabs>
     var prefab =
       PrefabManager.Instance.CreateEmptyPrefab(PrefabNames.ShipChunkBoundary16x16x16);
 
-    ChunkPrefabSharedSetup(prefab, Vector3.one * 16, CachedBoundaryAdderColor);
-
     var piece = prefab.AddComponent<Piece>();
-    piece.m_name = "Ship Chunk Boundary 16x16";
+    piece.m_name = "$valheim_vehicles_boundary_mesh 16x16";
     piece.m_description =
-      "Vehicle Ship Chunk Boundary 16x16 component, used to define the boundaries of the ship's collision mesh.";
+      "$valheim_vehicles_boundary_mesh_desc";
+    piece.m_icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
+      .VehicleBorderAdd);
     piece.m_placeEffect =
       LoadValheimAssets.woodFloorPiece.m_placeEffect;
-    PrefabRegistryController.AddPiece(new CustomPiece(prefab, true,
+
+    ChunkPrefabSharedSetup(prefab, piece, Vector3.one * 16, CachedBoundaryAdderColor);
+
+
+    PrefabRegistryController.AddPiece(new CustomPiece(prefab, false,
       new PieceConfig
       {
         PieceTable = PrefabRegistryController.GetPieceTableName(),
-        Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
-          .VehicleBorder),
         Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Tools),
         Enabled = true
       }));
@@ -461,21 +477,24 @@ public class CustomMeshPrefabs : RegisterPrefab<CustomMeshPrefabs>
     var prefab =
       PrefabManager.Instance.CreateEmptyPrefab(PrefabNames.ShipChunkBoundaryEraser);
 
-    ChunkPrefabSharedSetup(prefab, Vector3.one, CachedBoundaryEraserColor);
-
     var piece = prefab.AddComponent<Piece>();
-    piece.m_name = "Chunk (Eraser)";
+
+    piece.m_name = "$valheim_vehicles_boundary_mesh_eraser";
     piece.m_description =
-      "Vehicle Ship Chunk (Eraser), placing this will delete any chunk overlapping chunks in the area.";
+      "$valheim_vehicles_boundary_mesh_eraser_desc";
+    piece.m_icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
+      .VehicleBorderErase);
     piece.m_placeEffect =
       LoadValheimAssets.woodFloorPiece.m_placeEffect;
     piece.m_canRotate = true;
-    PrefabRegistryController.AddPiece(new CustomPiece(prefab, true,
+
+    ChunkPrefabSharedSetup(prefab, piece, Vector3.one * 4, CachedBoundaryEraserColor);
+
+
+    PrefabRegistryController.AddPiece(new CustomPiece(prefab, false,
       new PieceConfig
       {
         PieceTable = PrefabRegistryController.GetPieceTableName(),
-        Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
-          .ExperimentIcon),
         Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Tools),
         Enabled = true
       }));

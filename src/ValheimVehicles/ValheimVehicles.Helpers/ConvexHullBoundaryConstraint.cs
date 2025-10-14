@@ -162,13 +162,16 @@ public class ConvexHullBoundaryConstraint
       boundaryObject.transform.localPosition = Vector3.zero;
       boundaryObject.transform.localRotation = Quaternion.identity;
       boundaryObject.transform.localScale = Vector3.one;
-      boundaryObject.layer = LayerHelpers.PieceNonSolidLayer;
+      boundaryObject.layer = LayerHelpers.IgnoreRaycastLayer;
 
       boundaryCollider = boundaryObject.AddComponent<MeshCollider>();
       boundaryCollider.sharedMesh = boundaryMesh;
       boundaryCollider.convex = true;
       boundaryCollider.isTrigger = true;
       boundaryCollider.enabled = true;
+
+      // never include any layer
+      boundaryCollider.excludeLayers = ~0;
 
       isInitialized = true;
       LoggerProvider.LogInfo($"✅ Boundary constraint mesh generated with {verts.Count} vertices");

@@ -114,7 +114,7 @@
     public float cachedMaxDepthOffset;
 
     public float directionalForceUnanchored = 0.15f;
-    public float directionalForceSubmerged = 0.05f;
+    public float directionalForceSubmarine = 0.05f;
     public float directionalForceAnchored = 0.075f;
     public float maxForce = 0.5f;
 
@@ -2205,6 +2205,9 @@
 
       m_stearVelForceFactor = 1.3f;
       m_backwardForce = PhysicsConfig.backwardForce.Value;
+      directionalForceUnanchored = PhysicsConfig.waterRockForceUnanchored.Value;
+      directionalForceAnchored = PhysicsConfig.waterRockForceAnchored.Value;
+      directionalForceSubmarine = PhysicsConfig.waterRockForceSubmarine.Value;
     }
 
     /// <summary>
@@ -2216,12 +2219,17 @@
     {
       if (isBeached) return 0;
 
-      if (IsSubmerged()) return directionalForceSubmerged;
+      if (IsSubmerged()) return directionalForceSubmarine;
 
-      if (!isAnchored) return directionalForceUnanchored;
+      if (!isAnchored)
+      {
+        return directionalForceUnanchored;
+      }
 
       return directionalForceAnchored;
     }
+
+    public static float VehicleExponentialRocking = 2f;
 
     public void UpdateWaterForce(ShipFloatation shipFloatation)
     {
@@ -2238,7 +2246,7 @@
 
       if (shipFloatation.IsAboveBuoyantLevel) return;
 
-      m_body.WakeUp();
+      // m_body.WakeUp();
 
       // TODO swap with damage from environment such as ashlands
       // if (m_waterImpactDamage > 0f)
@@ -2287,15 +2295,15 @@
         0f - maxForce, maxForce);
 
       forwardUpwardForce = Mathf.Sign(forwardUpwardForce) *
-                           Mathf.Abs(Mathf.Pow(forwardUpwardForce, 2f));
+                           Mathf.Abs(Mathf.Pow(forwardUpwardForce, VehicleExponentialRocking));
       backwardsUpwardForce = Mathf.Sign(backwardsUpwardForce) *
-                             Mathf.Abs(Mathf.Pow(backwardsUpwardForce, 2f));
+                             Mathf.Abs(Mathf.Pow(backwardsUpwardForce, VehicleExponentialRocking));
       leftUpwardForce = Mathf.Sign(leftUpwardForce) *
-                        Mathf.Abs(Mathf.Pow(leftUpwardForce, 2f));
+                        Mathf.Abs(Mathf.Pow(leftUpwardForce, VehicleExponentialRocking));
       rightUpwardForce = Mathf.Sign(rightUpwardForce) *
-                         Mathf.Abs(Mathf.Pow(rightUpwardForce, 2f));
+                         Mathf.Abs(Mathf.Pow(rightUpwardForce, VehicleExponentialRocking));
 
-      var centerOffMassDifference = Vector3.up * localCenterOfMassOffset * centerOfMassForceOffsetDifferenceMultiplier;
+      var centerOffMassDifference = Vector3.up * (localCenterOfMassOffset * centerOfMassForceOffsetDifferenceMultiplier);
 
       if (CanRunForwardWaterForce)
         AddForceAtPosition(Vector3.up * forwardUpwardForce * deltaForceMultiplier,
@@ -2315,7 +2323,50 @@
         AddForceAtPosition(Vector3.up * rightUpwardForce * deltaForceMultiplier,
           shipRight - centerOffMassDifference,
           ForceMode.Acceleration);
+
+      if (CanApplyRightingForce)
+      {
+        ApplyRightingForce();
+      }
     }
+
+    public static bool CanApplyRightingForce = true;
+    public static float rightingStrength = 0.2f;
+    /// <summary>
+    /// For righting the ship when it tilts too far or while anchored.
+    /// </summary>
+    public void ApplyRightingForce()
+    {
+      var currentRot = m_body.rotation;
+      var targetRot = Quaternion.Euler(0f, currentRot.eulerAngles.y, 0f);
+      var angleDiff = Quaternion.Angle(currentRot, targetRot);
+
+      var snappingThreshold = 0.5f;
+
+      // Threshold for snapping
+      // if (angleDiff < snappingThreshold)
+      // {
+      //   m_body.MoveRotation(targetRot);
+      //   var angularVelocityXYZero = m_body.angularVelocity;
+      //   angularVelocityXYZero.x = 0f;
+      //   angularVelocityXYZero.z = 0f;
+      //   m_body.angularVelocity = angularVelocityXYZero;
+      // }
+      // else
+      // {
+      var deltaRot = targetRot * Quaternion.Inverse(currentRot);
+      deltaRot.ToAngleAxis(out var angle, out var axis);
+      if (angle > 180f) angle -= 360f;
+      var tiltThreshold = 15f;
+      var computedRightingStrength = rightingStrength;
+      if (Mathf.Abs(angle) > tiltThreshold)
+        computedRightingStrength *= 2f;
+      var torque = axis * angle * computedRightingStrength;
+      torque.y = 0f;
+      m_body.AddTorque(torque, ForceMode.Acceleration);
+      // }
+    }
+
 
     public void UpdateShipFloatation(ShipFloatation shipFloatation)
     {
