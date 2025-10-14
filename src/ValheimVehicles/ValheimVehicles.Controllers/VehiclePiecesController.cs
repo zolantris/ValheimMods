@@ -852,6 +852,8 @@
       var initialized = m_nview?.GetZDO()
         .GetBool(VehicleZdoVars.ZdoKeyBaseVehicleInitState) ?? false;
 
+      UpdateChunkBoundsData(false);
+
       BaseVehicleInitState = initialized
         ? InitializationState.Complete
         : InitializationState.Created;
@@ -2198,6 +2200,7 @@
       }
 
       TryWriteChunkBoundsData([]);
+      UpdateChunkBoundsData(true);
       Player.m_localPlayer?.Message(MessageHud.MessageType.Center,
         $"$valheim_vehicles_shared_clear_success {chunkCount}");
     }
