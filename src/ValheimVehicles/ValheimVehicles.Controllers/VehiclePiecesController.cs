@@ -2204,7 +2204,7 @@
       UpdateChunkBoundsData(true);
       VehicleConfigSync.SendSyncBounds();
       Player.m_localPlayer.Message(MessageHud.MessageType.Center,
-        $"$valheim_vehicles_shared_clear_success {chunkCount}");
+        $"$valheim_vehicles_shared_clear_success chunks:<{chunkCount}>");
     }
 
     public void TryWriteChunkBoundsData(HashSet<VehicleChunkSizeData>? currentData)
