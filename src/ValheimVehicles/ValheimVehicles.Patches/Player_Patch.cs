@@ -405,6 +405,8 @@
       PatchSharedData.PlayerLastRayPiece = piece;
     }
 
+
+#if DEBUG
     public static float RaycastDistance = 150f;
 
     public static bool PieceRayTest(
@@ -446,7 +448,7 @@
       waterSurface = (Collider)null;
       return false;
     }
-
+#endif
 
     [HarmonyPatch(typeof(Player), "Save")]
     [HarmonyPrefix]
