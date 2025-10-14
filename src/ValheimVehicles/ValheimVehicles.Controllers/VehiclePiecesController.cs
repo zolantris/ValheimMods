@@ -2183,9 +2183,10 @@
     /// </summary>
     public void ClearAllBoundaryChunkData()
     {
-      if (!m_nview)
+      if (!Player.m_localPlayer) return;
+      if (!m_nview || !VehicleConfigSync)
       {
-        Player.m_localPlayer?.Message(MessageHud.MessageType.Center,
+        Player.m_localPlayer.Message(MessageHud.MessageType.Center,
           "$valheim_vehicles_shared_clear_failure");
         return;
       }
@@ -2194,14 +2195,15 @@
       var chunkCount = currentChunkData.Count;
       if (chunkCount == 0)
       {
-        Player.m_localPlayer?.Message(MessageHud.MessageType.Center,
+        Player.m_localPlayer.Message(MessageHud.MessageType.Center,
           "$valheim_vehicles_shared_clear_failure");
         return;
       }
 
       TryWriteChunkBoundsData([]);
       UpdateChunkBoundsData(true);
-      Player.m_localPlayer?.Message(MessageHud.MessageType.Center,
+      VehicleConfigSync.SendSyncBounds();
+      Player.m_localPlayer.Message(MessageHud.MessageType.Center,
         $"$valheim_vehicles_shared_clear_success {chunkCount}");
     }
 
