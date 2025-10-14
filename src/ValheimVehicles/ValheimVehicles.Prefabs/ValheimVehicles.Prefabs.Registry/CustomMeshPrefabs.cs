@@ -19,8 +19,8 @@ namespace ValheimVehicles.Prefabs.Registry;
  */
 public class CustomMeshPrefabs : RegisterPrefab<CustomMeshPrefabs>
 {
-  public static Color CachedBoundaryAdderColor = new(0, 1f, 0, 0.15f);
-  public static Color CachedBoundaryEraserColor = new(1f, 0, 0, 0.15f);
+  public static Color CachedBoundaryAdderColor = new(0, 1f, 0, 0.08f);
+  public static Color CachedBoundaryEraserColor = new(1f, 0, 0, 0.08f);
 
   public override void OnRegister()
   {

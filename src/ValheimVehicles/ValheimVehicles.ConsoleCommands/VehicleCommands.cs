@@ -156,6 +156,9 @@ public class VehicleCommands : ConsoleCommand
       case VehicleCommandArgs.help:
         Logger.LogMessage(OnHelp());
         break;
+      case VehicleCommandArgs.clearBoundaryChunkData:
+        ClearAllVehicleBoundaryChunks();
+        break;
     }
   }
 
