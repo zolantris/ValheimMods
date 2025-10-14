@@ -153,6 +153,9 @@
     public void SyncVehicleBounds()
     {
       if (PiecesController == null) return;
+
+      // only update chunkbounds data. Rebuild will be requested after all updates are done.
+      PiecesController.UpdateChunkBoundsData(false);
       PiecesController.RequestBoundsRebuild();
     }
 

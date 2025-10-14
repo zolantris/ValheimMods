@@ -116,7 +116,7 @@ namespace ValheimVehicles.SharedScripts
 
     private void InitDefaultColliderPointData(Allocator allocator)
     {
-      ColliderPointData = new PrefabColliderPointData(Prefab.transform.localPosition, [], allocator);
+      ColliderPointData = new PrefabColliderPointData(Prefab.transform.localPosition, new Vector3[] {}, allocator);
     }
 
     // public void Dispose()

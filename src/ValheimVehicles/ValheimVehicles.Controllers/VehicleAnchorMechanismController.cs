@@ -37,16 +37,21 @@
     public override void FixedUpdate()
     {
       base.FixedUpdate();
-
       if (currentState == AnchorState.Lowering) UpdateDistanceToGround();
+    }
+
+    public float GetDistanceToGround()
+    {
+      var position = transform.position - GetAnchorStartLocalPosition();
+      var distanceFromAnchorToGround =
+        position.y - ZoneSystem.instance.GetGroundHeight(position);
+      return distanceFromAnchorToGround;
     }
 
     public void UpdateDistanceToGround()
     {
-      var position = anchorRopeAttachStartPoint.position;
-      var distanceFromAnchorToGround =
-        position.y - ZoneSystem.instance.GetGroundHeight(position);
-      anchorDropDistance = Mathf.Clamp(distanceFromAnchorToGround, 1f,
+      var dtg = GetDistanceToGround();
+      anchorDropDistance = Mathf.Clamp(dtg, 1f,
         maxAnchorDistance);
     }
 
@@ -78,6 +83,18 @@
       return GetCurrentStateTextStatic(currentState, IsLandVehicle());
     }
 
+    /// <summary>
+    /// Catch all if the anchor is not near the ground when it becomes anchored, move it down to the ground. This always happens on initial spawn.
+    /// </summary>
+    public void UpdateAnchorPositionIfNotNearGround()
+    {
+      var deltaGround = GetDistanceToGround();
+      if (!(deltaGround > 2)) return;
+      var newPos = GetAnchorStartLocalPosition();
+      newPos.y -= deltaGround;
+      anchorTransform.localPosition = newPos;
+    }
+
     public override void OnAnchorStateChange(AnchorState newState)
     {
       // No callbacks for anchor when flying
@@ -93,6 +110,7 @@
         case AnchorState.Lowering:
           break;
         case AnchorState.Anchored:
+          UpdateAnchorPositionIfNotNearGround();
           break;
         case AnchorState.Reeling:
           break;
@@ -102,7 +120,7 @@
           throw new ArgumentOutOfRangeException(nameof(newState), newState, null);
       }
 
-      if (MovementController != null && ((ValheimBaseGameShip)MovementController).m_nview.IsOwner())
+      if (MovementController != null && MovementController.m_nview.IsOwner())
         MovementController.SendSetAnchor(newState);
     }
   }

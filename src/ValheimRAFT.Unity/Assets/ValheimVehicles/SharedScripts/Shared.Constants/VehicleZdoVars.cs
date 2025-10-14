@@ -82,6 +82,8 @@ namespace ValheimVehicles.Shared.Constants
 
     public static readonly string VehicleAnchorState = "VehicleAnchorState";
 
+    public const string VehicleChunkBounds = "VehicleChunkBounds";
+
     public static readonly int VehicleTargetHeight =
       "VehicleTargetHeight".GetStableHashCode();
 

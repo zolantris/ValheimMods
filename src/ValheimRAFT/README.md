@@ -189,6 +189,44 @@ discontain other mods.
   </thead>
   <tbody>
     <tr>
+      <td>Boundary Chunk Addition (8x8) and (16x16)</td>
+      <td><img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT.Unity/Assets/ValheimVehicles/Icons/border_all.png" width="50"/></td>
+      <td>Added based on request from many players that there were bugs with their ships and having problems with collisions vastly exceeding safe areas of the ship. 
+
+This tool allows you to constrain the boundary of a vehicle within the box
+placed.
+
+1. Placing one box will constrain the vehicle to only that boxes area.
+2. Placing two boxes will constrain the vehicle to the area within each box and
+   in between those boxes
+3. Placing many boxes will constrain the vehicle to the area within each box and
+   in between all of those boxes.
+4. Any hull pieces placed outside the boxes will not be considered part of the
+   vehicle and can phase through the ground and will not collide with any
+   structures.
+
+**Viewing the boxes areas**
+
+1. To view the boxes run the command `vehicle debug` then press Physics Debugger
+2. To view the physics updates to the hull bounds. Run `vehicle debug`
+   again and press Hull Debugger.
+
+**Tips/Warnings**
+
+:warning: Making a small area but large ship will break some raft logic if the
+player is not within the onboard zones.
+
+:brain: Try to add a box at front, back, and max height of ship and max lowest
+point of ship. This will encapsulate whole ship.
+
+</td>
+    </tr>
+    <tr>
+      <td>Boundary Chunk Clear</td>
+      <td><img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT.Unity/Assets/ValheimVehicles/Icons/border_clear.png" width="50"/></td>
+      <td>Individually Clear the Boundary Chunk Additions boxes placed. Clearing is based on intersection and multiple boxes will be removed if the clear box hits both of them.</td>
+    </tr>
+    <tr>
       <td>Cannon (fixed)</td>
       <td><img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/cannon_fixed.png" width="200"/></td>
       <td>Introduced in 3.6.x updates. The cannon can be added to a any vehicle or base and be fired from a single controller. On Vehicles this is the wheel. Anywhere else this is the Cannon Control Center which is a telescope.</td>
@@ -566,19 +604,20 @@ by Jere if you want to get code completion for these scripts. (I believe it's
 this mod that does this. Also allows flight and other hacks on servers and
 automating it if you want to debug a build.)
 
-| name                  | description                                                                                                                                                                                                                                                                                                                                                                                                                                            |
-|-----------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `creative`            | Must be fired on or near a ship, will place the ship in edit mode above the water. Height can be configured in the config menu. Can and will hit the player so if the players are not on the ship and not the one running the command beware of this.                                                                                                                                                                                                  |
-| `debug`               | opens the debug menu. Has some more ways to debug the vehicle.                                                                                                                                                                                                                                                                                                                                                                                         |
-| `report-info`         | Formats a report of the current vehicle with some metrics added to it. Helpful for when submitting a bug. Also, could be helpful for users if they want to know why their raft is broken.                                                                                                                                                                                                                                                              |
-| `recover`             | Will recover any vanilla pieces on a raft. Pieces that are non-vanilla can be lost due to them not registering before the mod crashes and then the game deletes them as invalid content. Raft has a way to prevent this, but if raft bugs out it's going to not protect users.                                                                                                                                                                         |
-| `move`                | Will teleport the raft and protect the players on the raft from being smashed out of the world...all players on the raft. If you are in the water outside the raft in the landing zone, you will die or get hit into space. Takes the arguements of `X Y Z` in decimal format. IE `0.0 0 -50` all work. And would take you zero (x) zero (y) and move you backwards by 50. Rembemer raft is relative so this will be relative coordinates to the raft. |
-| `move-up`             | Same as teleport but will allow moving the raft in the area upwards.                                                                                                                                                                                                                                                                                                                                                                                   |
-| `rotate`              | Will will attempt to force rotate the vehicle.                                                                                                                                                                                                                                                                                                                                                                                                         |
-| `toggleOceanSway`     | Toggles ocean sway of vehicles. No more lurches only up and down. For those that are sea sick...or want to build but be moving.                                                                                                                                                                                                                                                                                                                        |
-| `upgradeShipToV2`     | Upgrades an older ValheimRAFT world ship to the V2 ship. This will fix a broken ship. V1 ships are deprecated and will be removed soon. Do not use them. They probably do not work for ashlands anymore either.                                                                                                                                                                                                                                        |
-| `downgradeToShipToV1` | Downgrades to an older v1 ship. Not supported. Do not do this. Support will be removed soon IE `3.x.x`.                                                                                                                                                                                                                                                                                                                                                |
-| `colliderEditMode`    | A new command added in 2.4.0 watermesh overhaul. This will allow editing the invisible / non-colliding (with build hammer) water mesh colliders. Running it again will hide the generated squares around the water meshes.                                                                                                                                                                                                                             |
+| name                     | description                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+|--------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `creative`               | Must be fired on or near a ship, will place the ship in edit mode above the water. Height can be configured in the config menu. Can and will hit the player so if the players are not on the ship and not the one running the command beware of this.                                                                                                                                                                                                  |
+| `debug`                  | opens the debug menu. Has some more ways to debug the vehicle.                                                                                                                                                                                                                                                                                                                                                                                         |
+| `report-info`            | Formats a report of the current vehicle with some metrics added to it. Helpful for when submitting a bug. Also, could be helpful for users if they want to know why their raft is broken.                                                                                                                                                                                                                                                              |
+| `recover`                | Will recover any vanilla pieces on a raft. Pieces that are non-vanilla can be lost due to them not registering before the mod crashes and then the game deletes them as invalid content. Raft has a way to prevent this, but if raft bugs out it's going to not protect users.                                                                                                                                                                         |
+| `move`                   | Will teleport the raft and protect the players on the raft from being smashed out of the world...all players on the raft. If you are in the water outside the raft in the landing zone, you will die or get hit into space. Takes the arguements of `X Y Z` in decimal format. IE `0.0 0 -50` all work. And would take you zero (x) zero (y) and move you backwards by 50. Rembemer raft is relative so this will be relative coordinates to the raft. |
+| `move-up`                | Same as teleport but will allow moving the raft in the area upwards.                                                                                                                                                                                                                                                                                                                                                                                   |
+| `rotate`                 | Will will attempt to force rotate the vehicle.                                                                                                                                                                                                                                                                                                                                                                                                         |
+| `toggleOceanSway`        | Toggles ocean sway of vehicles. No more lurches only up and down. For those that are sea sick...or want to build but be moving.                                                                                                                                                                                                                                                                                                                        |
+| `upgradeShipToV2`        | Upgrades an older ValheimRAFT world ship to the V2 ship. This will fix a broken ship. V1 ships are deprecated and will be removed soon. Do not use them. They probably do not work for ashlands anymore either.                                                                                                                                                                                                                                        |
+| `downgradeToShipToV1`    | Downgrades to an older v1 ship. Not supported. Do not do this. Support will be removed soon IE `3.x.x`.                                                                                                                                                                                                                                                                                                                                                |
+| `colliderEditMode`       | A new command added in 2.4.0 watermesh overhaul. This will allow editing the invisible / non-colliding (with build hammer) water mesh colliders. Running it again will hide the generated squares around the water meshes.                                                                                                                                                                                                                             |                                             |
+| `clearBoundaryChunkData` | Clears the boundary chunk data which is added when placing the Boundary Chunk prefabs.                                                                                                                                                                                                                                                                                                                                                                 |
 
 ## Issues
 

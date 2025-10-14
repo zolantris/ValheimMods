@@ -3,7 +3,7 @@ using UnityEngine;
 namespace ValheimVehicles.Storage.Serialization;
 
 [Serializable]
-public struct SerializableVector3
+public record struct SerializableVector3
 {
   public float x;
   public float y;

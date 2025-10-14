@@ -902,15 +902,15 @@ Other methods removed after 2.5.0
 50% will be the very bottom of the vehicle's collider. This is just a default. Any vehicle can be configured directly via config menu.
 - Default Value: 0.65
 
-### flightDamping_4.0.1 
+### flightDamping_4.1.0 
 - Description: Controls how much the water pushes the boat upwards directly. This value may affect angular damping too. Recommended to keep the original value. But tweaking can remove or add additional jitter. Higher values likely will add more jitter.
 - Default Value: 1
 
-### flightSidewaysDamping_4.0.1 
+### flightSidewaysDamping_4.1.0 
 - Description: Controls how much the water pushes the boat sideways based on wind direction and velocity.
 - Default Value: 2
 
-### flightAngularDamping_4.0.1 
+### flightAngularDamping_4.1.0 
 - Description: Controls how much the water pushes the boat from a vertical angle based on water and velocity. Lower values will cause more rocking and allow better turn rates. Higher values will make the vehicle more stable, but less turning angle and possibly less realistic. If you get motion-sickness this can allow tweaking sway without disabling it all and also prevent rapid turning.
 - Default Value: 1
 
@@ -930,15 +930,27 @@ Other methods removed after 2.5.0
 - Description: Flight angular drag controls how much the vehicle slows down when turning.
 - Default Value: 1.2
 
-### force_4.0.1 
-- Description: EXPERIMENTAL_FORCE. Lower values will not allow the vehicle to balance fast when tilted. Lower values can reduce bobbing, but must be below the forceDistance value.
-- Default Value: 1
+### waterRockForce_submarine_4.1.0 
+- Description: Configure the rocking force while submerged/in submarine underwater mode. This required water ballasting to be enabled and the vehicle to be underwater.
+- Default Value: 0.04
 
-### forceDistance_4.0.1 
+### waterRockForce_anchored_4.1.0 
+- Description: Configure the rocking force while anchored at sea. Requires the vehicle anchor to be deployed. At 0, the vehicle will still attempt to right itself, and will no longer sway. This should be a lower number than waterRockForceUnanchored.
+- Default Value: 0.04
+
+### waterRockForce_unanchored_4.1.0 
+- Description: Configure the rocking/sway force while at sea. At 0, the vehicle will still attempt to right itself, and will no longer sway. Higher values will make the vehicle much less stable and cause sea sickness. Recommended to stay within 0.075f and 0.10f but allows up to 0.15f.
+- Default Value: 0.075
+
+### force_4.1.0 
+- Description: EXPERIMENTAL_FORCE. Lower values will not allow the vehicle to balance fast when tilted. Lower values than 0.5f will make vehicle sink. Lower values can reduce bobbing, but must be below the forceDistance value.
+- Default Value: 0.5
+
+### forceDistance_4.1.0 
 - Description: EXPERIMENTAL_FORCE_DISTANCE should always be above the value of force. Otherwise bobbing will occur. Lower values will not allow the vehicle to balance fast when tilted
 - Default Value: 2
 
-### backwardForce_4.0.1 
+### backwardForce_4.1.0 
 - Description: EXPERIMENTAL_BackwardFORCE
 - Default Value: 1
 
@@ -946,15 +958,15 @@ Other methods removed after 2.5.0
 - Description: Steer force controls how much the vehicle will resist steering when turning due to water pushing against it
 - Default Value: 1
 
-### waterDamping_4.0.1 
+### waterDamping_4.1.0 
 - Description: Controls how much the water pushes the boat upwards directly. This value may affect angular damping too. Recommended to keep the original value. But tweaking can remove or add additional jitter. Higher values likely will add more jitter.
 - Default Value: 1
 
-### waterSidewaysDamping_4.0.1 
+### waterSidewaysDamping_4.1.0 
 - Description: Controls how much the water pushes the boat sideways based on wind direction and velocity.
 - Default Value: 2
 
-### waterAngularDamping_4.0.1 
+### waterAngularDamping_4.1.0 
 - Description: Controls how much the water pushes the boat from a vertical angle based on water and velocity. Lower values will cause more rocking and allow better turn rates. Higher values will make the vehicle more stable, but less turning angle and possibly less realistic. If you get motion-sickness this can allow tweaking sway without disabling it all and also prevent rapid turning.
 - Default Value: 1
 
@@ -970,15 +982,15 @@ Other methods removed after 2.5.0
 - Description: rotation drag controls how much the vehicle slows down when turning.
 - Default Value: 0.8
 
-### submersibleDamping_4.0.1 
+### submersibleDamping_4.1.0 
 - Description: Controls how much the water pushes the boat upwards directly. This value may affect angular damping too. Recommended to keep the original value. But tweaking can remove or add additional jitter. Higher values likely will add more jitter.
 - Default Value: 1
 
-### submersibleSidewaysDamping_4.0.1 
+### submersibleSidewaysDamping_4.1.0 
 - Description: Controls how much the water pushes the boat sideways based on wind direction and velocity.
 - Default Value: 2
 
-### submersibleAngularDamping_4.0.1 
+### submersibleAngularDamping_4.1.0 
 - Description: Controls how much the water pushes the boat from a vertical angle based on water and velocity. Lower values will cause more rocking and allow better turn rates. Higher values will make the vehicle more stable, but less turning angle and possibly less realistic. If you get motion-sickness this can allow tweaking sway without disabling it all and also prevent rapid turning.
 - Default Value: 1
 
@@ -1010,15 +1022,15 @@ Other methods removed after 2.5.0
 - Description: Wheel offset for Y position. Allowing for raising the treads higher. May require increasing suspension distance so the treads spawn then push the vehicle upwards. Negative lowers the wheels. Positive raises the treads. This value will not override custom config vehicles.
 - Default Value: -1
 
-### MaxVehicleLinearVelocity_4.0.x 
+### MaxVehicleLinearVelocity_4.1.x 
 - Description: Sets the absolute max speed a vehicle can ever move in. This is X Y Z directions. This will prevent the ship from rapidly flying away. Try staying between 5 and 100. Higher values will increase potential of vehicle flying off to space or rapidly accelerating through objects before physics can apply to an unloaded zone.
 - Default Value: 100
 
-### MaxVehicleLinearYVelocity_4.0.x 
+### MaxVehicleLinearYVelocity_4.1.x 
 - Description: Sets the absolute max speed a vehicle can ever move in vertical direction. This can significantly reduce vertical sway when lowered. This will limit the ship capability to launch into space. Lower values are safer. Too low and the vehicle will not recover fast from being underwater if falling into the water. Flight vehicles will not be affected by this value.
 - Default Value: 5
 
-### MaxVehicleAngularVelocity_4.0.x 
+### MaxVehicleAngularVelocity_4.1.x 
 - Description: Sets the absolute max speed a vehicle can ROTATE in. Having a high value means the vehicle can spin out of control.
 - Default Value: 0.1
 

@@ -461,6 +461,9 @@
           }
         }
 
+        // Apply boundary constraint filtering if implemented by derived class
+        points = ApplyBoundaryConstraints(points);
+
         // We cannot generate a convex collider with so view points. We must bail early. This task should can be rescheduled / handled by parent invoker.
         if (points.Count <= 4 || !m_convexHullCalculator.GenerateHull(points, false, ref verts, ref tris, ref normals, out var hasBailed))
         {
@@ -477,6 +480,15 @@
         m_convexHullAPI.PostGenerateConvexMeshes();
         IgnoreAllCollisionsFromConvexColliders();
         callback?.Invoke(true);
+      }
+
+      /// <summary>
+      /// Virtual method that can be overridden by derived classes to apply boundary constraints to hull points.
+      /// By default, returns the points unchanged.
+      /// </summary>
+      protected virtual List<Vector3> ApplyBoundaryConstraints(List<Vector3> points)
+      {
+        return points;
       }
 
       /// <summary>

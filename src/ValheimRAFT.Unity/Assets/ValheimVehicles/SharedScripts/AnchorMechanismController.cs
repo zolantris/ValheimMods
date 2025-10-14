@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -65,6 +66,12 @@ namespace ValheimVehicles.SharedScripts
     private Transform anchorStateFadeTextTransform;
     private HoverFadeText anchorStateFadeText;
     private float messageFadeValue = 255f;
+
+    public Vector3 GetAnchorStartLocalPosition()
+    {
+      return anchorStartLocalPosition;
+    }
+
     /// <summary>
     ///   This rigidbody should not start awakened to prevent collision problems on
     ///   placement
@@ -109,7 +116,26 @@ namespace ValheimVehicles.SharedScripts
       UpdateRopeVisual();
       UpdateAnchorState(AnchorState.Recovered, GetCurrentStateText());
 
-      anchorRb.MovePosition(anchorRopeAttachStartPoint.position);
+      anchorRb.transform.localPosition = anchorStartLocalPosition;
+    }
+
+    /// <summary>
+    /// Guard against anchor sync issue where anchor spawns in original raft ball but on move does not bring the rigidbody anchor with it.
+    /// - delay added in case the parent change is done before positional change.
+    /// </summary>
+    private void OnTransformParentChanged()
+    {
+      Invoke(nameof(GuardAgainstAnchorSyncIssue), 0.1f);
+    }
+
+    private void GuardAgainstAnchorSyncIssue()
+    {
+      if (anchorRb == null) return;
+
+      if (transform.position.sqrMagnitude - anchorTransform.position.sqrMagnitude > 0.5f)
+      {
+        anchorTransform.localPosition = GetAnchorStartLocalPosition();
+      }
     }
 
     private void Update()
@@ -135,8 +161,8 @@ namespace ValheimVehicles.SharedScripts
         case AnchorState.Idle:
           if (anchorRb != null)
           {
-            anchorRb.transform.position = anchorRopeAttachStartPoint.position;
-            anchorRb.transform.localRotation = Quaternion.identity;
+            anchorTransform.localPosition = anchorStartLocalPosition;
+            anchorTransform.localRotation = Quaternion.identity;
           }
           break;
       }
@@ -185,6 +211,14 @@ namespace ValheimVehicles.SharedScripts
     {
       // Do nothing if state is equivalent
       if (newState == currentState) return;
+
+
+      // drop anchor on first load otherwise it will not spawn / return to anchor state.
+      if (currentState == AnchorState.Idle && newState == AnchorState.Anchored)
+      {
+        StartDropping();
+      }
+
       currentState = newState;
 
       UpdateHoverText(text);

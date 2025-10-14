@@ -4,6 +4,7 @@
   using System.Collections;
   using System.Collections.Generic;
   using System.Diagnostics;
+  using System.IO;
   using System.Linq;
   using System.Text.RegularExpressions;
   using HarmonyLib;
@@ -25,8 +26,10 @@
   using ValheimVehicles.SharedScripts;
   using ValheimVehicles.SharedScripts.Enums;
   using ValheimVehicles.SharedScripts.Helpers;
+  using ValheimVehicles.Storage.Serialization;
   using ValheimVehicles.Structs;
   using ValheimVehicles.ValheimVehicles.Components;
+  using ValheimVehicles.ValheimVehicles.Structs;
   using ZdoWatcher;
   using ZdoWatcher.ZdoWatcher.Utils;
   using Zolantris.Shared;
@@ -232,6 +235,8 @@
     private Bounds BaseControllerPieceBounds;
     private Transform floatColliderTransform;
 
+    public ConvexHullBoundaryConstraint HullBoundaryConstraint = new();
+
     internal Stopwatch InitializationTimer = new();
 
     private bool IsPhysicsForceSynced =
@@ -378,6 +383,9 @@
       _movingPiecesContainerTransform = CreateMovingPiecesContainer();
       m_localRigidbody = _piecesContainerTransform.GetComponent<Rigidbody>();
       InitializationTimer.Start();
+
+      // Look for any existing data for the vehicle.
+      UpdateChunkBoundsData(false);
     }
 
     public void AddTargetController()
@@ -514,7 +522,7 @@
 
       OnPieceRemoved(netView.gameObject);
 
-      if (PrefabNames.IsHull(netView.gameObject)) m_hullPieces.Remove(netView);
+      if (PrefabNames.IsHull(netView.gameObject.name)) m_hullPieces.Remove(netView);
 
       var isRam = RamPrefabRegistry.IsRam(netView.name);
       if (isRam) m_ramPieces.Remove(netView);
@@ -843,6 +851,8 @@
 
       var initialized = m_nview?.GetZDO()
         .GetBool(VehicleZdoVars.ZdoKeyBaseVehicleInitState) ?? false;
+
+      UpdateChunkBoundsData(false);
 
       BaseVehicleInitState = initialized
         ? InitializationState.Complete
@@ -1571,7 +1581,7 @@
  */
     public IEnumerator UpdatePiecesInEachSectorWorker()
     {
-      LoggerProvider.LogMessage("UpdatePiecesInEachSectorWorker started");
+      LoggerProvider.LogDebug("UpdatePiecesInEachSectorWorker started");
       while (isActiveAndEnabled)
       {
         if (!m_nview)
@@ -1592,7 +1602,7 @@
         yield return new WaitForFixedUpdate();
       }
 
-      LoggerProvider.LogMessage("UpdatePiecesInEachSectorWorker finished");
+      LoggerProvider.LogDebug("UpdatePiecesInEachSectorWorker finished");
       // if we get here we need to restart this updater and this requires the coroutine to be null
       _serverUpdatePiecesCoroutine = null;
     }
@@ -1690,6 +1700,7 @@
     public override void RequestBoundsRebuild()
     {
       if (!isActiveAndEnabled || ZNetView.m_forceDisableInit || !isInitialPieceActivationComplete) return;
+
       base.RequestBoundsRebuild();
     }
 
@@ -2151,16 +2162,188 @@
         IsLandVehicle: true
       };
 
-      lastAnchorState = anchorState;
 
       var currentWheelStateText = VehicleAnchorMechanismController.GetCurrentStateTextStatic(anchorState, isLandVehicle);
       foreach (var anchorComponent in m_anchorMechanismComponents)
+      {
         if (anchorState != anchorComponent.currentState)
           anchorComponent.UpdateAnchorState(anchorState, currentWheelStateText);
+      }
 
       if (_steeringWheelPiece)
       {
         _steeringWheelPiece.UpdateSteeringHoverMessage(anchorState, currentWheelStateText);
+      }
+
+      lastAnchorState = anchorState;
+    }
+
+    /// <summary>
+    /// Removes all boundary chunk data from the vehicle. Allowing default behavior
+    /// </summary>
+    public void ClearAllBoundaryChunkData()
+    {
+      if (!Player.m_localPlayer) return;
+      if (!m_nview || !VehicleConfigSync)
+      {
+        Player.m_localPlayer.Message(MessageHud.MessageType.Center,
+          "$valheim_vehicles_shared_clear_failure");
+        return;
+      }
+
+      var currentChunkData = ReadChunkBoundsData(m_nview.GetZDO());
+      var chunkCount = currentChunkData.Count;
+      if (chunkCount == 0)
+      {
+        Player.m_localPlayer.Message(MessageHud.MessageType.Center,
+          "$valheim_vehicles_shared_clear_failure");
+        return;
+      }
+
+      TryWriteChunkBoundsData([]);
+      UpdateChunkBoundsData(true);
+      VehicleConfigSync.SendSyncBounds();
+      Player.m_localPlayer.Message(MessageHud.MessageType.Center,
+        $"$valheim_vehicles_shared_clear_success chunks:<{chunkCount}>");
+    }
+
+    public void TryWriteChunkBoundsData(HashSet<VehicleChunkSizeData>? currentData)
+    {
+      if (m_nview == null) return;
+      if (!m_nview.HasOwner())
+      {
+        m_nview.ClaimOwnership();
+      }
+      if (!m_nview.IsOwner()) return;
+      var zdo = m_nview.GetZDO();
+      if (zdo == null) return;
+
+      // always ensure we do not lose data
+      currentData ??= ReadChunkBoundsData(zdo);
+
+      var stream = new MemoryStream();
+      var writer = new BinaryWriter(stream);
+
+      writer.Write(VersionedConfigUtil.GetDynamicMinorVersionKey());
+
+      // size must be read first to determine number of iterations
+      var size = currentData.Count;
+      writer.Write(size);
+
+      foreach (var vehicleChunkSizeData in currentData)
+      {
+        // this auto writes 3 values when in vector3 format
+        writer.Write(vehicleChunkSizeData.position.ToVector3());
+        writer.Write(vehicleChunkSizeData.chunkSize);
+      }
+
+      zdo.Set(VehicleZdoVars.VehicleChunkBounds, stream.ToArray());
+
+      if (VehicleConfigSync)
+      {
+        VehicleConfigSync.SendSyncBounds();
+      }
+    }
+
+    /// <summary>
+    /// Reader and writter must always have same order for readingbytes and any changes to structure will cause a breaking change to how things are parsed.
+    /// </summary>
+    /// <param name="zdo"></param>
+    /// <returns></returns>
+    public static HashSet<VehicleChunkSizeData> ReadChunkBoundsData(ZDO zdo)
+    {
+      var byteArray = zdo.GetByteArray(VehicleZdoVars.VehicleChunkBounds);
+      if (byteArray == null || byteArray.Length == 0)
+      {
+        LoggerProvider.LogDebug($"ReadChunkBoundsData as no byte or empty array. <{byteArray}>");
+        return [];
+      }
+      var stream = new MemoryStream(byteArray);
+      if (!stream.CanRead)
+      {
+        LoggerProvider.LogDebug("ReadChunkBoundsData stream cannot be read");
+        return [];
+      }
+      var reader = new BinaryReader(stream);
+      var version = reader.ReadString();
+
+#if DEBUG
+      LoggerProvider.LogDebug($"ReadChunkBoundsData version: {version}");
+#endif
+
+      var size = reader.ReadInt32();
+      if (size == 0) return [];
+
+      var output = new HashSet<VehicleChunkSizeData>();
+
+      for (var i = 0; i < size; i++)
+      {
+        var position = new SerializableVector3(reader.ReadVector3());
+        var chunkSize = reader.ReadInt32();
+        var chunkData = new VehicleChunkSizeData
+        {
+          position = position,
+          chunkSize = chunkSize
+        };
+        output.Add(chunkData);
+      }
+
+      return output;
+    }
+
+    /// <summary>
+    /// Must be owner
+    /// </summary>
+    /// <param name="pendingChunkData"></param>
+    public void RemoveChunkBoundsData(VehicleChunkSizeData? pendingChunkData)
+    {
+      if (m_nview == null) return;
+      if (!m_nview.HasOwner())
+      {
+        m_nview.ClaimOwnership();
+      }
+      if (!m_nview.IsOwner()) return;
+
+      var zdo = m_nview.GetZDO();
+      if (zdo == null) return;
+      var currentData = ReadChunkBoundsData(zdo);
+      if (pendingChunkData.HasValue) currentData.RemoveWhere(x => x.position.Equals(pendingChunkData.Value.position));
+      TryWriteChunkBoundsData(currentData);
+    }
+
+    public void AddChunkBoundsData(VehicleChunkSizeData data)
+    {
+      if (m_nview == null) return;
+      if (!m_nview.HasOwner())
+      {
+        m_nview.ClaimOwnership();
+      }
+      if (!m_nview.IsOwner()) return;
+      var zdo = m_nview.GetZDO();
+      if (zdo == null) return;
+
+      var currentData = ReadChunkBoundsData(zdo);
+      currentData.Add(data);
+      TryWriteChunkBoundsData(currentData);
+    }
+
+    public void UpdateChunkBoundsData(bool canRebuildBounds)
+    {
+      if (m_nview == null) return;
+      var zdo = m_nview.GetZDO();
+      if (zdo == null) return;
+
+      // Regenerate boundary constraint mesh if pieces were added/removed
+      HullBoundaryConstraint.Clear();
+      HullBoundaryConstraint.SetChunkSizeDataItems(ReadChunkBoundsData(zdo));
+      HullBoundaryConstraint.UpdateAllBoundaryPoints();
+
+      // Generate boundary constrain mesh now.
+      TryGenerateBoundaryConstraintMesh();
+
+      if (canRebuildBounds)
+      {
+        ForceRebuildBounds();
       }
     }
 
@@ -2628,8 +2811,6 @@
         return;
       }
 
-      var pieceGo = piece.gameObject;
-
       if (hasDebug) LoggerProvider.LogDebug("Added new piece is valid");
       AddNewPiece(piece.m_nview);
     }
@@ -2642,6 +2823,21 @@
       AddNewPiece(nv);
     }
 
+    private bool IsEraserCubeOverlappingChunk(Bounds chunkBounds, Bounds eraserCubeBounds)
+    {
+      var eraserCenter = eraserCubeBounds.center;
+      var halfSize = eraserCubeBounds.size * 0.5f;
+      for (var x = -1; x <= 1; x += 2)
+      for (var y = -1; y <= 1; y += 2)
+      for (var z = -1; z <= 1; z += 2)
+      {
+        var corner = eraserCenter + new Vector3(x * halfSize.x, y * halfSize.y, z * halfSize.z);
+        if (chunkBounds.Contains(corner))
+          return true;
+      }
+      return false;
+    }
+
     public void AddNewPiece(ZNetView netView)
     {
       if (netView == null)
@@ -2651,15 +2847,89 @@
       }
       if (TryBailOnSameObject(netView.gameObject)) return;
       var zdo = netView.GetZDO();
+      var prefabName = netView.name;
+
       if (zdo == null)
       {
-        LoggerProvider.LogError($"NetView <{netView.name}> has no valid ZDO returning");
+        LoggerProvider.LogError($"NetView <{prefabName}> has no valid ZDO returning");
+        return;
+      }
+
+
+      if (VehicleChunkController.IsShipChunkBoundaryEraser(prefabName))
+      {
+        if (m_nview.IsOwner())
+        {
+          netView.ClaimOwnership();
+        }
+        else
+        {
+          return;
+        }
+
+        var hasRemovedData = false;
+
+        foreach (var cachedChunkSizeDataItem in HullBoundaryConstraint.cachedChunkSizeDataItems)
+        {
+          // Get chunk bounds (assuming you have a method to get bounds from chunk data)
+          var chunkBounds = ConvexHullBoundaryConstraint.GetChunkBounds(cachedChunkSizeDataItem.position.ToVector3(), cachedChunkSizeDataItem.chunkSize * Vector3.one);
+
+          // Get eraser cube bounds (assuming eraser cube is at netView.transform.position and has known size)
+          var eraserCubeBounds = new Bounds(
+            transform.InverseTransformPoint(netView.transform.position),
+            VehicleChunkController.eraserCubeSize * 1.1f // Vector3 size of the eraser cube (plus a bit more to allow for collisions
+          );
+
+          var isOverlapping = IsEraserCubeOverlappingChunk(chunkBounds, eraserCubeBounds);
+          var intersects = isOverlapping || chunkBounds.Intersects(eraserCubeBounds);
+
+          if (isOverlapping || intersects)
+          {
+            LoggerProvider.LogDebug($"Removed ship chunkPiece boundary netView {prefabName} at localPosition: {cachedChunkSizeDataItem.position}.");
+            RemoveChunkBoundsData(cachedChunkSizeDataItem);
+            // Optionally, do not break to remove all intersecting chunks
+            hasRemovedData = true;
+          }
+        }
+        if (hasRemovedData)
+        {
+          UpdateChunkBoundsData(true);
+        }
+
+        // destroy the now unused piece.
+        ZNetScene.instance.Destroy(netView.gameObject);
+        return;
+      }
+
+      // Check if this is a ship chunk boundary piece
+      if (VehicleChunkController.IsShipChunkBoundaryPiece(prefabName))
+      {
+
+        var localPosition = transform.InverseTransformPoint(netView.transform.position);
+        var chunkData = VehicleChunkController.ToChunkSizeData(prefabName, localPosition);
+
+        LoggerProvider.LogDebug($"Added ship chunkPiece boundary netView {prefabName} at localPosition: {localPosition}.");
+
+        // try to update data if applicable
+        AddChunkBoundsData(chunkData);
+
+        // always optimistically update.
+        UpdateChunkBoundsData(true);
+
+        // for clarity (we must be vehicle owner and then destroy the piece after the vehicle owner detects the new piece added)
+        var vehicleNv = m_nview;
+        if (vehicleNv && vehicleNv.IsOwner())
+        {
+          netView.ClaimOwnership();
+          // destroy the now unused piece.
+          ZNetScene.instance.Destroy(netView.gameObject);
+        }
         return;
       }
 
       if (zdo.m_prefab == PrefabNameHashes.WaterVehicleShip)
       {
-        LoggerProvider.LogWarning($"Attempted to add a piece to a water vehicle. This is not allowed. NetView <{netView.name}>");
+        LoggerProvider.LogWarning($"Attempted to add a piece to a water vehicle. This is not allowed. NetView <{prefabName}>");
         return;
       }
 
@@ -2679,7 +2949,7 @@
 
       if (m_pieces.Contains(netView))
       {
-        LoggerProvider.LogDev($"NetView already is added. name: {netView.name}");
+        LoggerProvider.LogDev($"NetView already is added. name: {prefabName}");
       }
       else
       {
@@ -2751,6 +3021,27 @@
       {
         wnt.Destroy();
       }
+    }
+
+    /// <summary>
+    /// Override to apply boundary constraints to convex hull points.
+    /// This ensures that piece collider points stay within the ship chunk boundaries.
+    /// </summary>
+    protected override List<Vector3> ApplyBoundaryConstraints(List<Vector3> points)
+    {
+      // If no boundary pieces are placed, skip constraint application
+      if (!HullBoundaryConstraint.IsInitialized && HullBoundaryConstraint.cachedChunkSizeDataItems.Count > 0)
+      {
+        return points;
+      }
+
+      // Apply constraints to all points
+      for (var i = 0; i < points.Count; i++)
+      {
+        points[i] = HullBoundaryConstraint.ConstrainPoint(points[i]);
+      }
+
+      return points;
     }
 
     /// <summary>
@@ -3270,6 +3561,19 @@
       }
     }
 
+    /// <summary>
+    /// Generates the boundary constraint mesh from placed ship chunk boundary pieces.
+    /// Should be called during RebuildBounds before convex hull generation.
+    /// </summary>
+    private void TryGenerateBoundaryConstraintMesh()
+    {
+      // Generate the mesh collider for efficient constraint checking
+      if (HullBoundaryConstraint.GenerateBoundaryMesh(transform))
+      {
+        LoggerProvider.LogInfo($"✅ Ship boundary constraint mesh generated with vertices: {HullBoundaryConstraint.GetVerticesCount} and boundary objects: {HullBoundaryConstraint.GetObjectsCount}");
+      }
+    }
+
 // todo move this logic to a file that can be tested
 // todo compute the float colliderY transform so it aligns with bounds if player builds underneath boat
     public void OnBoundsChangeUpdateShipColliders()
@@ -3288,6 +3592,8 @@
           "Cached convexHullBounds is null this is like a problem with collider setup. Make sure to use custom colliders if other settings are not working");
         return;
       }
+
+
 
       /*
        * @description float collider logic

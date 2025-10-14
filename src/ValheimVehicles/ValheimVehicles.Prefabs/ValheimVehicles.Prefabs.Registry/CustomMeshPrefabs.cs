@@ -1,13 +1,14 @@
 using Jotunn.Configs;
 using Jotunn.Entities;
 using Jotunn.Managers;
-using UnityEditor;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
 using UnityEngine.Rendering;
 using ValheimVehicles.BepInExConfig;
 using ValheimVehicles.SharedScripts;
 using ValheimVehicles.Components;
+using ValheimVehicles.Controllers;
+using ValheimVehicles.Helpers;
 using Zolantris.Shared;
 using Logger = Jotunn.Logger;
 
@@ -18,11 +19,17 @@ namespace ValheimVehicles.Prefabs.Registry;
  */
 public class CustomMeshPrefabs : RegisterPrefab<CustomMeshPrefabs>
 {
+  public static Color CachedBoundaryAdderColor = new(0, 1f, 0, 0.08f);
+  public static Color CachedBoundaryEraserColor = new(1f, 0, 0, 0.08f);
+
   public override void OnRegister()
   {
     RegisterWaterMaskCreator();
     RegisterWaterMaskPrefab();
     RegisterCustomFloatationPrefab();
+    RegisterShipChunkBoundary8x8();
+    RegisterShipChunkBoundary16x16();
+    RegisterShipChunkBoundaryEraser();
 
     if (CustomMeshConfig.EnableCustomWaterMeshTestPrefabs.Value)
     {
@@ -106,7 +113,7 @@ public class CustomMeshPrefabs : RegisterPrefab<CustomMeshPrefabs>
     var prefab =
       PrefabManager.Instance.CreateEmptyPrefab(PrefabNames.CustomWaterFloatation, false);
     var meshRenderer = prefab.GetComponent<MeshRenderer>();
-    var material = new Material(LoadValheimAssets.CustomPieceShader)
+    var material = new Material(LoadValheimVehicleAssets.DoubleSidedTransparentMat)
     {
       color = new Color(0.5f, 0.4f, 0.5f, 0.8f)
     };
@@ -146,7 +153,7 @@ public class CustomMeshPrefabs : RegisterPrefab<CustomMeshPrefabs>
         false);
 
     var mesh = prefab.GetComponent<MeshRenderer>();
-    var material = new Material(LoadValheimAssets.CustomPieceShader)
+    var material = new Material(LoadValheimVehicleAssets.DoubleSidedTransparentMat)
     {
       color = new Color(0.3f, 0.4f, 1, 0.8f)
     };
@@ -277,6 +284,217 @@ public class CustomMeshPrefabs : RegisterPrefab<CustomMeshPrefabs>
         PieceTable = PrefabRegistryController.GetPieceTableName(),
         Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
           .WaterOpacityBucket),
+        Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Tools),
+        Enabled = true
+      }));
+  }
+
+  private static Material? cachedBoundaryMaterial = null;
+
+  public static void ChunkPrefabSharedSetup(GameObject prefab, Piece piece, Vector3 scale, Color color)
+  {
+    var meshRenderer = prefab.GetComponent<MeshRenderer>();
+
+    // allow placing further.
+    piece.m_extraPlacementDistance = 10;
+
+    prefab.transform.rotation = Quaternion.identity;
+
+
+    prefab.AddComponent<DelayedSelfDeletingComponent>();
+    PrefabRegistryHelpers.AddNetViewWithPersistence(prefab);
+
+    piece.m_canRotate = true;
+    piece.m_allowRotatedOverlap = true;
+    piece.m_noClipping = false;
+
+    // injects snappoints per each transform and scales them properly.
+    var convexHullBoundary = new ConvexHullBoundaryConstraint();
+    convexHullBoundary.AddBoundaryPiecePoints(prefab.transform.localPosition, scale);
+    var snappoints = convexHullBoundary.boundaryVertices;
+    var count = 1;
+
+    var collider = prefab.GetComponent<BoxCollider>();
+    collider.includeLayers = LayerMask.GetMask("piece_nonsolid");
+
+    prefab.transform.localScale = scale;
+
+    foreach (var position in snappoints)
+    {
+      var go = new GameObject($"$hud_snappoint_corner ${count}")
+      {
+        transform =
+        {
+          position = position,
+          parent = prefab.transform
+        },
+        tag = "snappoint",
+        layer = LayerHelpers.PieceLayer
+      };
+      count++;
+    }
+
+    if (cachedBoundaryMaterial == null)
+    {
+      cachedBoundaryMaterial = new Material(LoadValheimVehicleAssets.DoubleSidedTransparentMat)
+      {
+        color = new Color(0.3f, 0.4f, 1, 0.8f)
+      };
+    }
+
+    meshRenderer.sharedMaterial = cachedBoundaryMaterial;
+
+    if (color != meshRenderer.material.color)
+    {
+      meshRenderer.material.color = color;
+    }
+
+    meshRenderer.material.renderQueue = 3000;
+
+    meshRenderer.lightProbeUsage = LightProbeUsage.Off;
+    meshRenderer.receiveShadows = false;
+    meshRenderer.shadowCastingMode = ShadowCastingMode.Off;
+    meshRenderer.rayTracingMode = RayTracingMode.Off;
+    meshRenderer.reflectionProbeUsage = ReflectionProbeUsage.Off;
+  }
+
+
+  /// <summary>
+  /// Unused, too small IMO
+  /// </summary>
+  private static void RegisterShipChunkBoundary1x1()
+  {
+    var prefab =
+      PrefabManager.Instance.CreateEmptyPrefab(PrefabNames.ShipChunkBoundary1x1x1);
+
+
+    var piece = prefab.AddComponent<Piece>();
+    piece.m_name = "$valheim_vehicles_boundary_mesh 1x1";
+    piece.m_description =
+      "$valheim_vehicles_boundary_mesh_desc";
+    piece.m_placeEffect =
+      LoadValheimAssets.woodFloorPiece.m_placeEffect;
+
+    ChunkPrefabSharedSetup(prefab, piece, Vector3.one * 8, CachedBoundaryAdderColor);
+
+
+    PrefabRegistryController.AddPiece(new CustomPiece(prefab, false,
+      new PieceConfig
+      {
+        PieceTable = PrefabRegistryController.GetPieceTableName(),
+        Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
+          .VehicleBorderAdd),
+        Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Tools),
+        Enabled = true
+      }));
+  }
+
+  /// <summary>
+  /// Unused, too small IMO
+  /// </summary>
+  private static void RegisterShipChunkBoundary4x4()
+  {
+    var prefab =
+      PrefabManager.Instance.CreateEmptyPrefab(PrefabNames.ShipChunkBoundary4x4x4);
+
+
+    var piece = prefab.AddComponent<Piece>();
+    piece.m_name = "$valheim_vehicles_boundary_mesh 4x4";
+    piece.m_description =
+      "$valheim_vehicles_boundary_mesh_desc";
+    piece.m_icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
+      .VehicleBorderAdd);
+
+    piece.m_placeEffect =
+      LoadValheimAssets.woodFloorPiece.m_placeEffect;
+
+    ChunkPrefabSharedSetup(prefab, piece, Vector3.one * 8, CachedBoundaryAdderColor);
+
+
+    PrefabRegistryController.AddPiece(new CustomPiece(prefab, false,
+      new PieceConfig
+      {
+        PieceTable = PrefabRegistryController.GetPieceTableName(),
+        Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Tools),
+        Enabled = true
+      }));
+  }
+
+  private static void RegisterShipChunkBoundary8x8()
+  {
+    var prefab =
+      PrefabManager.Instance.CreateEmptyPrefab(PrefabNames.ShipChunkBoundary8x8x8);
+
+
+    var piece = prefab.AddComponent<Piece>();
+    piece.m_name = "$valheim_vehicles_boundary_mesh 8x8";
+    piece.m_description =
+      "$valheim_vehicles_boundary_mesh_desc";
+    piece.m_placeEffect =
+      LoadValheimAssets.woodFloorPiece.m_placeEffect;
+    piece.m_icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
+      .VehicleBorderAdd);
+
+    ChunkPrefabSharedSetup(prefab, piece, Vector3.one * 8, CachedBoundaryAdderColor);
+
+    PrefabRegistryController.AddPiece(new CustomPiece(prefab, false,
+      new PieceConfig
+      {
+        PieceTable = PrefabRegistryController.GetPieceTableName(),
+        Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Tools),
+        Enabled = true
+      }));
+  }
+
+  private static void RegisterShipChunkBoundary16x16()
+  {
+    var prefab =
+      PrefabManager.Instance.CreateEmptyPrefab(PrefabNames.ShipChunkBoundary16x16x16);
+
+    var piece = prefab.AddComponent<Piece>();
+    piece.m_name = "$valheim_vehicles_boundary_mesh 16x16";
+    piece.m_description =
+      "$valheim_vehicles_boundary_mesh_desc";
+    piece.m_icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
+      .VehicleBorderAdd);
+    piece.m_placeEffect =
+      LoadValheimAssets.woodFloorPiece.m_placeEffect;
+
+    ChunkPrefabSharedSetup(prefab, piece, Vector3.one * 16, CachedBoundaryAdderColor);
+
+
+    PrefabRegistryController.AddPiece(new CustomPiece(prefab, false,
+      new PieceConfig
+      {
+        PieceTable = PrefabRegistryController.GetPieceTableName(),
+        Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Tools),
+        Enabled = true
+      }));
+  }
+
+  private static void RegisterShipChunkBoundaryEraser()
+  {
+    var prefab =
+      PrefabManager.Instance.CreateEmptyPrefab(PrefabNames.ShipChunkBoundaryEraser);
+
+    var piece = prefab.AddComponent<Piece>();
+
+    piece.m_name = "$valheim_vehicles_boundary_mesh_eraser";
+    piece.m_description =
+      "$valheim_vehicles_boundary_mesh_eraser_desc";
+    piece.m_icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
+      .VehicleBorderErase);
+    piece.m_placeEffect =
+      LoadValheimAssets.woodFloorPiece.m_placeEffect;
+    piece.m_canRotate = true;
+
+    ChunkPrefabSharedSetup(prefab, piece, Vector3.one * 4, CachedBoundaryEraserColor);
+
+
+    PrefabRegistryController.AddPiece(new CustomPiece(prefab, false,
+      new PieceConfig
+      {
+        PieceTable = PrefabRegistryController.GetPieceTableName(),
         Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Tools),
         Enabled = true
       }));
