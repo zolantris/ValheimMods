@@ -55,6 +55,8 @@ public class VehicleDebugHelpers : MonoBehaviour
   private GameObject? leftCube;
 
   private List<GameObject?> hullChunkBoundaryCubes = new();
+  private List<GameObject?> floatationCubes = new();
+  private List<GameObject?> waterForceCubes = new();
 
   public static Color OrangeColor = new(1f, 0.647f, 0);
 
@@ -62,6 +64,15 @@ public class VehicleDebugHelpers : MonoBehaviour
   private Dictionary<GameObject, Vector3> localPositions = new();
 
   public static Color BuildBoundaryColor = new(1, 1, 1, 0.15f);
+
+  public static bool ShowWaterForceLocation = true;
+
+
+  public struct CubeData
+  {
+    public Vector3 position;
+    public string name;
+  }
 
   private void RenderDebugCubes()
   {
@@ -103,16 +114,110 @@ public class VehicleDebugHelpers : MonoBehaviour
       }
     }
 
+
+    var centerOffMassDifference = Vector3.up * (vehicleManagerInstance
+      .MovementController.localCenterOfMassOffset * vehicleManagerInstance
+      .MovementController.centerOfMassForceOffsetDifferenceMultiplier);
+
     // physics should be orange
     if (shipFloatation != null)
     {
-      RenderDebugCube(ref forwardCube, shipFloatation.Value.ShipForward,
-        "water_forward", OrangeColor, Vector3.zero);
-      RenderDebugCube(ref backwardCube, shipFloatation.Value.ShipBack,
-        "water_backward", OrangeColor, Vector3.zero);
-      RenderDebugCube(ref rightCube, shipFloatation.Value.ShipRight,
-        "water_right", OrangeColor, Vector3.zero);
-      RenderDebugCube(ref leftCube, shipFloatation.Value.ShipLeft, "water_left", OrangeColor, Vector3.zero);
+      if (floatationCubes.Count != 4)
+      {
+        foreach (var cube in floatationCubes)
+          Destroy(cube);
+        floatationCubes.Clear();
+
+        // must make list same size
+        for (var i = 0; i < 4; i++)
+        {
+          floatationCubes.Add(null);
+        }
+      }
+      if (waterForceCubes.Count != 4)
+      {
+        foreach (var cube in waterForceCubes)
+          Destroy(cube);
+        waterForceCubes.Clear();
+
+        // must make list same size
+        for (var i = 0; i < 4; i++)
+        {
+          waterForceCubes.Add(null);
+        }
+      }
+
+      var floationCubeDataItems = new CubeData[]
+      {
+        new()
+        {
+          position = shipFloatation.Value.ShipForward,
+          name = "water_forward"
+        },
+        new()
+        {
+          position = shipFloatation.Value.ShipBack,
+          name = "water_backward"
+        },
+        new()
+        {
+          position = shipFloatation.Value.ShipRight,
+          name = "water_right"
+        },
+        new()
+        {
+          position = shipFloatation.Value.ShipLeft,
+          name = "water_left"
+        }
+      };
+
+      var waterForceCubeDataItems = new CubeData[]
+      {
+        new()
+        {
+          position = shipFloatation.Value.ShipForward - centerOffMassDifference,
+          name = "water_forward"
+        },
+        new()
+        {
+          position = shipFloatation.Value.ShipBack - centerOffMassDifference,
+          name = "water_backward"
+        },
+        new()
+        {
+          position = shipFloatation.Value.ShipRight - centerOffMassDifference,
+          name = "water_right"
+        },
+        new()
+        {
+          position = shipFloatation.Value.ShipLeft - centerOffMassDifference,
+          name = "water_left"
+        }
+      };
+
+      for (var index = 0; index < waterForceCubes.Count; index++)
+      {
+        var waterForceCube = waterForceCubes[index];
+        var waterForceCubeData = waterForceCubeDataItems[index];
+        waterForceCubes[index] = UpdateDebugCube(waterForceCube, waterForceCubeData.position,
+          Vector3.one, waterForceCubeData.name, OrangeColor, Vector3.zero);
+      }
+
+      for (var index = 0; index < floatationCubes.Count; index++)
+      {
+        var floatationCube = floatationCubes[index];
+        var floatationCubeData = floationCubeDataItems[index];
+        floatationCubes[index] = UpdateDebugCube(floatationCube, floatationCubeData.position,
+          Vector3.one, floatationCubeData.name, OrangeColor, Vector3.zero);
+      }
+
+      // RenderDebugCube(ref forwardCube, shipFloatation.Value.ShipForward,
+      //   "water_forward", OrangeColor, Vector3.zero);
+      // RenderDebugCube(ref backwardCube, shipFloatation.Value.ShipBack,
+      //   "water_backward", OrangeColor, Vector3.zero);
+      // RenderDebugCube(ref rightCube, shipFloatation.Value.ShipRight,
+      //   "water_right", OrangeColor, Vector3.zero);
+      // RenderDebugCube(ref leftCube, shipFloatation.Value.ShipLeft, "water_left", OrangeColor, Vector3.zero);
     }
 
     // center of mass debugging should be yellow
@@ -214,9 +319,17 @@ public class VehicleDebugHelpers : MonoBehaviour
       .ForEach(x => x.ForEach(Destroy));
     lines.Clear();
 
-    foreach (var hullChunkBoundaryCube in hullChunkBoundaryCubes)
+    foreach (var c in hullChunkBoundaryCubes)
     {
-      Destroy(hullChunkBoundaryCube);
+      Destroy(c);
+    }
+    foreach (var c in floatationCubes)
+    {
+      Destroy(c);
+    }
+    foreach (var c in waterForceCubes)
+    {
+      Destroy(c);
     }
 
     Destroy(worldCenterOfMassCube);
@@ -225,10 +338,7 @@ public class VehicleDebugHelpers : MonoBehaviour
     Destroy(vehiclePiecesCenterCube);
     Destroy(vehiclePieceCenterPoint);
     Destroy(vehicleMovementCenterCube);
-    Destroy(forwardCube);
-    Destroy(backwardCube);
-    Destroy(rightCube);
-    Destroy(leftCube);
+
 
     foreach (var obj in targetColliders)
     {

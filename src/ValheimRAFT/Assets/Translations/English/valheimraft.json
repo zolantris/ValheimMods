@@ -349,5 +349,8 @@
   "valheim_vehicles_hull_variant_triangular": "Triangular",
   "valheim_vehicles_shared_keys_seal": "Seal",
   "valheim_vehicles_hull_seal_desc": "Seals the corresponding hull rib piece",
-  "valheim_vehicles_hull_corner": "Corner"
+  "valheim_vehicles_hull_corner": "Corner",
+  "valheim_vehicles_command_clear_all_boundary_chunks": "Clear All Boundary Chunks",
+  "valheim_vehicles_shared_clear_success": "Cleared Chunks Successfully",
+  "valheim_vehicles_shared_clear_failure": "No chunk data found."
 }

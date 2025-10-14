@@ -1698,6 +1698,9 @@
     public override void RequestBoundsRebuild()
     {
       if (!isActiveAndEnabled || ZNetView.m_forceDisableInit || !isInitialPieceActivationComplete) return;
+
+      // chunks must be updated in case the vehicle bounds chunks have been mutated.
+      UpdateChunkBoundsData(true);
       base.RequestBoundsRebuild();
     }
 
@@ -2159,17 +2162,52 @@
         IsLandVehicle: true
       };
 
-      lastAnchorState = anchorState;
 
       var currentWheelStateText = VehicleAnchorMechanismController.GetCurrentStateTextStatic(anchorState, isLandVehicle);
       foreach (var anchorComponent in m_anchorMechanismComponents)
+      {
         if (anchorState != anchorComponent.currentState)
           anchorComponent.UpdateAnchorState(anchorState, currentWheelStateText);
+
+        // drop anchor on first load otherwise it will not spawn / return to anchor state.
+        if (lastAnchorState == AnchorState.Idle && anchorState == AnchorState.Anchored)
+        {
+          anchorComponent.StartDropping();
+        }
+      }
 
       if (_steeringWheelPiece)
       {
         _steeringWheelPiece.UpdateSteeringHoverMessage(anchorState, currentWheelStateText);
       }
+
+      lastAnchorState = anchorState;
+    }
+
+    /// <summary>
+    /// Removes all boundary chunk data from the vehicle. Allowing default behavior
+    /// </summary>
+    public void ClearAllBoundaryChunkData()
+    {
+      if (!m_nview)
+      {
+        Player.m_localPlayer?.Message(MessageHud.MessageType.Center,
+          "$valheim_vehicles_shared_clear_failure");
+        return;
+      }
+
+      var currentChunkData = ReadChunkBoundsData(m_nview.GetZDO());
+      var chunkCount = currentChunkData.Count;
+      if (chunkCount == 0)
+      {
+        Player.m_localPlayer?.Message(MessageHud.MessageType.Center,
+          "$valheim_vehicles_shared_clear_failure");
+        return;
+      }
+
+      TryWriteChunkBoundsData([]);
+      Player.m_localPlayer?.Message(MessageHud.MessageType.Center,
+        $"$valheim_vehicles_shared_clear_success {chunkCount}");
     }
 
     public void TryWriteChunkBoundsData(HashSet<VehicleChunkSizeData>? currentData)
@@ -2287,7 +2325,7 @@
       TryWriteChunkBoundsData(currentData);
     }
 
-    public void UpdateChunkBoundsData(bool canRebuildBounds = true)
+    public void UpdateChunkBoundsData(bool canRebuildBounds)
     {
       if (m_nview == null) return;
       var zdo = m_nview.GetZDO();

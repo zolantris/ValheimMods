@@ -55,6 +55,7 @@ public class VehicleCommands : ConsoleCommand
     public const string move = "move";
     public const string toggleOceanSway = "toggleOceanSway";
     public const string resetVehicleOwner = "resetLocalOwnership";
+    public const string clearBoundaryChunkData = "clearBoundaryChunkData";
   }
 
   public override string Help => OnHelp();
@@ -75,7 +76,8 @@ public class VehicleCommands : ConsoleCommand
       $"\n<{VehicleCommandArgs.reportInfo}>: outputs information related to the vehicle the player is on or near. This is meant for error reports" +
       $"\n<{VehicleCommandArgs.moveUp}>: Moves the vehicle within 50 units upwards by the value provided. Capped at 30 units to be safe. And Capped at 10 units lowest world position." +
       $"\n<{VehicleCommandArgs.move}>: Must provide 3 args: x y z, the movement is relative to those points" +
-      $"\n<{VehicleCommandArgs.colliderEditMode}>: Lets the player toggle collider edit mode for all vehicles allowing editing water displacement masks and other hidden items";
+      $"\n<{VehicleCommandArgs.colliderEditMode}>: Lets the player toggle collider edit mode for all vehicles allowing editing water displacement masks and other hidden items" +
+      $"\n<{VehicleCommandArgs.clearBoundaryChunkData}>: Clears the boundary chunk data for the nearest vehicle. This will force a rebuild of the convex hull boundary constraint. Boundary chunk data is use to limit the extent the vehicle can grow to.";
   }
 
   public override void Run(string[] args)
@@ -1187,6 +1189,15 @@ public class VehicleCommands : ConsoleCommand
 
     LoggerProvider.LogMessage("Completed destroy vehicle command.");
   }
+
+  public static void ClearAllVehicleBoundaryChunks()
+  {
+    if (!Player.m_localPlayer) return;
+    var closestVehicle = GetNearestVehicleManager();
+    if (closestVehicle == null || closestVehicle.PiecesController == null) return;
+    closestVehicle.PiecesController.ClearAllBoundaryChunkData();
+  }
+
   public override List<string> CommandOptionList()
   {
     return
@@ -1207,7 +1218,8 @@ public class VehicleCommands : ConsoleCommand
       VehicleCommandArgs.colliderEditMode,
       VehicleCommandArgs.move,
       VehicleCommandArgs.moveUp,
-      VehicleCommandArgs.resetVehicleOwner
+      VehicleCommandArgs.resetVehicleOwner,
+      VehicleCommandArgs.clearBoundaryChunkData
     ];
   }
   public override string Name => "vehicle";
