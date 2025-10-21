@@ -88,6 +88,8 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable, INetView
 
   public MeshCollider m_meshCollider;
 
+  public static bool Config_AllowMeshCollision = false;
+
   public Cloth m_sailCloth;
 
   public List<Vector3> m_sailCorners = new();
@@ -290,6 +292,7 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable, INetView
 
   public void UpdateSailClothWind()
   {
+    if (!EnvMan.instance || !m_sailCloth) return;
     var vector = EnvMan.instance.GetWindForce();
     m_sailCloth.externalAcceleration = vector * m_windMultiplier;
     m_sailCloth.randomAcceleration =
@@ -1162,9 +1165,24 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable, INetView
     }
 
     m_sailCloth.coefficients = coefficients;
-    m_meshCollider.sharedMesh = CreateCollisionMesh(m_sailCorners.Count);
-    m_meshCollider.convex = true; // required for triangle meshes to interact with physics
-    m_meshCollider.enabled = true; // ensure it's not disabled
+
+
+    if (!Config_AllowMeshCollision)
+    {
+      if (m_meshCollider)
+      {
+        m_meshCollider.enabled = false;
+      }
+    }
+    else
+    {
+      if (m_meshCollider)
+      {
+        m_meshCollider.sharedMesh = CreateCollisionMesh(m_sailCorners.Count);
+        m_meshCollider.convex = true; // required for triangle meshes to interact with physics
+        m_meshCollider.enabled = true; // ensure it's not disabled
+      }
+    }
   }
 
   public bool IsNotCustom => m_materialVariant != MaterialVariant.Custom;

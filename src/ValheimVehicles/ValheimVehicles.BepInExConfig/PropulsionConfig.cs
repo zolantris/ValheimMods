@@ -1,4 +1,5 @@
 using BepInEx.Configuration;
+using ComfyLib;
 using ValheimVehicles.Propulsion.Sail;
 using ValheimVehicles.Components;
 using ValheimVehicles.Controllers;
@@ -34,6 +35,7 @@ public class PropulsionConfig : BepInExBaseConfig<PropulsionConfig>
     null!;
   public static ConfigEntry<float> SailingMassPercentageFactor { get; set; }
   public static ConfigEntry<bool> AllowFlight { get; set; }
+  public static ConfigEntry<bool> AllowSailCollisions { get; set; }
 
   // Propulsion Configs
   public static ConfigEntry<float> MaxSailSpeed { get; set; }
@@ -49,7 +51,6 @@ public class PropulsionConfig : BepInExBaseConfig<PropulsionConfig>
   public static ConfigEntry<float> SailTier3Area { get; set; }
   public static ConfigEntry<float> SailTier4Area { get; set; }
   public static ConfigEntry<float> SailCustomAreaTier1Multiplier { get; set; }
-
   public static ConfigEntry<bool> ShowShipStats { get; set; }
 
   public static ConfigEntry<float> VerticalSmoothingSpeed
@@ -114,6 +115,12 @@ public class PropulsionConfig : BepInExBaseConfig<PropulsionConfig>
     AllowFlight = config.BindUnique<bool>(GenericSectionName, "AllowFlight", false,
       ConfigHelpers.CreateConfigDescription(
         "Allow the raft to fly (jump\\crouch to go up and down)", true));
+    AllowSailCollisions = config.BindUnique<bool>(GenericSectionName, "AllowSailCollisions", false,
+      ConfigHelpers.CreateConfigDescription(
+        "Allow sails to have colliders which a player or other objects cannot passthrough.", true, false));
+    AllowSailCollisions.SettingChanged += (sender, args) => SailComponent.Config_AllowMeshCollision = AllowSailCollisions.Value;
+    SailComponent.Config_AllowMeshCollision = AllowSailCollisions.Value;
+
     SailingMassPercentageFactor = config.BindUnique(GenericSectionName, "MassPercentage", 0.5f,
       ConfigHelpers.CreateConfigDescription(
         "Sets the mass percentage of the ship that will slow down the sails",

@@ -685,6 +685,10 @@ Recover is optional (defaults true). AmountPerLevel is optional (defaults 0). Am
 - Description: Allow the raft to fly (jump\crouch to go up and down)
 - Default Value: False
 
+### AllowSailCollisions 
+- Description: Allow sails to have colliders which a player or other objects cannot passthrough.
+- Default Value: False
+
 ### MassPercentage 
 - Description: Sets the mass percentage of the ship that will slow down the sails
 - Default Value: 0.5

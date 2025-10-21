@@ -2343,17 +2343,6 @@
 
       var snappingThreshold = 0.5f;
 
-      // Threshold for snapping
-      // if (angleDiff < snappingThreshold)
-      // {
-      //   m_body.MoveRotation(targetRot);
-      //   var angularVelocityXYZero = m_body.angularVelocity;
-      //   angularVelocityXYZero.x = 0f;
-      //   angularVelocityXYZero.z = 0f;
-      //   m_body.angularVelocity = angularVelocityXYZero;
-      // }
-      // else
-      // {
       var deltaRot = targetRot * Quaternion.Inverse(currentRot);
       deltaRot.ToAngleAxis(out var angle, out var axis);
       if (angle > 180f) angle -= 360f;
@@ -2364,7 +2353,6 @@
       var torque = axis * angle * computedRightingStrength;
       torque.y = 0f;
       m_body.AddTorque(torque, ForceMode.Acceleration);
-      // }
     }
 
 
@@ -3387,8 +3375,10 @@
         ref m_windChangeVelocity, 1f, 99f);
 
       // add a buoyancy force multiplier for when near stuck to slow down velocity.
-      m_sailForce *= ShipFloatationObj.BuoyancySpeedMultiplier;
-
+      if (!isFlying)
+      {
+        m_sailForce *= ShipFloatationObj.BuoyancySpeedMultiplier;
+      }
 
       return Vector3.ClampMagnitude(m_sailForce, 20f);
     }
@@ -3623,6 +3613,7 @@
       switch (instance.VehicleSpeed)
       {
         case Ship.Speed.Full:
+          sailArea *= 1f;
           break;
         case Ship.Speed.Half:
           sailArea *= 0.5f;
