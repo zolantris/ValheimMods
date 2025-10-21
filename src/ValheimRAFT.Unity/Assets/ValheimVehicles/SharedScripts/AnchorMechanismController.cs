@@ -125,12 +125,18 @@ namespace ValheimVehicles.SharedScripts
     /// </summary>
     private void OnTransformParentChanged()
     {
+      TryGuardAgainstAnchorSyncIssues();
+    }
+
+    public void TryGuardAgainstAnchorSyncIssues()
+    {
       Invoke(nameof(GuardAgainstAnchorSyncIssue), 0.1f);
     }
 
     private void GuardAgainstAnchorSyncIssue()
     {
-      if (anchorRb == null) return;
+      if (!isActiveAndEnabled) return;
+      if (anchorRb == null || anchorTransform == null) return;
 
       if (transform.position.sqrMagnitude - anchorTransform.position.sqrMagnitude > 0.5f)
       {

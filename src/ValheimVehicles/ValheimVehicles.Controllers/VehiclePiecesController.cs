@@ -2145,6 +2145,8 @@
       if (anchorComponent.MovementController == null &&
           MovementController != null)
         anchorComponent.MovementController = MovementController;
+
+      anchorComponent.TryGuardAgainstAnchorSyncIssues();
     }
     /// <summary>
     /// Binds the Movement to the anchor components and allows for the anchor hotkeys to toggle all anchors on the ship
@@ -2702,6 +2704,7 @@
         var parentMaskComponent = PatchSharedData.PlayerLastRayPiece.GetComponent<MastComponent>();
         if (!parentMaskComponent || !parentMaskComponent.m_rotationTransform) return;
         prefab.transform.SetParent(parentMaskComponent.m_rotationTransform);
+
         return;
       }
 

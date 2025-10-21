@@ -4,7 +4,7 @@
     {
         _MainTex ("Albedo (RGB)", 2D) = "white" {}
         _MainColor ("Color", Color) = (1,1,1,1)
-        _MainColorNormal ("Main Normal Map", 2D) = "bump" {}
+        _MainNormal ("Main Normal Map", 2D) = "bump" {}
 
         _Wet ("Wet", Range(0,1)) = 0.0
 
@@ -50,79 +50,109 @@
     }
 
     CGINCLUDE
-    #include <UnityPBSLighting.cginc>
-    sampler2D _MainTex;
-    sampler2D _MainNormal;
+    #pragma surface surf Standard alpha:fade vertex:vert addshadow
+    #pragma target 3.0
 
-    float _Cutoff;
+    #include "UnityCG.cginc"
+    #include "UnityPBSLighting.cginc"
+
+    // Textures
+    sampler2D _MainTex, _MainNormal;
+    sampler2D _PatternTex, _PatternNormal;
+    sampler2D _LogoTex, _LogoNormal;
+    sampler2D _EmissiveTex;
+
+    // Material params
+    fixed4 _MainColor, _PatternColor, _LogoColor, _EmissionColor;
+    half _Wet, _Glossiness, _Metallic, _MistAlpha, _Cutoff, _BumpScale,
+         _TwoSidedNormals;
+    half _PatternRotation, _LogoRotation;
+    half _SphereNormals, _SphereOffset;
 
     #define PI 3.14159265359
-
-    half _Wet;
-    half _Glossiness;
-    half _MistAlpha;
-    fixed4 _MainColor;
-
-    sampler2D _PatternTex;
-    sampler2D _PatternNormal;
-    fixed4 _PatternColor;
-    half _PatternRotation;
-
-    sampler2D _LogoTex;
-    sampler2D _LogoNormal;
-    fixed4 _LogoColor;
-    half _LogoRotation;
 
     struct Input
     {
         float2 uv_MainTex;
-        half _MistAlpha;
         float2 uv_PatternTex;
         float2 uv_LogoTex;
-        float facing : VFACE;
+        float facing : VFACE; // front=+1, back=-1
     };
 
     void vert(inout appdata_full v, out Input o)
     {
         UNITY_INITIALIZE_OUTPUT(Input, o);
+        // (vertex motion hooks exist but are not applied here)
+    }
+
+    inline float2 RotateUV(float2 uv, float angle, float2 pivot)
+    {
+        float s = sin(angle), c = cos(angle);
+        float2x2 R = float2x2(c, -s, s, c);
+        return mul(uv - pivot, R) + pivot;
+    }
+
+    inline float3 UnpackNormalSafe(fixed4 nrm, float scale)
+    {
+        return UnpackNormal(nrm) * max(scale, 0.0001);
     }
 
 
     void surf(Input IN, inout SurfaceOutputStandard o)
     {
-        float s = sin(_PatternRotation * PI * 2);
-        float c = cos(_PatternRotation * PI * 2);
-        float2x2 rotationMatrix = float2x2(c, -s, s, c);
-        IN.uv_PatternTex = mul(IN.uv_PatternTex, rotationMatrix);
+        // --- UV rotations ---
+        float2 uvPat = RotateUV(IN.uv_PatternTex, _PatternRotation * 2 * PI,
+                            float2(0, 0));
+        float2 uvLogo = RotateUV(IN.uv_LogoTex, _LogoRotation * 2 * PI,
+                                                float2(0.5, 0.5));
 
-        s = sin(_LogoRotation * PI * 2);
-        c = cos(_LogoRotation * PI * 2);
-        rotationMatrix = float2x2(c, -s, s, c);
-        IN.uv_LogoTex = mul(IN.uv_LogoTex, rotationMatrix);
-        IN.uv_LogoTex.xy += 0.5;
-
-        // Albedo comes from a texture tinted by color
+        // --- Samples ---
         fixed4 mainCol = tex2D(_MainTex, IN.uv_MainTex) * _MainColor;
-        fixed4 patternCol = tex2D(_PatternTex, IN.uv_PatternTex);
-        fixed4 logoCol = tex2D(_LogoTex, IN.uv_LogoTex);
+        // base color & alpha owner
+        fixed4 patternCol = tex2D(_PatternTex, uvPat);
+        fixed4 logoCol = tex2D(_LogoTex, uvLogo);
 
-        o.Albedo = lerp(mainCol.rgb, patternCol.rgb * _PatternColor.rgb,
-                    patternCol.r * _PatternColor.a);
-        o.Albedo = lerp(o.Albedo, logoCol.rgb * _LogoColor.rgb,
-                            logoCol.a * _LogoColor.a);
-        // Metallic and smoothness come from slider variables
-          float3 normal = UnpackNormal(tex2D(_MainNormal, IN.uv_MainTex)) + 
-                        UnpackNormal(tex2D(_PatternNormal, IN.uv_PatternTex)) + 
-                        UnpackNormal(tex2D(_LogoNormal, IN.uv_LogoTex));
+        // --- Color tints ---
+        fixed3 patRGB = patternCol.rgb * _PatternColor.rgb;
+        fixed3 logoRGB = logoCol.rgb * _LogoColor.rgb;
 
+        // --- Masks for COLOR mixing (pattern doesn’t affect final alpha) ---
+        // Pattern: use brightness so black => 0 (shows base), white => 1 (shows pattern)
+        half mPattern = saturate(dot(patternCol.rgb,
+                                         float3(0.2126, 0.7152, 0.0722))) *
+            _PatternColor.a;
+        // Logo: typically from PNG with alpha
+        half mLogo = saturate(logoCol.a * _LogoColor.a);
 
-        o.Normal = normal * (IN.facing > 0 ? 1 : -1);
+        // Optional: gate overlays by base opacity (avoid tinting fully transparent pixels)
+        mPattern *= saturate(mainCol.a);
+        mLogo *= saturate(mainCol.a);
 
-        
-        o.Metallic = _Glossiness;
-        o.Smoothness = _Wet;
+        // --- Compose RGB ---
+        fixed3 albedo = lerp(mainCol.rgb, patRGB, mPattern);
+        albedo = lerp(albedo, logoRGB, mLogo);
+        albedo = saturate(albedo);
 
-        o.Alpha = _MainColor.a * _MistAlpha;
+        // --- Normals (additive blend, renormalized), two-sided flip ---
+        float3 nMain = UnpackNormalSafe(tex2D(_MainNormal, IN.uv_MainTex),
+                           _BumpScale);
+        float3 nPat =
+            UnpackNormalSafe(tex2D(_PatternNormal, uvPat), _BumpScale);
+        float3 nLogo = UnpackNormalSafe(tex2D(_LogoNormal, uvLogo), _BumpScale);
+        float3 nTan = normalize(nMain + nPat + nLogo);
+        if (_TwoSidedNormals > 0.5 && IN.facing < 0.5) nTan = -nTan;
+
+        // --- Outputs ---
+        o.Albedo = albedo;
+        o.Normal = nTan;
+        o.Metallic = saturate(_Metallic);
+        o.Smoothness = saturate(_Glossiness);
+        o.Emission = tex2D(_EmissiveTex, IN.uv_MainTex).rgb * _EmissionColor.
+            rgb;
+
+        // Final alpha comes from MAIN only (pattern doesn’t punch holes)
+        half alphaMain = saturate(mainCol.a * _MistAlpha);
+        o.Alpha = alphaMain;
         clip(o.Alpha - _Cutoff);
     }
     ENDCG
@@ -137,7 +167,7 @@
         Blend SrcAlpha OneMinusSrcAlpha
 
         CGPROGRAM
-        #pragma surface surf Standard alpha:fade vertex:vert
+        #pragma surface surf Standard alpha:cutoff vertex:vert
         #pragma vertex vert
         #pragma target 5.0
         ENDCG

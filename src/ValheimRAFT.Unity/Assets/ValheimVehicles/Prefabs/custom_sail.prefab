@@ -60,6 +60,9 @@ SkinnedMeshRenderer:
   m_ReflectionProbeUsage: 1
   m_RayTracingMode: 3
   m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -93,8 +96,8 @@ SkinnedMeshRenderer:
   m_BlendShapeWeights: []
   m_RootBone: {fileID: 0}
   m_AABB:
-    m_Center: {x: 0, y: 0, z: 0}
-    m_Extent: {x: 5, y: 0.01, z: 5}
+    m_Center: {x: 0.02321434, y: 0.3207991, z: -0.01941824}
+    m_Extent: {x: 4.977655, y: 0.8375908, z: 5.0194182}
   m_DirtyAABB: 0
 --- !u!183 &6720571792043195886
 Cloth:
@@ -104,13 +107,13 @@ Cloth:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8424679882004870002}
   m_Enabled: 1
-  m_StretchingStiffness: 0.5
-  m_BendingStiffness: 0.5
+  m_StretchingStiffness: 1
+  m_BendingStiffness: 1
   m_UseTethers: 0
   m_UseGravity: 1
   m_Damping: 0
-  m_ExternalAcceleration: {x: 0, y: 0, z: -100}
-  m_RandomAcceleration: {x: 0, y: 0, z: -50}
+  m_ExternalAcceleration: {x: 0, y: 0, z: 0}
+  m_RandomAcceleration: {x: 0, y: 0, z: 0}
   m_WorldVelocityScale: 0.5
   m_WorldAccelerationScale: 0.5
   m_Friction: 0
