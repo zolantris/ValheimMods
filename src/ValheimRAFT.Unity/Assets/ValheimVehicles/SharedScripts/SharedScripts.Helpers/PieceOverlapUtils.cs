@@ -27,6 +27,9 @@ namespace ValheimVehicles.SharedScripts
 
     /// <summary>
     /// Resolves coplanarity for a single prefab instance at placement.
+    ///
+    /// Calls must always be guarded by PieceOverlap_Enabled config check to avoid it being run when users disable it.
+    /// 
     /// </summary>
     public static bool TryResolveCoplanarityOnPlacement(
       GameObject instance,

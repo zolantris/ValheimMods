@@ -2975,37 +2975,40 @@
           transform.InverseTransformPoint(netView.transform.position));
       }
 
-      PieceOverlapUtils.TryResolveCoplanarityOnPlacement(
-        netView.gameObject,
-        go =>
-        {
-          var goPiece = go.GetComponentInParent<Piece>();
-          if (goPiece) return goPiece.gameObject;
-          var rootGo = go.transform.root.gameObject;
-          LoggerProvider.LogWarning($"Could not find root piece for go {go.name} using root transform {rootGo.name}");
-          return rootGo;
-        },
-        0.001f,
-        16,
-        LayerHelpers.PieceLayerMask,
-        (prefabRoot, pos) =>
-        {
-          if (!prefabRoot || !prefabRoot.GetZDO(out var zdo)) return;
-          zdo.SetPosition(pos);
+      if (Mod_PieceOverlapConfig.PieceOverlap_Enabled.Value)
+      {
+        PieceOverlapUtils.TryResolveCoplanarityOnPlacement(
+          netView.gameObject,
+          go =>
+          {
+            var goPiece = go.GetComponentInParent<Piece>();
+            if (goPiece) return goPiece.gameObject;
+            var rootGo = go.transform.root.gameObject;
+            LoggerProvider.LogWarning($"Could not find root piece for go {go.name} using root transform {rootGo.name}");
+            return rootGo;
+          },
+          0.001f,
+          16,
+          LayerHelpers.PieceLayerMask,
+          (prefabRoot, pos) =>
+          {
+            if (!prefabRoot || !prefabRoot.GetZDO(out var zdo)) return;
+            zdo.SetPosition(pos);
 
-          // the assumption is this will be true. Fire an error when it's not.
-          var hasMBParent = zdo.GetInt(VehicleZdoVars.MBParentId, 0) != 0;
-          if (hasMBParent)
-          {
-            var positionOffset = transform.InverseTransformPoint(pos);
-            zdo.Set(VehicleZdoVars.MBPositionHash, positionOffset);
+            // the assumption is this will be true. Fire an error when it's not.
+            var hasMBParent = zdo.GetInt(VehicleZdoVars.MBParentId, 0) != 0;
+            if (hasMBParent)
+            {
+              var positionOffset = transform.InverseTransformPoint(pos);
+              zdo.Set(VehicleZdoVars.MBPositionHash, positionOffset);
+            }
+            else
+            {
+              LoggerProvider.LogError($"Could not find parent ZDOID when fixing overlap of piece {prefabRoot.name}");
+            }
           }
-          else
-          {
-            LoggerProvider.LogError($"Could not find parent ZDOID when fixing overlap of piece {prefabRoot.name}");
-          }
-        }
-      );
+        );
+      }
 
       AddPiece(netView, true);
       InitZdo(zdo);
