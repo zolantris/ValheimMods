@@ -51,9 +51,6 @@ public class PropulsionConfig : BepInExBaseConfig<PropulsionConfig>
   public static ConfigEntry<float> SailTier3Area { get; set; }
   public static ConfigEntry<float> SailTier4Area { get; set; }
   public static ConfigEntry<float> SailCustomAreaTier1Multiplier { get; set; }
-
-  public static ConfigEntry<bool> SailAllowSailCollisions { get; set; }
-
   public static ConfigEntry<bool> ShowShipStats { get; set; }
 
   public static ConfigEntry<float> VerticalSmoothingSpeed
