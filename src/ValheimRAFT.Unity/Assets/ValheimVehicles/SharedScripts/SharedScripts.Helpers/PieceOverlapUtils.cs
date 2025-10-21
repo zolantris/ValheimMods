@@ -4,6 +4,10 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+
+#if VALHEIM
+using ValheimVehicles.BepInExConfig;
+#endif
 using Zolantris.Shared;
 
 namespace ValheimVehicles.SharedScripts
@@ -42,6 +46,14 @@ namespace ValheimVehicles.SharedScripts
       var prefabRoot = getPrefabRoot?.Invoke(instance) ?? instance;
       var meshRenderers = prefabRoot.GetComponentsInChildren<MeshRenderer>();
       if (meshRenderers == null || meshRenderers.Length == 0) return false;
+
+#if VALHEIM
+      if (!Mod_PieceOverlapConfig.PieceOverlap_Enabled.Value)
+      {
+        LoggerProvider.LogDebugDebounced("PieceOverlapUtils called but PieceOverlap_Enabled config is false. This should not happen. Aborting.");
+        return false;
+      }
+#endif
 
       var originalPos = prefabRoot.transform.position;
       for (var band = 0; band < maxBands; band++)
