@@ -10,20 +10,25 @@ using UnityEngine;
 namespace ValheimVehicles.SharedScripts.Magic
 {
   /// <summary>
-  /// Gravity Flight with mouse-facing, velocity alignment, reverse, hold-brake,
-  /// and two hover-target update modes toggled by holding SHIFT+X:
-  ///   - Mode1 (AutoWhileVerticalInput): HoverHeight auto-updates while ascending/descending.
-  ///   - Mode2 (ManualOnLock): HoverHeight only updates when X is pressed.
-  /// Toggle flight: hold SHIFT+Space (2s).
-  /// Inputs (default): Space ascend, Ctrl descend, X lock hover, W/S forward/reverse, SHIFT+S brake, A/D strafe.
-  /// All input hooks are virtual for later Valheim integration.
+  /// Gravity Flight with:
+  ///  - SHIFT+Space (hold) enable, SHIFT+CTRL (hold) disable
+  ///  - Hover PD (two hover-target modes: SHIFT+X hold to toggle)
+  ///  - Mouse-facing + velocity alignment, reverse (S), hold-brake (SHIFT+S)
+  ///  - New: Energy/Eitr usage tiers (Low/Medium/High) + overridable consumption hooks
+  ///
+  /// Default keys (editor test):
+  ///  Enable: SHIFT+Space (2s)   Disable: SHIFT+CTRL (2s)
+  ///  Ascend: Space              Descend: CTRL
+  ///  Lock Hover: X              Toggle Hover Mode: SHIFT+X (1s)
+  ///  Forward/Reverse: W/S       Strafe: A/D
+  ///  Brake: SHIFT+S (hold)
   /// </summary>
   [RequireComponent(typeof(Rigidbody))]
   public class GravityMagicController : MonoBehaviour
   {
     // ---------- Config & Serialized ----------
     [Header("Activation")]
-    [SerializeField] private float holdToToggleSeconds = 2.0f; // SHIFT+Space
+    [SerializeField] private float holdToToggleSeconds = 2.0f; // SHIFT+Space to enable, SHIFT+CTRL to disable
     [SerializeField] private float brakeOnEnableTime = 0.25f;
     [SerializeField] private float brakeStrength = 20f;
 
@@ -37,13 +42,12 @@ namespace ValheimVehicles.SharedScripts.Magic
     [SerializeField] private float maxVerticalSpeed = 12f;
 
     [Header("Hover Target Update Mode")]
-    [SerializeField] private HoverUpdateMode hoverUpdateMode = HoverUpdateMode.AutoWhileVerticalInput; // default Mode 1
-    [SerializeField] private float holdToToggleHoverModeSeconds = 1.0f; // SHIFT+X hold duration
-    [Tooltip("Optional debug print when hover mode toggles.")]
+    [SerializeField] private HoverUpdateMode hoverUpdateMode = HoverUpdateMode.AutoWhileVerticalInput; // Mode 1 default
+    [SerializeField] private float holdToToggleHoverModeSeconds = 1.0f; // SHIFT+X hold
     [SerializeField] private bool logHoverModeToggles = false;
 
     [Header("Propulsion")]
-    [SerializeField] private float forwardAcceleration = 40f;
+    [SerializeField] private float forwardAcceleration = 40f; // forward & reverse
     [SerializeField] private float strafeAcceleration = 20f;
     [SerializeField] private float maxHorizontalSpeed = 18f;
     [SerializeField] private float baseDrag = 0.25f;
@@ -79,9 +83,26 @@ namespace ValheimVehicles.SharedScripts.Magic
     [SerializeField] private bool brakeAffectsVertical = true;
     [SerializeField] private float brakeStopSpeed = 0.2f;
 
+    [Header("Energy / Eitr (per second)")]
+    [Tooltip("Cost per second when hovering (idle PD).")]
+    [SerializeField] private float energyLowRate = 1.0f;
+    [Tooltip("Cost per second when descending.")]
+    [SerializeField] private float energyMediumRate = 3.0f;
+    [Tooltip("Cost per second when ascending or doing horizontal thrust / significant horizontal motion.")]
+    [SerializeField] private float energyHighRate = 6.0f;
+
+    [Tooltip("Extra cost added proportionally with horizontal speed (High state only). 0 = disabled.")]
+    [SerializeField] private float highSpeedExtraCostPerMS = 0.0f;
+
+    [Tooltip("Horizontal speed above which we consider it 'significant motion' for High tier.")]
+    [SerializeField] private float highMotionSpeedThreshold = 2.0f;
+
+    [SerializeField] public bool IsInitialActive = false;
+
     // ---------- Public (runtime) ----------
     public bool IsActive { get; private set; }
     public float HoverHeight { get; private set; }
+
     public HoverUpdateMode CurrentHoverMode => hoverUpdateMode;
 
     public enum HoverUpdateMode
@@ -92,14 +113,37 @@ namespace ValheimVehicles.SharedScripts.Magic
       ManualOnLock
     }
 
+    public enum EnergyState
+    {
+      Low,
+      Medium,
+      High
+    }
+
+    public EnergyState CurrentEnergyState { get; private set; } = EnergyState.Low;
+    public float CurrentEnergyRatePerSecond { get; private set; } = 0f;
+
     // ---------- Private state ----------
     private Rigidbody _rb;
     private Camera _cam;
+
+    // Toggle timers
     private float _toggleHoldTimer;
     private float _hoverModeHoldTimer;
+
+    // Quick brake on enable
     private bool _isBraking;
     private float _brakeTimer;
+
+    // Visual bank
     private float _bank;
+
+    // Last inputs observed (for energy classification)
+    private bool _lastAscend;
+    private bool _lastDescend;
+    private float _lastLongitudinal; // W/S
+    private float _lastStrafe; // A/D
+    private bool _lastBrakeHeld;
 
     // ---------- Unity ----------
     private void Awake()
@@ -110,6 +154,11 @@ namespace ValheimVehicles.SharedScripts.Magic
       _rb.useGravity = true;
       _rb.linearDamping = 0f;
       _rb.angularDamping = 0.5f;
+
+      if (IsInitialActive)
+      {
+        IsActive = true;
+      }
     }
 
     private void Update()
@@ -127,10 +176,12 @@ namespace ValheimVehicles.SharedScripts.Magic
 
       if (GetBrakeHeld())
       {
+        _lastBrakeHeld = true;
         ApplyHoldBrake(Time.fixedDeltaTime);
       }
       else
       {
+        _lastBrakeHeld = false;
         ApplyFlightForces(Time.fixedDeltaTime);
         if (forceAlignVelocityToCamera) AlignVelocityToCamera(Time.fixedDeltaTime);
       }
@@ -138,11 +189,15 @@ namespace ValheimVehicles.SharedScripts.Magic
       CapSpeeds();
       ApplyTurnDamping(Time.fixedDeltaTime);
       HandleQuickBrake(Time.fixedDeltaTime);
+
+      // ---- Energy usage (after physics step so speeds are current) ----
+      UpdateEnergy(Time.fixedDeltaTime);
     }
 
+    // ---------- Holds / Toggles ----------
     private void HandleToggleFlightHold()
     {
-      // Two separate chords for enable/disable
+      // Separate chords: SHIFT+Space to enable, SHIFT+CTRL to disable
       if (!IsActive && GetEnableFlightChordHeld())
       {
         _toggleHoldTimer += Time.unscaledDeltaTime;
@@ -165,22 +220,6 @@ namespace ValheimVehicles.SharedScripts.Magic
       {
         _toggleHoldTimer = 0f;
       }
-    }
-
-    // ---------------- Input Layer ----------------
-
-    /// <summary>SHIFT + Space (Jump) to ENABLE flight.</summary>
-    protected virtual bool GetEnableFlightChordHeld()
-    {
-      return (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift))
-             && Input.GetKey(KeyCode.Space);
-    }
-
-    /// <summary>SHIFT + CTRL (Down) to DISABLE flight.</summary>
-    protected virtual bool GetDisableFlightChordHeld()
-    {
-      return (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift))
-             && (Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl));
     }
 
     private void HandleToggleHoverModeHold()
@@ -266,6 +305,9 @@ namespace ValheimVehicles.SharedScripts.Magic
       var upHeld = GetAscendHeld();
       var dnHeld = GetDescendHeld();
 
+      _lastAscend = upHeld;
+      _lastDescend = dnHeld;
+
       if (upHeld)
       {
         _rb.AddForce(Vector3.up * (ascendAcceleration * forceModeScalar), forceMode);
@@ -286,15 +328,24 @@ namespace ValheimVehicles.SharedScripts.Magic
       if (look.sqrMagnitude > 0.0001f)
       {
         var longAxis = GetLongitudinalAxis(); // W=+1, S=-1
+        var strafe = GetStrafeAxis(); // A/D
+
+        _lastLongitudinal = longAxis;
+        _lastStrafe = strafe;
+
         if (Mathf.Abs(longAxis) > 0.0001f)
           _rb.AddForce(look * (forwardAcceleration * longAxis * forceModeScalar), forceMode);
 
-        var strafe = GetStrafeAxis();
         if (Mathf.Abs(strafe) > 0.0001f)
         {
           var right = Vector3.Cross(Vector3.up, look).normalized;
           _rb.AddForce(right * (strafe * strafeAcceleration * forceModeScalar), forceMode);
         }
+      }
+      else
+      {
+        _lastLongitudinal = 0f;
+        _lastStrafe = 0f;
       }
     }
 
@@ -437,12 +488,86 @@ namespace ValheimVehicles.SharedScripts.Magic
       if (_brakeTimer <= 0f) _isBraking = false;
     }
 
-    // ---------- Virtual input layer (override in Valheim integration) ----------
-    protected virtual bool GetToggleChordHeld()
+    // ---------- Energy / Eitr ----------
+    private void UpdateEnergy(float dt)
     {
-      // SHIFT + Space (Jump) to toggle flight
+      var vel = _rb.linearVelocity;
+      var hSpeed = new Vector3(vel.x, 0f, vel.z).magnitude;
+      var vSpeed = Mathf.Abs(vel.y);
+
+      // Choose state (virtual so Valheim can change classification rules)
+      var state = ComputeEnergyState(hSpeed, vSpeed, _lastAscend, _lastDescend, _lastBrakeHeld, _lastLongitudinal, _lastStrafe);
+
+      var rate = state switch
+      {
+        EnergyState.Low => energyLowRate,
+        EnergyState.Medium => energyMediumRate,
+        EnergyState.High => energyHighRate,
+        _ => energyLowRate
+      };
+
+      if (state == EnergyState.High && highSpeedExtraCostPerMS > 0f)
+      {
+        rate += hSpeed * highSpeedExtraCostPerMS;
+      }
+
+      CurrentEnergyState = state;
+      CurrentEnergyRatePerSecond = rate;
+
+      // Hook to actually apply/decrement energy (Eitr, battery, etc.)
+      ConsumeEnergy(state, rate, dt);
+    }
+
+    /// <summary>
+    /// Decide Low / Medium / High energy tiers.
+    /// Default:
+    ///  - High: ascending OR braking OR (|WASD| input) OR horizontal speed >= threshold
+    ///  - Medium: descending (without braking & not High)
+    ///  - Low: otherwise (hovering)
+    /// </summary>
+    protected virtual EnergyState ComputeEnergyState(
+      float horizontalSpeed, float verticalSpeedAbs,
+      bool ascendHeld, bool descendHeld, bool brakeHeld,
+      float longitudinalAxis, float strafeAxis)
+    {
+      var hasMoveInput = Mathf.Abs(longitudinalAxis) > 0.01f || Mathf.Abs(strafeAxis) > 0.01f;
+
+      if (brakeHeld) return EnergyState.High;
+      if (ascendHeld) return EnergyState.High;
+      if (hasMoveInput) return EnergyState.High;
+      if (horizontalSpeed >= highMotionSpeedThreshold) return EnergyState.High;
+
+      if (descendHeld) return EnergyState.Medium;
+
+      return EnergyState.Low;
+    }
+
+    /// <summary>
+    /// Consume energy at 'ratePerSecond' for dt seconds.
+    /// Override this to drain Eitr from player or a power-storage component.
+    /// Default: no-op.
+    /// </summary>
+    protected virtual void ConsumeEnergy(EnergyState state, float ratePerSecond, float dt)
+    {
+      // Example (pseudo):
+      // var cost = ratePerSecond * dt;
+      // MyPowerStore.TryConsume(cost);
+      // if (!MyPowerStore.HasEnergy) DisableFlight();
+    }
+
+    // ---------- Input layer (override in Valheim integration) ----------
+    /// <summary>SHIFT + Space (Jump) to ENABLE flight.</summary>
+    protected virtual bool GetEnableFlightChordHeld()
+    {
       return (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift))
              && Input.GetKey(KeyCode.Space);
+    }
+
+    /// <summary>SHIFT + CTRL (Down) to DISABLE flight.</summary>
+    protected virtual bool GetDisableFlightChordHeld()
+    {
+      return (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift))
+             && (Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl));
     }
 
     /// <summary>SHIFT + X hold to toggle hover mode.</summary>
