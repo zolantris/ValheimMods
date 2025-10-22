@@ -10,51 +10,73 @@ using UnityEngine;
 namespace ValheimVehicles.SharedScripts.Magic
 {
   /// <summary>
-  /// Gravity Flight: negate gravity, add up/down thrust, hover "balance point", and directional propulsion.
-  /// - Toggle by holding SHIFT + Jump (Space) for 2s (also disables with the same hold).
-  /// - While active:
-  ///   * Hold Space to go up
-  ///   * Hold LeftCtrl to go down
-  ///   * Press X to set a new hover balance (freezes vertical velocity around this height)
-  ///   * Propulsion follows look/camera direction; rapid damp when you turn sharply
-  /// - All input methods are virtual so you can override for Valheim later.
+  /// Gravity Flight with mouse-driven facing, velocity alignment, reverse, and a hold-brake.
+  /// Toggle: hold SHIFT+Space (2s). While active:
+  ///  - Space ascend, Ctrl descend, X set hover, W forward, S reverse, SHIFT+S brake, A/D strafe
+  ///  - Body aligns to camera yaw; velocity is steered toward camera forward.
+  /// All inputs are virtual for Valheim integration.
   /// </summary>
   [RequireComponent(typeof(Rigidbody))]
   public class GravityMagicController : MonoBehaviour
   {
-    // ---------- Static ----------
-    private static readonly int HoverLayerMask = ~0; // everything, tweak later if needed
-
     // ---------- Serialized (private) ----------
     [Header("Activation")]
-    [SerializeField] private float holdToToggleSeconds = 2.0f; // Hold SHIFT+Jump for this long to toggle
-    [SerializeField] private float brakeOnEnableTime = 0.25f; // Quick velocity brake when enabling
-    [SerializeField] private float brakeStrength = 20f; // How strong the quick brake is
+    [SerializeField] private float holdToToggleSeconds = 2.0f;
+    [SerializeField] private float brakeOnEnableTime = 0.25f;
+    [SerializeField] private float brakeStrength = 20f; // quick brake when enabling
 
-    [Header("Up/Down & Hover")]
-    [SerializeField] private float ascendAcceleration = 30f; // Upward accel while holding Jump
-    [SerializeField] private float descendAcceleration = 35f; // Downward accel while holding Ctrl
-    [SerializeField] private float hoverGravityCompensation = 1.0f; // 1.0 ~ cancel gravity at hover point
-    [SerializeField] private float hoverSnapWindow = 0.2f; // If vertical speed magnitude below this, we "stick" to hover
-    [SerializeField] private float hoverVDrag = 4.0f; // Vertical damping near hover
-    [SerializeField] private float maxVerticalSpeed = 12f; // Clamp for vertical speed while flying
+    [Header("Up/Down & Hover (PD)")]
+    [SerializeField] private float ascendAcceleration = 30f;
+    [SerializeField] private float descendAcceleration = 35f;
+    [SerializeField] private float hoverKp = 12f; // accel = Kp*err - Kd*velY
+    [SerializeField] private float hoverKd = 6f;
+    [SerializeField] private float hoverMaxAccel = 30f;
+    [SerializeField] private float hoverDeadZone = 0.03f;
+    [SerializeField] private float maxVerticalSpeed = 12f;
 
     [Header("Propulsion")]
-    [SerializeField] private float forwardAcceleration = 40f; // thrust along look
-    [SerializeField] private float strafeAcceleration = 20f; // A/D or lateral stick (optional)
-    [SerializeField] private float maxHorizontalSpeed = 18f; // clamp for planar speed
-    [SerializeField] private float baseDrag = 0.4f; // baseline drag while active
-    [SerializeField] private float turnDampExtra = 8f; // extra drag when camera turns sharply
-    [SerializeField] private float turnDampAngleStart = 25f; // degrees where extra damping begins
-    [SerializeField] private float turnDampAngleMax = 80f; // degrees where extra damping is full
+    [SerializeField] private float forwardAcceleration = 40f; // used for both forward and reverse
+    [SerializeField] private float strafeAcceleration = 20f;
+    [SerializeField] private float maxHorizontalSpeed = 18f;
+    [SerializeField] private float baseDrag = 0.25f;
+
+    [Header("Turn Damping")]
+    [SerializeField] private float turnDampExtra = 8f;
+    [SerializeField] private float turnDampAngleStart = 25f;
+    [SerializeField] private float turnDampAngleMax = 80f;
 
     [Header("Quality/Feel")]
-    [SerializeField] private float forceModeScalar = 1f; // global scalar if you need quick tuning
+    [SerializeField] private float forceModeScalar = 1f;
     [SerializeField] private ForceMode forceMode = ForceMode.Acceleration;
+
+    [Header("Ground Snap on Enable")]
+    [SerializeField] private float groundRayDistance = 3.0f;
+    [SerializeField] private LayerMask groundMask = ~0;
+
+    [Header("Mouse Look Turning (Editor test)")]
+    [SerializeField] private bool alignBodyToCameraYaw = true;
+    [SerializeField] private float bodyTurnSpeed = 12f;
+    [SerializeField] private bool bankOnTurn = true;
+    [SerializeField] private float bankMaxDegrees = 12f;
+    [SerializeField] private float bankResponsiveness = 6f;
+
+    [Header("Velocity Alignment to Camera")]
+    [SerializeField] private bool forceAlignVelocityToCamera = true;
+    [SerializeField] private float steerGain = 6f;
+    [SerializeField] private float steerMaxAccel = 30f;
+    [SerializeField] private float alignMinSpeed = 0.2f;
+
+    [Header("Hold Brake (SHIFT+S)")]
+    [Tooltip("Acceleration applied opposite to current velocity while brake held.")]
+    [SerializeField] private float holdBrakeAccel = 60f;
+    [Tooltip("If true, brake affects vertical velocity too; otherwise horizontal only.")]
+    [SerializeField] private bool brakeAffectsVertical = true;
+    [Tooltip("If speed goes below this while braking, we hard-stop to zero to prevent creep.")]
+    [SerializeField] private float brakeStopSpeed = 0.2f;
 
     // ---------- Public (runtime) ----------
     public bool IsActive { get; private set; }
-    public float HoverHeight { get; private set; } // world Y where we try to balance when hovering
+    public float HoverHeight { get; private set; }
 
     // ---------- Private state ----------
     private Rigidbody _rb;
@@ -62,40 +84,49 @@ namespace ValheimVehicles.SharedScripts.Magic
     private float _toggleHoldTimer;
     private bool _isBraking;
     private float _brakeTimer;
+    private float _bank; // visual roll for banking
 
-    // ---------- Unity lifecycle ----------
+    // ---------- Unity ----------
     private void Awake()
     {
       _rb = GetComponent<Rigidbody>();
       _cam = Camera.main;
-      // Baseline physically sane defaults for a cube test
+
       _rb.useGravity = true;
-      _rb.linearDamping = 0f;
-      _rb.angularDamping = 0.5f;
+      _rb.drag = 0f;
+      _rb.angularDrag = 0.5f;
     }
 
     private void Update()
     {
       HandleToggle();
       if (IsActive) HandleHoverSet();
+      if (IsActive && alignBodyToCameraYaw) AlignBodyYawToCamera(Time.unscaledDeltaTime);
     }
 
     private void FixedUpdate()
     {
       if (!IsActive) return;
 
-      ApplyFlightForces(Time.fixedDeltaTime);
+      if (GetBrakeHeld())
+      {
+        ApplyHoldBrake(Time.fixedDeltaTime);
+      }
+      else
+      {
+        ApplyFlightForces(Time.fixedDeltaTime);
+        if (forceAlignVelocityToCamera) AlignVelocityToCamera(Time.fixedDeltaTime);
+      }
+
       CapSpeeds();
       ApplyTurnDamping(Time.fixedDeltaTime);
       HandleQuickBrake(Time.fixedDeltaTime);
     }
 
-    // ---------- Core mechanics ----------
+    // ---------- Core ----------
     private void HandleToggle()
     {
-      // Hold SHIFT + Jump to toggle on/off
-      var wantsToggleChord = GetToggleChordHeld(); // virtual
-      if (wantsToggleChord)
+      if (GetToggleChordHeld())
       {
         _toggleHoldTimer += Time.unscaledDeltaTime;
         if (_toggleHoldTimer >= holdToToggleSeconds)
@@ -114,52 +145,70 @@ namespace ValheimVehicles.SharedScripts.Magic
     private void EnableFlight()
     {
       IsActive = true;
-      HoverHeight = transform.position.y;
-      _rb.useGravity = false;
-      _rb.linearDamping = baseDrag;
+
+      // Snap hover height to ground if close; else current Y
+      var pos = transform.position;
+      if (Physics.Raycast(pos + Vector3.up * 0.1f, Vector3.down, out var hit, groundRayDistance, groundMask, QueryTriggerInteraction.Ignore))
+        HoverHeight = hit.point.y;
+      else
+        HoverHeight = pos.y;
+
+      // Kill vertical drift
+      var v = _rb.velocity;
+      v.y = 0f;
+      _rb.velocity = v;
+
+      _rb.useGravity = false; // PD hover handles vertical
+      _rb.drag = baseDrag;
       StartQuickBrake();
-      OnFlightEnabled(); // virtual hook
+      OnFlightEnabled();
     }
 
     private void DisableFlight()
     {
       IsActive = false;
       _rb.useGravity = true;
-      _rb.linearDamping = 0f;
+      _rb.drag = 0f;
       _isBraking = false;
-      OnFlightDisabled(); // virtual hook
+      _bank = 0f;
+      OnFlightDisabled();
     }
 
     private void HandleHoverSet()
     {
-      if (GetSetHoverPressed()) // virtual (default: X)
+      if (GetSetHoverPressed())
       {
-        HoverHeight = transform.position.y;
+        var pos = transform.position;
+        if (Physics.Raycast(pos + Vector3.up * 0.1f, Vector3.down, out var hit, groundRayDistance, groundMask, QueryTriggerInteraction.Ignore))
+          HoverHeight = hit.point.y;
+        else
+          HoverHeight = pos.y;
+
         OnHoverPointChanged(HoverHeight);
       }
     }
 
     private void ApplyFlightForces(float dt)
     {
-      // 1) Vertical control: ascend / descend / hover compensation
-      var upInput = GetAscendHeld() ? 1f : 0f; // Space
-      var dnInput = GetDescendHeld() ? 1f : 0f; // LeftCtrl
+      // Vertical
+      var upHeld = GetAscendHeld();
+      var dnHeld = GetDescendHeld();
 
-      if (upInput > 0f)
+      if (upHeld)
         _rb.AddForce(Vector3.up * (ascendAcceleration * forceModeScalar), forceMode);
-      else if (dnInput > 0f)
+      else if (dnHeld)
         _rb.AddForce(Vector3.down * (descendAcceleration * forceModeScalar), forceMode);
       else
-        ApplyHoverBalance(dt);
+        ApplyHoverPD(dt);
 
-      // 2) Propulsion along look direction (WASD optional strafe)
+      // Horizontal (thrust forward/reverse + strafe)
       var look = GetLookDirection();
       if (look.sqrMagnitude > 0.0001f)
       {
-        // Forward thrust when holding forward or mouse button — default: hold Right Mouse (or just always-on if you prefer)
-        var thrust = GetForwardThrustScalar(); // virtual: default RMB or W
-        if (thrust > 0f)
-          _rb.AddForce(look * (forwardAcceleration * thrust * forceModeScalar), forceMode);
+        // W/S: forward (+1) or reverse (-1)
+        var longAxis = GetLongitudinalAxis(); // [-1..1]
+        if (Mathf.Abs(longAxis) > 0.0001f)
+          _rb.AddForce(look * (forwardAcceleration * longAxis * forceModeScalar), forceMode);
 
         var strafe = GetStrafeAxis(); // A/D
         if (Mathf.Abs(strafe) > 0.0001f)
@@ -170,31 +219,102 @@ namespace ValheimVehicles.SharedScripts.Magic
       }
     }
 
-    private void ApplyHoverBalance(float dt)
+    /// <summary>Apply a strong opposing accel to current velocity. Takes priority over thrust/strafe.</summary>
+    private void ApplyHoldBrake(float dt)
     {
-      // Cancel gravity near the hover height; softly stick there when vertical speed is small
-      var y = transform.position.y;
-      var vy = _rb.linearVelocity.y;
+      var v = _rb.velocity;
 
-      // Gravity compensation (negation-ish)
-      var gComp = Physics.gravity.y * -1f * hoverGravityCompensation;
-      _rb.AddForce(new Vector3(0f, gComp, 0f), forceMode);
-
-      // Gentle stick when very close/small speed
-      if (Mathf.Abs(vy) < hoverSnapWindow)
+      if (!brakeAffectsVertical)
       {
-        var toHover = Mathf.Clamp(HoverHeight - y, -1f, 1f);
-        _rb.AddForce(Vector3.up * (toHover * hoverVDrag), forceMode);
+        v.y = 0f; // ignore vertical when braking horizontally
       }
+
+      var speed = v.magnitude;
+      if (speed <= brakeStopSpeed)
+      {
+        // Hard stop to avoid endless tiny drift
+        var cur = _rb.velocity;
+        if (!brakeAffectsVertical)
+        {
+          cur.x = 0f;
+          cur.z = 0f;
+        }
+        else { cur = Vector3.zero; }
+        _rb.velocity = cur;
+        return;
+      }
+
+      var oppose = -v.normalized * holdBrakeAccel;
+      _rb.AddForce(oppose, ForceMode.Acceleration);
+
+      // optional: mild angular damping while braking
+      _rb.angularVelocity *= 0.92f;
+    }
+
+    /// <summary>PD toward HoverHeight. No fake gravity; useGravity=false.</summary>
+    private void ApplyHoverPD(float dt)
+    {
+      var y = transform.position.y;
+      var vy = _rb.velocity.y;
+      var err = HoverHeight - y;
+
+      if (Mathf.Abs(err) < hoverDeadZone)
+        return;
+
+      var accel = hoverKp * err - hoverKd * vy;
+      accel = Mathf.Clamp(accel, -hoverMaxAccel, hoverMaxAccel);
+
+      _rb.AddForce(Vector3.up * (accel * forceModeScalar), ForceMode.Acceleration);
+    }
+
+    /// <summary>Rotate the body smoothly to match the camera yaw. Optionally bank while turning.</summary>
+    private void AlignBodyYawToCamera(float dt)
+    {
+      var look = GetLookDirectionRaw(); // full forward
+      var planar = new Vector3(look.x, 0f, look.z);
+      if (planar.sqrMagnitude < 0.0001f) return;
+
+      var targetRot = Quaternion.LookRotation(planar.normalized, Vector3.up);
+      transform.rotation = Quaternion.Slerp(transform.rotation, targetRot, 1f - Mathf.Exp(-bodyTurnSpeed * dt));
+
+      if (bankOnTurn)
+      {
+        var fwd = new Vector3(transform.forward.x, 0f, transform.forward.z).normalized;
+        var dot = Mathf.Clamp(Vector3.Dot(fwd, planar.normalized), -1f, 1f);
+        var crossY = Vector3.Cross(fwd, planar.normalized).y; // sign for left/right
+        var turnAmt = Mathf.Acos(dot) * Mathf.Rad2Deg;
+        var desiredBank = Mathf.Clamp(turnAmt / 45f, 0f, 1f) * bankMaxDegrees * Mathf.Sign(crossY) * -1f;
+        _bank = Mathf.Lerp(_bank, desiredBank, 1f - Mathf.Exp(-bankResponsiveness * dt));
+
+        var yawOnly = Quaternion.Euler(0f, transform.rotation.eulerAngles.y, 0f);
+        transform.rotation = yawOnly * Quaternion.Euler(0f, 0f, _bank);
+      }
+    }
+
+    /// <summary>Steer current horizontal velocity to align with camera forward.</summary>
+    private void AlignVelocityToCamera(float dt)
+    {
+      var vel = _rb.velocity;
+      var hVel = new Vector3(vel.x, 0f, vel.z);
+      var speed = hVel.magnitude;
+      if (speed < alignMinSpeed) return;
+
+      var look = GetLookDirection();
+      if (look.sqrMagnitude < 0.0001f) return;
+
+      var desired = look * speed;
+      var steer = (desired - hVel) * steerGain;
+      var steerMag = steer.magnitude;
+      if (steerMag > steerMaxAccel) steer = steer * (steerMaxAccel / Mathf.Max(steerMag, 0.0001f));
+
+      _rb.AddForce(new Vector3(steer.x, 0f, steer.z), ForceMode.Acceleration);
     }
 
     private void CapSpeeds()
     {
-      // Vertical cap
-      var v = _rb.linearVelocity;
+      var v = _rb.velocity;
       v.y = Mathf.Clamp(v.y, -maxVerticalSpeed, maxVerticalSpeed);
 
-      // Horizontal cap
       var h = new Vector3(v.x, 0f, v.z);
       var hMag = h.magnitude;
       if (hMag > maxHorizontalSpeed)
@@ -203,14 +323,13 @@ namespace ValheimVehicles.SharedScripts.Magic
         v.x = h.x;
         v.z = h.z;
       }
-      _rb.linearVelocity = v;
+      _rb.velocity = v;
     }
 
     private void ApplyTurnDamping(float dt)
     {
-      // Extra damping when you change look direction vs current velocity
       var look = GetLookDirection();
-      var vel = _rb.linearVelocity;
+      var vel = _rb.velocity;
       var hVel = new Vector3(vel.x, 0f, vel.z);
 
       if (hVel.sqrMagnitude < 0.0001f || look.sqrMagnitude < 0.0001f) return;
@@ -221,7 +340,6 @@ namespace ValheimVehicles.SharedScripts.Magic
       var t = Mathf.InverseLerp(turnDampAngleStart, turnDampAngleMax, angle);
       var extra = Mathf.Lerp(0f, turnDampExtra, t);
 
-      // Apply extra drag-like force opposite horizontal velocity
       var oppose = -hVel.normalized * extra;
       _rb.AddForce(new Vector3(oppose.x, 0f, oppose.z), forceMode);
     }
@@ -236,16 +354,17 @@ namespace ValheimVehicles.SharedScripts.Magic
     {
       if (!_isBraking) return;
       _brakeTimer -= dt;
-      // Strong opposing force to quickly kill existing velocity (feels snappy on enable)
-      var oppose = -_rb.linearVelocity * brakeStrength;
+
+      var oppose = -_rb.velocity * brakeStrength;
       _rb.AddForce(oppose, ForceMode.Acceleration);
+
       if (_brakeTimer <= 0f) _isBraking = false;
     }
 
-    // ---------- Virtual input layer (override these for Valheim integration) ----------
+    // ---------- Virtual input layer (override in Valheim integration) ----------
     protected virtual bool GetToggleChordHeld()
     {
-      // SHIFT + Jump (Space)
+      // SHIFT + Space (Jump) to toggle flight
       return (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift))
              && Input.GetKey(KeyCode.Space);
     }
@@ -258,23 +377,25 @@ namespace ValheimVehicles.SharedScripts.Magic
     {
       return Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl);
     }
+
     protected virtual bool GetSetHoverPressed()
     {
       return Input.GetKeyDown(KeyCode.X);
     }
 
-    /// <summary>Return normalized look direction in world space.</summary>
-    protected virtual Vector3 GetLookDirection()
+    /// <summary>[-1..1] longitudinal: W = +1 (forward), S = -1 (reverse).</summary>
+    protected virtual float GetLongitudinalAxis()
     {
-      if (_cam && _cam.transform) return _cam.transform.forward.WithYZero().normalized;
-      return transform.forward.WithYZero().normalized;
+      var f = Input.GetKey(KeyCode.W) ? 1f : 0f;
+      var b = Input.GetKey(KeyCode.S) ? -1f : 0f;
+      return f + b;
     }
 
-    /// <summary>Scalar [0..1] for forward thrust (default: hold Right Mouse or W).</summary>
-    protected virtual float GetForwardThrustScalar()
+    /// <summary>Brake chord: SHIFT + S (takes priority over thrust).</summary>
+    protected virtual bool GetBrakeHeld()
     {
-      var held = Input.GetMouseButton(1) || Input.GetKey(KeyCode.W);
-      return held ? 1f : 0f;
+      var shift = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
+      return shift && Input.GetKey(KeyCode.S);
     }
 
     /// <summary>[-1..1] strafe axis (A/D)</summary>
@@ -283,6 +404,21 @@ namespace ValheimVehicles.SharedScripts.Magic
       var a = Input.GetKey(KeyCode.A) ? -1f : 0f;
       var d = Input.GetKey(KeyCode.D) ? +1f : 0f;
       return a + d;
+    }
+
+    /// <summary>Planar look direction from camera (normalized, y=0).</summary>
+    protected virtual Vector3 GetLookDirection()
+    {
+      var f = GetLookDirectionRaw();
+      var planar = new Vector3(f.x, 0f, f.z);
+      return planar.sqrMagnitude < 0.0001f ? Vector3.zero : planar.normalized;
+    }
+
+    /// <summary>Raw camera forward in world space (pitch included).</summary>
+    protected virtual Vector3 GetLookDirectionRaw()
+    {
+      if (_cam && _cam.transform) return _cam.transform.forward;
+      return transform.forward;
     }
 
     // ---------- Virtual hooks ----------
