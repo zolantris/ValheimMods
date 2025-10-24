@@ -436,26 +436,59 @@ namespace Eldritch.Core
       if (posLerpRoutine.IsRunning) return;
 
       SetupXenoTransforms();
-      // SnapshotCurrentPose();
+      SnapshotCurrentPose();
       // or posSnapshot
-      var fromPos = XenoAnimationPoses.GetPose(XenoAnimationPoses.Variants.Idle);
-      var targetPos = XenoAnimationPoses.GetPose(XenoAnimationPoses.Variants.TailFullAttackExtended);
 
-      var poses = new List<PoseLerpEntry>
+      var poses = new List<PoseTransition>
       {
+        // transition from current pose to target pose
         new()
         {
-          PoseData = fromPos,
+          // PoseData = poseSnapshot
+          PoseData = XenoAnimationPoses.Idle
+        },
+        // transition to idle pose first
+        new()
+        {
+          PoseData = XenoAnimationPoses.Idle,
+          Speed = 0.25f
+        },
+        // transition to tail attack fully extended pos
+        new()
+        {
+          PoseData = XenoAnimationPoses.TailAttack_PierceSwing1,
           Speed = 1f
         },
         new()
         {
-          PoseData = targetPos,
+          PoseData = XenoAnimationPoses.TailAttack_PierceSwing2,
           Speed = 1f
         },
         new()
         {
-          PoseData = fromPos,
+          PoseData = XenoAnimationPoses.TailFullAttackCharge,
+          Speed = 1f
+        },
+        // new()
+        // {
+        //   PoseData = XenoAnimationPoses.TailAttack_PierceSwing1,
+        //   Speed = 1f
+        // },
+        // new()
+        // {
+        //   PoseData = XenoAnimationPoses.TailAttack_PierceSwing2,
+        //   Speed = 1f
+        // },
+        // transition to Extended down pose;
+        // new()
+        // {
+        //   PoseData = XenoAnimationPoses.TailAttack_PierceHit,
+        //   Speed = 1f
+        // },
+        // return back to Idle pose
+        new()
+        {
+          PoseData = XenoAnimationPoses.Idle,
           Speed = 1f
         }
       };
@@ -823,13 +856,13 @@ namespace Eldritch.Core
       return keys.ToArray();
     }
 
-    public struct PoseLerpEntry
+    public struct PoseTransition
     {
       public Dictionary<string, JointPose> PoseData;
       public float Speed; // always applicable
     }
 
-    public IEnumerator LerpBetweenPoses(List<PoseLerpEntry> poses,
+    public IEnumerator LerpBetweenPoses(List<PoseTransition> poses,
       string[] skipTransformNames = null,
       float? timeout = null)
     {
@@ -846,23 +879,23 @@ namespace Eldritch.Core
 
         var commonKeys = GetCommonKeys(currentPos.PoseData, nextPose.PoseData, skipTransformNames);
 
-        yield return LerpToPose(allAnimationJoints, currentPos.PoseData, nextPose.PoseData, skipTransformNames, commonKeys, currentPos.Speed);
+        yield return LerpToPose(allAnimationJoints, currentPos.PoseData, nextPose.PoseData, skipTransformNames, commonKeys, nextPose.Speed);
       }
     }
 
-    public static List<PoseLerpEntry> HeadTurnPosLerp = new()
+    public static List<PoseTransition> HeadTurnPosLerp = new()
     {
-      new PoseLerpEntry
+      new PoseTransition
       {
         PoseData = XenoAnimationPoses.Crouch,
         Speed = 0.6f
       },
-      new PoseLerpEntry
+      new PoseTransition
       {
         PoseData = XenoAnimationPoses.CrouchHeadRight,
         Speed = 0.75f
       },
-      new PoseLerpEntry
+      new PoseTransition
       {
         PoseData = XenoAnimationPoses.Crouch,
         Speed = 0.6f
@@ -923,12 +956,15 @@ namespace Eldritch.Core
       Dictionary<string, JointPose> endPose,
       string[] skipTransformNames = null,
       string[] commonKeys = null,
-      float duration = 0.25f)
+      float duration = 0.25f, Vector3? rotationalFlux = null)
     {
       // Compute keys if not provided
       commonKeys ??= GetCommonKeys(startPose, endPose, skipTransformNames);
 
       var time = 0f;
+      var rotationalFluxVec = rotationalFlux ?? new Vector3(1f, 1f, 1f);
+      var rotationStartFlux = Quaternion.Euler(new Vector3(rotationalFluxVec.x * Random.Range(-1f, 1f), rotationalFluxVec.y * Random.Range(-1f, 1f), rotationalFluxVec.z * Random.Range(-1f, 1f)));
+      var rotationEndFlux = Quaternion.Euler(new Vector3(rotationalFluxVec.x * Random.Range(-1f, 1f), rotationalFluxVec.y * Random.Range(-1f, 1f), rotationalFluxVec.z * Random.Range(-1f, 1f)));
       while (time < duration)
       {
         yield return new WaitForEndOfFrame();
@@ -939,8 +975,11 @@ namespace Eldritch.Core
             continue;
           var poseA = startPose[jointName];
           var poseB = endPose[jointName];
+
+          var rotA = time == 0f ? poseA.Rotation * rotationStartFlux : poseA.Rotation;
+
           joint.localPosition = Vector3.Lerp(poseA.Position, poseB.Position, t);
-          joint.localRotation = Quaternion.Slerp(poseA.Rotation, poseB.Rotation, t);
+          joint.localRotation = Quaternion.Slerp(rotA, poseB.Rotation * rotationEndFlux, t);
         }
         time += Time.deltaTime;
       }
