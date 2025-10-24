@@ -162,6 +162,12 @@ namespace Eldritch.Core
       InitAnimators();
     }
 
+    private void OnDisable()
+    {
+      ResetTailLocalPositionsToOrig();
+      _lastTailStrength = 0f;
+    }
+
     public void PlaySleepingAnimation(bool canSleepAnimate)
     {
       if (!canSleepAnimate) return;
@@ -902,10 +908,16 @@ namespace Eldritch.Core
     [SerializeField] [Range(0.1f, 5f)] private float tailDebugStrengthMultiplier = 1f;
     [SerializeField] [Range(0f, 90f)] private float tailDebugMaxPerJointDegOverride = 0f; // 0 = use normal
     [SerializeField] private bool tailDebugGizmos = true;
+    [SerializeField] [Tooltip("Override tailExtraReach for testing (meters). 0 = use normal")]
+    private float tailDebugExtraReachOverride = 0f;
 
     // Cached, ordered chain from root->tip for better looking gradients
     private List<Transform> _tailChainOrdered;
     private int _tailChainCount;
+
+    // Cache originals for true extension (link translations)
+    private List<Vector3> _tailOrigLocalPos; // per joint (index i), the original localPosition
+    private List<float> _tailLinkOrigLen; // per link (i>=1), |localPosition|
 
     // Optional: track last strength to short-circuit
     private float _lastTailStrength;
@@ -940,6 +952,22 @@ namespace Eldritch.Core
         node = bestChild;
       }
       _tailChainCount = _tailChainOrdered.Count;
+
+      CacheTailOriginals();
+    }
+
+    private void CacheTailOriginals()
+    {
+      if (_tailChainOrdered == null || _tailChainOrdered.Count == 0) return;
+      _tailOrigLocalPos = new List<Vector3>(_tailChainOrdered.Count);
+      _tailLinkOrigLen = new List<float>(_tailChainOrdered.Count);
+      for (var i = 0; i < _tailChainOrdered.Count; i++)
+      {
+        var t = _tailChainOrdered[i];
+        var lp = t.localPosition;
+        _tailOrigLocalPos.Add(lp);
+        _tailLinkOrigLen.Add(i == 0 ? 0f : lp.magnitude);
+      }
     }
 
     private static int GetDepth(Transform t)
@@ -949,59 +977,6 @@ namespace Eldritch.Core
       for (var i = 0; i < t.childCount; i++)
         max = Mathf.Max(max, 1 + GetDepth(t.GetChild(i)));
       return max;
-    }
-
-    private void LateUpdate_TailExtension()
-    {
-      if (!tailExtensionEnabled || animator == null) return;
-      EnsureTailChainOrdered();
-      if (_tailChainCount == 0) return;
-
-      // Prefer explicit state detection (works with trigger-based attacks too),
-      // otherwise fall back to parameter gating.
-      var hasStateInfo = TryGetTailAttackStateInfo(out var stateLayer, out var stateInfo);
-      var isTailMode = animator.GetInteger(AttackMode) == 1 || _cachedAttackMode == 1 && animator.GetBool(Attack);
-      var inTailAttack = hasStateInfo || isTailMode;
-
-      // Debug can force the effect always-on
-      if (tailDebugForceMax) inTailAttack = true;
-
-      if (!inTailAttack)
-      {
-        _lastTailStrength = 0f;
-        return;
-      }
-
-      // Use the detected state's timing if we have it; else use configured layer.
-      var info = hasStateInfo
-        ? stateInfo
-        : animator.GetCurrentAnimatorStateInfo(Mathf.Clamp(tailAttackLayerIndex, 0, Mathf.Max(0, animator.layerCount - 1)));
-
-      var nTime = info.normalizedTime;
-      if (!float.IsFinite(nTime)) return;
-
-      // normalize to [0..1]
-      nTime = nTime - Mathf.Floor(nTime);
-
-      // Build a pulse centered at tailExtendPeakNTime with half-width
-      var t0 = Mathf.Clamp01((nTime - (tailExtendPeakNTime - tailExtendHalfWidth)) / (2f * tailExtendHalfWidth));
-      var pulse = Mathf.Clamp01(t0);
-      var strength = tailExtendCurve.Evaluate(pulse); // [0..1], bell-ish
-
-      if (tailDebugForceMax) strength = 1f;
-      strength = Mathf.Clamp01(strength * tailDebugStrengthMultiplier);
-
-      if (strength <= 0f && _lastTailStrength <= 0f)
-      {
-        _lastTailStrength = 0f;
-        return;
-      }
-
-      // Apply additive bend down the chain (distal segments bend more)
-      var overrideDeg = tailDebugMaxPerJointDegOverride > 0f ? (float?)tailDebugMaxPerJointDegOverride : null;
-      ApplyTailWhip(strength, overrideDeg);
-
-      _lastTailStrength = strength;
     }
 
     private bool IsInTailAttackStateByName()
@@ -1051,6 +1026,67 @@ namespace Eldritch.Core
       return false;
     }
 
+    private void LateUpdate_TailExtension()
+    {
+      if (!tailExtensionEnabled || animator == null) return;
+      EnsureTailChainOrdered();
+      if (_tailChainCount == 0) return;
+
+      // Prefer explicit state detection (works with trigger-based attacks too),
+      // otherwise fall back to parameter gating.
+      var hasStateInfo = TryGetTailAttackStateInfo(out var stateLayer, out var stateInfo);
+      var isTailMode = animator.GetInteger(AttackMode) == 1 || _cachedAttackMode == 1 && animator.GetBool(Attack);
+      var inTailAttack = hasStateInfo || isTailMode;
+
+      // Debug can force the effect always-on
+      if (tailDebugForceMax) inTailAttack = true;
+
+      if (!inTailAttack)
+      {
+        // Reset to original positions if we previously extended
+        if (_lastTailStrength > 0f)
+          ResetTailLocalPositionsToOrig();
+        _lastTailStrength = 0f;
+        return;
+      }
+
+      // Use the detected state's timing if we have it; else use configured layer.
+      var info = hasStateInfo
+        ? stateInfo
+        : animator.GetCurrentAnimatorStateInfo(Mathf.Clamp(tailAttackLayerIndex, 0, Mathf.Max(0, animator.layerCount - 1)));
+
+      var nTime = info.normalizedTime;
+      if (!float.IsFinite(nTime)) return;
+
+      // normalize to [0..1]
+      nTime = nTime - Mathf.Floor(nTime);
+
+      // Build a pulse centered at tailExtendPeakNTime with half-width
+      var t0 = Mathf.Clamp01((nTime - (tailExtendPeakNTime - tailExtendHalfWidth)) / (2f * tailExtendHalfWidth));
+      var pulse = Mathf.Clamp01(t0);
+      var strength = tailExtendCurve.Evaluate(pulse); // [0..1], bell-ish
+
+      if (tailDebugForceMax) strength = 1f;
+      strength = Mathf.Clamp01(strength * tailDebugStrengthMultiplier);
+
+      if (strength <= 0f && _lastTailStrength <= 0f)
+      {
+        // Ensure originals (no tail stretch)
+        ResetTailLocalPositionsToOrig();
+        _lastTailStrength = 0f;
+        return;
+      }
+
+      // 1) TRUE EXTENSION: lengthen links along their original directions (meters)
+      ApplyTailLengthen(strength);
+
+      // 2) ADDITIVE WHIP: bend by rotation for style
+      var overrideDeg = tailDebugMaxPerJointDegOverride > 0f ? (float?)tailDebugMaxPerJointDegOverride : null;
+      ApplyTailWhip(strength, overrideDeg);
+
+      _lastTailStrength = strength;
+    }
+
     private void ApplyTailWhip(float strength01, float? overrideMaxPerJointDeg = null)
     {
       // Heuristic: map desired extra reach (meters) to how hard we bend each joint.
@@ -1085,8 +1121,6 @@ namespace Eldritch.Core
         t.localRotation = t.localRotation * localRot;
 
         // 2) Small world-space bias to look generally toward facing
-        //    (rotate around world right/left depending on rig—use transform.right-ish at tail root)
-        //    We’ll use the character's local right axis at each joint's parent space.
         if (forwardBiasDeg > 0.01f)
         {
           var parent = t.parent ? t.parent : transform;
@@ -1094,6 +1128,61 @@ namespace Eldritch.Core
           var bias = Quaternion.AngleAxis(forwardBiasDeg * distalWeight, worldRight);
           t.rotation = bias * t.rotation;
         }
+      }
+    }
+
+    private void ApplyTailLengthen(float strength01)
+    {
+      if (_tailChainCount <= 1 || _tailOrigLocalPos == null) return;
+
+      // Compute total weighted length for distribution
+      var power = tailDistalFalloffPower;
+      var denom = 0f;
+      for (var i = 1; i < _tailChainCount; i++)
+      {
+        var u = i / (float)(_tailChainCount - 1); // 0..1 across links
+        var w = Mathf.Pow(u, power);
+        denom += w * _tailLinkOrigLen[i];
+      }
+
+      var extraMeters = tailDebugExtraReachOverride > 0f ? tailDebugExtraReachOverride : tailExtraReach;
+      extraMeters = Mathf.Max(0f, extraMeters) * strength01;
+
+      // Distribute per link and apply along original local direction
+      for (var i = 1; i < _tailChainCount; i++)
+      {
+        var t = _tailChainOrdered[i];
+        if (!t) continue;
+        var orig = _tailOrigLocalPos[i];
+        var len = _tailLinkOrigLen[i];
+        if (len <= 1e-6f)
+        {
+          // Nothing to extend on a zero-length link
+          t.localPosition = orig;
+          continue;
+        }
+        var dir = orig / len; // original link direction in parent space
+        var u = i / (float)(_tailChainCount - 1);
+        var w = Mathf.Pow(u, power);
+
+        float extMeters;
+        if (denom > 1e-6f)
+          extMeters = extraMeters * (w * len) / denom;
+        else
+          extMeters = extraMeters / Mathf.Max(1, _tailChainCount - 1);
+
+        t.localPosition = orig + dir * extMeters;
+      }
+    }
+
+    private void ResetTailLocalPositionsToOrig()
+    {
+      if (_tailChainCount <= 1 || _tailOrigLocalPos == null) return;
+      for (var i = 1; i < _tailChainCount; i++)
+      {
+        var t = _tailChainOrdered[i];
+        if (!t) continue;
+        t.localPosition = _tailOrigLocalPos[i];
       }
     }
 
