@@ -18,6 +18,19 @@ namespace Eldritch.Core
     [Header("Primary Voice Source (single)")]
     [SerializeField] private AudioSource voiceSource;
 
+    // Idle loop configuration (continuous ambience)
+    [Header("Idle Loop (continuous)")]
+    public bool enableIdleLoop = true;
+    public AudioClip idleLoopClip; // optional; falls back to idleClips[0]
+    [Range(0f, 1f)] public float idleLoopVolume = 0.35f;
+    public Vector2 idleLoopPitchRange = new(0.98f, 1.02f);
+    [Tooltip("Within this distance the idle is most audible.")]
+    public float idleNearDistance = 2f;
+    [Tooltip("Beyond this distance the idle is effectively inaudible.")]
+    public float idleMaxAudibleDistance = 12f;
+    [Tooltip("Optional custom rolloff curve (x: distance in meters, y: volume multiplier). If empty, a default curve is generated.")]
+    public AnimationCurve idleLoopRolloff;
+
     [Header("Pools")]
     [SerializeField] private int foleyPoolSize = 3;
     [SerializeField] private int attackPoolSize = 3;
@@ -63,6 +76,9 @@ namespace Eldritch.Core
     private readonly List<AudioSource> _attackPool = new();
     private readonly List<AudioSource> _impactPool = new();
 
+    // Dedicated idle loop source
+    private AudioSource _idleSource;
+
     // PlayOneShot end-time tracking for reliable busy/steal logic
     private readonly Dictionary<AudioSource, float> _sourceEndTimes = new();
 
@@ -90,7 +106,48 @@ namespace Eldritch.Core
       BuildPool(_foleyPool, foleyPoolSize, "Audio_Foley");
       BuildPool(_attackPool, attackPoolSize, "Audio_Attack");
       BuildPool(_impactPool, impactPoolSize, "Audio_Impact");
+
+      // Prepare idle loop source
+      EnsureIdleLoopSource();
     }
+
+    private void OnEnable()
+    {
+      if (enableIdleLoop) StartIdleLoop();
+    }
+
+    private void OnDisable()
+    {
+      StopIdleLoop();
+    }
+
+    private void OnValidate()
+    {
+      // Clamp and refresh idle settings when values change in the Inspector
+      idleNearDistance = Mathf.Max(0.01f, idleNearDistance);
+      idleMaxAudibleDistance = Mathf.Max(idleNearDistance + 0.01f, idleMaxAudibleDistance);
+      idleLoopVolume = Mathf.Clamp01(idleLoopVolume);
+
+      // If in editor or play mode, refresh the idle source config
+      if (Application.isPlaying)
+      {
+        RefreshIdleLoopSettings();
+      }
+      else
+      {
+        EnsureIdleLoopSource();
+      }
+    }
+
+#if UNITY_EDITOR
+    private void OnDrawGizmosSelected()
+    {
+      Gizmos.color = new Color(0f, 1f, 0.2f, 0.35f);
+      Gizmos.DrawWireSphere(transform.position, idleNearDistance);
+      Gizmos.color = new Color(0f, 0.6f, 1f, 0.25f);
+      Gizmos.DrawWireSphere(transform.position, idleMaxAudibleDistance);
+    }
+#endif
 
     private void ConfigureSource(AudioSource src, AudioMixerGroup group = null)
     {
@@ -123,11 +180,92 @@ namespace Eldritch.Core
       }
     }
 
+    // Setup or refresh the dedicated idle loop source
+    private void EnsureIdleLoopSource()
+    {
+      if (!enableIdleLoop)
+      {
+        if (_idleSource && _idleSource.isPlaying) _idleSource.Stop();
+        return;
+      }
+
+      if (_idleSource == null)
+      {
+        var go = new GameObject("Audio_IdleLoop");
+        go.transform.SetParent(transform, false);
+        _idleSource = go.AddComponent<AudioSource>();
+        if (voiceGroup) _idleSource.outputAudioMixerGroup = voiceGroup; // route with voice
+      }
+
+      // Configure idle 3D settings
+      _idleSource.playOnAwake = false;
+      _idleSource.loop = true;
+      _idleSource.spatialBlend = spatialBlend;
+      _idleSource.minDistance = 0.1f; // delegate attenuation to custom curve
+      _idleSource.maxDistance = Mathf.Max(0.1f, idleMaxAudibleDistance);
+      _idleSource.rolloffMode = AudioRolloffMode.Custom;
+
+      // Volume & pitch
+      _idleSource.volume = Mathf.Clamp01(idleLoopVolume);
+      _idleSource.pitch = Random.Range(idleLoopPitchRange.x, idleLoopPitchRange.y);
+
+      // Choose clip
+      var clip = idleLoopClip != null ? idleLoopClip : Pick(idleClips);
+      _idleSource.clip = clip;
+
+      // Apply custom rolloff curve
+      var curve = idleLoopRolloff == null || idleLoopRolloff.length == 0
+        ? BuildDefaultIdleCurve()
+        : idleLoopRolloff;
+      _idleSource.SetCustomCurve(AudioSourceCurveType.CustomRolloff, curve);
+    }
+
+    // Create a curve that's very quiet until close, then rises quickly near the creature
+    private AnimationCurve BuildDefaultIdleCurve()
+    {
+      var near = Mathf.Max(0.01f, idleNearDistance);
+      var max = Mathf.Max(near + 0.01f, idleMaxAudibleDistance);
+
+      var keys = new[]
+      {
+        new Keyframe(0f, 1f), // at the source: full volume
+        new Keyframe(near, 0.8f), // near distance: still strong
+        new Keyframe(Mathf.Min(near * 2f, max), 0.15f), // quickly drops beyond near
+        new Keyframe(max, 0f) // effectively silent at max
+      };
+      return new AnimationCurve(keys);
+    }
+
     // ------------- Public API -------------
 
     public bool PlayIdle()
     {
       return TryPlayVoice(Pick(idleClips), voiceMinInterval);
+    }
+
+    // Public control for idle loop
+    public void StartIdleLoop()
+    {
+      EnsureIdleLoopSource();
+      if (!enableIdleLoop || _idleSource == null || _idleSource.clip == null) return;
+      if (_idleSource.isPlaying) return;
+      _idleSource.Play();
+    }
+
+    public void StopIdleLoop()
+    {
+      if (_idleSource && _idleSource.isPlaying) _idleSource.Stop();
+    }
+
+    public void RefreshIdleLoopSettings()
+    {
+      if (_idleSource == null) return;
+      EnsureIdleLoopSource();
+      if (_idleSource.isPlaying)
+      {
+        _idleSource.volume = Mathf.Clamp01(idleLoopVolume);
+        _idleSource.pitch = Mathf.Clamp(Random.Range(idleLoopPitchRange.x, idleLoopPitchRange.y), 0.5f, 2f);
+      }
     }
     public bool PlayHiss()
     {

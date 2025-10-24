@@ -508,7 +508,7 @@ namespace Eldritch.Core
     {
       if (attack_nextUpdateTime > Time.fixedTime) return;
       var attackSpeed = Random.Range(0.8f, 1.2f);
-      var nextMode = Mathf.RoundToInt(Random.value);
+      var nextMode = Mathf.RoundToInt(Random.Range(0f, 0.75f));
       SetAttackSpeed(attackSpeed, true);
       SetAttackMode(nextMode);
     }

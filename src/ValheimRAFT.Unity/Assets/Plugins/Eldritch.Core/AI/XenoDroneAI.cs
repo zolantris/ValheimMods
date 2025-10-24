@@ -76,7 +76,7 @@ namespace Eldritch.Core
     public float lastLowestPointCheck;
     [SerializeField] public bool IsManualControlling;
 
-    public float closeRange = 1f;
+    public float closeRange = 2f;
     public AbilityManager abilityManager;
 
     [Header("Behavior State")]
@@ -542,7 +542,7 @@ namespace Eldritch.Core
             abilityManager.RequestDodge(-Vector2.up);
           }
         }
-        else
+        else if (Random.value > 0.75f)
         {
           RetreatFromPrimaryTarget();
         }
