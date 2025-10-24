@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text.RegularExpressions;
 using JetBrains.Annotations;
 using UnityEngine;
@@ -105,7 +106,7 @@ namespace Eldritch.Core
 
     public Vector2 neckRangeX = new(-40f, 40f);
     public Vector2 neckRotationZRange = new(-40f, 40f);
-    public Vector3 neckPivotStartRotation = new(0f, 0f, 65f);
+    public Vector3 neckPivotStartRotation = new(0f, 0f, 35f);
     public Vector3 neckUpDownStartRotation = new(0f, 0f, 40f);
 
     private void Awake()
@@ -154,6 +155,185 @@ namespace Eldritch.Core
     //     ikRelay.SetReceiver(this);
     //     
     // }
+
+    private Coroutine _debugTailRoutine;
+    private float[] _savedLayerWeights;
+
+    private void SaveLayerWeights()
+    {
+      if (!animator) return;
+      var layers = animator.layerCount;
+      _savedLayerWeights = new float[layers];
+      for (var i = 0; i < layers; i++) _savedLayerWeights[i] = animator.GetLayerWeight(i);
+    }
+
+    private void RestoreLayerWeights()
+    {
+      if (!animator || _savedLayerWeights == null) return;
+      var layers = Mathf.Min(animator.layerCount, _savedLayerWeights.Length);
+      for (var i = 0; i < layers; i++) animator.SetLayerWeight(i, _savedLayerWeights[i]);
+    }
+
+    [Header("Tail Attack Debug (Context Menu)")]
+    [SerializeField] private bool debugIsolateAttackLayer = true; // set base/movement layer to 0 while testing
+    [SerializeField] private float debugCrossfade = 0.08f; // seconds
+    [SerializeField] private float debugDefaultDuration = 1.20f; // seconds
+
+// Tail attack state matching (supports multiple names)
+    [SerializeField] private string[] tailAttackStateNames = { "attack_tail_solo", "tail_attack_solo" };
+    [SerializeField] private int tailAttackLayer = 0; // set if your tail attack lives on another layer
+
+    private int ResolveAttackStateHash()
+    {
+      // Pick the first name that exists; otherwise just use the first provided
+      if (tailAttackStateNames != null)
+      {
+        for (var i = 0; i < tailAttackStateNames.Length; i++)
+        {
+          if (!string.IsNullOrEmpty(tailAttackStateNames[i]))
+            return Animator.StringToHash(tailAttackStateNames[i]);
+        }
+      }
+      return 0;
+    }
+
+    private AnimationClip GetDominantClipOnLayer(int layer)
+    {
+      if (!animator) return null;
+
+      var infos = animator.GetCurrentAnimatorClipInfo(layer);
+      AnimationClip best = null;
+      var bestW = -1f;
+      for (var i = 0; i < infos.Length; i++)
+      {
+        if (infos[i].clip && infos[i].weight > bestW)
+        {
+          bestW = infos[i].weight;
+          best = infos[i].clip;
+        }
+      }
+
+      // During transition, also consider next state
+      if (animator.IsInTransition(layer))
+      {
+        var next = animator.GetNextAnimatorClipInfo(layer);
+        for (var i = 0; i < next.Length; i++)
+        {
+          if (next[i].clip && next[i].weight > bestW)
+          {
+            bestW = next[i].weight;
+            best = next[i].clip;
+          }
+        }
+      }
+      return best;
+    }
+
+    private IEnumerator PlayTailAttackOnce(float durationSeconds)
+    {
+      if (!animator) yield break;
+
+      // prevent overlap
+      if (_debugTailRoutine != null)
+      {
+        StopCoroutine(_debugTailRoutine);
+        _debugTailRoutine = null;
+        RestoreLayerWeights();
+      }
+      _debugTailRoutine = StartCoroutine(PlayTailAttackOnce_Internal(durationSeconds));
+      yield return _debugTailRoutine;
+      _debugTailRoutine = null;
+    }
+
+    private IEnumerator PlayTailAttackOnce_Internal(float durationSeconds)
+    {
+      SaveLayerWeights();
+
+      // Optionally isolate the attack layer so movement doesn't mask the bend while testing
+      if (debugIsolateAttackLayer)
+      {
+        for (var i = 0; i < animator.layerCount; i++)
+          animator.SetLayerWeight(i, i == tailAttackLayer ? 1f : 0f);
+      }
+      else
+      {
+        // Ensure attack layer contributes
+        animator.SetLayerWeight(tailAttackLayer, Mathf.Max(0.9f, animator.GetLayerWeight(tailAttackLayer)));
+      }
+
+      var stateHash = ResolveAttackStateHash();
+      if (stateHash == 0)
+      {
+        Debug.LogWarning("[XenoAnimationController] No tail attack state hash resolved.");
+        RestoreLayerWeights();
+        yield break;
+      }
+
+      // Crossfade into the attack state on the specified layer, start at 0 normalized time
+      animator.CrossFadeInFixedTime(stateHash, Mathf.Max(0.01f, debugCrossfade), tailAttackLayer, 0f);
+      yield return null; // wait one frame for clips to bind
+
+      // Fit the animation to the requested duration by adjusting animator speed
+      var clip = GetDominantClipOnLayer(tailAttackLayer);
+      if (clip != null && clip.length > 0.0001f)
+      {
+        // speed so that (clip length / speed) == duration
+        animator.speed = Mathf.Max(0.01f, clip.length / Mathf.Max(0.01f, durationSeconds));
+      }
+      else
+      {
+        animator.speed = 1f; // safe fallback
+      }
+
+      // Let it run for the chosen duration
+      var t = 0f;
+      while (t < durationSeconds)
+      {
+        t += Time.deltaTime;
+        yield return null;
+      }
+
+      // Clean up
+      animator.speed = 1f;
+      RestoreLayerWeights();
+    }
+
+    // Right-click the component header to run these
+    [ContextMenu("Debug/Tail Attack ▶ 0.8s")]
+    private void Debug_TailAttack_0_8s()
+    {
+      _ = StartCoroutine(PlayTailAttackOnce(0.8f));
+    }
+
+    [ContextMenu("Debug/Tail Attack ▶ 1.2s")]
+    private void Debug_TailAttack_1_2s()
+    {
+      _ = StartCoroutine(PlayTailAttackOnce(1.2f));
+    }
+
+    [ContextMenu("Debug/Tail Attack ▶ 2.0s")]
+    private void Debug_TailAttack_2_0s()
+    {
+      _ = StartCoroutine(PlayTailAttackOnce(2.0f));
+    }
+
+    [ContextMenu("Debug/Tail Attack ▶ default")]
+    private void Debug_TailAttack_Default()
+    {
+      _ = StartCoroutine(PlayTailAttackOnce(debugDefaultDuration));
+    }
+
+    [ContextMenu("Debug/Stop Tail Attack Test")]
+    private void Debug_StopTailAttack()
+    {
+      if (_debugTailRoutine != null)
+      {
+        StopCoroutine(_debugTailRoutine);
+        _debugTailRoutine = null;
+        RestoreLayerWeights();
+        if (animator) animator.speed = 1f;
+      }
+    }
 
     private void OnEnable()
     {
@@ -242,6 +422,45 @@ namespace Eldritch.Core
           t.localRotation = kvp.Value.Rotation;
         }
       }
+    }
+
+    private CoroutineHandle posLerpRoutine;
+    [SerializeField] public float posLerpToSpeed = 2f;
+    [SerializeField] public float posLerpReturnSpeed = 2f;
+
+    [ContextMenu("Lerp To Selected Variant Pose")]
+    public void LerpToSelectedVariantPose()
+    {
+      posLerpRoutine ??= new CoroutineHandle(this);
+
+      if (posLerpRoutine.IsRunning) return;
+
+      SetupXenoTransforms();
+      // SnapshotCurrentPose();
+      // or posSnapshot
+      var fromPos = XenoAnimationPoses.GetPose(XenoAnimationPoses.Variants.Idle);
+      var targetPos = XenoAnimationPoses.GetPose(XenoAnimationPoses.Variants.TailFullAttackExtended);
+
+      var poses = new List<PoseLerpEntry>
+      {
+        new()
+        {
+          PoseData = fromPos,
+          Speed = 1f
+        },
+        new()
+        {
+          PoseData = targetPos,
+          Speed = 1f
+        },
+        new()
+        {
+          PoseData = fromPos,
+          Speed = 1f
+        }
+      };
+
+      posLerpRoutine.Start(LerpBetweenPoses(poses, null));
     }
 
     [ContextMenu("Apply Selected Variant Pose")]
@@ -392,7 +611,7 @@ namespace Eldritch.Core
     {
       SetupXenoTransforms();
       SnapshotCurrentPose();
-      JointPoseDumpUtility.DumpPoseToFile(poseSnapshot, "Xeno_IdlePose");
+      JointPoseDumpUtility.DumpPoseToFile(poseSnapshot, $"Xeno_{poseVariant.ToString()}");
     }
 
     [ContextMenu("Dump Delta PoseSnapshot as C# (to dated file)")]
@@ -604,22 +823,51 @@ namespace Eldritch.Core
       return keys.ToArray();
     }
 
-    public IEnumerator LerpBetweenPoses(Dictionary<string, JointPose> a,
-      Dictionary<string, JointPose> b, float? timeout = null, string[] skipTransformNames = null)
+    public struct PoseLerpEntry
     {
-      var commonKeys = GetCommonKeys(a, b, skipTransformNames);
+      public Dictionary<string, JointPose> PoseData;
+      public float Speed; // always applicable
+    }
+
+    public IEnumerator LerpBetweenPoses(List<PoseLerpEntry> poses,
+      string[] skipTransformNames = null,
+      float? timeout = null)
+    {
       var currentTime = 0f;
-      var endTime = Time.time + timeout != null ? (float?)Time.time : null;
-      while (isActiveAndEnabled && (timeout == null || endTime > currentTime))
+
+      var len = poses.Count();
+
+      // must run on two poses at least
+      for (var index = 0; index < len - 1; index++)
       {
-        yield return LerpToPose(allAnimationJoints, a, b, null, commonKeys);
-        yield return LerpToPose(allAnimationJoints, b, a, null, commonKeys);
-        if (endTime != null)
-        {
-          currentTime = Time.time;
-        }
+        if (index + 1 >= len) break;
+        var currentPos = poses[index];
+        var nextPose = poses[(index + 1) % len];
+
+        var commonKeys = GetCommonKeys(currentPos.PoseData, nextPose.PoseData, skipTransformNames);
+
+        yield return LerpToPose(allAnimationJoints, currentPos.PoseData, nextPose.PoseData, skipTransformNames, commonKeys, currentPos.Speed);
       }
     }
+
+    public static List<PoseLerpEntry> HeadTurnPosLerp = new()
+    {
+      new PoseLerpEntry
+      {
+        PoseData = XenoAnimationPoses.Crouch,
+        Speed = 0.6f
+      },
+      new PoseLerpEntry
+      {
+        PoseData = XenoAnimationPoses.CrouchHeadRight,
+        Speed = 0.75f
+      },
+      new PoseLerpEntry
+      {
+        PoseData = XenoAnimationPoses.Crouch,
+        Speed = 0.6f
+      }
+    };
 
     private IEnumerator SimulateJumpWithPoseLerp(
       Dictionary<string, Transform> allJoints,
@@ -638,7 +886,8 @@ namespace Eldritch.Core
       // 2. Idle → Crouch
       yield return LerpToPose(allJoints, idlePose, crouchPose, skipTransformNames, null, crouchDuration);
 
-      var lerpPoseCoroutine = StartCoroutine(LerpBetweenPoses(crouchPose, XenoAnimationPoses.CrouchHeadRight, null, skipTransformNames));
+
+      var lerpPoseCoroutine = StartCoroutine(LerpBetweenPoses(HeadTurnPosLerp, skipTransformNames));
 
       // 3. Stay crouched during "air time" (simulate jump apex)
       var timePassed = 0f;
@@ -1089,6 +1338,10 @@ namespace Eldritch.Core
 
     private void ApplyTailWhip(float strength01, float? overrideMaxPerJointDeg = null)
     {
+#if UNITY_EDITOR
+      Debug.DrawLine(tailRoot.position, tailRoot.position + transform.forward * 2f, Color.green, 0.1f);
+      Debug.Log($"[TailWhip] Strength={strength01:F2}, Chain={_tailChainCount}, Enabled={tailExtensionEnabled}");
+#endif
       // Heuristic: map desired extra reach (meters) to how hard we bend each joint.
       // We convert meters -> degrees per joint using a crude scale; tweak tailMaxPerJointDeg for your rig.
       // Also bias the whole chain slightly toward character forward so it doesn’t “side flop.”
