@@ -9208,7 +9208,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 708204761}
-  - component: {fileID: 708204762}
+  - component: {fileID: 708204763}
   m_Layer: 9
   m_Name: audio
   m_TagString: Untagged
@@ -9231,103 +9231,57 @@ Transform:
   m_Children: []
   m_Father: {fileID: 5985126159874381201}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!82 &708204762
-AudioSource:
+--- !u!114 &708204763
+MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 708204760}
   m_Enabled: 1
-  serializedVersion: 4
-  OutputAudioMixerGroup: {fileID: 0}
-  m_audioClip: {fileID: 8300000, guid: 58a75ce1424ef0b4ea00e52ca81a7db8, type: 3}
-  m_Resource: {fileID: 8300000, guid: 58a75ce1424ef0b4ea00e52ca81a7db8, type: 3}
-  m_PlayOnAwake: 1
-  m_Volume: 1
-  m_Pitch: 1
-  Loop: 0
-  Mute: 0
-  Spatialize: 0
-  SpatializePostEffects: 0
-  Priority: 128
-  DopplerLevel: 1
-  MinDistance: 1
-  MaxDistance: 500
-  Pan2D: 0
-  rolloffMode: 0
-  BypassEffects: 0
-  BypassListenerEffects: 0
-  BypassReverbZones: 0
-  rolloffCustomCurve:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: 0
-      value: 1
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0.33333334
-      outWeight: 0.33333334
-    - serializedVersion: 3
-      time: 1
-      value: 0
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0.33333334
-      outWeight: 0.33333334
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
-  panLevelCustomCurve:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: 0
-      value: 0
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0.33333334
-      outWeight: 0.33333334
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
-  spreadCustomCurve:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: 0
-      value: 0
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0.33333334
-      outWeight: 0.33333334
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
-  reverbZoneMixCustomCurve:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: 0
-      value: 1
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0.33333334
-      outWeight: 0.33333334
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ff9fb8ef116e48f6a36faf389dbf3569, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  idleClips:
+  - {fileID: 8300000, guid: 58a75ce1424ef0b4ea00e52ca81a7db8, type: 3}
+  hissClips:
+  - {fileID: 8300000, guid: 3c82c1bd8428d654eadc7e5c12e56e00, type: 3}
+  roarClips:
+  - {fileID: 8300000, guid: bef0b5035b9b9204caf758483fe5ffca, type: 3}
+  hurtClips: []
+  foleyClips: []
+  attackClips: []
+  impactClips: []
+  voiceSource: {fileID: 0}
+  foleyPoolSize: 0
+  attackPoolSize: 0
+  impactPoolSize: 0
+  spatialBlend: 1
+  minDistance: 1.5
+  maxDistance: 25
+  globalMinInterval: 0.05
+  voiceMinInterval: 0.35
+  foleyMinInterval: 0.05
+  attackMinInterval: 0.08
+  hurtMinInterval: 0.2
+  impactMinInterval: 0.08
+  voicePitchRange: {x: 0.95, y: 1.05}
+  foleyPitchRange: {x: 0.95, y: 1.05}
+  attackPitchRange: {x: 0.95, y: 1.05}
+  hurtPitchRange: {x: 0.95, y: 1.05}
+  impactPitchRange: {x: 0.95, y: 1.05}
+  voiceVolume: 1
+  foleyVolume: 0.85
+  attackVolume: 0.95
+  hurtVolume: 0.9
+  impactVolume: 1
+  allowStealOldest: 1
+  dropOnBusy: 0
+  voiceGroup: {fileID: 0}
+  foleyGroup: {fileID: 0}
+  attackGroup: {fileID: 0}
+  impactGroup: {fileID: 0}
 --- !u!1 &710148553
 GameObject:
   m_ObjectHideFlags: 0

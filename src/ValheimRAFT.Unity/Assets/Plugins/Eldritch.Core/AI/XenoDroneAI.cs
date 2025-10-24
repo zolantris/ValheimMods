@@ -104,8 +104,11 @@ namespace Eldritch.Core
     private readonly OrbitRunner _orbit = new();
     private Transform bodyTransform;
 
+    public XenoAudioController audioController;
+
     private void Awake()
     {
+
       InitCoroutineHandlers();
       Instances.Add(this);
 
@@ -118,6 +121,10 @@ namespace Eldritch.Core
       if (!animationController) animationController = GetComponentInChildren<XenoAnimationController>();
       if (movementController) movementController.OwnerAI = this;
       if (animationController) animationController.OwnerAI = this;
+      if (!audioController)
+      {
+        audioController = GetComponentInChildren<XenoAudioController>();
+      }
 
       Health = MaxHealth;
 
@@ -698,26 +705,74 @@ namespace Eldritch.Core
       };
     }
 
+    public void PlayAudioForCurrentBehavior(string behaviorBailName)
+    {
+      if (behaviorBailName == nameof(Update_Death))
+      {
+        // play hurt 1x time then stop...b/c it's dead
+        audioController.PlayHurt();
+      }
+
+      if (behaviorBailName == nameof(Update_Flee))
+      {
+        audioController.PlayHurt();
+      }
+
+      if (behaviorBailName == nameof(Update_Flee))
+      {
+        audioController.PlayRoar();
+      }
+
+      if (behaviorBailName == nameof(Update_HuntBehavior))
+      {
+        // skip out on this half the time
+        if (Random.value > 0.5f) return;
+
+        if (huntBehaviorState.State == HuntBehaviorState.MovingAway || huntBehaviorState.State == HuntBehaviorState.Circling || huntBehaviorState.State == HuntBehaviorState.Circling)
+        {
+          audioController.PlayIdle();
+        }
+        else if (huntBehaviorState.State == HuntBehaviorState.Creeping)
+        {
+          audioController.PlayHiss();
+        }
+        else
+        {
+          audioController.PlayRoar();
+        }
+      }
+
+      if (behaviorBailName == nameof(Update_AttackTargetBehavior))
+      {
+        audioController.PlayRoar();
+      }
+    }
+
     public void UpdateAllBehaviors()
     {
       if (IsDead() || IsSleeping()) return;
+
+
 
       UpdatePrimaryTarget();
 
       // Call each updater until one returns true (bail).
       var hasBailed = false;
+      var behaviorBailName = "";
       foreach (var behaviorUpdater in _behaviorUpdaters)
       {
         var result = behaviorUpdater.Invoke();
         if (!result) continue;
         // (Optional) Log bailing for dev debugging
-        LoggerProvider.LogDev($"Bailed on {behaviorUpdater.Method.Name}");
+        behaviorBailName = behaviorUpdater.Method.Name;
+        LoggerProvider.LogDev($"Bailed on {behaviorBailName}");
         hasBailed = true;
         break;
       }
 
       // prevents infinity animation attack loops
       SyncAttackAnimState();
+      PlayAudioForCurrentBehavior(behaviorBailName);
 
       if (hasBailed) return;
     }
