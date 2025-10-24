@@ -335,8 +335,9 @@ namespace Eldritch.Core
     public void BindUnOptimizedRoots()
     {
       xenoAnimatorRoot = transform.Find("Visual") ?? transform;
-      xenoMeshSkin = xenoAnimatorRoot.Find("alien_xenos_drone_SK_Xenos_Drone");
-      xenoRoot = xenoAnimatorRoot.Find("alien_xenos_drone_SK_Xenos_Drone_skeleton/XenosBiped_TrajectorySHJnt/XenosBiped_ROOTSHJnt");
+      var offset = xenoAnimatorRoot.Find("drone_parent_offset");
+      xenoMeshSkin = offset.Find("alien_xenos_drone_SK_Xenos_Drone");
+      xenoRoot = offset.Find("alien_xenos_drone_SK_Xenos_Drone_skeleton/XenosBiped_TrajectorySHJnt/XenosBiped_ROOTSHJnt");
       spine01 = xenoRoot.Find("XenosBiped_Spine_01SHJnt");
       spine02 = spine01.Find("XenosBiped_Spine_02SHJnt");
       spine03 = spine02.Find("XenosBiped_Spine_03SHJnt");

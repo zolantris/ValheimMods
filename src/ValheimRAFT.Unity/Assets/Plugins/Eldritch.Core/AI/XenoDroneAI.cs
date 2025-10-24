@@ -119,15 +119,6 @@ namespace Eldritch.Core
       if (movementController) movementController.OwnerAI = this;
       if (animationController) animationController.OwnerAI = this;
 
-      bodyTransform = transform.Find("body");
-
-      if (bodyTransform)
-      {
-        bodyTransform.SetParent(null);
-        var collisionDelegate = bodyTransform.gameObject.AddComponent<CollisionDelegate>();
-        collisionDelegate.SetOwnerAI(this);
-      }
-
       Health = MaxHealth;
 
       BindBehaviors();
@@ -724,6 +715,10 @@ namespace Eldritch.Core
         hasBailed = true;
         break;
       }
+
+      // prevents infinity animation attack loops
+      SyncAttackAnimState();
+
       if (hasBailed) return;
     }
 
@@ -748,6 +743,7 @@ namespace Eldritch.Core
         {
           CurrentState = XenoAIState.Flee;
         }
+
         // FleeTowardSafeAllyOrRunAway();
         return true;
       }
@@ -808,6 +804,14 @@ namespace Eldritch.Core
         movementController.GetTurnSpeed()
       );
       animationController.PointHeadTowardTarget(PrimaryTarget);
+    }
+
+    public void SyncAttackAnimState()
+    {
+      if (!IsAttacking() && animationController.IsRunningAttack())
+      {
+        animationController.StopAttack();
+      }
     }
 
     public bool Update_Roam()

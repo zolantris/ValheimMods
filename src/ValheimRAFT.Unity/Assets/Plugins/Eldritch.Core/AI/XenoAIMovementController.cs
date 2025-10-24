@@ -14,6 +14,7 @@ namespace Eldritch.Core
   {
     [Header("References")]
     [SerializeField] private Rigidbody _rb;
+    [SerializeField] private Rigidbody _animationRb;
 
     public Collider HeadCollider;
     public Transform HeadColliderTransform;
@@ -80,11 +81,25 @@ namespace Eldritch.Core
     {
       if (!_rb)
       {
-        _rb = transform.Find("body").GetComponent<Rigidbody>();
+        // _rb = transform.Find("body").GetComponent<Rigidbody>();
+        _rb = transform.GetComponent<Rigidbody>();
         if (!_rb)
         {
           _rb = GetComponent<Rigidbody>();
         }
+      }
+
+      if (!_animationRb)
+      {
+        _animationRb = transform.Find("Visual").GetComponent<Rigidbody>();
+      }
+
+      // Configure Rigidbody to prevent jitter and tunneling
+      if (_rb)
+      {
+        _rb.interpolation = RigidbodyInterpolation.Interpolate;
+        _rb.collisionDetectionMode = CollisionDetectionMode.Continuous;
+        _rb.constraints = RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ;
       }
     }
 
@@ -96,6 +111,11 @@ namespace Eldritch.Core
     {
       if (!OwnerAI) return;
       if (!Rb) return;
+
+      // if (_animationRb)
+      // {
+      //   _animationRb.Move(_rb.position, _rb.rotation);
+      // }
 
       // sync animation body to rigidbody position
 
@@ -121,17 +141,11 @@ namespace Eldritch.Core
         _rb.useGravity = !IsGrounded;
       }
 
-      // SyncVelocityWithMovementSpeed(vel);
-
-      // animations desync rotation alot.
-      // if (!Rb.isKinematic)
-      // {
-      //   transform.rotation = Quaternion.Lerp(transform.rotation, Quaternion.Euler(0, transform.eulerAngles.y, 0), Time.fixedTime);
-      // }
+      // Use MoveRotation to prevent physics fighting and jitter
       if (!Rb.isKinematic)
       {
         var yaw = transform.eulerAngles.y;
-        transform.rotation = Quaternion.Euler(0f, yaw, 0f);
+        Rb.MoveRotation(Quaternion.Euler(0f, yaw, 0f));
       }
 
       UpdateGroundPoint();
@@ -259,7 +273,7 @@ namespace Eldritch.Core
       turnSpeed ??= GetTurnSpeed();
       var toTarget = targetPos - transform.position;
       RotateTowardsDirection(toTarget, turnSpeed.Value);
-      moveLerpVel = Mathf.MoveTowards(moveLerpVel, speed, accel * Time.deltaTime);
+      moveLerpVel = Mathf.MoveTowards(moveLerpVel, speed, accel * Time.fixedDeltaTime);
       Rb.AddForce(transform.forward * moveLerpVel, ForceMode.Acceleration);
 
       HasMovedInFrame = true;
@@ -270,23 +284,15 @@ namespace Eldritch.Core
       direction.y = 0;
       if (direction == Vector3.zero) return;
 
+      // ALWAYS rotate toward movement direction first
       RotateTowardsDirection(direction, turnSpeed);
 
-      // Compute target velocity on XZ
-      var targetVel = direction.normalized * speed;
-      var currentVel = Rb.linearVelocity;
-      currentVel.y = 0; // Only care about XZ
+      // Only apply force in the forward direction the alien is facing
+      var targetSpeed = speed;
+      var currentSpeed = Vector3.Dot(Rb.linearVelocity, transform.forward);
+      var speedDelta = Mathf.MoveTowards(currentSpeed, targetSpeed, lerpRate * Time.fixedDeltaTime);
 
-      // Lerp velocity for smooth acceleration/deceleration
-      var newVel = Vector3.Lerp(currentVel, targetVel, lerpRate * Time.fixedDeltaTime);
-
-      // Compute the change needed to reach this velocity
-      var velocityChange = newVel - currentVel;
-
-      // Only apply to XZ, leave Y alone for gravity/jumps
-      velocityChange.y = 0;
-
-      Rb.AddForce(velocityChange, ForceMode.VelocityChange);
+      Rb.AddForce(transform.forward * (speedDelta - currentSpeed), ForceMode.VelocityChange);
 
       HasMovedInFrame = true;
     }
@@ -355,11 +361,11 @@ namespace Eldritch.Core
       var shouldMove = Mathf.Abs(targetAngle) < 120f;
       if (!shouldMove)
       {
-        moveLerpVel = Mathf.MoveTowards(moveLerpVel, 0f, targetAccel * 2f * Time.deltaTime);
+        moveLerpVel = Mathf.MoveTowards(moveLerpVel, 0f, targetAccel * 2f * Time.fixedDeltaTime);
         return;
       }
 
-      moveLerpVel = Mathf.MoveTowards(moveLerpVel, targetSpeed, targetAccel * Time.deltaTime);
+      moveLerpVel = Mathf.MoveTowards(moveLerpVel, targetSpeed, targetAccel * Time.fixedDeltaTime);
       Rb.AddForce(transform.forward * moveLerpVel, ForceMode.Acceleration);
       HasMovedInFrame = true;
     }
@@ -517,7 +523,7 @@ namespace Eldritch.Core
         var targetSpeed = Mathf.Lerp(0f, wanderSpeed, approachT);
         var targetAccel = Mathf.Lerp(0f, distantAccelForce * 0.5f, approachT);
 
-        moveLerpVel = Mathf.MoveTowards(moveLerpVel, targetSpeed, targetAccel * Time.deltaTime);
+        moveLerpVel = Mathf.MoveTowards(moveLerpVel, targetSpeed, targetAccel * Time.fixedDeltaTime);
 
         Rb.AddForce(transform.forward * moveLerpVel, ForceMode.Acceleration);
 
@@ -744,7 +750,6 @@ namespace Eldritch.Core
       var dist = toTarget.magnitude;
       if (dist < 0.05f) return;
 
-      // --- dynamic radius (your config) ---
       var cfg = OwnerAI.huntBehaviorConfig;
       var desiredRadius = Mathf.Clamp(dist * cfg.circleRadiusFactor, cfg.minCircleRadius, cfg.maxCircleRadius);
 
@@ -755,12 +760,10 @@ namespace Eldritch.Core
       var desiredVel = tangent * baseCircleSpeed + correction;
       var desiredDir = desiredVel.sqrMagnitude > 0.001f ? desiredVel.normalized : tangent;
 
-      // Common probe
       var probeOrigin = transform.position + Vector3.up * 0.6f;
       var blocked = Physics.SphereCast(probeOrigin, orbitClearance, desiredDir,
         out var hit, orbitProbeLen, LayerHelpers.GroundLayers);
 
-      // Compute a point on the ring ahead we want to get to (for rejoin checks)
       var aheadDir = Quaternion.Euler(0, orbitRejoinAheadDeg * direction, 0) * toTarget.normalized;
       var rejoinPoint = target.position + aheadDir * desiredRadius;
 
@@ -786,7 +789,7 @@ namespace Eldritch.Core
 
         case OrbitState.Detour:
         {
-          _detourTimer += Time.deltaTime;
+          _detourTimer += Time.fixedDeltaTime;
 
           // Keep sampling; if we have a contact, use its normal. If not, keep last.
           if (blocked) _detourLastNormal = hit.normal;
@@ -849,7 +852,7 @@ namespace Eldritch.Core
         _rb.AddForce(delta, ForceMode.VelocityChange);
         HasMovedInFrame = true;
 
-        // Face where we’re actually moving; if too small, face intended vel
+        // Face where we're actually moving; if too small, face intended vel
         var face = flatVel.sqrMagnitude > 0.01f ? flatVel : vel;
         if (face.sqrMagnitude > 1e-4f)
           RotateTowardsDirection(face, distantTurnSpeed * 0.6f);
