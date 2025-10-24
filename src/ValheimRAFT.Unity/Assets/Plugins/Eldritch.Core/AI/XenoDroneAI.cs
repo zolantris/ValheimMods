@@ -11,6 +11,27 @@ using Zolantris.Shared;
 using Random = UnityEngine.Random;
 namespace Eldritch.Core
 {
+  public class CollisionDelegate : MonoBehaviour
+  {
+    public XenoDroneAI ownerAI;
+
+    public void SetOwnerAI(XenoDroneAI ai)
+    {
+      ownerAI = ai;
+    }
+
+    private void OnCollisionEnter(Collision other)
+    {
+      if (!ownerAI) return;
+      ownerAI.OnCollisionEnter(other);
+    }
+    private void OnCollisionStay(Collision other)
+    {
+      if (!ownerAI) return;
+      ownerAI.OnCollisionStay(other);
+    }
+  }
+
   public class XenoDroneAI : MonoBehaviour
   {
     public enum XenoAIState
@@ -42,8 +63,8 @@ namespace Eldritch.Core
     [Header("Timers")]
     public float TimeUntilSleep = 5f, TimeUntilWake = 50f;
 
-    public bool HasCamouflage;
-    public bool CanSleepAnimate;
+    public bool CanCamouflage = true;
+    public bool CanSleepAnimate = true;
     public bool CanJump = true;
 
 
@@ -81,6 +102,7 @@ namespace Eldritch.Core
     [SerializeField] private PathfindingAgentType navAgentType = PathfindingAgentType.Humanoid;
     private readonly PathRunner _nav = new();
     private readonly OrbitRunner _orbit = new();
+    private Transform bodyTransform;
 
     private void Awake()
     {
@@ -96,6 +118,15 @@ namespace Eldritch.Core
       if (!animationController) animationController = GetComponentInChildren<XenoAnimationController>();
       if (movementController) movementController.OwnerAI = this;
       if (animationController) animationController.OwnerAI = this;
+
+      bodyTransform = transform.Find("body");
+
+      if (bodyTransform)
+      {
+        bodyTransform.SetParent(null);
+        var collisionDelegate = bodyTransform.gameObject.AddComponent<CollisionDelegate>();
+        collisionDelegate.SetOwnerAI(this);
+      }
 
       Health = MaxHealth;
 
@@ -133,11 +164,11 @@ namespace Eldritch.Core
       Instances.Remove(this);
     }
 
-    private void OnCollisionEnter(Collision other)
+    public void OnCollisionEnter(Collision other)
     {
       // UpdateLastTouchGround(other.collider);
     }
-    private void OnCollisionStay(Collision other)
+    public void OnCollisionStay(Collision other)
     {
       UpdateLastTouchGround(other.collider);
     }
@@ -464,7 +495,7 @@ namespace Eldritch.Core
     }
 
 
-  #region FixedUpdates / Per fixed frame logic
+    #region FixedUpdates / Per fixed frame logic
 
     public void RotateTowardPrimaryTarget()
     {
@@ -628,9 +659,9 @@ namespace Eldritch.Core
       }
     }
 
-  #endregion
+    #endregion
 
-  #region Animation getters
+    #region Animation getters
 
     // Animator/Bones
     public Transform xenoAnimatorRoot => animationController?.xenoAnimatorRoot;
@@ -659,9 +690,9 @@ namespace Eldritch.Core
     public string ARMAttackObjName => animationController?.armAttackObjName;
     public string tailAttackObjName => animationController?.tailAttackObjName;
 
-  #endregion
+    #endregion
 
-  #region Behavior Updates
+    #region Behavior Updates
 
     private void BindBehaviors()
     {
@@ -797,7 +828,7 @@ namespace Eldritch.Core
 
     public void TryTriggerCamouflage()
     {
-      if (!huntBehaviorConfig.enableRandomCamouflage) return;
+      if (!CanCamouflage || !huntBehaviorConfig.enableRandomCamouflage) return;
 
       var beingWatched = TargetingUtil.IsTargetLookingAtMe(PrimaryTarget, transform);
 
@@ -841,10 +872,10 @@ namespace Eldritch.Core
       return true;
     }
 
-  #endregion
+    #endregion
 
 
-  #region State Booleans
+    #region State Booleans
 
     public bool IsOutOfHuntRange()
     {
@@ -889,11 +920,11 @@ namespace Eldritch.Core
       return CurrentState == XenoAIState.Attack;
     }
 
-  #endregion
+    #endregion
 
     // Put these inside XenoDroneAI (e.g., near bottom) to avoid new files.
 
-  #region Nav Runners (direct PathfindingAdapter)
+    #region Nav Runners (direct PathfindingAdapter)
 
     private bool _losCached;
     private float _losStableUntil;
@@ -1155,7 +1186,7 @@ namespace Eldritch.Core
       }
     }
 
-  #endregion
+    #endregion
 
 
   }

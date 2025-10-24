@@ -49,7 +49,8 @@ public static class PatchController
       typeof(RPCManager_Patches),
       typeof(Humanoid_EquipPatch),
       typeof(Container_Patches),
-      typeof(ZInput_Patches)
+      typeof(ZInput_Patches),
+      typeof(Valheim_GravityMagic_Patches)
     );
 
     if (PatchConfig.MineRockPatch.Value)

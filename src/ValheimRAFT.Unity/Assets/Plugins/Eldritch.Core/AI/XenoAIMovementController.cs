@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using Eldritch.Core.Abilities;
 using Eldritch.Core.Nav;
 using UnityEngine;
@@ -71,9 +72,20 @@ namespace Eldritch.Core
       }
       if (!animationController) animationController = GetComponentInChildren<XenoAnimationController>();
       if (!abilityManager) abilityManager = GetComponent<AbilityManager>();
-      if (!_rb) _rb = GetComponent<Rigidbody>();
 
       climbingState.Init(this, _rb, transform);
+    }
+
+    public void Start()
+    {
+      if (!_rb)
+      {
+        _rb = transform.Find("body").GetComponent<Rigidbody>();
+        if (!_rb)
+        {
+          _rb = GetComponent<Rigidbody>();
+        }
+      }
     }
 
     public RuntimeLinkVisualizer portalScanner; // assign in inspector
@@ -84,6 +96,15 @@ namespace Eldritch.Core
     {
       if (!OwnerAI) return;
       if (!Rb) return;
+
+      // sync animation body to rigidbody position
+
+      if (animationController && _rb.transform != transform)
+      {
+        // sync position if rigidbody is not top level.
+        // var position = Rb.position;
+        // transform.position = position;
+      }
 
       // if (Time.time >= _nextScanTime)
       // {

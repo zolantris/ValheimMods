@@ -16478,7 +16478,7 @@ GameObject:
   - component: {fileID: 766667270174999036}
   - component: {fileID: 6374318684615537092}
   m_Layer: 0
-  m_Name: AlienTest
+  m_Name: AlienTest_Rebuilt_Colliders
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
