@@ -89,6 +89,13 @@ namespace Eldritch.Core
     private CoroutineHandle _aiStateUpdateRoutine;
     private List<Func<bool>> _behaviorUpdaters = new();
 
+    // How tightly we try to stay on the target while attacking
+    [Header("Attack Follow Tuning")]
+    [Tooltip("Meters to maintain while swinging so colliders actually connect. If 0, uses movementController.closeRange.")]
+    [SerializeField] private float attackHugDistance = 0f;
+    [Tooltip("If target is beyond this, we path toward them even during Attack (LOS-based).")]
+    [SerializeField] private float attackChaseDistance = 3.5f;
+
     private CoroutineHandle _sleepRoutine;
     private Vector3 cachedLowestPoint = Vector3.zero;
 
@@ -229,18 +236,7 @@ namespace Eldritch.Core
           break;
         case XenoAIState.Attack:
           if (!PrimaryTarget) return;
-          FollowPathOrChase(PrimaryTarget.position);
-          // movementController.MoveChaseTarget(
-          //   PrimaryTarget.position,
-          //   null,
-          //   movementController.closeRange,
-          //   movementController.moveSpeed,
-          //   movementController.closeMoveSpeed,
-          //   movementController.AccelerationForceSpeed,
-          //   movementController.closeAccelForce,
-          //   GetTurnSpeed()),
-          //   movementController.closeTurnSpeed
-          // );
+          Update_AttackMovement();
           break;
         case XenoAIState.Sleeping:
           animationController.PlaySleepingAnimation(CanSleepAnimate);
@@ -492,6 +488,56 @@ namespace Eldritch.Core
       }
     }
 
+    // Keep tight contact and facing during the attack animation
+    private void Update_AttackMovement()
+    {
+      if (!PrimaryTarget) return;
+
+      // Keep head and body aimed for reliable hit boxes
+      animationController.PointHeadTowardTarget(PrimaryTarget);
+
+      var tgtPos = PrimaryTarget.position;
+      var to = tgtPos - transform.position;
+      to.y = 0f;
+
+      // Strongly rotate toward the target every frame
+      movementController.RotateTowardsDirection(to, movementController.GetTurnSpeed());
+
+      // If LOS is blocked, find a quick path to reacquire even during Attack
+      if (!HasClearLOS(tgtPos))
+      {
+        FollowPathOrChase(tgtPos);
+        return;
+      }
+
+      // Desired strike distance for reliable arm/tail colliders
+      var desiredHug = attackHugDistance > 0f ? attackHugDistance : movementController.closeRange;
+      desiredHug = Mathf.Max(0.35f, desiredHug);
+
+      // If we drifted out of range, micro-chase to keep contact
+      if (DeltaPrimaryTarget > desiredHug)
+      {
+        Vector3? vel = null;
+        if (PrimaryTargetRB)
+        {
+          try { vel = PrimaryTargetRB.linearVelocity; }
+          catch { vel = null; }
+        }
+        movementController.MoveChaseTarget(tgtPos, vel, movementController.closeTurnSpeed);
+        return;
+      }
+
+      // If we’re much too far (e.g., the target dodged away), do a short burst to re-close
+      if (DeltaPrimaryTarget > Mathf.Max(desiredHug * 1.5f, attackChaseDistance))
+      {
+        movementController.MoveChaseTarget(tgtPos, null, movementController.closeTurnSpeed);
+        return;
+      }
+
+      // Otherwise: we are in striking range — brake to avoid sliding past the target mid-swing
+      movementController.BrakeHard();
+    }
+
 
     #region FixedUpdates / Per fixed frame logic
 
@@ -705,8 +751,23 @@ namespace Eldritch.Core
       };
     }
 
+    public float lastAudioUpdate = 0f;
+    public float audioUpdateInterval = 5f;
+
     public void PlayAudioForCurrentBehavior(string behaviorBailName)
     {
+      if (Time.time > lastAudioUpdate + audioUpdateInterval)
+      {
+        lastAudioUpdate = Time.time;
+      }
+      else
+      {
+        return;
+      }
+
+      var shouldMakeSound = Random.value > 0.5f;
+      if (!shouldMakeSound) return;
+
       if (behaviorBailName == nameof(Update_Death))
       {
         // play hurt 1x time then stop...b/c it's dead
@@ -730,7 +791,8 @@ namespace Eldritch.Core
 
         if (huntBehaviorState.State == HuntBehaviorState.MovingAway || huntBehaviorState.State == HuntBehaviorState.Circling || huntBehaviorState.State == HuntBehaviorState.Circling)
         {
-          audioController.PlayIdle();
+          // audioController.PlayIdle();
+          return;
         }
         else if (huntBehaviorState.State == HuntBehaviorState.Creeping)
         {
