@@ -14,7 +14,7 @@ namespace Eldritch.Core
       TailFullAttackExtended
     }
 
-    public static readonly Dictionary<string, JointPose> TailAttack_PierceHit = new()
+    public static readonly Dictionary<string, JointPose> TailAttack_DEPRECATED_PIERCE_DOWN = new()
     {
       ["XenosBiped_ROOTSHJnt"] = new JointPose(new Vector3(0.2121263f, -0.1223949f, 2.059777f), new Quaternion(0.3513835f, 0.6560301f, 0.09747704f, 0.6607969f)),
       ["BloodSprayEffect"] = new JointPose(new Vector3(-1.305f, 0f, 0f), new Quaternion(1.490116E-07f, 4.470347E-08f, 0.999982f, -0.00600466f)),
@@ -936,7 +936,7 @@ namespace Eldritch.Core
     };
 
 
-    public static Dictionary<string, JointPose> TailFullAttackCharge = new()
+    public static Dictionary<string, JointPose> TailAttack_ChargeTail = new()
     {
       ["XenosBiped_ROOTSHJnt"] = new JointPose(new Vector3(-0.2911913f, -0.008615291f, 2.359553f), new Quaternion(-0.2555709f, 0.6871089f, 0.3427462f, 0.5874435f)),
       ["BloodSprayEffect"] = new JointPose(new Vector3(-1.305f, 0f, 0f), new Quaternion(1.490116E-07f, 4.470347E-08f, 0.999982f, -0.00600466f)),
@@ -1168,7 +1168,7 @@ namespace Eldritch.Core
       ["xeno_tail_attack_collider"] = new JointPose(new Vector3(0f, -0.1505029f, 0f), new Quaternion(-0.02688726f, -0.01559854f, 0.01442413f, 0.9994127f))
     };
 
-    public static readonly Dictionary<string, JointPose> TailAttack_Unknown = new()
+    public static readonly Dictionary<string, JointPose> TailAttack_HitPierce = new()
     {
       ["XenosBiped_ROOTSHJnt"] = new JointPose(new Vector3(0.2121263f, -0.1223949f, 2.059777f), new Quaternion(0.3513835f, 0.6560301f, 0.09747703f, 0.6607969f)),
       ["BloodSprayEffect"] = new JointPose(new Vector3(-1.305f, 0f, 0f), new Quaternion(1.490116E-07f, 4.470347E-08f, 0.999982f, -0.00600466f)),
@@ -1632,8 +1632,8 @@ namespace Eldritch.Core
       {
         case Variants.Crouch: return Crouch;
         case Variants.Idle: return Idle;
-        case Variants.TailFullAttack: return TailAttack_PierceHit;
-        case Variants.TailFullAttackExtended: return TailAttack_Unknown;
+        case Variants.TailFullAttack: return TailAttack_DEPRECATED_PIERCE_DOWN;
+        case Variants.TailFullAttackExtended: return TailAttack_HitPierce;
         // Add more cases as you add more poses
         default:
           throw new System.ArgumentException("Unknown pose variant: " + variant);

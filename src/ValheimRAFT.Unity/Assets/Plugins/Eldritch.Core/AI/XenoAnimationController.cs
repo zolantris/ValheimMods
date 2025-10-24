@@ -11,6 +11,22 @@ using Random = UnityEngine.Random;
 // ReSharper disable NamespaceStyle
 namespace Eldritch.Core
 {
+  public struct PoseTransition
+  {
+    public Dictionary<string, JointPose> PoseData;
+
+    public float Pause; // pause after running the transition.
+    /// <summary>Duration in seconds for this transition (applies when this is the *next* pose).</summary>
+    public float Speed;
+
+    /// <summary>
+    /// Progress/easing curve for this transition (applies when this is the *next* pose).
+    /// Evaluated with input t in [0..1]. If null, uses linear (t).
+    /// Examples: ease-in (fast end), ease-out (fast start), ease-in-out, bell/bump (slow middle).
+    /// </summary>
+    public AnimationCurve SpeedCurve;
+  }
+
   public class XenoAnimationController : MonoBehaviour, IXenoAnimationController
   {
 
@@ -79,6 +95,7 @@ namespace Eldritch.Core
     private bool _canPlayEffectOnFrame = true;
     private CoroutineHandle _jumpAnimationRoutine;
     private CoroutineHandle _headTurnRoutine;
+    private CoroutineHandle _tailAttackTransitionRoutine;
 
 
     // State
@@ -133,6 +150,20 @@ namespace Eldritch.Core
       }
 
       LateUpdate_TailExtension();
+
+      if (_latePoseDirty && _latePoseTargets.Count > 0)
+      {
+        foreach (var kv in _latePoseTargets)
+        {
+          var t = kv.Key;
+          if (!t) continue;
+          var jp = kv.Value;
+          t.localPosition = jp.Position;
+          t.localRotation = jp.Rotation;
+        }
+        _latePoseTargets.Clear();
+        _latePoseDirty = false;
+      }
 
       // UpdateFootIK();
       // sleepAnimation.LateUpdate_MoveHeadAround(neckPivot);
@@ -424,76 +455,64 @@ namespace Eldritch.Core
       }
     }
 
-    private CoroutineHandle posLerpRoutine;
-    [SerializeField] public float posLerpToSpeed = 2f;
-    [SerializeField] public float posLerpReturnSpeed = 2f;
+
+    public static List<PoseTransition> TailAttackTransitions = new()
+    {
+      // transition from current pose to target pose
+      new PoseTransition
+      {
+        // PoseData = poseSnapshot
+        PoseData = XenoAnimationPoses.Idle
+      },
+      // transition to idle pose first
+      new PoseTransition
+      {
+        PoseData = XenoAnimationPoses.Idle,
+        Speed = 0.25f
+      },
+      new PoseTransition
+      {
+        PoseData = XenoAnimationPoses.TailAttack_ChargeTail,
+        Speed = 1f
+      },
+      // transition to tail attack fully extended pos
+      new PoseTransition
+      {
+        PoseData = XenoAnimationPoses.TailAttack_PierceSwing1,
+        Speed = .2f
+      },
+      // new()
+      // {
+      //   PoseData = XenoAnimationPoses.TailAttack_PierceSwing2,
+      //   Speed = .1f
+      // },
+      new PoseTransition
+      {
+        PoseData = XenoAnimationPoses.TailAttack_HitPierce,
+        Speed = 0.2f,
+        Pause = 0.5f,
+        SpeedCurve = curveEaseOut
+      },
+      // return back to Idle pose
+      new PoseTransition
+      {
+        PoseData = XenoAnimationPoses.Idle,
+        Speed = 2f,
+        SpeedCurve = curveEaseIn // slow start fast end
+      }
+    };
 
     [ContextMenu("Lerp To Selected Variant Pose")]
     public void LerpToSelectedVariantPose()
     {
-      posLerpRoutine ??= new CoroutineHandle(this);
-
-      if (posLerpRoutine.IsRunning) return;
+      _tailAttackTransitionRoutine ??= new CoroutineHandle(this);
+      if (_tailAttackTransitionRoutine.IsRunning) return;
 
       SetupXenoTransforms();
       SnapshotCurrentPose();
       // or posSnapshot
 
-      var poses = new List<PoseTransition>
-      {
-        // transition from current pose to target pose
-        new()
-        {
-          // PoseData = poseSnapshot
-          PoseData = XenoAnimationPoses.Idle
-        },
-        // transition to idle pose first
-        new()
-        {
-          PoseData = XenoAnimationPoses.Idle,
-          Speed = 0.25f
-        },
-        // transition to tail attack fully extended pos
-        new()
-        {
-          PoseData = XenoAnimationPoses.TailAttack_PierceSwing1,
-          Speed = 1f
-        },
-        new()
-        {
-          PoseData = XenoAnimationPoses.TailAttack_PierceSwing2,
-          Speed = 1f
-        },
-        new()
-        {
-          PoseData = XenoAnimationPoses.TailFullAttackCharge,
-          Speed = 1f
-        },
-        // new()
-        // {
-        //   PoseData = XenoAnimationPoses.TailAttack_PierceSwing1,
-        //   Speed = 1f
-        // },
-        // new()
-        // {
-        //   PoseData = XenoAnimationPoses.TailAttack_PierceSwing2,
-        //   Speed = 1f
-        // },
-        // transition to Extended down pose;
-        // new()
-        // {
-        //   PoseData = XenoAnimationPoses.TailAttack_PierceHit,
-        //   Speed = 1f
-        // },
-        // return back to Idle pose
-        new()
-        {
-          PoseData = XenoAnimationPoses.Idle,
-          Speed = 1f
-        }
-      };
-
-      posLerpRoutine.Start(LerpBetweenPoses(poses, null));
+      _tailAttackTransitionRoutine.Start(LerpBetweenPoses(TailAttackTransitions, null));
     }
 
     [ContextMenu("Apply Selected Variant Pose")]
@@ -557,6 +576,7 @@ namespace Eldritch.Core
     {
       _sleepAnimationRoutine ??= new CoroutineHandle(this);
       _headTurnRoutine ??= new CoroutineHandle(this);
+      _tailAttackTransitionRoutine ??= new CoroutineHandle(this);
       _jumpAnimationRoutine ??= new CoroutineHandle(this);
     }
 
@@ -856,30 +876,41 @@ namespace Eldritch.Core
       return keys.ToArray();
     }
 
-    public struct PoseTransition
-    {
-      public Dictionary<string, JointPose> PoseData;
-      public float Speed; // always applicable
-    }
-
     public IEnumerator LerpBetweenPoses(List<PoseTransition> poses,
       string[] skipTransformNames = null,
       float? timeout = null)
     {
-      var currentTime = 0f;
-
-      var len = poses.Count();
-
-      // must run on two poses at least
+      var len = poses.Count;
       for (var index = 0; index < len - 1; index++)
       {
-        if (index + 1 >= len) break;
         var currentPos = poses[index];
-        var nextPose = poses[(index + 1) % len];
+        var nextPose = poses[index + 1];
 
         var commonKeys = GetCommonKeys(currentPos.PoseData, nextPose.PoseData, skipTransformNames);
 
-        yield return LerpToPose(allAnimationJoints, currentPos.PoseData, nextPose.PoseData, skipTransformNames, commonKeys, nextPose.Speed);
+        // Pass duration (nextPose.Speed) and curve (nextPose.SpeedCurve) to LerpToPose:
+        yield return LerpToPose(
+          allAnimationJoints,
+          currentPos.PoseData,
+          nextPose.PoseData,
+          skipTransformNames,
+          commonKeys,
+          nextPose.Speed,
+          nextPose.SpeedCurve
+        );
+
+        if (nextPose.Pause > 0f)
+        {
+          yield return LerpToPose(
+            allAnimationJoints,
+            nextPose.PoseData,
+            nextPose.PoseData,
+            skipTransformNames,
+            commonKeys,
+            nextPose.Pause,
+            nextPose.SpeedCurve
+          );
+        }
       }
     }
 
@@ -901,6 +932,16 @@ namespace Eldritch.Core
         Speed = 0.6f
       }
     };
+
+    [Header("Pose Lerp Curves (Defaults)")]
+    [SerializeField] public static AnimationCurve curveEaseInOut = AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
+    [SerializeField] public static AnimationCurve curveEaseIn = new(new Keyframe(0, 0, 0, 1.5f), new Keyframe(1, 1));
+    [SerializeField] public static AnimationCurve curveEaseOut = new(new Keyframe(0, 0), new Keyframe(1, 1, 1.5f, 0));
+    [SerializeField] public static AnimationCurve curveBump = new(
+      new Keyframe(0f, 0f, 0f, 3f),
+      new Keyframe(0.5f, 1f, 0f, 0f),
+      new Keyframe(1f, 0f, -3f, 0f)
+    );
 
     private IEnumerator SimulateJumpWithPoseLerp(
       Dictionary<string, Transform> allJoints,
@@ -954,44 +995,54 @@ namespace Eldritch.Core
       Dictionary<string, Transform> allJoints,
       Dictionary<string, JointPose> startPose,
       Dictionary<string, JointPose> endPose,
-      string[] skipTransformNames = null,
-      string[] commonKeys = null,
-      float duration = 0.25f, Vector3? rotationalFlux = null)
+      string[] skipTransformNames,
+      string[] commonKeys,
+      float duration,
+      [CanBeNull] AnimationCurve progressCurve = null)
     {
-      // Compute keys if not provided
       commonKeys ??= GetCommonKeys(startPose, endPose, skipTransformNames);
+      if (duration <= 0f) duration = 0.0001f;
+
+      // Resolve once to avoid dictionary lookups per-iteration
+      var jointList = new List<(Transform tr, JointPose a, JointPose b)>(commonKeys.Length);
+      for (var i = 0; i < commonKeys.Length; i++)
+      {
+        var key = commonKeys[i];
+        if (!allJoints.TryGetValue(key, out var tr) || !tr) continue;
+        var a = startPose[key];
+        var b = endPose[key];
+        jointList.Add((tr, a, b));
+      }
 
       var time = 0f;
-      var rotationalFluxVec = rotationalFlux ?? new Vector3(1f, 1f, 1f);
-      var rotationStartFlux = Quaternion.Euler(new Vector3(rotationalFluxVec.x * Random.Range(-1f, 1f), rotationalFluxVec.y * Random.Range(-1f, 1f), rotationalFluxVec.z * Random.Range(-1f, 1f)));
-      var rotationEndFlux = Quaternion.Euler(new Vector3(rotationalFluxVec.x * Random.Range(-1f, 1f), rotationalFluxVec.y * Random.Range(-1f, 1f), rotationalFluxVec.z * Random.Range(-1f, 1f)));
       while (time < duration)
       {
-        yield return new WaitForEndOfFrame();
         var t = time / duration;
-        foreach (var jointName in commonKeys)
+        var tt = progressCurve != null ? Mathf.Clamp01(progressCurve.Evaluate(t)) : t;
+
+        // Fill LateUpdate buffer (no direct transform writes here)
+        _latePoseTargets.Clear();
+        for (var i = 0; i < jointList.Count; i++)
         {
-          if (!allJoints.TryGetValue(jointName, out var joint) || joint == null)
-            continue;
-          var poseA = startPose[jointName];
-          var poseB = endPose[jointName];
-
-          var rotA = time == 0f ? poseA.Rotation * rotationStartFlux : poseA.Rotation;
-
-          joint.localPosition = Vector3.Lerp(poseA.Position, poseB.Position, t);
-          joint.localRotation = Quaternion.Slerp(rotA, poseB.Rotation * rotationEndFlux, t);
+          var (tr, a, b) = jointList[i];
+          var pos = Vector3.LerpUnclamped(a.Position, b.Position, tt);
+          var rot = Quaternion.SlerpUnclamped(a.Rotation, b.Rotation, tt);
+          _latePoseTargets[tr] = new JointPose(pos, rot);
         }
+        _latePoseDirty = true;
+
         time += Time.deltaTime;
+        yield return null; // compute during frame; apply in LateUpdate this frame
       }
-      // Snap to end pose
-      foreach (var jointName in commonKeys)
+
+      // Final snap (enqueue end pose one last time, LateUpdate will apply)
+      _latePoseTargets.Clear();
+      for (var i = 0; i < jointList.Count; i++)
       {
-        if (!allJoints.TryGetValue(jointName, out var joint) || joint == null)
-          continue;
-        var poseB = endPose[jointName];
-        joint.localPosition = poseB.Position;
-        joint.localRotation = poseB.Rotation;
+        var (tr, _, b) = jointList[i];
+        _latePoseTargets[tr] = b;
       }
+      _latePoseDirty = true;
     }
 
     public IEnumerator SleepingAnimationCoroutine()
@@ -1314,6 +1365,9 @@ namespace Eldritch.Core
       return false;
     }
 
+    private readonly Dictionary<Transform, JointPose> _latePoseTargets = new(128);
+    private bool _latePoseDirty;
+
     private void LateUpdate_TailExtension()
     {
       if (!tailExtensionEnabled || animator == null) return;
@@ -1326,53 +1380,59 @@ namespace Eldritch.Core
       var isTailMode = animator.GetInteger(AttackMode) == 1 || _cachedAttackMode == 1 && animator.GetBool(Attack);
       var inTailAttack = hasStateInfo || isTailMode;
 
+
+      if (inTailAttack)
+      {
+        _tailAttackTransitionRoutine.Start(LerpBetweenPoses(TailAttackTransitions, null));
+      }
+
       // Debug can force the effect always-on
-      if (tailDebugForceMax) inTailAttack = true;
-
-      if (!inTailAttack)
-      {
-        // Reset to original positions if we previously extended
-        if (_lastTailStrength > 0f)
-          ResetTailLocalPositionsToOrig();
-        _lastTailStrength = 0f;
-        return;
-      }
-
-      // Use the detected state's timing if we have it; else use configured layer.
-      var info = hasStateInfo
-        ? stateInfo
-        : animator.GetCurrentAnimatorStateInfo(Mathf.Clamp(tailAttackLayerIndex, 0, Mathf.Max(0, animator.layerCount - 1)));
-
-      var nTime = info.normalizedTime;
-      if (!float.IsFinite(nTime)) return;
-
-      // normalize to [0..1]
-      nTime = nTime - Mathf.Floor(nTime);
-
-      // Build a pulse centered at tailExtendPeakNTime with half-width
-      var t0 = Mathf.Clamp01((nTime - (tailExtendPeakNTime - tailExtendHalfWidth)) / (2f * tailExtendHalfWidth));
-      var pulse = Mathf.Clamp01(t0);
-      var strength = tailExtendCurve.Evaluate(pulse); // [0..1], bell-ish
-
-      if (tailDebugForceMax) strength = 1f;
-      strength = Mathf.Clamp01(strength * tailDebugStrengthMultiplier);
-
-      if (strength <= 0f && _lastTailStrength <= 0f)
-      {
-        // Ensure originals (no tail stretch)
-        ResetTailLocalPositionsToOrig();
-        _lastTailStrength = 0f;
-        return;
-      }
-
-      // 1) TRUE EXTENSION: lengthen links along their original directions (meters)
-      ApplyTailLengthen(strength);
-
-      // 2) ADDITIVE WHIP: bend by rotation for style
-      var overrideDeg = tailDebugMaxPerJointDegOverride > 0f ? (float?)tailDebugMaxPerJointDegOverride : null;
-      ApplyTailWhip(strength, overrideDeg);
-
-      _lastTailStrength = strength;
+      // if (tailDebugForceMax) inTailAttack = true;
+      //
+      // if (!inTailAttack)
+      // {
+      //   // Reset to original positions if we previously extended
+      //   if (_lastTailStrength > 0f)
+      //     ResetTailLocalPositionsToOrig();
+      //   _lastTailStrength = 0f;
+      //   return;
+      // }
+      //
+      // // Use the detected state's timing if we have it; else use configured layer.
+      // var info = hasStateInfo
+      //   ? stateInfo
+      //   : animator.GetCurrentAnimatorStateInfo(Mathf.Clamp(tailAttackLayerIndex, 0, Mathf.Max(0, animator.layerCount - 1)));
+      //
+      // var nTime = info.normalizedTime;
+      // if (!float.IsFinite(nTime)) return;
+      //
+      // // normalize to [0..1]
+      // nTime = nTime - Mathf.Floor(nTime);
+      //
+      // // Build a pulse centered at tailExtendPeakNTime with half-width
+      // var t0 = Mathf.Clamp01((nTime - (tailExtendPeakNTime - tailExtendHalfWidth)) / (2f * tailExtendHalfWidth));
+      // var pulse = Mathf.Clamp01(t0);
+      // var strength = tailExtendCurve.Evaluate(pulse); // [0..1], bell-ish
+      //
+      // if (tailDebugForceMax) strength = 1f;
+      // strength = Mathf.Clamp01(strength * tailDebugStrengthMultiplier);
+      //
+      // if (strength <= 0f && _lastTailStrength <= 0f)
+      // {
+      //   // Ensure originals (no tail stretch)
+      //   ResetTailLocalPositionsToOrig();
+      //   _lastTailStrength = 0f;
+      //   return;
+      // }
+      //
+      // // 1) TRUE EXTENSION: lengthen links along their original directions (meters)
+      // ApplyTailLengthen(strength);
+      //
+      // // 2) ADDITIVE WHIP: bend by rotation for style
+      // var overrideDeg = tailDebugMaxPerJointDegOverride > 0f ? (float?)tailDebugMaxPerJointDegOverride : null;
+      // ApplyTailWhip(strength, overrideDeg);
+      //
+      // _lastTailStrength = strength;
     }
 
     private void ApplyTailWhip(float strength01, float? overrideMaxPerJointDeg = null)
