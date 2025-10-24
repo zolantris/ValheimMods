@@ -29438,7 +29438,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8738935668784355239}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 05f7819b0da0d2f4ba6335a5bb19d929, type: 3}
   m_Name: 
@@ -29598,6 +29598,54 @@ MonoBehaviour:
   pitchDownMaxDeg: 40
   pitchSpeedDegPerSec: 360
   lookDownHeightThreshold: 0.25
+  tailExtensionEnabled: 1
+  tailAttackStateName: attack_tail
+  tailAttackStateTestName: attack_tail_solo
+  tailAttackLayerIndex: 1
+  tailExtendPeakNTime: 0.2
+  tailExtendHalfWidth: 0.12
+  tailExtraReach: 2
+  tailMaxPerJointDeg: 10
+  tailDistalFalloffPower: 2
+  tailBendLocalAxis: {x: 1, y: 0, z: 0}
+  tailForwardAimBiasDeg: 12
+  tailExtendCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 3
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 0.5
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 0
+      inSlope: -3
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  tailDebugForceMax: 0
+  tailDebugStrengthMultiplier: 1
+  tailDebugMaxPerJointDegOverride: 0
+  tailDebugGizmos: 1
 --- !u!1 &564246812728218061
 GameObject:
   m_ObjectHideFlags: 0
@@ -34835,9 +34883,9 @@ MonoBehaviour:
     forwardDistance: 7
     backwardDistance: 6
     sideDistance: 8
-    jumpHeight: 1
-    dodgeDuration: 0.5
-    cooldown: 5
+    jumpHeight: 10
+    dodgeDuration: 0.75
+    cooldown: 15
     minGapFromTarget: 0.35
     landingClearanceProbe: 0.4
     defaultDodgeDirection: {x: 0, y: 0}
@@ -35985,7 +36033,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   motionRoot: {fileID: 0}
-  autoBindRigidbodyRoot: 0
+  autoBindRigidbodyRoot: 1
   maxForwardSpeed: 6
   deadzoneSpeed: 0.05
   smoothingTau: 0.08
@@ -36377,6 +36425,54 @@ MonoBehaviour:
   pitchDownMaxDeg: 40
   pitchSpeedDegPerSec: 360
   lookDownHeightThreshold: 0.25
+  tailExtensionEnabled: 1
+  tailAttackStateName: attack_tail
+  tailAttackStateTestName: attack_tail_solo
+  tailAttackLayerIndex: 1
+  tailExtendPeakNTime: 0.2
+  tailExtendHalfWidth: 0.12
+  tailExtraReach: 2
+  tailMaxPerJointDeg: 10
+  tailDistalFalloffPower: 2
+  tailBendLocalAxis: {x: 1, y: 0, z: 0}
+  tailForwardAimBiasDeg: 12
+  tailExtendCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 3
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 0.5
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 0
+      inSlope: -3
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  tailDebugForceMax: 0
+  tailDebugStrengthMultiplier: 1
+  tailDebugMaxPerJointDegOverride: 0
+  tailDebugGizmos: 1
 --- !u!4 &4061630158745073229
 Transform:
   m_ObjectHideFlags: 0
@@ -56037,12 +56133,12 @@ Animator:
   m_Enabled: 1
   m_Avatar: {fileID: 9000000, guid: 595cee29b9912f04d9294bb4511d96bb, type: 3}
   m_Controller: {fileID: 9100000, guid: 22acfcfb222d3d349b003bc506564b6c, type: 2}
-  m_CullingMode: 1
+  m_CullingMode: 0
   m_UpdateMode: 0
-  m_ApplyRootMotion: 0
+  m_ApplyRootMotion: 1
   m_LinearVelocityBlending: 0
   m_StabilizeFeet: 0
-  m_AnimatePhysics: 0
+  m_AnimatePhysics: 1
   m_WarningMessage: 
   m_HasTransformHierarchy: 1
   m_AllowConstantClipSamplingOptimization: 1

@@ -43,7 +43,7 @@ namespace Eldritch.Core
     public Transform leftHip, rightHip, leftArm, rightArm, tailRoot, leftToeTransform, rightToeTransform;
     public float UpdatePauseTime = 2f;
     public float attack_nextUpdateTime;
-    public float nextUpdateInterval = 0.25f;
+    public float nextUpdateInterval = 2.25f;
 
     public float moveSpeed_nextUpdateTime;
     // public float nextUpdateInterval = 0.25f;
@@ -130,6 +130,9 @@ namespace Eldritch.Core
         neckPivot.localRotation = Quaternion.Euler(neckPivotAngle);
         neckUpDown.localRotation = Quaternion.Euler(neckUpDownAngle);
       }
+
+      LateUpdate_TailExtension();
+
       // UpdateFootIK();
       // sleepAnimation.LateUpdate_MoveHeadAround(neckPivot);
       // PlaySleepingCustomAnimations();
@@ -848,6 +851,283 @@ namespace Eldritch.Core
         col = capsuleCol;
       }
       allColliders.Add(col);
+    }
+
+    #endregion
+
+    #region Tail Attack
+
+    // === Tail Extension (procedural whip) ===
+    [Header("Tail Extension (Procedural)")]
+    [SerializeField] private bool tailExtensionEnabled = true;
+
+    [Tooltip("Animator state name that plays the tail attack (optional if you prefer Attack/AttackMode gate).")]
+    [SerializeField] private string tailAttackStateName = "attack_tail";
+    [SerializeField] private string tailAttackStateTestName = "attack_tail_solo";
+    [SerializeField] [Tooltip("Animator layer index where the tail attack state plays (0 = Base Layer by default). If unknown, leave 0; we'll also auto-detect by name across layers.")]
+    private int tailAttackLayerIndex = 1;
+
+    [Tooltip("Peak (normalized) time where the vanilla animation has the tail already closest to target. 0.20 = 20% into the clip.")]
+    [Range(0f, 1f)] public float tailExtendPeakNTime = 0.20f;
+
+    [Tooltip("Half-width of the extension window around the peak time. Larger = longer extend/retract window.")]
+    [Range(0.01f, 0.5f)] public float tailExtendHalfWidth = 0.12f;
+
+    [Tooltip("Extra forward distance you'd like the tip to visually reach (approx).")]
+    public float tailExtraReach = 2.0f;
+
+    [Tooltip("Max additional bend, in degrees, applied to the most distal joints at full strength.")]
+    [Range(0f, 45f)] public float tailMaxPerJointDeg = 10f;
+
+    [Tooltip("How the bend distributes from root(0) to tip(1). 1 = linear, >1 pushes bend into the distal segment(s).")]
+    [Range(0.5f, 4f)] public float tailDistalFalloffPower = 2f;
+
+    [Tooltip("Axis (local) to pitch the tail forward around. Most rigs use local X or Z. Adjust if the bend looks sideways.")]
+    public Vector3 tailBendLocalAxis = new(1f, 0f, 0f); // rotate around local X by default
+
+    [Tooltip("Additional world-space aim bias to push toward character forward (degrees at full strength).")]
+    [Range(0f, 30f)] public float tailForwardAimBiasDeg = 12f;
+
+    [Tooltip("Curve for extension strength over [0..1] window t. Defaults to a bell-ish pulse.")]
+    public AnimationCurve tailExtendCurve =
+      new(
+        new Keyframe(0f, 0f, 0f, 3f),
+        new Keyframe(0.5f, 1f, 0f, 0f),
+        new Keyframe(1f, 0f, -3f, 0f)
+      );
+
+    // Debug controls
+    [Header("Tail Debug")]
+    [SerializeField] private bool tailDebugForceMax = false;
+    [SerializeField] [Range(0.1f, 5f)] private float tailDebugStrengthMultiplier = 1f;
+    [SerializeField] [Range(0f, 90f)] private float tailDebugMaxPerJointDegOverride = 0f; // 0 = use normal
+    [SerializeField] private bool tailDebugGizmos = true;
+
+    // Cached, ordered chain from root->tip for better looking gradients
+    private List<Transform> _tailChainOrdered;
+    private int _tailChainCount;
+
+    // Optional: track last strength to short-circuit
+    private float _lastTailStrength;
+
+    private void EnsureTailChainOrdered()
+    {
+      if (_tailChainOrdered != null && _tailChainOrdered.Count > 0) return;
+      if (tailRoot == null) return;
+
+      // Build a single “deepest path” chain (root->tip). If the tail branches, this picks the longest path.
+      _tailChainOrdered = new List<Transform>(32);
+      var node = tailRoot;
+      _tailChainOrdered.Add(node);
+
+      // Walk down selecting the child chain that goes deepest
+      while (node.childCount > 0)
+      {
+        Transform bestChild = null;
+        var bestDepth = -1;
+        for (var i = 0; i < node.childCount; i++)
+        {
+          var c = node.GetChild(i);
+          var depth = GetDepth(c);
+          if (depth > bestDepth)
+          {
+            bestDepth = depth;
+            bestChild = c;
+          }
+        }
+        if (!bestChild) break;
+        _tailChainOrdered.Add(bestChild);
+        node = bestChild;
+      }
+      _tailChainCount = _tailChainOrdered.Count;
+    }
+
+    private static int GetDepth(Transform t)
+    {
+      // simple DFS depth
+      var max = 0;
+      for (var i = 0; i < t.childCount; i++)
+        max = Mathf.Max(max, 1 + GetDepth(t.GetChild(i)));
+      return max;
+    }
+
+    private void LateUpdate_TailExtension()
+    {
+      if (!tailExtensionEnabled || animator == null) return;
+      EnsureTailChainOrdered();
+      if (_tailChainCount == 0) return;
+
+      // Prefer explicit state detection (works with trigger-based attacks too),
+      // otherwise fall back to parameter gating.
+      var hasStateInfo = TryGetTailAttackStateInfo(out var stateLayer, out var stateInfo);
+      var isTailMode = animator.GetInteger(AttackMode) == 1 || _cachedAttackMode == 1 && animator.GetBool(Attack);
+      var inTailAttack = hasStateInfo || isTailMode;
+
+      // Debug can force the effect always-on
+      if (tailDebugForceMax) inTailAttack = true;
+
+      if (!inTailAttack)
+      {
+        _lastTailStrength = 0f;
+        return;
+      }
+
+      // Use the detected state's timing if we have it; else use configured layer.
+      var info = hasStateInfo
+        ? stateInfo
+        : animator.GetCurrentAnimatorStateInfo(Mathf.Clamp(tailAttackLayerIndex, 0, Mathf.Max(0, animator.layerCount - 1)));
+
+      var nTime = info.normalizedTime;
+      if (!float.IsFinite(nTime)) return;
+
+      // normalize to [0..1]
+      nTime = nTime - Mathf.Floor(nTime);
+
+      // Build a pulse centered at tailExtendPeakNTime with half-width
+      var t0 = Mathf.Clamp01((nTime - (tailExtendPeakNTime - tailExtendHalfWidth)) / (2f * tailExtendHalfWidth));
+      var pulse = Mathf.Clamp01(t0);
+      var strength = tailExtendCurve.Evaluate(pulse); // [0..1], bell-ish
+
+      if (tailDebugForceMax) strength = 1f;
+      strength = Mathf.Clamp01(strength * tailDebugStrengthMultiplier);
+
+      if (strength <= 0f && _lastTailStrength <= 0f)
+      {
+        _lastTailStrength = 0f;
+        return;
+      }
+
+      // Apply additive bend down the chain (distal segments bend more)
+      var overrideDeg = tailDebugMaxPerJointDegOverride > 0f ? (float?)tailDebugMaxPerJointDegOverride : null;
+      ApplyTailWhip(strength, overrideDeg);
+
+      _lastTailStrength = strength;
+    }
+
+    private bool IsInTailAttackStateByName()
+    {
+      return TryGetTailAttackStateInfo(out _, out _);
+    }
+
+    private bool TryGetTailAttackStateInfo(out int layerIndex, out AnimatorStateInfo info)
+    {
+      layerIndex = -1;
+      info = default;
+      if (animator == null) return false;
+
+      var nameA = tailAttackStateName;
+      var nameB = tailAttackStateTestName;
+      var hashA = !string.IsNullOrEmpty(nameA) ? Animator.StringToHash(nameA) : 0;
+      var hashB = !string.IsNullOrEmpty(nameB) ? Animator.StringToHash(nameB) : 0;
+
+      bool Matches(AnimatorStateInfo s)
+      {
+        if (hashA != 0 && s.shortNameHash == hashA) return true;
+        if (hashB != 0 && s.shortNameHash == hashB) return true;
+        // Fallback to IsName for full-path matches
+        if (!string.IsNullOrEmpty(nameA) && s.IsName(nameA)) return true;
+        if (!string.IsNullOrEmpty(nameB) && s.IsName(nameB)) return true;
+        return false;
+      }
+
+      for (var i = 0; i < animator.layerCount; i++)
+      {
+        var current = animator.GetCurrentAnimatorStateInfo(i);
+        if (Matches(current))
+        {
+          layerIndex = i;
+          info = current;
+          return true;
+        }
+
+        var next = animator.GetNextAnimatorStateInfo(i);
+        if (Matches(next))
+        {
+          layerIndex = i;
+          info = next;
+          return true;
+        }
+      }
+      return false;
+    }
+
+    private void ApplyTailWhip(float strength01, float? overrideMaxPerJointDeg = null)
+    {
+      // Heuristic: map desired extra reach (meters) to how hard we bend each joint.
+      // We convert meters -> degrees per joint using a crude scale; tweak tailMaxPerJointDeg for your rig.
+      // Also bias the whole chain slightly toward character forward so it doesn’t “side flop.”
+      if (_tailChainCount == 0) return;
+
+      // Add a slight global aim toward forward at peak
+      var forwardBiasDeg = tailForwardAimBiasDeg * strength01;
+
+      // Make sure axis is unit
+      var localAxis = tailBendLocalAxis.sqrMagnitude > 0.0001f
+        ? tailBendLocalAxis.normalized
+        : Vector3.right;
+
+      var maxJointDeg = overrideMaxPerJointDeg ?? tailMaxPerJointDeg;
+
+      // Weights: root -> tip, distal gets more (falloff power)
+      for (var i = 0; i < _tailChainCount; i++)
+      {
+        var t = _tailChainOrdered[i];
+        if (!t) continue;
+
+        var u = (i + 1) / (float)_tailChainCount; // 0..1 (skip the root being 0)
+        var distalWeight = Mathf.Pow(u, tailDistalFalloffPower);
+
+        // Final angular bend this joint gets:
+        var deg = maxJointDeg * distalWeight * strength01;
+
+        // 1) Local bend around chosen tail axis (e.g., pitch forward)
+        var localRot = Quaternion.AngleAxis(deg, localAxis);
+        t.localRotation = t.localRotation * localRot;
+
+        // 2) Small world-space bias to look generally toward facing
+        //    (rotate around world right/left depending on rig—use transform.right-ish at tail root)
+        //    We’ll use the character's local right axis at each joint's parent space.
+        if (forwardBiasDeg > 0.01f)
+        {
+          var parent = t.parent ? t.parent : transform;
+          var worldRight = parent.TransformDirection(Vector3.right);
+          var bias = Quaternion.AngleAxis(forwardBiasDeg * distalWeight, worldRight);
+          t.rotation = bias * t.rotation;
+        }
+      }
+    }
+
+    private void OnDrawGizmosSelected()
+    {
+      if (!tailDebugGizmos) return;
+      if (tailRoot == null) return;
+
+      // In edit mode, _tailChainOrdered may not be built yet.
+      if (_tailChainOrdered == null || _tailChainOrdered.Count == 0)
+      {
+        EnsureTailChainOrdered();
+      }
+      if (_tailChainOrdered == null || _tailChainOrdered.Count == 0) return;
+
+      // Draw chain and a small axis hint per joint
+      for (var i = 0; i < _tailChainOrdered.Count; i++)
+      {
+        var t = _tailChainOrdered[i];
+        if (!t) continue;
+
+        var u = (i + 1f) / _tailChainOrdered.Count;
+        Gizmos.color = Color.Lerp(Color.cyan, Color.blue, u);
+
+        // Draw link to next
+        if (i + 1 < _tailChainOrdered.Count && _tailChainOrdered[i + 1])
+        {
+          Gizmos.DrawLine(t.position, _tailChainOrdered[i + 1].position);
+        }
+
+        // Draw local bend axis direction
+        var axisDir = t.TransformDirection(tailBendLocalAxis.sqrMagnitude > 0.0001f ? tailBendLocalAxis.normalized : Vector3.right);
+        Gizmos.DrawRay(t.position, axisDir * 0.25f);
+      }
     }
 
     #endregion
