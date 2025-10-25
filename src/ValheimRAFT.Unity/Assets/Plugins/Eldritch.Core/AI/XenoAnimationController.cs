@@ -38,6 +38,7 @@ namespace Eldritch.Core
     public static readonly int AttackSpeed = Animator.StringToHash("attackSpeed"); // float
     public static readonly int Die = Animator.StringToHash("die"); // trigger
     public static readonly int AwakeTrigger = Animator.StringToHash("awake"); // trigger
+    public static readonly int ManualAttackCompleteTrigger = Animator.StringToHash("manualAttackComplete"); // trigger
     public static readonly int Move = Animator.StringToHash("move"); // trigger
     public static readonly int Sleep = Animator.StringToHash("sleep"); // trigger
     public static readonly int Idle = Animator.StringToHash("idle"); // trigger
@@ -459,11 +460,11 @@ namespace Eldritch.Core
     public static List<PoseTransition> TailAttackTransitions = new()
     {
       // transition from current pose to target pose
-      new PoseTransition
-      {
-        // PoseData = poseSnapshot
-        PoseData = XenoAnimationPoses.Idle
-      },
+      // new PoseTransition
+      // {
+      //   // PoseData = poseSnapshot
+      //   PoseData = XenoAnimationPoses.Idle
+      // },
       // transition to idle pose first
       new PoseTransition
       {
@@ -492,14 +493,14 @@ namespace Eldritch.Core
         Speed = 0.2f,
         Pause = 0.5f,
         SpeedCurve = curveEaseOut
-      },
-      // return back to Idle pose
-      new PoseTransition
-      {
-        PoseData = XenoAnimationPoses.Idle,
-        Speed = 2f,
-        SpeedCurve = curveEaseIn // slow start fast end
       }
+      // return back to Idle pose
+      // new PoseTransition
+      // {
+      //   PoseData = XenoAnimationPoses.Idle,
+      //   Speed = 2f,
+      //   SpeedCurve = curveEaseIn // slow start fast end
+      // }
     };
 
     [ContextMenu("Lerp To Selected Variant Pose")]
@@ -512,7 +513,8 @@ namespace Eldritch.Core
       SnapshotCurrentPose();
       // or posSnapshot
 
-      _tailAttackTransitionRoutine.Start(LerpBetweenPoses(TailAttackTransitions, null));
+      var skipTransformNames = new List<string> { "XenosBiped_Neck_TopSHJnt" };
+      _tailAttackTransitionRoutine.Start(LerpBetweenPoses(TailAttackTransitions, skipTransformNames.ToArray()));
     }
 
     [ContextMenu("Apply Selected Variant Pose")]
@@ -877,8 +879,7 @@ namespace Eldritch.Core
     }
 
     public IEnumerator LerpBetweenPoses(List<PoseTransition> poses,
-      string[] skipTransformNames = null,
-      float? timeout = null)
+      string[] skipTransformNames = null, [CanBeNull] Action onComplete = null)
     {
       var len = poses.Count;
       for (var index = 0; index < len - 1; index++)
@@ -912,6 +913,8 @@ namespace Eldritch.Core
           );
         }
       }
+
+      onComplete?.Invoke();
     }
 
     public static List<PoseTransition> HeadTurnPosLerp = new()
@@ -955,13 +958,13 @@ namespace Eldritch.Core
     {
       animator.SetBool(JumpTrigger, true);
       // 1. Disable animator (todo might not have to do this with animator order fixed)
-      DisableAnimator();
+      // DisableAnimator();
 
       // 2. Idle → Crouch
       yield return LerpToPose(allJoints, idlePose, crouchPose, skipTransformNames, null, crouchDuration);
 
 
-      var lerpPoseCoroutine = StartCoroutine(LerpBetweenPoses(HeadTurnPosLerp, skipTransformNames));
+      _headTurnRoutine.Start(LerpBetweenPoses(HeadTurnPosLerp, skipTransformNames));
 
       // 3. Stay crouched during "air time" (simulate jump apex)
       var timePassed = 0f;
@@ -971,16 +974,16 @@ namespace Eldritch.Core
         yield return null;
       }
 
-      StopCoroutine(lerpPoseCoroutine);
+      _headTurnRoutine.Stop();
 
-      SnapshotCurrentPose();
-      yield return LerpToPose(allJoints, poseSnapshot, idlePose, skipTransformNames, null, 0.1f);
-
-      // 4. Crouch → Idle
-      yield return LerpToPose(allJoints, crouchPose, idlePose, skipTransformNames, null, standDuration);
+      // SnapshotCurrentPose();
+      // yield return LerpToPose(allJoints, poseSnapshot, idlePose, skipTransformNames, null, 0.1f);
+      //
+      // // 4. Crouch → Idle
+      // yield return LerpToPose(allJoints, crouchPose, idlePose, skipTransformNames, null, standDuration);
 
       // 5. Re-enable animator
-      EnableAnimator();
+      // EnableAnimator();
       onComplete?.Invoke();
 
       animator.SetBool(JumpTrigger, false);
@@ -1021,7 +1024,6 @@ namespace Eldritch.Core
         var tt = progressCurve != null ? Mathf.Clamp01(progressCurve.Evaluate(t)) : t;
 
         // Fill LateUpdate buffer (no direct transform writes here)
-        _latePoseTargets.Clear();
         for (var i = 0; i < jointList.Count; i++)
         {
           var (tr, a, b) = jointList[i];
@@ -1036,13 +1038,14 @@ namespace Eldritch.Core
       }
 
       // Final snap (enqueue end pose one last time, LateUpdate will apply)
-      _latePoseTargets.Clear();
       for (var i = 0; i < jointList.Count; i++)
       {
         var (tr, _, b) = jointList[i];
         _latePoseTargets[tr] = b;
       }
       _latePoseDirty = true;
+
+      yield return null;
     }
 
     public IEnumerator SleepingAnimationCoroutine()
@@ -1381,9 +1384,34 @@ namespace Eldritch.Core
       var inTailAttack = hasStateInfo || isTailMode;
 
 
-      if (inTailAttack)
+      if (inTailAttack && !_tailAttackTransitionRoutine.IsRunning)
       {
-        _tailAttackTransitionRoutine.Start(LerpBetweenPoses(TailAttackTransitions, null));
+        SnapshotCurrentPose();
+        var startPosition = new PoseTransition
+        {
+          PoseData = poseSnapshot,
+          Speed = 0.25f
+        };
+        var returnPosition = new PoseTransition
+        {
+          PoseData = poseSnapshot,
+          Speed = 0.25f
+        };
+        var transitions = new List<PoseTransition> {};
+
+        transitions.Add(startPosition);
+        transitions.AddRange(TailAttackTransitions);
+        transitions.Add(returnPosition);
+
+        var ignoredStrings = XenoAnimationPoses.TailAttack_PierceSwing1.Select(kvp => kvp.Key).Where(x => !x.Contains("ROOT") && !x.Contains("Leg") && !x.Contains("Toe") && !x.Contains("Finger") && !x.Contains("Arm") && !x.Contains("Thumb") && !x.Contains("Back") && !x.Contains("Neck") && !x.Contains("Spine")).ToList();
+
+        var skipTransformNames = new List<string> { "XenosBiped_Neck_TopSHJnt", "XenosBiped_Head_JawSHJnt" };
+        skipTransformNames.AddRange(ignoredStrings);
+
+        _tailAttackTransitionRoutine.Start(LerpBetweenPoses(transitions, skipTransformNames.ToArray(), () =>
+        {
+          animator.SetTrigger(ManualAttackCompleteTrigger);
+        }));
       }
 
       // Debug can force the effect always-on
