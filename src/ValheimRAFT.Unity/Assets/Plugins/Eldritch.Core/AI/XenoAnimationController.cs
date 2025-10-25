@@ -493,14 +493,14 @@ namespace Eldritch.Core
         Speed = 0.2f,
         Pause = 0.5f,
         SpeedCurve = curveEaseOut
-      }
+      },
       // return back to Idle pose
-      // new PoseTransition
-      // {
-      //   PoseData = XenoAnimationPoses.Idle,
-      //   Speed = 2f,
-      //   SpeedCurve = curveEaseIn // slow start fast end
-      // }
+      new PoseTransition
+      {
+        PoseData = XenoAnimationPoses.Idle,
+        Speed = 2f,
+        SpeedCurve = curveEaseIn // slow start fast end
+      }
     };
 
     [ContextMenu("Lerp To Selected Variant Pose")]
