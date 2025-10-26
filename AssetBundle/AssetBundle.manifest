@@ -1,6 +1,6 @@
 ManifestFileVersion: 0
 UnityVersion: 6000.1.8f1
-CRC: 3083540566
+CRC: 369372916
 HashAppended: 0
 AssetBundleManifest:
   AssetBundleInfos:
@@ -9,4 +9,5 @@ AssetBundleManifest:
       Dependencies: {}
     Info_1:
       Name: eldritch
-      Dependencies: {}
+      Dependencies:
+        Dependency_0: valheim-vehicles
