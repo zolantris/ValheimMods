@@ -12,6 +12,8 @@ public static class PrefabRegistry
 {
   public static AssetBundle assetBundle;
   public static SpriteAtlas Sprites;
+  private const string droneAssetName = "xenomorph-drone-v1";
+
   /// <summary>
   /// Loads from eldritch core. (this might need to be done here so eldritch.Core gameobjects are resolved with eldritch core scripts)
   /// </summary>
@@ -30,9 +32,8 @@ public static class PrefabRegistry
     if (assetBundle == null) return;
     LoggerProvider.LogDebug($"Starting InjectAlienPrefab");
     const string XenoAdultName = "Eldritch_XenoAdult";
-    const string assetName = "xenomorph_drone";
 
-    var prefabAsset = assetBundle.LoadAsset<GameObject>(assetName);
+    var prefabAsset = assetBundle.LoadAsset<GameObject>(droneAssetName);
     if (prefabAsset == null) return;
 
     var originalComponents = prefabAsset.GetComponents<Component>();
@@ -93,7 +94,7 @@ public static class PrefabRegistry
   public static void RegisterXenoSpawn()
   {
     // Load prefab from ZNetScene or an AssetBundle
-    var asset = assetBundle.LoadAsset<GameObject>("xenomorph_drone");
+    var asset = assetBundle.LoadAsset<GameObject>(droneAssetName);
     if (!asset)
     {
       LoggerProvider.LogError("Xeno prefab not found — spawn registration skipped.");
@@ -115,13 +116,15 @@ public static class PrefabRegistry
       visualObj.transform.SetParent(xenoPrefab.transform);
     }
 
-    xenoPrefab.AddComponent<ZNetView>();
+    var nv = xenoPrefab.AddComponent<ZNetView>();
     xenoPrefab.AddComponent<ZSyncTransform>();
     xenoPrefab.AddComponent<ZSyncAnimation>();
 
     var animator = xenoPrefab.GetComponentInChildren<Animator>();
     // must be on animator gameobject
     var animEvent = animator.gameObject.AddComponent<CharacterAnimEvent>();
+
+    animEvent.m_nview = nv;
 
     // todo might need to patch this significantly for alien AI...or use BaseAI.
     // todo might have to add FootStep and VisEquipment

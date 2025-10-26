@@ -335,8 +335,9 @@ namespace Eldritch.Core
     public void BindUnOptimizedRoots()
     {
       xenoAnimatorRoot = transform.Find("Visual") ?? transform;
-      xenoMeshSkin = xenoAnimatorRoot.Find("alien_xenos_drone_SK_Xenos_Drone");
-      xenoRoot = xenoAnimatorRoot.Find("alien_xenos_drone_SK_Xenos_Drone_skeleton/XenosBiped_TrajectorySHJnt/XenosBiped_ROOTSHJnt");
+      var offsetRoot = xenoAnimatorRoot.Find("drone_parent_offset");
+      xenoMeshSkin = offsetRoot.Find("alien_xenos_drone_SK_Xenos_Drone");
+      xenoRoot = offsetRoot.Find("alien_xenos_drone_SK_Xenos_Drone_skeleton/XenosBiped_TrajectorySHJnt/XenosBiped_ROOTSHJnt");
       spine01 = xenoRoot.Find("XenosBiped_Spine_01SHJnt");
       spine02 = spine01.Find("XenosBiped_Spine_02SHJnt");
       spine03 = spine02.Find("XenosBiped_Spine_03SHJnt");
@@ -718,7 +719,7 @@ namespace Eldritch.Core
       return leftProj > rightProj ? leftToeTransform : rightToeTransform;
     }
 
-    #region Head Rotation
+  #region Head Rotation
 
     [SerializeField] private float yawMaxDeg = 40f;
     [SerializeField] private float yawSpeedDegPerSec = 540f;
@@ -780,7 +781,7 @@ namespace Eldritch.Core
       neckUpDownAngle.z = MoveTowardsSigned(neckUpDownAngle.z, desiredZ, pitchSpeedDegPerSec * Time.deltaTime);
     }
 
-    #endregion
+  #endregion
 
     public void PointHeadTowardTarget(Transform target)
     {
@@ -788,15 +789,15 @@ namespace Eldritch.Core
         UpdateHeadAnglesToward(target);
     }
 
-    #region Colliders
+  #region Colliders
 
     public HashSet<Collider> allColliders = new();
     public HashSet<Collider> attackTailColliders = new();
     public HashSet<Collider> attackArmColliders = new();
 
-    #endregion
+  #endregion
 
-    #region Colliders
+  #region Colliders
 
     public void AssignFootColliders(IEnumerable<Collider> colliders)
     {
@@ -849,7 +850,7 @@ namespace Eldritch.Core
       allColliders.Add(col);
     }
 
-    #endregion
+  #endregion
 
   }
 }

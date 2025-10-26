@@ -18,8 +18,8 @@ public class XenoHuntBehaviorConfig
   public bool FORCE_Creeping;
 
   [Header("Targeting")]
-  public float maxTargetDistance = 50f;
-  public float minHuntDistance = 2f;
+  public float maxTargetDistance = 80f;
+  public float minHuntDistance = 5f;
   public float minCreepDistance = 2f; // really close
 
   [Header("Circle Movement")]
@@ -34,19 +34,19 @@ public class XenoHuntBehaviorConfig
   public float leapingCooldown = 10f;
 
   [Header("Weighted Random Substate Probabilities (sum should be ~1.0)")]
-  [Range(0f, 1f)] public float probCircling = 0.55f;
-  [Range(0f, 1f)] public float probMovingAway = 0.10f;
-  [Range(0f, 1f)] public float probPausing = 0.22f;
-  [Range(0f, 1f)] public float probCreeping = 0.13f;
+  [Range(0f, 1f)] public float probCircling = 0.25f;
+  [Range(0f, 1f)] public float probMovingAway = 0.05f;
+  [Range(0f, 1f)] public float probPausing = 0.15f;
+  [Range(0f, 1f)] public float probCreeping = 0.55f;
 
   [Header("Weighted Random Ability properties during specific behaviors")]
-  [Range(0f, 1f)] public float probCamouflage = 0.15f;
-  [Range(0f, 1f)] public float probAttackInRange = 0.15f;
-  [Range(0f, 1f)] public float probLeapRetreat = 0.5f; // after leaping in range. Instead of engaging in combat. Retreat.
+  [Range(0f, 1f)] public float probCamouflage = 0.0f;
+  [Range(0f, 1f)] public float probAttackInRange = 1f;
+  [Range(0f, 1f)] public float probLeapRetreat = 0.0f; // after leaping in range. Instead of engaging in combat. Retreat.
 
   [Header("State Timer Durations (seconds)")]
-  public Vector2 circlingTimeRange = new(2.2f, 3.4f); // min/max
-  public Vector2 movingAwayTimeRange = new(1.0f, 1.8f);
+  public Vector2 circlingTimeRange = new(1, 1); // min/max
+  public Vector2 movingAwayTimeRange = new(1.0f, 1.0f);
   public Vector2 pausingTimeRange = new(0.8f, 1.4f);
   public Vector2 creepingTimeRange = new(1.1f, 2.0f);
 

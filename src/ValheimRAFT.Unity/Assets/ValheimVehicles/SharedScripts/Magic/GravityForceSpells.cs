@@ -33,18 +33,19 @@
 
       // ---------- Common ----------
       [Header("Common")]
-      [SerializeField] private float maxAffectMass = 500f;
+      // todo make this much lower but for testing 5000f allows lifting boats.
+      [SerializeField] private float maxAffectMass = 5000f;
       [SerializeField] private ForceMode forceMode = ForceMode.Impulse;
       [SerializeField] private float lineOfSightPadding = 0.25f;
 
       // ---------- Spells ----------
       [Header("Blast (Q)")]
       [SerializeField] private float blastRadiusAtHit = 6f;
-      [SerializeField] private float blastForce = 1200f;
+      [SerializeField] private float blastForce = 4000f;
 
       [Header("Hold (F)")]
-      [SerializeField] private float holdForce = 2000f;
-      [SerializeField] private float holdDuration = 2.0f;
+      [SerializeField] private float holdForce = 500f;
+      [SerializeField] private float holdDuration = 5.0f;
 
       [Header("Crush (C)")]
       [SerializeField] private float crushDownForce = 2800f;
@@ -76,7 +77,7 @@
       [SerializeField] private float pullDropDistance = 0f;
 
       [Header("Push (R)")]
-      [SerializeField] private float pushForce = 1500f;
+      [SerializeField] private float pushForce = 2000f;
 
       [Header("Throw (T)")]
       [SerializeField] private float throwUpForce = 2200f;

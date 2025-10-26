@@ -9529,6 +9529,153 @@ Transform:
   - {fileID: 2703684713173510051}
   m_Father: {fileID: 1271715054500694217}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &5676407611461398885
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 6611216112756704241}
+  - component: {fileID: 2682919543307536647}
+  m_Layer: 0
+  m_Name: Audio_IdleLoop
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &6611216112756704241
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5676407611461398885}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 8214625358689034178}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!82 &2682919543307536647
+AudioSource:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5676407611461398885}
+  m_Enabled: 1
+  serializedVersion: 4
+  OutputAudioMixerGroup: {fileID: 0}
+  m_audioClip: {fileID: 8300000, guid: 58a75ce1424ef0b4ea00e52ca81a7db8, type: 3}
+  m_Resource: {fileID: 8300000, guid: 58a75ce1424ef0b4ea00e52ca81a7db8, type: 3}
+  m_PlayOnAwake: 0
+  m_Volume: 0.35
+  m_Pitch: 1.0198154
+  Loop: 1
+  Mute: 0
+  Spatialize: 0
+  SpatializePostEffects: 0
+  Priority: 128
+  DopplerLevel: 1
+  MinDistance: 0.1
+  MaxDistance: 12
+  Pan2D: 0
+  rolloffMode: 2
+  BypassEffects: 0
+  BypassListenerEffects: 0
+  BypassReverbZones: 0
+  rolloffCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 0.16666667
+      value: 0.8
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 0.33333334
+      value: 0.15
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  panLevelCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  spreadCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  reverbZoneMixCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
 --- !u!1 &5746569401695326762
 GameObject:
   m_ObjectHideFlags: 0
@@ -17163,7 +17310,8 @@ Transform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children: []
+  m_Children:
+  - {fileID: 6611216112756704241}
   m_Father: {fileID: 5059553072509418606}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &774581081055572836
@@ -17352,7 +17500,7 @@ MonoBehaviour:
   MaxHealth: 100
   TimeUntilSleep: 5
   TimeUntilWake: 50
-  CanCamouflage: 1
+  CanCamouflage: 0
   CanSleepAnimate: 0
   CanJump: 1
   DeltaPrimaryTarget: 0
@@ -17376,27 +17524,27 @@ MonoBehaviour:
       enableRandomCamouflage: 1
       FORCE_Circling: 0
       FORCE_Creeping: 0
-      maxTargetDistance: 50
-      minHuntDistance: 10
+      maxTargetDistance: 75
+      minHuntDistance: 5
       minCreepDistance: 2
-      circleMoveSpeed: 7.5
-      creepingMoveSpeed: 5
+      circleMoveSpeed: 10
+      creepingMoveSpeed: 3
       movingSpeedFlux: 0.5
-      minCircleRadius: 5
-      maxCircleRadius: 15
-      circleRadiusFactor: 0.5
+      minCircleRadius: 3
+      maxCircleRadius: 8
+      circleRadiusFactor: 1
       leapingCooldown: 10
       probCircling: 0.25
-      probMovingAway: 0.25
+      probMovingAway: 0.1
       probPausing: 0.1
-      probCreeping: 0.4
-      probCamouflage: 0.25
-      probAttackInRange: 0.5
-      probLeapRetreat: 0.25
-      circlingTimeRange: {x: 2.2, y: 3.4}
-      movingAwayTimeRange: {x: 1, y: 1.8}
-      pausingTimeRange: {x: 0.8, y: 1.4}
-      creepingTimeRange: {x: 1.1, y: 2}
+      probCreeping: 0.5
+      probCamouflage: 0
+      probAttackInRange: 1
+      probLeapRetreat: 0
+      circlingTimeRange: {x: 1, y: 3}
+      movingAwayTimeRange: {x: 1, y: 4}
+      pausingTimeRange: {x: 1, y: 2}
+      creepingTimeRange: {x: 2, y: 4}
     State: 0
   huntBehaviorConfig:
     enableCircling: 1
@@ -17408,8 +17556,8 @@ MonoBehaviour:
     FORCE_Circling: 0
     FORCE_Creeping: 0
     maxTargetDistance: 75
-    minHuntDistance: 3
-    minCreepDistance: 4
+    minHuntDistance: 5
+    minCreepDistance: 2
     circleMoveSpeed: 10
     creepingMoveSpeed: 3
     movingSpeedFlux: 0.5
@@ -17451,14 +17599,14 @@ MonoBehaviour:
   HeadCollider: {fileID: 0}
   HeadColliderTransform: {fileID: 0}
   OwnerAI: {fileID: 4678002196957688360}
-  distanceMoveSpeed: 40
+  distanceMoveSpeed: 2
   closeMoveSpeed: 2
   distantAccelForce: 20
   closeAccelForce: 20
-  closeRange: 3
-  distantTurnSpeed: 40
-  closeTurnSpeed: 40
-  wanderSpeed: 20
+  closeRange: 4
+  distantTurnSpeed: 90
+  closeTurnSpeed: 90
+  wanderSpeed: 5
   maxJumpDistance: 4
   maxJumpHeightArc: 2.5
   maxRunRange: {x: 20, y: 0, z: 20}
