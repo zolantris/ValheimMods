@@ -69,6 +69,7 @@ namespace Eldritch.Core
 
 
     public float DeltaPrimaryTarget;
+    public static bool AttackRangeCanSkipLOS = true;
     public bool IsHiding = true;
 
     // Grounding
@@ -115,9 +116,12 @@ namespace Eldritch.Core
 
     private void Awake()
     {
+      Init();
+    }
 
+    public void Init()
+    {
       InitCoroutineHandlers();
-      Instances.Add(this);
 
       navAgentType = PathfindingAgentType.Humanoid;
 
@@ -140,7 +144,7 @@ namespace Eldritch.Core
 
     private void Start()
     {
-      BindBehaviors();
+      Init();
     }
 
     private void Update()
@@ -544,7 +548,7 @@ namespace Eldritch.Core
     }
 
 
-    #region FixedUpdates / Per fixed frame logic
+  #region FixedUpdates / Per fixed frame logic
 
     public void RotateTowardPrimaryTarget()
     {
@@ -708,9 +712,9 @@ namespace Eldritch.Core
       }
     }
 
-    #endregion
+  #endregion
 
-    #region Animation getters
+  #region Animation getters
 
     // Animator/Bones
     public Transform xenoAnimatorRoot => animationController?.xenoAnimatorRoot;
@@ -739,9 +743,9 @@ namespace Eldritch.Core
     public string ARMAttackObjName => animationController?.armAttackObjName;
     public string tailAttackObjName => animationController?.tailAttackObjName;
 
-    #endregion
+  #endregion
 
-    #region Behavior Updates
+  #region Behavior Updates
 
     private void BindBehaviors()
     {
@@ -999,10 +1003,10 @@ namespace Eldritch.Core
       return true;
     }
 
-    #endregion
+  #endregion
 
 
-    #region State Booleans
+  #region State Booleans
 
     public bool IsOutOfHuntRange()
     {
@@ -1024,7 +1028,7 @@ namespace Eldritch.Core
     public bool IsInAttackRange()
     {
       if (PrimaryTarget == null) return false;
-      if (!HasClearLOS(PrimaryTarget.position)) return false;
+      if (!AttackRangeCanSkipLOS && !HasClearLOS(PrimaryTarget.position)) return false;
       return DeltaPrimaryTarget < closeRange;
     }
 
@@ -1047,11 +1051,11 @@ namespace Eldritch.Core
       return CurrentState == XenoAIState.Attack;
     }
 
-    #endregion
+  #endregion
 
     // Put these inside XenoDroneAI (e.g., near bottom) to avoid new files.
 
-    #region Nav Runners (direct PathfindingAdapter)
+  #region Nav Runners (direct PathfindingAdapter)
 
     private bool _losCached;
     private float _losStableUntil;
@@ -1313,7 +1317,7 @@ namespace Eldritch.Core
       }
     }
 
-    #endregion
+  #endregion
 
 
   }
