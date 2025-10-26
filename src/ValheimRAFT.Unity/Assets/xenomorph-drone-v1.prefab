@@ -878,7 +878,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2884584817345903661}
   - component: {fileID: 8794376812469077489}
-  m_Layer: 9
+  m_Layer: 22
   m_Name: xeno_arm_attack_collider
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -910,7 +910,7 @@ CapsuleCollider:
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
-    m_Bits: 4194816
+    m_Bits: 205799936
   m_ExcludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -1189,7 +1189,7 @@ GameObject:
   m_Component:
   - component: {fileID: 627821654200584503}
   - component: {fileID: 7398796672410490735}
-  m_Layer: 9
+  m_Layer: 18
   m_Name: leg_left_lower_collider
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1226,7 +1226,7 @@ CapsuleCollider:
     serializedVersion: 2
     m_Bits: 0
   m_LayerOverridePriority: 0
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 2
@@ -2142,7 +2142,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4935210330288096524}
   - component: {fileID: 487337757712111208}
-  m_Layer: 9
+  m_Layer: 18
   m_Name: body_collider
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2179,7 +2179,7 @@ CapsuleCollider:
     serializedVersion: 2
     m_Bits: 0
   m_LayerOverridePriority: 0
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 2
@@ -2292,7 +2292,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3192353068121616767}
   - component: {fileID: 9082813826112046616}
-  m_Layer: 9
+  m_Layer: 18
   m_Name: leg_right_lower_collider
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2329,7 +2329,7 @@ CapsuleCollider:
     serializedVersion: 2
     m_Bits: 0
   m_LayerOverridePriority: 0
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 2
@@ -2610,7 +2610,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &8287182060708338218
 Transform:
   m_ObjectHideFlags: 0
@@ -2747,7 +2747,7 @@ GameObject:
   - component: {fileID: 71476459157954035}
   - component: {fileID: 3250130703488610846}
   - component: {fileID: 5255322311839038759}
-  m_Layer: 9
+  m_Layer: 18
   m_Name: foot_pad_collider
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2792,7 +2792,7 @@ BoxCollider:
     serializedVersion: 2
     m_Bits: 0
   m_LayerOverridePriority: 0
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
@@ -3486,7 +3486,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1825923608154405948}
   - component: {fileID: 8572440730329718262}
-  m_Layer: 9
+  m_Layer: 18
   m_Name: leg_right_upper_collider
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3523,7 +3523,7 @@ CapsuleCollider:
     serializedVersion: 2
     m_Bits: 0
   m_LayerOverridePriority: 0
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 2
@@ -4210,7 +4210,7 @@ GameObject:
   m_Component:
   - component: {fileID: 8529619494242087744}
   - component: {fileID: 3000748330794326912}
-  m_Layer: 9
+  m_Layer: 18
   m_Name: leg_left_mid_collider
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4247,7 +4247,7 @@ CapsuleCollider:
     serializedVersion: 2
     m_Bits: 0
   m_LayerOverridePriority: 0
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 2
@@ -4616,7 +4616,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4752285817859573959}
   - component: {fileID: 8107834212238142334}
-  m_Layer: 9
+  m_Layer: 22
   m_Name: xeno_arm_attack_collider
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4648,7 +4648,7 @@ CapsuleCollider:
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
-    m_Bits: 4194816
+    m_Bits: 205799936
   m_ExcludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -9529,153 +9529,6 @@ Transform:
   - {fileID: 2703684713173510051}
   m_Father: {fileID: 1271715054500694217}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &5676407611461398885
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 6611216112756704241}
-  - component: {fileID: 2682919543307536647}
-  m_Layer: 0
-  m_Name: Audio_IdleLoop
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &6611216112756704241
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5676407611461398885}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 8214625358689034178}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!82 &2682919543307536647
-AudioSource:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5676407611461398885}
-  m_Enabled: 1
-  serializedVersion: 4
-  OutputAudioMixerGroup: {fileID: 0}
-  m_audioClip: {fileID: 8300000, guid: 58a75ce1424ef0b4ea00e52ca81a7db8, type: 3}
-  m_Resource: {fileID: 8300000, guid: 58a75ce1424ef0b4ea00e52ca81a7db8, type: 3}
-  m_PlayOnAwake: 0
-  m_Volume: 0.35
-  m_Pitch: 1.0198154
-  Loop: 1
-  Mute: 0
-  Spatialize: 0
-  SpatializePostEffects: 0
-  Priority: 128
-  DopplerLevel: 1
-  MinDistance: 0.1
-  MaxDistance: 12
-  Pan2D: 0
-  rolloffMode: 2
-  BypassEffects: 0
-  BypassListenerEffects: 0
-  BypassReverbZones: 0
-  rolloffCustomCurve:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: 0
-      value: 1
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0
-    - serializedVersion: 3
-      time: 0.16666667
-      value: 0.8
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0
-    - serializedVersion: 3
-      time: 0.33333334
-      value: 0.15
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0
-    - serializedVersion: 3
-      time: 1
-      value: 0
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
-  panLevelCustomCurve:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: 0
-      value: 1
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0.33333334
-      outWeight: 0.33333334
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
-  spreadCustomCurve:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: 0
-      value: 0
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0.33333334
-      outWeight: 0.33333334
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
-  reverbZoneMixCustomCurve:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: 0
-      value: 1
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0.33333334
-      outWeight: 0.33333334
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
 --- !u!1 &5746569401695326762
 GameObject:
   m_ObjectHideFlags: 0
@@ -9755,7 +9608,7 @@ GameObject:
   - component: {fileID: 513653208691081163}
   - component: {fileID: 7729421605075709877}
   - component: {fileID: 6954544597601255818}
-  m_Layer: 9
+  m_Layer: 18
   m_Name: foot_pad_collider
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -9800,7 +9653,7 @@ BoxCollider:
     serializedVersion: 2
     m_Bits: 0
   m_LayerOverridePriority: 0
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
@@ -10257,7 +10110,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5315650862500275335}
   - component: {fileID: 5925971110170681611}
-  m_Layer: 9
+  m_Layer: 22
   m_Name: xeno_tail_attack_collider
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -10289,7 +10142,7 @@ CapsuleCollider:
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
-    m_Bits: 4194816
+    m_Bits: 205799936
   m_ExcludeLayers:
     serializedVersion: 2
     m_Bits: 3073
@@ -17310,8 +17163,7 @@ Transform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 6611216112756704241}
+  m_Children: []
   m_Father: {fileID: 5059553072509418606}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &774581081055572836
@@ -17734,7 +17586,7 @@ GameObject:
   m_Component:
   - component: {fileID: 8482420201846332563}
   - component: {fileID: 3367987433506769304}
-  m_Layer: 9
+  m_Layer: 18
   m_Name: leg_right_mid_collider
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -17771,7 +17623,7 @@ CapsuleCollider:
     serializedVersion: 2
     m_Bits: 0
   m_LayerOverridePriority: 0
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 2
@@ -17789,7 +17641,7 @@ GameObject:
   m_Component:
   - component: {fileID: 8762995495720842550}
   - component: {fileID: 5771598541303589624}
-  m_Layer: 9
+  m_Layer: 18
   m_Name: head_collider
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -18036,7 +17888,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6928691542862195566}
   - component: {fileID: 3213603177179153253}
-  m_Layer: 9
+  m_Layer: 18
   m_Name: leg_left_upper_collider
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -18073,7 +17925,7 @@ CapsuleCollider:
     serializedVersion: 2
     m_Bits: 0
   m_LayerOverridePriority: 0
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 2
