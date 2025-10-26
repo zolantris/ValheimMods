@@ -4,12 +4,34 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Eldritch.Core.Nav;
 using JetBrains.Annotations;
 using UnityEngine;
 using Zolantris.Shared;
 using Random = UnityEngine.Random;
 namespace Eldritch.Core
 {
+  public class CollisionDelegate : MonoBehaviour
+  {
+    public XenoDroneAI ownerAI;
+
+    public void SetOwnerAI(XenoDroneAI ai)
+    {
+      ownerAI = ai;
+    }
+
+    private void OnCollisionEnter(Collision other)
+    {
+      if (!ownerAI) return;
+      ownerAI.OnCollisionEnter(other);
+    }
+    private void OnCollisionStay(Collision other)
+    {
+      if (!ownerAI) return;
+      ownerAI.OnCollisionStay(other);
+    }
+  }
+
   public class XenoDroneAI : MonoBehaviour
   {
     public enum XenoAIState
@@ -41,8 +63,8 @@ namespace Eldritch.Core
     [Header("Timers")]
     public float TimeUntilSleep = 5f, TimeUntilWake = 50f;
 
-    public bool HasCamouflage;
-    public bool CanSleepAnimate;
+    public bool CanCamouflage = true;
+    public bool CanSleepAnimate = true;
     public bool CanJump = true;
 
 
@@ -54,7 +76,7 @@ namespace Eldritch.Core
     public float lastLowestPointCheck;
     [SerializeField] public bool IsManualControlling;
 
-    public float closeRange = 1f;
+    public float closeRange = 2f;
     public AbilityManager abilityManager;
 
     [Header("Behavior State")]
@@ -67,6 +89,13 @@ namespace Eldritch.Core
     private CoroutineHandle _aiStateUpdateRoutine;
     private List<Func<bool>> _behaviorUpdaters = new();
 
+    // How tightly we try to stay on the target while attacking
+    [Header("Attack Follow Tuning")]
+    [Tooltip("Meters to maintain while swinging so colliders actually connect. If 0, uses movementController.closeRange.")]
+    [SerializeField] private float attackHugDistance = 0f;
+    [Tooltip("If target is beyond this, we path toward them even during Attack (LOS-based).")]
+    [SerializeField] private float attackChaseDistance = 3.5f;
+
     private CoroutineHandle _sleepRoutine;
     private Vector3 cachedLowestPoint = Vector3.zero;
 
@@ -76,15 +105,21 @@ namespace Eldritch.Core
     private float _nextRepathTime = 0f;
 
     // Expose this in inspector if you want different body sizes
-    // --- Navigation (direct ValheimPathfinding) ---
-    [SerializeField] private ValheimPathfinding.AgentType navAgentType = ValheimPathfinding.AgentType.HumanoidBig;
+    // --- Navigation (direct PathfindingAdapter) ---
+    [SerializeField] private PathfindingAgentType navAgentType = PathfindingAgentType.Humanoid;
     private readonly PathRunner _nav = new();
     private readonly OrbitRunner _orbit = new();
+    private Transform bodyTransform;
+
+    public XenoAudioController audioController;
 
     private void Awake()
     {
+
       InitCoroutineHandlers();
       Instances.Add(this);
+
+      navAgentType = PathfindingAgentType.Humanoid;
 
       huntBehaviorState.behaviorConfig = huntBehaviorConfig;
 
@@ -93,9 +128,18 @@ namespace Eldritch.Core
       if (!animationController) animationController = GetComponentInChildren<XenoAnimationController>();
       if (movementController) movementController.OwnerAI = this;
       if (animationController) animationController.OwnerAI = this;
+      if (!audioController)
+      {
+        audioController = GetComponentInChildren<XenoAudioController>();
+      }
 
       Health = MaxHealth;
 
+      BindBehaviors();
+    }
+
+    private void Start()
+    {
       BindBehaviors();
     }
 
@@ -106,6 +150,8 @@ namespace Eldritch.Core
 
     private void FixedUpdate()
     {
+      if (!movementController || !movementController.Rb) return;
+
       lastTouchedLand += Time.fixedDeltaTime;
       if (CurrentState == XenoAIState.Dead) return;
       if (!IsGrounded()) return;
@@ -128,11 +174,11 @@ namespace Eldritch.Core
       Instances.Remove(this);
     }
 
-    private void OnCollisionEnter(Collision other)
+    public void OnCollisionEnter(Collision other)
     {
       // UpdateLastTouchGround(other.collider);
     }
-    private void OnCollisionStay(Collision other)
+    public void OnCollisionStay(Collision other)
     {
       UpdateLastTouchGround(other.collider);
     }
@@ -195,18 +241,7 @@ namespace Eldritch.Core
           break;
         case XenoAIState.Attack:
           if (!PrimaryTarget) return;
-          FollowPathOrChase(PrimaryTarget.position);
-          // movementController.MoveChaseTarget(
-          //   PrimaryTarget.position,
-          //   null,
-          //   movementController.closeRange,
-          //   movementController.moveSpeed,
-          //   movementController.closeMoveSpeed,
-          //   movementController.AccelerationForceSpeed,
-          //   movementController.closeAccelForce,
-          //   movementController.turnSpeed,
-          //   movementController.closeTurnSpeed
-          // );
+          Update_AttackMovement();
           break;
         case XenoAIState.Sleeping:
           animationController.PlaySleepingAnimation(CanSleepAnimate);
@@ -284,6 +319,16 @@ namespace Eldritch.Core
       animationController?.PlayBloodEffect();
       Health = Mathf.Max(Health - damage, 0f);
       if (Health <= 0.1f) SetDead();
+    }
+
+    public void SetPrimaryTarget(Transform target)
+    {
+      SetPrimaryTarget(target, target.GetComponent<Rigidbody>());
+    }
+    public void SetPrimaryTarget(Transform target, Rigidbody rigidbody)
+    {
+      PrimaryTarget = target;
+      PrimaryTargetRB = rigidbody;
     }
 
     // --- Targeting helpers ---
@@ -371,8 +416,67 @@ namespace Eldritch.Core
       StopSleeping();
     }
 
+    // Backpedal toward the circling ring (target-centered) while facing the target.
+// Returns true if we issued a move this frame.
+    private bool TryBackpedalToRing(float ringRadius)
+    {
+      if (!PrimaryTarget) return false;
+
+      // If we're already at/over the ring, don't retreat more.
+      if (DeltaPrimaryTarget >= ringRadius - 0.1f)
+        return false;
+
+      var self = transform.position;
+      var tgt = PrimaryTarget.position;
+
+      var away = self - tgt;
+      away.y = 0f;
+      if (away.sqrMagnitude < 1e-4f) away = -transform.forward;
+      var anchorRaw = tgt + away.normalized * ringRadius;
+
+      // Snap anchor to nav if possible
+      Vector3 anchor;
+      if (!Pathfinding.FindValidPoint(out anchor, anchorRaw, 2.5f, (int)navAgentType))
+        anchor = anchorRaw;
+
+      // Move along path corners **backwards** while facing the enemy
+      FollowPathBackpedal(anchor, tgt);
+      return true;
+    }
+
+
+    private void FollowPathBackpedal(Vector3 dest, Vector3 facePoint)
+    {
+      // Short path toward dest; move along corners *backwards* while facing 'facePoint'
+      var start = transform.position;
+
+      if (_nav.EnsurePath(start, dest, navAgentType, 0.45f) &&
+          _nav.TryStep(transform.position, 0.75f, out var corner))
+      {
+        var moveDir = corner - transform.position;
+        movementController.MoveAlongDirectionWhileFacing(
+          moveDir,
+          facePoint,
+          movementController.closeMoveSpeed * huntBehaviorState.creepSpeedMultiplier,
+          movementController.closeAccelForce, // reuse accel tuning
+          movementController.closeTurnSpeed
+        );
+      }
+      else
+      {
+        // graceful fallback if no corners yet
+        movementController.MoveAwayFromTarget(
+          facePoint,
+          movementController.closeMoveSpeed * huntBehaviorState.creepSpeedMultiplier,
+          movementController.closeAccelForce, // reuse accel tuning
+          movementController.closeTurnSpeed
+        );
+      }
+    }
+
     private void UpdateDeltaPrimaryTarget()
     {
+      if (!movementController || !movementController.Rb) return;
       if (!PrimaryTarget) return;
       var position = transform.position;
       if (PrimaryTargetRB)
@@ -389,49 +493,127 @@ namespace Eldritch.Core
       }
     }
 
+    // Keep tight contact and facing during the attack animation
+    private void Update_AttackMovement()
+    {
+      if (!PrimaryTarget) return;
+
+      // Keep head and body aimed for reliable hit boxes
+      animationController.PointHeadTowardTarget(PrimaryTarget);
+
+      var tgtPos = PrimaryTarget.position;
+      var to = tgtPos - transform.position;
+      to.y = 0f;
+
+      // Strongly rotate toward the target every frame
+      movementController.RotateTowardsDirection(to, movementController.GetTurnSpeed());
+
+      // If LOS is blocked, find a quick path to reacquire even during Attack
+      if (!HasClearLOS(tgtPos))
+      {
+        FollowPathOrChase(tgtPos);
+        return;
+      }
+
+      // Desired strike distance for reliable arm/tail colliders
+      var desiredHug = attackHugDistance > 0f ? attackHugDistance : movementController.closeRange;
+      desiredHug = Mathf.Max(0.35f, desiredHug);
+
+      // If we drifted out of range, micro-chase to keep contact
+      if (DeltaPrimaryTarget > desiredHug)
+      {
+        Vector3? vel = null;
+        if (PrimaryTargetRB)
+        {
+          try { vel = PrimaryTargetRB.linearVelocity; }
+          catch { vel = null; }
+        }
+        movementController.MoveChaseTarget(tgtPos, vel, movementController.closeTurnSpeed);
+        return;
+      }
+
+      // If we’re much too far (e.g., the target dodged away), do a short burst to re-close
+      if (DeltaPrimaryTarget > Mathf.Max(desiredHug * 1.5f, attackChaseDistance))
+      {
+        movementController.MoveChaseTarget(tgtPos, null, movementController.closeTurnSpeed);
+        return;
+      }
+
+      // Otherwise: we are in striking range — brake to avoid sliding past the target mid-swing
+      movementController.BrakeHard();
+    }
+
 
     #region FixedUpdates / Per fixed frame logic
+
+    public void RotateTowardPrimaryTarget()
+    {
+      if (PrimaryTarget == null) return;
+      var toTarget = PrimaryTarget.position - transform.position;
+      toTarget.y = 0f;
+      movementController.RotateTowardsDirection(toTarget, movementController.GetTurnSpeed());
+    }
 
     public void Update_HuntMovement()
     {
       if (!PrimaryTarget) return;
       if (abilityManager.IsDodging) return;
-
-      // Always point head at the target for creep factor
-      animationController.PointHeadTowardTarget(transform, PrimaryTarget);
-
       if (IsOutOfHuntRange())
       {
         UpdateAllBehaviors();
         return;
       }
 
+      if (animationController.IsRunningAttack())
+      {
+        animationController.StopAttack();
+      }
+
+      // Always point head at the target for creep factor
+      animationController.PointHeadTowardTarget(PrimaryTarget);
+      if (abilityManager.IsDodging || abilityManager.IsTailAttacking) return;
+
+
       // --- OVERRIDE: Retreat if in leap range and being looked at ---
       var inLeapRange = IsInLeapRange();
 
       var beingWatched = TargetingUtil.IsTargetLookingAtMe(PrimaryTarget, transform);
 
-
-      // If within leap range and NOT being watched
-      if (inLeapRange && huntBehaviorConfig.enableLeaping)
+      if (!IsAttacking() && !inLeapRange && DeltaPrimaryTarget < huntBehaviorConfig.minCreepDistance && beingWatched)
       {
-        if (!beingWatched)
+        if (CanJump)
         {
-          // 1. Lerp-rotate toward target (not snap!)
           var toTarget = PrimaryTarget.position - transform.position;
           toTarget.y = 0f;
-          var angleToTarget = Vector3.Angle(transform.forward, toTarget.normalized);
-          movementController.RotateTowardsDirection(toTarget, movementController.turnSpeed * 1.25f);
+          movementController.RotateTowardsDirection(toTarget, movementController.GetTurnSpeed());
 
-          // 2. Only leap if *almost* facing the target
+          var angleToTarget = Vector3.Angle(transform.forward, toTarget.normalized);
           if (angleToTarget < _attackYawThreshold)
           {
-            abilityManager?.RequestDodge(new Vector2(0, 1)); // Leap forward
+            abilityManager.RequestDodge(-Vector2.up);
           }
         }
-        else
+        else if (Random.value > 0.75f)
         {
           RetreatFromPrimaryTarget();
+        }
+        return;
+      }
+
+      // If within leap range and NOT being watched
+      if (inLeapRange && !abilityManager.IsDodging && huntBehaviorConfig.enableLeaping && !beingWatched)
+      {
+        // 1. Lerp-rotate toward target (not snap!)
+        var toTarget = PrimaryTarget.position - transform.position;
+        toTarget.y = 0f;
+        var angleToTarget = Vector3.Angle(transform.forward, toTarget.normalized);
+        movementController.RotateTowardsDirection(toTarget, movementController.GetTurnSpeed());
+
+        // 2. Only leap if *almost* facing the target
+        if (angleToTarget < _attackYawThreshold)
+        {
+          abilityManager.RequestLeapTowardEnemy();
+          // abilityManager?.RequestDodge(new Vector2(0, 1)); // Leap forward
         }
         return;
       }
@@ -446,16 +628,24 @@ namespace Eldritch.Core
         case HuntBehaviorState.Pausing:
           var toEnemy = PrimaryTarget.position - transform.position;
           toEnemy.y = 0f;
-          movementController.RotateTowardsDirection(toEnemy, movementController.turnSpeed);
+          movementController.RotateTowardsDirection(toEnemy, movementController.GetTurnSpeed());
           movementController.BrakeHard();
           return;
 
         case HuntBehaviorState.Creeping:
           if (!huntBehaviorConfig.enableCreeping) return;
+          if (PrimaryTarget == null) return;
+          if (DeltaPrimaryTarget < huntBehaviorConfig.minCreepDistance)
+          {
+            huntBehaviorState.creepDirection = -1;
+          }
 
-          var to = PrimaryTarget.position - transform.position;
+
+          var tgtPos = PrimaryTarget.position;
+          var to = tgtPos - transform.position;
           to.y = 0f;
 
+          movementController.RotateTowardsDirection(to, movementController.GetTurnSpeed());
           // movementController.DebugSimRouteTo(PrimaryTarget.position);
 
           // Only try to climb if **actually** blocked in the forward direction
@@ -463,7 +653,31 @@ namespace Eldritch.Core
           //     movementController.TryWallClimbWhenBlocked(to))
           //   return;
 
-          FollowPathOrChase(PrimaryTarget.position);
+          if (huntBehaviorState.creepDirection == 1)
+          {
+            // existing forward creep/chase path
+            FollowPathOrChase(tgtPos);
+          }
+          else
+          {
+            // RETREAT CREEP capped at circling max radius
+            var ringR = huntBehaviorConfig.maxCircleRadius;
+            if (!TryBackpedalToRing(ringR))
+            {
+              // If we can’t/path not ready, gracefully fall back to a tiny step away while facing target,
+              // but *only* if we’re still inside the ring.
+              if (DeltaPrimaryTarget < ringR - 0.05f)
+                movementController.MoveAwayFromTarget(
+                    tgtPos,
+                    movementController.closeMoveSpeed * huntBehaviorState.creepSpeedMultiplier,
+                    movementController.closeAccelForce * 0.6f,
+                    movementController.GetTurnSpeed()
+                  )
+                  ;
+              else
+                movementController.BrakeHard();
+            }
+          }
 
           return;
 
@@ -482,11 +696,10 @@ namespace Eldritch.Core
             cfg.circleRadiusFactor,
             (corner) => movementController.MoveTowardsTarget(
               corner,
-              movementController.moveSpeed,
-              movementController.AccelerationForceSpeed,
-              movementController.turnSpeed),
+              movementController.GetMoveSpeed(),
+              movementController.GetAccelForce(), movementController.GetTurnSpeed()),
             () =>
-              movementController.CircleAroundTarget(PrimaryTarget, huntBehaviorState.circleDirection, cfg.circleMoveSpeed)
+              movementController.CircleAroundTarget(PrimaryTarget, huntBehaviorState.circleDirection, huntBehaviorConfig.circleMoveSpeed)
           );
 
           // var speedFluxCircling = Random.Range(0.75f, 1.25f);
@@ -536,30 +749,101 @@ namespace Eldritch.Core
       {
         Update_Death,
         Update_Flee,
+        Update_Roam,
         Update_HuntBehavior,
         Update_AttackTargetBehavior,
-        Update_Roam,
         Update_SleepBehavior
       };
+    }
+
+    public float lastAudioUpdate = 0f;
+    public float audioUpdateInterval = 5f;
+
+    public void PlayAudioForCurrentBehavior(string behaviorBailName)
+    {
+      if (Time.time > lastAudioUpdate + audioUpdateInterval)
+      {
+        lastAudioUpdate = Time.time;
+      }
+      else
+      {
+        return;
+      }
+
+      var shouldMakeSound = Random.value > 0.5f;
+      if (!shouldMakeSound) return;
+
+      if (behaviorBailName == nameof(Update_Death))
+      {
+        // play hurt 1x time then stop...b/c it's dead
+        audioController.PlayHurt();
+      }
+
+      if (behaviorBailName == nameof(Update_Flee))
+      {
+        audioController.PlayHurt();
+      }
+
+      if (behaviorBailName == nameof(Update_Flee))
+      {
+        audioController.PlayRoar();
+      }
+
+      if (behaviorBailName == nameof(Update_HuntBehavior))
+      {
+        // skip out on this half the time
+        if (Random.value > 0.5f) return;
+
+        if (huntBehaviorState.State == HuntBehaviorState.MovingAway || huntBehaviorState.State == HuntBehaviorState.Circling || huntBehaviorState.State == HuntBehaviorState.Circling)
+        {
+          // audioController.PlayIdle();
+          return;
+        }
+        else if (huntBehaviorState.State == HuntBehaviorState.Creeping)
+        {
+          audioController.PlayHiss();
+        }
+        else
+        {
+          audioController.PlayRoar();
+        }
+      }
+
+      if (behaviorBailName == nameof(Update_AttackTargetBehavior))
+      {
+        audioController.PlayRoar();
+      }
     }
 
     public void UpdateAllBehaviors()
     {
       if (IsDead() || IsSleeping()) return;
 
+      if (_behaviorUpdaters.Count == 0)
+      {
+        BindBehaviors();
+      }
+
       UpdatePrimaryTarget();
 
       // Call each updater until one returns true (bail).
       var hasBailed = false;
+      var behaviorBailName = "";
       foreach (var behaviorUpdater in _behaviorUpdaters)
       {
         var result = behaviorUpdater.Invoke();
         if (!result) continue;
         // (Optional) Log bailing for dev debugging
-        LoggerProvider.LogDevDebounced($"Bailed on {behaviorUpdater.Method.Name}");
+        behaviorBailName = behaviorUpdater.Method.Name;
+        LoggerProvider.LogDev($"Bailed on {behaviorBailName}");
         hasBailed = true;
         break;
       }
+
+      // prevents infinity animation attack loops
+      SyncAttackAnimState();
+      PlayAudioForCurrentBehavior(behaviorBailName);
+
       if (hasBailed) return;
     }
 
@@ -584,6 +868,7 @@ namespace Eldritch.Core
         {
           CurrentState = XenoAIState.Flee;
         }
+
         // FleeTowardSafeAllyOrRunAway();
         return true;
       }
@@ -598,11 +883,20 @@ namespace Eldritch.Core
 
     public bool Update_HuntBehavior()
     {
+      var canAttack = huntBehaviorConfig.enableAttack && IsInAttackRange();
+      if (!canAttack && animationController.IsRunningAttack())
+      {
+        animationController.StopAttack();
+      }
       // early bail if we are in range and can attack.
-      if (huntBehaviorConfig.enableAttack && IsInAttackRange())
+      if (canAttack)
       {
         var percentage = Random.value;
-        if (percentage > huntBehaviorConfig.probAttackInRange) return false;
+        if (percentage > huntBehaviorConfig.probAttackInRange)
+        {
+          LoggerProvider.LogDebugDebounced("Skipping attack this frame.");
+          return false;
+        }
       }
 
       huntBehaviorState.SyncSharedData(new BehaviorStateSync
@@ -634,15 +928,26 @@ namespace Eldritch.Core
       // Option 1: Back away while facing target
       movementController.MoveAwayFromTarget(
         PrimaryTarget.position,
-        movementController.moveSpeed,
-        movementController.AccelerationForceSpeed * 0.5f,
-        movementController.turnSpeed
+        movementController.GetMoveSpeed(),
+        movementController.GetAccelForce() * 0.5f,
+        movementController.GetTurnSpeed()
       );
-      animationController.PointHeadTowardTarget(transform, PrimaryTarget);
+      animationController.PointHeadTowardTarget(PrimaryTarget);
+    }
+
+    public void SyncAttackAnimState()
+    {
+      if (!IsAttacking() && animationController.IsRunningAttack())
+      {
+        animationController.StopAttack();
+      }
     }
 
     public bool Update_Roam()
     {
+      var isInHuntOrAttackRange = IsInHuntingRange() || IsInAttackRange();
+      if (isInHuntOrAttackRange) return false;
+
       if (movementController.HasRoamTarget || movementController.TryUpdateCurrentWanderTarget())
       {
         CurrentState = XenoAIState.Roam;
@@ -656,7 +961,13 @@ namespace Eldritch.Core
 
     public void TryTriggerCamouflage()
     {
-      if (!huntBehaviorConfig.enableRandomCamouflage) return;
+      if (!CanCamouflage || !huntBehaviorConfig.enableRandomCamouflage) return;
+
+      var beingWatched = TargetingUtil.IsTargetLookingAtMe(PrimaryTarget, transform);
+
+      // do not activate camo when being observed by primary target.
+      if (beingWatched) return;
+
       var rand = Random.value;
       if (rand < huntBehaviorConfig.probCamouflage)
       {
@@ -667,13 +978,8 @@ namespace Eldritch.Core
     public bool Update_AttackTargetBehavior()
     {
       if (!PrimaryTarget) return false;
+      if (!huntBehaviorConfig.enableAttack) return false;
       var isInAttackRange = IsInAttackRange();
-
-      var chanceToAttack = Random.value;
-      if (chanceToAttack < 0.25f)
-      {
-        return false;
-      }
 
       if (isInAttackRange)
       {
@@ -703,7 +1009,7 @@ namespace Eldritch.Core
       return DeltaPrimaryTarget > huntBehaviorConfig.maxTargetDistance;
     }
 
-    public bool IsWithinHuntingRange()
+    public bool IsInHuntingRange()
     {
       if (!PrimaryTarget) return false;
       return DeltaPrimaryTarget >= huntBehaviorConfig.minHuntDistance && DeltaPrimaryTarget <= huntBehaviorConfig.maxTargetDistance;
@@ -712,7 +1018,7 @@ namespace Eldritch.Core
     public bool IsInLeapRange()
     {
       var minDodgeDistance = abilityManager.dodgeAbility.config.forwardDistance / 3f;
-      return DeltaPrimaryTarget < minDodgeDistance && DeltaPrimaryTarget < abilityManager.dodgeAbility.config.forwardDistance;
+      return DeltaPrimaryTarget > minDodgeDistance && DeltaPrimaryTarget < abilityManager.dodgeAbility.config.forwardDistance;
     }
 
     public bool IsInAttackRange()
@@ -745,19 +1051,46 @@ namespace Eldritch.Core
 
     // Put these inside XenoDroneAI (e.g., near bottom) to avoid new files.
 
-    #region Nav Runners (direct ValheimPathfinding)
+    #region Nav Runners (direct PathfindingAdapter)
 
+    private bool _losCached;
+    private float _losStableUntil;
     private bool HasClearLOS(Vector3 to)
     {
-      var from = transform.position + Vector3.up * 0.2f + transform.forward * 1f;
+      // use head if available, else chest height
+      var from = animationController && animationController.neckUpDown
+        ? animationController.neckUpDown.position
+        : transform.position + Vector3.up * 0.9f;
 
       var dir = to - from;
-      var result = !Physics.Raycast(from, dir.normalized, out var hit, dir.magnitude,
-        LayerMask.GetMask("Default", "static_solid", "piece", "terrain"));
-      Debug.DrawLine(from, to, result ? Color.green : Color.red);
+      var dist = dir.magnitude;
+      if (dist < 0.001f) return true;
 
-      return result;
+      var hit = Physics.SphereCast(from, 0.2f, dir.normalized, out _, dist,
+        LayerHelpers.GroundLayers);
+
+      var sensed = !hit;
+      var now = Time.time;
+      // 0.2s hysteresis to avoid mode thrash
+      const float hysteresis = 0.2f;
+
+      if (sensed != _losCached)
+      {
+        if (now >= _losStableUntil)
+        {
+          _losCached = sensed;
+          _losStableUntil = now + hysteresis;
+        }
+      }
+      else
+      {
+        _losStableUntil = now + hysteresis;
+      }
+
+      Debug.DrawLine(from, to, _losCached ? Color.green : Color.red);
+      return _losCached;
     }
+
 
     private void FollowPathOrChase(Vector3 targetPos)
     {
@@ -767,13 +1100,7 @@ namespace Eldritch.Core
         movementController.MoveChaseTarget(
           targetPos,
           null,
-          movementController.closeRange,
-          movementController.moveSpeed,
-          movementController.closeMoveSpeed,
-          movementController.AccelerationForceSpeed,
-          movementController.closeAccelForce,
-          movementController.turnSpeed,
-          movementController.closeTurnSpeed
+          movementController.GetTurnSpeed()
         );
         _nav.Clear();
         return;
@@ -796,9 +1123,9 @@ namespace Eldritch.Core
           // Move to the opening
           movementController.MoveTowardsTarget(
             ingressMovePoint,
-            movementController.moveSpeed,
-            movementController.AccelerationForceSpeed,
-            movementController.turnSpeed
+            movementController.GetMoveSpeed(),
+            movementController.GetAccelForce(),
+            movementController.GetTurnSpeed()
           );
 
           // If we’re at the hole, perform the drop/jump
@@ -817,13 +1144,13 @@ namespace Eldritch.Core
       {
         movementController.MoveTowardsTarget(
           corner,
-          movementController.moveSpeed,
-          movementController.AccelerationForceSpeed,
-          movementController.turnSpeed
-        );
+          movementController.distanceMoveSpeed,
+          movementController.distantAccelForce,
+          movementController.GetTurnSpeed());
       }
       else
       {
+
         movementController.BrakeHard(); // don’t ram walls when stuck
       }
     }
@@ -834,12 +1161,12 @@ namespace Eldritch.Core
       private int _i;
       private float _nextRepathAt;
 
-      public bool EnsurePath(Vector3 from, Vector3 to, ValheimPathfinding.AgentType agent, float cooldown = 0.5f)
+      public bool EnsurePath(Vector3 from, Vector3 to, PathfindingAgentType agent, float cooldown = 0.5f)
       {
         if (Time.time < _nextRepathAt && _i < _corners.Count) return true;
         _corners.Clear();
         _i = 0;
-        var ok = ValheimPathfinding.instance.GetPath(from, to, _corners, agent);
+        var ok = Pathfinding.GetPath(from, to, _corners, (int)agent);
         _nextRepathAt = Time.time + cooldown;
         return ok && _corners.Count > 0;
       }
@@ -871,7 +1198,7 @@ namespace Eldritch.Core
       private bool _haveAnchor;
       private float _nextPlanAt;
 
-      public ValheimPathfinding.AgentType agent = ValheimPathfinding.AgentType.Humanoid;
+      public PathfindingAgentType agent = PathfindingAgentType.Humanoid;
       public float cornerReach = 0.75f;
       public float arcDeg = 30f;
       public int samples = 8;
@@ -910,7 +1237,7 @@ namespace Eldritch.Core
         if (_path.Count == 0 && Time.time >= _nextPlanAt)
         {
           _nextPlanAt = Time.time + 0.35f;
-          if (!ValheimPathfinding.instance.GetPath(self.position, _anchor, _path, agent))
+          if (!Pathfinding.GetPath(self.position, _anchor, _path, (int)agent))
           {
             _haveAnchor = false;
             fallbackMove?.Invoke();
@@ -954,7 +1281,7 @@ namespace Eldritch.Core
           var rad = yaw * Mathf.Deg2Rad;
           var raw = new Vector3(Mathf.Cos(rad), 0, Mathf.Sin(rad)) * r + tgt;
 
-          if (!ValheimPathfinding.instance.FindValidPoint(out var candidate, raw, 2.5f, agent))
+          if (!Pathfinding.FindValidPoint(out var candidate, raw, 2.5f, (int)agent))
             continue;
 
           var toA = candidate - tgt;
@@ -962,7 +1289,7 @@ namespace Eldritch.Core
           var tangent = Quaternion.Euler(0, 90f * dir, 0) * toA.normalized;
           var progress = Vector3.Dot(tangent, (candidate - self).normalized);
 
-          var reachable = ValheimPathfinding.instance.HavePath(self, candidate, agent);
+          var reachable = Pathfinding.HavePath(self, candidate, (int)agent);
           var reachBonus = reachable ? 1f : -2f;
           var distScore = -Vector3.Distance(self, candidate) * 0.1f;
 
