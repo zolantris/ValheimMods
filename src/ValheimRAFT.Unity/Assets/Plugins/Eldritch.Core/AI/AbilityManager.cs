@@ -94,7 +94,7 @@ namespace Eldritch.Core
 
       if (!ok) return false;
 
-      var skip = new[] { "Tail" };
+      var skip = new List<string> { "Tail" };
       animationController.PlayJump(skip);
 
 
@@ -120,7 +120,7 @@ namespace Eldritch.Core
         if (hasRun)
         {
           // todo rig jump + tail attack. Otherwise we have to use running animation + attack
-          var skipTransforms = new[] { "Tail" };
+          var skipTransforms = new List<string> { "Tail" };
           animationController.PlayJump(skipTransforms);
           if (IsForwardDodge(dir))
           {

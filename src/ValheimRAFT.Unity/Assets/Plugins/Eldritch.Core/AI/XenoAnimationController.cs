@@ -152,16 +152,17 @@ namespace Eldritch.Core
 
       LateUpdate_TailExtension();
 
+      // clears/updates all poses for next frame.
       if (_latePoseDirty && _latePoseTargets.Count > 0)
       {
         foreach (var kv in _latePoseTargets)
         {
-          var t = kv.Key;
-          if (!t) continue;
-          var jp = kv.Value;
-          t.localPosition = jp.Position;
-          t.localRotation = jp.Rotation;
+          var data = kv.Value;
+          if (!data.transform) continue;
+          data.transform.localPosition = data.Position;
+          data.transform.localRotation = data.Rotation;
         }
+
         _latePoseTargets.Clear();
         _latePoseDirty = false;
       }
@@ -396,7 +397,7 @@ namespace Eldritch.Core
       _jumpAnimationRoutine.Stop();
     }
 
-    public void PlayJump(string[] skipTransformNames = null)
+    public void PlayJump(List<string> skipTransformNames = null)
     {
       if (_jumpAnimationRoutine.IsRunning) return;
 
@@ -514,7 +515,7 @@ namespace Eldritch.Core
       // or posSnapshot
 
       var skipTransformNames = new List<string> { "XenosBiped_Neck_TopSHJnt" };
-      _tailAttackTransitionRoutine.Start(LerpBetweenPoses(TailAttackTransitions, skipTransformNames.ToArray()));
+      _tailAttackTransitionRoutine.Start(LerpBetweenPoses(TailAttackTransitions, skipTransformNames));
     }
 
     [ContextMenu("Apply Selected Variant Pose")]
@@ -740,14 +741,16 @@ namespace Eldritch.Core
     /// </summary>
     public void PlayAttack(int attackMode, bool canRandomize = false, bool isSingle = false)
     {
-      EnableAttackColliders(attackMode);
-      if (canRandomize)
+      if (canRandomize && _cachedAttackMode != 1)
       {
         TryRandomizeAttackMode();
       }
       else
       {
-        SetAttackMode(attackMode);
+        if (attackMode != _cachedAttackMode)
+        {
+          SetAttackMode(attackMode);
+        }
       }
 
       if (isSingle)
@@ -756,8 +759,14 @@ namespace Eldritch.Core
       }
       else
       {
-        animator.SetBool(Attack, true);
+        if (!animator.GetBool(Attack))
+        {
+          animator.SetBool(Attack, true);
+        }
       }
+
+      // must be run last as this will check the animator state (not the data)
+      EnableAttackColliders();
     }
 
     public bool IsRunningAttack()
@@ -768,14 +777,65 @@ namespace Eldritch.Core
     public void StopAttack()
     {
       DisableAttackColliders();
+      if (!animator.GetBool(Attack)) return;
       animator.SetBool(Attack, false);
+    }
+
+    // Potential skip keys "Toe", "Leg", "Finger" "Thumb" "Spine"
+    public static readonly List<string> _skippedTailAttackKeys = GetSkipKeys(XenoAnimationPoses.TailAttack_ChargeTail, new List<string> { "XenosBiped_Neck_TopSHJnt", "XenosBiped_Head_JawSHJnt", "Neck" });
+
+    public void TailAttackManualAnimation_Start()
+    {
+      SnapshotCurrentPose();
+      var startPosition = new PoseTransition
+      {
+        PoseData = poseSnapshot,
+        Speed = 0.25f
+      };
+      var returnPosition = new PoseTransition
+      {
+        PoseData = poseSnapshot,
+        Speed = 0.25f
+      };
+      var transitions = new List<PoseTransition> {};
+
+      transitions.Add(startPosition);
+      transitions.AddRange(TailAttackTransitions);
+      transitions.Add(returnPosition);
+
+
+      _tailAttackTransitionRoutine.Start(LerpBetweenPoses(transitions, _skippedTailAttackKeys, () =>
+      {
+        animator.SetTrigger(ManualAttackCompleteTrigger);
+      }));
+    }
+
+    public void TailAttackManualAnimation_Stop()
+    {
+      // do not run if there is no routine running.
+      if (!_tailAttackTransitionRoutine.IsRunning) return;
+      _tailAttackTransitionRoutine.Stop();
+      foreach (var latePoseTarget in _latePoseTargets)
+      {
+        if (_skippedTailAttackKeys.Contains(latePoseTarget.Key))
+        {
+          _latePoseTargets.Remove(latePoseTarget.Key);
+        }
+      }
     }
 
     public void SetAttackMode(int mode)
     {
       attack_nextUpdateTime = Time.fixedTime + nextUpdateInterval;
       _cachedAttackMode = mode;
+
+      // do nothing if same value.
+      if (animator.GetInteger(AttackMode) == _cachedAttackMode) return;
       animator.SetInteger(AttackMode, _cachedAttackMode);
+      if (animator.GetInteger(AttackMode) == 1 && mode == 0)
+      {
+        TailAttackManualAnimation_Stop();
+      }
     }
 
     public void TryRandomizeAttackMode()
@@ -814,20 +874,16 @@ namespace Eldritch.Core
     /// <summary>
     ///   Enables and disables attack colliders based on attack type
     /// </summary>
-    /// <param name="attackMode"></param>
-    public void EnableAttackColliders(int attackMode)
+    public void EnableAttackColliders()
     {
-      var isArmAttack = attackMode == 0;
-      var isTailAttack = attackMode == 1;
-
-      if (isArmAttack)
+      if (IsArmAttack())
       {
         ToggleColliderList(attackArmColliders, true);
         ToggleColliderList(attackTailColliders, false);
         return;
       }
 
-      if (isTailAttack)
+      if (IsTailAttack())
       {
         ToggleColliderList(attackTailColliders, true);
         ToggleColliderList(attackArmColliders, false);
@@ -857,10 +913,26 @@ namespace Eldritch.Core
       // neckUpDown.localRotation = Quaternion.Euler(x, yaw, ztilt);
     }
 
-    public static string[] GetCommonKeys(Dictionary<string, JointPose> a, Dictionary<string, JointPose> b, string[] skipTransformNames = null)
+    public static List<string> GetSkipKeys(Dictionary<string, JointPose> poseDictionary, List<string> skipTransformNames = null)
     {
       Regex skipRegexp = null;
-      if (skipTransformNames != null && skipTransformNames.Length > 0)
+      if (skipTransformNames is { Count: > 0 })
+      {
+        // Looser variant: match if *any* of the provided names appears in the key.
+        // Escape each name to avoid regex metacharacters, then join with '|'.
+        var pattern = string.Join("|", skipTransformNames.Select(Regex.Escape));
+        skipRegexp = new Regex(pattern, RegexOptions.IgnoreCase | RegexOptions.Compiled);
+      }
+
+      return poseDictionary.Keys
+        .Where(key => skipRegexp == null || skipRegexp.IsMatch(key))
+        .ToList();
+    }
+
+    public static List<string> GetCommonKeys(Dictionary<string, JointPose> a, Dictionary<string, JointPose> b, List<string> skipTransformNames = null)
+    {
+      Regex skipRegexp = null;
+      if (skipTransformNames != null && skipTransformNames.Count > 0)
       {
         // No anchors: pattern is e.g. "spine|neck|tail", so any name containing any of those will match
         var pattern = string.Join("|", skipTransformNames);
@@ -875,11 +947,11 @@ namespace Eldritch.Core
         keys.Add(key);
       }
 
-      return keys.ToArray();
+      return keys;
     }
 
     public IEnumerator LerpBetweenPoses(List<PoseTransition> poses,
-      string[] skipTransformNames = null, [CanBeNull] Action onComplete = null)
+      List<string> skipTransformNames = null, [CanBeNull] Action onComplete = null)
     {
       var len = poses.Count;
       for (var index = 0; index < len - 1; index++)
@@ -953,7 +1025,7 @@ namespace Eldritch.Core
       float crouchDuration,
       float airMinWaitTime,
       float standDuration,
-      string[] skipTransformNames = null,
+      List<string> skipTransformNames = null,
       Action onComplete = null)
     {
       animator.SetBool(JumpTrigger, true);
@@ -998,8 +1070,8 @@ namespace Eldritch.Core
       Dictionary<string, Transform> allJoints,
       Dictionary<string, JointPose> startPose,
       Dictionary<string, JointPose> endPose,
-      string[] skipTransformNames,
-      string[] commonKeys,
+      List<string> skipTransformNames,
+      List<string> commonKeys,
       float duration,
       [CanBeNull] AnimationCurve progressCurve = null)
     {
@@ -1007,10 +1079,9 @@ namespace Eldritch.Core
       if (duration <= 0f) duration = 0.0001f;
 
       // Resolve once to avoid dictionary lookups per-iteration
-      var jointList = new List<(Transform tr, JointPose a, JointPose b)>(commonKeys.Length);
-      for (var i = 0; i < commonKeys.Length; i++)
+      var jointList = new List<(Transform tr, JointPose a, JointPose b)>(commonKeys.Count);
+      foreach (var key in commonKeys)
       {
-        var key = commonKeys[i];
         if (!allJoints.TryGetValue(key, out var tr) || !tr) continue;
         var a = startPose[key];
         var b = endPose[key];
@@ -1024,12 +1095,11 @@ namespace Eldritch.Core
         var tt = progressCurve != null ? Mathf.Clamp01(progressCurve.Evaluate(t)) : t;
 
         // Fill LateUpdate buffer (no direct transform writes here)
-        for (var i = 0; i < jointList.Count; i++)
+        foreach (var (tr, a, b) in jointList)
         {
-          var (tr, a, b) = jointList[i];
           var pos = Vector3.LerpUnclamped(a.Position, b.Position, tt);
           var rot = Quaternion.SlerpUnclamped(a.Rotation, b.Rotation, tt);
-          _latePoseTargets[tr] = new JointPose(pos, rot);
+          _latePoseTargets[tr.name] = new JointPose(pos, rot, tr);
         }
         _latePoseDirty = true;
 
@@ -1038,10 +1108,9 @@ namespace Eldritch.Core
       }
 
       // Final snap (enqueue end pose one last time, LateUpdate will apply)
-      for (var i = 0; i < jointList.Count; i++)
+      foreach (var (tr, _, b) in jointList)
       {
-        var (tr, _, b) = jointList[i];
-        _latePoseTargets[tr] = b;
+        _latePoseTargets[tr.name] = b;
       }
       _latePoseDirty = true;
 
@@ -1368,8 +1437,18 @@ namespace Eldritch.Core
       return false;
     }
 
-    private readonly Dictionary<Transform, JointPose> _latePoseTargets = new(128);
+    private readonly Dictionary<string, JointPose> _latePoseTargets = new();
     private bool _latePoseDirty;
+
+    public bool IsArmAttack()
+    {
+      return animator.GetInteger(AttackMode) == 0;
+    }
+
+    public bool IsTailAttack()
+    {
+      return animator.GetInteger(AttackMode) == 1;
+    }
 
     private void LateUpdate_TailExtension()
     {
@@ -1379,39 +1458,10 @@ namespace Eldritch.Core
 
       // Prefer explicit state detection (works with trigger-based attacks too),
       // otherwise fall back to parameter gating.
-      var hasStateInfo = TryGetTailAttackStateInfo(out var stateLayer, out var stateInfo);
-      var isTailMode = animator.GetInteger(AttackMode) == 1 || _cachedAttackMode == 1 && animator.GetBool(Attack);
-      var inTailAttack = hasStateInfo || isTailMode;
 
-
-      if (inTailAttack && !_tailAttackTransitionRoutine.IsRunning)
+      if (IsTailAttack() && !_tailAttackTransitionRoutine.IsRunning)
       {
-        SnapshotCurrentPose();
-        var startPosition = new PoseTransition
-        {
-          PoseData = poseSnapshot,
-          Speed = 0.25f
-        };
-        var returnPosition = new PoseTransition
-        {
-          PoseData = poseSnapshot,
-          Speed = 0.25f
-        };
-        var transitions = new List<PoseTransition> {};
-
-        transitions.Add(startPosition);
-        transitions.AddRange(TailAttackTransitions);
-        transitions.Add(returnPosition);
-
-        var ignoredStrings = XenoAnimationPoses.TailAttack_PierceSwing1.Select(kvp => kvp.Key).Where(x => !x.Contains("ROOT") && !x.Contains("Leg") && !x.Contains("Toe") && !x.Contains("Finger") && !x.Contains("Arm") && !x.Contains("Thumb") && !x.Contains("Back") && !x.Contains("Neck") && !x.Contains("Spine")).ToList();
-
-        var skipTransformNames = new List<string> { "XenosBiped_Neck_TopSHJnt", "XenosBiped_Head_JawSHJnt" };
-        skipTransformNames.AddRange(ignoredStrings);
-
-        _tailAttackTransitionRoutine.Start(LerpBetweenPoses(transitions, skipTransformNames.ToArray(), () =>
-        {
-          animator.SetTrigger(ManualAttackCompleteTrigger);
-        }));
+        TailAttackManualAnimation_Start();
       }
 
       // Debug can force the effect always-on

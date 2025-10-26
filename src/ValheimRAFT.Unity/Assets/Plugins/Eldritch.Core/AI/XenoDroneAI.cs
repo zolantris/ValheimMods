@@ -138,6 +138,11 @@ namespace Eldritch.Core
       BindBehaviors();
     }
 
+    private void Start()
+    {
+      BindBehaviors();
+    }
+
     private void Update()
     {
       animationController.ResetBloodCooldown();
@@ -814,7 +819,10 @@ namespace Eldritch.Core
     {
       if (IsDead() || IsSleeping()) return;
 
-
+      if (_behaviorUpdaters.Count == 0)
+      {
+        BindBehaviors();
+      }
 
       UpdatePrimaryTarget();
 
@@ -884,7 +892,11 @@ namespace Eldritch.Core
       if (canAttack)
       {
         var percentage = Random.value;
-        if (percentage > huntBehaviorConfig.probAttackInRange) return false;
+        if (percentage > huntBehaviorConfig.probAttackInRange)
+        {
+          LoggerProvider.LogDebugDebounced("Skipping attack this frame.");
+          return false;
+        }
       }
 
       huntBehaviorState.SyncSharedData(new BehaviorStateSync
@@ -968,12 +980,6 @@ namespace Eldritch.Core
       if (!PrimaryTarget) return false;
       if (!huntBehaviorConfig.enableAttack) return false;
       var isInAttackRange = IsInAttackRange();
-
-      var chanceToAttack = Random.value;
-      if (chanceToAttack < 0.25f)
-      {
-        return false;
-      }
 
       if (isInAttackRange)
       {
