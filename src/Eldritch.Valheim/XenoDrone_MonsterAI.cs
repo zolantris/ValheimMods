@@ -42,14 +42,14 @@ public class XenoDrone_MonsterAI : MonsterAI
     }
   }
 
-  public void HandleHitTarget((XenoHitboxType type, XenoAttackHitbox hitbox, Collider other, GameObject targetRoot, float dmgAmount) args)
+  public void HandleHitTarget((XenoHitboxType type, XenoAttackHitbox hitbox, Collider other, GameObject targetRoot) args)
   {
-    var (type, hitbox, other, targetRoot, dmgAmount) = args;
+    var (type, hitbox, other, targetRoot) = args;
     // Prefer Characters (players/NPCs)
     var hitCharacter = targetRoot.GetComponentInParent<Character>();
     if (hitCharacter != null)
     {
-      ApplyCharacterDamage(hitCharacter, other, type, dmgAmount);
+      ApplyCharacterDamage(hitCharacter, other, type);
       return;
     }
 
@@ -57,7 +57,7 @@ public class XenoDrone_MonsterAI : MonsterAI
     var wnt = targetRoot.GetComponentInParent<WearNTear>();
     if (wnt != null)
     {
-      ApplyWearNTearDamage(wnt, other, type, dmgAmount);
+      ApplyWearNTearDamage(wnt, other, type);
       return;
     }
 
@@ -66,7 +66,7 @@ public class XenoDrone_MonsterAI : MonsterAI
     // if (destructible != null) { destructible.Hit(...); return; }
   }
 
-  private void ApplyCharacterDamage(Character character, Collider other, XenoHitboxType type, float amount)
+  private void ApplyCharacterDamage(Character character, Collider other, XenoHitboxType type)
   {
     var p = other.ClosestPoint(transform.position);
     var dir = (character.transform.position - p).normalized;
@@ -76,8 +76,15 @@ public class XenoDrone_MonsterAI : MonsterAI
       m_point = p,
       m_dir = dir,
       m_hitType = HitData.HitType.EnemyHit,
-      m_pushForce = 0f,
-      m_attacker = character.GetZDOID(),
+      m_staggerMultiplier = 50, // todo set this.
+      m_pushForce = 3f,
+      m_hitCollider = other,
+      m_attacker = xenoCharacter.GetZDOID(),
+      m_blockable = false,
+      m_dodgeable = false,
+      m_ranged = false,
+      m_toolTier = 99,
+      m_radius = 0,
       m_damage = GetDamageFromType(type)
     };
 
@@ -89,7 +96,7 @@ public class XenoDrone_MonsterAI : MonsterAI
     return type == XenoHitboxType.Arm ? EldritchPrefabRegistry.XenoDroneArmDamage : EldritchPrefabRegistry.XenoDroneTailDamage;
   }
 
-  private void ApplyWearNTearDamage(WearNTear wnt, Collider other, XenoHitboxType type, float amount)
+  private void ApplyWearNTearDamage(WearNTear wnt, Collider other, XenoHitboxType type)
   {
     var p = other.ClosestPoint(transform.position);
     var dir = (wnt.transform.position - p).normalized;
@@ -99,21 +106,18 @@ public class XenoDrone_MonsterAI : MonsterAI
       m_point = p,
       m_dir = dir,
       m_hitType = HitData.HitType.EnemyHit,
+      m_pushForce = 3f,
+      m_hitCollider = other,
+      m_blockable = false,
+      m_dodgeable = false,
+      m_ranged = false,
+      m_toolTier = 99,
+      m_radius = 0,
       m_attacker = xenoCharacter.GetZDOID(),
       m_damage = GetDamageFromType(type)
     };
 
     wnt.Damage(hd);
-  }
-
-  public void OnCollisionEnter(Collision other)
-  {
-    LoggerProvider.LogDebugDebounced($"Hit collider: {other.collider.name} layer: {other.gameObject.layer} root: {other.transform.root.name}");
-  }
-
-  public void OnTriggerEnter(Collider other)
-  {
-    LoggerProvider.LogDebugDebounced($"Hit collider: {other.name} layer: {other.gameObject.layer} root: {other.transform.root.name}");
   }
 
   public bool MonsterUpdateAIMethod(float dt)

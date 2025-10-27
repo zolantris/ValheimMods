@@ -15,9 +15,7 @@ ModelImporter:
     resampleCurves: 1
     optimizeGameObjects: 0
     removeConstantScaleCurves: 1
-    motionNodeName: 
-    rigImportErrors: 
-    rigImportWarnings: 
+    motionNodeName: <Root Transform>
     animationImportErrors: 
     animationImportWarnings: 
     animationRetargetingWarnings: 
@@ -457,8 +455,8 @@ ModelImporter:
       name: attack_arms
       takeName: alien_xenos_drone_SK_Xenos_Drone_skeleton|attack_arms
       internalID: -6156271255650111601
-      firstFrame: 0
-      lastFrame: 57
+      firstFrame: 6
+      lastFrame: 55
       wrapMode: 0
       orientationOffsetY: 0
       level: 0
@@ -1665,7 +1663,7 @@ ModelImporter:
     legStretch: 0.05
     feetSpacing: 0
     globalScale: 1.5
-    rootMotionBoneName: 
+    rootMotionBoneName: alien_xenos_drone_SK_Xenos_Drone
     hasTranslationDoF: 0
     hasExtraRoot: 1
     skeletonHasParents: 1

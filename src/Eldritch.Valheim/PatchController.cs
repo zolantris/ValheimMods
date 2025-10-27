@@ -12,7 +12,8 @@ public static class PatchController
     _harmonyInstance = new Harmony(harmonyGuid);
 
     HarmonyHelper.TryPatchAll(_harmonyInstance,
-      typeof(Patch_Humanoid)
+      typeof(Patch_Humanoid),
+      typeof(Patch_Character)
     );
   }
 

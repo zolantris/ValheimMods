@@ -19,6 +19,9 @@ namespace Eldritch.Core
     /// <summary>Duration in seconds for this transition (applies when this is the *next* pose).</summary>
     public float Speed;
 
+    [CanBeNull] public Action OnStart;
+    [CanBeNull] public Action OnEnd;
+
     /// <summary>
     /// Progress/easing curve for this transition (applies when this is the *next* pose).
     /// Evaluated with input t in [0..1]. If null, uses linear (t).
@@ -57,6 +60,7 @@ namespace Eldritch.Core
 
     [Header("Animation Transforms")]
     public Transform xenoAnimatorRoot;
+    public Transform animationOffset;
     public Transform xenoMeshSkin, xenoRoot, spine01, spine02, spine03, spineTop, neckUpDown, neckPivot;
     public Transform leftHip, rightHip, leftArm, rightArm, tailRoot, leftToeTransform, rightToeTransform;
     public float UpdatePauseTime = 2f;
@@ -126,8 +130,12 @@ namespace Eldritch.Core
 
     public Vector2 neckRangeX = new(-40f, 40f);
     public Vector2 neckRotationZRange = new(-40f, 40f);
-    public Vector3 neckPivotStartRotation = new(0f, 0f, 35f);
+    public Vector3 neckPivotStartRotation = new(0f, 0f, 90f);
     public Vector3 neckUpDownStartRotation = new(0f, 0f, 40f);
+
+    // offset for animation root (some animations do not align perfectly)
+    [NonSerialized] private Vector3 baseAnimationPosition = new(0, -0.7f, -0.48f);
+    [NonSerialized] private Vector3 armAttackOffsetPosition = new(0, -0.5f, 0.2f);
 
     private void Awake()
     {
@@ -152,9 +160,24 @@ namespace Eldritch.Core
         neckUpDown.localRotation = Quaternion.Euler(neckUpDownAngle);
       }
 
+      // Do not allow attack colliders after animation is in transition
+      if (!IsAnimatingArmAttack() && !IsAnimatingTailAttack())
+      {
+        DisableAttackColliders();
+      }
+
       if (OwnerAI.PrimaryTarget && OwnerAI.IsInAttackReachRange() || OwnerAI.IsInHuntingRange())
       {
         PointHeadTowardTarget(OwnerAI.PrimaryTarget);
+      }
+
+      if (IsAnimatingArmAttack())
+      {
+        animationOffset.localPosition = Vector3.Lerp(animationOffset.localPosition, baseAnimationPosition + armAttackOffsetPosition, 0.5f);
+      }
+      else
+      {
+        animationOffset.localPosition = Vector3.Lerp(animationOffset.localPosition, baseAnimationPosition, Time.deltaTime * 5f);
       }
 
       if (IsAnimatingTailAttack() && !_tailAttackTransitionRoutine.IsRunning)
@@ -374,7 +397,7 @@ namespace Eldritch.Core
       new PoseTransition
       {
         PoseData = XenoAnimationPoses.TailAttack_PierceSwing1,
-        Speed = 0.2f
+        Speed = 0.05f
       },
       // new()
       // {
@@ -385,15 +408,7 @@ namespace Eldritch.Core
       {
         PoseData = XenoAnimationPoses.TailAttack_HitPierce,
         Speed = 0.1f,
-        Pause = 0.125f,
         SpeedCurve = curveEaseOut
-      },
-      // return back to Idle pose
-      new PoseTransition
-      {
-        PoseData = XenoAnimationPoses.Idle,
-        Speed = 0.4f,
-        SpeedCurve = curveEaseIn // slow start fast end
       }
     };
 
@@ -514,9 +529,9 @@ namespace Eldritch.Core
     public void BindUnOptimizedRoots()
     {
       xenoAnimatorRoot = transform.Find("Visual") ?? transform;
-      var offset = xenoAnimatorRoot.Find("drone_parent_offset");
-      xenoMeshSkin = offset.Find("alien_xenos_drone_SK_Xenos_Drone");
-      xenoRoot = offset.Find("alien_xenos_drone_SK_Xenos_Drone_skeleton/XenosBiped_TrajectorySHJnt/XenosBiped_ROOTSHJnt");
+      animationOffset = xenoAnimatorRoot.Find("drone_parent_offset");
+      xenoMeshSkin = animationOffset.Find("alien_xenos_drone_SK_Xenos_Drone");
+      xenoRoot = animationOffset.Find("alien_xenos_drone_SK_Xenos_Drone_skeleton/XenosBiped_TrajectorySHJnt/XenosBiped_ROOTSHJnt");
       spine01 = xenoRoot.Find("XenosBiped_Spine_01SHJnt");
       spine02 = spine01.Find("XenosBiped_Spine_02SHJnt");
       spine03 = spine02.Find("XenosBiped_Spine_03SHJnt");
@@ -652,7 +667,6 @@ namespace Eldritch.Core
 
       var armAttack = _cachedAttackMode == 0;
       var tailAttack = _cachedAttackMode == 1;
-      EnableAttackColliders(armAttack, tailAttack);
       // if (!isUnchanged)
       // {
       //   var armAttack = _cachedAttackMode == 0;
@@ -664,6 +678,12 @@ namespace Eldritch.Core
       // calling PlayAttack should trigger the attack animation is nothing is running
       if (!IsAnimatingArmAttack() && !IsAnimatingTailAttack())
       {
+        // tail attack can enable mid animation but arm attack is full animation. We would have to time the animation to enable the collider. so we delay it for now
+        if (armAttack)
+        {
+          EnableAttackCollidersDelayed(true, false, 0.1f);
+        }
+        // todo add a combo attack option.
         animator.SetTrigger(AttackSingle);
       }
     }
@@ -684,8 +704,9 @@ namespace Eldritch.Core
 
     // Potential skip keys "Toe", "Leg", "Finger" "Thumb" "Spine"
     public static readonly List<string> _skippedTailAttackKeys = GetSkipKeys(XenoAnimationPoses.TailAttack_ChargeTail, new List<string> { "XenosBiped_Neck_TopSHJnt", "XenosBiped_Head_JawSHJnt" });
+    public static readonly List<string> _skippedTailAttackKeysTailOnly = GetSkipKeys(XenoAnimationPoses.TailAttack_ChargeTail, new List<string> { "XenosBiped_Neck_TopSHJnt", "XenosBiped_Head_JawSHJnt", "Knee", "Toe", "Finger", "Arm", "Leg", "Head", "Spine" });
 
-    public void TailAttackManualAnimation_Start()
+    public void TailAttackManualAnimation_Start(List<string> skipKeys = null)
     {
       SnapshotCurrentPose();
       var startPosition = new PoseTransition
@@ -696,16 +717,39 @@ namespace Eldritch.Core
       var returnPosition = new PoseTransition
       {
         PoseData = poseSnapshot,
-        Speed = 0.25f
+        Speed = 0.55f
       };
+      var pierceHitAndCurve = new PoseTransition
+      {
+        PoseData = XenoAnimationPoses.TailAttack_HitPierce_ToGround,
+        Speed = 0.05f,
+        Pause = 0.15f,
+        OnStart = () =>
+        {
+          foreach (var attackTailCollider in attackTailColliders)
+          {
+            attackTailCollider.enabled = true;
+          }
+        },
+        OnEnd = () =>
+        {
+          foreach (var attackTailCollider in attackTailColliders)
+          {
+            attackTailCollider.enabled = false;
+          }
+        },
+        SpeedCurve = curveEaseOut
+      };
+
       var transitions = new List<PoseTransition> {};
 
       transitions.Add(startPosition);
       transitions.AddRange(TailAttackTransitions);
+      transitions.Add(pierceHitAndCurve);
       transitions.Add(returnPosition);
 
 
-      _tailAttackTransitionRoutine.Start(LerpBetweenPoses(transitions, _skippedTailAttackKeys, () =>
+      _tailAttackTransitionRoutine.Start(LerpBetweenPoses(transitions, skipKeys ?? _skippedTailAttackKeys, () =>
       {
         animator.SetTrigger(ManualAttackCompleteTrigger);
       }));
@@ -790,8 +834,28 @@ namespace Eldritch.Core
     /// </summary>
     public void EnableAttackColliders(bool armAttack, bool tailAttack)
     {
+      IsDelayInvoked = false;
       ToggleColliderList(attackArmColliders, armAttack);
       ToggleColliderList(attackTailColliders, tailAttack);
+    }
+
+    public bool IsDelayInvoked = false;
+    /// <summary>
+    /// Used to delay enabling the attack collider so the collider is enabled near when it's ready to hit.
+    /// </summary>
+    public void EnableAttackCollidersDelayed(bool armAttack, bool tailAttack, float delay)
+    {
+      if (IsDelayInvoked) return;
+      if (!armAttack)
+      {
+        ToggleColliderList(attackArmColliders, false);
+      }
+      if (!tailAttack)
+      {
+        ToggleColliderList(attackTailColliders, false);
+      }
+
+      Invoke(nameof(EnableAttackColliders), delay);
     }
 
     public void DisableAttackColliders()
@@ -866,6 +930,8 @@ namespace Eldritch.Core
 
         var commonKeys = GetCommonKeys(currentPos.PoseData, nextPose.PoseData, skipTransformNames);
 
+        nextPose.OnStart?.Invoke();
+
         // Pass duration (nextPose.Speed) and curve (nextPose.SpeedCurve) to LerpToPose:
         yield return LerpToPose(
           allAnimationJoints,
@@ -889,6 +955,8 @@ namespace Eldritch.Core
             nextPose.SpeedCurve
           );
         }
+
+        nextPose.OnEnd?.Invoke();
       }
 
       yield return null;
@@ -1050,7 +1118,7 @@ namespace Eldritch.Core
     [SerializeField] private float yawMaxDeg = 40f;
     [SerializeField] private float yawSpeedDegPerSec = 540f;
 
-    [SerializeField] private float pitchDownMaxDeg = 40f; // your +40 at feet
+    [SerializeField] private float pitchDownMaxDeg = 30f; // your +40 at feet
     [SerializeField] private float pitchSpeedDegPerSec = 360f;
     [SerializeField] private float lookDownHeightThreshold = 0.25f; // meters below neck before we start pitching down
 
@@ -1084,7 +1152,10 @@ namespace Eldritch.Core
       var fwdPlane = Vector3.ProjectOnPlane(forwardYaw, up).normalized;
       var yawDeg = Mathf.Clamp(Vector3.SignedAngle(fwdPlane, toPlane, up), -yawMaxDeg, yawMaxDeg);
 
-      neckUpDownAngle.y = MoveTowardsSigned(neckUpDownAngle.y, yawDeg, yawSpeedDegPerSec * Time.deltaTime);
+      var nextNeckUpDown = neckUpDownAngle;
+
+
+      nextNeckUpDown.y = MoveTowardsSigned(neckUpDownAngle.y, yawDeg, yawSpeedDegPerSec * Time.deltaTime);
 
       // ===== PITCH (down only) using heading-based right axis =====
       // Right axis tied to *heading* not current neck rotation → stable pitch sign.
@@ -1104,7 +1175,9 @@ namespace Eldritch.Core
         desiredZ = Mathf.Lerp(-pitchDownMaxDeg, +pitchDownMaxDeg, t);
       }
 
-      neckUpDownAngle.z = MoveTowardsSigned(neckUpDownAngle.z, desiredZ, pitchSpeedDegPerSec * Time.deltaTime);
+      nextNeckUpDown.z = MoveTowardsSigned(neckUpDownAngle.z, desiredZ, pitchSpeedDegPerSec * Time.deltaTime);
+
+      neckUpDownAngle = nextNeckUpDown;
     }
 
     #endregion

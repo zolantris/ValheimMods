@@ -10188,12 +10188,12 @@ CapsuleCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 1
   m_ProvidesContacts: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 2
   m_Radius: 0.06852957
-  m_Height: 0.709464
+  m_Height: 2.643902
   m_Direction: 0
-  m_Center: {x: -0.30473152, y: 0.00000012982261, z: 0.0021900572}
+  m_Center: {x: 0.6624854, y: 0.00000050160605, z: 0.0021884718}
 --- !u!114 &1623749216548292914
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -10480,6 +10480,7 @@ MonoBehaviour:
   _tailAttackObjName: xeno_tail_attack_collider
   xenoSkinnedMeshRenderer: {fileID: 6250668962578162294}
   xenoAnimatorRoot: {fileID: 4663728711685826490}
+  animationOffset: {fileID: 6954048000273737323}
   xenoMeshSkin: {fileID: 3722721186305412241}
   xenoRoot: {fileID: 3939487795657638454}
   spine01: {fileID: 9222924568091102625}
@@ -10516,14 +10517,15 @@ MonoBehaviour:
   zAngleRange: {x: -10, y: 10}
   scanPeriod: 8
   randomizeAmount: 0.3
-  neckPivotAngle: {x: 0, y: 0, z: 35}
+  neckPivotAngle: {x: 0, y: 0, z: 65}
   neckUpDownAngle: {x: 0, y: 0, z: 40}
   neckRangeX: {x: -40, y: 40}
   neckRotationZRange: {x: -40, y: 40}
-  neckPivotStartRotation: {x: 0, y: 0, z: 35}
+  neckPivotStartRotation: {x: 0, y: 0, z: 65}
   neckUpDownStartRotation: {x: 0, y: 0, z: 40}
   ChanceToTailAttack: 0.3
   ChanceToArmAttack: 0.7
+  IsDelayInvoked: 0
   yawMaxDeg: 40
   yawSpeedDegPerSec: 540
   pitchDownMaxDeg: 40
@@ -17343,10 +17345,10 @@ CapsuleCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 2
-  m_Radius: 0.7224065
+  m_Radius: 0.4653263
   m_Height: 2.9562473
   m_Direction: 1
-  m_Center: {x: 0, y: 1.5, z: 0}
+  m_Center: {x: -0, y: 1.5, z: -0.1957258}
 --- !u!114 &4678002196957688360
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -17394,7 +17396,6 @@ MonoBehaviour:
   audioUpdateInterval: 5
   tailDamage: 55
   armDamage: 35
-  maxHitsPerTargetPerSwing: 1
 --- !u!114 &1812349534389666146
 MonoBehaviour:
   m_ObjectHideFlags: 0

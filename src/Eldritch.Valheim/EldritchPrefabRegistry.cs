@@ -128,6 +128,7 @@ public static class EldritchPrefabRegistry
     //   LoggerProvider.LogError("Xeno merge failed.");
     //   return;
     // }
+    if (xenoPrefab == null) return;
 
     var nv = xenoPrefab.GetOrAddComponent<ZNetView>();
     nv.m_type = ZDO.ObjectType.Default;
@@ -213,24 +214,13 @@ public static class EldritchPrefabRegistry
   public static HitData.DamageTypes XenoDroneArmDamage = new()
   {
     m_slash = 30f,
-    m_pierce = 20f,
-    m_blunt = 10f,
-    m_fire = 0f,
-    m_frost = 0f,
-    m_lightning = 0f,
-    m_poison = 15f,
-    m_spirit = 0f
+    m_poison = 5f
   };
   public static HitData.DamageTypes XenoDroneTailDamage = new()
   {
-    m_slash = 30f,
+    m_damage = 50f,
     m_pierce = 50f,
-    m_blunt = 10f,
-    m_fire = 0f,
-    m_frost = 0f,
-    m_lightning = 0f,
-    m_poison = 50f,
-    m_spirit = 0f
+    m_poison = 5f
   };
 
   public static void AddItemToXeno(Humanoid humanoid)
