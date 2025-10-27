@@ -7,7 +7,8 @@ public class XenoDrone_MonsterAI : MonsterAI
   public XenoDroneAI DroneAI;
   public XenoAIMovementController MovementController;
 
-  public bool ShouldSkipAiMovement = false;
+  public static bool ShouldSkipAiMovement = false;
+  public static bool ShouldSkipUpdateAI = false;
 
   public override void Awake()
   {
@@ -18,12 +19,14 @@ public class XenoDrone_MonsterAI : MonsterAI
 
   public bool MonsterUpdateAIMethod(float dt)
   {
-    if (ShouldSkipAiMovement) return true;
     if (DroneAI.abilityManager.IsDodging) return true;
-    if (DroneAI.CurrentState == XenoDroneAI.XenoAIState.Idle) return true;
-    if (DroneAI.CurrentState == XenoDroneAI.XenoAIState.Hunt) return true;
-    if (!base.UpdateAI(dt))
+    if (!ShouldSkipUpdateAI && !base.UpdateAI(dt))
       return false;
+
+    if (DroneAI.CurrentState == XenoDroneAI.XenoAIState.Idle) return true;
+    if (DroneAI.CurrentState == XenoDroneAI.XenoAIState.Dead) return true;
+    if (DroneAI.CurrentState == XenoDroneAI.XenoAIState.Hunt) return true;
+
     if (IsSleeping())
     {
       UpdateSleep(dt);
@@ -37,6 +40,12 @@ public class XenoDrone_MonsterAI : MonsterAI
     UpdateTarget(character, dt, out canHearTarget, out canSeeTarget);
     if ((bool)(Object)m_tamable && (bool)(Object)m_tamable.m_saddle && m_tamable.m_saddle.UpdateRiding(dt))
       return true;
+
+    // TODO Add support for setting target here from XenoDroneAI (based on canHearTarget and canSeeTarget)
+
+    // Early out for skipping AI movement
+    if (ShouldSkipAiMovement) return true;
+
     if (m_avoidLand && !m_character.IsSwimming())
     {
       MoveToWater(dt, 20f);

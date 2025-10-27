@@ -18,6 +18,7 @@ public class EldritchValheimPlugin : BaseUnityPlugin
   public const string Version = "1.0.0";
   public const string ModName = "EldritchValheim";
   public const string ModGuid = $"{Author}.{ModName}";
+  public static string HarmonyGuid => ModGuid;
 
   public static AssetBundle assetBundle = null!;
   public static SpriteAtlas Sprites = null!;
@@ -27,19 +28,19 @@ public class EldritchValheimPlugin : BaseUnityPlugin
     LoggerProvider.Setup(Logger);
     LoggerProvider.LogDebug("Eldritchcore initialized");
 
+    PatchController.Apply(HarmonyGuid);
+
+
     // ReSharper disable once RedundantNameQualifier
     Eldritch.Core.Nav.Pathfinding.Register(new ValheimPathfindingShim());
 
-    InvokeRepeating(nameof(DebugCheckinMethod), 3f, 5f);
-
+    CreatureManager.OnVanillaCreaturesAvailable += () =>
+    {
+      EldritchPrefabRegistry.RegisterAllCreatures();
+    };
     PrefabManager.OnVanillaPrefabsAvailable += () =>
     {
-      PrefabRegistry.RegisterAllPrefabs();
+      EldritchPrefabRegistry.RegisterAllPrefabs();
     };
-  }
-
-  public void DebugCheckinMethod()
-  {
-    LoggerProvider.LogDebug("Checkin called");
   }
 }

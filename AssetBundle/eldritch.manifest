@@ -1,11 +1,11 @@
 ManifestFileVersion: 0
 UnityVersion: 6000.1.8f1
-CRC: 758683828
+CRC: 1972808898
 Compression: LZMA
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 437409d07c618abc6811d69c330b6931
+    Hash: cff780651a988c4e2b1efdedf5c2a944
   TypeTreeHash:
     serializedVersion: 2
     Hash: 00000000000000000000000000000000
@@ -51,7 +51,7 @@ ClassTypes:
 - Class: 95
   Script: {instanceID: 0}
 - Class: 114
-  Script: {fileID: 11500000, guid: ff9fb8ef116e48f6a36faf389dbf3569, type: 3}
+  Script: {fileID: 11500000, guid: 9f61eb9c251f494cbf7b9f0787a663c6, type: 3}
 - Class: 115
   Script: {instanceID: 0}
 - Class: 134

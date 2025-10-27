@@ -152,7 +152,7 @@ namespace Eldritch.Core
         neckUpDown.localRotation = Quaternion.Euler(neckUpDownAngle);
       }
 
-      if (IsTailAttack() && !_tailAttackTransitionRoutine.IsRunning)
+      if (IsAnimatingTailAttack() && !_tailAttackTransitionRoutine.IsRunning)
       {
         TailAttackManualAnimation_Start();
       }
@@ -286,6 +286,10 @@ namespace Eldritch.Core
 
     public void PlayJump(List<string> skipTransformNames = null)
     {
+      if (_jumpAnimationRoutine == null)
+      {
+        InitCoroutineHandlers();
+      }
       if (_jumpAnimationRoutine.IsRunning) return;
 
       _jumpAnimationRoutine.Start(SimulateJumpWithPoseLerp(
@@ -639,11 +643,21 @@ namespace Eldritch.Core
         }
       }
 
-      if (!IsTailAttack() && !IsArmAttacking())
+      var armAttack = _cachedAttackMode == 0;
+      var tailAttack = _cachedAttackMode == 1;
+      EnableAttackColliders(armAttack, tailAttack);
+      // if (!isUnchanged)
+      // {
+      //   var armAttack = _cachedAttackMode == 0;
+      //   var tailAttack = _cachedAttackMode == 1;
+      //   // must be run last as this will check the animator state (not the data)
+      //   EnableAttackColliders(armAttack, tailAttack);
+      // }
+
+      // calling PlayAttack should trigger the attack animation is nothing is running
+      if (!IsAnimatingArmAttack() && !IsAnimatingTailAttack())
       {
         animator.SetTrigger(AttackSingle);
-        // must be run last as this will check the animator state (not the data)
-        EnableAttackColliders();
       }
     }
 
@@ -765,21 +779,12 @@ namespace Eldritch.Core
     /// <summary>
     ///   Enables and disables attack colliders based on attack type
     /// </summary>
-    public void EnableAttackColliders()
+    public void EnableAttackColliders(bool armAttack, bool tailAttack)
     {
-      if (IsArmAttacking())
-      {
-        ToggleColliderList(attackArmColliders, true);
-        ToggleColliderList(attackTailColliders, false);
-        return;
-      }
-
-      if (IsTailAttack())
-      {
-        ToggleColliderList(attackTailColliders, true);
-        ToggleColliderList(attackArmColliders, false);
-      }
+      ToggleColliderList(attackArmColliders, armAttack);
+      ToggleColliderList(attackTailColliders, tailAttack);
     }
+
     public void DisableAttackColliders()
     {
       ToggleColliderList(attackArmColliders, false);
@@ -1031,7 +1036,7 @@ namespace Eldritch.Core
       return leftProj > rightProj ? leftToeTransform : rightToeTransform;
     }
 
-    #region Head Rotation
+  #region Head Rotation
 
     [SerializeField] private float yawMaxDeg = 40f;
     [SerializeField] private float yawSpeedDegPerSec = 540f;
@@ -1093,7 +1098,7 @@ namespace Eldritch.Core
       neckUpDownAngle.z = MoveTowardsSigned(neckUpDownAngle.z, desiredZ, pitchSpeedDegPerSec * Time.deltaTime);
     }
 
-    #endregion
+  #endregion
 
     public void PointHeadTowardTarget(Transform target)
     {
@@ -1101,15 +1106,15 @@ namespace Eldritch.Core
         UpdateHeadAnglesToward(target);
     }
 
-    #region Colliders
+  #region Colliders
 
     public HashSet<Collider> allColliders = new();
     public HashSet<Collider> attackTailColliders = new();
     public HashSet<Collider> attackArmColliders = new();
 
-    #endregion
+  #endregion
 
-    #region Colliders
+  #region Colliders
 
     public void AssignFootColliders(IEnumerable<Collider> colliders)
     {
@@ -1162,9 +1167,9 @@ namespace Eldritch.Core
       allColliders.Add(col);
     }
 
-    #endregion
+  #endregion
 
-    #region Tail Attack ;
+  #region Tail Attack ;
 
     [Tooltip("Animator state name that plays the tail attack (optional if you prefer Attack/AttackMode gate).")]
     [SerializeField] private int armAttackLayerIndex = 1;
@@ -1176,57 +1181,18 @@ namespace Eldritch.Core
     private readonly Dictionary<string, JointPose> _latePoseTargets = new();
     private bool _latePoseDirty;
 
-    private bool IsStatePlayingOnLayer(int layerIndex, params string[] candidateNames)
-    {
-      if (animator == null) return false;
-      if (layerIndex < 0 || layerIndex >= animator.layerCount) return false;
-
-      bool Matches(AnimatorStateInfo s)
-      {
-        if (!s.IsTag("Ignore")) // example guard if needed; remove if not used
-          return false;
-        return false;
-      }
-
-      // Precompute hashes for speed
-      var hashes = candidateNames
-        .Where(n => !string.IsNullOrEmpty(n))
-        .Select(Animator.StringToHash)
-        .ToArray();
-
-      bool MatchesState(AnimatorStateInfo s)
-      {
-        if (s.shortNameHash != 0 && hashes.Contains(s.shortNameHash)) return true;
-        foreach (var name in candidateNames)
-          if (!string.IsNullOrEmpty(name) && s.IsName(name))
-            return true;
-        return false;
-      }
-
-      var current = animator.GetCurrentAnimatorStateInfo(layerIndex);
-      if (MatchesState(current)) return true;
-
-      if (animator.IsInTransition(layerIndex))
-      {
-        var next = animator.GetNextAnimatorStateInfo(layerIndex);
-        if (MatchesState(next)) return true;
-      }
-
-      return false;
-    }
-
 // Replace existing checks with:
-    public bool IsArmAttacking()
+    public bool IsAnimatingArmAttack()
     {
       return AnimatorStateIdUtil.IsPlayingAny(animator, 1, _armIds);
     }
 
-    public bool IsTailAttack()
+    public bool IsAnimatingTailAttack()
     {
       return AnimatorStateIdUtil.IsPlayingAny(animator, 1, _tailIds);
     }
 
-    #endregion
+  #endregion
 
   }
 }
