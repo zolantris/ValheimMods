@@ -152,6 +152,11 @@ namespace Eldritch.Core
         neckUpDown.localRotation = Quaternion.Euler(neckUpDownAngle);
       }
 
+      if (OwnerAI.PrimaryTarget && OwnerAI.IsInAttackReachRange() || OwnerAI.IsInHuntingRange())
+      {
+        PointHeadTowardTarget(OwnerAI.PrimaryTarget);
+      }
+
       if (IsAnimatingTailAttack() && !_tailAttackTransitionRoutine.IsRunning)
       {
         TailAttackManualAnimation_Start();
@@ -631,6 +636,7 @@ namespace Eldritch.Core
     /// </summary>
     public void PlayAttack(int attackMode, bool canRandomize = false, bool isSingle = false)
     {
+      if (!OwnerAI.IsAttacking()) return;
       if (canRandomize)
       {
         TryRandomizeAttackMode();
@@ -642,6 +648,7 @@ namespace Eldritch.Core
           SetAttackMode(attackMode);
         }
       }
+
 
       var armAttack = _cachedAttackMode == 0;
       var tailAttack = _cachedAttackMode == 1;
@@ -663,14 +670,16 @@ namespace Eldritch.Core
 
     public bool IsRunningAttack()
     {
-      return animator.GetBool(AutoAttack);
+      return animator.GetBool(AutoAttack) || IsAnimatingArmAttack() || IsAnimatingTailAttack();
     }
 
+    // This will force stop an attack.
     public void StopAttack()
     {
       DisableAttackColliders();
       if (!animator.GetBool(AutoAttack)) return;
       animator.SetBool(AutoAttack, false);
+      animator.SetTrigger(ManualAttackCompleteTrigger);
     }
 
     // Potential skip keys "Toe", "Leg", "Finger" "Thumb" "Spine"
@@ -1036,7 +1045,7 @@ namespace Eldritch.Core
       return leftProj > rightProj ? leftToeTransform : rightToeTransform;
     }
 
-  #region Head Rotation
+    #region Head Rotation
 
     [SerializeField] private float yawMaxDeg = 40f;
     [SerializeField] private float yawSpeedDegPerSec = 540f;
@@ -1098,7 +1107,7 @@ namespace Eldritch.Core
       neckUpDownAngle.z = MoveTowardsSigned(neckUpDownAngle.z, desiredZ, pitchSpeedDegPerSec * Time.deltaTime);
     }
 
-  #endregion
+    #endregion
 
     public void PointHeadTowardTarget(Transform target)
     {
@@ -1106,15 +1115,15 @@ namespace Eldritch.Core
         UpdateHeadAnglesToward(target);
     }
 
-  #region Colliders
+    #region Colliders
 
     public HashSet<Collider> allColliders = new();
     public HashSet<Collider> attackTailColliders = new();
     public HashSet<Collider> attackArmColliders = new();
 
-  #endregion
+    #endregion
 
-  #region Colliders
+    #region Colliders
 
     public void AssignFootColliders(IEnumerable<Collider> colliders)
     {
@@ -1167,9 +1176,9 @@ namespace Eldritch.Core
       allColliders.Add(col);
     }
 
-  #endregion
+    #endregion
 
-  #region Tail Attack ;
+    #region Tail Attack ;
 
     [Tooltip("Animator state name that plays the tail attack (optional if you prefer Attack/AttackMode gate).")]
     [SerializeField] private int armAttackLayerIndex = 1;
@@ -1192,7 +1201,7 @@ namespace Eldritch.Core
       return AnimatorStateIdUtil.IsPlayingAny(animator, 1, _tailIds);
     }
 
-  #endregion
+    #endregion
 
   }
 }

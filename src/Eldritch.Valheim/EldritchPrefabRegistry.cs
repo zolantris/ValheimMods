@@ -137,7 +137,8 @@ public static class EldritchPrefabRegistry
     var spawnConfig = new SpawnConfig
     {
       Name = droneConfigName,
-      Biome = Heightmap.Biome.All, // for now all biomes can spawn alien. todo make this configurable
+      Biome = Heightmap.Biome.Swamp, // todo make this configurable
+      // Biome = Heightmap.Biome.All, // for now all biomes can spawn alien. todo make this configurable
       SpawnChance = 100f, // 100% todo make this configurable
       MinGroupSize = 1, // todo make this configurable
       MaxGroupSize = 3, // todo make this configurable

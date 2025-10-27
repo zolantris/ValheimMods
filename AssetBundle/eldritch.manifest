@@ -1,11 +1,11 @@
 ManifestFileVersion: 0
 UnityVersion: 6000.1.8f1
-CRC: 1972808898
+CRC: 4869309
 Compression: LZMA
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: cff780651a988c4e2b1efdedf5c2a944
+    Hash: 93398a9041dffd7bf643899645b96caa
   TypeTreeHash:
     serializedVersion: 2
     Hash: 00000000000000000000000000000000
@@ -40,8 +40,6 @@ ClassTypes:
   Script: {instanceID: 0}
 - Class: 81
   Script: {instanceID: 0}
-- Class: 82
-  Script: {instanceID: 0}
 - Class: 83
   Script: {instanceID: 0}
 - Class: 90
@@ -75,8 +73,6 @@ SerializeReferenceClassIdentifiers:
   ClassName: Eldritch.Core.Abilities.DodgeAbilityConfig
 - AssemblyName: Eldritch.Core
   ClassName: Eldritch.Core.SurfaceClimbingState
-- AssemblyName: Eldritch.Core
-  ClassName: Eldritch.Core.XenoHuntBehaviorConfig
 - AssemblyName: Eldritch.Core
   ClassName: Eldritch.Core.XenoHuntBehaviorState
 Assets:

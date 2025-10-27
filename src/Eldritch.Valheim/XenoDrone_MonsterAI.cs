@@ -23,10 +23,6 @@ public class XenoDrone_MonsterAI : MonsterAI
     if (!ShouldSkipUpdateAI && !base.UpdateAI(dt))
       return false;
 
-    if (DroneAI.CurrentState == XenoDroneAI.XenoAIState.Idle) return true;
-    if (DroneAI.CurrentState == XenoDroneAI.XenoAIState.Dead) return true;
-    if (DroneAI.CurrentState == XenoDroneAI.XenoAIState.Hunt) return true;
-
     if (IsSleeping())
     {
       UpdateSleep(dt);
@@ -40,6 +36,11 @@ public class XenoDrone_MonsterAI : MonsterAI
     UpdateTarget(character, dt, out canHearTarget, out canSeeTarget);
     if ((bool)(Object)m_tamable && (bool)(Object)m_tamable.m_saddle && m_tamable.m_saddle.UpdateRiding(dt))
       return true;
+
+    if (DroneAI.CurrentState == XenoDroneAI.XenoAIState.Idle) return true;
+    if (DroneAI.CurrentState == XenoDroneAI.XenoAIState.Dead) return true;
+    if (DroneAI.CurrentState == XenoDroneAI.XenoAIState.Hunt) return true;
+    if (DroneAI.CurrentState == XenoDroneAI.XenoAIState.Attack) return true;
 
     // TODO Add support for setting target here from XenoDroneAI (based on canHearTarget and canSeeTarget)
 

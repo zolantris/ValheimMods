@@ -10423,7 +10423,7 @@ MonoBehaviour:
   _tailAttackObjName: xeno_tail_attack_collider
   xenoSkinnedMeshRenderer: {fileID: 0}
   xenoAnimatorRoot: {fileID: 4663728711685826490}
-  xenoMeshSkin: {fileID: 0}
+  xenoMeshSkin: {fileID: 3722721186305412241}
   xenoRoot: {fileID: 3939487795657638454}
   spine01: {fileID: 9222924568091102625}
   spine02: {fileID: 5868738996644924044}
@@ -10440,7 +10440,7 @@ MonoBehaviour:
   rightToeTransform: {fileID: 7739203842663322357}
   UpdatePauseTime: 2
   attack_nextUpdateTime: 0
-  nextUpdateInterval: 0.1
+  nextUpdateInterval: 1
   moveSpeed_nextUpdateTime: 2.03
   SleepMoveUpdateTilt: 0
   SleepMoveZTilt: 90
@@ -11759,7 +11759,7 @@ Transform:
   m_GameObject: {fileID: 7704534297364182006}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 1.38, z: -1}
+  m_LocalPosition: {x: 0, y: 2.99, z: 0.54}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -17304,7 +17304,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   movementController: {fileID: 1812349534389666146}
   animationController: {fileID: 7779316879407544975}
-  CurrentState: 2
+  CurrentState: 0
   PrimaryTarget: {fileID: 0}
   PrimaryTargetRB: {fileID: 0}
   CachedPrimaryTargetXeno: {fileID: 0}
@@ -17314,84 +17314,24 @@ MonoBehaviour:
   TimeUntilSleep: 5
   TimeUntilWake: 50
   CanCamouflage: 0
-  CanSleepAnimate: 0
+  CanSleepAnimate: 1
   CanJump: 1
   DeltaPrimaryTarget: 0
-  IsHiding: 0
+  IsHiding: 1
   lastTouchedLand: 0
   lastLowestPointCheck: 0
   IsManualControlling: 0
-  closeRange: 2
+  attackHitRange: 3
   abilityManager: {fileID: 6374318684615537092}
   huntBehaviorState:
     creepDirection: 1
     circleDirection: 1
     _decisionTimer: 0
     FORCE_CreepRetreat: 0
-    behaviorConfig:
-      enableCircling: 1
-      enableCreeping: 1
-      enableAttack: 1
-      enableLeaping: 1
-      enableRetreating: 0
-      enableRandomCamouflage: 1
-      FORCE_Circling: 0
-      FORCE_Creeping: 0
-      maxTargetDistance: 75
-      minHuntDistance: 5
-      minCreepDistance: 2
-      circleMoveSpeed: 10
-      creepingMoveSpeed: 3
-      movingSpeedFlux: 0.5
-      minCircleRadius: 3
-      maxCircleRadius: 8
-      circleRadiusFactor: 1
-      leapingCooldown: 10
-      probCircling: 0.25
-      probMovingAway: 0.1
-      probPausing: 0.1
-      probCreeping: 0.5
-      probCamouflage: 0
-      probAttackInRange: 1
-      probLeapRetreat: 0
-      circlingTimeRange: {x: 1, y: 3}
-      movingAwayTimeRange: {x: 1, y: 4}
-      pausingTimeRange: {x: 1, y: 2}
-      creepingTimeRange: {x: 2, y: 4}
     State: 0
-  huntBehaviorConfig:
-    enableCircling: 1
-    enableCreeping: 1
-    enableAttack: 1
-    enableLeaping: 1
-    enableRetreating: 0
-    enableRandomCamouflage: 1
-    FORCE_Circling: 0
-    FORCE_Creeping: 0
-    maxTargetDistance: 75
-    minHuntDistance: 5
-    minCreepDistance: 2
-    circleMoveSpeed: 10
-    creepingMoveSpeed: 3
-    movingSpeedFlux: 0.5
-    minCircleRadius: 3
-    maxCircleRadius: 8
-    circleRadiusFactor: 1
-    leapingCooldown: 10
-    probCircling: 0.25
-    probMovingAway: 0.1
-    probPausing: 0.1
-    probCreeping: 0.5
-    probCamouflage: 0
-    probAttackInRange: 1
-    probLeapRetreat: 0
-    circlingTimeRange: {x: 1, y: 3}
-    movingAwayTimeRange: {x: 1, y: 4}
-    pausingTimeRange: {x: 1, y: 2}
-    creepingTimeRange: {x: 2, y: 4}
   attackHugDistance: 0.5
-  attackChaseDistance: 5
-  navAgentType: 1
+  attackChaseDistance: 20
+  navAgentType: 8
   audioController: {fileID: 0}
   lastAudioUpdate: 0
   audioUpdateInterval: 5
@@ -17516,6 +17456,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ff9fb8ef116e48f6a36faf389dbf3569, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  audioAnchor: {fileID: 4033147883265019889}
   idleClips:
   - {fileID: 8300000, guid: 58a75ce1424ef0b4ea00e52ca81a7db8, type: 3}
   hissClips:
@@ -17567,6 +17508,8 @@ MonoBehaviour:
   foleyGroup: {fileID: 0}
   attackGroup: {fileID: 0}
   impactGroup: {fileID: 0}
+  _idleSource: {fileID: 0}
+  idleChildName: Audio_IdleLoop
 --- !u!1 &8288794731862456045
 GameObject:
   m_ObjectHideFlags: 0

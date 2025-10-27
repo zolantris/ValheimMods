@@ -1,11 +1,23 @@
 ﻿using System.Collections.Generic;
+
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 using UnityEngine;
 using UnityEngine.Audio;
 
+// ReSharper disable ArrangeNamespaceBody
+// ReSharper disable NamespaceStyle
 namespace Eldritch.Core
 {
+
+
   public class XenoAudioController : MonoBehaviour
   {
+    [Header("Routing / Anchor")]
+    [Tooltip("Optional parent for all audio sources (e.g., head/face bone). If null, uses this transform.")]
+    [SerializeField] private Transform audioAnchor;
+
     [Header("Clips - Variations (optional)")]
     public AudioClip[] idleClips;
     public AudioClip[] hissClips;
@@ -77,7 +89,7 @@ namespace Eldritch.Core
     private readonly List<AudioSource> _impactPool = new();
 
     // Dedicated idle loop source
-    private AudioSource _idleSource;
+    [SerializeField] [HideInInspector] private AudioSource _idleSource;
 
     // PlayOneShot end-time tracking for reliable busy/steal logic
     private readonly Dictionary<AudioSource, float> _sourceEndTimes = new();
@@ -90,6 +102,14 @@ namespace Eldritch.Core
     private float _lastHurtTime;
     private float _lastImpactTime;
     private readonly Dictionary<AudioClip, float> _lastClipTime = new();
+
+    [SerializeField] [Tooltip("Name for the idle loop child under the anchor.")]
+    private string idleChildName = "Audio_IdleLoop";
+    private Transform EffectiveAnchor()
+    {
+      return audioAnchor != null ? audioAnchor : transform;
+    }
+
 
     private void Awake()
     {
@@ -123,21 +143,79 @@ namespace Eldritch.Core
 
     private void OnValidate()
     {
-      // Clamp and refresh idle settings when values change in the Inspector
-      idleNearDistance = Mathf.Max(0.01f, idleNearDistance);
-      idleMaxAudibleDistance = Mathf.Max(idleNearDistance + 0.01f, idleMaxAudibleDistance);
-      idleLoopVolume = Mathf.Clamp01(idleLoopVolume);
+      // --- clamp your existing serialized values here as you already do ---
 
-      // If in editor or play mode, refresh the idle source config
-      if (Application.isPlaying)
+      // Edit mode: DO NOT CREATE. Only rebind + reconfigure if present.
+      if (!Application.isPlaying)
       {
-        RefreshIdleLoopSettings();
+        RebindIdleSourceIfNeeded(); // only finds existing
+        ReparentIdleSourceToAnchor(); // moves under audioAnchor if set
+        if (_idleSource != null)
+          ApplyIdleConfig(_idleSource); // safe editor-time property sync
+        return;
       }
-      else
+
+      // Play mode: safe to fully ensure configuration/creation
+      EnsureIdleLoopSource();
+    }
+    private void RebindIdleSourceIfNeeded()
+    {
+      if (_idleSource != null) return;
+
+      // Try to find by name under current anchor
+      var anchor = EffectiveAnchor();
+      var found = FindChildAudioByName(anchor, idleChildName);
+      if (found != null) _idleSource = found;
+    }
+    private void ReparentIdleSourceToAnchor()
+    {
+      if (_idleSource == null) return;
+      var anchor = EffectiveAnchor();
+      if (_idleSource.transform.parent != anchor)
       {
-        EnsureIdleLoopSource();
+#if UNITY_EDITOR
+        // keep editor operations undoable
+        Undo.SetTransformParent(_idleSource.transform, anchor, "Reparent Audio Source");
+        _idleSource.transform.localPosition = Vector3.zero;
+        _idleSource.transform.localRotation = Quaternion.identity;
+        _idleSource.transform.localScale = Vector3.one;
+#else
+        _idleSource.transform.SetParent(anchor, false);
+#endif
       }
     }
+
+    /// <summary>Play-mode only: ensure we have a correctly configured idle loop source.</summary>
+    private void EnsureIdleLoopSource()
+    {
+      // If disabled, stop and exit
+      if (!enableIdleLoop)
+      {
+        if (_idleSource && _idleSource.isPlaying) _idleSource.Stop();
+        return;
+      }
+
+      // Rebind first if reference was lost
+      if (_idleSource == null) RebindIdleSourceIfNeeded();
+
+      // Only create in play mode
+      if (_idleSource == null)
+      {
+        var anchor = EffectiveAnchor();
+        var go = new GameObject(idleChildName);
+        go.transform.SetParent(anchor, false);
+        _idleSource = go.AddComponent<AudioSource>();
+      }
+
+      // Make sure it's under the anchor
+      ReparentIdleSourceToAnchor();
+
+      // Configure and (re)start
+      ApplyIdleConfig(_idleSource);
+      if (_idleSource.clip && !_idleSource.isPlaying)
+        _idleSource.Play();
+    }
+
 
 #if UNITY_EDITOR
     private void OnDrawGizmosSelected()
@@ -149,6 +227,38 @@ namespace Eldritch.Core
     }
 #endif
 
+#if UNITY_EDITOR
+    [ContextMenu("Audio/Move Existing Children To Anchor")]
+    private void Editor_MoveChildrenToAnchor()
+    {
+      RebindIdleSourceIfNeeded();
+      ReparentIdleSourceToAnchor();
+      if (_idleSource) ApplyIdleConfig(_idleSource);
+    }
+
+    [ContextMenu("Audio/Rebuild Idle (Play Mode Only)")]
+    private void Editor_RebuildIdlePlayOnly()
+    {
+      if (Application.isPlaying)
+      {
+        // Clean any duplicates under the anchor first (optional)
+        var anchor = EffectiveAnchor();
+        var dup = FindChildAudioByName(anchor, idleChildName);
+        if (dup && dup != _idleSource)
+          Destroy(dup.gameObject);
+
+        if (_idleSource) Destroy(_idleSource.gameObject);
+        _idleSource = null;
+
+        EnsureIdleLoopSource();
+      }
+      else
+      {
+        Debug.Log("Idle rebuild only occurs in Play mode to avoid editor-time spawning.");
+      }
+    }
+#endif
+
     private void ConfigureSource(AudioSource src, AudioMixerGroup group = null)
     {
       src.playOnAwake = false;
@@ -157,6 +267,66 @@ namespace Eldritch.Core
       src.maxDistance = maxDistance;
       src.rolloffMode = AudioRolloffMode.Linear;
       if (group) src.outputAudioMixerGroup = group;
+    }
+
+    /// <summary>Utility: search immediate children under a root for an AudioSource by name.</summary>
+    private AudioSource FindChildAudioByName(Transform root, string childName)
+    {
+      if (!root) return null;
+      for (var i = 0; i < root.childCount; i++)
+      {
+        var c = root.GetChild(i);
+        if (c.name == childName)
+        {
+          var a = c.GetComponent<AudioSource>();
+          if (a) return a;
+        }
+      }
+      return null;
+    }
+
+    /// <summary>Public helper to set the audio anchor at runtime or editor and reparent existing sources.</summary>
+    public void SetAudioAnchor(Transform newAnchor, bool moveExistingChildren = true)
+    {
+      audioAnchor = newAnchor;
+      if (moveExistingChildren)
+      {
+        ReparentIdleSourceToAnchor();
+      }
+#if UNITY_EDITOR
+      EditorUtility.SetDirty(this);
+#endif
+    }
+
+
+    /// <summary>Apply idle loop settings to the given source (safe in editor and play mode).</summary>
+    private void ApplyIdleConfig(AudioSource src)
+    {
+      if (src == null) return;
+
+      src.playOnAwake = false;
+      src.loop = true;
+      src.spatialBlend = spatialBlend;
+
+      src.minDistance = 0.1f;
+      src.maxDistance = Mathf.Max(0.1f, idleMaxAudibleDistance);
+      src.rolloffMode = AudioRolloffMode.Custom;
+
+      src.volume = Mathf.Clamp01(idleLoopVolume);
+      src.pitch = Mathf.Clamp(Random.Range(idleLoopPitchRange.x, idleLoopPitchRange.y), 0.01f, 3f);
+
+      // Pick clip but don't force creation
+      var chosen = idleLoopClip != null ? idleLoopClip : Pick(idleClips);
+      if (chosen != null) src.clip = chosen;
+
+      // Custom rolloff curve
+      var curve = idleLoopRolloff == null || idleLoopRolloff.length == 0
+        ? BuildDefaultIdleCurve()
+        : idleLoopRolloff;
+
+      src.SetCustomCurve(AudioSourceCurveType.CustomRolloff, curve);
+
+      if (voiceGroup) src.outputAudioMixerGroup = voiceGroup;
     }
 
     private void BuildPool(List<AudioSource> pool, int size, string childPrefix)
@@ -180,45 +350,6 @@ namespace Eldritch.Core
       }
     }
 
-    // Setup or refresh the dedicated idle loop source
-    private void EnsureIdleLoopSource()
-    {
-      if (!enableIdleLoop)
-      {
-        if (_idleSource && _idleSource.isPlaying) _idleSource.Stop();
-        return;
-      }
-
-      if (_idleSource == null)
-      {
-        var go = new GameObject("Audio_IdleLoop");
-        go.transform.SetParent(transform, false);
-        _idleSource = go.AddComponent<AudioSource>();
-        if (voiceGroup) _idleSource.outputAudioMixerGroup = voiceGroup; // route with voice
-      }
-
-      // Configure idle 3D settings
-      _idleSource.playOnAwake = false;
-      _idleSource.loop = true;
-      _idleSource.spatialBlend = spatialBlend;
-      _idleSource.minDistance = 0.1f; // delegate attenuation to custom curve
-      _idleSource.maxDistance = Mathf.Max(0.1f, idleMaxAudibleDistance);
-      _idleSource.rolloffMode = AudioRolloffMode.Custom;
-
-      // Volume & pitch
-      _idleSource.volume = Mathf.Clamp01(idleLoopVolume);
-      _idleSource.pitch = Random.Range(idleLoopPitchRange.x, idleLoopPitchRange.y);
-
-      // Choose clip
-      var clip = idleLoopClip != null ? idleLoopClip : Pick(idleClips);
-      _idleSource.clip = clip;
-
-      // Apply custom rolloff curve
-      var curve = idleLoopRolloff == null || idleLoopRolloff.length == 0
-        ? BuildDefaultIdleCurve()
-        : idleLoopRolloff;
-      _idleSource.SetCustomCurve(AudioSourceCurveType.CustomRolloff, curve);
-    }
 
     // Create a curve that's very quiet until close, then rises quickly near the creature
     private AnimationCurve BuildDefaultIdleCurve()

@@ -19,6 +19,7 @@ namespace Eldritch.Core
       Roam,
       Hunt,
       Attack,
+      Chase,
       Flee,
       Dead,
       Sleeping
@@ -56,7 +57,8 @@ namespace Eldritch.Core
     public float lastLowestPointCheck;
     [SerializeField] public bool IsManualControlling;
 
-    public float closeRange = 2f;
+    // todo make this static
+    public float attackHitRange = 3f;
     public AbilityManager abilityManager;
 
     [Header("Behavior State")]
@@ -64,17 +66,19 @@ namespace Eldritch.Core
 
     [Header("Behavior Configs")]
     [SerializeField]
-    public XenoHuntBehaviorConfig huntBehaviorConfig = new();
+    public XenoHuntBehaviorConfig huntBehaviorConfig => XenoDroneConfig.xenoHuntBehaviorConfig;
     private readonly float _circleDecisionInterval = 3f;
     private CoroutineHandle _aiStateUpdateRoutine;
     private List<Func<bool>> _behaviorUpdaters = new();
 
     // How tightly we try to stay on the target while attacking
     [Header("Attack Follow Tuning")]
-    [Tooltip("Meters to maintain while swinging so colliders actually connect. If 0, uses movementController.closeRange.")]
-    [SerializeField] private float attackHugDistance = 0f;
+    [Tooltip("Meters to maintain while swinging so colliders actually connect. If 0, uses movementController.attackHitRange.")]
+    [SerializeField] private float attackHugDistance = 0.1f;
     [Tooltip("If target is beyond this, we path toward them even during Attack (LOS-based).")]
-    [SerializeField] private float attackChaseDistance = 3.5f;
+    [SerializeField] private float attackChaseDistance = 20f;
+
+    private bool IsChasing => CurrentState == XenoAIState.Chase && huntBehaviorState.State == HuntBehaviorState.Chasing || CurrentState == XenoAIState.Attack;
 
     private CoroutineHandle _sleepRoutine;
     private Vector3 cachedLowestPoint = Vector3.zero;
@@ -103,8 +107,6 @@ namespace Eldritch.Core
       InitCoroutineHandlers();
 
       navAgentType = PathfindingAgentType.Humanoid;
-
-      huntBehaviorState.behaviorConfig = huntBehaviorConfig;
 
       if (!abilityManager) abilityManager = GetComponent<AbilityManager>();
       if (!movementController) movementController = GetComponent<XenoAIMovementController>();
@@ -268,6 +270,7 @@ namespace Eldritch.Core
         movementController.Rb.isKinematic = false;
       }
     }
+
     public void StartAttackBehavior()
     {
       if (CurrentState == XenoAIState.Dead) return;
@@ -277,26 +280,9 @@ namespace Eldritch.Core
     }
     public void StopAttackBehavior()
     {
-      if (CurrentState == XenoAIState.Dead) return;
-      if (CurrentState != XenoAIState.Attack)
-      {
-        animationController.StopAttack();
-        return;
-      }
-
-      if (CurrentState == XenoAIState.Attack)
-      {
-        animationController.StopAttack();
-        if (PrimaryTarget)
-        {
-          CurrentState = XenoAIState.Hunt;
-        }
-        else
-        {
-          CurrentState = XenoAIState.Roam;
-        }
-      }
+      animationController.StopAttack();
     }
+
     public void ApplyDamage(float damage)
     {
       animationController?.PlayBloodEffect();
@@ -547,10 +533,10 @@ namespace Eldritch.Core
         return;
       }
 
-      if (animationController.IsRunningAttack())
-      {
-        animationController.StopAttack();
-      }
+      // if (animationController.IsRunningAttack())
+      // {
+      //   animationController.StopAttack();
+      // }
 
       // Always point head at the target for creep factor
       animationController.PointHeadTowardTarget(PrimaryTarget);
@@ -561,6 +547,14 @@ namespace Eldritch.Core
       var inLeapRange = IsInLeapRange();
 
       var beingWatched = TargetingUtil.IsTargetLookingAtMe(PrimaryTarget, transform);
+
+      // Chasing == attacking state (for movement purposes)
+      // Attacking state will include actual attack animations.
+      if (huntBehaviorState.State == HuntBehaviorState.Chasing)
+      {
+        Update_AttackMovement();
+        return;
+      }
 
       if (!IsAttacking() && !inLeapRange && DeltaPrimaryTarget < huntBehaviorConfig.minCreepDistance && beingWatched)
       {
@@ -573,11 +567,12 @@ namespace Eldritch.Core
           var angleToTarget = Vector3.Angle(transform.forward, toTarget.normalized);
           if (angleToTarget < _attackYawThreshold)
           {
-            abilityManager.RequestDodge(-Vector2.up);
+            abilityManager.RequestDodge(Vector2.up);
           }
         }
         else if (Random.value > 0.75f)
         {
+          LoggerProvider.LogDebugDebounced($"Retreating from target {PrimaryTarget.name} looking at {transform.name}");
           RetreatFromPrimaryTarget();
         }
         return;
@@ -866,20 +861,19 @@ namespace Eldritch.Core
 
     public bool Update_HuntBehavior()
     {
-      var canAttack = huntBehaviorConfig.enableAttack && IsInAttackRange();
+      var canAttack = huntBehaviorConfig.enableAttack && IsInAttackReachRange();
+      if (canAttack) return false;
+
       if (!canAttack && animationController.IsRunningAttack())
       {
         animationController.StopAttack();
       }
-      // early bail if we are in range and can attack.
-      if (canAttack)
+
+      if (huntBehaviorState.DecisionTimer < 0)
       {
-        var percentage = Random.value;
-        if (percentage > huntBehaviorConfig.probAttackInRange)
-        {
-          LoggerProvider.LogDebugDebounced("Skipping attack this frame.");
-          return false;
-        }
+        if (TryBailOnAttack(canAttack)) return false;
+        // early bail if we are in range and can attack.
+        TryTriggerCamouflage();
       }
 
       huntBehaviorState.SyncSharedData(new BehaviorStateSync
@@ -888,17 +882,15 @@ namespace Eldritch.Core
         DeltaPrimaryTarget = DeltaPrimaryTarget,
         Self = transform
       });
-      if (huntBehaviorState.DecisionTimer < 0)
-      {
-        TryTriggerCamouflage();
-      }
+
       if (!huntBehaviorState.TryUpdateBehavior()) return false;
       // run other effects
 
-      if (CurrentState == XenoAIState.Attack)
+      if (CurrentState == XenoAIState.Attack && huntBehaviorState.State != HuntBehaviorState.Chasing)
       {
         StopAttackBehavior();
       }
+
       CurrentState = XenoAIState.Hunt;
       return true;
     }
@@ -928,7 +920,7 @@ namespace Eldritch.Core
 
     public bool Update_Roam()
     {
-      var isInHuntOrAttackRange = IsInHuntingRange() || IsInAttackRange();
+      var isInHuntOrAttackRange = IsInHuntingRange() || IsInAttackChaseRange() || IsInAttackReachRange();
       if (isInHuntOrAttackRange) return false;
 
       if (movementController.HasRoamTarget || movementController.TryUpdateCurrentWanderTarget())
@@ -941,6 +933,19 @@ namespace Eldritch.Core
     }
 
     private readonly float _attackYawThreshold = 10f; // Degrees allowed for facing before leaping
+
+    public bool TryBailOnAttack(bool canAttack)
+    {
+      if (!canAttack) return false;
+      var percentage = Random.value;
+      if (percentage > huntBehaviorConfig.probAttackInRange)
+      {
+        LoggerProvider.LogDebugDebounced("Skipping attack this frame.");
+        return true;
+      }
+
+      return false;
+    }
 
     public void TryTriggerCamouflage()
     {
@@ -962,7 +967,10 @@ namespace Eldritch.Core
     {
       if (!PrimaryTarget) return false;
       if (!huntBehaviorConfig.enableAttack) return false;
-      var isInAttackRange = IsInAttackRange();
+
+
+
+      var isInAttackRange = IsInAttackReachRange();
 
       if (isInAttackRange)
       {
@@ -1004,11 +1012,24 @@ namespace Eldritch.Core
       return DeltaPrimaryTarget > minDodgeDistance && DeltaPrimaryTarget < abilityManager.dodgeAbility.config.forwardDistance;
     }
 
-    public bool IsInAttackRange()
+    /// <summary>
+    /// Can reach/hit the enemy with attack colliders.
+    /// </summary>
+    /// <returns></returns>
+    public bool IsInAttackReachRange()
     {
       if (PrimaryTarget == null) return false;
       if (!AttackRangeCanSkipLOS && !HasClearLOS(PrimaryTarget.position)) return false;
-      return DeltaPrimaryTarget < closeRange;
+      return DeltaPrimaryTarget < attackHitRange;
+    }
+
+    /// <summary>
+    /// For Attacking chase mode. This will not allow swinging or tail attacks. Outside this range the Xeno will go back to Hunt movement mode.
+    /// </summary>
+    /// <returns></returns>
+    public bool IsInAttackChaseRange()
+    {
+      return IsChasing && DeltaPrimaryTarget < attackChaseDistance;
     }
 
     public bool IsSleeping()
