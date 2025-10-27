@@ -5,6 +5,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using Eldritch.Core.Nav;
+using Eldritch.Valheim;
 using JetBrains.Annotations;
 using UnityEngine;
 using Zolantris.Shared;
@@ -1317,6 +1318,62 @@ namespace Eldritch.Core
         return (a - b).sqrMagnitude <= r * r;
       }
     }
+
+  #endregion
+
+  #region Attack Logic
+
+    [Header("Damage")]
+    [SerializeField] private float tailDamage = 55f;
+    [SerializeField] private float armDamage = 35f;
+
+    [Header("Hurtbox Filter")]
+    [Tooltip("Max hits per swing per target")]
+    [SerializeField] private int maxHitsPerTargetPerSwing = 1;
+
+    // Attack window flags toggled by animation events or code
+    private bool _tailOpen, _armOpen;
+
+    // Per-swing dedupe (instanceID -> hit count)
+    private readonly Dictionary<int, int> _dedupe = new();
+
+    // ---- Attack window API (call from anim events) ----
+    public void OpenTailWindow()
+    {
+      _tailOpen = true;
+      _dedupe.Clear();
+    }
+    public void CloseTailWindow() { _tailOpen = false; }
+    public void OpenArmWindow()
+    {
+      _armOpen = true;
+      _dedupe.Clear();
+    }
+    public void CloseArmWindow() { _armOpen = false; }
+
+    public bool IsAttackWindowOpen(XenoHitboxType t)
+    {
+      return t == XenoHitboxType.Tail ? _tailOpen : _armOpen;
+    }
+
+    // ---- Main entry called by hitboxes ----
+    public void HandleHit(XenoHitboxType type, XenoAttackHitbox hitbox, Collider other)
+    {
+      var targetRoot = other.attachedRigidbody ? other.attachedRigidbody.gameObject : other.gameObject;
+      var id = targetRoot.GetInstanceID();
+
+      // Dedupe per swing
+      if (_dedupe.TryGetValue(id, out var count) && count >= maxHitsPerTargetPerSwing) return;
+      _dedupe[id] = count + 1;
+
+      var dmgAmount = type == XenoHitboxType.Tail ? tailDamage : armDamage;
+
+      // tuple
+      OnHitTarget?.Invoke((type, hitbox, other, targetRoot, dmgAmount));
+    }
+
+    // for integrations like Valheim (uses a touple for convenience)
+    public Action<(XenoHitboxType type, XenoAttackHitbox hitbox, Collider other, GameObject targetRoot, float dmgAmount)> OnHitTarget = (target) => {};
 
   #endregion
 

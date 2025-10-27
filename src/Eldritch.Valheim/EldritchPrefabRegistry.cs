@@ -143,6 +143,8 @@ public static class EldritchPrefabRegistry
 
     var animationController = xenoPrefab.GetComponentInChildren<XenoAnimationController>();
 
+
+
     humanoid.m_eye = xenoPrefab.transform.Find("EyePos");
     humanoid.m_animEvent = animEvent;
 
@@ -206,6 +208,100 @@ public static class EldritchPrefabRegistry
     CreatureManager.Instance.AddCreature(customXeno);
 
     // Add a spawn config (vanilla world spawner)
+  }
+
+  public static HitData.DamageTypes XenoDroneArmDamage = new()
+  {
+    m_slash = 30f,
+    m_pierce = 20f,
+    m_blunt = 10f,
+    m_fire = 0f,
+    m_frost = 0f,
+    m_lightning = 0f,
+    m_poison = 15f,
+    m_spirit = 0f
+  };
+  public static HitData.DamageTypes XenoDroneTailDamage = new()
+  {
+    m_slash = 30f,
+    m_pierce = 50f,
+    m_blunt = 10f,
+    m_fire = 0f,
+    m_frost = 0f,
+    m_lightning = 0f,
+    m_poison = 50f,
+    m_spirit = 0f
+  };
+
+  public static void AddItemToXeno(Humanoid humanoid)
+  {
+    var handWeaponAttack = new Attack
+    {
+      m_attackAnimation = null,
+      m_speedFactor = 1,
+      m_attackStamina = 20f,
+      m_attackRange = 2f
+    };
+
+    var xenoArmsItemDrop = new GameObject("XenoArmsPlaceholderDropPrefab");
+    var nv1 = xenoArmsItemDrop.AddComponent<ZNetView>();
+    nv1.m_persistent = false;
+
+    var xenoTailItemDrop = new GameObject("XenoTailDropPrefab");
+    var nv2 = xenoTailItemDrop.AddComponent<ZNetView>();
+    nv2.m_persistent = false;
+
+    var armItemDrop = xenoArmsItemDrop.AddComponent<ItemDrop>();
+    var tailItemDrop = xenoTailItemDrop.AddComponent<ItemDrop>();
+
+    var tailAttack = new Attack
+    {
+      m_attackAnimation = null,
+      m_attackStamina = 20f,
+      m_attackRange = 2f
+    };
+
+    var handWeapon = new ItemDrop.ItemData
+    {
+      m_dropPrefab = armItemDrop.gameObject,
+      m_shared = new ItemDrop.ItemData.SharedData
+      {
+        m_name = "xeno_arms_weapon",
+        m_attack = handWeaponAttack,
+        m_itemType = ItemDrop.ItemData.ItemType.TwoHandedWeapon,
+        m_maxStackSize = 1,
+        m_icons = [Sprites.GetSprite("anchor")],
+        m_skillType = Skills.SkillType.Swords,
+        m_damages = XenoDroneArmDamage,
+        m_equipDuration = 0,
+        m_attackForce = 10f,
+        m_useDurability = false,
+        m_aiTargetType = ItemDrop.ItemData.AiTarget.Enemy,
+        m_aiAttackMaxAngle = 25f
+      }
+    };
+    var tailWeapon = new ItemDrop.ItemData
+    {
+      m_dropPrefab = tailItemDrop.gameObject,
+      m_shared = new ItemDrop.ItemData.SharedData
+      {
+        m_name = "xeno_tail_weapon",
+        m_icons = [Sprites.GetSprite("anchor")],
+        m_attack = tailAttack,
+        m_maxStackSize = 1,
+        m_itemType = ItemDrop.ItemData.ItemType.TwoHandedWeapon,
+        m_equipDuration = 0,
+        m_skillType = Skills.SkillType.Swords,
+        m_damages = XenoDroneTailDamage,
+        m_attackForce = 10f,
+        m_useDurability = false,
+        m_aiTargetType = ItemDrop.ItemData.AiTarget.Enemy,
+        m_aiAttackMaxAngle = 25f
+      }
+    };
+
+    humanoid.m_inventory.AddItem(handWeapon);
+    humanoid.m_inventory.AddItem(tailWeapon);
   }
 
   public static void RegisterXenoSpawnOld()

@@ -1,5 +1,9 @@
+using System;
 using Eldritch.Core;
 using UnityEngine;
+using Zolantris.Shared;
+using Object = UnityEngine.Object;
+using Random = UnityEngine.Random;
 namespace Eldritch.Valheim;
 
 public class XenoDrone_MonsterAI : MonsterAI
@@ -11,13 +15,105 @@ public class XenoDrone_MonsterAI : MonsterAI
   public static bool ShouldSkipUpdateAI = false;
 
   public static bool ShouldUseNavigationOnAttack = false;
-  public static bool ShouldUseNavigationOnHunt = true;
+  public static bool ShouldUseNavigationOnHunt = false;
+
+  public Character xenoCharacter;
 
   public override void Awake()
   {
     DroneAI = GetComponent<XenoDroneAI>();
     MovementController = GetComponent<XenoAIMovementController>();
     base.Awake();
+  }
+
+  public override void OnEnable()
+  {
+    base.OnEnable();
+    xenoCharacter = GetComponent<Character>();
+    DroneAI.OnHitTarget += HandleHitTarget;
+  }
+
+  public override void OnDisable()
+  {
+    base.OnDisable();
+    if (DroneAI != null && DroneAI.OnHitTarget != null)
+    {
+      DroneAI.OnHitTarget -= HandleHitTarget;
+    }
+  }
+
+  public void HandleHitTarget((XenoHitboxType type, XenoAttackHitbox hitbox, Collider other, GameObject targetRoot, float dmgAmount) args)
+  {
+    var (type, hitbox, other, targetRoot, dmgAmount) = args;
+    // Prefer Characters (players/NPCs)
+    var hitCharacter = targetRoot.GetComponentInParent<Character>();
+    if (hitCharacter != null)
+    {
+      ApplyCharacterDamage(hitCharacter, other, type, dmgAmount);
+      return;
+    }
+
+    // Pieces / structures (WearNTear)
+    var wnt = targetRoot.GetComponentInParent<WearNTear>();
+    if (wnt != null)
+    {
+      ApplyWearNTearDamage(wnt, other, type, dmgAmount);
+      return;
+    }
+
+    // (Optional) other destructibles if your project uses a custom interface
+    // var destructible = targetRoot.GetComponentInParent<IMyDestructible>();
+    // if (destructible != null) { destructible.Hit(...); return; }
+  }
+
+  private void ApplyCharacterDamage(Character character, Collider other, XenoHitboxType type, float amount)
+  {
+    var p = other.ClosestPoint(transform.position);
+    var dir = (character.transform.position - p).normalized;
+
+    var hd = new HitData
+    {
+      m_point = p,
+      m_dir = dir,
+      m_hitType = HitData.HitType.EnemyHit,
+      m_pushForce = 0f,
+      m_attacker = character.GetZDOID(),
+      m_damage = GetDamageFromType(type)
+    };
+
+    character.Damage(hd);
+  }
+
+  private static HitData.DamageTypes GetDamageFromType(XenoHitboxType type)
+  {
+    return type == XenoHitboxType.Arm ? EldritchPrefabRegistry.XenoDroneArmDamage : EldritchPrefabRegistry.XenoDroneTailDamage;
+  }
+
+  private void ApplyWearNTearDamage(WearNTear wnt, Collider other, XenoHitboxType type, float amount)
+  {
+    var p = other.ClosestPoint(transform.position);
+    var dir = (wnt.transform.position - p).normalized;
+
+    var hd = new HitData
+    {
+      m_point = p,
+      m_dir = dir,
+      m_hitType = HitData.HitType.EnemyHit,
+      m_attacker = xenoCharacter.GetZDOID(),
+      m_damage = GetDamageFromType(type)
+    };
+
+    wnt.Damage(hd);
+  }
+
+  public void OnCollisionEnter(Collision other)
+  {
+    LoggerProvider.LogDebugDebounced($"Hit collider: {other.collider.name} layer: {other.gameObject.layer} root: {other.transform.root.name}");
+  }
+
+  public void OnTriggerEnter(Collider other)
+  {
+    LoggerProvider.LogDebugDebounced($"Hit collider: {other.name} layer: {other.gameObject.layer} root: {other.transform.root.name}");
   }
 
   public bool MonsterUpdateAIMethod(float dt)
@@ -32,6 +128,11 @@ public class XenoDrone_MonsterAI : MonsterAI
       return true;
     }
     var character = m_character as Humanoid;
+    if (character && character.m_inventory.GetAllItems().Count == 0)
+    {
+      EldritchPrefabRegistry.AddItemToXeno(character);
+    }
+
     if (HuntPlayer())
       SetAlerted(true);
     bool canHearTarget;

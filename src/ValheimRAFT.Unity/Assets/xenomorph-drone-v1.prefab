@@ -878,6 +878,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2884584817345903661}
   - component: {fileID: 8794376812469077489}
+  - component: {fileID: 4001257218493913520}
   m_Layer: 22
   m_Name: xeno_arm_attack_collider
   m_TagString: Untagged
@@ -910,7 +911,7 @@ CapsuleCollider:
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
-    m_Bits: 205799936
+    m_Bits: 205800960
   m_ExcludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -923,6 +924,24 @@ CapsuleCollider:
   m_Height: 0.33281434
   m_Direction: 0
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &4001257218493913520
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1119396371947801119}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7feb6eab014a4d1f994c4df62729f3b5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  type: 1
+  controller: {fileID: 4678002196957688360}
+  hittableLayers:
+    serializedVersion: 2
+    m_Bits: 202376705
+  useAttackWindow: 1
 --- !u!1 &1154735010382223541
 GameObject:
   m_ObjectHideFlags: 0
@@ -4616,6 +4635,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4752285817859573959}
   - component: {fileID: 8107834212238142334}
+  - component: {fileID: 6515270922342528024}
   m_Layer: 22
   m_Name: xeno_arm_attack_collider
   m_TagString: Untagged
@@ -4648,7 +4668,7 @@ CapsuleCollider:
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
-    m_Bits: 205799936
+    m_Bits: 205800960
   m_ExcludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -4661,6 +4681,24 @@ CapsuleCollider:
   m_Height: 0.33281434
   m_Direction: 0
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &6515270922342528024
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5025793217812891981}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7feb6eab014a4d1f994c4df62729f3b5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  type: 1
+  controller: {fileID: 4678002196957688360}
+  hittableLayers:
+    serializedVersion: 2
+    m_Bits: 202376705
+  useAttackWindow: 1
 --- !u!1 &5079644949672802072
 GameObject:
   m_ObjectHideFlags: 0
@@ -10110,6 +10148,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5315650862500275335}
   - component: {fileID: 5925971110170681611}
+  - component: {fileID: 1623749216548292914}
   m_Layer: 22
   m_Name: xeno_tail_attack_collider
   m_TagString: Untagged
@@ -10142,7 +10181,7 @@ CapsuleCollider:
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
-    m_Bits: 205799936
+    m_Bits: 205800960
   m_ExcludeLayers:
     serializedVersion: 2
     m_Bits: 3073
@@ -10155,6 +10194,24 @@ CapsuleCollider:
   m_Height: 0.709464
   m_Direction: 0
   m_Center: {x: -0.30473152, y: 0.00000012982261, z: 0.0021900572}
+--- !u!114 &1623749216548292914
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6325453802117120629}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7feb6eab014a4d1f994c4df62729f3b5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  type: 0
+  controller: {fileID: 4678002196957688360}
+  hittableLayers:
+    serializedVersion: 2
+    m_Bits: 202376705
+  useAttackWindow: 1
 --- !u!1 &6387037736757069172
 GameObject:
   m_ObjectHideFlags: 0
@@ -17228,7 +17285,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8190138394633468527}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: 0, y: 1, z: 0, w: 0}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -17239,7 +17296,7 @@ Transform:
   - {fileID: 2246269728047532262}
   - {fileID: 5921530544433613023}
   m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 180, z: 0}
 --- !u!54 &5170455730052162183
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -17335,6 +17392,9 @@ MonoBehaviour:
   audioController: {fileID: 0}
   lastAudioUpdate: 0
   audioUpdateInterval: 5
+  tailDamage: 55
+  armDamage: 35
+  maxHitsPerTargetPerSwing: 1
 --- !u!114 &1812349534389666146
 MonoBehaviour:
   m_ObjectHideFlags: 0
