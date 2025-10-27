@@ -10,6 +10,9 @@ public class XenoDrone_MonsterAI : MonsterAI
   public static bool ShouldSkipAiMovement = false;
   public static bool ShouldSkipUpdateAI = false;
 
+  public static bool ShouldUseNavigationOnAttack = false;
+  public static bool ShouldUseNavigationOnHunt = true;
+
   public override void Awake()
   {
     DroneAI = GetComponent<XenoDroneAI>();
@@ -39,8 +42,18 @@ public class XenoDrone_MonsterAI : MonsterAI
 
     if (DroneAI.CurrentState == XenoDroneAI.XenoAIState.Idle) return true;
     if (DroneAI.CurrentState == XenoDroneAI.XenoAIState.Dead) return true;
-    if (DroneAI.CurrentState == XenoDroneAI.XenoAIState.Hunt) return true;
-    if (DroneAI.CurrentState == XenoDroneAI.XenoAIState.Attack) return true;
+
+    if (m_targetCreature != null)
+    {
+      DroneAI.SetPrimaryTarget(m_targetCreature.transform);
+    }
+    else if (m_targetStatic)
+    {
+      DroneAI.SetPrimaryTarget(m_targetStatic.transform);
+    }
+
+    if (ShouldUseNavigationOnHunt && DroneAI.CurrentState == XenoDroneAI.XenoAIState.Hunt) return true;
+    if (ShouldUseNavigationOnAttack && DroneAI.CurrentState == XenoDroneAI.XenoAIState.Attack) return true;
 
     // TODO Add support for setting target here from XenoDroneAI (based on canHearTarget and canSeeTarget)
 

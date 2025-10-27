@@ -226,7 +226,7 @@ namespace Eldritch.Core
           break;
         case XenoAIState.Attack:
           if (!PrimaryTarget) return;
-          Update_AttackMovement();
+          // Update_AttackMovement();
           break;
         case XenoAIState.Sleeping:
           animationController.PlaySleepingAnimation(CanSleepAnimate);
@@ -552,7 +552,8 @@ namespace Eldritch.Core
       // Attacking state will include actual attack animations.
       if (huntBehaviorState.State == HuntBehaviorState.Chasing)
       {
-        Update_AttackMovement();
+        // attack movement should not be used.
+        // Update_AttackMovement();
         return;
       }
 

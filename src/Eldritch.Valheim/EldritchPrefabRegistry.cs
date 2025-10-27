@@ -1,5 +1,7 @@
 using System;
+using System.Linq;
 using Eldritch.Core;
+using Jotunn;
 using Jotunn.Configs;
 using Jotunn.Entities;
 using Jotunn.Managers;
@@ -117,16 +119,54 @@ public static class EldritchPrefabRegistry
       return;
     }
 
-    var xenoPrefab = PrefabManager.Instance.CreateClonedPrefab(XenoAdultName, seekerPrefab);
+    // var xenoInstance = UnityEngine.Object.Instantiate(xenoAsset);
+    var xenoPrefab = PrefabManager.Instance.CreateClonedPrefab(XenoAdultName, xenoAsset);
 
-    if (!XenoFromSeekerBuilder.BuildXenoFromSeeker(xenoPrefab, xenoAsset.transform.Find("Visual").gameObject, xenoAsset))
-    {
-      LoggerProvider.LogError("Failed to swap Seeker clone to Xeno.");
-      return;
-    }
+    // Merge in seeker top-level gameplay components (only missing ones)
+    // if (!XenoFromSeekerMinimalMerge.MergeIntoXeno(xenoInstance, seekerPrefab))
+    // {
+    //   LoggerProvider.LogError("Xeno merge failed.");
+    //   return;
+    // }
 
-    var humanoid = xenoPrefab.GetComponent<Humanoid>();
-    var xenoAnimationController = xenoPrefab.GetComponentInChildren<XenoAnimationController>();
+    var nv = xenoPrefab.GetOrAddComponent<ZNetView>();
+    nv.m_type = ZDO.ObjectType.Default;
+    nv.m_persistent = false;
+
+    var humanoid = xenoPrefab.GetOrAddComponent<Humanoid>();
+    var zSyncTransform = xenoPrefab.GetOrAddComponent<ZSyncTransform>();
+    var zSyncAnimation = xenoPrefab.GetOrAddComponent<ZSyncAnimation>();
+    var xenoDroneMonsterAI = xenoPrefab.AddComponent<XenoDrone_MonsterAI>();
+
+    var animator = xenoPrefab.GetComponentInChildren<Animator>();
+    var animEvent = animator.gameObject.AddComponent<CharacterAnimEvent>();
+
+    var animationController = xenoPrefab.GetComponentInChildren<XenoAnimationController>();
+
+    humanoid.m_eye = xenoPrefab.transform.Find("EyePos");
+    humanoid.m_animEvent = animEvent;
+
+    animEvent.m_animator = animator;
+    animEvent.m_nview = nv;
+    animEvent.m_head = animationController.neckPivot;
+    animEvent.m_eyes = [animationController.neckPivot, animationController.neckPivot];
+    animEvent.m_feets = animationController.footColliders.Select(x => new CharacterAnimEvent.Foot(x.transform, x.transform.parent.name.Contains("_l_") ? AvatarIKGoal.LeftFoot : AvatarIKGoal.RightFoot)).ToArray();
+
+    humanoid.m_animator = animator;
+    zSyncAnimation.m_animator = animator;
+
+
+    xenoDroneMonsterAI.m_huntPlayer = true;
+    xenoDroneMonsterAI.m_enableHuntPlayer = true;
+
+    // if (!XenoFromSeekerBuilder.BuildXenoFromSeeker(xenoPrefab, xenoAsset.transform.Find("Visual").gameObject, xenoAsset))
+    // {
+    //   LoggerProvider.LogError("Failed to swap Seeker clone to Xeno.");
+    //   return;
+    // }
+
+    // var humanoid = xenoPrefab.GetOrAddComponent<Humanoid>();
+    // var xenoAnimationController = xenoPrefab.GetComponentInChildren<XenoAnimationController>();
 
     // if (humanoid && xenoAnimationController)
     // {

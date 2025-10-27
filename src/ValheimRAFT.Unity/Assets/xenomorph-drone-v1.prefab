@@ -10421,7 +10421,7 @@ MonoBehaviour:
   _bloodEffects: {fileID: 7299453355686205095}
   _handAttackObjName: xeno_arm_attack_collider
   _tailAttackObjName: xeno_tail_attack_collider
-  xenoSkinnedMeshRenderer: {fileID: 0}
+  xenoSkinnedMeshRenderer: {fileID: 6250668962578162294}
   xenoAnimatorRoot: {fileID: 4663728711685826490}
   xenoMeshSkin: {fileID: 3722721186305412241}
   xenoRoot: {fileID: 3939487795657638454}
@@ -10459,8 +10459,8 @@ MonoBehaviour:
   zAngleRange: {x: -10, y: 10}
   scanPeriod: 8
   randomizeAmount: 0.3
-  neckPivotAngle: {x: 0, y: 0, z: 0}
-  neckUpDownAngle: {x: 0, y: 0, z: 0}
+  neckPivotAngle: {x: 0, y: 0, z: 35}
+  neckUpDownAngle: {x: 0, y: 0, z: 40}
   neckRangeX: {x: -40, y: 40}
   neckRotationZRange: {x: -40, y: 40}
   neckPivotStartRotation: {x: 0, y: 0, z: 35}
@@ -17277,7 +17277,7 @@ CapsuleCollider:
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 2048
   m_ExcludeLayers:
     serializedVersion: 2
     m_Bits: 0
