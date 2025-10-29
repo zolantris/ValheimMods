@@ -22,19 +22,40 @@ currently uses the vanilla AI (making the Xeno less realistic).
 
 ### Monsters
 
-Xenomorph Drones
+<!-- Replaced the previous bullet list with a structured HTML table for clarity and to include spawn IDs -->
 
-- Fast and agile, these creatures hunt in packs and can quickly overwhelm
-  players.
-- Stealthy predators that can ambush players from the shadows.
-- Weakness: Fire. (eventually)
-- Behaviors (not released in 1.0.0 due to movement/navigation bugs)
-    - Hunt: Circle
-    - Hunt: Leap
-    - Hunt: Charge (attack and chases player)
-    - Hunt: Retreat (will move away)
-    - Hunt: Creep (will move towards player if player is not looking in their
-      direction or move backwards if player is looking at them).
+<table>
+  <thead>
+    <tr>
+      <th>Image</th>
+      <th>Name</th>
+      <th>ID</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><img src="assets/images/xeno_drone.png" alt="Xenomorph Drone" style="max-width:120px; height:auto;"/></td>
+      <td>Xenomorph Drone</td>
+      <td><code>xeno_drone</code></td>
+      <td>Fast and agile pack hunters. Stealthy predators that can ambush players. Weakness: Fire (planned). Behaviors: hunt, leap, charge, retreat, creep. (Movement/nav AI limited in 1.0.0)</td>
+    </tr>
+    <tr>
+      <td><img src="assets/images/example_monster.png" alt="Example Monster" style="max-width:120px; height:auto;"/></td>
+      <td>Example Monster</td>
+      <td><code>example_monster</code></td>
+      <td>Placeholder entry. Add a short description and use the ID for spawning and config references.</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>
+The values in the <code>ID</code> column are the canonical spawn identifiers used by the mod (for example in spawn commands, config files, or spawn tables). Use these IDs when spawning monsters via console commands or programmatic spawners.
+</p>
+
+<p>
+Image notes: place small PNG/JPG images in `src/Eldritch.Valheim/assets/images/` (or update the paths above). Recommended width: 120px (use responsive styling as above). If images are not present, the <code>&lt;img&gt;</code> tags will show broken-image placeholders in GitHub/Markdown viewers.
+</p>
 
 Some of this content must remain free (EG some assets). Most code/content from
 Eldritch.Core is only available to use with permission from the author as some

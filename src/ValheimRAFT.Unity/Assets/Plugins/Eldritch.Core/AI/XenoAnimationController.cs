@@ -815,8 +815,8 @@ namespace Eldritch.Core
       }
     }
 
-    [SerializeField] public float ChanceToTailAttack = 0.3f;
-    [SerializeField] public float ChanceToArmAttack = 0.7f;
+    public static float ChanceToTailAttack = 0.5f;
+    public static float ChanceToArmAttack = 0.5f;
 
     public void TryRandomizeAttackMode()
     {

@@ -6,6 +6,8 @@
         <RootNamespace>Eldritch.Valheim</RootNamespace>
         <AssemblyName>Eldritch.Valheim</AssemblyName>
         <AssemblyType>Library</AssemblyType>
+        <Configurations>Debug;Release;Release Archive</Configurations>
+        <Platforms>AnyCPU</Platforms>
     </PropertyGroup>
 
     <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">

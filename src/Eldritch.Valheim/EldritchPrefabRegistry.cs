@@ -283,10 +283,42 @@ public static class EldritchPrefabRegistry
     // Do not register spawn configs if disabled.
     SpawnConfig[] spawnConfigs = EldritchBepinExXenoDroneConfig.Enabled.Value ? [xenoGlobalModifierSpawnConfig, xenoNoModifierSpawnConfig] : [];
 
+    var tarDrop = new DropConfig
+    {
+      Item = "Tar",
+      Chance = 10f,
+      MinAmount = 1,
+      MaxAmount = 3
+    };
+    var boneFragmentsDrop = new DropConfig
+    {
+      Item = "Bone Fragments",
+      Chance = 100f,
+      MinAmount = 2,
+      MaxAmount = 4
+    };
+    var chitinDrop = new DropConfig
+    {
+      Item = "Chitin",
+      Chance = 70f,
+      MinAmount = 2,
+      MaxAmount = 3
+    };
+    var eitrDrop = new DropConfig
+    {
+      Item = "Eitr",
+      Chance = 10f,
+      MinAmount = 1,
+      MaxAmount = 1
+    };
+
+
+
     var creatureConfig = new CreatureConfig
     {
       Name = droneConfigName,
       Consumables = [],
+      DropConfigs = [tarDrop, boneFragmentsDrop, chitinDrop, eitrDrop],
       SpawnConfigs = spawnConfigs,
       Faction = Character.Faction.SeaMonsters // or forests or demon is glitchy,
     };
@@ -302,19 +334,18 @@ public static class EldritchPrefabRegistry
   public static HitData.DamageTypes XenoDroneArmDamage = new()
   {
     m_slash = 30f,
-    m_poison = 5f
+    m_pierce = 10f
   };
 
   public static HitData.DamageTypes XenoDroneBloodDamage = new()
   {
-    m_poison = 30f
+    m_poison = 50f
   };
 
   public static HitData.DamageTypes XenoDroneTailDamage = new()
   {
-    m_damage = 50f,
-    m_pierce = 50f,
-    m_poison = 5f
+    m_slash = 25f,
+    m_pierce = 50f
   };
 
   public static void UpdateDamage()
@@ -411,6 +442,8 @@ public static class EldritchPrefabRegistry
 
   public static void RegisterAllPrefabs()
   {
+    UpdateDamage();
+
 #if DEBUG
     // for now do not even register placeable xeno.
     return;

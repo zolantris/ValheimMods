@@ -6,6 +6,7 @@ namespace ValheimVehicles.ValheimVehicles.Patches;
 [HarmonyPatch]
 public class Valheim_GravityMagic_Patches
 {
+#if DEBUG
   [HarmonyPatch(typeof(Player), nameof(Player.Awake))]
   [HarmonyPostfix]
   public static void PlayerAwake_InjectGravityMagic(Player __instance)
@@ -16,4 +17,5 @@ public class Valheim_GravityMagic_Patches
       __instance.gameObject.AddComponent<GravityForceSpells>();
     }
   }
+#endif
 }
