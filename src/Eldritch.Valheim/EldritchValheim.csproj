@@ -1,6 +1,9 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
     <Import Project="$(SolutionDir)build\base.props"/>
     <Import Project="$(SolutionDir)build\valheim.props"/>
+    <Import Project="$(SolutionDir)build\eldritch_version.props"/>
+    <Import Project="$(SolutionDir)build\static_version_generator.targets"/>
+    <Import Project="$(SolutionDir)build\thunderstore_manifest_update.targets"/>
 
     <PropertyGroup>
         <RootNamespace>Eldritch.Valheim</RootNamespace>
@@ -8,10 +11,6 @@
         <AssemblyType>Library</AssemblyType>
         <Configurations>Debug;Release;Release Archive</Configurations>
         <Platforms>AnyCPU</Platforms>
-    </PropertyGroup>
-
-    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-        <OutputPath>bin\Debug\</OutputPath>
     </PropertyGroup>
 
     <!--    translations-->

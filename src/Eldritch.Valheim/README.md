@@ -35,7 +35,7 @@ currently uses the vanilla AI (making the Xeno less realistic).
   </thead>
   <tbody>
     <tr>
-      <td><img src="assets/images/xeno_drone.png" alt="Xenomorph Drone" style="max-width:120px; height:auto;"/></td>
+      <td><img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/Eldritch.Valheim/Icons/xeno-drone.png" alt="Xenomorph Drone" style="max-width:120px; height:auto;"/></td>
       <td>Xenomorph Drone</td>
       <td><code>xeno_drone</code></td>
       <td>Fast and agile pack hunters. Stealthy predators that can ambush players. Weakness: Fire (planned). Behaviors: hunt, leap, charge, retreat, creep. (Movement/nav AI limited in 1.0.0)</td>

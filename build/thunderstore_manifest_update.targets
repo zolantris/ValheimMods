@@ -7,6 +7,6 @@
         </PropertyGroup>
 
 
-        <Exec Condition="Exists('$(ModSyncExe)')" Command="&quot;$(ModSyncExe)&quot; syncJson --config=&quot;$(ModSyncConfig)&quot; --targets=thunderstore-release,thunderstore-beta --syncJsonKey=version_number --syncJsonValue=$(Version)"/>
+        <Exec Condition="Exists('$(ModSyncExe)')" Command="&quot;$(ModSyncExe)&quot; syncJson --config=&quot;$(ModSyncConfig)&quot; --targets=valheimraft-thunderstore-release,valheimraft-thunderstore-beta,eldritch-thunderstore-release --syncJsonKey=version_number --syncJsonValue=$(Version)"/>
     </Target>
 </Project>
