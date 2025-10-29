@@ -42,7 +42,7 @@ public struct EditableSpawnConfig
   }
 }
 
-public class EldritchXenoDroneConfig : BepInExBaseConfig<EldritchXenoDroneConfig>
+public class EldritchBepinExXenoDroneConfig : BepInExBaseConfig<EldritchBepinExXenoDroneConfig>
 {
   public static ConfigEntry<bool> Enabled;
 
@@ -56,16 +56,21 @@ public class EldritchXenoDroneConfig : BepInExBaseConfig<EldritchXenoDroneConfig
   public static ConfigEntry<float> attackDamageTailAcid;
   public static ConfigEntry<float> attackDamageTailPierce;
   public static ConfigEntry<float> attackDamageTailSlash;
-  
+
   public static ConfigEntry<float> attackDamageArmsAcid;
   public static ConfigEntry<float> attackDamageArmsPierce;
   public static ConfigEntry<float> attackDamageArmsSlash;
-  
+
   public static ConfigEntry<float> attackDamageMouthPierce;
-  
+
   public static ConfigEntry<float> attackDamageBloodAcid;
-  
+
   public static ConfigEntry<float> XenoHealthMultiplier;
+
+  public static ConfigEntry<bool> IsTameable;
+  public static ConfigEntry<float> Speed;
+  public static ConfigEntry<float> XenoSwimSpeed;
+  public static ConfigEntry<float> RunSpeed;
 
   // damage structs
   public static ConfigEntry<float> XenoAcidDamage;
@@ -75,8 +80,9 @@ public class EldritchXenoDroneConfig : BepInExBaseConfig<EldritchXenoDroneConfig
   public static ConfigEntry<string> XenoSpawnConfig;
 
   // individual properties
-  public static ConfigEntry<Heightmap.Biome> Biome;
-  public static ConfigEntry<Heightmap.Biome> BiomesWithoutWorldModifierRequirements;
+  public static ConfigEntry<Heightmap.Biome> BiomeSpawn;
+
+  public static ConfigEntry<Heightmap.Biome> BiomesAlwaysSpawn;
   public static ConfigEntry<GlobalKeys> GlobalKeysConditionalSpawn;
 
 
@@ -94,7 +100,23 @@ public class EldritchXenoDroneConfig : BepInExBaseConfig<EldritchXenoDroneConfig
   public static void BindCharacterConfig(string prefabName, ConfigFile config)
   {
     XenoHealth = config.BindUnique(sectionKey_characterConfig, "maxHealth", 200f, ConfigHelpers.CreateConfigDescription("Configuration for Xeno Drone max base health"));
+    Speed = config.BindUnique(sectionKey_characterConfig, "Speed", 15f, ConfigHelpers.CreateConfigDescription("Base speed."));
+    XenoSwimSpeed = config.BindUnique(sectionKey_characterConfig, "XenoSwimSpeed", 5f, ConfigHelpers.CreateConfigDescription("Swim speed."));
+    RunSpeed = config.BindUnique(sectionKey_characterConfig, "RunSpeed", 20f, ConfigHelpers.CreateConfigDescription("Run speed (might not apply for creatures)"));
     XenoHealthMultiplier = config.BindUnique(sectionKey_characterConfig, "healthMultiplier", 1.0f, ConfigHelpers.CreateConfigDescription("Health multiplier for the Xeno Drone per level"));
+    IsTameable = config.BindUnique(sectionKey_characterConfig, "IsTameable", false, ConfigHelpers.CreateConfigDescription("Xenos can be tamed if true. They like eggs."));
+
+    attackDamageTailAcid = config.BindUnique(sectionKey_characterConfig, "attackDamageTailAcid", 12f, ConfigHelpers.CreateConfigDescription("Tail acid attack damage"));
+    attackDamageTailPierce = config.BindUnique(sectionKey_characterConfig, "attackDamageTailPierce", 18f, ConfigHelpers.CreateConfigDescription("Tail pierce attack damage"));
+    attackDamageTailSlash = config.BindUnique(sectionKey_characterConfig, "attackDamageTailSlash", 18f, ConfigHelpers.CreateConfigDescription("Tail slash attack damage"));
+
+    attackDamageArmsAcid = config.BindUnique(sectionKey_characterConfig, "attackDamageArmsAcid", 8f, ConfigHelpers.CreateConfigDescription("Arms acid attack damage"));
+    attackDamageArmsPierce = config.BindUnique(sectionKey_characterConfig, "attackDamageArmsPierce", 10f, ConfigHelpers.CreateConfigDescription("Arms pierce attack damage"));
+    attackDamageArmsSlash = config.BindUnique(sectionKey_characterConfig, "attackDamageArmsSlash", 10f, ConfigHelpers.CreateConfigDescription("Arms slash attack damage"));
+
+    attackDamageMouthPierce = config.BindUnique(sectionKey_characterConfig, "attackDamageMouthPierce", 22f, ConfigHelpers.CreateConfigDescription("Mouth pierce attack damage"));
+
+    attackDamageBloodAcid = config.BindUnique(sectionKey_characterConfig, "attackDamageBloodAcid", 6f, ConfigHelpers.CreateConfigDescription("Acid damage applied to blood/dot effects"));
   }
 
   public static void BindSpawnConfig(string prefabName, ConfigFile config)
@@ -103,12 +125,13 @@ public class EldritchXenoDroneConfig : BepInExBaseConfig<EldritchXenoDroneConfig
 
     XenoSpawnConfig = config.BindJson<EditableSpawnConfig>(sectionKey_spawnConfig, "xenoSpawnConfig", new EditableSpawnConfig(), "Configuration for Xeno spawning");
 
-    Biome = config.BindUnique(sectionKey_spawnConfig, "Biome", Heightmap.Biome.All, ConfigHelpers.CreateConfigDescription("Enable Xenos for specific Biomes, multiple biomes can be used. This will allow spawning in all Biomes. However Xenos spawns will only occur if GlobalKey conditions are met (or none are set)"));
-    BiomesWithoutWorldModifierRequirements = config.BindUnique(sectionKey_spawnConfig, "BiomesWithoutWorldModifierRequirements", Heightmap.Biome.AshLands | Heightmap.Biome.DeepNorth | Heightmap.Biome.Mistlands, ConfigHelpers.CreateConfigDescription($"Enable {prefabName} for specific Biomes without World Modifier requirements, multiple biomes can be used. This will allow spawning in these Biomes regardless of World Modifier conditions."));
+    BiomeSpawn = config.BindUnique(sectionKey_spawnConfig, "BiomeSpawn", EldritchPrefabRegistry.DefaultBiomesAfterGlobalKey, ConfigHelpers.CreateConfigDescription("Enable Xenos for specific Biomes, multiple biomes can be used. This will allow spawning in all Biomes. However Xenos spawns will only occur if GlobalKey conditions are met (or none are set)"));
+
+    BiomesAlwaysSpawn = config.BindUnique(sectionKey_spawnConfig, "BiomesAlwaysSpawn", EldritchPrefabRegistry.DefaultAlwaysSpawnInBiomes, ConfigHelpers.CreateConfigDescription($"Enable {prefabName} for specific Biomes without World Modifier requirements, multiple biomes can be used. This will allow spawning in these Biomes regardless of World Modifier conditions."));
 
     GlobalKeysConditionalSpawn = config.BindUnique(sectionKey_spawnConfig, "GlobalKeysConditionalSpawn", GlobalKeys.defeated_goblinking, ConfigHelpers.CreateConfigDescription("Conditionally enable spawning based on all global modifiers being active. This means all of them must be fulfilled. For more info on keys go here. https://valheimcheats.com/global-key"));
 
-    SpawnChance = config.BindUnique(sectionKey_spawnConfig, "SpawnChance", 5f, ConfigHelpers.CreateConfigDescription("Chance to spawn each spawn interval (0-100)", new AcceptableValueRange<float>(0f, 100f)));
+    SpawnChance = config.BindUnique(sectionKey_spawnConfig, "SpawnChance", 5f, ConfigHelpers.CreateConfigDescription("Chance to spawn each spawn interval (0-100)", true, false, new AcceptableValueRange<float>(0f, 100f)));
 
     MinGroupSize = config.BindUnique(sectionKey_spawnConfig, "MinGroupSize", 1, ConfigHelpers.CreateConfigDescription("Min Group Size Spawned"));
 
@@ -120,7 +143,7 @@ public class EldritchXenoDroneConfig : BepInExBaseConfig<EldritchXenoDroneConfig
 
     SpawnAtNight = config.BindUnique(sectionKey_spawnConfig, "SpawnAtNight", true, ConfigHelpers.CreateConfigDescription("Enable spawning at night."));
 
-    MaxAltitude = config.BindUnique(sectionKey_spawnConfig, "MaxAltitude", 1000f, ConfigHelpers.CreateConfigDescription("Allow spawning below this altitude.", new AcceptableValueRange<float>(20f, 10000f)));
+    MaxAltitude = config.BindUnique(sectionKey_spawnConfig, "MaxAltitude", 1000f, ConfigHelpers.CreateConfigDescription("Allow spawning below this altitude.", true, false, new AcceptableValueRange<float>(20f, 10000f)));
 
     MinAltitude = config.BindUnique(sectionKey_spawnConfig, "MinAltitude", 0f, ConfigHelpers.CreateConfigDescription("Allow spawning above this altitude"));
 

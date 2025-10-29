@@ -31,16 +31,33 @@ public class XenoDrone_MonsterAI : MonsterAI
     base.Awake();
   }
 
+  public void OnDamaged()
+  {
+    var health = xenoCharacter.m_health;
+    DroneAI.ApplyDamage(health);
+  }
+
   public override void OnEnable()
   {
     base.OnEnable();
     xenoCharacter = GetComponent<Character>();
+
+    if (xenoCharacter)
+    {
+      xenoCharacter.m_onDamaged += OnDamaged;
+    }
+    else
+    {
+      LoggerProvider.LogError("No character component found on XenoDrone_MonsterAI");
+    }
+
     DroneAI.OnHitTarget += HandleHitTarget;
   }
 
   public override void OnDisable()
   {
     base.OnDisable();
+    xenoCharacter.m_onDamaged -= OnDamaged;
     if (DroneAI != null && DroneAI.OnHitTarget != null)
     {
       DroneAI.OnHitTarget -= HandleHitTarget;
@@ -98,7 +115,21 @@ public class XenoDrone_MonsterAI : MonsterAI
 
   private static HitData.DamageTypes GetDamageFromType(XenoHitboxType type)
   {
-    return type == XenoHitboxType.Arm ? EldritchPrefabRegistry.XenoDroneArmDamage : EldritchPrefabRegistry.XenoDroneTailDamage;
+    if (type == XenoHitboxType.Tail)
+    {
+      return EldritchPrefabRegistry.XenoDroneTailDamage;
+    }
+    if (type == XenoHitboxType.Arm)
+    {
+      return EldritchPrefabRegistry.XenoDroneArmDamage;
+    }
+
+    if (type == XenoHitboxType.Blood)
+    {
+      return EldritchPrefabRegistry.XenoDroneBloodDamage;
+    }
+
+    throw new Exception("Unknown damage type");
   }
 
 

@@ -16,17 +16,21 @@ public static class EldritchPrefabRegistry
   public static SpriteAtlas Sprites;
   public const string droneAssetName = "xenomorph-drone-v1";
   public const string droneConfigName = "eldritch_xeno_drone";
+  private const string XenoAdultName = "Eldritch_XenoAdult_Creature";
 
-  public static SpawnConfig XenoSpawnConfig = new()
+  public static Heightmap.Biome DefaultAlwaysSpawnInBiomes = Heightmap.Biome.AshLands | Heightmap.Biome.DeepNorth | Heightmap.Biome.Mistlands;
+  public static Heightmap.Biome DefaultBiomesAfterGlobalKey = Heightmap.Biome.BlackForest | Heightmap.Biome.Swamp;
+
+
+  public static SpawnConfig xenoGlobalModifierSpawnConfig = new()
   {
     Name = droneConfigName,
-    Biome = Heightmap.Biome.Swamp, // todo make this configurable
-    // Biome = Heightmap.Biome.All, // for now all biomes can spawn alien. todo make this configurable
-    SpawnChance = 100f, // 100% todo make this configurable
-    MinGroupSize = 1, // todo make this configurable
-    MaxGroupSize = 3, // todo make this configurable
-    // SpawnInterval = 600f,
-    SpawnInterval = 200f, // todo make this configurable
+    Biome = DefaultBiomesAfterGlobalKey,
+    SpawnChance = 5f,
+    MinGroupSize = 1,
+    MaxGroupSize = 3,
+    RequiredGlobalKey = nameof(GlobalKeys.defeated_goblinking),
+    SpawnInterval = 600f,
     SpawnAtDay = true,
     SpawnAtNight = true,
     MaxAltitude = 1000f,
@@ -35,23 +39,55 @@ public static class EldritchPrefabRegistry
     MaxLevel = 10 // todo add config for level scaling.
   };
 
+  public static SpawnConfig xenoNoModifierSpawnConfig = new()
+  {
+    Name = droneConfigName,
+    Biome = DefaultAlwaysSpawnInBiomes,
+    SpawnChance = 5f,
+    MinGroupSize = 1,
+    MaxGroupSize = 5,
+    SpawnInterval = 600f,
+    SpawnAtDay = true,
+    SpawnAtNight = true,
+    MaxAltitude = 10000f,
+    MinAltitude = 0f,
+    HuntPlayer = true,
+    MaxLevel = 10
+  };
+
 
   public static void UpdateSpawnConfig()
   {
-    XenoSpawnConfig = new SpawnConfig
+    xenoGlobalModifierSpawnConfig = new SpawnConfig
     {
       Name = droneConfigName,
-      Biome = EldritchXenoDroneConfig.Biome.Value,
-      SpawnChance = EldritchXenoDroneConfig.SpawnChance.Value,
-      MinGroupSize = EldritchXenoDroneConfig.MinGroupSize.Value,
-      MaxGroupSize = EldritchXenoDroneConfig.MaxGroupSize.Value,
-      SpawnInterval = EldritchXenoDroneConfig.SpawnInterval.Value,
-      SpawnAtDay = EldritchXenoDroneConfig.SpawnAtDay.Value,
-      SpawnAtNight = EldritchXenoDroneConfig.SpawnAtNight.Value,
-      MaxAltitude = EldritchXenoDroneConfig.MaxAltitude.Value,
-      MinAltitude = EldritchXenoDroneConfig.MinAltitude.Value,
-      HuntPlayer = EldritchXenoDroneConfig.HuntPlayer.Value,
-      MaxLevel = EldritchXenoDroneConfig.MaxLevel.Value
+      Biome = EldritchBepinExXenoDroneConfig.BiomeSpawn.Value,
+      SpawnChance = EldritchBepinExXenoDroneConfig.SpawnChance.Value,
+      MinGroupSize = EldritchBepinExXenoDroneConfig.MinGroupSize.Value,
+      MaxGroupSize = EldritchBepinExXenoDroneConfig.MaxGroupSize.Value,
+      SpawnInterval = EldritchBepinExXenoDroneConfig.SpawnInterval.Value,
+      SpawnAtDay = EldritchBepinExXenoDroneConfig.SpawnAtDay.Value,
+      SpawnAtNight = EldritchBepinExXenoDroneConfig.SpawnAtNight.Value,
+      MaxAltitude = EldritchBepinExXenoDroneConfig.MaxAltitude.Value,
+      MinAltitude = EldritchBepinExXenoDroneConfig.MinAltitude.Value,
+      HuntPlayer = EldritchBepinExXenoDroneConfig.HuntPlayer.Value,
+      MaxLevel = EldritchBepinExXenoDroneConfig.MaxLevel.Value
+    };
+
+    xenoNoModifierSpawnConfig = new SpawnConfig
+    {
+      Name = droneConfigName,
+      Biome = EldritchBepinExXenoDroneConfig.BiomesAlwaysSpawn.Value,
+      SpawnChance = EldritchBepinExXenoDroneConfig.SpawnChance.Value,
+      MinGroupSize = EldritchBepinExXenoDroneConfig.MinGroupSize.Value,
+      MaxGroupSize = EldritchBepinExXenoDroneConfig.MaxGroupSize.Value,
+      SpawnInterval = EldritchBepinExXenoDroneConfig.SpawnInterval.Value,
+      SpawnAtDay = EldritchBepinExXenoDroneConfig.SpawnAtDay.Value,
+      SpawnAtNight = EldritchBepinExXenoDroneConfig.SpawnAtNight.Value,
+      MaxAltitude = EldritchBepinExXenoDroneConfig.MaxAltitude.Value,
+      MinAltitude = EldritchBepinExXenoDroneConfig.MinAltitude.Value,
+      HuntPlayer = EldritchBepinExXenoDroneConfig.HuntPlayer.Value,
+      MaxLevel = EldritchBepinExXenoDroneConfig.MaxLevel.Value
     };
   }
 
@@ -72,20 +108,20 @@ public static class EldritchPrefabRegistry
   {
     if (assetBundle == null) return;
     LoggerProvider.LogDebug($"Starting InjectAlienPrefab");
-    const string XenoAdultName = "Eldritch_XenoAdult";
+    const string XenoAdultPieceName = "Eldritch_XenoAdult_Piece";
 
     var prefabAsset = assetBundle.LoadAsset<GameObject>(droneAssetName);
     if (prefabAsset == null) return;
 
     var originalComponents = prefabAsset.GetComponents<Component>();
-    var clonedPrefab = PrefabManager.Instance.CreateClonedPrefab(XenoAdultName, prefabAsset);
+    var clonedPrefab = PrefabManager.Instance.CreateClonedPrefab(XenoAdultPieceName, prefabAsset);
 
     if (!clonedPrefab) return;
 
     clonedPrefab.AddComponent<ZNetView>();
     clonedPrefab.AddComponent<XenoDroneSpawnHandler>();
     var piece = clonedPrefab.AddComponent<Piece>();
-    piece.m_name = XenoAdultName;
+    piece.m_name = XenoAdultPieceName;
     piece.m_icon = Sprites.GetSprite("anchor");
 
     var components = clonedPrefab.GetComponents<Component>();
@@ -131,6 +167,12 @@ public static class EldritchPrefabRegistry
     LoggerProvider.LogDebug($"Added {piece}");
   }
 
+  public static void OnConfigUpdateSpawnSettings()
+  {
+    UpdateSpawnConfig();
+    var xenoPrefab = PrefabManager.Instance.GetPrefab(droneConfigName);
+  }
+
   public static void RegisterXenoSpawn()
   {
     UpdateSpawnConfig();
@@ -143,7 +185,6 @@ public static class EldritchPrefabRegistry
       return;
     }
 
-    const string XenoAdultName = "Eldritch_XenoAdult_Creature";
     var seekerCreature = CreatureManager.Instance.GetCreature("Seeker");
     var seekerPrefab = seekerCreature != null ? seekerCreature.Prefab : null;
 
@@ -151,7 +192,6 @@ public static class EldritchPrefabRegistry
     {
       seekerPrefab = CreatureManager.Instance.GetCreaturePrefab("Seeker");
     }
-
     // var xenoPrefab = PrefabManager.Instance.CreateClonedPrefab(XenoAdultName, asset);
     if (seekerPrefab == null)
     {
@@ -169,31 +209,43 @@ public static class EldritchPrefabRegistry
     // }
     if (xenoPrefab == null) return;
 
+    var seekerHumanoid = seekerPrefab.GetComponent<Humanoid>();
+
     var nv = xenoPrefab.GetOrAddComponent<ZNetView>();
     nv.m_type = ZDO.ObjectType.Default;
     nv.m_persistent = false;
 
     var humanoid = xenoPrefab.GetOrAddComponent<Humanoid>();
+
+    // bind effects from seeker to xeno
+    humanoid.m_deathEffects = seekerHumanoid.m_deathEffects;
+    humanoid.m_onDeath = seekerHumanoid.m_onDeath;
+    humanoid.m_dropEffects = seekerHumanoid.m_dropEffects;
+    humanoid.m_waterEffects = seekerHumanoid.m_waterEffects;
+    humanoid.m_critHitEffects = seekerHumanoid.m_critHitEffects;
+
     var zSyncTransform = xenoPrefab.GetOrAddComponent<ZSyncTransform>();
     var zSyncAnimation = xenoPrefab.GetOrAddComponent<ZSyncAnimation>();
-    var xenoDroneMonsterAI = xenoPrefab.AddComponent<XenoDrone_MonsterAI>();
+    var xenoDroneMonsterAI = xenoPrefab.GetOrAddComponent<XenoDrone_MonsterAI>();
 
     var animator = xenoPrefab.GetComponentInChildren<Animator>();
-    var animEvent = animator.gameObject.AddComponent<CharacterAnimEvent>();
+    var animEvent = animator.gameObject.GetOrAddComponent<CharacterAnimEvent>();
 
     var animationController = xenoPrefab.GetComponentInChildren<XenoAnimationController>();
 
 
-    // todo determine how to make tameable...someone will ask for it.
-    var tameable = xenoPrefab.GetOrAddComponent<Tameable>();
-    tameable.m_commandable = true;
-    tameable.m_monsterAI = xenoDroneMonsterAI;
+    // todo determine if this works.
+    if (EldritchBepinExXenoDroneConfig.IsTameable.Value)
+    {
+      var tameable = xenoPrefab.GetOrAddComponent<Tameable>();
+      tameable.m_commandable = true;
+      tameable.m_monsterAI = xenoDroneMonsterAI;
+      humanoid.m_tameableMonsterAI = xenoDroneMonsterAI;
+    }
 
-    // todo add health config
-    humanoid.m_health = 500f;
-    humanoid.m_tameableMonsterAI = xenoDroneMonsterAI;
-    humanoid.m_swimSpeed = 10f;
-
+    humanoid.m_health = EldritchBepinExXenoDroneConfig.XenoHealth.Value;
+    humanoid.m_runSpeed = EldritchBepinExXenoDroneConfig.RunSpeed.Value;
+    humanoid.m_swimSpeed = EldritchBepinExXenoDroneConfig.XenoSwimSpeed.Value;
 
     humanoid.m_eye = xenoPrefab.transform.Find("EyePos");
     humanoid.m_animEvent = animEvent;
@@ -213,11 +265,11 @@ public static class EldritchPrefabRegistry
 
     AddWeaponItemsToXenoInventory(humanoid);
 
-    // if (!XenoFromSeekerBuilder.BuildXenoFromSeeker(xenoPrefab, xenoAsset.transform.Find("Visual").gameObject, xenoAsset))
-    // {
-    //   LoggerProvider.LogError("Failed to swap Seeker clone to Xeno.");
-    //   return;
-    // }
+    if (!XenoFromSeekerBuilder.BuildXenoFromSeeker(xenoPrefab, xenoAsset.transform.Find("Visual").gameObject, xenoAsset))
+    {
+      LoggerProvider.LogError("Failed to swap Seeker clone to Xeno.");
+      return;
+    }
 
     // var humanoid = xenoPrefab.GetOrAddComponent<Humanoid>();
     // var xenoAnimationController = xenoPrefab.GetComponentInChildren<XenoAnimationController>();
@@ -228,13 +280,15 @@ public static class EldritchPrefabRegistry
     //   humanoid.m_head = xenoAnimationController.neckPivot;
     // }
 
-    var spawnConfig = XenoSpawnConfig;
+    var spawnConfig = xenoGlobalModifierSpawnConfig;
+
+    SpawnConfig[] spawnConfigs = [xenoGlobalModifierSpawnConfig, xenoNoModifierSpawnConfig];
 
     var creatureConfig = new CreatureConfig
     {
       Name = droneConfigName,
       Consumables = [],
-      SpawnConfigs = [spawnConfig],
+      SpawnConfigs = spawnConfigs,
       Faction = Character.Faction.SeaMonsters // or forests or demon is glitchy,
     };
 
@@ -251,12 +305,39 @@ public static class EldritchPrefabRegistry
     m_slash = 30f,
     m_poison = 5f
   };
+
+  public static HitData.DamageTypes XenoDroneBloodDamage = new()
+  {
+    m_poison = 30f
+  };
+
   public static HitData.DamageTypes XenoDroneTailDamage = new()
   {
     m_damage = 50f,
     m_pierce = 50f,
     m_poison = 5f
   };
+
+  public static void UpdateDamage()
+  {
+    XenoDroneArmDamage = new HitData.DamageTypes
+    {
+      m_slash = EldritchBepinExXenoDroneConfig.attackDamageArmsSlash.Value,
+      m_pierce = EldritchBepinExXenoDroneConfig.attackDamageArmsPierce.Value
+    };
+
+    XenoDroneBloodDamage = new HitData.DamageTypes
+    {
+      m_poison = EldritchBepinExXenoDroneConfig.attackDamageBloodAcid.Value
+    };
+
+    XenoDroneTailDamage = new HitData.DamageTypes
+    {
+      m_damage = 50f,
+      m_pierce = 50f,
+      m_poison = 5f
+    };
+  }
 
   public static void AddWeaponItemsToXenoInventory(Humanoid humanoid)
   {
@@ -331,8 +412,12 @@ public static class EldritchPrefabRegistry
 
   public static void RegisterAllPrefabs()
   {
+#if DEBUG
+    // for now do not even register placeable xeno.
+    return;
     LoadAssemblies();
     RegisterPlaceableAlien();
+#endif
   }
   public static void RegisterAllCreatures()
   {

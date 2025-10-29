@@ -3,6 +3,7 @@
 
 using System.Reflection;
 using Eldritch.Core;
+using Jotunn;
 using Jotunn.Managers;
 using UnityEngine;
 using Zolantris.Shared;
@@ -83,12 +84,13 @@ namespace Eldritch.Valheim
         LoggerProvider.LogError("BuildXenoFromSeeker: animator not found after Visual swap.");
         return false;
       }
-      var cae = animator.gameObject.GetComponent<CharacterAnimEvent>() ?? animator.gameObject.AddComponent<CharacterAnimEvent>();
+      var cae = animator.gameObject.GetOrAddComponent<CharacterAnimEvent>();
       cae.m_nview = nview;
 
       // 3) MonsterAI → XenoDrone_MonsterAI (migrate tuning)
       var srcAI = seekerCloneRoot.GetComponent<MonsterAI>();
-      var xenoAI = seekerCloneRoot.GetComponent<XenoDrone_MonsterAI>() ?? seekerCloneRoot.AddComponent<XenoDrone_MonsterAI>();
+      var xenoAI = seekerCloneRoot.GetOrAddComponent<XenoDrone_MonsterAI>();
+
       if (srcAI)
       {
         PrefabGraft.CopyFields(srcAI, xenoAI);

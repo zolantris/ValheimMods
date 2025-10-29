@@ -40,9 +40,9 @@ namespace Zolantris.Shared
     /// </summary>
     public static ConfigDescription CreateConfigDescription(
       string description,
-      AcceptableValueBase acceptableValues = null,
       bool isSynchronized = true,
       bool isAdvanced = false,
+      AcceptableValueBase acceptableValues = null,
       string category = null,
       int? order = null,
       bool? readOnly = null,

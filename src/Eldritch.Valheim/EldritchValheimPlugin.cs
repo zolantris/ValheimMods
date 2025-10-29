@@ -35,12 +35,10 @@ public class EldritchValheimPlugin : BaseUnityPlugin
   public void Awake()
   {
     LoggerProvider.Setup(Logger);
-    LoggerProvider.LogDebug("Eldritchcore initialized");
 
     PatchController.Apply(HarmonyGuid);
 
-
-
+    EldritchBepinExXenoDroneConfig.BindConfig(Config, ModConfigSync);
 
     // ReSharper disable once RedundantNameQualifier
     Eldritch.Core.Nav.Pathfinding.Register(new ValheimPathfindingShim());
@@ -53,5 +51,7 @@ public class EldritchValheimPlugin : BaseUnityPlugin
     {
       EldritchPrefabRegistry.RegisterAllPrefabs();
     };
+
+    LoggerProvider.LogDebug($"{ModName} initialized");
   }
 }

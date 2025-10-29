@@ -39,7 +39,9 @@ namespace Eldritch.Core
     public Rigidbody PrimaryTargetRB;
     [CanBeNull] public XenoDroneAI CachedPrimaryTargetXeno;
     public int PackId;
-    public float Health, MaxHealth = 100f;
+
+    public float Health = 100f;
+    public float MaxHealth = 100f;
 
     [Header("Timers")]
     public float TimeUntilSleep = 5f, TimeUntilWake = 50f;
@@ -284,10 +286,24 @@ namespace Eldritch.Core
       animationController.StopAttack();
     }
 
+    public void Bleed()
+    {
+      if (!animationController) return;
+      animationController.PlayBloodEffect();
+    }
+
+    public void UpdateHealth(float health)
+    {
+      Health = health;
+    }
+
     public void ApplyDamage(float damage)
     {
-      animationController?.PlayBloodEffect();
+      if (!animationController) return;
+
+      animationController.PlayBloodEffect();
       Health = Mathf.Max(Health - damage, 0f);
+
       if (Health <= 0.1f) SetDead();
     }
 
@@ -1323,21 +1339,31 @@ namespace Eldritch.Core
 
   #region Attack Logic
 
+    // todo sync / add this damage to play mode testing attacks
     [Header("Damage")]
     [SerializeField] private float tailDamage = 55f;
     [SerializeField] private float armDamage = 35f;
-
+    [SerializeField] private float bloodDamage = 15f;
 
     // Attack window flags toggled by animation events or code
     private bool _tailOpen => animationController.IsAnimatingTailAttack();
     private bool _armOpen => animationController.IsAnimatingArmAttack();
 
-    // Per-swing dedupe (instanceID -> hit count)
-    private readonly Dictionary<int, int> _dedupe = new();
+    private bool _bleeding => animationController.IsBleeding();
 
     public bool IsAttackWindowOpen(XenoHitboxType t)
     {
-      return t == XenoHitboxType.Tail ? _tailOpen : _armOpen;
+      if (t == XenoHitboxType.Tail)
+      {
+        return _tailOpen;
+      }
+
+      if (t == XenoHitboxType.Arm)
+      {
+        return _armOpen;
+      }
+
+      return _bleeding;
     }
 
     // ---- Main entry called by hitboxes ----

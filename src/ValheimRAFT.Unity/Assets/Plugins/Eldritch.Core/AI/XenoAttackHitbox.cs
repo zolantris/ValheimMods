@@ -10,7 +10,8 @@ namespace Eldritch.Valheim
   public enum XenoHitboxType
   {
     Tail,
-    Arm
+    Arm,
+    Blood
   }
 
   [RequireComponent(typeof(Collider))]
