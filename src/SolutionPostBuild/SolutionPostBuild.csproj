@@ -31,7 +31,7 @@
     <PropertyGroup Label="For target args generation">
         <SyncTargets Condition="'$(IsRunnableServer)' == 'true'">server</SyncTargets>
         <!--        <SyncTargets Condition="'$(IsRunnableClient)' == 'true'">localClientEldritch</SyncTargets>-->
-        <SyncTargets Condition="'$(IsRunnableClient)' == 'true'">localClient</SyncTargets>
+        <SyncTargets Condition="'$(IsRunnableClient)' == 'true'">localClient,localClientEldritch</SyncTargets>
         <!--  This overrides server or client config -->
         <SyncTargets Condition="'$(IsRunnableClientServer)' == 'true'">localClient,localClientEldritch,vmClient,server</SyncTargets>
 

@@ -1,5 +1,9 @@
+using System;
 using Eldritch.Core;
 using UnityEngine;
+using Zolantris.Shared;
+using Object = UnityEngine.Object;
+using Random = UnityEngine.Random;
 namespace Eldritch.Valheim;
 
 public class XenoDrone_MonsterAI : MonsterAI
@@ -7,7 +11,17 @@ public class XenoDrone_MonsterAI : MonsterAI
   public XenoDroneAI DroneAI;
   public XenoAIMovementController MovementController;
 
-  public bool ShouldSkipAiMovement = false;
+  public static bool ShouldSkipAiMovement = false;
+  public static bool ShouldSkipUpdateAI = false;
+
+  public static bool ShouldUseNavigationOnAttack = false;
+  public static bool ShouldUseNavigationOnHunt = false;
+  public static bool ShouldUseNavigationOnHuntChargeAttack = false;
+
+  // damage configs
+  public static float pushForce = 3f;
+
+  public Character xenoCharacter;
 
   public override void Awake()
   {
@@ -16,20 +30,151 @@ public class XenoDrone_MonsterAI : MonsterAI
     base.Awake();
   }
 
+  public void XenoDroneOnDamaged(float damage, Character character)
+  {
+    var health = xenoCharacter.GetHealth();
+    DroneAI.ApplyDamage(health);
+  }
+
+  public override void OnEnable()
+  {
+    base.OnEnable();
+    xenoCharacter = GetComponent<Character>();
+
+    if (xenoCharacter)
+    {
+      xenoCharacter.m_onDamaged += XenoDroneOnDamaged;
+      DroneAI.MaxHealth = xenoCharacter.GetMaxHealth();
+      DroneAI.Health = xenoCharacter.GetHealth();
+    }
+    else
+    {
+      LoggerProvider.LogError("No character component found on XenoDrone_MonsterAI");
+    }
+
+    DroneAI.OnHitTarget += HandleHitTarget;
+  }
+
+  public override void OnDisable()
+  {
+    base.OnDisable();
+    xenoCharacter.m_onDamaged -= XenoDroneOnDamaged;
+    if (DroneAI != null && DroneAI.OnHitTarget != null)
+    {
+      DroneAI.OnHitTarget -= HandleHitTarget;
+    }
+  }
+
+  public void HandleHitTarget((XenoHitboxType type, XenoAttackHitbox hitbox, Collider other, GameObject targetRoot) args)
+  {
+    var (type, hitbox, other, targetRoot) = args;
+    // Prefer Characters (players/NPCs)
+    var hitCharacter = targetRoot.GetComponentInParent<Character>();
+    if (hitCharacter != null)
+    {
+      ApplyCharacterDamage(hitCharacter, other, type);
+      return;
+    }
+
+    // Pieces / structures (WearNTear)
+    var wnt = targetRoot.GetComponentInParent<WearNTear>();
+    if (wnt != null)
+    {
+      ApplyWearNTearDamage(wnt, other, type);
+      return;
+    }
+
+    // (Optional) other destructibles if your project uses a custom interface
+    // var destructible = targetRoot.GetComponentInParent<IMyDestructible>();
+    // if (destructible != null) { destructible.Hit(...); return; }
+  }
+
+  private void ApplyCharacterDamage(Character character, Collider other, XenoHitboxType type)
+  {
+    var p = other.ClosestPoint(transform.position);
+    var dir = (character.transform.position - p).normalized;
+
+    var hd = new HitData
+    {
+      m_point = p,
+      m_dir = dir,
+      m_hitType = HitData.HitType.EnemyHit,
+      m_staggerMultiplier = 50, // todo set this.
+      m_pushForce = pushForce,
+      m_hitCollider = other,
+      m_attacker = xenoCharacter.GetZDOID(),
+      m_blockable = true,
+      m_dodgeable = true,
+      m_ranged = false,
+      m_toolTier = 99,
+      m_radius = 0,
+      m_damage = GetDamageFromType(type)
+    };
+
+    character.Damage(hd);
+  }
+
+  private static HitData.DamageTypes GetDamageFromType(XenoHitboxType type)
+  {
+    if (type == XenoHitboxType.Tail)
+    {
+      return EldritchPrefabRegistry.XenoDroneTailDamage;
+    }
+    if (type == XenoHitboxType.Arm)
+    {
+      return EldritchPrefabRegistry.XenoDroneArmDamage;
+    }
+
+    if (type == XenoHitboxType.Blood)
+    {
+      return EldritchPrefabRegistry.XenoDroneBloodDamage;
+    }
+
+    throw new Exception("Unknown damage type");
+  }
+
+
+  private void ApplyWearNTearDamage(WearNTear wnt, Collider other, XenoHitboxType type)
+  {
+    var p = other.ClosestPoint(transform.position);
+    var dir = (wnt.transform.position - p).normalized;
+
+    var hd = new HitData
+    {
+      m_point = p,
+      m_dir = dir,
+      m_hitType = HitData.HitType.EnemyHit,
+      m_pushForce = pushForce,
+      m_hitCollider = other,
+      m_blockable = true,
+      m_dodgeable = true,
+      m_ranged = false,
+      m_toolTier = 99,
+      m_radius = 0,
+      m_attacker = xenoCharacter.GetZDOID(),
+      m_damage = GetDamageFromType(type)
+    };
+
+    wnt.Damage(hd);
+  }
+
   public bool MonsterUpdateAIMethod(float dt)
   {
-    if (ShouldSkipAiMovement) return true;
     if (DroneAI.abilityManager.IsDodging) return true;
-    if (DroneAI.CurrentState == XenoDroneAI.XenoAIState.Idle) return true;
-    if (DroneAI.CurrentState == XenoDroneAI.XenoAIState.Hunt) return true;
-    if (!base.UpdateAI(dt))
+    if (!ShouldSkipUpdateAI && !base.UpdateAI(dt))
       return false;
+
     if (IsSleeping())
     {
       UpdateSleep(dt);
       return true;
     }
     var character = m_character as Humanoid;
+    if (character && character.m_inventory.GetAllItems().Count == 0)
+    {
+      EldritchPrefabRegistry.AddWeaponItemsToXenoInventory(character);
+    }
+
     if (HuntPlayer())
       SetAlerted(true);
     bool canHearTarget;
@@ -37,6 +182,28 @@ public class XenoDrone_MonsterAI : MonsterAI
     UpdateTarget(character, dt, out canHearTarget, out canSeeTarget);
     if ((bool)(Object)m_tamable && (bool)(Object)m_tamable.m_saddle && m_tamable.m_saddle.UpdateRiding(dt))
       return true;
+
+    if (DroneAI.CurrentState == XenoDroneAI.XenoAIState.Idle) return true;
+    if (DroneAI.CurrentState == XenoDroneAI.XenoAIState.Dead) return true;
+
+    if (m_targetCreature != null)
+    {
+      DroneAI.SetPrimaryTarget(m_targetCreature.transform);
+    }
+    else if (m_targetStatic)
+    {
+      DroneAI.SetPrimaryTarget(m_targetStatic.transform);
+    }
+
+    if (ShouldUseNavigationOnHunt && DroneAI.CurrentState == XenoDroneAI.XenoAIState.Hunt && DroneAI.huntBehaviorState.State != HuntBehaviorState.Chasing) return true;
+    if (ShouldUseNavigationOnHuntChargeAttack && DroneAI.CurrentState == XenoDroneAI.XenoAIState.Hunt && DroneAI.huntBehaviorState.State == HuntBehaviorState.Chasing) return true;
+    if (ShouldUseNavigationOnAttack && DroneAI.CurrentState == XenoDroneAI.XenoAIState.Attack) return true;
+
+    // TODO Add support for setting target here from XenoDroneAI (based on canHearTarget and canSeeTarget)
+
+    // Early out for skipping AI movement
+    if (ShouldSkipAiMovement) return true;
+
     if (m_avoidLand && !m_character.IsSwimming())
     {
       MoveToWater(dt, 20f);

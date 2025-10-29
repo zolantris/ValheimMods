@@ -1,13 +1,37 @@
 <Project Sdk="Microsoft.NET.Sdk">
     <Import Project="$(SolutionDir)build\base.props"/>
-    <Import Project="$(SolutionDir)build\unity_libs_2022.props"/>
+    <Import Project="$(SolutionDir)build\unity_libs.props"/>
     <Import Project="$(SolutionDir)build\bepinex_libs.props"/>
+
+    <!-- Required plugins   -->
+
+    <!-- For all JSON serialization -->
+    <ItemGroup>
+        <Reference Include="Newtonsoft.Json" Version="13.0.3">
+            <HintPath>$(SolutionDir)\Dependencies\Newtonsoft.Json.dll</HintPath>
+        </Reference>
+    </ItemGroup>
+
+
     <PropertyGroup>
         <AssemblyName>Zolantris.Shared</AssemblyName>
+        <AssemblyVersion>1.1.0</AssemblyVersion>
         <RootNamespace>Zolantris.Shared</RootNamespace>
         <Configurations>Debug;Release;ReleaseBETA Archive;ModSyncOnly</Configurations>
         <Platforms>AnyCPU</Platforms>
     </PropertyGroup>
+    <ItemGroup>
+        <Compile Update="Zolantris.Shared\ClassValidator.cs">
+            <Link>SharedScripts.Validation\ClassValidator.cs</Link>
+        </Compile>
+    </ItemGroup>
+
+    <!-- Required for syncing bepinex configs (lots of players not using bepinex config manager)   -->
+    <ItemGroup>
+        <Reference Include="ServerSync" Version="1.19.0">
+            <HintPath>$(SolutionDir)\Dependencies\ServerSync.dll</HintPath>
+        </Reference>
+    </ItemGroup>
     <!--  Converts valheim to a unity debug build  -->
     <!--    <Import Project="..\..\build\unity-debug-build-converter.targets"/>-->
 </Project>

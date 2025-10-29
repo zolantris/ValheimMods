@@ -5,13 +5,14 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using Eldritch.Core.Nav;
+using Eldritch.Valheim;
 using JetBrains.Annotations;
 using UnityEngine;
 using Zolantris.Shared;
 using Random = UnityEngine.Random;
 namespace Eldritch.Core
 {
-  public class XenoDroneAI : MonoBehaviour
+  public class XenoDroneAI : MonoBehaviour, IParticleSystemCollisionForwarder
   {
     public enum XenoAIState
     {
@@ -19,6 +20,7 @@ namespace Eldritch.Core
       Roam,
       Hunt,
       Attack,
+      Chase,
       Flee,
       Dead,
       Sleeping
@@ -37,17 +39,23 @@ namespace Eldritch.Core
     public Rigidbody PrimaryTargetRB;
     [CanBeNull] public XenoDroneAI CachedPrimaryTargetXeno;
     public int PackId;
-    public float Health, MaxHealth = 100f;
+
+    public float Health = 100f;
+    public float MaxHealth = 100f;
 
     [Header("Timers")]
     public float TimeUntilSleep = 5f, TimeUntilWake = 50f;
 
-    public bool HasCamouflage;
-    public bool CanSleepAnimate;
+    public bool CanCamouflage = true;
+    public bool CanSleepAnimate = true;
     public bool CanJump = true;
+
+    // for attacks when health is lower the tail now does more damage.
+    public static bool CanInfuseBloodIntoTailAttack = true;
 
 
     public float DeltaPrimaryTarget;
+    public static bool AttackRangeCanSkipLOS = true;
     public bool IsHiding = true;
 
     // Grounding
@@ -55,7 +63,8 @@ namespace Eldritch.Core
     public float lastLowestPointCheck;
     [SerializeField] public bool IsManualControlling;
 
-    public float closeRange = 1f;
+    // todo make this static
+    public float attackHitRange = 3f;
     public AbilityManager abilityManager;
 
     [Header("Behavior State")]
@@ -63,10 +72,19 @@ namespace Eldritch.Core
 
     [Header("Behavior Configs")]
     [SerializeField]
-    public XenoHuntBehaviorConfig huntBehaviorConfig = new();
+    public XenoHuntBehaviorConfig huntBehaviorConfig => XenoDroneConfig.xenoHuntBehaviorConfig;
     private readonly float _circleDecisionInterval = 3f;
     private CoroutineHandle _aiStateUpdateRoutine;
     private List<Func<bool>> _behaviorUpdaters = new();
+
+    // How tightly we try to stay on the target while attacking
+    [Header("Attack Follow Tuning")]
+    [Tooltip("Meters to maintain while swinging so colliders actually connect. If 0, uses movementController.attackHitRange.")]
+    [SerializeField] private float attackHugDistance = 0.1f;
+    [Tooltip("If target is beyond this, we path toward them even during Attack (LOS-based).")]
+    [SerializeField] private float attackChaseDistance = 20f;
+
+    private bool IsChasing => CurrentState == XenoAIState.Chase && huntBehaviorState.State == HuntBehaviorState.Chasing || CurrentState == XenoAIState.Attack;
 
     private CoroutineHandle _sleepRoutine;
     private Vector3 cachedLowestPoint = Vector3.zero;
@@ -81,25 +99,39 @@ namespace Eldritch.Core
     [SerializeField] private PathfindingAgentType navAgentType = PathfindingAgentType.Humanoid;
     private readonly PathRunner _nav = new();
     private readonly OrbitRunner _orbit = new();
+    private Transform bodyTransform;
+
+    public XenoAudioController audioController;
 
     private void Awake()
     {
+      Init();
+    }
+
+    public void Init()
+    {
       InitCoroutineHandlers();
-      Instances.Add(this);
 
       navAgentType = PathfindingAgentType.Humanoid;
-
-      huntBehaviorState.behaviorConfig = huntBehaviorConfig;
 
       if (!abilityManager) abilityManager = GetComponent<AbilityManager>();
       if (!movementController) movementController = GetComponent<XenoAIMovementController>();
       if (!animationController) animationController = GetComponentInChildren<XenoAnimationController>();
       if (movementController) movementController.OwnerAI = this;
       if (animationController) animationController.OwnerAI = this;
+      if (!audioController)
+      {
+        audioController = GetComponentInChildren<XenoAudioController>();
+      }
 
-      Health = MaxHealth;
+      // Health = MaxHealth;
 
       BindBehaviors();
+    }
+
+    private void Start()
+    {
+      Init();
     }
 
     private void Update()
@@ -133,11 +165,12 @@ namespace Eldritch.Core
       Instances.Remove(this);
     }
 
-    private void OnCollisionEnter(Collision other)
+    public void OnCollisionEnter(Collision other)
     {
+      LoggerProvider.LogDebugDebounced($"Hit {other.transform.name}");
       // UpdateLastTouchGround(other.collider);
     }
-    private void OnCollisionStay(Collision other)
+    public void OnCollisionStay(Collision other)
     {
       UpdateLastTouchGround(other.collider);
     }
@@ -200,18 +233,7 @@ namespace Eldritch.Core
           break;
         case XenoAIState.Attack:
           if (!PrimaryTarget) return;
-          FollowPathOrChase(PrimaryTarget.position);
-          // movementController.MoveChaseTarget(
-          //   PrimaryTarget.position,
-          //   null,
-          //   movementController.closeRange,
-          //   movementController.moveSpeed,
-          //   movementController.closeMoveSpeed,
-          //   movementController.AccelerationForceSpeed,
-          //   movementController.closeAccelForce,
-          //   GetTurnSpeed()),
-          //   movementController.closeTurnSpeed
-          // );
+          // Update_AttackMovement();
           break;
         case XenoAIState.Sleeping:
           animationController.PlaySleepingAnimation(CanSleepAnimate);
@@ -255,6 +277,7 @@ namespace Eldritch.Core
         movementController.Rb.isKinematic = false;
       }
     }
+
     public void StartAttackBehavior()
     {
       if (CurrentState == XenoAIState.Dead) return;
@@ -264,30 +287,25 @@ namespace Eldritch.Core
     }
     public void StopAttackBehavior()
     {
-      if (CurrentState == XenoAIState.Dead) return;
-      if (CurrentState != XenoAIState.Attack)
-      {
-        animationController.StopAttack();
-        return;
-      }
-
-      if (CurrentState == XenoAIState.Attack)
-      {
-        animationController.StopAttack();
-        if (PrimaryTarget)
-        {
-          CurrentState = XenoAIState.Hunt;
-        }
-        else
-        {
-          CurrentState = XenoAIState.Roam;
-        }
-      }
+      animationController.StopAttack();
     }
-    public void ApplyDamage(float damage)
+
+    public void Bleed()
     {
-      animationController?.PlayBloodEffect();
-      Health = Mathf.Max(Health - damage, 0f);
+      if (!animationController) return;
+      animationController.PlayBloodEffect();
+    }
+
+    public void UpdateHealth(float health)
+    {
+      Health = health;
+    }
+
+    public void ApplyDamage(float nextHealth)
+    {
+      Bleed();
+      Health = Mathf.Max(nextHealth, 0f);
+
       if (Health <= 0.1f) SetDead();
     }
 
@@ -463,6 +481,56 @@ namespace Eldritch.Core
       }
     }
 
+    // Keep tight contact and facing during the attack animation
+    private void Update_AttackMovement()
+    {
+      if (!PrimaryTarget) return;
+
+      // Keep head and body aimed for reliable hit boxes
+      animationController.PointHeadTowardTarget(PrimaryTarget);
+
+      var tgtPos = PrimaryTarget.position;
+      var to = tgtPos - transform.position;
+      to.y = 0f;
+
+      // Strongly rotate toward the target every frame
+      movementController.RotateTowardsDirection(to, movementController.GetTurnSpeed());
+
+      // If LOS is blocked, find a quick path to reacquire even during Attack
+      if (!HasClearLOS(tgtPos))
+      {
+        FollowPathOrChase(tgtPos);
+        return;
+      }
+
+      // Desired strike distance for reliable arm/tail colliders
+      var desiredHug = attackHugDistance > 0f ? attackHugDistance : movementController.closeRange;
+      desiredHug = Mathf.Max(0.35f, desiredHug);
+
+      // If we drifted out of range, micro-chase to keep contact
+      if (DeltaPrimaryTarget > desiredHug)
+      {
+        Vector3? vel = null;
+        if (PrimaryTargetRB)
+        {
+          try { vel = PrimaryTargetRB.linearVelocity; }
+          catch { vel = null; }
+        }
+        movementController.MoveChaseTarget(tgtPos, vel, movementController.closeTurnSpeed);
+        return;
+      }
+
+      // If we’re much too far (e.g., the target dodged away), do a short burst to re-close
+      if (DeltaPrimaryTarget > Mathf.Max(desiredHug * 1.5f, attackChaseDistance))
+      {
+        movementController.MoveChaseTarget(tgtPos, null, movementController.closeTurnSpeed);
+        return;
+      }
+
+      // Otherwise: we are in striking range — brake to avoid sliding past the target mid-swing
+      movementController.BrakeHard();
+    }
+
 
   #region FixedUpdates / Per fixed frame logic
 
@@ -484,10 +552,10 @@ namespace Eldritch.Core
         return;
       }
 
-      if (animationController.IsRunningAttack())
-      {
-        animationController.StopAttack();
-      }
+      // if (animationController.IsRunningAttack())
+      // {
+      //   animationController.StopAttack();
+      // }
 
       // Always point head at the target for creep factor
       animationController.PointHeadTowardTarget(PrimaryTarget);
@@ -498,6 +566,15 @@ namespace Eldritch.Core
       var inLeapRange = IsInLeapRange();
 
       var beingWatched = TargetingUtil.IsTargetLookingAtMe(PrimaryTarget, transform);
+
+      // Chasing == attacking state (for movement purposes)
+      // Attacking state will include actual attack animations.
+      if (huntBehaviorState.State == HuntBehaviorState.Chasing)
+      {
+        // attack movement should not be used.
+        // Update_AttackMovement();
+        return;
+      }
 
       if (!IsAttacking() && !inLeapRange && DeltaPrimaryTarget < huntBehaviorConfig.minCreepDistance && beingWatched)
       {
@@ -510,11 +587,12 @@ namespace Eldritch.Core
           var angleToTarget = Vector3.Angle(transform.forward, toTarget.normalized);
           if (angleToTarget < _attackYawThreshold)
           {
-            abilityManager.RequestDodge(-Vector2.up);
+            abilityManager.RequestDodge(Vector2.up);
           }
         }
-        else
+        else if (Random.value > 0.75f)
         {
+          LoggerProvider.LogDebugDebounced($"Retreating from target {PrimaryTarget.name} looking at {transform.name}");
           RetreatFromPrimaryTarget();
         }
         return;
@@ -676,23 +754,94 @@ namespace Eldritch.Core
       };
     }
 
+    public float lastAudioUpdate = 0f;
+    public float audioUpdateInterval = 5f;
+
+    public void PlayAudioForCurrentBehavior(string behaviorBailName)
+    {
+      if (Time.time > lastAudioUpdate + audioUpdateInterval)
+      {
+        lastAudioUpdate = Time.time;
+      }
+      else
+      {
+        return;
+      }
+
+      var shouldMakeSound = Random.value > 0.5f;
+      if (!shouldMakeSound) return;
+
+      if (behaviorBailName == nameof(Update_Death))
+      {
+        // play hurt 1x time then stop...b/c it's dead
+        audioController.PlayHurt();
+      }
+
+      if (behaviorBailName == nameof(Update_Flee))
+      {
+        audioController.PlayHurt();
+      }
+
+      if (behaviorBailName == nameof(Update_Flee))
+      {
+        audioController.PlayRoar();
+      }
+
+      if (behaviorBailName == nameof(Update_HuntBehavior))
+      {
+        // skip out on this half the time
+        if (Random.value > 0.5f) return;
+
+        if (huntBehaviorState.State == HuntBehaviorState.MovingAway || huntBehaviorState.State == HuntBehaviorState.Circling || huntBehaviorState.State == HuntBehaviorState.Circling)
+        {
+          // audioController.PlayIdle();
+          return;
+        }
+        else if (huntBehaviorState.State == HuntBehaviorState.Creeping)
+        {
+          audioController.PlayHiss();
+        }
+        else
+        {
+          audioController.PlayRoar();
+        }
+      }
+
+      if (behaviorBailName == nameof(Update_AttackTargetBehavior))
+      {
+        audioController.PlayRoar();
+      }
+    }
+
     public void UpdateAllBehaviors()
     {
       if (IsDead() || IsSleeping()) return;
+
+      if (_behaviorUpdaters.Count == 0)
+      {
+        BindBehaviors();
+      }
 
       UpdatePrimaryTarget();
 
       // Call each updater until one returns true (bail).
       var hasBailed = false;
+      var behaviorBailName = "";
       foreach (var behaviorUpdater in _behaviorUpdaters)
       {
         var result = behaviorUpdater.Invoke();
         if (!result) continue;
         // (Optional) Log bailing for dev debugging
-        LoggerProvider.LogDev($"Bailed on {behaviorUpdater.Method.Name}");
+        behaviorBailName = behaviorUpdater.Method.Name;
+        LoggerProvider.LogDev($"Bailed on {behaviorBailName}");
         hasBailed = true;
         break;
       }
+
+      // prevents infinity animation attack loops
+      SyncAttackAnimState();
+      PlayAudioForCurrentBehavior(behaviorBailName);
+
       if (hasBailed) return;
     }
 
@@ -717,6 +866,7 @@ namespace Eldritch.Core
         {
           CurrentState = XenoAIState.Flee;
         }
+
         // FleeTowardSafeAllyOrRunAway();
         return true;
       }
@@ -731,16 +881,19 @@ namespace Eldritch.Core
 
     public bool Update_HuntBehavior()
     {
-      var canAttack = huntBehaviorConfig.enableAttack && IsInAttackRange();
+      var canAttack = huntBehaviorConfig.enableAttack && IsInAttackReachRange();
+      if (canAttack) return false;
+
       if (!canAttack && animationController.IsRunningAttack())
       {
         animationController.StopAttack();
       }
-      // early bail if we are in range and can attack.
-      if (canAttack)
+
+      if (huntBehaviorState.DecisionTimer < 0)
       {
-        var percentage = Random.value;
-        if (percentage > huntBehaviorConfig.probAttackInRange) return false;
+        if (TryBailOnAttack(canAttack)) return false;
+        // early bail if we are in range and can attack.
+        TryTriggerCamouflage();
       }
 
       huntBehaviorState.SyncSharedData(new BehaviorStateSync
@@ -749,17 +902,15 @@ namespace Eldritch.Core
         DeltaPrimaryTarget = DeltaPrimaryTarget,
         Self = transform
       });
-      if (huntBehaviorState.DecisionTimer < 0)
-      {
-        TryTriggerCamouflage();
-      }
+
       if (!huntBehaviorState.TryUpdateBehavior()) return false;
       // run other effects
 
-      if (CurrentState == XenoAIState.Attack)
+      if (CurrentState == XenoAIState.Attack && huntBehaviorState.State != HuntBehaviorState.Chasing)
       {
         StopAttackBehavior();
       }
+
       CurrentState = XenoAIState.Hunt;
       return true;
     }
@@ -779,9 +930,17 @@ namespace Eldritch.Core
       animationController.PointHeadTowardTarget(PrimaryTarget);
     }
 
+    public void SyncAttackAnimState()
+    {
+      if (!IsAttacking() && animationController.IsRunningAttack())
+      {
+        animationController.StopAttack();
+      }
+    }
+
     public bool Update_Roam()
     {
-      var isInHuntOrAttackRange = IsInHuntingRange() || IsInAttackRange();
+      var isInHuntOrAttackRange = IsInHuntingRange() || IsInAttackChaseRange() || IsInAttackReachRange();
       if (isInHuntOrAttackRange) return false;
 
       if (movementController.HasRoamTarget || movementController.TryUpdateCurrentWanderTarget())
@@ -795,9 +954,22 @@ namespace Eldritch.Core
 
     private readonly float _attackYawThreshold = 10f; // Degrees allowed for facing before leaping
 
+    public bool TryBailOnAttack(bool canAttack)
+    {
+      if (!canAttack) return false;
+      var percentage = Random.value;
+      if (percentage > huntBehaviorConfig.probAttackInRange)
+      {
+        LoggerProvider.LogDebugDebounced("Skipping attack this frame.");
+        return true;
+      }
+
+      return false;
+    }
+
     public void TryTriggerCamouflage()
     {
-      if (!huntBehaviorConfig.enableRandomCamouflage) return;
+      if (!CanCamouflage || !huntBehaviorConfig.enableRandomCamouflage) return;
 
       var beingWatched = TargetingUtil.IsTargetLookingAtMe(PrimaryTarget, transform);
 
@@ -815,13 +987,10 @@ namespace Eldritch.Core
     {
       if (!PrimaryTarget) return false;
       if (!huntBehaviorConfig.enableAttack) return false;
-      var isInAttackRange = IsInAttackRange();
 
-      var chanceToAttack = Random.value;
-      if (chanceToAttack < 0.25f)
-      {
-        return false;
-      }
+
+
+      var isInAttackRange = IsInAttackReachRange();
 
       if (isInAttackRange)
       {
@@ -863,11 +1032,24 @@ namespace Eldritch.Core
       return DeltaPrimaryTarget > minDodgeDistance && DeltaPrimaryTarget < abilityManager.dodgeAbility.config.forwardDistance;
     }
 
-    public bool IsInAttackRange()
+    /// <summary>
+    /// Can reach/hit the enemy with attack colliders.
+    /// </summary>
+    /// <returns></returns>
+    public bool IsInAttackReachRange()
     {
       if (PrimaryTarget == null) return false;
-      if (!HasClearLOS(PrimaryTarget.position)) return false;
-      return DeltaPrimaryTarget < closeRange;
+      if (!AttackRangeCanSkipLOS && !HasClearLOS(PrimaryTarget.position)) return false;
+      return DeltaPrimaryTarget < attackHitRange;
+    }
+
+    /// <summary>
+    /// For Attacking chase mode. This will not allow swinging or tail attacks. Outside this range the Xeno will go back to Hunt movement mode.
+    /// </summary>
+    /// <returns></returns>
+    public bool IsInAttackChaseRange()
+    {
+      return IsChasing && DeltaPrimaryTarget < attackChaseDistance;
     }
 
     public bool IsSleeping()
@@ -1157,6 +1339,62 @@ namespace Eldritch.Core
 
   #endregion
 
+  #region Attack Logic
 
+    // todo sync / add this damage to play mode testing attacks
+    [Header("Damage")]
+    [SerializeField] private float tailDamage = 55f;
+    [SerializeField] private float armDamage = 35f;
+    [SerializeField] private float bloodDamage = 15f;
+
+    // Attack window flags toggled by animation events or code
+    private bool _tailOpen => animationController.IsAnimatingTailAttack();
+    private bool _armOpen => animationController.IsAnimatingArmAttack();
+
+    private bool _bleeding => animationController.IsBleeding();
+
+    public bool IsAttackWindowOpen(XenoHitboxType t)
+    {
+      if (t == XenoHitboxType.Tail)
+      {
+        return _tailOpen;
+      }
+
+      if (t == XenoHitboxType.Arm)
+      {
+        return _armOpen;
+      }
+
+      return _bleeding;
+    }
+
+    // ---- Main entry called by hitboxes ----
+    public void HandleHit(XenoHitboxType type, XenoAttackHitbox hitbox, Collider other)
+    {
+      var targetRoot = other.attachedRigidbody ? other.attachedRigidbody.gameObject : other.gameObject;
+      var id = targetRoot.GetInstanceID();
+
+      if (CanInfuseBloodIntoTailAttack)
+      {
+        if (Health < MaxHealth)
+        {
+          animationController.PlayTailBloodEffect();
+        }
+      }
+
+      // tuple
+      OnHitTarget?.Invoke((type, hitbox, other, targetRoot));
+    }
+
+    // for integrations like Valheim (uses a touple for convenience)
+    public Action<(XenoHitboxType type, XenoAttackHitbox hitbox, Collider other, GameObject targetRoot)> OnHitTarget = (target) => {};
+
+  #endregion
+
+
+    public void OnParticleCollisionEvent(GameObject other, List<ParticleCollisionEvent> collisionEvent)
+    {
+      LoggerProvider.LogDebugDebounced($"Got message from ParticleCollisionEventForwarder, {other.name}");
+    }
   }
 }

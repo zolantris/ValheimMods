@@ -5,8 +5,6 @@ using System;
 using UnityEngine;
 namespace Eldritch.Core
 {
-
-
   [Serializable]
   public class XenoHuntBehaviorConfig
   {
@@ -25,7 +23,9 @@ namespace Eldritch.Core
     [Header("Targeting")]
     public float maxTargetDistance = 50f;
     public float minHuntDistance = 2f;
-    public float minCreepDistance = 2f; // really close
+    public float minCreepDistance = 2f; // really close (should be lower than attack chase distance)
+    public float attackStartChaseDistance = 5f; // this will allow the xeno to chase the target until they are out of range (transitioning the xeno into full attack range)
+    public float attackExitChaseDistance = 20f; // exit chasing and do other things.
 
     [Header("Circle Movement")]
     public float circleMoveSpeed = 7.5f;
@@ -52,6 +52,7 @@ namespace Eldritch.Core
     [Header("State Timer Durations (seconds)")]
     public Vector2 circlingTimeRange = new(2.2f, 3.4f); // min/max
     public Vector2 movingAwayTimeRange = new(1.0f, 1.8f);
+    public Vector2 chasingTimeRange = new(2f, 5f); // will chase regardless until out of range on next tick.
     public Vector2 pausingTimeRange = new(0.8f, 1.4f);
     public Vector2 creepingTimeRange = new(1.1f, 2.0f);
 

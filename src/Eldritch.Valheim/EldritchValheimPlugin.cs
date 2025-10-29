@@ -4,6 +4,7 @@ using Eldritch.Core;
 using Jotunn.Configs;
 using Jotunn.Entities;
 using Jotunn.Managers;
+using ServerSync;
 using UnityEngine;
 using UnityEngine.U2D;
 using Zolantris.Shared;
@@ -18,28 +19,39 @@ public class EldritchValheimPlugin : BaseUnityPlugin
   public const string Version = "1.0.0";
   public const string ModName = "EldritchValheim";
   public const string ModGuid = $"{Author}.{ModName}";
+  public static string HarmonyGuid => ModGuid;
 
   public static AssetBundle assetBundle = null!;
   public static SpriteAtlas Sprites = null!;
 
+  public static ConfigSync ModConfigSync = new(ModName)
+  {
+    DisplayName = ModName,
+    CurrentVersion = Version,
+    ModRequired = true,
+    IsLocked = true
+  };
+
   public void Awake()
   {
     LoggerProvider.Setup(Logger);
-    LoggerProvider.LogDebug("Eldritchcore initialized");
+
+    PatchController.Apply(HarmonyGuid);
+
+    EldritchBepinExXenoDroneConfig.BindConfig(Config, ModConfigSync);
 
     // ReSharper disable once RedundantNameQualifier
     Eldritch.Core.Nav.Pathfinding.Register(new ValheimPathfindingShim());
 
-    InvokeRepeating(nameof(DebugCheckinMethod), 3f, 5f);
-
+    CreatureManager.OnVanillaCreaturesAvailable += () =>
+    {
+      EldritchPrefabRegistry.RegisterAllCreatures();
+    };
     PrefabManager.OnVanillaPrefabsAvailable += () =>
     {
-      PrefabRegistry.RegisterAllPrefabs();
+      EldritchPrefabRegistry.RegisterAllPrefabs();
     };
-  }
 
-  public void DebugCheckinMethod()
-  {
-    LoggerProvider.LogDebug("Checkin called");
+    LoggerProvider.LogDebug($"{ModName} initialized");
   }
 }

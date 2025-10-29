@@ -10,6 +10,7 @@ namespace Eldritch.Core
   public enum HuntBehaviorState
   {
     Circling,
+    Chasing,
     MovingAway,
     Pausing,
     Creeping
@@ -24,7 +25,7 @@ namespace Eldritch.Core
     [SerializeField] public bool FORCE_CreepRetreat = false;
 
     public float creepSpeedMultiplier => creepDirection == 1 ? 1f : 0.5f;
-    public XenoHuntBehaviorConfig behaviorConfig; // shared ref with integrated state;
+    public XenoHuntBehaviorConfig behaviorConfig => XenoDroneConfig.xenoHuntBehaviorConfig; // shared ref with integrated state;
     public HuntBehaviorState State = HuntBehaviorState.Circling;
     private MonoBehaviour monoBehaviour;
     private CoroutineHandle timerHandler;
@@ -111,6 +112,12 @@ namespace Eldritch.Core
       DecisionTimer = Random.Range(behaviorConfig.movingAwayTimeRange.x, behaviorConfig.movingAwayTimeRange.y);
     }
 
+    private void UpdateChaseBehavior()
+    {
+      State = HuntBehaviorState.Chasing;
+      DecisionTimer = Random.Range(behaviorConfig.chasingTimeRange.x, behaviorConfig.chasingTimeRange.y);
+    }
+
     private void UpdatePauseBehavior(float rand)
     {
       State = HuntBehaviorState.Pausing;
@@ -124,7 +131,7 @@ namespace Eldritch.Core
 
       var targetLookingAtMe = TargetingUtil.IsTargetLookingAtMe(PrimaryTarget, Self);
 
-      var isNearCloseRange = DeltaPrimaryTarget - 2f < behaviorConfig.minCreepDistance;
+      var isNearCloseRange = DeltaPrimaryTarget < behaviorConfig.minCreepDistance;
 
       // do not retreat if nearby otherwise use 50% chance to retreat or advance
       // todo add courage (based on health) and enraged status when health lower than 10% and greater than 25%.
@@ -155,6 +162,14 @@ namespace Eldritch.Core
       if (behaviorConfig.FORCE_Creeping)
       {
         UpdateCreepBehavior(rand);
+        return;
+      }
+
+      // If not chasing and able to start chasing, do so.
+      // If already chasing and not out of range, continue chasing.
+      if (State != HuntBehaviorState.Chasing && DeltaPrimaryTarget < behaviorConfig.attackStartChaseDistance || State == HuntBehaviorState.Chasing && DeltaPrimaryTarget < behaviorConfig.attackExitChaseDistance)
+      {
+        UpdateChaseBehavior();
         return;
       }
 

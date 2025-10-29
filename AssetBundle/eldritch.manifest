@@ -1,16 +1,17 @@
 ManifestFileVersion: 0
 UnityVersion: 6000.1.8f1
-CRC: 1439142642
+CRC: 2742183584
+Compression: LZMA
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 2cd37e12a70e9e02ca7a2cc5657e11f7
+    Hash: c67b9dbeda5b9e743e26b2f66611274a
   TypeTreeHash:
     serializedVersion: 2
-    Hash: 200847933848a38f022b0b7d04380129
+    Hash: 00000000000000000000000000000000
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 486630604d86471ce1567c24ad6e5810
+    Hash: 00000000000000000000000000000000
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -39,6 +40,8 @@ ClassTypes:
   Script: {instanceID: 0}
 - Class: 81
   Script: {instanceID: 0}
+- Class: 83
+  Script: {instanceID: 0}
 - Class: 90
   Script: {instanceID: 0}
 - Class: 91
@@ -46,19 +49,7 @@ ClassTypes:
 - Class: 95
   Script: {instanceID: 0}
 - Class: 114
-  Script: {fileID: 11500000, guid: c12c46f8f3c74171a1c87c2cd50c92eb, type: 3}
-- Class: 114
-  Script: {fileID: 11500000, guid: 05f7819b0da0d2f4ba6335a5bb19d929, type: 3}
-- Class: 114
-  Script: {fileID: 11500000, guid: cdfae84e02924731b17bd74de3d20973, type: 3}
-- Class: 114
   Script: {fileID: 11500000, guid: 9f61eb9c251f494cbf7b9f0787a663c6, type: 3}
-- Class: 114
-  Script: {fileID: 11500000, guid: f41eb774c5ba4185a5e22e387876cd03, type: 3}
-- Class: 114
-  Script: {fileID: 11500000, guid: 1bf99c47ee254956981c32774ccaca00, type: 3}
-- Class: 114
-  Script: {fileID: 11500000, guid: 6d08ca6ba1ea4835a2a64ea2ca7ef994, type: 3}
 - Class: 115
   Script: {instanceID: 0}
 - Class: 134
@@ -83,10 +74,9 @@ SerializeReferenceClassIdentifiers:
 - AssemblyName: Eldritch.Core
   ClassName: Eldritch.Core.SurfaceClimbingState
 - AssemblyName: Eldritch.Core
-  ClassName: Eldritch.Core.XenoHuntBehaviorConfig
-- AssemblyName: Eldritch.Core
   ClassName: Eldritch.Core.XenoHuntBehaviorState
 Assets:
-- Assets/ValheimVehicles/ExternalAssets/Enemies/xeno/xenomorph_drone.prefab
+- Assets/xenomorph-drone-v1.prefab
 - Assets/Plugins/EldritchAssets/icons.spriteatlasv2
-Dependencies: []
+Dependencies:
+- C:/Users/fre/dev/repos/ValheimMods/AssetBundle/valheim-vehicles

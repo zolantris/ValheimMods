@@ -1,4 +1,5 @@
 using BepInEx.Configuration;
+using Zolantris.Shared;
 namespace ValheimVehicles.BepInExConfig;
 
 public class TEMPLATE_Config : BepInExBaseConfig<TEMPLATE_Config>

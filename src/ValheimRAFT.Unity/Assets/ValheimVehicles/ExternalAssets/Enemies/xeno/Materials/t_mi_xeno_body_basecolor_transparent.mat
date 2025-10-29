@@ -12,7 +12,7 @@ Material:
   m_Parent: {fileID: 2100000, guid: 84324aa6f2421464682bccb57af08a8f, type: 2}
   m_ModifiedSerializedProperties: 30
   m_ValidKeywords:
-  - _ALPHABLEND_ON
+  - _ALPHAPREMULTIPLY_ON
   - _GLOSSYREFLECTIONS_OFF
   - _NORMALMAP
   - _SMOOTHNESS_TEXTURE_ALBEDO_CHANNEL_A
@@ -37,12 +37,13 @@ Material:
     - _Glossiness: 0.66
     - _GlossyReflections: 0
     - _Metallic: 0
-    - _Mode: 2
+    - _Mode: 3
     - _SmoothnessTextureChannel: 1
     - _SpecularHighlights: 0
-    - _SrcBlend: 5
+    - _SrcBlend: 1
     - _ZWrite: 0
     m_Colors:
-    - _Color: {r: 0, g: 0, b: 0, a: 0.019607844}
+    - _Color: {r: 0, g: 0, b: 0, a: 0.14901961}
     - _EmissionColor: {r: 0.4932614, g: 0.4932614, b: 0.4932614, a: 1}
   m_BuildTextureStacks: []
+  m_AllowLocking: 1

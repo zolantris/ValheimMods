@@ -112,7 +112,7 @@
     </ItemGroup>
 
     <!--  UnityLibs  -->
-    <Import Project="$(SolutionDir)build\unity_libs_2022.props"/>
+    <Import Project="$(SolutionDir)build\unity_libs.props"/>
 
     <ItemGroup Label="required-mods">
         <Reference Include="Jotunn">
