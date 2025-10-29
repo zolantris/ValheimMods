@@ -53,6 +53,10 @@ namespace Eldritch.Core
     [SerializeField] public XenoDroneAI OwnerAI;
     [SerializeField] private ParticleSystem _bodyBloodEffects;
     [SerializeField] private ParticleSystem _tailBloodEffects;
+    [SerializeField] private ParticleSystem _tailBloodSubEffects;
+    private Transform _effectsTransform;
+
+    public static bool CanPlayBloodAttackOnTailHit = false;
 
     [SerializeField] private string _handAttackObjName = "xeno_arm_attack_collider";
     [SerializeField] private string _tailAttackObjName = "xeno_tail_attack_collider";
@@ -348,6 +352,8 @@ namespace Eldritch.Core
     {
       BindUnOptimizedRoots();
 
+      _effectsTransform = OwnerAI.transform.Find("Effects");
+
       xenoSkinnedMeshRenderer = xenoMeshSkin.GetComponent<SkinnedMeshRenderer>();
 
       var preGeneratedColliders = GetComponentsInChildren<Collider>();
@@ -359,17 +365,19 @@ namespace Eldritch.Core
       RecursiveCollectAllJoints(xenoRoot);
 
       if (_bodyBloodEffects == null) _bodyBloodEffects = xenoRoot.Find("BloodSprayEffect").GetComponent<ParticleSystem>();
-      if (_tailBloodEffects == null)
-      {
-        foreach (var attackTailCollider in attackTailColliders)
-        {
-          if (attackTailCollider.transform.Find("BloodSprayEffect"))
-          {
-            _tailBloodEffects = attackTailCollider.transform.Find("BloodSprayEffect").GetComponent<ParticleSystem>();
-            break;
-          }
-        }
-      }
+
+      _tailBloodEffects = OwnerAI.transform.Find("Effects/TailBloodSprayEffect").GetComponent<ParticleSystem>();
+      // if (_tailBloodEffects == null)
+      // {
+      //   foreach (var attackTailCollider in attackTailColliders)
+      //   {
+      //     if (attackTailCollider.transform.Find("BloodSprayEffect"))
+      //     {
+      //       _tailBloodEffects = attackTailCollider.transform.Find("BloodSprayEffect").GetComponent<ParticleSystem>();
+      //       break;
+      //     }
+      //   }
+      // }
 
       // initial values.
       // neckPivotAngle = neckPivot.localEulerAngles;
@@ -743,9 +751,13 @@ namespace Eldritch.Core
           {
             attackTailCollider.enabled = true;
           }
-          if (OwnerAI.Health < OwnerAI.MaxHealth)
+
+          if (CanPlayBloodAttackOnTailHit)
           {
-            PlayTailBloodEffect();
+            if (OwnerAI.Health < OwnerAI.MaxHealth)
+            {
+              PlayTailBloodEffect();
+            }
           }
         },
         OnEnd = () =>
@@ -769,6 +781,10 @@ namespace Eldritch.Core
       _tailAttackTransitionRoutine.Start(LerpBetweenPoses(transitions, skipKeys ?? _skippedTailAttackKeys, () =>
       {
         animator.SetTrigger(ManualAttackCompleteTrigger);
+        if (_tailBloodEffects.isPlaying)
+        {
+          StopTailBloodEffect();
+        }
       }));
     }
 
@@ -836,10 +852,31 @@ namespace Eldritch.Core
       }
     }
 
+    public void StopTailBloodEffect()
+    {
+      _tailBloodEffects.Stop();
+      var tailTailAttackCollider = attackTailColliders.FirstOrDefault();
+      if (tailTailAttackCollider)
+      {
+        _tailBloodEffects.transform.SetPositionAndRotation(tailTailAttackCollider.transform.position, Quaternion.identity);
+      }
+
+      _tailBloodEffects.transform.SetParent(OwnerAI.transform.Find("Effects"));
+    }
+
     public void PlayTailBloodEffect()
     {
       if (_canPlayEffectOnFrame && _tailBloodEffects != null)
       {
+        _tailBloodEffects.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+
+        var tailColliderPos = attackTailColliders.FirstOrDefault();
+        if (tailColliderPos)
+        {
+          // _tailBloodEffects.transform.SetParent(null);
+          _tailBloodEffects.transform.position = tailColliderPos.transform.position;
+          _tailBloodEffects.transform.rotation = tailColliderPos.transform.rotation;
+        }
         _tailBloodEffects.Play();
         _canPlayEffectOnFrame = false;
       }
@@ -1144,7 +1181,7 @@ namespace Eldritch.Core
       return leftProj > rightProj ? leftToeTransform : rightToeTransform;
     }
 
-    #region Head Rotation
+  #region Head Rotation
 
     [SerializeField] private float yawMaxDeg = 40f;
     [SerializeField] private float yawSpeedDegPerSec = 540f;
@@ -1211,7 +1248,7 @@ namespace Eldritch.Core
       neckUpDownAngle = nextNeckUpDown;
     }
 
-    #endregion
+  #endregion
 
     public void PointHeadTowardTarget(Transform target)
     {
@@ -1219,15 +1256,15 @@ namespace Eldritch.Core
         UpdateHeadAnglesToward(target);
     }
 
-    #region Colliders
+  #region Colliders
 
     public HashSet<Collider> allColliders = new();
     public HashSet<Collider> attackTailColliders = new();
     public HashSet<Collider> attackArmColliders = new();
 
-    #endregion
+  #endregion
 
-    #region Colliders
+  #region Colliders
 
     public void AssignFootColliders(IEnumerable<Collider> colliders)
     {
@@ -1252,10 +1289,11 @@ namespace Eldritch.Core
         }
         if (colName == tailAttackObjName)
         {
-          if (!_tailBloodEffects)
-          {
-            _tailBloodEffects = col.transform.Find("BloodSprayEffect").GetComponent<ParticleSystem>();
-          }
+          // if (!_tailBloodEffects)
+          // {
+          //   _tailBloodEffects = col.transform.Find("BloodSprayEffect").GetComponent<ParticleSystem>();
+          //   _tailBloodSubEffects = _tailBloodEffects.transform.Find("BloodGlobs").GetComponent<ParticleSystem>();
+          // }
           attackTailColliders.Add(col);
         }
       }
@@ -1284,9 +1322,9 @@ namespace Eldritch.Core
       allColliders.Add(col);
     }
 
-    #endregion
+  #endregion
 
-    #region Tail Attack ;
+  #region Tail Attack ;
 
     [Tooltip("Animator state name that plays the tail attack (optional if you prefer Attack/AttackMode gate).")]
     [SerializeField] private int armAttackLayerIndex = 1;
@@ -1309,7 +1347,7 @@ namespace Eldritch.Core
       return AnimatorStateIdUtil.IsPlayingAny(animator, 1, _tailIds);
     }
 
-    #endregion
+  #endregion
 
   }
 }

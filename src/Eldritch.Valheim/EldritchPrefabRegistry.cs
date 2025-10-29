@@ -263,13 +263,13 @@ public static class EldritchPrefabRegistry
     xenoDroneMonsterAI.m_huntPlayer = true;
     xenoDroneMonsterAI.m_enableHuntPlayer = true;
 
-    AddWeaponItemsToXenoInventory(humanoid);
+    // AddWeaponItemsToXenoInventory(humanoid);
 
-    if (!XenoFromSeekerBuilder.BuildXenoFromSeeker(xenoPrefab, xenoAsset.transform.Find("Visual").gameObject, xenoAsset))
-    {
-      LoggerProvider.LogError("Failed to swap Seeker clone to Xeno.");
-      return;
-    }
+    // if (!XenoFromSeekerBuilder.BuildXenoFromSeeker(xenoPrefab, xenoAsset.transform.Find("Visual").gameObject, xenoAsset))
+    // {
+    //   LoggerProvider.LogError("Failed to swap Seeker clone to Xeno.");
+    //   return;
+    // }
 
     // var humanoid = xenoPrefab.GetOrAddComponent<Humanoid>();
     // var xenoAnimationController = xenoPrefab.GetComponentInChildren<XenoAnimationController>();
@@ -280,9 +280,8 @@ public static class EldritchPrefabRegistry
     //   humanoid.m_head = xenoAnimationController.neckPivot;
     // }
 
-    var spawnConfig = xenoGlobalModifierSpawnConfig;
-
-    SpawnConfig[] spawnConfigs = [xenoGlobalModifierSpawnConfig, xenoNoModifierSpawnConfig];
+    // Do not register spawn configs if disabled.
+    SpawnConfig[] spawnConfigs = EldritchBepinExXenoDroneConfig.Enabled.Value ? [xenoGlobalModifierSpawnConfig, xenoNoModifierSpawnConfig] : [];
 
     var creatureConfig = new CreatureConfig
     {
@@ -333,9 +332,9 @@ public static class EldritchPrefabRegistry
 
     XenoDroneTailDamage = new HitData.DamageTypes
     {
-      m_damage = 50f,
-      m_pierce = 50f,
-      m_poison = 5f
+      m_pierce = EldritchBepinExXenoDroneConfig.attackDamageTailPierce.Value,
+      m_slash = EldritchBepinExXenoDroneConfig.attackDamageTailSlash.Value,
+      m_poison = EldritchBepinExXenoDroneConfig.attackDamageTailAcid.Value
     };
   }
 

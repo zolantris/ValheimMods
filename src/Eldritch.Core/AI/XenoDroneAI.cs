@@ -12,7 +12,7 @@ using Zolantris.Shared;
 using Random = UnityEngine.Random;
 namespace Eldritch.Core
 {
-  public class XenoDroneAI : MonoBehaviour
+  public class XenoDroneAI : MonoBehaviour, IParticleSystemCollisionForwarder
   {
     public enum XenoAIState
     {
@@ -49,6 +49,9 @@ namespace Eldritch.Core
     public bool CanCamouflage = true;
     public bool CanSleepAnimate = true;
     public bool CanJump = true;
+
+    // for attacks when health is lower the tail now does more damage.
+    public static bool CanInfuseBloodIntoTailAttack = true;
 
 
     public float DeltaPrimaryTarget;
@@ -121,7 +124,7 @@ namespace Eldritch.Core
         audioController = GetComponentInChildren<XenoAudioController>();
       }
 
-      Health = MaxHealth;
+      // Health = MaxHealth;
 
       BindBehaviors();
     }
@@ -164,6 +167,7 @@ namespace Eldritch.Core
 
     public void OnCollisionEnter(Collision other)
     {
+      LoggerProvider.LogDebugDebounced($"Hit {other.transform.name}");
       // UpdateLastTouchGround(other.collider);
     }
     public void OnCollisionStay(Collision other)
@@ -297,12 +301,10 @@ namespace Eldritch.Core
       Health = health;
     }
 
-    public void ApplyDamage(float damage)
+    public void ApplyDamage(float nextHealth)
     {
-      if (!animationController) return;
-
-      animationController.PlayBloodEffect();
-      Health = Mathf.Max(Health - damage, 0f);
+      Bleed();
+      Health = Mathf.Max(nextHealth, 0f);
 
       if (Health <= 0.1f) SetDead();
     }
@@ -1372,6 +1374,14 @@ namespace Eldritch.Core
       var targetRoot = other.attachedRigidbody ? other.attachedRigidbody.gameObject : other.gameObject;
       var id = targetRoot.GetInstanceID();
 
+      if (CanInfuseBloodIntoTailAttack)
+      {
+        if (Health < MaxHealth)
+        {
+          animationController.PlayTailBloodEffect();
+        }
+      }
+
       // tuple
       OnHitTarget?.Invoke((type, hitbox, other, targetRoot));
     }
@@ -1382,5 +1392,9 @@ namespace Eldritch.Core
   #endregion
 
 
+    public void OnParticleCollisionEvent(GameObject other, List<ParticleCollisionEvent> collisionEvent)
+    {
+      LoggerProvider.LogDebugDebounced($"Got message from ParticleCollisionEventForwarder, {other.name}");
+    }
   }
 }

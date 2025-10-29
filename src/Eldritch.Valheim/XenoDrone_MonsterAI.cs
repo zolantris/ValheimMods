@@ -21,7 +21,6 @@ public class XenoDrone_MonsterAI : MonsterAI
   // damage configs
   public static float pushForce = 3f;
 
-
   public Character xenoCharacter;
 
   public override void Awake()
@@ -31,9 +30,9 @@ public class XenoDrone_MonsterAI : MonsterAI
     base.Awake();
   }
 
-  public void OnDamaged()
+  public void XenoDroneOnDamaged(float damage, Character character)
   {
-    var health = xenoCharacter.m_health;
+    var health = xenoCharacter.GetHealth();
     DroneAI.ApplyDamage(health);
   }
 
@@ -44,7 +43,9 @@ public class XenoDrone_MonsterAI : MonsterAI
 
     if (xenoCharacter)
     {
-      xenoCharacter.m_onDamaged += OnDamaged;
+      xenoCharacter.m_onDamaged += XenoDroneOnDamaged;
+      DroneAI.MaxHealth = xenoCharacter.GetMaxHealth();
+      DroneAI.Health = xenoCharacter.GetHealth();
     }
     else
     {
@@ -57,7 +58,7 @@ public class XenoDrone_MonsterAI : MonsterAI
   public override void OnDisable()
   {
     base.OnDisable();
-    xenoCharacter.m_onDamaged -= OnDamaged;
+    xenoCharacter.m_onDamaged -= XenoDroneOnDamaged;
     if (DroneAI != null && DroneAI.OnHitTarget != null)
     {
       DroneAI.OnHitTarget -= HandleHitTarget;
