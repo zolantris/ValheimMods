@@ -834,28 +834,27 @@ namespace Eldritch.Core
     /// </summary>
     public void EnableAttackColliders(bool armAttack, bool tailAttack)
     {
-      IsDelayInvoked = false;
       ToggleColliderList(attackArmColliders, armAttack);
       ToggleColliderList(attackTailColliders, tailAttack);
     }
 
-    public bool IsDelayInvoked = false;
+    public void EnableArmCollider()
+    {
+      _isArmColliderDelayRunning = false;
+      ToggleColliderList(attackArmColliders, true);
+    }
+
+    private bool _isArmColliderDelayRunning = false;
     /// <summary>
     /// Used to delay enabling the attack collider so the collider is enabled near when it's ready to hit.
     /// </summary>
     public void EnableAttackCollidersDelayed(bool armAttack, bool tailAttack, float delay)
     {
-      if (IsDelayInvoked) return;
-      if (!armAttack)
-      {
-        ToggleColliderList(attackArmColliders, false);
-      }
-      if (!tailAttack)
-      {
-        ToggleColliderList(attackTailColliders, false);
-      }
+      if (_isArmColliderDelayRunning) return;
+      ToggleColliderList(attackTailColliders, false);
 
-      Invoke(nameof(EnableAttackColliders), delay);
+      _isArmColliderDelayRunning = true;
+      Invoke(nameof(EnableArmCollider), delay);
     }
 
     public void DisableAttackColliders()
@@ -1113,7 +1112,7 @@ namespace Eldritch.Core
       return leftProj > rightProj ? leftToeTransform : rightToeTransform;
     }
 
-    #region Head Rotation
+  #region Head Rotation
 
     [SerializeField] private float yawMaxDeg = 40f;
     [SerializeField] private float yawSpeedDegPerSec = 540f;
@@ -1180,7 +1179,7 @@ namespace Eldritch.Core
       neckUpDownAngle = nextNeckUpDown;
     }
 
-    #endregion
+  #endregion
 
     public void PointHeadTowardTarget(Transform target)
     {
@@ -1188,15 +1187,15 @@ namespace Eldritch.Core
         UpdateHeadAnglesToward(target);
     }
 
-    #region Colliders
+  #region Colliders
 
     public HashSet<Collider> allColliders = new();
     public HashSet<Collider> attackTailColliders = new();
     public HashSet<Collider> attackArmColliders = new();
 
-    #endregion
+  #endregion
 
-    #region Colliders
+  #region Colliders
 
     public void AssignFootColliders(IEnumerable<Collider> colliders)
     {
@@ -1249,9 +1248,9 @@ namespace Eldritch.Core
       allColliders.Add(col);
     }
 
-    #endregion
+  #endregion
 
-    #region Tail Attack ;
+  #region Tail Attack ;
 
     [Tooltip("Animator state name that plays the tail attack (optional if you prefer Attack/AttackMode gate).")]
     [SerializeField] private int armAttackLayerIndex = 1;
@@ -1274,7 +1273,7 @@ namespace Eldritch.Core
       return AnimatorStateIdUtil.IsPlayingAny(animator, 1, _tailIds);
     }
 
-    #endregion
+  #endregion
 
   }
 }

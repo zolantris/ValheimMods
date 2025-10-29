@@ -14,8 +14,46 @@ public static class EldritchPrefabRegistry
 {
   public static AssetBundle assetBundle;
   public static SpriteAtlas Sprites;
-  private const string droneAssetName = "xenomorph-drone-v1";
-  private const string droneConfigName = "eldritch_xeno_drone";
+  public const string droneAssetName = "xenomorph-drone-v1";
+  public const string droneConfigName = "eldritch_xeno_drone";
+
+  public static SpawnConfig XenoSpawnConfig = new()
+  {
+    Name = droneConfigName,
+    Biome = Heightmap.Biome.Swamp, // todo make this configurable
+    // Biome = Heightmap.Biome.All, // for now all biomes can spawn alien. todo make this configurable
+    SpawnChance = 100f, // 100% todo make this configurable
+    MinGroupSize = 1, // todo make this configurable
+    MaxGroupSize = 3, // todo make this configurable
+    // SpawnInterval = 600f,
+    SpawnInterval = 200f, // todo make this configurable
+    SpawnAtDay = true,
+    SpawnAtNight = true,
+    MaxAltitude = 1000f,
+    MinAltitude = 0f,
+    HuntPlayer = true,
+    MaxLevel = 10 // todo add config for level scaling.
+  };
+
+
+  public static void UpdateSpawnConfig()
+  {
+    XenoSpawnConfig = new SpawnConfig
+    {
+      Name = droneConfigName,
+      Biome = EldritchXenoDroneConfig.Biome.Value,
+      SpawnChance = EldritchXenoDroneConfig.SpawnChance.Value,
+      MinGroupSize = EldritchXenoDroneConfig.MinGroupSize.Value,
+      MaxGroupSize = EldritchXenoDroneConfig.MaxGroupSize.Value,
+      SpawnInterval = EldritchXenoDroneConfig.SpawnInterval.Value,
+      SpawnAtDay = EldritchXenoDroneConfig.SpawnAtDay.Value,
+      SpawnAtNight = EldritchXenoDroneConfig.SpawnAtNight.Value,
+      MaxAltitude = EldritchXenoDroneConfig.MaxAltitude.Value,
+      MinAltitude = EldritchXenoDroneConfig.MinAltitude.Value,
+      HuntPlayer = EldritchXenoDroneConfig.HuntPlayer.Value,
+      MaxLevel = EldritchXenoDroneConfig.MaxLevel.Value
+    };
+  }
 
   /// <summary>
   /// Loads from eldritch core. (this might need to be done here so eldritch.Core gameobjects are resolved with eldritch core scripts)
@@ -79,7 +117,6 @@ public static class EldritchPrefabRegistry
         Description = "Xenos....they're everywhere...",
         Icon = Sprites.GetSprite("anchor"), // for testing.
         Category = "Eldritch",
-        Enabled = true,
         Requirements =
         [
           new RequirementConfig
@@ -96,6 +133,8 @@ public static class EldritchPrefabRegistry
 
   public static void RegisterXenoSpawn()
   {
+    UpdateSpawnConfig();
+
     // Load prefab from ZNetScene or an AssetBundle
     var xenoAsset = assetBundle.LoadAsset<GameObject>(droneAssetName);
     if (!xenoAsset)
@@ -145,6 +184,16 @@ public static class EldritchPrefabRegistry
     var animationController = xenoPrefab.GetComponentInChildren<XenoAnimationController>();
 
 
+    // todo determine how to make tameable...someone will ask for it.
+    var tameable = xenoPrefab.GetOrAddComponent<Tameable>();
+    tameable.m_commandable = true;
+    tameable.m_monsterAI = xenoDroneMonsterAI;
+
+    // todo add health config
+    humanoid.m_health = 500f;
+    humanoid.m_tameableMonsterAI = xenoDroneMonsterAI;
+    humanoid.m_swimSpeed = 10f;
+
 
     humanoid.m_eye = xenoPrefab.transform.Find("EyePos");
     humanoid.m_animEvent = animEvent;
@@ -162,6 +211,8 @@ public static class EldritchPrefabRegistry
     xenoDroneMonsterAI.m_huntPlayer = true;
     xenoDroneMonsterAI.m_enableHuntPlayer = true;
 
+    AddWeaponItemsToXenoInventory(humanoid);
+
     // if (!XenoFromSeekerBuilder.BuildXenoFromSeeker(xenoPrefab, xenoAsset.transform.Find("Visual").gameObject, xenoAsset))
     // {
     //   LoggerProvider.LogError("Failed to swap Seeker clone to Xeno.");
@@ -177,30 +228,14 @@ public static class EldritchPrefabRegistry
     //   humanoid.m_head = xenoAnimationController.neckPivot;
     // }
 
-    var spawnConfig = new SpawnConfig
-    {
-      Name = droneConfigName,
-      Biome = Heightmap.Biome.Swamp, // todo make this configurable
-      // Biome = Heightmap.Biome.All, // for now all biomes can spawn alien. todo make this configurable
-      SpawnChance = 100f, // 100% todo make this configurable
-      MinGroupSize = 1, // todo make this configurable
-      MaxGroupSize = 3, // todo make this configurable
-      // SpawnInterval = 600f,
-      SpawnInterval = 200f, // todo make this configurable
-      SpawnAtDay = true,
-      SpawnAtNight = true,
-      MaxAltitude = 1000f,
-      MinAltitude = 0f,
-      HuntPlayer = true,
-      MaxLevel = 10 // todo add config for level scaling.
-    };
+    var spawnConfig = XenoSpawnConfig;
 
     var creatureConfig = new CreatureConfig
     {
       Name = droneConfigName,
       Consumables = [],
       SpawnConfigs = [spawnConfig],
-      Faction = Character.Faction.Demon // or forests if demon is glitchy,
+      Faction = Character.Faction.SeaMonsters // or forests or demon is glitchy,
     };
 
     // Create CustomCreature
@@ -223,7 +258,7 @@ public static class EldritchPrefabRegistry
     m_poison = 5f
   };
 
-  public static void AddItemToXeno(Humanoid humanoid)
+  public static void AddWeaponItemsToXenoInventory(Humanoid humanoid)
   {
     var handWeaponAttack = new Attack
     {
@@ -292,54 +327,6 @@ public static class EldritchPrefabRegistry
 
     humanoid.m_inventory.AddItem(handWeapon);
     humanoid.m_inventory.AddItem(tailWeapon);
-  }
-
-  public static void RegisterXenoSpawnOld()
-  {
-
-    // required for character to work...but not ideal for xeno.
-    // var capsule = xenoPrefab.AddComponent<CapsuleCollider>();
-    //
-    // var visualTransform = xenoPrefab.transform.Find("Visual");
-    // if (!visualTransform)
-    // {
-    //   var visualObj = new GameObject("Visual");
-    //   visualObj.transform.SetParent(xenoPrefab.transform);
-    // }
-
-    // var nv = xenoPrefab.AddComponent<ZNetView>();
-    // xenoPrefab.AddComponent<ZSyncTransform>();
-    // xenoPrefab.AddComponent<ZSyncAnimation>();
-    //
-    // var animator = xenoPrefab.GetComponentInChildren<Animator>();
-    // // must be on animator gameobject
-    // var animEvent = animator.gameObject.AddComponent<CharacterAnimEvent>();
-    //
-    // animEvent.m_nview = nv;
-    //
-    // // todo might need to patch this significantly for alien AI...or use BaseAI.
-    // // todo might have to add FootStep and VisEquipment
-    //
-    // var monsterAI = xenoPrefab.AddComponent<XenoDrone_MonsterAI>();
-    // // todo determine if monsters that do not use human rigs can use humanoid
-    // // var humanoid = xenoPrefab.AddComponent<Humanoid>();
-    // var humanoid = xenoPrefab.AddComponent<Humanoid>();
-    // humanoid.m_animator = animator;
-    // var xenoAnimationController = xenoPrefab.GetComponentInChildren<XenoAnimationController>();
-    //
-    // monsterAI.m_huntPlayer = true;
-    // monsterAI.m_enableHuntPlayer = true;
-    //
-    //
-    // // todo setup character better
-    // humanoid.m_health = 150f;
-    //
-    // var footStep = xenoPrefab.AddComponent<FootStep>();
-    // footStep.m_animator = animator;
-    //
-    // monsterAI.m_pathAgentType = Pathfinding.AgentType.Humanoid;
-    //
-    // monsterAI.m_character = humanoid;
   }
 
   public static void RegisterAllPrefabs()

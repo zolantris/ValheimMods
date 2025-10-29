@@ -22,6 +22,13 @@
         <ProjectReference Include="$(SolutionDir)src\Eldritch.Core\EldritchCore.csproj"/>
     </ItemGroup>
 
+    <!-- Required for property syncing (lots of players not using bepinex config manager)   -->
+    <ItemGroup>
+        <Reference Include="ServerSync" Version="1.19.0">
+            <HintPath>$(SolutionDir)\Dependencies\ServerSync.dll</HintPath>
+        </Reference>
+    </ItemGroup>
+
     <ItemGroup>
         <Folder Include="thunderstore\"/>
     </ItemGroup>

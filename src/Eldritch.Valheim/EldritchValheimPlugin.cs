@@ -4,6 +4,7 @@ using Eldritch.Core;
 using Jotunn.Configs;
 using Jotunn.Entities;
 using Jotunn.Managers;
+using ServerSync;
 using UnityEngine;
 using UnityEngine.U2D;
 using Zolantris.Shared;
@@ -23,12 +24,22 @@ public class EldritchValheimPlugin : BaseUnityPlugin
   public static AssetBundle assetBundle = null!;
   public static SpriteAtlas Sprites = null!;
 
+  public static ConfigSync ModConfigSync = new(ModName)
+  {
+    DisplayName = ModName,
+    CurrentVersion = Version,
+    ModRequired = true,
+    IsLocked = true
+  };
+
   public void Awake()
   {
     LoggerProvider.Setup(Logger);
     LoggerProvider.LogDebug("Eldritchcore initialized");
 
     PatchController.Apply(HarmonyGuid);
+
+
 
 
     // ReSharper disable once RedundantNameQualifier

@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
     <Import Project="$(SolutionDir)build\base.props"/>
-    <Import Project="$(SolutionDir)build\unity_libs_2022.props"/>
+    <Import Project="$(SolutionDir)build\unity_libs.props"/>
 
     <!--  TODO this might have to be embedded in the integration package  -->
     <ItemGroup Label="Assembly Assets">

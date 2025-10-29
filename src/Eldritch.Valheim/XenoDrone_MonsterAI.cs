@@ -16,6 +16,11 @@ public class XenoDrone_MonsterAI : MonsterAI
 
   public static bool ShouldUseNavigationOnAttack = false;
   public static bool ShouldUseNavigationOnHunt = false;
+  public static bool ShouldUseNavigationOnHuntChargeAttack = false;
+
+  // damage configs
+  public static float pushForce = 3f;
+
 
   public Character xenoCharacter;
 
@@ -77,11 +82,11 @@ public class XenoDrone_MonsterAI : MonsterAI
       m_dir = dir,
       m_hitType = HitData.HitType.EnemyHit,
       m_staggerMultiplier = 50, // todo set this.
-      m_pushForce = 3f,
+      m_pushForce = pushForce,
       m_hitCollider = other,
       m_attacker = xenoCharacter.GetZDOID(),
-      m_blockable = false,
-      m_dodgeable = false,
+      m_blockable = true,
+      m_dodgeable = true,
       m_ranged = false,
       m_toolTier = 99,
       m_radius = 0,
@@ -96,6 +101,7 @@ public class XenoDrone_MonsterAI : MonsterAI
     return type == XenoHitboxType.Arm ? EldritchPrefabRegistry.XenoDroneArmDamage : EldritchPrefabRegistry.XenoDroneTailDamage;
   }
 
+
   private void ApplyWearNTearDamage(WearNTear wnt, Collider other, XenoHitboxType type)
   {
     var p = other.ClosestPoint(transform.position);
@@ -106,10 +112,10 @@ public class XenoDrone_MonsterAI : MonsterAI
       m_point = p,
       m_dir = dir,
       m_hitType = HitData.HitType.EnemyHit,
-      m_pushForce = 3f,
+      m_pushForce = pushForce,
       m_hitCollider = other,
-      m_blockable = false,
-      m_dodgeable = false,
+      m_blockable = true,
+      m_dodgeable = true,
       m_ranged = false,
       m_toolTier = 99,
       m_radius = 0,
@@ -134,7 +140,7 @@ public class XenoDrone_MonsterAI : MonsterAI
     var character = m_character as Humanoid;
     if (character && character.m_inventory.GetAllItems().Count == 0)
     {
-      EldritchPrefabRegistry.AddItemToXeno(character);
+      EldritchPrefabRegistry.AddWeaponItemsToXenoInventory(character);
     }
 
     if (HuntPlayer())
@@ -157,7 +163,8 @@ public class XenoDrone_MonsterAI : MonsterAI
       DroneAI.SetPrimaryTarget(m_targetStatic.transform);
     }
 
-    if (ShouldUseNavigationOnHunt && DroneAI.CurrentState == XenoDroneAI.XenoAIState.Hunt) return true;
+    if (ShouldUseNavigationOnHunt && DroneAI.CurrentState == XenoDroneAI.XenoAIState.Hunt && DroneAI.huntBehaviorState.State != HuntBehaviorState.Chasing) return true;
+    if (ShouldUseNavigationOnHuntChargeAttack && DroneAI.CurrentState == XenoDroneAI.XenoAIState.Hunt && DroneAI.huntBehaviorState.State == HuntBehaviorState.Chasing) return true;
     if (ShouldUseNavigationOnAttack && DroneAI.CurrentState == XenoDroneAI.XenoAIState.Attack) return true;
 
     // TODO Add support for setting target here from XenoDroneAI (based on canHearTarget and canSeeTarget)

@@ -48,6 +48,7 @@
         <Compile Update="..\ValheimRAFT.Unity\Assets\ValheimVehicles\SharedScripts\ConvexHullBoundaryConstraint.cs">
             <Link>ValheimVehicles.Helpers\ConvexHullBoundaryConstraint.cs</Link>
         </Compile>
+        <Compile Remove="..\ValheimRAFT.Unity\Assets\ValheimVehicles\SharedScripts\SharedScripts.Validation\**"/>
     </ItemGroup>
     <ItemGroup Label="Internal ValheimVehicles scripts"><!-- Includes all namespace folders -->
         <!--        <Compile Include="ValheimVehicles.*\**\*.cs"/>-->

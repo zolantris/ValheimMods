@@ -167,38 +167,38 @@ public class ValheimVehiclesPlugin : MonoBehaviour
 
     ModConfigSync = configSync;
 
-    PatchConfig.BindConfig(config);
+    PatchConfig.BindConfig(config, ModConfigSync);
 
     // generic prefab config (catch all until these are specialized)
-    PrefabConfig.BindConfig(config);
+    PrefabConfig.BindConfig(config, ModConfigSync);
     // prefab configs (all variants);
-    CannonPrefabConfig.BindConfig(config);
+    CannonPrefabConfig.BindConfig(config, ModConfigSync);
 
     // other configs
-    RamConfig.BindConfig(config);
-    PrefabRecipeConfig.BindConfig(config);
-    VehicleGuiMenuConfig.BindConfig(config);
-    PropulsionConfig.BindConfig(config);
-    ModSupportConfig.BindConfig(config);
-    CustomMeshConfig.BindConfig(config);
-    WaterConfig.BindConfig(config);
-    PhysicsConfig.BindConfig(config);
-    MinimapConfig.BindConfig(config);
-    HudConfig.BindConfig(config);
-    CameraConfig.BindConfig(config);
-    RenderingConfig.BindConfig(config);
-    VehicleGlobalConfig.BindConfig(config);
-    GuiConfig.BindConfig(config);
-    PowerSystemConfig.BindConfig(config);
+    RamConfig.BindConfig(config, ModConfigSync);
+    PrefabRecipeConfig.BindConfig(config, ModConfigSync);
+    VehicleGuiMenuConfig.BindConfig(config, ModConfigSync);
+    PropulsionConfig.BindConfig(config, ModConfigSync);
+    ModSupportConfig.BindConfig(config, ModConfigSync);
+    CustomMeshConfig.BindConfig(config, ModConfigSync);
+    WaterConfig.BindConfig(config, ModConfigSync);
+    PhysicsConfig.BindConfig(config, ModConfigSync);
+    MinimapConfig.BindConfig(config, ModConfigSync);
+    HudConfig.BindConfig(config, ModConfigSync);
+    CameraConfig.BindConfig(config, ModConfigSync);
+    RenderingConfig.BindConfig(config, ModConfigSync);
+    VehicleGlobalConfig.BindConfig(config, ModConfigSync);
+    GuiConfig.BindConfig(config, ModConfigSync);
+    PowerSystemConfig.BindConfig(config, ModConfigSync);
 
     // Sub-Mods
-    Mod_PieceOverlapConfig.BindConfig(config);
+    Mod_PieceOverlapConfig.BindConfig(config, ModConfigSync);
 
     LoggerProvider.LogInfo("Plugin ValheimVehicles started on server.");
 
 #if DEBUG
     // Meant for only being run in debug builds for testing quickly
-    QuickStartWorldConfig.BindConfig(config);
+    QuickStartWorldConfig.BindConfig(config, ModConfigSync);
 #endif
 
     HasCreatedConfig = true;
