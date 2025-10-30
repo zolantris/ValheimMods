@@ -39,10 +39,33 @@ public static class VariableResolver
     // If it's a list/array, recurse on items
     if (typeof(IEnumerable).IsAssignableFrom(type) && type != typeof(string))
     {
-      var list = (IEnumerable)obj;
-      foreach (var item in list)
+      // Prefer indexable collections (Array, List<T>, etc.)
+      if (obj is IList list)
+      {
+        for (var i = 0; i < list.Count; i++)
+        {
+          var item = list[i];
+          if (item is string s)
+          {
+            try
+            {
+              list[i] = InterpolateVars(s, resolvedVars);
+            }
+            catch (NotSupportedException)
+            {
+              // collection is read-only; skip mutation
+            }
+          }
+          else if (item != null)
+          {
+            RecursivelyResolveObject(item, resolvedVars, ignoredKeysRegex);
+          }
+        }
+        return;
+      }
+      // Fallback: non-indexable IEnumerable — can't set items, just recurse
+      foreach (var item in (IEnumerable)obj)
         RecursivelyResolveObject(item, resolvedVars, ignoredKeysRegex);
-      return;
     }
 
     // For normal objects, iterate fields/properties

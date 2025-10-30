@@ -1,4 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <!--  for thunderstore version sync-->
+    <PropertyGroup>
+        <SyncTargets>valheimraft-thunderstore-release,valheimraft-thunderstore-beta</SyncTargets>
+    </PropertyGroup>
+
     <Import Project="$(SolutionDir)build\base.props"/>
     <Import Project="$(SolutionDir)build\valheim.props"/>
     <Import Project="$(SolutionDir)build\valheimraft_version.props"/>
