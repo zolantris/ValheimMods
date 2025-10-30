@@ -1,15 +1,21 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
+    <!--  for thunderstore version sync-->
+    <PropertyGroup>
+        <SyncTargets>eldritch-thunderstore-release</SyncTargets>
+    </PropertyGroup>
+
+
     <Import Project="$(SolutionDir)build\base.props"/>
     <Import Project="$(SolutionDir)build\valheim.props"/>
     <Import Project="$(SolutionDir)build\eldritch_version.props"/>
     <Import Project="$(SolutionDir)build\static_version_generator.targets"/>
-    <Import Project="$(SolutionDir)build\thunderstore_manifest_update.targets"/>
+    <!--    <Import Project="$(SolutionDir)build\thunderstore_manifest_update.targets"/>-->
 
     <PropertyGroup>
         <RootNamespace>Eldritch.Valheim</RootNamespace>
         <AssemblyName>Eldritch.Valheim</AssemblyName>
         <AssemblyType>Library</AssemblyType>
-        <Configurations>Debug;Release;Release Archive</Configurations>
+        <Configurations>Debug;Release</Configurations>
         <Platforms>AnyCPU</Platforms>
     </PropertyGroup>
 

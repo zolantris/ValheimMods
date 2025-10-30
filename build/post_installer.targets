@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+<Project>
     <PropertyGroup>
         <Nullable>enable</Nullable>
         <Configurations>Debug;Release;Release Archive;ReleaseBETA Archive</Configurations>

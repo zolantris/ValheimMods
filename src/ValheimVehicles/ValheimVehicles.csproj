@@ -32,16 +32,6 @@
         <!--        <EmbeddedResources Include="Assets\**.png" /> -->
     </ItemGroup>
 
-    <!--    <Import Project="$(SolutionDir)\build\valheim.targets"/>-->
-    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'ReleaseBETA Archive|AnyCPU' ">
-        <OutputPath>bin\ReleaseBETA Archive\</OutputPath>
-    </PropertyGroup>
-    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-        <OutputPath>bin\Release\</OutputPath>
-    </PropertyGroup>
-    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-        <OutputPath>bin\Debug\</OutputPath>
-    </PropertyGroup>
     <ItemGroup Label="ValheimVehicle.SharedScripts Unity testable scripts">
         <!--  Allows for both sharing and testing these scripts within unity. Best of both worlds.      -->
         <Compile Include="..\ValheimRAFT.Unity\Assets\ValheimVehicles\SharedScripts\**\*.cs"/>
@@ -60,5 +50,11 @@
         <ProjectReference Include="..\Shared\Shared.csproj"/>
         <ProjectReference Include="..\DynamicLocations\DynamicLocations.csproj"/>
         <ProjectReference Include="..\ZdoWatcher\ZdoWatcher.csproj"/>
+    </ItemGroup>
+    <ItemGroup>
+        <PackageReference Update="Krafs.Publicizer" Version="2.3.0">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+        </PackageReference>
     </ItemGroup>
 </Project>

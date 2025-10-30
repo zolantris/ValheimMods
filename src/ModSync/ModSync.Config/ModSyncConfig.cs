@@ -33,10 +33,16 @@ internal static class ModSyncConfig
 
   internal class ConfigTargetData
   {
+    // sync targets
     public Dictionary<string, SyncTargetShared>? syncTargets = null;
+    // shared schema for all targets
     public Dictionary<string, SyncTargetShared>? sharedTargets = null;
+    // binary running
     public Dictionary<string, RunTargetItem>? runTargets = null;
+    // json data syncing
     public Dictionary<string, JsonSyncTarget>? syncJsonTargets = null;
+    // archiving targets (nexus/thunderstore zip and publishing for github releases)
+    public Dictionary<string, ArchiveTarget>? archiveTargets = null;
   }
 
   /// <summary>
@@ -65,6 +71,30 @@ internal static class ModSyncConfig
     public string args;
     public bool isConditional;
     public string[]? conditions;
+  }
+
+  public enum ArchiveBuildType
+  {
+    Thunderstore
+  }
+
+  /// <summary>
+  /// includePatterns turns into a regex that matches files to include in the archive.
+  /// </summary>
+  public class ArchiveTarget
+  {
+    public List<string> includePatterns = [];
+    public List<string> excludePatterns = [];
+    public List<string> inputDirs = [];
+    public List<string> inputFiles = [];
+    public ArchiveBuildType buildType;
+    public string outputDir;
+    public string thunderstoreTemplateDir;
+    public string releaseName;
+    public string archiveName;
+    public string archiveFileType;
+    public string releaseVersion;
+    public string releaseTypeSuffix;
   }
 
   public class SyncTargetShared
@@ -104,12 +134,18 @@ internal static class ModSyncConfig
     return sharedTargets.TryGetValue(key, out syncTargetShared);
   }
 
-  public static bool TryCreateConfig(string configPath, string? envName)
+  public static Dictionary<string, string> GetOverrideVariables(Dictionary<string, string> options)
+  {
+    return options.Where(x => x.Key.StartsWith(ModSyncCli.Opt_OverridePrefix, StringComparison.OrdinalIgnoreCase)).ToDictionary(kv => kv.Key.Replace(ModSyncCli.Opt_OverridePrefix, ""), kv => kv.Value);
+  }
+
+  public static bool TryCreateConfig(string configPath, string? envName, Dictionary<string, string> options)
   {
     _hasRunConfig = true;
     // for later logging/debugging.
     _configPath = configPath;
 
+    var overrideVariables = GetOverrideVariables(options);
     var json5String = File.ReadAllText(configPath);
     var config = Json5Core.Json5.Deserialize<ConfigData>(json5String);
     if (config == null) return false;
@@ -124,6 +160,7 @@ internal static class ModSyncConfig
 
     // merge any overrides into other keys
     MergeEnvironmentVariables(config.variables, config.environments, envName);
+    MergeOverrideVariables(config.variables, overrideVariables);
 
     var initialVariables = config.variables.ToDictionary();
 
@@ -131,6 +168,7 @@ internal static class ModSyncConfig
     var ignoredKeysRegex = RegexGenerator.GenerateRegexFromList(IgnoredConfigKeysForResolver);
 
     VariableResolver.RecursivelyResolveObject(config, config.variables, ignoredKeysRegex);
+
     config.initialVariables = initialVariables;
 
     if (config.runTargets == null && config.sharedTargets == null && config.syncTargets == null)
@@ -150,6 +188,17 @@ internal static class ModSyncConfig
     Instance = config;
     return true;
   }
+
+  public static void MergeOverrideVariables(
+    Dictionary<string, string> baseVars,
+    Dictionary<string, string> overrides)
+  {
+    foreach (var kv in overrides)
+    {
+      baseVars[kv.Key] = kv.Value; // override or add
+    }
+  }
+
 
   public static void MergeEnvironmentVariables(
     Dictionary<string, string> baseVars,

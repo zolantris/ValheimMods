@@ -1,4 +1,6 @@
 using System;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using ModSync.Config;
 
 internal static class Logger
@@ -14,6 +16,19 @@ internal static class Logger
       Console.WriteLine($"{ModSyncName}:{level} -> {message}");
       Console.ForegroundColor = prevColor;
     }
+  }
+
+  // Helper to produce a compact, cycle-safe JSON representation for logs
+  public static string SerializeForLog(object? obj)
+  {
+    if (obj == null) return "null";
+    var opts = new JsonSerializerOptions
+    {
+      WriteIndented = false,
+      DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+      ReferenceHandler = ReferenceHandler.IgnoreCycles
+    };
+    return JsonSerializer.Serialize(obj, opts);
   }
 
   public static void Error(string message)

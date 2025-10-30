@@ -19,6 +19,7 @@ public static class ModSyncCli
   // Arg types
   public const string Arg_Sync = "sync";
   public const string Arg_SyncJson = "syncJson";
+  public const string Arg_GenerateArchive = "generateArchive";
   public const string Arg_Deploy = "deploy";
   public const string Arg_Run = "run";
 
@@ -33,6 +34,7 @@ public static class ModSyncCli
 
   internal const string Opt_SyncJsonKey = "syncJsonKey";
   internal const string Opt_SyncJsonValue = "syncJsonValue";
+  internal const string Opt_OverridePrefix = "override-";
 
   public static int Main(string[] args)
   {
@@ -60,7 +62,7 @@ public static class ModSyncCli
     ModSyncConfig.UpdateConfigBooleans(options);
 
     // Load and parse JSON5 config
-    if (!ModSyncConfig.TryCreateConfig(configPath, envName))
+    if (!ModSyncConfig.TryCreateConfig(configPath, envName, options))
     {
       Console.Error.WriteLine($"Error parsing config file: {configPath}. Bailing.");
       return 1;
@@ -79,6 +81,9 @@ public static class ModSyncCli
       }
       case Arg_Sync:
         SyncToTarget.HandleSync(targets);
+        break;
+      case Arg_GenerateArchive:
+        GenerateArchive.HandleGenerateModArchive(targets.First());
         break;
       // case Arg_Deploy:
       //   HandleDeploy(options, configRoot.deployTargets);
@@ -175,6 +180,8 @@ public static class ModSyncCli
     }
 
     var targetList = targetNames.Split(',', StringSplitOptions.RemoveEmptyEntries);
+
+    Logger.Debug(targetList.ToString());
 
     return targetList;
   }

@@ -1,12 +1,15 @@
 <Project>
     <!--  This auto syncs the current project's version to the current project's thunderstore -->
     <Target KeepDuplicateOutputs="false" Name="ModSync_UpdateThunderstore" AfterTargets="BeforeCompile">
+        <!--        -->
+        <!--        <PropertyGroup>-->
+        <!--            <SyncTargets>valheimraft-thunderstore-release,valheimraft-thunderstore-beta</SyncTargets>-->
+        <!--        </PropertyGroup>-->
         <PropertyGroup>
             <ModSyncExe>$(SolutionDir)build/bin/ModSync/Release/ModSync.exe</ModSyncExe>
             <ModSyncConfig>$(SolutionDir)modSync.json5</ModSyncConfig>
         </PropertyGroup>
 
-
-        <Exec Condition="Exists('$(ModSyncExe)')" Command="&quot;$(ModSyncExe)&quot; syncJson --config=&quot;$(ModSyncConfig)&quot; --targets=valheimraft-thunderstore-release,valheimraft-thunderstore-beta,eldritch-thunderstore-release --syncJsonKey=version_number --syncJsonValue=$(Version)"/>
+        <Exec Condition="Exists('$(ModSyncExe)')" Command="&quot;$(ModSyncExe)&quot; syncJson --config=&quot;$(ModSyncConfig)&quot; --targets=$(SyncTargets) --syncJsonKey=version_number --syncJsonValue=$(Version)"/>
     </Target>
 </Project>

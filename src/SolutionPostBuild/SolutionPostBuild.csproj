@@ -1,6 +1,6 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project>
+    <!--  TODO figure out why SDK messes this up Sdk="Microsoft.NET.Sdk"  -->
     <Import Project="$(SolutionDir)build\base.props"/>
-    <Import Project="$(SolutionDir)build\build_variables.props"/>
     <Import Project="$(SolutionDir)build\valheimraft_version.props"/>
     <Import Project="$(SolutionDir)\build\game_launcher.targets"/>
 
@@ -59,10 +59,97 @@
         <Message Text="Success" Importance="high"/>
     </Target>
 
-    <Target KeepDuplicateOutputs="false" Name="Generate_Mod_Archive" AfterTargets="RunPostInstaller" Condition=" '$(Configuration)|$(Platform)' == 'ReleaseBETA Archive|AnyCPU' or  '$(Configuration)|$(Platform)' == 'Release Archive|AnyCPU' ">
+    <!--    <Target KeepDuplicateOutputs="false" Name="Generate_Mod_Archive_Raft" AfterTargets="RunPostInstaller" Condition=" '$(Configuration)|$(Platform)' == 'ReleaseBETA Archive|AnyCPU' or  '$(Configuration)|$(Platform)' == 'Release Archive|AnyCPU' ">-->
+    <!--        <PropertyGroup Label="Shared Release Properties">-->
+    <!--            <ReleaseName>ValheimRAFT</ReleaseName>-->
+    <!--            <RepoDir>$(SolutionDir)src\ValheimRAFT\</RepoDir>-->
+    <!--            &lt;!&ndash;    From ValheimRAFT        &ndash;&gt;-->
+    <!--            <ReleaseVersion>$(Version)</ReleaseVersion>-->
+    <!--            <ThunderStoreName>Thunderstore</ThunderStoreName>-->
+    <!--            <TmpDir>$(ModOutputDir)tmp\</TmpDir>-->
+    <!--            <NexusName>Nexus</NexusName>-->
+    <!--            <AutoDocName>$(ReleaseName)_AutoDoc.md</AutoDocName>-->
+    <!--            <AutoDocPath>$(PluginDeployPath)\$(AutoDocName)</AutoDocPath>-->
+    <!--            <PrefabSnapshotPath>$(PluginDeployPath)\PrefabSnapshots\prefabs-$(ReleaseVersion).json</PrefabSnapshotPath>-->
+    <!--            <LocalAutoDocPath>$(SolutionDir)src\$(ReleaseName)\docs\$(AutoDocName)</LocalAutoDocPath>-->
+    <!--            <LocalPrefabSnapshotPath>$(SolutionDir)src\$(ReleaseName)\docs\prefabs-$(ReleaseVersion).json</LocalPrefabSnapshotPath>-->
+    <!--        </PropertyGroup>-->
+
+    <!--        <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release Archive|AnyCPU'">-->
+    <!--            <ThunderStoreDir>$(RepoDir)ThunderStore\</ThunderStoreDir>-->
+    <!--            <ModNameVersion>$(ReleaseName)-$(ReleaseVersion).zip</ModNameVersion>-->
+    <!--        </PropertyGroup>-->
+    <!--        <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'ReleaseBeta Archive|AnyCPU'">-->
+    <!--            <ThunderStoreDir>$(RepoDir)ThunderStoreBeta\</ThunderStoreDir>-->
+    <!--            <ModNameVersion>$(ReleaseName)-$(ReleaseVersion)-beta.zip</ModNameVersion>-->
+    <!--        </PropertyGroup>-->
+
+    <!--        <Exec Command="if exist &quot;$(TmpDir)plugins\Assets&quot; rd /s /q &quot;$(TmpDir)plugins\Assets&quot;"/>-->
+    <!--        <Exec Command="if exist &quot;$(TmpDir)&quot; rd /s /q &quot;$(TmpDir)&quot;"/>-->
+
+    <!--        <Exec Command="if not exist &quot;$(ModOutputDir)&quot; mkdir &quot;$(ModOutputDir)&quot;"/>-->
+    <!--        <Exec Command="if not exist &quot;$(TmpDir)&quot; mkdir &quot;$(TmpDir)&quot;"/>-->
+    <!--        <Exec Command="if not exist &quot;$(TmpDir)plugins&quot; mkdir &quot;$(TmpDir)plugins&quot;"/>-->
+    <!--        <Exec Command="if not exist &quot;$(TmpDir)$(ReleaseName)&quot; mkdir &quot;$(TmpDir)$(ReleaseName)&quot;"/>-->
+
+    <!--        <Exec Command="copy &quot;$(SolutionDir)src\ValheimRAFT\README.md&quot; &quot;$(TmpDir)README.md&quot;"/>-->
+
+    <!--        &lt;!&ndash; Overrites the auto-doc &ndash;&gt;-->
+    <!--        <Copy Condition="Exists('$(AutoDocPath)') and Exists('$(LocalAutoDocPath)')" SourceFiles="$(AutoDocPath)" DestinationFolder="$(SolutionDir)src\$(ReleaseName)\docs\"/>-->
+
+    <!--        &lt;!&ndash; Copy Assets &ndash;&gt;-->
+    <!--        <Exec Command="if exist &quot;$(AssetsDir)&quot; xcopy /d &quot;$(AssetsDir)&quot; &quot;$(TmpDir)plugins\Assets\&quot; /E/H"/>-->
+    <!--        <Exec Command="if exist $&quot;$(AssetsDir)&quot; del &quot;$(TmpDir)plugins\Assets\*.png.meta&quot;"/>-->
+
+    <!--        &lt;!&ndash;   copy all files from outputdir, anything included is something that does not exist in the base game dependencies...this copies too many things, including dev only deps fyi. dont use it for production     &ndash;&gt;-->
+    <!--        <Exec Command="xcopy &quot;$(SolutionDir)build/bin/ValheimRAFT/Release&quot; &quot;$(TmpDir)plugins\&quot; /q /s /y /i"/>-->
+
+    <!--        <Exec Command="xcopy /d &quot;$(ThunderStoreDir)&quot; &quot;$(TmpDir)&quot; /E/H"/>-->
+    <!--        &lt;!&ndash; delete duplicate mod version&ndash;&gt;-->
+    <!--        <Exec Command="if exist &quot;$(ModOutputDir)$(ThunderStoreName)-$(ModNameVersion)&quot; del /s /q &quot;$(ModOutputDir)$(ThunderStoreName)-$(ModNameVersion)&quot;"/>-->
+    <!--        <Exec Command="if exist &quot;$(ModOutputDir)$(NexusName)-$(ModNameVersion)&quot; del /s /q &quot;$(ModOutputDir)$(NexusName)-$(ModNameVersion)&quot;"/>-->
+    <!--        <Exec Command="if exist &quot;$(ModOutputDir)libs-$(ReleaseVersion).zip&quot; del /s /q &quot;$(ModOutputDir)libs-$(ReleaseVersion).zip&quot;"/>-->
+
+    <!--        <Exec Command="powershell Compress-Archive '$(TmpDir)\*' '$(ModOutputDir)$(ThunderStoreName)-$(ModNameVersion)'"/>-->
+
+    <!--        &lt;!&ndash;  For modNexus there needs to be a folder with the modname     &ndash;&gt;-->
+    <!--        <Exec Command="xcopy /d &quot;$(TmpDir)plugins&quot; &quot;$(TmpDir)$(ReleaseName)&quot; /E/H"/>-->
+    <!--        <Exec Command="powershell Compress-Archive '$(TmpDir)$(ReleaseName)' '$(ModOutputDir)$(NexusName)-$(ModNameVersion)'"/>-->
+    <!--        <Exec Command="powershell Compress-Archive '$(SolutionDir)libs\*' '$(ModOutputDir)libs-$(ReleaseVersion).zip'"/>-->
+    <!--        <Exec Command="if exist &quot;$(TmpDir)&quot; rd /s /q &quot;$(TmpDir)&quot;"/>-->
+    <!--    </Target>-->
+    <PropertyGroup>
+        <EldritchVersion>1.0.1</EldritchVersion>
+    </PropertyGroup>
+    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+        <OutputPath>bin\Debug\</OutputPath>
+    </PropertyGroup>
+    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+        <OutputPath>bin\Release\</OutputPath>
+    </PropertyGroup>
+    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release Archive|AnyCPU' ">
+        <OutputPath>bin\Release Archive\</OutputPath>
+    </PropertyGroup>
+    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug Run Client|AnyCPU' ">
+        <OutputPath>bin\Debug Run Client\</OutputPath>
+    </PropertyGroup>
+    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release Run Client|AnyCPU' ">
+        <OutputPath>bin\Release Run Client\</OutputPath>
+    </PropertyGroup>
+    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug Run ClientServer|AnyCPU' ">
+        <OutputPath>bin\Debug Run ClientServer\</OutputPath>
+    </PropertyGroup>
+    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'ReleaseBeta Archive|AnyCPU' ">
+        <OutputPath>bin\ReleaseBeta Archive\</OutputPath>
+    </PropertyGroup>
+    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'ModSyncOnly|AnyCPU' ">
+        <OutputPath>bin\ModSyncOnly\</OutputPath>
+    </PropertyGroup>
+    <Target KeepDuplicateOutputs="false" Name="Generate_Mod_Archive_Eldritch" AfterTargets="RunPostInstaller" Condition=" '$(Configuration)|$(Platform)' == 'ReleaseBETA Archive|AnyCPU' or  '$(Configuration)|$(Platform)' == 'Release Archive|AnyCPU' ">
+        <!-- Flattened properties: remove nested PropertyGroup elements (invalid) and duplicate conditional groups -->
         <PropertyGroup Label="Shared Release Properties">
-            <ReleaseName>ValheimRAFT</ReleaseName>
-            <RepoDir>$(SolutionDir)src\ValheimRAFT\</RepoDir>
+            <ReleaseName>Eldritch</ReleaseName>
+            <RepoDir>$(SolutionDir)src\Eldritch.Valheim\</RepoDir>
             <!--    From ValheimRAFT        -->
             <ReleaseVersion>$(Version)</ReleaseVersion>
             <ThunderStoreName>Thunderstore</ThunderStoreName>
@@ -92,7 +179,7 @@
         <Exec Command="if not exist &quot;$(TmpDir)plugins&quot; mkdir &quot;$(TmpDir)plugins&quot;"/>
         <Exec Command="if not exist &quot;$(TmpDir)$(ReleaseName)&quot; mkdir &quot;$(TmpDir)$(ReleaseName)&quot;"/>
 
-        <Exec Command="copy &quot;$(SolutionDir)src\ValheimRAFT\README.md&quot; &quot;$(TmpDir)README.md&quot;"/>
+        <Exec Command="copy &quot;$(SolutionDir)src\Eldritch.Valheim\README.md&quot; &quot;$(TmpDir)README.md&quot;"/>
 
         <!-- Overrites the auto-doc -->
         <Copy Condition="Exists('$(AutoDocPath)') and Exists('$(LocalAutoDocPath)')" SourceFiles="$(AutoDocPath)" DestinationFolder="$(SolutionDir)src\$(ReleaseName)\docs\"/>
@@ -102,7 +189,7 @@
         <Exec Command="if exist $&quot;$(AssetsDir)&quot; del &quot;$(TmpDir)plugins\Assets\*.png.meta&quot;"/>
 
         <!--   copy all files from outputdir, anything included is something that does not exist in the base game dependencies...this copies too many things, including dev only deps fyi. dont use it for production     -->
-        <Exec Command="xcopy &quot;$(SolutionDir)build/bin/ValheimRAFT/Release&quot; &quot;$(TmpDir)plugins\&quot; /q /s /y /i"/>
+        <Exec Command="xcopy &quot;$(SolutionDir)build/bin/EldritchValheim/Release&quot; &quot;$(TmpDir)plugins\&quot; /q /s /y /i"/>
 
         <Exec Command="xcopy /d &quot;$(ThunderStoreDir)&quot; &quot;$(TmpDir)&quot; /E/H"/>
         <!-- delete duplicate mod version-->

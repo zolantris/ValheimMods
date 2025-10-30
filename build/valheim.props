@@ -36,7 +36,7 @@
 
     <!-- Automatic publicize game libs -->
     <ItemGroup>
-        <PackageReference Include="Krafs.Publicizer" Version="2.2.1">
+        <PackageReference Include="Krafs.Publicizer" Version="2.3.0">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
         </PackageReference>

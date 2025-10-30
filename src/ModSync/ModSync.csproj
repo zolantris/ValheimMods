@@ -1,15 +1,13 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-    <Import Project="$(SolutionDir)build\base.props"/>
-    <Import Project="$(SolutionDir)build\build_variables.props"/>
-
     <PropertyGroup>
         <OutputType>Exe</OutputType>
-        <Configurations>Debug;Release;ModSyncOnly</Configurations>
+        <GenerateTargetFrameworkAttribute>false</GenerateTargetFrameworkAttribute>
+        <Configurations>Debug;Release</Configurations>
         <Platforms>AnyCPU</Platforms>
         <TargetFramework>Net8.0</TargetFramework>
         <DefineConstants>DEBUG;TRACE;</DefineConstants>
-        <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     </PropertyGroup>
+
     <ItemGroup>
         <PackageReference Include="System.Core"/>
         <PackageReference Include="Json5Core" Version="1.0.12"/>

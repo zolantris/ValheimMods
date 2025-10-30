@@ -14,7 +14,6 @@
         <!--                          '$(Configuration)' == 'Release Run Server' or-->
         <!--                          '$(Configuration)' == 'Release Run ClientServer'">true-->
         <!--        </IsRunnable>-->
-        <IsRunnable>true</IsRunnable>
         <!--        <IsRunnable Condition="'$(IsRunnable)' != 'true'">false</IsRunnable>-->
         <IsDebug Condition="'$(Configuration)' == 'Debug' or '$(IsRunnableDebug)' == 'true'">true</IsDebug>
         <IsRelease Condition="'$(Configuration)' == 'Release' or '$(IsRunnableRelease)' == 'true'">true</IsRelease>
