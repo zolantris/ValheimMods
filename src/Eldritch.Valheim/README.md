@@ -4,6 +4,27 @@ Eldritch Valheim is a mod for the game Valheim that introduces eldritch-themed
 content, including new creatures, items, and biomes inspired by cosmic horror
 and Lovecraftian lore.
 
+This has not been tested in multiplayer, but it should work.
+
+This mod is meant
+for Valheim but Eldritch.Core is meant for integration into other Unity games (
+and maybe my own game eventually).
+
+## Tutorial
+
+1. Install the mod, then start them game
+2. To edit how xenos spawn you can open the `EldritchValheim.dll.config` file in
+   a
+   text editor or using bepinexconfiguration manager.
+3. Most of the configuration is server synced - IT WILL REQUIRE a server restart
+   to apply config updates for now.
+
+## Version
+
+- 1.0.0: Initial release with Xenomorphs and basic eldritch-themed content. (The
+  content works, but is limited in scope and polish. Future updates will expand
+  and refine the mod.)
+
 ## Installation
 
 1. Ensure you have Valheim installed and updated to the latest version.
@@ -57,6 +78,11 @@ The values in the <code>ID</code> column are the canonical spawn identifiers use
 Image notes: place small PNG/JPG images in `src/Eldritch.Valheim/assets/images/` (or update the paths above). Recommended width: 120px (use responsive styling as above). If images are not present, the <code>&lt;img&gt;</code> tags will show broken-image placeholders in GitHub/Markdown viewers.
 </p>
 
+## Permissions / Legal
+
 Some of this content must remain free (EG some assets). Most code/content from
-Eldritch.Core is only available to use with permission from the author as some
-of this code may be introduced in paid content/games.
+Eldritch.Core is only available to use with permission from the author as _some
+of_ this code may be introduced in paid content/games.
+
+Do not sell or redistribute this mod or its
+assets without permission from the owner (and the IP of any content)

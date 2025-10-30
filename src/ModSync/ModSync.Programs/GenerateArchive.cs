@@ -30,6 +30,7 @@ public class GenerateArchive
       generateThunderstoreModArchive(
         currentTarget.inputDirs,
         currentTarget.inputFiles,
+        currentTarget.thunderstoreInputFiles,
         currentTarget.thunderstoreTemplateDir,
         currentTarget.outputDir,
         currentTarget.releaseName,
@@ -47,7 +48,7 @@ public class GenerateArchive
     // todo add recursive syncing based on targets provided
   }
 
-  internal static void generateThunderstoreModArchive(List<string> inputDirs, List<string> inputFiles, string thunderstoreTemplateDir, string outputDir, string releaseName, string archiveName, string archiveFileType, string releaseTypeSuffix, List<string> includesPattern, List<string> excludesPattern)
+  internal static void generateThunderstoreModArchive(List<string> inputDirs, List<string> inputFiles, List<string> thunderstoreInputFiles, string thunderstoreTemplateDir, string outputDir, string releaseName, string archiveName, string archiveFileType, string releaseTypeSuffix, List<string> includesPattern, List<string> excludesPattern)
   {
     if (outputDir.Length < 1)
     {
@@ -92,6 +93,20 @@ public class GenerateArchive
 
     // Copy template plugins to top level directory eg icons,readme,manifest.json
     FileUtils.CopyDirectory(thunderstoreTemplateDir, tmpDir);
+
+    // typically readmes and other information that does not belong in plugins folder for project info.
+    foreach (var inputFile in thunderstoreInputFiles)
+    {
+      var file = File.Exists(inputFile);
+      if (!file)
+      {
+        Logger.Error("Input file does not exist: " + inputFile);
+        continue;
+      }
+      var fileName = Path.GetFileName(inputFile);
+      FileUtils.CopyFile(inputFile, Path.Combine(tmpDir, fileName));
+    }
+
 
     foreach (var inputDir in inputDirs)
     {
