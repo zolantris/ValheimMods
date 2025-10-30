@@ -292,7 +292,7 @@ public static class EldritchPrefabRegistry
     };
     var boneFragmentsDrop = new DropConfig
     {
-      Item = "Bone Fragments",
+      Item = "BoneFragments",
       Chance = 100f,
       MinAmount = 2,
       MaxAmount = 4
@@ -312,12 +312,20 @@ public static class EldritchPrefabRegistry
       MaxAmount = 1
     };
 
-
+    string[] consumeables = EldritchBepinExXenoDroneConfig.IsTameable.Value
+      ?
+      [
+        "RawMeat", // universally safe
+        "NeckTail", // swamp-y protein
+        "LoxMeat", // late-game meat
+        "SerpentMeat" // rare/high value]
+      ]
+      : [];
 
     var creatureConfig = new CreatureConfig
     {
       Name = droneConfigName,
-      Consumables = [],
+      Consumables = consumeables,
       DropConfigs = [tarDrop, boneFragmentsDrop, chitinDrop, eitrDrop],
       SpawnConfigs = spawnConfigs,
       Faction = Character.Faction.SeaMonsters // or forests or demon is glitchy,
