@@ -47,7 +47,5 @@ public class EldritchValheimPlugin : BaseUnityPlugin
     {
       EldritchPrefabRegistry.RegisterAllPrefabs();
     };
-
-    LoggerProvider.LogDebug($"{ModName} initialized");
   }
 }
