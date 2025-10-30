@@ -1,4 +1,5 @@
 using System;
+using System.Runtime.CompilerServices;
 using Eldritch.Core;
 using UnityEngine;
 using Zolantris.Shared;
@@ -30,6 +31,24 @@ public class XenoDrone_MonsterAI : MonsterAI
     base.Awake();
   }
 
+  public void SetupXeno()
+  {
+    if (!xenoCharacter) return;
+    xenoCharacter.m_damageModifiers = new HitData.DamageModifiers
+    {
+      m_poison = HitData.DamageModifier.Ignore, // completely immune to and ignores poison effects
+      m_frost = HitData.DamageModifier.Immune, // completely immune to frost effects (but still shows it)
+      m_blunt = HitData.DamageModifier.VeryResistant,
+      m_pickaxe = HitData.DamageModifier.VeryResistant,
+      m_spirit = HitData.DamageModifier.Resistant,
+      m_chop = HitData.DamageModifier.Resistant,
+      m_slash = HitData.DamageModifier.Resistant,
+      m_pierce = HitData.DamageModifier.Normal,
+      m_lightning = HitData.DamageModifier.Normal,
+      m_fire = HitData.DamageModifier.SlightlyWeak
+    };
+  }
+
   public void XenoDroneOnDamaged(float damage, Character character)
   {
     var health = xenoCharacter.GetHealth();
@@ -53,6 +72,7 @@ public class XenoDrone_MonsterAI : MonsterAI
     }
 
     DroneAI.OnHitTarget += HandleHitTarget;
+    DroneAI.OnHitBlood += HandleBloodHitTarget;
   }
 
   public override void OnDisable()
@@ -62,6 +82,29 @@ public class XenoDrone_MonsterAI : MonsterAI
     if (DroneAI != null && DroneAI.OnHitTarget != null)
     {
       DroneAI.OnHitTarget -= HandleHitTarget;
+    }
+    if (DroneAI != null && DroneAI.OnHitBlood != null)
+    {
+      DroneAI.OnHitBlood -= HandleBloodHitTarget;
+    }
+  }
+
+  public void HandleBloodHitTarget(GameObject targetRoot)
+  {
+    // Prefer Characters (players/NPCs)
+    var hitCharacter = targetRoot.GetComponentInParent<Character>();
+    if (hitCharacter != null)
+    {
+      ApplyCharacterDamage(hitCharacter, hitCharacter.GetCollider(), XenoHitboxType.Blood);
+      return;
+    }
+
+    // Pieces / structures (WearNTear)
+    var destructible = targetRoot.GetComponentInParent<IDestructible>();
+    if (destructible != null)
+    {
+      ApplyDestructibleDamage(targetRoot, destructible, XenoHitboxType.Blood);
+      return;
     }
   }
 
@@ -77,16 +120,12 @@ public class XenoDrone_MonsterAI : MonsterAI
     }
 
     // Pieces / structures (WearNTear)
-    var wnt = targetRoot.GetComponentInParent<WearNTear>();
-    if (wnt != null)
+    var destructible = targetRoot.GetComponentInParent<IDestructible>();
+    if (destructible != null)
     {
-      ApplyWearNTearDamage(wnt, other, type);
+      ApplyDestructibleDamage(targetRoot, destructible, type, other);
       return;
     }
-
-    // (Optional) other destructibles if your project uses a custom interface
-    // var destructible = targetRoot.GetComponentInParent<IMyDestructible>();
-    // if (destructible != null) { destructible.Hit(...); return; }
   }
 
   private void ApplyCharacterDamage(Character character, Collider other, XenoHitboxType type)
@@ -106,7 +145,7 @@ public class XenoDrone_MonsterAI : MonsterAI
       m_blockable = true,
       m_dodgeable = true,
       m_ranged = false,
-      m_toolTier = 99,
+      m_toolTier = type == XenoHitboxType.Blood ? (short)99 : (short)1,
       m_radius = 0,
       m_damage = GetDamageFromType(type)
     };
@@ -134,10 +173,14 @@ public class XenoDrone_MonsterAI : MonsterAI
   }
 
 
-  private void ApplyWearNTearDamage(WearNTear wnt, Collider other, XenoHitboxType type)
+  private void ApplyDestructibleDamage(GameObject obj, IDestructible destructible, XenoHitboxType type, Collider? collider = null)
   {
-    var p = other.ClosestPoint(transform.position);
-    var dir = (wnt.transform.position - p).normalized;
+    if (collider == null)
+    {
+      collider = obj.GetComponent<Collider>();
+    }
+    var p = collider == null ? obj.transform.position : collider.ClosestPoint(transform.position);
+    var dir = (obj.transform.position - p).normalized;
 
     var hd = new HitData
     {
@@ -145,17 +188,17 @@ public class XenoDrone_MonsterAI : MonsterAI
       m_dir = dir,
       m_hitType = HitData.HitType.EnemyHit,
       m_pushForce = pushForce,
-      m_hitCollider = other,
+      m_hitCollider = collider,
       m_blockable = true,
       m_dodgeable = true,
       m_ranged = false,
-      m_toolTier = 99,
+      m_toolTier = type == XenoHitboxType.Blood ? (short)99 : (short)1,
       m_radius = 0,
       m_attacker = xenoCharacter.GetZDOID(),
       m_damage = GetDamageFromType(type)
     };
 
-    wnt.Damage(hd);
+    destructible.Damage(hd);
   }
 
   public bool MonsterUpdateAIMethod(float dt)
@@ -170,7 +213,7 @@ public class XenoDrone_MonsterAI : MonsterAI
       return true;
     }
     var character = m_character as Humanoid;
-    if (character && character.m_inventory.GetAllItems().Count == 0)
+    if (character && character.m_inventory != null && character.m_inventory.GetAllItems().Count == 0)
     {
       EldritchPrefabRegistry.AddWeaponItemsToXenoInventory(character);
     }

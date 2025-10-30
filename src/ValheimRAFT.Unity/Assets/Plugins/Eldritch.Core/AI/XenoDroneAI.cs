@@ -1368,6 +1368,31 @@ namespace Eldritch.Core
       return _bleeding;
     }
 
+    public HashSet<GameObject> HitList = new();
+    public static float debounceHitTime = 0.25f;
+
+    public IEnumerator DebounceRemoveHit(GameObject obj)
+    {
+      yield return new WaitForSeconds(debounceHitTime);
+      if (obj == null)
+      {
+        yield break;
+      }
+      HitList.Remove(obj);
+      HitList.RemoveWhere(x => x == null);
+    }
+
+    // ---- Main entry called by hitboxes ----
+    public void HandleHitBlood(GameObject obj)
+    {
+      if (HitList.Contains(obj))
+      {
+        return;
+      }
+      StartCoroutine(DebounceRemoveHit(obj));
+      OnHitBlood?.Invoke(obj);
+    }
+
     // ---- Main entry called by hitboxes ----
     public void HandleHit(XenoHitboxType type, XenoAttackHitbox hitbox, Collider other)
     {
@@ -1388,13 +1413,13 @@ namespace Eldritch.Core
 
     // for integrations like Valheim (uses a touple for convenience)
     public Action<(XenoHitboxType type, XenoAttackHitbox hitbox, Collider other, GameObject targetRoot)> OnHitTarget = (target) => {};
+    public Action<GameObject> OnHitBlood = (target) => {};
 
   #endregion
 
-
     public void OnParticleCollisionEvent(GameObject other, List<ParticleCollisionEvent> collisionEvent)
     {
-      LoggerProvider.LogDebugDebounced($"Got message from ParticleCollisionEventForwarder, {other.name}");
+      HandleHitBlood(other);
     }
   }
 }

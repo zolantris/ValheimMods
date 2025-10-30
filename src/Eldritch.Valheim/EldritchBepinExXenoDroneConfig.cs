@@ -104,7 +104,7 @@ public class EldritchBepinExXenoDroneConfig : BepInExBaseConfig<EldritchBepinExX
     XenoSwimSpeed = config.BindUnique(sectionKey_characterConfig, "XenoSwimSpeed", 5f, ConfigHelpers.CreateConfigDescription("Swim speed."));
     RunSpeed = config.BindUnique(sectionKey_characterConfig, "RunSpeed", 20f, ConfigHelpers.CreateConfigDescription("Run speed (might not apply for creatures)"));
     XenoHealthMultiplier = config.BindUnique(sectionKey_characterConfig, "healthMultiplier", 1.0f, ConfigHelpers.CreateConfigDescription("Health multiplier for the Xeno Drone per level"));
-    IsTameable = config.BindUnique(sectionKey_characterConfig, "IsTameable", false, ConfigHelpers.CreateConfigDescription("Xenos can be tamed if true. They like eggs."));
+    IsTameable = config.BindUnique(sectionKey_characterConfig, "IsTameable", false, ConfigHelpers.CreateConfigDescription("Xenos can be tamed if true. They like meats RawMeat, NeckTail, LoxMeat, SerpentMeat."));
 
     attackDamageTailAcid = config.BindUnique(sectionKey_characterConfig, "attackDamageTailAcid", 12f, ConfigHelpers.CreateConfigDescription("Tail acid attack damage"));
     attackDamageTailPierce = config.BindUnique(sectionKey_characterConfig, "attackDamageTailPierce", 18f, ConfigHelpers.CreateConfigDescription("Tail pierce attack damage"));

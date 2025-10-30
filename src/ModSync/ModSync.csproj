@@ -1,4 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
+    <Import Project="$(SolutionDir)build\base.props"/>
+
     <PropertyGroup>
         <OutputType>Exe</OutputType>
         <GenerateTargetFrameworkAttribute>false</GenerateTargetFrameworkAttribute>
