@@ -4,6 +4,6 @@
   "website_url": "https://github.com/zolantris/ValheimMods/tree/main/src/Eldritch.Valheim",
   "description": "Eldritch is a mod that contains new monster variants with unique behaviors and abilities to enhance the gameplay experience in Valheim. Initial release includes the Xeno Drone monster.",
   "dependencies": [
-    "ValheimModding-Jotunn-2.26.0"
+    "ValheimModding-Jotunn-2.27.0"
   ]
 }

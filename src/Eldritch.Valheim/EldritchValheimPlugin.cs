@@ -1,8 +1,4 @@
-﻿using System;
-using BepInEx;
-using Eldritch.Core;
-using Jotunn.Configs;
-using Jotunn.Entities;
+﻿using BepInEx;
 using Jotunn.Managers;
 using ServerSync;
 using UnityEngine;
