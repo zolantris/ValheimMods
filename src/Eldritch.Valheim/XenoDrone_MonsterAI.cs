@@ -33,7 +33,24 @@ public class XenoDrone_MonsterAI : MonsterAI
 
   public void SetupXeno()
   {
-    if (!xenoCharacter) return;
+    xenoCharacter = GetComponent<Character>();
+    DroneAI.OnHitTarget += HandleHitTarget;
+    DroneAI.OnHitBlood += HandleBloodHitTarget;
+
+    if (!xenoCharacter)
+    {
+      LoggerProvider.LogError("No character component found on XenoDrone_MonsterAI");
+      return;
+    }
+
+    xenoCharacter.m_onDamaged += XenoDroneOnDamaged;
+    DroneAI.MaxHealth = xenoCharacter.GetMaxHealth();
+    DroneAI.Health = xenoCharacter.GetHealth();
+
+    xenoCharacter.m_health = EldritchBepinExXenoDroneConfig.XenoHealth.Value;
+    xenoCharacter.m_runSpeed = EldritchBepinExXenoDroneConfig.RunSpeed.Value;
+    xenoCharacter.m_swimSpeed = EldritchBepinExXenoDroneConfig.XenoSwimSpeed.Value;
+
     xenoCharacter.m_damageModifiers = new HitData.DamageModifiers
     {
       m_poison = HitData.DamageModifier.Ignore, // completely immune to and ignores poison effects
@@ -58,21 +75,7 @@ public class XenoDrone_MonsterAI : MonsterAI
   public override void OnEnable()
   {
     base.OnEnable();
-    xenoCharacter = GetComponent<Character>();
-
-    if (xenoCharacter)
-    {
-      xenoCharacter.m_onDamaged += XenoDroneOnDamaged;
-      DroneAI.MaxHealth = xenoCharacter.GetMaxHealth();
-      DroneAI.Health = xenoCharacter.GetHealth();
-    }
-    else
-    {
-      LoggerProvider.LogError("No character component found on XenoDrone_MonsterAI");
-    }
-
-    DroneAI.OnHitTarget += HandleHitTarget;
-    DroneAI.OnHitBlood += HandleBloodHitTarget;
+    SetupXeno();
   }
 
   public override void OnDisable()

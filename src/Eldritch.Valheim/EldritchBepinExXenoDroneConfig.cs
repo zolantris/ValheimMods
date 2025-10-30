@@ -61,7 +61,9 @@ public class EldritchBepinExXenoDroneConfig : BepInExBaseConfig<EldritchBepinExX
   public static ConfigEntry<float> attackDamageArmsPierce;
   public static ConfigEntry<float> attackDamageArmsSlash;
 
+#if DEBUG
   public static ConfigEntry<float> attackDamageMouthPierce;
+#endif
 
   public static ConfigEntry<float> attackDamageBloodAcid;
 
@@ -71,9 +73,6 @@ public class EldritchBepinExXenoDroneConfig : BepInExBaseConfig<EldritchBepinExX
   public static ConfigEntry<float> Speed;
   public static ConfigEntry<float> XenoSwimSpeed;
   public static ConfigEntry<float> RunSpeed;
-
-  // damage structs
-  public static ConfigEntry<float> XenoAcidDamage;
 
   // Spawn Config
   // test only to see how json binding works
@@ -114,8 +113,9 @@ public class EldritchBepinExXenoDroneConfig : BepInExBaseConfig<EldritchBepinExX
     attackDamageArmsPierce = config.BindUnique(sectionKey_characterConfig, "attackDamageArmsPierce", 10f, ConfigHelpers.CreateConfigDescription("Arms pierce attack damage"));
     attackDamageArmsSlash = config.BindUnique(sectionKey_characterConfig, "attackDamageArmsSlash", 10f, ConfigHelpers.CreateConfigDescription("Arms slash attack damage"));
 
-    attackDamageMouthPierce = config.BindUnique(sectionKey_characterConfig, "attackDamageMouthPierce", 22f, ConfigHelpers.CreateConfigDescription("Mouth pierce attack damage"));
-
+#if DEBUG
+    attackDamageMouthPierce = config.BindUnique(sectionKey_characterConfig, "attackDamageMouthPierce", 22f, ConfigHelpers.CreateConfigDescription("Mouth pierce attack damage. Attacks/animations, Not yet implemented"));
+#endif
     attackDamageBloodAcid = config.BindUnique(sectionKey_characterConfig, "attackDamageBloodAcid", 6f, ConfigHelpers.CreateConfigDescription("Acid damage applied to blood/dot effects"));
   }
 

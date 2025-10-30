@@ -15,7 +15,8 @@ public static class EldritchPrefabRegistry
   public static AssetBundle assetBundle;
   public static SpriteAtlas Sprites;
   public const string droneAssetName = "xenomorph-drone-v1";
-  public const string droneConfigName = "eldritch_xeno_drone";
+  // todo to determine if this actually translates.
+  public const string droneConfigName = "Xenomorph Drone";
   private const string XenoAdultName = "Eldritch_XenoAdult_Creature";
 
   public static Heightmap.Biome DefaultAlwaysSpawnInBiomes = Heightmap.Biome.AshLands | Heightmap.Biome.DeepNorth | Heightmap.Biome.Mistlands;
@@ -231,6 +232,14 @@ public static class EldritchPrefabRegistry
 
     var animationController = xenoPrefab.GetComponentInChildren<XenoAnimationController>();
 
+#if DEBUG
+    // todo fix unstable footstep code.
+
+    // var footstep = xenoPrefab.GetOrAddComponent<FootStep>();
+    // footstep.m_character = humanoid;
+    // footstep.m_animator = xenoDroneMonsterAI.DroneAI.animationController.animator;
+    // footstep.m_feet = xenoDroneMonsterAI.DroneAI.animationController.footColliders.Select(x => x.transform).ToArray();
+#endif
 
     // todo determine if this works.
     if (EldritchBepinExXenoDroneConfig.IsTameable.Value)

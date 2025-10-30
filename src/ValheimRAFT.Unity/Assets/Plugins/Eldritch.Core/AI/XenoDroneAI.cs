@@ -1369,11 +1369,11 @@ namespace Eldritch.Core
     }
 
     public HashSet<GameObject> HitList = new();
-    public static float debounceHitTime = 0.25f;
+    public static float repeatHitDelayTime = 1.25f;
 
     public IEnumerator DebounceRemoveHit(GameObject obj)
     {
-      yield return new WaitForSeconds(debounceHitTime);
+      yield return new WaitForSeconds(repeatHitDelayTime);
       if (obj == null)
       {
         yield break;
@@ -1385,6 +1385,16 @@ namespace Eldritch.Core
     // ---- Main entry called by hitboxes ----
     public void HandleHitBlood(GameObject obj)
     {
+      if (obj == null)
+      {
+        return;
+      }
+      // do not hit self.
+      if (obj.transform.root == transform.root)
+      {
+        return;
+      }
+
       if (HitList.Contains(obj))
       {
         return;
