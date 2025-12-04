@@ -67,6 +67,10 @@ public class CannonPrefabConfig : BepInExBaseConfig<CannonPrefabConfig>
     {
       itemData.m_shared.m_attack = new Attack();
     }
+    if (itemData.m_shared.m_secondaryAttack == null)
+    {
+      itemData.m_shared.m_secondaryAttack = new Attack();
+    }
     itemData.m_shared.m_attack.m_reloadTime = CannonHandHeld_ReloadTime.Value;
     itemData.m_shared.m_attack.m_attackStamina = CannonHandHeld_AttackStamina.Value;
     itemData.m_shared.m_attack.m_reloadStaminaDrain = CannonHandHeld_ReloadStamina.Value;
@@ -270,7 +274,11 @@ public class CannonPrefabConfig : BepInExBaseConfig<CannonPrefabConfig>
     SetupCannonball(config);
     SetupPowderBarrel(config);
 
-    EnableCannons = config.BindUnique(PrefabConfig.PrefabConfigKey, "CannonPrefabs_Enabled", true, ConfigHelpers.CreateConfigDescription("Allows servers to enable/disable cannons feature.", true, false));
-    EnableCannons.SettingChanged += (_, _) => CannonPrefabs.OnEnabledChange();
+    EnableCannons = config.BindUnique(PrefabConfig.PrefabConfigKey, "CannonPrefabs_Enabled", true, ConfigHelpers.CreateConfigDescription("Allows servers to enable/disable cannons feature and skip registering these items. Toggling this feature mid run might be unstable but it should register when going false -> true.", true, false));
+    EnableCannons.SettingChanged += (_, _) =>
+    {
+      CannonPrefabs.Register();
+      CannonPrefabs.OnEnabledChange();
+    };
   }
 }

@@ -132,6 +132,19 @@ public class CannonPrefabs : RegisterPrefab<CannonPrefabs>
     CannonballExplosiveProjectile = prefab;
   }
 
+  private void SetupBaseItemDataProperties(ItemDrop drop)
+  {
+    if (drop.m_itemData.m_shared.m_attack == null)
+    {
+      drop.m_itemData.m_shared.m_attack = new Attack();
+    }
+
+    if (drop.m_itemData.m_shared.m_secondaryAttack == null)
+    {
+      drop.m_itemData.m_shared.m_secondaryAttack = new Attack();
+    }
+  }
+
   private void RegisterCannonballSolidItemPrefab()
   {
     var prefabAsset = LoadValheimVehicleAssets._bundle.LoadAsset<GameObject>("cannon_ball_bronze");
@@ -316,10 +329,7 @@ public class CannonPrefabs : RegisterPrefab<CannonPrefabs>
       m_itemType = ItemDrop.ItemData.ItemType.TwoHandedWeapon
     };
 
-    if (itemDrop.m_itemData.m_shared.m_attack == null)
-    {
-      itemDrop.m_itemData.m_shared.m_attack = new Attack();
-    }
+    SetupBaseItemDataProperties(itemDrop);
 
     var attack = itemDrop.m_itemData.m_shared.m_attack;
 
@@ -402,10 +412,7 @@ public class CannonPrefabs : RegisterPrefab<CannonPrefabs>
       m_itemType = ItemDrop.ItemData.ItemType.TwoHandedWeapon
     };
 
-    if (itemDrop.m_itemData.m_shared.m_attack == null)
-    {
-      itemDrop.m_itemData.m_shared.m_attack = new Attack();
-    }
+    SetupBaseItemDataProperties(itemDrop);
 
     itemDrop.m_itemData.m_shared.m_attack.m_attackAnimation = "swing_sword";
     itemDrop.m_itemData.m_shared.m_attack.m_attackType = Attack.AttackType.TriggerProjectile;
@@ -561,6 +568,9 @@ public class CannonPrefabs : RegisterPrefab<CannonPrefabs>
 
   public override void OnRegister()
   {
+    // skip registry if prefab registry is disabled.
+    if (!CannonPrefabConfig.EnableCannons.Value) return;
+
     // persistent inventory items
     RegisterCannonballSolidItemPrefab();
     RegisterCannonballExplosiveItemPrefab();

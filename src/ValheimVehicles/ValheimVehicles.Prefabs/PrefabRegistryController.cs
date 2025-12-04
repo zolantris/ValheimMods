@@ -819,6 +819,7 @@ namespace ValheimVehicles.Prefabs
 
       ShipRudderPrefabs.Register();
 
+      // cannon prefabs
       CannonPrefabs.Register();
 
       // Raft Structure

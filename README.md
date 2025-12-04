@@ -18,11 +18,12 @@ The following statuses will be used to label repos.
 
 ### Supported Mods
 
-| Mod Name                                                   | Status     | Description                                                                                                                           | 
-|------------------------------------------------------------|------------|---------------------------------------------------------------------------------------------------------------------------------------|
-| [ValheimRAFT][ValheimRAFT_Dir]                             | **Active** | Allows Valheim Build system on the water, similar to the Raft Game                                                                    |
-| [YggdrasilTerrain][YggdrassilTerrain_Dir]                  | **LTS** | Allows for walking, building, and colliding with the Yggdrasil Branch. Adds teleport commands and collision config to futureproof it. |
-| [BuildingDamageModExtended][BuildingDamageModExtended_Dir] | **NOT released**    | Allows setting building damage multipliers based on entity types and also additionally allows for damage caps                         |
+| Mod Name                                                   | Status           | Description                                                                                                                           | 
+|------------------------------------------------------------|------------------|---------------------------------------------------------------------------------------------------------------------------------------|
+| [ValheimRAFT][ValheimRAFT_Dir]                             | **Active**       | Allows Valheim Build system on the water, similar to the Raft Game                                                                    |
+| [Eldritch][Eldritch_Dir]                                   | **Active**       | Allows Eldritch creatures in valheim to spawn. Currently support Xenomorph drones with complex attack animations.                     |
+| [YggdrasilTerrain][YggdrassilTerrain_Dir]                  | **LTS**          | Allows for walking, building, and colliding with the Yggdrasil Branch. Adds teleport commands and collision config to futureproof it. |
+| [BuildingDamageModExtended][BuildingDamageModExtended_Dir] | **NOT released** | Allows setting building damage multipliers based on entity types and also additionally allows for damage caps                         |
 
 ## Contributing
 
@@ -64,7 +65,7 @@ Go [here](docs/CONTRIBUTING.md) for more information.
 6. In Rider connect the debugger via attach to process. Create a custom process
    call it `Valheim` add the IP which is the debug_address e.g. `127.0.0.1` and
    the port `10000`
-   - This can be found under `"mono-remote"`
+    - This can be found under `"mono-remote"`
 7. add a breakpoint in your mod to pause things.
 8. alternative wait for a game error to throw and it will pause and decompile
    that assembly!
@@ -72,7 +73,9 @@ Go [here](docs/CONTRIBUTING.md) for more information.
 ## Want Valheim To Run Faster?
 
 Add this to `valheim_Data/boot.config folder. This should allow script heavy
-mods to run garbage collecting every 20ms instead of every 3 ms. Big gains especially for larger GPUs and multithreaded CPUs which do not need to be forced to garbage collect.
+mods to run garbage collecting every 20ms instead of every 3 ms. Big gains
+especially for larger GPUs and multithreaded CPUs which do not need to be forced
+to garbage collect.
 
 ```ini
 gc-max-time-slice=20
@@ -87,6 +90,8 @@ no aggregate spot for them.
 [Full GPT output of flags](./docs/unity-flags-from-chatgpt-4.md)
 
 [ValheimRAFT_Dir]: src/ValheimRAFT
+
+[Eldritch_Dir]: src/Eldritch.Valheim
 
 [YggdrassilTerrain_Dir]: src/YggdrasilTerrain
 

@@ -87,6 +87,7 @@ internal static class ModSyncConfig
     public List<string> excludePatterns = [];
     public List<string> inputDirs = [];
     public List<string> inputFiles = [];
+    public List<string> thunderstoreInputFiles = [];
     public ArchiveBuildType buildType;
     public string outputDir;
     public string thunderstoreTemplateDir;
