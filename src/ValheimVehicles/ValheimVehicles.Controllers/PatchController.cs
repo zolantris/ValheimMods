@@ -47,11 +47,11 @@ public static class PatchController
       typeof(RPCRegistryDebugger_Patches),
       // TODO Migrate to It's own mod
       typeof(Valheim_GravityMagic_Patches),
+      typeof(ZInput_Patches),
 #endif
       typeof(RPCManager_Patches),
       typeof(Humanoid_EquipPatch),
-      typeof(Container_Patches),
-      typeof(ZInput_Patches)
+      typeof(Container_Patches)
     );
 
     if (PatchConfig.MineRockPatch.Value)
