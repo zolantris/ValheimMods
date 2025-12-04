@@ -12,8 +12,11 @@ public static class Humanoid_EquipPatch
   // must use translation names for shared.m_name
   public static Dictionary<Player, CannonHandHeldController> PlayerCannonController = new();
 
-  // [HarmonyPatch(typeof(Humanoid), nameof(EquipItem), new Type[] { typeof(ItemDrop.ItemData), typeof(bool) })]
+#if DEBUG
+  [HarmonyPatch(typeof(Humanoid), nameof(Humanoid.EquipItem), new Type[] { typeof(ItemDrop.ItemData), typeof(bool) })]
+#else
   [HarmonyPatch(typeof(Humanoid), "EquipItem", new Type[] { typeof(ItemDrop.ItemData), typeof(bool) })]
+#endif
   [HarmonyPostfix]
   private static void EquipItemPatch(Player __instance, ItemDrop.ItemData item, bool triggerEquipEffects)
   {
@@ -31,8 +34,11 @@ public static class Humanoid_EquipPatch
     }
   }
 
-  // [HarmonyPatch(typeof(Humanoid), nameof(Humanoid.UnequipItem), new Type[] { typeof(ItemDrop.ItemData), typeof(bool) })]
+#if DEBUG
+  [HarmonyPatch(typeof(Humanoid), nameof(Humanoid.UnequipItem), new Type[] { typeof(ItemDrop.ItemData), typeof(bool) })]
+#else
   [HarmonyPatch(typeof(Humanoid), "UnequipItem", new Type[] { typeof(ItemDrop.ItemData), typeof(bool) })]
+#endif
   [HarmonyPostfix]
   private static void UnequipItemPatch(Player __instance, ItemDrop.ItemData item, bool triggerEquipEffects)
   {
