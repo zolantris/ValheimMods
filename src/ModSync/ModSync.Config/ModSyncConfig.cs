@@ -75,7 +75,8 @@ internal static class ModSyncConfig
 
   public enum ArchiveBuildType
   {
-    Thunderstore
+    Thunderstore,
+    Nexus
   }
 
   /// <summary>

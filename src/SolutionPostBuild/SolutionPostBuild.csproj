@@ -63,7 +63,12 @@
     <Import Project="$(SolutionDir)build\valheimraft_version.props"/>
     <Target KeepDuplicateOutputs="false" Name="Generate_Mod_Archive_Raft" AfterTargets="RunPostInstaller" Condition=" '$(Configuration)|$(Platform)' == 'ReleaseBETA Archive|AnyCPU' or  '$(Configuration)|$(Platform)' == 'Release Archive|AnyCPU' ">
         <Exec
-                Command="dotnet &quot;$(ModSyncDll)&quot; generateArchive --targets=valheimraft-release --env-release=true --override-version=$(ValheimRAFTVersion)"
+                Command="dotnet &quot;$(ModSyncDll)&quot; generateArchive --targets=valheimraft-release-thunderstore --env-release=true --override-version=$(ValheimRAFTVersion)"
+                WorkingDirectory="$(SolutionDir)"
+                IgnoreExitCode="false"
+        />
+        <Exec
+                Command="dotnet &quot;$(ModSyncDll)&quot; generateArchive --targets=valheimraft-release-nexus --env-release=true --override-version=$(ValheimRAFTVersion)"
                 WorkingDirectory="$(SolutionDir)"
                 IgnoreExitCode="false"
         />
