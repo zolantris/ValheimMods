@@ -43,7 +43,17 @@ public class GenerateArchive
     }
     else
     {
-      Logger.Debug($"Unsupported archive build type: {currentTarget.buildType} Acceptable values are {ModSyncConfig.ArchiveBuildType.Thunderstore}");
+      generateNexusStoreArchive(
+        currentTarget.inputDirs,
+        currentTarget.inputFiles,
+        currentTarget.outputDir,
+        currentTarget.releaseName,
+        currentTarget.archiveName,
+        currentTarget.archiveFileType,
+        currentTarget.releaseTypeSuffix,
+        currentTarget.includePatterns,
+        currentTarget.excludePatterns
+      );
     }
     // todo add recursive syncing based on targets provided
   }
@@ -147,15 +157,84 @@ public class GenerateArchive
     }
   }
 
-
   /// <summary>
   /// This is a flat Archive instead of nested Thunderstore structure
   /// </summary>
-  /// Implement this
-  internal static void generateNexusStoreArchive(string inputPath, string outputPath, string archiveName, string releaseTypeSuffix, Regex includesRegex)
+  internal static void generateNexusStoreArchive(List<string> inputDirs, List<string> inputFiles, string outputDir, string releaseName, string archiveName, string archiveFileType, string releaseTypeSuffix, List<string> includesPattern, List<string> excludesPattern)
   {
-    throw new NotImplementedException();
+    if (outputDir.Length < 1)
+    {
+      Logger.Error($"Output path must be a valid path got {outputDir}");
+      return;
+    }
+
+    releaseTypeSuffix ??= string.Empty;
+
+    var includedFilesRegex = RegexGenerator.GenerateRegexFromList(includesPattern);
+    var excludedFilesRegex = RegexGenerator.GenerateRegexFromList(excludesPattern);
+
+    // var modNameVersion = $"{archiveName}-{archiveVersion}{suffix}.zip";
+    var archiveOutputPath = Path.Combine(outputDir, $"{archiveName}-Nexus.{archiveFileType}");
+    var tmpDir = Path.Combine(outputDir, $"tmp-{releaseName}-Nexus");
+
+    var suffix = releaseTypeSuffix == string.Empty ? "" : $"-{releaseTypeSuffix}";
+
+    // Clean up temporary directories
+    if (File.Exists(archiveOutputPath))
+    {
+      File.Delete(archiveOutputPath);
+    }
+    else if (Directory.Exists(archiveOutputPath))
+    {
+      Directory.Delete(archiveOutputPath);
+    }
+
+    if (Directory.Exists(tmpDir))
+      Directory.Delete(tmpDir, true);
+
+    // Create necessary directories
+    Directory.CreateDirectory(tmpDir);
+
+
+    foreach (var inputDir in inputDirs)
+    {
+      if (!Directory.Exists(inputDir))
+      {
+        Logger.Error("Input directory does not exist: " + inputDir);
+        continue;
+      }
+      FileUtils.CopyDirectory(inputDir, tmpDir, excludedFilesRegex, includedFilesRegex);
+    }
+
+    foreach (var inputFile in inputFiles)
+    {
+      var file = File.Exists(inputFile);
+      if (!file)
+      {
+        Logger.Error("Input file does not exist: " + inputFile);
+        continue;
+      }
+      if (includesPattern.Count > 0 && !includedFilesRegex.IsMatch(inputFile)) continue;
+      if (excludesPattern.Count > 0 && excludedFilesRegex.IsMatch(inputFile)) continue;
+
+      var fileName = Path.GetFileName(inputFile);
+      FileUtils.CopyFile(inputFile, Path.Combine(tmpDir, fileName));
+    }
+
+    if (File.Exists(archiveOutputPath))
+      File.Delete(archiveOutputPath);
+
+    // Create Nexus archive
+    FileUtils.CreateZipArchive(tmpDir, archiveOutputPath);
+
+    // cleanup
+
+    if (Directory.Exists(tmpDir))
+    {
+      Directory.Delete(tmpDir, true);
+    }
   }
+
 
   /// <summary>
   /// Todo add a copy method for external assets outside of current directory.
