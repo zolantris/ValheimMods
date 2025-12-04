@@ -1,5 +1,7 @@
 # Eldritch Valheim
 
+<img width=50 src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/Eldritch.Valheim/Thunderstore/icon.png" alt="Eldritch Mod Icon" />
+
 Eldritch Valheim is a mod for the game Valheim that introduces eldritch-themed
 content, including new creatures, items, and biomes inspired by cosmic horror
 and Lovecraftian lore.
