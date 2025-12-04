@@ -27,7 +27,7 @@ public static class FileUtils
     }
   }
 
-  internal static void CopyDirectory(string sourceDir, string destinationDir, Regex? excludedFilesRegex = null)
+  internal static void CopyDirectory(string sourceDir, string destinationDir, Regex? excludedFilesRegex = null, Regex? includedFilesRegex = null)
   {
     if (!Directory.Exists(sourceDir))
     {
@@ -50,6 +50,7 @@ public static class FileUtils
     foreach (var file in Directory.GetFiles(sourceDir))
     {
       var fileName = Path.GetFileName(file);
+      if (includedFilesRegex != null && !includedFilesRegex.IsMatch(fileName)) continue;
       if (excludedFilesRegex != null && excludedFilesRegex.IsMatch(fileName)) continue;
 
       Logger.Debug($"FileName: {fileName}");
@@ -66,6 +67,8 @@ public static class FileUtils
     foreach (var dir in Directory.GetDirectories(sourceDir))
     {
       var dirName = Path.GetFileName(dir);
+      if (includedFilesRegex != null && !includedFilesRegex.IsMatch(dirName)) continue;
+      if (excludedFilesRegex != null && excludedFilesRegex.IsMatch(dirName)) continue;
       var destDir = Path.Combine(destinationDir, dirName);
       CopyDirectory(dir, destDir, excludedFilesRegex);
     }

@@ -25,10 +25,13 @@
         <ProjectDir>$(SolutionDir)src\$(AssemblyName)</ProjectDir>
         <ModOutputDir>$(SolutionDir)mod-releases\versions\</ModOutputDir>
         <DLLFromRoot>$(SolutionDir)build\bin\$(Configuration)\$(AssemblyName).dll</DLLFromRoot>
-        <ModSyncDll>$(SolutionDir)build\bin\ModSync\Debug\ModSync.dll</ModSyncDll>
         <AssetsDir>$(SolutionDir)src\ValheimRAFT\Assets\</AssetsDir>
     </PropertyGroup>
     <PropertyGroup Label="Directories" Condition="'$(IsRelease)' == 'true'">
-        <ModSyncDll>$(SolutionDir)src\ModSync\bin\Release\net8.0\ModSync.dll</ModSyncDll>
+        <ModSyncDll>$(SolutionDir)\build\bin\ModSync\Release\ModSync.dll</ModSyncDll>
+    </PropertyGroup>
+
+    <PropertyGroup Label="Directories">
+        <ModSyncDll>$(SolutionDir)build\bin\ModSync\Release\ModSync.dll</ModSyncDll>
     </PropertyGroup>
 </Project>

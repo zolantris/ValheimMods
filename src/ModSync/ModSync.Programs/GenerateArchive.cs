@@ -64,7 +64,7 @@ public class GenerateArchive
 
     releaseTypeSuffix ??= string.Empty;
 
-    var includesRegex = RegexGenerator.GenerateRegexFromList(includesPattern);
+    var includedFilesRegex = RegexGenerator.GenerateRegexFromList(includesPattern);
     var excludedFilesRegex = RegexGenerator.GenerateRegexFromList(excludesPattern);
 
     // var modNameVersion = $"{archiveName}-{archiveVersion}{suffix}.zip";
@@ -115,7 +115,7 @@ public class GenerateArchive
         Logger.Error("Input directory does not exist: " + inputDir);
         continue;
       }
-      FileUtils.CopyDirectory(inputDir, pluginsOutputDir, excludedFilesRegex);
+      FileUtils.CopyDirectory(inputDir, pluginsOutputDir, excludedFilesRegex, includedFilesRegex);
     }
 
     foreach (var inputFile in inputFiles)
@@ -126,6 +126,9 @@ public class GenerateArchive
         Logger.Error("Input file does not exist: " + inputFile);
         continue;
       }
+      if (includesPattern.Count > 0 && !includedFilesRegex.IsMatch(inputFile)) continue;
+      if (excludesPattern.Count > 0 && excludedFilesRegex.IsMatch(inputFile)) continue;
+
       var fileName = Path.GetFileName(inputFile);
       FileUtils.CopyFile(inputFile, Path.Combine(pluginsOutputDir, fileName));
     }
@@ -135,6 +138,13 @@ public class GenerateArchive
 
     // Create ThunderStore archive
     FileUtils.CreateZipArchive(tmpDir, archiveOutputPath);
+
+    // cleanup
+
+    if (Directory.Exists(tmpDir))
+    {
+      Directory.Delete(tmpDir, true);
+    }
   }
 
 
