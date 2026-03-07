@@ -1435,11 +1435,12 @@
       for (var index = 0; index < pieceToUpdateList.Count; index++)
       {
         var zdo = pieceToUpdateList[index];
-        if (zdo == null || zdo.IsValid())
+        if (zdo == null || !zdo.IsValid())
         {
-          LoggerProvider.LogDebugDebounced(
-            $"Null netview found with m_pieces: netview, safe removing the piece");
-          m_pieces.FastRemoveAt(ref index);
+          if (zdo != null)
+          {
+            itemsToRemove.Add(zdo);
+          }
           continue;
         }
 
@@ -1469,6 +1470,8 @@
           var netViewToRemove = ZNetScene.instance.FindInstance(zdo);
           if (netViewToRemove)
           {
+            LoggerProvider.LogDebugDebounced(
+              $"invalid zdo found during ForceUpdateAllPiecePositions for piece {netViewToRemove.name}");
             m_pieces.Remove(netViewToRemove);
           }
         }
