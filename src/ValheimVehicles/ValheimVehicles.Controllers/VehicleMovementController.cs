@@ -909,6 +909,8 @@
         return;
       }
 
+      GuardClientOwnershipAndVehiclePhysics(false);
+
       // nested vehicles always must wait for parent.
       if (isWaitingForParentVehicleToBeReady)
       {
@@ -946,9 +948,45 @@
       VehiclePhysicsFixedUpdateAllClients();
     }
 
+    public void GuardClientOwnershipAndVehiclePhysics(bool wasError)
+    {
+      if (m_nview == null) return;
+      if (!m_nview.HasOwner())
+      {
+        m_nview.ClaimOwnership();
+
+        // secondary check.
+        if (!m_nview.HasOwner())
+        {
+          if (m_body)
+          {
+            m_body.isKinematic = true;
+          }
+          if (zsyncTransform && m_body)
+          {
+            zsyncTransform.SetKinematic(true);
+          }
+        }
+      }
+      else
+      {
+        if (wasError)
+        {
+          if (m_body)
+          {
+            m_body.isKinematic = true;
+          }
+        }
+      }
+    }
+
     public void CustomFixedUpdate(float deltaTime)
     {
-      if (IsInvalid()) return;
+      if (IsInvalid())
+      {
+        GuardClientOwnershipAndVehiclePhysics(true);
+        return;
+      }
       try
       {
         GuardedFixedUpdate(deltaTime);
