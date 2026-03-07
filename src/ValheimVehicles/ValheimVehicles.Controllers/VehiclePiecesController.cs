@@ -2716,10 +2716,19 @@
     ///   that were added without going through InitZdo (e.g. local player).</param>
     /// <returns>Map of ZNetView → destination world position for every onboard character,
     ///   to be applied to physics bodies after the zone loads.</returns>
+    /// <summary>
+    /// Updates all piece ZDOs and character positions when teleporting a vehicle.
+    /// Calculates relative offsets and applies them to the new vehicle position.
+    /// </summary>
+    /// <param name="persistentId">The vehicle's persistent ZDO ID</param>
+    /// <param name="newVehiclePos">The destination position for the vehicle</param>
+    /// <param name="vehicleCurrentPos">Current ZDO position of the vehicle (authoritative source of truth)</param>
+    /// <param name="liveTempPieces">List of live temporary pieces (players, etc.)</param>
+    /// <returns>Dictionary mapping ZNetViews to their destination positions</returns>
     public static Dictionary<ZNetView, Vector3> StampAllVehicleZdosToPosition(
       int persistentId,
       Vector3 newVehiclePos,
-      Vector3 vehicleBodyPos,
+      Vector3 vehicleCurrentPos,
       List<ZNetView>? liveTempPieces)
     {
       var newSector = ZoneSystem.GetZone(newVehiclePos);
@@ -2768,7 +2777,7 @@
           var nv = ZNetScene.instance != null ? ZNetScene.instance.FindInstance(zdo) : null;
           if (nv != null)
           {
-            relativeOffset = nv.transform.position - vehicleBodyPos;
+            relativeOffset = nv.transform.position - vehicleCurrentPos;
           }
           else
           {
@@ -2798,7 +2807,7 @@
       // -----------------------------------------------------------------------
       // 3. Live temp pieces — covers players (who skip AddTempPieceProperties)
       //    and any other objects that never went through InitZdo.
-      //    Offset = worldPos - vehicleBodyPos (consistent with dynamic objects).
+      //    Offset = worldPos - vehicleCurrentPos (consistent with dynamic objects).
       // -----------------------------------------------------------------------
       if (liveTempPieces != null)
       {
@@ -2811,7 +2820,7 @@
           // Skip if already handled via m_dynamicObjects above.
           if (characterDestinations.ContainsKey(nv)) continue;
 
-          var relativeOffset = nv.transform.position - vehicleBodyPos;
+          var relativeOffset = nv.transform.position - vehicleCurrentPos;
           var destPos = newVehiclePos + relativeOffset;
 
           zdo.Set(VehicleZdoVars.MBPositionHash, relativeOffset);
@@ -2926,7 +2935,6 @@
 
       // Remove from m_dynamicObjects so it is not teleported with the vehicle
       // on future far-zone moves. Without this cleanup the ZDOID lingers and
-      // StampAllVehicleZdosToPosition would move a piece that has left the ship.
       var zdo = netView.GetZDO();
       if (zdo != null && m_dynamicObjects.TryGetValue(PersistentZdoId, out var dynamicList))
       {

@@ -16,10 +16,12 @@ using UnityEngine.Assertions.Must;
 using ValheimVehicles.BepInExConfig;
 using ValheimVehicles.Helpers;
 using ValheimVehicles.Prefabs;
+using ValheimVehicles.Shared.Constants;
 using ValheimVehicles.SharedScripts;
 using ValheimVehicles.Components;
 using ValheimVehicles.Controllers;
 using ValheimVehicles.Interfaces;
+using ValheimVehicles.Shared.Constants;
 using ValheimVehicles.UI;
 using Zolantris.Shared;
 using Zolantris.Shared.Debug;
@@ -511,11 +513,12 @@ public class VehicleCommands : ConsoleCommand
     movementController?.SetIsTeleporting(true);
 
     var wasKinematic = false;
-    var vehicleBodyPos = newLocation; // fallback
+    // Use vehicle ZDO position as the authoritative reference (source of truth in multiplayer).
+    // NEVER use transform.position as it may be out of sync on non-owner clients.
+    var vehicleCurrentPos = vehicleInstance.m_nview.m_zdo.GetPosition();
     if (movementController != null && movementController.m_body != null)
     {
       wasKinematic = movementController.m_body.isKinematic;
-      vehicleBodyPos = movementController.m_body.position; // snapshot BEFORE move
       movementController.m_body.isKinematic = true;
       movementController.m_body.linearVelocity = Vector3.zero;
       movementController.m_body.angularVelocity = Vector3.zero;
@@ -538,15 +541,19 @@ public class VehicleCommands : ConsoleCommand
       vehicleInstance.m_nview.m_zdo.SetSector(ZoneSystem.GetZone(newLocation));
 
       characterDestinations = VehiclePiecesController.StampAllVehicleZdosToPosition(
-        persistentId, newLocation, vehicleBodyPos, liveTempPieces);
+        persistentId, newLocation, vehicleCurrentPos, liveTempPieces);
 
-      // Advance reference position for local player if not already in destinations.
+      // Only update reference position if local player is actually onboard (in characterDestinations).
+      // StampAllVehicleZdosToPosition handles all onboard characters via temp pieces and dynamic objects.
+      // If the player is not in that list, they are NOT onboard and should NOT be teleported.
       var localPlayer = Player.m_localPlayer;
-      if (localPlayer != null)
+      if (localPlayer != null && localPlayer.m_nview != null)
       {
-        var localNv = localPlayer.m_nview;
-        if (localNv != null && !characterDestinations.ContainsKey(localNv))
+        if (characterDestinations.ContainsKey(localPlayer.m_nview))
+        {
+          // Player is onboard and will be teleported — update reference position for zone streaming.
           ZNet.instance.SetReferencePosition(newLocation);
+        }
       }
     }
     catch (Exception e)
@@ -644,6 +651,7 @@ public class VehicleCommands : ConsoleCommand
   /// <summary>
   /// Moves the vehicle based on the provided offset vector.
   /// - Must be only called via commands. This is meant to move the player even if they are not attached to the vehicle.
+  /// - MoveVehicleIntoFarZone handles all character teleportation internally, so we don't use SafeMovePlayer here.
   /// </summary>
   /// <param name="vehicleInstance">The vehicle instance to move.</param>
   /// <param name="offset">The offset vector to apply.</param>
@@ -656,15 +664,9 @@ public class VehicleCommands : ConsoleCommand
     vehicleInstance.SetCreativeMode(true);
     yield return new WaitForFixedUpdate();
 
-    Vector3? finalPosition = null;
-    yield return SafeMovePlayer(vehicleInstance.OnboardController, true,
-      () =>
-      {
-        return finalPosition ??
-               vehicleInstance.OnboardController.transform.position;
-      },
-      MoveVehicleIntoFarZone(vehicleInstance, offset,
-        (pos) => { finalPosition = pos; }));
+    // MoveVehicleIntoFarZone handles ALL character teleportation via StampAllVehicleZdosToPosition,
+    // including players who may be far from the vehicle. No SafeMovePlayer wrapper needed.
+    yield return MoveVehicleIntoFarZone(vehicleInstance, offset, _ => {});
 
     if (vehicleInstance != null) vehicleInstance.SetCreativeMode(false);
   }
