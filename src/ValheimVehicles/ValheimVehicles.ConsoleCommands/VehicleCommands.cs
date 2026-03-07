@@ -338,23 +338,46 @@ public class VehicleCommands : ConsoleCommand
     var player = character.GetComponent<Player>();
     if (player == null)
     {
+      // Non-player character — move body + ZDO directly.
       character.m_body.position = toPosition;
       character.m_nview.m_zdo.SetPosition(toPosition);
       character.m_nview.m_zdo.SetRotation(character.transform.rotation);
       return;
     }
+
     if (Player.m_localPlayer == player)
     {
+      // For the local player we must update ALL of: reference position, transform,
+      // rigidbody, and ZDO. Updating only SetReferencePosition leaves the ZDO in
+      // the old zone — the server culls it and the player gets deleted.
       ZNet.instance.SetReferencePosition(toPosition);
+
+      // Move the physics body (authoritative position for physics).
+      if (player.m_body.isKinematic)
+        player.m_body.isKinematic = false;
+      player.m_body.position = toPosition;
+      player.m_body.linearVelocity = Vector3.zero;
+      player.m_body.angularVelocity = Vector3.zero;
+
+      // Move the transform so it matches immediately before the next frame.
+      player.transform.position = toPosition;
+
+      // Stamp the ZDO to the new position and sector so the server keeps the
+      // player alive in the new zone rather than culling them from the old one.
+      var playerZdo = player.m_nview?.GetZDO();
+      if (playerZdo != null)
+      {
+        playerZdo.SetPosition(toPosition);
+        playerZdo.SetSector(ZoneSystem.GetZone(toPosition));
+      }
     }
     else
     {
-      // reset teleporting
+      // Remote player — use the standard teleport path.
       player.m_teleporting = false;
       player.m_teleportTimer = 999f;
       player.TeleportTo(toPosition, character.transform.rotation, false);
     }
-
   }
 
   /// <summary>
@@ -368,50 +391,49 @@ public class VehicleCommands : ConsoleCommand
   {
     if (data == null) yield break;
     if (data.Value.charactersOnShip.Count <= 0) yield break;
-    var piecesController =
-      data.Value.OnboardController?.PiecesController?.transform;
+
+    var piecesController = data.Value.OnboardController?.PiecesController?.transform;
     var zdo = data.Value.OnboardController?.Manager?.m_nview?.GetZDO();
 
-    if (piecesController == null || zdo == null) yield break;
+    if (zdo == null) yield break;
+    // piecesController transform may be null if the vehicle was unloaded during
+    // the far-zone teleport — all access below is guarded against this.
 
     foreach (var safeMoveCharacterData in data.Value.charactersOnShip)
     {
       var targetLocation = nextPosition + safeMoveCharacterData.lastLocalOffset;
+
+      // Only do the delta-distance correction if the transform is still alive.
+      if (piecesController != null && piecesController)
       {
         var safeMoveCharacterPos = safeMoveCharacterData.character.transform.position;
-        var piecesControllerPos = piecesController.transform.position;
+        var piecesControllerPos = piecesController.position;
 
-        var deltaX = safeMoveCharacterPos.x -
-                     piecesControllerPos.x;
-        var deltaY = safeMoveCharacterPos.y -
-                     piecesControllerPos.y;
-        var deltaZ = safeMoveCharacterPos.z -
-                     piecesControllerPos.z;
+        var deltaX = safeMoveCharacterPos.x - piecesControllerPos.x;
+        var deltaY = safeMoveCharacterPos.y - piecesControllerPos.y;
+        var deltaZ = safeMoveCharacterPos.z - piecesControllerPos.z;
 
-        if (Mathf.Abs(deltaX) > 50f || Mathf.Abs(deltaY) > 50f ||
-            Mathf.Abs(deltaZ) > 50f)
-          targetLocation = zdo!
-                             .GetPosition() +
-                           safeMoveCharacterData.lastLocalOffset;
-
-        TeleportImmediately(safeMoveCharacterData.character,
-          targetLocation);
-
-        if (Player.m_localPlayer == safeMoveCharacterData.character)
-        {
-          ZNet.instance.SetReferencePosition(targetLocation);
-        }
+        if (Mathf.Abs(deltaX) > 50f || Mathf.Abs(deltaY) > 50f || Mathf.Abs(deltaZ) > 50f)
+          targetLocation = zdo.GetPosition() + safeMoveCharacterData.lastLocalOffset;
       }
+      else
+      {
+        // Vehicle transform destroyed — use ZDO position as the origin.
+        targetLocation = zdo.GetPosition() + safeMoveCharacterData.lastLocalOffset;
+      }
+
+      TeleportImmediately(safeMoveCharacterData.character, targetLocation);
+
+      if (Player.m_localPlayer == safeMoveCharacterData.character)
+        ZNet.instance.SetReferencePosition(targetLocation);
     }
 
     yield return new WaitForFixedUpdate();
 
     var timer = Stopwatch.StartNew();
     var complete = false;
-    while (timer.ElapsedMilliseconds < 5000 && complete == false)
+    while (timer.ElapsedMilliseconds < 5000 && !complete)
     {
-      if (complete) break;
-
       var isSuccess = true;
       foreach (var playerData in data.Value.charactersOnShip)
       {
@@ -423,20 +445,18 @@ public class VehicleCommands : ConsoleCommand
           break;
         }
 
-        if (piecesController != null)
+        // Only re-parent onto the vehicle if it's still alive.
+        if (piecesController != null && piecesController)
         {
           if (!playerData.isDebugFlying)
           {
-            playerData.character.transform.SetParent(piecesController
-              .transform);
-            playerData.character.transform.localPosition =
-              playerData.lastLocalOffset;
+            playerData.character.transform.SetParent(piecesController);
+            playerData.character.transform.localPosition = playerData.lastLocalOffset;
           }
           else
           {
             playerData.character.transform.position =
-              piecesController.transform.position +
-              playerData.lastLocalOffset;
+              piecesController.position + playerData.lastLocalOffset;
           }
         }
 
@@ -444,7 +464,6 @@ public class VehicleCommands : ConsoleCommand
       }
 
       yield return new WaitForFixedUpdate();
-
       complete = isSuccess;
     }
 
@@ -457,7 +476,6 @@ public class VehicleCommands : ConsoleCommand
 
     if (shouldProtectAgainstFallDamage)
     {
-      // keep running this for the first 5 seconds to prevent falldamage while the ship recovers it's physics and the player lands on the ship.
       while (timer.ElapsedMilliseconds < 5000)
       {
         foreach (var playerData in data.Value.charactersOnShip)
@@ -466,45 +484,161 @@ public class VehicleCommands : ConsoleCommand
           playerData.character.m_fallTimer = 0f;
           playerData.character.m_maxAirAltitude = -10000f;
         }
-
         yield return new WaitForFixedUpdate();
       }
     }
-    timer.Restart();
 
+    timer.Restart();
     yield return null;
   }
 
   private static IEnumerator MoveVehicleIntoFarZone(VehicleManager vehicleInstance,
     Vector3 offset, Action<Vector3> onPositionReady)
   {
-    if (vehicleInstance.PiecesController == null) yield break;
-    var newLocation =
-      VectorUtils.MergeVectors(vehicleInstance.transform.position, offset);
+    if (vehicleInstance == null || vehicleInstance.PiecesController == null) yield break;
 
-    // attempts to for the ship to move here.
+    var newLocation = VectorUtils.MergeVectors(vehicleInstance.transform.position, offset);
     var zoneToMoveTo = ZoneSystem.GetZone(newLocation);
+
+    // -----------------------------------------------------------------------
+    // Step 1: Broadcast IsTeleporting = true to ALL clients via RPC + ZDO.
+    // GuardedFixedUpdate on every client will keep the body kinematic and
+    // block ownership claims for the entire duration of the move.
+    // Also freeze the local body directly so there is zero physics gap between
+    // now and the first time GuardedFixedUpdate reads the ZDO value.
+    // -----------------------------------------------------------------------
+    var movementController = vehicleInstance.MovementController;
+    movementController?.SetIsTeleporting(true);
+
+    var wasKinematic = false;
+    var vehicleBodyPos = newLocation; // fallback
+    if (movementController != null && movementController.m_body != null)
+    {
+      wasKinematic = movementController.m_body.isKinematic;
+      vehicleBodyPos = movementController.m_body.position; // snapshot BEFORE move
+      movementController.m_body.isKinematic = true;
+      movementController.m_body.linearVelocity = Vector3.zero;
+      movementController.m_body.angularVelocity = Vector3.zero;
+    }
+
+    // Capture destinations outside the try so the post-yield steps can access it.
+    Dictionary<ZNetView, Vector3> characterDestinations;
+
+    try
+    {
+      // -----------------------------------------------------------------------
+      // Step 2: Snapshot offsets and stamp all ZDOs (pieces + dynamic objects +
+      // players) BEFORE the zone-load wait.
+      // -----------------------------------------------------------------------
+      var persistentId = vehicleInstance.PersistentZdoId;
+      var liveTempPieces = vehicleInstance.PiecesController.m_tempPieces;
+
+      // Root vehicle ZDO first — anchors the vehicle in the new sector.
+      vehicleInstance.m_nview.m_zdo.SetPosition(newLocation);
+      vehicleInstance.m_nview.m_zdo.SetSector(ZoneSystem.GetZone(newLocation));
+
+      characterDestinations = VehiclePiecesController.StampAllVehicleZdosToPosition(
+        persistentId, newLocation, vehicleBodyPos, liveTempPieces);
+
+      // Advance reference position for local player if not already in destinations.
+      var localPlayer = Player.m_localPlayer;
+      if (localPlayer != null)
+      {
+        var localNv = localPlayer.m_nview;
+        if (localNv != null && !characterDestinations.ContainsKey(localNv))
+          ZNet.instance.SetReferencePosition(newLocation);
+      }
+    }
+    catch (Exception e)
+    {
+      LoggerProvider.LogError($"MoveVehicleIntoFarZone: exception during ZDO stamping — aborting teleport. {e}");
+      movementController?.SetIsTeleporting(false);
+      yield break;
+    }
+
+    // -----------------------------------------------------------------------
+    // Step 3: Kick off zone generation at the destination.
+    // -----------------------------------------------------------------------
     if (!ZoneSystem.instance.PokeLocalZone(zoneToMoveTo))
-      if (!ZoneSystem.instance.SpawnZone(zoneToMoveTo,
-            ZoneSystem.SpawnMode.Full, out _))
+      if (!ZoneSystem.instance.SpawnZone(zoneToMoveTo, ZoneSystem.SpawnMode.Full, out _))
         ZoneSystem.instance.CreateLocalZones(newLocation);
 
     var timer = Stopwatch.StartNew();
-
-    yield return new WaitUntil(() => ZoneSystem.instance.IsZoneGenerated(zoneToMoveTo) || timer.ElapsedMilliseconds > 15000);
+    yield return new WaitUntil(() =>
+      ZoneSystem.instance.IsZoneGenerated(zoneToMoveTo) ||
+      timer.ElapsedMilliseconds > 15000);
 
     timer.Restart();
-
     yield return new WaitUntil(() =>
       ZoneSystem.instance.IsZoneLoaded(newLocation) ||
       timer.ElapsedMilliseconds > 5000);
 
-    if (vehicleInstance.m_nview == null || vehicleInstance.m_nview.m_zdo == null) yield break;
+    // -----------------------------------------------------------------------
+    // Step 4: Zone is loaded. Validate vehicle ref, then move body.
+    // -----------------------------------------------------------------------
+    if (vehicleInstance == null ||
+        vehicleInstance.m_nview == null ||
+        vehicleInstance.m_nview.m_zdo == null)
+    {
+      // Clear teleport flag so no client stays permanently frozen.
+      movementController?.SetIsTeleporting(false);
+      foreach (var kvp in characterDestinations)
+        if (kvp.Key && kvp.Key.GetComponent<Character>() is {} c)
+          c.m_body.isKinematic = false;
+      yield break;
+    }
 
-    vehicleInstance.PiecesController.ForceUpdateAllPiecePositions(newLocation);
-    vehicleInstance.transform.position = newLocation;
-    vehicleInstance.m_nview.m_zdo.SetPosition(newLocation);
-    onPositionReady(vehicleInstance.transform.position);
+    // Move vehicle body while still kinematic — no physics pop.
+    if (movementController != null && movementController.m_body != null)
+    {
+      movementController.m_body.position = newLocation;
+      movementController.m_body.rotation = Quaternion.Euler(
+        0f, movementController.m_body.rotation.eulerAngles.y, 0f);
+    }
+
+    if (vehicleInstance) vehicleInstance.transform.position = newLocation;
+
+    // -----------------------------------------------------------------------
+    // Step 5: Move every onboard character to its correct relative position.
+    // -----------------------------------------------------------------------
+    foreach (var kvp in characterDestinations)
+    {
+      var nv = kvp.Key;
+      var destPos = kvp.Value;
+      if (!nv) continue;
+
+      var character = nv.GetComponent<Character>();
+      if (character == null) continue;
+
+      character.transform.position = destPos;
+      if (character.m_body != null)
+      {
+        character.m_body.position = destPos;
+        character.m_body.isKinematic = false;
+        character.m_body.linearVelocity = Vector3.zero;
+        character.m_body.angularVelocity = Vector3.zero;
+      }
+
+      character.m_fallTimer = 0f;
+      character.m_maxAirAltitude = -10000f;
+    }
+
+    // -----------------------------------------------------------------------
+    // Step 6: Restore vehicle physics and clear the teleporting flag.
+    // Clearing LAST ensures GuardedFixedUpdate won't re-enable physics until
+    // the body is already at the correct position.
+    // -----------------------------------------------------------------------
+    if (movementController != null && movementController.m_body != null && !wasKinematic)
+    {
+      movementController.m_body.isKinematic = false;
+      movementController.m_body.linearVelocity = Vector3.zero;
+      movementController.m_body.angularVelocity = Vector3.zero;
+    }
+
+    // Broadcast to all clients that the teleport is complete — physics resumes.
+    movementController?.SetIsTeleporting(false);
+
+    onPositionReady(newLocation);
   }
 
   /// <summary>
@@ -702,7 +836,6 @@ public class VehicleCommands : ConsoleCommand
     LoggerProvider.LogWarning(
       $"{vehicleNotFoundMsg} \nMust be within <50f> (game meters). The player must be closer to the boat.");
   }
-
   public static RaycastHit[] AllocatedRaycast = new RaycastHit[20];
 
   public static bool TryGetVehicleManager(Collider collider, [NotNullWhen(true)] out VehicleManager? vehicleManager)
@@ -975,7 +1108,6 @@ public class VehicleCommands : ConsoleCommand
       logSeparatorEnd
     ));
   }
-
   public static Stopwatch _creativeModeTimer = new();
   public static Coroutine? _creativeModeCoroutineInstance = null;
 
@@ -1063,7 +1195,6 @@ public class VehicleCommands : ConsoleCommand
     _creativeModeTimer.Reset();
     LoggerProvider.LogMessage("Completed creative mode commands.");
   }
-
   public static float rotationLerp = 1f;
   public static float positionLerp = 1f;
 
@@ -1211,7 +1342,6 @@ public class VehicleCommands : ConsoleCommand
     if (closestVehicle == null || closestVehicle.PiecesController == null) return;
     closestVehicle.PiecesController.ClearAllBoundaryChunkData();
   }
-
   public override List<string> CommandOptionList()
   {
     return
