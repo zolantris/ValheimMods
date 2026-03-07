@@ -1489,24 +1489,46 @@
           continue;
         }
 
-        var combinedBounds = GetCombinedColliderBoundsInPiece(nv.gameObject);
+        var isPlayer = nv.GetComponent<Character>()?.IsPlayer() == true;
 
-        // todo handle edge cases like if the temp piece is very close the vehicle.
-        if (!convexHullBounds.Intersects(combinedBounds))
+        // Players must never be evicted from m_tempPieces due to a transient bounds
+        // mismatch during a force-move: their corrected ZDO position (below) will
+        // land them outside the current hull bounds by design.
+        if (!isPlayer)
         {
-          // do not remove the piece otherwise it mutates the current list.
-          RemoveTempPiece(nv, false);
-          m_tempPieces.FastRemoveAt(ref index);
-          continue;
+          var combinedBounds = GetCombinedColliderBoundsInPiece(nv.gameObject);
+
+          // todo handle edge cases like if the temp piece is very close the vehicle.
+          if (!convexHullBounds.Intersects(combinedBounds))
+          {
+            // do not remove the piece otherwise it mutates the current list.
+            RemoveTempPiece(nv, false);
+            m_tempPieces.FastRemoveAt(ref index);
+            continue;
+          }
         }
+
+        // Refresh the relative offset so it reflects where the piece actually is
+        // on the ship right now, not just where it was when it first boarded.
+        // freshOffset = current world pos - vehicle centre of mass.
+        var freshOffset = nv.transform.position - m_localRigidbody.worldCenterOfMass;
+        nv.m_zdo?.Set(VehicleZdoVars.MBPositionHash, freshOffset);
+
+        // Project the piece to its correct destination sector:
+        // vehiclePosition is the new world position the vehicle ZDO was just stamped
+        // to, so vehiclePosition + freshOffset is where this piece should be.
+        var correctedWorldPos = vehiclePosition + freshOffset;
 
         if (Player.m_localPlayer != null && Player.m_localPlayer.m_nview == nv)
         {
-          ZNet.instance.SetReferencePosition(nv.transform.position);
+          // Advance the streaming reference to the destination so the server does
+          // not cull the local player's ZDO before the teleport fires.
+          ZNet.instance.SetReferencePosition(correctedWorldPos);
         }
 
-        // should always use actual position as this is a moving object that might have a ZsyncTransform.
-        nv.m_zdo?.SetPosition(nv.transform.position);
+        // Write the destination sector into the ZDO instead of the stale current
+        // world position, preventing the server from seeing this piece in a dead sector.
+        nv.m_zdo?.SetPosition(correctedWorldPos);
       }
     }
 
@@ -2729,11 +2751,6 @@
         TrySetPieceToParent(netView);
       }
 
-      OnPieceAdded(netView.gameObject);
-
-      // still need this for flickering but it may cause problems when the object leaves the area.
-      // PieceActivatorHelpers.FixPieceMeshes(netView);
-
       if (!shouldSkipIgnoreColliders)
       {
         OnAddPieceIgnoreColliders(netView);
@@ -2751,9 +2768,22 @@
       RemoveDynamicParentForVehicle(netView);
       netView.transform.SetParent(null);
 
+
       if (shouldRemoveFromList)
       {
         m_tempPieces.Remove(netView);
+      }
+
+      if (m_prefabPieceDataItems.ContainsKey(netView.gameObject))
+      {
+        var errorMessage =
+          $"RemoveTempPiece: temp piece '{netView.name}' was found in m_prefabPieceDataItems. " +
+          "Temp pieces must never be added to the convex hull — this is a bug. Removing now to prevent hull inflation.";
+        LoggerProvider.LogError(errorMessage);
+        OnPieceRemoved(netView.gameObject);
+#if DEBUG
+        throw new Exception(errorMessage);
+#endif
       }
     }
 
