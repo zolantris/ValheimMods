@@ -1500,6 +1500,11 @@
           continue;
         }
 
+        if (Player.m_localPlayer != null && Player.m_localPlayer.m_nview == nv)
+        {
+          ZNet.instance.SetReferencePosition(nv.transform.position);
+        }
+
         // should always use actual position as this is a moving object that might have a ZsyncTransform.
         nv.m_zdo?.SetPosition(nv.transform.position);
       }

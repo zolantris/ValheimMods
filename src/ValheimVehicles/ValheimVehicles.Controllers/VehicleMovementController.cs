@@ -962,6 +962,7 @@
           {
             m_body.isKinematic = true;
           }
+          // if there is still no owner / the is something major happening, force disable zsyncTransform kinematic to prevent errors. This prevents all clients from attempting to run physics on the ship that is bugged out.
           if (zsyncTransform && m_body)
           {
             zsyncTransform.SetKinematic(true);

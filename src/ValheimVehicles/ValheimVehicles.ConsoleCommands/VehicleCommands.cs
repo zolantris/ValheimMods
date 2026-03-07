@@ -415,6 +415,8 @@ public class VehicleCommands : ConsoleCommand
       var isSuccess = true;
       foreach (var playerData in data.Value.charactersOnShip)
       {
+        if (!playerData.character) continue;
+
         if (playerData.character.IsTeleporting())
         {
           isSuccess = false;
@@ -448,7 +450,10 @@ public class VehicleCommands : ConsoleCommand
 
     if (!complete)
       foreach (var playerData in data.Value.charactersOnShip)
+      {
+        if (!playerData.character) continue;
         ResetPlayerVelocities(playerData.character);
+      }
 
     if (shouldProtectAgainstFallDamage)
     {
@@ -457,6 +462,7 @@ public class VehicleCommands : ConsoleCommand
       {
         foreach (var playerData in data.Value.charactersOnShip)
         {
+          if (!playerData.character) continue;
           playerData.character.m_fallTimer = 0f;
           playerData.character.m_maxAirAltitude = -10000f;
         }
@@ -484,15 +490,20 @@ public class VehicleCommands : ConsoleCommand
         ZoneSystem.instance.CreateLocalZones(newLocation);
 
     var timer = Stopwatch.StartNew();
+
+    yield return new WaitUntil(() => ZoneSystem.instance.IsZoneGenerated(zoneToMoveTo) || timer.ElapsedMilliseconds > 15000);
+
+    timer.Restart();
+
     yield return new WaitUntil(() =>
       ZoneSystem.instance.IsZoneLoaded(newLocation) ||
       timer.ElapsedMilliseconds > 5000);
 
     if (vehicleInstance.m_nview == null || vehicleInstance.m_nview.m_zdo == null) yield break;
 
+    vehicleInstance.PiecesController.ForceUpdateAllPiecePositions(newLocation);
     vehicleInstance.transform.position = newLocation;
     vehicleInstance.m_nview.m_zdo.SetPosition(newLocation);
-    vehicleInstance.PiecesController.ForceUpdateAllPiecePositions(newLocation);
     onPositionReady(vehicleInstance.transform.position);
   }
 
