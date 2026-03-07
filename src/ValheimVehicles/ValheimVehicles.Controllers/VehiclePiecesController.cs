@@ -2925,6 +2925,8 @@
 
     public void RemoveTempPiece(ZNetView netView, bool shouldRemoveFromList = true)
     {
+      if (!netView) return; // Null check to prevent crashes
+      
       RemoveDynamicParentForVehicle(netView);
       netView.transform.SetParent(null);
 
@@ -3726,9 +3728,22 @@
         !nv || !nv.gameObject || !nv.gameObject.activeInHierarchy ||
         !nv.transform || !nv.transform.IsChildOf(GetPiecesContainer()));
 
-      m_tempPieces.RemoveAll(nv =>
-        !nv || !nv.gameObject || !nv.gameObject.activeInHierarchy ||
-        !nv.transform || !nv.transform.IsChildOf(GetPiecesContainer()));
+      // Remove temp pieces AND clean up m_dynamicObjects entries
+      // Cannot use RemoveAll directly - must call RemoveTempPiece to scrub m_dynamicObjects
+      for (var i = m_tempPieces.Count - 1; i >= 0; i--)
+      {
+        var nv = m_tempPieces[i];
+        if (!nv || !nv.gameObject || !nv.gameObject.activeInHierarchy ||
+            !nv.transform || !nv.transform.IsChildOf(GetPiecesContainer()))
+        {
+          // Only call RemoveTempPiece if nv exists (to clean up m_dynamicObjects)
+          if (nv)
+          {
+            RemoveTempPiece(nv, shouldRemoveFromList: false);
+          }
+          m_tempPieces.RemoveAt(i);
+        }
+      }
 
       // This is a safety check to ensure we do not have stale prefab entries. This may need to be run on generation of convex hull as well.
       m_prefabPieceDataItems.RemoveNullKeys();
