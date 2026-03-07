@@ -1109,6 +1109,8 @@
     public void UpdateControls(float dt)
     {
       if (m_nview == null) return;
+
+      var wasOwner = m_nview.IsOwner();
       if (!m_nview.HasOwner())
       {
         m_nview.ClaimOwnership();
@@ -1118,8 +1120,15 @@
       {
         m_nview.GetZDO().Set(ZDOVars.s_forward, (int)vehicleSpeed);
         m_nview.GetZDO().Set(ZDOVars.s_rudder, m_rudderValue);
+      }
+
+      // do not run other non-owner tasks in fixed update if we were the owner.
+      if (wasOwner)
+      {
         return;
       }
+
+      // non owner tasks.
 
       if (OnboardController && vehicleRam && (vehicleRam.m_owner == null || vehicleRam.m_owner.m_nview.GetZDO().GetOwner() != m_nview.GetZDO().GetOwner()))
       {
@@ -4549,12 +4558,16 @@
       FixPlayerParent(player);
     }
 
-    public void UpdateVehicleRamOwner(Player owner)
+    public void UpdateVehicleRamOwner(Player owner, long targetPlayerId)
     {
       // must set the ram owner otherwise it will not be able to damage enemies.
       if (vehicleRam && vehicleRam.m_owner != owner)
       {
         vehicleRam.m_owner = owner;
+        if (vehicleRam.m_nview)
+        {
+          vehicleRam.m_nview.GetZDO().SetOwner(targetPlayerId);
+        }
       }
     }
 
@@ -4565,6 +4578,8 @@
           PiecesController == null ||
           m_nview == null || m_nview.m_zdo == null)
         return;
+
+      var targetPlayerId = targetPlayer.GetPlayerID();
 
       EjectPreviousPlayerFromControls(previousPlayer);
 
@@ -4577,6 +4592,7 @@
 
       if (PiecesController)
       {
+        PiecesController.ForceSyncAllPrefabsToVehiclePosition();
         PiecesController.targetController.OnDetectionModeChange();
       }
 
@@ -4588,10 +4604,10 @@
       var playerOwner = targetPlayer.GetOwner();
 
       m_nview.GetZDO().SetOwner(playerOwner);
-      if (previousUserId != targetPlayer.GetPlayerID() || previousUserId == 0L)
-        m_nview.GetZDO().Set(ZDOVars.s_user, targetPlayer.GetPlayerID());
+      if (previousUserId != targetPlayerId || previousUserId == 0L)
+        m_nview.GetZDO().Set(ZDOVars.s_user, targetPlayerId);
 
-      UpdateVehicleRamOwner(targetPlayer);
+      UpdateVehicleRamOwner(targetPlayer, targetPlayerId);
 
       LoggerProvider.LogDebug("Changing ship owner to " + playerOwner +
                               $", name: {targetPlayer.GetPlayerName()}");

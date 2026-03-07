@@ -395,6 +395,22 @@
       targetController.autoFire = true;
     }
 
+    /// <summary>
+    /// This will retrieve all vehicle pieces tracked when the server loads and/or when the current player or other players add new pieces.
+    /// </summary>
+    public void ForceSyncAllPrefabsToVehiclePosition()
+    {
+      if (!m_allPieces.TryGetValue(Manager.PersistentZdoId, out var list)) return;
+      foreach (var zdo in list)
+      {
+        if (zdo == null) continue;
+        if (!zdo.IsValid()) continue;
+
+        var vehiclePosition = GetVehiclePosition();
+        SetPrefabWorldPosition(zdo, vehiclePosition);
+      }
+    }
+
 
     public void Start()
     {
@@ -456,22 +472,44 @@
       CleanUp();
     }
 
+    /// <summary>
+    /// Doing nothing here might actually improve performance as calling a network object with many updates per update is pretty heavy.
+    /// </summary>
+    /// <param name="deltaTime"></param>
+    /// <param name="time"></param>
     public void CustomUpdate(float deltaTime, float time)
     {
-      Client_UpdateAllPieces();
+      // if (IsInvalid()) return;
+      // if (ZNet.instance == null) return;
+      // if (ZNet.instance.IsDedicated()) return;
+      // if (!IsPlayerOwnerOfNetview()) return;
+      //
+      // Client_UpdateAllPieces();
     }
 
     public override void CustomFixedUpdate(float deltaTime)
     {
       if (m_nview == null) return;
       Sync();
-    }
 
-    public void CustomLateUpdate(float deltaTime)
-    {
-      if (ZNet.instance == null || ZNet.instance.IsServer()) return;
       Client_UpdateAllPieces();
       UpdateBedPieces();
+    }
+
+    /// <summary>
+    /// Doing nothing here might actually improve performance as calling a network object with many updates per update is pretty heavy.
+    /// </summary>
+    /// <param name="deltaTime"></param>
+    /// <param name="time"></param>
+    public void CustomLateUpdate(float deltaTime)
+    {
+      // if (ZNet.instance == null) return;
+      // if (ZNet.instance.IsDedicated()) return;
+      // if (IsInvalid()) return;
+      // if (!IsPlayerOwnerOfNetview()) return;
+      //
+      // Client_UpdateAllPieces();
+      // UpdateBedPieces();
     }
 
     public ZNetView? GetNetView()
@@ -851,6 +889,9 @@
 
       var initialized = m_nview?.GetZDO()
         .GetBool(VehicleZdoVars.ZdoKeyBaseVehicleInitState) ?? false;
+
+      // ensures that all pieces are requested to be brought into the current area
+      ForceSyncAllPrefabsToVehiclePosition();
 
       UpdateChunkBoundsData(false);
 
@@ -1339,11 +1380,34 @@
     }
 
     /// <summary>
+    /// Get the vehicle's networked position instead of the current client's position which could be inaccurate
+    /// </summary>
+    private Vector3 GetVehiclePosition()
+    {
+      var zdo = m_nview != null ? m_nview.GetZDO() : null;
+      var positionToUse = zdo?.GetPosition() ?? transform.position;
+      return positionToUse;
+    }
+
+    /// <summary>
     /// For local updates use position of current transform.
     /// </summary>
     public void ForceUpdateAllPiecePositions()
     {
-      ForceUpdateAllPiecePositions(transform.position);
+      ForceUpdateAllPiecePositions(GetVehiclePosition());
+    }
+
+    public void SetPrefabWorldPosition(ZDO zdo, Vector3 vehiclePosition)
+    {
+      if (CanUseActualPiecePosition)
+      {
+        var zdoRelativePosition = zdo.GetVec3(VehicleZdoVars.MBPositionHash, vehiclePosition);
+        zdo.SetPosition(zdoRelativePosition);
+      }
+      else
+      {
+        zdo.SetPosition(vehiclePosition);
+      }
     }
 
     /// <summary>
@@ -1361,10 +1425,17 @@
       var rootNvZdo = netView.GetZDO();
       rootNvZdo.SetPosition(vehiclePosition);
 
-      for (var index = 0; index < m_pieces.Count; index++)
+      if (!m_allPieces.TryGetValue(Manager.PersistentZdoId, out var pieceToUpdateList))
       {
-        var nv = m_pieces[index];
-        if (!nv || !nv.IsValid())
+        pieceToUpdateList = m_pieces.Select(x => x.GetZDO()).ToList();
+      }
+
+      var itemsToRemove = new List<ZDO>();
+
+      for (var index = 0; index < pieceToUpdateList.Count; index++)
+      {
+        var zdo = pieceToUpdateList[index];
+        if (zdo == null || zdo.IsValid())
         {
           LoggerProvider.LogDebugDebounced(
             $"Null netview found with m_pieces: netview, safe removing the piece");
@@ -1372,13 +1443,13 @@
           continue;
         }
 
-        var hasPrefabPieceData = m_prefabPieceDataItems.TryGetValue(nv.gameObject, out var prefabPieceData);
-
-        if (hasPrefabPieceData)
+        // NOTE: this might be a heavy task (alternatively we could use local dictionary)
+        var nv = ZNetScene.instance.FindInstance(zdo);
+        if (nv && m_prefabPieceDataItems.TryGetValue(nv.gameObject, out var prefabPieceData))
         {
           if (prefabPieceData.IsBed)
           {
-            UpdatePieceZdoPosition(nv.GetZDO(), vehiclePosition, prefabPieceData.IsBed);
+            UpdatePieceZdoPosition(zdo, vehiclePosition, prefabPieceData.IsBed);
             continue;
           }
           if (prefabPieceData.IsSwivelChild && TrySetSwivelPiecePosition(nv))
@@ -1388,8 +1459,21 @@
         }
 
         // updates the zdo for the current location of the piece.
-        nv.GetZDO()?.SetPosition(CanUseActualPiecePosition ? nv.transform.position : vehiclePosition);
+        SetPrefabWorldPosition(zdo, vehiclePosition);
       }
+
+      if (ZNetScene.instance)
+      {
+        foreach (var zdo in itemsToRemove)
+        {
+          var netViewToRemove = ZNetScene.instance.FindInstance(zdo);
+          if (netViewToRemove)
+          {
+            m_pieces.Remove(netViewToRemove);
+          }
+        }
+      }
+
       var convexHullBounds = convexHullComponent.GetConvexHullBounds(false);
 
       // Removes the temp collider from the parent if not within the parent.
@@ -1437,9 +1521,8 @@
     /**
      * @warning this must only be called on the client
      */
-    public void Client_UpdateAllPieces()
+    private void Client_UpdateAllPieces()
     {
-      if (IsInvalid()) return;
       var sector = ZoneSystem.GetZone(transform.position);
 
       if (sector == m_sector)
@@ -1460,7 +1543,7 @@
     /// <returns></returns>
     private bool IsPlayerOwnerOfNetview()
     {
-      return m_nview?.GetZDO()?.IsOwner() ?? false;
+      return m_nview != null && (m_nview.GetZDO()?.IsOwner() ?? false);
     }
 
     /// <summary>
@@ -3010,8 +3093,8 @@
         );
       }
 
-      AddPiece(netView, true);
       InitZdo(zdo);
+      AddPiece(netView, true);
 
       if (previousCount == 0 && GetPieceCount() == 1) SetInitComplete();
     }
