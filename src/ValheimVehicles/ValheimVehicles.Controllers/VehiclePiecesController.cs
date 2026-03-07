@@ -2717,9 +2717,8 @@
     /// <returns>Map of ZNetView → destination world position for every onboard character,
     ///   to be applied to physics bodies after the zone loads.</returns>
     /// <summary>
-    /// Snapshots all vehicle piece and character positions to calculate relative offsets.
-    /// DOES NOT UPDATE ANY ZDOs - only records current positions for later application.
-    /// Returns a dictionary of characters and their destination positions.
+    /// Updates all piece ZDOs and character positions when teleporting a vehicle.
+    /// Calculates relative offsets and applies them to the new vehicle position.
     /// </summary>
     /// <param name="persistentId">The vehicle's persistent ZDO ID</param>
     /// <param name="newVehiclePos">The destination position for the vehicle</param>
@@ -2732,113 +2731,12 @@
       Vector3 vehicleCurrentPos,
       List<ZNetView>? liveTempPieces)
     {
+      var newSector = ZoneSystem.GetZone(newVehiclePos);
       var characterDestinations = new Dictionary<ZNetView, Vector3>();
 
       // -----------------------------------------------------------------------
       // 1. Persistent pieces (hull, furniture, etc.)
-      //    Just snapshot their offsets - they'll be updated after zone load
-      // -----------------------------------------------------------------------
-      // Persistent pieces don't need destinations - they're updated via MBPositionHash
-
-      // -----------------------------------------------------------------------
-      // 2. Dynamic objects registered via InitZdo (animals, carts, non-player chars)
-      //    Calculate their destinations for later update
-      // -----------------------------------------------------------------------
-      if (m_dynamicObjects.TryGetValue(persistentId, out var dynamicZdoIds))
-      {
-        for (var i = dynamicZdoIds.Count - 1; i >= 0; i--)
-        {
-          var zdoid = dynamicZdoIds[i];
-          var zdo = ZDOMan.instance?.GetZDO(zdoid);
-          if (zdo == null || !zdo.IsValid())
-          {
-            dynamicZdoIds.RemoveAt(i);
-            continue;
-          }
-
-          // Snapshot current position to calculate offset
-          Vector3 relativeOffset;
-          var nv = ZNetScene.instance != null ? ZNetScene.instance.FindInstance(zdo) : null;
-          if (nv != null)
-          {
-            relativeOffset = nv.transform.position - vehicleCurrentPos;
-          }
-          else
-          {
-            relativeOffset = zdo.GetVec3(VehicleZdoVars.MBPositionHash, Vector3.zero);
-          }
-
-          var destPos = newVehiclePos + relativeOffset;
-
-          // Freeze character bodies and record their destination
-          // ZDO update happens LATER after zone is loaded
-          if (nv != null)
-          {
-            var character = nv.GetComponent<Character>();
-            if (character != null && character.m_body != null)
-            {
-              character.m_body.isKinematic = true;
-              character.m_body.linearVelocity = Vector3.zero;
-              character.m_body.angularVelocity = Vector3.zero;
-              characterDestinations[nv] = destPos;
-            }
-          }
-        }
-      }
-
-      // -----------------------------------------------------------------------
-      // 3. Live temp pieces — covers players (who skip AddTempPieceProperties)
-      //    and any other objects that never went through InitZdo.
-      //    Snapshot their positions for later update.
-      // -----------------------------------------------------------------------
-      if (liveTempPieces != null)
-      {
-        foreach (var nv in liveTempPieces)
-        {
-          if (!nv) continue;
-          var zdo = nv.GetZDO();
-          if (zdo == null) continue;
-
-          // Skip if already handled via m_dynamicObjects above.
-          if (characterDestinations.ContainsKey(nv)) continue;
-
-          // Snapshot current position to calculate offset
-          var relativeOffset = nv.transform.position - vehicleCurrentPos;
-          var destPos = newVehiclePos + relativeOffset;
-
-          // For ALL characters (players and NPCs), freeze body and record destination
-          // ZDO update happens LATER via TeleportImmediately
-          var character = nv.GetComponent<Character>();
-          if (character != null && character.m_body != null)
-          {
-            character.m_body.isKinematic = true;
-            character.m_body.linearVelocity = Vector3.zero;
-            character.m_body.angularVelocity = Vector3.zero;
-            characterDestinations[nv] = destPos;
-          }
-        }
-      }
-
-      return characterDestinations;
-    }
-
-    /// <summary>
-    /// Actually applies the ZDO updates after zone is loaded.
-    /// Updates all persistent pieces and dynamic objects to their new positions.
-    /// Called AFTER StampAllVehicleZdosToPosition and zone generation.
-    /// </summary>
-    /// <param name="persistentId">The vehicle's persistent ZDO ID</param>
-    /// <param name="newVehiclePos">The destination position for the vehicle</param>
-    /// <param name="vehicleCurrentPos">Original ZDO position of the vehicle (for calculating offsets)</param>
-    public static void ApplyVehicleZdoPositionUpdates(
-      int persistentId,
-      Vector3 newVehiclePos,
-      Vector3 vehicleCurrentPos)
-    {
-      var newSector = ZoneSystem.GetZone(newVehiclePos);
-
-      // -----------------------------------------------------------------------
-      // 1. Update persistent pieces (hull, furniture, etc.)
+      //    MBPositionHash = localPosition relative to vehicle origin.
       // -----------------------------------------------------------------------
       if (m_allPieces.TryGetValue(persistentId, out var pieceZdos))
       {
@@ -2858,8 +2756,9 @@
       }
 
       // -----------------------------------------------------------------------
-      // 2. Update dynamic objects (animals, carts, non-player chars)
-      //    Skip players - they're handled by TeleportImmediately
+      // 2. Dynamic objects registered via InitZdo (animals, carts, non-player
+      //    temp pieces). MBPositionHash = worldPos - worldCenterOfMass.
+      //    We re-derive from the live netview when available for accuracy.
       // -----------------------------------------------------------------------
       if (m_dynamicObjects.TryGetValue(persistentId, out var dynamicZdoIds))
       {
@@ -2873,16 +2772,9 @@
             continue;
           }
 
-          // Check if this is a player
-          var nv = ZNetScene.instance != null ? ZNetScene.instance.FindInstance(zdo) : null;
-          var character = nv?.GetComponent<Character>();
-          var isPlayer = character?.IsPlayer() ?? false;
-
-          // Skip players - TeleportImmediately handles them
-          if (isPlayer) continue;
-
-          // Calculate and apply new position for non-players
+          // Prefer live transform for an accurate current offset.
           Vector3 relativeOffset;
+          var nv = ZNetScene.instance != null ? ZNetScene.instance.FindInstance(zdo) : null;
           if (nv != null)
           {
             relativeOffset = nv.transform.position - vehicleCurrentPos;
@@ -2896,79 +2788,61 @@
           zdo.Set(VehicleZdoVars.MBPositionHash, relativeOffset);
           zdo.SetPosition(destPos);
           zdo.SetSector(ZoneSystem.GetZone(destPos));
-        }
-      }
-    }
 
-    /// <summary>
-    /// Re-registers all pieces and dynamic objects with the vehicle after a teleport.
-    /// During zone transitions, objects get unmounted and removed from temp pieces.
-    /// This method ensures they are re-added to m_allPieces and m_dynamicObjects collections.
-    /// Called AFTER zone load and ZDO position updates are complete.
-    /// </summary>
-    /// <param name="persistentId">The vehicle's persistent ZDO ID</param>
-    public static void ReRegisterVehicleObjects(int persistentId)
-    {
-      // -----------------------------------------------------------------------
-      // 1. Re-register persistent pieces
-      // -----------------------------------------------------------------------
-      if (m_allPieces.TryGetValue(persistentId, out var pieceZdos))
-      {
-        // Pieces are already in m_allPieces, but we need to ensure their ZDOs are valid
-        // and re-call InitZdo to ensure they're properly registered
-        for (var i = pieceZdos.Count - 1; i >= 0; i--)
-        {
-          var zdo = pieceZdos[i];
-          if (zdo == null || !zdo.IsValid())
-          {
-            pieceZdos.RemoveAt(i);
-            continue;
-          }
-
-          // Re-register the ZDO to ensure it's properly tracked
-          InitZdo(zdo);
-        }
-      }
-
-      // -----------------------------------------------------------------------
-      // 2. Re-register dynamic objects
-      // -----------------------------------------------------------------------
-      if (m_dynamicObjects.TryGetValue(persistentId, out var dynamicZdoIds))
-      {
-        // Create a copy to iterate since InitZdo might modify the collection
-        var zdoidsCopy = new List<ZDOID>(dynamicZdoIds);
-        
-        foreach (var zdoid in zdoidsCopy)
-        {
-          var zdo = ZDOMan.instance?.GetZDO(zdoid);
-          if (zdo == null || !zdo.IsValid())
-          {
-            dynamicZdoIds.Remove(zdoid);
-            continue;
-          }
-
-          // Re-register the dynamic object ZDO
-          InitZdo(zdo);
-          
-          // Find the netview instance and re-add temp piece properties if needed
-          var nv = ZNetScene.instance != null ? ZNetScene.instance.FindInstance(zdo) : null;
+          // Freeze character bodies and record their destination.
           if (nv != null)
           {
             var character = nv.GetComponent<Character>();
-            var isPlayer = character?.IsPlayer() ?? false;
-            
-            // Skip players - they don't need AddTempPieceProperties
-            if (!isPlayer)
+            if (character != null && character.m_body != null)
             {
-              // Ensure TempPieceParentId is set (InitZDO should handle this, but double-check)
-              if (zdo.GetInt(VehicleZdoVars.TempPieceParentId) == 0)
-              {
-                zdo.Set(VehicleZdoVars.TempPieceParentId, persistentId);
-              }
+              character.m_body.isKinematic = true;
+              character.m_body.linearVelocity = Vector3.zero;
+              character.m_body.angularVelocity = Vector3.zero;
+              characterDestinations[nv] = destPos;
             }
           }
         }
       }
+
+      // -----------------------------------------------------------------------
+      // 3. Live temp pieces — covers players (who skip AddTempPieceProperties)
+      //    and any other objects that never went through InitZdo.
+      //    Offset = worldPos - vehicleCurrentPos (consistent with dynamic objects).
+      // -----------------------------------------------------------------------
+      if (liveTempPieces != null)
+      {
+        foreach (var nv in liveTempPieces)
+        {
+          if (!nv) continue;
+          var zdo = nv.GetZDO();
+          if (zdo == null) continue;
+
+          // Skip if already handled via m_dynamicObjects above.
+          if (characterDestinations.ContainsKey(nv)) continue;
+
+          var relativeOffset = nv.transform.position - vehicleCurrentPos;
+          var destPos = newVehiclePos + relativeOffset;
+
+          zdo.Set(VehicleZdoVars.MBPositionHash, relativeOffset);
+          zdo.SetPosition(destPos);
+          zdo.SetSector(ZoneSystem.GetZone(destPos));
+
+          // Advance streaming reference for local player.
+          var character = nv.GetComponent<Character>();
+          if (character != null && character.m_body != null)
+          {
+            character.m_body.isKinematic = true;
+            character.m_body.linearVelocity = Vector3.zero;
+            character.m_body.angularVelocity = Vector3.zero;
+            characterDestinations[nv] = destPos;
+          }
+
+          if (Player.m_localPlayer != null && Player.m_localPlayer.m_nview == nv)
+            ZNet.instance.SetReferencePosition(destPos);
+        }
+      }
+
+      return characterDestinations;
     }
 
     public void ActivatePiece(ZNetView netView)

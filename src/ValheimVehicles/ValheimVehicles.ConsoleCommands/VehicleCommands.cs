@@ -526,23 +526,20 @@ public class VehicleCommands : ConsoleCommand
 
     // Capture destinations outside the try so the post-yield steps can access it.
     Dictionary<ZNetView, Vector3> characterDestinations;
-    int persistentId;
 
     try
     {
       // -----------------------------------------------------------------------
-      // Step 2: Update vehicle ZDO to anchor it in the new zone, then SNAPSHOT
-      // all current positions to calculate relative offsets.
-      // Snapshotting does NOT update any piece/character ZDOs - only freezes bodies.
+      // Step 2: Snapshot offsets and stamp all ZDOs (pieces + dynamic objects +
+      // players) BEFORE the zone-load wait.
       // -----------------------------------------------------------------------
-      persistentId = vehicleInstance.PersistentZdoId;
+      var persistentId = vehicleInstance.PersistentZdoId;
       var liveTempPieces = vehicleInstance.PiecesController.m_tempPieces;
 
-      // Anchor vehicle ZDO in new zone first
+      // Root vehicle ZDO first — anchors the vehicle in the new sector.
       vehicleInstance.m_nview.m_zdo.SetPosition(newLocation);
       vehicleInstance.m_nview.m_zdo.SetSector(ZoneSystem.GetZone(newLocation));
 
-      // Snapshot current state - no piece/character ZDO updates yet!
       characterDestinations = VehiclePiecesController.StampAllVehicleZdosToPosition(
         persistentId, newLocation, vehicleCurrentPos, liveTempPieces);
 
@@ -561,7 +558,7 @@ public class VehicleCommands : ConsoleCommand
     }
     catch (Exception e)
     {
-      LoggerProvider.LogError($"MoveVehicleIntoFarZone: exception during snapshot — aborting teleport. {e}");
+      LoggerProvider.LogError($"MoveVehicleIntoFarZone: exception during ZDO stamping — aborting teleport. {e}");
       movementController?.SetIsTeleporting(false);
       yield break;
     }
@@ -584,22 +581,7 @@ public class VehicleCommands : ConsoleCommand
       timer.ElapsedMilliseconds > 5000);
 
     // -----------------------------------------------------------------------
-    // Step 4: Zone is loaded. NOW update all ZDOs (pieces and non-player entities).
-    // Vehicle ZDO was already updated in Step 2, but pieces need their positions updated.
-    // Uses captured persistentId to avoid null reference if vehicle was unloaded.
-    // -----------------------------------------------------------------------
-    VehiclePiecesController.ApplyVehicleZdoPositionUpdates(
-      persistentId, newLocation, vehicleCurrentPos);
-
-    // -----------------------------------------------------------------------
-    // Step 4.5: Re-register all pieces and dynamic objects.
-    // During zone transition, objects get unmounted and removed from temp pieces.
-    // This ensures they are re-added to m_allPieces and m_dynamicObjects collections.
-    // -----------------------------------------------------------------------
-    VehiclePiecesController.ReRegisterVehicleObjects(persistentId);
-
-    // -----------------------------------------------------------------------
-    // Step 5: Validate vehicle ref, then move vehicle body.
+    // Step 4: Zone is loaded. Validate vehicle ref, then move body.
     // -----------------------------------------------------------------------
     if (vehicleInstance == null ||
         vehicleInstance.m_nview == null ||
@@ -624,8 +606,7 @@ public class VehicleCommands : ConsoleCommand
     if (vehicleInstance) vehicleInstance.transform.position = newLocation;
 
     // -----------------------------------------------------------------------
-    // Step 6: Move every onboard character to its correct relative position.
-    // Use TeleportImmediately for players to update ZDO+transform+body atomically.
+    // Step 5: Move every onboard character to its correct relative position.
     // -----------------------------------------------------------------------
     foreach (var kvp in characterDestinations)
     {
@@ -636,15 +617,21 @@ public class VehicleCommands : ConsoleCommand
       var character = nv.GetComponent<Character>();
       if (character == null) continue;
 
-      // Use TeleportImmediately to safely teleport (handles ZDO+transform+body atomically)
-      TeleportImmediately(character, destPos);
+      character.transform.position = destPos;
+      if (character.m_body != null)
+      {
+        character.m_body.position = destPos;
+        character.m_body.isKinematic = false;
+        character.m_body.linearVelocity = Vector3.zero;
+        character.m_body.angularVelocity = Vector3.zero;
+      }
 
       character.m_fallTimer = 0f;
       character.m_maxAirAltitude = -10000f;
     }
 
     // -----------------------------------------------------------------------
-    // Step 7: Restore vehicle physics and clear the teleporting flag.
+    // Step 6: Restore vehicle physics and clear the teleporting flag.
     // Clearing LAST ensures GuardedFixedUpdate won't re-enable physics until
     // the body is already at the correct position.
     // -----------------------------------------------------------------------
