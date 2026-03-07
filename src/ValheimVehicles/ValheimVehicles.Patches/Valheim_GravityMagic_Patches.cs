@@ -7,15 +7,15 @@ namespace ValheimVehicles.ValheimVehicles.Patches;
 public class Valheim_GravityMagic_Patches
 {
 #if DEBUG
-  [HarmonyPatch(typeof(Player), nameof(Player.Awake))]
-  [HarmonyPostfix]
-  public static void PlayerAwake_InjectGravityMagic(Player __instance)
-  {
-    if (__instance)
-    {
-      __instance.gameObject.AddComponent<GravityMagicControllerBridge>();
-      __instance.gameObject.AddComponent<GravityForceSpells>();
-    }
-  }
+  // [HarmonyPatch(typeof(Player), nameof(Player.Awake))]
+  // [HarmonyPostfix]
+  // public static void PlayerAwake_InjectGravityMagic(Player __instance)
+  // {
+  //   if (__instance)
+  //   {
+  //     __instance.gameObject.AddComponent<GravityMagicControllerBridge>();
+  //     __instance.gameObject.AddComponent<GravityForceSpells>();
+  //   }
+  // }
 #endif
 }
