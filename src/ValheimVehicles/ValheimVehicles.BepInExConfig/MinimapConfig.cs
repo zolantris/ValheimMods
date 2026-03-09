@@ -57,7 +57,7 @@ public class MinimapConfig : BepInExBaseConfig<MinimapConfig>
     VisibleVehicleRadius = config.BindUnique(SectionKey, "VisibleVehicleRadius", 50f,
       ConfigHelpers.CreateConfigDescription(
         "A radius in which all vehicles are revealed. This is more balanced than ShowAllVehicles.",
-        true, true, new AcceptableValueRange<float>(5, 1000f)));
+        true, true, new AcceptableValueRange<float>(5, 10000f)));
 
     ShowBedsOnVehicles = config.BindUnique(SectionKey, "ShowBedsOnVehicles", true,
       ConfigHelpers.CreateConfigDescription(
