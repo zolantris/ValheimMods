@@ -495,10 +495,12 @@
     public override void CustomFixedUpdate(float deltaTime)
     {
       if (m_nview == null) return;
-      Sync();
+      if (IsInvalid()) return;
+      if (ZNet.instance == null) return;
+      if (ZNet.instance.IsDedicated()) return;
 
-      Client_UpdateAllPieces();
-      UpdateBedPieces();
+      Sync();
+      OwnerSync();
     }
 
     /// <summary>
@@ -1312,6 +1314,16 @@
         rotation
       );
 
+    }
+
+    /// <summary>
+    /// Only the owner of the vehicle should sync zdo positions to avoid errors.
+    /// </summary>
+    public void OwnerSync()
+    {
+      if (!IsPlayerOwnerOfNetview()) return;
+      Client_UpdateAllPieces();
+      UpdateBedPieces();
     }
 
     /// <summary>
