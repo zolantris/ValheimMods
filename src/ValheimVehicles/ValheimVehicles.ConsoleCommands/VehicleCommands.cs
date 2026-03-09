@@ -1411,7 +1411,7 @@ public class VehicleCommands : ConsoleCommand
 
     VehiclePiecesController.ForceSyncAllPrefabsToVehiclePosition(
       persistentZdoId,
-      vehicleNetView,
+      activeNv,
       null);
 
     return wasClamped;
