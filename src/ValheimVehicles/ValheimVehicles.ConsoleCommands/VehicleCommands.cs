@@ -58,6 +58,7 @@ public class VehicleCommands : ConsoleCommand
     public const string toggleOceanSway = "toggleOceanSway";
     public const string resetVehicleOwner = "resetLocalOwnership";
     public const string clearBoundaryChunkData = "clearBoundaryChunkData";
+    public const string recenter = "recenter";
   }
 
   public override string Help => OnHelp();
@@ -79,6 +80,7 @@ public class VehicleCommands : ConsoleCommand
       $"\n<{VehicleCommandArgs.moveUp}>: Moves the vehicle within 50 units upwards by the value provided. Capped at 30 units to be safe. And Capped at 10 units lowest world position." +
       $"\n<{VehicleCommandArgs.move}>: Must provide 3 args: x y z, the movement is relative to those points" +
       $"\n<{VehicleCommandArgs.colliderEditMode}>: Lets the player toggle collider edit mode for all vehicles allowing editing water displacement masks and other hidden items" +
+      $"\n<{VehicleCommandArgs.recenter}>: Manually recenters the vehicle's ZDO origin to the geometric hull center. This prevents piece ZDOs from drifting into foreign zone sectors." +
       $"\n<{VehicleCommandArgs.clearBoundaryChunkData}>: Clears the boundary chunk data for the nearest vehicle. This will force a rebuild of the convex hull boundary constraint. Boundary chunk data is use to limit the extent the vehicle can grow to.";
   }
 
@@ -160,6 +162,9 @@ public class VehicleCommands : ConsoleCommand
         break;
       case VehicleCommandArgs.clearBoundaryChunkData:
         ClearAllVehicleBoundaryChunks();
+        break;
+      case VehicleCommandArgs.recenter:
+        VehicleRecenter();
         break;
     }
   }
@@ -1344,6 +1349,39 @@ public class VehicleCommands : ConsoleCommand
     if (closestVehicle == null || closestVehicle.PiecesController == null) return;
     closestVehicle.PiecesController.ClearAllBoundaryChunkData();
   }
+
+  public static void VehicleRecenter()
+  {
+    if (!Player.m_localPlayer)
+    {
+      Logger.LogWarning("Player does not exist, cannot run recenter command.");
+      return;
+    }
+
+    var closestVehicle = GetNearestVehicleManager();
+    if (closestVehicle == null || closestVehicle.PiecesController == null)
+    {
+      Logger.LogWarning("No vehicle nearby to recenter.");
+      return;
+    }
+
+    var piecesController = closestVehicle.PiecesController;
+    if (!piecesController.m_nview || !piecesController.m_nview.IsValid())
+    {
+      Logger.LogWarning("Vehicle network view is not valid.");
+      return;
+    }
+
+    if (!piecesController.m_nview.IsOwner())
+    {
+      Logger.LogWarning("You must be the owner of the vehicle to recenter it.");
+      return;
+    }
+
+    piecesController.ManualRecenterVehicleOrigin();
+    Logger.LogMessage("Vehicle recenter initiated. Check logs for details.");
+  }
+
   public override List<string> CommandOptionList()
   {
     return
@@ -1365,7 +1403,8 @@ public class VehicleCommands : ConsoleCommand
       VehicleCommandArgs.move,
       VehicleCommandArgs.moveUp,
       VehicleCommandArgs.resetVehicleOwner,
-      VehicleCommandArgs.clearBoundaryChunkData
+      VehicleCommandArgs.clearBoundaryChunkData,
+      VehicleCommandArgs.recenter
     ];
   }
   public override string Name => "vehicle";

@@ -2926,7 +2926,7 @@
     public void RemoveTempPiece(ZNetView netView, bool shouldRemoveFromList = true)
     {
       if (!netView) return; // Null check to prevent crashes
-      
+
       RemoveDynamicParentForVehicle(netView);
       netView.transform.SetParent(null);
 
@@ -3739,7 +3739,7 @@
           // Only call RemoveTempPiece if nv exists (to clean up m_dynamicObjects)
           if (nv)
           {
-            RemoveTempPiece(nv, shouldRemoveFromList: false);
+            RemoveTempPiece(nv, false);
           }
           m_tempPieces.RemoveAt(i);
         }
@@ -3880,6 +3880,35 @@
     }
 
     /// <summary>
+    /// Public method to manually trigger vehicle recentering via console command.
+    /// Players can use "vehicle recenter" to manually recenter the vehicle origin.
+    /// This is safer than automatic recentering which could regress user ships.
+    /// </summary>
+    public void ManualRecenterVehicleOrigin()
+    {
+      if (_recenterCoroutineInstance != null)
+      {
+        LoggerProvider.LogWarning("A recenter operation is already in progress.");
+        return;
+      }
+
+      if (!m_nview || !m_nview.IsValid())
+      {
+        LoggerProvider.LogError("Cannot recenter: vehicle network view is invalid.");
+        return;
+      }
+
+      if (!m_nview.IsOwner())
+      {
+        LoggerProvider.LogError("Cannot recenter: you must be the owner of the vehicle.");
+        return;
+      }
+
+      LoggerProvider.LogInfo("Manual vehicle recenter requested by player.");
+      RequestRecenterVehicleOrigin();
+    }
+
+    /// <summary>
     /// A complete override of OnConvexHullGenerated.
     /// </summary>
     public override void OnConvexHullGenerated(bool hasSucceeded)
@@ -3936,11 +3965,6 @@
         VehicleRamAoe.RegisterVehicleColliders(Manager);
         MovementController.vehicleRam.UpdateColliderCache();
       }
-
-      // Recenter the ZDO origin to the geometric hull center so piece ZDOs are
-      // never stamped to a position that escapes the actual piece layout into a
-      // foreign zone sector. Safe to run while moving — does NOT touch the body.
-      RequestRecenterVehicleOrigin();
     }
 
     /// <summary>
