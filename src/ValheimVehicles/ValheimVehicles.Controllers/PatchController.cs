@@ -112,10 +112,9 @@ public static class PatchController
   public static void TryPatchPlanBuild()
   {
     if (_harmonyInstance == null) return;
-    if (!PatchConfig.ForceDisablePlanBuildPatches.Value && (
-          Directory.Exists(Path.Combine(Paths.PluginPath, "MathiasDecrock-PlanBuild")) ||
-          Directory.Exists(Path.Combine(Paths.PluginPath, "PlanBuild")) ||
-          Chainloader.PluginInfos.ContainsKey(PlanBuildGuid)))
+    if (PatchConfig.ForceDisablePlanBuildPatches.Value || Directory.Exists(Path.Combine(Paths.PluginPath, "MathiasDecrock-PlanBuild")) ||
+        Directory.Exists(Path.Combine(Paths.PluginPath, "PlanBuild")) ||
+        Chainloader.PluginInfos.ContainsKey(PlanBuildGuid))
     {
       Logger.LogInfo("Applying PlanBuild Patch");
       HarmonyHelper.TryPatchAll(_harmonyInstance, typeof(PlanBuild_Patch));
