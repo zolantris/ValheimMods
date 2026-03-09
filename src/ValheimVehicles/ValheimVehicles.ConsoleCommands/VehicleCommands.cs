@@ -1360,12 +1360,9 @@ public class VehicleCommands : ConsoleCommand
   /// Clamps the Y position of a vehicle's ZDO to [minHeight, maxHeight].
   /// </summary>
   /// <returns>True if the position was changed, false if already within range or the ZDO was invalid.</returns>
-  public static bool ClampVehicleZdoToSafeHeight(ZNetView vehicleNetView, float minHeight, float maxHeight)
+  public static bool ClampVehicleZdoToSafeHeight(ZDO vehicleZdo, ZNetView? activeNetView, float minHeight, float maxHeight)
   {
-    if (!vehicleNetView || !vehicleNetView.IsValid()) return false;
-    var vehicleZdo = vehicleNetView.GetZDO();
-    if (vehicleZdo == null || !vehicleZdo.IsValid()) return false;
-
+    if (!vehicleZdo.IsValid()) return false;
     var currentPos = vehicleZdo.GetPosition();
 
     var groundLevel = ZoneSystem.instance.GetGroundHeight(currentPos);
@@ -1381,7 +1378,16 @@ public class VehicleCommands : ConsoleCommand
     var clampedY = Mathf.Clamp(currentPos.y, minGroundOrWaterOrClampedHeight, maxGroundOrWaterOrClampedHeight);
     if (Mathf.Approximately(clampedY, currentPos.y)) return false;
 
-    vehicleZdo.SetPosition(new Vector3(currentPos.x, clampedY, currentPos.z));
+    var newCoordinates = new Vector3(currentPos.x, clampedY, currentPos.z);
+
+    // EG player is rendering it currently
+    if (activeNetView != null)
+    {
+      activeNetView.ClaimOwnership();
+      activeNetView.transform.position = newCoordinates;
+    }
+
+    vehicleZdo.SetPosition(newCoordinates);
     Logger.LogInfo(
       $"[{VehicleCommandArgs.repairAllVehiclePositions}] Vehicle ZDO {vehicleZdo.m_uid}: clamped Y from {currentPos.y:F2} to {clampedY:F2}.");
     return true;
@@ -1394,11 +1400,14 @@ public class VehicleCommands : ConsoleCommand
   public static bool RepairVehiclePosition(int persistentZdoId, float? minHeight, float? maxHeight)
   {
     VehiclePiecesController.ActiveInstances.TryGetValue(persistentZdoId, out var activeController);
-    var vehicleNetView = activeController?.m_nview;
+
+    var vehicleZdo = ZdoWatcher.ZdoWatchController.Instance.GetZdo(persistentZdoId);
+
+    var activeNv = ZNetScene.instance.FindInstance(vehicleZdo);
 
     var wasClamped = false;
-    if (minHeight.HasValue && maxHeight.HasValue && vehicleNetView != null)
-      wasClamped = ClampVehicleZdoToSafeHeight(vehicleNetView, minHeight.Value, maxHeight.Value);
+    if (minHeight.HasValue && maxHeight.HasValue && vehicleZdo != null)
+      wasClamped = ClampVehicleZdoToSafeHeight(vehicleZdo, activeNv, minHeight.Value, maxHeight.Value);
 
     VehiclePiecesController.ForceSyncAllPrefabsToVehiclePosition(
       persistentZdoId,
@@ -1418,8 +1427,16 @@ public class VehicleCommands : ConsoleCommand
   /// </summary>
   public static void RepairAllVehiclePositions(string[]? args)
   {
+    if (!SynchronizationManager.Instance.PlayerIsAdmin)
+    {
+      Logger.LogMessage(
+        "User must be an admin to run this command.");
+      return;
+    }
+
     float? minHeight = null;
     float? maxHeight = null;
+
 
     if (args != null && args.Length >= 2)
     {
