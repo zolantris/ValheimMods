@@ -1385,6 +1385,10 @@ public class VehicleCommands : ConsoleCommand
     {
       activeNetView.ClaimOwnership();
       activeNetView.transform.position = newCoordinates;
+      if (activeNetView.m_body)
+      {
+        activeNetView.m_body.position = newCoordinates;
+      }
     }
 
     vehicleZdo.SetPosition(newCoordinates);
@@ -1434,11 +1438,11 @@ public class VehicleCommands : ConsoleCommand
       return;
     }
 
-    float? minHeight = null;
-    float? maxHeight = null;
+    var minHeight = 30f;
+    var maxHeight = 3000f;
 
 
-    if (args != null && args.Length >= 2)
+    if (args != null)
     {
       if (float.TryParse(args[0], out var parsedMin) && float.TryParse(args[1], out var parsedMax))
       {
@@ -1447,9 +1451,8 @@ public class VehicleCommands : ConsoleCommand
       }
       else
       {
-        Logger.LogWarning(
-          $"[{VehicleCommandArgs.repairAllVehiclePositions}] Could not parse minHeight/maxHeight from args '{args[0]}' / '{args[1]}'. " +
-          "Both must be valid floats. Height constraint will be skipped.");
+        Logger.LogMessage(
+          $"[{VehicleCommandArgs.repairAllVehiclePositions}] Using default minHeight {minHeight} and maxHeight {maxHeight}. As no args were provided. Please use <command> <minHeight> <maxHeight> if you need to spawn the vehicle higher than these defaults on top of automatic ground/water checks.");
       }
     }
 
@@ -1472,9 +1475,7 @@ public class VehicleCommands : ConsoleCommand
 
     Logger.LogMessage(
       $"[{VehicleCommandArgs.repairAllVehiclePositions}] Repaired {repairedCount} vehicle(s). " +
-      (minHeight.HasValue && maxHeight.HasValue
-        ? $"Height clamped [{minHeight:F2}, {maxHeight:F2}]: {clampedCount} vehicle(s) adjusted."
-        : "No height constraint applied."));
+      $"Height clamped [{minHeight:F2}, {maxHeight:F2}]: {clampedCount} vehicle(s) adjusted.");
   }
 
   public static void VehicleRecenter()
