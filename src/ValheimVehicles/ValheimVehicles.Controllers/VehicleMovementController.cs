@@ -4780,22 +4780,9 @@
 
       EjectPreviousPlayerFromControls(previousPlayer);
 
-
-      UpdatePlayerOnShip(targetPlayer);
-      UpdateVehicleSpeedThrottle();
-
-      // allows looking through ship while controlling vehicle.
-      VehicleOnboardController.AddOrRemovePlayerBlockingCameraWhileControlling(targetPlayer, true);
-
-      if (PiecesController)
-      {
-        PiecesController.ForceSyncAllPrefabsToVehiclePosition();
-        PiecesController.targetController.OnDetectionModeChange();
-      }
-
+      // start of ownership critical update
 
       var isLocalPlayer = targetPlayer == Player.m_localPlayer;
-
       var previousUserId = previousPlayer?.GetPlayerID() ?? 0L;
       // the person controlling the ship should control physics
       var playerOwner = targetPlayer.GetOwner();
@@ -4803,6 +4790,22 @@
       m_nview.GetZDO().SetOwner(playerOwner);
       if (previousUserId != targetPlayerId || previousUserId == 0L)
         m_nview.GetZDO().Set(ZDOVars.s_user, targetPlayerId);
+
+      // end of ownership critical update
+
+      UpdatePlayerOnShip(targetPlayer);
+      UpdateVehicleSpeedThrottle();
+
+      // allows looking through ship while controlling vehicle.
+      VehicleOnboardController.AddOrRemovePlayerBlockingCameraWhileControlling(targetPlayer, true);
+
+
+      if (PiecesController)
+      {
+        VehiclePiecesController.ForceSyncAllPrefabsToVehiclePosition(Manager.PersistentZdoId, m_nview, transform.position);
+        PiecesController.targetController.OnDetectionModeChange();
+      }
+
 
       UpdateVehicleRamOwner(targetPlayer, targetPlayerId);
 

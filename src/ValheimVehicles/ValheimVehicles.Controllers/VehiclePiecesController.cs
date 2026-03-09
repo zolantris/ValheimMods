@@ -401,15 +401,17 @@
     /// <summary>
     /// This will retrieve all vehicle pieces tracked when the server loads and/or when the current player or other players add new pieces.
     /// </summary>
-    public void ForceSyncAllPrefabsToVehiclePosition()
+    public static void ForceSyncAllPrefabsToVehiclePosition(int persistentZdoId, ZNetView? netView, Vector3? fallbackPosition)
     {
-      if (!m_allPieces.TryGetValue(Manager.PersistentZdoId, out var list)) return;
+      if (!m_allPieces.TryGetValue(persistentZdoId, out var list)) return;
       foreach (var zdo in list)
       {
         if (zdo == null) continue;
         if (!zdo.IsValid()) continue;
 
-        var vehiclePosition = GetVehiclePosition();
+        var position = fallbackPosition ?? zdo.GetPosition();
+
+        var vehiclePosition = GetVehiclePosition(netView, position);
         SetPrefabWorldPosition(zdo, vehiclePosition);
       }
     }
@@ -894,7 +896,7 @@
         .GetBool(VehicleZdoVars.ZdoKeyBaseVehicleInitState) ?? false;
 
       // ensures that all pieces are requested to be brought into the current area
-      ForceSyncAllPrefabsToVehiclePosition();
+      ForceSyncAllPrefabsToVehiclePosition(Manager.PersistentZdoId, m_nview, transform.position);
 
       UpdateChunkBoundsData(false);
 
@@ -1385,10 +1387,10 @@
     /// <summary>
     /// Get the vehicle's networked position instead of the current client's position which could be inaccurate
     /// </summary>
-    private Vector3 GetVehiclePosition()
+    private static Vector3 GetVehiclePosition(ZNetView? netView, Vector3 fallbackPosition)
     {
-      var zdo = m_nview != null ? m_nview.GetZDO() : null;
-      var positionToUse = zdo?.GetPosition() ?? transform.position;
+      var zdo = netView != null ? netView.GetZDO() : null;
+      var positionToUse = zdo?.GetPosition() ?? fallbackPosition;
       return positionToUse;
     }
 
@@ -1397,10 +1399,10 @@
     /// </summary>
     public void ForceUpdateAllPiecePositions()
     {
-      ForceUpdateAllPiecePositions(GetVehiclePosition());
+      ForceUpdateAllPiecePositions(GetVehiclePosition(m_nview, transform.position));
     }
 
-    public void SetPrefabWorldPosition(ZDO zdo, Vector3 vehiclePosition)
+    public static void SetPrefabWorldPosition(ZDO zdo, Vector3 vehiclePosition)
     {
       if (CanUseActualPiecePosition)
       {
