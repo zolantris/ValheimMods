@@ -60,6 +60,7 @@ public class VehicleCommands : ConsoleCommand
     public const string clearBoundaryChunkData = "clearBoundaryChunkData";
     public const string recenter = "recenter";
     public const string repairAllVehiclePositions = "repairAllVehiclePositions";
+    public const string repairNearbyVehiclePositions = "repairNearbyVehiclePositions";
   }
 
   public override string Help => OnHelp();
@@ -83,7 +84,8 @@ public class VehicleCommands : ConsoleCommand
       $"\n<{VehicleCommandArgs.colliderEditMode}>: Lets the player toggle collider edit mode for all vehicles allowing editing water displacement masks and other hidden items" +
       $"\n<{VehicleCommandArgs.recenter}>: Manually recenters the vehicle's ZDO origin to the geometric hull center. This prevents piece ZDOs from drifting into foreign zone sectors." +
       $"\n<{VehicleCommandArgs.clearBoundaryChunkData}>: Clears the boundary chunk data for the nearest vehicle. This will force a rebuild of the convex hull boundary constraint. Boundary chunk data is use to limit the extent the vehicle can grow to." +
-      $"\n<{VehicleCommandArgs.repairAllVehiclePositions}>: Iterates all tracked vehicles and forces all pieces to be synchronized to the current vehicle location. Optional args: minHeight maxHeight. When provided, the vehicle Y position is clamped to [minHeight, maxHeight] before syncing pieces. Useful if vehicles have fallen through the ground or launched into the sky. Example: vehicle repairAllVehiclePositions -100 500";
+      $"\n<{VehicleCommandArgs.repairAllVehiclePositions}>: Iterates all tracked vehicles and forces all pieces to be synchronized to the current vehicle location. Optional args: minHeight maxHeight. When provided, the vehicle Y position is clamped to [minHeight, maxHeight] before syncing pieces. Useful if vehicles have fallen through the ground or launched into the sky. Example: vehicle repairAllVehiclePositions -100 500" +
+      $"\n<{VehicleCommandArgs.repairNearbyVehiclePositions}>: Repairs all vehicles within a horizontal radius around the player. Optional args: radiusX radiusZ minHeight maxHeight. Defaults to 250 250 for the radius. Example: vehicle repairNearbyVehiclePositions 250 250 -100 500";
   }
 
   public override void Run(string[] args)
@@ -171,6 +173,9 @@ public class VehicleCommands : ConsoleCommand
       case VehicleCommandArgs.repairAllVehiclePositions:
         if (!CanRunCheatCommand()) return;
         RepairAllVehiclePositions(nextArgs);
+        break;
+      case VehicleCommandArgs.repairNearbyVehiclePositions:
+        RepairNearbyVehiclePositions(nextArgs);
         break;
     }
   }
@@ -1478,6 +1483,85 @@ public class VehicleCommands : ConsoleCommand
       $"Height clamped [{minHeight:F2}, {maxHeight:F2}]: {clampedCount} vehicle(s) adjusted.");
   }
 
+  /// <summary>
+  /// Repairs all vehicles within a horizontal radius around the player.
+  /// Uses X/Z distance only (height is ignored).
+  /// <para>
+  /// Optional args: [radiusX] [radiusZ] [minHeight] [maxHeight]
+  /// Defaults to radiusX=250, radiusZ=250 if not provided.
+  /// When minHeight and maxHeight are provided, the vehicle ZDO Y position is clamped
+  /// before syncing its pieces.
+  /// </para>
+  /// </summary>
+  public static void RepairNearbyVehiclePositions(string[]? args)
+  {
+    if (Player.m_localPlayer == null)
+    {
+      Logger.LogMessage("No player found. Cannot determine nearby vehicles.");
+      return;
+    }
+
+    var playerPos = Player.m_localPlayer.transform.position;
+    var radiusX = 250f;
+    var radiusZ = 250f;
+    float? minHeight = null;
+    float? maxHeight = null;
+
+    if (args != null && args.Length > 0)
+    {
+      // Parse radiusX
+      if (float.TryParse(args[0], out var parsedRadiusX))
+        radiusX = Mathf.Clamp(parsedRadiusX, 15f, 250f);
+
+      // Parse radiusZ
+      if (args.Length > 1 && float.TryParse(args[1], out var parsedRadiusZ))
+        radiusZ = Mathf.Clamp(parsedRadiusZ, 15f, 250f);
+
+      // Parse minHeight and maxHeight
+      if (args.Length > 2 && float.TryParse(args[2], out var parsedMin))
+        minHeight = parsedMin;
+
+      if (args.Length > 3 && float.TryParse(args[3], out var parsedMax))
+        maxHeight = parsedMax;
+    }
+
+    var allPieces = VehiclePiecesController.m_allPieces;
+    if (allPieces == null || allPieces.Count == 0)
+    {
+      Logger.LogMessage($"[{VehicleCommandArgs.repairNearbyVehiclePositions}] No vehicles found in m_allPieces.");
+      return;
+    }
+
+    var repairedCount = 0;
+    var clampedCount = 0;
+
+    foreach (var kvp in allPieces)
+    {
+      var vehicleZdo = ZdoWatcher.ZdoWatchController.Instance.GetZdo(kvp.Key);
+      if (vehicleZdo == null) continue;
+
+      var vehiclePos = vehicleZdo.GetPosition();
+      var dx = playerPos.x - vehiclePos.x;
+      var dz = playerPos.z - vehiclePos.z;
+
+      // Check if within horizontal radius (X/Z only, ignore Y)
+      if (dx * dx <= radiusX * radiusX && dz * dz <= radiusZ * radiusZ)
+      {
+        RepairVehiclePosition(kvp.Key, minHeight, maxHeight);
+        if (minHeight.HasValue && maxHeight.HasValue)
+        {
+          clampedCount++;
+        }
+        repairedCount++;
+      }
+    }
+
+    Logger.LogMessage(
+      $"[{VehicleCommandArgs.repairNearbyVehiclePositions}] Repaired {repairedCount} vehicle(s) within radius X:{radiusX:F1}, Z:{radiusZ:F1}. " +
+      $"Height clamped: {clampedCount} vehicle(s)." +
+      (repairedCount == 0 ? " To repair ALL vehicles on the map, use: vehicle repairAllVehiclePositions" : ""));
+  }
+
   public static void VehicleRecenter()
   {
     if (!Player.m_localPlayer)
@@ -1533,7 +1617,8 @@ public class VehicleCommands : ConsoleCommand
       VehicleCommandArgs.resetVehicleOwner,
       VehicleCommandArgs.clearBoundaryChunkData,
       VehicleCommandArgs.recenter,
-      VehicleCommandArgs.repairAllVehiclePositions
+      VehicleCommandArgs.repairAllVehiclePositions,
+      VehicleCommandArgs.repairNearbyVehiclePositions
     ];
   }
   public override string Name => "vehicle";
