@@ -59,6 +59,7 @@ public class VehicleCommands : ConsoleCommand
     public const string resetVehicleOwner = "resetLocalOwnership";
     public const string clearBoundaryChunkData = "clearBoundaryChunkData";
     public const string recenter = "recenter";
+    public const string repairAllVehiclePositions = "repairAllVehiclePositions";
   }
 
   public override string Help => OnHelp();
@@ -81,7 +82,8 @@ public class VehicleCommands : ConsoleCommand
       $"\n<{VehicleCommandArgs.move}>: Must provide 3 args: x y z, the movement is relative to those points" +
       $"\n<{VehicleCommandArgs.colliderEditMode}>: Lets the player toggle collider edit mode for all vehicles allowing editing water displacement masks and other hidden items" +
       $"\n<{VehicleCommandArgs.recenter}>: Manually recenters the vehicle's ZDO origin to the geometric hull center. This prevents piece ZDOs from drifting into foreign zone sectors." +
-      $"\n<{VehicleCommandArgs.clearBoundaryChunkData}>: Clears the boundary chunk data for the nearest vehicle. This will force a rebuild of the convex hull boundary constraint. Boundary chunk data is use to limit the extent the vehicle can grow to.";
+      $"\n<{VehicleCommandArgs.clearBoundaryChunkData}>: Clears the boundary chunk data for the nearest vehicle. This will force a rebuild of the convex hull boundary constraint. Boundary chunk data is use to limit the extent the vehicle can grow to." +
+      $"\n<{VehicleCommandArgs.repairAllVehiclePositions}>: Iterates all tracked vehicles and forces all pieces to be synchronized to the current vehicle location. Optional args: minHeight maxHeight. When provided, the vehicle Y position is clamped to [minHeight, maxHeight] before syncing pieces. Useful if vehicles have fallen through the ground or launched into the sky. Example: vehicle repairAllVehiclePositions -100 500";
   }
 
   public override void Run(string[] args)
@@ -165,6 +167,10 @@ public class VehicleCommands : ConsoleCommand
         break;
       case VehicleCommandArgs.recenter:
         VehicleRecenter();
+        break;
+      case VehicleCommandArgs.repairAllVehiclePositions:
+        if (!CanRunCheatCommand()) return;
+        RepairAllVehiclePositions(nextArgs);
         break;
     }
   }
@@ -1350,6 +1356,110 @@ public class VehicleCommands : ConsoleCommand
     closestVehicle.PiecesController.ClearAllBoundaryChunkData();
   }
 
+  /// <summary>
+  /// Clamps the Y position of a vehicle's ZDO to [minHeight, maxHeight].
+  /// </summary>
+  /// <returns>True if the position was changed, false if already within range or the ZDO was invalid.</returns>
+  public static bool ClampVehicleZdoToSafeHeight(ZNetView vehicleNetView, float minHeight, float maxHeight)
+  {
+    if (!vehicleNetView || !vehicleNetView.IsValid()) return false;
+    var vehicleZdo = vehicleNetView.GetZDO();
+    if (vehicleZdo == null || !vehicleZdo.IsValid()) return false;
+
+    var currentPos = vehicleZdo.GetPosition();
+
+    var groundLevel = ZoneSystem.instance.GetGroundHeight(currentPos);
+    var waterLevel = ZoneSystem.instance.m_waterLevel;
+
+    var minGroundOrWaterHeight = Mathf.Max(groundLevel, waterLevel);
+
+    var minGroundOrWaterOrClampedHeight = Mathf.Max(minGroundOrWaterHeight, minHeight);
+    var maxGroundOrWaterOrClampedHeight = Mathf.Max(minGroundOrWaterHeight, maxHeight);
+
+    Logger.LogDebug($"Clamping vehicle ZDO Y position. groundHeight {groundLevel}; waterLevel {waterLevel}; minHeight {minHeight}; maxHeight {maxHeight}. Got (min): minGroundOrWaterOrClampedHeight {minGroundOrWaterOrClampedHeight} (max): maxGroundOrWaterOrClampedHeight {maxGroundOrWaterOrClampedHeight}");
+
+    var clampedY = Mathf.Clamp(currentPos.y, minGroundOrWaterOrClampedHeight, maxGroundOrWaterOrClampedHeight);
+    if (Mathf.Approximately(clampedY, currentPos.y)) return false;
+
+    vehicleZdo.SetPosition(new Vector3(currentPos.x, clampedY, currentPos.z));
+    Logger.LogInfo(
+      $"[{VehicleCommandArgs.repairAllVehiclePositions}] Vehicle ZDO {vehicleZdo.m_uid}: clamped Y from {currentPos.y:F2} to {clampedY:F2}.");
+    return true;
+  }
+
+  /// <summary>
+  /// Repairs a single vehicle: optionally clamps its ZDO Y position then force-syncs all its pieces.
+  /// </summary>
+  /// <returns>True if the vehicle height was clamped, false otherwise.</returns>
+  public static bool RepairVehiclePosition(int persistentZdoId, float? minHeight, float? maxHeight)
+  {
+    VehiclePiecesController.ActiveInstances.TryGetValue(persistentZdoId, out var activeController);
+    var vehicleNetView = activeController?.m_nview;
+
+    var wasClamped = false;
+    if (minHeight.HasValue && maxHeight.HasValue && vehicleNetView != null)
+      wasClamped = ClampVehicleZdoToSafeHeight(vehicleNetView, minHeight.Value, maxHeight.Value);
+
+    VehiclePiecesController.ForceSyncAllPrefabsToVehiclePosition(
+      persistentZdoId,
+      vehicleNetView,
+      null);
+
+    return wasClamped;
+  }
+
+  /// <summary>
+  /// Iterates all tracked vehicles and repairs each one via <see cref="RepairVehiclePosition"/>.
+  /// <para>
+  /// Optional args: [minHeight] [maxHeight]
+  /// When both are provided the vehicle ZDO Y position is clamped to [minHeight, maxHeight] before
+  /// syncing its pieces. If only one or neither value is supplied the height constraint is skipped.
+  /// </para>
+  /// </summary>
+  public static void RepairAllVehiclePositions(string[]? args)
+  {
+    float? minHeight = null;
+    float? maxHeight = null;
+
+    if (args != null && args.Length >= 2)
+    {
+      if (float.TryParse(args[0], out var parsedMin) && float.TryParse(args[1], out var parsedMax))
+      {
+        minHeight = parsedMin;
+        maxHeight = parsedMax;
+      }
+      else
+      {
+        Logger.LogWarning(
+          $"[{VehicleCommandArgs.repairAllVehiclePositions}] Could not parse minHeight/maxHeight from args '{args[0]}' / '{args[1]}'. " +
+          "Both must be valid floats. Height constraint will be skipped.");
+      }
+    }
+
+    var allPieces = VehiclePiecesController.m_allPieces;
+    if (allPieces == null || allPieces.Count == 0)
+    {
+      Logger.LogMessage($"[{VehicleCommandArgs.repairAllVehiclePositions}] No vehicles found in m_allPieces.");
+      return;
+    }
+
+    var repairedCount = 0;
+    var clampedCount = 0;
+
+    foreach (var kvp in allPieces)
+    {
+      if (RepairVehiclePosition(kvp.Key, minHeight, maxHeight))
+        clampedCount++;
+      repairedCount++;
+    }
+
+    Logger.LogMessage(
+      $"[{VehicleCommandArgs.repairAllVehiclePositions}] Repaired {repairedCount} vehicle(s). " +
+      (minHeight.HasValue && maxHeight.HasValue
+        ? $"Height clamped [{minHeight:F2}, {maxHeight:F2}]: {clampedCount} vehicle(s) adjusted."
+        : "No height constraint applied."));
+  }
+
   public static void VehicleRecenter()
   {
     if (!Player.m_localPlayer)
@@ -1404,7 +1514,8 @@ public class VehicleCommands : ConsoleCommand
       VehicleCommandArgs.moveUp,
       VehicleCommandArgs.resetVehicleOwner,
       VehicleCommandArgs.clearBoundaryChunkData,
-      VehicleCommandArgs.recenter
+      VehicleCommandArgs.recenter,
+      VehicleCommandArgs.repairAllVehiclePositions
     ];
   }
   public override string Name => "vehicle";

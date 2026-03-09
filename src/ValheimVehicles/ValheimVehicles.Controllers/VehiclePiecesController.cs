@@ -1406,7 +1406,7 @@
     {
       if (CanUseActualPiecePosition)
       {
-        var zdoRelativePosition = zdo.GetVec3(VehicleZdoVars.MBPositionHash, vehiclePosition);
+        var zdoRelativePosition = vehiclePosition + zdo.GetVec3(VehicleZdoVars.MBPositionHash, Vector3.zero);
         zdo.SetPosition(zdoRelativePosition);
       }
       else
