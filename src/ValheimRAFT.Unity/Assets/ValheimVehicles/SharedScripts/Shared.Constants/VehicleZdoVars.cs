@@ -82,6 +82,13 @@ namespace ValheimVehicles.Shared.Constants
 
     public static readonly string VehicleAnchorState = "VehicleAnchorState";
 
+    /// <summary>
+    /// Set to true while a far-zone teleport is in progress.
+    /// All clients read this from the ZDO and block physics/ownership changes
+    /// until it clears. Owner sets via RPC_SetIsTeleporting.
+    /// </summary>
+    public const string VehicleIsTeleporting = "VehicleIsTeleporting";
+
     public const string VehicleChunkBounds = "VehicleChunkBounds";
 
     public static readonly int VehicleTargetHeight =

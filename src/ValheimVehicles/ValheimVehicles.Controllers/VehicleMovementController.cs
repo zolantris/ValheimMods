@@ -141,6 +141,7 @@
     private ShipFloatation? _currentShipFloatation;
 
     private Coroutine? _debouncedForceTakeoverControlsInstance;
+    private CoroutineHandle _teleportWatchdogCoroutine;
 
     // todo remove if unused or make this a getter. Might not be safe from null references though.
     // private GameObject _piecesContainer;
@@ -288,6 +289,8 @@
     {
       AwakeSetupShipComponents();
       _parentSyncRoutine = new CoroutineHandle(this);
+      _teleportWatchdogCoroutine = new CoroutineHandle(this);
+      _rotationFixRoutine = new CoroutineHandle(this);
       DamageColliders = VehicleManager.GetVehicleMovementDamageColliders(transform);
       m_nview = GetComponent<ZNetView>();
 
@@ -371,12 +374,12 @@
     {
       Instances.Add(this);
       MonoUpdaterInstances.Add(this);
-      StartCoroutine(nameof(ShipFixRoutine));
+      _rotationFixRoutine.Start(ShipFixRoutine());
     }
 
     private void OnDisable()
     {
-      StopCoroutine(nameof(ShipFixRoutine));
+      _rotationFixRoutine.Stop();
       if (_hasRegister) UnregisterRPCListeners();
       Instances.Remove(this);
       MonoUpdaterInstances.Remove(this);
@@ -569,6 +572,7 @@
     // allows messaging when power updates. It is unthrottled though.
     private bool _hasPower = false;
     private CoroutineHandle _parentSyncRoutine;
+    private CoroutineHandle _rotationFixRoutine;
 
     public void OnParentReady(VehicleManager vehicleParent)
     {
@@ -909,6 +913,8 @@
         return;
       }
 
+      GuardClientOwnershipAndVehiclePhysics(false);
+
       // nested vehicles always must wait for parent.
       if (isWaitingForParentVehicleToBeReady)
       {
@@ -936,6 +942,27 @@
         SyncVehicleCreativeDependentItems();
         return;
       }
+      // Block all physics while a far-zone teleport is in progress.
+      // The ZDO value is synced to all clients via RPC_SetIsTeleporting so
+      // every client sees the same frozen state. Without this guard the
+      // non-kinematic path below immediately re-enables physics and the
+      // vehicle sinks before the destination zone has finished loading.
+      if (IsTeleporting)
+      {
+        if (!m_body.isKinematic)
+        {
+          m_body.isKinematic = true;
+          m_body.linearVelocity = Vector3.zero;
+          m_body.angularVelocity = Vector3.zero;
+        }
+
+        // Start the stuck-watchdog the first time we see IsTeleporting == true
+        // so it only runs while a teleport is actually in progress.
+        if (!_teleportWatchdogCoroutine.IsRunning)
+          _teleportWatchdogCoroutine.Start(TeleportStuckWatchdog());
+
+        return;
+      }
 
       if (!isPlayerHaulingVehicle && m_body.isKinematic || isPlayerHaulingVehicle && HaulingPlayer != null && HaulingPlayer.transform.root == PiecesController!.transform.root)
       {
@@ -946,9 +973,46 @@
       VehiclePhysicsFixedUpdateAllClients();
     }
 
+    public void GuardClientOwnershipAndVehiclePhysics(bool wasError)
+    {
+      if (m_nview == null) return;
+      if (!m_nview.HasOwner())
+      {
+        m_nview.ClaimOwnership();
+
+        // secondary check.
+        if (!m_nview.HasOwner())
+        {
+          if (m_body)
+          {
+            m_body.isKinematic = true;
+          }
+          // if there is still no owner / the is something major happening, force disable zsyncTransform kinematic to prevent errors. This prevents all clients from attempting to run physics on the ship that is bugged out.
+          if (zsyncTransform && m_body)
+          {
+            zsyncTransform.SetKinematic(true);
+          }
+        }
+      }
+      else
+      {
+        if (wasError)
+        {
+          if (m_body)
+          {
+            m_body.isKinematic = true;
+          }
+        }
+      }
+    }
+
     public void CustomFixedUpdate(float deltaTime)
     {
-      if (IsInvalid()) return;
+      if (IsInvalid())
+      {
+        GuardClientOwnershipAndVehiclePhysics(true);
+        return;
+      }
       try
       {
         GuardedFixedUpdate(deltaTime);
@@ -1109,6 +1173,11 @@
     public void UpdateControls(float dt)
     {
       if (m_nview == null) return;
+      // Do not claim ownership or write ZDO while a teleport is in progress —
+      // the teleporting owner must not be interrupted by another client.
+      if (IsTeleporting) return;
+
+      var wasOwner = m_nview.IsOwner();
       if (!m_nview.HasOwner())
       {
         m_nview.ClaimOwnership();
@@ -1118,8 +1187,15 @@
       {
         m_nview.GetZDO().Set(ZDOVars.s_forward, (int)vehicleSpeed);
         m_nview.GetZDO().Set(ZDOVars.s_rudder, m_rudderValue);
+      }
+
+      // do not run other non-owner tasks in fixed update if we were the owner.
+      if (wasOwner)
+      {
         return;
       }
+
+      // non owner tasks.
 
       if (OnboardController && vehicleRam && (vehicleRam.m_owner == null || vehicleRam.m_owner.m_nview.GetZDO().GetOwner() != m_nview.GetZDO().GetOwner()))
       {
@@ -1576,6 +1652,7 @@
     public IEnumerator FixShipRotation()
     {
       if (IsInvalid()) yield break;
+      if (!IsOwner()) yield break;
       if (Manager == null) yield break;
       var eulerAngles = transform.rotation.eulerAngles;
       var eulerX = eulerAngles.x;
@@ -3799,6 +3876,9 @@
       // boat sway
       m_nview.Unregister(nameof(RPC_SetOceanSway));
 
+      // teleport state
+      m_nview.Unregister(nameof(RPC_SetIsTeleporting));
+
       // steering
       m_nview.Unregister(nameof(RPC_RequestControl));
       m_nview.Unregister(nameof(RPC_RequestResponse));
@@ -3835,6 +3915,9 @@
       // todo consider moving boat sway to VehicleConfigSync
       // boat sway
       m_nview.Register<bool>(nameof(RPC_SetOceanSway), RPC_SetOceanSway);
+
+      // teleport state — blocks physics and ownership claims during far-zone moves
+      m_nview.Register<bool>(nameof(RPC_SetIsTeleporting), RPC_SetIsTeleporting);
 
       // steering
       m_nview.Register<long>(nameof(RPC_RequestControl), RPC_RequestControl);
@@ -4463,6 +4546,129 @@
       HasOceanSwayDisabled = isEnabled;
     }
 
+    /// <summary>
+    /// True while a far-zone teleport is in progress.
+    /// Read from ZDO so all clients agree on the state.
+    /// </summary>
+    public bool IsTeleporting =>
+      m_nview != null && (m_nview.GetZDO()?.GetBool(VehicleZdoVars.VehicleIsTeleporting) ?? false);
+
+    /// <summary>
+    /// Broadcast teleport state to all clients via ZDO + RPC so every client
+    /// freezes physics and refuses to claim ownership during the move.
+    /// Only the current ZDO owner should call this.
+    /// </summary>
+    public void SetIsTeleporting(bool isTeleporting)
+    {
+      if (m_nview == null) return;
+      if (!m_nview.IsOwner()) m_nview.ClaimOwnership();
+      m_nview.GetZDO()?.Set(VehicleZdoVars.VehicleIsTeleporting, isTeleporting);
+      m_nview.InvokeRPC(ZRoutedRpc.Everybody, nameof(RPC_SetIsTeleporting), isTeleporting);
+    }
+
+    internal void RPC_SetIsTeleporting(long sender, bool isTeleporting)
+    {
+      // The ZDO value is the authoritative source; the RPC is a fast
+      // wake-up for clients that haven't polled the ZDO yet this frame.
+      if (m_nview == null) return;
+      if (m_body == null) return;
+
+      m_body.isKinematic = isTeleporting;
+      if (isTeleporting)
+      {
+        m_body.linearVelocity = Vector3.zero;
+        m_body.angularVelocity = Vector3.zero;
+      }
+      else
+      {
+        // Teleport finished normally — stop the watchdog so it doesn't fire
+        // late and null the ref so GuardedFixedUpdate can start a fresh one
+        // for the next teleport.
+        _teleportWatchdogCoroutine.Stop();
+      }
+    }
+
+    /// <summary>
+    /// Maximum time (seconds) a teleport is allowed to remain in-progress
+    /// before we treat it as stuck. 15s zone generation + 5s zone load = 20s.
+    /// </summary>
+    private const float TeleportStuckTimeoutSeconds = 20f;
+
+    /// <summary>
+    /// One-shot watchdog started by <see cref="GuardedFixedUpdate"/> the first
+    /// time it sees <see cref="IsTeleporting"/> == true. Counts up to
+    /// <see cref="TeleportStuckTimeoutSeconds"/> then force-clears the flag and
+    /// exits. Stopped early by <see cref="RPC_SetIsTeleporting"/> when the
+    /// teleport completes normally.
+    ///
+    /// Recovery strategy when the timeout fires:
+    ///   • Owner still alive  → call SetIsTeleporting(false), broadcast to all.
+    ///   • Owner disconnected → claim ownership first, then broadcast.
+    ///   • Non-owner, owner still connected → unfreeze body locally only; the
+    ///     owner's watchdog will broadcast the authoritative ZDO clear.
+    /// </summary>
+    private IEnumerator TeleportStuckWatchdog()
+    {
+      var elapsed = 0f;
+
+      while (elapsed < TeleportStuckTimeoutSeconds)
+      {
+        yield return new WaitForSeconds(1f);
+        elapsed += 1f;
+
+        // Teleport cleared normally before timeout — nothing to do.
+        if (!IsTeleporting)
+        {
+          yield break;
+        }
+      }
+
+      // --- Timeout reached — flag is stuck ---
+
+      if (m_nview == null || !m_nview.IsValid())
+      {
+        yield break;
+      }
+
+      var isOwner = m_nview.IsOwner();
+      var ownerPeerId = m_nview.GetZDO().GetOwner();
+      var ownerIsConnected = ownerPeerId == ZNet.GetUID() ||
+                             ZNet.instance.GetPeer(ownerPeerId) != null;
+
+      if (!isOwner && ownerIsConnected)
+      {
+        // Owner is alive — just unfreeze locally and let the owner clear the ZDO.
+        LoggerProvider.LogWarning(
+          $"[TeleportStuckWatchdog] VehicleId={Manager?.PersistentZdoId}: " +
+          "stuck but owner still connected — unfreezing body locally only.");
+
+        if (m_body != null && m_body.isKinematic)
+        {
+          m_body.isKinematic = false;
+          m_body.linearVelocity = Vector3.zero;
+          m_body.angularVelocity = Vector3.zero;
+        }
+      }
+      else
+      {
+        if (!isOwner)
+        {
+          LoggerProvider.LogWarning(
+            $"[TeleportStuckWatchdog] VehicleId={Manager?.PersistentZdoId}: " +
+            "original teleport owner disconnected — claiming ownership to clear stuck flag.");
+          m_nview.ClaimOwnership();
+        }
+        else
+        {
+          LoggerProvider.LogWarning(
+            $"[TeleportStuckWatchdog] VehicleId={Manager?.PersistentZdoId}: " +
+            $"stuck for {TeleportStuckTimeoutSeconds}s as owner — forcing clear.");
+        }
+
+        SetIsTeleporting(false);
+      }
+    }
+
     private void SyncAnchor()
     {
       if (ZNetView.m_forceDisableInit) return;
@@ -4549,12 +4755,16 @@
       FixPlayerParent(player);
     }
 
-    public void UpdateVehicleRamOwner(Player owner)
+    public void UpdateVehicleRamOwner(Player owner, long targetPlayerId)
     {
       // must set the ram owner otherwise it will not be able to damage enemies.
       if (vehicleRam && vehicleRam.m_owner != owner)
       {
         vehicleRam.m_owner = owner;
+        if (vehicleRam.m_nview)
+        {
+          vehicleRam.m_nview.GetZDO().SetOwner(targetPlayerId);
+        }
       }
     }
 
@@ -4566,8 +4776,22 @@
           m_nview == null || m_nview.m_zdo == null)
         return;
 
+      var targetPlayerId = targetPlayer.GetPlayerID();
+
       EjectPreviousPlayerFromControls(previousPlayer);
 
+      // start of ownership critical update
+
+      var isLocalPlayer = targetPlayer == Player.m_localPlayer;
+      var previousUserId = previousPlayer?.GetPlayerID() ?? 0L;
+      // the person controlling the ship should control physics
+      var playerOwner = targetPlayer.GetOwner();
+
+      m_nview.GetZDO().SetOwner(playerOwner);
+      if (previousUserId != targetPlayerId || previousUserId == 0L)
+        m_nview.GetZDO().Set(ZDOVars.s_user, targetPlayerId);
+
+      // end of ownership critical update
 
       UpdatePlayerOnShip(targetPlayer);
       UpdateVehicleSpeedThrottle();
@@ -4575,23 +4799,15 @@
       // allows looking through ship while controlling vehicle.
       VehicleOnboardController.AddOrRemovePlayerBlockingCameraWhileControlling(targetPlayer, true);
 
+
       if (PiecesController)
       {
+        VehiclePiecesController.ForceSyncAllPrefabsToVehiclePosition(Manager.PersistentZdoId, m_nview, transform.position);
         PiecesController.targetController.OnDetectionModeChange();
       }
 
 
-      var isLocalPlayer = targetPlayer == Player.m_localPlayer;
-
-      var previousUserId = previousPlayer?.GetPlayerID() ?? 0L;
-      // the person controlling the ship should control physics
-      var playerOwner = targetPlayer.GetOwner();
-
-      m_nview.GetZDO().SetOwner(playerOwner);
-      if (previousUserId != targetPlayer.GetPlayerID() || previousUserId == 0L)
-        m_nview.GetZDO().Set(ZDOVars.s_user, targetPlayer.GetPlayerID());
-
-      UpdateVehicleRamOwner(targetPlayer);
+      UpdateVehicleRamOwner(targetPlayer, targetPlayerId);
 
       LoggerProvider.LogDebug("Changing ship owner to " + playerOwner +
                               $", name: {targetPlayer.GetPlayerName()}");

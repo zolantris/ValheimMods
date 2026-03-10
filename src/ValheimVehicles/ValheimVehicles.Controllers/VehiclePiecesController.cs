@@ -216,6 +216,9 @@
     private Coroutine? _pendingPiecesCoroutine;
     private bool _pendingPiecesDirty;
 
+    // only one recentering operation may be in-flight at a time
+    private Coroutine? _recenterCoroutineInstance;
+
     // private Bounds BaseControllerHullBounds;
     private Bounds _pendingVehicleBounds;
 
@@ -395,6 +398,24 @@
       targetController.autoFire = true;
     }
 
+    /// <summary>
+    /// This will retrieve all vehicle pieces tracked when the server loads and/or when the current player or other players add new pieces.
+    /// </summary>
+    public static void ForceSyncAllPrefabsToVehiclePosition(int persistentZdoId, ZNetView? netView, Vector3? fallbackPosition)
+    {
+      if (!m_allPieces.TryGetValue(persistentZdoId, out var list)) return;
+      foreach (var zdo in list)
+      {
+        if (zdo == null) continue;
+        if (!zdo.IsValid()) continue;
+
+        var position = fallbackPosition ?? zdo.GetPosition();
+
+        var vehiclePosition = GetVehiclePosition(netView, position);
+        SetPrefabWorldPosition(zdo, vehiclePosition);
+      }
+    }
+
 
     public void Start()
     {
@@ -456,22 +477,46 @@
       CleanUp();
     }
 
+    /// <summary>
+    /// Doing nothing here might actually improve performance as calling a network object with many updates per update is pretty heavy.
+    /// </summary>
+    /// <param name="deltaTime"></param>
+    /// <param name="time"></param>
     public void CustomUpdate(float deltaTime, float time)
     {
-      Client_UpdateAllPieces();
+      // if (IsInvalid()) return;
+      // if (ZNet.instance == null) return;
+      // if (ZNet.instance.IsDedicated()) return;
+      // if (!IsPlayerOwnerOfNetview()) return;
+      //
+      // Client_UpdateAllPieces();
     }
 
     public override void CustomFixedUpdate(float deltaTime)
     {
       if (m_nview == null) return;
+      if (IsInvalid()) return;
+      if (ZNet.instance == null) return;
+      if (ZNet.instance.IsDedicated()) return;
+
       Sync();
+      OwnerSync();
     }
 
+    /// <summary>
+    /// Doing nothing here might actually improve performance as calling a network object with many updates per update is pretty heavy.
+    /// </summary>
+    /// <param name="deltaTime"></param>
+    /// <param name="time"></param>
     public void CustomLateUpdate(float deltaTime)
     {
-      if (ZNet.instance == null || ZNet.instance.IsServer()) return;
-      Client_UpdateAllPieces();
-      UpdateBedPieces();
+      // if (ZNet.instance == null) return;
+      // if (ZNet.instance.IsDedicated()) return;
+      // if (IsInvalid()) return;
+      // if (!IsPlayerOwnerOfNetview()) return;
+      //
+      // Client_UpdateAllPieces();
+      // UpdateBedPieces();
     }
 
     public ZNetView? GetNetView()
@@ -851,6 +896,9 @@
 
       var initialized = m_nview?.GetZDO()
         .GetBool(VehicleZdoVars.ZdoKeyBaseVehicleInitState) ?? false;
+
+      // ensures that all pieces are requested to be brought into the current area
+      ForceSyncAllPrefabsToVehiclePosition(Manager.PersistentZdoId, m_nview, transform.position);
 
       UpdateChunkBoundsData(false);
 
@@ -1269,6 +1317,16 @@
     }
 
     /// <summary>
+    /// Only the owner of the vehicle should sync zdo positions to avoid errors.
+    /// </summary>
+    public void OwnerSync()
+    {
+      if (!IsPlayerOwnerOfNetview()) return;
+      Client_UpdateAllPieces();
+      UpdateBedPieces();
+    }
+
+    /// <summary>
     /// Client should use the Synced rigidbody by default.
     ///
     /// If pieceSync is enabled it runs only that logic
@@ -1339,11 +1397,34 @@
     }
 
     /// <summary>
+    /// Get the vehicle's networked position instead of the current client's position which could be inaccurate
+    /// </summary>
+    private static Vector3 GetVehiclePosition(ZNetView? netView, Vector3 fallbackPosition)
+    {
+      var zdo = netView != null ? netView.GetZDO() : null;
+      var positionToUse = zdo?.GetPosition() ?? fallbackPosition;
+      return positionToUse;
+    }
+
+    /// <summary>
     /// For local updates use position of current transform.
     /// </summary>
     public void ForceUpdateAllPiecePositions()
     {
-      ForceUpdateAllPiecePositions(transform.position);
+      ForceUpdateAllPiecePositions(GetVehiclePosition(m_nview, transform.position));
+    }
+
+    public static void SetPrefabWorldPosition(ZDO zdo, Vector3 vehiclePosition)
+    {
+      if (CanUseActualPiecePosition)
+      {
+        var zdoRelativePosition = vehiclePosition + zdo.GetVec3(VehicleZdoVars.MBPositionHash, Vector3.zero);
+        zdo.SetPosition(zdoRelativePosition);
+      }
+      else
+      {
+        zdo.SetPosition(vehiclePosition);
+      }
     }
 
     /// <summary>
@@ -1361,24 +1442,32 @@
       var rootNvZdo = netView.GetZDO();
       rootNvZdo.SetPosition(vehiclePosition);
 
-      for (var index = 0; index < m_pieces.Count; index++)
+      if (!m_allPieces.TryGetValue(Manager.PersistentZdoId, out var pieceToUpdateList))
       {
-        var nv = m_pieces[index];
-        if (!nv || !nv.IsValid())
+        pieceToUpdateList = m_pieces.Select(x => x.GetZDO()).ToList();
+      }
+
+      var itemsToRemove = new List<ZDO>();
+
+      for (var index = 0; index < pieceToUpdateList.Count; index++)
+      {
+        var zdo = pieceToUpdateList[index];
+        if (zdo == null || !zdo.IsValid())
         {
-          LoggerProvider.LogDebugDebounced(
-            $"Null netview found with m_pieces: netview, safe removing the piece");
-          m_pieces.FastRemoveAt(ref index);
+          if (zdo != null)
+          {
+            itemsToRemove.Add(zdo);
+          }
           continue;
         }
 
-        var hasPrefabPieceData = m_prefabPieceDataItems.TryGetValue(nv.gameObject, out var prefabPieceData);
-
-        if (hasPrefabPieceData)
+        // NOTE: this might be a heavy task (alternatively we could use local dictionary)
+        var nv = ZNetScene.instance.FindInstance(zdo);
+        if (nv && m_prefabPieceDataItems.TryGetValue(nv.gameObject, out var prefabPieceData))
         {
           if (prefabPieceData.IsBed)
           {
-            UpdatePieceZdoPosition(nv.GetZDO(), vehiclePosition, prefabPieceData.IsBed);
+            UpdatePieceZdoPosition(zdo, vehiclePosition, prefabPieceData.IsBed);
             continue;
           }
           if (prefabPieceData.IsSwivelChild && TrySetSwivelPiecePosition(nv))
@@ -1388,8 +1477,23 @@
         }
 
         // updates the zdo for the current location of the piece.
-        nv.GetZDO()?.SetPosition(CanUseActualPiecePosition ? nv.transform.position : vehiclePosition);
+        SetPrefabWorldPosition(zdo, vehiclePosition);
       }
+
+      if (ZNetScene.instance)
+      {
+        foreach (var zdo in itemsToRemove)
+        {
+          var netViewToRemove = ZNetScene.instance.FindInstance(zdo);
+          if (netViewToRemove)
+          {
+            LoggerProvider.LogDebugDebounced(
+              $"invalid zdo found during ForceUpdateAllPiecePositions for piece {netViewToRemove.name}");
+            m_pieces.Remove(netViewToRemove);
+          }
+        }
+      }
+
       var convexHullBounds = convexHullComponent.GetConvexHullBounds(false);
 
       // Removes the temp collider from the parent if not within the parent.
@@ -1402,19 +1506,46 @@
           continue;
         }
 
-        var combinedBounds = GetCombinedColliderBoundsInPiece(nv.gameObject);
+        var isPlayer = nv.GetComponent<Character>()?.IsPlayer() == true;
 
-        // todo handle edge cases like if the temp piece is very close the vehicle.
-        if (!convexHullBounds.Intersects(combinedBounds))
+        // Players must never be evicted from m_tempPieces due to a transient bounds
+        // mismatch during a force-move: their corrected ZDO position (below) will
+        // land them outside the current hull bounds by design.
+        if (!isPlayer)
         {
-          // do not remove the piece otherwise it mutates the current list.
-          RemoveTempPiece(nv, false);
-          m_tempPieces.FastRemoveAt(ref index);
-          continue;
+          var combinedBounds = GetCombinedColliderBoundsInPiece(nv.gameObject);
+
+          // todo handle edge cases like if the temp piece is very close the vehicle.
+          if (!convexHullBounds.Intersects(combinedBounds))
+          {
+            // do not remove the piece otherwise it mutates the current list.
+            RemoveTempPiece(nv, false);
+            m_tempPieces.FastRemoveAt(ref index);
+            continue;
+          }
         }
 
-        // should always use actual position as this is a moving object that might have a ZsyncTransform.
-        nv.m_zdo?.SetPosition(nv.transform.position);
+        // Refresh the relative offset so it reflects where the piece actually is
+        // on the ship right now, not just where it was when it first boarded.
+        // freshOffset = current world pos - vehicle centre of mass.
+        var freshOffset = nv.transform.position - m_localRigidbody.worldCenterOfMass;
+        nv.m_zdo?.Set(VehicleZdoVars.MBPositionHash, freshOffset);
+
+        // Project the piece to its correct destination sector:
+        // vehiclePosition is the new world position the vehicle ZDO was just stamped
+        // to, so vehiclePosition + freshOffset is where this piece should be.
+        var correctedWorldPos = vehiclePosition + freshOffset;
+
+        if (Player.m_localPlayer != null && Player.m_localPlayer.m_nview == nv)
+        {
+          // Advance the streaming reference to the destination so the server does
+          // not cull the local player's ZDO before the teleport fires.
+          ZNet.instance.SetReferencePosition(correctedWorldPos);
+        }
+
+        // Write the destination sector into the ZDO instead of the stale current
+        // world position, preventing the server from seeing this piece in a dead sector.
+        nv.m_zdo?.SetPosition(correctedWorldPos);
       }
     }
 
@@ -1437,9 +1568,8 @@
     /**
      * @warning this must only be called on the client
      */
-    public void Client_UpdateAllPieces()
+    private void Client_UpdateAllPieces()
     {
-      if (IsInvalid()) return;
       var sector = ZoneSystem.GetZone(transform.position);
 
       if (sector == m_sector)
@@ -1460,7 +1590,7 @@
     /// <returns></returns>
     private bool IsPlayerOwnerOfNetview()
     {
-      return m_nview?.GetZDO()?.IsOwner() ?? false;
+      return m_nview != null && (m_nview.GetZDO()?.IsOwner() ?? false);
     }
 
     /// <summary>
@@ -2572,6 +2702,163 @@
       zdo.RemoveVec3(VehicleZdoVars.MBRotationVecHash);
     }
 
+    /// <summary>
+    /// Moves ALL ZDOs that belong to a vehicle to a new world position purely via ZDO
+    /// calls — no live transforms required. Safe to call even if the vehicle GameObject
+    /// has been unloaded/GC'd during an async zone-load wait.
+    ///
+    /// Also freezes every onboard character (kinematic + zero velocity) and returns a
+    /// dictionary mapping each character's ZNetView to the world position they should be
+    /// moved to after the zone finishes loading.  The caller is responsible for actually
+    /// moving those bodies and unfreezing them once the zone is ready.
+    ///
+    /// OFFSET CONVENTIONS:
+    ///   Persistent pieces  — MBPositionHash is localPosition relative to vehicle origin.
+    ///                        destPos = newVehiclePos + localOffset.
+    ///   Dynamic objects    — MBPositionHash is (worldPos - worldCenterOfMass), set by
+    ///                        AddTempPieceProperties and refreshed in ForceUpdateAllPiecePositions.
+    ///                        We re-compute from the live transform here for accuracy, falling
+    ///                        back to the stored value if the netview is no longer alive.
+    ///   Players            — NOT in m_dynamicObjects (AddTemporaryPiece skips properties for
+    ///                        players). They are only in the instance m_tempPieces list, which
+    ///                        is passed in directly.
+    /// </summary>
+    /// <param name="persistentId">Vehicle persistent ZDO id.</param>
+    /// <param name="newVehiclePos">New world position for the vehicle origin.</param>
+    /// <param name="vehicleBodyPos">Current world position of the vehicle rigidbody (before move).</param>
+    /// <param name="liveTempPieces">Instance m_tempPieces list — covers players and any objects
+    ///   that were added without going through InitZdo (e.g. local player).</param>
+    /// <returns>Map of ZNetView → destination world position for every onboard character,
+    ///   to be applied to physics bodies after the zone loads.</returns>
+    /// <summary>
+    /// Updates all piece ZDOs and character positions when teleporting a vehicle.
+    /// Calculates relative offsets and applies them to the new vehicle position.
+    /// </summary>
+    /// <param name="persistentId">The vehicle's persistent ZDO ID</param>
+    /// <param name="newVehiclePos">The destination position for the vehicle</param>
+    /// <param name="vehicleCurrentPos">Current ZDO position of the vehicle (authoritative source of truth)</param>
+    /// <param name="liveTempPieces">List of live temporary pieces (players, etc.)</param>
+    /// <returns>Dictionary mapping ZNetViews to their destination positions</returns>
+    public static Dictionary<ZNetView, Vector3> StampAllVehicleZdosToPosition(
+      int persistentId,
+      Vector3 newVehiclePos,
+      Vector3 vehicleCurrentPos,
+      List<ZNetView>? liveTempPieces)
+    {
+      var newSector = ZoneSystem.GetZone(newVehiclePos);
+      var characterDestinations = new Dictionary<ZNetView, Vector3>();
+
+      // -----------------------------------------------------------------------
+      // 1. Persistent pieces (hull, furniture, etc.)
+      //    MBPositionHash = localPosition relative to vehicle origin.
+      // -----------------------------------------------------------------------
+      if (m_allPieces.TryGetValue(persistentId, out var pieceZdos))
+      {
+        for (var i = pieceZdos.Count - 1; i >= 0; i--)
+        {
+          var zdo = pieceZdos[i];
+          if (zdo == null || !zdo.IsValid())
+          {
+            pieceZdos.RemoveAt(i);
+            continue;
+          }
+
+          var localOffset = zdo.GetVec3(VehicleZdoVars.MBPositionHash, Vector3.zero);
+          zdo.SetPosition(newVehiclePos + localOffset);
+          zdo.SetSector(newSector);
+        }
+      }
+
+      // -----------------------------------------------------------------------
+      // 2. Dynamic objects registered via InitZdo (animals, carts, non-player
+      //    temp pieces). MBPositionHash = worldPos - worldCenterOfMass.
+      //    We re-derive from the live netview when available for accuracy.
+      // -----------------------------------------------------------------------
+      if (m_dynamicObjects.TryGetValue(persistentId, out var dynamicZdoIds))
+      {
+        for (var i = dynamicZdoIds.Count - 1; i >= 0; i--)
+        {
+          var zdoid = dynamicZdoIds[i];
+          var zdo = ZDOMan.instance?.GetZDO(zdoid);
+          if (zdo == null || !zdo.IsValid())
+          {
+            dynamicZdoIds.RemoveAt(i);
+            continue;
+          }
+
+          // Prefer live transform for an accurate current offset.
+          Vector3 relativeOffset;
+          var nv = ZNetScene.instance != null ? ZNetScene.instance.FindInstance(zdo) : null;
+          if (nv != null)
+          {
+            relativeOffset = nv.transform.position - vehicleCurrentPos;
+          }
+          else
+          {
+            relativeOffset = zdo.GetVec3(VehicleZdoVars.MBPositionHash, Vector3.zero);
+          }
+
+          var destPos = newVehiclePos + relativeOffset;
+          zdo.Set(VehicleZdoVars.MBPositionHash, relativeOffset);
+          zdo.SetPosition(destPos);
+          zdo.SetSector(ZoneSystem.GetZone(destPos));
+
+          // Freeze character bodies and record their destination.
+          if (nv != null)
+          {
+            var character = nv.GetComponent<Character>();
+            if (character != null && character.m_body != null)
+            {
+              character.m_body.isKinematic = true;
+              character.m_body.linearVelocity = Vector3.zero;
+              character.m_body.angularVelocity = Vector3.zero;
+              characterDestinations[nv] = destPos;
+            }
+          }
+        }
+      }
+
+      // -----------------------------------------------------------------------
+      // 3. Live temp pieces — covers players (who skip AddTempPieceProperties)
+      //    and any other objects that never went through InitZdo.
+      //    Offset = worldPos - vehicleCurrentPos (consistent with dynamic objects).
+      // -----------------------------------------------------------------------
+      if (liveTempPieces != null)
+      {
+        foreach (var nv in liveTempPieces)
+        {
+          if (!nv) continue;
+          var zdo = nv.GetZDO();
+          if (zdo == null) continue;
+
+          // Skip if already handled via m_dynamicObjects above.
+          if (characterDestinations.ContainsKey(nv)) continue;
+
+          var relativeOffset = nv.transform.position - vehicleCurrentPos;
+          var destPos = newVehiclePos + relativeOffset;
+
+          zdo.Set(VehicleZdoVars.MBPositionHash, relativeOffset);
+          zdo.SetPosition(destPos);
+          zdo.SetSector(ZoneSystem.GetZone(destPos));
+
+          // Advance streaming reference for local player.
+          var character = nv.GetComponent<Character>();
+          if (character != null && character.m_body != null)
+          {
+            character.m_body.isKinematic = true;
+            character.m_body.linearVelocity = Vector3.zero;
+            character.m_body.angularVelocity = Vector3.zero;
+            characterDestinations[nv] = destPos;
+          }
+
+          if (Player.m_localPlayer != null && Player.m_localPlayer.m_nview == nv)
+            ZNet.instance.SetReferencePosition(destPos);
+        }
+      }
+
+      return characterDestinations;
+    }
+
     public void ActivatePiece(ZNetView netView)
     {
       if (netView == null) return;
@@ -2638,11 +2925,6 @@
         TrySetPieceToParent(netView);
       }
 
-      OnPieceAdded(netView.gameObject);
-
-      // still need this for flickering but it may cause problems when the object leaves the area.
-      // PieceActivatorHelpers.FixPieceMeshes(netView);
-
       if (!shouldSkipIgnoreColliders)
       {
         OnAddPieceIgnoreColliders(netView);
@@ -2657,12 +2939,34 @@
 
     public void RemoveTempPiece(ZNetView netView, bool shouldRemoveFromList = true)
     {
+      if (!netView) return; // Null check to prevent crashes
+
       RemoveDynamicParentForVehicle(netView);
       netView.transform.SetParent(null);
 
       if (shouldRemoveFromList)
       {
         m_tempPieces.Remove(netView);
+      }
+
+      // Remove from m_dynamicObjects so it is not teleported with the vehicle
+      // on future far-zone moves. Without this cleanup the ZDOID lingers and
+      var zdo = netView.GetZDO();
+      if (zdo != null && m_dynamicObjects.TryGetValue(PersistentZdoId, out var dynamicList))
+      {
+        dynamicList.Remove(zdo.m_uid);
+      }
+
+      if (m_prefabPieceDataItems.ContainsKey(netView.gameObject))
+      {
+        var errorMessage =
+          $"RemoveTempPiece: temp piece '{netView.name}' was found in m_prefabPieceDataItems. " +
+          "Temp pieces must never be added to the convex hull — this is a bug. Removing now to prevent hull inflation.";
+        LoggerProvider.LogError(errorMessage);
+        OnPieceRemoved(netView.gameObject);
+#if DEBUG
+        throw new Exception(errorMessage);
+#endif
       }
     }
 
@@ -3010,8 +3314,8 @@
         );
       }
 
-      AddPiece(netView, true);
       InitZdo(zdo);
+      AddPiece(netView, true);
 
       if (previousCount == 0 && GetPieceCount() == 1) SetInitComplete();
     }
@@ -3438,9 +3742,22 @@
         !nv || !nv.gameObject || !nv.gameObject.activeInHierarchy ||
         !nv.transform || !nv.transform.IsChildOf(GetPiecesContainer()));
 
-      m_tempPieces.RemoveAll(nv =>
-        !nv || !nv.gameObject || !nv.gameObject.activeInHierarchy ||
-        !nv.transform || !nv.transform.IsChildOf(GetPiecesContainer()));
+      // Remove temp pieces AND clean up m_dynamicObjects entries
+      // Cannot use RemoveAll directly - must call RemoveTempPiece to scrub m_dynamicObjects
+      for (var i = m_tempPieces.Count - 1; i >= 0; i--)
+      {
+        var nv = m_tempPieces[i];
+        if (!nv || !nv.gameObject || !nv.gameObject.activeInHierarchy ||
+            !nv.transform || !nv.transform.IsChildOf(GetPiecesContainer()))
+        {
+          // Only call RemoveTempPiece if nv exists (to clean up m_dynamicObjects)
+          if (nv)
+          {
+            RemoveTempPiece(nv, false);
+          }
+          m_tempPieces.RemoveAt(i);
+        }
+      }
 
       // This is a safety check to ensure we do not have stale prefab entries. This may need to be run on generation of convex hull as well.
       m_prefabPieceDataItems.RemoveNullKeys();
@@ -3450,7 +3767,7 @@
     /// - Must be wrapped in a delay/coroutine to prevent spamming on unmounting bounds
     /// - cannot be de-encapsulated by default so regenerating it seems prudent on piece removal
     /// </summary>
-    /// 
+    ///
     /// <param name="isForced"></param>
     public override void RebuildBounds(bool isForced = false)
     {
@@ -3492,6 +3809,117 @@
     {
       // Update tracked VehicleColliders to ignore.
       Manager.GetComponentsInChildren(vehicleCollidersToIgnore);
+    }
+
+    /// <summary>
+    /// Recenters the vehicle's ZDO origin to the geometric hull center after every
+    /// convex hull rebuild.
+    ///
+    /// WHY: MBPositionHash offsets are stored as localPosition relative to the
+    /// VehiclePiecesController transform origin. Asymmetric building drifts that
+    /// origin far from the actual piece layout. ForceUpdateAllPiecePositions then
+    /// stamps piece ZDOs to vehiclePosition (= drifted origin), placing them in
+    /// the wrong zone sector where the server culls them.
+    ///
+    /// WHY NOT touch rigidbody/kinematic state:
+    /// This fires from OnConvexHullGenerated which can happen while sailing (player
+    /// adds a piece mid-voyage). Making the body kinematic or zeroing velocity would
+    /// violently interrupt movement. Only ZDO records are updated — the transform
+    /// hierarchy is never touched.
+    ///
+    /// HOW: Pieces are children of the rigidbody transform so their localPosition
+    /// is always accurate relative to the body origin. We subtract the XZ geometric
+    /// center offset from each localPosition to get the new MBPositionHash relative
+    /// to the new center, then shift the root ZDO world position by the same amount.
+    /// Y excluded — intentional (buoyancy / terrain).
+    /// </summary>
+    private IEnumerator RecenterVehicleOriginCoroutine()
+    {
+      // Wait one fixed-update so we are between physics steps, not mid-integration.
+      yield return new WaitForFixedUpdate();
+
+      try
+      {
+        if (!Manager || !Manager.IsInitialized) yield break;
+        if (!m_nview || m_nview.GetZDO() == null) yield break;
+        if (!m_nview.IsOwner()) yield break;
+        if (MovementController == null || MovementController.m_body == null) yield break;
+
+        // Geometric center of all hull pieces in VehiclePiecesController local space.
+        var localCenter = convexHullComponent.GetConvexHullBounds(true).center;
+
+        // Only correct X/Z — Y is intentional (buoyancy / terrain height).
+        var xzShift = new Vector3(localCenter.x, 0f, localCenter.z);
+
+        const float recenterThreshold = 2f; // metres
+        if (xzShift.magnitude < recenterThreshold) yield break;
+
+        LoggerProvider.LogDebug(
+          $"RecenterVehicleOrigin: XZ drift {xzShift.magnitude:F1} m — recentering ZDO offsets (vehicle keeps moving).");
+
+        // Re-snapshot each piece's localPosition minus the XZ drift into MBPositionHash.
+        // localPosition is always accurate since pieces are parented to the body.
+        // The offset is now relative to the new geometric center.
+        foreach (var nv in m_pieces)
+        {
+          if (!nv) continue;
+          var zdo = nv.GetZDO();
+          if (zdo == null) continue;
+          zdo.Set(VehicleZdoVars.MBPositionHash, nv.transform.localPosition - xzShift);
+        }
+
+        // Shift the root ZDO's recorded world position to the new logical center.
+        // The body is NOT moved — only the ZDO's stored position changes.
+        // Next time ForceUpdateAllPiecePositions runs it will use this corrected origin.
+        var worldShift = transform.TransformDirection(xzShift);
+        var newWorldOrigin = MovementController.m_body.position + worldShift;
+        var rootZdo = m_nview.GetZDO();
+        rootZdo.SetPosition(newWorldOrigin);
+        rootZdo.SetSector(ZoneSystem.GetZone(newWorldOrigin));
+
+        LoggerProvider.LogDebug(
+          $"RecenterVehicleOrigin: done. New ZDO world origin: {newWorldOrigin}");
+      }
+      finally
+      {
+        _recenterCoroutineInstance = null;
+      }
+    }
+
+    private void RequestRecenterVehicleOrigin()
+    {
+      // Debounce: only one recentering operation may be in-flight at a time.
+      if (_recenterCoroutineInstance != null) return;
+      _recenterCoroutineInstance = StartCoroutine(RecenterVehicleOriginCoroutine());
+    }
+
+    /// <summary>
+    /// Public method to manually trigger vehicle recentering via console command.
+    /// Players can use "vehicle recenter" to manually recenter the vehicle origin.
+    /// This is safer than automatic recentering which could regress user ships.
+    /// </summary>
+    public void ManualRecenterVehicleOrigin()
+    {
+      if (_recenterCoroutineInstance != null)
+      {
+        LoggerProvider.LogWarning("A recenter operation is already in progress.");
+        return;
+      }
+
+      if (!m_nview || !m_nview.IsValid())
+      {
+        LoggerProvider.LogError("Cannot recenter: vehicle network view is invalid.");
+        return;
+      }
+
+      if (!m_nview.IsOwner())
+      {
+        LoggerProvider.LogError("Cannot recenter: you must be the owner of the vehicle.");
+        return;
+      }
+
+      LoggerProvider.LogInfo("Manual vehicle recenter requested by player.");
+      RequestRecenterVehicleOrigin();
     }
 
     /// <summary>
@@ -3750,7 +4178,7 @@
     /// <summary>
     /// Gets all colliders even inactive ones, so they can ignore the vehicles colliders that should not interact with pieces aboard a vehicle
     /// </summary>
-    /// If only including active colliders, this would cause a problem if a WearNTear Piece updated its object and the collider began interacting with the vehicle 
+    /// If only including active colliders, this would cause a problem if a WearNTear Piece updated its object and the collider began interacting with the vehicle
     /// <param name="netView"></param>
     /// <returns></returns>
     public static List<Collider> GetCollidersInPiece(GameObject netView,

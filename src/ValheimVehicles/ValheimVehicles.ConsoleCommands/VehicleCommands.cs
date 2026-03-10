@@ -16,10 +16,12 @@ using UnityEngine.Assertions.Must;
 using ValheimVehicles.BepInExConfig;
 using ValheimVehicles.Helpers;
 using ValheimVehicles.Prefabs;
+using ValheimVehicles.Shared.Constants;
 using ValheimVehicles.SharedScripts;
 using ValheimVehicles.Components;
 using ValheimVehicles.Controllers;
 using ValheimVehicles.Interfaces;
+using ValheimVehicles.Shared.Constants;
 using ValheimVehicles.UI;
 using Zolantris.Shared;
 using Zolantris.Shared.Debug;
@@ -56,28 +58,136 @@ public class VehicleCommands : ConsoleCommand
     public const string toggleOceanSway = "toggleOceanSway";
     public const string resetVehicleOwner = "resetLocalOwnership";
     public const string clearBoundaryChunkData = "clearBoundaryChunkData";
+    public const string recenter = "recenter";
+    public const string fixAllVehiclePositions = "fixAllVehiclePositions";
+    public const string fixNearbyVehiclePositions = "fixNearbyVehiclePositions";
+  }
+
+  private struct CommandInfo
+  {
+    public string CommandName;
+    public string CommandDescription;
+    public bool IsAdmin;
+    public bool IsDebugOnly;
+
+    public CommandInfo(string commandName, string commandDescription, bool isAdmin = false, bool isDebugOnly = false)
+    {
+      CommandName = commandName;
+      CommandDescription = commandDescription;
+      IsAdmin = isAdmin;
+      IsDebugOnly = isDebugOnly;
+    }
+  }
+
+  private static readonly List<CommandInfo> VehicleCommandDefinitions = BuildVehicleCommandDefinitions();
+
+  private static List<CommandInfo> BuildVehicleCommandDefinitions()
+  {
+    var commands = new List<CommandInfo>();
+
+#if DEBUG
+    // Debug-only commands appear first and are omitted from production builds.
+    commands.Add(new CommandInfo(
+      VehicleCommandArgs.debugShort,
+      "Shortcut for debug command",
+      true,
+      true));
+
+    commands.Add(new CommandInfo(
+      VehicleCommandArgs.config,
+      "Will show a config menu related to the current vehicle you are on. You can customize values specifically for your current vehicle. This menu must be reopened via command or via the power lever whenever the user changes vehicles.",
+      isDebugOnly: true));
+
+    commands.Add(new CommandInfo(
+      VehicleCommandArgs.recenter,
+      "Manually re-centers the vehicle's ZDO origin to the geometric hull center. This prevents piece ZDOs from drifting into foreign zone sectors."));
+#endif
+
+    commands.AddRange(new[]
+    {
+      new CommandInfo(
+        VehicleCommandArgs.debug,
+        "Will show a menu with options like rotating or debugging vehicle colliders",
+        true),
+
+      new CommandInfo(
+        VehicleCommandArgs.destroy,
+        "Will DELETE the current raft and BREAK all pieces. This is a destructive command. You have been warned!",
+        true),
+
+      new CommandInfo(
+        VehicleCommandArgs.recover,
+        "Will recover any vehicles within range of 1000"),
+
+      new CommandInfo(
+        VehicleCommandArgs.rotate,
+        "Defaults to zeroing x and z tilt. Can also provide 3 args: x y z",
+        true),
+
+      new CommandInfo(
+        VehicleCommandArgs.move,
+        "Must provide 3 args: x y z, the movement is relative to those points",
+        true),
+
+      new CommandInfo(
+        VehicleCommandArgs.moveUp,
+        "Moves the vehicle within 50 units upwards by the value provided. Capped at 30 units to be safe. And Capped at 10 units lowest world position.",
+        true),
+
+      new CommandInfo(
+        VehicleCommandArgs.toggleOceanSway,
+        "Stops the vehicle from swaying in the water. It will stay at 0 degrees (x and z) tilt and only allow rotating on y axis"),
+
+      new CommandInfo(
+        VehicleCommandArgs.reportInfo,
+        "Outputs information related to the vehicle the player is on or near. This is meant for error reports"),
+
+      new CommandInfo(
+        VehicleCommandArgs.colliderEditMode,
+        "Lets the player toggle collider edit mode for all vehicles allowing editing water displacement masks and other hidden items"),
+
+      new CommandInfo(
+        VehicleCommandArgs.creative,
+        "Toggles creative mode for vehicle building. This will lock the player so the vehicle does not kill them while it moves into creative mode. This is not meant to be used while on a moving vehicle or in combat. Use with caution."),
+
+      new CommandInfo(
+        VehicleCommandArgs.resetVehicleOwner,
+        "Resets the vehicle ownership to the local player"),
+
+      new CommandInfo(
+        VehicleCommandArgs.clearBoundaryChunkData,
+        "Clears the boundary chunk data for the nearest vehicle. This will force a rebuild of the convex hull boundary constraint. Boundary chunk data is use to limit the extent the vehicle can grow to."),
+
+      new CommandInfo(
+        VehicleCommandArgs.fixAllVehiclePositions,
+        "Fixes the position of vehicle and all prefabs that are part of the vehicle. Applies to the entire world. Use `fixNearbyVehiclePositions` if you are not an admin or want to fix a vehicle in your area.\nOptional args: <minHeight> <maxHeight>. When provided, the vehicle Y position is clamped to [minHeight, maxHeight] before syncing pieces. Useful if vehicles have fallen through the ground or launched into the sky.\nExample: vehicle fixAllVehiclePositions -100 500\nWarning this will potentially kill players if they are mid-flight or on a vehicle that this command runs on.",
+        true),
+
+      new CommandInfo(
+        VehicleCommandArgs.fixNearbyVehiclePositions,
+        "Fixes the position of vehicle and all prefabs that are part of the vehicle. Applies only to vehicles in a radius around the player.\nOptional args: radiusX radiusZ minHeight maxHeight. Defaults to 250 250 for the radius. Example: vehicle fixNearbyVehiclePositions 250 250 -100 500"),
+
+      new CommandInfo(
+        VehicleCommandArgs.help,
+        "Shows this help message")
+    });
+
+    return commands;
   }
 
   public override string Help => OnHelp();
 
   public static string OnHelp()
   {
-    return
-      "Runs vehicle commands, each command will require parameters to run use help to see the input values." +
-#if DEBUG
-      // config is only debug for now.
-      $"\n<{VehicleCommandArgs.config}>: will show a menu related to the current vehicle you are on. This GUI menu will let you customize values specifically for your current vehicle." +
-#endif
-      $"\n<{VehicleCommandArgs.destroy}>: will DELETE the current raft and BREAK all pieces. This is a destructive admin-only command or (if cheats are enabled). You have been warned!" +
-      $"\n<{VehicleCommandArgs.debug}>: will show a menu with options like rotating or debugging vehicle colliders" +
-      $"\n<{VehicleCommandArgs.recover}>: will recover any vehicles within range of 1000" +
-      $"\n<{VehicleCommandArgs.rotate}>: defaults to zeroing x and z tilt. Can also provide 3 args: x y z" +
-      $"\n<{VehicleCommandArgs.toggleOceanSway}>: stops the vehicle from swaying in the water. It will stay at 0 degrees (x and z) tilt and only allow rotating on y axis" +
-      $"\n<{VehicleCommandArgs.reportInfo}>: outputs information related to the vehicle the player is on or near. This is meant for error reports" +
-      $"\n<{VehicleCommandArgs.moveUp}>: Moves the vehicle within 50 units upwards by the value provided. Capped at 30 units to be safe. And Capped at 10 units lowest world position." +
-      $"\n<{VehicleCommandArgs.move}>: Must provide 3 args: x y z, the movement is relative to those points" +
-      $"\n<{VehicleCommandArgs.colliderEditMode}>: Lets the player toggle collider edit mode for all vehicles allowing editing water displacement masks and other hidden items" +
-      $"\n<{VehicleCommandArgs.clearBoundaryChunkData}>: Clears the boundary chunk data for the nearest vehicle. This will force a rebuild of the convex hull boundary constraint. Boundary chunk data is use to limit the extent the vehicle can grow to.";
+    var helpText = "Runs vehicle commands, each command will require parameters to run use help to see the input values.";
+
+    foreach (var cmd in VehicleCommandDefinitions)
+    {
+      var prefix = cmd.IsAdmin ? "[Admin-only]: " : "";
+      helpText += $"\n<{cmd.CommandName}>: {prefix}{cmd.CommandDescription}";
+    }
+
+    return helpText;
   }
 
   public override void Run(string[] args)
@@ -101,19 +211,26 @@ public class VehicleCommands : ConsoleCommand
       return;
     }
 
+    var commandInfo = VehicleCommandDefinitions.FirstOrDefault(x => x.CommandName == firstArg);
+    if (string.IsNullOrEmpty(commandInfo.CommandName))
+    {
+      Logger.LogMessage($"Unknown vehicle command '{firstArg}'. Run 'vehicle {VehicleCommandArgs.help}' for options.");
+      return;
+    }
+
+    if (commandInfo.IsAdmin && !CanRunCheatCommand()) return;
+
     var nextArgs = args.Skip(1).ToArray();
 
     switch (firstArg)
     {
       case VehicleCommandArgs.move:
-        if (!CanRunCheatCommand()) return;
         VehicleMove(nextArgs);
         break;
       case VehicleCommandArgs.toggleOceanSway:
         VehicleToggleOceanSway();
         break;
       case VehicleCommandArgs.rotate:
-        if (!CanRunCheatCommand()) return;
         VehicleRotate(args);
         break;
       case VehicleCommandArgs.recover:
@@ -134,12 +251,10 @@ public class VehicleCommands : ConsoleCommand
       case VehicleCommandArgs.destroy:
         DestroyCurrentVehicle();
         break;
-#if DEBUG
       // config is not ready - only debug for now.
       case VehicleCommandArgs.config:
         ToggleVehicleGuiConfig();
         break;
-#endif
       case VehicleCommandArgs.reportInfo:
         OnReportInfo();
         break;
@@ -147,7 +262,6 @@ public class VehicleCommands : ConsoleCommand
         ToggleColliderEditMode();
         break;
       case VehicleCommandArgs.moveUp:
-        if (!CanRunCheatCommand()) return;
         VehicleMoveVertically(nextArgs);
         break;
       case VehicleCommandArgs.resetVehicleOwner:
@@ -158,6 +272,15 @@ public class VehicleCommands : ConsoleCommand
         break;
       case VehicleCommandArgs.clearBoundaryChunkData:
         ClearAllVehicleBoundaryChunks();
+        break;
+      case VehicleCommandArgs.recenter:
+        VehicleRecenter();
+        break;
+      case VehicleCommandArgs.fixAllVehiclePositions:
+        RepairAllVehiclePositions(nextArgs);
+        break;
+      case VehicleCommandArgs.fixNearbyVehiclePositions:
+        RepairNearbyVehiclePositions(nextArgs);
         break;
     }
   }
@@ -338,23 +461,46 @@ public class VehicleCommands : ConsoleCommand
     var player = character.GetComponent<Player>();
     if (player == null)
     {
+      // Non-player character — move body + ZDO directly.
       character.m_body.position = toPosition;
       character.m_nview.m_zdo.SetPosition(toPosition);
       character.m_nview.m_zdo.SetRotation(character.transform.rotation);
       return;
     }
+
     if (Player.m_localPlayer == player)
     {
+      // For the local player we must update ALL of: reference position, transform,
+      // rigidbody, and ZDO. Updating only SetReferencePosition leaves the ZDO in
+      // the old zone — the server culls it and the player gets deleted.
       ZNet.instance.SetReferencePosition(toPosition);
+
+      // Move the physics body (authoritative position for physics).
+      if (player.m_body.isKinematic)
+        player.m_body.isKinematic = false;
+      player.m_body.position = toPosition;
+      player.m_body.linearVelocity = Vector3.zero;
+      player.m_body.angularVelocity = Vector3.zero;
+
+      // Move the transform so it matches immediately before the next frame.
+      player.transform.position = toPosition;
+
+      // Stamp the ZDO to the new position and sector so the server keeps the
+      // player alive in the new zone rather than culling them from the old one.
+      var playerZdo = player.m_nview?.GetZDO();
+      if (playerZdo != null)
+      {
+        playerZdo.SetPosition(toPosition);
+        playerZdo.SetSector(ZoneSystem.GetZone(toPosition));
+      }
     }
     else
     {
-      // reset teleporting
+      // Remote player — use the standard teleport path.
       player.m_teleporting = false;
       player.m_teleportTimer = 999f;
       player.TeleportTo(toPosition, character.transform.rotation, false);
     }
-
   }
 
   /// <summary>
@@ -368,73 +514,72 @@ public class VehicleCommands : ConsoleCommand
   {
     if (data == null) yield break;
     if (data.Value.charactersOnShip.Count <= 0) yield break;
-    var piecesController =
-      data.Value.OnboardController?.PiecesController?.transform;
+
+    var piecesController = data.Value.OnboardController?.PiecesController?.transform;
     var zdo = data.Value.OnboardController?.Manager?.m_nview?.GetZDO();
 
-    if (piecesController == null || zdo == null) yield break;
+    if (zdo == null) yield break;
+    // piecesController transform may be null if the vehicle was unloaded during
+    // the far-zone teleport — all access below is guarded against this.
 
     foreach (var safeMoveCharacterData in data.Value.charactersOnShip)
     {
       var targetLocation = nextPosition + safeMoveCharacterData.lastLocalOffset;
+
+      // Only do the delta-distance correction if the transform is still alive.
+      if (piecesController != null && piecesController)
       {
         var safeMoveCharacterPos = safeMoveCharacterData.character.transform.position;
-        var piecesControllerPos = piecesController.transform.position;
+        var piecesControllerPos = piecesController.position;
 
-        var deltaX = safeMoveCharacterPos.x -
-                     piecesControllerPos.x;
-        var deltaY = safeMoveCharacterPos.y -
-                     piecesControllerPos.y;
-        var deltaZ = safeMoveCharacterPos.z -
-                     piecesControllerPos.z;
+        var deltaX = safeMoveCharacterPos.x - piecesControllerPos.x;
+        var deltaY = safeMoveCharacterPos.y - piecesControllerPos.y;
+        var deltaZ = safeMoveCharacterPos.z - piecesControllerPos.z;
 
-        if (Mathf.Abs(deltaX) > 50f || Mathf.Abs(deltaY) > 50f ||
-            Mathf.Abs(deltaZ) > 50f)
-          targetLocation = zdo!
-                             .GetPosition() +
-                           safeMoveCharacterData.lastLocalOffset;
-
-        TeleportImmediately(safeMoveCharacterData.character,
-          targetLocation);
-
-        if (Player.m_localPlayer == safeMoveCharacterData.character)
-        {
-          ZNet.instance.SetReferencePosition(targetLocation);
-        }
+        if (Mathf.Abs(deltaX) > 50f || Mathf.Abs(deltaY) > 50f || Mathf.Abs(deltaZ) > 50f)
+          targetLocation = zdo.GetPosition() + safeMoveCharacterData.lastLocalOffset;
       }
+      else
+      {
+        // Vehicle transform destroyed — use ZDO position as the origin.
+        targetLocation = zdo.GetPosition() + safeMoveCharacterData.lastLocalOffset;
+      }
+
+      TeleportImmediately(safeMoveCharacterData.character, targetLocation);
+
+      if (Player.m_localPlayer == safeMoveCharacterData.character)
+        ZNet.instance.SetReferencePosition(targetLocation);
     }
 
     yield return new WaitForFixedUpdate();
 
     var timer = Stopwatch.StartNew();
     var complete = false;
-    while (timer.ElapsedMilliseconds < 5000 && complete == false)
+    while (timer.ElapsedMilliseconds < 5000 && !complete)
     {
-      if (complete) break;
-
       var isSuccess = true;
       foreach (var playerData in data.Value.charactersOnShip)
       {
+        if (!playerData.character) continue;
+
         if (playerData.character.IsTeleporting())
         {
           isSuccess = false;
           break;
         }
 
-        if (piecesController != null)
+        // Only re-parent onto the vehicle if it's still alive.
+        if (piecesController != null && piecesController)
         {
           if (!playerData.isDebugFlying)
           {
-            playerData.character.transform.SetParent(piecesController
-              .transform);
-            playerData.character.transform.localPosition =
-              playerData.lastLocalOffset;
+            playerData.character.transform.SetParent(piecesController);
+            playerData.character.transform.localPosition = playerData.lastLocalOffset;
           }
           else
           {
             playerData.character.transform.position =
-              piecesController.transform.position +
-              playerData.lastLocalOffset;
+              piecesController.position + playerData.lastLocalOffset;
           }
         }
 
@@ -442,63 +587,192 @@ public class VehicleCommands : ConsoleCommand
       }
 
       yield return new WaitForFixedUpdate();
-
       complete = isSuccess;
     }
 
     if (!complete)
       foreach (var playerData in data.Value.charactersOnShip)
+      {
+        if (!playerData.character) continue;
         ResetPlayerVelocities(playerData.character);
+      }
 
     if (shouldProtectAgainstFallDamage)
     {
-      // keep running this for the first 5 seconds to prevent falldamage while the ship recovers it's physics and the player lands on the ship.
       while (timer.ElapsedMilliseconds < 5000)
       {
         foreach (var playerData in data.Value.charactersOnShip)
         {
+          if (!playerData.character) continue;
           playerData.character.m_fallTimer = 0f;
           playerData.character.m_maxAirAltitude = -10000f;
         }
-
         yield return new WaitForFixedUpdate();
       }
     }
-    timer.Restart();
 
+    timer.Restart();
     yield return null;
   }
 
   private static IEnumerator MoveVehicleIntoFarZone(VehicleManager vehicleInstance,
     Vector3 offset, Action<Vector3> onPositionReady)
   {
-    if (vehicleInstance.PiecesController == null) yield break;
-    var newLocation =
-      VectorUtils.MergeVectors(vehicleInstance.transform.position, offset);
+    if (vehicleInstance == null || vehicleInstance.PiecesController == null) yield break;
 
-    // attempts to for the ship to move here.
+    var newLocation = VectorUtils.MergeVectors(vehicleInstance.transform.position, offset);
     var zoneToMoveTo = ZoneSystem.GetZone(newLocation);
+
+    // -----------------------------------------------------------------------
+    // Step 1: Broadcast IsTeleporting = true to ALL clients via RPC + ZDO.
+    // GuardedFixedUpdate on every client will keep the body kinematic and
+    // block ownership claims for the entire duration of the move.
+    // Also freeze the local body directly so there is zero physics gap between
+    // now and the first time GuardedFixedUpdate reads the ZDO value.
+    // -----------------------------------------------------------------------
+    var movementController = vehicleInstance.MovementController;
+    movementController?.SetIsTeleporting(true);
+
+    var wasKinematic = false;
+    // Use vehicle ZDO position as the authoritative reference (source of truth in multiplayer).
+    // NEVER use transform.position as it may be out of sync on non-owner clients.
+    var vehicleCurrentPos = vehicleInstance.m_nview.m_zdo.GetPosition();
+    if (movementController != null && movementController.m_body != null)
+    {
+      wasKinematic = movementController.m_body.isKinematic;
+      movementController.m_body.isKinematic = true;
+      movementController.m_body.linearVelocity = Vector3.zero;
+      movementController.m_body.angularVelocity = Vector3.zero;
+    }
+
+    // Capture destinations outside the try so the post-yield steps can access it.
+    Dictionary<ZNetView, Vector3> characterDestinations;
+
+    try
+    {
+      // -----------------------------------------------------------------------
+      // Step 2: Snapshot offsets and stamp all ZDOs (pieces + dynamic objects +
+      // players) BEFORE the zone-load wait.
+      // -----------------------------------------------------------------------
+      var persistentId = vehicleInstance.PersistentZdoId;
+      var liveTempPieces = vehicleInstance.PiecesController.m_tempPieces;
+
+      // Root vehicle ZDO first — anchors the vehicle in the new sector.
+      vehicleInstance.m_nview.m_zdo.SetPosition(newLocation);
+      vehicleInstance.m_nview.m_zdo.SetSector(ZoneSystem.GetZone(newLocation));
+
+      characterDestinations = VehiclePiecesController.StampAllVehicleZdosToPosition(
+        persistentId, newLocation, vehicleCurrentPos, liveTempPieces);
+
+      // Only update reference position if local player is actually onboard (in characterDestinations).
+      // StampAllVehicleZdosToPosition handles all onboard characters via temp pieces and dynamic objects.
+      // If the player is not in that list, they are NOT onboard and should NOT be teleported.
+      var localPlayer = Player.m_localPlayer;
+      if (localPlayer != null && localPlayer.m_nview != null)
+      {
+        if (characterDestinations.ContainsKey(localPlayer.m_nview))
+        {
+          // Player is onboard and will be teleported — update reference position for zone streaming.
+          ZNet.instance.SetReferencePosition(newLocation);
+        }
+      }
+    }
+    catch (Exception e)
+    {
+      LoggerProvider.LogError($"MoveVehicleIntoFarZone: exception during ZDO stamping — aborting teleport. {e}");
+      movementController?.SetIsTeleporting(false);
+      yield break;
+    }
+
+    // -----------------------------------------------------------------------
+    // Step 3: Kick off zone generation at the destination.
+    // -----------------------------------------------------------------------
     if (!ZoneSystem.instance.PokeLocalZone(zoneToMoveTo))
-      if (!ZoneSystem.instance.SpawnZone(zoneToMoveTo,
-            ZoneSystem.SpawnMode.Full, out _))
+      if (!ZoneSystem.instance.SpawnZone(zoneToMoveTo, ZoneSystem.SpawnMode.Full, out _))
         ZoneSystem.instance.CreateLocalZones(newLocation);
 
     var timer = Stopwatch.StartNew();
     yield return new WaitUntil(() =>
+      ZoneSystem.instance.IsZoneGenerated(zoneToMoveTo) ||
+      timer.ElapsedMilliseconds > 15000);
+
+    timer.Restart();
+    yield return new WaitUntil(() =>
       ZoneSystem.instance.IsZoneLoaded(newLocation) ||
       timer.ElapsedMilliseconds > 5000);
 
-    if (vehicleInstance.m_nview == null || vehicleInstance.m_nview.m_zdo == null) yield break;
+    // -----------------------------------------------------------------------
+    // Step 4: Zone is loaded. Validate vehicle ref, then move body.
+    // -----------------------------------------------------------------------
+    if (vehicleInstance == null ||
+        vehicleInstance.m_nview == null ||
+        vehicleInstance.m_nview.m_zdo == null)
+    {
+      // Clear teleport flag so no client stays permanently frozen.
+      movementController?.SetIsTeleporting(false);
+      foreach (var kvp in characterDestinations)
+        if (kvp.Key && kvp.Key.GetComponent<Character>() is {} c)
+          c.m_body.isKinematic = false;
+      yield break;
+    }
 
-    vehicleInstance.transform.position = newLocation;
-    vehicleInstance.m_nview.m_zdo.SetPosition(newLocation);
-    vehicleInstance.PiecesController.ForceUpdateAllPiecePositions(newLocation);
-    onPositionReady(vehicleInstance.transform.position);
+    // Move vehicle body while still kinematic — no physics pop.
+    if (movementController != null && movementController.m_body != null)
+    {
+      movementController.m_body.position = newLocation;
+      movementController.m_body.rotation = Quaternion.Euler(
+        0f, movementController.m_body.rotation.eulerAngles.y, 0f);
+    }
+
+    if (vehicleInstance) vehicleInstance.transform.position = newLocation;
+
+    // -----------------------------------------------------------------------
+    // Step 5: Move every onboard character to its correct relative position.
+    // -----------------------------------------------------------------------
+    foreach (var kvp in characterDestinations)
+    {
+      var nv = kvp.Key;
+      var destPos = kvp.Value;
+      if (!nv) continue;
+
+      var character = nv.GetComponent<Character>();
+      if (character == null) continue;
+
+      character.transform.position = destPos;
+      if (character.m_body != null)
+      {
+        character.m_body.position = destPos;
+        character.m_body.isKinematic = false;
+        character.m_body.linearVelocity = Vector3.zero;
+        character.m_body.angularVelocity = Vector3.zero;
+      }
+
+      character.m_fallTimer = 0f;
+      character.m_maxAirAltitude = -10000f;
+    }
+
+    // -----------------------------------------------------------------------
+    // Step 6: Restore vehicle physics and clear the teleporting flag.
+    // Clearing LAST ensures GuardedFixedUpdate won't re-enable physics until
+    // the body is already at the correct position.
+    // -----------------------------------------------------------------------
+    if (movementController != null && movementController.m_body != null && !wasKinematic)
+    {
+      movementController.m_body.isKinematic = false;
+      movementController.m_body.linearVelocity = Vector3.zero;
+      movementController.m_body.angularVelocity = Vector3.zero;
+    }
+
+    // Broadcast to all clients that the teleport is complete — physics resumes.
+    movementController?.SetIsTeleporting(false);
+
+    onPositionReady(newLocation);
   }
 
   /// <summary>
   /// Moves the vehicle based on the provided offset vector.
   /// - Must be only called via commands. This is meant to move the player even if they are not attached to the vehicle.
+  /// - MoveVehicleIntoFarZone handles all character teleportation internally, so we don't use SafeMovePlayer here.
   /// </summary>
   /// <param name="vehicleInstance">The vehicle instance to move.</param>
   /// <param name="offset">The offset vector to apply.</param>
@@ -511,15 +785,9 @@ public class VehicleCommands : ConsoleCommand
     vehicleInstance.SetCreativeMode(true);
     yield return new WaitForFixedUpdate();
 
-    Vector3? finalPosition = null;
-    yield return SafeMovePlayer(vehicleInstance.OnboardController, true,
-      () =>
-      {
-        return finalPosition ??
-               vehicleInstance.OnboardController.transform.position;
-      },
-      MoveVehicleIntoFarZone(vehicleInstance, offset,
-        (pos) => { finalPosition = pos; }));
+    // MoveVehicleIntoFarZone handles ALL character teleportation via StampAllVehicleZdosToPosition,
+    // including players who may be far from the vehicle. No SafeMovePlayer wrapper needed.
+    yield return MoveVehicleIntoFarZone(vehicleInstance, offset, _ => {});
 
     if (vehicleInstance != null) vehicleInstance.SetCreativeMode(false);
   }
@@ -691,7 +959,6 @@ public class VehicleCommands : ConsoleCommand
     LoggerProvider.LogWarning(
       $"{vehicleNotFoundMsg} \nMust be within <50f> (game meters). The player must be closer to the boat.");
   }
-
   public static RaycastHit[] AllocatedRaycast = new RaycastHit[20];
 
   public static bool TryGetVehicleManager(Collider collider, [NotNullWhen(true)] out VehicleManager? vehicleManager)
@@ -964,7 +1231,6 @@ public class VehicleCommands : ConsoleCommand
       logSeparatorEnd
     ));
   }
-
   public static Stopwatch _creativeModeTimer = new();
   public static Coroutine? _creativeModeCoroutineInstance = null;
 
@@ -1052,7 +1318,6 @@ public class VehicleCommands : ConsoleCommand
     _creativeModeTimer.Reset();
     LoggerProvider.LogMessage("Completed creative mode commands.");
   }
-
   public static float rotationLerp = 1f;
   public static float positionLerp = 1f;
 
@@ -1201,29 +1466,245 @@ public class VehicleCommands : ConsoleCommand
     closestVehicle.PiecesController.ClearAllBoundaryChunkData();
   }
 
+  /// <summary>
+  /// Clamps the Y position of a vehicle's ZDO to [minHeight, maxHeight].
+  /// </summary>
+  /// <returns>True if the position was changed, false if already within range or the ZDO was invalid.</returns>
+  public static bool ClampVehicleZdoToSafeHeight(ZDO vehicleZdo, ZNetView? activeNetView, float minHeight, float maxHeight)
+  {
+    if (!vehicleZdo.IsValid()) return false;
+    var currentPos = vehicleZdo.GetPosition();
+
+    var groundLevel = ZoneSystem.instance.GetGroundHeight(currentPos);
+    var waterLevel = ZoneSystem.instance.m_waterLevel;
+
+    var minGroundOrWaterHeight = Mathf.Max(groundLevel, waterLevel);
+
+    var minGroundOrWaterOrClampedHeight = Mathf.Max(minGroundOrWaterHeight, minHeight);
+    var maxGroundOrWaterOrClampedHeight = Mathf.Max(minGroundOrWaterHeight, maxHeight);
+
+    Logger.LogDebug($"Clamping vehicle ZDO Y position. groundHeight {groundLevel}; waterLevel {waterLevel}; minHeight {minHeight}; maxHeight {maxHeight}. Got (min): minGroundOrWaterOrClampedHeight {minGroundOrWaterOrClampedHeight} (max): maxGroundOrWaterOrClampedHeight {maxGroundOrWaterOrClampedHeight}");
+
+    var clampedY = Mathf.Clamp(currentPos.y, minGroundOrWaterOrClampedHeight, maxGroundOrWaterOrClampedHeight);
+    if (Mathf.Approximately(clampedY, currentPos.y)) return false;
+
+    var newCoordinates = new Vector3(currentPos.x, clampedY, currentPos.z);
+
+    // EG player is rendering it currently
+    if (activeNetView != null)
+    {
+      activeNetView.ClaimOwnership();
+      activeNetView.transform.position = newCoordinates;
+      if (activeNetView.m_body)
+      {
+        activeNetView.m_body.position = newCoordinates;
+      }
+    }
+
+    vehicleZdo.SetPosition(newCoordinates);
+    Logger.LogInfo(
+      $"[{VehicleCommandArgs.fixAllVehiclePositions}] Vehicle ZDO {vehicleZdo.m_uid}: clamped Y from {currentPos.y:F2} to {clampedY:F2}.");
+    return true;
+  }
+
+  /// <summary>
+  /// Repairs a single vehicle: optionally clamps its ZDO Y position then force-syncs all its pieces.
+  /// </summary>
+  /// <returns>True if the vehicle height was clamped, false otherwise.</returns>
+  public static bool RepairVehiclePosition(int persistentZdoId, float? minHeight, float? maxHeight)
+  {
+    VehiclePiecesController.ActiveInstances.TryGetValue(persistentZdoId, out var activeController);
+
+    var vehicleZdo = ZdoWatcher.ZdoWatchController.Instance.GetZdo(persistentZdoId);
+
+    var activeNv = ZNetScene.instance.FindInstance(vehicleZdo);
+
+    var wasClamped = false;
+    if (minHeight.HasValue && maxHeight.HasValue && vehicleZdo != null)
+      wasClamped = ClampVehicleZdoToSafeHeight(vehicleZdo, activeNv, minHeight.Value, maxHeight.Value);
+
+    VehiclePiecesController.ForceSyncAllPrefabsToVehiclePosition(
+      persistentZdoId,
+      activeNv,
+      null);
+
+    return wasClamped;
+  }
+
+  /// <summary>
+  /// Iterates all tracked vehicles and fixs each one via <see cref="RepairVehiclePosition"/>.
+  /// <para>
+  /// Optional args: [minHeight] [maxHeight]
+  /// When both are provided the vehicle ZDO Y position is clamped to [minHeight, maxHeight] before
+  /// syncing its pieces. If only one or neither value is supplied the height constraint is skipped.
+  /// </para>
+  /// </summary>
+  public static void RepairAllVehiclePositions(string[]? args)
+  {
+    if (!SynchronizationManager.Instance.PlayerIsAdmin)
+    {
+      Logger.LogMessage(
+        "User must be an admin to run this command.");
+      return;
+    }
+
+    var minHeight = 30f;
+    var maxHeight = 3000f;
+
+
+    if (args != null)
+    {
+      if (float.TryParse(args[0], out var parsedMin) && float.TryParse(args[1], out var parsedMax))
+      {
+        minHeight = parsedMin;
+        maxHeight = parsedMax;
+      }
+      else
+      {
+        Logger.LogMessage(
+          $"[{VehicleCommandArgs.fixAllVehiclePositions}] Using default minHeight {minHeight} and maxHeight {maxHeight}. As no args were provided. Please use <command> <minHeight> <maxHeight> if you need to spawn the vehicle higher than these defaults on top of automatic ground/water checks.");
+      }
+    }
+
+    var allPieces = VehiclePiecesController.m_allPieces;
+    if (allPieces == null || allPieces.Count == 0)
+    {
+      Logger.LogMessage($"[{VehicleCommandArgs.fixAllVehiclePositions}] No vehicles found in m_allPieces.");
+      return;
+    }
+
+    var fixedCount = 0;
+    var clampedCount = 0;
+
+    foreach (var kvp in allPieces)
+    {
+      if (RepairVehiclePosition(kvp.Key, minHeight, maxHeight))
+        clampedCount++;
+      fixedCount++;
+    }
+
+    Logger.LogMessage(
+      $"[{VehicleCommandArgs.fixAllVehiclePositions}] Repaired {fixedCount} vehicle(s). " +
+      $"Height clamped [{minHeight:F2}, {maxHeight:F2}]: {clampedCount} vehicle(s) adjusted.");
+  }
+
+  /// <summary>
+  /// Repairs all vehicles within a horizontal radius around the player.
+  /// Uses X/Z distance only (height is ignored).
+  /// <para>
+  /// Optional args: [radiusX] [radiusZ] [minHeight] [maxHeight]
+  /// Defaults to radiusX=250, radiusZ=250 if not provided.
+  /// When minHeight and maxHeight are provided, the vehicle ZDO Y position is clamped
+  /// before syncing its pieces.
+  /// </para>
+  /// </summary>
+  public static void RepairNearbyVehiclePositions(string[]? args)
+  {
+    if (Player.m_localPlayer == null)
+    {
+      Logger.LogMessage("No player found. Cannot determine nearby vehicles.");
+      return;
+    }
+
+    var playerPos = Player.m_localPlayer.transform.position;
+    var radiusX = 250f;
+    var radiusZ = 250f;
+    float? minHeight = null;
+    float? maxHeight = null;
+
+    if (args != null && args.Length > 0)
+    {
+      // Parse radiusX
+      if (float.TryParse(args[0], out var parsedRadiusX))
+        radiusX = Mathf.Clamp(parsedRadiusX, 15f, 250f);
+
+      // Parse radiusZ
+      if (args.Length > 1 && float.TryParse(args[1], out var parsedRadiusZ))
+        radiusZ = Mathf.Clamp(parsedRadiusZ, 15f, 250f);
+
+      // Parse minHeight and maxHeight
+      if (args.Length > 2 && float.TryParse(args[2], out var parsedMin))
+        minHeight = parsedMin;
+
+      if (args.Length > 3 && float.TryParse(args[3], out var parsedMax))
+        maxHeight = parsedMax;
+    }
+
+    var allPieces = VehiclePiecesController.m_allPieces;
+    if (allPieces == null || allPieces.Count == 0)
+    {
+      Logger.LogMessage($"[{VehicleCommandArgs.fixNearbyVehiclePositions}] No vehicles found in m_allPieces.");
+      return;
+    }
+
+    var fixedCount = 0;
+    var clampedCount = 0;
+
+    foreach (var kvp in allPieces)
+    {
+      var vehicleZdo = ZdoWatcher.ZdoWatchController.Instance.GetZdo(kvp.Key);
+      if (vehicleZdo == null) continue;
+
+      var vehiclePos = vehicleZdo.GetPosition();
+      var dx = playerPos.x - vehiclePos.x;
+      var dz = playerPos.z - vehiclePos.z;
+
+      // Check if within horizontal radius (X/Z only, ignore Y)
+      if (dx * dx <= radiusX * radiusX && dz * dz <= radiusZ * radiusZ)
+      {
+        RepairVehiclePosition(kvp.Key, minHeight, maxHeight);
+        if (minHeight.HasValue && maxHeight.HasValue)
+        {
+          clampedCount++;
+        }
+        fixedCount++;
+      }
+    }
+
+    Logger.LogMessage(
+      $"[{VehicleCommandArgs.fixNearbyVehiclePositions}] Repaired {fixedCount} vehicle(s) within radius X:{radiusX:F1}, Z:{radiusZ:F1}. " +
+      $"Height clamped: {clampedCount} vehicle(s)." +
+      (fixedCount == 0 ? " To fix ALL vehicles on the map, use: vehicle fixAllVehiclePositions" : ""));
+  }
+
+  public static void VehicleRecenter()
+  {
+    if (!Player.m_localPlayer)
+    {
+      Logger.LogWarning("Player does not exist, cannot run recenter command.");
+      return;
+    }
+
+    var closestVehicle = GetNearestVehicleManager();
+    if (closestVehicle == null || closestVehicle.PiecesController == null)
+    {
+      Logger.LogWarning("No vehicle nearby to recenter.");
+      return;
+    }
+
+    var piecesController = closestVehicle.PiecesController;
+    if (!piecesController.m_nview || !piecesController.m_nview.IsValid())
+    {
+      Logger.LogWarning("Vehicle network view is not valid.");
+      return;
+    }
+
+    if (!piecesController.m_nview.IsOwner())
+    {
+      Logger.LogWarning("You must be the owner of the vehicle to recenter it.");
+      return;
+    }
+
+    piecesController.ManualRecenterVehicleOrigin();
+    Logger.LogMessage("Vehicle recenter initiated. Check logs for details.");
+  }
+
   public override List<string> CommandOptionList()
   {
-    return
-    [
-      // VehicleCommandArgs.locate, 
-      VehicleCommandArgs.destroy,
-#if DEBUG
-      // config is only debug for now.
-      VehicleCommandArgs.config,
-#endif
-      VehicleCommandArgs.debug,
-      VehicleCommandArgs.rotate,
-      VehicleCommandArgs.toggleOceanSway,
-      VehicleCommandArgs.creative,
-      VehicleCommandArgs.help,
-      VehicleCommandArgs.recover,
-      VehicleCommandArgs.reportInfo,
-      VehicleCommandArgs.colliderEditMode,
-      VehicleCommandArgs.move,
-      VehicleCommandArgs.moveUp,
-      VehicleCommandArgs.resetVehicleOwner,
-      VehicleCommandArgs.clearBoundaryChunkData
-    ];
+    return VehicleCommandDefinitions
+      .Where(x => !x.IsDebugOnly)
+      .Select(x => x.CommandName)
+      .ToList();
   }
   public override string Name => "vehicle";
 }

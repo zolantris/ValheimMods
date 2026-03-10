@@ -34,7 +34,7 @@
         <!--        <SyncTargets Condition="'$(IsRunnableClient)' == 'true'">localClientEldritch</SyncTargets>-->
         <SyncTargets Condition="'$(IsRunnableClient)' == 'true'">localClient,localClientEldritch</SyncTargets>
         <!--  This overrides server or client config -->
-        <SyncTargets Condition="'$(IsRunnableClientServer)' == 'true'">localClient,localClientEldritch,vmClient,server</SyncTargets>
+        <SyncTargets Condition="'$(IsRunnableClientServer)' == 'true'">localClient,localClientEldritch,vmClient,server,serverEldritch</SyncTargets>
 
         <SyncEnvFlags>--env-debug=true</SyncEnvFlags>
         <SyncEnvFlags Condition="'$(IsRelease)' == 'true'">--env-release</SyncEnvFlags>

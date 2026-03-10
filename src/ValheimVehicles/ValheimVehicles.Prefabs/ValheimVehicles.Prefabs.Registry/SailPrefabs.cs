@@ -8,6 +8,7 @@ using UnityEngine.Rendering;
 using ValheimVehicles.Components;
 using ValheimVehicles.BepInExConfig;
 using ValheimVehicles.SharedScripts;
+using Zolantris.Shared;
 using Logger = Jotunn.Logger;
 
 namespace ValheimVehicles.Prefabs.Registry;
@@ -230,12 +231,16 @@ public class SailPrefabs : RegisterPrefab<SailPrefabs>
     sailCreatorComponent.m_sailSize = sailCount;
 
     var mesh = prefab.GetComponent<MeshRenderer>();
-    var material = new Material(LoadValheimAssets.CustomPieceShader)
+
+    if (!RuntimeEnv.IsHeadlessServer())
     {
-      color = Color.green
-    };
-    mesh.material = material;
-    mesh.transform.localScale = new Vector3(0.1f, 0.1f, 0.1f);
+      var material = new Material(LoadValheimAssets.CustomPieceShader)
+      {
+        color = Color.green
+      };
+      mesh.material = material;
+      mesh.transform.localScale = new Vector3(0.1f, 0.1f, 0.1f);
+    }
 
     var sailIcon = sailCount == 3
       ? LoadValheimVehicleAssets.VehicleSprites.GetSprite("customsail_tri")

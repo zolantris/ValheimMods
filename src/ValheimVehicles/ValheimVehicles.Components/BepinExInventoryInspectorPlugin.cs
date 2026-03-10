@@ -3,7 +3,7 @@ using HarmonyLib;
 using System.Reflection;
 using System.Linq;
 
-[BepInPlugin("dev.inventorypatchdetector", "Inventory Patch Detector", "1.0.0")]
+[BepInPlugin("dev.zolantris.inventorypatchdetector", "Inventory Patch Detector", "1.0.0")]
 public class PatchDetector : BaseUnityPlugin
 {
   private void Start()

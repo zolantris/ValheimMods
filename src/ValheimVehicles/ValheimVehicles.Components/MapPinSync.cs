@@ -48,11 +48,15 @@ public class MapPinSync : MonoBehaviour
 
   private void OnEnable()
   {
+    if (ZNet.instance == null) return;
+    if (ZNet.instance.IsDedicated()) return;
     MinimapManager.OnVanillaMapDataLoaded += OnMapReady;
   }
 
   private void OnDisable()
   {
+    if (ZNet.instance == null) return;
+    if (ZNet.instance.IsDedicated()) return;
     MinimapManager.OnVanillaMapDataLoaded -= OnMapReady;
     StopAllCoroutines();
     ClearAllVehiclePins();
@@ -64,6 +68,12 @@ public class MapPinSync : MonoBehaviour
   private void OnMapReady()
   {
     if (ZNet.instance == null || Minimap.instance == null) return;
+
+    // clear everything first
+    StopAllCoroutines();
+    ClearAllVehiclePins();
+    _vehiclePins.Clear();
+
     StartVehiclePinSync();
     StartSpawnPinSync();
     hasInitialized = true;
@@ -94,11 +104,13 @@ public class MapPinSync : MonoBehaviour
   {
     if (MinimapConfig.ShowAllVehiclesOnMap.Value) return true;
     if (Player.m_localPlayer == null) return false;
-    var distanceBetweenPlayerAndPoint =
-      Vector3.Distance(Player.m_localPlayer.transform.position, point);
-    var isWithinVisibleRadius = distanceBetweenPlayerAndPoint <=
-                                MinimapConfig.VisibleVehicleRadius.Value;
-    return isWithinVisibleRadius;
+
+    var playerPosition = Player.m_localPlayer.transform.position;
+    var dx = playerPosition.x - point.x;
+    var dz = playerPosition.z - point.z;
+    var visibleRadius = MinimapConfig.VisibleVehicleRadius.Value;
+
+    return dx * dx + dz * dz <= visibleRadius * visibleRadius;
   }
 
   private void ClearSpawnPin(Minimap.PinData? pinData)
