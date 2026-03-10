@@ -1,0 +1,36 @@
+<Project>
+    <!--  imports shared build ready props -->
+    <Import Project="$(SolutionDir)build\build_ready.props"/>
+    <PropertyGroup Label="Build Ready Dynamic Variables">
+        <BuildReadyManifest>$(BuildReadyDir)$(MSBuildProjectName).ready</BuildReadyManifest>
+    </PropertyGroup>
+
+    <Target Name="BuildReady_Cleanup"
+            AfterTargets="Build"
+            KeepDuplicateOutputs="false"
+            Condition="'$(EnableBuildReadyCleanup)' == 'true'">
+        <MakeDir Directories="$(BuildReadyDir)"/>
+
+        <!-- clear the manifest once for this build -->
+        <WriteLinesToFile
+                File="$(BuildReadyManifest)"
+                Lines=""
+                Overwrite="true"/>
+
+        <Message Text="Cleared archive manifest: $(BuildReadyManifest)" Importance="high"/>
+    </Target>
+
+    <Target Name="BuildReady_Mark"
+            AfterTargets="Build"
+            KeepDuplicateOutputs="false"
+            Condition="'$(EnableBuildReadyMark)' == 'true'">
+        <MakeDir Directories="$(BuildReadyDir)"/>
+
+        <WriteLinesToFile
+                File="$(BuildReadyManifest)"
+                Lines="$(MSBuildProjectName)"
+                Overwrite="false"/>
+
+        <Message Text="Marked archive participant: $(MSBuildProjectName)" Importance="high"/>
+    </Target>
+</Project>

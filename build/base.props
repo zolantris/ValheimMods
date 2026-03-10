@@ -1,7 +1,8 @@
 <Project>
     <Import Project="$(SolutionDir)build\.props" Condition="Exists('$(SolutionDir)build\.props')"/>
     <Import Project="$(SolutionDir)build\build_variables.props" Condition="Exists('$(SolutionDir)build\build_variables.props')"/>
-    
+    <Import Project="$(SolutionDir)build\run_marker.targets" Condition="Exists('$(SolutionDir)build\run_marker.targets')"/>
+
     <!--  Either it's Debug or Release for output bucket standardization  -->
     <PropertyGroup Label="Normalized Configuration">
         <NormalizedConfiguration Condition="'$(IsRelease)' == 'true'">Release</NormalizedConfiguration>

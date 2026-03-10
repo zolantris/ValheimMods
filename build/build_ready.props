@@ -1,0 +1,7 @@
+<Project>
+    <PropertyGroup>
+        <BuildReadyDir>$(SolutionDir)build\build-ready\</BuildReadyDir>
+        <EnableBuildReadyCleanup>true</EnableBuildReadyCleanup>
+        <EnableBuildReadyMark>true</EnableBuildReadyMark>
+    </PropertyGroup>
+</Project>
