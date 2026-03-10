@@ -2,7 +2,7 @@
 
     <!--  for thunderstore version sync-->
     <PropertyGroup>
-        <SyncTargets>valheimraft-thunderstore-release,valheimraft-thunderstore-beta</SyncTargets>
+        <SyncTargets>valheimraft-release-thunderstore,valheimraft-beta-thunderstore</SyncTargets>
     </PropertyGroup>
 
     <Import Project="$(SolutionDir)build\base.props"/>
@@ -10,6 +10,9 @@
     <Import Project="$(SolutionDir)build\valheimraft_version.props"/>
     <Import Project="$(SolutionDir)build\static_version_generator.targets"/>
     <Import Project="$(SolutionDir)build\thunderstore_manifest_update.targets"/>
+
+    <!--  This lets SolutionPostBuild.csproj know if this project has built  -->
+    <Import Project="$(SolutionDir)build\build_ready.targets"/>
 
     <PropertyGroup>
         <Configuration Condition=" '$(Configuration)' == '' ">Debug;VALHEIM_RAFT</Configuration>

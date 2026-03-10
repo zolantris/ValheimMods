@@ -7,18 +7,26 @@
         <IsRunnableServer Condition="'$(Configuration)' == 'Release Run Server' or '$(Configuration)' == 'Debug Run Server'">true</IsRunnableServer>
         <IsRunnableClient Condition="'$(IsRunnableRelease)' == 'true' or '$(IsRunnableDebug)' == 'true'">true</IsRunnableClient>
         <IsRunnable Condition="'$(IsRunnableRelease)' == 'true' or '$(IsRunnableDebug)' == 'true'">true</IsRunnable>
-        <!--        <IsRunnable Condition="'$(Configuration)' == 'Debug Run Client' or-->
-        <!--                          '$(Configuration)' == 'Debug Run Server' or-->
-        <!--                          '$(Configuration)' == 'Debug Run ClientServer' or-->
-        <!--                          '$(Configuration)' == 'Release Run Client' or-->
-        <!--                          '$(Configuration)' == 'Release Run Server' or-->
-        <!--                          '$(Configuration)' == 'Release Run ClientServer'">true-->
-        <!--        </IsRunnable>-->
-        <!--        <IsRunnable Condition="'$(IsRunnable)' != 'true'">false</IsRunnable>-->
         <IsDebug Condition="'$(Configuration)' == 'Debug' or '$(IsRunnableDebug)' == 'true'">true</IsDebug>
         <IsRelease Condition="'$(Configuration)' == 'Release' or '$(IsRunnableRelease)' == 'true'">true</IsRelease>
         <IsNotArchive Condition="'$(Configuration)' != 'Release Archive' and '$(Configuration)' != 'ReleaseBETA Archive'">true</IsNotArchive>
+        <IsReleaseArchive Condition="'$(Configuration)' == 'Release Archive'">true</IsReleaseArchive>
+        <IsReleaseBetaArchive Condition="'$(Configuration)' == 'ReleaseBeta Archive'">true</IsReleaseBetaArchive>
     </PropertyGroup>
+
+    <Target Name="LogArchiveConfig" AfterTargets="Build" KeepDuplicateOutputs="false">
+        <Message Text="Configuration=$(Configuration)" Importance="high"/>
+        <Message Text="Platform=$(Platform)" Importance="high"/>
+        <Message Text="Configuration|Platform=$(Configuration)|$(Platform)" Importance="high"/>
+    </Target>
+
+    <Target KeepDuplicateOutputs="false" Name="Logger" AfterTargets="Build">
+        <Message Text="IsRunnableServer is: $(IsRunnableServer)" Importance="high"/>
+        <Message Text="IsRunnableClient is: $(IsRunnableClient)" Importance="high"/>
+        <Message Text="IsRunnableClientServer is: $(IsRunnableClientServer)" Importance="high"/>
+        <Message Text="IsReleaseArchive is: $(IsReleaseArchive)" Importance="high"/>
+        <Message Text="IsReleaseBetaArchive is: $(IsReleaseBetaArchive)" Importance="high"/>
+    </Target>
 
 
     <PropertyGroup Label="Directories">
