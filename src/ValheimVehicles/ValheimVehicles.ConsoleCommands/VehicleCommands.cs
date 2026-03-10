@@ -59,33 +59,135 @@ public class VehicleCommands : ConsoleCommand
     public const string resetVehicleOwner = "resetLocalOwnership";
     public const string clearBoundaryChunkData = "clearBoundaryChunkData";
     public const string recenter = "recenter";
-    public const string repairAllVehiclePositions = "repairAllVehiclePositions";
-    public const string repairNearbyVehiclePositions = "repairNearbyVehiclePositions";
+    public const string fixAllVehiclePositions = "fixAllVehiclePositions";
+    public const string fixNearbyVehiclePositions = "fixNearbyVehiclePositions";
+  }
+
+  private struct CommandInfo
+  {
+    public string CommandName;
+    public string CommandDescription;
+    public bool IsAdmin;
+    public bool IsDebugOnly;
+
+    public CommandInfo(string commandName, string commandDescription, bool isAdmin = false, bool isDebugOnly = false)
+    {
+      CommandName = commandName;
+      CommandDescription = commandDescription;
+      IsAdmin = isAdmin;
+      IsDebugOnly = isDebugOnly;
+    }
+  }
+
+  private static readonly List<CommandInfo> VehicleCommandDefinitions = BuildVehicleCommandDefinitions();
+
+  private static List<CommandInfo> BuildVehicleCommandDefinitions()
+  {
+    var commands = new List<CommandInfo>();
+
+#if DEBUG
+    // Debug-only commands appear first and are omitted from production builds.
+    commands.Add(new CommandInfo(
+      VehicleCommandArgs.debugShort,
+      "Shortcut for debug command",
+      true,
+      true));
+
+    commands.Add(new CommandInfo(
+      VehicleCommandArgs.config,
+      "Will show a config menu related to the current vehicle you are on. You can customize values specifically for your current vehicle. This menu must be reopened via command or via the power lever whenever the user changes vehicles.",
+      isDebugOnly: true));
+
+    commands.Add(new CommandInfo(
+      VehicleCommandArgs.recenter,
+      "Manually re-centers the vehicle's ZDO origin to the geometric hull center. This prevents piece ZDOs from drifting into foreign zone sectors."));
+#endif
+
+    commands.AddRange(new[]
+    {
+      new CommandInfo(
+        VehicleCommandArgs.debug,
+        "Will show a menu with options like rotating or debugging vehicle colliders",
+        true),
+
+      new CommandInfo(
+        VehicleCommandArgs.destroy,
+        "Will DELETE the current raft and BREAK all pieces. This is a destructive command. You have been warned!",
+        true),
+
+      new CommandInfo(
+        VehicleCommandArgs.recover,
+        "Will recover any vehicles within range of 1000"),
+
+      new CommandInfo(
+        VehicleCommandArgs.rotate,
+        "Defaults to zeroing x and z tilt. Can also provide 3 args: x y z",
+        true),
+
+      new CommandInfo(
+        VehicleCommandArgs.move,
+        "Must provide 3 args: x y z, the movement is relative to those points",
+        true),
+
+      new CommandInfo(
+        VehicleCommandArgs.moveUp,
+        "Moves the vehicle within 50 units upwards by the value provided. Capped at 30 units to be safe. And Capped at 10 units lowest world position.",
+        true),
+
+      new CommandInfo(
+        VehicleCommandArgs.toggleOceanSway,
+        "Stops the vehicle from swaying in the water. It will stay at 0 degrees (x and z) tilt and only allow rotating on y axis"),
+
+      new CommandInfo(
+        VehicleCommandArgs.reportInfo,
+        "Outputs information related to the vehicle the player is on or near. This is meant for error reports"),
+
+      new CommandInfo(
+        VehicleCommandArgs.colliderEditMode,
+        "Lets the player toggle collider edit mode for all vehicles allowing editing water displacement masks and other hidden items"),
+
+      new CommandInfo(
+        VehicleCommandArgs.creative,
+        "Toggles creative mode for vehicle building. This will lock the player so the vehicle does not kill them while it moves into creative mode. This is not meant to be used while on a moving vehicle or in combat. Use with caution."),
+
+      new CommandInfo(
+        VehicleCommandArgs.resetVehicleOwner,
+        "Resets the vehicle ownership to the local player"),
+
+      new CommandInfo(
+        VehicleCommandArgs.clearBoundaryChunkData,
+        "Clears the boundary chunk data for the nearest vehicle. This will force a rebuild of the convex hull boundary constraint. Boundary chunk data is use to limit the extent the vehicle can grow to."),
+
+      new CommandInfo(
+        VehicleCommandArgs.fixAllVehiclePositions,
+        "Fixes the position of vehicle and all prefabs that are part of the vehicle. Applies to the entire world. Use `fixNearbyVehiclePositions` if you are not an admin or want to fix a vehicle in your area.\nOptional args: <minHeight> <maxHeight>. When provided, the vehicle Y position is clamped to [minHeight, maxHeight] before syncing pieces. Useful if vehicles have fallen through the ground or launched into the sky.\nExample: vehicle fixAllVehiclePositions -100 500\nWarning this will potentially kill players if they are mid-flight or on a vehicle that this command runs on.",
+        true),
+
+      new CommandInfo(
+        VehicleCommandArgs.fixNearbyVehiclePositions,
+        "Fixes the position of vehicle and all prefabs that are part of the vehicle. Applies only to vehicles in a radius around the player.\nOptional args: radiusX radiusZ minHeight maxHeight. Defaults to 250 250 for the radius. Example: vehicle fixNearbyVehiclePositions 250 250 -100 500"),
+
+      new CommandInfo(
+        VehicleCommandArgs.help,
+        "Shows this help message")
+    });
+
+    return commands;
   }
 
   public override string Help => OnHelp();
 
   public static string OnHelp()
   {
-    return
-      "Runs vehicle commands, each command will require parameters to run use help to see the input values." +
-#if DEBUG
-      // config is only debug for now.
-      $"\n<{VehicleCommandArgs.config}>: will show a menu related to the current vehicle you are on. This GUI menu will let you customize values specifically for your current vehicle." +
-#endif
-      $"\n<{VehicleCommandArgs.destroy}>: will DELETE the current raft and BREAK all pieces. This is a destructive admin-only command or (if cheats are enabled). You have been warned!" +
-      $"\n<{VehicleCommandArgs.debug}>: will show a menu with options like rotating or debugging vehicle colliders" +
-      $"\n<{VehicleCommandArgs.recover}>: will recover any vehicles within range of 1000" +
-      $"\n<{VehicleCommandArgs.rotate}>: defaults to zeroing x and z tilt. Can also provide 3 args: x y z" +
-      $"\n<{VehicleCommandArgs.toggleOceanSway}>: stops the vehicle from swaying in the water. It will stay at 0 degrees (x and z) tilt and only allow rotating on y axis" +
-      $"\n<{VehicleCommandArgs.reportInfo}>: outputs information related to the vehicle the player is on or near. This is meant for error reports" +
-      $"\n<{VehicleCommandArgs.moveUp}>: Moves the vehicle within 50 units upwards by the value provided. Capped at 30 units to be safe. And Capped at 10 units lowest world position." +
-      $"\n<{VehicleCommandArgs.move}>: Must provide 3 args: x y z, the movement is relative to those points" +
-      $"\n<{VehicleCommandArgs.colliderEditMode}>: Lets the player toggle collider edit mode for all vehicles allowing editing water displacement masks and other hidden items" +
-      $"\n<{VehicleCommandArgs.recenter}>: Manually recenters the vehicle's ZDO origin to the geometric hull center. This prevents piece ZDOs from drifting into foreign zone sectors." +
-      $"\n<{VehicleCommandArgs.clearBoundaryChunkData}>: Clears the boundary chunk data for the nearest vehicle. This will force a rebuild of the convex hull boundary constraint. Boundary chunk data is use to limit the extent the vehicle can grow to." +
-      $"\n<{VehicleCommandArgs.repairAllVehiclePositions}>: Iterates all tracked vehicles and forces all pieces to be synchronized to the current vehicle location. Optional args: minHeight maxHeight. When provided, the vehicle Y position is clamped to [minHeight, maxHeight] before syncing pieces. Useful if vehicles have fallen through the ground or launched into the sky. Example: vehicle repairAllVehiclePositions -100 500" +
-      $"\n<{VehicleCommandArgs.repairNearbyVehiclePositions}>: Repairs all vehicles within a horizontal radius around the player. Optional args: radiusX radiusZ minHeight maxHeight. Defaults to 250 250 for the radius. Example: vehicle repairNearbyVehiclePositions 250 250 -100 500";
+    var helpText = "Runs vehicle commands, each command will require parameters to run use help to see the input values.";
+
+    foreach (var cmd in VehicleCommandDefinitions)
+    {
+      var prefix = cmd.IsAdmin ? "[Admin-only]: " : "";
+      helpText += $"\n<{cmd.CommandName}>: {prefix}{cmd.CommandDescription}";
+    }
+
+    return helpText;
   }
 
   public override void Run(string[] args)
@@ -109,19 +211,26 @@ public class VehicleCommands : ConsoleCommand
       return;
     }
 
+    var commandInfo = VehicleCommandDefinitions.FirstOrDefault(x => x.CommandName == firstArg);
+    if (string.IsNullOrEmpty(commandInfo.CommandName))
+    {
+      Logger.LogMessage($"Unknown vehicle command '{firstArg}'. Run 'vehicle {VehicleCommandArgs.help}' for options.");
+      return;
+    }
+
+    if (commandInfo.IsAdmin && !CanRunCheatCommand()) return;
+
     var nextArgs = args.Skip(1).ToArray();
 
     switch (firstArg)
     {
       case VehicleCommandArgs.move:
-        if (!CanRunCheatCommand()) return;
         VehicleMove(nextArgs);
         break;
       case VehicleCommandArgs.toggleOceanSway:
         VehicleToggleOceanSway();
         break;
       case VehicleCommandArgs.rotate:
-        if (!CanRunCheatCommand()) return;
         VehicleRotate(args);
         break;
       case VehicleCommandArgs.recover:
@@ -142,12 +251,10 @@ public class VehicleCommands : ConsoleCommand
       case VehicleCommandArgs.destroy:
         DestroyCurrentVehicle();
         break;
-#if DEBUG
       // config is not ready - only debug for now.
       case VehicleCommandArgs.config:
         ToggleVehicleGuiConfig();
         break;
-#endif
       case VehicleCommandArgs.reportInfo:
         OnReportInfo();
         break;
@@ -155,7 +262,6 @@ public class VehicleCommands : ConsoleCommand
         ToggleColliderEditMode();
         break;
       case VehicleCommandArgs.moveUp:
-        if (!CanRunCheatCommand()) return;
         VehicleMoveVertically(nextArgs);
         break;
       case VehicleCommandArgs.resetVehicleOwner:
@@ -170,11 +276,10 @@ public class VehicleCommands : ConsoleCommand
       case VehicleCommandArgs.recenter:
         VehicleRecenter();
         break;
-      case VehicleCommandArgs.repairAllVehiclePositions:
-        if (!CanRunCheatCommand()) return;
+      case VehicleCommandArgs.fixAllVehiclePositions:
         RepairAllVehiclePositions(nextArgs);
         break;
-      case VehicleCommandArgs.repairNearbyVehiclePositions:
+      case VehicleCommandArgs.fixNearbyVehiclePositions:
         RepairNearbyVehiclePositions(nextArgs);
         break;
     }
@@ -1398,7 +1503,7 @@ public class VehicleCommands : ConsoleCommand
 
     vehicleZdo.SetPosition(newCoordinates);
     Logger.LogInfo(
-      $"[{VehicleCommandArgs.repairAllVehiclePositions}] Vehicle ZDO {vehicleZdo.m_uid}: clamped Y from {currentPos.y:F2} to {clampedY:F2}.");
+      $"[{VehicleCommandArgs.fixAllVehiclePositions}] Vehicle ZDO {vehicleZdo.m_uid}: clamped Y from {currentPos.y:F2} to {clampedY:F2}.");
     return true;
   }
 
@@ -1427,7 +1532,7 @@ public class VehicleCommands : ConsoleCommand
   }
 
   /// <summary>
-  /// Iterates all tracked vehicles and repairs each one via <see cref="RepairVehiclePosition"/>.
+  /// Iterates all tracked vehicles and fixs each one via <see cref="RepairVehiclePosition"/>.
   /// <para>
   /// Optional args: [minHeight] [maxHeight]
   /// When both are provided the vehicle ZDO Y position is clamped to [minHeight, maxHeight] before
@@ -1457,29 +1562,29 @@ public class VehicleCommands : ConsoleCommand
       else
       {
         Logger.LogMessage(
-          $"[{VehicleCommandArgs.repairAllVehiclePositions}] Using default minHeight {minHeight} and maxHeight {maxHeight}. As no args were provided. Please use <command> <minHeight> <maxHeight> if you need to spawn the vehicle higher than these defaults on top of automatic ground/water checks.");
+          $"[{VehicleCommandArgs.fixAllVehiclePositions}] Using default minHeight {minHeight} and maxHeight {maxHeight}. As no args were provided. Please use <command> <minHeight> <maxHeight> if you need to spawn the vehicle higher than these defaults on top of automatic ground/water checks.");
       }
     }
 
     var allPieces = VehiclePiecesController.m_allPieces;
     if (allPieces == null || allPieces.Count == 0)
     {
-      Logger.LogMessage($"[{VehicleCommandArgs.repairAllVehiclePositions}] No vehicles found in m_allPieces.");
+      Logger.LogMessage($"[{VehicleCommandArgs.fixAllVehiclePositions}] No vehicles found in m_allPieces.");
       return;
     }
 
-    var repairedCount = 0;
+    var fixedCount = 0;
     var clampedCount = 0;
 
     foreach (var kvp in allPieces)
     {
       if (RepairVehiclePosition(kvp.Key, minHeight, maxHeight))
         clampedCount++;
-      repairedCount++;
+      fixedCount++;
     }
 
     Logger.LogMessage(
-      $"[{VehicleCommandArgs.repairAllVehiclePositions}] Repaired {repairedCount} vehicle(s). " +
+      $"[{VehicleCommandArgs.fixAllVehiclePositions}] Repaired {fixedCount} vehicle(s). " +
       $"Height clamped [{minHeight:F2}, {maxHeight:F2}]: {clampedCount} vehicle(s) adjusted.");
   }
 
@@ -1528,11 +1633,11 @@ public class VehicleCommands : ConsoleCommand
     var allPieces = VehiclePiecesController.m_allPieces;
     if (allPieces == null || allPieces.Count == 0)
     {
-      Logger.LogMessage($"[{VehicleCommandArgs.repairNearbyVehiclePositions}] No vehicles found in m_allPieces.");
+      Logger.LogMessage($"[{VehicleCommandArgs.fixNearbyVehiclePositions}] No vehicles found in m_allPieces.");
       return;
     }
 
-    var repairedCount = 0;
+    var fixedCount = 0;
     var clampedCount = 0;
 
     foreach (var kvp in allPieces)
@@ -1552,14 +1657,14 @@ public class VehicleCommands : ConsoleCommand
         {
           clampedCount++;
         }
-        repairedCount++;
+        fixedCount++;
       }
     }
 
     Logger.LogMessage(
-      $"[{VehicleCommandArgs.repairNearbyVehiclePositions}] Repaired {repairedCount} vehicle(s) within radius X:{radiusX:F1}, Z:{radiusZ:F1}. " +
+      $"[{VehicleCommandArgs.fixNearbyVehiclePositions}] Repaired {fixedCount} vehicle(s) within radius X:{radiusX:F1}, Z:{radiusZ:F1}. " +
       $"Height clamped: {clampedCount} vehicle(s)." +
-      (repairedCount == 0 ? " To repair ALL vehicles on the map, use: vehicle repairAllVehiclePositions" : ""));
+      (fixedCount == 0 ? " To fix ALL vehicles on the map, use: vehicle fixAllVehiclePositions" : ""));
   }
 
   public static void VehicleRecenter()
@@ -1596,30 +1701,10 @@ public class VehicleCommands : ConsoleCommand
 
   public override List<string> CommandOptionList()
   {
-    return
-    [
-      // VehicleCommandArgs.locate, 
-      VehicleCommandArgs.destroy,
-#if DEBUG
-      // config is only debug for now.
-      VehicleCommandArgs.config,
-#endif
-      VehicleCommandArgs.debug,
-      VehicleCommandArgs.rotate,
-      VehicleCommandArgs.toggleOceanSway,
-      VehicleCommandArgs.creative,
-      VehicleCommandArgs.help,
-      VehicleCommandArgs.recover,
-      VehicleCommandArgs.reportInfo,
-      VehicleCommandArgs.colliderEditMode,
-      VehicleCommandArgs.move,
-      VehicleCommandArgs.moveUp,
-      VehicleCommandArgs.resetVehicleOwner,
-      VehicleCommandArgs.clearBoundaryChunkData,
-      VehicleCommandArgs.recenter,
-      VehicleCommandArgs.repairAllVehiclePositions,
-      VehicleCommandArgs.repairNearbyVehiclePositions
-    ];
+    return VehicleCommandDefinitions
+      .Where(x => !x.IsDebugOnly)
+      .Select(x => x.CommandName)
+      .ToList();
   }
   public override string Name => "vehicle";
 }
