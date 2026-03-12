@@ -171,7 +171,7 @@ namespace ValheimVehicles.SharedScripts
       // {
       //   if (m_nview.IsOwner())
       //   {
-      //     m_customZSyncTransform.OwnerSync();
+      //     m_customZSyncTransform.AllClientsSync();
       //   }
       // }
     }

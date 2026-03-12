@@ -505,7 +505,7 @@
       // if (IsInvalid()) return;
       // if (ZNet.instance == null) return;
       // if (ZNet.instance.IsDedicated()) return;
-      // if (!IsPlayerOwnerOfNetView()) return;
+      // if (!IsPlayerOwner()) return;
       //
       // Client_UpdateAllPieces();
     }
@@ -525,7 +525,7 @@
       if (!CanSync()) return;
 
       Sync();
-      OwnerSync();
+      AllClientsSync();
     }
 
     /// <summary>
@@ -537,12 +537,12 @@
     {
       if (!CanSync()) return;
 
-      OwnerSync();
+      AllClientsSync();
       NonOwnerSync();
       // if (ZNet.instance == null) return;
       // if (ZNet.instance.IsDedicated()) return;
       // if (IsInvalid()) return;
-      // if (!IsPlayerOwnerOfNetView()) return;
+      // if (!IsPlayerOwner()) return;
       //
       // Client_UpdateAllPieces();
       // UpdateBedPieces();
@@ -1347,12 +1347,13 @@
 
     public void NonOwnerSync()
     {
-      if (IsPlayerOwnerOfNetView()) return;
+      if (IsPlayerOwner(m_nview ? m_nview.GetZDO() : null)) return;
       if (!m_nview || !Manager.OnboardController) return;
 
       // sync self
       if (Player.m_localPlayer && Player.m_localPlayer.m_nview && Player.m_localPlayer.m_nview.m_body && Manager.OnboardController.m_localPlayers.Contains(Player.m_localPlayer))
       {
+        if (Player.m_localPlayer.IsTeleporting()) return;
         var zdo = Player.m_localPlayer.m_nview.GetZDO();
         var playerPos = Player.m_localPlayer.m_nview.m_body.position;
         var vehiclePos = m_nview.GetZDO().GetPosition();
@@ -1367,11 +1368,13 @@
     }
 
     /// <summary>
-    /// Only the owner of the vehicle should sync zdo positions to avoid errors.
+    /// All clients must run this or their zdos get stale.
     /// </summary>
-    public void OwnerSync()
+    public void AllClientsSync()
     {
-      if (!IsPlayerOwnerOfNetView()) return;
+      // dedicated does not need to run this as it has a coroutine.
+      if (IsDedicatedServerInstance()) return;
+      if (!IsPlayerOwner(m_nview ? m_nview.GetZDO() : null)) return;
       Client_UpdateAllPieces();
       UpdateBedPieces();
     }
@@ -1452,6 +1455,12 @@
     private static Vector3 GetVehiclePosition(ZNetView? netView, Vector3 fallbackPosition)
     {
       var zdo = netView != null ? netView.GetZDO() : null;
+
+      if (IsPlayerOwner(zdo) && netView)
+      {
+        return netView.m_body.position;
+      }
+
       var positionToUse = zdo?.GetPosition() ?? fallbackPosition;
       return positionToUse;
     }
@@ -1563,7 +1572,8 @@
           continue;
         }
 
-        var isPlayer = nv.GetComponent<Character>()?.IsPlayer() == true;
+        var character = nv.GetComponent<Character>();
+        var isPlayer = character != null && character.IsPlayer();
 
         // Players must never be evicted from m_tempPieces due to a transient bounds
         // mismatch during a force-move: their corrected ZDO position (below) will
@@ -1580,6 +1590,11 @@
             m_tempPieces.FastRemoveAt(ref index);
             continue;
           }
+        }
+
+        if (character != null && (character.IsTeleporting() || character.IsDead()))
+        {
+          continue;
         }
 
         var position = nv.m_body != null ? nv.m_body.transform.position : nv.transform.position;
@@ -1657,9 +1672,9 @@
     /// Abstract for this getter, coherces to false
     /// </summary>
     /// <returns></returns>
-    private bool IsPlayerOwnerOfNetView()
+    private static bool IsPlayerOwner(ZDO? zdo)
     {
-      return m_nview != null && (m_nview.GetZDO()?.IsOwner() ?? false);
+      return zdo != null && zdo.IsOwner();
     }
 
     /// <summary>
@@ -2625,12 +2640,26 @@
           PrefabNames.WaterVehicleShip.GetStableHashCode() || zdo.m_prefab == PrefabNames.LandVehicle.GetStableHashCode()) return;
 
       var id = GetParentID(zdo);
-      if (id == 0 || !m_allPieces.TryGetValue(id, out var list)) return;
+      if (id != 0 && m_allPieces.TryGetValue(id, out var list))
+      {
+        list.Remove(zdo);
+        itemsRemovedDuringWait = true;
+      }
 
-      // fast remove might not be threadsafe
-      list.Remove(zdo);
+      var cid = zdo.GetInt(VehicleZdoVars.TempPieceParentId);
+      if (cid != 0)
+      {
+        if (!m_dynamicObjects.TryGetValue(cid, out var objectList))
+        {
+          m_dynamicObjects.Remove(cid);
+        }
+        else
+        {
+          objectList.Remove(zdo.m_uid);
+        }
 
-      itemsRemovedDuringWait = true;
+        itemsRemovedDuringWait = true;
+      }
     }
 
     public static int GetParentID(ZDO zdo)
