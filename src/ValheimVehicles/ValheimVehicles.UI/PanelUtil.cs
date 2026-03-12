@@ -93,6 +93,13 @@ public class PanelUtil
     {
       OnPanelPositionChange(_panelTransform, WindowPosition);
     };
+
+    ScreenSizeWatcher.OnScreenSizeChanged += (_) =>
+    {
+      GuiConfig.EnsurePanelInScreenBounds(panelTransform.anchoredPosition, WindowPosition);
+      panelTransform.anchoredPosition = WindowPosition.Value;
+    };
+
     // Create the button object above the gui manager. So it can hide itself.
     var buttonObject = GUIManager.Instance.CreateButton(
       isActive ? hideText : showText,
