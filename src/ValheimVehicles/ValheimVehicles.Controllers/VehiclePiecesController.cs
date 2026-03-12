@@ -502,12 +502,9 @@
     /// <param name="time"></param>
     public void CustomUpdate(float deltaTime, float time)
     {
-      // if (IsInvalid()) return;
-      // if (ZNet.instance == null) return;
-      // if (ZNet.instance.IsDedicated()) return;
-      // if (!IsPlayerOwner()) return;
-      //
-      // Client_UpdateAllPieces();
+      if (!CanSync()) return;
+
+      AllClientsSync();
     }
 
     private bool CanSync()
@@ -531,21 +528,8 @@
     /// <summary>
     /// Doing nothing here might actually improve performance as calling a network object with many updates per update is pretty heavy.
     /// </summary>
-    /// <param name="deltaTime"></param>
-    /// <param name="time"></param>
     public void CustomLateUpdate(float deltaTime)
     {
-      if (!CanSync()) return;
-
-      AllClientsSync();
-      NonOwnerSync();
-      // if (ZNet.instance == null) return;
-      // if (ZNet.instance.IsDedicated()) return;
-      // if (IsInvalid()) return;
-      // if (!IsPlayerOwner()) return;
-      //
-      // Client_UpdateAllPieces();
-      // UpdateBedPieces();
     }
 
     public ZNetView? GetNetView()
@@ -1552,10 +1536,12 @@
           }
         }
       }
+    }
+
+    public void SyncAllTempPiecePositions(Vector3 vehiclePosition)
+    {
 
       var convexHullBounds = convexHullComponent.GetConvexHullBounds(false);
-
-      // Removes the temp collider from the parent if not within the parent.
       for (var index = 0; index < m_tempPieces.Count; index++)
       {
         var nv = m_tempPieces[index];
@@ -1598,6 +1584,25 @@
         }
 
         var position = nv.m_body != null ? nv.m_body.transform.position : nv.transform.position;
+
+        if (character != null && isPlayer)
+        {
+          position = nvZdo.GetPosition();
+          var zsync = nv.GetComponent<ZSyncTransform>();
+          if (nv.m_body)
+          {
+            nv.m_body.position = position;
+          }
+          else
+          {
+            nv.transform.position = position;
+          }
+
+          if (zsync)
+          {
+            zsync.SyncNow();
+          }
+        }
         // Refresh the relative offset so it reflects where the piece actually is
         // on the ship right now, not just where it was when it first boarded.
         // freshOffset = current world pos - vehicle centre of mass.
@@ -1648,12 +1653,12 @@
       if (!m_nview) return;
 
       var shouldUpdate = _nextUpdate <= ZNet.instance.m_netTime;
+      var zdoPosition = m_nview.GetZDO().GetPosition();
 
       if (_nextUpdate <= 0f || shouldUpdate)
       {
         _nextUpdate = ZNet.instance.m_netTime;
       }
-      var zdoPosition = m_nview.GetZDO().GetPosition();
 
       if (!shouldUpdate && !VehicleGlobalConfig.ForceShipOwnerUpdatePerFrame.Value)
       {
