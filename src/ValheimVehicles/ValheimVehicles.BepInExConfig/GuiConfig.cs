@@ -30,26 +30,28 @@ public class GuiConfig : BepInExBaseConfig<GuiConfig>
     var nextCoordinates = inputCoordinates;
     var hasMutated = false;
 
-    if (inputCoordinates.x < 10)
+    var maxX = Mathf.Max(10f, Screen.width - DefaultPanelWidth);
+    var maxY = Mathf.Max(10f, Screen.height - DefaultPanelHeight);
+
+    if (inputCoordinates.x < 10f)
     {
-      nextCoordinates.x = 10;
+      nextCoordinates.x = 10f;
       hasMutated = true;
     }
-    if (inputCoordinates.y < 10)
+    else if (inputCoordinates.x > maxX)
     {
-      nextCoordinates.y = 10;
+      nextCoordinates.x = maxX;
       hasMutated = true;
     }
 
-    if (inputCoordinates.x > Screen.width - 10)
+    if (inputCoordinates.y < 10f)
     {
-      nextCoordinates.x = Screen.width - DefaultPanelWidth;
+      nextCoordinates.y = 10f;
       hasMutated = true;
     }
-
-    if (inputCoordinates.y > Screen.height - DefaultPanelHeight)
+    else if (inputCoordinates.y > maxY)
     {
-      nextCoordinates.y = Screen.height - DefaultPanelHeight;
+      nextCoordinates.y = maxY;
       hasMutated = true;
     }
 
@@ -68,19 +70,18 @@ public class GuiConfig : BepInExBaseConfig<GuiConfig>
       ConfigHelpers.CreateConfigDescription(description, false, false)
     );
 
-    entry.SettingChanged += (_, _) =>
-      EnsurePanelInScreenBounds(entry.Value, entry);
-
-    // If you resize valheim client it will not update this property and cause problems.
-    ScreenSizeWatcher.OnScreenSizeChanged += (_) =>
+    void ClampEntry()
     {
-      if (entry != null && entry.Value != Vector2.zero)
-      {
-        EnsurePanelInScreenBounds(entry.Value, entry);
-      }
-    };
+      EnsurePanelInScreenBounds(entry.Value, entry);
+    }
 
-    EnsurePanelInScreenBounds(entry.Value, entry);
+    // Clamp the stored position once before listeners are attached.
+    ClampEntry();
+
+    entry.SettingChanged += (_, _) => ClampEntry();
+
+    // If the client gets resized, clamp persisted panel position to the new bounds.
+    ScreenSizeWatcher.OnScreenSizeChanged += (_) => ClampEntry();
 
     configEntry = entry;
   }

@@ -14,6 +14,7 @@ public class GamePause_Patch
   [HarmonyPostfix]
   private static void UpdatePausePostfix()
   {
+    if (!PatchConfig.ShipPausePatch.Value) return;
     // stops the dumb rotation.
     Game.m_pauseRotateFade = 0.0f;
     PreventTimeFreezeOnShip();

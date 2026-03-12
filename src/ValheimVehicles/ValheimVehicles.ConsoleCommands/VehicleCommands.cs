@@ -280,7 +280,7 @@ public class VehicleCommands : ConsoleCommand
         RepairAllVehiclePositions(nextArgs);
         break;
       case VehicleCommandArgs.fixNearbyVehiclePositions:
-        RepairNearbyVehiclePositions(nextArgs);
+        FixNearbyVehiclePositions(nextArgs);
         break;
     }
   }
@@ -1511,7 +1511,7 @@ public class VehicleCommands : ConsoleCommand
   /// Repairs a single vehicle: optionally clamps its ZDO Y position then force-syncs all its pieces.
   /// </summary>
   /// <returns>True if the vehicle height was clamped, false otherwise.</returns>
-  public static bool RepairVehiclePosition(int persistentZdoId, float? minHeight, float? maxHeight)
+  public static bool FixVehiclePosition(int persistentZdoId, float? minHeight, float? maxHeight)
   {
     VehiclePiecesController.ActiveInstances.TryGetValue(persistentZdoId, out var activeController);
 
@@ -1523,7 +1523,7 @@ public class VehicleCommands : ConsoleCommand
     if (minHeight.HasValue && maxHeight.HasValue && vehicleZdo != null)
       wasClamped = ClampVehicleZdoToSafeHeight(vehicleZdo, activeNv, minHeight.Value, maxHeight.Value);
 
-    VehiclePiecesController.ForceSyncAllPrefabsToVehiclePosition(
+    VehiclePiecesController.SyncAllPrefabsToVehiclePosition(
       persistentZdoId,
       activeNv,
       null);
@@ -1532,7 +1532,7 @@ public class VehicleCommands : ConsoleCommand
   }
 
   /// <summary>
-  /// Iterates all tracked vehicles and fixs each one via <see cref="RepairVehiclePosition"/>.
+  /// Iterates all tracked vehicles and fixs each one via <see cref="FixVehiclePosition"/>.
   /// <para>
   /// Optional args: [minHeight] [maxHeight]
   /// When both are provided the vehicle ZDO Y position is clamped to [minHeight, maxHeight] before
@@ -1578,7 +1578,7 @@ public class VehicleCommands : ConsoleCommand
 
     foreach (var kvp in allPieces)
     {
-      if (RepairVehiclePosition(kvp.Key, minHeight, maxHeight))
+      if (FixVehiclePosition(kvp.Key, minHeight, maxHeight))
         clampedCount++;
       fixedCount++;
     }
@@ -1598,7 +1598,7 @@ public class VehicleCommands : ConsoleCommand
   /// before syncing its pieces.
   /// </para>
   /// </summary>
-  public static void RepairNearbyVehiclePositions(string[]? args)
+  public static void FixNearbyVehiclePositions(string[]? args)
   {
     if (Player.m_localPlayer == null)
     {
@@ -1652,7 +1652,7 @@ public class VehicleCommands : ConsoleCommand
       // Check if within horizontal radius (X/Z only, ignore Y)
       if (dx * dx <= radiusX * radiusX && dz * dz <= radiusZ * radiusZ)
       {
-        RepairVehiclePosition(kvp.Key, minHeight, maxHeight);
+        FixVehiclePosition(kvp.Key, minHeight, maxHeight);
         if (minHeight.HasValue && maxHeight.HasValue)
         {
           clampedCount++;
