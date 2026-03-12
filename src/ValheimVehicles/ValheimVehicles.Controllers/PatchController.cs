@@ -67,10 +67,8 @@ public static class PatchController
     // HarmonyHelper.TryPatchAll(_harmonyInstance, typeof(ZNetViewInvokeRPCHook));
 #endif
 
-    if (PatchConfig.ShipPausePatch.Value)
-    {
-      HarmonyHelper.TryPatchAll(_harmonyInstance, typeof(GamePause_Patch));
-    }
+
+    HarmonyHelper.TryPatchAll(_harmonyInstance, typeof(GamePause_Patch));
 
     if (ModSupportConfig.DebugRemoveStartMenuBackground.Value)
     {
