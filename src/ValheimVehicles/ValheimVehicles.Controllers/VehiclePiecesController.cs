@@ -225,7 +225,7 @@
     private VehiclePieceActivator _pieceActivator;
 
     private Transform? _piecesContainerTransform;
-    private Coroutine? _serverUpdatePiecesCoroutine;
+    private static CoroutineHandle? _serverUpdatePiecesCoroutine;
 
     // only one is allowed
     internal SteeringWheelComponent? _steeringWheelPiece;
@@ -399,12 +399,27 @@
     }
 
     /// <summary>
-    /// This will retrieve all vehicle pieces tracked when the server loads and/or when the current player or other players add new pieces.
+    /// This is a full sync of all vehicles on a map. It is used for both servers and client commands to ensure vehicles sync across all peers.
     /// </summary>
-    public static void ForceSyncAllPrefabsToVehiclePosition(int persistentZdoId, ZNetView? netView, Vector3? fallbackPosition)
+    ///
+    /// This does not update vehicle position. This should be handled by the owner of the vehicle.
+    /// 
+    public static void Server_SyncAllVehiclePiecesToVehiclePosition()
     {
-      if (!m_allPieces.TryGetValue(persistentZdoId, out var list)) return;
-      foreach (var zdo in list)
+      foreach (var kvp in m_allPieces)
+      {
+        var vehicleZdo = ZdoWatchController.Instance.GetZdo(kvp.Key);
+        if (vehicleZdo == null) continue;
+
+        var netView = ZNetScene.instance.FindInstance(vehicleZdo);
+        var fallbackPos = netView != null ? netView.m_body.position : vehicleZdo.GetPosition();
+        SyncAllPrefabsToVehiclePosition(kvp.Key, netView, fallbackPos);
+      }
+    }
+
+    public static void SyncAllPrefabsToVehiclePosition(List<ZDO> vehicleZdos, ZNetView? netView, Vector3? fallbackPosition)
+    {
+      foreach (var zdo in vehicleZdos)
       {
         if (zdo == null) continue;
         if (!zdo.IsValid()) continue;
@@ -414,6 +429,15 @@
         var vehiclePosition = GetVehiclePosition(netView, position);
         SetPrefabWorldPosition(zdo, vehiclePosition);
       }
+    }
+
+    /// <summary>
+    /// This will retrieve all vehicle pieces tracked when the server loads and/or when the current player or other players add new pieces.
+    /// </summary>
+    public static void SyncAllPrefabsToVehiclePosition(int persistentZdoId, ZNetView? netView, Vector3? fallbackPosition)
+    {
+      if (!m_allPieces.TryGetValue(persistentZdoId, out var list)) return;
+      SyncAllPrefabsToVehiclePosition(list, netView, fallbackPosition);
     }
 
 
@@ -467,12 +491,6 @@
         ActiveInstances.Remove(Manager.PersistentZdoId);
 
       InitializationTimer.Stop();
-      if (_serverUpdatePiecesCoroutine != null)
-        StopCoroutine(_serverUpdatePiecesCoroutine);
-
-
-      // probably safer to just do this.
-      StopAllCoroutines();
 
       CleanUp();
     }
@@ -487,17 +505,24 @@
       // if (IsInvalid()) return;
       // if (ZNet.instance == null) return;
       // if (ZNet.instance.IsDedicated()) return;
-      // if (!IsPlayerOwnerOfNetview()) return;
+      // if (!IsPlayerOwnerOfNetView()) return;
       //
       // Client_UpdateAllPieces();
     }
 
+    private bool CanSync()
+    {
+      if (m_nview == null) return false;
+      if (IsInvalid()) return false;
+      if (ZNet.instance == null) return false;
+      if (ZNet.instance.IsDedicated()) return false;
+
+      return true;
+    }
+
     public override void CustomFixedUpdate(float deltaTime)
     {
-      if (m_nview == null) return;
-      if (IsInvalid()) return;
-      if (ZNet.instance == null) return;
-      if (ZNet.instance.IsDedicated()) return;
+      if (!CanSync()) return;
 
       Sync();
       OwnerSync();
@@ -510,10 +535,14 @@
     /// <param name="time"></param>
     public void CustomLateUpdate(float deltaTime)
     {
+      if (!CanSync()) return;
+
+      OwnerSync();
+      NonOwnerSync();
       // if (ZNet.instance == null) return;
       // if (ZNet.instance.IsDedicated()) return;
       // if (IsInvalid()) return;
-      // if (!IsPlayerOwnerOfNetview()) return;
+      // if (!IsPlayerOwnerOfNetView()) return;
       //
       // Client_UpdateAllPieces();
       // UpdateBedPieces();
@@ -898,7 +927,7 @@
         .GetBool(VehicleZdoVars.ZdoKeyBaseVehicleInitState) ?? false;
 
       // ensures that all pieces are requested to be brought into the current area
-      ForceSyncAllPrefabsToVehiclePosition(Manager.PersistentZdoId, m_nview, transform.position);
+      SyncAllPrefabsToVehiclePosition(Manager.PersistentZdoId, m_nview, transform.position);
 
       UpdateChunkBoundsData(false);
 
@@ -1149,18 +1178,21 @@
       }
     }
 
+    /// <summary>
+    /// Whenever server start this will be started. Eg user client opens local server or dedicate server starts.
+    /// </summary>
+    public static void StartServerUpdaters()
+    {
+      if (!ZNet.instance) return;
+      if (!IsServerInstance()) return;
+
+      _serverUpdatePiecesCoroutine ??= new CoroutineHandle(ZNetScene.instance);
+      _serverUpdatePiecesCoroutine.Start(UpdatePiecesInEachSectorWorker());
+    }
+
     private void StartClientServerUpdaters()
     {
       if (!(bool)ZNet.instance) return;
-
-      LoggerProvider.LogDebug($"IsDedicated : {ZNet.instance.IsDedicated()}");
-      if (ZNet.instance.IsDedicated() && _serverUpdatePiecesCoroutine == null)
-      {
-        LoggerProvider.LogDebug("Calling UpdatePiecesInEachSectorWorker");
-        _serverUpdatePiecesCoroutine =
-          StartCoroutine(nameof(UpdatePiecesInEachSectorWorker));
-      }
-
       StartActivatePendingPieces();
     }
 
@@ -1180,9 +1212,6 @@
         StopCoroutine(_pendingPiecesCoroutine);
         OnActivatePendingPiecesComplete(PendingPieceStateEnum.ForceReset);
       }
-
-      if (_serverUpdatePiecesCoroutine != null)
-        StopCoroutine(_serverUpdatePiecesCoroutine);
 
       if (Manager == null)
         LoggerProvider.LogError("Cleanup called but there is no valid VehicleInstance");
@@ -1316,12 +1345,33 @@
 
     }
 
+    public void NonOwnerSync()
+    {
+      if (IsPlayerOwnerOfNetView()) return;
+      if (!m_nview || !Manager.OnboardController) return;
+
+      // sync self
+      if (Player.m_localPlayer && Player.m_localPlayer.m_nview && Player.m_localPlayer.m_nview.m_body && Manager.OnboardController.m_localPlayers.Contains(Player.m_localPlayer))
+      {
+        var zdo = Player.m_localPlayer.m_nview.GetZDO();
+        var playerPos = Player.m_localPlayer.m_nview.m_body.position;
+        var vehiclePos = m_nview.GetZDO().GetPosition();
+        var relativePosition = playerPos - vehiclePos;
+        zdo.Set(VehicleZdoVars.MBPositionHash, relativePosition);
+        zdo.SetPosition(playerPos);
+
+        // Advance the streaming reference to the destination so the server does
+        // not cull the local player's ZDO before the teleport fires.
+        ZNet.instance.SetReferencePosition(playerPos);
+      }
+    }
+
     /// <summary>
     /// Only the owner of the vehicle should sync zdo positions to avoid errors.
     /// </summary>
     public void OwnerSync()
     {
-      if (!IsPlayerOwnerOfNetview()) return;
+      if (!IsPlayerOwnerOfNetView()) return;
       Client_UpdateAllPieces();
       UpdateBedPieces();
     }
@@ -1411,6 +1461,7 @@
     /// </summary>
     public void ForceUpdateAllPiecePositions()
     {
+      LoggerProvider.LogDebugDebounced("Force updating all piece positions");
       ForceUpdateAllPiecePositions(GetVehiclePosition(m_nview, transform.position));
     }
 
@@ -1476,7 +1527,6 @@
           }
         }
 
-        // updates the zdo for the current location of the piece.
         SetPrefabWorldPosition(zdo, vehiclePosition);
       }
 
@@ -1505,6 +1555,13 @@
           m_tempPieces.FastRemoveAt(ref index);
           continue;
         }
+        var nvZdo = nv.GetZDO();
+
+        if (nvZdo == null || !nvZdo.IsValid())
+        {
+          m_tempPieces.FastRemoveAt(ref index);
+          continue;
+        }
 
         var isPlayer = nv.GetComponent<Character>()?.IsPlayer() == true;
 
@@ -1525,11 +1582,12 @@
           }
         }
 
+        var position = nv.m_body != null ? nv.m_body.transform.position : nv.transform.position;
         // Refresh the relative offset so it reflects where the piece actually is
         // on the ship right now, not just where it was when it first boarded.
         // freshOffset = current world pos - vehicle centre of mass.
-        var freshOffset = nv.transform.position - m_localRigidbody.worldCenterOfMass;
-        nv.m_zdo?.Set(VehicleZdoVars.MBPositionHash, freshOffset);
+        var freshOffset = position - vehiclePosition;
+        nvZdo.Set(VehicleZdoVars.MBPositionHash, freshOffset);
 
         // Project the piece to its correct destination sector:
         // vehiclePosition is the new world position the vehicle ZDO was just stamped
@@ -1545,7 +1603,7 @@
 
         // Write the destination sector into the ZDO instead of the stale current
         // world position, preventing the server from seeing this piece in a dead sector.
-        nv.m_zdo?.SetPosition(correctedWorldPos);
+        nvZdo.SetPosition(correctedWorldPos);
       }
     }
 
@@ -1565,22 +1623,33 @@
       return false;
     }
 
+    private double _nextUpdate = -1f;
+
     /**
      * @warning this must only be called on the client
      */
     private void Client_UpdateAllPieces()
     {
-      var sector = ZoneSystem.GetZone(transform.position);
+      if (!m_nview) return;
 
-      if (sector == m_sector)
+      var shouldUpdate = _nextUpdate <= ZNet.instance.m_netTime;
+
+      if (_nextUpdate <= 0f || shouldUpdate)
       {
-        if (VehicleGlobalConfig.ForceShipOwnerUpdatePerFrame.Value)
-          ForceUpdateAllPiecePositions();
+        _nextUpdate = ZNet.instance.m_netTime;
+      }
+      var zdoPosition = m_nview.GetZDO().GetPosition();
 
-        return;
+      if (!shouldUpdate && !VehicleGlobalConfig.ForceShipOwnerUpdatePerFrame.Value)
+      {
+        var sector = ZoneSystem.GetZone(zdoPosition);
+        if (sector == m_sector)
+        {
+          return;
+        }
       }
 
-      m_sector = sector;
+      m_sector = ZoneSystem.GetZone(zdoPosition);
       ForceUpdateAllPiecePositions();
     }
 
@@ -1588,58 +1657,9 @@
     /// Abstract for this getter, coherces to false
     /// </summary>
     /// <returns></returns>
-    private bool IsPlayerOwnerOfNetview()
+    private bool IsPlayerOwnerOfNetView()
     {
       return m_nview != null && (m_nview.GetZDO()?.IsOwner() ?? false);
-    }
-
-    /// <summary>
-    /// Ran locally in singleplayer or on the machine that owns the netview or on the server.
-    /// </summary>
-    public void Server_SyncAllPieces()
-    {
-      if (!ZNet.instance) return;
-
-      // jotunn extension for Server + Dedicated check. May not be required as IsDedicated may not be true on clients.
-      var isDedicatedServer = ZNet.instance.IsServerInstance();
-
-      LoggerProvider.LogDev($"IsDedicatedServer : {isDedicatedServer}, isServer: {ZNet.instance.IsServer()} isDedicated {ZNet.instance.IsDedicated()}");
-
-      if (!isDedicatedServer) return;
-
-      if (_serverUpdatePiecesCoroutine != null) return;
-
-      _serverUpdatePiecesCoroutine =
-        StartCoroutine(UpdatePiecesInEachSectorWorker());
-    }
-
-
-    public void UpdatePieces(List<ZDO> list)
-    {
-      var pos = transform.position;
-      var sector = ZoneSystem.GetZone(pos);
-
-      if (m_serverSector == sector) return;
-      if (!sector.Equals(m_sector)) m_sector = sector;
-
-      m_serverSector = sector;
-
-      for (var i = 0; i < list.Count; i++)
-      {
-        var zdo = list[i];
-
-        // This could also be a problem. If the zdo is created but the ship is in part of another sector it gets cut off.
-        if (zdo.GetSector() == sector) continue;
-
-        var id = zdo.GetInt(VehicleZdoVars.MBParentId);
-        if (id != PersistentZdoId)
-        {
-          list.FastRemoveAt(ref i);
-          continue;
-        }
-
-        UpdatePieceZdoPosition(zdo, pos);
-      }
     }
 
     /// <summary>
@@ -1687,39 +1707,37 @@
       // }
     }
 
-    /**
-     * large ships need additional threads to render the ship quickly
-     *
-     * @todo setPosition should not need to be called unless the item is out of alignment. In theory it should be relative to parent so it never should be out of alignment.
-     */
-    private IEnumerator UpdatePiecesWorker(List<ZDO> list)
+    public static bool IsServerInstance()
     {
-      LoggerProvider.LogDebug("called UpdatePiecesWorker");
-      UpdatePieces(list);
-      yield return new WaitForFixedUpdate();
+      return ZNet.instance != null && ZNet.instance.IsServer();
     }
 
-/*
- * This method IS important, but it also seems heavily related to causing the raft to disappear if it fails.
- *
- * - Apparently to get this working this method must also fire on the client & on server.
- *
- * - This method must fire when a zone loads, otherwise the items will be in a box position until they are renders.
- * - For larger ships, this can take up to 20 seconds. Yikes.
- *
- * Outside of this problem, this script repeatedly calls (but stays on a separate thread) which may be related to fps drop.
- */
-    public IEnumerator UpdatePiecesInEachSectorWorker()
+    public static bool IsDedicatedServerInstance()
+    {
+      return ZNet.instance != null && ZNet.instance.IsServer() && ZNet.instance.IsDedicated();
+    }
+
+    /*
+     * This method IS important, but it also seems heavily related to causing the raft to disappear if it fails.
+     *
+     * - Apparently to get this working this method must also fire on the client & on server.
+     *
+     * - This method must fire when a zone loads, otherwise the items will be in a box position until they are renders.
+     * - For larger ships, this can take up to 20 seconds. Yikes.
+     *
+     * Outside of this problem, this script repeatedly calls (but stays on a separate thread) which may be related to fps drop.
+     */
+    public static IEnumerator UpdatePiecesInEachSectorWorker()
     {
       LoggerProvider.LogDebug("UpdatePiecesInEachSectorWorker started");
-      while (isActiveAndEnabled)
+      while (!IsServerInstance())
       {
-        if (!m_nview)
-          yield return new WaitUntil(() => Manager != null && Manager.m_nview != null);
+        yield return new WaitForSeconds(1f);
+      }
 
-        var output =
-          m_allPieces.TryGetValue(Manager.PersistentZdoId, out var list);
-        if (list == null || !output)
+      while (IsServerInstance())
+      {
+        if (m_allPieces.Keys.Count == 0)
         {
           yield return new WaitForSeconds(Math.Max(
             ModEnvironment.IsDebug ? 0.05f : 0.1f,
@@ -1728,13 +1746,11 @@
           continue;
         }
 
-        yield return UpdatePiecesWorker(list);
-        yield return new WaitForFixedUpdate();
+        yield return new WaitForSeconds(0.5f);
+        Server_SyncAllVehiclePiecesToVehiclePosition();
       }
 
       LoggerProvider.LogDebug("UpdatePiecesInEachSectorWorker finished");
-      // if we get here we need to restart this updater and this requires the coroutine to be null
-      _serverUpdatePiecesCoroutine = null;
     }
 
     /// <summary>

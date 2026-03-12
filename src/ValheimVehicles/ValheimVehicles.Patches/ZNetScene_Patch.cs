@@ -1,4 +1,5 @@
 using HarmonyLib;
+using ValheimVehicles.Controllers;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.SharedScripts;
 using Zolantris.Shared;
@@ -15,13 +16,15 @@ public class ZNetScene_Patch
     return !PatchSharedData.m_disableCreateDestroy;
   }
 
+
+  [HarmonyPatch(typeof(ZNetScene), "Awake")]
+  [HarmonyPostfix]
+  private static void InjectGlobalVehicleSyncRoutine()
+  {
+    VehiclePiecesController.StartServerUpdaters();
+  }
+
 #if DEBUG
-  // [HarmonyPatch(typeof(ZNetScene), nameof(ZNetScene.Awake))]
-  // [HarmonyPostfix]
-  // private static void ZNetScene_Awake_Subscribe()
-  // {
-  //   LoggerProvider.LogDev("called ZNetScene.Awake.");
-  // }
   [HarmonyPatch(typeof(ZNetScene), nameof(ZNetScene.OnDestroy))]
   [HarmonyPrefix]
   private static void ZNetScene_OnDestroy_Subscribe()

@@ -4802,7 +4802,7 @@
 
       if (PiecesController)
       {
-        VehiclePiecesController.ForceSyncAllPrefabsToVehiclePosition(Manager.PersistentZdoId, m_nview, transform.position);
+        VehiclePiecesController.SyncAllPrefabsToVehiclePosition(Manager.PersistentZdoId, m_nview, transform.position);
         PiecesController.targetController.OnDetectionModeChange();
       }
 
