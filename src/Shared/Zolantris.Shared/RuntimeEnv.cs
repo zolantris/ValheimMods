@@ -1,10 +1,11 @@
 using UnityEngine;
-namespace Zolantris.Shared;
-
-public static class RuntimeEnv
+namespace Zolantris.Shared
 {
-  public static bool IsHeadlessServer()
+  public static class RuntimeEnv
   {
-    return SystemInfo.graphicsDeviceType == UnityEngine.Rendering.GraphicsDeviceType.Null;
+    public static bool IsHeadlessServer()
+    {
+      return SystemInfo.graphicsDeviceType == UnityEngine.Rendering.GraphicsDeviceType.Null;
+    }
   }
 }

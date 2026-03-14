@@ -9,6 +9,7 @@ using Jotunn.Managers;
 using UnityEngine;
 using ValheimVehicles.BepInExConfig;
 using ValheimVehicles.Prefabs;
+using ValheimVehicles.Shared.Constants;
 using ValheimVehicles.SharedScripts;
 using ZdoWatcher;
 using Zolantris.Shared;
@@ -248,14 +249,29 @@ public class MapPinSync : MonoBehaviour
     }
   }
 
-  private static Sprite? _vehicleMapSprite;
+  private static Sprite? _vehicleLandMapSprite;
+  private static Sprite? _vehicleWaterMapSprite;
+  private static Sprite? _vehicleAirMapSprite;
 
-  private static Sprite? GetVehicleMapSprite()
+  public static void LoadSprites()
   {
-    if (_vehicleMapSprite != null) return _vehicleMapSprite;
-    if (LoadValheimVehicleAssets.VehicleSprites == null) return null;
-    _vehicleMapSprite = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames.Dock);
-    return _vehicleMapSprite;
+    _vehicleLandMapSprite = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames.LandVehicle);
+    _vehicleWaterMapSprite = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames.WaterVehicle);
+    _vehicleAirMapSprite = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames.AirVehicle);
+  }
+
+  private static Sprite? GetVehicleMapSprite(ZDO zdo)
+  {
+    var prefab = ZNetScene.instance.GetPrefab(zdo.GetPrefab());
+    var isWaterVehicle = prefab.name.StartsWith(PrefabNames.WaterVehicleShip);
+    var isAirVehicle = PropulsionConfig.AllowFlight.Value && isWaterVehicle && zdo.GetFloat(VehicleZdoVars.VehicleTargetHeight) > 5f && prefab.name.StartsWith(PrefabNames.LandVehicle);
+    var isLandVehicle = prefab.name.StartsWith(PrefabNames.LandVehicle);
+
+    if (isLandVehicle) return _vehicleLandMapSprite;
+    if (isAirVehicle) return _vehicleAirMapSprite;
+    if (isWaterVehicle) return _vehicleWaterMapSprite;
+
+    return null;
   }
 
   private void UpdateVehiclePins()
@@ -306,12 +322,14 @@ public class MapPinSync : MonoBehaviour
       {
         var zdoOwner = zdo.GetOwner();
         var zdoVehicleName = zdo.GetString(VehicleCustomConfig.Key_VehicleName, "V:Unnamed");
+
+
         var pinLabel = $"V:{zdoVehicleName}";
         var pinData = Minimap.instance.AddPin(position,
           Minimap.PinType.Icon4,
           pinLabel, false, false, zdoOwner);
 
-        var vehicleSprite = GetVehicleMapSprite();
+        var vehicleSprite = GetVehicleMapSprite(zdo);
         if (vehicleSprite != null) pinData.m_icon = vehicleSprite;
 
         _vehiclePins[position] = new CustomPinZdoData

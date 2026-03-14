@@ -32,6 +32,8 @@ public abstract class SpriteNames
     "rudder_advanced_double_wood";
 
   public const string LandVehicle = "vehicle_land";
+  public const string WaterVehicle = "vehicle_water";
+  public const string AirVehicle = "vehicle_air";
 
   public const string ShipRudderAdvancedDoubleIron =
     "rudder_advanced_double_iron";
