@@ -122,16 +122,22 @@ orientation of the vehicle or Cannon Control Center:
 Each group displays a number showing how many cannons belong to it. You cycle
 between groups and fire them independently.
 
-### Group Cycling Demo
+### Group Cycling and Controls Demo
+
+<a href="https://youtu.be/jhxpUrqVfVg" style="display:inline-block; position:relative;">
+  <img src="https://raw.githubusercontent.com/zolantris/ValheimMods/chore/documentation-improvements/src/ValheimRAFT/docs/assets/cannons_groups_demo_placeholder.png" width="480" alt="Cannon Groups Demo — click to play"/>
+<img src="https://raw.githubusercontent.com/zolantris/ValheimMods/chore/documentation-improvements/src/ValheimRAFT/docs/assets/play_circle.png" width="64" alt="" style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); pointer-events:none;"/>
+</a>
 
 - All cannons must be near a powder barrel.
 - All cannons must be near a telescope (or placed on a vehicle).
 - All cannons must have a container with cannonballs nearby.
 
-<a href="https://www.youtube.com/watch?v=PLACEHOLDER_VIDEO_ID" style="display:inline-block; position:relative;">
-  <img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT/docs/assets/cannons_groups_demo_placeholder.png" width="480" alt="Cannon Groups Demo — click to play"/>
-  <img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT/docs/assets/play_circle.png" width="64" alt="" style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); pointer-events:none;"/>
-</a>
+Each group is collected from cardinal directions relative to the controller (
+Steering Wheel or Cannon Control Center). For example, a cannon facing within
+±45° of the vehicle forward direction is assigned to the forward group; within
+±45° of backward to the aft group; left/right flanks get their respective
+groups.
 
 ## Controls
 
