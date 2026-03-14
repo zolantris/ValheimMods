@@ -1,11 +1,11 @@
 ManifestFileVersion: 0
 UnityVersion: 6000.1.8f1
-CRC: 136471295
+CRC: 746964932
 Compression: LZMA
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 3c59f22689cfa7bf2e1bb39e6192faf7
+    Hash: 7697fdbeaadaa44037bfad4c3801071b
   TypeTreeHash:
     serializedVersion: 2
     Hash: 00000000000000000000000000000000

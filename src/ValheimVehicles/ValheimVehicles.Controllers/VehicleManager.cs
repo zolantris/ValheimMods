@@ -1044,6 +1044,12 @@
       set {}
     }
 
+    public string VehicleName
+    {
+      get => Config.VehicleName;
+      set {}
+    }
+
   #endregion
 
   }

@@ -9,6 +9,7 @@ using Jotunn.Managers;
 using UnityEngine;
 using ValheimVehicles.BepInExConfig;
 using ValheimVehicles.Prefabs;
+using ValheimVehicles.Shared.Constants;
 using ValheimVehicles.SharedScripts;
 using ZdoWatcher;
 using Zolantris.Shared;
@@ -51,6 +52,7 @@ public class MapPinSync : MonoBehaviour
 
   private void OnEnable()
   {
+    LoadSprites();
     refreshDynamicSpawnPinRoutine ??= new CoroutineHandle(this);
     refreshVehiclePinsRoutine ??= new CoroutineHandle(this);
     zdoSyncCoroutine ??= new CoroutineHandle(this);
@@ -248,6 +250,39 @@ public class MapPinSync : MonoBehaviour
     }
   }
 
+  private static Sprite? _vehicleLandMapSprite;
+  private static Sprite? _vehicleWaterMapSprite;
+  private static Sprite? _vehicleAirMapSprite;
+
+  public static void LoadSprites()
+  {
+    try
+    {
+
+      _vehicleLandMapSprite = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames.LandVehicle);
+      _vehicleWaterMapSprite = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames.WaterVehicle);
+      _vehicleAirMapSprite = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames.AirVehicle);
+    }
+    catch (Exception ex)
+    {
+      Debug.LogError($"Error loading vehicle map sprites: {ex}");
+    }
+  }
+
+  private static Sprite? GetVehicleMapSprite(ZDO zdo)
+  {
+    var prefab = ZNetScene.instance.GetPrefab(zdo.GetPrefab());
+    var isWaterVehicle = prefab.name.StartsWith(PrefabNames.WaterVehicleShip);
+    var isAirVehicle = PropulsionConfig.AllowFlight.Value && isWaterVehicle && zdo.GetFloat(VehicleZdoVars.VehicleTargetHeight) > 5f && prefab.name.StartsWith(PrefabNames.LandVehicle);
+    var isLandVehicle = prefab.name.StartsWith(PrefabNames.LandVehicle);
+
+    if (isLandVehicle) return _vehicleLandMapSprite;
+    if (isAirVehicle) return _vehicleAirMapSprite;
+    if (isWaterVehicle) return _vehicleWaterMapSprite;
+
+    return null;
+  }
+
   private void UpdateVehiclePins()
   {
     if (Minimap.instance == null) return;
@@ -295,9 +330,16 @@ public class MapPinSync : MonoBehaviour
       if (isVisible)
       {
         var zdoOwner = zdo.GetOwner();
+        var zdoVehicleName = zdo.GetString(VehicleCustomConfig.Key_VehicleName, "V:Unnamed");
+
+
+        var pinLabel = $"V:{zdoVehicleName}";
         var pinData = Minimap.instance.AddPin(position,
           Minimap.PinType.Icon4,
-          $"Vehicle", false, false, zdoOwner);
+          pinLabel, false, false, zdoOwner);
+
+        var vehicleSprite = GetVehicleMapSprite(zdo);
+        if (vehicleSprite != null) pinData.m_icon = vehicleSprite;
 
         _vehiclePins[position] = new CustomPinZdoData
           { pinData = pinData, zdo = zdo };

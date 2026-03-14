@@ -4,6 +4,7 @@
   using System.Collections.Generic;
   using System.Diagnostics;
   using System.Diagnostics.CodeAnalysis;
+  using System.Globalization;
   using DynamicLocations.Constants;
   using DynamicLocations.Controllers;
   using Jotunn.Managers;
@@ -474,10 +475,15 @@
 
     public static Slider? LandVehicleTreadDistance_Slider;
     public static Slider? LandVehicleTreadScale_Slider;
+    public static TMP_InputField? LandVehicleTreadDistance_Input;
+    public static TMP_InputField? LandVehicleTreadScale_Input;
+
+    public static TMP_InputField? VehicleName_Input;
 
     public static Slider? WaterFloatation_Slider;
     public static Toggle? WaterFloatation_Toggle;
     public static GameObject? WaterFloatationSliderRow;
+    public static TMP_InputField? WaterFloatation_Input;
 
     public static VehicleManager? CurrentSelectedVehicle;
 
@@ -485,6 +491,22 @@
     public static bool IsEditing = false;
     private static TextMeshProUGUI _saveStatus;
     private static Button _resetButton;
+
+    private static string FormatConfigFloat(float value)
+    {
+      return value.ToString(CultureInfo.CurrentCulture);
+    }
+
+    private static bool TryParseConfigFloat(string value, out float parsedValue)
+    {
+      return float.TryParse(value, NumberStyles.Float | NumberStyles.AllowThousands, CultureInfo.CurrentCulture, out parsedValue) ||
+             float.TryParse(value, NumberStyles.Float | NumberStyles.AllowThousands, CultureInfo.InvariantCulture, out parsedValue);
+    }
+
+    private static void SyncConfigInputValue(TMP_InputField? inputField, float value)
+    {
+      if (inputField != null) inputField.SetTextWithoutNotify(FormatConfigFloat(value));
+    }
 
     public virtual void SetSavedState()
     {
@@ -502,7 +524,7 @@
         _tempVehicleConfig = new VehicleCustomConfig();
       }
       manager.VehicleConfigSync.Config.ApplyFrom(_tempVehicleConfig);
-      manager.VehicleConfigSync.Save(manager.m_nview.GetZDO(), [VehicleCustomConfig.Key_TreadDistance, VehicleCustomConfig.Key_CustomFloatationHeight]);
+      manager.VehicleConfigSync.Save(manager.m_nview.GetZDO(), [VehicleCustomConfig.Key_TreadDistance, VehicleCustomConfig.Key_CustomFloatationHeight, VehicleCustomConfig.Key_VehicleName]);
 
       if (manager.LandMovementController)
       {
@@ -615,9 +637,28 @@
         return;
       }
 
+      var currentManager = manager;
       var sliderWidth = scrollWidth * 0.8f;
 
-      if (!manager.IsLandVehicle)
+      // Vehicle name — shown for all vehicle types
+      SwivelUIHelpers.AddSectionLabel(svParent, viewStyles, ModTranslations.VehicleConfig_VehicleName);
+      SwivelUIHelpers.AddTextInputRow(
+        svParent,
+        viewStyles,
+        ModTranslations.VehicleConfig_VehicleName,
+        _tempVehicleConfig.VehicleName,
+        value =>
+        {
+          _tempVehicleConfig.VehicleName = value;
+          UnsetSavedState();
+        },
+        out VehicleName_Input,
+        ModTranslations.VehicleConfig_VehicleName,
+        TMP_InputField.ContentType.Standard,
+        _ => VehicleName_Input?.SetTextWithoutNotify(_tempVehicleConfig.VehicleName),
+        sliderWidth);
+
+      if (!currentManager.IsLandVehicle)
       {
         // water vehicles
 
@@ -630,30 +671,35 @@
           UnsetSavedState();
         }, out WaterFloatation_Toggle);
 
-        WaterFloatationSliderRow = SwivelUIHelpers.AddSliderRow(svParent, viewStyles, ModTranslations.VehicleConfig_CustomFloatationHeight, -25f, 25f, manager.Config.CustomFloatationHeight, v =>
+
+        WaterFloatationSliderRow = SwivelUIHelpers.AddSliderRow(svParent, viewStyles, ModTranslations.VehicleConfig_CustomFloatationHeight, -25f, 25f, _tempVehicleConfig.CustomFloatationHeight, v =>
         {
           _tempVehicleConfig.HasCustomFloatationHeight = true;
           _tempVehicleConfig.CustomFloatationHeight = v;
+          SyncConfigInputValue(WaterFloatation_Input, _tempVehicleConfig.CustomFloatationHeight);
           UnsetSavedState();
         }, out WaterFloatation_Slider, sliderWidth);
       }
 
-      if (manager.IsLandVehicle)
+      if (currentManager.IsLandVehicle)
       {
         // land vehicles
         SwivelUIHelpers.AddSectionLabel(svParent, viewStyles, ModTranslations.VehicleConfig_LandVehicle_Section);
 
         // distance
-        SwivelUIHelpers.AddSliderRow(svParent, viewStyles, ModTranslations.VehicleConfig_TreadsDistance, MinTargetOffset, MaxTargetOffset, manager.Config.TreadDistance, v =>
+        SwivelUIHelpers.AddSliderRow(svParent, viewStyles, ModTranslations.VehicleConfig_TreadsDistance, MinTargetOffset, MaxTargetOffset, _tempVehicleConfig.TreadDistance, v =>
         {
           _tempVehicleConfig.TreadDistance = v;
+          SyncConfigInputValue(LandVehicleTreadDistance_Input, _tempVehicleConfig.TreadDistance);
           UnsetSavedState();
         }, out LandVehicleTreadDistance_Slider, sliderWidth);
+
         // scale
         SwivelUIHelpers.AddSectionLabel(svParent, viewStyles, ModTranslations.VehicleConfig_TreadsScale);
-        SwivelUIHelpers.AddSliderRow(svParent, viewStyles, ModTranslations.VehicleConfig_TreadsScale, MinTargetOffset, MaxTargetOffset, manager.Config.TreadScaleX, v =>
+        SwivelUIHelpers.AddSliderRow(svParent, viewStyles, ModTranslations.VehicleConfig_TreadsScale, MinTargetOffset, MaxTargetOffset, _tempVehicleConfig.TreadScaleX, v =>
         {
           _tempVehicleConfig.TreadScaleX = v;
+          SyncConfigInputValue(LandVehicleTreadScale_Input, _tempVehicleConfig.TreadScaleX);
           UnsetSavedState();
         }, out LandVehicleTreadScale_Slider, sliderWidth);
       }
@@ -669,17 +715,22 @@
       {
         _tempVehicleConfig = new VehicleCustomConfig();
 
-        if (manager.IsLandVehicle && LandVehicleTreadDistance_Slider && LandVehicleTreadScale_Slider)
+        VehicleName_Input?.SetTextWithoutNotify(_tempVehicleConfig.VehicleName);
+
+        if (currentManager.IsLandVehicle && LandVehicleTreadDistance_Slider && LandVehicleTreadScale_Slider)
         {
           LandVehicleTreadDistance_Slider.SetValueWithoutNotify(_tempVehicleConfig.TreadDistance);
           LandVehicleTreadScale_Slider.SetValueWithoutNotify(_tempVehicleConfig.TreadScaleX);
+          SyncConfigInputValue(LandVehicleTreadDistance_Input, _tempVehicleConfig.TreadDistance);
+          SyncConfigInputValue(LandVehicleTreadScale_Input, _tempVehicleConfig.TreadScaleX);
         }
-        WaterFloatation_Slider.SetValueWithoutNotify(_tempVehicleConfig.CustomFloatationHeight);
-        WaterFloatation_Toggle.SetIsOnWithoutNotify(_tempVehicleConfig.HasCustomFloatationHeight);
-        WaterFloatationSliderRow.gameObject.SetActive(_tempVehicleConfig.HasCustomFloatationHeight);
+
+        if (WaterFloatation_Slider != null) WaterFloatation_Slider.SetValueWithoutNotify(_tempVehicleConfig.CustomFloatationHeight);
+        if (WaterFloatation_Toggle != null) WaterFloatation_Toggle.SetIsOnWithoutNotify(_tempVehicleConfig.HasCustomFloatationHeight);
+        if (WaterFloatationSliderRow != null) WaterFloatationSliderRow.SetActive(_tempVehicleConfig.HasCustomFloatationHeight);
+        SyncConfigInputValue(WaterFloatation_Input, _tempVehicleConfig.CustomFloatationHeight);
         UnsetSavedState();
       });
-      buttonGO.transform.SetSiblingIndex(0);
     }
 
     private static bool CanAddAdminCommand()
