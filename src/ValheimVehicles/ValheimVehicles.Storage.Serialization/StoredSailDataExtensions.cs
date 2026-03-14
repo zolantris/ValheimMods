@@ -55,8 +55,9 @@ public static class StoredSailDataExtensions
 
   public static void ApplySerializableData(this StoredSailData data, ZDO zdo, SailComponent component)
   {
-    zdo.Set(SailComponent.m_sailCornersCountHash, data.SailCorners.Count);
-    for (var i = 0; i < data.SailCorners.Count && i < 4; i++)
+    var cornerCount = data.SailCorners.Count;
+    zdo.Set(SailComponent.m_sailCornersCountHash, cornerCount);
+    for (var i = 0; i < cornerCount && i < 4; i++)
     {
       var corner = data.SailCorners[i].ToVector3();
       zdo.Set(i switch
@@ -68,6 +69,9 @@ public static class StoredSailDataExtensions
         _ => 0
       }, corner);
     }
+    // 4th corner is intentionally not written for 3-point sails.
+    // GetIsInitialized's legacy recovery block is now gated on zdoCorners == 0 only,
+    // so a valid count of 3 already prevents it from ever running.
 
     zdo.Set(SailComponent.m_lockedSailSidesHash, data.LockedSides);
     zdo.Set(SailComponent.m_lockedSailCornersHash, data.LockedCorners);

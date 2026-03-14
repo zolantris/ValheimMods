@@ -418,6 +418,8 @@ public class EditSailComponentPanel
       m_editSail.LoadFromMaterial();
       m_editSail.SaveZdo();
       m_editSail.LoadZDO();
+      // Notify all other peers to reload the ZDO now that it has been saved.
+      m_editSail.RequestSyncZDOData();
     }
 
     CloseEditPanel();
