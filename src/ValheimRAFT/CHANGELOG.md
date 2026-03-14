@@ -28,7 +28,7 @@ the [GitHub Releases](https://github.com/zolantris/ValheimMods/releases) page.
 
 ---
 
-## [4.1.3] — 2024
+## [4.1.3] — 2025-12-04
 
 ### Fixed
 
@@ -36,7 +36,7 @@ the [GitHub Releases](https://github.com/zolantris/ValheimMods/releases) page.
 
 ---
 
-## [4.1.2]
+## [4.1.2] — 2025-12-03
 
 ### Fixed
 
@@ -46,7 +46,7 @@ the [GitHub Releases](https://github.com/zolantris/ValheimMods/releases) page.
 
 ---
 
-## [4.1.1]
+## [4.1.1] — 2025-10-20
 
 ### Fixed
 
@@ -55,7 +55,7 @@ the [GitHub Releases](https://github.com/zolantris/ValheimMods/releases) page.
 
 ---
 
-## [4.1.0-beta.1]
+## [4.1.0-beta.1] — 2025-10-14
 
 ### Added
 
@@ -64,7 +64,7 @@ the [GitHub Releases](https://github.com/zolantris/ValheimMods/releases) page.
 
 ---
 
-## [4.0.4] / [4.0.3]
+## [4.0.4] / [4.0.3] — 2025-10-12
 
 ### Fixed
 
@@ -73,7 +73,7 @@ the [GitHub Releases](https://github.com/zolantris/ValheimMods/releases) page.
 
 ---
 
-## [4.0.2]
+## [4.0.2] — 2025-10-12
 
 ### Added
 
@@ -82,7 +82,7 @@ the [GitHub Releases](https://github.com/zolantris/ValheimMods/releases) page.
 
 ---
 
-## [4.0.1]
+## [4.0.1] — 2025-10-03
 
 ### Fixed
 
@@ -90,7 +90,7 @@ the [GitHub Releases](https://github.com/zolantris/ValheimMods/releases) page.
 
 ---
 
-## [4.0.0]
+## [4.0.0] — 2025-08-25
 
 ### Added
 
@@ -109,7 +109,7 @@ the [GitHub Releases](https://github.com/zolantris/ValheimMods/releases) page.
 
 ---
 
-## [3.7.2]
+## [3.7.2] — 2025-08-24
 
 ### Added
 
@@ -118,7 +118,7 @@ the [GitHub Releases](https://github.com/zolantris/ValheimMods/releases) page.
 
 ---
 
-## [3.7.1-beta]
+## [3.7.1-beta] — 2025-08-16
 
 ### Added
 
@@ -126,7 +126,7 @@ the [GitHub Releases](https://github.com/zolantris/ValheimMods/releases) page.
 
 ---
 
-## [3.6.6]
+## [3.6.6] — 2025-07-31
 
 ### Fixed
 
@@ -134,7 +134,7 @@ the [GitHub Releases](https://github.com/zolantris/ValheimMods/releases) page.
 
 ---
 
-## [3.6.5]
+## [3.6.5] — 2025-07-30
 
 ### Fixed
 
@@ -142,7 +142,7 @@ the [GitHub Releases](https://github.com/zolantris/ValheimMods/releases) page.
 
 ---
 
-## [3.6.4]
+## [3.6.4] — 2025-07-26
 
 ### Added
 
@@ -154,7 +154,7 @@ the [GitHub Releases](https://github.com/zolantris/ValheimMods/releases) page.
 
 ---
 
-## [3.6.3-beta] / [3.6.1-beta.2] / [3.6.0-beta.1]
+## [3.6.3-beta] / [3.6.1-beta.2] / [3.6.0-beta.1] — 2025-07-21
 
 ### Added
 
@@ -170,7 +170,7 @@ the [GitHub Releases](https://github.com/zolantris/ValheimMods/releases) page.
 
 ---
 
-## [3.5.4]
+## [3.5.4] — 2025-07-03
 
 ### Fixed
 
@@ -178,7 +178,7 @@ the [GitHub Releases](https://github.com/zolantris/ValheimMods/releases) page.
 
 ---
 
-## [3.5.3]
+## [3.5.3] — 2025-06-24
 
 ### Fixed
 
@@ -187,7 +187,7 @@ the [GitHub Releases](https://github.com/zolantris/ValheimMods/releases) page.
 
 ---
 
-## [3.5.2]
+## [3.5.2] — 2025-06-23
 
 ### Added
 
@@ -201,7 +201,7 @@ the [GitHub Releases](https://github.com/zolantris/ValheimMods/releases) page.
 
 ---
 
-## [3.4.3]
+## [3.4.3] — 2025-05-30
 
 ### Fixed
 
@@ -211,7 +211,7 @@ the [GitHub Releases](https://github.com/zolantris/ValheimMods/releases) page.
 
 ---
 
-## [3.4.0-beta.1]
+## [3.4.0-beta.1] — 2025-05-10
 
 ### Added
 
@@ -221,7 +221,7 @@ the [GitHub Releases](https://github.com/zolantris/ValheimMods/releases) page.
 
 ---
 
-## [3.3.0]
+## [3.3.0] — 2025-04-29
 
 ### Added
 
@@ -233,7 +233,7 @@ the [GitHub Releases](https://github.com/zolantris/ValheimMods/releases) page.
 
 ---
 
-## [3.2.1]
+## [3.2.1] — 2025-04-28
 
 ### Added
 
@@ -241,7 +241,7 @@ the [GitHub Releases](https://github.com/zolantris/ValheimMods/releases) page.
 
 ---
 
-## [3.2.0]
+## [3.2.0] — 2025-04-28
 
 ### Added
 
@@ -259,7 +259,7 @@ the [GitHub Releases](https://github.com/zolantris/ValheimMods/releases) page.
 
 ---
 
-## [3.1.0]
+## [3.1.0] — 2025-04-04
 
 ### Added
 
@@ -268,7 +268,7 @@ the [GitHub Releases](https://github.com/zolantris/ValheimMods/releases) page.
 
 ---
 
-## [3.0.8] / [3.0.7] / [3.0.5] / [3.0.4]
+## [3.0.8] / [3.0.7] / [3.0.5] / [3.0.4] — 2025-04-01
 
 ### Fixed
 
@@ -280,7 +280,7 @@ the [GitHub Releases](https://github.com/zolantris/ValheimMods/releases) page.
 
 ---
 
-## [3.0.0-beta]
+## [3.0.0-beta] — 2025-02-01
 
 ### Added
 
@@ -292,7 +292,7 @@ the [GitHub Releases](https://github.com/zolantris/ValheimMods/releases) page.
 
 ---
 
-## [2.5.3]
+## [2.5.3] — 2025-01-20
 
 ### Added
 
@@ -304,7 +304,7 @@ the [GitHub Releases](https://github.com/zolantris/ValheimMods/releases) page.
 
 ---
 
-## [2.5.0-beta.1]
+## [2.5.0-beta.1] — 2025-01-12
 
 ### Added
 
@@ -316,7 +316,7 @@ the [GitHub Releases](https://github.com/zolantris/ValheimMods/releases) page.
 
 ---
 
-## [2.4.3]
+## [2.4.3] — 2024-11-30
 
 ### Fixed
 
@@ -326,7 +326,7 @@ the [GitHub Releases](https://github.com/zolantris/ValheimMods/releases) page.
 
 ---
 
-## [2.4.2]
+## [2.4.2] — 2024-11-24
 
 ### Fixed
 
@@ -335,7 +335,7 @@ the [GitHub Releases](https://github.com/zolantris/ValheimMods/releases) page.
 
 ---
 
-## [2.4.1]
+## [2.4.1] — 2024-11-11
 
 ### Fixed
 
@@ -344,7 +344,7 @@ the [GitHub Releases](https://github.com/zolantris/ValheimMods/releases) page.
 
 ---
 
-## [2.4.0]
+## [2.4.0] — 2024-11-10
 
 ### Added
 
@@ -357,7 +357,7 @@ the [GitHub Releases](https://github.com/zolantris/ValheimMods/releases) page.
 
 ---
 
-## [2.4.0-beta.1]
+## [2.4.0-beta.1] — 2024-11-09
 
 ### Added
 
@@ -367,8 +367,8 @@ the [GitHub Releases](https://github.com/zolantris/ValheimMods/releases) page.
 
 ---
 
-## [2.2.4] / [2.2.3] / [2.2.2]
-
+## [2.2.4] / [2.2.3] / [2.2.2] — 2024-08-25
+ 
 ### Fixed
 
 - Ship floatation logic regressions.
@@ -378,7 +378,7 @@ the [GitHub Releases](https://github.com/zolantris/ValheimMods/releases) page.
 
 ---
 
-## [2.2.0]
+## [2.2.0] — 2024-07-06
 
 ### Added
 
@@ -394,7 +394,7 @@ the [GitHub Releases](https://github.com/zolantris/ValheimMods/releases) page.
 
 ---
 
-## [2.1.1] / [2.1.0]
+## [2.1.1] / [2.1.0] — 2024-05-22
 
 ### Fixed
 
@@ -404,7 +404,7 @@ the [GitHub Releases](https://github.com/zolantris/ValheimMods/releases) page.
 
 ---
 
-## [2.0.3] / [2.0.2] / [2.0.1] / [2.0.0]
+## [2.0.3] / [2.0.2] / [2.0.1] / [2.0.0] — 2024-05-17
 
 ### Added
 
@@ -428,7 +428,7 @@ the [GitHub Releases](https://github.com/zolantris/ValheimMods/releases) page.
 
 ---
 
-## [1.6.14]
+## [1.6.14] — 2024-01-21
 
 ### Fixed
 
@@ -436,7 +436,7 @@ the [GitHub Releases](https://github.com/zolantris/ValheimMods/releases) page.
 
 ---
 
-## [1.6.13]
+## [1.6.13] — 2024-01-20
 
 ### Fixed
 
@@ -444,7 +444,7 @@ the [GitHub Releases](https://github.com/zolantris/ValheimMods/releases) page.
 
 ---
 
-## [1.6.12]
+## [1.6.12] — 2024-01-07
 
 ### Fixed
 
@@ -452,7 +452,7 @@ the [GitHub Releases](https://github.com/zolantris/ValheimMods/releases) page.
 
 ---
 
-## [1.6.11]
+## [1.6.11] — 2023-12-30
 
 ### Added
 
@@ -466,7 +466,7 @@ the [GitHub Releases](https://github.com/zolantris/ValheimMods/releases) page.
 
 ---
 
-## [1.6.9] / [1.6.10]
+## [1.6.9] / [1.6.10] — 2023-12-30
 
 ### Fixed
 
@@ -475,7 +475,7 @@ the [GitHub Releases](https://github.com/zolantris/ValheimMods/releases) page.
 
 ---
 
-## [1.6.7] / [1.6.8]
+## [1.6.7] / [1.6.8] — 2023-12-29
 
 ### Added
 
@@ -488,7 +488,7 @@ the [GitHub Releases](https://github.com/zolantris/ValheimMods/releases) page.
 
 ---
 
-## [1.6.5] / [1.6.6]
+## [1.6.5] / [1.6.6] — 2023-12-27
 
 ### Fixed
 
@@ -497,7 +497,7 @@ the [GitHub Releases](https://github.com/zolantris/ValheimMods/releases) page.
 
 ---
 
-## [1.6.4]
+## [1.6.4] — 2023-12-26
 
 ### Added
 
@@ -506,7 +506,7 @@ the [GitHub Releases](https://github.com/zolantris/ValheimMods/releases) page.
 
 ---
 
-## [1.6.3]
+## [1.6.3] — 2023-12-24
 
 ### Fixed
 
@@ -514,8 +514,8 @@ the [GitHub Releases](https://github.com/zolantris/ValheimMods/releases) page.
 
 ---
 
-## [1.6.2]
-
+## [1.6.2] — 2023-12-21
+ 
 ### Fixed
 
 - Server stability for zone-based raft updates.
