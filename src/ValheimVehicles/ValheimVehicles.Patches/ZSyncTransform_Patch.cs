@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using HarmonyLib;
 using UnityEngine;
 using ValheimVehicles.Controllers;
+using Zolantris.Shared;
 
 namespace ValheimVehicles.Patches;
 
@@ -37,24 +38,34 @@ public class ZSyncTransform_Patch
   [HarmonyPrefix]
   private static bool GetRelativePosition_ForVehicle(ZSyncTransform __instance, ref bool __result, ZDO zdo, out ZDOID parent, out string attachJoint, out Vector3 relativePos, out Quaternion relativeRot, out Vector3 relativeVel)
   {
-    parent = ZDOID.None;
-    attachJoint = "";
-    relativePos = Vector3.zero;
-    relativeRot = Quaternion.identity;
-    relativeVel = Vector3.zero;
-
     var t = __instance.transform;
-    if (!t.parent) return true;
+    if (!t.parent)
+    {
+      parent = ZDOID.None;
+      attachJoint = "";
+      relativePos = Vector3.zero;
+      relativeRot = Quaternion.identity;
+      relativeVel = Vector3.zero;
+      return true;
+    }
 
     var vehiclePiece = t.GetComponentInParent<VehiclePiecesController>();
-    if (vehiclePiece && vehiclePiece.m_nview)
+    if (vehiclePiece && vehiclePiece.Manager.m_nview)
     {
-      parent = vehiclePiece.m_nview.GetZDO().m_uid;
+      parent = vehiclePiece.Manager.m_nview.GetZDO().m_uid;
+      attachJoint = "";
+      relativeVel = Vector3.zero;
       relativePos = t.localPosition;
       relativeRot = t.localRotation;
       __result = true;
       return false;
     }
+
+    parent = ZDOID.None;
+    attachJoint = "";
+    relativePos = Vector3.zero;
+    relativeRot = Quaternion.identity;
+    relativeVel = Vector3.zero;
 
     return true;
   }
