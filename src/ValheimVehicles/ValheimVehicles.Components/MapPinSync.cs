@@ -42,15 +42,19 @@ public class MapPinSync : MonoBehaviour
 
   public void Awake()
   {
+    refreshDynamicSpawnPinRoutine ??= new CoroutineHandle(this);
+    refreshVehiclePinsRoutine ??= new CoroutineHandle(this);
+    zdoSyncCoroutine ??= new CoroutineHandle(this);
+
     Instance = this;
   }
 
   private void OnEnable()
   {
+    refreshDynamicSpawnPinRoutine ??= new CoroutineHandle(this);
+    refreshVehiclePinsRoutine ??= new CoroutineHandle(this);
+    zdoSyncCoroutine ??= new CoroutineHandle(this);
     MinimapManager.OnVanillaMapDataLoaded += OnMapReady;
-    StartDynamicSpawnPinSync();
-    StartVehiclePinSync();
-    StartRefreshAllVehicleZDos();
   }
 
   private void OnDisable()
@@ -85,20 +89,17 @@ public class MapPinSync : MonoBehaviour
 
   public void StartRefreshAllVehicleZDos()
   {
-    zdoSyncCoroutine ??= new CoroutineHandle(this);
-    zdoSyncCoroutine.Start(RefreshAllVehicleZDOs());
+    zdoSyncCoroutine?.Start(RefreshAllVehicleZDOs());
   }
 
   public void StartVehiclePinSync()
   {
-    refreshVehiclePinsRoutine ??= new CoroutineHandle(this);
-    refreshVehiclePinsRoutine.Start(RefreshVehiclePins());
+    refreshVehiclePinsRoutine?.Start(RefreshVehiclePins());
   }
 
   public void StartDynamicSpawnPinSync()
   {
-    refreshDynamicSpawnPinRoutine ??= new CoroutineHandle(this);
-    refreshDynamicSpawnPinRoutine.Start(RefreshDynamicSpawnPin());
+    refreshDynamicSpawnPinRoutine?.Start(RefreshDynamicSpawnPin());
   }
 
   private bool IsWithinVisibleRadius(Vector3 point)
@@ -188,9 +189,24 @@ public class MapPinSync : MonoBehaviour
   {
     while (isActiveAndEnabled)
     {
-      if (ZNet.instance == null) continue;
-      if (ZNet.instance != null && ZNet.instance.IsServer() && ZNet.instance.IsDedicated()) continue;
-      if (Player.m_localPlayer == null) continue;
+      yield return null;
+      if (ZNet.instance == null)
+      {
+        yield return new WaitForSeconds(1);
+        continue;
+      }
+
+      if (ZNet.instance != null && ZNet.instance.IsServer() && ZNet.instance.IsDedicated())
+      {
+        // do not run on dedicated server, as there is no need to sync ZDOs to clients and it can cause performance issues.
+        yield break;
+      }
+
+      if (Player.m_localPlayer == null)
+      {
+        yield return null;
+        continue;
+      }
 
       yield return UpdatePlayerSpawnPin();
       yield return new WaitForSeconds(MinimapConfig.BedPinSyncInterval.Value);
@@ -202,9 +218,24 @@ public class MapPinSync : MonoBehaviour
   {
     while (isActiveAndEnabled)
     {
-      if (ZNet.instance == null) continue;
-      if (ZNet.instance != null && ZNet.instance.IsServer() && ZNet.instance.IsDedicated()) continue;
-      if (Player.m_localPlayer == null) continue;
+      yield return null;
+      if (ZNet.instance == null)
+      {
+        yield return new WaitForSeconds(1);
+        continue;
+      }
+
+      if (ZNet.instance != null && ZNet.instance.IsServer() && ZNet.instance.IsDedicated())
+      {
+        // do not run on dedicated server, as there is no need to sync ZDOs to clients and it can cause performance issues.
+        yield break;
+      }
+
+      if (Player.m_localPlayer == null)
+      {
+        yield return null;
+        continue;
+      }
       // heavy call but needed for all vehicles to be searchable on the map.
       ZdoWatchController.Instance.RequestAllPersistentZdosFromServer();
       yield return new WaitForSeconds(30f);
@@ -272,7 +303,7 @@ public class MapPinSync : MonoBehaviour
   {
     while (isActiveAndEnabled)
     {
-      yield return new WaitForSeconds(MinimapConfig.VehiclePinSyncInterval.Value);
+      yield return new WaitForSeconds(Mathf.Max(MinimapConfig.VehiclePinSyncInterval.Value, 1));
       if (ZNet.instance == null) continue;
       if (ZNet.instance != null && ZNet.instance.IsServer() && ZNet.instance.IsDedicated()) continue;
       if (Player.m_localPlayer == null) continue;
