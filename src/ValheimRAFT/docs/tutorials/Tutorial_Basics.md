@@ -55,6 +55,9 @@ A quick-start guide to building and sailing your first vehicle.
 ## The Vehicle Hammer
 
 The **Vehicle Hammer** is the primary build tool for all ValheimRAFT prefabs.
+See [Readme](https://github.com/zolantris/ValheimMods/blob/main/src/ValheimRAFT/README.md#prefabs)
+for a full list of prefabs and their
+functions.
 
 - Craft it from the workbench once you have the mod installed.
 - Equip it like a normal hammer — right-click opens the build menu.
