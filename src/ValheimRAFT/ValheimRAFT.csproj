@@ -65,6 +65,7 @@
     </ItemGroup>
     <ItemGroup>
         <Folder Include="docs-images\"/>
+        <Folder Include="docs\assets\"/>
         <Folder Include="Generated\"/>
         <Folder Include="ValheimRAFT.Patches\"/>
     </ItemGroup>
