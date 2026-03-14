@@ -55,4 +55,10 @@ public interface IVehicleConfig
     get;
     set;
   }
+
+  public string VehicleName
+  {
+    get;
+    set;
+  }
 }

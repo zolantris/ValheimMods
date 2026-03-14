@@ -169,6 +169,9 @@ public partial class ModTranslations
     VehicleConfig_TreadsScale = SafeLocalize("$valheim_vehicles_config_treads_scale");
     VehicleConfig_TreadsMaxLength = SafeLocalize("$valheim_vehicles_treads_max_length");
 
+    // vehicle name
+    VehicleConfig_VehicleName = SafeLocalize("$valheim_vehicles_config_vehicle_name");
+
 
     // section titles
     VehicleConfig_LandVehicle_Section = SafeLocalize("$valheim_vehicles_land_vehicle");

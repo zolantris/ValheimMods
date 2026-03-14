@@ -78,7 +78,7 @@
 
         var text = textGO.GetComponent<TextMeshProUGUI>();
         ApplyInputStyle(text, viewStyles);
-        text.enableWordWrapping = false;
+        text.textWrappingMode = TextWrappingModes.NoWrap;
         text.overflowMode = TextOverflowModes.Ellipsis;
         text.fontSizeMin = 14;
         text.fontSizeMax = viewStyles.FontSizeDropdownLabel;
@@ -98,7 +98,7 @@
         placeholderText.text = string.IsNullOrWhiteSpace(placeholder) ? currentValue : placeholder;
         placeholderText.fontStyle = FontStyles.Italic;
         placeholderText.color = new Color(viewStyles.InputTextColor.r, viewStyles.InputTextColor.g, viewStyles.InputTextColor.b, 0.55f);
-        placeholderText.enableWordWrapping = false;
+        placeholderText.textWrappingMode = TextWrappingModes.NoWrap;
         placeholderText.overflowMode = TextOverflowModes.Ellipsis;
         placeholderText.fontSizeMin = 14;
         placeholderText.fontSizeMax = viewStyles.FontSizeDropdownLabel;

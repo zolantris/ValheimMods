@@ -197,6 +197,7 @@ namespace ValheimVehicles.SharedScripts
     public static string VehicleConfig_TreadsDistance;
     public static string VehicleConfig_TreadsScale;
     public static string VehicleConfig_TreadsMaxLength;
+    public static string VehicleConfig_VehicleName;
     // vehicle config sections
     public static string VehicleConfig_LandVehicle_Section;
     public static string VehicleConfig_WaterVehicle_Section;
