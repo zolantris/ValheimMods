@@ -124,11 +124,14 @@ between groups and fire them independently.
 
 ### Group Cycling Demo
 
-- all cannons must be near powder barrel.
-- all cannons must be near telescope (or on a vehicle)
-- all cannons must have a container with cannonballs near them.
+- All cannons must be near a powder barrel.
+- All cannons must be near a telescope (or placed on a vehicle).
+- All cannons must have a container with cannonballs nearby.
 
-[cannons_groups_demo.mp4](https://raw.githubusercontent.com/zolantris/ValheimMods/chore/documentation-improvements/src/ValheimRAFT/docs/assets/cannons_groups_demo.mp4)
+<a href="https://www.youtube.com/watch?v=PLACEHOLDER_VIDEO_ID" style="display:inline-block; position:relative;">
+  <img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT/docs/assets/cannons_groups_demo_placeholder.png" width="480" alt="Cannon Groups Demo — click to play"/>
+  <img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT/docs/assets/play_circle.png" width="64" alt="" style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); pointer-events:none;"/>
+</a>
 
 ## Controls
 
