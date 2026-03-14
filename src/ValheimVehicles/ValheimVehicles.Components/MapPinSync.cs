@@ -52,6 +52,7 @@ public class MapPinSync : MonoBehaviour
 
   private void OnEnable()
   {
+    LoadSprites();
     refreshDynamicSpawnPinRoutine ??= new CoroutineHandle(this);
     refreshVehiclePinsRoutine ??= new CoroutineHandle(this);
     zdoSyncCoroutine ??= new CoroutineHandle(this);
@@ -255,9 +256,17 @@ public class MapPinSync : MonoBehaviour
 
   public static void LoadSprites()
   {
-    _vehicleLandMapSprite = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames.LandVehicle);
-    _vehicleWaterMapSprite = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames.WaterVehicle);
-    _vehicleAirMapSprite = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames.AirVehicle);
+    try
+    {
+
+      _vehicleLandMapSprite = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames.LandVehicle);
+      _vehicleWaterMapSprite = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames.WaterVehicle);
+      _vehicleAirMapSprite = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames.AirVehicle);
+    }
+    catch (Exception ex)
+    {
+      Debug.LogError($"Error loading vehicle map sprites: {ex}");
+    }
   }
 
   private static Sprite? GetVehicleMapSprite(ZDO zdo)
