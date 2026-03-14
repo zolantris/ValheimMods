@@ -294,7 +294,7 @@
   "valheim_vehicles_sail_raft": "Raft Sail",
   "valheim_vehicles_sail_drakkal": "Drakkal Sail",
   "valheim_vehicles_cannon_fixed_tier1": "Cannon (fixed)",
-  "valheim_vehicles_cannon_fixed_tier1_desc": "A fixed cannon that can be used to defend your ship. Can be fired manually from the ship console. Requires gunpowder barrel nearby to function and cannonballs in a nearby storage container.",
+  "valheim_vehicles_cannon_fixed_tier1_desc": "A fixed cannon that can be used to defend your ship. Can be fired manually from the ship console or via the telescope prefab. Requires gunpowder barrel nearby to function and cannonballs in a nearby storage container.",
   "valheim_vehicles_cannon_turret_tier1": "Cannon (turret)",
   "valheim_vehicles_cannon_turret_tier1_desc": "A turret cannon that can be used to defend your ship. Can be fired manually from the ship console or left on automatic to defend player and area. Requires gunpowder barrel nearby to function and cannonballs in a nearby storage container.",
   "valheim_vehicles_item_cannon_handheld_item": "Cannon Handheld",
