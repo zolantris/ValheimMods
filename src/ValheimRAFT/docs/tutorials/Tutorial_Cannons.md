@@ -125,8 +125,8 @@ between groups and fire them independently.
 ### Group Cycling and Controls Demo
 
 <a href="https://youtu.be/jhxpUrqVfVg" style="display:inline-block; position:relative;">
-  <img src="https://raw.githubusercontent.com/zolantris/ValheimMods/chore/documentation-improvements/src/ValheimRAFT/docs/assets/cannons_groups_demo_placeholder.png" width="480" alt="Cannon Groups Demo — click to play"/>
-<img src="https://raw.githubusercontent.com/zolantris/ValheimMods/chore/documentation-improvements/src/ValheimRAFT/docs/assets/play_circle.png" width="64" alt="" style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); pointer-events:none;"/>
+  <img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT/docs/assets/cannons_groups_demo_placeholder.png" width="480" alt="Cannon Groups Demo — click to play"/>
+<img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT/docs/assets/play_circle.png" width="64" alt="" style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); pointer-events:none;"/>
 </a>
 
 - All cannons must be near a powder barrel.

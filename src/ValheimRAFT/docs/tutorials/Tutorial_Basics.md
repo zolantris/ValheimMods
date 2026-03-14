@@ -112,7 +112,7 @@ helm. The vehicle is now under your control.
   <tbody>
     <tr>
       <td style="padding:8px; white-space:nowrap;"><b>Wind (Sails)</b></td>
-      <td style="padding:8px;"><img src="https://raw.githubusercontent.com/zolantris/ValheimMods/chore/documentation-improvements/src/ValheimRAFT/docs/assets/engine_speed_config_default.png" width="500"/></td>
+      <td style="padding:8px;"><img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT/docs/assets/engine_speed_config_default.png" width="500"/></td>
       <td style="padding:8px;">
         <pre style="margin:0; font-size:12px;">Rudder Slow Speed = 5
 Rudder Half Speed = 0
@@ -122,7 +122,7 @@ Rudder Full Speed = 0</pre>
     </tr>
     <tr>
       <td style="padding:8px; white-space:nowrap;"><b>Engine (Rudder Speed)</b></td>
-      <td style="padding:8px;"><img src="https://raw.githubusercontent.com/zolantris/ValheimMods/chore/documentation-improvements/src/ValheimRAFT/docs/assets/engine_speed_config_overrides.png" width="500"/></td>
+      <td style="padding:8px;"><img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT/docs/assets/engine_speed_config_overrides.png" width="500"/></td>
       <td style="padding:8px;">
         <pre style="margin:0; font-size:12px;">Rudder Slow Speed = 5
 Rudder Half Speed = 30
@@ -174,7 +174,7 @@ Vehicles that have been given a name via the vehicle config panel show as
 
 Example image of a vehicle pin on the minimap:
 
-<img src="https://raw.githubusercontent.com/zolantris/ValheimMods/chore/documentation-improvements/src/ValheimRAFT/docs/assets/vehicle_map_pins_all.png" width="400"/>
+<img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT/docs/assets/vehicle_map_pins_all.png" width="400"/>
 
 For visibility distance look
 at [VisibleVehicleRadius](https://github.com/zolantris/ValheimMods/blob/main/src/ValheimRAFT/docs/ValheimRAFT_AutoDoc.md#visiblevehicleradius)
@@ -214,22 +214,22 @@ per-vehicle.
   <tbody>
     <tr>
       <td style="padding:8px;"><b>1. Place the Mechanism Switch</b></td>
-      <td style="padding:8px;"><img src="https://raw.githubusercontent.com/zolantris/ValheimMods/chore/documentation-improvements/src/ValheimRAFT/docs/assets/1_build_mechanical_switch.png" width="220"/></td>
+      <td style="padding:8px;"><img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT/docs/assets/1_build_mechanical_switch.png" width="220"/></td>
       <td style="padding:8px;">Open the Vehicle Hammer build menu, go to the <b>Power</b> tab, and place a <b>Mechanism Switch</b> somewhere accessible on your vehicle.</td>
     </tr>
     <tr>
       <td style="padding:8px;"><b>2. Open the Configure Panel</b></td>
-      <td style="padding:8px;"><img src="https://raw.githubusercontent.com/zolantris/ValheimMods/chore/documentation-improvements/src/ValheimRAFT/docs/assets/2_shift_e_open_configure.png" width="220"/></td>
+      <td style="padding:8px;"><img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT/docs/assets/2_shift_e_open_configure.png" width="220"/></td>
       <td style="padding:8px;">Hold <b>Shift + E</b> on the Mechanism Switch to open the configure panel. Set the mode to <b>CommandsHud</b> if it is not already.</td>
     </tr>
     <tr>
       <td style="padding:8px;"><b>3. Open Config from the Debug Menu</b></td>
-      <td style="padding:8px;"><img src="https://raw.githubusercontent.com/zolantris/ValheimMods/chore/documentation-improvements/src/ValheimRAFT/docs/assets/3_on_debug_menu_open_config_by_pressing_button.png" width="220"/></td>
+      <td style="padding:8px;"><img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT/docs/assets/3_on_debug_menu_open_config_by_pressing_button.png" width="220"/></td>
       <td style="padding:8px;">Press <b>E</b> on the switch to open the debug panel. Click the <b>Config</b> button to open the per-vehicle config panel.</td>
     </tr>
     <tr>
       <td style="padding:8px;"><b>4. Vehicle Config Menu</b></td>
-      <td style="padding:8px;"><img src="https://raw.githubusercontent.com/zolantris/ValheimMods/chore/documentation-improvements/src/ValheimRAFT/docs/assets/4_vehicle_config_menu.png" width="220"/></td>
+      <td style="padding:8px;"><img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT/docs/assets/4_vehicle_config_menu.png" width="220"/></td>
       <td style="padding:8px;">Set a custom <b>Vehicle Name</b> (shown on the minimap as <code>V:&lt;name&gt;</code>), adjust the <b>Custom Floatation Height</b>, and configure other per-vehicle settings.</td>
     </tr>
   </tbody>
@@ -390,7 +390,7 @@ Key settings to know as a new player:
 </table>
 
 The full config reference is in
-the [auto-generated config doc](https://github.com/zolantris/ValheimMods/tree/chore/documentation-improvements/src/ValheimRAFT/docs/ValheimRAFT_AutoDoc.md).
+the [auto-generated config doc](https://github.com/zolantris/ValheimMods/tree/main/src/ValheimRAFT/docs/ValheimRAFT_AutoDoc.md).
 
 ---
 
@@ -445,17 +445,17 @@ your stamina hits zero you take damage, so keep an eye on it.
   <tbody>
     <tr>
       <td style="padding:8px;"><b>1. Start hauling</b></td>
-      <td style="padding:8px;"><img src="https://raw.githubusercontent.com/zolantris/ValheimMods/chore/documentation-improvements/src/ValheimRAFT/docs/assets/haul1_start.png" width="220"/></td>
+      <td style="padding:8px;"><img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT/docs/assets/haul1_start.png" width="220"/></td>
       <td style="padding:8px;">Walk up to the <b>Rope Anchor</b> on the vehicle and hold <b>Shift + E</b> to grab the rope and begin dragging.</td>
     </tr>
     <tr>
       <td style="padding:8px;"><b>2. Pull the vehicle</b></td>
-      <td style="padding:8px;"><img src="https://raw.githubusercontent.com/zolantris/ValheimMods/chore/documentation-improvements/src/ValheimRAFT/docs/assets/haul2_pull_vehicle.png" width="220"/></td>
+      <td style="padding:8px;"><img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT/docs/assets/haul2_pull_vehicle.png" width="220"/></td>
       <td style="padding:8px;">Walk in the direction you want the vehicle to move. It will follow you. Stamina drains continuously while moving — watch the stamina bar.</td>
     </tr>
     <tr>
       <td style="padding:8px;"><b>3. Stop and rest</b></td>
-      <td style="padding:8px;"><img src="https://raw.githubusercontent.com/zolantris/ValheimMods/chore/documentation-improvements/src/ValheimRAFT/docs/assets/haul3_stop.png" width="220"/></td>
+      <td style="padding:8px;"><img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT/docs/assets/haul3_stop.png" width="220"/></td>
       <td style="padding:8px;">Stop moving to let stamina regenerate. The vehicle holds its position while you rest. Release <b>Shift + E</b> to drop the rope entirely.</td>
     </tr>
   </tbody>
