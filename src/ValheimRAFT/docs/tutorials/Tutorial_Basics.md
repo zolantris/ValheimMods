@@ -74,8 +74,6 @@ Find open water. Open the build menu and place a **Water Vehicle** prefab. This
 is the invisible physics anchor every other piece attaches to — place it on the
 water surface.
 
-[Image: Water Vehicle prefab placement](https://raw.githubusercontent.com/zolantris/ValheimMods/main/docs/images/tutorial_basics/water_vehicle_placement.png)
-
 ### 2. Add a Floor
 
 Switch to the **Hull** tab and place hull floor pieces on top of the vehicle
@@ -99,79 +97,88 @@ helm. The vehicle is now under your control.
 
 ## Propulsion Options
 
-- **Wind power** — place sails to harness the wind. The more and larger the
-  sails, the faster you go.
-- **Engines** — Currently the user can modify valheimraft.cfg file to set values
-  for the mid and full speed so that the vehicle is much faster and goes up
-  wind. This is not realistic, but it is fun. Balanced Engine pieces might be
-  introduced in a future update.
-
-Example config without rudder speed
-[RudderSpeed](https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT/docs/assets/engine_speed_config_default.png)
-
-```yaml
-## Set the Slow speed of rudder, this will not apply sail speed.
-# Setting type: Single
-# Default value: 5
-# Acceptable value range: From 2 to 20
-Rudder Slow Speed = 5
-
-  ## Set the Half speed of rudder, this will apply additively with sails
-  # Setting type: Single
-  # Default value: 0
-  # Acceptable value range: From 0 to 100
+<table style="width:100%; border-collapse:collapse;">
+  <thead>
+    <tr>
+      <th style="padding:8px; border-bottom:2px solid #444;">Option</th>
+      <th style="padding:8px; border-bottom:2px solid #444;">BepInExConfig</th>
+      <th style="padding:8px; border-bottom:2px solid #444;">Config</th>
+      <th style="padding:8px; border-bottom:2px solid #444;">Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="padding:8px; white-space:nowrap;"><b>Wind (Sails)</b></td>
+      <td style="padding:8px;"><img src="https://raw.githubusercontent.com/zolantris/ValheimMods/chore/documentation-improvements/src/ValheimRAFT/docs/assets/engine_speed_config_default.png" width="500"/></td>
+      <td style="padding:8px;">
+        <pre style="margin:0; font-size:12px;">Rudder Slow Speed = 5
 Rudder Half Speed = 0
-
-  ## Set the Full speed of rudder, this will apply additively with sails
-  # Setting type: Single
-  # Default value: 0
-  # Acceptable value range: From 0 to 100
-Rudder Full Speed = 0
-```
-
-Example config with rudder speed
-[RudderSpeed](https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT/docs/assets/engine_speed_config_overrides.png)
-
-```yaml
-## Set the Slow speed of rudder, this will not apply sail speed.
-# Setting type: Single
-# Default value: 5
-# Acceptable value range: From 2 to 20
-Rudder Slow Speed = 5
-
-  ## Set the Half speed of rudder, this will apply additively with sails
-  # Setting type: Single
-  # Default value: 0
-  # Acceptable value range: From 0 to 100
+Rudder Full Speed = 0</pre>
+      </td>
+      <td style="padding:8px;">Default mode. Place sails to harness the wind. The more and larger the sails, the faster you go. With rudder speeds at <code>0</code> the vehicle is purely wind-driven — speed and direction are dictated by the wind.</td>
+    </tr>
+    <tr>
+      <td style="padding:8px; white-space:nowrap;"><b>Engine (Rudder Speed)</b></td>
+      <td style="padding:8px;"><img src="https://raw.githubusercontent.com/zolantris/ValheimMods/chore/documentation-improvements/src/ValheimRAFT/docs/assets/engine_speed_config_overrides.png" width="500"/></td>
+      <td style="padding:8px;">
+        <pre style="margin:0; font-size:12px;">Rudder Slow Speed = 5
 Rudder Half Speed = 30
-
-  ## Set the Full speed of rudder, this will apply additively with sails
-  # Setting type: Single
-  # Default value: 0
-  # Acceptable value range: From 0 to 100
-Rudder Full Speed = 15
-```
+Rudder Full Speed = 15</pre>
+      </td>
+      <td style="padding:8px;">Set <code>Rudder Half Speed</code> and <code>Rudder Full Speed</code> to non-zero values in <code>valheimraft.cfg</code> to add engine-like thrust on top of wind. This lets the vehicle move against the wind and reach much higher speeds. Values are additive with sail speed. Balanced engine prefabs may be added in a future update.</td>
+    </tr>
+  </tbody>
+</table>
 
 ## Map and Minimap
 
 All Vehicles can be viewed on the map. There are three types of vehicles, each
 with their own minimap icon:
 
-| Vehicle Type  |                                                                           Icon                                                                            | Pin Label                 | Description                                               |
-|---------------|:---------------------------------------------------------------------------------------------------------------------------------------------------------:|---------------------------|-----------------------------------------------------------|
-| Water Vehicle | <img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT.Unity/Assets/ValheimVehicles/Icons/vehicle_water.png" width="40"/> | `V:<name>` or `V:Unnamed` | Ships and water-based rafts sailing on the ocean surface. |
-| Air Vehicle   |  <img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT.Unity/Assets/ValheimVehicles/Icons/vehicle_air.png" width="40"/>  | `V:<name>` or `V:Unnamed` | Flying vehicles operating above terrain and water.        |
-| Land Vehicle  | <img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT.Unity/Assets/ValheimVehicles/Icons/vehicle_land.png" width="40"/>  | `V:<name>` or `V:Unnamed` | Wheeled/tread vehicles travelling overland.               |
+<table style="width:100%; border-collapse:collapse;">
+  <thead>
+    <tr>
+      <th style="padding:8px; border-bottom:2px solid #444;">Vehicle Type</th>
+      <th style="padding:8px; border-bottom:2px solid #444; text-align:center;">Icon</th>
+      <th style="padding:8px; border-bottom:2px solid #444;">Pin Label</th>
+      <th style="padding:8px; border-bottom:2px solid #444;">Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="padding:8px;">Water Vehicle</td>
+      <td style="padding:8px; text-align:center;"><img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT.Unity/Assets/ValheimVehicles/Icons/vehicle_water.png" width="40"/></td>
+      <td style="padding:8px;"><code>V:&lt;name&gt;</code> or <code>Vehicle</code></td>
+      <td style="padding:8px;">Ships and water-based rafts sailing on the ocean surface.</td>
+    </tr>
+    <tr>
+      <td style="padding:8px;">Air Vehicle</td>
+      <td style="padding:8px; text-align:center;"><img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT.Unity/Assets/ValheimVehicles/Icons/vehicle_air.png" width="40"/></td>
+      <td style="padding:8px;"><code>V:&lt;name&gt;</code> or <code>Vehicle</code></td>
+      <td style="padding:8px;">Flying vehicles operating above terrain and water.</td>
+    </tr>
+    <tr>
+      <td style="padding:8px;">Land Vehicle</td>
+      <td style="padding:8px; text-align:center;"><img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT.Unity/Assets/ValheimVehicles/Icons/vehicle_land.png" width="40"/></td>
+      <td style="padding:8px;"><code>V:&lt;name&gt;</code> or <code>Vehicle</code></td>
+      <td style="padding:8px;">Wheeled/tread vehicles travelling overland.</td>
+    </tr>
+  </tbody>
+</table>
 
 Vehicles that have been given a name via the vehicle config panel show as
 `V:<name>` on the pin. Unnamed vehicles show as `V:Unnamed`.
 
 Example image of a vehicle pin on the minimap:
-<img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT/docs/assets/vehicle_map_pins_all.png" width="400"/>
 
-For visibility distance, there is configuration on distance of visible vehicles
-and whether they show
-on the minimap. See the config reference for details.
+<img src="https://raw.githubusercontent.com/zolantris/ValheimMods/chore/documentation-improvements/src/ValheimRAFT/docs/assets/vehicle_map_pins_all.png" width="400"/>
+
+For visibility distance look
+at [VisibleVehicleRadius](https://github.com/zolantris/ValheimMods/blob/main/src/ValheimRAFT/docs/ValheimRAFT_AutoDoc.md#visiblevehicleradius)
+
+```yaml
+VisibleVehicleRadius = 75
+```
 
 ---
 
@@ -204,22 +211,22 @@ per-vehicle.
   <tbody>
     <tr>
       <td style="padding:8px;"><b>1. Place the Mechanism Switch</b></td>
-      <td style="padding:8px;"><img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT/docs/assets/1_build_mechanical_switch.png" width="220"/></td>
+      <td style="padding:8px;"><img src="https://raw.githubusercontent.com/zolantris/ValheimMods/chore/documentation-improvements/src/ValheimRAFT/docs/assets/1_build_mechanical_switch.png" width="220"/></td>
       <td style="padding:8px;">Open the Vehicle Hammer build menu, go to the <b>Power</b> tab, and place a <b>Mechanism Switch</b> somewhere accessible on your vehicle.</td>
     </tr>
     <tr>
       <td style="padding:8px;"><b>2. Open the Configure Panel</b></td>
-      <td style="padding:8px;"><img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT/docs/assets/2_shift_e_open_configure.png" width="220"/></td>
+      <td style="padding:8px;"><img src="https://raw.githubusercontent.com/zolantris/ValheimMods/chore/documentation-improvements/src/ValheimRAFT/docs/assets/2_shift_e_open_configure.png" width="220"/></td>
       <td style="padding:8px;">Hold <b>Shift + E</b> on the Mechanism Switch to open the configure panel. Set the mode to <b>CommandsHud</b> if it is not already.</td>
     </tr>
     <tr>
       <td style="padding:8px;"><b>3. Open Config from the Debug Menu</b></td>
-      <td style="padding:8px;"><img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT/docs/assets/3_on_debug_menu_open_config_by_pressing_button.png" width="220"/></td>
+      <td style="padding:8px;"><img src="https://raw.githubusercontent.com/zolantris/ValheimMods/chore/documentation-improvements/src/ValheimRAFT/docs/assets/3_on_debug_menu_open_config_by_pressing_button.png" width="220"/></td>
       <td style="padding:8px;">Press <b>E</b> on the switch to open the debug panel. Click the <b>Config</b> button to open the per-vehicle config panel.</td>
     </tr>
     <tr>
       <td style="padding:8px;"><b>4. Vehicle Config Menu</b></td>
-      <td style="padding:8px;"><img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT/docs/assets/4_vehicle_config_menu.png" width="220"/></td>
+      <td style="padding:8px;"><img src="https://raw.githubusercontent.com/zolantris/ValheimMods/chore/documentation-improvements/src/ValheimRAFT/docs/assets/4_vehicle_config_menu.png" width="220"/></td>
       <td style="padding:8px;">Set a custom <b>Vehicle Name</b> (shown on the minimap as <code>V:&lt;name&gt;</code>), adjust the <b>Custom Floatation Height</b>, and configure other per-vehicle settings.</td>
     </tr>
   </tbody>
@@ -227,12 +234,20 @@ per-vehicle.
 
 ## Steering and Sailing
 
-| Input            | Action                      |
-|------------------|-----------------------------|
-| `W`              | Increase speed / raise sail |
-| `S`              | Decrease speed / lower sail |
-| `A` / `D`        | Turn left / right           |
-| `[Use]` on wheel | Board / leave helm          |
+<table style="width:100%; border-collapse:collapse;">
+  <thead>
+    <tr>
+      <th style="padding:8px; border-bottom:2px solid #444;">Input</th>
+      <th style="padding:8px; border-bottom:2px solid #444;">Action</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td style="padding:8px;"><code>W</code></td><td style="padding:8px;">Increase speed / raise sail</td></tr>
+    <tr><td style="padding:8px;"><code>S</code></td><td style="padding:8px;">Decrease speed / lower sail</td></tr>
+    <tr><td style="padding:8px;"><code>A</code> / <code>D</code></td><td style="padding:8px;">Turn left / right</td></tr>
+    <tr><td style="padding:8px;"><code>[Use]</code> on wheel</td><td style="padding:8px;">Board / leave helm</td></tr>
+  </tbody>
+</table>
 
 **Speed tiers:** stopped → slow → half → full. Each tier raises the sail higher.
 
@@ -248,13 +263,22 @@ during placement to change the ship's orientation.
 
 Each sail contributes independently to total speed. Multiple sails stack.
 
-| Sail                        | Tier | Notes                                         |
-|-----------------------------|------|-----------------------------------------------|
-| Raft Sail                   | 1    | Starter sail, modest power                    |
-| Karve Sail                  | 2    | Mid-tier power                                |
-| Viking Sail                 | 3    | High power                                    |
-| Drakkal Sail                | 4    | Highest power                                 |
-| Custom Sail (3- or 4-point) | 1    | Power scales with sail area — larger = faster |
+<table style="width:100%; border-collapse:collapse;">
+  <thead>
+    <tr>
+      <th style="padding:8px; border-bottom:2px solid #444;">Sail</th>
+      <th style="padding:8px; border-bottom:2px solid #444;">Tier</th>
+      <th style="padding:8px; border-bottom:2px solid #444;">Notes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td style="padding:8px;">Raft Sail</td><td style="padding:8px;">1</td><td style="padding:8px;">Starter sail, modest power</td></tr>
+    <tr><td style="padding:8px;">Karve Sail</td><td style="padding:8px;">2</td><td style="padding:8px;">Mid-tier power</td></tr>
+    <tr><td style="padding:8px;">Viking Sail</td><td style="padding:8px;">3</td><td style="padding:8px;">High power</td></tr>
+    <tr><td style="padding:8px;">Drakkal Sail</td><td style="padding:8px;">4</td><td style="padding:8px;">Highest power</td></tr>
+    <tr><td style="padding:8px;">Custom Sail (3- or 4-point)</td><td style="padding:8px;">1</td><td style="padding:8px;">Power scales with sail area — larger = faster</td></tr>
+  </tbody>
+</table>
 
 ### Custom Sail textures
 
@@ -287,13 +311,21 @@ Hull pieces (slabs, walls, ribs, prows, corners) do two things:
 2. Adjust the vehicle's **floatation height** based on the global config
    `HullFloatationColliderLocation`.
 
-| Config Value           | Behaviour                                                                                                                  |
-|------------------------|----------------------------------------------------------------------------------------------------------------------------|
-| `Fixed`                | Floatation locked at 0. Most stable. **Default.**                                                                          |
-| `Average`              | Average height of all pieces on the vehicle.                                                                               |
-| `AverageVehiclePieces` | Average of hull pieces only (ignores masts etc).                                                                           |
-| `Center`               | Midpoint between highest and lowest hull piece.                                                                            |
-| `Custom`               | Per-vehicle override — place the Floatation Prefab on the desired surface. ⚠️ Can launch the player if moved while aboard. |
+<table style="width:100%; border-collapse:collapse;">
+  <thead>
+    <tr>
+      <th style="padding:8px; border-bottom:2px solid #444;">Config Value</th>
+      <th style="padding:8px; border-bottom:2px solid #444;">Behaviour</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td style="padding:8px;"><code>Fixed</code></td><td style="padding:8px;">Floatation locked at 0. Most stable. <b>Default.</b></td></tr>
+    <tr><td style="padding:8px;"><code>Average</code></td><td style="padding:8px;">Average height of all pieces on the vehicle.</td></tr>
+    <tr><td style="padding:8px;"><code>AverageVehiclePieces</code></td><td style="padding:8px;">Average of hull pieces only (ignores masts etc).</td></tr>
+    <tr><td style="padding:8px;"><code>Center</code></td><td style="padding:8px;">Midpoint between highest and lowest hull piece.</td></tr>
+    <tr><td style="padding:8px;"><code>Custom</code></td><td style="padding:8px;">Per-vehicle override — place the Floatation Prefab on the desired surface. ⚠️ Can launch the player if moved while aboard.</td></tr>
+  </tbody>
+</table>
 
 > Hull mechanics only apply to **V2 WaterVehicles**. Older V1 rafts are not
 > affected.
@@ -340,14 +372,22 @@ with new config options.
 
 Key settings to know as a new player:
 
-| Setting                          | What it does                                                                                 |
-|----------------------------------|----------------------------------------------------------------------------------------------|
-| `HullFloatationColliderLocation` | Controls how hull pieces affect floatation. See [Hull and Floatation](#hull-and-floatation). |
-| `ServerRaftUpdateZoneInterval`   | How often the server checks vehicle zones. Increase on low-spec servers.                     |
-| `fixPlanBuildPositionIssues`     | Enables the PlanBuild coordinate fix patch. Disable if PlanBuild is not installed.           |
+<table style="width:100%; border-collapse:collapse;">
+  <thead>
+    <tr>
+      <th style="padding:8px; border-bottom:2px solid #444;">Setting</th>
+      <th style="padding:8px; border-bottom:2px solid #444;">What it does</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td style="padding:8px;"><code>HullFloatationColliderLocation</code></td><td style="padding:8px;">Controls how hull pieces affect floatation. See <a href="#hull-and-floatation">Hull and Floatation</a>.</td></tr>
+    <tr><td style="padding:8px;"><code>ServerRaftUpdateZoneInterval</code></td><td style="padding:8px;">How often the server checks vehicle zones. Increase on low-spec servers.</td></tr>
+    <tr><td style="padding:8px;"><code>fixPlanBuildPositionIssues</code></td><td style="padding:8px;">Enables the PlanBuild coordinate fix patch. Disable if PlanBuild is not installed.</td></tr>
+  </tbody>
+</table>
 
 The full config reference is in
-the [auto-generated config doc](https://github.com/zolantris/ValheimMods/tree/main/src/ValheimRAFT/docs/ValheimRAFT_AutoDoc.md).
+the [auto-generated config doc](https://github.com/zolantris/ValheimMods/tree/chore/documentation-improvements/src/ValheimRAFT/docs/ValheimRAFT_AutoDoc.md).
 
 ---
 
@@ -391,15 +431,27 @@ your stamina hits zero you take damage, so keep an eye on it.
    continuing. The vehicle will hold its position while you rest nearby.
 6. Release **Shift + E** (or stop holding it) to drop the rope.
 
+![haul3_stop.png](https://github.com/zolantris/ValheimMods/tree/chore/documentation-improvements/src/ValheimRAFT/docs/assets/haul3_stop.png)
+![haul2_pull_vehicle.png](https://github.com/zolantris/ValheimMods/tree/chore/documentation-improvements/src/ValheimRAFT/docs/assets/haul2_pull_vehicle.png)
+![haul1_start.png](https://github.com/zolantris/ValheimMods/tree/chore/documentation-improvements/src/ValheimRAFT/docs/assets/haul1_start.png)
+
 ---
 
 ### Stamina Management
 
-| Situation                   | Stamina effect               |
-|-----------------------------|------------------------------|
-| Moving while hauling        | Stamina drains continuously  |
-| Standing still near vehicle | Stamina regenerates normally |
-| Stamina reaches 0           | Player takes damage          |
+<table style="width:100%; border-collapse:collapse;">
+  <thead>
+    <tr>
+      <th style="padding:8px; border-bottom:2px solid #444;">Situation</th>
+      <th style="padding:8px; border-bottom:2px solid #444;">Stamina effect</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td style="padding:8px;">Moving while hauling</td><td style="padding:8px;">Stamina drains continuously</td></tr>
+    <tr><td style="padding:8px;">Standing still near vehicle</td><td style="padding:8px;">Stamina regenerates normally</td></tr>
+    <tr><td style="padding:8px;">Stamina reaches 0</td><td style="padding:8px;">Player takes damage</td></tr>
+  </tbody>
+</table>
 
 Eat high-stamina foods before a long haul. Barley, cloudberries, and serpent
 stew are good choices in the mid-to-late game.

@@ -54,10 +54,10 @@ public class MinimapConfig : BepInExBaseConfig<MinimapConfig>
         "Shows all vehicles on global map. All vehicles will update their position.",
         true, true));
 
-    VisibleVehicleRadius = config.BindUnique(SectionKey, "VisibleVehicleRadius", 50f,
+    VisibleVehicleRadius = config.BindUnique(SectionKey, "VisibleVehicleRadius", 150f,
       ConfigHelpers.CreateConfigDescription(
         "A radius in which all vehicles are revealed. This is more balanced than ShowAllVehicles.",
-        true, true, new AcceptableValueRange<float>(5, 10000f)));
+        true, true, new AcceptableValueRange<float>(75f, 10000f)));
 
     ShowBedsOnVehicles = config.BindUnique(SectionKey, "ShowBedsOnVehicles", true,
       ConfigHelpers.CreateConfigDescription(
