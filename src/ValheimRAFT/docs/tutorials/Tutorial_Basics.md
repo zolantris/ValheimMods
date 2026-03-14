@@ -543,6 +543,8 @@ voyage.
   reference
 - [Vehicle Storage / Save & Spawn](./Tutorial_VehicleStorage.md) — save and
   reload ship blueprints
+- [Cannons](./Tutorial_Cannons.md) — placing, grouping, aiming, and firing all
+  cannon types
 - [Power System Guide](./Tutorial_PowerSystem.md) — engines, batteries, pylons,
   and swivels
 - [Vehicle Dock demo (video)](https://youtu.be/iJSqmvJZlzo) — loading a land

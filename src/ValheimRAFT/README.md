@@ -14,9 +14,10 @@ previews, swap to the beta variant.
 
 ## Tutorials
 
-- [Basics & Getting Started](https://github.com/zolantris/ValheimMods/tree/main/src/ValheimRAFT/docs/tutorials/Tutorial_Basics.md)
+- [Valheim RAFT Basics](https://github.com/zolantris/ValheimMods/tree/main/src/ValheimRAFT/docs/tutorials/Tutorial_Basics.md)
 - [Vehicle Storage/Saving](https://github.com/zolantris/ValheimMods/tree/main/src/ValheimRAFT/docs/tutorials/Tutorial_VehicleStorage.md)
 - [Vehicle Commands](https://github.com/zolantris/ValheimMods/tree/main/src/ValheimRAFT/docs/tutorials/Tutorial_VehicleCommandsInterface.md)
+- [Cannons](https://github.com/zolantris/ValheimMods/tree/main/src/ValheimRAFT/docs/tutorials/Tutorial_Cannons.md)
 - [Power System Guide](https://github.com/zolantris/ValheimMods/tree/main/src/ValheimRAFT/docs/tutorials/Tutorial_PowerSystem.md)
 
 ## Video Tutorials
