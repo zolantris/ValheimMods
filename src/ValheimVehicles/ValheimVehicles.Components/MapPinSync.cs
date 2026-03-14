@@ -273,7 +273,7 @@ public class MapPinSync : MonoBehaviour
   {
     var prefab = ZNetScene.instance.GetPrefab(zdo.GetPrefab());
     var isWaterVehicle = prefab.name.StartsWith(PrefabNames.WaterVehicleShip);
-    var isAirVehicle = PropulsionConfig.AllowFlight.Value && isWaterVehicle && zdo.GetFloat(VehicleZdoVars.VehicleTargetHeight) > 5f && prefab.name.StartsWith(PrefabNames.LandVehicle);
+    var isAirVehicle = PropulsionConfig.AllowFlight.Value && (isWaterVehicle || prefab.name.StartsWith(PrefabNames.AirVehicle)) && zdo.GetFloat(VehicleZdoVars.VehicleTargetHeight) > 5f;
     var isLandVehicle = prefab.name.StartsWith(PrefabNames.LandVehicle);
 
     if (isLandVehicle) return _vehicleLandMapSprite;
@@ -330,7 +330,7 @@ public class MapPinSync : MonoBehaviour
       if (isVisible)
       {
         var zdoOwner = zdo.GetOwner();
-        var zdoVehicleName = zdo.GetString(VehicleCustomConfig.Key_VehicleName, "V:Unnamed");
+        var zdoVehicleName = zdo.GetString(VehicleCustomConfig.Key_VehicleName, "Unnamed");
 
 
         var pinLabel = $"V:{zdoVehicleName}";

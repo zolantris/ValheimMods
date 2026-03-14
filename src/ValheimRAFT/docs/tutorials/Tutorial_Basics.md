@@ -167,14 +167,63 @@ Vehicles that have been given a name via the vehicle config panel show as
 `V:<name>` on the pin. Unnamed vehicles show as `V:Unnamed`.
 
 Example image of a vehicle pin on the minimap:
-![Vehicle minimap pin example](https://raw.githubusercontent.com/zolantris/ValheimMods/main/docs/images/tutorial_basics/vehicle_minimap_pin.png)
+<img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT/docs/assets/vehicle_map_pins_all.png" width="400"/>
 
-Noting
-
-- There is configuration on distance of visible vehicles and whether they show
-  on the minimap. See the config reference for details.
+For visibility distance, there is configuration on distance of visible vehicles
+and whether they show
+on the minimap. See the config reference for details.
 
 ---
+
+## Per Vehicle Config Panel
+
+All vehicles have a config panel that can be accessed by interacting with the
+steering wheel while holding **Shift**. This panel allows you to set a custom
+name
+for the vehicle, toggle map visibility, and adjust other settings on a
+per-vehicle.
+
+1. Board the vehicle.
+2. Place a **Mechanism Switch** found in the Power tab of the Vehicle Hammer.
+3. Interact with the switch while holding **Shift + E** to open the configure
+   panel. Ensure the mode is set to **CommandsHud** — this will open the debug
+   panel which contains commands and shortcuts for building and configuring your
+   vehicle.
+4. Click **Config** in the debug panel.
+5. In the Config panel you can set a custom name for the vehicle and adjust the
+   floatation height.
+
+<table style="width:100%; border-collapse:collapse;">
+  <thead>
+    <tr>
+      <th style="padding:8px; border-bottom:2px solid #444;">Step</th>
+      <th style="padding:8px; border-bottom:2px solid #444;">Image</th>
+      <th style="padding:8px; border-bottom:2px solid #444;">Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="padding:8px;"><b>1. Place the Mechanism Switch</b></td>
+      <td style="padding:8px;"><img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT/docs/assets/1_build_mechanical_switch.png" width="220"/></td>
+      <td style="padding:8px;">Open the Vehicle Hammer build menu, go to the <b>Power</b> tab, and place a <b>Mechanism Switch</b> somewhere accessible on your vehicle.</td>
+    </tr>
+    <tr>
+      <td style="padding:8px;"><b>2. Open the Configure Panel</b></td>
+      <td style="padding:8px;"><img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT/docs/assets/2_shift_e_open_configure.png" width="220"/></td>
+      <td style="padding:8px;">Hold <b>Shift + E</b> on the Mechanism Switch to open the configure panel. Set the mode to <b>CommandsHud</b> if it is not already.</td>
+    </tr>
+    <tr>
+      <td style="padding:8px;"><b>3. Open Config from the Debug Menu</b></td>
+      <td style="padding:8px;"><img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT/docs/assets/3_on_debug_menu_open_config_by_pressing_button.png" width="220"/></td>
+      <td style="padding:8px;">Press <b>E</b> on the switch to open the debug panel. Click the <b>Config</b> button to open the per-vehicle config panel.</td>
+    </tr>
+    <tr>
+      <td style="padding:8px;"><b>4. Vehicle Config Menu</b></td>
+      <td style="padding:8px;"><img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT/docs/assets/4_vehicle_config_menu.png" width="220"/></td>
+      <td style="padding:8px;">Set a custom <b>Vehicle Name</b> (shown on the minimap as <code>V:&lt;name&gt;</code>), adjust the <b>Custom Floatation Height</b>, and configure other per-vehicle settings.</td>
+    </tr>
+  </tbody>
+</table>
 
 ## Steering and Sailing
 
