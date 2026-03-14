@@ -12,29 +12,16 @@ This mod has both a beta and a non-beta on Thunderstore. Please make sure you
 are using non-beta if you want a stable experience. If you want to test
 previews, swap to the beta variant.
 
-## Latest Updates
-
-### Changes of 3.6.x
-
-- 3.6.x Adds cannons, hand cannons (item) and turret prefabs.
-- Adds manual standalone turret controls as well as ship controls
-- Adds prefab recipe configs for cannons and walls/floors. Allows for setting
-  all recipe ingredients and quantity.
-- Adds wood 2x8 walls (sleek) this will remain until we get new hull assets.
-- Significantly increases speed of rendering ships and entire valheim world with
-  `Experimental_CustomMaxCreatedObjectsPerFrame`. This was originally 600 items
-  per second. Now it's about 6000 items. Meaning ships render fast. Even on
-  respawn. Tweak it back to 10 if you want base game values.
-
 ## Tutorials
 
-This document contains generic tutorials and information on configuring the mod.
+- [Valheim RAFT Basics](https://github.com/zolantris/ValheimMods/tree/main/src/ValheimRAFT/docs/tutorials/Tutorial_Basics.md)
+- [Vehicle Storage/Saving](https://github.com/zolantris/ValheimMods/tree/main/src/ValheimRAFT/docs/tutorials/Tutorial_VehicleStorage.md)
+- [Vehicle Commands](https://github.com/zolantris/ValheimMods/tree/main/src/ValheimRAFT/docs/tutorials/Tutorial_VehicleCommandsInterface.md)
+- [Cannons](https://github.com/zolantris/ValheimMods/tree/main/src/ValheimRAFT/docs/tutorials/Tutorial_Cannons.md)
+- [Power System Guide](https://github.com/zolantris/ValheimMods/tree/main/src/ValheimRAFT/docs/tutorials/Tutorial_PowerSystem.md)
 
-### Other Tutorials
+## Video Tutorials
 
-- [Vehicle Storage/Saving](./docs/tutorials/Tutorial_VehicleStorage.md)
-- [Vehicle Commands](./docs/tutorials/Tutorial_VehicleCommandsInterface.md)
-- Videos
     - [Swivels Visual Tutorial](https://youtu.be/wtnUCGz2zek)
     - [Vehicle Dock (LandVehicles to WaterVehicle)](https://youtu.be/iJSqmvJZlzo)
 
@@ -103,6 +90,8 @@ source the mod on 12/25/2023.
     * [Support Open Source](#support-open-source)
     * [Logging Metrics](#logging-metrics)
         * [What information will be collected](#what-information-will-be-collected)
+    * [Changelog](https://github.com/zolantris/ValheimMods/tree/main/src/ValheimRAFT/CHANGELOG.md)
+    * [Power System](#power-system)
 
 <!-- TOC -->
 
@@ -470,12 +459,21 @@ point of ship. This will encapsulate whole ship.
       </td>
     </tr>
     <tr>
-      <td>Pylons (unavailable) (v3.7.0+)</td>
+      <td>Pylons (unavailable)</td>
       <td>
         <img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/mechanism_power_pylon.png" width="48"/>
       </td>
       <td>
         Allow extending the grid much further. Have electrical arcs. Will be useful in determining which networks are connected via the visible discharge of the electricity. This is a beta feature until it's ready.
+      </td>
+    </tr>
+    <tr>
+      <td>Vehicle Dock</td>
+      <td>
+        <img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/anchor_dock.png" width="48"/>
+      </td>
+      <td>
+        Allows for docking of ships. A single land vehicle can be attached to the dock and then undocked. This allows players to drop a land vehicle near the shore and the redock it when returning. Docks can also work in the air and can allow an air vehicle to drop a land vehicle and then later grab it from the ground.
       </td>
     </tr>
   </tbody>
@@ -836,128 +834,3 @@ This logging has yet to be implemented.
 [unity-explorer-link]: https://thunderstore.io/c/valheim/p/sinai-dev/UnityExplorer/
 
 [hull-mechanics-link]: https://github.com/zolantris/ValheimMods/blob/main/src/ValheimRAFT/README.md#hull-mechanics
-
-
-<!--
-  ValheimRAFT Power System Guide
-  Compatible with ValheimRAFT >=4.0.0
--->
-
-<h1 align="center">🔋 ValheimRAFT Power System Guide (4.0.0+)</h1>
-<p align="center">
-  <b>Automate, connect, and power up your world!</b><br>
-  <i>ValheimRAFT now features a robust, modular Power System to connect engines, batteries, pylons, and more.</i>
-</p>
-<hr>
-
-## ⚡ Overview
-
-> The Power System in ValheimRAFT (since v4.0.0) lets you generate, store,
-> transfer, and consume energy to automate your vehicles and contraptions.
->
-> Use engines to produce power, **batteries** to store it, and **power pylons**
-> or **cables** to link components together!
-
----
-
-## Core Components
-
-<table>
-  <tr>
-    <th>Component</th>
-    <th>Description</th>
-  </tr>
-  <tr>
-    <td><b>Power Engine</b></td>
-    <td>Burns fuel to produce power. Configurable fuel types and outputs.</td>
-  </tr>
-  <tr>
-    <td><b>Power Storage (Battery)</b></td>
-    <td>Stores excess power for later use. Can supply connected devices when engines are offline.</td>
-  </tr>
-  <tr>
-    <td><b>Power Pylon</b></td>
-    <td>Connects power networks across distance. Automatically links nearby sources and storage.</td>
-  </tr>
-  <tr>
-    <td><b>Conduit Plate</b></td>
-    <td>Transfers energy to/from the player (e.g., Eitr), or bridges different networks.</td>
-  </tr>
-  <tr>
-    <td><b>Consumers</b></td>
-    <td>Anything that uses power (motors, machines, advanced modules).</td>
-  </tr>
-</table>
-
----
-
-## 🔌 How Power Flows
-
-<ol>
-  <li>Engines <b>burn fuel</b> (wood, coal, etc) and output <b>Power</b>.</li>
-  <li>Power flows into <b>Batteries</b> or directly to <b>Consumers</b> (e.g. engines, lights, automation).</li>
-  <li><b>Pylons</b> relay power between distant nodes—just build them close enough to link!</li>
-  <li>If power is needed but no engine is running, <b>Batteries</b> automatically discharge.</li>
-</ol>
-
----
-
-## 🚀 Getting Started
-
-### 1. Build a power source
-
-Current prefabs: `Eitr Source`
-
-- Place a **Power Engine** on your raft or base.
-- Add valid fuel (check the tooltip).
-- Power sources
-
-### 2. Add Power Storage
-
-Current prefabs `Eitr Storage`
-
-- Place a **Battery** nearby or connected via pylons for longer distances.
-- Batteries store excess energy and help during low-fuel periods.
-- Batteries will visually fill. Each can be inspected for energy and capacity.
-- Batteries will charge a single battery before charging other batteries in
-  order amount of charge. Highest charge will always charge first.
-
-### 3. Link With Pylons (BETA)
-
-- Place **Power Pylons** to extend your network. Pylons are only needed when
-  linking devices across long distances.
-- Pylons will auto-link if within range—no cables required!
-- Pylons will show electricity and connections.
-
-### 4. Power Consumers
-
-Current prefabs: `swivel`
-
-- Place a swivel.
-- Configure a switch to target the swivel. (see mechanism switch section).
-- Provided there is power network and power charge. Clicking activate should
-  rotate or move the swivel.
-
-### Mechanism Switch
-
-The main controller for all mechanisms. Allows for configuring all mechanisms
-available in this mod.
-
-- Can open vehicle debug menu by default without any commands.
-- Can open up a swivel toggle menu
-- Can be configured to activate any single swivel within a reasonable distance (
-  50 meters). The swivel must be in a powered area.
-- Does not directly require power but swivels by default will require power to
-  activate.
-
----
-
-## Power Network Diagrams
-
-```mermaid
-graph LR
-  Engine["Engine 🔥"] -- Refined Eitr to Power --> Battery["Battery 🔋"]
-  Battery -- Power --> Consumer["Swivel ⚙️"]
-  Player -- Eitr Regen --> ConduitInput["Conduit (Drain)"] -- Eitr/To Power --> Battery["Battery 🔋"]
-  Battery["Battery 🔋"] --> ConduitOutput["Conduit (Charge)"] -- Eitr Regen --> Player
-```
