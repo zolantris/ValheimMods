@@ -1523,10 +1523,10 @@ public class VehicleCommands : ConsoleCommand
     if (minHeight.HasValue && maxHeight.HasValue && vehicleZdo != null)
       wasClamped = ClampVehicleZdoToSafeHeight(vehicleZdo, activeNv, minHeight.Value, maxHeight.Value);
 
-    VehiclePiecesController.SyncAllPrefabsToVehiclePosition(
-      persistentZdoId,
-      activeNv,
-      null);
+    if (vehicleZdo != null && VehiclePiecesController.m_allPieces.TryGetValue(persistentZdoId, out var zdoPieces))
+    {
+      VehiclePiecesController.SyncAllPrefabsToVehiclePosition(vehicleZdo, zdoPieces);
+    }
 
     return wasClamped;
   }
