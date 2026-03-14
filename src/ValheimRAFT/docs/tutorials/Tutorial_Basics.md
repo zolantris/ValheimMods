@@ -431,9 +431,32 @@ your stamina hits zero you take damage, so keep an eye on it.
    continuing. The vehicle will hold its position while you rest nearby.
 6. Release **Shift + E** (or stop holding it) to drop the rope.
 
-![haul3_stop.png](https://github.com/zolantris/ValheimMods/tree/chore/documentation-improvements/src/ValheimRAFT/docs/assets/haul3_stop.png)
-![haul2_pull_vehicle.png](https://github.com/zolantris/ValheimMods/tree/chore/documentation-improvements/src/ValheimRAFT/docs/assets/haul2_pull_vehicle.png)
-![haul1_start.png](https://github.com/zolantris/ValheimMods/tree/chore/documentation-improvements/src/ValheimRAFT/docs/assets/haul1_start.png)
+<table style="width:100%; border-collapse:collapse;">
+  <thead>
+    <tr>
+      <th style="padding:8px; border-bottom:2px solid #444;">Step</th>
+      <th style="padding:8px; border-bottom:2px solid #444;">Image</th>
+      <th style="padding:8px; border-bottom:2px solid #444;">Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="padding:8px;"><b>1. Start hauling</b></td>
+      <td style="padding:8px;"><img src="https://raw.githubusercontent.com/zolantris/ValheimMods/chore/documentation-improvements/src/ValheimRAFT/docs/assets/haul1_start.png" width="220"/></td>
+      <td style="padding:8px;">Walk up to the <b>Rope Anchor</b> on the vehicle and hold <b>Shift + E</b> to grab the rope and begin dragging.</td>
+    </tr>
+    <tr>
+      <td style="padding:8px;"><b>2. Pull the vehicle</b></td>
+      <td style="padding:8px;"><img src="https://raw.githubusercontent.com/zolantris/ValheimMods/chore/documentation-improvements/src/ValheimRAFT/docs/assets/haul2_pull_vehicle.png" width="220"/></td>
+      <td style="padding:8px;">Walk in the direction you want the vehicle to move. It will follow you. Stamina drains continuously while moving — watch the stamina bar.</td>
+    </tr>
+    <tr>
+      <td style="padding:8px;"><b>3. Stop and rest</b></td>
+      <td style="padding:8px;"><img src="https://raw.githubusercontent.com/zolantris/ValheimMods/chore/documentation-improvements/src/ValheimRAFT/docs/assets/haul3_stop.png" width="220"/></td>
+      <td style="padding:8px;">Stop moving to let stamina regenerate. The vehicle holds its position while you rest. Release <b>Shift + E</b> to drop the rope entirely.</td>
+    </tr>
+  </tbody>
+</table>
 
 ---
 
