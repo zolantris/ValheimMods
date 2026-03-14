@@ -1349,10 +1349,6 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable, INetView
     if (!m_nview.IsOwner())
     {
       m_nview.ClaimOwnership();
-      if (!IsInvoking(nameof(TryEdit)))
-      {
-        InvokeRepeating(nameof(TryEdit), 0.5f, 0.5f);
-      }
     }
     else
     {
