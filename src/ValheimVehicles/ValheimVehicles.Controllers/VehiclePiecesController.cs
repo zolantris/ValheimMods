@@ -22,6 +22,7 @@
   using ValheimVehicles.Prefabs;
   using ValheimVehicles.Prefabs.Registry;
   using ValheimVehicles.Propulsion.Rudder;
+  using ValheimVehicles.RPC;
   using ValheimVehicles.Shared.Constants;
   using ValheimVehicles.SharedScripts;
   using ValheimVehicles.SharedScripts.Enums;
@@ -398,48 +399,97 @@
       targetController.autoFire = true;
     }
 
+    public static float VehicleActiveAreaSyncRadius = 250f;
+
     /// <summary>
     /// This is a full sync of all vehicles on a map. It is used for both servers and client commands to ensure vehicles sync across all peers.
     /// </summary>
     ///
     /// This does not update vehicle position. This should be handled by the owner of the vehicle.
     /// 
-    public static void Server_SyncAllVehiclePiecesToVehiclePosition()
+    public static IEnumerator Server_SyncAllVehiclePiecesToVehiclePosition()
     {
+      var stopWatchRuntime = Stopwatch.StartNew();
+      var totalTime = Stopwatch.StartNew();
+
       foreach (var kvp in m_allPieces)
       {
+        // ensure we never run for too long in one frame to avoid holding FPS. This can happen if there are a lot of pieces to update and the position updates are heavy.
+        if (stopWatchRuntime.ElapsedMilliseconds > 10)
+        {
+          yield return null;
+          stopWatchRuntime.Restart();
+        }
+
+        if (!ZdoWatchController.Instance)
+        {
+          LoggerProvider.LogError("ZdoWatchController instance not found, cannot sync vehicle pieces to position");
+          yield break;
+        }
         var vehicleZdo = ZdoWatchController.Instance.GetZdo(kvp.Key);
         if (vehicleZdo == null) continue;
 
-        var netView = ZNetScene.instance.FindInstance(vehicleZdo);
-        var fallbackPos = netView != null ? netView.m_body.position : vehicleZdo.GetPosition();
-        SyncAllPrefabsToVehiclePosition(kvp.Key, netView, fallbackPos);
+        if (!RPCUtils.HasNearbyPlayersOrPeers([vehicleZdo], VehicleActiveAreaSyncRadius)) continue;
+
+        yield return SyncAllPrefabsToVehiclePosition_Routine(vehicleZdo, kvp.Value, stopWatchRuntime);
+        yield return null;
       }
+
+      totalTime.Stop();
+      LoggerProvider.LogDebugDebounced($"<sync_all_pieces_runtime> Total runtime for syncing all pieces: {totalTime.ElapsedMilliseconds}ms");
+
+      if (totalTime.ElapsedMilliseconds < 500)
+      {
+        yield return new WaitForSeconds(1000f - totalTime.ElapsedMilliseconds);
+      }
+
+      yield return null;
     }
 
-    public static void SyncAllPrefabsToVehiclePosition(List<ZDO> vehicleZdos, ZNetView? netView, Vector3? fallbackPosition)
+    public static IEnumerator SyncAllPrefabsToVehiclePosition_Routine(ZDO vehicleZdo, List<ZDO> zdoPieces, Stopwatch stopWatchRuntime)
     {
-      foreach (var zdo in vehicleZdos)
+      var vehiclePosition = GetVehiclePosition(vehicleZdo);
+      if (!vehiclePosition.HasValue) yield break;
+      foreach (var zdo in zdoPieces)
       {
+        // ensure we never run for too long in one frame to avoid holding FPS. This can happen if there are a lot of pieces to update and the position updates are heavy.
+        if (stopWatchRuntime.ElapsedMilliseconds > 10)
+        {
+          yield return null;
+          stopWatchRuntime.Restart();
+        }
+
         if (zdo == null) continue;
         if (!zdo.IsValid()) continue;
-
-        var position = fallbackPosition ?? zdo.GetPosition();
-
-        var vehiclePosition = GetVehiclePosition(netView, position);
-        SetPrefabWorldPosition(zdo, vehiclePosition);
+        SetPrefabWorldPosition(zdo, vehiclePosition.Value);
       }
     }
 
     /// <summary>
-    /// This will retrieve all vehicle pieces tracked when the server loads and/or when the current player or other players add new pieces.
+    /// Meant for both client and server commands to sync vehicles. This is single threaded so there can be frame drops. Not meant for continuous runs.
     /// </summary>
-    public static void SyncAllPrefabsToVehiclePosition(int persistentZdoId, ZNetView? netView, Vector3? fallbackPosition)
+    /// <param name="vehicleZdo"></param>
+    /// <param name="zdoPieces"></param>
+    public static void SyncAllPrefabsToVehiclePosition(ZDO vehicleZdo, List<ZDO> zdoPieces)
     {
-      if (!m_allPieces.TryGetValue(persistentZdoId, out var list)) return;
-      SyncAllPrefabsToVehiclePosition(list, netView, fallbackPosition);
+      var vehiclePosition = GetVehiclePosition(vehicleZdo);
+      if (!vehiclePosition.HasValue) return;
+      foreach (var zdo in zdoPieces)
+      {
+        if (zdo == null) continue;
+        if (!zdo.IsValid()) continue;
+        SetPrefabWorldPosition(zdo, vehiclePosition.Value);
+      }
     }
 
+    public static void SyncAllPrefabsToVehiclePosition(int vehiclePersistentId)
+    {
+      var vehicleZdo = ZdoWatchController.Instance.GetZdo(vehiclePersistentId);
+      if (vehicleZdo != null && m_allPieces.TryGetValue(vehiclePersistentId, out var zdoPieces))
+      {
+        SyncAllPrefabsToVehiclePosition(vehicleZdo, zdoPieces);
+      }
+    }
 
     public void Start()
     {
@@ -911,7 +961,11 @@
         .GetBool(VehicleZdoVars.ZdoKeyBaseVehicleInitState) ?? false;
 
       // ensures that all pieces are requested to be brought into the current area
-      SyncAllPrefabsToVehiclePosition(Manager.PersistentZdoId, m_nview, transform.position);
+      var vehicleZdo = ZdoWatchController.Instance.GetZdo(Manager.PersistentZdoId);
+      if (vehicleZdo != null && m_allPieces.TryGetValue(Manager.PersistentZdoId, out var zdoPieces))
+      {
+        SyncAllPrefabsToVehiclePosition(vehicleZdo, zdoPieces);
+      }
 
       UpdateChunkBoundsData(false);
 
@@ -1436,16 +1490,23 @@
     /// <summary>
     /// Get the vehicle's networked position instead of the current client's position which could be inaccurate
     /// </summary>
-    private static Vector3 GetVehiclePosition(ZNetView? netView, Vector3 fallbackPosition)
+    private static Vector3? GetVehiclePosition(ZDO? zdo)
     {
-      var zdo = netView != null ? netView.GetZDO() : null;
-
-      if (IsPlayerOwner(zdo) && netView)
+      if (zdo == null || !zdo.IsValid())
       {
-        return netView.m_body.position;
+        return null;
       }
 
-      var positionToUse = zdo?.GetPosition() ?? fallbackPosition;
+      if (IsPlayerOwner(zdo))
+      {
+        var netView = ZNetScene.instance.FindInstance(zdo);
+        if (netView)
+        {
+          return netView.m_body.position;
+        }
+      }
+
+      var positionToUse = zdo.GetPosition();
       return positionToUse;
     }
 
@@ -1454,8 +1515,10 @@
     /// </summary>
     public void ForceUpdateAllPiecePositions()
     {
-      LoggerProvider.LogDebugDebounced("Force updating all piece positions");
-      ForceUpdateAllPiecePositions(GetVehiclePosition(m_nview, transform.position));
+      if (!m_nview) return;
+      var position = GetVehiclePosition(m_nview.GetZDO());
+      if (!position.HasValue) return;
+      ForceUpdateAllPiecePositions(position.Value);
     }
 
     public static void SetPrefabWorldPosition(ZDO zdo, Vector3 vehiclePosition)
@@ -1729,11 +1792,18 @@
 
     public static bool IsServerInstance()
     {
+#if DEBUG
+      if (ZNet.IsSinglePlayer) return false;
+#else
+      // single player servers should not count as their ZDOs do not need to sync across all clients (For performance reasons).
+      if (ZNet.IsSinglePlayer) return false;
+#endif
       return ZNet.instance != null && ZNet.instance.IsServer();
     }
 
     public static bool IsDedicatedServerInstance()
     {
+      if (ZNet.IsSinglePlayer) return false;
       return ZNet.instance != null && ZNet.instance.IsServer() && ZNet.instance.IsDedicated();
     }
 
@@ -1757,6 +1827,7 @@
 
       while (IsServerInstance())
       {
+        // m_allPieces is also indirectly updated/synced via MapPinSync which requests all vehicle zdos from the server
         if (m_allPieces.Keys.Count == 0)
         {
           yield return new WaitForSeconds(Math.Max(
@@ -1765,9 +1836,7 @@
               .Value));
           continue;
         }
-
-        yield return new WaitForSeconds(0.5f);
-        Server_SyncAllVehiclePiecesToVehiclePosition();
+        yield return Server_SyncAllVehiclePiecesToVehiclePosition();
       }
 
       LoggerProvider.LogDebug("UpdatePiecesInEachSectorWorker finished");

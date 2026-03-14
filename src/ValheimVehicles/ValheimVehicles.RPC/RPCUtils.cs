@@ -11,6 +11,16 @@ namespace ValheimVehicles.RPC;
 
 public static class RPCUtils
 {
+  /// <summary>
+  /// XZ-only distance check. Valheim loads zones based on horizontal distance only — Y is irrelevant.
+  /// </summary>
+  private static float DistanceXZ(Vector3 a, Vector3 b)
+  {
+    var dx = a.x - b.x;
+    var dz = a.z - b.z;
+    return Mathf.Sqrt(dx * dx + dz * dz);
+  }
+
   public static string GetRPCPrefix(string name)
   {
     return $"{ValheimVehiclesPlugin.ModName}_{name}";
@@ -49,39 +59,50 @@ public static class RPCUtils
   /// <returns></returns>
   public static bool HasNearbyPlayersOrPeers(List<ZDO> nodes, float maxDistance = 50f)
   {
-    var canRun = false;
-
     if (Player.m_localPlayer != null)
     {
       foreach (var node in nodes)
       {
-        var pos = node.GetPosition();
-        if (Vector3.Distance(pos, Player.m_localPlayer.transform.position) < maxDistance)
-        {
-          canRun = true;
-          break;
-        }
+        if (DistanceXZ(node.GetPosition(), Player.m_localPlayer.transform.position) < maxDistance)
+          return true;
       }
     }
 
-    if (canRun) return true;
+    if (!ZNet.instance) return false;
 
     // Step 2: Iterate through peers and match them with nodes.
     var peers = ZNet.instance.GetPeers();
     if (peers.Count == 0) return false;
-    // iterate through each node first as this may be a quicker match.
     foreach (var node in nodes)
-    foreach (var instanceMPeer in peers)
+    foreach (var peer in peers)
     {
-      var pos = node.GetPosition();
-      if (Vector3.Distance(pos, instanceMPeer.m_refPos) < maxDistance)
-      {
-        canRun = true;
-        break;
-      }
+      if (DistanceXZ(node.GetPosition(), peer.m_refPos) < maxDistance)
+        return true;
     }
 
-    return canRun;
+    return false;
+  }
+
+  /// <summary>
+  /// Single-ZDO overload — avoids allocating a List per call when checking one vehicle at a time.
+  /// Uses XZ-only distance since Valheim loads zones based on horizontal distance only.
+  /// </summary>
+  public static bool HasNearbyPlayersOrPeers(ZDO node, float maxDistance = 50f)
+  {
+    var pos = node.GetPosition();
+
+    if (Player.m_localPlayer != null &&
+        DistanceXZ(pos, Player.m_localPlayer.transform.position) < maxDistance)
+      return true;
+
+    var peers = ZNet.instance.GetPeers();
+    foreach (var peer in peers)
+    {
+      if (DistanceXZ(pos, peer.m_refPos) < maxDistance)
+        return true;
+    }
+
+    return false;
   }
 
   public static bool TryGetNearbyPeers(ZDO zdo, float maxDistance, out List<ZNetPeer> matchingPeers)
@@ -90,19 +111,17 @@ public static class RPCUtils
 
     var zdoPosition = zdo.GetPosition();
 
-    if (Player.m_localPlayer && Vector3.Distance(zdoPosition, Player.m_localPlayer.transform.position) < maxDistance)
+    if (Player.m_localPlayer && DistanceXZ(zdoPosition, Player.m_localPlayer.transform.position) < maxDistance)
     {
       var playerPeer = ZRoutedRpc.instance.GetPeer(Player.m_localPlayer.GetOwner());
       matchingPeers.Add(playerPeer);
-      zdo.GetPosition();
     }
+
     var peers = ZNet.instance.GetPeers();
     foreach (var instanceMPeer in peers)
     {
-      if (Vector3.Distance(zdoPosition, instanceMPeer.m_refPos) < 25f)
-      {
+      if (DistanceXZ(zdoPosition, instanceMPeer.m_refPos) < maxDistance)
         matchingPeers.Add(instanceMPeer);
-      }
     }
 
     return matchingPeers.Count > 0;
@@ -122,7 +141,7 @@ public static class RPCUtils
       return;
     }
 
-    if (ZNet.instance && Player.m_localPlayer && Vector3.Distance(zdo.GetPosition(), ZNet.instance.m_referencePosition) < threshold)
+    if (ZNet.instance && Player.m_localPlayer && DistanceXZ(zdo.GetPosition(), ZNet.instance.m_referencePosition) < threshold)
     {
       action(Player.m_localPlayer.GetOwner());
     }

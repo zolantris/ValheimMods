@@ -197,13 +197,13 @@ public class MapPinSync : MonoBehaviour
   }
 
   // Shared gate for client-side sync loops: wait when not ready, stop on dedicated server.
-  private SyncPreconditionState EvaluateSyncPreconditions(out YieldInstruction? waitInstruction)
+  // waitInstruction is ALWAYS non-null when state == Wait to prevent tight spin loops (yield return null every frame).
+  private SyncPreconditionState EvaluateSyncPreconditions(out YieldInstruction waitInstruction)
   {
-    waitInstruction = null;
+    waitInstruction = oneSecondWait;
 
     if (ZNet.instance == null)
     {
-      waitInstruction = oneSecondWait;
       return SyncPreconditionState.Wait;
     }
 
@@ -227,7 +227,7 @@ public class MapPinSync : MonoBehaviour
       }
 
       yield return UpdatePlayerSpawnPin();
-      yield return new WaitForSeconds(MinimapConfig.BedPinSyncInterval.Value);
+      yield return new WaitForSeconds(Mathf.Max(MinimapConfig.BedPinSyncInterval.Value, 1f));
     }
   }
 
@@ -288,36 +288,50 @@ public class MapPinSync : MonoBehaviour
     if (Minimap.instance == null) return;
     if (Minimap.instance.m_pins == null) return;
     if (ZdoWatchController.Instance == null) return;
-    var guids = ZdoWatchController.Instance.GetAllZdoGuids();
-    var vehicleZdos = guids.Select(x => x.Value).Where(x =>
-    {
-      var prefab = ZNetScene.instance.GetPrefab(x.GetPrefab());
-      if (prefab == null) return false;
-      return PrefabNames.IsVehicle(prefab.name);
-    }).ToHashSet();
+    if (ZNetScene.instance == null) return;
 
-    var allPins = Minimap.instance.m_pins;
+    var guids = ZdoWatchController.Instance.GetAllZdoGuids();
+
+    // Build vehicle ZDO list without extra ToHashSet allocation on a LINQ chain
+    var vehicleZdos = new HashSet<ZDO>();
+    foreach (var pair in guids)
+    {
+      var zdo = pair.Value;
+      var prefab = ZNetScene.instance.GetPrefab(zdo.GetPrefab());
+      if (prefab != null && PrefabNames.IsVehicle(prefab.name))
+        vehicleZdos.Add(zdo);
+    }
+
+    // Build an O(1) lookup from position -> pin to avoid O(n) List.Find per vehicle pin
+    var pinsByPos = new Dictionary<Vector3, Minimap.PinData>(Minimap.instance.m_pins.Count);
+    foreach (var pin in Minimap.instance.m_pins)
+      pinsByPos[pin.m_pos] = pin;
+
     var pinZdosToSkip = new HashSet<ZDO>();
 
     // Update existing pins
+    var keysToUpdate = new List<(Vector3 oldKey, Vector3 newKey, CustomPinZdoData data)>();
     foreach (var vehiclePin in _vehiclePins)
     {
-      var getPin = allPins.Find(pin => pin.m_pos == vehiclePin.Key);
-      if (getPin != null)
-      {
-        var zdoPosition = vehiclePin.Value.zdo.GetPosition();
-        getPin.m_pos = zdoPosition;
-        var isVisible = IsWithinVisibleRadius(zdoPosition);
-        // Update the key in _vehiclePins without removing and re-adding
-        if (!vehiclePin.Key.Equals(zdoPosition))
-        {
-          if (isVisible) _vehiclePins[zdoPosition] = vehiclePin.Value;
+      if (!pinsByPos.TryGetValue(vehiclePin.Key, out var getPin)) continue;
 
-          _vehiclePins.Remove(vehiclePin.Key);
-        }
+      var zdoPosition = vehiclePin.Value.zdo.GetPosition();
+      getPin.m_pos = zdoPosition;
+      var isVisible = IsWithinVisibleRadius(zdoPosition);
 
+      if (!vehiclePin.Key.Equals(zdoPosition))
+        keysToUpdate.Add((vehiclePin.Key, zdoPosition, vehiclePin.Value));
+
+      if (isVisible || vehiclePin.Key.Equals(zdoPosition))
         pinZdosToSkip.Add(vehiclePin.Value.zdo);
-      }
+    }
+
+    // Apply key updates outside enumeration
+    foreach (var (oldKey, newKey, data) in keysToUpdate)
+    {
+      _vehiclePins.Remove(oldKey);
+      if (IsWithinVisibleRadius(newKey))
+        _vehiclePins[newKey] = data;
     }
 
     // Add new pins for ZDOs not already processed
@@ -331,7 +345,6 @@ public class MapPinSync : MonoBehaviour
       {
         var zdoOwner = zdo.GetOwner();
         var zdoVehicleName = zdo.GetString(VehicleCustomConfig.Key_VehicleName, "Unnamed");
-
 
         var pinLabel = $"V:{zdoVehicleName}";
         var pinData = Minimap.instance.AddPin(position,
@@ -351,15 +364,24 @@ public class MapPinSync : MonoBehaviour
   {
     while (isActiveAndEnabled)
     {
-      yield return new WaitForSeconds(Mathf.Max(MinimapConfig.VehiclePinSyncInterval.Value, 1));
-      if (ZNet.instance == null) continue;
-      if (ZNet.instance != null && ZNet.instance.IsServer() && ZNet.instance.IsDedicated()) continue;
-      if (Player.m_localPlayer == null) continue;
+      var preconditionState = EvaluateSyncPreconditions(out var waitInstruction);
+      if (preconditionState == SyncPreconditionState.Stop) yield break;
+      if (preconditionState == SyncPreconditionState.Wait)
+      {
+        yield return waitInstruction;
+        continue;
+      }
+
       // Clear existing pins from both dictionaries
       ClearAllVehiclePins();
 
+      // Yield a frame between clear and rebuild to spread cost
+      yield return null;
+
       // Regenerate all pins
       UpdateVehiclePins();
+
+      yield return new WaitForSeconds(Mathf.Max(MinimapConfig.VehiclePinSyncInterval.Value, 1));
     }
   }
   /// <summary>
