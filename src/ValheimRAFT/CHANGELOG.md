@@ -6,6 +6,15 @@ the [GitHub Releases](https://github.com/zolantris/ValheimMods/releases) page.
 
 ---
 
+## [4.2.2] - 2026-03-14
+
+### Fixed
+
+- ensure that sails request a sync to other peers
+- ensure peers can send a message that sail has been updated.
+- ensure sail data is not corrupted
+- ensure a failed claim of a sail can be recalled to request ownership.
+
 ## [4.2.1] - 2026-03-14
 
 ### Fixed
