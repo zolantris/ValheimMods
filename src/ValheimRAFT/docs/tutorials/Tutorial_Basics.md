@@ -152,6 +152,28 @@ Rudder Half Speed = 30
 Rudder Full Speed = 15
 ```
 
+## Map and Minimap
+
+All Vehicles can be viewed on the map. There are three types of vehicles, each
+with their own minimap icon:
+
+| Vehicle Type  |                                                                           Icon                                                                            | Pin Label                 | Description                                               |
+|---------------|:---------------------------------------------------------------------------------------------------------------------------------------------------------:|---------------------------|-----------------------------------------------------------|
+| Water Vehicle | <img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT.Unity/Assets/ValheimVehicles/Icons/vehicle_water.png" width="40"/> | `V:<name>` or `V:Unnamed` | Ships and water-based rafts sailing on the ocean surface. |
+| Air Vehicle   |  <img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT.Unity/Assets/ValheimVehicles/Icons/vehicle_air.png" width="40"/>  | `V:<name>` or `V:Unnamed` | Flying vehicles operating above terrain and water.        |
+| Land Vehicle  | <img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT.Unity/Assets/ValheimVehicles/Icons/vehicle_land.png" width="40"/>  | `V:<name>` or `V:Unnamed` | Wheeled/tread vehicles travelling overland.               |
+
+Vehicles that have been given a name via the vehicle config panel show as
+`V:<name>` on the pin. Unnamed vehicles show as `V:Unnamed`.
+
+Example image of a vehicle pin on the minimap:
+![Vehicle minimap pin example](https://raw.githubusercontent.com/zolantris/ValheimMods/main/docs/images/tutorial_basics/vehicle_minimap_pin.png)
+
+Noting
+
+- There is configuration on distance of visible vehicles and whether they show
+  on the minimap. See the config reference for details.
+
 ---
 
 ## Steering and Sailing
