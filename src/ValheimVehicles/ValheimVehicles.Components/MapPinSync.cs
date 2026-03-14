@@ -185,26 +185,42 @@ public class MapPinSync : MonoBehaviour
   }
 
 
+  private readonly WaitForSeconds oneSecondWait = new(1f);
+
+  private enum SyncPreconditionState
+  {
+    Ready,
+    Wait,
+    Stop
+  }
+
+  // Shared gate for client-side sync loops: wait when not ready, stop on dedicated server.
+  private SyncPreconditionState EvaluateSyncPreconditions(out YieldInstruction? waitInstruction)
+  {
+    waitInstruction = null;
+
+    if (ZNet.instance == null)
+    {
+      waitInstruction = oneSecondWait;
+      return SyncPreconditionState.Wait;
+    }
+
+    if (ZNet.instance.IsServer() && ZNet.instance.IsDedicated()) return SyncPreconditionState.Stop;
+
+    if (Player.m_localPlayer == null) return SyncPreconditionState.Wait;
+
+    return SyncPreconditionState.Ready;
+  }
+
   public IEnumerator RefreshDynamicSpawnPin()
   {
     while (isActiveAndEnabled)
     {
-      yield return null;
-      if (ZNet.instance == null)
+      var preconditionState = EvaluateSyncPreconditions(out var waitInstruction);
+      if (preconditionState == SyncPreconditionState.Stop) yield break;
+      if (preconditionState == SyncPreconditionState.Wait)
       {
-        yield return new WaitForSeconds(1);
-        continue;
-      }
-
-      if (ZNet.instance != null && ZNet.instance.IsServer() && ZNet.instance.IsDedicated())
-      {
-        // do not run on dedicated server, as there is no need to sync ZDOs to clients and it can cause performance issues.
-        yield break;
-      }
-
-      if (Player.m_localPlayer == null)
-      {
-        yield return null;
+        yield return waitInstruction;
         continue;
       }
 
@@ -218,24 +234,14 @@ public class MapPinSync : MonoBehaviour
   {
     while (isActiveAndEnabled)
     {
-      yield return null;
-      if (ZNet.instance == null)
+      var preconditionState = EvaluateSyncPreconditions(out var waitInstruction);
+      if (preconditionState == SyncPreconditionState.Stop) yield break;
+      if (preconditionState == SyncPreconditionState.Wait)
       {
-        yield return new WaitForSeconds(1);
+        yield return waitInstruction;
         continue;
       }
 
-      if (ZNet.instance != null && ZNet.instance.IsServer() && ZNet.instance.IsDedicated())
-      {
-        // do not run on dedicated server, as there is no need to sync ZDOs to clients and it can cause performance issues.
-        yield break;
-      }
-
-      if (Player.m_localPlayer == null)
-      {
-        yield return null;
-        continue;
-      }
       // heavy call but needed for all vehicles to be searchable on the map.
       ZdoWatchController.Instance.RequestAllPersistentZdosFromServer();
       yield return new WaitForSeconds(30f);
