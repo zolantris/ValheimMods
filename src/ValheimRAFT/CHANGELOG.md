@@ -6,7 +6,18 @@ the [GitHub Releases](https://github.com/zolantris/ValheimMods/releases) page.
 
 ---
 
-## [4.2.0] — main branch
+## [4.2.1] - 2026-03-14
+
+### Fixed
+
+- fixes a constant stutter issue with valheim raft on non-dedicated servers and
+  likely fixes dedicated server stuttering. Issue introduced in 4.2.0 with
+  server sync fixes
+- ensure that syncs only happen on vehicles for servers within 250 unit
+  radius of an active player. This ensures only active vehicles are
+  force synced to these positions.
+
+## [4.2.0] — 2026-03-13
 
 ### Added
 
@@ -368,7 +379,7 @@ the [GitHub Releases](https://github.com/zolantris/ValheimMods/releases) page.
 ---
 
 ## [2.2.4] / [2.2.3] / [2.2.2] — 2024-08-25
- 
+
 ### Fixed
 
 - Ship floatation logic regressions.
@@ -515,7 +526,7 @@ the [GitHub Releases](https://github.com/zolantris/ValheimMods/releases) page.
 ---
 
 ## [1.6.2] — 2023-12-21
- 
+
 ### Fixed
 
 - Server stability for zone-based raft updates.

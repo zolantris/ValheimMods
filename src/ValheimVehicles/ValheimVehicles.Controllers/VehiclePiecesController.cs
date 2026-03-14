@@ -1406,13 +1406,12 @@
     }
 
     /// <summary>
-    /// All clients must run this or their zdos get stale.
+    /// All clients must run this or their zdos get stale (even though other peers are also setting these values the positional values never get synced properly).
     /// </summary>
     public void AllClientsSync()
     {
       // dedicated does not need to run this as it has a coroutine.
       if (IsDedicatedServerInstance()) return;
-      if (!IsPlayerOwner(m_nview ? m_nview.GetZDO() : null)) return;
       Client_UpdateAllPieces();
       UpdateBedPieces();
     }
