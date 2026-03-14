@@ -52,7 +52,7 @@
     </PropertyGroup>
 
     <PropertyGroup Label="Build Generation Flags">
-        <ShouldArchiveValheimRAFT Condition="'$(DidBuildValheimRAFT)' == 'true' And '$(IsReleaseBuild)' == 'true'">true</ShouldArchiveValheimRAFT>
+        <ShouldArchiveValheimRAFT Condition="'$(DidBuildValheimRAFT)' == 'true' And '$(IsReleaseArchive)' == 'true'">true</ShouldArchiveValheimRAFT>
         <ShouldArchiveValheimRAFTBeta Condition="'$(DidBuildValheimRAFT)' == 'true' And '$(IsReleaseBetaArchive)' == 'true'">true</ShouldArchiveValheimRAFTBeta>
         <ShouldArchiveEldritch Condition="'$(DidBuildEldritchValheim)' == 'true' And '$(IsReleaseArchive)' == 'true'">true</ShouldArchiveEldritch>
     </PropertyGroup>
