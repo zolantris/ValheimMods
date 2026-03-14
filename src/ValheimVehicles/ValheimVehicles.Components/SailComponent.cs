@@ -108,9 +108,9 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable, INetView
 
   public float m_clothRandomAccelerationFactor = 0.5f;
 
-  public SailLockedSide m_lockedSailSides;
+  public SailLockedSide m_lockedSailSides = SailLockedSide.Everything;
 
-  public SailLockedSide m_lockedSailCorners;
+  public SailLockedSide m_lockedSailCorners = SailLockedSide.Everything;
 
   public int m_patternHash;
 
@@ -142,6 +142,8 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable, INetView
 
   public float m_mistAlpha = 1f;
   public CoroutineHandle sailParentRoutine;
+  private CoroutineHandle _waitForInitRoutine;
+  private CoroutineHandle _loadZDORoutine;
 
   private float m_sailArea = 0f;
   private static bool DebugBoxCollider = true;
@@ -187,6 +189,8 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable, INetView
   public void Awake()
   {
     sailParentRoutine = new CoroutineHandle(this);
+    _waitForInitRoutine = new CoroutineHandle(this);
+    _loadZDORoutine = new CoroutineHandle(this);
     m_sailComponents.Add(this);
     m_mastComponent = GetComponent<MastComponent>();
     m_mastComponent.m_allowSailRotation = false;
@@ -252,11 +256,15 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable, INetView
       yield return new WaitForFixedUpdate();
     }
 
-    if (timer.ElapsedMilliseconds > maxWaitTime)
+
+    if (timer.ElapsedMilliseconds >= maxWaitTime)
     {
       LoggerProvider.LogDev("Exiting WaitForInitialization due to timeout");
       yield break;
     }
+
+    // One extra frame — lets any remaining ZDO corner vectors arrive before we read them
+    yield return new WaitForFixedUpdate();
 
     RegisterRPC();
     LoadZDO();
@@ -314,7 +322,9 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable, INetView
     }
     else
     {
-      StartCoroutine(WaitForInitialization());
+      // Stop any previous wait — zone reloads call OnEnable multiple times
+      _waitForInitRoutine.Stop();
+      _waitForInitRoutine.Start(WaitForInitialization());
     }
   }
 
@@ -340,6 +350,9 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable, INetView
   public void OnDisable()
   {
     CancelInvoke();
+    _waitForInitRoutine.Stop();
+    _loadZDORoutine.Stop();
+    sailParentRoutine.Stop();
     StopAllCoroutines();
     UnregisterRPC();
   }
@@ -371,6 +384,19 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable, INetView
     m_sailCorners = data.SailCorners.Select(corner => corner.ToVector3()).ToList();
     m_lockedSailSides = (SailLockedSide)data.LockedSides;
     m_lockedSailCorners = (SailLockedSide)data.LockedCorners;
+
+    // For 3-point sails: strip the D bit from the persistent fields (it is meaningless
+    // for triangles) and apply a sane default when the values are unset (fresh spawn).
+    if (m_sailCorners.Count == 3)
+    {
+      m_lockedSailSides &= ~SailLockedSide.D;
+      m_lockedSailCorners &= ~SailLockedSide.D;
+      if (m_lockedSailSides == SailLockedSide.None && m_lockedSailCorners == SailLockedSide.None)
+      {
+        m_lockedSailSides = SailLockedSide.A | SailLockedSide.B | SailLockedSide.C;
+        m_lockedSailCorners = SailLockedSide.A | SailLockedSide.B | SailLockedSide.C;
+      }
+    }
 
     // only updates the sail parent if applicable. This is not related to StoredSailData.
     UpdateSailParent();
@@ -451,49 +477,33 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable, INetView
     if (!this.IsNetViewValid(out var netView)) return false;
     var zdo = netView.GetZDO();
     if (zdo == null) return false;
+
+    if (!zdo.GetBool(HasInitializedHash)) return false;
+
     var zdoCorners = zdo.GetInt(m_sailCornersCountHash);
-    var hasInitialized = zdo.GetBool(HasInitializedHash);
 
-    if (!hasInitialized)
+    // Legacy migration: count was never written but individual corner keys may exist (old saves).
+    // Detect all 4 corners present and upgrade the ZDO in place — only when count is 0.
+    if (zdoCorners == 0)
     {
-      return false;
-    }
+      var impossible = new Vector3(100001f, 100001f, 100001f);
+      var c1 = zdo.GetVec3(m_sailCorner1Hash, impossible);
+      var c2 = zdo.GetVec3(m_sailCorner2Hash, impossible);
+      var c3 = zdo.GetVec3(m_sailCorner3Hash, impossible);
+      var c4 = zdo.GetVec3(m_sailCorner4Hash, impossible);
 
-    // for 4 point sails
-    if (zdoCorners == 0 || m_sailCorners.Count != zdoCorners || m_sailCorners.Count == 0)
-    {
-      var impossibleVector3 = new Vector3(100001f, 100001f, 100001f);
-
-      var corner1 = zdo.GetVec3(m_sailCorner1Hash, impossibleVector3);
-      var corner2 = zdo.GetVec3(m_sailCorner2Hash, impossibleVector3);
-      var corner3 = zdo.GetVec3(m_sailCorner3Hash, impossibleVector3);
-      var corner4 = zdo.GetVec3(m_sailCorner4Hash, impossibleVector3);
-
-      if (corner1 != impossibleVector3 && corner2 != impossibleVector3 && corner3 != impossibleVector3 && corner4 != impossibleVector3)
+      if (c1 != impossible && c2 != impossible && c3 != impossible && c4 != impossible)
       {
-        m_sailCorners.Clear();
-        m_sailCorners.AddRange([corner1, corner2, corner3, corner4]);
+        // Write the count so we never fall into this branch again
         zdo.Set(m_sailCornersCountHash, 4);
         zdoCorners = 4;
       }
     }
 
-    if (m_sailCorners.Count != 3 &&
-        m_sailCorners.Count != 4)
-    {
-      return false;
-    }
-
-    if (zdoCorners is 3 or 4)
-    {
-      zdo.Set(HasInitializedHash, true);
-    }
-    else
-    {
-      return false;
-    }
-
-    return true;
+    // ZDO must declare a valid corner count — that's all we need to know we're ready.
+    // m_sailCorners is NOT checked here: it is always empty on a fresh zone reload
+    // and is only populated by ApplyLoadedSailData which runs after this gate.
+    return zdoCorners is 3 or 4;
   }
 
 
@@ -763,17 +773,17 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable, INetView
   public void RequestSyncZDOData()
   {
     if (m_nview == null || m_nview.m_zdo == null) return;
-    m_nview.InvokeRPC(nameof(RPC_SyncSailData));
+    m_nview.InvokeRPC(ZRoutedRpc.Everybody, nameof(RPC_SyncSailData));
   }
 
   public void RPC_SyncSailData(long sender)
   {
     if (!isActiveAndEnabled) return;
-    if (LoadZDOCoroutine != null) return;
-    LoadZDOCoroutine = StartCoroutine(Debounce_LoadZDO());
+    // The sender already called LoadZDO directly after saving — skip the redundant reload.
+    if (sender == ZNet.GetUID()) return;
+    if (_loadZDORoutine.IsRunning) return;
+    _loadZDORoutine.Start(Debounce_LoadZDO());
   }
-
-  private Coroutine? LoadZDOCoroutine = null;
 
   public IEnumerator Debounce_LoadZDO()
   {
@@ -787,7 +797,6 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable, INetView
     {
       // ignored
     }
-    LoadZDOCoroutine = null;
   }
 
   /// <summary>
@@ -1062,13 +1071,15 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable, INetView
 
     if (m_sailCorners.Count == 3)
     {
-      m_lockedSailCorners &= ~SailLockedSide.D;
-      m_lockedSailSides &= ~SailLockedSide.D;
-      if (m_lockedSailCorners == SailLockedSide.None &&
-          m_lockedSailSides == SailLockedSide.None)
+      // Use local copies — never mutate the persistent fields here.
+      // SaveZdo reads m_lockedSailSides/m_lockedSailCorners directly; mutating them
+      // would write incorrect values back to the ZDO on the next save.
+      var lockedCorners = m_lockedSailCorners & ~SailLockedSide.D;
+      var lockedSides = m_lockedSailSides & ~SailLockedSide.D;
+      if (lockedCorners == SailLockedSide.None && lockedSides == SailLockedSide.None)
       {
-        m_lockedSailCorners = SailLockedSide.Everything;
-        m_lockedSailSides = SailLockedSide.Everything;
+        lockedCorners = SailLockedSide.Everything & ~SailLockedSide.D;
+        lockedSides = SailLockedSide.Everything & ~SailLockedSide.D;
       }
 
       var sideA2 = (m_sailCorners[0] - m_sailCorners[1]).normalized;
@@ -1076,31 +1087,31 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable, INetView
       var sideC2 = (m_sailCorners[2] - m_sailCorners[0]).normalized;
       for (var k = 0; k < mesh.vertices.Length; k++)
       {
-        if (m_lockedSailCorners.HasFlag(SailLockedSide.A) &&
+        if (lockedCorners.HasFlag(SailLockedSide.A) &&
             mesh.vertices[k] == m_sailCorners[0])
           coefficients[k].maxDistance = 0f;
 
-        if (m_lockedSailCorners.HasFlag(SailLockedSide.B) &&
+        if (lockedCorners.HasFlag(SailLockedSide.B) &&
             mesh.vertices[k] == m_sailCorners[1])
           coefficients[k].maxDistance = 0f;
 
-        if (m_lockedSailCorners.HasFlag(SailLockedSide.C) &&
+        if (lockedCorners.HasFlag(SailLockedSide.C) &&
             mesh.vertices[k] == m_sailCorners[2])
           coefficients[k].maxDistance = 0f;
 
-        if (m_lockedSailSides.HasFlag(SailLockedSide.A) &&
+        if (lockedSides.HasFlag(SailLockedSide.A) &&
             Mathf.Abs(Vector3.Dot(
               (m_sailCorners[0] - mesh.vertices[k]).normalized, sideA2)) >=
             0.9999f)
           coefficients[k].maxDistance = 0f;
 
-        if (m_lockedSailSides.HasFlag(SailLockedSide.B) &&
+        if (lockedSides.HasFlag(SailLockedSide.B) &&
             Mathf.Abs(Vector3.Dot(
               (m_sailCorners[1] - mesh.vertices[k]).normalized, sideB2)) >=
             0.9999f)
           coefficients[k].maxDistance = 0f;
 
-        if (m_lockedSailSides.HasFlag(SailLockedSide.C) &&
+        if (lockedSides.HasFlag(SailLockedSide.C) &&
             Mathf.Abs(Vector3.Dot(
               (m_sailCorners[2] - mesh.vertices[k]).normalized, sideC2)) >=
             0.9999f)
@@ -1337,9 +1348,9 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable, INetView
   {
     if (!m_nview.IsOwner())
     {
+      m_nview.ClaimOwnership();
       if (!IsInvoking(nameof(TryEdit)))
       {
-        m_nview.ClaimOwnership();
         InvokeRepeating(nameof(TryEdit), 0.5f, 0.5f);
       }
     }
