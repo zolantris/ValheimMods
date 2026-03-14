@@ -43,6 +43,7 @@ public static class PatchController
       typeof(Fireplace_WaterPatches),
       typeof(Minimap_VehicleIcons),
       typeof(ZDO_Patch),
+      typeof(ZSyncTransform_Patch),
 #if DEBUG
       typeof(RPCRegistryDebugger_Patches),
       // TODO Migrate to It's own mod
