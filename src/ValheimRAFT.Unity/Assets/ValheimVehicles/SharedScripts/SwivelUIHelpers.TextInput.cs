@@ -77,7 +77,12 @@
         textRT.offsetMax = Vector2.zero;
 
         var text = textGO.GetComponent<TextMeshProUGUI>();
-        ApplyInputStyle(text, viewStyles);
+        text.fontSize = viewStyles.FontSizeDropdownLabel;
+        text.color = viewStyles.InputTextColor;
+        text.alignment = TextAlignmentOptions.Left;
+        text.fontStyle = FontStyles.Normal;
+        text.outlineWidth = 0f;
+        text.outlineColor = Color.clear;
         text.textWrappingMode = TextWrappingModes.NoWrap;
         text.overflowMode = TextOverflowModes.Ellipsis;
         text.fontSizeMin = 14;
@@ -94,10 +99,11 @@
         placeholderRT.offsetMax = Vector2.zero;
 
         var placeholderText = placeholderGO.GetComponent<TextMeshProUGUI>();
-        ApplyInputStyle(placeholderText, viewStyles);
+        placeholderText.fontSize = viewStyles.FontSizeDropdownLabel;
+        placeholderText.alignment = TextAlignmentOptions.Left;
         placeholderText.text = string.IsNullOrWhiteSpace(placeholder) ? currentValue : placeholder;
         placeholderText.fontStyle = FontStyles.Italic;
-        placeholderText.color = new Color(viewStyles.InputTextColor.r, viewStyles.InputTextColor.g, viewStyles.InputTextColor.b, 0.55f);
+        placeholderText.color = new Color(viewStyles.InputTextColor.r, viewStyles.InputTextColor.g, viewStyles.InputTextColor.b, 0.45f);
         placeholderText.textWrappingMode = TextWrappingModes.NoWrap;
         placeholderText.overflowMode = TextOverflowModes.Ellipsis;
         placeholderText.fontSizeMin = 14;

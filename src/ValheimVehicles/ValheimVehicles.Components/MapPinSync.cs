@@ -248,6 +248,16 @@ public class MapPinSync : MonoBehaviour
     }
   }
 
+  private static Sprite? _vehicleMapSprite;
+
+  private static Sprite? GetVehicleMapSprite()
+  {
+    if (_vehicleMapSprite != null) return _vehicleMapSprite;
+    if (LoadValheimVehicleAssets.VehicleSprites == null) return null;
+    _vehicleMapSprite = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames.Dock);
+    return _vehicleMapSprite;
+  }
+
   private void UpdateVehiclePins()
   {
     if (Minimap.instance == null) return;
@@ -295,9 +305,14 @@ public class MapPinSync : MonoBehaviour
       if (isVisible)
       {
         var zdoOwner = zdo.GetOwner();
+        var zdoVehicleName = zdo.GetString(VehicleCustomConfig.Key_VehicleName, "V:Unnamed");
+        var pinLabel = $"V:{zdoVehicleName}";
         var pinData = Minimap.instance.AddPin(position,
           Minimap.PinType.Icon4,
-          $"Vehicle", false, false, zdoOwner);
+          pinLabel, false, false, zdoOwner);
+
+        var vehicleSprite = GetVehicleMapSprite();
+        if (vehicleSprite != null) pinData.m_icon = vehicleSprite;
 
         _vehiclePins[position] = new CustomPinZdoData
           { pinData = pinData, zdo = zdo };
