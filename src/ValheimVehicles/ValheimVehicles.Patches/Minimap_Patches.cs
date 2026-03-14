@@ -14,6 +14,13 @@ public class Minimap_VehicleIcons
   [HarmonyPostfix]
   public static void InjectMapUpdater(Minimap __instance)
   {
+    var minimapGo = __instance.gameObject;
+    var minimapComponent = minimapGo.GetComponent<MapPinSync>();
+    if (minimapGo.GetComponent<MapPinSync>() != null)
+    {
+      Object.Destroy(minimapComponent);
+      return;
+    }
     __instance.gameObject.AddComponent<MapPinSync>();
   }
 
@@ -24,18 +31,7 @@ public class Minimap_VehicleIcons
     Object.Destroy(PinSyncInstance);
   }
 
-  // [HarmonyPatch(typeof(Minimap), nameof(Minimap.Start))]
-  // [HarmonyPostfix]
-  // public static void ForceUpdateIconSpriteSize(Minimap __instance)
-  // {
-  //   __instance.m_visibleIconTypes =
-  //     new bool[Enum.GetValues(typeof(Minimap.PinType)).Length];
-  //
-  //   // adds additional indexes for icons we want.
-  //   __instance.m_visibleIconTypes[__instance.m_visibleIconTypes.Length] = true;
-  //
-  //   return;
-  // }
+
   [HarmonyPatch(typeof(Minimap), nameof(Minimap.UpdatePlayerMarker))]
   [HarmonyPrefix]
   public static bool UpdatePlayerMarker(Minimap __instance, Player player,
@@ -86,26 +82,4 @@ public class Minimap_VehicleIcons
 
     return false;
   }
-
-  // [HarmonyPatch(typeof(Minimap), nameof(Minimap.UpdatePlayerMarker))]
-  // static IEnumerable<CodeInstruction> Transpiler(
-  //   IEnumerable<CodeInstruction> instructions)
-  // {
-  //   var codes = new List<CodeInstruction>(instructions);
-  //   var getControlledShipMethod = AccessTools.Method(typeof(Player),
-  //     nameof(Player.GetControlledShip));
-  //   var customCheckMethod = AccessTools.Method(typeof(Player_Patch),
-  //     nameof(Player_Patch.HandleGetControlledShip), [typeof(Player)]);
-  //
-  //   for (int i = 0; i < codes.Count; i++)
-  //   {
-  //     if (codes[i].Calls(getControlledShipMethod))
-  //     {
-  //       // Replace the call to GetControlledShip with MyCustomGetControlledShipCheck
-  //       codes[i] = new CodeInstruction(OpCodes.Call, customCheckMethod);
-  //     }
-  //   }
-  //
-  //   return codes.AsEnumerable();
-  // }
 }

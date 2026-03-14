@@ -42,7 +42,7 @@ public class MinimapConfig : BepInExBaseConfig<MinimapConfig>
 
     BedPinSyncInterval.SettingChanged += (sender, args) =>
     {
-      MapPinSync.Instance.StartSpawnPinSync();
+      MapPinSync.Instance.StartDynamicSpawnPinSync();
     };
 
     VehicleNameTag = config.BindUnique(SectionKey, "VehicleNameTag", "Vehicle",

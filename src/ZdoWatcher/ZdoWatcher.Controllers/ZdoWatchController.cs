@@ -23,8 +23,10 @@ public class ZdoWatchController : MonoBehaviour
   private readonly List<DebugSafeTimer> _timers = new();
 
   private CustomRPC RPC_RequestPersistentIdInstance;
+  private CustomRPC RPC_RequestAllPersistentIdInstance;
 
   public static string RPC_RequestPersistentId_Name = "ZdoWatcherController_RPC_RequestSync";
+  public static string RPC_RequestAllPersistentIds_Name = "ZdoWatcherController_RPC_RequestAllSync";
 
   // In theory, we only need to hit the server then iterate and force send the zdos directly to the peer instead of the other way around.
   // We call SyncToPeer when which does this.
@@ -33,6 +35,10 @@ public class ZdoWatchController : MonoBehaviour
     RPC_RequestPersistentIdInstance = NetworkManager.Instance.AddRPC(
       RPC_RequestPersistentId_Name,
       RequestPersistentIdRPCServerReceive, null);
+
+    RPC_RequestAllPersistentIdInstance = NetworkManager.Instance.AddRPC(
+      RPC_RequestAllPersistentIds_Name,
+      RequestAllPersistentIdsRPCServerReceive, null);
   }
 
   /// <summary>
@@ -74,12 +80,15 @@ public class ZdoWatchController : MonoBehaviour
     {
       zdoPeer.ForceSendZDO(zdoId.m_uid);
     }
-    else
-    {
-      Logger.LogDebug(
-        "RequestPersistentIdRPCServerReceive called but zdoid not found, attempting to sync all ids to peer");
-      SyncToPeer(zdoPeer);
-    }
+
+    yield return null;
+  }
+
+  private IEnumerator RequestAllPersistentIdsRPCServerReceive(long sender,
+    ZPackage package)
+  {
+    var zdoPeer = ZDOMan.instance.GetPeer(sender);
+    SyncToPeer(zdoPeer);
 
     yield return null;
   }
@@ -110,7 +119,7 @@ public class ZdoWatchController : MonoBehaviour
   public bool RequestZdoFromServer(int persistentId)
   {
     // bail on dedicated only.
-    if (ZNet.instance.IsDedicated())
+    if (ZNet.instance.IsServer() && ZNet.instance.IsDedicated())
     {
       return false;
     }
@@ -123,6 +132,22 @@ public class ZdoWatchController : MonoBehaviour
     RPC_RequestPersistentIdInstance.SendPackage(serverPeer, package);
     return true;
   }
+
+  public bool RequestAllPersistentZdosFromServer()
+  {
+    // bail on dedicated only.
+    if (ZNet.instance.IsServer() && ZNet.instance.IsDedicated())
+    {
+      return false;
+    }
+
+    var package = new ZPackage();
+
+    var serverPeer = ZRoutedRpc.instance.GetServerPeerID();
+    RPC_RequestAllPersistentIdInstance.SendPackage(serverPeer, package);
+    return true;
+  }
+
 
   /// <summary>
   /// Combines the WaitForZdo and RequestZdoFromServer

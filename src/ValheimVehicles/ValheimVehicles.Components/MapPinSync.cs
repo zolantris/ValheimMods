@@ -11,6 +11,7 @@ using ValheimVehicles.BepInExConfig;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.SharedScripts;
 using ZdoWatcher;
+using Zolantris.Shared;
 
 namespace ValheimVehicles.Components;
 
@@ -27,8 +28,9 @@ public class MapPinSync : MonoBehaviour
   private ZDO? cachedPlayerSpawnZdo = null;
   private Vector3? cachedLastBedVector = null;
   private Minimap.PinData? cachedLastBedPinData = null;
-  private Coroutine? refreshDynamicSpawnPinRoutine;
-  private Coroutine? refreshVehiclePinsRoutine;
+  private CoroutineHandle? refreshDynamicSpawnPinRoutine;
+  private CoroutineHandle? refreshVehiclePinsRoutine;
+  private CoroutineHandle? zdoSyncCoroutine;
 
   public string GetOwnerNameFromZdo(ZDO zdo)
   {
@@ -40,25 +42,29 @@ public class MapPinSync : MonoBehaviour
 
   public void Awake()
   {
+    refreshDynamicSpawnPinRoutine ??= new CoroutineHandle(this);
+    refreshVehiclePinsRoutine ??= new CoroutineHandle(this);
+    zdoSyncCoroutine ??= new CoroutineHandle(this);
+
     Instance = this;
-    if (ZNet.instance == null) return;
-    if (ZNet.instance.IsDedicated()) return;
-    ZdoWatchController.Instance.GetAllZdoGuids();
   }
 
   private void OnEnable()
   {
-    if (ZNet.instance == null) return;
-    if (ZNet.instance.IsDedicated()) return;
+    refreshDynamicSpawnPinRoutine ??= new CoroutineHandle(this);
+    refreshVehiclePinsRoutine ??= new CoroutineHandle(this);
+    zdoSyncCoroutine ??= new CoroutineHandle(this);
     MinimapManager.OnVanillaMapDataLoaded += OnMapReady;
   }
 
   private void OnDisable()
   {
-    if (ZNet.instance == null) return;
-    if (ZNet.instance.IsDedicated()) return;
     MinimapManager.OnVanillaMapDataLoaded -= OnMapReady;
-    StopAllCoroutines();
+
+    refreshDynamicSpawnPinRoutine?.Stop();
+    refreshVehiclePinsRoutine?.Stop();
+    zdoSyncCoroutine?.Stop();
+
     ClearAllVehiclePins();
     _vehiclePins.Clear();
     refreshVehiclePinsRoutine = null;
@@ -68,36 +74,32 @@ public class MapPinSync : MonoBehaviour
   private void OnMapReady()
   {
     if (ZNet.instance == null || Minimap.instance == null) return;
-
+    ZdoWatchController.Instance.GetAllZdoGuids();
     // clear everything first
     StopAllCoroutines();
     ClearAllVehiclePins();
     _vehiclePins.Clear();
 
+    StartDynamicSpawnPinSync();
     StartVehiclePinSync();
-    StartSpawnPinSync();
+    StartRefreshAllVehicleZDos();
+
     hasInitialized = true;
+  }
+
+  public void StartRefreshAllVehicleZDos()
+  {
+    zdoSyncCoroutine?.Start(RefreshAllVehicleZDOs());
   }
 
   public void StartVehiclePinSync()
   {
-    if (refreshVehiclePinsRoutine != null)
-    {
-      StopCoroutine(refreshVehiclePinsRoutine);
-      refreshVehiclePinsRoutine = null;
-    }
-
-    refreshVehiclePinsRoutine = StartCoroutine(RefreshVehiclePins());
+    refreshVehiclePinsRoutine?.Start(RefreshVehiclePins());
   }
 
-  public void StartSpawnPinSync()
+  public void StartDynamicSpawnPinSync()
   {
-    if (refreshDynamicSpawnPinRoutine != null)
-    {
-      StopCoroutine(refreshDynamicSpawnPinRoutine);
-      refreshDynamicSpawnPinRoutine = null;
-    }
-    refreshDynamicSpawnPinRoutine = StartCoroutine(RefreshDynamicSpawnPin());
+    refreshDynamicSpawnPinRoutine?.Start(RefreshDynamicSpawnPin());
   }
 
   private bool IsWithinVisibleRadius(Vector3 point)
@@ -183,12 +185,66 @@ public class MapPinSync : MonoBehaviour
   }
 
 
+  private readonly WaitForSeconds oneSecondWait = new(1f);
+
+  private enum SyncPreconditionState
+  {
+    Ready,
+    Wait,
+    Stop
+  }
+
+  // Shared gate for client-side sync loops: wait when not ready, stop on dedicated server.
+  private SyncPreconditionState EvaluateSyncPreconditions(out YieldInstruction? waitInstruction)
+  {
+    waitInstruction = null;
+
+    if (ZNet.instance == null)
+    {
+      waitInstruction = oneSecondWait;
+      return SyncPreconditionState.Wait;
+    }
+
+    if (ZNet.instance.IsServer() && ZNet.instance.IsDedicated()) return SyncPreconditionState.Stop;
+
+    if (Player.m_localPlayer == null) return SyncPreconditionState.Wait;
+
+    return SyncPreconditionState.Ready;
+  }
+
   public IEnumerator RefreshDynamicSpawnPin()
   {
     while (isActiveAndEnabled)
     {
+      var preconditionState = EvaluateSyncPreconditions(out var waitInstruction);
+      if (preconditionState == SyncPreconditionState.Stop) yield break;
+      if (preconditionState == SyncPreconditionState.Wait)
+      {
+        yield return waitInstruction;
+        continue;
+      }
+
       yield return UpdatePlayerSpawnPin();
       yield return new WaitForSeconds(MinimapConfig.BedPinSyncInterval.Value);
+    }
+  }
+
+
+  public IEnumerator RefreshAllVehicleZDOs()
+  {
+    while (isActiveAndEnabled)
+    {
+      var preconditionState = EvaluateSyncPreconditions(out var waitInstruction);
+      if (preconditionState == SyncPreconditionState.Stop) yield break;
+      if (preconditionState == SyncPreconditionState.Wait)
+      {
+        yield return waitInstruction;
+        continue;
+      }
+
+      // heavy call but needed for all vehicles to be searchable on the map.
+      ZdoWatchController.Instance.RequestAllPersistentZdosFromServer();
+      yield return new WaitForSeconds(30f);
     }
   }
 
@@ -253,10 +309,10 @@ public class MapPinSync : MonoBehaviour
   {
     while (isActiveAndEnabled)
     {
-      yield return new WaitForSeconds(MinimapConfig.VehiclePinSyncInterval.Value);
-      if (ZNet.instance == null) yield return null;
-      if (ZNet.instance != null && ZNet.instance.IsDedicated()) yield break;
-      if (Player.m_localPlayer == null) yield return null;
+      yield return new WaitForSeconds(Mathf.Max(MinimapConfig.VehiclePinSyncInterval.Value, 1));
+      if (ZNet.instance == null) continue;
+      if (ZNet.instance != null && ZNet.instance.IsServer() && ZNet.instance.IsDedicated()) continue;
+      if (Player.m_localPlayer == null) continue;
       // Clear existing pins from both dictionaries
       ClearAllVehiclePins();
 
