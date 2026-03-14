@@ -1780,24 +1780,10 @@
       }
     }
 
-    private void UpdatePlayers()
-    {
-      // if (BaseController?.m_players == null) return;
-      // var vehiclePlayers = BaseController.m_players;
-      // foreach (var vehiclePlayer in vehiclePlayers)
-      // {
-      //   AddDynamicParentForVehicle(vehiclePlayer.m_nview, this);
-      // }
-    }
-
     public static bool IsServerInstance()
     {
-#if DEBUG
-      if (ZNet.IsSinglePlayer) return false;
-#else
       // single player servers should not count as their ZDOs do not need to sync across all clients (For performance reasons).
       if (ZNet.IsSinglePlayer) return false;
-#endif
       return ZNet.instance != null && ZNet.instance.IsServer();
     }
 
