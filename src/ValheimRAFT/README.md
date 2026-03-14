@@ -14,11 +14,11 @@ previews, swap to the beta variant.
 
 ## Tutorials
 
-- [Valheim RAFT Basics](https://github.com/zolantris/ValheimMods/tree/main/src/ValheimRAFT/docs/tutorials/Tutorial_Basics.md)
-- [Vehicle Storage/Saving](https://github.com/zolantris/ValheimMods/tree/main/src/ValheimRAFT/docs/tutorials/Tutorial_VehicleStorage.md)
-- [Vehicle Commands](https://github.com/zolantris/ValheimMods/tree/main/src/ValheimRAFT/docs/tutorials/Tutorial_VehicleCommandsInterface.md)
-- [Cannons](https://github.com/zolantris/ValheimMods/tree/main/src/ValheimRAFT/docs/tutorials/Tutorial_Cannons.md)
-- [Power System Guide](https://github.com/zolantris/ValheimMods/tree/main/src/ValheimRAFT/docs/tutorials/Tutorial_PowerSystem.md)
+- [Valheim RAFT Basics](https://github.com/zolantris/ValheimMods/blob/main/src/ValheimRAFT/docs/tutorials/Tutorial_Basics.md)
+- [Vehicle Storage/Saving](https://github.com/zolantris/ValheimMods/blob/main/src/ValheimRAFT/docs/tutorials/Tutorial_VehicleStorage.md)
+- [Vehicle Commands](https://github.com/zolantris/ValheimMods/blob/main/src/ValheimRAFT/docs/tutorials/Tutorial_VehicleCommandsInterface.md)
+- [Cannons](https://github.com/zolantris/ValheimMods/blob/main/src/ValheimRAFT/docs/tutorials/Tutorial_Cannons.md)
+- [Power System Guide](https://github.com/zolantris/ValheimMods/blob/main/src/ValheimRAFT/docs/tutorials/Tutorial_PowerSystem.md)
 
 ## Video Tutorials
 
@@ -28,7 +28,7 @@ previews, swap to the beta variant.
 ## Mod Info
 
 :warning: Warning. If you are reading this readme on the
-[ValheimMods/ValheimRAFT](https://github.com/zolantris/ValheimMods/tree/main/src/ValheimRAFT)
+[ValheimMods/ValheimRAFT](https://github.com/zolantris/ValheimMods/blob/main/src/ValheimRAFT)
 repo :warning:
 
 - There likely will
@@ -90,7 +90,7 @@ source the mod on 12/25/2023.
     * [Support Open Source](#support-open-source)
     * [Logging Metrics](#logging-metrics)
         * [What information will be collected](#what-information-will-be-collected)
-    * [Changelog](https://github.com/zolantris/ValheimMods/tree/main/src/ValheimRAFT/CHANGELOG.md)
+    * [Changelog](https://github.com/zolantris/ValheimMods/blob/main/src/ValheimRAFT/CHANGELOG.md)
     * [Power System](#power-system)
 
 <!-- TOC -->
@@ -526,9 +526,9 @@ Floatation is determined by the key `HullFloatationColliderLocation`.
 | Fixed                | Fixed a 0. This will never move making it the most stable way to build boats. This is the default config. Other values will mutate the floatation as more pieces are added or removed.                                                                                                                                                                                                                                                                                    |
 | Custom               | Direct way to control each vehicle. This will only be allowed on local vehicles.<br><br> Place the FloatationPrefab on a surface of the boat. The surface's height will become the new float position. Placing another FloatationPrefab will unset and revert the vehicle back to the global default EG Fixed,Center,Average,AverageOfHull.<br><br> **This can launch the player beware of moving the custom float marker while on the vehicle without fall-protection**. |
 
-[//]: # ([image_base_urls]&#40;https://github.com/zolantris/ValheimMods/tree/main/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/Icons&#41;)
+[//]: # ([image_base_urls]&#40;https://github.com/zolantris/ValheimMods/blob/main/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/Icons&#41;)
 
-[//]: # ([image_base_urls_generated]&#40;https://github.com/zolantris/ValheimMods/tree/main/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons&#41;)
+[//]: # ([image_base_urls_generated]&#40;https://github.com/zolantris/ValheimMods/blob/main/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons&#41;)
 
 ## Client/Server/SinglePlayer Support
 
@@ -588,7 +588,7 @@ Excludes
 
 There is auto-documentation for this config at this link. Please go here to read
 up on all the
-config. [config auto-generated document](https://github.com/zolantris/ValheimMods/tree/main/src/ValheimRAFT/docs/ValheimRAFT_AutoDoc.md)
+config. [config auto-generated document](https://github.com/zolantris/ValheimMods/blob/main/src/ValheimRAFT/docs/ValheimRAFT_AutoDoc.md)
 
 ## Commands
 
