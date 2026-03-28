@@ -7215,7 +7215,7 @@ MonoBehaviour:
     m_Extent: {x: 0.5, y: 0.5, z: 0.5}
   CenterObj: {fileID: 0}
   isForward: 1
-  convexHullComponent: {fileID: 1246876116}
+  convexHullComponent: {fileID: 0}
   speedMultiplierOverride: 0
   treadPhysicMaterialOverride: {fileID: 0}
 --- !u!4 &3130001060467473924
@@ -7469,6 +7469,12 @@ MonoBehaviour:
   currentTrackWidth: 0
   currentLocalPlanarVelocity: {x: 0, y: 0, z: 0}
   currentVehicleCenter: {x: 0, y: 0, z: 0}
+  slopeGravityCompensation: 1.1
+  slopeHoldAcceleration: 14
+  slopeLateralHoldAcceleration: 14
+  uphillAccelerationBoost: 18
+  antiReverseAcceleration: 18
+  downhillOverspeedBrakeAcceleration: 12
 --- !u!1 &8225528950328919720
 GameObject:
   m_ObjectHideFlags: 0
@@ -7567,7 +7573,7 @@ MonoBehaviour:
     m_Extent: {x: 0.5, y: 0.5, z: 0.5}
   CenterObj: {fileID: 0}
   isForward: 1
-  convexHullComponent: {fileID: 1246876116}
+  convexHullComponent: {fileID: 0}
   speedMultiplierOverride: 0
   treadPhysicMaterialOverride: {fileID: 0}
 --- !u!1660057539 &9223372036854775807
