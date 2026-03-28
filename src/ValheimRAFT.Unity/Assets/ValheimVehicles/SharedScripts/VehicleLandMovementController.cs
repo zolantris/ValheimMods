@@ -155,6 +155,28 @@ namespace ValheimVehicles.SharedScripts
     [Tooltip("Multiplier used to convert input turns of -1 and 1 to a bigger number")]
     public float wheelMass = 500f;
 
+    [Header("Differential Drive Settings")]
+    [Tooltip("Maximum forward/reverse speed in meters/second.")]
+    public float maxLinearSpeed = 12f;
+
+    [Tooltip("Maximum angular speed (degrees/sec) when spinning in place).")]
+    public float maxAngularSpeedDeg = 90f;
+
+    [Tooltip("Maximum linear acceleration (m/s^2) applied to reach target speed.")]
+    public float linearAcceleration = 6f;
+
+    [Tooltip("Maximum angular acceleration (rad/s^2) applied to reach target yaw rate.")]
+    public float angularAcceleration = 3f;
+
+    [Tooltip("Optional curve to remap throttle input (0..1) to speed multiplier. Useful to bias start/stop behaviour.")]
+    public AnimationCurve speedCurve = AnimationCurve.Linear(0f, 0f, 1f, 1f);
+
+    [Tooltip("How aggressively lateral (sideways) velocity is damped to prevent slipping.")]
+    public float lateralDampingFactor = 10f;
+
+    [Tooltip("Maximum absolute force applied per tread (safety clamp).")]
+    public float maxTreadForce = 20000f;
+
     [Tooltip("Transforms")]
     public Transform wheelParent;
     public Transform treadsParent;
@@ -613,344 +635,95 @@ namespace ValheimVehicles.SharedScripts
     // New method: apply forces directly at the treads to simulate continuous treads
     private void ApplyTreadForces()
     {
+      // Fresh differential-drive based physics (no legacy logic retained)
       if (!IsVehicleReady) return;
       if (!IsUsingEngine || IsBraking)
       {
-        if (IsBraking)
-        {
-          ApplyBrakes();
-        }
-        currentLeftForce = 0;
-        currentRightForce = 0;
+        // When braking or engine off, zero out applied tread forces and damp velocities gently
+        currentLeftForce = 0f;
+        currentRightForce = 0f;
+        // Strongly damp lateral motion to prevent sliding while parked
+        var lateralVel = Vector3.ProjectOnPlane(vehicleRootBody.linearVelocity, transform.forward);
+        vehicleRootBody.AddForce(-lateralVel * lateralDampingFactor * vehicleRootBody.mass, ForceMode.Acceleration);
         ApplyDecreasingForce();
-
         return;
       }
 
-      AdjustForHills();
+      // Core idea: compute a target forward speed and a target yaw rate from inputs
+      var dt = Time.fixedDeltaTime;
       var forward = transform.forward;
       var leftTreadPos = treadsLeftTransform.position;
       var rightTreadPos = treadsRightTransform.position;
 
-      if (vehicleRootBody.linearVelocity.magnitude > maxSpeed)
-      {
-        return;
-      }
-      // Differential steering:
-      // - A positive inputMovement moves the tank forward.
-      // - A positive inputTurnForce will add force to the left tread and subtract from the right,
-      //   causing an in-place right turn (and vice versa).
-
-      // Get current angular speed (rotation speed around the Y-axis)
-      var angularSpeed = Mathf.Abs(vehicleRootBody.angularVelocity.y);
-
-
-      // Lerp turn force: Starts high at low speeds (20), drops to 0.01 at max angular speed.
-      // todo inspect this turn lerp. This likely drops all turning speed too much.
-      var turnForceLerp = Mathf.Lerp(inputTurnForce * baseTurnAccelerationMultiplier, 0f, Mathf.Clamp01(angularSpeed / MaxAngularLerpSpeed));
-      var baseTorqueTurnLerp = Mathf.Lerp(1f, 0.25f, Mathf.Clamp01(baseAcceleration / highAcceleration));
-      combinedTurnLerp = turnForceLerp * baseTorqueTurnLerp;
-
-      var leftForce = 0f;
-      var rightForce = 0f;
-
-      if (m_steeringType == SteeringType.Magic)
-      {
-        leftForce = combinedTurnLerp;
-      }
-
-      if (m_steeringType == SteeringType.Differential)
-      {
-        var dt = Time.fixedDeltaTime;
-        var baseTurnRate = Mathf.Lerp(baseAccelerationMultiplier, 0f, Mathf.Clamp01(baseAcceleration / baseTurnAccelerationMultiplier));
-        leftForce = (inputMovement + combinedTurnLerp) * (baseAcceleration + baseTurnRate) * hillFactor * dt;
-        rightForce = (inputMovement - combinedTurnLerp) * (baseAcceleration + baseTurnRate) * hillFactor * dt;
-      }
-
-
-      if (UseUnbalancedForce)
-      {
-        var unbalancedForceLeft = Mathf.Lerp(1, 1 + inputTurnForce, Mathf.Abs(inputTurnForce));
-        var unbalancedForceRight = Mathf.Lerp(1, 1 - inputTurnForce, Mathf.Abs(inputTurnForce));
-        leftForce *= unbalancedForceLeft;
-        rightForce *= unbalancedForceRight;
-      }
-
-      if (stuckTime > 0)
-      {
-        leftForce *= 1 + stuckTime;
-        rightForce *= 1 + stuckTime;
-      }
-
-      // var upwardsForce = transform.up * baseTorque * 0.01f;
-      var upwardsForce = GetUpwardsForce();
-
       var deltaTreads = Vector3.Distance(rightTreadPos, leftTreadPos);
+      if (deltaTreads < minTreadDistances) return;
 
-      if (deltaTreads < minTreadDistances)
-      {
-        currentLeftForce = 0;
-        currentRightForce = 0;
-        // vehicle is not ready. The treads are too close.
-        return;
-      }
+      // Map inputMovement (-1..1) to target speed using optional curve
+      var thrAbs = Mathf.Clamp01(Mathf.Abs(inputMovement));
+      var thrSign = Mathf.Sign(inputMovement);
+      var speedMultiplier = speedCurve != null ? speedCurve.Evaluate(thrAbs) : thrAbs;
+      var targetSpeed = Mathf.Clamp(speedMultiplier * maxLinearSpeed, 0f, maxLinearSpeed) * thrSign;
 
-      vehicleRootBody.AddForceAtPosition(forward * leftForce + upwardsForce, treadsLeftTransform.position, ForceMode.Acceleration);
-      vehicleRootBody.AddForceAtPosition(forward * rightForce + upwardsForce, treadsRightTransform.position, ForceMode.Acceleration);
+      // Map inputTurnForce (-1..1) to target yaw rate in radians/sec
+      var targetYawRate = Mathf.Deg2Rad * maxAngularSpeedDeg * Mathf.Clamp(inputTurnForce, -1f, 1f);
 
+      // Current states
+      var currentForwardSpeed = Vector3.Dot(vehicleRootBody.linearVelocity, forward);
+      var currentYawRate = vehicleRootBody.angularVelocity.y;
+
+      // Desired accelerations (clamped)
+      var desiredLinearAccel = Mathf.Clamp((targetSpeed - currentForwardSpeed) / Mathf.Max(dt, 1e-6f), -linearAcceleration, linearAcceleration);
+      var desiredAngularAccel = Mathf.Clamp((targetYawRate - currentYawRate) / Mathf.Max(dt, 1e-6f), -angularAcceleration, angularAcceleration);
+
+      // Convert to forces/torques
+      var totalForwardForce = vehicleRootBody.mass * desiredLinearAccel; // F = m * a
+
+      // Approximate yaw inertia around local Y using inertiaTensor (note: inertiaTensor is in local space)
+      var inertiaY = vehicleRootBody.inertiaTensor.y; // reasonable approximation
+      var requiredTorque = inertiaY * desiredAngularAccel; // τ = I * α
+
+      // force difference needed between treads: τ = (F_right - F_left) * (trackWidth / 2)
+      var halfTrack = Mathf.Max(deltaTreads * 0.5f, 0.01f);
+      var forceDifference = requiredTorque / halfTrack; // (F_right - F_left)
+
+      // Distribute forward force evenly, then add/subtract differential component to produce torque
+      var perTreadForward = totalForwardForce * 0.5f;
+
+      var leftForce = perTreadForward - forceDifference * 0.5f;
+      var rightForce = perTreadForward + forceDifference * 0.5f;
+
+      // Clamp tread forces to avoid unrealistic spikes
+      leftForce = Mathf.Clamp(leftForce, -maxTreadForce, maxTreadForce);
+      rightForce = Mathf.Clamp(rightForce, -maxTreadForce, maxTreadForce);
+
+      // Apply forces at the two tread positions. Use ForceMode.Force for physics consistency.
+      var upwardsForce = GetUpwardsForce();
+      vehicleRootBody.AddForceAtPosition(forward * leftForce + upwardsForce, leftTreadPos, ForceMode.Force);
+      vehicleRootBody.AddForceAtPosition(forward * rightForce + upwardsForce, rightTreadPos, ForceMode.Force);
+
+      // Lateral damping: actively counteract sideways velocity to prevent slipping
+      var vel = vehicleRootBody.linearVelocity;
+      var forwardComponent = forward * Vector3.Dot(vel, forward);
+      var lateralComponent = vel - forwardComponent;
+      var lateralAccel = -lateralComponent * lateralDampingFactor; // m/s^2
+      vehicleRootBody.AddForce(lateralAccel * vehicleRootBody.mass, ForceMode.Force);
+
+      // Small angular damping to stabilise yaw when no input
+      var yawDamping = -vehicleRootBody.angularVelocity.y * (Mathf.Abs(inputTurnForce) > 0.01f ? 0.1f : 1f);
+      vehicleRootBody.AddTorque(new Vector3(0f, yawDamping * vehicleRootBody.mass, 0f), ForceMode.Force);
+
+      // Publish values for visuals and debugging
       currentLeftForce = leftForce;
       currentRightForce = rightForce;
 
-      // todo may only use this to replace sideways velocity damping
-      DampUnwantedVelocity(vehicleRootBody, treadLateralDamping, treadBackwardDamping);
-
-      // this removes sideways velocities quickly to prevent issues with vehicle at higher speeds turning.
-      DampenSidewaysVelocity();
-      DampenAngularYVelocity();
-
-      // Prevent translation during in-place turning
+      // Prevent unwanted lateral drift while turning in place: keep vertical velocity unchanged but reduce translation
       if (IsTurningInPlace && IsOnGround)
       {
-        // Only preserve Y angular velocity (turning)
-        var vel = vehicleRootBody.linearVelocity;
-        // Optionally preserve Y to allow height
-        vehicleRootBody.linearVelocity = Vector3.Slerp(vel, new Vector3(0, vel.y, 0), Time.fixedDeltaTime * rotatingInPlaceTimeMultiplierVelocity);
-        // Make sure only Y angular velocity is kept (for yaw turn)
-        var angVel = vehicleRootBody.angularVelocity;
-        vehicleRootBody.angularVelocity = Vector3.Slerp(angVel, new Vector3(0, angVel.y, 0), Time.fixedDeltaTime * rotatingInPlaceTimeMultiplierAngularVelocity);
+        var lv = vehicleRootBody.linearVelocity;
+        vehicleRootBody.linearVelocity = Vector3.Lerp(lv, new Vector3(0f, lv.y, 0f), Mathf.Clamp01(dt * lateralDampingFactor * 0.5f));
       }
     }
 
-    private float GetSteeringForceLerp()
-    {
-      var angularSpeed = Mathf.Abs(vehicleRootBody.angularVelocity.y);
-
-      // Lerp turn force: Starts high at low speeds (20), drops to 0.01 at max angular speed.
-      var turnForceLerp = Mathf.Lerp(50f * inputTurnForce * baseTurnAccelerationMultiplier, 0f, Mathf.Clamp01(angularSpeed / 5f));
-      var baseTorqueTurnLerp = Mathf.Lerp(1.3f, 0.5f, Mathf.Clamp01(baseTorque / highTorque));
-      var combinedTurnLerp = turnForceLerp * baseTorqueTurnLerp;
-
-      return combinedTurnLerp;
-    }
-
-    /// <summary>
-    ///   Sets up all treads. Makes it easier to not mess up on left/right duplication
-    ///   of properties per tread
-    /// </summary>
-    /// <param name="treadObj"></param>
-    /// <param name="movingTreadComponent"></param>
-    /// <param name="treadRb"></param>
-    private void SetupSingleTread(GameObject treadObj, ref MovingTreadComponent movingTreadComponent)
-    {
-      if (!movingTreadComponent)
-      {
-        movingTreadComponent = treadObj.GetComponent<MovingTreadComponent>();
-      }
-      if (!movingTreadComponent)
-      {
-        movingTreadComponent = treadObj.AddComponent<MovingTreadComponent>();
-      }
-
-      movingTreadComponent.treadParent = treadObj.transform;
-
-      if (treadsPrefab)
-      {
-        movingTreadComponent.treadPrefab = treadsPrefab;
-      }
-      movingTreadComponent.vehicleLandMovementController = this;
-    }
-    /// <summary>
-    ///   Init for both treads
-    /// </summary>
-    private void InitTreads()
-    {
-      _isTreadsInitialized = false;
-
-      if (!treadPhysicMaterial)
-      {
-        // shared dynamic physicMaterial. This can be different per vehicle used.
-        treadPhysicMaterial = new PhysicsMaterial("TreadPhysicMaterial")
-        {
-          dynamicFriction = IsBraking ? 1f : dynamicFriction,
-          staticFriction = IsBraking ? 0.5f : staticFriction,
-          bounciness = 0.01f,
-          bounceCombine = PhysicsMaterialCombine.Minimum,
-          frictionCombine = PhysicsMaterialCombine.Minimum
-        };
-      }
-
-      if (!treadsRightTransform || !treadsLeftTransform)
-      {
-        return;
-      }
-
-      SetupSingleTread(treadsRightTransform.gameObject, ref treadsRightMovingComponent);
-      SetupSingleTread(treadsLeftTransform.gameObject, ref treadsLeftMovingComponent);
-
-      _isTreadsInitialized = true;
-    }
-
-    public void ConfigureJoint(ConfigurableJoint joint, Rigidbody vehicleBody, Rigidbody currentRB, Vector3 localPosition)
-    {
-      if (!currentRB.isKinematic)
-      {
-        currentRB.isKinematic = true;
-      }
-
-      joint.autoConfigureConnectedAnchor = false;
-      joint.connectedBody = null;
-      joint.anchor = Vector3.zero;
-
-      joint.connectedAnchor = localPosition;
-      joint.connectedBody = vehicleBody;
-
-      // Lock rotation completely
-      joint.angularXMotion = ConfigurableJointMotion.Locked;
-      joint.angularYMotion = ConfigurableJointMotion.Locked;
-      joint.angularZMotion = ConfigurableJointMotion.Limited;
-
-      // Allow expansion by keeping movement flexible along the growing axis
-      joint.xMotion = ConfigurableJointMotion.Locked;
-      joint.yMotion = ConfigurableJointMotion.Limited; // Adjust as needed
-      joint.zMotion = ConfigurableJointMotion.Locked;
-
-      currentRB.isKinematic = false;
-    }
-
-    public void ScaleAxle(Transform axle, float targetLength)
-    {
-      var meshBounds = axle.GetComponent<MeshFilter>().sharedMesh.bounds.size;
-      axle.localScale = new Vector3(
-        targetLength / meshBounds.x, // Scale only the length axis
-        axle.localScale.y, // Keep other axes the same
-        axle.localScale.z
-      );
-    }
-
-    public void ScaleMeshToFitBounds(Transform obj, Vector3 targetSize)
-    {
-      var meshFilter = obj.GetComponent<MeshFilter>();
-      if (!meshFilter) return;
-
-      // Get original bounds in local space
-      var meshBounds = meshFilter.sharedMesh.bounds.size;
-
-      // Calculate required scale factor per axis
-      var scaleFactor = new Vector3(
-        targetSize.x / meshBounds.x,
-        targetSize.y / meshBounds.y,
-        targetSize.z / meshBounds.z
-      );
-
-      // Apply scale
-      obj.localScale = scaleFactor;
-    }
-
-    private void CleanupTreads()
-    {
-      if (treadsLeftMovingComponent) Destroy(treadsLeftMovingComponent);
-      if (treadsRightMovingComponent) Destroy(treadsRightMovingComponent);
-    }
-
-    private static void DeleteAllItems(List<GameObject> items)
-    {
-      if (items.Count <= 0) return;
-      var tempList = Enumerable.ToList(items);
-      foreach (var set in tempList)
-      {
-        if (set != null)
-        {
-          Destroy(set);
-        }
-      }
-      items.Clear();
-    }
-
-    private void Cleanup()
-    {
-      DeleteAllItems(wheelInstances);
-      DeleteAllItems(rotationEngineInstances);
-
-      totalWheels = 0;
-      rotationEngineInstances.Clear();
-      rotatorEngineHingeInstances.Clear();
-      wheelSyncPropertiesMap.Clear();
-      poweredWheels.Clear();
-      wheelColliders.Clear();
-      colliders.Clear();
-
-      // non-allocating.
-      right = Array.Empty<WheelCollider>();
-      left = Array.Empty<WheelCollider>();
-
-
-      rear.Clear();
-      front.Clear();
-      rightRenderers.Clear();
-      leftRenderers.Clear();
-    }
-
-    public void ApplyFrictionUpdates()
-    {
-      if (IsBraking) return;
-
-      var isTryingToMove = Mathf.Abs(inputMovement) > 0.01f || Mathf.Abs(inputTurnForce) > 0.01f;
-
-      if (isTryingToMove)
-      {
-        // Lower friction so tracks can slip and move from rest
-        treadPhysicMaterial.dynamicFriction = dynamicFriction;
-        treadPhysicMaterial.staticFriction = staticFriction;
-      }
-      else
-      {
-        // High friction, lock in place
-        treadPhysicMaterial.dynamicFriction = 1f;
-        treadPhysicMaterial.staticFriction = 1f;
-      }
-    }
-
-    /// <summary>
-    ///   To be called from VehicleMovementController
-    /// </summary>
-    public void VehicleMovementFixedUpdateOwnerClient()
-    {
-      if (!IsVehicleReady) return;
-      if (vehicleRootBody.isKinematic) return;
-      _shouldSyncVisualOnCurrentFrame = true;
-
-      UpdateIsOnGround();
-
-      IsTurningInPlace = Mathf.Approximately(inputMovement, 0f) && Mathf.Abs(inputTurnForce) > 0f;
-      currentSpeed = GetTankSpeed();
-
-      if (!IsOnGround)
-      {
-        ApplyDownforce();
-        return;
-      }
-
-      ApplyFrictionUpdates();
-
-      HandleObstacleClimb();
-
-      if (useDirectTreadPhysics)
-      {
-        ApplyTreadForces();
-      }
-    }
-
-    public void VehicleMovementFixedUpdateAllClients()
-    {
-      SyncWheelAndTreadVisuals();
-    }
-
-    /// <summary>
-    ///   Compute the true bottom of the wheel visually to match the wheelcollider that
-    ///   could be larger.
-    /// </summary>
-    /// <param name="wheelCollider"></param>
-    /// <param name="wheelSync"></param>
     private void AlignVisualWheels(WheelCollider wheelCollider, WheelSyncProperties wheelSync)
     {
       if (wheelCollider == null) return;
@@ -1885,10 +1658,6 @@ namespace ValheimVehicles.SharedScripts
       // should not be called outside of editor. These should be optimized outside of a fixed update.
       UpdateMaxRPM();
       UpdateAccelerationValues(accelerationType, inputMovement >= 0);
-
-      // critical call, meant for all components
-      VehicleMovementFixedUpdateOwnerClient();
-      VehicleMovementFixedUpdateAllClients();
     }
 #endif
   }
