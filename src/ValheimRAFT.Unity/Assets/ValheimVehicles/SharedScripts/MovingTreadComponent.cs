@@ -91,6 +91,8 @@ namespace ValheimVehicles.SharedScripts
     public VehicleLandMovementController vehicleLandMovementController;
     public List<HingeJoint> _wheelRotators = new();
     public Transform rotatorParent;
+
+    [Header("Prefabs")]
     public GameObject treadPrefab;
     public float treadTopLocalPosition = treadPointYOffset;
     public float treadBottomLocalPosition;
@@ -117,6 +119,9 @@ namespace ValheimVehicles.SharedScripts
     internal List<LocalTransform> _treadTargetPoints = new();
 
     private float lastSpeed;
+
+    // todo maybe calculate tread scalar.
+    public static float treadRadiusScalar = 1f;
 
     // Speed multiplier that controls the overall speed of treads
     private float speedMultiplier = 1f;
@@ -202,7 +207,7 @@ namespace ValheimVehicles.SharedScripts
       convexHullComponent.m_colliderParentTransform = treadParent;
       convexHullComponent.HasPreviewGeneration = false;
       convexHullComponent.IsAllowedAsHullOverride = AllowTreadsObject;
-      convexHullComponent.AddLocalPhysicMaterial(vehicleLandMovementController.treadPhysicMaterial);
+      // convexHullComponent.AddLocalPhysicMaterial(vehicleLandMovementController.treadPhysicMaterial);
     }
 
     public bool IsOnGround()
@@ -356,7 +361,7 @@ namespace ValheimVehicles.SharedScripts
 
 
       // scale the tread to the correct height.
-      treadGameObject.transform.localScale = Vector3.one * vehicleLandMovementController.GetWheelRadiusScalar();
+      treadGameObject.transform.localScale = Vector3.one * treadRadiusScalar;
 
       var localPoint = new LocalTransform(treadGameObject.transform);
       _treadTargetPoints.Add(localPoint);
@@ -381,7 +386,9 @@ namespace ValheimVehicles.SharedScripts
       CleanUp();
 
       CreateCenteringObject();
-      var scalar = vehicleLandMovementController.GetWheelRadiusScalar();
+
+      // todo refactor this if needed
+      var scalar = 1f;
       var horizontalTreads = Mathf.RoundToInt(bounds.size.z / treadPointDistanceZ / scalar);
 
       // scaled from radius of the first wheel.
@@ -444,8 +451,8 @@ namespace ValheimVehicles.SharedScripts
         InitSingleTread(treadGameObject);
       }
 
-      CenterObj.transform.position = treadParent.position + localBounds.center;
-      treadParent.position = CenterObj.transform.position;
+      // CenterObj.transform.position = treadParent.position + localBounds.center;
+      // treadParent.position = CenterObj.transform.position;
 
       // var treadGameObjects = _movingTreads.Select(x => x.gameObject).ToList();
       var treadGameObjects = new List<GameObject>();

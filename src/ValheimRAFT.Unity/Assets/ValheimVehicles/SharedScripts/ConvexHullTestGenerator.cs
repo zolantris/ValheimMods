@@ -302,21 +302,36 @@ namespace ValheimVehicles.SharedScripts
         vehicleLandMovementController.Initialize(bounds);
       }
 
-      // RigidbodyUtils.RecenterRigidbodyPivot(PiecesParentObj.gameObject);
-      // RigidbodyUtils.RecenterRigidbodyPivot(vehicleWheelController.gameObject);
+      var colliders = PiecesParentObj.GetComponentsInChildren<Collider>();
+
+      foreach (var a in colliders)
+      {
+        foreach (var b in colliders)
+        {
+          Physics.IgnoreCollision(a, b);
+        }
+      }
+
+      var vehicleColliders = vehicleLandMovementController.transform.root.GetComponentsInChildren<Collider>();
+
+
+      foreach (var a in vehicleColliders)
+      {
+        foreach (var b in vehicleColliders)
+        {
+          Physics.IgnoreCollision(a, b);
+        }
+      }
+
+      foreach (var a in colliders)
+      {
+        foreach (var b in vehicleColliders)
+        {
+          Physics.IgnoreCollision(a, b);
+        }
+      }
+      // PhysicUtils.IgnoreCollisionsWithinRoot(convexHullParentGameObject.transform, convexHullParentGameObject.transform.root, colliders);
     }
-    //
-    // public void IgnoreAllCollidersBetweenWheelsAndPieces()
-    // {
-    //   var childColliders = PhysicsHelpers.GetAllChildColliders(transform);
-    //   PhysicsHelpers.IgnoreCollidersForLists(vehicleWheelController.colliders, childColliders);
-    // }
-    //
-    // public void IgnoreAllCollidersBetweenTreadsAndPieces()
-    // {
-    //   var childColliders = PhysicsHelpers.GetAllChildColliders(transform);
-    //   PhysicsHelpers.IgnoreCollidersForLists(vehicleWheelController.colliders, childColliders);
-    // }
 
     private void DrawSphere(Vector3 center, float radius)
     {

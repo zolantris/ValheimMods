@@ -290,6 +290,29 @@ namespace ValheimVehicles.SharedScripts
 
       if (treadsLeftMovingComponent) treadsLeftMovingComponent.GenerateTreads(bounds);
       if (treadsRightMovingComponent) treadsRightMovingComponent.GenerateTreads(bounds);
+
+      // Compute the midpoint between the two tread center objects in WORLD space,
+      // then store that position relative to the centerOfMassTransform's PARENT so
+      // the localPosition is not affected by the centerOfMassTransform's own rotation.
+      if (centerOfMassTransform != null && treadsLeftMovingComponent != null && treadsRightMovingComponent != null &&
+          treadsLeftMovingComponent.CenterObj != null && treadsRightMovingComponent.CenterObj != null)
+      {
+        var leftWorld = treadsLeftMovingComponent.CenterObj.transform.position;
+        var rightWorld = treadsRightMovingComponent.CenterObj.transform.position;
+        var midWorld = (leftWorld + rightWorld) * 0.5f;
+
+        var parent = centerOfMassTransform.parent;
+        if (parent != null)
+        {
+          // Store midpoint in local coordinates of the parent so centerOfMassTransform.rotation doesn't affect it
+          centerOfMassTransform.localPosition = parent.InverseTransformPoint(midWorld);
+        }
+        else
+        {
+          // No parent: set world position directly
+          centerOfMassTransform.position = midWorld;
+        }
+      }
     }
 
     public void Initialize(Bounds? bounds)
