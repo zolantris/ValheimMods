@@ -149,7 +149,6 @@ GameObject:
   m_Component:
   - component: {fileID: 370483867695338920}
   - component: {fileID: 6223762886225816425}
-  - component: {fileID: 2730767645089586560}
   m_Layer: 10
   m_Name: vehicle_ship_pieces
   m_TagString: Untagged
@@ -180,10 +179,10 @@ Rigidbody:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6660037161417452804}
-  serializedVersion: 4
+  serializedVersion: 5
   m_Mass: 99999
-  m_Drag: 1
-  m_AngularDrag: 0.3
+  m_LinearDamping: 1
+  m_AngularDamping: 0.3
   m_CenterOfMass: {x: 0, y: 0, z: 0}
   m_InertiaTensor: {x: 1, y: 1, z: 1}
   m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
@@ -200,18 +199,3 @@ Rigidbody:
   m_Interpolate: 1
   m_Constraints: 0
   m_CollisionDetection: 1
---- !u!138 &2730767645089586560
-FixedJoint:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6660037161417452804}
-  m_ConnectedBody: {fileID: 0}
-  m_ConnectedArticulationBody: {fileID: 0}
-  m_BreakForce: Infinity
-  m_BreakTorque: Infinity
-  m_EnableCollision: 0
-  m_EnablePreprocessing: 1
-  m_MassScale: 1
-  m_ConnectedMassScale: 9999

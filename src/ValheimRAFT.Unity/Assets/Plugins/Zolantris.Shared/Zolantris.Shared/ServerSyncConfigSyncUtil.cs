@@ -5,8 +5,9 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using BepInEx.Configuration;
+#if VALHEIM
 using ServerSync;
-
+#endif
 namespace Zolantris.Shared
 {
   public static class ServerSyncConfigSyncUtil
@@ -14,6 +15,7 @@ namespace Zolantris.Shared
     private static readonly HashSet<ConfigEntryBase> RegisteredEntries = new();
     private static readonly HashSet<string> RegisteredKeys = new();
 
+#if VALHEIM
     public static void RegisterAllConfigEntries(ConfigSync sync, Type configType)
     {
       foreach (var field in configType.GetFields(BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy))
@@ -58,5 +60,6 @@ namespace Zolantris.Shared
         }
       }
     }
+#endif
   }
 }

@@ -577,6 +577,7 @@ namespace ValheimVehicles.SharedScripts
 
     public virtual Quaternion CalculateTargetWindDirectionRotation()
     {
+      if (!windDirectionTransform) return Quaternion.identity;
       // todo this logic might not be accurate. (for flat wind check)
       // Ensure direction is valid
       var windPosition = windDirectionTransform.position;
