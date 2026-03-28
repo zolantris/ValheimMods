@@ -12,11 +12,9 @@ using Vector3 = UnityEngine.Vector3;
 namespace ValheimVehicles.SharedScripts
 {
   /// <summary>
-  ///   Full rewrite of tracked land vehicle movement.
-  ///   - No wheel collider drive physics
-  ///   - Left/right treads are the drive contact points
-  ///   - Wheels and visual tread pieces are cosmetic only
-  ///   - Designed to work in plain Unity and in Valheim integration
+  ///   Full tracked vehicle movement rewrite.
+  ///   Physics is driven by the root rigidbody, but the effective vehicle center is the midpoint
+  ///   between the left and right tread anchors. Wheels and individual tread pieces are cosmetic.
   /// </summary>
   [RequireComponent(typeof(Rigidbody))]
   public class VehicleLandMovementController : MonoBehaviour
@@ -50,6 +48,7 @@ namespace ValheimVehicles.SharedScripts
 
     [Header("Vehicle References")]
     public Transform forwardDirection;
+    [Tooltip("Optional. Leave null or set to this transform to allow Unity to auto-compute COM.")]
     public Transform centerOfMassTransform;
     public Transform wheelParent;
     public Transform treadsParent;
@@ -65,68 +64,54 @@ namespace ValheimVehicles.SharedScripts
     public float minTreadDistances = 0.25f;
     public Bounds currentVehicleFrameBounds = new(Vector3.zero, Vector3.one * 5f);
 
+    [Header("Wheel Compatibility")]
+    public float wheelRadius = 1.5f;
+    public static float treadRadiusScalar = 1f;
+
     [Header("Speed")]
-    [Tooltip("Maximum forward speed in meters per second.")]
-    public float maxForwardSpeed = 8f;
-
-    [Tooltip("Maximum reverse speed in meters per second.")]
-    public float maxReverseSpeed = 4.5f;
-
-    [Tooltip("Maximum yaw rate during neutral turn in degrees per second.")]
+    public float maxForwardSpeed = 10f;
+    public float maxReverseSpeed = 5f;
     public float maxNeutralTurnRate = 70f;
-
-    [Tooltip("Maximum yaw rate while moving in degrees per second.")]
     public float maxMovingTurnRate = 45f;
 
     [Header("Acceleration")]
-    [Tooltip("Forward acceleration at High profile in m/s².")]
-    public float maxForwardAcceleration = 3.8f;
-
-    [Tooltip("Reverse acceleration at High profile in m/s².")]
-    public float maxReverseAcceleration = 2.6f;
-
-    [Tooltip("Brake deceleration in m/s².")]
-    public float maxBrakeAcceleration = 6.5f;
-
-    [Tooltip("How aggressively track speed chases the target speed.")]
+    public float maxForwardAcceleration = 6f;
+    public float maxReverseAcceleration = 4f;
+    public float maxBrakeAcceleration = 8f;
     public float driveResponse = 5.5f;
-
-    [Tooltip("Additional drag when no throttle is applied.")]
     public float rollingResistance = 1.2f;
 
     [Header("Grip / Stability")]
-    [Tooltip("Planar sideways correction in m/s². Higher value = less lateral slip.")]
-    public float lateralGripAcceleration = 18f;
-
-    [Tooltip("Planar forward/reverse correction used when braking.")]
+    public float lateralGripAcceleration = 20f;
     public float brakingGripAcceleration = 16f;
-
-    [Tooltip("How strongly in-place turning removes world drift.")]
-    public float inPlaceTranslationDamping = 14f;
-
-    [Tooltip("How strongly yaw is damped when there is little or no steering input.")]
+    public float inPlaceTranslationDamping = 12f;
     public float yawDamping = 3.5f;
-
-    [Tooltip("Roll/pitch stabilization while grounded.")]
     public float rollPitchStabilization = 8f;
-
-    [Tooltip("A small constant downforce to keep contact stable on uneven terrain.")]
     public float groundedDownforce = 1.0f;
+    public float lowSpeedGripBoost = 2.25f;
+    public float neutralTurnBoost = 1.5f;
+
+    [Header("Yaw Drive")]
+    public float yawVelocityResponse = 3.5f;
+    public float maxYawAcceleration = 3.25f;
 
     [Header("Air Control")]
     public float airborneAngularDamping = 1.5f;
     public float airborneDownforce = 2.0f;
 
-    [Header("Tread Visuals")]
-    public bool ShouldSyncWheelsToCollider;
-    public bool ShouldHideWheelRender;
-    public bool HasVisualTreadAnimation = true;
-
     [Header("Brake")]
-    public bool StartBraked = true;
+    public bool StartBraked;
 
-    [Header("Debug")]
+    [Header("Tread Collider Material Compatibility")]
+    public float dynamicFriction = 0.01f;
+    public float staticFriction = 0.05f;
+    public PhysicsMaterial treadPhysicMaterial;
+
+    [Header("Visuals")]
+    public bool HasVisualTreadAnimation = true;
     public bool DrawDebug;
+
+    [Header("Runtime Debug")]
     public float currentLeftForce;
     public float currentRightForce;
     public float currentLeftTargetSpeed;
@@ -135,6 +120,7 @@ namespace ValheimVehicles.SharedScripts
     public float currentYawRateDegrees;
     public float currentTrackWidth;
     public Vector3 currentLocalPlanarVelocity;
+    public Vector3 currentVehicleCenter;
 
     public Action OnWheelsInitialized = () => {};
 
@@ -172,14 +158,23 @@ namespace ValheimVehicles.SharedScripts
       if (!rotationEnginesParent) rotationEnginesParent = transform.Find("vehicle_movement/rotation_engines");
       if (!forwardDirection) forwardDirection = transform;
 
-      var centerOfMass = transform.Find("center_of_mass");
-      if (!centerOfMassTransform && centerOfMass) centerOfMassTransform = centerOfMass;
-      if (!centerOfMassTransform) centerOfMassTransform = transform;
-
       if (!treadsRightTransform) treadsRightTransform = transform.Find("vehicle_movement/treads/treads_right");
       if (!treadsLeftTransform) treadsLeftTransform = transform.Find("vehicle_movement/treads/treads_left");
 
+      if (!treadPhysicMaterial)
+      {
+        treadPhysicMaterial = new PhysicsMaterial("VehicleLandMovementController_TreadMaterial")
+        {
+          dynamicFriction = dynamicFriction,
+          staticFriction = staticFriction,
+          bounciness = 0f,
+          bounceCombine = PhysicsMaterialCombine.Minimum,
+          frictionCombine = PhysicsMaterialCombine.Multiply
+        };
+      }
+
       IsBraking = StartBraked;
+
 
       ConfigureRigidBody();
       InitTreads();
@@ -215,12 +210,25 @@ namespace ValheimVehicles.SharedScripts
       vehicleRootBody.interpolation = RigidbodyInterpolation.Interpolate;
       vehicleRootBody.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
       vehicleRootBody.maxAngularVelocity = 8f;
-
-      if (centerOfMassTransform)
-      {
-        vehicleRootBody.centerOfMass = transform.InverseTransformPoint(centerOfMassTransform.position);
-      }
     }
+
+    // private void ConfigureRigidBody()
+    // {
+    //   if (!vehicleRootBody) return;
+    //
+    //   vehicleRootBody.interpolation = RigidbodyInterpolation.Interpolate;
+    //   vehicleRootBody.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
+    //   vehicleRootBody.maxAngularVelocity = 8f;
+    //
+    //   if (centerOfMassTransform && centerOfMassTransform != transform)
+    //   {
+    //     vehicleRootBody.centerOfMass = transform.InverseTransformPoint(centerOfMassTransform.position);
+    //   }
+    //   else
+    //   {
+    //     vehicleRootBody.ResetCenterOfMass();
+    //   }
+    // }
 
     private void SetupSingleTread(GameObject treadObj, ref MovingTreadComponent movingTreadComponent)
     {
@@ -290,29 +298,6 @@ namespace ValheimVehicles.SharedScripts
 
       if (treadsLeftMovingComponent) treadsLeftMovingComponent.GenerateTreads(bounds);
       if (treadsRightMovingComponent) treadsRightMovingComponent.GenerateTreads(bounds);
-
-      // Compute the midpoint between the two tread center objects in WORLD space,
-      // then store that position relative to the centerOfMassTransform's PARENT so
-      // the localPosition is not affected by the centerOfMassTransform's own rotation.
-      if (centerOfMassTransform != null && treadsLeftMovingComponent != null && treadsRightMovingComponent != null &&
-          treadsLeftMovingComponent.CenterObj != null && treadsRightMovingComponent.CenterObj != null)
-      {
-        var leftWorld = treadsLeftMovingComponent.CenterObj.transform.position;
-        var rightWorld = treadsRightMovingComponent.CenterObj.transform.position;
-        var midWorld = (leftWorld + rightWorld) * 0.5f;
-
-        var parent = centerOfMassTransform.parent;
-        if (parent != null)
-        {
-          // Store midpoint in local coordinates of the parent so centerOfMassTransform.rotation doesn't affect it
-          centerOfMassTransform.localPosition = parent.InverseTransformPoint(midWorld);
-        }
-        else
-        {
-          // No parent: set world position directly
-          centerOfMassTransform.position = midWorld;
-        }
-      }
     }
 
     public void Initialize(Bounds? bounds)
@@ -334,8 +319,8 @@ namespace ValheimVehicles.SharedScripts
 
       if (treadsLeftTransform && treadsRightTransform)
       {
-        var leftGrounded = Physics.Raycast(treadsLeftTransform.position + transform.up * 0.2f, -transform.up, 1.0f);
-        var rightGrounded = Physics.Raycast(treadsRightTransform.position + transform.up * 0.2f, -transform.up, 1.0f);
+        var leftGrounded = Physics.Raycast(treadsLeftTransform.position + Vector3.up * 0.2f, Vector3.down, 1.0f);
+        var rightGrounded = Physics.Raycast(treadsRightTransform.position + Vector3.up * 0.2f, Vector3.down, 1.0f);
 
         if (leftGrounded || rightGrounded)
         {
@@ -399,152 +384,158 @@ namespace ValheimVehicles.SharedScripts
       IsBraking = value;
     }
 
+    public float GetWheelRadiusScalar()
+    {
+      return treadRadiusScalar;
+    }
+
+    private Transform GetDriveTransform()
+    {
+      return forwardDirection ? forwardDirection : transform;
+    }
+
+    private Vector3 GetVehicleCenterWorld()
+    {
+      if (treadsLeftTransform && treadsRightTransform)
+      {
+        return (treadsLeftTransform.position + treadsRightTransform.position) * 0.5f;
+      }
+
+      return vehicleRootBody ? vehicleRootBody.worldCenterOfMass : transform.position;
+    }
+
     private float GetCurrentTrackWidth()
     {
       if (!treadsLeftTransform || !treadsRightTransform) return Mathf.Max(currentVehicleFrameBounds.size.x, 1.5f);
       return Mathf.Max(Vector3.Distance(treadsLeftTransform.position, treadsRightTransform.position), minTreadDistances);
     }
 
-    private float GetPointForwardSpeed(Transform pointTransform)
+    private void ApplyAirControl()
     {
-      var pointVelocity = vehicleRootBody.GetPointVelocity(pointTransform.position);
-      return Vector3.Dot(pointVelocity, transform.forward);
+      var driveTransform = GetDriveTransform();
+      var localAngularVelocity = driveTransform.InverseTransformDirection(vehicleRootBody.angularVelocity);
+
+      vehicleRootBody.AddRelativeTorque(-localAngularVelocity * airborneAngularDamping, ForceMode.Acceleration);
+      vehicleRootBody.AddForce(-Vector3.up * (airborneDownforce * vehicleRootBody.mass), ForceMode.Force);
     }
 
-    private float GetPointSideSpeed(Transform pointTransform)
+    private void ApplyAngularStability(float targetYawRateDegrees)
     {
-      var pointVelocity = vehicleRootBody.GetPointVelocity(pointTransform.position);
-      return Vector3.Dot(pointVelocity, transform.right);
-    }
-
-    private void ApplyTrackForceAtTread(Transform treadTransform, float targetSpeed, float maxAccel, bool isLeftTread)
-    {
-      var pointForwardSpeed = GetPointForwardSpeed(treadTransform);
-      var pointSideSpeed = GetPointSideSpeed(treadTransform);
-
-      var speedError = targetSpeed - pointForwardSpeed;
-      var desiredForwardAccel = Mathf.Clamp(speedError * driveResponse, -maxAccel, maxAccel);
-
-      if (Mathf.Approximately(targetSpeed, 0f) && !IsBraking)
-      {
-        desiredForwardAccel += -pointForwardSpeed * rollingResistance;
-      }
-
-      if (IsBraking)
-      {
-        desiredForwardAccel = Mathf.Clamp(-pointForwardSpeed * driveResponse, -maxBrakeAcceleration, maxBrakeAcceleration);
-      }
-
-      var desiredSideAccel = Mathf.Clamp(-pointSideSpeed * driveResponse, -lateralGripAcceleration, lateralGripAcceleration);
-
-      if (IsBraking)
-      {
-        desiredSideAccel = Mathf.Clamp(-pointSideSpeed * driveResponse, -brakingGripAcceleration, brakingGripAcceleration);
-      }
-
-      var forwardForce = transform.forward * (desiredForwardAccel * vehicleRootBody.mass * 0.5f);
-      var sideForce = transform.right * (desiredSideAccel * vehicleRootBody.mass * 0.5f);
-      var downForce = -transform.up * (groundedDownforce * vehicleRootBody.mass * 0.5f);
-
-      vehicleRootBody.AddForceAtPosition(forwardForce + sideForce + downForce, treadTransform.position, ForceMode.Force);
-
-      if (isLeftTread)
-      {
-        currentLeftForce = Vector3.Dot(forwardForce, transform.forward);
-      }
-      else
-      {
-        currentRightForce = Vector3.Dot(forwardForce, transform.forward);
-      }
-    }
-
-    private void ApplyInPlaceTurnDriftCorrection()
-    {
-      var localVelocity = transform.InverseTransformDirection(vehicleRootBody.linearVelocity);
-      var planarVelocity = new Vector3(localVelocity.x, 0f, localVelocity.z);
-      var correction = -transform.TransformDirection(planarVelocity) * (vehicleRootBody.mass * inPlaceTranslationDamping);
-
-      vehicleRootBody.AddForce(correction, ForceMode.Force);
-    }
-
-    private void ApplyAngularStability(float desiredYawRateDegrees)
-    {
-      var localAngularVelocity = transform.InverseTransformDirection(vehicleRootBody.angularVelocity);
+      var driveTransform = GetDriveTransform();
+      var localAngularVelocity = driveTransform.InverseTransformDirection(vehicleRootBody.angularVelocity);
       var currentYawRate = localAngularVelocity.y * Mathf.Rad2Deg;
-      var yawError = desiredYawRateDegrees - currentYawRate;
 
       if (Mathf.Abs(inputTurnForce) < 0.05f)
       {
-        var yawCorrection = -currentYawRate * yawDamping;
-        vehicleRootBody.AddRelativeTorque(Vector3.up * (yawCorrection * Mathf.Deg2Rad), ForceMode.Acceleration);
-      }
-      else
-      {
-        var yawAssist = yawError * 0.08f;
-        vehicleRootBody.AddRelativeTorque(Vector3.up * (yawAssist * Mathf.Deg2Rad), ForceMode.Acceleration);
+        var yawDampAccel = -currentYawRate * yawDamping * 0.02f;
+        vehicleRootBody.AddTorque(driveTransform.up * yawDampAccel, ForceMode.Acceleration);
       }
 
-      var rollPitch = new Vector3(localAngularVelocity.x, 0f, localAngularVelocity.z);
-      vehicleRootBody.AddRelativeTorque(-rollPitch * rollPitchStabilization, ForceMode.Acceleration);
-    }
-
-    private void ApplyAirControl()
-    {
-      var localAngularVelocity = transform.InverseTransformDirection(vehicleRootBody.angularVelocity);
-      vehicleRootBody.AddRelativeTorque(-localAngularVelocity * airborneAngularDamping, ForceMode.Acceleration);
-      vehicleRootBody.AddForce(-transform.up * (airborneDownforce * vehicleRootBody.mass), ForceMode.Force);
+      var rollPitchAngular = new Vector3(localAngularVelocity.x, 0f, localAngularVelocity.z);
+      var correctiveWorldTorque = driveTransform.TransformDirection(-rollPitchAngular * rollPitchStabilization);
+      vehicleRootBody.AddTorque(correctiveWorldTorque, ForceMode.Acceleration);
     }
 
     private void UpdateTrackedMovement()
     {
       if (!IsVehicleReady) return;
 
-      var movementInput = Mathf.Clamp(inputMovement, -1f, 1f);
+      var driveTransform = GetDriveTransform();
+      var driveForward = driveTransform.forward;
+      var driveRight = driveTransform.right;
+      var driveUp = driveTransform.up;
+
+      var moveInput = Mathf.Clamp(inputMovement, -1f, 1f);
       var turnInput = Mathf.Clamp(inputTurnForce, -1f, 1f);
 
       if (_currentAccelerationScale <= 0f)
       {
-        movementInput = 0f;
+        moveInput = 0f;
         turnInput = 0f;
       }
 
-      IsTurningInPlace = Mathf.Abs(movementInput) < 0.05f && Mathf.Abs(turnInput) > 0.05f;
+      var worldVelocity = vehicleRootBody.linearVelocity;
+      var localVelocity = driveTransform.InverseTransformDirection(worldVelocity);
+      var planarLocalVelocity = new Vector3(localVelocity.x, 0f, localVelocity.z);
 
+      currentLocalPlanarVelocity = planarLocalVelocity;
+      currentForwardSpeed = planarLocalVelocity.z;
+      currentYawRateDegrees = driveTransform.InverseTransformDirection(vehicleRootBody.angularVelocity).y * Mathf.Rad2Deg;
       currentTrackWidth = GetCurrentTrackWidth();
+      currentVehicleCenter = GetVehicleCenterWorld();
 
-      var effectiveForwardSpeed = movementInput >= 0f ? maxForwardSpeed : maxReverseSpeed;
-      var desiredLinearSpeed = movementInput * effectiveForwardSpeed;
+      IsTurningInPlace = Mathf.Abs(moveInput) < 0.05f && Mathf.Abs(turnInput) > 0.05f;
 
-      var desiredYawRate = IsTurningInPlace
-        ? turnInput * maxNeutralTurnRate
+      var targetForwardSpeed = moveInput >= 0f
+        ? moveInput * maxForwardSpeed
+        : moveInput * maxReverseSpeed;
+
+      var maxDriveAccel = moveInput >= 0f
+        ? maxForwardAcceleration * _currentAccelerationScale
+        : maxReverseAcceleration * _currentAccelerationScale;
+
+      if (IsBraking)
+      {
+        targetForwardSpeed = 0f;
+        maxDriveAccel = maxBrakeAcceleration;
+      }
+
+      var forwardSpeedError = targetForwardSpeed - planarLocalVelocity.z;
+      var desiredForwardAccel = Mathf.Clamp(forwardSpeedError * driveResponse, -maxDriveAccel, maxDriveAccel);
+
+      if (!IsBraking && Mathf.Abs(moveInput) < 0.05f)
+      {
+        desiredForwardAccel = Mathf.Clamp(-planarLocalVelocity.z * rollingResistance, -maxBrakeAcceleration, maxBrakeAcceleration);
+      }
+
+      vehicleRootBody.AddForce(driveForward * (desiredForwardAccel * vehicleRootBody.mass), ForceMode.Force);
+
+      var targetYawRate = IsTurningInPlace
+        ? turnInput * maxNeutralTurnRate * neutralTurnBoost
         : turnInput * maxMovingTurnRate;
 
-      var desiredYawRateRad = desiredYawRate * Mathf.Deg2Rad;
-      var halfTrackWidth = currentTrackWidth * 0.5f;
+      var currentYawRate = driveTransform.InverseTransformDirection(vehicleRootBody.angularVelocity).y * Mathf.Rad2Deg;
+      var yawRateError = targetYawRate - currentYawRate;
+      var desiredYawAccel = Mathf.Clamp(yawRateError * yawVelocityResponse, -maxYawAcceleration, maxYawAcceleration);
 
-      currentLeftTargetSpeed = desiredLinearSpeed - desiredYawRateRad * halfTrackWidth;
-      currentRightTargetSpeed = desiredLinearSpeed + desiredYawRateRad * halfTrackWidth;
+      vehicleRootBody.AddTorque(driveUp * desiredYawAccel, ForceMode.Acceleration);
 
-      var forwardAccel = maxForwardAcceleration * _currentAccelerationScale;
-      var reverseAccel = maxReverseAcceleration * _currentAccelerationScale;
+      var lateralGrip = lateralGripAcceleration;
+      if (Mathf.Abs(planarLocalVelocity.z) < 0.5f)
+      {
+        lateralGrip *= lowSpeedGripBoost;
+      }
 
-      var leftAccel = currentLeftTargetSpeed >= 0f ? forwardAccel : reverseAccel;
-      var rightAccel = currentRightTargetSpeed >= 0f ? forwardAccel : reverseAccel;
+      var desiredLateralAccel = Mathf.Clamp(-planarLocalVelocity.x * driveResponse, -lateralGrip, lateralGrip);
+      vehicleRootBody.AddForce(driveRight * (desiredLateralAccel * vehicleRootBody.mass), ForceMode.Force);
 
-      ApplyTrackForceAtTread(treadsLeftTransform, currentLeftTargetSpeed, leftAccel, true);
-      ApplyTrackForceAtTread(treadsRightTransform, currentRightTargetSpeed, rightAccel, false);
+      if (IsBraking)
+      {
+        var brakingAccel = Mathf.Clamp(-planarLocalVelocity.z * driveResponse, -maxBrakeAcceleration, maxBrakeAcceleration);
+        vehicleRootBody.AddForce(driveForward * (brakingAccel * vehicleRootBody.mass), ForceMode.Force);
+      }
 
       if (IsTurningInPlace)
       {
-        ApplyInPlaceTurnDriftCorrection();
+        var verticalVelocity = Vector3.Project(worldVelocity, Vector3.up);
+        var planarWorldVelocity = worldVelocity - verticalVelocity;
+        var inPlaceCorrection = -planarWorldVelocity * inPlaceTranslationDamping * vehicleRootBody.mass;
+        vehicleRootBody.AddForce(inPlaceCorrection, ForceMode.Force);
       }
 
-      ApplyAngularStability(desiredYawRate);
+      vehicleRootBody.AddForce(-driveUp * (groundedDownforce * vehicleRootBody.mass), ForceMode.Force);
 
-      currentForwardSpeed = Vector3.Dot(vehicleRootBody.linearVelocity, transform.forward);
-      currentYawRateDegrees = transform.InverseTransformDirection(vehicleRootBody.angularVelocity).y * Mathf.Rad2Deg;
-      currentLocalPlanarVelocity = transform.InverseTransformDirection(vehicleRootBody.linearVelocity);
-      currentLocalPlanarVelocity.y = 0f;
+      ApplyAngularStability(targetYawRate);
+
+      var targetYawRateRad = targetYawRate * Mathf.Deg2Rad;
+      var halfTrackWidth = currentTrackWidth * 0.5f;
+      var baseTrackSpeed = targetForwardSpeed;
+
+      currentLeftTargetSpeed = baseTrackSpeed - targetYawRateRad * halfTrackWidth;
+      currentRightTargetSpeed = baseTrackSpeed + targetYawRateRad * halfTrackWidth;
+
+      currentLeftForce = currentLeftTargetSpeed;
+      currentRightForce = currentRightTargetSpeed;
     }
 
     private void UpdateTreadVisuals()
@@ -553,13 +544,13 @@ namespace ValheimVehicles.SharedScripts
 
       if (treadsLeftMovingComponent)
       {
-        treadsLeftMovingComponent.isForward = currentLeftTargetSpeed >= 0f;
+        treadsLeftMovingComponent.SetDirection(currentLeftTargetSpeed >= 0f);
         treadsLeftMovingComponent.SetSpeed(Mathf.Abs(currentLeftTargetSpeed));
       }
 
       if (treadsRightMovingComponent)
       {
-        treadsRightMovingComponent.isForward = currentRightTargetSpeed >= 0f;
+        treadsRightMovingComponent.SetDirection(currentRightTargetSpeed >= 0f);
         treadsRightMovingComponent.SetSpeed(Mathf.Abs(currentRightTargetSpeed));
       }
     }
@@ -592,8 +583,7 @@ namespace ValheimVehicles.SharedScripts
       if (!UseInputControls) return;
 
 #if !VALHEIM
-      var brakePressed = Input.GetKeyDown(KeyCode.Space);
-      if (brakePressed && !_isBrakePressedDown)
+      if (Input.GetKeyDown(KeyCode.Space) && !_isBrakePressedDown)
       {
         ToggleBrake();
         _isBrakePressedDown = true;
@@ -604,15 +594,18 @@ namespace ValheimVehicles.SharedScripts
         _isBrakePressedDown = false;
       }
 
-      SetTurnInput(Input.GetAxisRaw("Horizontal"));
-      SetInputMovement(Input.GetAxisRaw("Vertical"));
+      var moveInput = Input.GetAxisRaw("Vertical");
+      var turnInput = Input.GetAxisRaw("Horizontal");
 
-      if (Mathf.Abs(inputMovement) > InputDeadZone || Mathf.Abs(inputTurnForce) > InputDeadZone)
+      SetInputMovement(moveInput);
+      SetTurnInput(turnInput);
+
+      if (Mathf.Abs(moveInput) > InputDeadZone || Mathf.Abs(turnInput) > InputDeadZone)
       {
         IsBraking = false;
       }
 
-      UpdateAccelerationValues(accelerationType, inputMovement >= 0f);
+      UpdateAccelerationValues(accelerationType, moveInput >= 0f);
 #endif
     }
 
@@ -647,11 +640,16 @@ namespace ValheimVehicles.SharedScripts
       if (treadsLeftTransform) Gizmos.DrawSphere(treadsLeftTransform.position, 0.15f);
       if (treadsRightTransform) Gizmos.DrawSphere(treadsRightTransform.position, 0.15f);
 
+      Gizmos.color = Color.yellow;
+      Gizmos.DrawSphere(GetVehicleCenterWorld(), 0.18f);
+
+      var driveTransform = GetDriveTransform();
+
       Gizmos.color = Color.green;
-      Gizmos.DrawLine(transform.position, transform.position + transform.forward * 2f);
+      Gizmos.DrawLine(GetVehicleCenterWorld(), GetVehicleCenterWorld() + driveTransform.forward * 2f);
 
       Gizmos.color = Color.red;
-      Gizmos.DrawLine(transform.position, transform.position + transform.right * 2f);
+      Gizmos.DrawLine(GetVehicleCenterWorld(), GetVehicleCenterWorld() + driveTransform.right * 2f);
     }
 #endif
   }
