@@ -131,14 +131,25 @@ namespace ValheimVehicles.SharedScripts
     public float antiReverseAcceleration = 18f;
     public float downhillOverspeedBrakeAcceleration = 12f;
 
+    [Header("Idle Hold")]
+    public float idlePlanarSnapSpeed = 0.08f;
+    public float idleAngularSnapSpeed = 0.04f;
+    public float idleHoldYawDamping = 8f;
+    public float idleSlopeStickForce = 2.5f;
+
+
     [Header("Other")]
+    public bool IsBrakeOverride = false;
+    public bool IsBreakOverride_Value = false;
+
     private Vector3 _currentGroundNormal = Vector3.up;
 
-    public Action OnWheelsInitialized = () => {};
 
     internal MovingTreadComponent treadsLeftMovingComponent;
     internal MovingTreadComponent treadsRightMovingComponent;
     internal Rigidbody vehicleRootBody;
+
+    public BasePiecesController? pieceController;
 
     private bool _isBraking;
     private bool _isTreadsInitialized;
@@ -146,13 +157,21 @@ namespace ValheimVehicles.SharedScripts
     private bool _isBrakePressedDown;
     private float _currentAccelerationScale = 0.7f;
     private float _lastGroundTouchElapsed = 10f;
+    private const float IdleStopDurationSeconds = 3f;
 
+    private bool _wasIdleLastFixedUpdate;
+    private float _idleStopElapsed;
+    private Vector3 _idleStartPlanarVelocity;
+    private float _idleStartYawVelocityLocal;
+
+    public Action OnWheelsInitialized = () => {};
     public bool IsVehicleReady => _isVehicleInitialized && _isTreadsInitialized && vehicleRootBody && treadsLeftTransform && treadsRightTransform;
+
 
     [UsedImplicitly]
     public bool IsBraking
     {
-      get => _isBraking;
+      get => IsBrakeOverride ? IsBreakOverride_Value : _isBraking;
       private set => _isBraking = value;
     }
 
@@ -322,46 +341,129 @@ namespace ValheimVehicles.SharedScripts
       OnWheelsInitialized();
     }
 
+    private static readonly RaycastHit[] GroundHitBuffer = new RaycastHit[16];
+
+    private bool TryGetValidGroundHit(MovingTreadComponent treadComponent, out RaycastHit validHit)
+    {
+      validHit = default;
+
+      if (!treadComponent)
+        return false;
+
+      var centerPosition = treadComponent.CenterObj.transform.position;
+      var treadLowestPosition = new Vector3(centerPosition.x, centerPosition.y - treadComponent.localBounds.extents.y, centerPosition.z);
+
+      var origin = treadLowestPosition - Vector3.up * 0.25f;
+      var hitCount = Physics.RaycastNonAlloc(
+        origin,
+        Vector3.down,
+        GroundHitBuffer,
+        1.5f,
+        LayerHelpers.PhysicalLayerMask,
+        QueryTriggerInteraction.Ignore
+      );
+
+      if (hitCount <= 0)
+        return false;
+
+      SortHitsByDistanceAscending(GroundHitBuffer, hitCount);
+
+      for (var i = 0; i < hitCount; i++)
+      {
+        var hit = GroundHitBuffer[i];
+        if (!IsValidGroundHit(hit))
+          continue;
+
+        validHit = hit;
+        return true;
+      }
+
+      return false;
+    }
+
+    private bool IsValidGroundHit(RaycastHit hit)
+    {
+      if (!hit.collider)
+        return false;
+
+      var hitTransform = hit.collider.transform;
+      if (!hitTransform)
+        return false;
+
+      if (IsIgnoredGroundHitTransform(hitTransform))
+        return false;
+
+      return true;
+    }
+
+    private bool IsIgnoredGroundHitTransform(Transform hitTransform)
+    {
+      var hitRoot = hitTransform.root;
+      if (!hitRoot)
+        return false;
+
+      if (IsSameRoot(hitRoot, transform.root))
+        return true;
+
+      if (pieceController && IsSameRoot(hitRoot, pieceController.transform.root))
+        return true;
+
+      return false;
+    }
+
+    private static bool IsSameRoot(Transform a, Transform b)
+    {
+      return a && b && a == b;
+    }
+
+    private static void SortHitsByDistanceAscending(RaycastHit[] hits, int hitCount)
+    {
+      for (var i = 0; i < hitCount - 1; i++)
+      {
+        for (var j = i + 1; j < hitCount; j++)
+        {
+          if (hits[j].distance >= hits[i].distance)
+            continue;
+
+          var temp = hits[i];
+          hits[i] = hits[j];
+          hits[j] = temp;
+        }
+      }
+    }
+
     public void UpdateIsOnGround()
     {
       if (_lastGroundTouchElapsed < GroundTouchGraceSeconds)
-      {
         _lastGroundTouchElapsed += Time.fixedDeltaTime;
-      }
 
       var hasGroundHit = false;
       var normalSum = Vector3.zero;
       var normalCount = 0;
 
-      if (treadsLeftTransform)
+      if (TryGetValidGroundHit(treadsLeftMovingComponent, out var leftHit))
       {
-        if (Physics.Raycast(treadsLeftTransform.position + Vector3.up * 0.25f, Vector3.down, out var leftHit, 1.5f, LayerHelpers.PhysicalLayerMask))
-        {
-          hasGroundHit = true;
-          normalSum += leftHit.normal;
-          normalCount++;
-        }
+        hasGroundHit = true;
+        normalSum += leftHit.normal;
+        normalCount++;
       }
 
-      if (treadsRightTransform)
+      if (TryGetValidGroundHit(treadsRightMovingComponent, out var rightHit))
       {
-        if (Physics.Raycast(treadsRightTransform.position + Vector3.up * 0.25f, Vector3.down, out var rightHit, 1.5f, LayerHelpers.PhysicalLayerMask))
-        {
-          hasGroundHit = true;
-          normalSum += rightHit.normal;
-          normalCount++;
-        }
+        hasGroundHit = true;
+        normalSum += rightHit.normal;
+        normalCount++;
       }
 
       if (hasGroundHit)
       {
         _lastGroundTouchElapsed = 0f;
-        _currentGroundNormal = normalCount > 0 ? (normalSum / normalCount).normalized : Vector3.up;
+        _currentGroundNormal = normalCount > 0
+          ? (normalSum / normalCount).normalized
+          : Vector3.up;
       }
-      else
-      {
-        IsOnGround = false;
-      }
+
+      IsOnGround = _lastGroundTouchElapsed < GroundTouchGraceSeconds;
     }
 
     private float GetAccelerationScale(AccelerationType type)
@@ -459,79 +561,6 @@ namespace ValheimVehicles.SharedScripts
       vehicleRootBody.AddTorque(-angularVelocity * 0.5f, ForceMode.Acceleration);
     }
 
-    private void ApplyGroundPhysics()
-    {
-      if (!vehicleRootBody) return;
-
-      var moveInput = Mathf.Clamp(inputMovement, -1f, 1f);
-      var turnInput = Mathf.Clamp(inputTurnForce, -1f, 1f);
-
-      var groundNormal = _currentGroundNormal;
-
-      var driveTransform = GetDriveTransform();
-      var forward = Vector3.ProjectOnPlane(driveTransform.forward, groundNormal).normalized;
-      var right = Vector3.ProjectOnPlane(driveTransform.right, groundNormal).normalized;
-
-      var velocity = vehicleRootBody.linearVelocity;
-
-      var forwardSpeed = Vector3.Dot(velocity, forward);
-      var sidewaysSpeed = Vector3.Dot(velocity, right);
-
-      var targetSpeed = moveInput >= 0f
-        ? moveInput * maxForwardSpeed
-        : moveInput * maxReverseSpeed;
-
-      var accel = moveInput >= 0f
-        ? maxForwardAcceleration
-        : maxReverseAcceleration;
-
-      var gravityAlongForward = Vector3.Dot(Physics.gravity, forward);
-      var gravityAlongRight = Vector3.Dot(Physics.gravity, right);
-
-      var forwardError = targetSpeed - forwardSpeed;
-      var desiredForwardAccel = forwardError * driveResponse;
-
-      desiredForwardAccel -= gravityAlongForward * slopeGravityCompensation;
-      desiredForwardAccel = Mathf.Clamp(desiredForwardAccel, -accel, accel);
-
-      vehicleRootBody.AddForce(forward * desiredForwardAccel, ForceMode.Acceleration);
-
-      var desiredSideAccel = -sidewaysSpeed * driveResponse - gravityAlongRight * slopeGravityCompensation;
-      desiredSideAccel = Mathf.Clamp(desiredSideAccel, -lateralGripAcceleration, lateralGripAcceleration);
-
-      vehicleRootBody.AddForce(right * desiredSideAccel, ForceMode.Acceleration);
-
-      if (moveInput > 0f && forwardSpeed < 0f)
-      {
-        vehicleRootBody.AddForce(forward * antiReverseAcceleration, ForceMode.Acceleration);
-      }
-      else if (moveInput < 0f && forwardSpeed > 0f)
-      {
-        vehicleRootBody.AddForce(-forward * antiReverseAcceleration, ForceMode.Acceleration);
-      }
-
-      var targetYawRate = Mathf.Abs(moveInput) < 0.05f
-        ? turnInput * maxNeutralTurnRate
-        : turnInput * maxMovingTurnRate;
-
-      var currentYawRate = driveTransform.InverseTransformDirection(vehicleRootBody.angularVelocity).y * Mathf.Rad2Deg;
-      var yawError = targetYawRate - currentYawRate;
-      var yawAccel = Mathf.Clamp(yawError * yawVelocityResponse, -maxYawAcceleration, maxYawAcceleration);
-
-      vehicleRootBody.AddTorque(driveTransform.up * yawAccel, ForceMode.Acceleration);
-
-      var verticalVelocity = Vector3.Project(velocity, Vector3.up);
-      var planarVelocity = velocity - verticalVelocity;
-      var planarSpeed = planarVelocity.magnitude;
-
-      var maxPlanarSpeed = moveInput >= 0f ? maxForwardSpeed : maxReverseSpeed;
-      if (Mathf.Abs(moveInput) > 0.01f && planarSpeed > maxPlanarSpeed)
-      {
-        planarVelocity = planarVelocity.normalized * maxPlanarSpeed;
-        vehicleRootBody.linearVelocity = planarVelocity + verticalVelocity;
-      }
-    }
-
     private void ApplyAngularStability(float targetYawRateDegrees)
     {
       var driveTransform = GetDriveTransform();
@@ -549,9 +578,72 @@ namespace ValheimVehicles.SharedScripts
       vehicleRootBody.AddTorque(correctiveWorldTorque, ForceMode.Acceleration);
     }
 
-    private void UpdateTrackedMovement()
+    private bool IsIdleInput()
     {
-      if (!IsVehicleReady) return;
+      return Mathf.Abs(inputMovement) < 0.05f && Mathf.Abs(inputTurnForce) < 0.05f;
+    }
+
+    private void BeginIdleStop(Vector3 groundNormal)
+    {
+      _wasIdleLastFixedUpdate = true;
+      _idleStopElapsed = 0f;
+
+      var velocity = vehicleRootBody.linearVelocity;
+      _idleStartPlanarVelocity = Vector3.ProjectOnPlane(velocity, groundNormal);
+
+      var driveTransform = GetDriveTransform();
+      var localAngularVelocity = driveTransform.InverseTransformDirection(vehicleRootBody.angularVelocity);
+      _idleStartYawVelocityLocal = localAngularVelocity.y;
+    }
+
+    private void EndIdleStop()
+    {
+      _wasIdleLastFixedUpdate = false;
+      _idleStopElapsed = 0f;
+      _idleStartPlanarVelocity = Vector3.zero;
+      _idleStartYawVelocityLocal = 0f;
+    }
+
+    private void ApplyIdleStop(Vector3 groundNormal)
+    {
+      if (!_wasIdleLastFixedUpdate)
+      {
+        BeginIdleStop(groundNormal);
+      }
+      else
+      {
+        _idleStopElapsed = Mathf.Min(_idleStopElapsed + Time.fixedDeltaTime, IdleStopDurationSeconds);
+      }
+
+      var t = IdleStopDurationSeconds <= 0f
+        ? 1f
+        : Mathf.Clamp01(_idleStopElapsed / IdleStopDurationSeconds);
+
+      var remainingPlanarVelocity = Vector3.Lerp(_idleStartPlanarVelocity, Vector3.zero, t);
+
+      var currentVelocity = vehicleRootBody.linearVelocity;
+      var normalVelocity = Vector3.Project(currentVelocity, groundNormal);
+      vehicleRootBody.linearVelocity = normalVelocity + remainingPlanarVelocity;
+
+      var driveTransform = GetDriveTransform();
+      var localAngularVelocity = driveTransform.InverseTransformDirection(vehicleRootBody.angularVelocity);
+      localAngularVelocity.y = Mathf.Lerp(_idleStartYawVelocityLocal, 0f, t);
+      vehicleRootBody.angularVelocity = driveTransform.TransformDirection(localAngularVelocity);
+
+      currentForwardSpeed = Vector3.Dot(remainingPlanarVelocity, Vector3.ProjectOnPlane(driveTransform.forward, groundNormal).normalized);
+      currentLocalPlanarVelocity = driveTransform.InverseTransformDirection(remainingPlanarVelocity);
+      currentYawRateDegrees = localAngularVelocity.y * Mathf.Rad2Deg;
+
+      currentLeftTargetSpeed = 0f;
+      currentRightTargetSpeed = 0f;
+      currentLeftForce = 0f;
+      currentRightForce = 0f;
+      IsTurningInPlace = false;
+    }
+
+    private void ApplyGroundPhysics()
+    {
+      if (!vehicleRootBody) return;
 
       var driveTransform = GetDriveTransform();
       var rawForward = driveTransform.forward;
@@ -583,14 +675,29 @@ namespace ValheimVehicles.SharedScripts
       }
 
       var worldVelocity = vehicleRootBody.linearVelocity;
-      var forwardSpeed = Vector3.Dot(worldVelocity, driveForward);
-      var lateralSpeed = Vector3.Dot(worldVelocity, driveRight);
+      var planarVelocity = Vector3.ProjectOnPlane(worldVelocity, groundNormal);
+      var forwardSpeed = Vector3.Dot(planarVelocity, driveForward);
+      var lateralSpeed = Vector3.Dot(planarVelocity, driveRight);
 
       currentForwardSpeed = forwardSpeed;
       currentLocalPlanarVelocity = new Vector3(lateralSpeed, 0f, forwardSpeed);
       currentYawRateDegrees = driveTransform.InverseTransformDirection(vehicleRootBody.angularVelocity).y * Mathf.Rad2Deg;
       currentTrackWidth = GetCurrentTrackWidth();
       currentVehicleCenter = GetVehicleCenterWorld();
+
+      var isIdle = IsIdleInput() && !IsBraking;
+
+      if (isIdle)
+      {
+        ApplyIdleStop(groundNormal);
+        vehicleRootBody.AddForce(-groundNormal * groundedDownforce, ForceMode.Acceleration);
+        return;
+      }
+
+      if (_wasIdleLastFixedUpdate)
+      {
+        EndIdleStop();
+      }
 
       IsTurningInPlace = Mathf.Abs(moveInput) < 0.05f && Mathf.Abs(turnInput) > 0.05f;
 
@@ -644,7 +751,7 @@ namespace ValheimVehicles.SharedScripts
         }
       }
 
-      vehicleRootBody.AddForce(driveForward * (desiredForwardAccel * vehicleRootBody.mass), ForceMode.Force);
+      vehicleRootBody.AddForce(driveForward * desiredForwardAccel, ForceMode.Acceleration);
 
       var lateralHold = Mathf.Abs(moveInput) < 0.05f
         ? Mathf.Max(lateralGripAcceleration, slopeLateralHoldAcceleration)
@@ -653,7 +760,7 @@ namespace ValheimVehicles.SharedScripts
       var desiredLateralAccel = -lateralSpeed * driveResponse - gravityAlongRight * slopeGravityCompensation;
       desiredLateralAccel = Mathf.Clamp(desiredLateralAccel, -lateralHold, lateralHold);
 
-      vehicleRootBody.AddForce(driveRight * (desiredLateralAccel * vehicleRootBody.mass), ForceMode.Force);
+      vehicleRootBody.AddForce(driveRight * desiredLateralAccel, ForceMode.Acceleration);
 
       var maxAllowedForwardSpeed = moveInput >= 0f ? maxForwardSpeed : maxReverseSpeed;
 
@@ -661,13 +768,13 @@ namespace ValheimVehicles.SharedScripts
       {
         var overspeed = forwardSpeed - maxAllowedForwardSpeed;
         var overspeedBrake = Mathf.Min(overspeed * driveResponse, downhillOverspeedBrakeAcceleration);
-        vehicleRootBody.AddForce(-driveForward * (overspeedBrake * vehicleRootBody.mass), ForceMode.Force);
+        vehicleRootBody.AddForce(-driveForward * overspeedBrake, ForceMode.Acceleration);
       }
       else if (moveInput < 0f && -forwardSpeed > maxAllowedForwardSpeed)
       {
         var overspeed = -forwardSpeed - maxAllowedForwardSpeed;
         var overspeedBrake = Mathf.Min(overspeed * driveResponse, downhillOverspeedBrakeAcceleration);
-        vehicleRootBody.AddForce(driveForward * (overspeedBrake * vehicleRootBody.mass), ForceMode.Force);
+        vehicleRootBody.AddForce(driveForward * overspeedBrake, ForceMode.Acceleration);
       }
 
       var targetYawRate = IsTurningInPlace
@@ -682,12 +789,11 @@ namespace ValheimVehicles.SharedScripts
 
       if (IsTurningInPlace)
       {
-        var planarVelocity = Vector3.ProjectOnPlane(worldVelocity, groundNormal);
-        var inPlaceCorrection = -planarVelocity * inPlaceTranslationDamping * vehicleRootBody.mass;
-        vehicleRootBody.AddForce(inPlaceCorrection, ForceMode.Force);
+        var inPlaceCorrection = -planarVelocity * inPlaceTranslationDamping;
+        vehicleRootBody.AddForce(inPlaceCorrection, ForceMode.Acceleration);
       }
 
-      vehicleRootBody.AddForce(-groundNormal * (groundedDownforce * vehicleRootBody.mass), ForceMode.Force);
+      vehicleRootBody.AddForce(-groundNormal * groundedDownforce, ForceMode.Acceleration);
 
       ApplyAngularStability(targetYawRate);
 
@@ -701,7 +807,34 @@ namespace ValheimVehicles.SharedScripts
       currentLeftForce = currentLeftTargetSpeed;
       currentRightForce = currentRightTargetSpeed;
     }
+    private void ApplyIdleSlopeHold(Vector3 planarVelocity, Vector3 groundNormal, Vector3 driveUp)
+    {
+      if (!vehicleRootBody) return;
 
+      var planarSpeed = planarVelocity.magnitude;
+      var yawSpeed = Mathf.Abs(vehicleRootBody.angularVelocity.y);
+
+      if (planarSpeed <= idlePlanarSnapSpeed)
+      {
+        var normalVelocity = Vector3.Project(vehicleRootBody.linearVelocity, groundNormal);
+        vehicleRootBody.linearVelocity = normalVelocity;
+      }
+      else
+      {
+        vehicleRootBody.AddForce(-planarVelocity * idleSlopeStickForce, ForceMode.Acceleration);
+      }
+
+      if (yawSpeed <= idleAngularSnapSpeed)
+      {
+        var angular = vehicleRootBody.angularVelocity;
+        angular.y = 0f;
+        vehicleRootBody.angularVelocity = angular;
+      }
+      else
+      {
+        vehicleRootBody.AddTorque(-driveUp * (vehicleRootBody.angularVelocity.y * idleHoldYawDamping), ForceMode.Acceleration);
+      }
+    }
     private void UpdateTreadVisuals()
     {
       if (!HasVisualTreadAnimation) return;
@@ -732,10 +865,13 @@ namespace ValheimVehicles.SharedScripts
       }
       else
       {
+        if (_wasIdleLastFixedUpdate)
+        {
+          EndIdleStop();
+        }
+
         ApplyAirbornePhysics();
       }
-
-      UpdateTrackedMovement();
     }
 
     public void VehicleMovementFixedUpdateAllClients()

@@ -710,6 +710,8 @@
           LandMovementController = gameObject.AddComponent<VehicleLandMovementController>();
         }
       }
+
+      LandMovementController.pieceController = PiecesController;
       LandMovementController.inputTurnForce = 0;
       LandMovementController.inputMovement = 0;
       UpdateLandMovementControllerProperties();

@@ -7475,6 +7475,7 @@ MonoBehaviour:
   uphillAccelerationBoost: 18
   antiReverseAcceleration: 18
   downhillOverspeedBrakeAcceleration: 12
+  pieceController: {fileID: 1246876114}
 --- !u!1 &8225528950328919720
 GameObject:
   m_ObjectHideFlags: 0
