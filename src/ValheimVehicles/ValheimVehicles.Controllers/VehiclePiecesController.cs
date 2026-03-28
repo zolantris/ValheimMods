@@ -515,6 +515,8 @@
     {
       base.OnEnable();
 
+      OnLocalOriginShiftApplied += OnVehicleCenterShift;
+
       HasRunCleanup = false;
       MonoUpdaterInstances.Add(this);
       InitializationTimer.Restart();
@@ -527,8 +529,27 @@
       StartClientServerUpdaters();
     }
 
+    /// <summary>
+    /// Handles vehicle shift persistence.
+    /// </summary>
+    /// TODO determine if this can just be set by host eg if zdos can be trusted.
+    /// 
+    /// <param name="offset"></param>
+    public void OnVehicleCenterShift(Vector3 offset)
+    {
+      if (offset == Vector3.zero) return;
+      if (!m_allPieces.TryGetValue(Manager.PersistentZdoId, out var zdoPieces)) return;
+      foreach (var zdo in zdoPieces)
+      {
+        var previousHash = zdo.GetVec3(VehicleZdoVars.MBPositionHash, Vector3.zero);
+        zdo.Set(VehicleZdoVars.MBPositionHash, previousHash - offset);
+      }
+    }
+
     public override void OnDisable()
     {
+      OnLocalOriginShiftApplied -= OnVehicleCenterShift;
+
       // hopefully it can be run otherwise it needs to be patched so it can run just before objects are being cleaned up in a zone.
       ForceUpdateAllPiecePositions();
 

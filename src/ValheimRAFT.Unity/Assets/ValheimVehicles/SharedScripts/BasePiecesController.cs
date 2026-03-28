@@ -373,8 +373,17 @@ namespace ValheimVehicles.SharedScripts
         return false;
       }
 
-      m_syncRigidbody.MovePosition(m_localRigidbody.position + localShift);
-      m_localRigidbody.MovePosition(m_localRigidbody.position + localShift);
+      var worldShift = transform.TransformVector(localShift);
+
+      if (m_localRigidbody)
+      {
+        m_localRigidbody.position += worldShift;
+      }
+
+      if (m_syncRigidbody)
+      {
+        m_syncRigidbody.position += worldShift;
+      }
 
       Physics.SyncTransforms();
       OnLocalOriginShiftApplied?.Invoke(localShift);

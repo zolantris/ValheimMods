@@ -20,7 +20,8 @@ namespace ValheimVehicles.SharedScripts
     private const float lastTerrainTouchTimeExpiration = 10f;
     private const float convexHullClusterThreshold = 50f;
 
-    public static GameObject fallbackPrefab = null!;
+    public static GameObject fallbackTreadPrefab = null!;
+    public static GameObject fallbackWheelPrefab = null!;
 
     internal static Vector3 tread_meshScalar = new(2f, 0.0500000007f, 0.599999964f);
 
@@ -114,15 +115,15 @@ namespace ValheimVehicles.SharedScripts
     private float _lastTerrainTouchDeltaTime = -100f;
     private float speedMultiplier = 1f;
 
-    internal WheelCollider[] wheelColliders = { };
+    internal WheelCollider[] wheelColliders = {};
 
     public void Awake()
     {
       rotatorParent = transform.Find("rotators");
 
-      if (!treadPrefab && fallbackPrefab)
+      if (!treadPrefab && fallbackTreadPrefab)
       {
-        treadPrefab = fallbackPrefab;
+        treadPrefab = fallbackTreadPrefab;
       }
 
       if (!treadParent)
@@ -179,6 +180,7 @@ namespace ValheimVehicles.SharedScripts
 
     private void OnCollisionStay(Collision collision)
     {
+      if (collision.gameObject.transform.root == transform.root) return;
       if (collision.gameObject.layer == LayerHelpers.TerrainLayer)
       {
         _lastTerrainTouchDeltaTime = Time.fixedTime;
@@ -408,7 +410,8 @@ namespace ValheimVehicles.SharedScripts
         meshCollider.transform.SetParent(treadParent, true);
         meshCollider.transform.localRotation = Quaternion.identity;
         meshCollider.gameObject.layer = LayerHelpers.PieceLayer;
-        meshCollider.gameObject.name = PrefabNames.ConvexTreadCollider;
+        var leftOrRightName = transform.name.Contains("left") ? "left" : "right";
+        meshCollider.gameObject.name = $"{PrefabNames.ConvexTreadCollider}_{leftOrRightName}";
         meshCollider.includeLayers = LayerMask.GetMask("terrain", "piece", "Default", "static_solid");
         meshCollider.excludeLayers = LayerHelpers.RamColliderExcludeLayers;
         meshCollider.isTrigger = false;

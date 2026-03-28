@@ -657,19 +657,21 @@
     public void UpdateLandMovementControllerProperties(bool shouldSkipLoad = false)
     {
       if (!IsLandVehicle || MovementController == null || LandMovementController == null) return;
-      if (LandMovementController.treadsPrefab == null)
+      if (MovingTreadComponent.fallbackTreadPrefab == null)
       {
-        LandMovementController.treadsPrefab = LoadValheimVehicleAssets.TankTreadsSingle;
+        MovingTreadComponent.fallbackTreadPrefab = LoadValheimVehicleAssets.TankTreadsSingle;
       }
 
-      if (LandMovementController.wheelPrefab == null)
+      if (MovingTreadComponent.fallbackWheelPrefab == null)
       {
-        LandMovementController.wheelPrefab = LoadValheimVehicleAssets.WheelSingle;
+        MovingTreadComponent.fallbackWheelPrefab = LoadValheimVehicleAssets.WheelSingle;
       }
 
       // very important to add these. We always need a base of 30.
-      var additionalTurnRate = Mathf.Lerp(VehicleLandMovementController.defaultTurnAccelerationMultiplier / 4, VehicleLandMovementController.defaultTurnAccelerationMultiplier * 4, Mathf.Clamp01(PropulsionConfig.VehicleLandTurnSpeed.Value));
-      VehicleLandMovementController.baseTurnAccelerationMultiplier = additionalTurnRate;
+      var additionalTurnRate = Mathf.Lerp(40f, 110f, Mathf.Clamp01(PropulsionConfig.VehicleLandTurnSpeed.Value));
+
+      LandMovementController.maxNeutralTurnRate = additionalTurnRate;
+      LandMovementController.maxMovingTurnRate = additionalTurnRate / 2f;
 
       // sync's forward dir.
       LandMovementController.forwardDirection = MovementController.ShipDirection;
