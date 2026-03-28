@@ -616,10 +616,6 @@ namespace ValheimVehicles.SharedScripts
       if (!IsVehicleReady) return;
       if (!IsUsingEngine || IsBraking)
       {
-        if (IsBraking)
-        {
-          ApplyBrakes();
-        }
         currentLeftForce = 0;
         currentRightForce = 0;
         ApplyDecreasingForce();
@@ -627,7 +623,6 @@ namespace ValheimVehicles.SharedScripts
         return;
       }
 
-      AdjustForHills();
       var forward = transform.forward;
       var leftTreadPos = treadsLeftTransform.position;
       var rightTreadPos = treadsRightTransform.position;
@@ -924,15 +919,12 @@ namespace ValheimVehicles.SharedScripts
       IsTurningInPlace = Mathf.Approximately(inputMovement, 0f) && Mathf.Abs(inputTurnForce) > 0f;
       currentSpeed = GetTankSpeed();
 
-      if (!IsOnGround)
-      {
-        ApplyDownforce();
-        return;
-      }
-
       ApplyFrictionUpdates();
 
-      HandleObstacleClimb();
+      if (!IsOnGround)
+      {
+        return;
+      }
 
       if (useDirectTreadPhysics)
       {
@@ -1078,7 +1070,6 @@ namespace ValheimVehicles.SharedScripts
 
       // physics
       UpdateAccelerationValues(accelerationType, isForward);
-      ApplyFrictionValuesToAllWheels();
 
       // AlignWheelsWithTreads(vehicleFrameBounds);
       _isWheelsInitialized = true;
@@ -1514,227 +1505,11 @@ namespace ValheimVehicles.SharedScripts
       var maxTotalTorque = baseMotorTorque * baseTorque * 4;
       MaxWheelRPM = Mathf.Clamp(Mathf.Abs(maxTotalTorque), 1000f, 5000f);
     }
-    // Adjusts hillFactor based on the tank's forward Y component.
-    // Flat (forward.y == 0) results in hillFactor = 1.
-    // Uphill (forward.y positive) scales hillFactor up to 3.
-    // Downhill (forward.y negative) scales hillFactor down to 0.5.
-    private void AdjustForHills()
-    {
-      // The Y component of the forward vector represents the vertical inclination.
-      var slope = transform.forward.y;
-      // maxSlope defines the normalized forward.y value at which we consider the hill "steep" (about 30°).
-      var maxSlope = 0.5f;
-      if (slope > 0)
-      {
-        hillFactor = Mathf.Lerp(1f, maxHillFactorMultiplier, Mathf.Clamp01(slope / maxSlope));
-      }
-      else
-      {
-        hillFactor = Mathf.Lerp(1f, 1f / maxHillFactorMultiplier, Mathf.Clamp01(-slope / maxSlope));
-      }
-
-      if (Mathf.Abs(slope) > 0.3f)
-      {
-        vehicleRootBody.AddForceAtPosition(vehicleRootBody.transform.up * Gravity, vehicleRootBody.worldCenterOfMass, ForceMode.Acceleration);
-      }
-    }
-
-    // private void AdjustForHills()
-    // {
-    //   // Get forward direction of the tank
-    //   var tankForward = transform.forward;
-    //
-    //   // Project forward vector onto XZ plane to get horizontal direction
-    //   var flatForward = Vector3.ProjectOnPlane(tankForward, Vector3.up).normalized;
-    //
-    //   // Calculate the pitch angle using dot product
-    //   var slopeFactor = Vector3.Dot(tankForward, flatForward);
-    //
-    //   // Adjust hill factor: Steeper inclines require more torque
-    //   hillFactor = Mathf.Clamp(1f + (1f - slopeFactor), 0.5f, 2f);
-    // }
 
     private float GetTankSpeed()
     {
       return Vector3.Dot(vehicleRootBody.linearVelocity, transform.forward);
     }
-
-
-    private void ApplyBrakes()
-    {
-      if (wheelColliders.Count <= 0) return;
-      currentSpeed = GetTankSpeed();
-      var brakeForce = vehicleRootBody.mass * Mathf.Abs(currentSpeed) / 2f; // Stops in ~2s
-
-      foreach (var wheel in wheelColliders)
-      {
-        // Apply braking force based on current torque & momentum
-        wheel.brakeTorque = Mathf.Max(brakeForce, (useDirectTreadPhysics ? Mathf.Abs(defaultBreakForce * baseAcceleration) : Mathf.Abs(wheel.motorTorque)) * 1.5f);
-        wheel.motorTorque = 0; // Cut off power when braking
-      }
-    }
-
-    private void ApplyDownforce()
-    {
-      vehicleRootBody.AddForce(-Vector3.up * Gravity, ForceMode.Acceleration);
-    }
-
-    private void ApplyFrictionToWheelCollider(WheelCollider wheel, float speed)
-    {
-      var frictionMultiplier = Mathf.Clamp(10f / wheelColliders.Count, 0.7f, 1.5f);
-
-      var adjustedStiffness = Mathf.Lerp(2.5f, 3.5f, speed / topSpeed); // Adaptive stiffness based on speed
-
-      currentForwardFriction = new WheelFrictionCurve
-      {
-        extremumSlip = 0.4f * frictionMultiplier,
-        extremumValue = 1.5f * frictionMultiplier,
-        asymptoteSlip = 2.5f * frictionMultiplier, // Increased to prevent excessive grip switching
-        asymptoteValue = 0.5f * frictionMultiplier,
-        stiffness = adjustedStiffness // Adjust dynamically instead of hardcoding 10f
-      };
-
-      currentSidewaysFriction = new WheelFrictionCurve
-      {
-        extremumSlip = (IsTurningInPlace ? 0.5f : 0.4f) * frictionMultiplier,
-        extremumValue = (IsTurningInPlace ? 0.7f : 0.8f) * frictionMultiplier,
-        asymptoteSlip = (IsTurningInPlace ? 1.8f : 2.0f) * frictionMultiplier,
-        asymptoteValue = (IsTurningInPlace ? 0.5f : 0.6f) * frictionMultiplier,
-        stiffness = IsTurningInPlace ? 1.8f : Mathf.Lerp(2f, 2.5f, speed / topSpeed)
-      };
-
-      wheel.forwardFriction = currentForwardFriction;
-      wheel.sidewaysFriction = currentSidewaysFriction;
-    }
-
-
-    private void ApplyFrictionValuesToAllWheels()
-    {
-      if (!vehicleRootBody) return;
-      wheelColliders.ForEach(x => ApplyFrictionToWheelCollider(x, currentSpeed));
-    }
-
-    private void AdjustSuspensionForTank()
-    {
-      var isApplyingForce = Mathf.Abs(inputMovement) > 0.1f || Mathf.Abs(inputTurnForce) > 0.1f;
-      var isMoving = vehicleRootBody.linearVelocity.magnitude > 0.5f;
-
-      // If the tank is applying force but isn't moving, increase stuck timer
-      if (isApplyingForce && !isMoving)
-      {
-        stuckTime += Time.fixedDeltaTime;
-      }
-      else
-      {
-        stuckTime = 0f; // Reset if moving
-      }
-
-      var stuckMultiplier = Mathf.Clamp01(stuckTime / 3f); // Smooth transition over 3 seconds
-
-      foreach (var wheel in wheelColliders)
-      {
-        var suspensionSpring = wheel.suspensionSpring;
-
-        // wheel.transform.localPosition = Vector3.Lerp(wheel.transform.localPosition, new Vector3(0, Mathf.Lerp(0, -0.5f, stuckMultiplier), 0), Time.fixedDeltaTime); // Move wheels down slightly
-        // Adjust spring force dynamically based on mass
-        suspensionSpring.spring = Mathf.Clamp(vehicleRootBody.mass * 10f, 35000f, 50000f);
-        suspensionSpring.damper = Mathf.Lerp(1500f, 1500f, Mathf.Clamp01(vehicleRootBody.linearVelocity.magnitude / maxSpeed));
-
-        // Lower targetPosition when stuck to push wheels down for more grip
-        // suspensionSpring.targetPosition = Mathf.Lerp(suspensionSpring.targetPosition, Mathf.Lerp(0.1f, 0.5f, stuckMultiplier), Time.fixedDeltaTime);
-
-        wheel.suspensionSpring = suspensionSpring;
-
-      }
-    }
-
-    private void HandleObstacleClimb()
-    {
-      // RaycastHit hit;
-      // frontPosition = transform.position + transform.forward * 2f + Vector3.up * 1f; // Store position for Gizmos
-
-      // var hasHit = Physics.Raycast(frontPosition, transform.forward, out hit, 2f);
-      // Detect if the front of the tank is hitting an obstacle
-      // if (hasHit)
-      // {
-      // var climbForce = transform.up * 10000f + transform.forward * 5000f;
-      // vehicleRootBody.AddForceAtPosition(climbForce, frontPosition, ForceMode.Force);
-      // }
-    }
-
-    // private void ApplyTorque(float move, float turn)
-    // {
-    //   if (Mathf.Approximately(move, 0f) && Mathf.Approximately(turn, 0f))
-    //   {
-    //     StopWheels();
-    //     return;
-    //   }
-    //
-    //   var lerpedTurnFactor = Mathf.Lerp(lerpedTurnFactor, Mathf.Abs(turn), Time.fixedDeltaTime * 5f);
-    //   var speed = vehicleRootBody.linearVelocity.magnitude;
-    //   var angularSpeed = Mathf.Abs(vehicleRootBody.angularVelocity.y); // Get current rotation speed
-    //
-    //   var targetSpeed = move * maxSpeed;
-    //   var torqueBoost = hillFactor * uphillTorqueMultiplier;
-    //
-    //   // if (move > 0 && Vector3.Dot(vehicleRootBody.linearVelocity, transform.forward) < 0)
-    //   // {
-    //   //   torqueBoost += downhillResistance;
-    //   // }
-    //
-    //   if (Mathf.Abs(speed - targetSpeed) < 1f)
-    //   {
-    //     torqueBoost *= 0.85f;
-    //   }
-    //
-    //   var minTorque = baseTorque * 0.2f;
-    //   var forwardTorque = Mathf.Max((baseTorque + torqueBoost) * move, minTorque);
-    //
-    //   var leftSideTorque = forwardTorque;
-    //   var rightSideTorque = forwardTorque;
-    //
-    //   // **New: Apply Turn Boost if Rotating in Place**
-    //   if (Mathf.Approximately(move, 0f) && Mathf.Abs(turn) > 0f)
-    //   {
-    //     // var maxTurnSpeed = 1.5f; // Max angular velocity before limiting turn boost
-    //     var turnBoost = Mathf.Clamp(maxRotationSpeed - angularSpeed, 1f, maxRotationSpeed); // Increase torque at low speeds
-    //
-    //     leftSideTorque = turn > 0 ? -baseTorque * turnBoost : baseTorque * turnBoost;
-    //     rightSideTorque = turn > 0 ? baseTorque * turnBoost : -baseTorque * turnBoost;
-    //   }
-    //   else if (Mathf.Abs(turn) >= 0.5f)
-    //   {
-    //     leftSideTorque = turn > 0 ? baseTorque : -baseTorque;
-    //     rightSideTorque = turn > 0 ? -baseTorque : baseTorque;
-    //   }
-    //   else if (turn != 0)
-    //   {
-    //     var turnStrength = Mathf.Lerp(1f, 0.6f, lerpe);
-    //
-    //     if (turn > 0)
-    //     {
-    //       leftSideTorque *= 1f;
-    //       rightSideTorque *= turnStrength;
-    //     }
-    //     else
-    //     {
-    //       leftSideTorque *= turnStrength;
-    //       rightSideTorque *= 1f;
-    //     }
-    //   }
-    //
-    //   // Apply torques to wheels
-    //   foreach (var leftWheel in left)
-    //   {
-    //     leftWheel.brakeTorque = 0f;
-    //     leftWheel.motorTorque = leftSideTorque;
-    //   }
-    //   foreach (var rightWheel in right)
-    //   {
-    //     rightWheel.brakeTorque = 0f;
-    //     rightWheel.motorTorque = rightSideTorque;
-    //   }
-    // }
 
     public void StopWheels()
     {
