@@ -1,14 +1,8 @@
 ﻿#region
 
 using System;
-using System.Collections.Generic;
-using System.Diagnostics;
 using JetBrains.Annotations;
 using UnityEngine;
-using UnityEngine.Serialization;
-using Zolantris.Shared;
-using Debug = UnityEngine.Debug;
-using Enumerable = System.Linq.Enumerable;
 using Vector3 = UnityEngine.Vector3;
 
 #endregion
@@ -18,12 +12,15 @@ using Vector3 = UnityEngine.Vector3;
 namespace ValheimVehicles.SharedScripts
 {
   /// <summary>
-  ///   Controls all LandVehicle Wheel and Force Settings.
+  ///   Full rewrite of tracked land vehicle movement.
+  ///   - No wheel collider drive physics
+  ///   - Left/right treads are the drive contact points
+  ///   - Wheels and visual tread pieces are cosmetic only
+  ///   - Designed to work in plain Unity and in Valheim integration
   /// </summary>
   [RequireComponent(typeof(Rigidbody))]
   public class VehicleLandMovementController : MonoBehaviour
   {
-
     public enum AccelerationType
     {
       Stop,
@@ -34,294 +31,132 @@ namespace ValheimVehicles.SharedScripts
 
     public enum SteeringType
     {
-      Differential,
-      Magic,
-      FourWheel
+      Differential
     }
 
-    public const float wheelBaseRadiusScale = 1.5f;
+    private const float GroundTouchGraceSeconds = 0.2f;
+    private const float InputDeadZone = 0.025f;
 
-    internal const float Gravity = 9.81f; // Earth gravity constant
-    internal const float uphillTorqueMultiplier = 1.5f; // Adjust for hill climbing power
-    internal const float downhillResistance = 500f; // Torque to counteract rolling backward
-    internal const float stabilityCorrectionFactor = 200f;
-    internal static float baseAccelerationMultiplier = 30f;
-    public static float defaultTurnAccelerationMultiplier = 10f;
-    private static readonly float _lastTerrainTouchTimeExpiration = 1f;
-    public static float baseTurnAccelerationMultiplier = defaultTurnAccelerationMultiplier;
+    [Header("Runtime Input")]
+    [Range(-1f, 1f)] public float inputMovement;
+    [Range(-1f, 1f)] public float inputTurnForce;
+    public bool UseInputControls = true;
+    public bool IsOnGround;
+    public bool IsTurningInPlace { get; private set; }
 
-    public static float defaultBreakForce = 500f;
+    [Header("Drive Mode")]
+    public AccelerationType accelerationType = AccelerationType.Medium;
+    public SteeringType steeringType = SteeringType.Differential;
 
-    private static readonly float highAcceleration = 6 * baseAccelerationMultiplier;
-    private static readonly float mediumAcceleration = 3 * baseAccelerationMultiplier;
-    private static readonly float lowAcceleration = 1 * baseAccelerationMultiplier;
-
-    // for locking down rotational speed if already rotating. This will clamp velocity. Velocity above 2f is way to quick.
-    public static float MaxAngularLerpSpeed = 2f;
-
-    public static float rotatingInPlaceTimeMultiplierVelocity = 10f;
-    public static float rotatingInPlaceTimeMultiplierAngularVelocity = 10f;
-    public static Vector3 OVERRIDE_upwardsForce = new(0, 0.01f, 0);
-
-    public float minTreadDistances = 0.1f;
-    public float treadWidthXScale = 1f;
-
-    [Header("USER Inputs (FOR FORCE EFFECTS")]
-    [Tooltip(
-      "User input")]
-    public AccelerationType accelerationType = AccelerationType.Low;
-
-    public float inputTurnForce;
-    public float inputMovement;
-
-    public float MaxWheelRPM = 3000f;
-    public float turnInputOverride;
-
-    public bool UseInputControls;
-
-    [Header("Vehicle Generation Properties")]
-    public float maxTreadLength = 20f;
-    public float maxTreadWidth = 8f;
-
-    [Header("Overrides")]
-    public float Override_WheelBottomOffset;
-    public float Override_WheelSpring;
-    public float Override_WheelRadius;
-    public float Override_WheelSuspensionDistance;
-    public float Override_TopSpeed;
-    public float Override_wheelDampingRate = 2f;
-    public float Override_WheelSpringDamper = 2f;
-    public int Override_IsBraking;
-
-    [Tooltip(
-      "Assign this to override the center of mass. This can be useful to make the tank more stable and prevent it from flipping over. \n\nNOTE: THIS TRANSFORM MUST BE A CHILD OF THE ROOT TANK OBJECT.")]
-    public Transform? centerOfMassTransform;
-
-    [Tooltip(
-      "Front wheels used for steering by rotating the wheels left/right.")]
-    public List<WheelCollider> front = new();
-
-    [Tooltip("Rear wheels for steering by rotating the wheels left/right.")]
-    public List<WheelCollider> rear = new();
-
-    [Tooltip(
-      "Wheels on the left side of the tank that are used for differential steering.")]
-    public WheelCollider[] left = {};
-    public List<GameObject> leftRenderers = new();
-    public List<GameObject> rightRenderers = new();
-
-
-    [Tooltip(
-      "Wheels on the right side of the tank that are used for differential steering.")]
-    public WheelCollider[] right = {};
-
-    public SteeringType m_steeringType = SteeringType.Differential;
-
-    [Header("Wheel Settings")]
-    public Transform forwardDirection; // Dynamic rotation reference
-
-    public GameObject wheelPrefab; // Prefab for a single wheel set
-    public GameObject rotationEnginePrefab; // Prefab for a single wheel set
-
-    public int minimumWheelSets = 3; // Minimum number of wheel sets
-    public int maxWheelSets = 3; // Max number of wheel sets (FYI 20 is limit of all wheels so 10 total sets)
-    public float
-      wheelSetIncrement = 5f;
-    public float axelPadding = 0.5f; // Extra length on both sides of axel
-
-    [Tooltip("Wheel properties")]
-    public float wheelBottomOffset = -1f;
-    public float wheelRadius = 1.5f;
-    public float wheelSuspensionDistance = 1.5f;
-    public float wheelSuspensionSpring = 35000f;
-    public float wheelSuspensionSpringDamper = 10000f;
-    public float wheelSuspensionTarget = 0.4f;
-    public GameObject treadsPrefab;
-    [Tooltip("This torque value is scaled for wheelmass radius and vehicle mass")]
-    public float baseTorque;
-
-    [Tooltip("Top speed of the tank in m/s.")]
-    public float topSpeed = 50.0f;
-    [Tooltip(
-      "For tanks with front/rear wheels defined, this is how far those wheels turn.")]
-    public float steeringAngle = 30.0f;
-
-    [Header("Force Values")]
-    [Tooltip("Power of any wheel listed under powered wheels.")]
-    public float baseMotorTorque = 10.0f;
-
-    [FormerlySerializedAs("baseVelocityChange")] [Tooltip("Multiplier used to convert input into a force applied at the treads an alternative to wheel motor torque.")]
-    public float baseAcceleration = 5.0f; // Adjust this value as needed
-    [Tooltip("Multiplier used to convert input turns of -1 and 1 to a bigger number")]
-    public float wheelMass = 500f;
-
-    [Header("Differential Drive Settings")]
-    [Tooltip("Maximum forward/reverse speed in meters/second.")]
-    public float maxLinearSpeed = 12f;
-
-    [Tooltip("Maximum angular speed (degrees/sec) when spinning in place).")]
-    public float maxAngularSpeedDeg = 90f;
-
-    [Tooltip("Maximum linear acceleration (m/s^2) applied to reach target speed.")]
-    public float linearAcceleration = 6f;
-
-    [Tooltip("Maximum angular acceleration (rad/s^2) applied to reach target yaw rate.")]
-    public float angularAcceleration = 3f;
-
-    [Tooltip("Optional curve to remap throttle input (0..1) to speed multiplier. Useful to bias start/stop behaviour.")]
-    public AnimationCurve speedCurve = AnimationCurve.Linear(0f, 0f, 1f, 1f);
-
-    [Tooltip("How aggressively lateral (sideways) velocity is damped to prevent slipping.")]
-    public float lateralDampingFactor = 10f;
-
-    [Tooltip("Maximum absolute force applied per tread (safety clamp).")]
-    public float maxTreadForce = 20000f;
-
-    [Tooltip("Transforms")]
+    [Header("Vehicle References")]
+    public Transform forwardDirection;
+    public Transform centerOfMassTransform;
     public Transform wheelParent;
     public Transform treadsParent;
     public Transform rotationEnginesParent;
-
     public Transform treadsRightTransform;
     public Transform treadsLeftTransform;
 
-    // public Rigidbody treadsLeftRb;
-    // public Rigidbody treadsRightRb;
+    [Header("Vehicle Generation")]
+    public float maxTreadLength = 20f;
+    public float maxTreadWidth = 8f;
+    public float wheelBottomOffset = -1f;
+    public float treadWidthXScale = 1f;
+    public float minTreadDistances = 0.25f;
+    public Bounds currentVehicleFrameBounds = new(Vector3.zero, Vector3.one * 5f);
 
-    [Header("Wheel Acceleration internal Values")]
-    public float lowTorque;
-    public float mediumTorque;
-    public float highTorque;
-    public bool isForward = true;
+    [Header("Speed")]
+    [Tooltip("Maximum forward speed in meters per second.")]
+    public float maxForwardSpeed = 8f;
 
-    public bool lastTurningState;
-    [Header("SYNC LOGIC")]
+    [Tooltip("Maximum reverse speed in meters per second.")]
+    public float maxReverseSpeed = 4.5f;
+
+    [Tooltip("Maximum yaw rate during neutral turn in degrees per second.")]
+    public float maxNeutralTurnRate = 70f;
+
+    [Tooltip("Maximum yaw rate while moving in degrees per second.")]
+    public float maxMovingTurnRate = 45f;
+
+    [Header("Acceleration")]
+    [Tooltip("Forward acceleration at High profile in m/s².")]
+    public float maxForwardAcceleration = 3.8f;
+
+    [Tooltip("Reverse acceleration at High profile in m/s².")]
+    public float maxReverseAcceleration = 2.6f;
+
+    [Tooltip("Brake deceleration in m/s².")]
+    public float maxBrakeAcceleration = 6.5f;
+
+    [Tooltip("How aggressively track speed chases the target speed.")]
+    public float driveResponse = 5.5f;
+
+    [Tooltip("Additional drag when no throttle is applied.")]
+    public float rollingResistance = 1.2f;
+
+    [Header("Grip / Stability")]
+    [Tooltip("Planar sideways correction in m/s². Higher value = less lateral slip.")]
+    public float lateralGripAcceleration = 18f;
+
+    [Tooltip("Planar forward/reverse correction used when braking.")]
+    public float brakingGripAcceleration = 16f;
+
+    [Tooltip("How strongly in-place turning removes world drift.")]
+    public float inPlaceTranslationDamping = 14f;
+
+    [Tooltip("How strongly yaw is damped when there is little or no steering input.")]
+    public float yawDamping = 3.5f;
+
+    [Tooltip("Roll/pitch stabilization while grounded.")]
+    public float rollPitchStabilization = 8f;
+
+    [Tooltip("A small constant downforce to keep contact stable on uneven terrain.")]
+    public float groundedDownforce = 1.0f;
+
+    [Header("Air Control")]
+    public float airborneAngularDamping = 1.5f;
+    public float airborneDownforce = 2.0f;
+
+    [Header("Tread Visuals")]
     public bool ShouldSyncWheelsToCollider;
-    // wheel regeneration unstable so leave this one for now 
-    [Tooltip("Prevent deletion of wheels if they already exist when regenerating. This is optimal to prevent wheel from being embedded in terrain")]
-    public bool ShouldCleanupPerInitialize;
-
-    [Tooltip("Toggle between wheel-collider torque and direct tread physics.")]
-    public bool useDirectTreadPhysics = true;
-    public bool useWheelTorquePhysics;
-
-    public Bounds currentVehicleFrameBounds = new(Vector3.zero, Vector3.one * 5);
-
-
-    public int totalWheels;
-
-    public Vector3 wheelPrefabCenterPointOffset = Vector3.zero;
-
-    public Bounds wheelPrefabMeshSize;
-
-    public float SuspensionDistanceMultiplier = 1f;
-
-    public bool UseUnbalancedForce;
-
     public bool ShouldHideWheelRender;
+    public bool HasVisualTreadAnimation = true;
 
-    public float dynamicFriction = 0.01f;
-    public float staticFriction = 0.05f;
-    public PhysicsMaterial treadPhysicMaterial;
+    [Header("Brake")]
+    public bool StartBraked = true;
 
-    public bool IsOnGround;
-    public float dampingDuration = 0.5f; // Time to fully eliminate sideways velocity
-    public float angularDampingDuration = 0.25f; // Time to eliminate angular Y velocity
-
-    public float maxHillFactorMultiplier = 3f;
-    public bool ShouldApplyDownwardsForceOnSlop = true;
-
+    [Header("Debug")]
+    public bool DrawDebug;
     public float currentLeftForce;
     public float currentRightForce;
-
-    public float treadLateralDamping = 0.01f;
-    public float treadBackwardDamping = 50f;
-
-    private readonly float maxRotationSpeed = 1f; // Default top speed
-    private readonly float maxSpeed = 25f; // Default top speed
-    // Set to false until it's stable/syncs with the treads.
-    [Tooltip("Wheels that provide power and move the tank forwards/reverse.")]
-    public readonly List<WheelCollider> poweredWheels = new();
-
-    // Used to associate a wheel with a one of the model prefabs.
-    private readonly Dictionary<WheelCollider, WheelSyncProperties> wheelSyncPropertiesMap =
-      new();
-
-    private bool _braking = true;
-
-    // Vehicle states
-    private bool _isTreadsInitialized;
-    private bool _isWheelsInitialized;
-    private float _lastTerrainTouchDeltaTime = 10f;
-
-    private bool _shouldSyncVisualOnCurrentFrame = true; // wheel visual sync main controller variable
-    private float angularVelocityYSmoothDamp; // For angular Y damping
-
-    internal List<Collider> colliders = new();
-
-    private float combinedTurnLerp;
-    public WheelFrictionCurve currentForwardFriction;
-
-    public WheelFrictionCurve currentSidewaysFriction;
-
-    private float currentSpeed; // Speed tracking
-    private float deltaRunPoweredWheels = 0f;
-    private float elapsedTime = 0f;
-    private Vector3 frontPosition; // Store the calculated front position for Gizmos
-
-    private float hillFactor = 1f; // Hill compensation multiplier
-
-    private Coroutine? initializeWheelsCoroutine;
-
-    private bool isBrakePressedDown = true;
-
-    internal bool isInAir = true;
-    private bool isLeftForward = true;
-    private bool isRightForward = true;
-    private Vector3 lateralVelocitySmoothDamp = Vector3.zero; // For SmoothDamp velocity tracking
-    // private float lerpedTurnFactor;
-    private Vector3 m_angularVelocitySmoothSpeed = Vector3.zero;
-
-    private Vector3 m_velocitySmoothSpeed = Vector3.zero;
+    public float currentLeftTargetSpeed;
+    public float currentRightTargetSpeed;
+    public float currentForwardSpeed;
+    public float currentYawRateDegrees;
+    public float currentTrackWidth;
+    public Vector3 currentLocalPlanarVelocity;
 
     public Action OnWheelsInitialized = () => {};
 
-    internal float powerWheelDeltaInterval = 0.3f;
-    internal List<GameObject> rotationEngineInstances = new();
-    internal List<HingeJoint> rotatorEngineHingeInstances = new();
-
-    private float stuckTime; // Timer for detecting if the tank is stuck
     internal MovingTreadComponent treadsLeftMovingComponent;
     internal MovingTreadComponent treadsRightMovingComponent;
-
-    [Tooltip("Kinematic Objects and Colliders")]
     internal Rigidbody vehicleRootBody;
-    internal List<WheelCollider> wheelColliders = new();
 
-    internal List<GameObject> wheelInstances = new();
-    public bool IsVehicleReady => _isWheelsInitialized && _isTreadsInitialized && vehicleRootBody; // important catchall for preventing fixedupdate physics from being applied until the vehicle is ready.
-    public float wheelColliderRadius => Mathf.Clamp(wheelRadius, 0f, 5f);
+    private bool _isBraking;
+    private bool _isTreadsInitialized;
+    private bool _isVehicleInitialized;
+    private bool _isBrakePressedDown;
+    private float _currentAccelerationScale = 0.7f;
+    private float _lastGroundTouchElapsed = 10f;
 
-    public bool IsTurningInPlace
-    {
-      get;
-      private set;
-    }
+    public bool IsVehicleReady => _isVehicleInitialized && _isTreadsInitialized && vehicleRootBody && treadsLeftTransform && treadsRightTransform;
 
     [UsedImplicitly]
     public bool IsBraking
     {
-      get => _braking;
-      private set
-      {
-        if (_braking == value) return;
-        _braking = value;
-        OnBrakingUpdate(value);
-      }
+      get => _isBraking;
+      private set => _isBraking = value;
     }
-
-    // both inputTurnForce and inputMovement have to be zero to not use the engine.
-    public bool IsUsingEngine => !Mathf.Approximately(inputTurnForce, 0f) || !Mathf.Approximately(inputMovement, 0f);
 
     private void Awake()
     {
@@ -329,1272 +164,204 @@ namespace ValheimVehicles.SharedScripts
       var ghostContainer = transform.Find("ghostContainer");
       if (ghostContainer) ghostContainer.gameObject.SetActive(false);
 #endif
-      wheelParent = transform.Find("vehicle_movement/wheels");
-      treadsParent = transform.Find("vehicle_movement/treads");
 
       vehicleRootBody = GetComponent<Rigidbody>();
+
+      if (!wheelParent) wheelParent = transform.Find("vehicle_movement/wheels");
+      if (!treadsParent) treadsParent = transform.Find("vehicle_movement/treads");
+      if (!rotationEnginesParent) rotationEnginesParent = transform.Find("vehicle_movement/rotation_engines");
+      if (!forwardDirection) forwardDirection = transform;
+
       var centerOfMass = transform.Find("center_of_mass");
-      if (centerOfMass != null) centerOfMassTransform = centerOfMass;
-      if (centerOfMassTransform == null) centerOfMassTransform = transform;
+      if (!centerOfMassTransform && centerOfMass) centerOfMassTransform = centerOfMass;
+      if (!centerOfMassTransform) centerOfMassTransform = transform;
 
-      if (!treadsRightTransform)
-      {
-        treadsRightTransform = transform.Find("vehicle_movement/treads/treads_right");
-      }
-      if (!treadsLeftTransform)
-      {
-        treadsLeftTransform = transform.Find("vehicle_movement/treads/treads_left");
-      }
+      if (!treadsRightTransform) treadsRightTransform = transform.Find("vehicle_movement/treads/treads_right");
+      if (!treadsLeftTransform) treadsLeftTransform = transform.Find("vehicle_movement/treads/treads_left");
 
+      IsBraking = StartBraked;
+
+      ConfigureRigidBody();
       InitTreads();
     }
 
     private void OnEnable()
     {
-      UpdateMaxRPM();
+      ConfigureRigidBody();
       InitTreads();
     }
 
     private void OnDisable()
     {
       CleanupTreads();
-      Cleanup();
     }
 
     private void OnCollisionEnter(Collision collision)
     {
-      // Skip if there are no contact points (avoids unnecessary processing)
-      if (collision.contactCount == 0) return;
-
-      if (collision.collider.gameObject.layer == LayerHelpers.TerrainLayer)
-      {
-        _lastTerrainTouchDeltaTime = 0f;
-      }
-
-#if VALHEIM && DEBUG
-      if (collision.collider.GetComponentInParent<Character>() != null)
-      {
-        Debug.Log("ValheimVehicles.WheelController Hit a character!");
-      }
-#endif
-
-      // Get first contact point and its collider
-      var contact = collision.GetContact(0);
-      var ownCollider = contact.thisCollider;
-
-      // Skip collisions that are not from "convexHull" parts
-      if (ownCollider == null || !ownCollider.name.StartsWith("convexHull")) return;
-
-      // Compute the front position using the tank's bounds
-      var frontPosition = transform.position + transform.forward * (currentVehicleFrameBounds.extents.z + 0.5f);
-
-      if (!vehicleRootBody.isKinematic)
-      {
-        // Only apply climbing force if the collision happens at the front of the tank
-        if (Vector3.Dot(transform.forward, (contact.point - transform.position).normalized) > 0.5f)
-        {
-          ApplyClimbForce(frontPosition);
-        }
-      }
+      if (collision.contactCount <= 0) return;
+      _lastGroundTouchElapsed = 0f;
     }
+
     private void OnCollisionStay(Collision collision)
     {
-      if (LayerHelpers.IsContainedWithinLayerMask(collision.gameObject.layer, LayerHelpers.PhysicalLayerMask))
-      {
-        _lastTerrainTouchDeltaTime = 0f;
-      }
+      if (collision.contactCount <= 0) return;
+      _lastGroundTouchElapsed = 0f;
     }
 
-    /// <summary>
-    ///   FixedUpdate Ground checks
-    /// </summary>
-    public void UpdateIsOnGround()
+    private void ConfigureRigidBody()
     {
-      // for ground check
-      if (_lastTerrainTouchDeltaTime < _lastTerrainTouchTimeExpiration)
-      {
-        _lastTerrainTouchDeltaTime += Time.fixedDeltaTime;
-      }
+      if (!vehicleRootBody) return;
 
-      IsOnGround = _lastTerrainTouchDeltaTime < _lastTerrainTouchTimeExpiration;
+      vehicleRootBody.interpolation = RigidbodyInterpolation.Interpolate;
+      vehicleRootBody.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
+      vehicleRootBody.maxAngularVelocity = 8f;
+
+      if (centerOfMassTransform)
+      {
+        vehicleRootBody.centerOfMass = transform.InverseTransformPoint(centerOfMassTransform.position);
+      }
     }
 
-    private void ApplyClimbForce(Vector3 frontPosition)
+    private void SetupSingleTread(GameObject treadObj, ref MovingTreadComponent movingTreadComponent)
     {
-      // Apply force upwards & forward to push the tank over the obstacle
-      vehicleRootBody.AddForceAtPosition(transform.up * 8000f, frontPosition, ForceMode.Force);
-    }
-    // Draw debug visualization
-    // private void OnDrawGizmos()
-    // {
-    //   if (!Application.isPlaying) return;
-    //
-    //   Gizmos.color = Color.red; // Set Gizmo color to red for visibility
-    //   Gizmos.DrawSphere(frontPosition, 0.2f); // Draw a small sphere at frontPosition
-    //   Gizmos.DrawLine(frontPosition, frontPosition + transform.forward * 2f); // Draw ray forward
-    // }
+      if (!movingTreadComponent) movingTreadComponent = treadObj.GetComponent<MovingTreadComponent>();
+      if (!movingTreadComponent) movingTreadComponent = treadObj.AddComponent<MovingTreadComponent>();
 
-    private void AlignWheelsWithTreads(Bounds bounds)
+      movingTreadComponent.treadParent = treadObj.transform;
+      movingTreadComponent.vehicleLandMovementController = this;
+    }
+
+    private void InitTreads()
     {
-      var leftIndex = 0;
-      var rightIndex = 0;
+      _isTreadsInitialized = false;
 
-      // Physics.SyncTransforms();
+      if (!treadsRightTransform || !treadsLeftTransform) return;
 
-      // TODO this needs to be fixed to be relative position due to how the position can mismatch we need to calculate based on local bounds of the tread or at least rotated based on the parent
-      var sizePerIndex = bounds.size.z / (left.Length - 1);
-      // Sync position correctly because it's pretty complicated getting these wheels to align well with treads center. Requires treads to be generated
+      SetupSingleTread(treadsRightTransform.gameObject, ref treadsRightMovingComponent);
+      SetupSingleTread(treadsLeftTransform.gameObject, ref treadsLeftMovingComponent);
 
-      var wheelOffsetLeft = transform.InverseTransformPoint(treadsLeftTransform.position);
-      var wheelOffsetRight = transform.InverseTransformPoint(treadsRightTransform.position);
-
-      foreach (var wheelInstance in wheelInstances)
-      {
-        var newPos = Vector3.zero;
-        if (wheelInstance.name.Contains("left"))
-        {
-          // wheelInstance.transform.position = treadsLeft.position;
-          newPos = new Vector3(0, 0, sizePerIndex * leftIndex - bounds.extents.z) + wheelOffsetLeft;
-          leftIndex += 1;
-          wheelInstance.transform.localPosition = newPos;
-        }
-        if (wheelInstance.name.Contains("right"))
-        {
-          // wheelInstance.transform.position = treadsRight.position;
-          newPos = new Vector3(0, 0, sizePerIndex * rightIndex - bounds.extents.z) + wheelOffsetRight;
-          rightIndex += 1;
-          wheelInstance.transform.localPosition = newPos;
-        }
-      }
+      _isTreadsInitialized = true;
     }
 
-    /// <summary>
-    ///   Requires SetupWheels to be called
-    /// </summary>
-    /// <param name="bounds"></param>
-    private void UpdateTreads(Bounds bounds)
+    private void CleanupTreads()
     {
-      if (!treadsLeftMovingComponent || !treadsRightMovingComponent || !_isTreadsInitialized)
-      {
-        InitTreads();
-      }
-      // if (!vehicleRootBody) return;
-      if (treadsLeftTransform && treadsRightTransform)
-      {
-        var leftJoint = treadsLeftTransform.GetComponent<ConfigurableJoint>();
-        var rightJoint = treadsRightTransform.GetComponent<ConfigurableJoint>();
-
-        var treadsAnchorLeftLocalPosition = new Vector3(bounds.min.x, bounds.min.y + wheelBottomOffset, bounds.center.z);
-        var treadsAnchorRightLocalPosition = new Vector3(bounds.max.x, bounds.min.y + wheelBottomOffset, bounds.center.z);
-
-        if (leftJoint && rightJoint)
-        {
-          leftJoint.connectedBody = null;
-          rightJoint.connectedBody = null;
-          leftJoint.connectedAnchor = Vector3.zero;
-          rightJoint.connectedAnchor = Vector3.zero;
-        }
-
-        // var localPoint = vehicleRootBody.transform.InverseTransformPoint();
-
-        treadsLeftTransform.localRotation = Quaternion.identity;
-        treadsRightTransform.localRotation = Quaternion.identity;
-        treadsLeftTransform.position = vehicleRootBody.transform.TransformPoint(treadsAnchorLeftLocalPosition);
-        treadsRightTransform.position = vehicleRootBody.transform.TransformPoint(treadsAnchorRightLocalPosition);
-
-        var scale = new Vector3(treadWidthXScale, 1, 1);
-        treadsLeftTransform.localScale = scale;
-        treadsRightTransform.localScale = scale;
-
-        // wheelParent.transform.localPosition = new Vector3(0, bounds.min.y + wheelBottomOffset, 0);
-        // treadsLeft.rotation = vehicleRootBody.transform.rotation;
-        // treadsRight.rotation = vehicleRootBody.transform.rotation;
-
-        // if (leftJoint && rightJoint)
-        // {
-        //   ConfigureJoint(leftJoint, vehicleRootBody, treadsLeftRb, treadsAnchorLeftLocalPosition);
-        //   ConfigureJoint(rightJoint, vehicleRootBody, treadsRightRb, treadsAnchorRightLocalPosition);
-        // }
-        // if (!treadsLeftRb.isKinematic) treadsLeftRb.isKinematic = true;
-        // if (!treadsRightRb.isKinematic) treadsRightRb.isKinematic = true;
-      }
-      if (treadsLeftMovingComponent && treadsRightMovingComponent)
-      {
-        if (!treadsLeftMovingComponent.vehicleLandMovementController || !treadsRightMovingComponent.vehicleLandMovementController)
-        {
-          InitTreads();
-        }
-
-        treadsLeftMovingComponent.wheelColliders = left;
-        treadsRightMovingComponent.wheelColliders = right;
-        treadsLeftMovingComponent.GenerateTreads(bounds);
-        treadsRightMovingComponent.GenerateTreads(bounds);
-      }
-
-      // var collidersRight = treadsRightMovingComponent.GetComponentsInChildren<Collider>();
-      // var collidersLeft = treadsLeftMovingComponent.GetComponentsInChildren<Collider>();
-      // colliders.AddRange(collidersLeft);
-      // colliders.AddRange(collidersRight);
-
-      // todo ensure colliders are then ignored upstream. We want the treads to be able to hit the player or at least a convex collider variant to do this.
-
-      // if (treadsRightRb && treadsLeftRb)
-      // {
-      // PhysicsHelpers.UpdateRelativeCenterOfMass(treadsLeftRb, centerOfMassOffset);
-      // PhysicsHelpers.UpdateRelativeCenterOfMass(treadsRightRb, centerOfMassOffset);
-      // }
-    }
-    public void SmoothAngularVelocity()
-    {
-      if (Mathf.Abs(vehicleRootBody.angularVelocity.y) > maxRotationSpeed * 0.75f || !IsUsingEngine)
-      {
-        vehicleRootBody.angularVelocity = Vector3.SmoothDamp(vehicleRootBody.angularVelocity, new Vector3(vehicleRootBody.angularVelocity.x, vehicleRootBody.angularVelocity.y * 0.75f, vehicleRootBody.angularVelocity.z), ref m_angularVelocitySmoothSpeed, 2f);
-      }
-      else
-      {
-        m_angularVelocitySmoothSpeed = Vector3.Lerp(m_angularVelocitySmoothSpeed, Vector3.zero, Time.fixedDeltaTime * 10f);
-      }
+      if (treadsLeftMovingComponent) Destroy(treadsLeftMovingComponent);
+      if (treadsRightMovingComponent) Destroy(treadsRightMovingComponent);
     }
 
-    private void DampenAngularYVelocity()
-    {
-      var angularVelocity = vehicleRootBody.angularVelocity;
-
-      // Smoothly damp only the Y-axis angular velocity
-      var newAngularY = Mathf.SmoothDamp(angularVelocity.y, 0, ref angularVelocityYSmoothDamp, angularDampingDuration);
-
-      // Apply the new angular velocity while keeping X & Z untouched
-      vehicleRootBody.angularVelocity = new Vector3(angularVelocity.x, newAngularY, angularVelocity.z);
-    }
-    private void DampenSidewaysVelocity()
-    {
-      var velocity = vehicleRootBody.linearVelocity;
-      var forward = transform.forward;
-
-      // Ensure forward direction is only in XZ plane
-      forward.y = 0;
-      forward.Normalize();
-
-      // Get forward velocity (in XZ plane)
-      var forwardVelocity = Vector3.ProjectOnPlane(velocity, Vector3.up);
-      forwardVelocity = Vector3.Project(forwardVelocity, forward);
-
-      // Extract sideways velocity (X and Z only)
-      var sidewaysVelocity = new Vector3(velocity.x, 0, velocity.z) - forwardVelocity;
-
-      // Smoothly damp sideways velocity to zero over `dampingDuration`
-      var newSidewaysVelocity = Vector3.SmoothDamp(sidewaysVelocity, Vector3.zero, ref lateralVelocitySmoothDamp, dampingDuration);
-
-      // Preserve Y velocity (gravity & jumps)
-      vehicleRootBody.linearVelocity = new Vector3(forwardVelocity.x + newSidewaysVelocity.x, velocity.y, forwardVelocity.z + newSidewaysVelocity.z);
-    }
-    private void ApplyDecreasingForce()
-    {
-      var smoothTime = IsBraking ? 2f : 6f;
-      if (Mathf.Abs(currentSpeed) > 0)
-      {
-        vehicleRootBody.linearVelocity = Vector3.SmoothDamp(vehicleRootBody.linearVelocity, Vector3.zero, ref m_velocitySmoothSpeed, smoothTime);
-      }
-      else
-      {
-        m_velocitySmoothSpeed = Vector3.Lerp(m_velocitySmoothSpeed, Vector3.zero, Time.fixedDeltaTime * 10f);
-      }
-      SmoothAngularVelocity();
-    }
-
-    private void DampUnwantedVelocity(Rigidbody rb, float lateralDamping, float backwardDamping)
-    {
-      if (!rb) return;
-
-      var velocity = rb.linearVelocity;
-      var forwardDir = rb.transform.forward * Mathf.Clamp(inputMovement, -1, 1);
-
-      // Project velocity onto forward direction
-      var forwardSpeed = Vector3.Dot(velocity, forwardDir);
-      var forwardVelocity = forwardDir * forwardSpeed;
-
-      // Compute unwanted velocity (lateral + backward)
-      var unwantedVelocity = velocity - forwardVelocity;
-
-      // Apply counter force to dampen the unwanted velocity
-      var dampingForce = -unwantedVelocity * lateralDamping;
-
-      // Apply additional damping for unwanted backward motion
-      if (forwardSpeed < 0)
-      {
-        dampingForce += forwardDir * (-forwardSpeed * backwardDamping);
-      }
-
-      rb.AddForce(dampingForce, ForceMode.Acceleration);
-    }
-    public Vector3 GetUpwardsForce()
-    {
-      return OVERRIDE_upwardsForce;
-    }
-
-    // New method: apply forces directly at the treads to simulate continuous treads
-    private void ApplyTreadForces()
-    {
-      // Fresh differential-drive based physics (no legacy logic retained)
-      if (!IsVehicleReady) return;
-      if (!IsUsingEngine || IsBraking)
-      {
-        // When braking or engine off, zero out applied tread forces and damp velocities gently
-        currentLeftForce = 0f;
-        currentRightForce = 0f;
-        // Strongly damp lateral motion to prevent sliding while parked
-        var lateralVel = Vector3.ProjectOnPlane(vehicleRootBody.linearVelocity, transform.forward);
-        vehicleRootBody.AddForce(-lateralVel * lateralDampingFactor * vehicleRootBody.mass, ForceMode.Acceleration);
-        ApplyDecreasingForce();
-        return;
-      }
-
-      // Core idea: compute a target forward speed and a target yaw rate from inputs
-      var dt = Time.fixedDeltaTime;
-      var forward = transform.forward;
-      var leftTreadPos = treadsLeftTransform.position;
-      var rightTreadPos = treadsRightTransform.position;
-
-      var deltaTreads = Vector3.Distance(rightTreadPos, leftTreadPos);
-      if (deltaTreads < minTreadDistances) return;
-
-      // Map inputMovement (-1..1) to target speed using optional curve
-      var thrAbs = Mathf.Clamp01(Mathf.Abs(inputMovement));
-      var thrSign = Mathf.Sign(inputMovement);
-      var speedMultiplier = speedCurve != null ? speedCurve.Evaluate(thrAbs) : thrAbs;
-      var targetSpeed = Mathf.Clamp(speedMultiplier * maxLinearSpeed, 0f, maxLinearSpeed) * thrSign;
-
-      // Map inputTurnForce (-1..1) to target yaw rate in radians/sec
-      var targetYawRate = Mathf.Deg2Rad * maxAngularSpeedDeg * Mathf.Clamp(inputTurnForce, -1f, 1f);
-
-      // Current states
-      var currentForwardSpeed = Vector3.Dot(vehicleRootBody.linearVelocity, forward);
-      var currentYawRate = vehicleRootBody.angularVelocity.y;
-
-      // Desired accelerations (clamped)
-      var desiredLinearAccel = Mathf.Clamp((targetSpeed - currentForwardSpeed) / Mathf.Max(dt, 1e-6f), -linearAcceleration, linearAcceleration);
-      var desiredAngularAccel = Mathf.Clamp((targetYawRate - currentYawRate) / Mathf.Max(dt, 1e-6f), -angularAcceleration, angularAcceleration);
-
-      // Convert to forces/torques
-      var totalForwardForce = vehicleRootBody.mass * desiredLinearAccel; // F = m * a
-
-      // Approximate yaw inertia around local Y using inertiaTensor (note: inertiaTensor is in local space)
-      var inertiaY = vehicleRootBody.inertiaTensor.y; // reasonable approximation
-      var requiredTorque = inertiaY * desiredAngularAccel; // τ = I * α
-
-      // force difference needed between treads: τ = (F_right - F_left) * (trackWidth / 2)
-      var halfTrack = Mathf.Max(deltaTreads * 0.5f, 0.01f);
-      var forceDifference = requiredTorque / halfTrack; // (F_right - F_left)
-
-      // Distribute forward force evenly, then add/subtract differential component to produce torque
-      var perTreadForward = totalForwardForce * 0.5f;
-
-      var leftForce = perTreadForward - forceDifference * 0.5f;
-      var rightForce = perTreadForward + forceDifference * 0.5f;
-
-      // Clamp tread forces to avoid unrealistic spikes
-      leftForce = Mathf.Clamp(leftForce, -maxTreadForce, maxTreadForce);
-      rightForce = Mathf.Clamp(rightForce, -maxTreadForce, maxTreadForce);
-
-      // Apply forces at the two tread positions. Use ForceMode.Force for physics consistency.
-      var upwardsForce = GetUpwardsForce();
-      vehicleRootBody.AddForceAtPosition(forward * leftForce + upwardsForce, leftTreadPos, ForceMode.Force);
-      vehicleRootBody.AddForceAtPosition(forward * rightForce + upwardsForce, rightTreadPos, ForceMode.Force);
-
-      // Lateral damping: actively counteract sideways velocity to prevent slipping
-      var vel = vehicleRootBody.linearVelocity;
-      var forwardComponent = forward * Vector3.Dot(vel, forward);
-      var lateralComponent = vel - forwardComponent;
-      var lateralAccel = -lateralComponent * lateralDampingFactor; // m/s^2
-      vehicleRootBody.AddForce(lateralAccel * vehicleRootBody.mass, ForceMode.Force);
-
-      // Small angular damping to stabilise yaw when no input
-      var yawDamping = -vehicleRootBody.angularVelocity.y * (Mathf.Abs(inputTurnForce) > 0.01f ? 0.1f : 1f);
-      vehicleRootBody.AddTorque(new Vector3(0f, yawDamping * vehicleRootBody.mass, 0f), ForceMode.Force);
-
-      // Publish values for visuals and debugging
-      currentLeftForce = leftForce;
-      currentRightForce = rightForce;
-
-      // Prevent unwanted lateral drift while turning in place: keep vertical velocity unchanged but reduce translation
-      if (IsTurningInPlace && IsOnGround)
-      {
-        var lv = vehicleRootBody.linearVelocity;
-        vehicleRootBody.linearVelocity = Vector3.Lerp(lv, new Vector3(0f, lv.y, 0f), Mathf.Clamp01(dt * lateralDampingFactor * 0.5f));
-      }
-    }
-
-    private void AlignVisualWheels(WheelCollider wheelCollider, WheelSyncProperties wheelSync)
-    {
-      if (wheelCollider == null) return;
-
-      wheelCollider.GetWorldPose(out var colliderPosition, out _);
-
-      // todo not sure why wheelX require 1/4 divisor as it is already centered and should not be changing the wheel alignment.
-      var wheelX = colliderPosition.x + wheelSync.wheelMeshScale.x / 4;
-      var wheelY = colliderPosition.y - wheelRadius + wheelSync.wheelMeshScale.y / 2;
-      var bottomContactPoint = new Vector3(wheelX, wheelY, colliderPosition.z);
-
-      // Compute final position: Align the **bottom of the visual wheel** with the contact point
-      // visualWheel.position = bottomContactPoint + visualWheel.up * visualRadius;
-      // wheelSync.wheelVisual.transform.position = colliderPosition - (2.5f - 1f) * Vector3.up;
-      wheelSync.wheelVisual.transform.position = bottomContactPoint;
-
-      // **Correct rotation: Prevent tilting, but allow rolling**
-      // var forward = wheelCollider.transform.forward; // Preserve rolling direction
-      // var up = -Vector3.up; // Keep the wheel upright (prevent unwanted tilts)
-      // visualWheel.rotation = QuaternionExtensions.LookRotationSafe(forward, up);
-    }
-    /// <summary>
-    ///   Responsible for matching wheels and treads visually with their speed. This is
-    ///   throttled to make the visual performant across frames.
-    /// </summary>
-    public void SyncWheelAndTreadVisuals()
-    {
-      if (!_shouldSyncVisualOnCurrentFrame) return;
-
-      if (treadsLeftMovingComponent && treadsRightMovingComponent)
-      {
-        // var lerpTime = Mathf.Clamp01(Mathf.Abs(inputMovement) * baseAcceleration + combinedTurnLerp * baseTurnAccelerationMultiplier / highAcceleration);
-        var clampedSpeed = Mathf.Clamp(Mathf.Abs(currentLeftForce), 0, 8f);
-        // var lerpSpeed = Mathf.Lerp(0f, 8f, lerpTime);
-        if ((inputMovement > 0 || inputTurnForce > 0) && Mathf.Approximately(clampedSpeed, 0))
-        {
-          clampedSpeed = 0.5f;
-        }
-        treadsLeftMovingComponent.SetSpeed(clampedSpeed);
-        treadsRightMovingComponent.SetSpeed(clampedSpeed);
-        UpdateSteeringTreadDirectionVisuals();
-      }
-
-      if (ShouldSyncWheelsToCollider)
-      {
-        wheelColliders.ForEach(x =>
-        {
-          if (wheelSyncPropertiesMap.TryGetValue(x,
-                out var wheelSyncProperties))
-          {
-            SyncWheelVisual(x, wheelSyncProperties);
-          }
-        });
-      }
-
-      // syncs the treads to align with the vehicle
-
-      // if (leftRenderers.Count > 0 && rightRenderers.Count > 0)
-      // {
-      //   var averageYLeft = Enumerable.ToList(Enumerable.Select(leftRenderers, x => x.transform.position)).Average();
-      //   var averageYRight = Enumerable.ToList(Enumerable.Select(rightRenderers, x => x.transform.position)).Average();
-      //
-      //   var leftPos = treadsLeftTransform.position;
-      //   leftPos.y = averageYLeft.y;
-      //   treadsLeftTransform.position = leftPos;
-      //
-      //   var rightPos = treadsRightTransform.position;
-      //   rightPos.y = averageYRight.y;
-      //   treadsRightTransform.position = rightPos;
-      // }
-
-      _shouldSyncVisualOnCurrentFrame = false;
-    }
-
-    /// <summary>
-    ///   This method is meant to constrain the wheel bounds so they are within
-    ///   realistic levels.
-    /// </summary>
-    /// <param name="bounds"></param>
-    /// <returns></returns>
     public Bounds GetVehicleFrameBounds(Bounds bounds)
     {
-      if (bounds.size.x < 4f || bounds.size.y < 4f || bounds.size.z < 4f)
+      if (bounds.size.x < 2f || bounds.size.y < 0.05f || bounds.size.z < 2f)
       {
-        var size = new Vector3(Mathf.Max(bounds.size.x, 2f), Mathf.Max(bounds.size.y, 0.05f), Mathf.Max(bounds.size.z, 2f));
-        var center = bounds.center;
-        bounds = new Bounds(center, size);
+        bounds = new Bounds(bounds.center, new Vector3(Mathf.Max(bounds.size.x, 2f), Mathf.Max(bounds.size.y, 0.05f), Mathf.Max(bounds.size.z, 2f)));
       }
 
-      var isBoundsXOversized = bounds.size.x > maxTreadWidth;
-      var isBoundsZOversized = bounds.size.z > maxTreadLength;
-
-      // constrains the bounds to a workable level
-      if (isBoundsXOversized || isBoundsZOversized)
+      if (bounds.size.x > maxTreadWidth || bounds.size.z > maxTreadLength)
       {
-        bounds = new Bounds(bounds.center, new Vector3(isBoundsXOversized ? maxTreadWidth : bounds.size.x, bounds.size.y, isBoundsZOversized ? maxTreadLength : bounds.size.z));
+        bounds = new Bounds(
+          bounds.center,
+          new Vector3(
+            Mathf.Min(bounds.size.x, maxTreadWidth),
+            bounds.size.y,
+            Mathf.Min(bounds.size.z, maxTreadLength)
+          )
+        );
       }
 
       return bounds;
     }
 
-    /// <summary>
-    ///   Must pass a local bounds into this wheel controller. The local bounds must be
-    ///   relative to the VehicleWheelController transform.
-    /// </summary>
-    /// TODO make this a coroutine so it does not impact performance.
-    /// <param name="bounds"></param>
+    private void UpdateTreads(Bounds bounds)
+    {
+      if (!treadsLeftTransform || !treadsRightTransform) return;
+
+      var leftLocal = new Vector3(bounds.min.x, bounds.min.y + wheelBottomOffset, bounds.center.z);
+      var rightLocal = new Vector3(bounds.max.x, bounds.min.y + wheelBottomOffset, bounds.center.z);
+
+      treadsLeftTransform.localRotation = Quaternion.identity;
+      treadsRightTransform.localRotation = Quaternion.identity;
+
+      treadsLeftTransform.position = transform.TransformPoint(leftLocal);
+      treadsRightTransform.position = transform.TransformPoint(rightLocal);
+
+      var treadScale = new Vector3(treadWidthXScale, 1f, 1f);
+      treadsLeftTransform.localScale = treadScale;
+      treadsRightTransform.localScale = treadScale;
+
+      if (treadsLeftMovingComponent) treadsLeftMovingComponent.GenerateTreads(bounds);
+      if (treadsRightMovingComponent) treadsRightMovingComponent.GenerateTreads(bounds);
+    }
+
     public void Initialize(Bounds? bounds)
     {
-      _isWheelsInitialized = false;
-      var vehicleFrameBounds = GetVehicleFrameBounds(bounds.GetValueOrDefault());
-      currentVehicleFrameBounds = vehicleFrameBounds;
-
-      if (ShouldCleanupPerInitialize)
-      {
-        Cleanup();
-      }
-
-      // treads - initialize first so wheels can align within the drawn treads.
+      currentVehicleFrameBounds = GetVehicleFrameBounds(bounds.GetValueOrDefault(new Bounds(Vector3.zero, Vector3.one * 4f)));
       UpdateTreads(currentVehicleFrameBounds);
+      UpdateAccelerationValues(accelerationType, true);
 
-      // wheels
-      // GenerateWheelSets(currentVehicleFrameBounds);
-      // SetupWheels();
-
-      // physics
-      UpdateAccelerationValues(accelerationType, isForward);
-      ApplyFrictionValuesToAllWheels();
-
-      // AlignWheelsWithTreads(vehicleFrameBounds);
-      _isWheelsInitialized = true;
+      _isVehicleInitialized = true;
       OnWheelsInitialized();
     }
 
-    /// <summary>
-    ///   This assumes the already called clear for all lists. But still has a check
-    /// </summary>
-    private void SetupWheels()
+    public void UpdateIsOnGround()
     {
-      wheelColliders = new List<WheelCollider>();
-      colliders = new List<Collider>();
-      var tmpLeft = new List<WheelCollider>();
-      var tmpRight = new List<WheelCollider>();
-
-      wheelInstances.ForEach(x =>
+      if (_lastGroundTouchElapsed < GroundTouchGraceSeconds)
       {
-        var wheelCollider = x.GetComponentInChildren<WheelCollider>();
-        if (!wheelCollider) return;
-        wheelColliders.Add(wheelCollider);
-        var colliderComp = wheelCollider.GetComponent<Collider>();
-        if (colliderComp) colliders.Add(colliderComp);
-      });
+        _lastGroundTouchElapsed += Time.fixedDeltaTime;
+      }
 
-
-      foreach (var wheelCollider in wheelColliders)
+      if (treadsLeftTransform && treadsRightTransform)
       {
-        if (wheelCollider.name.StartsWith("Front") && !front.Contains(wheelCollider))
-          front.Add(wheelCollider);
+        var leftGrounded = Physics.Raycast(treadsLeftTransform.position + transform.up * 0.2f, -transform.up, 1.0f);
+        var rightGrounded = Physics.Raycast(treadsRightTransform.position + transform.up * 0.2f, -transform.up, 1.0f);
 
-        if (wheelCollider.name.StartsWith("Rear") && !rear.Contains(wheelCollider))
-          rear.Add(wheelCollider);
-
-        var isRight = wheelCollider.transform.parent.name.Contains("right");
-        if (isRight && !Enumerable.Contains(right, wheelCollider))
+        if (leftGrounded || rightGrounded)
         {
-          tmpRight.Add(wheelCollider);
-        }
-        if (isRight)
-        {
-          var wheelMesh = wheelCollider.transform.parent.Find("wheel_mesh");
-          if (wheelMesh && !rightRenderers.Contains(wheelMesh.gameObject))
-          {
-            rightRenderers.Add(wheelMesh.gameObject);
-          }
-        }
-
-        var isLeft = wheelCollider.transform.parent.name.Contains("left");
-        if (isLeft && !Enumerable.Contains(left, wheelCollider))
-        {
-          tmpLeft.Add(wheelCollider);
-        }
-
-        if (isLeft)
-        {
-          var wheelMesh = wheelCollider.transform.parent.Find("wheel_mesh");
-          if (wheelMesh && !leftRenderers.Contains(wheelMesh.gameObject))
-          {
-            leftRenderers.Add(wheelMesh.gameObject);
-          }
-        }
-
-        if (!poweredWheels.Contains(wheelCollider))
-        {
-          poweredWheels.Add(wheelCollider);
+          _lastGroundTouchElapsed = 0f;
         }
       }
 
-      left = tmpLeft.ToArray();
-      right = tmpRight.ToArray();
-
-      tmpLeft.Clear();
-      tmpRight.Clear();
+      IsOnGround = _lastGroundTouchElapsed < GroundTouchGraceSeconds;
     }
 
-    public bool IsXBoundsAlignment()
+    private float GetAccelerationScale(AccelerationType type)
     {
-      // Determine the forward direction (X or Z axis) based on ForwardDirection rotation
-      var forwardAngle =
-        Mathf.Round(forwardDirection.eulerAngles.y / 90f) * 90f;
-      var isXBounds = Mathf.Approximately(Mathf.Abs(forwardAngle) % 180, 90);
-      return isXBounds;
-    }
-
-    public string GetPositionName(int index, int indexLength)
-    {
-      var positionName = "mid";
-      if (index == 0)
+      return type switch
       {
-        positionName = "front";
-      }
-
-      if (index == indexLength - 1)
-      {
-        positionName = "back";
-      }
-
-      return positionName;
-    }
-
-    /// <summary>
-    ///   For overriding wheels with values. Mainly for debugging
-    /// </summary>
-    [Conditional("DEBUG")]
-    private void SetOverrides()
-    {
-
-      if (Override_WheelSuspensionDistance != 0)
-      {
-        wheelSuspensionDistance = Override_WheelSuspensionDistance;
-      }
-      if (Override_TopSpeed != 0)
-      {
-        topSpeed = Override_TopSpeed;
-      }
-      if (Override_WheelBottomOffset != 0)
-      {
-        wheelBottomOffset = Override_WheelBottomOffset;
-      }
-      if (Override_WheelRadius != 0)
-      {
-        wheelRadius = Override_WheelRadius;
-      }
-
-      if (Override_WheelSpring != 0)
-      {
-        wheelSuspensionSpring = Override_WheelSpring;
-      }
-
-      var breakValue = Math.Sign(Override_IsBraking);
-      if (breakValue != 0)
-      {
-        IsBraking = breakValue == -1;
-      }
-    }
-
-    /// <summary>
-    // todo figure out why GetRelativeWheelToTreadBounds fails to align when rotating
-    /// </summary>
-    /// <param name="isLeftTread"></param>
-    /// <returns></returns>
-    public Bounds GetRelativeWheelToTreadBounds(bool isLeftTread)
-    {
-      // todo this section of code can be computed one time.
-      var treadsComponent = isLeftTread ? treadsLeftMovingComponent : treadsRightMovingComponent;
-      var treadParentPosition = treadsComponent.transform.position;
-      var treadBounds = treadsComponent.localBounds;
-      var localTreadCenter = wheelParent.InverseTransformPoint(treadBounds.center + treadParentPosition);
-
-      return new Bounds(localTreadCenter, treadBounds.size);
-    }
-
-    /// <summary>
-    ///   Generates wheel sets from a local bounds. This bounds must be local.
-    /// </summary>
-    /// TODO fix the rotated wheel issue where wheels get out of alignment for 90 degrees and -90 variants.
-    /// <param name="bounds"></param>
-    private void GenerateWheelSets(Bounds bounds)
-    {
-      if (!vehicleRootBody) return;
-      if (!wheelPrefab || !forwardDirection)
-      {
-        Debug.LogError(
-          "Bounds Transform, Forward Direction, and Wheel Set Prefab must be assigned.");
-        return;
-      }
-
-      // var isXBounds = IsXBoundsAlignment();
-      var totalWheelSets = CalculateTotalWheelSets(bounds);
-      // this is important to set before calling setter logic that may need to know how many wheels are to be added.
-      // alternative is using an allocating array. Might be cleaner.
-      totalWheels = totalWheelSets * 2;
-
-      // we fully can regenerate wheels.
-      // todo just remove the ones we no longer use
-      if (totalWheels != wheelInstances.Count || wheelColliders.Count != totalWheels)
-      {
-        Cleanup();
-      }
-
-      var wheelIndex = 0;
-
-      // var wheelLeftBounds = GetRelativeWheelToTreadBounds(isLeftTread: true);
-      // var wheelRightBounds = GetRelativeWheelToTreadBounds(isLeftTread: false);
-      // todo figure out why GetRelativeWheelToTreadBounds fails to align when rotating
-      var wheelLeftBounds = new Bounds(new Vector3(bounds.min.x, bounds.min.y + wheelRadius, bounds.center.z), treadsLeftMovingComponent.localBounds.size);
-      var wheelRightBounds = new Bounds(new Vector3(bounds.max.x + 1f, bounds.min.y + wheelRadius, bounds.center.z), treadsRightMovingComponent.localBounds.size);
-      var spacing = Mathf.Max(wheelLeftBounds.size.z - 1f, 4f) / Math.Max(totalWheelSets - 1, 1);
-
-      // Generate wheel sets dynamically
-      for (var i = 0; i < totalWheelSets; i++)
-      {
-        for (var directionIndex = 0; directionIndex < 2; directionIndex++)
-        {
-          var isLeft = directionIndex == 0;
-          GameObject wheelInstance;
-          // **Fix: Correct check for reusing existing instances**
-          if (wheelIndex < wheelInstances.Count && wheelInstances[wheelIndex] != null)
-          {
-            wheelInstance = wheelInstances[wheelIndex];
-          }
-          else
-          {
-            wheelInstance = Instantiate(wheelPrefab, treadsParent);
-            // wheelInstance = Instantiate(wheelPrefab, isLeft ?treadsLeftTransform: treadsRightTransform);
-            wheelInstances.Add(wheelInstance); // **Only add new wheels**
-          }
-          var dirName = isLeft ? "left" : "right";
-          var positionName = GetPositionName(i, totalWheelSets);
-          wheelInstance.name = $"ValheimVehicles_VehicleLand_wheel_{positionName}_{dirName}_{i}";
-
-          var treadBounds = isLeft ? wheelLeftBounds : wheelRightBounds;
-          var localPosition = GetWheelLocalPosition(wheelInstance, isLeft, i, treadBounds, spacing);
-
-          wheelInstance.transform.localPosition = localPosition;
-
-          SetWheelProperties(wheelInstance);
-
-          // **Fix: Replace instead of appending again**
-          if (wheelIndex < wheelInstances.Count)
-          {
-            wheelInstances[wheelIndex] = wheelInstance; // Replace instead of adding extra entries
-          }
-
-          wheelIndex += 1;
-        }
-      }
-    }
-
-    private int CalculateTotalWheelSets(Bounds bounds)
-    {
-      var vehicleSize = bounds.size.z; // Assuming size along the Z-axis determines length
-      var setInt = Mathf.RoundToInt(vehicleSize / wheelSetIncrement);
-      if (setInt % 2 == 0)
-      {
-        setInt += 1;
-      }
-
-      var nearestIncrement = Mathf.Clamp(setInt, minimumWheelSets, maxWheelSets);
-      return nearestIncrement;
-    }
-
-    private Bounds GetLocalMeshBounds(GameObject wheelInstance)
-    {
-      var meshCollider = wheelInstance.transform.Find("wheel_mesh/wheel_rotator").GetComponent<MeshCollider>();
-      var localBounds = meshCollider.sharedMesh.bounds; // Local-space bounds
-
-      return localBounds;
-    }
-
-    private Vector3 GetWheelLocalPosition(GameObject wheelInstance, bool isLeft, int index, Bounds treadBounds, float spacing)
-    {
-      // var meshBounds = GetLocalMeshBounds(wheelInstance);
-
-      // Convert local center to world space
-      // var worldCenter = wheelInstance.transform.TransformPoint(wheelInstance.transform.localPosition);
-
-      // Calculate local position using local bounds
-      var xPos = isLeft ? treadBounds.min.x : treadBounds.max.x;
-      var zPos = treadBounds.max.z * 0.95f - spacing * index * 0.95f;
-      var yPos = treadBounds.center.y + wheelBottomOffset;
-
-      return new Vector3(xPos, yPos, zPos);
-    }
-
-    public float GetWheelRadiusScalar()
-    {
-      if (!_isWheelsInitialized || totalWheels == 0) return 1;
-      // return 1;
-      // return wheelRadius / wheelBaseRadiusScale;
-      return 1;
-    }
-
-    private void SetWheelProperties(GameObject wheelObj)
-    {
-      if (!vehicleRootBody) return;
-      var wheelColliderTransform =
-        wheelObj.transform.Find("wheel_collider");
-      if (!wheelColliderTransform) return;
-
-      var wheelCollider = wheelColliderTransform.GetComponent<WheelCollider>();
-
-      wheelCollider.mass = wheelMass;
-      // Larger radius is required for traversing valheim terrain. Small wheels will disappear.
-      wheelCollider.radius = wheelColliderRadius;
-
-      // Dynamically adjust targetPosition based on weight & radius
-      // var massFactor = Mathf.Clamp01(vehicleRootBody.mass / 2000f); // Normalize weight influence
-      // var radiusFactor = Mathf.Clamp01(wheelColliderRadius / 1f); // Normalize wheel size influence
-
-
-      // wheelCollider.suspensionDistance = wheelColliderRadius * 2f * SuspensionDistanceMultiplier;
-      // wheelCollider.suspensionDistance = Mathf.Max(wheelColliderRadius / 2f, wheelSuspensionDistance);
-      wheelCollider.suspensionDistance = wheelSuspensionDistance;
-      wheelCollider.forceAppPointDistance = wheelColliderRadius * 2f;
-
-      // wheelCollider.wheelDampingRate = Override_wheelDampingRate;
-      var suspensionSpring = wheelCollider.suspensionSpring;
-
-      suspensionSpring.damper = wheelSuspensionSpringDamper;
-      suspensionSpring.spring = wheelSuspensionSpring;
-      suspensionSpring.targetPosition = wheelSuspensionTarget;
-
-      wheelCollider.suspensionSpring = suspensionSpring;
-
-      var wheelScalar = GetWheelRadiusScalar();
-
-      if (!Mathf.Approximately(wheelScalar, 1f))
-      {
-        // wheelVisual.transform.localScale = new Vector3(wheelScalar * wheelMeshLocalScale.x, wheelScalar * wheelMeshLocalScale.y, wheelScalar * wheelMeshLocalScale.z);
-      }
-
-      if (!wheelSyncPropertiesMap.ContainsKey(wheelCollider))
-        wheelSyncPropertiesMap.Add(wheelCollider, new WheelSyncProperties(wheelObj));
-    }
-
-    public void SyncWheelVisual(WheelCollider wheel, WheelSyncProperties wheelSyncProperties)
-    {
-      if (!_shouldSyncVisualOnCurrentFrame) return;
-
-      if (ShouldHideWheelRender)
-      {
-        wheelSyncProperties.wheelVisual.gameObject.SetActive(false);
-        return;
-      }
-      if (!ShouldHideWheelRender && !wheelSyncProperties.wheelVisual.gameObject.activeInHierarchy)
-      {
-        wheelSyncProperties.wheelVisual.gameObject.SetActive(true);
-      }
-      if (!wheelSyncProperties.wheelVisual || !wheelSyncProperties.wheelBottom || !wheelSyncProperties.wheelCenter)
-      {
-        wheelSyncPropertiesMap.Remove(wheel);
-        return;
-      }
-
-      AlignVisualWheels(wheel, wheelSyncProperties);
-      RotateOnXAxis(wheel, wheelSyncProperties.wheelVisual.transform);
-
-    }
-    /// <summary>
-    ///   Update wheel mesh positions to match the physics wheels.
-    /// </summary>
-    /// <param name="wheelRenderer"></param>
-    /// <param name="wheelCollider"></param>
-    private void SyncWheelVisualWithCollider(Transform wheelVisual, WheelCollider wheelCollider)
-    {
-      if (wheelVisual == null) return;
-      var wheelTransform = wheelVisual.transform;
-      wheelCollider.GetWorldPose(out var position, out var rotation);
-      if (ShouldSyncWheelsToCollider)
-      {
-        if (wheelRadius > 2)
-        {
-          position.y -= wheelRadius - 1;
-        }
-        wheelTransform.position = position;
-      }
-      wheelVisual.rotation = rotation;
-      RotateOnXAxis(wheelCollider, wheelVisual.transform);
-    }
-
-    private void RotateOnXAxis(WheelCollider wheelCollider,
-      Transform wheelTransform)
-    {
-      var deltaRotation = Mathf.Clamp(wheelCollider.rpm * Time.fixedDeltaTime, -359f, 359f);
-      wheelTransform.Rotate(Vector3.right,
-        deltaRotation, Space.Self);
-    }
-
-    /// <summary>
-    ///   Calculates torque values dynamically based on tank mass, wheel count, radius,
-    ///   wheelmass.
-    /// </summary>
-    public static (float Low, float Medium, float High) CalculateTorque(float tankMass, int wheelCount, float wheelRadius, float wheelMass)
-    {
-      if (wheelCount <= 0 || wheelRadius <= 0)
-      {
-        return (0f, 0f, 0f);
-      }
-
-      // Acceleration presets (m/s²)
-      var lowAcceleration = 2f;
-      var mediumAcceleration = 5f;
-      var highAcceleration = 10f;
-
-      // Compute linear force per wheel (F = ma / wheelCount)
-      var forceLow = tankMass * lowAcceleration / wheelCount;
-      var forceMedium = tankMass * mediumAcceleration / wheelCount;
-      var forceHigh = tankMass * highAcceleration / wheelCount;
-
-      // Rotational torque contribution per wheel (τ = (1/2) * M * r * a)
-      var rotationalLow = 0.5f * wheelMass * wheelRadius * lowAcceleration;
-      var rotationalMedium = 0.5f * wheelMass * wheelRadius * mediumAcceleration;
-      var rotationalHigh = 0.5f * wheelMass * wheelRadius * highAcceleration;
-
-      // Total torque = Linear Torque + Rotational Torque
-      var torqueLow = forceLow * wheelRadius + rotationalLow;
-      var torqueMedium = forceMedium * wheelRadius + rotationalMedium;
-      var torqueHigh = forceHigh * wheelRadius + rotationalHigh;
-
-      return (torqueLow, torqueMedium, torqueHigh);
-    }
-
-    private void UpdateSteeringTreadDirectionVisuals()
-    {
-      switch (inputTurnForce)
-      {
-        case > 0.2f:
-          isLeftForward = isForward;
-          isRightForward = !isForward;
-          break;
-        case < -0.2f:
-          isLeftForward = !isForward;
-          isRightForward = isForward;
-          break;
-        default:
-          isLeftForward = isForward;
-          isRightForward = isForward;
-          break;
-      }
-
-      treadsLeftMovingComponent.isForward = isLeftForward;
-      treadsRightMovingComponent.isForward = isRightForward;
-    }
-
-    /// <summary>
-    ///   This is the absolute max value torque has before it is clamped both positive
-    ///   and negative.
-    /// </summary>
-    public void UpdateMaxRPM()
-    {
-      var maxTotalTorque = baseMotorTorque * baseTorque * 4;
-      MaxWheelRPM = Mathf.Clamp(Mathf.Abs(maxTotalTorque), 1000f, 5000f);
-    }
-    // Adjusts hillFactor based on the tank's forward Y component.
-    // Flat (forward.y == 0) results in hillFactor = 1.
-    // Uphill (forward.y positive) scales hillFactor up to 3.
-    // Downhill (forward.y negative) scales hillFactor down to 0.5.
-    private void AdjustForHills()
-    {
-      // The Y component of the forward vector represents the vertical inclination.
-      var slope = transform.forward.y;
-      // maxSlope defines the normalized forward.y value at which we consider the hill "steep" (about 30°).
-      var maxSlope = 0.5f;
-      if (slope > 0)
-      {
-        hillFactor = Mathf.Lerp(1f, maxHillFactorMultiplier, Mathf.Clamp01(slope / maxSlope));
-      }
-      else
-      {
-        hillFactor = Mathf.Lerp(1f, 1f / maxHillFactorMultiplier, Mathf.Clamp01(-slope / maxSlope));
-      }
-
-      if (Mathf.Abs(slope) > 0.3f)
-      {
-        vehicleRootBody.AddForceAtPosition(vehicleRootBody.transform.up * Gravity, vehicleRootBody.worldCenterOfMass, ForceMode.Acceleration);
-      }
-    }
-
-    // private void AdjustForHills()
-    // {
-    //   // Get forward direction of the tank
-    //   var tankForward = transform.forward;
-    //
-    //   // Project forward vector onto XZ plane to get horizontal direction
-    //   var flatForward = Vector3.ProjectOnPlane(tankForward, Vector3.up).normalized;
-    //
-    //   // Calculate the pitch angle using dot product
-    //   var slopeFactor = Vector3.Dot(tankForward, flatForward);
-    //
-    //   // Adjust hill factor: Steeper inclines require more torque
-    //   hillFactor = Mathf.Clamp(1f + (1f - slopeFactor), 0.5f, 2f);
-    // }
-
-    private float GetTankSpeed()
-    {
-      return Vector3.Dot(vehicleRootBody.linearVelocity, transform.forward);
-    }
-
-
-    private void ApplyBrakes()
-    {
-      if (wheelColliders.Count <= 0) return;
-      currentSpeed = GetTankSpeed();
-      var brakeForce = vehicleRootBody.mass * Mathf.Abs(currentSpeed) / 2f; // Stops in ~2s
-
-      foreach (var wheel in wheelColliders)
-      {
-        // Apply braking force based on current torque & momentum
-        wheel.brakeTorque = Mathf.Max(brakeForce, (useDirectTreadPhysics ? Mathf.Abs(defaultBreakForce * baseAcceleration) : Mathf.Abs(wheel.motorTorque)) * 1.5f);
-        wheel.motorTorque = 0; // Cut off power when braking
-      }
-    }
-
-    private void ApplyDownforce()
-    {
-      vehicleRootBody.AddForce(-Vector3.up * Gravity, ForceMode.Acceleration);
-    }
-
-    private void ApplyFrictionToWheelCollider(WheelCollider wheel, float speed)
-    {
-      var frictionMultiplier = Mathf.Clamp(10f / wheelColliders.Count, 0.7f, 1.5f);
-
-      var adjustedStiffness = Mathf.Lerp(2.5f, 3.5f, speed / topSpeed); // Adaptive stiffness based on speed
-
-      currentForwardFriction = new WheelFrictionCurve
-      {
-        extremumSlip = 0.4f * frictionMultiplier,
-        extremumValue = 1.5f * frictionMultiplier,
-        asymptoteSlip = 2.5f * frictionMultiplier, // Increased to prevent excessive grip switching
-        asymptoteValue = 0.5f * frictionMultiplier,
-        stiffness = adjustedStiffness // Adjust dynamically instead of hardcoding 10f
+        AccelerationType.Stop => 0f,
+        AccelerationType.Low => 0.4f,
+        AccelerationType.Medium => 0.7f,
+        AccelerationType.High => 1f,
+        _ => 0.7f
       };
-
-      currentSidewaysFriction = new WheelFrictionCurve
-      {
-        extremumSlip = (IsTurningInPlace ? 0.5f : 0.4f) * frictionMultiplier,
-        extremumValue = (IsTurningInPlace ? 0.7f : 0.8f) * frictionMultiplier,
-        asymptoteSlip = (IsTurningInPlace ? 1.8f : 2.0f) * frictionMultiplier,
-        asymptoteValue = (IsTurningInPlace ? 0.5f : 0.6f) * frictionMultiplier,
-        stiffness = IsTurningInPlace ? 1.8f : Mathf.Lerp(2f, 2.5f, speed / topSpeed)
-      };
-
-      wheel.forwardFriction = currentForwardFriction;
-      wheel.sidewaysFriction = currentSidewaysFriction;
     }
 
-
-    private void ApplyFrictionValuesToAllWheels()
-    {
-      if (!vehicleRootBody) return;
-      wheelColliders.ForEach(x => ApplyFrictionToWheelCollider(x, currentSpeed));
-    }
-
-    private void AdjustSuspensionForTank()
-    {
-      var isApplyingForce = Mathf.Abs(inputMovement) > 0.1f || Mathf.Abs(inputTurnForce) > 0.1f;
-      var isMoving = vehicleRootBody.linearVelocity.magnitude > 0.5f;
-
-      // If the tank is applying force but isn't moving, increase stuck timer
-      if (isApplyingForce && !isMoving)
-      {
-        stuckTime += Time.fixedDeltaTime;
-      }
-      else
-      {
-        stuckTime = 0f; // Reset if moving
-      }
-
-      var stuckMultiplier = Mathf.Clamp01(stuckTime / 3f); // Smooth transition over 3 seconds
-
-      foreach (var wheel in wheelColliders)
-      {
-        var suspensionSpring = wheel.suspensionSpring;
-
-        // wheel.transform.localPosition = Vector3.Lerp(wheel.transform.localPosition, new Vector3(0, Mathf.Lerp(0, -0.5f, stuckMultiplier), 0), Time.fixedDeltaTime); // Move wheels down slightly
-        // Adjust spring force dynamically based on mass
-        suspensionSpring.spring = Mathf.Clamp(vehicleRootBody.mass * 10f, 35000f, 50000f);
-        suspensionSpring.damper = Mathf.Lerp(1500f, 1500f, Mathf.Clamp01(vehicleRootBody.linearVelocity.magnitude / maxSpeed));
-
-        // Lower targetPosition when stuck to push wheels down for more grip
-        // suspensionSpring.targetPosition = Mathf.Lerp(suspensionSpring.targetPosition, Mathf.Lerp(0.1f, 0.5f, stuckMultiplier), Time.fixedDeltaTime);
-
-        wheel.suspensionSpring = suspensionSpring;
-
-      }
-    }
-
-    private void HandleObstacleClimb()
-    {
-      // RaycastHit hit;
-      // frontPosition = transform.position + transform.forward * 2f + Vector3.up * 1f; // Store position for Gizmos
-
-      // var hasHit = Physics.Raycast(frontPosition, transform.forward, out hit, 2f);
-      // Detect if the front of the tank is hitting an obstacle
-      // if (hasHit)
-      // {
-      // var climbForce = transform.up * 10000f + transform.forward * 5000f;
-      // vehicleRootBody.AddForceAtPosition(climbForce, frontPosition, ForceMode.Force);
-      // }
-    }
-
-    // private void ApplyTorque(float move, float turn)
-    // {
-    //   if (Mathf.Approximately(move, 0f) && Mathf.Approximately(turn, 0f))
-    //   {
-    //     StopWheels();
-    //     return;
-    //   }
-    //
-    //   var lerpedTurnFactor = Mathf.Lerp(lerpedTurnFactor, Mathf.Abs(turn), Time.fixedDeltaTime * 5f);
-    //   var speed = vehicleRootBody.linearVelocity.magnitude;
-    //   var angularSpeed = Mathf.Abs(vehicleRootBody.angularVelocity.y); // Get current rotation speed
-    //
-    //   var targetSpeed = move * maxSpeed;
-    //   var torqueBoost = hillFactor * uphillTorqueMultiplier;
-    //
-    //   // if (move > 0 && Vector3.Dot(vehicleRootBody.linearVelocity, transform.forward) < 0)
-    //   // {
-    //   //   torqueBoost += downhillResistance;
-    //   // }
-    //
-    //   if (Mathf.Abs(speed - targetSpeed) < 1f)
-    //   {
-    //     torqueBoost *= 0.85f;
-    //   }
-    //
-    //   var minTorque = baseTorque * 0.2f;
-    //   var forwardTorque = Mathf.Max((baseTorque + torqueBoost) * move, minTorque);
-    //
-    //   var leftSideTorque = forwardTorque;
-    //   var rightSideTorque = forwardTorque;
-    //
-    //   // **New: Apply Turn Boost if Rotating in Place**
-    //   if (Mathf.Approximately(move, 0f) && Mathf.Abs(turn) > 0f)
-    //   {
-    //     // var maxTurnSpeed = 1.5f; // Max angular velocity before limiting turn boost
-    //     var turnBoost = Mathf.Clamp(maxRotationSpeed - angularSpeed, 1f, maxRotationSpeed); // Increase torque at low speeds
-    //
-    //     leftSideTorque = turn > 0 ? -baseTorque * turnBoost : baseTorque * turnBoost;
-    //     rightSideTorque = turn > 0 ? baseTorque * turnBoost : -baseTorque * turnBoost;
-    //   }
-    //   else if (Mathf.Abs(turn) >= 0.5f)
-    //   {
-    //     leftSideTorque = turn > 0 ? baseTorque : -baseTorque;
-    //     rightSideTorque = turn > 0 ? -baseTorque : baseTorque;
-    //   }
-    //   else if (turn != 0)
-    //   {
-    //     var turnStrength = Mathf.Lerp(1f, 0.6f, lerpe);
-    //
-    //     if (turn > 0)
-    //     {
-    //       leftSideTorque *= 1f;
-    //       rightSideTorque *= turnStrength;
-    //     }
-    //     else
-    //     {
-    //       leftSideTorque *= turnStrength;
-    //       rightSideTorque *= 1f;
-    //     }
-    //   }
-    //
-    //   // Apply torques to wheels
-    //   foreach (var leftWheel in left)
-    //   {
-    //     leftWheel.brakeTorque = 0f;
-    //     leftWheel.motorTorque = leftSideTorque;
-    //   }
-    //   foreach (var rightWheel in right)
-    //   {
-    //     rightWheel.brakeTorque = 0f;
-    //     rightWheel.motorTorque = rightSideTorque;
-    //   }
-    // }
-
-    public void StopWheels()
-    {
-      currentSpeed = GetTankSpeed();
-      var engineBrakeForce = vehicleRootBody.mass * Mathf.Abs(currentSpeed) / 5f; // Lighter braking effect
-
-      foreach (var wheel in wheelColliders)
-      {
-        wheel.motorTorque = 0f; // No acceleration
-        wheel.brakeTorque = engineBrakeForce; // Light braking
-      }
-    }
-
-    public void SetInputMovement(float val)
-    {
-      if (accelerationType == AccelerationType.Stop || IsBraking || Mathf.Approximately(val, 0f))
-      {
-        inputMovement = 0;
-        return;
-      }
-      inputMovement = val;
-    }
-
-    /// <summary>
-    ///   Todo add a enum for directional forces. IE Forward, Reverse, Stop.
-    /// </summary>
-    /// <param name="acceleration"></param>
-    /// <param name="isMovingForward"></param>
     public void UpdateAccelerationValues(AccelerationType acceleration, bool isMovingForward = true)
     {
-      if (!vehicleRootBody) return;
-      (lowTorque, mediumTorque, highTorque) = CalculateTorque(vehicleRootBody.mass, wheelInstances.Count, wheelRadius, wheelMass);
-
       accelerationType = acceleration;
-      baseTorque = acceleration switch
-      {
-        AccelerationType.High => highTorque,
-        AccelerationType.Medium => mediumTorque,
-        AccelerationType.Low => lowTorque,
-        AccelerationType.Stop => 0,
-        _ => 0
-      };
+      _currentAccelerationScale = GetAccelerationScale(acceleration);
+    }
 
-      baseAcceleration = acceleration switch
+    public void SetInputMovement(float value)
+    {
+      if (Mathf.Abs(value) < InputDeadZone)
       {
-        AccelerationType.High => highAcceleration,
-        AccelerationType.Medium => mediumAcceleration,
-        AccelerationType.Low => lowAcceleration,
-        AccelerationType.Stop => 0,
-        _ => 0
-      };
-
-      isForward = isMovingForward;
-
-      if (!IsUsingEngine)
-      {
-        wheelColliders.ForEach(x =>
-        {
-          x.brakeTorque = 50f;
-        });
+        inputMovement = 0f;
+        return;
       }
-      else
-      {
-        wheelColliders.ForEach(x =>
-        {
-          x.brakeTorque = 0f;
-        });
-      }
+
+      inputMovement = Mathf.Clamp(value, -1f, 1f);
     }
 
     [UsedImplicitly]
-    public void SetTurnInput(float val)
+    public void SetTurnInput(float value)
     {
-      inputTurnForce = val;
-    }
+      if (Mathf.Abs(value) < InputDeadZone)
+      {
+        inputTurnForce = 0f;
+        return;
+      }
 
-    private void OnBrakingUpdate(bool currentVal)
-    {
-      if (treadPhysicMaterial)
-      {
-        treadPhysicMaterial.dynamicFriction = currentVal ? 0.5f : dynamicFriction;
-        treadPhysicMaterial.staticFriction = currentVal ? 0.5f : staticFriction;
-      }
-      if (!currentVal)
-      {
-        wheelColliders.ForEach(x => x.brakeTorque = 0f);
-      }
+      inputTurnForce = Mathf.Clamp(value, -1f, 1f);
     }
 
     [UsedImplicitly]
@@ -1604,83 +371,265 @@ namespace ValheimVehicles.SharedScripts
     }
 
     [UsedImplicitly]
-    public void SetBrake(bool val)
+    public void SetBrake(bool value)
     {
-      IsBraking = val;
+      IsBraking = value;
     }
 
-    /// <summary>
-    ///   This will need logic to check if the player is the owner and if the player is
-    ///   controlling the vehicle actively.
-    ///   - To be called within VehicleMovementController.
-    /// </summary>
+    private float GetCurrentTrackWidth()
+    {
+      if (!treadsLeftTransform || !treadsRightTransform) return Mathf.Max(currentVehicleFrameBounds.size.x, 1.5f);
+      return Mathf.Max(Vector3.Distance(treadsLeftTransform.position, treadsRightTransform.position), minTreadDistances);
+    }
+
+    private float GetPointForwardSpeed(Transform pointTransform)
+    {
+      var pointVelocity = vehicleRootBody.GetPointVelocity(pointTransform.position);
+      return Vector3.Dot(pointVelocity, transform.forward);
+    }
+
+    private float GetPointSideSpeed(Transform pointTransform)
+    {
+      var pointVelocity = vehicleRootBody.GetPointVelocity(pointTransform.position);
+      return Vector3.Dot(pointVelocity, transform.right);
+    }
+
+    private void ApplyTrackForceAtTread(Transform treadTransform, float targetSpeed, float maxAccel, bool isLeftTread)
+    {
+      var pointForwardSpeed = GetPointForwardSpeed(treadTransform);
+      var pointSideSpeed = GetPointSideSpeed(treadTransform);
+
+      var speedError = targetSpeed - pointForwardSpeed;
+      var desiredForwardAccel = Mathf.Clamp(speedError * driveResponse, -maxAccel, maxAccel);
+
+      if (Mathf.Approximately(targetSpeed, 0f) && !IsBraking)
+      {
+        desiredForwardAccel += -pointForwardSpeed * rollingResistance;
+      }
+
+      if (IsBraking)
+      {
+        desiredForwardAccel = Mathf.Clamp(-pointForwardSpeed * driveResponse, -maxBrakeAcceleration, maxBrakeAcceleration);
+      }
+
+      var desiredSideAccel = Mathf.Clamp(-pointSideSpeed * driveResponse, -lateralGripAcceleration, lateralGripAcceleration);
+
+      if (IsBraking)
+      {
+        desiredSideAccel = Mathf.Clamp(-pointSideSpeed * driveResponse, -brakingGripAcceleration, brakingGripAcceleration);
+      }
+
+      var forwardForce = transform.forward * (desiredForwardAccel * vehicleRootBody.mass * 0.5f);
+      var sideForce = transform.right * (desiredSideAccel * vehicleRootBody.mass * 0.5f);
+      var downForce = -transform.up * (groundedDownforce * vehicleRootBody.mass * 0.5f);
+
+      vehicleRootBody.AddForceAtPosition(forwardForce + sideForce + downForce, treadTransform.position, ForceMode.Force);
+
+      if (isLeftTread)
+      {
+        currentLeftForce = Vector3.Dot(forwardForce, transform.forward);
+      }
+      else
+      {
+        currentRightForce = Vector3.Dot(forwardForce, transform.forward);
+      }
+    }
+
+    private void ApplyInPlaceTurnDriftCorrection()
+    {
+      var localVelocity = transform.InverseTransformDirection(vehicleRootBody.linearVelocity);
+      var planarVelocity = new Vector3(localVelocity.x, 0f, localVelocity.z);
+      var correction = -transform.TransformDirection(planarVelocity) * (vehicleRootBody.mass * inPlaceTranslationDamping);
+
+      vehicleRootBody.AddForce(correction, ForceMode.Force);
+    }
+
+    private void ApplyAngularStability(float desiredYawRateDegrees)
+    {
+      var localAngularVelocity = transform.InverseTransformDirection(vehicleRootBody.angularVelocity);
+      var currentYawRate = localAngularVelocity.y * Mathf.Rad2Deg;
+      var yawError = desiredYawRateDegrees - currentYawRate;
+
+      if (Mathf.Abs(inputTurnForce) < 0.05f)
+      {
+        var yawCorrection = -currentYawRate * yawDamping;
+        vehicleRootBody.AddRelativeTorque(Vector3.up * (yawCorrection * Mathf.Deg2Rad), ForceMode.Acceleration);
+      }
+      else
+      {
+        var yawAssist = yawError * 0.08f;
+        vehicleRootBody.AddRelativeTorque(Vector3.up * (yawAssist * Mathf.Deg2Rad), ForceMode.Acceleration);
+      }
+
+      var rollPitch = new Vector3(localAngularVelocity.x, 0f, localAngularVelocity.z);
+      vehicleRootBody.AddRelativeTorque(-rollPitch * rollPitchStabilization, ForceMode.Acceleration);
+    }
+
+    private void ApplyAirControl()
+    {
+      var localAngularVelocity = transform.InverseTransformDirection(vehicleRootBody.angularVelocity);
+      vehicleRootBody.AddRelativeTorque(-localAngularVelocity * airborneAngularDamping, ForceMode.Acceleration);
+      vehicleRootBody.AddForce(-transform.up * (airborneDownforce * vehicleRootBody.mass), ForceMode.Force);
+    }
+
+    private void UpdateTrackedMovement()
+    {
+      if (!IsVehicleReady) return;
+
+      var movementInput = Mathf.Clamp(inputMovement, -1f, 1f);
+      var turnInput = Mathf.Clamp(inputTurnForce, -1f, 1f);
+
+      if (_currentAccelerationScale <= 0f)
+      {
+        movementInput = 0f;
+        turnInput = 0f;
+      }
+
+      IsTurningInPlace = Mathf.Abs(movementInput) < 0.05f && Mathf.Abs(turnInput) > 0.05f;
+
+      currentTrackWidth = GetCurrentTrackWidth();
+
+      var effectiveForwardSpeed = movementInput >= 0f ? maxForwardSpeed : maxReverseSpeed;
+      var desiredLinearSpeed = movementInput * effectiveForwardSpeed;
+
+      var desiredYawRate = IsTurningInPlace
+        ? turnInput * maxNeutralTurnRate
+        : turnInput * maxMovingTurnRate;
+
+      var desiredYawRateRad = desiredYawRate * Mathf.Deg2Rad;
+      var halfTrackWidth = currentTrackWidth * 0.5f;
+
+      currentLeftTargetSpeed = desiredLinearSpeed - desiredYawRateRad * halfTrackWidth;
+      currentRightTargetSpeed = desiredLinearSpeed + desiredYawRateRad * halfTrackWidth;
+
+      var forwardAccel = maxForwardAcceleration * _currentAccelerationScale;
+      var reverseAccel = maxReverseAcceleration * _currentAccelerationScale;
+
+      var leftAccel = currentLeftTargetSpeed >= 0f ? forwardAccel : reverseAccel;
+      var rightAccel = currentRightTargetSpeed >= 0f ? forwardAccel : reverseAccel;
+
+      ApplyTrackForceAtTread(treadsLeftTransform, currentLeftTargetSpeed, leftAccel, true);
+      ApplyTrackForceAtTread(treadsRightTransform, currentRightTargetSpeed, rightAccel, false);
+
+      if (IsTurningInPlace)
+      {
+        ApplyInPlaceTurnDriftCorrection();
+      }
+
+      ApplyAngularStability(desiredYawRate);
+
+      currentForwardSpeed = Vector3.Dot(vehicleRootBody.linearVelocity, transform.forward);
+      currentYawRateDegrees = transform.InverseTransformDirection(vehicleRootBody.angularVelocity).y * Mathf.Rad2Deg;
+      currentLocalPlanarVelocity = transform.InverseTransformDirection(vehicleRootBody.linearVelocity);
+      currentLocalPlanarVelocity.y = 0f;
+    }
+
+    private void UpdateTreadVisuals()
+    {
+      if (!HasVisualTreadAnimation) return;
+
+      if (treadsLeftMovingComponent)
+      {
+        treadsLeftMovingComponent.isForward = currentLeftTargetSpeed >= 0f;
+        treadsLeftMovingComponent.SetSpeed(Mathf.Abs(currentLeftTargetSpeed));
+      }
+
+      if (treadsRightMovingComponent)
+      {
+        treadsRightMovingComponent.isForward = currentRightTargetSpeed >= 0f;
+        treadsRightMovingComponent.SetSpeed(Mathf.Abs(currentRightTargetSpeed));
+      }
+    }
+
+    public void VehicleMovementFixedUpdateOwnerClient()
+    {
+      if (!IsVehicleReady) return;
+      if (vehicleRootBody.isKinematic) return;
+
+      UpdateIsOnGround();
+
+      if (!IsOnGround)
+      {
+        ApplyAirControl();
+        UpdateTreadVisuals();
+        return;
+      }
+
+      UpdateTrackedMovement();
+      UpdateTreadVisuals();
+    }
+
+    public void VehicleMovementFixedUpdateAllClients()
+    {
+      UpdateTreadVisuals();
+    }
+
     public void UpdateControls()
     {
       if (!UseInputControls) return;
 
 #if !VALHEIM
-      var isBrakingPressed = Input.GetKeyDown(KeyCode.Space);
-      if (!isBrakingPressed && isBrakePressedDown)
-      {
-        isBrakePressedDown = false;
-      }
-      if (isBrakingPressed && !isBrakePressedDown)
+      var brakePressed = Input.GetKeyDown(KeyCode.Space);
+      if (brakePressed && !_isBrakePressedDown)
       {
         ToggleBrake();
-        isBrakePressedDown = true;
-      }
-      var inputTurn = Input.GetAxis("Horizontal");
-      inputTurnForce += inputTurn * Time.deltaTime;
-      if (Mathf.Approximately(inputTurn, 0))
-      {
-        inputTurnForce = 0;
+        _isBrakePressedDown = true;
       }
 
-      var inputVertical = Input.GetAxis("Vertical");
-      SetInputMovement(inputVertical);
-      UpdateAccelerationValues(accelerationType, inputMovement >= 0);
+      if (Input.GetKeyUp(KeyCode.Space))
+      {
+        _isBrakePressedDown = false;
+      }
+
+      SetTurnInput(Input.GetAxisRaw("Horizontal"));
+      SetInputMovement(Input.GetAxisRaw("Vertical"));
+
+      if (Mathf.Abs(inputMovement) > InputDeadZone || Mathf.Abs(inputTurnForce) > InputDeadZone)
+      {
+        IsBraking = false;
+      }
+
+      UpdateAccelerationValues(accelerationType, inputMovement >= 0f);
 #endif
     }
 
-    // We run this only in Unity Editor
 #if !VALHEIM
     private void Update()
     {
       if (!Application.isPlaying) return;
       UpdateControls();
-      SetOverrides();
     }
 
     private void FixedUpdate()
     {
       if (!Application.isPlaying) return;
 
-      // should not be called outside of editor. These should be optimized outside of a fixed update.
-      UpdateMaxRPM();
-      UpdateAccelerationValues(accelerationType, inputMovement >= 0);
+      if (!IsVehicleReady)
+      {
+        if (treadsLeftTransform && treadsRightTransform)
+        {
+          _isVehicleInitialized = true;
+        }
+      }
+
+      VehicleMovementFixedUpdateOwnerClient();
+      VehicleMovementFixedUpdateAllClients();
+    }
+
+    private void OnDrawGizmosSelected()
+    {
+      if (!DrawDebug) return;
+
+      Gizmos.color = Color.cyan;
+      if (treadsLeftTransform) Gizmos.DrawSphere(treadsLeftTransform.position, 0.15f);
+      if (treadsRightTransform) Gizmos.DrawSphere(treadsRightTransform.position, 0.15f);
+
+      Gizmos.color = Color.green;
+      Gizmos.DrawLine(transform.position, transform.position + transform.forward * 2f);
+
+      Gizmos.color = Color.red;
+      Gizmos.DrawLine(transform.position, transform.position + transform.right * 2f);
     }
 #endif
-  }
-
-  public struct WheelSyncProperties
-  {
-    public Transform wheelBottom;
-    public Transform wheelCenter;
-    public Transform wheelVisual;
-    public Vector3 wheelMeshScale;
-
-    public WheelSyncProperties(GameObject wheelObj)
-    {
-      wheelVisual =
-        wheelObj.transform.Find("wheel_mesh");
-      wheelBottom =
-        wheelObj.transform.Find("bottom_point");
-      wheelCenter =
-        wheelObj.transform.Find("center_point");
-
-      var meshFilter = wheelVisual.Find("wheel_rotator").GetComponent<MeshFilter>();
-      var worldScale = Vector3.Scale(meshFilter.sharedMesh.bounds.size, meshFilter.transform.lossyScale);
-      wheelMeshScale = worldScale;
-    }
   }
 }
