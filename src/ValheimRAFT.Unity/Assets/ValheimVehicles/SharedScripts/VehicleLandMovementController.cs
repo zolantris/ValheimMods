@@ -151,7 +151,7 @@ namespace ValheimVehicles.SharedScripts
 
     public BasePiecesController? pieceController;
 
-    private bool _isBraking;
+    [SerializeField] private bool _isBraking;
     private bool _isTreadsInitialized;
     private bool _isVehicleInitialized;
     private bool _isBrakePressedDown;
