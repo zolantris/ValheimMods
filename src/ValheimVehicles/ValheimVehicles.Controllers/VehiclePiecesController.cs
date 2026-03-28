@@ -511,8 +511,10 @@
       StartClientServerUpdaters();
     }
 
-    private void OnEnable()
+    public override void OnEnable()
     {
+      base.OnEnable();
+
       HasRunCleanup = false;
       MonoUpdaterInstances.Add(this);
       InitializationTimer.Restart();

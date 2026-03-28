@@ -4143,6 +4143,9 @@ MonoBehaviour:
   pieceDataChangeIndex: 0
   m_convexHullJobHandler: {fileID: 0}
   selectedHullGenerationMode: 1
+  enableOriginRecentering: 1
+  recenterOnlyXZ: 1
+  originShiftMinDistance: 0.01
 --- !u!114 &1246876116
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4301,7 +4304,7 @@ MonoBehaviour:
   basePiecesController: {fileID: 1246876114}
   centerOfMassOffset: -4
   cameraTransform: {fileID: 2010887271}
-  hasCalledFirstGenerate: 1
+  hasCalledFirstGenerate: 0
   prefabFloorPiece: {fileID: 7703310815849067777, guid: 3c942f23fd2b53c42b0e3c4adaacbdbd, type: 3}
   prefabWallPiece: {fileID: 823324547598808604, guid: d1dfb42f9ef9399439623ffa5432b3ef, type: 3}
   vehiclePiecesObj: {fileID: 1246876110}
@@ -5213,15 +5216,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7129448049700917872, guid: 699de6175e029004e8ce4d6a3873c281, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 2.125
+      value: 0.92
       objectReference: {fileID: 0}
     - target: {fileID: 7129448049700917872, guid: 699de6175e029004e8ce4d6a3873c281, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0
+      value: -0.61
       objectReference: {fileID: 0}
     - target: {fileID: 7129448049700917872, guid: 699de6175e029004e8ce4d6a3873c281, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 2
+      value: 0.99
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -7241,7 +7244,7 @@ Transform:
   m_GameObject: {fileID: 4499314200508571651}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: -0.25, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -7408,9 +7411,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dea12cabaab3d264285d3dc11b245d8a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  inputMovement: 0
-  inputTurnForce: 0.5
-  UseInputControls: 0
+  inputMovement: -0.1
+  inputTurnForce: 0
+  UseInputControls: 1
   IsOnGround: 0
   accelerationType: 1
   steeringType: 0

@@ -174,7 +174,6 @@ namespace ValheimVehicles.SharedScripts
       if (!hasCalledFirstGenerate || HasResyncFixedUpdate && CanRunGenerate)
       {
         Generate();
-        // movementPiecesController.RebuildBounds();
         hasCalledFirstGenerate = true;
       }
     }
@@ -302,6 +301,9 @@ namespace ValheimVehicles.SharedScripts
         vehicleLandMovementController.Initialize(bounds);
       }
 
+      basePiecesController.RebuildBounds();
+
+
       var colliders = PiecesParentObj.GetComponentsInChildren<Collider>();
 
       foreach (var a in colliders)
@@ -330,7 +332,6 @@ namespace ValheimVehicles.SharedScripts
           Physics.IgnoreCollision(a, b);
         }
       }
-      // PhysicUtils.IgnoreCollisionsWithinRoot(convexHullParentGameObject.transform, convexHullParentGameObject.transform.root, colliders);
     }
 
     private void DrawSphere(Vector3 center, float radius)
