@@ -9,6 +9,10 @@
         <NormalizedConfiguration Condition="'$(IsRelease)' != 'true'">Debug</NormalizedConfiguration>
     </PropertyGroup>
 
+    <PropertyGroup>
+        <DefineConstants>$(DefineConstants);EXTERNAL_UNITY</DefineConstants>
+    </PropertyGroup>
+
     <PropertyGroup Label="Overrides for MSBuild">
         <BaseOutputPath>$(SolutionDir)Build\bin\</BaseOutputPath>
         <BaseIntermediateOutputPath>$(SolutionDir)Build\obj\</BaseIntermediateOutputPath>

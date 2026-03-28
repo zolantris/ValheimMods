@@ -5100,11 +5100,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 370483867695338920, guid: 699de6175e029004e8ce4d6a3873c281, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 67.6
+      value: 52.3
       objectReference: {fileID: 0}
     - target: {fileID: 370483867695338920, guid: 699de6175e029004e8ce4d6a3873c281, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 114.625
+      value: 147.4
       objectReference: {fileID: 0}
     - target: {fileID: 370483867695338920, guid: 699de6175e029004e8ce4d6a3873c281, type: 3}
       propertyPath: m_LocalRotation.w
@@ -7227,7 +7227,7 @@ Transform:
   m_GameObject: {fileID: 8225528950328919720}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 197.555, y: 67.6, z: 114.625}
+  m_LocalPosition: {x: 197.555, y: 52.3, z: 147.4}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -7475,7 +7475,14 @@ MonoBehaviour:
   uphillAccelerationBoost: 18
   antiReverseAcceleration: 18
   downhillOverspeedBrakeAcceleration: 12
+  idlePlanarSnapSpeed: 0.08
+  idleAngularSnapSpeed: 0.04
+  idleHoldYawDamping: 8
+  idleSlopeStickForce: 2.5
+  IsBrakeOverride: 0
+  IsBreakOverride_Value: 0
   pieceController: {fileID: 1246876114}
+  _isBraking: 0
 --- !u!1 &8225528950328919720
 GameObject:
   m_ObjectHideFlags: 0

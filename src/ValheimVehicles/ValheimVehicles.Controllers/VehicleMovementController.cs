@@ -2078,7 +2078,7 @@
     public void InitLandVehicleWheels()
     {
       if (LandMovementController == null || PiecesController == null) return;
-      if (LandMovementController.wheelColliders.Count == 0)
+      if (LandMovementController.treadsLeftMovingComponent == null | LandMovementController.treadsRightMovingComponent == null)
       {
         m_body.Sleep();
         m_body.isKinematic = true;
@@ -2172,7 +2172,7 @@
       var isForward = VehicleSpeed != Ship.Speed.Back;
       var landInputMovementMultiplier = GetLandVehicleSpeedInput();
       LandMovementController!.inputMovement = landInputMovementMultiplier;
-      if (landSpeed != LandMovementController!.accelerationType || LandMovementController.isForward != isForward)
+      if (landSpeed != LandMovementController!.accelerationType)
       {
         LandMovementController.forwardDirection = ShipDirection;
         LandMovementController.UpdateAccelerationValues(landSpeed, isForward);
