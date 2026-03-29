@@ -1079,7 +1079,11 @@ public class ShipHullPrefabRegistry : RegisterPrefab<ShipHullPrefabRegistry>
       // TODO After 3.8.0 remove this. It was added for beta compatibility to 3.7.x
       PrefabRegistryController.AddPrefabAlias(assetName, prefabName);
 
-      var icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(originalAssetName);
+      var iconAssetName = isInverse
+        ? assetName
+        : originalAssetName;
+
+      var icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(iconAssetName);
 
       if (!icon)
       {
@@ -1248,7 +1252,8 @@ public class ShipHullPrefabRegistry : RegisterPrefab<ShipHullPrefabRegistry>
         for (var col = 0; col < width; col++)
         {
           var sourceIndex = row * width + col;
-          var flippedIndex = row * width + (width - 1 - col);
+          var flippedRow = height - 1 - row;
+          var flippedIndex = flippedRow * width + col;
           flippedPixels[flippedIndex] = sourcePixels[sourceIndex];
         }
       }
@@ -1262,8 +1267,8 @@ public class ShipHullPrefabRegistry : RegisterPrefab<ShipHullPrefabRegistry>
       flippedTexture.Apply(false, false);
 
       var normalizedPivot = new Vector2(
-        1f - sourceSprite.pivot.x / sourceSprite.rect.width,
-        sourceSprite.pivot.y / sourceSprite.rect.height);
+        sourceSprite.pivot.x / sourceSprite.rect.width,
+        1f - sourceSprite.pivot.y / sourceSprite.rect.height);
 
       return Sprite.Create(
         flippedTexture,
@@ -1280,6 +1285,7 @@ public class ShipHullPrefabRegistry : RegisterPrefab<ShipHullPrefabRegistry>
       return sourceSprite;
     }
   }
+
   private static Texture2D TryCreateReadableTexture(Texture2D sourceTexture)
   {
     if (!sourceTexture)

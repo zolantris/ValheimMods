@@ -12,6 +12,8 @@ public static class WorldSessionState
     _activeWorldKey = 0L;
   }
 
+  public static bool canClearWorldScopeState = false;
+
   public static void EnsureWorldScope(long newWorldKey)
   {
     if (newWorldKey == 0)
@@ -35,6 +37,7 @@ public static class WorldSessionState
   /// 
   private static void ClearWorldScopedState()
   {
+    if (!canClearWorldScopeState) return;
     ZdoWatchController.Instance.Reset();
     VehicleManager.VehicleInstances.Clear();
   }

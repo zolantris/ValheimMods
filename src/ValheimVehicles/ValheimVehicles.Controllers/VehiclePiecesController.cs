@@ -211,6 +211,9 @@
     public readonly Dictionary<ZDOID, EffectArea>
       m_vehicleBurningEffectAreas = new();
 
+    public readonly List<SwivelComponentBridge>
+      m_swivelComponentBridgePieces = new();
+
 
     private Coroutine? _bedUpdateCoroutine;
 
@@ -662,8 +665,14 @@
 
     public void InitSwivelController(SwivelComponentBridge swivelComponentBridge)
     {
+      m_swivelComponentBridgePieces.Add(swivelComponentBridge);
       swivelComponentBridge.m_vehiclePiecesController = this;
       swivelComponentBridge.StartActivatePendingSwivelPieces();
+    }
+
+    public void RemoveSwivelController(SwivelComponentBridge swivelComponentBridge)
+    {
+      m_swivelComponentBridgePieces.Remove(swivelComponentBridge);
     }
 
     public void RemovePiece(ZNetView netView)
@@ -806,6 +815,9 @@
         if (component == null) continue;
         switch (component)
         {
+          case SwivelComponentBridge swivelComponentBridge:
+            RemoveSwivelController(swivelComponentBridge);
+            break;
           case SailComponent sail:
             m_sailPieces.Remove(sail);
             break;
@@ -1589,13 +1601,11 @@
     {
       if (!Manager.IsInitialized) return;
       if (Manager.isCreative) return;
-
+      if (m_zdo == null || !isActiveAndEnabled) return;
       Physics.SyncTransforms();
 
-      if (!isActiveAndEnabled || !this.IsNetViewValid(out var netView)) return;
       // use center of rigidbody to set position.
-      var rootNvZdo = netView.GetZDO();
-      rootNvZdo.SetPosition(vehiclePosition);
+      m_zdo.SetPosition(vehiclePosition);
 
       if (!m_allPieces.TryGetValue(Manager.PersistentZdoId, out var pieceToUpdateList))
       {
@@ -1627,6 +1637,39 @@
           if (prefabPieceData.IsSwivelChild && TrySetSwivelPiecePosition(nv))
           {
             continue;
+          }
+        }
+
+        SetPrefabWorldPosition(zdo, vehiclePosition);
+      }
+
+      foreach (var swivelComponentBridge in m_swivelComponentBridgePieces)
+      foreach (var swivelItemNetView in swivelComponentBridge.m_pieces)
+      {
+        var zdo = swivelItemNetView.GetZDO();
+        if (zdo == null || !zdo.IsValid())
+        {
+          continue;
+        }
+        // NOTE: this might be a heavy task (alternatively we could use local dictionary)
+        var nv = ZNetScene.instance.FindInstance(zdo);
+        if (nv)
+        {
+          if (m_prefabPieceDataItems.TryGetValue(nv.gameObject, out var prefabPieceData))
+          {
+            if (prefabPieceData.IsBed)
+            {
+              UpdatePieceZdoPosition(zdo, vehiclePosition, prefabPieceData.IsBed);
+              continue;
+            }
+            if (prefabPieceData.IsSwivelChild && TrySetSwivelPiecePosition(nv))
+            {
+              continue;
+            }
+          }
+          else
+          {
+            LoggerProvider.LogDevDebounced($"SwivelComponent piece not in vehicle pieces {nv.name}");
           }
         }
 
@@ -1761,7 +1804,7 @@
      */
     private void Client_UpdateAllPieces()
     {
-      var zdoPosition = m_zdo.GetPosition();
+      var zdoPosition = m_zdo!.GetPosition();
       var zdoSector = ZoneSystem.GetZone(zdoPosition);
 
       var currentSector = ZoneSystem.GetZone(m_syncRigidbody.position);
@@ -4115,6 +4158,8 @@
           LoggerProvider.LogError($"{e}");
         }
       }
+
+      UpdateVehicleTrueCenter();
 
       // Critical for vehicle stability otherwise it will blast off in a random direction to due colliders internally colliding.
       IgnoreAllVehicleColliders();
