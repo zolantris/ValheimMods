@@ -812,6 +812,11 @@
       get;
       set;
     } = null!;
+    public ZDO? m_zdo
+    {
+      get;
+      set;
+    }
 
     public bool IsControllerValid => Manager.IsControllerValid;
 

@@ -39,6 +39,11 @@ public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interac
     get;
     set;
   }
+  public ZDO? m_zdo
+  {
+    get;
+    set;
+  }
   public List<SwivelComponent> nearbySwivelComponents = new();
   public MechanismSwitchConfigSync prefabConfigSync = new();
   public bool hasInitPrefabConfigSync = false;

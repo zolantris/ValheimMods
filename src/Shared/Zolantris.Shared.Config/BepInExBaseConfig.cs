@@ -1,5 +1,8 @@
 using BepInEx.Configuration;
+
+#if !UNITY_RUNTIME && !UNITY_EDITOR
 using ServerSync;
+#endif
 // ReSharper disable ArrangeNamespaceBody
 namespace Zolantris.Shared
 {
@@ -24,6 +27,7 @@ namespace Zolantris.Shared
     /// <summary>
     /// We must always validate the Config class for requires null values. 
     /// </summary>
+#if !UNITY_RUNTIME && !UNITY_EDITOR
     public static void BindConfig(ConfigFile config, ConfigSync configSync)
     {
       Instance.OnBindConfig(config);
@@ -35,6 +39,7 @@ namespace Zolantris.Shared
       }
       ShouldSkipSyncOnBind = false;
     }
+#endif
 
     /// <summary>
     /// Meant for all configs to be initialized.

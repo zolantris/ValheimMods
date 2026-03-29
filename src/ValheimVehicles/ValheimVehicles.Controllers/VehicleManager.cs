@@ -244,6 +244,11 @@
     public VehiclePiecesController? PiecesController { get; set; }
 
     public ZNetView m_nview { get; set; }
+    public ZDO? m_zdo
+    {
+      get;
+      set;
+    }
 
     public Transform vehicleMovementTransform;
     public Transform vehicleMovementCollidersTransform;
@@ -386,6 +391,10 @@
         StopCoroutine(_validateVehicleCoroutineInstance);
         _validateVehicleCoroutineInstance = null;
       }
+
+      if (PersistentZdoId != 0 && VehicleInstances.ContainsKey(PersistentZdoId))
+        VehicleInstances.Remove(PersistentZdoId);
+
       UpdateIsControllerValid();
       IsControllerValid = false;
     }
@@ -488,6 +497,11 @@
         m_nview = GetComponent<ZNetView>();
       }
 
+      if (m_nview)
+      {
+        m_zdo = m_nview.GetZDO();
+      }
+
       vehicleMovementTransform = GetVehicleMovementTransform(transform);
     }
 
@@ -545,37 +559,50 @@
 
     public void InitializeAllComponents()
     {
-      if (!this.IsNetViewValid()) return;
-      // must have latest data loaded into the Vehicle otherwise config can be inaccurate.
-      if (!InitializeData()) return;
-
-      InitializeVehiclePiecesController();
-      InitializeMovementController();
-      InitializeOnboardController();
-      InitializeShipEffects();
-      InitializeLandMovementController();
-      InitializePowerConsumerData();
-
-      if (!TryGetControllersToBind(out var controllersToBind))
+      try
       {
-        LoggerProvider.LogError("Error while Initializing components. This likely means ValheimVehicles Mod is broken for this Vehicle Type.");
-        return;
+        if (!this.IsNetViewValid()) return;
+        // must have latest data loaded into the Vehicle otherwise config can be inaccurate.
+        if (!InitializeData()) return;
+
+        InitializeVehiclePiecesController();
+        InitializeMovementController();
+        InitializeOnboardController();
+        InitializeShipEffects();
+        InitializeLandMovementController();
+        InitializePowerConsumerData();
+
+        if (PiecesController != null && MovementController != null)
+        {
+          PiecesController.m_syncRigidbody = MovementController.m_body;
+        }
+
+        if (!TryGetControllersToBind(out var controllersToBind))
+        {
+          LoggerProvider.LogError("Error while Initializing components. This likely means ValheimVehicles Mod is broken for this Vehicle Type.");
+          return;
+        }
+
+        BindAllControllersAndData(controllersToBind);
+
+        if (!IsInitialized) return;
+
+        // For starting the vehicle pieces.
+        if (PiecesController != null)
+        {
+          PiecesController.InitFromShip();
+          InitStarterPiece();
+        }
+        else
+        {
+          Logger.LogError(
+            "InitializeAllComponents somehow failed, PiecesController does not exist");
+        }
       }
-
-      BindAllControllersAndData(controllersToBind);
-
-      if (!IsInitialized) return;
-
-      // For starting the vehicle pieces.
-      if (PiecesController != null)
+      catch (Exception e)
       {
-        PiecesController.InitFromShip();
-        InitStarterPiece();
-      }
-      else
-      {
-        Logger.LogError(
-          "InitializeAllComponents somehow failed, PiecesController does not exist");
+        IsInitialized = false;
+        LoggerProvider.LogError($"Error initializing VehicleManager: {e}");
       }
     }
 
@@ -657,19 +684,21 @@
     public void UpdateLandMovementControllerProperties(bool shouldSkipLoad = false)
     {
       if (!IsLandVehicle || MovementController == null || LandMovementController == null) return;
-      if (LandMovementController.treadsPrefab == null)
+      if (MovingTreadComponent.fallbackTreadPrefab == null)
       {
-        LandMovementController.treadsPrefab = LoadValheimVehicleAssets.TankTreadsSingle;
+        MovingTreadComponent.fallbackTreadPrefab = LoadValheimVehicleAssets.TankTreadsSingle;
       }
 
-      if (LandMovementController.wheelPrefab == null)
+      if (MovingTreadComponent.fallbackWheelPrefab == null)
       {
-        LandMovementController.wheelPrefab = LoadValheimVehicleAssets.WheelSingle;
+        MovingTreadComponent.fallbackWheelPrefab = LoadValheimVehicleAssets.WheelSingle;
       }
 
       // very important to add these. We always need a base of 30.
-      var additionalTurnRate = Mathf.Lerp(VehicleLandMovementController.defaultTurnAccelerationMultiplier / 4, VehicleLandMovementController.defaultTurnAccelerationMultiplier * 4, Mathf.Clamp01(PropulsionConfig.VehicleLandTurnSpeed.Value));
-      VehicleLandMovementController.baseTurnAccelerationMultiplier = additionalTurnRate;
+      var additionalTurnRate = Mathf.Lerp(40f, 110f, Mathf.Clamp01(PropulsionConfig.VehicleLandTurnSpeed.Value));
+
+      LandMovementController.maxNeutralTurnRate = additionalTurnRate;
+      LandMovementController.maxMovingTurnRate = additionalTurnRate / 2f;
 
       // sync's forward dir.
       LandMovementController.forwardDirection = MovementController.ShipDirection;
@@ -708,6 +737,8 @@
           LandMovementController = gameObject.AddComponent<VehicleLandMovementController>();
         }
       }
+
+      LandMovementController.pieceController = PiecesController;
       LandMovementController.inputTurnForce = 0;
       LandMovementController.inputMovement = 0;
       UpdateLandMovementControllerProperties();
@@ -760,6 +791,11 @@
       {
         m_nview = GetComponent<ZNetView>();
         netView = m_nview;
+      }
+
+      if (m_nview)
+      {
+        m_zdo = m_nview.GetZDO();
       }
 
       GetPersistentID();

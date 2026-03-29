@@ -54,6 +54,11 @@ public class PowerPylonComponentIntegration : PowerPylon, Hoverable, Interactabl
     get;
     set;
   }
+  public ZDO? m_zdo
+  {
+    get;
+    set;
+  }
   public bool Interact(Humanoid user, bool hold, bool alt)
   {
     if (!hold)

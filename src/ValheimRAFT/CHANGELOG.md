@@ -10,6 +10,13 @@ the [GitHub Releases](https://github.com/zolantris/ValheimMods/releases) page.
 
 ### Fixed
 
+- fixes land vehicles. They now work again.
+- Warning: Still a bit of sway when idle/braked on uneven terrain.
+
+## [4.2.2] - 2026-03-14
+
+### Fixed
+
 - ensure that sails request a sync to other peers
 - ensure peers can send a message that sail has been updated.
 - ensure sail data is not corrupted

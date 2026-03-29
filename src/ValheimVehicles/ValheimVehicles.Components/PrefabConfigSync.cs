@@ -15,6 +15,11 @@ namespace ValheimVehicles.Components;
 public class PrefabConfigSync<T, TComponentInterface> : MonoBehaviour, IPrefabCustomConfigRPCSync<T> where T : ISerializableConfig<T, TComponentInterface>, new()
 {
   public ZNetView? m_nview { get; set; }
+  public ZDO? m_zdo
+  {
+    get;
+    set;
+  }
 
   public bool HasInitLoaded;
   public bool _suppressMotionStateBroadcast = false;

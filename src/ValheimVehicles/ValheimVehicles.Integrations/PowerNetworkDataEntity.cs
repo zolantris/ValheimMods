@@ -29,6 +29,11 @@ namespace ValheimVehicles.Integrations
     }
 
     public ZNetView? m_nview { get; set; }
+    public ZDO? m_zdo
+    {
+      get;
+      set;
+    }
     public bool hasLoadedInitialData { get; private set; }
     protected SafeRPCHandler RpcHandler { get; private set; }
 

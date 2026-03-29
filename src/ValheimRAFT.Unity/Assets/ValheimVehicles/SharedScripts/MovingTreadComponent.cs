@@ -13,16 +13,18 @@ namespace ValheimVehicles.SharedScripts
 {
   public class MovingTreadComponent : MonoBehaviour
   {
-
     public const float treadPointDistanceZ = 0.624670029f;
     public const float treadPointYOffset = 1.578f;
     public const float treadRadiusScale1 = 0.789f;
 
-    private const float _lastTerrainTouchTimeExpiration = 10f;
+    private const float lastTerrainTouchTimeExpiration = 10f;
+    private const float convexHullClusterThreshold = 50f;
 
-    public static GameObject fallbackPrefab = null!;
+    public static GameObject fallbackTreadPrefab = null!;
+    public static GameObject fallbackWheelPrefab = null!;
 
     internal static Vector3 tread_meshScalar = new(2f, 0.0500000007f, 0.599999964f);
+
     internal static readonly List<LocalTransform> _treadFrontLocalPoints = new()
     {
       new LocalTransform
@@ -35,19 +37,16 @@ namespace ValheimVehicles.SharedScripts
         position = new Vector3(0.0f, 1.57800007f, 0f),
         rotation = Quaternion.identity
       },
-      // top-near
       new LocalTransform
       {
         position = new Vector3(0.0f, 1.4f, 0.542955399f),
         rotation = Quaternion.Euler(45f, 0f, 0f)
       },
-      // top middle
       new LocalTransform
       {
         position = new Vector3(0.0f, 0.782000542f, 0.756231308f),
         rotation = Quaternion.Euler(90f, 0f, 0f)
       },
-      // top near bottom
       new LocalTransform
       {
         position = new Vector3(0.0f, 0.245388985f, 0.542955399f),
@@ -59,34 +58,32 @@ namespace ValheimVehicles.SharedScripts
         rotation = Quaternion.Euler(180f, 0f, 0f)
       }
     };
+
     internal static readonly List<LocalTransform> _treadBackLocalPoints = new()
     {
-      // // flat top tread
       new LocalTransform
       {
         position = new Vector3(0.0f, 0.0f, 0.0f),
         rotation = Quaternion.Euler(180f, 0f, 0f)
       },
-      // back-near bottom tread
       new LocalTransform
       {
         position = new Vector3(0.0f, 0.245388985f, -0.542955399f),
-        rotation = Quaternion.Euler(225, 0f, 0f)
+        rotation = Quaternion.Euler(225f, 0f, 0f)
       },
-      // back middle tread
       new LocalTransform
       {
         position = new Vector3(0.0f, 0.782000542f, -0.756231308f),
-        rotation = Quaternion.Euler(270, 0, 0)
+        rotation = Quaternion.Euler(270f, 0f, 0f)
       },
-      // back-near-top tread angles 315
       new LocalTransform
       {
         position = new Vector3(0.0f, 1.34000015f, -0.542955399f),
-        rotation = Quaternion.Euler(315, 0, 0)
+        rotation = Quaternion.Euler(315f, 0f, 0f)
       }
     };
-    private static readonly Quaternion flippedXRotation = Quaternion.Euler(180, 0, 0);
+
+    private static readonly Quaternion flippedXRotation = Quaternion.Euler(180f, 0f, 0f);
 
     public VehicleLandMovementController vehicleLandMovementController;
     public List<HingeJoint> _wheelRotators = new();
@@ -101,24 +98,21 @@ namespace ValheimVehicles.SharedScripts
     public Bounds vehicleLocalBounds = new(Vector3.zero, Vector3.one);
     public GameObject CenterObj;
 
-    // New flag to control direction of movement
     public bool isForward = true;
 
     public ConvexHullAPI convexHullComponent;
     public float speedMultiplierOverride;
+    public PhysicsMaterial treadPhysicMaterialOverride;
 
+    internal readonly Dictionary<Rigidbody, float> _treadProgress = new();
+    internal readonly List<Rigidbody> _movingTreads = new();
+    internal readonly Dictionary<Rigidbody, int> _treadTargetPointMap = new();
+    internal readonly List<LocalTransform> _treadTargetPoints = new();
 
-    internal readonly Dictionary<Rigidbody, float> _treadProgress = new(); // Stores the progress of each tread (0 to 1)
+    private readonly List<GameObject> _generatedTreadObjects = new();
 
     private bool _hasInitLocalBounds;
-    private float _lastTerrainTouchDeltaTime = 10f;
-    internal List<Rigidbody> _movingTreads = new();
-    internal Dictionary<Rigidbody, int> _treadTargetPointMap = new();
-    internal List<LocalTransform> _treadTargetPoints = new();
-
-    private float lastSpeed;
-
-    // Speed multiplier that controls the overall speed of treads
+    private float _lastTerrainTouchDeltaTime = -100f;
     private float speedMultiplier = 1f;
 
     internal WheelCollider[] wheelColliders = {};
@@ -126,15 +120,17 @@ namespace ValheimVehicles.SharedScripts
     public void Awake()
     {
       rotatorParent = transform.Find("rotators");
-      if (!treadPrefab && fallbackPrefab)
+
+      if (!treadPrefab && fallbackTreadPrefab)
       {
-        treadPrefab = fallbackPrefab;
+        treadPrefab = fallbackTreadPrefab;
       }
 
       if (!treadParent)
       {
         treadParent = transform.Find("treads");
       }
+
       if (!treadParent)
       {
         treadParent = transform;
@@ -148,11 +144,14 @@ namespace ValheimVehicles.SharedScripts
 
     public void Start()
     {
-      // VehicleWheelController must initialize some critical values. Methods here are reliant on it.
+      if (!vehicleLandMovementController)
+      {
+        vehicleLandMovementController = GetComponentInParent<VehicleLandMovementController>();
+      }
+
       InitConvexHullComponent();
     }
 
-    // Update is called once per frame
     public void FixedUpdate()
     {
       if (!isActiveAndEnabled) return;
@@ -161,18 +160,18 @@ namespace ValheimVehicles.SharedScripts
 
     public void OnEnable()
     {
-      CleanUp();
-      GenerateTreads(new Bounds(Vector3.zero, Vector3.one * 4));
+      CleanUpRuntimeState();
     }
-
 
     public void OnDisable()
     {
-      CleanUp();
+      FullCleanup();
     }
 
     public void OnDestroy()
     {
+      FullCleanup();
+
       if (CenterObj)
       {
         Destroy(CenterObj);
@@ -181,133 +180,77 @@ namespace ValheimVehicles.SharedScripts
 
     private void OnCollisionStay(Collision collision)
     {
+      if (collision.gameObject.transform.root == transform.root) return;
       if (collision.gameObject.layer == LayerHelpers.TerrainLayer)
       {
         _lastTerrainTouchDeltaTime = Time.fixedTime;
       }
     }
 
-    /// <summary>
-    ///   Must be called on Start as the vehicleWheelController context will not exist
-    ///   yet.
-    /// </summary>
     public void InitConvexHullComponent()
     {
       if (!vehicleLandMovementController) return;
+
+      if (!convexHullComponent)
+      {
+        convexHullComponent = gameObject.GetComponent<ConvexHullAPI>();
+      }
+
       if (!convexHullComponent)
       {
         convexHullComponent = gameObject.AddComponent<ConvexHullAPI>();
       }
 
       convexHullComponent.m_colliderParentTransform = treadParent;
+      convexHullComponent.parentTransform = treadParent;
       convexHullComponent.HasPreviewGeneration = false;
+      convexHullComponent.ShouldDestroyOnGenerate = true;
       convexHullComponent.IsAllowedAsHullOverride = AllowTreadsObject;
-      convexHullComponent.AddLocalPhysicMaterial(vehicleLandMovementController.treadPhysicMaterial);
+
+      if (treadPhysicMaterialOverride)
+      {
+        convexHullComponent.AddLocalPhysicMaterial(treadPhysicMaterialOverride);
+      }
+      else if (vehicleLandMovementController.treadPhysicMaterial)
+      {
+        convexHullComponent.AddLocalPhysicMaterial(vehicleLandMovementController.treadPhysicMaterial);
+      }
     }
 
     public bool IsOnGround()
     {
-      return _lastTerrainTouchDeltaTime + _lastTerrainTouchTimeExpiration < Time.fixedTime;
+      return Time.fixedTime - _lastTerrainTouchDeltaTime < lastTerrainTouchTimeExpiration;
     }
 
     public Bounds GetGlobalBounds()
     {
+      if (!CenterObj)
+      {
+        return new Bounds(transform.position, localBounds.size);
+      }
+
       return new Bounds(CenterObj.transform.position, localBounds.size);
     }
 
-    /// <summary>
-    ///   A lower case string matcher to allow any object starting with treads to be
-    ///   allowed as a convexhull so we can create collisions.
-    /// </summary>
-    /// <param name="val"></param>
-    /// <returns></returns>
-    public bool AllowTreadsObject(string val)
-
+    public bool AllowTreadsObject(string value)
     {
-      if (val.ToLower().Contains("tread"))
-        return true;
-      return false;
+      return value.ToLower().Contains("tread");
     }
 
     public void UpdateRotators()
     {
       Physics.SyncTransforms();
+
       _wheelRotators.ForEach(hinge =>
       {
-        // Calculate the mesh bounds (you could also use other methods for finding the center)
-//       Renderer meshRenderer = hinge.GetComponentInChildren<Renderer>(); // Make sure the object has a Renderer
-//       Vector3 meshCenter = meshRenderer.bounds.center; // The center of the mesh's bounds
-//
-// // Adjust the anchor based on the object's current position and mesh offset
-// // Convert the world-space center to local space of the object
-//       Vector3 localCenter = hinge.transform.InverseTransformPoint(meshCenter);
-//
-// // Set the hinge joint's anchor to the local center
-//       hinge.anchor = localCenter;
-//
-// // Optionally, adjust the pivot position to match the hinge anchor if necessary
-//       hinge.transform.position = meshCenter; // Optionally re-adjust the pivot position
-
-// Assuming the hinge joint is attached to this object
-
-// Get the center of mass of the object
-//       var rb = hinge.transform.GetComponent<Rigidbody>();
-// // Set the hinge joint's anchor to the center of mass
-//       hinge.anchor = hinge.transform.InverseTransformPoint(rb.worldCenterOfMass);
-//
-// // Optional: Set the pivot to match the anchor point
-//       hinge.transform.position = rb.worldCenterOfMass; // Make sure the object is centered around the hinge
-// Assuming the hinge joint is attached to this object
-        // HingeJoint hinge = GetComponent<HingeJoint>();
-
-// Get the center of mass of the object
-        var centerOfMass = hinge.transform.parent.position; // Or use a different method to calculate the center
-
-// Set the hinge joint's anchor to the center of mass
+        var centerOfMass = hinge.transform.parent.position;
         hinge.anchor = hinge.transform.InverseTransformPoint(centerOfMass);
-
-// Optional: Set the pivot to match the anchor point
-        // hinge.transform.position = centerOfMass; // Make sure the object is centered around the hinge
-
 
         var motor = hinge.motor;
         motor.force = speedMultiplier * speedMultiplierOverride * 50f;
         motor.targetVelocity = speedMultiplier * speedMultiplierOverride * 50f;
         hinge.motor = motor;
       });
-    }
-
-    public void InitTreadsFromChildren()
-    {
-      CreateCenteringObject();
-      var hasInitLocalBounds = true;
-      // Initialize tread positions and add rigidbodies
-      for (var i = 0; i < treadParent.childCount; i++)
-      {
-        var child = treadParent.GetChild(i);
-        if (!child) continue;
-
-        // Update bounds for the first time
-        if (hasInitLocalBounds)
-        {
-          hasInitLocalBounds = false;
-          localBounds = new Bounds(child.localPosition, Vector3.zero);
-        }
-
-        localBounds.Encapsulate(child.GetComponentInChildren<MeshCollider>().bounds);
-
-
-        var localPoint = new LocalTransform(child.transform);
-        _treadTargetPoints.Add(localPoint);
-
-        var rb = AddRigidbodyToChild(child);
-        _movingTreads.Add(rb);
-        _treadTargetPointMap.Add(rb, i);
-
-        // Initialize progress for each tread (0 to 1)
-        _treadProgress[rb] = 0f;
-      }
-      CenterObj.transform.position = transform.position + localBounds.center;
     }
 
     public void CreateCenteringObject()
@@ -321,168 +264,222 @@ namespace ValheimVehicles.SharedScripts
           transform = { parent = transform }
         };
       }
+
+      CenterObj.transform.localRotation = Quaternion.identity;
+      CenterObj.transform.localScale = Vector3.one;
     }
 
-    /// <summary>
-    ///   All objects / data related to treads must be cleared here.
-    /// </summary>
-    public void CleanUp()
+    private void CleanUpGeneratedTreads()
     {
-      _movingTreads.ForEach(x =>
+      foreach (var treadObject in _generatedTreadObjects)
       {
-        if (x) Destroy(x.gameObject);
-      });
+        if (treadObject)
+        {
+          Destroy(treadObject);
+        }
+      }
 
+      _generatedTreadObjects.Clear();
+    }
+
+    private void CleanUpConvexMeshes()
+    {
+      if (!convexHullComponent) return;
+      convexHullComponent.DestroyAllConvexMeshes();
+    }
+
+    private void CleanUpRuntimeState()
+    {
       _wheelRotators.Clear();
       _movingTreads.Clear();
       _treadTargetPointMap.Clear();
       _treadTargetPoints.Clear();
       _treadProgress.Clear();
+      originalTreadPositions.Clear();
       _hasInitLocalBounds = true;
+      localBounds = new Bounds(Vector3.zero, Vector3.one);
+    }
+
+    public void FullCleanup()
+    {
+      CleanUpGeneratedTreads();
+      CleanUpConvexMeshes();
+      CleanUpRuntimeState();
+    }
+
+    private void EncapsulateLocalPoint(Vector3 localPosition)
+    {
+      if (_hasInitLocalBounds)
+      {
+        _hasInitLocalBounds = false;
+        localBounds = new Bounds(localPosition, Vector3.zero);
+      }
+
+      localBounds.Encapsulate(localPosition);
+      localBounds.Encapsulate(localPosition + Vector3.right * 0.5f);
+      localBounds.Encapsulate(localPosition + Vector3.left * 0.5f);
     }
 
     public void InitSingleTread(GameObject treadGameObject)
     {
-      var localPosition = treadGameObject.transform.localPosition;
-      if (_hasInitLocalBounds)
-      {
-        _hasInitLocalBounds = false;
-        localBounds = new Bounds(localPosition, Vector3.one);
-      }
+      var treadTransform = treadGameObject.transform;
+      var localPosition = treadTransform.localPosition;
 
-      localBounds.Encapsulate(localPosition + Vector3.right * 0.5f);
-      localBounds.Encapsulate(localPosition);
-      localBounds.Encapsulate(localPosition + Vector3.left * 0.5f);
+      EncapsulateLocalPoint(localPosition);
 
+      var scalar = vehicleLandMovementController
+        ? vehicleLandMovementController.GetWheelRadiusScalar()
+        : VehicleLandMovementController.treadRadiusScalar;
 
-      // scale the tread to the correct height.
-      treadGameObject.transform.localScale = Vector3.one * vehicleLandMovementController.GetWheelRadiusScalar();
+      treadTransform.localScale = Vector3.one * scalar;
 
-      var localPoint = new LocalTransform(treadGameObject.transform);
+      var localPoint = new LocalTransform(treadTransform);
       _treadTargetPoints.Add(localPoint);
+      originalTreadPositions.Add(localPosition);
 
-      var rb = AddRigidbodyToChild(treadGameObject.transform);
+      var rb = AddRigidbodyToChild(treadTransform);
       _movingTreads.Add(rb);
-      _treadTargetPointMap.Add(rb, _movingTreads.Count - 1);
-
-      // Initialize progress for each tread (0 to 1)
+      _treadTargetPointMap[rb] = _movingTreads.Count - 1;
       _treadProgress[rb] = 0f;
+
+      _generatedTreadObjects.Add(treadGameObject);
     }
 
-    /// <summary>
-    ///   Generates dynamically all treads based on a bounds size. Must be invoked
-    /// </summary>
-    /// <param name="bounds"></param>
+    private GameObject CreateTreadInstance(string treadName, Vector3 localPosition, Quaternion localRotation)
+    {
+      var treadGameObject = Instantiate(treadPrefab, treadParent);
+      treadGameObject.name = treadName;
+      treadGameObject.transform.localPosition = localPosition;
+      treadGameObject.transform.localRotation = localRotation;
+      treadGameObject.transform.localScale = Vector3.one;
+      return treadGameObject;
+    }
+
+    private List<GameObject> GetGeneratedTreadGameObjects()
+    {
+      var treadObjects = new List<GameObject>();
+
+      foreach (Transform child in treadParent)
+      {
+        if (!child) continue;
+        if (!AllowTreadsObject(child.name)) continue;
+        treadObjects.Add(child.gameObject);
+      }
+
+      return treadObjects;
+    }
+
+    private void RecalculateCenterObject()
+    {
+      CreateCenteringObject();
+
+      CenterObj.transform.localPosition = localBounds.center;
+      CenterObj.transform.localRotation = Quaternion.identity;
+    }
+
+    private void GenerateConvexHullForCurrentTreads()
+    {
+      InitConvexHullComponent();
+
+      if (!convexHullComponent) return;
+
+      convexHullComponent.m_colliderParentTransform = treadParent;
+      convexHullComponent.parentTransform = treadParent;
+      convexHullComponent.DestroyAllConvexMeshes();
+
+      var treadGameObjects = GetGeneratedTreadGameObjects();
+      if (treadGameObjects.Count == 0)
+      {
+        Debug.LogError($"MovingTreadComponent on {name} could not find any generated tread objects for convex hull generation.");
+        return;
+      }
+
+      Physics.SyncTransforms();
+
+      convexHullComponent.GenerateMeshesFromChildColliders(
+        treadParent.gameObject,
+        Vector3.zero,
+        convexHullClusterThreshold,
+        treadGameObjects
+      );
+
+      foreach (var meshCollider in convexHullComponent.convexHullMeshColliders)
+      {
+        if (!meshCollider) continue;
+
+        meshCollider.transform.SetParent(treadParent, true);
+        meshCollider.transform.localRotation = Quaternion.identity;
+        meshCollider.gameObject.layer = LayerHelpers.PieceLayer;
+        var leftOrRightName = transform.name.Contains("left") ? "left" : "right";
+        meshCollider.gameObject.name = $"{PrefabNames.ConvexTreadCollider}_{leftOrRightName}";
+        meshCollider.includeLayers = LayerMask.GetMask("terrain", "piece", "Default", "static_solid");
+        meshCollider.excludeLayers = LayerHelpers.RamColliderExcludeLayers;
+        meshCollider.isTrigger = false;
+      }
+
+      Physics.SyncTransforms();
+      convexHullComponent.UpdateConvexHullBounds();
+    }
+
     public void GenerateTreads(Bounds bounds)
     {
       if (!treadPrefab) return;
       if (!vehicleLandMovementController) return;
+      if (!treadParent) return;
+
       vehicleLocalBounds = bounds;
-      CleanUp();
 
+      FullCleanup();
       CreateCenteringObject();
-      var scalar = vehicleLandMovementController.GetWheelRadiusScalar();
-      var horizontalTreads = Mathf.RoundToInt(bounds.size.z / treadPointDistanceZ / scalar);
 
-      // scaled from radius of the first wheel.
+      treadParent.localRotation = Quaternion.identity;
+      treadParent.localScale = Vector3.one;
+
+      var scalar = 1f;
+      var horizontalTreads = Mathf.Max(1, Mathf.RoundToInt(bounds.size.z / treadPointDistanceZ / scalar));
       var fullTreadLength = horizontalTreads * treadPointDistanceZ;
 
-      // makes the treads within the vehicle
-      var centeringOffset = Vector3.down * treadPointYOffset / 2f / scalar + Vector3.forward * -vehicleLocalBounds.extents.z / scalar - Vector3.forward * 0.25f;
+      var centeringOffset =
+        Vector3.down * treadPointYOffset / 2f / scalar +
+        Vector3.forward * -vehicleLocalBounds.extents.z / scalar -
+        Vector3.forward * 0.25f;
 
-      // top treads
       for (var i = 0; i < horizontalTreads; i++)
       {
-        var treadGameObject = Instantiate(treadPrefab, treadParent);
-        treadGameObject.name = $"tread_{i}_top";
-
         var zPos = treadPointDistanceZ * i;
-        var offset = new Vector3(0, treadPointYOffset, zPos) + centeringOffset;
-        treadGameObject.transform.localPosition = offset;
-        // Update bounds for the first time
+        var localPosition = new Vector3(0f, treadPointYOffset, zPos) + centeringOffset;
+        var treadGameObject = CreateTreadInstance($"tread_{i}_top", localPosition, Quaternion.identity);
         InitSingleTread(treadGameObject);
       }
 
-      // front treads
       for (var i = 0; i < _treadFrontLocalPoints.Count; i++)
       {
-        var x = _treadFrontLocalPoints[i];
-        var treadGameObject = Instantiate(treadPrefab, treadParent);
-        treadGameObject.name = $"tread_{i}_front";
-
-        // we offset the Z position so that it aligns with the last 
-        var zPos = x.position.z + fullTreadLength + treadPointDistanceZ;
-        treadGameObject.transform.localPosition = new Vector3(x.position.x, x.position.y, zPos) + centeringOffset;
-        treadGameObject.transform.localRotation = x.rotation;
-
+        var point = _treadFrontLocalPoints[i];
+        var zPos = point.position.z + fullTreadLength + treadPointDistanceZ;
+        var localPosition = new Vector3(point.position.x, point.position.y, zPos) + centeringOffset;
+        var treadGameObject = CreateTreadInstance($"tread_{i}_front", localPosition, point.rotation);
         InitSingleTread(treadGameObject);
       }
 
       for (var i = 0; i < horizontalTreads; i++)
       {
-        var treadGameObject = Instantiate(treadPrefab, treadParent);
-        treadGameObject.name = $"tread_{i}_bottom";
-        var offset = new Vector3(0, 0, treadPointDistanceZ * (horizontalTreads - i));
-        var rotation = flippedXRotation;
-
-        treadGameObject.transform.localPosition = offset + centeringOffset;
-        treadGameObject.transform.localRotation = rotation;
-
+        var localPosition = new Vector3(0f, 0f, treadPointDistanceZ * (horizontalTreads - i)) + centeringOffset;
+        var treadGameObject = CreateTreadInstance($"tread_{i}_bottom", localPosition, flippedXRotation);
         InitSingleTread(treadGameObject);
       }
 
       for (var i = 0; i < _treadBackLocalPoints.Count; i++)
       {
-        var x = _treadBackLocalPoints[i];
-        var treadGameObject = Instantiate(treadPrefab, transform.position, Quaternion.identity, treadParent);
-        treadGameObject.name = $"tread_{i}_back";
-
-        // since this is zero based it is actually fine to not use relative calcs for z pos.
-        treadGameObject.transform.localPosition = x.position + centeringOffset;
-        treadGameObject.transform.localRotation = x.rotation;
-
+        var point = _treadBackLocalPoints[i];
+        var localPosition = point.position + centeringOffset;
+        var treadGameObject = CreateTreadInstance($"tread_{i}_back", localPosition, point.rotation);
         InitSingleTread(treadGameObject);
       }
 
-      CenterObj.transform.position = treadParent.position + localBounds.center;
-      treadParent.position = CenterObj.transform.position;
-
-      // var treadGameObjects = _movingTreads.Select(x => x.gameObject).ToList();
-      var treadGameObjects = new List<GameObject>();
-      _movingTreads.ForEach(x =>
-      {
-        if (x == null) return;
-        if (x.gameObject == null) return;
-        treadGameObjects.Add(x.gameObject);
-      });
-
-      if (convexHullComponent == null)
-      {
-        InitConvexHullComponent();
-      }
-
-      if (convexHullComponent != null)
-      {
-        convexHullComponent.GenerateMeshesFromChildColliders(treadParent.gameObject, Vector3.zero, 50, treadGameObjects);
-        convexHullComponent.convexHullMeshColliders.ForEach(x =>
-        {
-          if (!x) return;
-          // set to piece layer allowing vehicle to hit this layer and land/board rafts.
-          x.gameObject.layer = LayerHelpers.PieceLayer;
-
-          x.gameObject.name = PrefabNames.ConvexTreadCollider;
-          x.includeLayers = LayerMask.GetMask("terrain", "piece", "Default", "static_solid");
-          x.excludeLayers = LayerHelpers.RamColliderExcludeLayers;
-          x.isTrigger = false;
-        });
-      }
+      RecalculateCenterObject();
+      GenerateConvexHullForCurrentTreads();
     }
 
-    /// <summary>
-    ///   Controls visual clamping of tread speed to avoid jittery animations.
-    /// </summary>
-    /// This may not need a negative protection as we use direction to control this value
-    /// <param name="speed"></param>
     public void SetSpeed(float speed)
     {
 #if DEBUG
@@ -520,8 +517,8 @@ namespace ValheimVehicles.SharedScripts
       {
         rb = child.gameObject.AddComponent<Rigidbody>();
       }
+
       rb.mass = 20f;
-      // rb.constraints = RigidbodyConstraints.FreezePositionX;
       rb.linearDamping = 0f;
       rb.angularDamping = 0f;
       rb.useGravity = false;
@@ -538,11 +535,9 @@ namespace ValheimVehicles.SharedScripts
         return;
       }
 
-      // World position of the parent object (important to factor in)
       var parentPosition = treadParent.position;
       var parentRotation = treadParent.rotation;
 
-      // Update tread rotation and position
       for (var i = 0; i < _movingTreads.Count; i++)
       {
         var currentTreadRb = _movingTreads[i];
@@ -550,13 +545,11 @@ namespace ValheimVehicles.SharedScripts
 
         var currentTreadTarget = _treadTargetPointMap[currentTreadRb];
 
-        // If moving backward, reverse the order of treads
         if (!isForward)
         {
-          currentTreadTarget = _movingTreads.Count - 1 - currentTreadTarget; // Reversed indexing
+          currentTreadTarget = _movingTreads.Count - 1 - currentTreadTarget;
         }
 
-        // Ensure the targets loop correctly (wrap around)
         if (currentTreadTarget >= _movingTreads.Count)
         {
           currentTreadTarget = 0;
@@ -567,12 +560,9 @@ namespace ValheimVehicles.SharedScripts
         }
 
         var localTransform = _treadTargetPoints[currentTreadTarget];
-
-        // Calculate world space position and rotation for the target
         var worldTargetPosition = parentRotation * localTransform.position + parentPosition;
         var worldTargetRotation = parentRotation * localTransform.rotation;
 
-        // Get the previous target position and rotation
         var prevTreadTarget = isForward ? currentTreadTarget - 1 : currentTreadTarget + 1;
         if (prevTreadTarget >= _movingTreads.Count) prevTreadTarget = 0;
         if (prevTreadTarget < 0) prevTreadTarget = _movingTreads.Count - 1;
@@ -581,47 +571,25 @@ namespace ValheimVehicles.SharedScripts
         var worldPrevPosition = parentRotation * prevLocalTransform.position + parentPosition;
         var worldPrevRotation = parentRotation * prevLocalTransform.rotation;
 
-        // Interpolation factor for smooth movement
         var progress = _treadProgress[currentTreadRb];
-
-        // Increment progress based on fixedDeltaTime and speedMultiplier
         progress += Time.fixedDeltaTime * speedMultiplier;
 
-        // Loop progress between 0 and 1
         if (progress > 1f)
         {
-          progress = 0f; // Reset progress when we reach the target point
-          currentTreadTarget = isForward ? currentTreadTarget + 1 : currentTreadTarget - 1; // Update target point index
+          progress = 0f;
+          currentTreadTarget = isForward ? currentTreadTarget + 1 : currentTreadTarget - 1;
 
-          // Ensure we stay within bounds
           if (currentTreadTarget >= _movingTreads.Count) currentTreadTarget = 0;
           if (currentTreadTarget < 0) currentTreadTarget = _movingTreads.Count - 1;
 
-          _treadProgress[currentTreadRb] = progress; // Reset progress for the next point
+          _treadProgress[currentTreadRb] = progress;
         }
 
-        // Update the progress value
         _treadProgress[currentTreadRb] = progress;
-        // _treadTargetPointMap[currentTreadRb] = currentTreadTarget;
 
-        // Lerp position and rotation based on the progress
         var newPosition = Vector3.Lerp(worldPrevPosition, worldTargetPosition, progress);
         var newRotation = Quaternion.Lerp(worldPrevRotation, worldTargetRotation, progress);
 
-        // if (!currentTreadRb.name.Contains("top"))
-        // {
-        //   var rbTransform = currentTreadRb.transform;
-        //   var position = rbTransform.position;
-        //   // var deltaPosition = newPosition - position;
-        //   // the forward direction should push backwards
-        //   var forwardMultiplier = isForward ? -1f : 1f;
-        //   var inverseDirectionalForce = rbTransform.forward * 450f * forwardMultiplier;
-        //   var upwardForce = rbTransform.up * 50f;
-        //   var force = upwardForce + inverseDirectionalForce;
-        //   rootRb.AddForceAtPosition(force, position, ForceMode.Force);
-        // }
-
-        // Apply the calculated position and rotation to the tread's rigidbody
         currentTreadRb.Move(newPosition, newRotation);
       }
     }

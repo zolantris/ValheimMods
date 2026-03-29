@@ -406,7 +406,7 @@ public class LoadValheimVehicleAssets : ILoadAssets
     Cannonball.ImpactSoundOverride = assetBundle.LoadAsset<AudioClip>("impact-hit-sound-fx.mp3");
 
     PowerPylon.LightningMaterial = LightningMaterial;
-    MovingTreadComponent.fallbackPrefab = TankTreadsSingle;
+    MovingTreadComponent.fallbackTreadPrefab = TankTreadsSingle;
 
     ClassValidator.ValidateRequiredNonNullFields<LoadValheimVehicleAssets>();
   }

@@ -23,6 +23,7 @@
       to.LandMovementController = from.LandMovementController;
       to.Manager = from.Manager;
       to.m_nview = from.m_nview;
+      to.m_zdo = from.m_zdo;
     }
 
     private static readonly Regex NonLandVehicleAllowedNullKeys = StringValidatorExtensions.GenerateRegexFromList([nameof(IVehicleSharedProperties.LandMovementController)]);

@@ -9,6 +9,11 @@ public class SafeRPCHandler : INetView
 {
   private readonly HashSet<string> _registeredRpcs = new();
   public ZNetView? m_nview { get; set; }
+  public ZDO? m_zdo
+  {
+    get;
+    set;
+  }
   public SafeRPCHandler(ZNetView netView)
   {
     if (netView == null)

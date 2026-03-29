@@ -47,6 +47,17 @@ namespace ValheimVehicles.SharedScripts
       return Points[index]; // ✅ Directly fetch from local storage
     }
 
+    public void ApplyLocalShift(Vector3 localShift)
+    {
+      LocalPosition -= localShift;
+      LocalBounds.center -= localShift;
+
+      for (var i = 0; i < Points.Length; i++)
+      {
+        Points[i] -= localShift;
+      }
+    }
+
     // public void Dispose()
     // {
     //   if (Points.IsCreated)

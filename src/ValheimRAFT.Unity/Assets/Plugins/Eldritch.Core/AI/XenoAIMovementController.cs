@@ -324,6 +324,30 @@ namespace Eldritch.Core
       return OwnerAI.DeltaPrimaryTarget > closeRange ? distantAccelForce : closeAccelForce;
     }
 
+
+    // public void tempMethod()
+    // {
+    //   if (centerOfMassTransform != null && treadsLeftMovingComponent != null && treadsRightMovingComponent != null &&
+    //       treadsLeftMovingComponent.CenterObj != null && treadsRightMovingComponent.CenterObj != null)
+    //   {
+    //     var leftWorld = treadsLeftMovingComponent.CenterObj.transform.position;
+    //     var rightWorld = treadsRightMovingComponent.CenterObj.transform.position;
+    //     var midWorld = (leftWorld + rightWorld) * 0.5f;
+    //
+    //     var parent = centerOfMassTransform.parent;
+    //     if (parent != null)
+    //     {
+    //       // Store midpoint in local coordinates of the parent so centerOfMassTransform.rotation doesn't affect it
+    //       centerOfMassTransform.localPosition = parent.InverseTransformPoint(midWorld);
+    //     }
+    //     else
+    //     {
+    //       // No parent: set world position directly
+    //       centerOfMassTransform.position = midWorld;
+    //     }
+    //   }
+    // }
+
     public void MoveChaseTarget(Vector3 targetPos, Vector3? targetVelocity, float turnRate)
     {
       var predictedTarget = targetPos + (targetVelocity ?? Vector3.zero) * 0.5f;

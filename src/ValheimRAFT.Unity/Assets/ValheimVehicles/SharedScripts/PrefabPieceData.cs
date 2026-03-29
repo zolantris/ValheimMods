@@ -119,6 +119,20 @@ namespace ValheimVehicles.SharedScripts
       ColliderPointData = new PrefabColliderPointData(Prefab.transform.localPosition, new Vector3[] {}, allocator);
     }
 
+    public void ApplyLocalShift(Vector3 localShift)
+    {
+      if (Prefab)
+      {
+        Prefab.transform.localPosition -= localShift;
+      }
+
+      if (ColliderPointData.HasValue)
+      {
+        var colliderPointData = ColliderPointData.Value;
+        colliderPointData.ApplyLocalShift(localShift);
+        ColliderPointData = colliderPointData;
+      }
+    }
     // public void Dispose()
     // {
     //   PointDataItems.Dispose(); // ✅ Dispose local native points

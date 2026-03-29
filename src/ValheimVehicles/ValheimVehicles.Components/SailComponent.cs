@@ -1383,4 +1383,9 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable, INetView
     get;
     set;
   }
+  public ZDO? m_zdo
+  {
+    get;
+    set;
+  }
 }
