@@ -46,6 +46,13 @@ public class ShipHullPrefabRegistry : RegisterPrefab<ShipHullPrefabRegistry>
     public string Description;
   }
 
+  public static HashSet<string> HullsWithInverseVariant = new()
+  {
+    "hull_bow_center",
+    "hull_seal_expander",
+    "hull_bow_tri"
+  };
+
   public override void OnRegister()
   {
 
