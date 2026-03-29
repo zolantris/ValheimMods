@@ -5,6 +5,7 @@
   using UnityEngine;
   using ValheimVehicles.Components;
   using ValheimVehicles.Controllers;
+  using ValheimVehicles.Integrations;
   using ValheimVehicles.Shared.Constants;
   using Zolantris.Shared;
 
@@ -128,7 +129,7 @@
     /// <summary>
     /// Prevent scene unloading of a vehicle child ZDO while its parent vehicle is still active.
     /// </summary>
-    private static bool ShouldRetainVehicleChildZdo(ZDO zdo)
+    private static bool ShouldRetainVehicleChildZdo(ZDO? zdo)
     {
       if (zdo == null)
       {
@@ -141,9 +142,48 @@
       }
 
       var parentPersistentId = zdo.GetInt(VehicleZdoVars.MBParentId, 0);
+
+      if (parentPersistentId == 0)
+      {
+        var swivelPersistentId = zdo.GetInt(VehicleZdoVars.SwivelParentId, 0);
+        VehiclePiecesController.VehicleParentIdCache[zdo] = swivelPersistentId;
+        return IsSwivelParentActive(swivelPersistentId);
+      }
+
       VehiclePiecesController.VehicleParentIdCache[zdo] = parentPersistentId;
 
       return IsVehicleParentActive(parentPersistentId);
+    }
+
+    private static bool IsSwivelParentActive(int parentPersistentId)
+    {
+      if (parentPersistentId == 0)
+      {
+        return false;
+      }
+
+      if (!SwivelComponentBridge.ActiveInstances.TryGetValue(parentPersistentId, out var swivelComponentBridge))
+      {
+        return false;
+      }
+
+      if (!swivelComponentBridge || !swivelComponentBridge.isActiveAndEnabled)
+      {
+        return false;
+      }
+
+      if (swivelComponentBridge.m_nview == null)
+      {
+        return false;
+      }
+
+      var swivelZdo = swivelComponentBridge.m_zdo;
+      if (swivelZdo == null)
+      {
+        return false;
+      }
+
+      return true;
     }
 
     private static bool IsVehicleParentActive(int parentPersistentId)

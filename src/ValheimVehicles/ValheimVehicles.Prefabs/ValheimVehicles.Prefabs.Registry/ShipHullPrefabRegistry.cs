@@ -49,8 +49,13 @@ public class ShipHullPrefabRegistry : RegisterPrefab<ShipHullPrefabRegistry>
   public static HashSet<string> HullsWithInverseVariant = new()
   {
     "hull_bow_center",
-    "hull_seal_expander",
-    "hull_bow_tri"
+    "hull_rib_expander",
+    "hull_bow_tri",
+    "hull_bow_curved",
+    "hull_rib_aft_left",
+    "hull_rib_aft_right",
+    "hull_rib_iron",
+    "hull_rib_wood"
   };
 
   public override void OnRegister()
@@ -1018,10 +1023,48 @@ public class ShipHullPrefabRegistry : RegisterPrefab<ShipHullPrefabRegistry>
     // meshCollider.includeLayers = LayerHelpers.PhysicalLayerMask;
   }
 
-  public void RegisterHullV4Prefab(string assetName, TranslationData translationData, string hullMaterial,
+  public void RegisterHullV4Prefab(
+    string assetName,
+    TranslationData translationData,
+    string hullMaterial,
     PrefabNames.PrefabSizeVariant sizeVariant)
   {
-    var prefabName = $"{PrefabNames.ValheimVehiclesPrefix}_{assetName}";
+    RegisterHullV4PrefabInternal(
+      assetName,
+      translationData,
+      hullMaterial,
+      sizeVariant,
+      false,
+      assetName);
+
+    if (!ShouldRegisterInverseV4Prefab(assetName))
+    {
+      return;
+    }
+
+    var inverseAssetName = GetInverseV4AssetName(assetName);
+
+    RegisterHullV4PrefabInternal(
+      inverseAssetName,
+      translationData,
+      hullMaterial,
+      sizeVariant,
+      true,
+      assetName);
+  }
+
+  private void RegisterHullV4PrefabInternal(
+    string assetName,
+    TranslationData translationData,
+    string hullMaterial,
+    PrefabNames.PrefabSizeVariant sizeVariant,
+    bool isInverse,
+    string originalAssetName)
+  {
+    var prefabName = isInverse
+      ? $"{PrefabNames.ValheimVehiclesPrefix}_{originalAssetName}_inverse"
+      : $"{PrefabNames.ValheimVehiclesPrefix}_{assetName}";
+
     try
     {
       var prefabAsset =
@@ -1036,20 +1079,26 @@ public class ShipHullPrefabRegistry : RegisterPrefab<ShipHullPrefabRegistry>
       // TODO After 3.8.0 remove this. It was added for beta compatibility to 3.7.x
       PrefabRegistryController.AddPrefabAlias(assetName, prefabName);
 
-      var icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(assetName);
+      var icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(originalAssetName);
 
       if (!icon)
       {
-        icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
-          .ErrorIcon);
+        icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames.ErrorIcon);
+      }
+
+      if (isInverse)
+      {
+        icon = TryCreateInverseIcon(icon) ?? icon;
       }
 
       if (!PrefabRegistryHelpers.PieceDataDictionary.ContainsKey(prefabName))
       {
         PrefabRegistryHelpers.PieceDataDictionary.Add(prefabName, new PrefabRegistryHelpers.PieceData
         {
-          Name = translationData.Name,
-          Description = translationData.Description,
+          Name = isInverse
+            ? $"{translationData.Name} $valheim_vehicles_inverse"
+            : translationData.Name,
+          Description = isInverse ? $"{translationData.Description} $valheim_vehicles_inverse_desc" : translationData.Description,
           Icon = icon
         });
       }
@@ -1061,7 +1110,13 @@ public class ShipHullPrefabRegistry : RegisterPrefab<ShipHullPrefabRegistry>
 
       var prefab =
         PrefabManager.Instance.CreateClonedPrefab(
-          prefabName, prefabAsset);
+          prefabName,
+          prefabAsset);
+
+      if (isInverse)
+      {
+        ConvertPrefabToInverseTopLevelLayout(prefab);
+      }
 
       var colliders = prefab.GetComponentsInChildren<Collider>();
       if (colliders == null || colliders.Length == 0)
@@ -1086,6 +1141,200 @@ public class ShipHullPrefabRegistry : RegisterPrefab<ShipHullPrefabRegistry>
     catch (Exception e)
     {
       LoggerProvider.LogError($"Error while registering for HullRibProw {assetName} prefabName: {prefabName} {e}");
+    }
+  }
+
+  private static bool ShouldRegisterInverseV4Prefab(string assetName)
+  {
+    return HullsWithInverseVariant.Any(assetName.StartsWith);
+  }
+
+  private static string GetInverseV4AssetName(string assetName)
+  {
+    if (assetName.Contains("_left_"))
+    {
+      return assetName.Replace("_left_", "_right_");
+    }
+
+    if (assetName.Contains("_right_"))
+    {
+      return assetName.Replace("_right_", "_left_");
+    }
+
+    return assetName;
+  }
+
+  private static void ConvertPrefabToInverseTopLevelLayout(GameObject prefab)
+  {
+    if (!prefab)
+    {
+      return;
+    }
+
+    var prefabTransform = prefab.transform;
+    var temporaryPivot = new GameObject("__inverse_pivot__").transform;
+    temporaryPivot.SetParent(prefabTransform, false);
+
+    var topLevelChildren = new List<Transform>();
+    for (var i = 0; i < prefabTransform.childCount; i++)
+    {
+      var child = prefabTransform.GetChild(i);
+      if (child == temporaryPivot)
+      {
+        continue;
+      }
+
+      topLevelChildren.Add(child);
+    }
+
+    foreach (var child in topLevelChildren)
+    {
+      child.SetParent(temporaryPivot, true);
+    }
+
+    // visually new Vector3(0f, 8f, 0f); is inverse + opposite side, but prefab must be 0,0,0 aligned so 0,4f,0.
+    temporaryPivot.localPosition = new Vector3(0f, 4f, 0f);
+    temporaryPivot.localRotation = Quaternion.Euler(180f, 180f, 0f);
+    temporaryPivot.localScale = Vector3.one;
+
+    var transformedChildren = new List<Transform>();
+    for (var i = 0; i < temporaryPivot.childCount; i++)
+    {
+      transformedChildren.Add(temporaryPivot.GetChild(i));
+    }
+
+    foreach (var child in transformedChildren)
+    {
+      child.SetParent(prefabTransform, true);
+    }
+
+    UnityEngine.Object.DestroyImmediate(temporaryPivot.gameObject);
+  }
+
+  private static Sprite TryCreateInverseIcon(Sprite sourceSprite)
+  {
+    if (!sourceSprite || !sourceSprite.texture)
+    {
+      return sourceSprite;
+    }
+
+    try
+    {
+      if (sourceSprite.packed && sourceSprite.packingRotation != SpritePackingRotation.None)
+      {
+        LoggerProvider.LogWarning(
+          $"Skipping inverse icon flip for packed/rotated sprite {sourceSprite.name}. Use a dedicated inverse icon asset instead.");
+
+        return sourceSprite;
+      }
+
+      var readableTexture = TryCreateReadableTexture(sourceSprite.texture);
+      if (!readableTexture)
+      {
+        return sourceSprite;
+      }
+
+      var textureRect = sourceSprite.textureRect;
+      var x = Mathf.RoundToInt(textureRect.x);
+      var y = Mathf.RoundToInt(textureRect.y);
+      var width = Mathf.RoundToInt(textureRect.width);
+      var height = Mathf.RoundToInt(textureRect.height);
+
+      var sourcePixels = readableTexture.GetPixels(x, y, width, height);
+      var flippedPixels = new Color[sourcePixels.Length];
+
+      for (var row = 0; row < height; row++)
+      {
+        for (var col = 0; col < width; col++)
+        {
+          var sourceIndex = row * width + col;
+          var flippedIndex = row * width + (width - 1 - col);
+          flippedPixels[flippedIndex] = sourcePixels[sourceIndex];
+        }
+      }
+
+      var flippedTexture = new Texture2D(width, height, TextureFormat.RGBA32, false)
+      {
+        name = $"{sourceSprite.name}_inverse"
+      };
+
+      flippedTexture.SetPixels(flippedPixels);
+      flippedTexture.Apply(false, false);
+
+      var normalizedPivot = new Vector2(
+        1f - sourceSprite.pivot.x / sourceSprite.rect.width,
+        sourceSprite.pivot.y / sourceSprite.rect.height);
+
+      return Sprite.Create(
+        flippedTexture,
+        new Rect(0f, 0f, width, height),
+        normalizedPivot,
+        sourceSprite.pixelsPerUnit,
+        0,
+        SpriteMeshType.FullRect,
+        sourceSprite.border);
+    }
+    catch (Exception e)
+    {
+      LoggerProvider.LogWarning($"Failed to flip inverse icon for sprite {sourceSprite.name}: {e}");
+      return sourceSprite;
+    }
+  }
+  private static Texture2D TryCreateReadableTexture(Texture2D sourceTexture)
+  {
+    if (!sourceTexture)
+    {
+      return null;
+    }
+
+    try
+    {
+      var directCopy = new Texture2D(sourceTexture.width, sourceTexture.height, TextureFormat.RGBA32, false)
+      {
+        name = $"{sourceTexture.name}_readable_copy"
+      };
+
+      directCopy.SetPixels(sourceTexture.GetPixels());
+      directCopy.Apply(false, false);
+      return directCopy;
+    }
+    catch
+    {
+      try
+      {
+        var renderTexture = RenderTexture.GetTemporary(
+          sourceTexture.width,
+          sourceTexture.height,
+          0,
+          RenderTextureFormat.ARGB32,
+          RenderTextureReadWrite.Linear);
+
+        Graphics.Blit(sourceTexture, renderTexture);
+
+        var previous = RenderTexture.active;
+        RenderTexture.active = renderTexture;
+
+        var readableCopy = new Texture2D(sourceTexture.width, sourceTexture.height, TextureFormat.RGBA32, false)
+        {
+          name = $"{sourceTexture.name}_readable_copy"
+        };
+
+        readableCopy.ReadPixels(
+          new Rect(0, 0, renderTexture.width, renderTexture.height),
+          0,
+          0);
+        readableCopy.Apply(false, false);
+
+        RenderTexture.active = previous;
+        RenderTexture.ReleaseTemporary(renderTexture);
+
+        return readableCopy;
+      }
+      catch (Exception e)
+      {
+        LoggerProvider.LogWarning($"Failed to create readable texture copy for {sourceTexture.name}: {e}");
+        return null;
+      }
     }
   }
 
