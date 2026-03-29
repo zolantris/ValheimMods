@@ -158,30 +158,25 @@
         return false;
       }
 
-// todo this other logic is likely not needed.
-      return true;
+      // todo this other logic is likely not needed.
 
-      //
-      // if (!vehicleManager || !vehicleManager.isActiveAndEnabled)
-      // {
-      //   return false;
-      // }
-      //
-      //
-      // 
-      //
-      // if (vehicleManager.m_nview == null)
-      // {
-      //   return false;
-      // }
-      //
-      // var vehicleZdo = vehicleManager.m_nview.GetZDO();
-      // if (vehicleZdo == null)
-      // {
-      //   return false;
-      // }
-      //
-      // return true;
+      if (!vehicleManager || !vehicleManager.isActiveAndEnabled)
+      {
+        return false;
+      }
+
+      if (vehicleManager.m_nview == null)
+      {
+        return false;
+      }
+
+      var vehicleZdo = vehicleManager.m_zdo;
+      if (vehicleZdo == null)
+      {
+        return false;
+      }
+
+      return true;
     }
 
 #if DEBUG

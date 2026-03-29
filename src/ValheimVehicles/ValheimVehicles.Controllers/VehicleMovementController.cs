@@ -5066,6 +5066,11 @@
       get;
       set;
     }
+    public ZDO? m_zdo
+    {
+      get;
+      set;
+    }
     public bool IsControllerValid => Manager.IsControllerValid;
 
     public bool IsInitialized => Manager.IsInitialized;

@@ -244,6 +244,11 @@
     public VehiclePiecesController? PiecesController { get; set; }
 
     public ZNetView m_nview { get; set; }
+    public ZDO? m_zdo
+    {
+      get;
+      set;
+    }
 
     public Transform vehicleMovementTransform;
     public Transform vehicleMovementCollidersTransform;
@@ -492,6 +497,11 @@
         m_nview = GetComponent<ZNetView>();
       }
 
+      if (m_nview)
+      {
+        m_zdo = m_nview.GetZDO();
+      }
+
       vehicleMovementTransform = GetVehicleMovementTransform(transform);
     }
 
@@ -549,37 +559,50 @@
 
     public void InitializeAllComponents()
     {
-      if (!this.IsNetViewValid()) return;
-      // must have latest data loaded into the Vehicle otherwise config can be inaccurate.
-      if (!InitializeData()) return;
-
-      InitializeVehiclePiecesController();
-      InitializeMovementController();
-      InitializeOnboardController();
-      InitializeShipEffects();
-      InitializeLandMovementController();
-      InitializePowerConsumerData();
-
-      if (!TryGetControllersToBind(out var controllersToBind))
+      try
       {
-        LoggerProvider.LogError("Error while Initializing components. This likely means ValheimVehicles Mod is broken for this Vehicle Type.");
-        return;
+        if (!this.IsNetViewValid()) return;
+        // must have latest data loaded into the Vehicle otherwise config can be inaccurate.
+        if (!InitializeData()) return;
+
+        InitializeVehiclePiecesController();
+        InitializeMovementController();
+        InitializeOnboardController();
+        InitializeShipEffects();
+        InitializeLandMovementController();
+        InitializePowerConsumerData();
+
+        if (PiecesController != null && MovementController != null)
+        {
+          PiecesController.m_syncRigidbody = MovementController.m_body;
+        }
+
+        if (!TryGetControllersToBind(out var controllersToBind))
+        {
+          LoggerProvider.LogError("Error while Initializing components. This likely means ValheimVehicles Mod is broken for this Vehicle Type.");
+          return;
+        }
+
+        BindAllControllersAndData(controllersToBind);
+
+        if (!IsInitialized) return;
+
+        // For starting the vehicle pieces.
+        if (PiecesController != null)
+        {
+          PiecesController.InitFromShip();
+          InitStarterPiece();
+        }
+        else
+        {
+          Logger.LogError(
+            "InitializeAllComponents somehow failed, PiecesController does not exist");
+        }
       }
-
-      BindAllControllersAndData(controllersToBind);
-
-      if (!IsInitialized) return;
-
-      // For starting the vehicle pieces.
-      if (PiecesController != null)
+      catch (Exception e)
       {
-        PiecesController.InitFromShip();
-        InitStarterPiece();
-      }
-      else
-      {
-        Logger.LogError(
-          "InitializeAllComponents somehow failed, PiecesController does not exist");
+        IsInitialized = false;
+        LoggerProvider.LogError($"Error initializing VehicleManager: {e}");
       }
     }
 
@@ -768,6 +791,11 @@
       {
         m_nview = GetComponent<ZNetView>();
         netView = m_nview;
+      }
+
+      if (m_nview)
+      {
+        m_zdo = m_nview.GetZDO();
       }
 
       GetPersistentID();

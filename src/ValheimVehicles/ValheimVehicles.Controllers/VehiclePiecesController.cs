@@ -92,7 +92,7 @@
     public static readonly Dictionary<Collider, int> m_prefabPieceColliderToIdMap = new();
 
 
-    public static Dictionary<int, List<ZDO>> m_allPieces = new();
+    public static Dictionary<int, HashSet<ZDO>> m_allPieces = new();
 
     /// <summary>
     /// These are materials or players that will not be persisted via ZDOs but are "on" the ship and will be added as a child of the ship
@@ -451,7 +451,7 @@
       yield return null;
     }
 
-    public static IEnumerator SyncAllPrefabsToVehiclePosition_Routine(ZDO vehicleZdo, List<ZDO> zdoPieces, Stopwatch stopWatchRuntime)
+    public static IEnumerator SyncAllPrefabsToVehiclePosition_Routine(ZDO vehicleZdo, HashSet<ZDO> zdoPieces, Stopwatch stopWatchRuntime)
     {
       var vehiclePosition = GetVehiclePosition(vehicleZdo);
       if (!vehiclePosition.HasValue) yield break;
@@ -475,7 +475,7 @@
     /// </summary>
     /// <param name="vehicleZdo"></param>
     /// <param name="zdoPieces"></param>
-    public static void SyncAllPrefabsToVehiclePosition(ZDO vehicleZdo, List<ZDO> zdoPieces)
+    public static void SyncAllPrefabsToVehiclePosition(ZDO vehicleZdo, HashSet<ZDO> zdoPieces)
     {
       var vehiclePosition = GetVehiclePosition(vehicleZdo);
       if (!vehiclePosition.HasValue) return;
@@ -560,6 +560,11 @@
 
       base.OnDisable();
 
+      if (m_zdo != null)
+      {
+        VehicleParentIdCache.Remove(m_zdo);
+      }
+
       _isInvalid = true;
 
       if (MonoUpdaterInstances.Contains(this)) MonoUpdaterInstances.Remove(this);
@@ -581,26 +586,50 @@
     public void CustomUpdate(float deltaTime, float time)
     {
       if (!CanSync()) return;
-
-      AllClientsSync();
+      try
+      {
+        AllClientsSync();
+      }
+      catch (Exception ex)
+      {
+        _canSyncCached = false;
+      }
     }
+
+    private bool _canSyncCached = false;
 
     private bool CanSync()
     {
-      if (m_nview == null) return false;
-      if (IsInvalid()) return false;
-      if (ZNet.instance == null) return false;
-      if (ZNet.instance.IsDedicated()) return false;
+      if (_canSyncCached) return true;
+      try
+      {
+        if (m_zdo == null || !m_nview || !m_syncRigidbody || !m_localRigidbody) return false;
+        if (IsInvalid()) return false;
+        if (ZNet.instance == null) return false;
+        if (ZNet.instance.IsDedicated()) return false;
 
-      return true;
+        _canSyncCached = true;
+        return true;
+      }
+      catch (Exception ex)
+      {
+        _canSyncCached = false;
+        return _canSyncCached;
+      }
     }
 
     public override void CustomFixedUpdate(float deltaTime)
     {
       if (!CanSync()) return;
-
-      Sync();
-      AllClientsSync();
+      try
+      {
+        Sync();
+        AllClientsSync();
+      }
+      catch (Exception ex)
+      {
+        _canSyncCached = false;
+      }
     }
 
     /// <summary>
@@ -976,7 +1005,7 @@
 
     public void LoadInitState()
     {
-      if (!m_nview || !Manager ||
+      if (m_zdo == null || !Manager ||
           !MovementController)
       {
         LoggerProvider.LogDebug(
@@ -985,7 +1014,7 @@
         return;
       }
 
-      var initialized = m_nview?.GetZDO()
+      var initialized = m_zdo?
         .GetBool(VehicleZdoVars.ZdoKeyBaseVehicleInitState) ?? false;
 
       // ensures that all pieces are requested to be brought into the current area
@@ -1004,7 +1033,7 @@
 
     public void SetInitComplete()
     {
-      m_nview?.GetZDO()
+      m_zdo?
         .Set(VehicleZdoVars.ZdoKeyBaseVehicleInitState, true);
       BaseVehicleInitState = InitializationState.Complete;
       IgnoreAllVehicleColliders();
@@ -1311,27 +1340,22 @@
       }
     }
 
-    public void SyncRigidbodyStats(float drag, float angularDrag,
+    public void SyncRigidbodyStats(float linearDamping, float angularDamping,
       bool flight)
     {
       if (!isActiveAndEnabled) return;
-      if (MovementController?.m_body == null || m_statsOverride ||
-          !Manager || !m_localRigidbody)
+      if (!m_syncRigidbody || !m_localRigidbody || m_statsOverride)
         return;
 
       if (VehiclePhysicsMode.ForceSyncedRigidbody !=
           localVehiclePhysicsMode)
         SetVehiclePhysicsType(VehiclePhysicsMode.ForceSyncedRigidbody);
 
-      m_localRigidbody.angularDrag = angularDrag;
-      MovementController.m_body.angularDrag = angularDrag;
+      m_localRigidbody.angularDamping = angularDamping;
+      m_syncRigidbody.angularDamping = angularDamping;
 
-      m_localRigidbody.drag = drag;
-      MovementController.m_body.drag = drag;
-
-      // temp disable mass sync.
-      // m_body.mass = mass;
-      // MovementController.m_body.mass = mass;
+      m_localRigidbody.linearDamping = linearDamping;
+      m_syncRigidbody.linearDamping = linearDamping;
     }
 
     public void SetVehiclePhysicsType(
@@ -1403,18 +1427,15 @@
       if (IsInvalid()) return;
 
       var rotation = GetRotationWithLean();
-      var position = MovementController!.m_body.position;
       m_localRigidbody.Move(
-        position,
+        m_syncRigidbody.position,
         rotation
       );
-
     }
 
     public void NonOwnerSync()
     {
-      if (IsPlayerOwner(m_nview ? m_nview.GetZDO() : null)) return;
-      if (!m_nview || !Manager.OnboardController) return;
+      if (m_zdo == null || !Manager.OnboardController || IsPlayerOwner(m_zdo)) return;
 
       // sync self
       if (Player.m_localPlayer && Player.m_localPlayer.m_nview && Player.m_localPlayer.m_nview.m_body && Manager.OnboardController.m_localPlayers.Contains(Player.m_localPlayer))
@@ -1422,7 +1443,7 @@
         if (Player.m_localPlayer.IsTeleporting()) return;
         var zdo = Player.m_localPlayer.m_nview.GetZDO();
         var playerPos = Player.m_localPlayer.m_nview.m_body.position;
-        var vehiclePos = m_nview.GetZDO().GetPosition();
+        var vehiclePos = m_zdo.GetPosition();
         var relativePosition = playerPos - vehiclePos;
         zdo.Set(VehicleZdoVars.MBPositionHash, relativePosition);
         zdo.SetPosition(playerPos);
@@ -1578,14 +1599,13 @@
 
       if (!m_allPieces.TryGetValue(Manager.PersistentZdoId, out var pieceToUpdateList))
       {
-        pieceToUpdateList = m_pieces.Select(x => x.GetZDO()).ToList();
+        pieceToUpdateList = m_pieces.Select(x => x.GetZDO()).ToHashSet();
       }
 
       var itemsToRemove = new List<ZDO>();
 
-      for (var index = 0; index < pieceToUpdateList.Count; index++)
+      foreach (var zdo in pieceToUpdateList)
       {
-        var zdo = pieceToUpdateList[index];
         if (zdo == null || !zdo.IsValid())
         {
           if (zdo != null)
@@ -1733,34 +1753,27 @@
       return false;
     }
 
-    private double _nextUpdate = -1f;
+    private double _nextForcedResyncUpdate = -1f;
+    public static float forcedClientUpdateIntervalSeconds = 10f;
 
     /**
      * @warning this must only be called on the client
      */
     private void Client_UpdateAllPieces()
     {
-      if (!m_nview) return;
+      var zdoPosition = m_zdo.GetPosition();
+      var zdoSector = ZoneSystem.GetZone(zdoPosition);
 
-      var shouldUpdate = _nextUpdate <= ZNet.instance.m_netTime;
-      var zdoPosition = m_nview.GetZDO().GetPosition();
+      var currentSector = ZoneSystem.GetZone(m_syncRigidbody.position);
+      m_sector = currentSector;
 
-      if (_nextUpdate <= 0f || shouldUpdate)
+      var shouldUpdate = VehicleGlobalConfig.ForceShipOwnerUpdatePerFrame.Value || zdoSector != m_sector || _nextForcedResyncUpdate >= Time.time;
+      if (shouldUpdate)
       {
-        _nextUpdate = ZNet.instance.m_netTime;
+        // Time.time is in seconds.
+        _nextForcedResyncUpdate = Time.time + forcedClientUpdateIntervalSeconds;
+        ForceUpdateAllPiecePositions();
       }
-
-      if (!shouldUpdate && !VehicleGlobalConfig.ForceShipOwnerUpdatePerFrame.Value)
-      {
-        var sector = ZoneSystem.GetZone(zdoPosition);
-        if (sector == m_sector)
-        {
-          return;
-        }
-      }
-
-      m_sector = ZoneSystem.GetZone(zdoPosition);
-      ForceUpdateAllPiecePositions();
     }
 
     /// <summary>
@@ -2729,9 +2742,9 @@
       var id = GetParentID(zdo);
 
       // TODO major performance issue when saving. This iterates through each zdo per removal.
-      if (id != 0 && m_allPieces.TryGetValue(id, out var list))
+      if (id != 0 && m_allPieces.TryGetValue(id, out var hashSet))
       {
-        list.FastRemove(zdo);
+        hashSet.Remove(zdo);
         itemsRemovedDuringWait = true;
       }
 
@@ -2882,24 +2895,31 @@
       var newSector = ZoneSystem.GetZone(newVehiclePos);
       var characterDestinations = new Dictionary<ZNetView, Vector3>();
 
+
       // -----------------------------------------------------------------------
       // 1. Persistent pieces (hull, furniture, etc.)
       //    MBPositionHash = localPosition relative to vehicle origin.
       // -----------------------------------------------------------------------
       if (m_allPieces.TryGetValue(persistentId, out var pieceZdos))
       {
-        for (var i = pieceZdos.Count - 1; i >= 0; i--)
+        var zdosToRemove = new List<ZDO>();
+
+        foreach (var zdo in pieceZdos)
         {
-          var zdo = pieceZdos[i];
           if (zdo == null || !zdo.IsValid())
           {
-            pieceZdos.RemoveAt(i);
             continue;
           }
 
           var localOffset = zdo.GetVec3(VehicleZdoVars.MBPositionHash, Vector3.zero);
           zdo.SetPosition(newVehiclePos + localOffset);
           zdo.SetSector(newSector);
+        }
+
+
+        foreach (var zdo in zdosToRemove)
+        {
+          pieceZdos.Remove(zdo);
         }
       }
 
@@ -4377,12 +4397,11 @@
 
     public override int GetPieceCount()
     {
-      if (Manager == null || Manager.m_nview == null ||
-          Manager.m_nview.m_zdo == null)
+      if (m_zdo == null)
         return base.GetPieceCount();
 
       var count =
-        Manager.m_nview.m_zdo.GetInt(VehicleZdoVars.MBPieceCount,
+        m_zdo.GetInt(VehicleZdoVars.MBPieceCount,
           m_pieces.Count);
       return count;
     }
@@ -4435,6 +4454,12 @@
       get;
       set;
     }
+    public ZDO? m_zdo
+    {
+      get;
+      set;
+    }
+
     public bool IsControllerValid => Manager.IsControllerValid;
     public bool IsInitialized => Manager.IsInitialized;
     public bool IsDestroying => Manager.IsDestroying;

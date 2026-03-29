@@ -755,4 +755,9 @@
       get;
       set;
     }
+    public ZDO? m_zdo
+    {
+      get;
+      set;
+    }
   }

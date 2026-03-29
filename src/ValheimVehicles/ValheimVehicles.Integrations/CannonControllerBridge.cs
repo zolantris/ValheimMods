@@ -141,4 +141,9 @@ public class CannonControllerBridge : CannonController, Hoverable, Interactable,
     get;
     set;
   }
+  public ZDO? m_zdo
+  {
+    get;
+    set;
+  }
 }

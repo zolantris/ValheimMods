@@ -27,8 +27,10 @@ public class CustomMeshPrefabs : RegisterPrefab<CustomMeshPrefabs>
     RegisterWaterMaskCreator();
     RegisterWaterMaskPrefab();
     RegisterCustomFloatationPrefab();
-    RegisterShipChunkBoundary8x8();
-    RegisterShipChunkBoundary16x16();
+    RegisterShipChunkBoundaryFromMultiplier(2);
+    RegisterShipChunkBoundaryFromMultiplier(4);
+    RegisterShipChunkBoundaryFromMultiplier(8);
+    RegisterShipChunkBoundaryFromMultiplier(16);
     RegisterShipChunkBoundaryEraser();
 
     if (CustomMeshConfig.EnableCustomWaterMeshTestPrefabs.Value)
@@ -420,14 +422,13 @@ public class CustomMeshPrefabs : RegisterPrefab<CustomMeshPrefabs>
       }));
   }
 
-  private static void RegisterShipChunkBoundary8x8()
+  private static void RegisterShipChunkBoundaryFromMultiplier(int multiplier)
   {
     var prefab =
       PrefabManager.Instance.CreateEmptyPrefab(PrefabNames.ShipChunkBoundary8x8x8);
 
-
     var piece = prefab.AddComponent<Piece>();
-    piece.m_name = "$valheim_vehicles_boundary_mesh 8x8";
+    piece.m_name = $"$valheim_vehicles_boundary_mesh {multiplier}x{multiplier}";
     piece.m_description =
       "$valheim_vehicles_boundary_mesh_desc";
     piece.m_placeEffect =
@@ -435,33 +436,7 @@ public class CustomMeshPrefabs : RegisterPrefab<CustomMeshPrefabs>
     piece.m_icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
       .VehicleBorderAdd);
 
-    ChunkPrefabSharedSetup(prefab, piece, Vector3.one * 8, CachedBoundaryAdderColor);
-
-    PrefabRegistryController.AddPiece(new CustomPiece(prefab, false,
-      new PieceConfig
-      {
-        PieceTable = PrefabRegistryController.GetPieceTableName(),
-        Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Tools),
-        Enabled = true
-      }));
-  }
-
-  private static void RegisterShipChunkBoundary16x16()
-  {
-    var prefab =
-      PrefabManager.Instance.CreateEmptyPrefab(PrefabNames.ShipChunkBoundary16x16x16);
-
-    var piece = prefab.AddComponent<Piece>();
-    piece.m_name = "$valheim_vehicles_boundary_mesh 16x16";
-    piece.m_description =
-      "$valheim_vehicles_boundary_mesh_desc";
-    piece.m_icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
-      .VehicleBorderAdd);
-    piece.m_placeEffect =
-      LoadValheimAssets.woodFloorPiece.m_placeEffect;
-
-    ChunkPrefabSharedSetup(prefab, piece, Vector3.one * 16, CachedBoundaryAdderColor);
-
+    ChunkPrefabSharedSetup(prefab, piece, Vector3.one * multiplier, CachedBoundaryAdderColor);
 
     PrefabRegistryController.AddPiece(new CustomPiece(prefab, false,
       new PieceConfig

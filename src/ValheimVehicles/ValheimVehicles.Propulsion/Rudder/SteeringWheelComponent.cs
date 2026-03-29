@@ -590,4 +590,9 @@ public class SteeringWheelComponent : MonoBehaviour, IAnimatorHandler, Hoverable
     get;
     set;
   }
+  public ZDO? m_zdo
+  {
+    get;
+    set;
+  }
 }
