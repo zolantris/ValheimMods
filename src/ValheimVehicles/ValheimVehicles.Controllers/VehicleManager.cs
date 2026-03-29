@@ -386,6 +386,10 @@
         StopCoroutine(_validateVehicleCoroutineInstance);
         _validateVehicleCoroutineInstance = null;
       }
+
+      if (PersistentZdoId != 0 && VehicleInstances.ContainsKey(PersistentZdoId))
+        VehicleInstances.Remove(PersistentZdoId);
+
       UpdateIsControllerValid();
       IsControllerValid = false;
     }

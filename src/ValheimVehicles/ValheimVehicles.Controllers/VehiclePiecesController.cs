@@ -84,6 +84,11 @@
     /// </summary>
     public static Dictionary<int, List<ZNetView>> m_pendingPieces = new();
     public static Dictionary<int, List<ActivationPieceData>> m_pendingTempPieces = new();
+
+    /// <summary>
+    /// ZDO to PersistentId cache to avoid having to call GetPersistentId() on netviews which is a heavy call. This also allows use to retain zdos in ZNetScene by referencing this.
+    /// </summary>
+    public static Dictionary<ZDO, int> VehicleParentIdCache = new();
     public static readonly Dictionary<Collider, int> m_prefabPieceColliderToIdMap = new();
 
 
@@ -2722,9 +2727,11 @@
           PrefabNames.WaterVehicleShip.GetStableHashCode() || zdo.m_prefab == PrefabNames.LandVehicle.GetStableHashCode()) return;
 
       var id = GetParentID(zdo);
+
+      // TODO major performance issue when saving. This iterates through each zdo per removal.
       if (id != 0 && m_allPieces.TryGetValue(id, out var list))
       {
-        list.Remove(zdo);
+        list.FastRemove(zdo);
         itemsRemovedDuringWait = true;
       }
 
