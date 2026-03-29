@@ -17,6 +17,12 @@ public class VehicleChunkController
     {
       return 1;
     }
+
+    if (prefabName.Contains(PrefabNames.ShipChunkBoundary1x1x1))
+    {
+      return 1;
+    }
+
     if (prefabName.Contains(PrefabNames.ShipChunkBoundary4x4x4))
     {
       return 4;
@@ -41,6 +47,7 @@ public class VehicleChunkController
   public static bool IsShipChunkBoundaryPiece(string name)
   {
     return name.StartsWith(PrefabNames.ShipChunkBoundary1x1x1) ||
+           name.StartsWith(PrefabNames.ShipChunkBoundary2x2x2) ||
            name.StartsWith(PrefabNames.ShipChunkBoundary4x4x4) ||
            name.StartsWith(PrefabNames.ShipChunkBoundary8x8x8) ||
            name.StartsWith(PrefabNames.ShipChunkBoundary16x16x16);

@@ -101,6 +101,9 @@
       public static readonly string ShipChunkBoundary1x1x1 =
         $"{ValheimVehiclesPrefix}_ShipChunkBoundary1x1x1";
 
+      public static readonly string ShipChunkBoundary2x2x2 =
+        $"{ValheimVehiclesPrefix}_ShipChunkBoundary1x1x1";
+
       public static readonly string ShipChunkBoundary4x4x4 =
         $"{ValheimVehiclesPrefix}_ShipChunkBoundary4x4x4";
 

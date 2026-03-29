@@ -360,68 +360,6 @@ public class CustomMeshPrefabs : RegisterPrefab<CustomMeshPrefabs>
     meshRenderer.reflectionProbeUsage = ReflectionProbeUsage.Off;
   }
 
-
-  /// <summary>
-  /// Unused, too small IMO
-  /// </summary>
-  private static void RegisterShipChunkBoundary1x1()
-  {
-    var prefab =
-      PrefabManager.Instance.CreateEmptyPrefab(PrefabNames.ShipChunkBoundary1x1x1);
-
-
-    var piece = prefab.AddComponent<Piece>();
-    piece.m_name = "$valheim_vehicles_boundary_mesh 1x1";
-    piece.m_description =
-      "$valheim_vehicles_boundary_mesh_desc";
-    piece.m_placeEffect =
-      LoadValheimAssets.woodFloorPiece.m_placeEffect;
-
-    ChunkPrefabSharedSetup(prefab, piece, Vector3.one * 8, CachedBoundaryAdderColor);
-
-
-    PrefabRegistryController.AddPiece(new CustomPiece(prefab, false,
-      new PieceConfig
-      {
-        PieceTable = PrefabRegistryController.GetPieceTableName(),
-        Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
-          .VehicleBorderAdd),
-        Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Tools),
-        Enabled = true
-      }));
-  }
-
-  /// <summary>
-  /// Unused, too small IMO
-  /// </summary>
-  private static void RegisterShipChunkBoundary4x4()
-  {
-    var prefab =
-      PrefabManager.Instance.CreateEmptyPrefab(PrefabNames.ShipChunkBoundary4x4x4);
-
-
-    var piece = prefab.AddComponent<Piece>();
-    piece.m_name = "$valheim_vehicles_boundary_mesh 4x4";
-    piece.m_description =
-      "$valheim_vehicles_boundary_mesh_desc";
-    piece.m_icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
-      .VehicleBorderAdd);
-
-    piece.m_placeEffect =
-      LoadValheimAssets.woodFloorPiece.m_placeEffect;
-
-    ChunkPrefabSharedSetup(prefab, piece, Vector3.one * 8, CachedBoundaryAdderColor);
-
-
-    PrefabRegistryController.AddPiece(new CustomPiece(prefab, false,
-      new PieceConfig
-      {
-        PieceTable = PrefabRegistryController.GetPieceTableName(),
-        Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Tools),
-        Enabled = true
-      }));
-  }
-
   private static void RegisterShipChunkBoundaryFromMultiplier(int multiplier)
   {
     var prefab =
