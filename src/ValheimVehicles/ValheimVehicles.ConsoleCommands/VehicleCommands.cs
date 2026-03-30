@@ -1192,7 +1192,7 @@ public class VehicleCommands : ConsoleCommand
     var vehiclePendingPieces =
       pieceController?.GetCurrentPendingPieces();
     var vehiclePendingPiecesCount = vehiclePendingPieces?.Count ?? -1;
-    var currentPendingState = pieceController!.GetPieceActivator().pieceState;
+    var currentPendingState = pieceController!.PendingPiecesState;
     var pendingPiecesString =
       string.Join(",", vehiclePendingPieces?.Select(x => x.name) ?? []);
     if (pendingPiecesString == string.Empty) pendingPiecesString = "None";

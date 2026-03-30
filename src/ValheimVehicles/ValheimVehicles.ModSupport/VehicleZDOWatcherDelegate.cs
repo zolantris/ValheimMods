@@ -31,7 +31,7 @@ public abstract class VehicleZDOWatcherDelegate
 
   public static void OnZdoReset(ZDO zdo)
   {
-    VehiclePiecesController.RemoveZdo(zdo);
+    VehiclePiecesController.RemoveZDO(zdo);
     SwivelComponentBridge.RemoveZdo(zdo);
   }
 }

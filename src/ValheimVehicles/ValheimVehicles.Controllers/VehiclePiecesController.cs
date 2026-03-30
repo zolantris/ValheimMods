@@ -57,6 +57,12 @@
       ActiveInstances = new();
 
     /// <summary>
+    /// pieceDictionary with a key (vehicleId) and value as a list of netviews 
+    /// </summary>
+    public static Dictionary<int, List<ZNetView>> m_pendingPieces = new();
+    public static Dictionary<int, List<ActivationPieceData>> m_pendingTempPieces = new();
+
+    /// <summary>
     /// ZDO to PersistentId cache to avoid having to call GetPersistentId() on netviews which is a heavy call. This also allows use to retain zdos in ZNetScene by referencing this.
     /// </summary>
     public static Dictionary<ZDO, int> VehicleParentIdCache = new();
@@ -68,7 +74,7 @@
     /// <summary>
     /// These are materials or players that will not be persisted via ZDOs but are "on" the ship and will be added as a child of the ship
     /// </summary>
-    public static Dictionary<int, HashSet<ZDOID>>
+    public static Dictionary<int, List<ZDOID>>
       m_dynamicObjects = new();
 
     // public static Dictionary<ZDOID, ZNetView> temporaryMaterials = new();
@@ -193,6 +199,7 @@
     private Bounds _pendingHullBounds;
 
 
+    private Coroutine? _pendingPiecesCoroutine;
     private bool _pendingPiecesDirty;
 
     // only one recentering operation may be in-flight at a time
@@ -275,9 +282,30 @@
       private set;
     } = InitializationState.Pending;
 
-    public override bool IsActivationComplete =>
-      _pieceActivator.pieceState is not PendingPieceStateEnum.Failure
+    public bool IsActivationComplete =>
+      PendingPiecesState is not PendingPieceStateEnum.Failure
         and not PendingPieceStateEnum.Running;
+
+    public static bool DEBUGAllowActivatePendingPieces
+    {
+      get => _allowPendingPiecesToActivate;
+      set
+      {
+        if (value) ActivateAllPendingPieces();
+
+        _allowPendingPiecesToActivate = value;
+      }
+    }
+
+    /// <summary>
+    /// For usage in debugging
+    /// </summary>
+    /// <returns></returns>
+    public PendingPieceStateEnum PendingPiecesState
+    {
+      get;
+      private set;
+    } = PendingPieceStateEnum.Idle;
 
     public static bool hasDebug => VehicleGuiMenuConfig.HasDebugPieces.Value;
 
@@ -293,16 +321,9 @@
       !MovementController?.IsFlying() ?? false ||
       PropulsionConfig.AllowFlight.Value == false;
 
-    public bool CanActivatePendingPieces => _pieceActivator.CanActivatePendingPieces;
+    public bool CanActivatePendingPieces => _pendingPiecesCoroutine == null;
 
     public TargetController targetController;
-
-    public VehiclePieceActivator GetPieceActivator()
-    {
-      return _pieceActivator;
-    }
-
-    public override bool IsInitialPieceActivationComplete => _pieceActivator.IsInitialActivationComplete;
 
     public override void Awake()
     {
@@ -354,8 +375,6 @@
 
       // Look for any existing data for the vehicle.
       UpdateChunkBoundsData(false);
-
-      SetupPieceActivator();
     }
 
     public void AddTargetController()
@@ -464,6 +483,8 @@
       if (hasDebug)
       {
         LoggerProvider.LogInfo($"pieces {m_pieces.Count}");
+        LoggerProvider.LogInfo($"pendingPieces {m_pendingPieces.Count}");
+        LoggerProvider.LogInfo($"allPieces {m_allPieces.Count}");
       }
 
       InitializeBasePiecesControllerOverrides();
@@ -472,14 +493,12 @@
           !ActiveInstances.ContainsKey(Manager.PersistentZdoId))
         ActiveInstances.Add(Manager.PersistentZdoId, this);
 
-      _pieceActivator.StartInitPersistentId();
       StartClientServerUpdaters();
     }
 
     public override void OnEnable()
     {
       base.OnEnable();
-
 
       OnLocalOriginShiftApplied += OnVehicleCenterShift;
 
@@ -493,14 +512,6 @@
       }
 
       StartClientServerUpdaters();
-    }
-
-    public void SetupPieceActivator()
-    {
-      _pieceActivator = gameObject.AddComponent<VehiclePieceActivator>();
-      _pieceActivator.Init(this);
-      _pieceActivator.OnActivationComplete += OnActivatePendingPiecesComplete;
-      _pieceActivator.OnInitComplete = SetInitComplete;
     }
 
     /// <summary>
@@ -960,9 +971,25 @@
     public List<ZNetView>? GetCurrentPendingPieces()
     {
       var persistentId = GetPersistentId();
-      BasePieceActivatorComponent.m_pendingPieces.TryGetValue(persistentId,
+      m_pendingPieces.TryGetValue(persistentId,
         out var pendingPiecesList);
       return pendingPiecesList ?? null;
+    }
+
+    /**
+     * Side Effect to be used when initialization state changes. This allows for starting the ActivatePendingPiecesCoroutine
+     */
+    private void OnBaseVehicleInitializationStateChange(InitializationState state)
+    {
+      if (state != InitializationState.Complete) return;
+
+      StartActivatePendingPieces();
+    }
+
+    public static bool GetIsActivationComplete(
+      VehiclePiecesController? piecesController)
+    {
+      return piecesController != null && piecesController.IsActivationComplete;
     }
 
     public void LoadInitState()
@@ -999,8 +1026,6 @@
         .Set(VehicleZdoVars.ZdoKeyBaseVehicleInitState, true);
       BaseVehicleInitState = InitializationState.Complete;
       IgnoreAllVehicleColliders();
-
-      RequestBoundsRebuild();
     }
 
 
@@ -1252,7 +1277,7 @@
     private void StartClientServerUpdaters()
     {
       if (!(bool)ZNet.instance) return;
-      StartActivatePendingVehiclePieces();
+      StartActivatePendingPieces();
     }
 
     public void CleanUp()
@@ -1266,20 +1291,28 @@
         Destroy(vehicleCenter);
       }
 
+      if (_pendingPiecesCoroutine != null)
+      {
+        StopCoroutine(_pendingPiecesCoroutine);
+        OnActivatePendingPiecesComplete(PendingPieceStateEnum.ForceReset);
+      }
+
       if (Manager == null)
         LoggerProvider.LogError("Cleanup called but there is no valid VehicleInstance");
 
       if (!ZNetScene.instance || PersistentZdoId == null ||
           PersistentZdoId == 0) return;
 
-      foreach (var prefabPieceData in m_prefabPieceDataItems.Values)
+
+      for (var index = 0; index < m_pieces.Count; index++)
       {
-        if (!prefabPieceData.Prefab) continue;
-        if (!prefabPieceData.IsSwivelChild)
+        if (!m_pieces.TryGetValidElement(ref index, ["m_zdo"], out var piece))
         {
-          prefabPieceData.Prefab.transform.SetParent(null);
-          AddInactivePiece(Manager!.PersistentZdoId, prefabPieceData.Prefab.GetComponent<ZNetView>(), null, true);
+          continue;
         }
+
+        piece.transform.SetParent(null);
+        AddInactivePiece(Manager!.PersistentZdoId, piece, null, true);
       }
 
       // todo might need to do some freezing of positions if these pieces are rigidbodies/physics related such as animals and npcs.
@@ -1391,7 +1424,7 @@
 
     public void NonOwnerSync()
     {
-      if (m_zdo == null || !Manager.OnboardController || ZdoUtils.IsPlayerOwner(m_zdo)) return;
+      if (m_zdo == null || !Manager.OnboardController || IsPlayerOwner(m_zdo)) return;
 
       // sync self
       if (Player.m_localPlayer && Player.m_localPlayer.m_nview && Player.m_localPlayer.m_nview.m_body && Manager.OnboardController.m_localPlayers.Contains(Player.m_localPlayer))
@@ -1501,7 +1534,7 @@
         return null;
       }
 
-      if (ZdoUtils.IsPlayerOwner(zdo))
+      if (IsPlayerOwner(zdo))
       {
         var netView = ZNetScene.instance.FindInstance(zdo);
         if (netView)
@@ -1578,7 +1611,6 @@
             UpdatePieceZdoPosition(zdo, vehiclePosition, prefabPieceData.IsBed);
             continue;
           }
-          // swivels should never be updated with vehicle position as a swivel could be moving.
           if (prefabPieceData.IsSwivelChild && TrySetSwivelPiecePosition(nv))
           {
             continue;
@@ -1733,7 +1765,8 @@
         var zdo = nv.GetZDO();
         if (zdo != null)
         {
-          UpdatePieceZdoPosition(zdo, swivel.GetNetView().GetZDO().GetPosition());
+
+          UpdatePieceZdoPosition(zdo, swivel.transform.position);
         }
         return true;
       }
@@ -1761,6 +1794,15 @@
         _nextForcedResyncUpdate = Time.time + forcedClientUpdateIntervalSeconds;
         ForceUpdateAllPiecePositions();
       }
+    }
+
+    /// <summary>
+    /// Abstract for this getter, coherces to false
+    /// </summary>
+    /// <returns></returns>
+    private static bool IsPlayerOwner(ZDO? zdo)
+    {
+      return zdo != null && zdo.IsOwner();
     }
 
     /// <summary>
@@ -1870,11 +1912,6 @@
       AddPendingTempPiece(activationPieceData);
     }
 
-    public void StartActivatePendingVehiclePieces()
-    {
-      _pieceActivator.StartActivatePendingPieces();
-    }
-
     public static void AddInactivePiece(int id, ZNetView netView,
       VehiclePiecesController? instance, bool skipActivation = false)
     {
@@ -1886,24 +1923,28 @@
       if (hasDebug)
         LoggerProvider.LogDebug($"addInactivePiece called with {id} for {netView.name}");
 
+      if (instance != null)
+      {
+        instance.CancelInvoke(nameof(StartActivatePendingPieces));
+      }
+
       if (instance != null && instance.isActiveAndEnabled)
       {
-        instance.CancelInvoke(nameof(instance.StartActivatePendingVehiclePieces));
         if (ActiveInstances.TryGetValue(id, out var activeInstance))
         {
           activeInstance.ActivatePiece(netView);
           return;
         }
-
-        BasePieceActivatorComponent.AddPendingPiece(id, netView, skipActivation, true, false);
       }
+
+      AddPendingPiece(id, netView, skipActivation);
 
       var wnt = netView.GetComponent<WearNTear>();
       if ((bool)wnt) wnt.enabled = false;
 
       if (!skipActivation && instance != null && ZNet.instance != null && !instance.IsInvalid())
         // This will queue up a re-run of ActivatePendingPieces if there are any
-        instance.Invoke(nameof(instance.StartActivatePendingVehiclePieces), 0.1f);
+        instance.Invoke(nameof(StartActivatePendingPieces), 0.1f);
     }
 
 /*
@@ -1939,7 +1980,7 @@
     /// </summary>
     public override void RequestBoundsRebuild()
     {
-      if (!isActiveAndEnabled || ZNetView.m_forceDisableInit || !base.IsInitialPieceActivationComplete) return;
+      if (!isActiveAndEnabled || ZNetView.m_forceDisableInit || !IsInitialPieceActivationComplete) return;
 
       base.RequestBoundsRebuild();
     }
@@ -2045,38 +2086,123 @@
       else if (gameObject) Destroy(gameObject);
     }
 
+    public void AddPendingPieceToActiveVehicle(int vehicleId, ZNetView piece,
+      bool skipActivation = false)
+    {
+      PendingPiecesState = PendingPieceStateEnum.Scheduled;
+      if (_pendingPiecesCoroutine != null)
+      {
+        _newPendingPiecesQueue.Add(piece);
+        _pendingPiecesDirty = true;
+        return;
+      }
+
+      if (!m_pendingPieces.TryGetValue(vehicleId, out var list))
+      {
+        list = [];
+        m_pendingPieces.Add(vehicleId, list);
+      }
+
+      list.Add(piece);
+      _pendingPiecesDirty = true;
+
+
+      if (!skipActivation && isActiveAndEnabled && piece != null &&
+          piece.isActiveAndEnabled)
+        // delegates to coroutine activation logic
+        StartActivatePendingPieces();
+    }
+
     private static void AddPendingTempPiece(ActivationPieceData activationPieceData)
     {
       ActiveInstances.TryGetValue(activationPieceData.vehicleId, out var activeVehicleInstance);
 
-      if (!BasePieceActivatorComponent.m_pendingTempPieces.ContainsKey(activationPieceData.vehicleId))
-        BasePieceActivatorComponent.m_pendingTempPieces.Add(activationPieceData.vehicleId, []);
+      if (!m_pendingTempPieces.ContainsKey(activationPieceData.vehicleId))
+        m_pendingTempPieces.Add(activationPieceData.vehicleId, []);
 
       if (activeVehicleInstance == null)
       {
-        BasePieceActivatorComponent.m_pendingTempPieces[activationPieceData.vehicleId].Add(activationPieceData);
+        m_pendingTempPieces[activationPieceData.vehicleId].Add(activationPieceData);
         return;
       }
 
       activeVehicleInstance.AddTemporaryPiece(activationPieceData);
     }
 
+    private static void AddPendingPiece(int vehicleId, ZNetView piece, bool skipActivation = false)
+    {
+      ActiveInstances.TryGetValue(vehicleId, out var vehicleInstance);
+
+      if (!m_pendingPieces.ContainsKey(vehicleId))
+        m_pendingPieces.Add(vehicleId, []);
+
+      if (vehicleInstance == null)
+      {
+        m_pendingPieces[vehicleId].Add(piece);
+        return;
+      }
+
+      vehicleInstance.AddPendingPieceToActiveVehicle(vehicleId, piece, skipActivation);
+    }
+
+    public static void ActivateAllPendingPieces()
+    {
+      foreach (var pieceController in ActiveInstances)
+        pieceController.Value.StartActivatePendingPieces();
+    }
+
     internal static List<ZNetView>? GetShipActiveInstances(int? persistentId)
     {
       if (persistentId == null) return null;
       var hasSucceeded =
-        BasePieceActivatorComponent.m_pendingPieces.TryGetValue(persistentId.Value, out var list);
+        m_pendingPieces.TryGetValue(persistentId.Value, out var list);
 
       return !hasSucceeded ? null : list;
     }
 
-    public void OnActivatePendingPiecesComplete(PendingPieceStateEnum pieceState)
+    /// <summary>
+    /// Main method for starting the pending piece activation.
+    /// - It will only allow 1 instance of itself to run
+    /// - It will only run on Initialization state complete
+    /// - It will only run if there are valid pieces to activate
+    /// </summary>
+    public void StartActivatePendingPieces()
     {
-      if (pieceState == PendingPieceStateEnum.Idle || pieceState == PendingPieceStateEnum.Complete)
+      // For debugging activation of raft
+#if DEBUG
+      if (!DEBUGAllowActivatePendingPieces) return;
+#endif
+      if (hasDebug)
+        LoggerProvider.LogDebug(
+          $"ActivatePendingPiecesCoroutine(): pendingPieces count: {m_pendingPieces.Count}");
+      if (!CanActivatePendingPieces) return;
+
+      if (Manager == null) return;
+
+      // do not run if in a Pending or Created state or if no pending pieces
+      if (BaseVehicleInitState != InitializationState.Complete &&
+          GetCurrentPendingPieces()?.Count == 0) return;
+
+      if (_pendingPiecesCoroutine == null)
       {
-        if (!base.IsInitialPieceActivationComplete)
+        _pendingPiecesCoroutine =
+          StartCoroutine(nameof(ActivatePendingPiecesCoroutine));
+      }
+    }
+
+    public void OnActivatePendingPiecesComplete(
+      PendingPieceStateEnum pieceStateEnum,
+      string message = "")
+    {
+      _pendingPiecesCoroutine = null;
+      PendingPiecesState = pieceStateEnum;
+      PendingPiecesTimer.Reset();
+
+      if (pieceStateEnum == PendingPieceStateEnum.Complete)
+      {
+        if (!IsInitialPieceActivationComplete)
         {
-          base.IsInitialPieceActivationComplete = true;
+          IsInitialPieceActivationComplete = true;
           // as a safety measure calling this will prevent collisions if any piece was delayed in activation.
           ForceRebuildBounds();
         }
@@ -2087,10 +2213,87 @@
         }
       }
 
-      if (pieceState == PendingPieceStateEnum.ForceReset)
+      if (pieceStateEnum == PendingPieceStateEnum.ForceReset)
         InitializationTimer.Reset();
       else
         InitializationTimer.Stop();
+
+
+      if (pieceStateEnum == PendingPieceStateEnum.Failure)
+        LoggerProvider.LogWarning(
+          $"ActivatePendingPieces did not complete correctly. Reason: {message}");
+    }
+
+    public void OnStartActivatePendingPieces()
+    {
+      PendingPiecesState = PendingPieceStateEnum.Running;
+      PendingPiecesTimer.Restart();
+    }
+
+    public IEnumerator ActivatePendingPiecesCoroutine()
+    {
+      if (BaseVehicleInitState !=
+          InitializationState.Complete)
+      {
+        _pendingPiecesCoroutine = null;
+        yield break;
+      }
+
+      OnStartActivatePendingPieces();
+
+      var persistentZdoId = PersistentZdoId;
+      if (persistentZdoId == 0)
+      {
+        OnActivatePendingPiecesComplete(PendingPieceStateEnum.Failure,
+          "No persistentID found on Vehicle instance");
+        yield break;
+      }
+
+      var currentPieces = GetShipActiveInstances(persistentZdoId);
+
+      if (currentPieces == null || currentPieces.Count == 0)
+      {
+        OnActivatePendingPiecesComplete(PendingPieceStateEnum.Complete);
+        yield break;
+      }
+
+      // Does not care about conditionals are first run
+      do
+      {
+        if (ZNetScene.instance.InLoadingScreen())
+          yield return new WaitForFixedUpdate();
+
+        yield return null;
+
+        if (Manager?.m_nview == null)
+        {
+          // NetView somehow unmounted;
+          OnActivatePendingPiecesComplete(PendingPieceStateEnum.ForceReset);
+          _pendingPiecesCoroutine = null;
+          yield break;
+        }
+
+        _pendingPiecesDirty = false;
+
+        if (currentPieces == null && _newPendingPiecesQueue.Count == 0) continue;
+        // Process each pending piece, yielding periodically to avoid frame spikes
+        foreach (var piece in currentPieces.ToList())
+          // Activate each piece (e.g., instantiate or enable)
+          ActivatePiece(piece);
+
+        // Clear processed items and add any newly queued items
+        currentPieces?.Clear();
+        if (_newPendingPiecesQueue.Count <= 0) continue;
+        currentPieces ??= [];
+        currentPieces.AddRange(_newPendingPiecesQueue);
+        _newPendingPiecesQueue.Clear();
+        _pendingPiecesDirty = true; // Mark dirty to re-run coroutine
+      } while
+        (_pendingPiecesDirty); // Loop if new items were added during this run
+
+      ActivateTempPieces();
+
+      OnActivatePendingPiecesComplete(PendingPieceStateEnum.Complete);
     }
 
     /// <summary>
@@ -2532,6 +2735,9 @@
           m_allPieces.Add(id, list);
         }
 
+        // important for preventing a list error if the zdo has already been added
+        if (list.Contains(zdo)) return;
+
         list.Add(zdo);
       }
 
@@ -2540,7 +2746,7 @@
       {
         if (!m_dynamicObjects.TryGetValue(cid, out var objectList))
         {
-          objectList = new HashSet<ZDOID>();
+          objectList = new List<ZDOID>();
           m_dynamicObjects.Add(cid, objectList);
         }
 
@@ -2548,7 +2754,7 @@
       }
     }
 
-    public static void RemoveZdo(ZDO zdo)
+    public static void RemoveZDO(ZDO zdo)
     {
       if (zdo.m_prefab ==
           PrefabNames.WaterVehicleShip.GetStableHashCode() || zdo.m_prefab == PrefabNames.LandVehicle.GetStableHashCode()) return;
@@ -2626,7 +2832,7 @@
     public void ActivateTempPieces()
     {
       if (Manager == null) return;
-      if (!BasePieceActivatorComponent.m_pendingTempPieces.TryGetValue(Manager.PersistentZdoId, out var pendingTempPiecesList))
+      if (!m_pendingTempPieces.TryGetValue(Manager.PersistentZdoId, out var pendingTempPiecesList))
       {
         LoggerProvider.LogDebug($"No temp pieces found for vehicle {Manager.PersistentZdoId}");
         return;
@@ -2744,12 +2950,13 @@
       // -----------------------------------------------------------------------
       if (m_dynamicObjects.TryGetValue(persistentId, out var dynamicZdoIds))
       {
-        foreach (var zdoid in dynamicZdoIds)
+        for (var i = dynamicZdoIds.Count - 1; i >= 0; i--)
         {
+          var zdoid = dynamicZdoIds[i];
           var zdo = ZDOMan.instance?.GetZDO(zdoid);
           if (zdo == null || !zdo.IsValid())
           {
-            dynamicZdoIds.Remove(zdoid);
+            dynamicZdoIds.RemoveAt(i);
             continue;
           }
 
@@ -3008,7 +3215,7 @@
         }
 
         var hasPendingPieces =
-          BasePieceActivatorComponent.m_pendingPieces.TryGetValue(vehicleController.PersistentZdoId,
+          m_pendingPieces.TryGetValue(vehicleController.PersistentZdoId,
             out var pendingPieces);
         var hasPieces = vehicleController.PiecesController.GetPieceCount() != 0;
 

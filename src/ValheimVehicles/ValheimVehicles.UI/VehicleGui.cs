@@ -849,7 +849,7 @@
         var nearest = VehicleCommands.GetNearestVehicleManager();
         if (nearest != null)
         {
-          nearest.PiecesController?.StartActivatePendingVehiclePieces();
+          nearest.PiecesController?.StartActivatePendingPieces();
         }
       }
 

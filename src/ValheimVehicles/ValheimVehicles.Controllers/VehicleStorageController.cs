@@ -500,7 +500,7 @@
         }
       }
 
-      vehicleShip.PiecesController.StartActivatePendingVehiclePieces();
+      vehicleShip.PiecesController.StartActivatePendingPieces();
     }
 
     /// <summary>

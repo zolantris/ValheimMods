@@ -209,7 +209,7 @@
       {
         if (VehiclePiecesController.ActiveInstances.TryGetValue(parentId, out var vehicle))
         {
-          vehicle.StartActivatePendingVehiclePieces();
+          vehicle.StartActivatePendingPieces();
         }
       }
 
