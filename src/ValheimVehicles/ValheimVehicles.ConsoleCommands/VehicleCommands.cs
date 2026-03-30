@@ -1552,17 +1552,24 @@ public class VehicleCommands : ConsoleCommand
     var maxHeight = 3000f;
 
 
-    if (args != null)
+    if (args != null && args.Length >= 2)
     {
-      if (float.TryParse(args[0], out var parsedMin) && float.TryParse(args[1], out var parsedMax))
+      try
       {
-        minHeight = parsedMin;
-        maxHeight = parsedMax;
+        if (float.TryParse(args[0], out var parsedMin) && float.TryParse(args[1], out var parsedMax))
+        {
+          minHeight = parsedMin;
+          maxHeight = parsedMax;
+        }
+        else
+        {
+          Logger.LogMessage(
+            $"[{VehicleCommandArgs.fixAllVehiclePositions}] Using default minHeight {minHeight} and maxHeight {maxHeight}. As no args were provided. Please use <command> <minHeight> <maxHeight> if you need to spawn the vehicle higher than these defaults on top of automatic ground/water checks.");
+        }
       }
-      else
+      catch (Exception e)
       {
-        Logger.LogMessage(
-          $"[{VehicleCommandArgs.fixAllVehiclePositions}] Using default minHeight {minHeight} and maxHeight {maxHeight}. As no args were provided. Please use <command> <minHeight> <maxHeight> if you need to spawn the vehicle higher than these defaults on top of automatic ground/water checks.");
+        LoggerProvider.LogError(e.Message);
       }
     }
 
