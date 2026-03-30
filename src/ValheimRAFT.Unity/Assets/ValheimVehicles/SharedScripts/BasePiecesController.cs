@@ -52,6 +52,9 @@
       public MeshClusterController m_meshClusterComponent;
       public int pieceDataChangeIndex;
 
+      public bool HasClusterMeshesEnabled;
+      public int MinClusterThreshold = 500;
+
       // convexJobHandler is used for scheduling all piece updates.
       public ConvexHullJobHandler m_convexHullJobHandler;
 
@@ -431,7 +434,11 @@
       protected virtual void FinalizeBoundsGenerationAfterShift()
       {
         var items = m_prefabPieceDataItems.Keys.Where(x => x != null && !m_prefabPieceDataItems[x].IsSwivelChild).ToArray();
-        m_meshClusterComponent.GenerateCombinedMeshes(items);
+
+        if (HasClusterMeshesEnabled && items.Length >= MinClusterThreshold)
+        {
+          m_meshClusterComponent.GenerateCombinedMeshes(items);
+        }
 
         if (LandMovementController != null)
         {

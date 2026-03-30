@@ -375,6 +375,9 @@
 
       // Look for any existing data for the vehicle.
       UpdateChunkBoundsData(false);
+
+      HasClusterMeshesEnabled = RenderingConfig.EnableVehicleClusterMeshRendering.Value;
+      MinClusterThreshold = RenderingConfig.ClusterRenderingPieceThreshold.Value;
     }
 
     public void AddTargetController()
@@ -4107,6 +4110,9 @@
         return;
       }
 
+      HasClusterMeshesEnabled = RenderingConfig.EnableVehicleClusterMeshRendering.Value;
+      MinClusterThreshold = RenderingConfig.ClusterRenderingPieceThreshold.Value;
+
       UpdateVehicleTrueCenter();
 
       UpdateTrackedColliders();
@@ -4125,7 +4131,7 @@
         LoggerProvider.LogError($"{e}");
       }
 
-      if (RenderingConfig.EnableVehicleClusterMeshRendering.Value && m_pieces.Count >= RenderingConfig.ClusterRenderingPieceThreshold.Value)
+      if (HasClusterMeshesEnabled && m_pieces.Count >= MinClusterThreshold)
       {
         try
         {
