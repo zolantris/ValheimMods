@@ -97,7 +97,7 @@
 
       if (!m_pendingPieces.TryGetValue(id, out var pending) || pending.Count == 0)
       {
-        OnActivationComplete.Invoke(pieceState);
+        OnActivationComplete?.Invoke(pieceState);
         return;
       }
 
@@ -115,7 +115,7 @@
       var persistentId = Host.GetPersistentId();
       if (persistentId == 0)
       {
-        OnActivationComplete.Invoke(pieceState);
+        OnActivationComplete?.Invoke(pieceState);
         yield break;
       }
 
@@ -124,7 +124,7 @@
       if (currentPieces == null || currentPieces.Count == 0)
       {
         pieceState = PendingPieceStateEnum.Complete;
-        OnActivationComplete.Invoke(pieceState);
+        OnActivationComplete?.Invoke(pieceState);
         yield break;
       }
 
@@ -136,7 +136,7 @@
         if (Host.GetNetView() == null)
         {
           pieceState = PendingPieceStateEnum.ForceReset;
-          OnActivationComplete.Invoke(pieceState);
+          OnActivationComplete?.Invoke(pieceState);
           yield break;
         }
 

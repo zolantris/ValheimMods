@@ -511,6 +511,12 @@
         }
       }
       base.OnTransformParentChanged();
+
+      // ensures any swivel pieces associated with it are force synced if rendered.
+      if (_currentZdo != null && AllSwivelPieces.TryGetValue(GetPersistentId(), out var zdoPieces))
+      {
+        SyncAllPrefabsToSwivelPosition(_currentZdo, zdoPieces);
+      }
     }
 
     /// <summary>

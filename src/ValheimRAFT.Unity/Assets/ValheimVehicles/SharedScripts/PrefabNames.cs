@@ -113,6 +113,11 @@
       public static readonly string ShipChunkBoundary16x16x16 =
         $"{ValheimVehiclesPrefix}_ShipChunkBoundary16x16x16";
 
+      public static string GetShipChunkBoundaryName(int size)
+      {
+        return $"{ValheimVehiclesPrefix}_ShipChunkBoundaryName_{size}x{size}x{size}";
+      }
+
       public static readonly string ShipChunkBoundaryEraser =
         $"{ValheimVehiclesPrefix}_ShipChunkBoundaryEraser";
 

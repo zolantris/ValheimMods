@@ -363,7 +363,7 @@ public class CustomMeshPrefabs : RegisterPrefab<CustomMeshPrefabs>
   private static void RegisterShipChunkBoundaryFromMultiplier(int multiplier)
   {
     var prefab =
-      PrefabManager.Instance.CreateEmptyPrefab(PrefabNames.ShipChunkBoundary8x8x8);
+      PrefabManager.Instance.CreateEmptyPrefab(PrefabNames.GetShipChunkBoundaryName(multiplier));
 
     var piece = prefab.AddComponent<Piece>();
     piece.m_name = $"$valheim_vehicles_boundary_mesh {multiplier}x{multiplier}";

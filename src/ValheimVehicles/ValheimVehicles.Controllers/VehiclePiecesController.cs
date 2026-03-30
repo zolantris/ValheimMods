@@ -2072,7 +2072,7 @@
 
     public void OnActivatePendingPiecesComplete(PendingPieceStateEnum pieceState)
     {
-      if (pieceState == PendingPieceStateEnum.Complete)
+      if (pieceState == PendingPieceStateEnum.Idle || pieceState == PendingPieceStateEnum.Complete)
       {
         if (!base.IsInitialPieceActivationComplete)
         {
