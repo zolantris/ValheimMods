@@ -849,7 +849,7 @@
         var nearest = VehicleCommands.GetNearestVehicleManager();
         if (nearest != null)
         {
-          nearest.PiecesController?.StartActivatePendingPieces();
+          nearest.PiecesController?.StartActivatePendingVehiclePieces();
         }
       }
 
@@ -871,17 +871,6 @@
 #if DEBUG
       GUILayout.BeginArea(new Rect(250, Screen.height - 510, 200, 200),
         myButtonStyle);
-      if (GUILayout.Button(
-            $"ActivatePendingPieces {VehiclePiecesController.DEBUGAllowActivatePendingPieces}"))
-      {
-        VehiclePiecesController.DEBUGAllowActivatePendingPieces =
-          !VehiclePiecesController.DEBUGAllowActivatePendingPieces;
-        if (VehiclePiecesController.DEBUGAllowActivatePendingPieces)
-          foreach (var vehiclePiecesController in VehiclePiecesController
-                     .ActiveInstances.Values)
-            vehiclePiecesController.StartActivatePendingPieces();
-      }
-
       if (GUILayout.Button("Delete ShipZDO"))
       {
         var currentVehicle = VehicleCommands.GetNearestVehicleManager();

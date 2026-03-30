@@ -16,6 +16,7 @@ using UnityEngine.UI;
 using ValheimVehicles.BepInExConfig;
 using ValheimVehicles.Controllers;
 using ValheimVehicles.Shared.Constants;
+using ValheimVehicles.SharedScripts;
 using Zolantris.Shared.Debug;
 using Logger = Jotunn.Logger;
 
@@ -65,7 +66,7 @@ public class DynamicLocationsLoginIntegration : DynamicLoginIntegration
     }
 
     yield return new WaitUntil(() => vehicle.Instance != null && vehicle.Instance.PiecesController != null && (
-                                       vehicle.Instance.PiecesController.isInitialPieceActivationComplete ||
+                                       ((BasePiecesController)vehicle.Instance.PiecesController).IsInitialPieceActivationComplete ||
                                        vehicle.Instance.PiecesController.IsActivationComplete) ||
                                      localTimer.ElapsedMilliseconds > 2000);
 

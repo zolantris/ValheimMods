@@ -682,12 +682,12 @@
 
       bool IsActivatedThis()
       {
-        return PiecesController != null && PiecesController.isInitialPieceActivationComplete && PiecesController.m_convexHullAPI.convexHullMeshColliders.Count > 0;
+        return PiecesController != null && ((BasePiecesController)PiecesController).IsInitialPieceActivationComplete && PiecesController.m_convexHullAPI.convexHullMeshColliders.Count > 0;
       }
 
       bool IsActivatedOther()
       {
-        return Manager.VehicleParent != null && Manager.VehicleParent.PiecesController != null && Manager.VehicleParent.PiecesController.isInitialPieceActivationComplete && Manager.VehicleParent.PiecesController.m_convexHullAPI.convexHullMeshColliders.Count > 0;
+        return Manager.VehicleParent != null && Manager.VehicleParent.PiecesController != null && ((BasePiecesController)Manager.VehicleParent.PiecesController).IsInitialPieceActivationComplete && Manager.VehicleParent.PiecesController.m_convexHullAPI.convexHullMeshColliders.Count > 0;
       }
 
       while (!IsExpired())
@@ -900,7 +900,7 @@
 
       // if the vehicle has not initialized pieces, physics should never be run.
       if (!Manager!
-            .PiecesController!.isInitialPieceActivationComplete)
+            .PiecesController!.IsInitialPieceActivationComplete)
       {
         m_body.isKinematic = true;
         return;

@@ -1,6 +1,7 @@
 using System;
 using System.Reflection;
 using ValheimVehicles.Controllers;
+using ValheimVehicles.Integrations;
 using ValheimVehicles.Prefabs;
 using ZdoWatcher;
 using Zolantris.Shared;
@@ -20,14 +21,17 @@ public abstract class VehicleZDOWatcherDelegate
   private static void OnZdoLoad(ZDO zdo)
   {
     VehiclePiecesController.InitZdo(zdo);
+    SwivelComponentBridge.InitZdo(zdo);
   }
   private static void OnZdoDeserialize(ZDO zdo)
   {
     VehiclePiecesController.InitZdo(zdo);
+    SwivelComponentBridge.InitZdo(zdo);
   }
 
   public static void OnZdoReset(ZDO zdo)
   {
-    VehiclePiecesController.RemoveZDO(zdo);
+    VehiclePiecesController.RemoveZdo(zdo);
+    SwivelComponentBridge.RemoveZdo(zdo);
   }
 }

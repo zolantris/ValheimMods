@@ -7,6 +7,7 @@
   using ValheimVehicles.Components;
   using ValheimVehicles.BepInExConfig;
   using ValheimVehicles.Controllers;
+  using ValheimVehicles.Enums;
   using ValheimVehicles.Helpers;
   using ValheimVehicles.Interfaces;
   using ValheimVehicles.RPC;
@@ -14,6 +15,7 @@
   using ValheimVehicles.SharedScripts;
   using ValheimVehicles.SharedScripts.Helpers;
   using ValheimVehicles.SharedScripts.PowerSystem.Compute;
+  using ZdoWatcher.ZdoWatcher.Utils;
   using Zolantris.Shared;
 
 #endregion
@@ -61,6 +63,8 @@
     public static Dictionary<ZDO, SwivelComponentBridge> ZdoToComponent = new();
     public ZDO? _currentZdo;
 
+    public static Dictionary<int, HashSet<ZDO>> AllSwivelPieces = new();
+
     public override MotionState MotionState
     {
       get
@@ -74,6 +78,30 @@
         currentMotionState = value;
         SetMotionState(value);
       }
+    }
+
+    public static void InitZdo(ZDO zdo)
+    {
+      if (!TryGetSwivelParentId(zdo, out var id)) return;
+      if (!AllSwivelPieces.TryGetValue(id, out var allSwivelPieces))
+      {
+        allSwivelPieces = [];
+        AllSwivelPieces.Add(id, allSwivelPieces);
+      }
+
+      allSwivelPieces.Add(zdo);
+    }
+
+
+    public static void RemoveZdo(ZDO zdo)
+    {
+      if (!TryGetSwivelParentId(zdo, out var id)) return;
+      if (!AllSwivelPieces.TryGetValue(id, out var allSwivelPieces))
+      {
+        return;
+      }
+
+      allSwivelPieces.Remove(zdo);
     }
 
     public override int SwivelPersistentId
@@ -109,6 +137,53 @@
       SetupHoverFadeText();
 
       SetupPieceActivator();
+    }
+
+    /// <summary>
+    /// Get the vehicle's networked position instead of the current client's position which could be inaccurate
+    /// </summary>
+    private static Vector3? GetSwivelPosition(ZDO? zdo)
+    {
+      if (zdo == null || !zdo.IsValid())
+      {
+        return null;
+      }
+
+      if (ZdoUtils.IsPlayerOwner(zdo))
+      {
+        var netView = ZNetScene.instance.FindInstance(zdo);
+        if (netView && netView.m_body)
+        {
+          return netView.m_body.position;
+        }
+      }
+
+      var positionToUse = zdo.GetPosition();
+      return positionToUse;
+    }
+
+
+    /// <summary>
+    /// Meant for both client and server commands to sync vehicles. This is single threaded so there can be frame drops. Not meant for continuous runs.
+    /// </summary>
+    /// <param name="vehicleZdo"></param>
+    /// <param name="zdoPieces"></param>
+    public static void SyncAllPrefabsToSwivelPosition(ZDO vehicleZdo, HashSet<ZDO> zdoPieces)
+    {
+      var vehiclePosition = GetSwivelPosition(vehicleZdo);
+      if (!vehiclePosition.HasValue) return;
+      foreach (var zdo in zdoPieces)
+      {
+        if (zdo == null) continue;
+        if (!zdo.IsValid()) continue;
+        SetPrefabWorldPosition(zdo, vehiclePosition.Value);
+      }
+    }
+
+    public static void SetPrefabWorldPosition(ZDO zdo, Vector3 swivelParentPosition)
+    {
+      var zdoRelativePosition = swivelParentPosition + zdo.GetVec3(VehicleZdoVars.MBPositionHash, Vector3.zero);
+      zdo.SetPosition(zdoRelativePosition);
     }
 
     public override void SetMotionState(MotionState state)
@@ -193,6 +268,12 @@
         {
           ActiveInstances.Add(persistentId, this);
         }
+
+        // ensures any swivel pieces associated with it are force synced if rendered.
+        if (AllSwivelPieces.TryGetValue(persistentId, out var zdoPieces))
+        {
+          SyncAllPrefabsToSwivelPosition(_currentZdo, zdoPieces);
+        }
       });
 
       if (_guardedMotionCheck != null)
@@ -200,13 +281,14 @@
         StopCoroutine(_guardedMotionCheck);
       }
       _guardedMotionCheck = StartCoroutine(GuardedMotionCheck());
+
     }
 
     public void SetupPieceActivator()
     {
       _pieceActivator = gameObject.AddComponent<SwivelPieceActivator>();
       _pieceActivator.Init(this);
-      _pieceActivator.OnActivationComplete = OnActivationComplete;
+      _pieceActivator.OnActivationComplete += OnActivationComplete;
       _pieceActivator.OnInitComplete = OnInitComplete;
     }
 
@@ -316,7 +398,7 @@
       GuardSwivelValues();
     }
 
-    public void OnActivationComplete()
+    public void OnActivationComplete(PendingPieceStateEnum state)
     {
       _IsReady = true;
     }
@@ -665,7 +747,7 @@
     {
       if (nv == null)
       {
-        BasePieceActivatorComponent.AddPendingPiece(GetPersistentId(), nv);
+        BasePieceActivatorComponent.AddPendingPiece(GetPersistentId(), nv, false, false, true);
         return;
       }
       AddPieceToParent(nv.transform);

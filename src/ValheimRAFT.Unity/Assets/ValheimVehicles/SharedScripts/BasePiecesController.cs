@@ -74,7 +74,11 @@
       internal bool _shouldUpdatePieceColliders;
       internal bool _shouldUpdateVehicleColliders;
 
-      internal bool isInitialPieceActivationComplete;
+      public virtual bool IsInitialPieceActivationComplete
+      {
+        get;
+        set;
+      }
       private List<Vector3> normals = new();
       private List<int> tris = new();
 
@@ -97,7 +101,7 @@
       /// </summary>
       public event Action<Vector3>? OnLocalOriginShiftApplied;
 
-      public bool IsActivationComplete
+      public virtual bool IsActivationComplete
       {
         get;
       }
@@ -191,9 +195,9 @@
 
 
 #if !VALHEIM
-      if (!isInitialPieceActivationComplete)
+      if (!IsInitialPieceActivationComplete)
       {
-        isInitialPieceActivationComplete = true;
+        IsInitialPieceActivationComplete = true;
       }
 #endif
 
@@ -222,7 +226,7 @@
         // }
 
         // will only update if there is a subscription for this texture.
-        if (isInitialPieceActivationComplete)
+        if (IsInitialPieceActivationComplete)
         {
           m_meshClusterComponent.ScheduleRebuildCombinedMeshes(piece);
         }
@@ -254,7 +258,7 @@
         }
 
         // we do not rebuild bounds until this generation is completed
-        if (!isInitialPieceActivationComplete)
+        if (!IsInitialPieceActivationComplete)
         {
           return;
         }
@@ -368,6 +372,8 @@
         {
           if (!piece) continue;
           if (!m_prefabPieceDataItems.TryGetValue(piece, out var data)) continue;
+          // swivel children should not be shifted. Only swivels themselves can be shifted and even then only the top most swivel. Nested swivels would just inherit from top most swivel.
+          if (data.IsSwivelChild) continue;
 
           data.ApplyLocalShift(localShift);
           m_prefabPieceDataItems[piece] = data;
@@ -424,7 +430,7 @@
 
       protected virtual void FinalizeBoundsGenerationAfterShift()
       {
-        var items = m_prefabPieceDataItems.Keys.Where(x => x != null).ToArray();
+        var items = m_prefabPieceDataItems.Keys.Where(x => x != null && !m_prefabPieceDataItems[x].IsSwivelChild).ToArray();
         m_meshClusterComponent.GenerateCombinedMeshes(items);
 
         if (LandMovementController != null)
@@ -451,7 +457,7 @@
         yield return new WaitUntil(() => _lastRebuildTime + 5f < Time.fixedTime);
 
         var timer = Stopwatch.StartNew();
-        while (timer.ElapsedMilliseconds < 2000f && !isInitialPieceActivationComplete)
+        while (timer.ElapsedMilliseconds < 2000f && !IsInitialPieceActivationComplete)
         {
           if (!isActiveAndEnabled) yield break;
           yield return new WaitForFixedUpdate();

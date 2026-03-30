@@ -11,4 +11,14 @@ public static class ZdoUtils
   {
     return (int)zdoid.UserID + (int)zdoid.ID;
   }
+
+
+  /// <summary>
+  /// Abstract for this getter, coherces to false
+  /// </summary>
+  /// <returns></returns>
+  public static bool IsPlayerOwner(ZDO? zdo)
+  {
+    return zdo != null && zdo.IsOwner();
+  }
 }

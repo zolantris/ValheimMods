@@ -24,21 +24,29 @@
 
   public abstract class BasePieceActivatorComponent : MonoBehaviour
   {
-    protected Coroutine? _pendingPiecesCoroutine;
-    protected PendingPieceStateEnum _pendingPiecesState;
+    protected CoroutineHandle _pendingPiecesCoroutine;
+    public PendingPieceStateEnum pieceState;
     protected bool _pendingPiecesDirty;
     protected List<ZNetView> _newPendingPiecesQueue = new();
     protected Stopwatch PendingPiecesTimer = new();
+
+
+    /// <summary>
+    /// Temp pieces within a moving object. These could move outside a vehicle/swivel.
+    /// </summary>
+    public static Dictionary<int, List<ActivationPieceData>> m_pendingTempPieces = new();
 
     public abstract IPieceActivatorHost Host { get; }
 
     public static readonly Dictionary<int, List<ZNetView>> m_pendingPieces = new();
 
-    protected bool CanActivatePendingPieces => _pendingPiecesCoroutine == null && _isInitComplete && Host != null && Host.GetPersistentId() != 0;
+    public bool CanActivatePendingPieces => _isInitComplete && Host != null && Host.GetPersistentId() != 0;
 
-    private Coroutine? _initPersistentIdCoroutine;
+    public bool IsPendingPieceActivationRunning => _pendingPiecesCoroutine.IsRunning;
+
+    private CoroutineHandle _initPersistentIdCoroutine;
     private bool _isInitComplete = false;
-    public Action OnActivationComplete = () =>
+    public Action<PendingPieceStateEnum> OnActivationComplete = (val) =>
     {
       LoggerProvider.LogWarning("No OnActivationComplete assigned");
     };
@@ -47,13 +55,14 @@
       LoggerProvider.LogWarning("No OnInitComplete assigned");
     };
 
+    public bool IsInitialActivationComplete => _isInitComplete;
+
     protected abstract void TrySetPieceToParent(ZNetView netView);
     protected abstract void AddPiece(ZNetView netView, bool isNewPiece = false);
 
     public void StartInitPersistentId()
     {
-      if (_initPersistentIdCoroutine != null) return;
-      _initPersistentIdCoroutine = StartCoroutine(InitPersistentIdRoutine());
+      _initPersistentIdCoroutine.Start(InitPersistentIdRoutine());
     }
 
     protected IEnumerator InitPersistentIdRoutine()
@@ -62,16 +71,21 @@
       {
         yield return null;
       }
-      _initPersistentIdCoroutine = null;
       _isInitComplete = true;
 
       OnInitComplete.Invoke();
     }
 
+    public void OnEnable()
+    {
+      _pendingPiecesCoroutine ??= new CoroutineHandle(this);
+      _initPersistentIdCoroutine ??= new CoroutineHandle(this);
+    }
+
     public void OnDisable()
     {
-      StopAllCoroutines();
-      _pendingPiecesCoroutine = null;
+      _pendingPiecesCoroutine?.Stop();
+      _initPersistentIdCoroutine?.Stop();
     }
 
 
@@ -80,26 +94,28 @@
       if (!CanActivatePendingPieces || !isActiveAndEnabled || ZNet.instance == null || ZNetScene.instance == null) return;
 
       var id = Host.GetPersistentId();
+
       if (!m_pendingPieces.TryGetValue(id, out var pending) || pending.Count == 0)
       {
-        OnActivationComplete.Invoke();
+        OnActivationComplete.Invoke(pieceState);
         return;
       }
 
-      if (_pendingPiecesCoroutine == null)
-        _pendingPiecesCoroutine = StartCoroutine(ActivatePendingPiecesCoroutine());
+      if (!_pendingPiecesCoroutine.IsRunning)
+      {
+        _pendingPiecesCoroutine?.Start(ActivatePendingPiecesCoroutine());
+      }
     }
 
     public IEnumerator ActivatePendingPiecesCoroutine()
     {
-      _pendingPiecesState = PendingPieceStateEnum.Running;
+      pieceState = PendingPieceStateEnum.Running;
       PendingPiecesTimer.Restart();
 
       var persistentId = Host.GetPersistentId();
       if (persistentId == 0)
       {
-        _pendingPiecesCoroutine = null;
-        OnActivationComplete.Invoke();
+        OnActivationComplete.Invoke(pieceState);
         yield break;
       }
 
@@ -107,9 +123,8 @@
 
       if (currentPieces == null || currentPieces.Count == 0)
       {
-        _pendingPiecesState = PendingPieceStateEnum.Complete;
-        _pendingPiecesCoroutine = null;
-        OnActivationComplete.Invoke();
+        pieceState = PendingPieceStateEnum.Complete;
+        OnActivationComplete.Invoke(pieceState);
         yield break;
       }
 
@@ -120,9 +135,8 @@
 
         if (Host.GetNetView() == null)
         {
-          _pendingPiecesState = PendingPieceStateEnum.ForceReset;
-          _pendingPiecesCoroutine = null;
-          OnActivationComplete.Invoke();
+          pieceState = PendingPieceStateEnum.ForceReset;
+          OnActivationComplete.Invoke(pieceState);
           yield break;
         }
 
@@ -144,9 +158,8 @@
 
       } while (_pendingPiecesDirty);
 
-      _pendingPiecesState = PendingPieceStateEnum.Complete;
-      _pendingPiecesCoroutine = null;
-      OnActivationComplete?.Invoke();
+      pieceState = PendingPieceStateEnum.Complete;
+      OnActivationComplete?.Invoke(pieceState);
     }
 
     protected void FinalizeTransform(ZNetView netView)
@@ -174,16 +187,16 @@
       return id;
     }
 
-    public static void AddPendingPiece(int swivelParentId, ZNetView netView)
+    public static void AddPendingPiece(int parentId, ZNetView netView, bool skipActivation = false, bool isVehicle = false, bool isSwivel = false)
     {
       if (!ValheimExtensions.IsCurrentGameHealthy()) return;
       if (netView == null || netView.GetZDO() == null) return;
-      if (!m_pendingPieces.TryGetValue(swivelParentId, out var list) || list.Count == 0)
+      if (!m_pendingPieces.TryGetValue(parentId, out var list) || list.Count == 0)
       {
         list = [netView];
 
         // must set the list.
-        m_pendingPieces[swivelParentId] = list;
+        m_pendingPieces[parentId] = list;
         return;
       }
 
@@ -192,9 +205,20 @@
         list.Add(netView);
       }
 
-      if (SwivelComponentBridge.ActiveInstances.TryGetValue(swivelParentId, out var swivel))
+      if (!skipActivation && isVehicle)
       {
-        swivel.StartActivatePendingSwivelPieces();
+        if (VehiclePiecesController.ActiveInstances.TryGetValue(parentId, out var vehicle))
+        {
+          vehicle.StartActivatePendingVehiclePieces();
+        }
+      }
+
+      if (!skipActivation && isSwivel)
+      {
+        if (SwivelComponentBridge.ActiveInstances.TryGetValue(parentId, out var swivel))
+        {
+          swivel.StartActivatePendingSwivelPieces();
+        }
       }
     }
 
@@ -213,7 +237,7 @@
       }
 
       // If the ZDO object is not loaded add it to a Pending Piece.
-      AddPendingPiece(id, netView);
+      AddPendingPiece(id, netView, false, false, true);
       return false;
     }
 
