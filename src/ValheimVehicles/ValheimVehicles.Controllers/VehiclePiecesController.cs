@@ -2667,25 +2667,25 @@
         {
           ++numberOfTier1Sails;
           var multiplier = PropulsionConfig.SailTier1Area.Value;
-          cachedTotalSailArea += numberOfTier1Sails * multiplier;
+          cachedTotalSailArea += multiplier;
         }
         else if (mMastPiece.name.StartsWith(PrefabNames.Tier2RaftMastName))
         {
           ++numberOfTier2Sails;
           var multiplier = PropulsionConfig.SailTier2Area.Value;
-          cachedTotalSailArea += numberOfTier2Sails * multiplier;
+          cachedTotalSailArea += multiplier;
         }
         else if (mMastPiece.name.StartsWith(PrefabNames.Tier3RaftMastName))
         {
           ++numberOfTier3Sails;
           var multiplier = PropulsionConfig.SailTier3Area.Value;
-          cachedTotalSailArea += numberOfTier3Sails * multiplier;
+          cachedTotalSailArea += multiplier;
         }
         else if (mMastPiece.name.StartsWith(PrefabNames.Tier4RaftMastName))
         {
           ++numberOfTier4Sails;
           var multiplier = PropulsionConfig.SailTier4Area.Value;
-          cachedTotalSailArea += numberOfTier4Sails * multiplier;
+          cachedTotalSailArea += multiplier;
         }
       }
 
