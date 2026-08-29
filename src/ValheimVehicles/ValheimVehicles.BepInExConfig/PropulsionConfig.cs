@@ -40,6 +40,8 @@ public class PropulsionConfig : BepInExBaseConfig<PropulsionConfig>
   // Propulsion Configs
   public static ConfigEntry<float> MaxSailSpeed { get; set; }
   public static ConfigEntry<float> SpeedCapMultiplier { get; set; }
+  public static ConfigEntry<float> SailForceRealismCap { get; set; }
+  public static ConfigEntry<float> SailForceSaturationConstant { get; set; }
 
 
   public static ConfigEntry<bool> FlightVerticalToggle { get; set; }
@@ -208,6 +210,21 @@ public class PropulsionConfig : BepInExBaseConfig<PropulsionConfig>
       ConfigHelpers.CreateConfigDescription(
         "Sets the speed at which it becomes significantly harder to gain speed per sail area",
         true));
+
+    // EXPERIMENTAL: proof-of-concept diminishing-returns curve for GetSailingForce. The area/mass
+    // ratio above saturates to MaxSailSpeed with very few sails since area and mass tend to scale
+    // together as ships grow, so this drives the curve off raw area instead (mass is a softer
+    // sqrt dampener) and asymptotically approaches SailForceRealismCap instead of ramping linearly
+    // to the MaxSailSpeed failsafe. See PR discussion for context/rationale - tune or remove freely.
+    SailForceRealismCap = config.BindUnique(GenericSectionName, "SailForceRealismCap", 15f,
+      ConfigHelpers.CreateConfigDescription(
+        "EXPERIMENTAL. Practical top sailing speed the diminishing-returns sail force curve approaches. MaxSailSpeed remains an untouched hard failsafe above this.",
+        true, false, new AcceptableValueRange<float>(5f, 30f)));
+
+    SailForceSaturationConstant = config.BindUnique(GenericSectionName, "SailForceSaturationConstant", 3f,
+      ConfigHelpers.CreateConfigDescription(
+        "EXPERIMENTAL. Saturation constant K in t = effectiveArea / (effectiveArea + K) for the sail force diminishing-returns curve. Lower reaches SailForceRealismCap with less sail area; higher requires much more.",
+        true, false, new AcceptableValueRange<float>(0.1f, 50f)));
 
     // rudder
 
