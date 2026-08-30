@@ -955,6 +955,12 @@ public class VehicleCommands : ConsoleCommand
     if (Player.m_localPlayer == null) return;
     var vehicleNotFoundMsg = ModTranslations.VehicleCommand_Message_VehicleNotFound;
     Player.m_localPlayer.Message(MessageHud.MessageType.Center, vehicleNotFoundMsg);
+    // global:: disambiguates Valheim's own Console class from System.Console,
+    // which is also in scope here. Echoes into the F5 console output itself,
+    // not just the on-screen HUD message and the BepInEx log file - useful
+    // when running a command like `vehicle report-info` directly from console
+    // and wanting the failure reason visible right there in the same window.
+    global::Console.instance?.AddString(vehicleNotFoundMsg);
     LoggerProvider.LogWarning(
       $"{vehicleNotFoundMsg} \nMust be within <50f> (game meters). The player must be closer to the boat.");
   }
