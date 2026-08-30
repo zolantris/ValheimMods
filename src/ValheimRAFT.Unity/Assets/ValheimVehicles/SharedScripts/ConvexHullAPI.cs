@@ -1,4 +1,4 @@
-#region
+﻿#region
 
   using System;
   using System.Collections.Generic;
@@ -1423,6 +1423,10 @@
         }
 
         meshCollider.convex = true;
+        // Order matters conceptually, not syntactically: includeLayers adds collisions on top of
+        // the layer collision matrix, and excludeLayers overrules both it and the includeLayers
+        // set on this collider's Rigidbody. Anything this solid hull volume must never push out
+        // therefore belongs in BlockingColliderExcludeLayers, not merely in the ignore matrix.
         meshCollider.excludeLayers = LayerHelpers.BlockingColliderExcludeLayers;
         meshCollider.includeLayers = LayerHelpers.PhysicalLayerMask;
         meshCollider.transform.localRotation = Quaternion.identity;

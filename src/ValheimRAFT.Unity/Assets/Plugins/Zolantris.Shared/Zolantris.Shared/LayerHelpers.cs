@@ -44,9 +44,25 @@
 
       public static string SmokeLayerString = LayerMask.LayerToName(31);
 
+      /// <summary>
+      ///   Applied as excludeLayers on the vehicle's solid convex hull collider.
+      /// </summary>
+      /// <remarks>
+      ///   "vehicle" (vanilla carts and boats) must be listed here. The convex hull collider is a
+      ///   solid, filled volume wrapping the ship's whole exterior silhouette, so anything resting
+      ///   on the deck sits roughly two metres inside it. If a vanilla vehicle is allowed to
+      ///   contact that volume, PhysX depenetration pushes it out to the nearest exterior surface -
+      ///   which is the hull's sloped outer shell - and it then rolls off the ship.
+      ///   ValheimRaftPlugin.AddPhysicsSettings() already declares this with
+      ///   Physics.IgnoreLayerCollision(CustomRaftLayer, "vehicle", true), but the hull re-enables
+      ///   it through includeLayers = PhysicalLayerMask (which contains "vehicle"), and
+      ///   includeLayers applies in addition to the layer collision matrix. excludeLayers takes
+      ///   priority over includeLayers on both the Collider and its Rigidbody, so excluding the
+      ///   layer here is what actually makes the declared intent hold.
+      /// </remarks>
       public static LayerMask BlockingColliderExcludeLayers = LayerMask.GetMask(
         "character", "character_net", "character_trigger", "viewbox",
-        "character_nonenv",
+        "character_nonenv", "vehicle",
         LayerMask.LayerToName(CustomRaftLayer), SmokeLayerString);
 
       public static LayerMask CannonHitLayers = LayerMask.GetMask("character", "character_net", "character_ghost", "character_noenv", "Default", "Default_small", "hitbox", "piece", "static_solid", "terrain", "vehicle");
