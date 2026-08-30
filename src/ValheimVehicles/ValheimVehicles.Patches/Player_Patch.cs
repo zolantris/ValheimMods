@@ -601,23 +601,43 @@
       return false;
     }
 
+    /// <summary>
+    /// Vehicle-relative rotation compat fix for `Player.UpdatePlacementGhost`.
+    ///
+    /// This used to be a Transpiler that rewrote the `Quaternion.Euler(x,y,z)`
+    /// call inside `UpdatePlacementGhost` to route through
+    /// <see cref="VehicleRotationHelpers.RelativeEuler"/>. That collided with
+    /// any other mod that also transpiles the same call (e.g. Valheim Plus's
+    /// FreePlacementRotation): Harmony runs transpilers on a method as a
+    /// pipeline, so whichever mod's transpiler patches first rewrites the call,
+    /// and the other mod's pattern-match then finds nothing left to touch and
+    /// silently no-ops (Valheim Plus logs
+    /// "Couldn't transpile `Player.UpdatePlacementGhost`!" and gives up,
+    /// breaking FreePlacementRotation entirely).
+    ///
+    /// A Postfix avoids this: it runs after every other patch on this method
+    /// (transpiler, prefix, or postfix) has already produced its final
+    /// ghost/marker rotation, so it doesn't care what set that rotation -
+    /// vanilla, Valheim Plus FreeRotation, or anything else. It just layers the
+    /// vehicle-relative adjustment on top of the end result, the same way
+    /// <see cref="ComfyGizmo_Patch.ValheimVehicle_GetRotation"/> layers it on
+    /// top of ComfyGizmo's rotation output instead of rewriting ComfyGizmo's IL.
+    /// </summary>
     [HarmonyPatch(typeof(Player), "UpdatePlacementGhost")]
-    [HarmonyTranspiler]
-    public static IEnumerable<CodeInstruction> UpdatePlacementGhost(
-      IEnumerable<CodeInstruction> instructions)
+    [HarmonyPostfix]
+    public static void UpdatePlacementGhost_ApplyVehicleRelativeRotation(Player __instance)
     {
-      var list = instructions.ToList();
-      for (var i = 0; i < list.Count; i++)
-        if (list[i].Calls(AccessTools.Method(typeof(Quaternion), "Euler", new[]
-            {
-              typeof(float),
-              typeof(float),
-              typeof(float)
-            })))
-          list[i] = new CodeInstruction(OpCodes.Call,
-            AccessTools.Method(typeof(VehicleRotationHelpers),
-              nameof(VehicleRotationHelpers.RelativeEuler)));
-      return list;
+      if (__instance.m_placementGhost != null)
+      {
+        var ghostTransform = __instance.m_placementGhost.transform;
+        ghostTransform.rotation = VehicleRotationHelpers.RelativeEulerFromVector(ghostTransform.rotation.eulerAngles);
+      }
+
+      if (__instance.m_placementMarkerInstance != null)
+      {
+        var markerTransform = __instance.m_placementMarkerInstance.transform;
+        markerTransform.rotation = VehicleRotationHelpers.RelativeEulerFromVector(markerTransform.rotation.eulerAngles);
+      }
     }
 
     [HarmonyPatch(typeof(Player), "GetControlledShip")]
