@@ -6,7 +6,6 @@ using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using BepInEx.Logging;
-using ComfyGizmo;
 using HarmonyLib;
 using Jotunn;
 using Jotunn.Entities;
@@ -1183,10 +1182,13 @@ public class VehicleCommands : ConsoleCommand
     var shipInstance =
       GetNearestVehicleManager();
     if (shipInstance == null)
+    {
       Logger.LogMessage(
         "No ship found, please run this command near the ship that needs to be reported.");
+      return;
+    }
 
-    var pieceController = shipInstance!.PiecesController;
+    var pieceController = shipInstance.PiecesController;
     if (pieceController == null) return;
 
     var vehiclePendingPieces =
