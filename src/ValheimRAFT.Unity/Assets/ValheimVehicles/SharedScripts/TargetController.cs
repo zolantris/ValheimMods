@@ -223,8 +223,13 @@ namespace ValheimVehicles.SharedScripts
       }
       else
       {
+        // Dropping the Rigidbody is cleanup for cannon pieces, which carry one of their own.
+        // This component is also added to the vehicle pieces container, whose Rigidbody is the
+        // anchor of the FixedJoint tying the pieces to the movement controller's body. Unity
+        // refuses to delete a Rigidbody a Joint depends on and logs an error for every attempt,
+        // so skip any host whose body is load-bearing for a joint.
         var rb = GetComponent<Rigidbody>();
-        if (rb)
+        if (rb && !GetComponent<Joint>())
         {
           Destroy(rb);
         }
