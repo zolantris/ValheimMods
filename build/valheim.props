@@ -132,6 +132,8 @@
             <Private>False</Private>
         </Reference>
         <Publicize Include="Advize_PlantEasily"/>
+        <!-- Keep PlantEasily's private config helper from colliding with Jotunn's public type. -->
+        <DoNotPublicize Include="Advize_PlantEasily:ConfigurationManagerAttributes"/>
         <Reference Include="Advize_PlantEasily">
             <SpecificVersion>False</SpecificVersion>
             <HintPath>$(SolutionDir)libs\Advize_PlantEasily.dll</HintPath>

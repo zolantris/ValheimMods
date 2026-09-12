@@ -1330,6 +1330,11 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable, INetView
     return "";
   }
 
+  public float GetHoverOffset()
+  {
+    return 0f;
+  }
+
   public string GetHoverText()
   {
     return Localization.instance.Localize(

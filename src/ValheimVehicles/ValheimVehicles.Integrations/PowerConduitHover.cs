@@ -22,4 +22,9 @@ public class PowerConduitHover : MonoBehaviour, Hoverable
   {
     return _plateComponent.Data.Mode == PowerConduitMode.Charge ? ModTranslations.PowerConduit_ChargePlate_Name : ModTranslations.PowerConduit_DrainPlate_Name;
   }
+
+  public float GetHoverOffset()
+  {
+    return 0f;
+  }
 }

@@ -3,7 +3,6 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using System.IO;
 using System.Linq;
 using BepInEx.Logging;
 using ComfyGizmo;
@@ -491,7 +490,6 @@ public class VehicleCommands : ConsoleCommand
       if (playerZdo != null)
       {
         playerZdo.SetPosition(toPosition);
-        playerZdo.SetSector(ZoneSystem.GetZone(toPosition));
       }
     }
     else
@@ -659,7 +657,6 @@ public class VehicleCommands : ConsoleCommand
 
       // Root vehicle ZDO first — anchors the vehicle in the new sector.
       vehicleInstance.m_nview.m_zdo.SetPosition(newLocation);
-      vehicleInstance.m_nview.m_zdo.SetSector(ZoneSystem.GetZone(newLocation));
 
       characterDestinations = VehiclePiecesController.StampAllVehicleZdosToPosition(
         persistentId, newLocation, vehicleCurrentPos, liveTempPieces);
@@ -1155,17 +1152,13 @@ public class VehicleCommands : ConsoleCommand
     try
     {
       var playerFolderLocation =
-        PlayerProfile.GetCharacterFolderPath(Game.instance.m_playerProfile
+        SaveSystem.GetCharacterFolderPath(Game.instance.m_playerProfile
           .m_fileSource);
-      var worldFolderLocation =
-        World.GetWorldSavePath(Game.instance.m_playerProfile.m_fileSource);
-
-
-      var logFile = PlayerProfile.GetPath(
-                      Game.instance.m_playerProfile
-                        .m_fileSource,
-                      "Player.log") ??
-                    $"Possible issue findingpath: guessing path is -> {Path.Combine(playerFolderLocation, "../Player.log")}";
+      var hostedWorld = ZNet.GetWorldIfIsHost();
+      var worldFolderLocation = hostedWorld != null
+        ? SaveSystem.GetWorldsSaveRootPath(hostedWorld.m_fileSource)
+        : "N/A (remote world)";
+      var logFile = Application.consoleLogPath;
 
       return string.Join("\n",
         $"PlayerProfile location: {playerFolderLocation}",

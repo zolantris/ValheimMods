@@ -429,6 +429,11 @@ public class BoardingRampComponent : MonoBehaviour, Interactable, Hoverable
     return "";
   }
 
+  public float GetHoverOffset()
+  {
+    return 0f;
+  }
+
   public string GetHoverText()
   {
     var stateChangeDesc =

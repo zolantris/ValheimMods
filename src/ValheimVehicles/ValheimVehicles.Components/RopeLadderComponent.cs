@@ -75,6 +75,11 @@
       return "";
     }
 
+    public float GetHoverOffset()
+    {
+      return 0f;
+    }
+
     public static string WithYellowBold(string val)
     {
       return $"[<color=yellow><b>{val}</b></color>]";

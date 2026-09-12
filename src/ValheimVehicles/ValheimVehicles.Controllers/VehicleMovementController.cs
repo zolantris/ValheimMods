@@ -1779,16 +1779,16 @@
 
       if (Vector3.Distance(lastPosition, transform.position) < 3f) return;
 
-      var mode = Minimap.m_instance.m_mode;
+      var mode = Minimap.instance.m_mode;
       if (vehicleMapKey != "")
-        ZoneSystem.m_instance.RemoveGlobalKey(vehicleMapKey);
+        ZoneSystem.instance.RemoveGlobalKey(vehicleMapKey);
 
       vehicleMapKey = GetVehicleMapKey();
 
       if (vehicleMapKey != "")
       {
-        ZoneSystem.m_instance.SetGlobalKey(vehicleMapKey);
-        Minimap.m_instance.SetMapMode(mode);
+        ZoneSystem.instance.SetGlobalKey(vehicleMapKey);
+        Minimap.instance.SetMapMode(mode);
       }
     }
 
@@ -3401,7 +3401,7 @@
         return cachedFlyingValue;
       }
 
-      if (!ZoneSystem.m_instance) return false;
+      if (!ZoneSystem.instance) return false;
 
       lastFlyingDt = Time.fixedDeltaTime;
 

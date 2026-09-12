@@ -18,7 +18,7 @@ public class GameCamera_WaterPatches
   public static float? prevFogDensity;
   public static bool? prevFog;
   public static Color? prevFogColor;
-  public static Vector2i? prevFogZone = Vector2i.zero;
+  public static Vector2s? prevFogZone = Vector2s.zero;
 
   // Meant to be updated by WaterVolumePatches
   public static bool CanUpdateFog;
@@ -33,7 +33,7 @@ public class GameCamera_WaterPatches
       : currentEnvironment.m_fogColorNight;
   }
 
-  public static Vector2i GetCurrentZone()
+  public static Vector2s GetCurrentZone()
   {
     var playerPos = GameCamera.instance.m_playerPos;
     var currentZone =

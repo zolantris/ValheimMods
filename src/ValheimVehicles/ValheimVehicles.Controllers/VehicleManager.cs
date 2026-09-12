@@ -821,13 +821,9 @@
       if (!(bool)m_nview || m_nview.GetZDO() == null || m_nview.m_ghost ||
           PiecesController == null ||
           !isActiveAndEnabled) return;
-      var position = transform.position;
-
-      var sector = ZoneSystem.GetZone(position);
       var zdo = m_nview.GetZDO();
 
       zdo.SetPosition(PiecesController.m_localRigidbody.worldCenterOfMass);
-      zdo.SetSector(sector);
     }
 
     private GameObject GetStarterPiece()

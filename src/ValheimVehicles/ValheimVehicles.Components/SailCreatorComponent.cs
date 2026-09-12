@@ -100,7 +100,14 @@ public class SailCreatorComponent : MonoBehaviour
 
 
     var piece = sailPrefabInstance.GetComponent<Piece>();
-    piece.SetCreator(m_sailCreators[0].GetComponent<Piece>().GetCreator());
+    var sourcePiece = m_sailCreators[0].GetComponent<Piece>();
+    var creatorIndex = sourcePiece.GetCreatorPlatformUserIdIndex();
+    var playerHistory = ZNet.World.m_playerHistory;
+    // Older pieces may have no platform author recorded in the world's history.
+    var creatorPlatformUserId = creatorIndex >= 0 && creatorIndex < playerHistory.Count
+      ? playerHistory[creatorIndex].m_id
+      : Splatform.PlatformUserID.None;
+    piece.SetCreator(sourcePiece.GetCreator(), creatorPlatformUserId);
 
     AddToVehicle(netView);
 
