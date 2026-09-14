@@ -11,7 +11,6 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="System.Core"/>
         <PackageReference Include="Json5Core" Version="1.0.12"/>
     </ItemGroup>
 </Project>

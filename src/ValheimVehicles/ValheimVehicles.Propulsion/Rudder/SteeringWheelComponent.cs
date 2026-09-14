@@ -282,6 +282,11 @@ public class SteeringWheelComponent : MonoBehaviour, IAnimatorHandler, Hoverable
     return ModTranslations.WheelControls_Name;
   }
 
+  public float GetHoverOffset()
+  {
+    return 0f;
+  }
+
   public void SetLastUsedWheel()
   {
     if (ControllersInstance.MovementController != null)

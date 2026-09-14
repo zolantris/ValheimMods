@@ -49,6 +49,11 @@ public class PowerPylonComponentIntegration : PowerPylon, Hoverable, Interactabl
   {
     return $"Power Pylon (HoverName) on Network: {NetworkId}";
   }
+
+  public float GetHoverOffset()
+  {
+    return 0f;
+  }
   public ZNetView? m_nview
   {
     get;
