@@ -178,15 +178,15 @@ namespace ValheimVehicles.SharedScripts
       }
     }
 
-    public void OnEnable()
-    {
-      // Generate();
-    }
+      public void OnEnable()
+      {
+        // Generate();
+      }
 
-    public void OnDisable()
-    {
-      Cleanup();
-    }
+      public void OnDisable()
+      {
+        Cleanup();
+      }
 
 
     private void OnDrawGizmos()
