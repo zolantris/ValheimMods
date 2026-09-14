@@ -508,6 +508,16 @@ stew are good choices in the mid-to-late game.
 
 ### The vehicle sank underground
 
+1. Go near the vehicle. Use `vehicle fixNearbyVehiclePositions`
+2. If admin and the first step fails run
+   `vehicle fixAllVehiclePositions 30 1000`. This will fix all vehicle
+   positions. The `30` is the lowest height the vehicle is allowed to be at. The
+   `1000` is max height (Example if there is an air vehicles or on a mountain
+   you dont want to force these vehicles to be touching land).
+
+Alternative manual (no-command) external fix (this requires knowledge of
+unityexplorer and is not recommended):
+
 1.
 
 Download [Unity Explorer](https://thunderstore.io/c/valheim/p/sinai-dev/UnityExplorer/).
@@ -519,6 +529,14 @@ Download [Unity Explorer](https://thunderstore.io/c/valheim/p/sinai-dev/UnityExp
    world.
 
 ### The vehicle turns into a box when I sail near it (area loads)
+
+- Please run `vehicle fixNearbyVehiclePositions`.
+
+It's possible a client disconnected from the server and the server stopped
+updating vehicle positions which caused the miss in the saved zdos.
+
+This command should force the vehicles in the area of 250 radius to be fixed and
+sync their item positions correctly.
 
 - On a dedicated server this was largely fixed in `>=2.0.0`.
 - Single player rendering issues should be reported as a bug with your
@@ -532,8 +550,10 @@ Download [Unity Explorer](https://thunderstore.io/c/valheim/p/sinai-dev/UnityExp
 
 ### My bed spawn doesn't update when the ship moves
 
-This is a known issue. Rebuild the bed and set your spawn again after each
-voyage.
+This is a known issue. Please use DynamicLocations (built-in with ValheimRAFt)
+and tag a bed. It should sync
+your spawn to the bed. And when you relog it will move you to your bed / vehicle
+if the vehicle has moved.
 
 ---
 

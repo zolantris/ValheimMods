@@ -703,6 +703,17 @@ public abstract class PrefabRegistryHelpers
         $"$valheim_vehicles_inverse_desc {piece.m_description}";
     }
 
+    // Backfill the hammer's build/placement sound if nothing set one already.
+    // This must live here rather than in SetWearNTear(): several registries
+    // (e.g. ShipHullPrefabRegistry.SetupHullPrefab) call SetWearNTear() before
+    // this method even creates the Piece component, so a check done there
+    // silently finds no Piece yet and never applies. This runs at the one
+    // point every piece is guaranteed to already have its Piece component.
+    if (IsEffectListEmpty(piece.m_placeEffect))
+    {
+      piece.m_placeEffect = LoadValheimAssets.woodFloorPiece.m_placeEffect;
+    }
+
     return piece;
   }
 
@@ -787,6 +798,13 @@ public abstract class PrefabRegistryHelpers
                                   tierMultiplier;
 
     return wearNTearComponent;
+  }
+
+  private static bool IsEffectListEmpty(EffectList effectList)
+  {
+    return effectList == null ||
+           effectList.m_effectPrefabs == null ||
+           effectList.m_effectPrefabs.Length == 0;
   }
 
   /**
