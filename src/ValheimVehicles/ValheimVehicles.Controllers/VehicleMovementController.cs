@@ -3149,10 +3149,16 @@
       return true;
     }
 
+    // Match the initial full-size custom-sail proxy, including creative vehicles
+    // which synchronize their pieces without calling UpdateSailSize.
+    private float _vanillaSailPosition = 1f;
+
     public void UpdateSailSize(float dt)
     {
       var num = 0f;
       var speed = VehicleSpeed;
+      var vanillaTarget = speed == Ship.Speed.Full ? 1f : speed == Ship.Speed.Half ? 0.5f : 0f;
+      _vanillaSailPosition = Mathf.MoveTowards(_vanillaSailPosition, vanillaTarget, dt);
 
       switch (speed)
       {
@@ -3314,24 +3320,8 @@
           }
         }
 
-        // custom masts do not have sailcloth or sail objects yet.
-        if (mast.m_sailCloth)
-        {
-          if (mast.m_allowSailShrinking)
-          {
-            if (mast.m_sailObject.transform.localScale !=
-                m_sailObject.transform.localScale)
-              mast.m_sailCloth.enabled = false;
-            mast.m_sailObject.transform.localScale =
-              m_sailObject.transform.localScale;
-            mast.m_sailCloth.enabled = true;
-          }
-          else
-          {
-            mast.m_sailObject.transform.localScale = Vector3.one;
-            mast.m_sailCloth.enabled = !mast.m_disableCloth;
-          }
-        }
+        mast.UpdateSail(_vanillaSailPosition,
+          m_sailObject ? m_sailObject.transform.localScale : Vector3.one);
       }
 
       foreach (var rudder in PiecesController.m_rudderPieces
