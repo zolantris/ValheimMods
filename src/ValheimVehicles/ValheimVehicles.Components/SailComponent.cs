@@ -272,20 +272,28 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable, INetView
 
   public static Material OverrideMaterial_VikingShipSail()
   {
-    return LoadValheimAssets.vikingShipPrefab.transform
-      .Find("ship/visual/Mast/Sail").GetComponentInChildren<SkinnedMeshRenderer>().material;
+    return GetVanillaSailMaterial(LoadValheimAssets.vikingShipPrefab);
   }
 
   public static Material OverrideMaterial_DrakkalShipSail()
   {
-    return LoadValheimAssets.drakkarPrefab.transform
-      .Find("ship/visual/Mast/Sail").GetComponentInChildren<SkinnedMeshRenderer>().material;
+    return GetVanillaSailMaterial(LoadValheimAssets.drakkarPrefab);
   }
 
   public static Material OverrideMaterial_RaftShipSail()
   {
-    return LoadValheimAssets.raftMast.transform
-      .Find("Sail").GetComponentInChildren<SkinnedMeshRenderer>().material;
+    return GetVanillaSailMaterial(LoadValheimAssets.vanillaRaftPrefab);
+  }
+
+  private static Material GetVanillaSailMaterial(GameObject shipPrefab)
+  {
+    // The old Sail object is absent or inactive in 1.0. The cloth's renderer
+    // list identifies the active sail and avoids Drakkar's duplicate names.
+    var cloth = shipPrefab.GetComponent<Ship>().m_sailCloth;
+    var renderer = cloth.SerializeData.sourceRenderers.FirstOrDefault(candidate => candidate);
+    if (!renderer || !renderer.sharedMaterial)
+      throw new InvalidOperationException($"{shipPrefab.name}: vanilla sail material is missing.");
+    return renderer.sharedMaterial;
   }
 
   public void FixedUpdate()
