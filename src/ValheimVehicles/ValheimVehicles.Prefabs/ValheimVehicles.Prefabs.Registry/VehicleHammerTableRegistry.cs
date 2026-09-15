@@ -1,14 +1,11 @@
 // ReSharper disable ArrangeNamespaceBody
 // ReSharper disable NamespaceStyle
 
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using Jotunn.Configs;
 using Jotunn.Entities;
 using Jotunn.Managers;
-using UnityEngine;
 using ValheimVehicles.BepInExConfig;
 using Zolantris.Shared;
 
@@ -21,59 +18,50 @@ namespace ValheimVehicles.Prefabs.Registry
     public const string VehicleHammerTableName = "ValheimVehicles_HammerTable";
 
     /// <summary>
-    /// Canonical order from config, converted to localized labels (same index order).
-    /// </summary>
-    private static string[] BuildLocalizedLabelsFromCanon()
-    {
-      var canon = PrefabConfig.GetVehicleHammerCategoryOrder();
-      // Map canonicals -> localized labels in the SAME order
-      return VehicleHammerTableCategories.ToLocalizedLabels(canon).ToArray();
-    }
-
-    /// <summary>
     /// Apply BOTH the canonical category list (drives grouping/index) and the localized labels (display) in lockstep.
     /// This prevents index/label drift that causes wrong items to appear under tabs.
     /// </summary>
     public static void RefreshCategoriesAndLabels()
     {
+      RefreshCategoriesAndLabels(false);
+    }
+
+    private static void RefreshCategoriesAndLabels(bool initializeCategories)
+    {
       var table = PieceManager.Instance.GetPieceTable(VehicleHammerTableName);
       if (!table) return;
 
-      var canonicalOrder = PrefabConfig.GetVehicleHammerCategoryOrder().ToList(); // e.g., ["Tools","Hull",...]
-      var localizedLabels = BuildLocalizedLabelsFromCanon().ToList(); // e.g., ["工具","船体",...]
+      // Valheim stores enum IDs here, not the canonical strings used by config.
+      // Keep those IDs stable so pieces and the selected category retain their
+      // meaning when only the display order or language changes.
+      var categories = new List<Piece.PieceCategory>();
+      var labels = new List<string>();
 
-      // 2) Set the underlying canonical categories list (index driver)
-      //    Different Valheim/JVL versions used different field names; support both.
-      if (!TrySetStringListField(table, "m_customCategories", canonicalOrder))
+      foreach (var canonical in PrefabConfig.GetVehicleHammerCategoryOrder())
       {
-        // Older/newer fallback name
-        TrySetStringListField(table, "m_categories", canonicalOrder);
+        var category = PieceManager.Instance.GetPieceCategory(canonical);
+        if (!category.HasValue || categories.Contains(category.Value)) continue;
+        // Jotunn removes empty categories. A language/order refresh must not
+        // resurrect those tabs; only table creation initializes the full set.
+        if (!initializeCategories && !table.m_categories.Contains(category.Value)) continue;
+        categories.Add(category.Value);
+        labels.Add(VehicleHammerTableCategories.ToLocalizedLabel(canonical));
       }
 
-      // 3) Set the UI labels for those categories in the SAME index order
-      table.m_categoryLabels = localizedLabels;
-    }
-
-    /// <summary>
-    /// Utility: tries to set a List&lt;string&gt; field on PieceTable via reflection if present.
-    /// </summary>
-    private static bool TrySetStringListField(PieceTable table, string fieldName, List<string> value)
-    {
-      var f = typeof(PieceTable).GetField(fieldName, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-      if (f == null) return false;
-
-      // Some game builds store a List<string>, others an array of strings. Handle both.
-      if (f.FieldType == typeof(List<string>))
+      // Preserve any additional categories another mod added to this table,
+      // including their labels. Never modify the vanilla hammer's table.
+      for (var index = 0; index < table.m_categories.Count; index++)
       {
-        f.SetValue(table, value);
-        return true;
+        var category = table.m_categories[index];
+        if (categories.Contains(category)) continue;
+        categories.Add(category);
+        labels.Add(index < table.m_categoryLabels.Count
+          ? table.m_categoryLabels[index]
+          : category.ToString());
       }
-      if (f.FieldType == typeof(string[]))
-      {
-        f.SetValue(table, value.ToArray());
-        return true;
-      }
-      return false;
+
+      table.m_categories = categories;
+      table.m_categoryLabels = labels;
     }
 
     /// <summary>
@@ -95,14 +83,7 @@ namespace ValheimVehicles.Prefabs.Registry
 
       VehicleHammerTable = new CustomPieceTable(VehicleHammerTableName, vehicleHammerTableConfig);
 
-      // Keep labels & category indexes in sync on language or order changes
-      Localization.OnLanguageChange += RefreshCategoriesAndLabels;
-      PrefabConfig.VehicleHammerOrder.OnOrderChanged += _ => RefreshCategoriesAndLabels();
-
       var success = PieceManager.Instance.AddPieceTable(VehicleHammerTable);
-
-      // Apply localized labels now (after the table exists)
-      RefreshCategoriesAndLabels();
 
       if (!success)
       {
@@ -110,7 +91,15 @@ namespace ValheimVehicles.Prefabs.Registry
           "VehicleHammerTable failed to be added. Falling back to original hammer table for all items. " +
           "This is a bug and could break your game. Please report this.");
         VehicleHammerTable = null;
+        return;
       }
+
+      // Keep labels & category indexes in sync on language or order changes.
+      Localization.OnLanguageChange += RefreshCategoriesAndLabels;
+      PrefabConfig.VehicleHammerOrder.OnOrderChanged += _ => RefreshCategoriesAndLabels();
+
+      // AddPieceTable has registered canonical names with Jotunn at this point.
+      RefreshCategoriesAndLabels(true);
     }
 
     public override void OnRegister()
