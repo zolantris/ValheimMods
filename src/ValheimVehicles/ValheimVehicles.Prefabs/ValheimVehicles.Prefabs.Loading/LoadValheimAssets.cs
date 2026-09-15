@@ -37,7 +37,7 @@ public class LoadValheimAssets
 
     waterMask = vikingShipPrefab.transform.Find("ship/visual/watermask");
     waterMaskShader = waterMask.GetComponent<Renderer>().sharedMaterial.shader;
-    raftMast = vanillaRaftPrefab.transform.Find("ship/visual/mast").gameObject;
+    raftMast = vanillaRaftPrefab.GetComponent<Ship>().m_mastObject;
 
     var woodFloorPrefab = prefabManager.GetPrefab("wood_floor");
     var stoneFloorPrefab = prefabManager.GetPrefab("stone_floor");
