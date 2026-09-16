@@ -7,7 +7,7 @@ public class MastComponent : MonoBehaviour
 {
   public GameObject? m_sailObject;
 
-  public Cloth? m_sailCloth;
+  public MagicaCloth2.MagicaCloth? m_sailCloth;
 
   public bool m_allowSailRotation = false;
   public Transform? m_rotationTransform = null;

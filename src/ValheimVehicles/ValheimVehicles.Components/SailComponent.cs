@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using MagicaCloth2;
 using UnityEngine;
 using UnityEngine.Serialization;
 using ValheimVehicles.BepInExConfig;
@@ -90,7 +91,7 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable, INetView
 
   public static bool Config_AllowMeshCollision = false;
 
-  public Cloth m_sailCloth;
+  public MagicaCloth m_sailCloth;
 
   public List<Vector3> m_sailCorners = new();
 
@@ -174,6 +175,8 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable, INetView
   private static readonly int LogoNormal = Shader.PropertyToID("_LogoNormal");
   public bool hasRegisteredRPC = false;
 
+  private const float SailPinTolerance = 0.001f;
+
   public enum MaterialVariant
   {
     Custom,
@@ -191,11 +194,25 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable, INetView
     sailParentRoutine = new CoroutineHandle(this);
     _waitForInitRoutine = new CoroutineHandle(this);
     _loadZDORoutine = new CoroutineHandle(this);
+
     m_sailComponents.Add(this);
+
     m_mastComponent = GetComponent<MastComponent>();
     m_mastComponent.m_allowSailRotation = false;
-    m_sailCloth = GetComponent<Cloth>();
+
+    m_sailCloth = GetComponent<MagicaCloth>();
+
+    if (m_sailCloth)
+    {
+      m_sailCloth.Initialize();
+      m_sailCloth.DisableAutoBuild();
+
+      m_sailCloth.SerializeData.updateMode =
+        ClothUpdateMode.UnityPhysics;
+    }
+
     m_mastComponent.m_sailCloth = m_sailCloth;
+
     m_mesh = GetComponent<SkinnedMeshRenderer>();
     customMaterial = m_mesh.material;
 
@@ -296,15 +313,29 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable, INetView
     {
       UpdateMistAlphaForPlayerCamera();
     }
+
+
   }
 
   public void UpdateSailClothWind()
   {
-    if (!EnvMan.instance || !m_sailCloth) return;
-    var vector = EnvMan.instance.GetWindForce();
-    m_sailCloth.externalAcceleration = vector * m_windMultiplier;
-    m_sailCloth.randomAcceleration =
-      vector * (m_windMultiplier * m_clothRandomAccelerationFactor);
+    if (!EnvMan.instance || !m_sailCloth || !m_sailCloth.IsValid())
+      return;
+
+    var acceleration =
+      EnvMan.instance.GetWindForce() * m_windMultiplier;
+
+    var magnitude = acceleration.magnitude;
+    if (magnitude <= Mathf.Epsilon)
+      return;
+
+    var deltaVelocity = magnitude * Time.fixedDeltaTime;
+
+    m_sailCloth.AddForce(
+      acceleration / magnitude,
+      deltaVelocity,
+      ClothForceMode.VelocityAddWithoutDepth
+    );
   }
 
   private void OnEnable()
@@ -1055,145 +1086,279 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable, INetView
 
   public void UpdateCoefficients()
   {
-    m_sailCloth.enabled = !m_sailFlags.HasFlag(SailFlags.DisableCloth);
-
-    UpdateSailArea();
+    if (!m_sailCloth || !m_mesh || !m_mesh.sharedMesh)
+    {
+      LoggerProvider.LogWarning(
+        "UpdateCoefficients(): Missing MagicaCloth or sail mesh.");
+      return;
+    }
 
     var mesh = m_mesh.sharedMesh;
-    var coefficients = mesh.vertexCount == m_sailCloth.coefficients.Length
-      ? m_sailCloth.coefficients
-      : new ClothSkinningCoefficient[mesh.vertexCount];
-    for (var i = 0; i < coefficients.Length; i++)
+
+    if (m_sailCorners.Count is not (3 or 4))
     {
-      coefficients[i].maxDistance = float.MaxValue;
-      coefficients[i].collisionSphereDistance = float.MaxValue;
+      LoggerProvider.LogWarning(
+        $"UpdateCoefficients(): Expected 3 or 4 sail corners, got {m_sailCorners.Count}.");
+      return;
     }
 
-    if (m_sailCorners.Count == 3)
+    var attributes = BuildSailVertexAttributes(mesh);
+
+    var serializeData = m_sailCloth.SerializeData;
+    var serializeData2 = m_sailCloth.GetSerializeData2();
+
+    // This sail is dynamically generated MeshCloth.
+    serializeData.clothType = ClothProcess.ClothType.MeshCloth;
+    serializeData.paintMode = ClothSerializeData.PaintMode.Manual;
+
+    // Ensure this renderer is the source mesh.
+    serializeData.sourceRenderers.Clear();
+    serializeData.sourceRenderers.Add(m_mesh);
+
+    // Magica requires one VertexAttribute[] for each source renderer.
+    serializeData2.vertexAttributeList.Clear();
+    serializeData2.vertexAttributeList.Add(attributes);
+
+    UpdateMeshCollider();
+
+    // IMPORTANT:
+    // Vertex attributes are construction data, not ordinary runtime parameters.
+    // BuildAndRun() needs to occur after this when constructing the cloth.
+  }
+
+  private void UpdateMeshCollider()
+  {
+    if (!m_meshCollider)
     {
-      // Use local copies — never mutate the persistent fields here.
-      // SaveZdo reads m_lockedSailSides/m_lockedSailCorners directly; mutating them
-      // would write incorrect values back to the ZDO on the next save.
-      var lockedCorners = m_lockedSailCorners & ~SailLockedSide.D;
-      var lockedSides = m_lockedSailSides & ~SailLockedSide.D;
-      if (lockedCorners == SailLockedSide.None && lockedSides == SailLockedSide.None)
-      {
-        lockedCorners = SailLockedSide.Everything & ~SailLockedSide.D;
-        lockedSides = SailLockedSide.Everything & ~SailLockedSide.D;
-      }
-
-      var sideA2 = (m_sailCorners[0] - m_sailCorners[1]).normalized;
-      var sideB2 = (m_sailCorners[1] - m_sailCorners[2]).normalized;
-      var sideC2 = (m_sailCorners[2] - m_sailCorners[0]).normalized;
-      for (var k = 0; k < mesh.vertices.Length; k++)
-      {
-        if (lockedCorners.HasFlag(SailLockedSide.A) &&
-            mesh.vertices[k] == m_sailCorners[0])
-          coefficients[k].maxDistance = 0f;
-
-        if (lockedCorners.HasFlag(SailLockedSide.B) &&
-            mesh.vertices[k] == m_sailCorners[1])
-          coefficients[k].maxDistance = 0f;
-
-        if (lockedCorners.HasFlag(SailLockedSide.C) &&
-            mesh.vertices[k] == m_sailCorners[2])
-          coefficients[k].maxDistance = 0f;
-
-        if (lockedSides.HasFlag(SailLockedSide.A) &&
-            Mathf.Abs(Vector3.Dot(
-              (m_sailCorners[0] - mesh.vertices[k]).normalized, sideA2)) >=
-            0.9999f)
-          coefficients[k].maxDistance = 0f;
-
-        if (lockedSides.HasFlag(SailLockedSide.B) &&
-            Mathf.Abs(Vector3.Dot(
-              (m_sailCorners[1] - mesh.vertices[k]).normalized, sideB2)) >=
-            0.9999f)
-          coefficients[k].maxDistance = 0f;
-
-        if (lockedSides.HasFlag(SailLockedSide.C) &&
-            Mathf.Abs(Vector3.Dot(
-              (m_sailCorners[2] - mesh.vertices[k]).normalized, sideC2)) >=
-            0.9999f)
-          coefficients[k].maxDistance = 0f;
-      }
+      return;
     }
-    else if (m_sailCorners.Count == 4)
-    {
-      if (m_lockedSailCorners == SailLockedSide.None &&
-          m_lockedSailSides == SailLockedSide.None)
-      {
-        m_lockedSailCorners = SailLockedSide.Everything;
-        m_lockedSailSides = SailLockedSide.Everything;
-      }
-
-      var sideA = (m_sailCorners[0] - m_sailCorners[1]).normalized;
-      var sideB = (m_sailCorners[1] - m_sailCorners[2]).normalized;
-      var sideC = (m_sailCorners[2] - m_sailCorners[3]).normalized;
-      var sideD = (m_sailCorners[3] - m_sailCorners[0]).normalized;
-      for (var j = 0; j < mesh.vertices.Length; j++)
-      {
-        if (m_lockedSailCorners.HasFlag(SailLockedSide.A) &&
-            mesh.vertices[j] == m_sailCorners[0])
-          coefficients[j].maxDistance = 0f;
-
-        if (m_lockedSailCorners.HasFlag(SailLockedSide.B) &&
-            mesh.vertices[j] == m_sailCorners[1])
-          coefficients[j].maxDistance = 0f;
-
-        if (m_lockedSailCorners.HasFlag(SailLockedSide.C) &&
-            mesh.vertices[j] == m_sailCorners[2])
-          coefficients[j].maxDistance = 0f;
-
-        if (m_lockedSailCorners.HasFlag(SailLockedSide.D) &&
-            mesh.vertices[j] == m_sailCorners[3])
-          coefficients[j].maxDistance = 0f;
-
-        if (m_lockedSailSides.HasFlag(SailLockedSide.A) &&
-            Mathf.Abs(Vector3.Dot(
-              (m_sailCorners[0] - mesh.vertices[j]).normalized, sideA)) >=
-            0.9999f)
-          coefficients[j].maxDistance = 0f;
-
-        if (m_lockedSailSides.HasFlag(SailLockedSide.B) &&
-            Mathf.Abs(Vector3.Dot(
-              (m_sailCorners[1] - mesh.vertices[j]).normalized, sideB)) >=
-            0.9999f)
-          coefficients[j].maxDistance = 0f;
-
-        if (m_lockedSailSides.HasFlag(SailLockedSide.C) &&
-            Mathf.Abs(Vector3.Dot(
-              (m_sailCorners[2] - mesh.vertices[j]).normalized, sideC)) >=
-            0.9999f)
-          coefficients[j].maxDistance = 0f;
-
-        if (m_lockedSailSides.HasFlag(SailLockedSide.D) &&
-            Mathf.Abs(Vector3.Dot(
-              (m_sailCorners[3] - mesh.vertices[j]).normalized, sideD)) >=
-            0.9999f)
-          coefficients[j].maxDistance = 0f;
-      }
-    }
-
-    m_sailCloth.coefficients = coefficients;
-
 
     if (!Config_AllowMeshCollision)
     {
-      if (m_meshCollider)
+      m_meshCollider.enabled = false;
+      m_meshCollider.sharedMesh = null;
+      return;
+    }
+
+    if (m_sailCorners.Count is not (3 or 4))
+    {
+      m_meshCollider.enabled = false;
+      m_meshCollider.sharedMesh = null;
+      return;
+    }
+
+    var collisionMesh = CreateCollisionMesh(m_sailCorners.Count);
+
+    if (!collisionMesh)
+    {
+      LoggerProvider.LogWarning(
+        $"UpdateMeshCollider(): Failed to create collision mesh for {m_sailCorners.Count} sail corners.");
+
+      m_meshCollider.enabled = false;
+      m_meshCollider.sharedMesh = null;
+      return;
+    }
+
+    // Clear first so Unity actually refreshes the collider when replacing
+    // the generated mesh at runtime.
+    m_meshCollider.sharedMesh = null;
+    m_meshCollider.sharedMesh = collisionMesh;
+
+    // Required for a MeshCollider attached beneath a moving Rigidbody.
+    m_meshCollider.convex = true;
+    m_meshCollider.enabled = true;
+  }
+
+  private VertexAttribute[] BuildSailVertexAttributes(Mesh mesh)
+  {
+    var vertices = mesh.vertices;
+    var attributes = new VertexAttribute[vertices.Length];
+
+    // Equivalent to the old:
+    //
+    // coefficients[i].maxDistance = float.MaxValue;
+    //
+    // Everything moves unless explicitly pinned.
+    for (var i = 0; i < attributes.Length; i++)
+    {
+      attributes[i] = VertexAttribute.Move;
+    }
+
+    var lockedCorners = m_lockedSailCorners;
+    var lockedSides = m_lockedSailSides;
+
+    // D does not exist on triangular sails.
+    if (m_sailCorners.Count == 3)
+    {
+      lockedCorners &= ~SailLockedSide.D;
+      lockedSides &= ~SailLockedSide.D;
+
+      if (lockedCorners == SailLockedSide.None &&
+          lockedSides == SailLockedSide.None)
       {
-        m_meshCollider.enabled = false;
+        lockedCorners =
+          SailLockedSide.A |
+          SailLockedSide.B |
+          SailLockedSide.C;
+
+        lockedSides =
+          SailLockedSide.A |
+          SailLockedSide.B |
+          SailLockedSide.C;
       }
     }
     else
     {
-      if (m_meshCollider)
+      // Preserve your current default behavior without mutating the
+      // persistent ZDO-backed fields from this method.
+      if (lockedCorners == SailLockedSide.None &&
+          lockedSides == SailLockedSide.None)
       {
-        m_meshCollider.sharedMesh = CreateCollisionMesh(m_sailCorners.Count);
-        m_meshCollider.convex = true; // required for triangle meshes to interact with physics
-        m_meshCollider.enabled = true; // ensure it's not disabled
+        lockedCorners = SailLockedSide.Everything;
+        lockedSides = SailLockedSide.Everything;
       }
     }
+
+    for (var i = 0; i < vertices.Length; i++)
+    {
+      var vertex = vertices[i];
+
+      if (ShouldPinVertex(
+            vertex,
+            lockedCorners,
+            lockedSides))
+      {
+        attributes[i] = VertexAttribute.Fixed;
+      }
+    }
+
+    return attributes;
+  }
+
+  private bool ShouldPinVertex(
+    Vector3 vertex,
+    SailLockedSide lockedCorners,
+    SailLockedSide lockedSides)
+  {
+    var cornerCount = m_sailCorners.Count;
+
+    if (cornerCount < 3)
+      return false;
+
+    //
+    // Corners
+    //
+
+    if (lockedCorners.HasFlag(SailLockedSide.A) &&
+        ApproximatelySamePoint(vertex, m_sailCorners[0]))
+    {
+      return true;
+    }
+
+    if (lockedCorners.HasFlag(SailLockedSide.B) &&
+        ApproximatelySamePoint(vertex, m_sailCorners[1]))
+    {
+      return true;
+    }
+
+    if (lockedCorners.HasFlag(SailLockedSide.C) &&
+        ApproximatelySamePoint(vertex, m_sailCorners[2]))
+    {
+      return true;
+    }
+
+    if (cornerCount == 4 &&
+        lockedCorners.HasFlag(SailLockedSide.D) &&
+        ApproximatelySamePoint(vertex, m_sailCorners[3]))
+    {
+      return true;
+    }
+
+    //
+    // Edges
+    //
+    // A = corner 0 -> 1
+    // B = corner 1 -> 2
+    // C = corner 2 -> (3 for quad, 0 for triangle)
+    // D = corner 3 -> 0
+    //
+
+    if (lockedSides.HasFlag(SailLockedSide.A) &&
+        IsPointOnSegment(
+          vertex,
+          m_sailCorners[0],
+          m_sailCorners[1]))
+    {
+      return true;
+    }
+
+    if (lockedSides.HasFlag(SailLockedSide.B) &&
+        IsPointOnSegment(
+          vertex,
+          m_sailCorners[1],
+          m_sailCorners[2]))
+    {
+      return true;
+    }
+
+    if (lockedSides.HasFlag(SailLockedSide.C))
+    {
+      var cEnd = cornerCount == 4
+        ? m_sailCorners[3]
+        : m_sailCorners[0];
+
+      if (IsPointOnSegment(
+            vertex,
+            m_sailCorners[2],
+            cEnd))
+      {
+        return true;
+      }
+    }
+
+    if (cornerCount == 4 &&
+        lockedSides.HasFlag(SailLockedSide.D) &&
+        IsPointOnSegment(
+          vertex,
+          m_sailCorners[3],
+          m_sailCorners[0]))
+    {
+      return true;
+    }
+
+    return false;
+  }
+
+  private static bool ApproximatelySamePoint(Vector3 a, Vector3 b)
+  {
+    return (a - b).sqrMagnitude <=
+           SailPinTolerance * SailPinTolerance;
+  }
+
+  private static bool IsPointOnSegment(
+    Vector3 point,
+    Vector3 start,
+    Vector3 end)
+  {
+    var segment = end - start;
+    var segmentLengthSqr = segment.sqrMagnitude;
+
+    if (segmentLengthSqr <= Mathf.Epsilon)
+    {
+      return ApproximatelySamePoint(point, start);
+    }
+
+    var t = Vector3.Dot(point - start, segment) /
+            segmentLengthSqr;
+
+    // Must actually be between the two corners.
+    if (t < 0f || t > 1f)
+      return false;
+
+    var closestPoint = start + segment * t;
+
+    return (point - closestPoint).sqrMagnitude <=
+           SailPinTolerance * SailPinTolerance;
   }
 
   public bool IsNotCustom => m_materialVariant != MaterialVariant.Custom;

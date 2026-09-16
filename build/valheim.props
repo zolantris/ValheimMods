@@ -103,6 +103,12 @@
             <HintPath>$(ManagedDataPath)\assembly_utils.dll</HintPath>
             <Private>False</Private>
         </Reference>
+
+        <Reference Include="MagicaClothV2">
+            <SpecificVersion>False</SpecificVersion>
+            <HintPath>$(ManagedDataPath)\MagicaClothV2.dll</HintPath>
+            <Private>False</Private>
+        </Reference>
     </ItemGroup>
 
     <ItemGroup Label="Csharp-Libs">
