@@ -39,5 +39,19 @@ public class RegisterPrefab<TSelf> : IPrefabRegistryController
     }
   }
 
+  public void TryRegister(Action action)
+  {
+    try
+    {
+      action();
+    }
+    catch (Exception e)
+    {
+      LoggerProvider.LogWarning(
+        $"ValheimRAFT: Error while registering {action.Method.Name}\n{e}"
+      );
+    }
+  }
+
   public virtual void OnRegister() {}
 }

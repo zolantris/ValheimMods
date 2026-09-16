@@ -274,18 +274,6 @@ public class SailPrefabs : RegisterPrefab<SailPrefabs>
     return description;
   }
 
-  private void TryRegister(Action action)
-  {
-    try
-    {
-      action();
-    }
-    catch (Exception e)
-    {
-      LoggerProvider.LogWarning($"ValheimRAFT SailPrefabs: error while registering SaiPrefab \n {e.Message}");
-    }
-  }
-
   private void RegisterRaftMast()
   {
     var mbRaftMastPrefab =
