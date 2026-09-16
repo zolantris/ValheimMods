@@ -957,7 +957,7 @@ public class VehicleCommands : ConsoleCommand
     // not just the on-screen HUD message and the BepInEx log file - useful
     // when running a command like `vehicle report-info` directly from console
     // and wanting the failure reason visible right there in the same window.
-    global::Console.instance?.AddString(vehicleNotFoundMsg);
+    Console.instance?.AddString(vehicleNotFoundMsg);
     LoggerProvider.LogWarning(
       $"{vehicleNotFoundMsg} \nMust be within <50f> (game meters). The player must be closer to the boat.");
   }
@@ -1524,9 +1524,11 @@ public class VehicleCommands : ConsoleCommand
     if (minHeight.HasValue && maxHeight.HasValue && vehicleZdo != null)
       wasClamped = ClampVehicleZdoToSafeHeight(vehicleZdo, activeNv, minHeight.Value, maxHeight.Value);
 
-    if (vehicleZdo != null && VehiclePiecesController.m_allPieces.TryGetValue(persistentZdoId, out var zdoPieces))
+    var vehicleZNetView = ZNetScene.instance.FindInstance(vehicleZdo);
+
+    if (vehicleZdo != null && vehicleZNetView != null && VehiclePiecesController.m_allPieces.TryGetValue(persistentZdoId, out var zdoPieces))
     {
-      VehiclePiecesController.SyncAllPrefabsToVehiclePosition(vehicleZdo, zdoPieces);
+      VehiclePiecesController.SyncAllPrefabsToVehiclePosition(vehicleZNetView, zdoPieces);
     }
 
     return wasClamped;

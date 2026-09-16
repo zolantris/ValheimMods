@@ -1,10 +1,7 @@
-using System.Linq;
-using Jotunn;
 using Jotunn.Configs;
 using Jotunn.Entities;
 using Jotunn.Managers;
 using UnityEngine;
-using UnityEngine.Rendering;
 using ValheimVehicles.Components;
 using ValheimVehicles.BepInExConfig;
 using ValheimVehicles.SharedScripts;
@@ -20,14 +17,16 @@ public class SailPrefabs : RegisterPrefab<SailPrefabs>
 {
   public override void OnRegister()
   {
-    RegisterRaftMast();
-    RegisterKarveMast();
-    RegisterVikingMast();
-    RegisterDrakkalMast();
-    RegisterCustomSail();
-    RegisterCustomSailCreator(3);
-    RegisterCustomSailCreator(4);
+    TryRegister(RegisterRaftMast);
+    TryRegister(RegisterKarveMast);
+    TryRegister(RegisterVikingMast);
+    TryRegister(RegisterDrakkalMast);
+    TryRegister(RegisterCustomSail);
+    TryRegister(() => RegisterCustomSailCreator(3));
+    TryRegister(() => RegisterCustomSailCreator(4));
   }
+
+  public const string ValheimSailName = "Karve_Sail";
 
   public static bool IsSail(string objName)
   {
@@ -60,6 +59,11 @@ public class SailPrefabs : RegisterPrefab<SailPrefabs>
 
     var vikingShipMastComponent =
       vikingShipMastPrefab.AddComponent<MastComponent>();
+    vikingShipMastComponent.m_sailObject =
+      vikingShipMastPrefab.transform.Find(ValheimSailName).gameObject;
+
+    vikingShipMastComponent.m_sailCloth =
+      vikingShipMastComponent.m_sailObject.GetComponentInChildren<MagicaCloth2.MagicaCloth>();
     vikingShipMastComponent.ConfigureVanillaSail(vikingShip);
     vikingShipMastComponent.m_allowSailRotation = true;
     vikingShipMastComponent.m_allowSailShrinking = true;
