@@ -1,9 +1,9 @@
 {
   "name": "ValheimRAFTBETA",
-  "version_number": "5.0.1",
+  "version_number": "5.0.2",
   "website_url": "https://github.com/zolantris/ValheimMods/tree/main/src/ValheimRAFT",
-  "description": "ValheimRAFT (BETA) - a vehicles mod for valheim. Build a ship, build a land vehicle (3.0.0). Explore valheim! This is a BETA release channel. Please use the non-beta for stable versions.",
+  "description": "ValheimRAFT (BETA) - Supports DeepNorth >=1.0.0. A vehicles mod for valheim. Build a ship, build a land vehicle (3.0.0). Explore valheim! This is a BETA release channel. Please use the non-beta for stable versions.",
   "dependencies": [
-    "ValheimModding-Jotunn-2.27.0"
+    "ValheimModding-Jotunn-2.30.0"
   ]
 }
