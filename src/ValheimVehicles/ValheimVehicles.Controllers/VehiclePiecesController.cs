@@ -419,7 +419,10 @@
 
         if (!RPCUtils.HasNearbyPlayersOrPeers([vehicleZdo], VehicleActiveAreaSyncRadius)) continue;
 
-        yield return SyncAllPrefabsToVehiclePosition_Routine(vehicleZdo, kvp.Value, stopWatchRuntime);
+        var vehicleNetView = ZNetScene.instance.FindInstance(vehicleZdo);
+        if (!vehicleNetView) yield break;
+
+        yield return SyncAllPrefabsToVehiclePosition_Routine(vehicleNetView, kvp.Value, stopWatchRuntime);
         yield return null;
       }
 
@@ -434,9 +437,9 @@
       yield return null;
     }
 
-    public static IEnumerator SyncAllPrefabsToVehiclePosition_Routine(ZDO vehicleZdo, HashSet<ZDO> zdoPieces, Stopwatch stopWatchRuntime)
+    public static IEnumerator SyncAllPrefabsToVehiclePosition_Routine(ZNetView vehicleNetView, HashSet<ZDO> zdoPieces, Stopwatch stopWatchRuntime)
     {
-      var vehiclePosition = GetVehiclePosition(vehicleZdo);
+      var vehiclePosition = GetVehiclePosition(vehicleNetView);
       if (!vehiclePosition.HasValue) yield break;
       foreach (var zdo in zdoPieces)
       {
@@ -456,11 +459,11 @@
     /// <summary>
     /// Meant for both client and server commands to sync vehicles. This is single threaded so there can be frame drops. Not meant for continuous runs.
     /// </summary>
-    /// <param name="vehicleZdo"></param>
+    /// <param name="vehicleNetView"></param>
     /// <param name="zdoPieces"></param>
-    public static void SyncAllPrefabsToVehiclePosition(ZDO vehicleZdo, HashSet<ZDO> zdoPieces)
+    public static void SyncAllPrefabsToVehiclePosition(ZNetView vehicleNetView, HashSet<ZDO> zdoPieces)
     {
-      var vehiclePosition = GetVehiclePosition(vehicleZdo);
+      var vehiclePosition = GetVehiclePosition(vehicleNetView);
       if (!vehiclePosition.HasValue) return;
       foreach (var zdo in zdoPieces)
       {
@@ -473,9 +476,14 @@
     public static void SyncAllPrefabsToVehiclePosition(int vehiclePersistentId)
     {
       var vehicleZdo = ZdoWatchController.Instance.GetZdo(vehiclePersistentId);
-      if (vehicleZdo != null && m_allPieces.TryGetValue(vehiclePersistentId, out var zdoPieces))
+      if (vehicleZdo == null) return;
+
+      var vehicleNetView = ZNetScene.instance.FindInstance(vehicleZdo);
+      if (vehicleNetView == null) return;
+
+      if (m_allPieces.TryGetValue(vehiclePersistentId, out var zdoPieces))
       {
-        SyncAllPrefabsToVehiclePosition(vehicleZdo, zdoPieces);
+        SyncAllPrefabsToVehiclePosition(vehicleNetView, zdoPieces);
       }
     }
 
@@ -1011,9 +1019,10 @@
 
       // ensures that all pieces are requested to be brought into the current area
       var vehicleZdo = ZdoWatchController.Instance.GetZdo(Manager.PersistentZdoId);
-      if (vehicleZdo != null && m_allPieces.TryGetValue(Manager.PersistentZdoId, out var zdoPieces))
+
+      if (vehicleZdo != null && Manager.m_nview.IsValid() && m_allPieces.TryGetValue(Manager.PersistentZdoId, out var zdoPieces))
       {
-        SyncAllPrefabsToVehiclePosition(vehicleZdo, zdoPieces);
+        SyncAllPrefabsToVehiclePosition(Manager.m_nview, zdoPieces);
       }
 
       UpdateChunkBoundsData(false);
@@ -1530,24 +1539,17 @@
     /// <summary>
     /// Get the vehicle's networked position instead of the current client's position which could be inaccurate
     /// </summary>
-    private static Vector3? GetVehiclePosition(ZDO? zdo)
+    /// 
+    private static Vector3? GetVehiclePosition(ZNetView? nvInstance)
     {
-      if (zdo == null || !zdo.IsValid())
+      // if netview is not healthy or unavailable bail immediately.
+      if (nvInstance == null || !nvInstance.IsValid())
       {
         return null;
       }
 
-      if (IsPlayerOwner(zdo))
-      {
-        var netView = ZNetScene.instance.FindInstance(zdo);
-        if (netView)
-        {
-          return netView.m_body.position;
-        }
-      }
-
-      var positionToUse = zdo.GetPosition();
-      return positionToUse;
+      // This should always use the current vehicle physics position not the stale/synced zdo position to avoid problems.
+      return nvInstance.m_body.position;
     }
 
     /// <summary>
@@ -1556,7 +1558,7 @@
     public void ForceUpdateAllPiecePositions()
     {
       if (!m_nview) return;
-      var position = GetVehiclePosition(m_nview.GetZDO());
+      var position = GetVehiclePosition(m_nview);
       if (!position.HasValue) return;
       ForceUpdateAllPiecePositions(position.Value);
     }
