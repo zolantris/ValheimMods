@@ -1,16 +1,15 @@
 using BepInEx.Configuration;
 using QuickStartOrJoinWorld.Patches;
-using Zolantris.Shared;
 
 namespace QuickStartOrJoinWorld.Config;
 
 /// <summary>
-/// For configuring quickstart worlds meant for debug an BETA variants of valheimRAFT
+/// For configuring quickstart worlds meant for debug an BETA variants
 /// This mod is super helpful for starting and/or connecting to a world/server without any UI input.
 /// 
 /// The Config file is debug-only for now.
 /// </summary>
-public class QuickStartWorldConfig : BepInExBaseConfig<QuickStartWorldConfig>
+public class QuickStartWorldConfig
 {
   private const string QuickStartSection = "QuickStartWorld";
 #if DEBUG
@@ -76,7 +75,7 @@ public class QuickStartWorldConfig : BepInExBaseConfig<QuickStartWorldConfig>
   }
 #endif
 
-  public override void OnBindConfig(ConfigFile config)
+  public static void BindConfig(ConfigFile config, object? configSync)
   {
 #if DEBUG
     ServerOnlineBackendType = config.Bind(QuickStartSection, "ServerOnlineBackendType", OnlineBackendType.Steamworks, new ConfigDescription("For setting the server type."));
@@ -134,3 +133,4 @@ public class QuickStartWorldConfig : BepInExBaseConfig<QuickStartWorldConfig>
 #endif
   }
 }
+

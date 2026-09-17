@@ -9,11 +9,6 @@
         <Platforms>AnyCPU</Platforms>
     </PropertyGroup>
 
-    <!-- Compiled Shared items  -->
-    <ItemGroup>
-        <ProjectReference Include="..\Shared\Shared.csproj"/>
-    </ItemGroup>
-
     <ItemGroup>
         <PackageReference Update="Krafs.Publicizer" Version="2.3.0">
             <PrivateAssets>all</PrivateAssets>

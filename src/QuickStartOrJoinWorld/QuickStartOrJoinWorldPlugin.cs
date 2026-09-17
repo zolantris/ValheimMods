@@ -1,15 +1,10 @@
 using BepInEx;
-using BepInEx.Configuration;
 using HarmonyLib;
-using Jotunn.Utils;
 using QuickStartOrJoinWorld.Config;
 
 namespace QuickStartOrJoinWorld;
 
 [BepInPlugin(BepInGuid, ModName, Version)]
-[BepInDependency(Jotunn.Main.ModGuid)]
-[NetworkCompatibility(CompatibilityLevel.ClientMustHaveMod,
-  VersionStrictness.Minor)]
 public class QuickStartOrJoinWorldPlugin : BaseUnityPlugin
 {
   public const string Author = "zolantris";
