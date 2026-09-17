@@ -280,6 +280,49 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable, INetView
 
     return true;
   }
+  
+  private bool EnsureUnbuiltSailCloth()
+  {
+    if (!m_mesh)
+    {
+      m_mesh = GetComponent<SkinnedMeshRenderer>();
+    }
+
+    if (!m_mesh)
+    {
+      LoggerProvider.LogError(
+        $"SailComponent '{name}' has no SkinnedMeshRenderer.");
+
+      return false;
+    }
+
+    if (!m_sailCloth)
+    {
+      m_sailCloth = GetComponent<MagicaCloth>();
+    }
+
+    if (!m_sailCloth)
+    {
+      m_sailCloth = gameObject.AddComponent<MagicaCloth>();
+    }
+
+    if (!m_sailCloth)
+    {
+      LoggerProvider.LogError(
+        $"Unable to create MagicaCloth for sail '{name}'.");
+
+      return false;
+    }
+
+    // This must happen before MagicaCloth.Start() gets a chance
+    // to automatically construct the cloth.
+    m_sailCloth.DisableAutoBuild();
+
+    // DO NOT Initialize() here.
+    // DO NOT BuildAndRun() here.
+
+    return true;
+  }
 
   public static void AddDefaultSailsToTextures()
   {

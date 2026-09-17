@@ -29,7 +29,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Eldritch.Valheim", "src\Eld
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ValheimSaveFixes", "src\ValheimSaveFixes\ValheimSaveFixes.csproj", "{43617C5E-F0A2-4C79-AB5C-6257388F6EBF}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QuickStartOrJoinWorld", "src\QuickStartOrJoinWorld\QuickStartOrJoinWorld.csproj", "{46CC8E2A-A625-459C-963B-94D1A80BB2B6}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DirectWorld", "src\DirectWorld\DirectWorld.csproj", "{46CC8E2A-A625-459C-963B-94D1A80BB2B6}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -319,3 +319,4 @@ Global
 		HideSolutionNode = FALSE
 	EndGlobalSection
 EndGlobal
+

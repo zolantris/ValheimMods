@@ -1,11 +1,13 @@
 using System.Linq;
 using HarmonyLib;
-using QuickStartOrJoinWorld.Config;
+using DirectWorld.Config;
 
-namespace QuickStartOrJoinWorld.Patches;
+namespace DirectWorld.Patches;
 
-public class QuickStartWorld_Patch
+public class DirectWorld_Patch
 {
+#if DEBUG
+
   /// <summary>
   /// Extends CookieMilkX's mod in debug only but adds support for selection via configuration menu 
   /// </summary>
@@ -16,9 +18,9 @@ public class QuickStartWorld_Patch
   [HarmonyPostfix]
   public static void DirectPlayExtended(FejdStartup __instance)
   {
-    if (!QuickStartWorldConfig.QuickStartEnabled.Value ||
-        QuickStartWorldConfig.QuickStartWorldName.Value == "" ||
-        QuickStartWorldConfig.QuickStartWorldPlayerName.Value == "") return;
+    if (!DirectWorldConfig.DirectWorldEnabled.Value ||
+        DirectWorldConfig.DirectWorldName.Value == "" ||
+        DirectWorldConfig.DirectWorldPlayerName.Value == "") return;
     ConnectOrHostServer();
   }
 
@@ -28,29 +30,28 @@ public class QuickStartWorld_Patch
     var worldList = SaveSystem.GetWorldList();
     var playerProfiles = SaveSystem.GetAllPlayerProfiles();
     var world = worldList.FirstOrDefault((x) =>
-      x.m_name == QuickStartWorldConfig.QuickStartWorldName.Value);
+      x.m_name == DirectWorldConfig.DirectWorldName.Value);
     var player = playerProfiles.FirstOrDefault((x) =>
-      x.m_playerName == QuickStartWorldConfig.QuickStartWorldPlayerName.Value);
+      x.m_playerName == DirectWorldConfig.DirectWorldPlayerName.Value);
 
     if (world == null || player == null) return;
 
     ZSteamMatchmaking.instance.StopServerListing();
-    // ZNet.m_onlineBackend = OnlineBackendType.Steamworks;
-    ZNet.m_onlineBackend = QuickStartWorldConfig.ServerOnlineBackendType.Value;
+    ZNet.m_onlineBackend = DirectWorldConfig.ServerOnlineBackendType.Value;
     Game.SetProfile(player.m_filename, FileHelpers.FileSource.Local);
 
-    // joins an already hosted server.
-    if (QuickStartWorldConfig.IsJoinServer.Value)
+    if (DirectWorldConfig.IsJoinServer.Value)
     {
-      ZNet.SetServerHost(QuickStartWorldConfig.JoinServerUrl.Value, QuickStartWorldConfig.JoinServerPort.Value, QuickStartWorldConfig.ServerOnlineBackendType.Value);
+      ZNet.SetServerHost(DirectWorldConfig.JoinServerUrl.Value, DirectWorldConfig.JoinServerPort.Value, DirectWorldConfig.ServerOnlineBackendType.Value);
       FejdStartup.instance.LoadMainScene();
     }
     else
     {
-      ZNet.SetServer(true, QuickStartWorldConfig.IsOpenServer.Value, QuickStartWorldConfig.IsPublicServer.Value,
-        world.m_name, QuickStartWorldConfig.QuickStartWorldPassword.Value,
+      ZNet.SetServer(true, DirectWorldConfig.IsOpenServer.Value, DirectWorldConfig.IsPublicServer.Value,
+        world.m_name, DirectWorldConfig.DirectWorldPassword.Value,
         world);
       FejdStartup.instance.LoadMainScene();
     }
   }
+#endif
 }

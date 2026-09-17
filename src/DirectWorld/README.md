@@ -1,10 +1,10 @@
-# QuickStartOrJoinWorld
+# DirectWorld
 
 A BepInEx mod for Valheim that enables rapid world startup and server joining without UI interaction. Perfect for both developers and players who want to skip menus and jump straight into the action.
 
 ## Overview
 
-QuickStartOrJoinWorld is a **debug-only** mod that automatically loads a Valheim world or joins a server on startup. Once configured, simply launch the game and it will:
+DirectWorld is a **debug-only** mod that automatically loads a Valheim world or joins a server on startup. Once configured, simply launch the game and it will:
 
 1. Automatically load your configured world
 2. Select your configured character
@@ -25,14 +25,14 @@ No manual UI interaction required—from launch to fully loaded in-world.
 
 ## Configuration
 
-All settings are in the `QuickStartOrJoinWorld.cfg` config file under the `[QuickStartWorld]` section:
+All settings are in the `DirectWorld.cfg` config file under the `[DirectWorld]` section:
 
 | Setting | Type | Default | Description |
 |---------|------|---------|-------------|
-| `QuickStartEnabled` | bool | false | Enable/disable quick start functionality |
-| `QuickStartWorldName` | string | "" | Name of the world to load |
-| `QuickStartWorldPlayerName` | string | "" | Character/player name to use |
-| `QuickStartWorldPassword` | string | "" | Password for the hosted world |
+| `DirectWorldEnabled` | bool | false | Enable/disable auto-loading |
+| `DirectWorldName` | string | "" | Name of the world to load |
+| `DirectWorldPlayerName` | string | "" | Character/player name to use |
+| `DirectWorldPassword` | string | "" | Password for the hosted world |
 | `ServerOnlineBackendType` | enum | Steamworks | Online backend (Steamworks, etc.) |
 | `IsJoinServer` | bool | false | Join remote server instead of hosting |
 | `JoinServerUrl` | string | "" | IP or URL of remote server |
@@ -45,10 +45,10 @@ All settings are in the `QuickStartOrJoinWorld.cfg` config file under the `[Quic
 To automatically load a world on startup:
 
 ```ini
-[QuickStartWorld]
-QuickStartEnabled=true
-QuickStartWorldName=MyWorld
-QuickStartWorldPlayerName=MyCharacter
+[DirectWorld]
+DirectWorldEnabled=true
+DirectWorldName=MyWorld
+DirectWorldPlayerName=MyCharacter
 ServerOnlineBackendType=Steamworks
 ```
 
@@ -57,12 +57,12 @@ Launch the game—your world and character load automatically.
 To automatically join a remote server:
 
 ```ini
-[QuickStartWorld]
-QuickStartEnabled=true
+[DirectWorld]
+DirectWorldEnabled=true
 IsJoinServer=true
 JoinServerUrl=192.168.1.100
 JoinServerPort=2456
-QuickStartWorldPlayerName=MyCharacter
+DirectWorldPlayerName=MyCharacter
 ServerOnlineBackendType=Steamworks
 ```
 
@@ -101,7 +101,7 @@ This mod is **debug-only** and only activates in Debug builds. It will not run i
 
 ## Credits
 
-This mod extends the concept introduced by [CookieMilkX's DirectPlay mod](https://thunderstore.io/c/valheim/p/CookiexMilk/DirectPlay/). QuickStartOrJoinWorld builds upon this foundation by adding configuration-based world and server selection, allowing users to customize their startup experience without code changes.
+This mod extends the concept introduced by [CookieMilkX's DirectPlay mod](https://thunderstore.io/c/valheim/p/CookiexMilk/DirectPlay/). DirectWorld builds upon this foundation by adding configuration-based world and server selection, allowing users to customize their startup experience without code changes.
 
 ## Dependencies
 
@@ -111,5 +111,3 @@ This mod extends the concept introduced by [CookieMilkX's DirectPlay mod](https:
 ## License
 
 GNU General Public License v3.0
-
-

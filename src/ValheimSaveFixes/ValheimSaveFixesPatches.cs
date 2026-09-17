@@ -9,6 +9,90 @@ namespace ValheimSaveFixes.Patches;
 internal static class SaveMountFixes
 {
   /*
+   * PlayerProfile disk write
+   *
+   * Game.SavePlayerProfile() eventually calls:
+   *
+   *   PlayerProfile.Save()
+   *     -> SavePlayerToDisk()
+   *
+   * SavePlayerToDisk has its own CloudStorageSupported check/mount.
+   * Therefore suppress that mount when THIS profile is Local.
+   */
+
+  private static bool ShouldMountCloudForProfileDisk(
+    PlayerProfile profile)
+  {
+    if (!FileHelpers.CloudStorageSupported)
+      return false;
+
+    if (profile == null)
+      return true;
+
+    return profile.m_fileSource.IsCloud();
+  }
+
+  [HarmonyPatch(typeof(PlayerProfile), "SavePlayerToDisk")]
+  [HarmonyTranspiler]
+  private static IEnumerable<CodeInstruction> SavePlayerToDisk_Transpiler(
+    IEnumerable<CodeInstruction> instructions)
+  {
+    var cloudSupportedGetter =
+      AccessTools.PropertyGetter(
+        typeof(FileHelpers),
+        nameof(FileHelpers.CloudStorageSupported));
+
+    var replacement =
+      AccessTools.Method(
+        typeof(SaveMountFixes),
+        nameof(ShouldMountCloudForProfileDisk));
+
+    var replaced = false;
+
+    foreach (var instruction in instructions)
+    {
+      if (!replaced &&
+          instruction.Calls(cloudSupportedGetter))
+      {
+        /*
+         * Original:
+         *
+         *   call FileHelpers.get_CloudStorageSupported()
+         *
+         * Replacement:
+         *
+         *   ldarg.0
+         *   call ShouldMountCloudForProfileDisk(PlayerProfile)
+         *
+         * Mutating the original instruction avoids directly touching
+         * Harmony labels/blocks and therefore avoids the Label/mscorlib
+         * compile problem.
+         */
+
+        instruction.opcode = OpCodes.Ldarg_0;
+        instruction.operand = null;
+
+        yield return instruction;
+
+        yield return new CodeInstruction(
+          OpCodes.Call,
+          replacement);
+
+        replaced = true;
+        continue;
+      }
+
+      yield return instruction;
+    }
+
+    if (!replaced)
+    {
+      ZLog.LogError(
+        "[ValheimSaveFixes] Failed to patch cloud mount check in PlayerProfile.SavePlayerToDisk");
+    }
+  }
+
+  /*
    * New world / character creation
    *
    * Vanilla selects Local when:

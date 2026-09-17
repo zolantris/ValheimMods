@@ -1,11 +1,11 @@
 using System.Reflection;
 using System.Runtime.InteropServices;
 
-[assembly: AssemblyTitle("QuickStartOrJoinWorld")]
-[assembly: AssemblyDescription("Valheim Mod for quick start or join world functionality")]
+[assembly: AssemblyTitle("DirectWorld")]
+[assembly: AssemblyDescription("Valheim Mod for rapid world startup and server joining without UI interaction")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("zolantris")]
-[assembly: AssemblyProduct("QuickStartOrJoinWorld")]
+[assembly: AssemblyProduct("DirectWorld")]
 [assembly: AssemblyCopyright("Copyright © 2024, GNU-v3 licensed")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
