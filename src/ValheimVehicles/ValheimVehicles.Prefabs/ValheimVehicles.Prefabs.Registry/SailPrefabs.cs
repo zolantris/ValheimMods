@@ -246,7 +246,7 @@ public class SailPrefabs : RegisterPrefab<SailPrefabs>
     piece.m_name = pieceName;
     piece.m_description = $"$mb_sail_{sailCount}_desc";
     piece.m_placeEffect = LoadValheimAssets.woodFloorPiece.m_placeEffect;
-
+    piece.m_canRotate = false; // rotating causes weird behaviors for the points.
 
     var sailCreatorComponent = prefab.AddComponent<SailCreatorComponent>();
     sailCreatorComponent.m_sailSize = sailCount;
