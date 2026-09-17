@@ -29,6 +29,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Eldritch.Valheim", "src\Eld
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ValheimSaveFixes", "src\ValheimSaveFixes\ValheimSaveFixes.csproj", "{43617C5E-F0A2-4C79-AB5C-6257388F6EBF}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QuickStartOrJoinWorld", "src\QuickStartOrJoinWorld\QuickStartOrJoinWorld.csproj", "{46CC8E2A-A625-459C-963B-94D1A80BB2B6}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -288,6 +290,30 @@ Global
 		{43617C5E-F0A2-4C79-AB5C-6257388F6EBF}.ReleaseBETA Archive|Any CPU.Build.0 = Debug|Any CPU
 		{43617C5E-F0A2-4C79-AB5C-6257388F6EBF}.ModSyncOnly|Any CPU.ActiveCfg = Debug|Any CPU
 		{43617C5E-F0A2-4C79-AB5C-6257388F6EBF}.ModSyncOnly|Any CPU.Build.0 = Debug|Any CPU
+		{46CC8E2A-A625-459C-963B-94D1A80BB2B6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{46CC8E2A-A625-459C-963B-94D1A80BB2B6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{46CC8E2A-A625-459C-963B-94D1A80BB2B6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{46CC8E2A-A625-459C-963B-94D1A80BB2B6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{46CC8E2A-A625-459C-963B-94D1A80BB2B6}.Release Archive|Any CPU.ActiveCfg = Release Archive|Any CPU
+		{46CC8E2A-A625-459C-963B-94D1A80BB2B6}.Release Archive|Any CPU.Build.0 = Release Archive|Any CPU
+		{46CC8E2A-A625-459C-963B-94D1A80BB2B6}.Test|Any CPU.ActiveCfg = Debug|Any CPU
+		{46CC8E2A-A625-459C-963B-94D1A80BB2B6}.Test|Any CPU.Build.0 = Debug|Any CPU
+		{46CC8E2A-A625-459C-963B-94D1A80BB2B6}.Debug Run Client|Any CPU.ActiveCfg = Debug|Any CPU
+		{46CC8E2A-A625-459C-963B-94D1A80BB2B6}.Debug Run Client|Any CPU.Build.0 = Debug|Any CPU
+		{46CC8E2A-A625-459C-963B-94D1A80BB2B6}.Debug Run Server|Any CPU.ActiveCfg = Debug|Any CPU
+		{46CC8E2A-A625-459C-963B-94D1A80BB2B6}.Debug Run Server|Any CPU.Build.0 = Debug|Any CPU
+		{46CC8E2A-A625-459C-963B-94D1A80BB2B6}.Release Run Server|Any CPU.ActiveCfg = Debug|Any CPU
+		{46CC8E2A-A625-459C-963B-94D1A80BB2B6}.Release Run Server|Any CPU.Build.0 = Debug|Any CPU
+		{46CC8E2A-A625-459C-963B-94D1A80BB2B6}.Release Run Client|Any CPU.ActiveCfg = Debug|Any CPU
+		{46CC8E2A-A625-459C-963B-94D1A80BB2B6}.Release Run Client|Any CPU.Build.0 = Debug|Any CPU
+		{46CC8E2A-A625-459C-963B-94D1A80BB2B6}.Release Run ClientServer|Any CPU.ActiveCfg = Debug|Any CPU
+		{46CC8E2A-A625-459C-963B-94D1A80BB2B6}.Release Run ClientServer|Any CPU.Build.0 = Debug|Any CPU
+		{46CC8E2A-A625-459C-963B-94D1A80BB2B6}.Debug Run ClientServer|Any CPU.ActiveCfg = Debug|Any CPU
+		{46CC8E2A-A625-459C-963B-94D1A80BB2B6}.Debug Run ClientServer|Any CPU.Build.0 = Debug|Any CPU
+		{46CC8E2A-A625-459C-963B-94D1A80BB2B6}.ReleaseBETA Archive|Any CPU.ActiveCfg = ReleaseBETA Archive|Any CPU
+		{46CC8E2A-A625-459C-963B-94D1A80BB2B6}.ReleaseBETA Archive|Any CPU.Build.0 = ReleaseBETA Archive|Any CPU
+		{46CC8E2A-A625-459C-963B-94D1A80BB2B6}.ModSyncOnly|Any CPU.ActiveCfg = ModSyncOnly|Any CPU
+		{46CC8E2A-A625-459C-963B-94D1A80BB2B6}.ModSyncOnly|Any CPU.Build.0 = ModSyncOnly|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
