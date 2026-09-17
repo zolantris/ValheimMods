@@ -6,8 +6,6 @@ namespace QuickStartOrJoinWorld.Patches;
 
 public class QuickStartWorld_Patch
 {
-#if DEBUG
-
   /// <summary>
   /// Extends CookieMilkX's mod in debug only but adds support for selection via configuration menu 
   /// </summary>
@@ -55,5 +53,4 @@ public class QuickStartWorld_Patch
       FejdStartup.instance.LoadMainScene();
     }
   }
-#endif
 }

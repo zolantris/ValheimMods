@@ -99,6 +99,10 @@ No menus. No clicking. Just gameplay.
 
 This mod is **debug-only** and only activates in Debug builds. It will not run in Release builds.
 
+## Credits
+
+This mod extends the concept introduced by [CookieMilkX's DirectPlay mod](https://thunderstore.io/c/valheim/p/CookiexMilk/DirectPlay/). QuickStartOrJoinWorld builds upon this foundation by adding configuration-based world and server selection, allowing users to customize their startup experience without code changes.
+
 ## Dependencies
 
 - BepInEx
@@ -107,4 +111,5 @@ This mod is **debug-only** and only activates in Debug builds. It will not run i
 ## License
 
 GNU General Public License v3.0
+
 

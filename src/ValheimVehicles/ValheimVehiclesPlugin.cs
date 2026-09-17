@@ -10,7 +10,6 @@ using ValheimVehicles.BepInExConfig;
 using ValheimVehicles.Controllers;
 using ValheimVehicles.Integrations;
 using ValheimVehicles.Prefabs;
-using ValheimVehicles.QuickStartWorld.Config;
 using ValheimVehicles.SharedScripts;
 using ValheimVehicles.UI;
 using Zolantris.Shared;
@@ -195,11 +194,6 @@ public class ValheimVehiclesPlugin : MonoBehaviour
     Mod_PieceOverlapConfig.BindConfig(config, ModConfigSync);
 
     LoggerProvider.LogInfo("Plugin ValheimVehicles started on server.");
-
-#if DEBUG
-    // Meant for only being run in debug builds for testing quickly
-    QuickStartWorldConfig.BindConfig(config, ModConfigSync);
-#endif
 
     HasCreatedConfig = true;
   }

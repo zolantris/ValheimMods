@@ -21,9 +21,7 @@ public class QuickStartOrJoinWorldPlugin : BaseUnityPlugin
 
   public void Awake()
   {
-#if DEBUG
     QuickStartWorldConfig.BindConfig(Config, null!);
-#endif
     _harmony = new Harmony(HarmonyGuid);
     _harmony.PatchAll(typeof(Patches.QuickStartWorld_Patch));
   }
