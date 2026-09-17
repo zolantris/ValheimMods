@@ -145,6 +145,27 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable, INetView
   public CoroutineHandle sailParentRoutine;
   private CoroutineHandle _waitForInitRoutine;
   private CoroutineHandle _loadZDORoutine;
+  private CoroutineHandle _clothRebuildRoutine;
+
+  /*
+   * MagicaCloth2 construction data is immutable once BuildAndRun() starts.
+   * Keep explicit ownership of the generated source mesh and rebuild state so
+   * ZDO/material reloads cannot accidentally rebuild an already-built cloth.
+   */
+  private Mesh? _generatedSailMesh;
+  private Mesh? _generatedCollisionMesh;
+  private Mesh? _pendingSailMesh;
+  private Mesh? _rebuildSailMesh;
+
+  private SailClothBuildState _activeClothBuildState;
+  private SailClothBuildState _pendingClothBuildState;
+  private SailClothBuildState _rebuildClothBuildState;
+
+  private bool _hasActiveClothBuildState;
+  private bool _hasPendingClothBuildState;
+  private bool _hasRebuildClothBuildState;
+
+  private static bool _defaultSailsRegistered;
 
   private float m_sailArea = 0f;
   private static bool DebugBoxCollider = true;
@@ -177,6 +198,67 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable, INetView
 
   private const float SailPinTolerance = 0.001f;
 
+  private readonly struct SailClothBuildState : IEquatable<SailClothBuildState>
+  {
+    public readonly int CornerCount;
+    public readonly Vector3 CornerA;
+    public readonly Vector3 CornerB;
+    public readonly Vector3 CornerC;
+    public readonly Vector3 CornerD;
+    public readonly float Subdivision;
+    public readonly SailLockedSide LockedCorners;
+    public readonly SailLockedSide LockedSides;
+
+    public SailClothBuildState(
+      IReadOnlyList<Vector3> corners,
+      float subdivision,
+      SailLockedSide lockedCorners,
+      SailLockedSide lockedSides)
+    {
+      CornerCount = corners.Count;
+      CornerA = corners.Count > 0 ? corners[0] : Vector3.zero;
+      CornerB = corners.Count > 1 ? corners[1] : Vector3.zero;
+      CornerC = corners.Count > 2 ? corners[2] : Vector3.zero;
+      CornerD = corners.Count > 3 ? corners[3] : Vector3.zero;
+      Subdivision = subdivision;
+      LockedCorners = lockedCorners;
+      LockedSides = lockedSides;
+    }
+
+    public bool Equals(SailClothBuildState other)
+    {
+      return CornerCount == other.CornerCount &&
+             CornerA == other.CornerA &&
+             CornerB == other.CornerB &&
+             CornerC == other.CornerC &&
+             CornerD == other.CornerD &&
+             Mathf.Approximately(Subdivision, other.Subdivision) &&
+             LockedCorners == other.LockedCorners &&
+             LockedSides == other.LockedSides;
+    }
+
+    public override bool Equals(object? obj)
+    {
+      return obj is SailClothBuildState other && Equals(other);
+    }
+
+    public override int GetHashCode()
+    {
+      unchecked
+      {
+        var hash = CornerCount;
+        hash = hash * 397 ^ CornerA.GetHashCode();
+        hash = hash * 397 ^ CornerB.GetHashCode();
+        hash = hash * 397 ^ CornerC.GetHashCode();
+        hash = hash * 397 ^ CornerD.GetHashCode();
+        hash = hash * 397 ^ Subdivision.GetHashCode();
+        hash = hash * 397 ^ (int)LockedCorners;
+        hash = hash * 397 ^ (int)LockedSides;
+        return hash;
+      }
+    }
+  }
+
   public enum MaterialVariant
   {
     Custom,
@@ -194,6 +276,7 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable, INetView
     sailParentRoutine = new CoroutineHandle(this);
     _waitForInitRoutine = new CoroutineHandle(this);
     _loadZDORoutine = new CoroutineHandle(this);
+    _clothRebuildRoutine = new CoroutineHandle(this);
 
     m_sailComponents.Add(this);
 
@@ -209,6 +292,11 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable, INetView
     m_nview =
       GetComponent<ZNetView>();
 
+    /*
+     * Disable Magica's Start()-time auto build during Awake. All custom sails
+     * are built manually after their generated mesh and fixed vertex attributes
+     * have been assigned.
+     */
     EnsureSailCloth();
 
     if (m_mastComponent)
@@ -219,6 +307,9 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable, INetView
 
     if (m_mesh)
     {
+      // This is only an initial fallback. LoadFromMaterial() refreshes it from
+      // the renderer because dynamically-created sails can receive their source
+      // material after SailComponent.Awake() has already run.
       customMaterial =
         m_mesh.material;
     }
@@ -263,7 +354,15 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable, INetView
       return false;
     }
 
-    m_sailCloth.Initialize();
+    /*
+     * Do not call Initialize() here.
+     *
+     * MagicaCloth2's runtime-construction flow is:
+     *   Add component -> configure construction data -> BuildAndRun().
+     *
+     * DisableAutoBuild() must happen before Start() gets a chance to build the
+     * component with the prefab/default mesh.
+     */
     m_sailCloth.DisableAutoBuild();
 
     var serializeData =
@@ -280,57 +379,30 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable, INetView
 
     return true;
   }
-  
-  private bool EnsureUnbuiltSailCloth()
-  {
-    if (!m_mesh)
-    {
-      m_mesh = GetComponent<SkinnedMeshRenderer>();
-    }
-
-    if (!m_mesh)
-    {
-      LoggerProvider.LogError(
-        $"SailComponent '{name}' has no SkinnedMeshRenderer.");
-
-      return false;
-    }
-
-    if (!m_sailCloth)
-    {
-      m_sailCloth = GetComponent<MagicaCloth>();
-    }
-
-    if (!m_sailCloth)
-    {
-      m_sailCloth = gameObject.AddComponent<MagicaCloth>();
-    }
-
-    if (!m_sailCloth)
-    {
-      LoggerProvider.LogError(
-        $"Unable to create MagicaCloth for sail '{name}'.");
-
-      return false;
-    }
-
-    // This must happen before MagicaCloth.Start() gets a chance
-    // to automatically construct the cloth.
-    m_sailCloth.DisableAutoBuild();
-
-    // DO NOT Initialize() here.
-    // DO NOT BuildAndRun() here.
-
-    return true;
-  }
 
   public static void AddDefaultSailsToTextures()
   {
+    if (_defaultSailsRegistered)
+    {
+      return;
+    }
+
+    var sailsGroup = CustomTextureGroup.Get("Sails");
+    if (sailsGroup == null)
+    {
+      /*
+       * Asset texture groups may not exist yet during early prefab/component
+       * creation. Do not latch the failure; a later sail Awake can retry.
+       */
+      LoggerProvider.LogWarning(
+        "AddDefaultSailsToTextures(): Sails texture group is not initialized yet.");
+
+      return;
+    }
+
     var drakkalMaterial = OverrideMaterial_DrakkalShipSail();
     var vikingMaterial = OverrideMaterial_VikingShipSail();
     var raftShipSailMaterial = OverrideMaterial_RaftShipSail();
-
-    var sailsGroup = CustomTextureGroup.Get("Sails");
 
     sailsGroup.AddTexture(new CustomTexture
     {
@@ -347,8 +419,9 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable, INetView
       Texture = raftShipSailMaterial.GetTexture(MainTex),
       Normal = raftShipSailMaterial.GetTexture(BumpMap)
     });
-  }
 
+    _defaultSailsRegistered = true;
+  }
 
   public void RegisterRPC()
   {
@@ -485,6 +558,8 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable, INetView
 
   public void OnDestroy()
   {
+    ReleasePendingSailMeshes();
+    ReleaseGeneratedMeshes();
     m_sailComponents.Remove(this);
   }
 
@@ -493,8 +568,16 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable, INetView
     CancelInvoke();
     _waitForInitRoutine.Stop();
     _loadZDORoutine.Stop();
+    _clothRebuildRoutine.Stop();
     sailParentRoutine.Stop();
     StopAllCoroutines();
+
+    ReleasePendingSailMeshes();
+
+    /*
+     * Do not destroy _generatedSailMesh here. A temporarily disabled sail can
+     * be enabled again and its MagicaCloth still owns that source topology.
+     */
     UnregisterRPC();
   }
 
@@ -682,12 +765,48 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable, INetView
 
   public void LoadFromMaterial()
   {
-    var sailMaterial = GetSailMaterial();
-    m_mainColor = sailMaterial.GetColor(m_materialVariant == MaterialVariant.Custom ? MainColor : VegetationColor);
+    if (!m_mesh)
+    {
+      LoggerProvider.LogError(
+        $"LoadFromMaterial(): Sail '{name}' has no SkinnedMeshRenderer.");
+
+      return;
+    }
+
+    Material sailMaterial;
+
+    if (m_materialVariant == MaterialVariant.Custom)
+    {
+      /*
+       * Awake can run before SailCreator assigns the source material.
+       * The renderer is therefore authoritative when importing a custom sail.
+       */
+      sailMaterial = m_mesh.material;
+      customMaterial = sailMaterial;
+    }
+    else
+    {
+      sailMaterial = GetSailMaterial();
+    }
+
+    if (!sailMaterial)
+    {
+      LoggerProvider.LogError(
+        $"LoadFromMaterial(): Sail '{name}' has no usable material.");
+
+      return;
+    }
+
+    m_mainColor = sailMaterial.GetColor(
+      m_materialVariant == MaterialVariant.Custom
+        ? MainColor
+        : VegetationColor);
+
     m_mistAlpha = 1f;
+
     var mainTex = sailMaterial.GetTexture(MainTex);
 
-    if (mainTex != null)
+    if (mainTex)
     {
       m_mainHash = mainTex.name.GetStableHashCode();
     }
@@ -700,37 +819,28 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable, INetView
     m_mainScale = sailMaterial.GetTextureScale(MainTex);
     m_mainOffset = sailMaterial.GetTextureOffset(MainTex);
 
-    // do not set incompatible shader values.
-    if (m_materialVariant != MaterialVariant.Custom) return;
+    // Do not read custom shader properties from vanilla sail materials.
+    if (m_materialVariant != MaterialVariant.Custom)
+    {
+      return;
+    }
 
     var patternTex = sailMaterial.GetTexture(PatternTex);
-    var patternGroup = CustomTextureGroup.Get("Patterns")?
-      .GetTextureByHash(patternTex.name.GetStableHashCode());
-    if (patternGroup != null)
-    {
-      m_patternHash = patternTex.name.GetStableHashCode();
-    }
-    else
-    {
-      LoggerProvider.LogWarning("Error pattern group not found. Ensure you have the assets folder under this mod.");
-    }
+    m_patternHash = ResolveMaterialTextureHash(
+      patternTex,
+      "Patterns",
+      "pattern");
 
     m_patternScale = sailMaterial.GetTextureScale(PatternTex);
     m_patternOffset = sailMaterial.GetTextureOffset(PatternTex);
     m_patternColor = sailMaterial.GetColor(PatternColor);
     m_patternRotation = sailMaterial.GetFloat(PatternRotation);
-    var logoTex = sailMaterial.GetTexture(LogoTex);
-    var logoGroup = CustomTextureGroup.Get("Logos")?
-      .GetTextureByHash(logoTex.name.GetStableHashCode());
-    if (logoGroup != null)
-    {
-      m_logoHash = logoTex.name.GetStableHashCode();
-    }
-    else
-    {
-      LoggerProvider.LogWarning("Error pattern group not found. Ensure you have the assets folder under this mod.");
-    }
 
+    var logoTex = sailMaterial.GetTexture(LogoTex);
+    m_logoHash = ResolveMaterialTextureHash(
+      logoTex,
+      "Logos",
+      "logo");
 
     m_logoScale = sailMaterial.GetTextureScale(LogoTex);
     m_logoOffset = sailMaterial.GetTextureOffset(LogoTex);
@@ -759,19 +869,80 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable, INetView
     }
   }
 
+  private static int ResolveMaterialTextureHash(
+    Texture? texture,
+    string groupName,
+    string textureRole)
+  {
+    if (!texture)
+    {
+      LoggerProvider.LogDebug(
+        $"LoadFromMaterial(): Custom sail has no {textureRole} texture.");
+
+      return 0;
+    }
+
+    var hash = texture.name.GetStableHashCode();
+    var group = CustomTextureGroup.Get(groupName);
+
+    if (group == null)
+    {
+      /*
+       * Keep the hash even if registration is late. Once the asset group has
+       * finished loading, the normal ZDO apply path can resolve this hash.
+       */
+      LoggerProvider.LogWarning(
+        $"LoadFromMaterial(): Texture group '{groupName}' is not initialized yet. " +
+        $"{textureRole} texture='{texture.name}', hash={hash}.");
+
+      return hash;
+    }
+
+    if (group.GetTextureByHash(hash) == null)
+    {
+      LoggerProvider.LogWarning(
+        $"LoadFromMaterial(): {textureRole} texture '{texture.name}' " +
+        $"(hash={hash}) is not registered in texture group '{groupName}'.");
+    }
+
+    return hash;
+  }
+
   public Material GetSailMaterial()
   {
     switch (m_materialVariant)
     {
       case MaterialVariant.Custom:
-        return customMaterial;
+        if (customMaterial)
+        {
+          return customMaterial;
+        }
+
+        if (m_mesh)
+        {
+          customMaterial = m_mesh.material;
+          return customMaterial;
+        }
+
+        throw new InvalidOperationException(
+          $"Sail '{name}' has no custom material or renderer.");
+
       case MaterialVariant.Karve:
         return OverrideMaterial_VikingShipSail();
+
       case MaterialVariant.Drakkal:
         return OverrideMaterial_DrakkalShipSail();
+
       case MaterialVariant.Raft:
         return OverrideMaterial_RaftShipSail();
+
       default:
+        if (!m_mesh)
+        {
+          throw new InvalidOperationException(
+            $"Sail '{name}' has no renderer.");
+        }
+
         return m_mesh.material;
     }
   }
@@ -1014,9 +1185,44 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable, INetView
   {
     Logger.LogDebug(
       $"CreateSailMesh(): {m_sailCorners.Count} m_lockedSailCorners: {m_lockedSailCorners} ({(int)m_lockedSailCorners}) m_lockedSailSides: {m_lockedSailSides} ({(int)m_lockedSailSides})");
-    m_sailCloth.enabled = false;
-    if (m_sailCorners.Count < 3) return;
 
+    if (m_sailCorners.Count is not (3 or 4))
+    {
+      LoggerProvider.LogError(
+        $"CreateSailMesh(): Expected 3 or 4 sail corners, got {m_sailCorners.Count}.");
+
+      return;
+    }
+
+    var buildState = new SailClothBuildState(
+      m_sailCorners,
+      m_sailSubdivision,
+      m_lockedSailCorners,
+      m_lockedSailSides);
+
+    /*
+     * LoadZDO() can run repeatedly without geometry changing. Material/ZDO
+     * reloads must never rebuild a MagicaCloth that already represents this
+     * exact construction state.
+     */
+    if (_hasActiveClothBuildState &&
+        _activeClothBuildState.Equals(buildState))
+    {
+      SyncSailClothEnabledState();
+      return;
+    }
+
+    if (_hasPendingClothBuildState &&
+        _pendingClothBuildState.Equals(buildState))
+    {
+      return;
+    }
+
+    if (_hasRebuildClothBuildState &&
+        _rebuildClothBuildState.Equals(buildState))
+    {
+      return;
+    }
 
     if (!EnsureSailCloth())
     {
@@ -1026,109 +1232,137 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable, INetView
       return;
     }
 
+    var mesh = CreateGeneratedSailMesh();
+
+    if (!mesh)
+    {
+      LoggerProvider.LogError(
+        $"CreateSailMesh(): Failed to generate sail mesh for '{name}'.");
+
+      return;
+    }
+
+    QueueSailClothRebuild(mesh, buildState);
+  }
+
+  private Mesh? CreateGeneratedSailMesh()
+  {
     var vertices = new List<Vector3>();
     var uvs = new List<Vector2>();
     var triangles = new List<int>();
 
-    // if (m_sailCorners.Count == 3)
-    // {
-    //   vertices.Add(m_sailCorners[0]);
-    //   vertices.Add(m_sailCorners[1]);
-    //   vertices.Add(m_sailCorners[2]);
-    //   triangles.Add(0);
-    //   triangles.Add(1);
-    //   triangles.Add(2);
-    //   uvs.Add(new Vector2
-    //   {
-    //     x = 0f,
-    //     y = 0f
-    //   });
-    //   uvs.Add(new Vector2
-    //   {
-    //     x = 1f,
-    //     y = 0f
-    //   });
-    //   uvs.Add(new Vector2
-    //   {
-    //     x = 1f,
-    //     y = 1f
-    //   });
-    // }
     if (m_sailCorners.Count == 3)
     {
-      // Add vertices in clockwise order for proper normal calculation
+      // Add vertices in clockwise order for proper normal calculation.
       vertices.Add(m_sailCorners[0]);
       vertices.Add(m_sailCorners[1]);
       vertices.Add(m_sailCorners[2]);
 
-      // Add front face triangle
+      // Add front face triangle.
       triangles.Add(0);
       triangles.Add(1);
       triangles.Add(2);
 
-      // Use proper UV mapping that covers the full texture space
-      uvs.Add(new Vector2(0f, 0f)); // Bottom-left
-      uvs.Add(new Vector2(1f, 0f)); // Bottom-right
-      uvs.Add(new Vector2(0.5f, 1f)); // Top-center
+      // Use proper UV mapping that covers the full texture space.
+      uvs.Add(new Vector2(0f, 0f));
+      uvs.Add(new Vector2(1f, 0f));
+      uvs.Add(new Vector2(0.5f, 1f));
     }
     else if (m_sailCorners.Count == 4)
     {
       var dx = (m_sailCorners[1] - m_sailCorners[0]).magnitude;
       var dy = (m_sailCorners[2] - m_sailCorners[0]).magnitude;
-      var dxs = Mathf.Round(dx / m_sailSubdivision);
-      var dys = Mathf.Round(dy / m_sailSubdivision);
-      for (var x2 = 0; (float)x2 <= dxs; x2++)
-      for (var y2 = 0; (float)y2 <= dys; y2++)
+      var dxs = Mathf.Max(1, Mathf.RoundToInt(dx / m_sailSubdivision));
+      var dys = Mathf.Max(1, Mathf.RoundToInt(dy / m_sailSubdivision));
+
+      for (var x = 0; x <= dxs; x++)
       {
-        var xs1 = Vector3.Lerp(m_sailCorners[0], m_sailCorners[1],
-          (float)x2 / dxs);
-        var xs2 = Vector3.Lerp(m_sailCorners[3], m_sailCorners[2],
-          (float)x2 / dxs);
-        var ys1 = Vector3.Lerp(xs1, xs2, (float)y2 / dys);
-        vertices.Add(ys1);
-        uvs.Add(new Vector2
+        for (var y = 0; y <= dys; y++)
         {
-          x = (float)x2 / dxs,
-          y = (float)y2 / dys
-        });
+          var xs1 = Vector3.Lerp(
+            m_sailCorners[0],
+            m_sailCorners[1],
+            (float)x / dxs);
+
+          var xs2 = Vector3.Lerp(
+            m_sailCorners[3],
+            m_sailCorners[2],
+            (float)x / dxs);
+
+          var vertex = Vector3.Lerp(
+            xs1,
+            xs2,
+            (float)y / dys);
+
+          vertices.Add(vertex);
+          uvs.Add(new Vector2(
+            (float)x / dxs,
+            (float)y / dys));
+        }
       }
 
-      dxs += 1f;
-      dys += 1f;
-      for (var x = 0; (float)x < dxs - 1f; x++)
-      for (var y = 0; (float)y < dys - 1f; y++)
+      var rowSize = dys + 1;
+
+      for (var x = 0; x < dxs; x++)
       {
-        triangles.Add((int)(dys * (float)x + (float)y) + 1);
-        triangles.Add((int)(dys * (float)x + (float)y));
-        triangles.Add((int)(dys * (float)x + (float)y) + (int)dys);
-        triangles.Add((int)(dys * (float)x + (float)y) + 1);
-        triangles.Add((int)(dys * (float)x + (float)y) + (int)dys);
-        triangles.Add((int)(dys * (float)x + (float)y) + (int)dys + 1);
+        for (var y = 0; y < dys; y++)
+        {
+          var current = rowSize * x + y;
+          var nextColumn = current + rowSize;
+
+          triangles.Add(current + 1);
+          triangles.Add(current);
+          triangles.Add(nextColumn);
+
+          triangles.Add(current + 1);
+          triangles.Add(nextColumn);
+          triangles.Add(nextColumn + 1);
+        }
       }
     }
 
-    var mesh = new Mesh();
+    if (vertices.Count == 0 || triangles.Count == 0)
+    {
+      return null;
+    }
+
+    var mesh = new Mesh
+    {
+      name = $"ValheimRAFT_Sail_{GetInstanceID()}"
+    };
+
     mesh.SetVertices(vertices);
     mesh.SetTriangles(triangles, 0);
     mesh.SetUVs(0, uvs);
-
-    // mesh.Optimize();
     mesh.RecalculateNormals();
     mesh.RecalculateTangents();
+    mesh.RecalculateBounds();
 
     if (m_sailCorners.Count == 3)
     {
       var sqrSubDist = m_sailSubdivision * m_sailSubdivision;
       var subdivisionCount = 0;
-      var maxSubdivisions = 3; // Adjust based on your needs
+      const int maxSubdivisions = 3;
 
       while (subdivisionCount < maxSubdivisions)
       {
-        var dist = (mesh.vertices[mesh.triangles[0]] -
-                    mesh.vertices[mesh.triangles[1]])
+        var meshVertices = mesh.vertices;
+        var meshTriangles = mesh.triangles;
+
+        if (meshTriangles.Length < 2)
+        {
+          break;
+        }
+
+        var dist =
+          (meshVertices[meshTriangles[0]] -
+           meshVertices[meshTriangles[1]])
           .sqrMagnitude;
 
-        if (dist < sqrSubDist) break;
+        if (dist < sqrSubDist)
+        {
+          break;
+        }
 
         MeshUtils.Subdivide(mesh);
         subdivisionCount++;
@@ -1136,29 +1370,312 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable, INetView
 
       mesh.RecalculateNormals();
       mesh.RecalculateTangents();
+      mesh.RecalculateBounds();
     }
 
+    return mesh;
+  }
 
-    m_mesh.sharedMesh = mesh;
-
-    // todo see if the collision mesh can be fixed as it probably is more performant
-    UpdateCoefficients();
-
+  private void QueueSailClothRebuild(
+    Mesh mesh,
+    SailClothBuildState buildState)
+  {
     /*
-     * Magica's own API requires BuildAndRun() after all construction
-     * data has been assigned.
+     * Coalesce multiple ZDO/edit updates. If a newer geometry request arrives
+     * while Magica is being torn down, only the newest pending mesh is built.
      */
-    if (!m_sailCloth.BuildAndRun())
+    if (_pendingSailMesh)
+    {
+      Destroy(_pendingSailMesh);
+    }
+
+    _pendingSailMesh = mesh;
+    _pendingClothBuildState = buildState;
+    _hasPendingClothBuildState = true;
+
+    if (!_clothRebuildRoutine.IsRunning)
+    {
+      _clothRebuildRoutine.Start(ProcessSailClothRebuildQueue());
+    }
+  }
+
+  private IEnumerator ProcessSailClothRebuildQueue()
+  {
+    while (_hasPendingClothBuildState && _pendingSailMesh)
+    {
+      _rebuildSailMesh = _pendingSailMesh;
+      _rebuildClothBuildState = _pendingClothBuildState;
+      _hasRebuildClothBuildState = true;
+
+      _pendingSailMesh = null;
+      _hasPendingClothBuildState = false;
+
+      var oldCloth = m_sailCloth;
+
+      /*
+       * The first dynamically-created cloth is still unbuilt and can be used.
+       * Once any build has started (or an unexpected auto-build is valid), the
+       * component must be destroyed before changing renderer/source topology.
+       */
+      var mustReplaceCloth =
+        oldCloth &&
+        (_hasActiveClothBuildState || oldCloth.IsValid());
+
+      if (mustReplaceCloth)
+      {
+        oldCloth.enabled = false;
+
+        if (m_mastComponent &&
+            m_mastComponent.m_sailCloth == oldCloth)
+        {
+          m_mastComponent.m_sailCloth = null;
+        }
+
+        m_sailCloth = null;
+        _hasActiveClothBuildState = false;
+
+        Destroy(oldCloth);
+
+        /*
+         * Destroy() is deferred. Wait until the old MagicaCloth has released
+         * its renderer/proxy state before assigning a new source mesh.
+         */
+        yield return null;
+
+        if (!isActiveAndEnabled)
+        {
+          ReleaseRebuildSailMesh();
+          yield break;
+        }
+
+        /*
+         * A newer edit arrived while the old cloth was being destroyed.
+         * Discard this intermediate mesh and build only the newest request.
+         */
+        if (_hasPendingClothBuildState && _pendingSailMesh)
+        {
+          ReleaseRebuildSailMesh();
+          continue;
+        }
+      }
+
+      if (!m_sailCloth)
+      {
+        m_sailCloth = gameObject.AddComponent<MagicaCloth>();
+      }
+
+      if (!m_sailCloth)
+      {
+        LoggerProvider.LogError(
+          $"ProcessSailClothRebuildQueue(): Unable to create MagicaCloth for '{name}'.");
+
+        ReleaseRebuildSailMesh();
+        continue;
+      }
+
+      var cloth = m_sailCloth;
+
+      cloth.DisableAutoBuild();
+
+      /*
+       * Release the previous source mesh only after the old MagicaCloth has
+       * been destroyed. Magica may keep references to that topology while it
+       * owns the renderer.
+       */
+      if (_generatedSailMesh &&
+          _generatedSailMesh != _rebuildSailMesh)
+      {
+        Destroy(_generatedSailMesh);
+      }
+
+      _generatedSailMesh = _rebuildSailMesh;
+      _rebuildSailMesh = null;
+
+      m_mesh.sharedMesh = _generatedSailMesh;
+
+      ConfigureSailClothForMesh(
+        cloth,
+        _generatedSailMesh);
+
+      UpdateMeshCollider();
+
+      _activeClothBuildState =
+        _rebuildClothBuildState;
+
+      _hasActiveClothBuildState = true;
+      _hasRebuildClothBuildState = false;
+
+      var expectedCloth = cloth;
+      var expectedState = _activeClothBuildState;
+
+      cloth.OnBuildComplete += (completedCloth, success) =>
+      {
+        OnSailClothBuildComplete(
+          completedCloth,
+          expectedState,
+          success);
+      };  
+
+      // Keep the component enabled while Magica performs its asynchronous build.
+      // If DisableCloth is set, OnBuildComplete will disable simulation afterward.
+      cloth.enabled = true;
+
+      if (!cloth.BuildAndRun())
+      {
+        LoggerProvider.LogError(
+          $"CreateSailMesh(): MagicaCloth BuildAndRun could not start for '{name}'.");
+
+        if (m_sailCloth == cloth)
+        {
+          m_sailCloth = null;
+        }
+
+        if (m_mastComponent &&
+            m_mastComponent.m_sailCloth == cloth)
+        {
+          m_mastComponent.m_sailCloth = null;
+        }
+
+        _hasActiveClothBuildState = false;
+        Destroy(cloth);
+
+        continue;
+      }
+
+      if (m_mastComponent)
+      {
+        m_mastComponent.m_sailCloth = cloth;
+      }
+
+      /*
+       * BuildAndRun is asynchronous. OnBuildComplete applies the final enabled
+       * state once construction succeeds.
+       */
+    }
+
+    _hasRebuildClothBuildState = false;
+  }
+
+  private void ConfigureSailClothForMesh(
+    MagicaCloth cloth,
+    Mesh mesh)
+  {
+    var serializeData = cloth.SerializeData;
+    var serializeData2 = cloth.GetSerializeData2();
+
+    serializeData.updateMode =
+      ClothUpdateMode.UnityPhysics;
+
+    serializeData.clothType =
+      ClothProcess.ClothType.MeshCloth;
+
+    serializeData.paintMode =
+      ClothSerializeData.PaintMode.Manual;
+
+    serializeData.sourceRenderers.Clear();
+    serializeData.sourceRenderers.Add(m_mesh);
+
+    var attributes = BuildSailVertexAttributes(mesh);
+
+    serializeData2.vertexAttributeList.Clear();
+    serializeData2.vertexAttributeList.Add(attributes);
+  }
+
+  private void OnSailClothBuildComplete(
+    MagicaCloth cloth,
+    SailClothBuildState expectedState,
+    bool success)
+  {
+    /*
+     * Ignore callbacks from a cloth that was superseded/destroyed while its
+     * asynchronous construction was still in flight.
+     */
+    if (!cloth ||
+        cloth != m_sailCloth ||
+        !_hasActiveClothBuildState ||
+        !_activeClothBuildState.Equals(expectedState))
+    {
+      return;
+    }
+
+    if (!success)
     {
       LoggerProvider.LogError(
-        $"CreateSailMesh(): MagicaCloth BuildAndRun failed for '{name}'.");
+        $"MagicaCloth asynchronous build failed for '{name}'.");
 
+      _hasActiveClothBuildState = false;
+
+      if (m_mastComponent &&
+          m_mastComponent.m_sailCloth == cloth)
+      {
+        m_mastComponent.m_sailCloth = null;
+      }
+
+      m_sailCloth = null;
+      Destroy(cloth);
+      return;
+    }
+
+    if (m_mastComponent)
+    {
+      m_mastComponent.m_sailCloth = cloth;
+    }
+
+    SyncSailClothEnabledState();
+  }
+
+  private void SyncSailClothEnabledState()
+  {
+    if (!m_sailCloth)
+    {
       return;
     }
 
     m_sailCloth.enabled =
       !m_sailFlags.HasFlag(
         SailFlags.DisableCloth);
+  }
+
+  private void ReleasePendingSailMeshes()
+  {
+    if (_pendingSailMesh)
+    {
+      Destroy(_pendingSailMesh);
+      _pendingSailMesh = null;
+    }
+
+    ReleaseRebuildSailMesh();
+
+    _hasPendingClothBuildState = false;
+    _hasRebuildClothBuildState = false;
+  }
+
+  private void ReleaseRebuildSailMesh()
+  {
+    if (_rebuildSailMesh)
+    {
+      Destroy(_rebuildSailMesh);
+      _rebuildSailMesh = null;
+    }
+
+    _hasRebuildClothBuildState = false;
+  }
+
+  private void ReleaseGeneratedMeshes()
+  {
+    if (_generatedSailMesh)
+    {
+      Destroy(_generatedSailMesh);
+      _generatedSailMesh = null;
+    }
+
+    if (_generatedCollisionMesh)
+    {
+      Destroy(_generatedCollisionMesh);
+      _generatedCollisionMesh = null;
+    }
+
+    _hasActiveClothBuildState = false;
   }
 
   public float GetSailArea()
@@ -1221,44 +1738,42 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable, INetView
 
   public void UpdateCoefficients()
   {
-    if (!m_sailCloth || !m_mesh || !m_mesh.sharedMesh)
+    /*
+     * Retained for compatibility with existing callers.
+     *
+     * Magica vertex attributes are construction data. Once BuildAndRun() has
+     * started they cannot be safely replaced in-place; CreateSailMesh() owns
+     * rebuilds and will replace the MagicaCloth component when required.
+     */
+    if (_hasActiveClothBuildState)
     {
-      LoggerProvider.LogWarning(
-        "UpdateCoefficients(): Missing MagicaCloth or sail mesh.");
+      LoggerProvider.LogDebug(
+        "UpdateCoefficients(): Cloth is already built. Use CreateSailMesh() to rebuild changed construction data.");
+
       return;
     }
 
-    var mesh = m_mesh.sharedMesh;
+    if (!m_sailCloth || !_generatedSailMesh)
+    {
+      LoggerProvider.LogWarning(
+        "UpdateCoefficients(): Missing MagicaCloth or generated sail mesh.");
+
+      return;
+    }
 
     if (m_sailCorners.Count is not (3 or 4))
     {
       LoggerProvider.LogWarning(
         $"UpdateCoefficients(): Expected 3 or 4 sail corners, got {m_sailCorners.Count}.");
+
       return;
     }
 
-    var attributes = BuildSailVertexAttributes(mesh);
-
-    var serializeData = m_sailCloth.SerializeData;
-    var serializeData2 = m_sailCloth.GetSerializeData2();
-
-    // This sail is dynamically generated MeshCloth.
-    serializeData.clothType = ClothProcess.ClothType.MeshCloth;
-    serializeData.paintMode = ClothSerializeData.PaintMode.Manual;
-
-    // Ensure this renderer is the source mesh.
-    serializeData.sourceRenderers.Clear();
-    serializeData.sourceRenderers.Add(m_mesh);
-
-    // Magica requires one VertexAttribute[] for each source renderer.
-    serializeData2.vertexAttributeList.Clear();
-    serializeData2.vertexAttributeList.Add(attributes);
+    ConfigureSailClothForMesh(
+      m_sailCloth,
+      _generatedSailMesh);
 
     UpdateMeshCollider();
-
-    // IMPORTANT:
-    // Vertex attributes are construction data, not ordinary runtime parameters.
-    // BuildAndRun() needs to occur after this when constructing the cloth.
   }
 
   private void UpdateMeshCollider()
@@ -1272,6 +1787,13 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable, INetView
     {
       m_meshCollider.enabled = false;
       m_meshCollider.sharedMesh = null;
+
+      if (_generatedCollisionMesh)
+      {
+        Destroy(_generatedCollisionMesh);
+        _generatedCollisionMesh = null;
+      }
+
       return;
     }
 
@@ -1279,10 +1801,19 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable, INetView
     {
       m_meshCollider.enabled = false;
       m_meshCollider.sharedMesh = null;
+
+      if (_generatedCollisionMesh)
+      {
+        Destroy(_generatedCollisionMesh);
+        _generatedCollisionMesh = null;
+      }
+
       return;
     }
 
-    var collisionMesh = CreateCollisionMesh(m_sailCorners.Count);
+    var collisionMesh =
+      CreateCollisionMesh(
+        m_sailCorners.Count);
 
     if (!collisionMesh)
     {
@@ -1294,10 +1825,18 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable, INetView
       return;
     }
 
-    // Clear first so Unity actually refreshes the collider when replacing
-    // the generated mesh at runtime.
+    m_meshCollider.enabled = false;
     m_meshCollider.sharedMesh = null;
-    m_meshCollider.sharedMesh = collisionMesh;
+
+    if (_generatedCollisionMesh)
+    {
+      Destroy(_generatedCollisionMesh);
+    }
+
+    _generatedCollisionMesh = collisionMesh;
+
+    m_meshCollider.sharedMesh =
+      _generatedCollisionMesh;
 
     // Required for a MeshCollider attached beneath a moving Rigidbody.
     m_meshCollider.convex = true;
@@ -1535,14 +2074,37 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable, INetView
   public void SetPattern(int hash)
   {
     if (IsNotCustom) return;
+
     m_patternHash = hash;
-    var customtexture =
-      CustomTextureGroup.Get("Patterns").GetTextureByHash(hash);
-    if (customtexture != null && (bool)customtexture.Texture && (bool)m_mesh)
+
+    var patternGroup =
+      CustomTextureGroup.Get("Patterns");
+
+    if (patternGroup == null)
     {
-      m_mesh.material.SetTexture(PatternTex, customtexture.Texture);
+      LoggerProvider.LogWarning(
+        $"SetPattern(): Patterns texture group is not initialized. hash={hash}.");
+
+      return;
+    }
+
+    var customtexture =
+      patternGroup.GetTextureByHash(hash);
+
+    if (customtexture != null &&
+        (bool)customtexture.Texture &&
+        (bool)m_mesh)
+    {
+      m_mesh.material.SetTexture(
+        PatternTex,
+        customtexture.Texture);
+
       if ((bool)customtexture.Normal)
-        m_mesh.material.SetTexture(PatternNormal, customtexture.Normal);
+      {
+        m_mesh.material.SetTexture(
+          PatternNormal,
+          customtexture.Normal);
+      }
     }
   }
 
@@ -1567,20 +2129,49 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable, INetView
   public void SetMain(int hash)
   {
     if (m_materialVariant != MaterialVariant.Custom) return;
+
     m_mainHash = hash;
-    var sailCustomGroup = CustomTextureGroup.Get("Sails");
+
+    var sailCustomGroup =
+      CustomTextureGroup.Get("Sails");
+
     if (sailCustomGroup == null)
     {
-      LoggerProvider.LogDebug("sailCustomGroup (from assets) error. Textures not set correctly. This means your sails will be using built-in mod textures only.");
+      LoggerProvider.LogDebug(
+        "SetMain(): Sails texture group is not initialized. Textures cannot be resolved yet.");
+
       return;
     }
-    var textureGroupFromHash = sailCustomGroup.GetTextureByHash(hash);
+
+    var textureGroupFromHash =
+      sailCustomGroup.GetTextureByHash(hash);
+
+    if (textureGroupFromHash == null)
+    {
+      LoggerProvider.LogWarning(
+        $"SetMain(): Sail texture hash {hash} was not found in the Sails texture group.");
+
+      return;
+    }
+
     var sailTexture = textureGroupFromHash.Texture;
     var sailNormal = textureGroupFromHash.Normal;
-    if (!(bool)sailTexture) return;
-    m_mesh.material.SetTexture(MainTex, sailTexture);
+
+    if (!(bool)sailTexture || !(bool)m_mesh)
+    {
+      return;
+    }
+
+    m_mesh.material.SetTexture(
+      MainTex,
+      sailTexture);
+
     if ((bool)sailNormal)
-      m_mesh.material.SetTexture(BumpMap, sailNormal);
+    {
+      m_mesh.material.SetTexture(
+        BumpMap,
+        sailNormal);
+    }
   }
 
   public void SetLogoScale(Vector2 vector2)
@@ -1614,14 +2205,37 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable, INetView
   public void SetLogo(int hash)
   {
     if (IsNotCustom) return;
+
     m_logoHash = hash;
-    var customtexture =
-      CustomTextureGroup.Get("Logos").GetTextureByHash(hash);
-    if (customtexture != null && (bool)customtexture.Texture && (bool)m_mesh)
+
+    var logoGroup =
+      CustomTextureGroup.Get("Logos");
+
+    if (logoGroup == null)
     {
-      m_mesh.material.SetTexture(LogoTex, customtexture.Texture);
+      LoggerProvider.LogWarning(
+        $"SetLogo(): Logos texture group is not initialized. hash={hash}.");
+
+      return;
+    }
+
+    var customtexture =
+      logoGroup.GetTextureByHash(hash);
+
+    if (customtexture != null &&
+        (bool)customtexture.Texture &&
+        (bool)m_mesh)
+    {
+      m_mesh.material.SetTexture(
+        LogoTex,
+        customtexture.Texture);
+
       if ((bool)customtexture.Normal)
-        m_mesh.material.SetTexture(LogoNormal, customtexture.Normal);
+      {
+        m_mesh.material.SetTexture(
+          LogoNormal,
+          customtexture.Normal);
+      }
     }
   }
 
