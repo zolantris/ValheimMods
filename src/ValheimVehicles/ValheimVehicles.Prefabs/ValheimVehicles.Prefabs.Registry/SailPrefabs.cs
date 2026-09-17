@@ -1,3 +1,4 @@
+using Jotunn;
 using Jotunn.Configs;
 using Jotunn.Entities;
 using Jotunn.Managers;
@@ -169,34 +170,59 @@ public class SailPrefabs : RegisterPrefab<SailPrefabs>
 
   private void RegisterCustomSail()
   {
-    var prefab = PrefabManager.Instance.CreateClonedPrefab(
-      PrefabNames.Tier1CustomSailName,
-      LoadValheimVehicleAssets.CustomSail);
+    var prefab =
+      PrefabManager.Instance.CreateClonedPrefab(
+        PrefabNames.Tier1CustomSailName,
+        LoadValheimVehicleAssets.CustomSail);
 
-    var mbSailPrefabPiece = prefab.AddComponent<Piece>();
-    mbSailPrefabPiece.m_name = "$mb_sail";
-    mbSailPrefabPiece.m_description = "$mb_sail_desc";
+    var mbSailPrefabPiece =
+      prefab.AddComponent<Piece>();
+
+    mbSailPrefabPiece.m_name =
+      "$mb_sail";
+
+    mbSailPrefabPiece.m_description =
+      "$mb_sail_desc";
+
     mbSailPrefabPiece.m_placeEffect =
       LoadValheimAssets.woodFloorPiece.m_placeEffect;
 
-    PrefabRegistryHelpers.AddNetViewWithPersistence(prefab);
+    PrefabRegistryHelpers.AddNetViewWithPersistence(
+      prefab);
 
-    var sail = prefab.AddComponent<SailComponent>();
+    /*
+     * Mast first because SailComponent.Awake() needs it.
+     */
+    var mast =
+      prefab.GetOrAddComponent<MastComponent>();
 
-    // this is a tier 1 sail
-    PrefabRegistryHelpers.SetWearNTear(prefab, 1);
-    PrefabRegistryHelpers.FixSnapPoints(prefab);
-
-    // mast should allowSailShrinking
-    var mast = prefab.AddComponent<MastComponent>();
     mast.m_sailObject = prefab;
-    mast.m_sailCloth = sail.m_sailCloth;
     mast.m_allowSailRotation = false;
     mast.m_allowSailShrinking = true;
 
-    PrefabManager.Instance.AddPrefab(prefab);
+    /*
+     * SailComponent.Awake() can now safely initialize both MagicaCloth
+     * and MastComponent linkage.
+     */
+    var sail =
+      prefab.GetOrAddComponent<SailComponent>();
+
+    mast.m_sailCloth =
+      sail.m_sailCloth;
+
+    PrefabRegistryHelpers.SetWearNTear(
+      prefab,
+      1);
+
+    PrefabRegistryHelpers.FixSnapPoints(
+      prefab);
+
+    PrefabManager.Instance.AddPrefab(
+      prefab);
+
     SailCreatorComponent.sailPrefab =
-      PrefabManager.Instance.GetPrefab(PrefabNames.Tier1CustomSailName);
+      PrefabManager.Instance.GetPrefab(
+        PrefabNames.Tier1CustomSailName);
   }
 
   /**

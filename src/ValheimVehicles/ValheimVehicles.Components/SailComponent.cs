@@ -197,29 +197,88 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable, INetView
 
     m_sailComponents.Add(this);
 
-    m_mastComponent = GetComponent<MastComponent>();
-    m_mastComponent.m_allowSailRotation = false;
+    m_mastComponent =
+      GetComponent<MastComponent>();
 
-    m_sailCloth = GetComponent<MagicaCloth>();
+    m_mesh =
+      GetComponent<SkinnedMeshRenderer>();
 
-    if (m_sailCloth)
+    m_meshCollider =
+      GetComponent<MeshCollider>();
+
+    m_nview =
+      GetComponent<ZNetView>();
+
+    EnsureSailCloth();
+
+    if (m_mastComponent)
     {
-      m_sailCloth.Initialize();
-      m_sailCloth.DisableAutoBuild();
-
-      m_sailCloth.SerializeData.updateMode =
-        ClothUpdateMode.UnityPhysics;
+      m_mastComponent.m_allowSailRotation = false;
+      m_mastComponent.m_sailCloth = m_sailCloth;
     }
 
-    m_mastComponent.m_sailCloth = m_sailCloth;
-
-    m_mesh = GetComponent<SkinnedMeshRenderer>();
-    customMaterial = m_mesh.material;
-
-    m_meshCollider = GetComponent<MeshCollider>();
-    m_nview = GetComponent<ZNetView>();
+    if (m_mesh)
+    {
+      customMaterial =
+        m_mesh.material;
+    }
 
     AddDefaultSailsToTextures();
+  }
+
+  private bool EnsureSailCloth()
+  {
+    if (!m_mesh)
+    {
+      m_mesh = GetComponent<SkinnedMeshRenderer>();
+    }
+
+    if (!m_mesh)
+    {
+      LoggerProvider.LogError(
+        $"SailComponent '{name}' has no SkinnedMeshRenderer.");
+
+      return false;
+    }
+
+    if (!m_sailCloth)
+    {
+      m_sailCloth = GetComponent<MagicaCloth>();
+    }
+
+    if (!m_sailCloth)
+    {
+      /*
+       * Custom sails are dynamically generated, so unlike vanilla sails
+       * it is valid for us to create/configure our own MagicaCloth.
+       */
+      m_sailCloth = gameObject.AddComponent<MagicaCloth>();
+    }
+
+    if (!m_sailCloth)
+    {
+      LoggerProvider.LogError(
+        $"Unable to create MagicaCloth for sail '{name}'.");
+
+      return false;
+    }
+
+    m_sailCloth.Initialize();
+    m_sailCloth.DisableAutoBuild();
+
+    var serializeData =
+      m_sailCloth.SerializeData;
+
+    serializeData.updateMode =
+      ClothUpdateMode.UnityPhysics;
+
+    serializeData.clothType =
+      ClothProcess.ClothType.MeshCloth;
+
+    serializeData.paintMode =
+      ClothSerializeData.PaintMode.Manual;
+
+    return true;
   }
 
   public static void AddDefaultSailsToTextures()
@@ -915,6 +974,15 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable, INetView
     m_sailCloth.enabled = false;
     if (m_sailCorners.Count < 3) return;
 
+
+    if (!EnsureSailCloth())
+    {
+      LoggerProvider.LogError(
+        $"CreateSailMesh(): No usable MagicaCloth on '{name}'.");
+
+      return;
+    }
+
     var vertices = new List<Vector3>();
     var uvs = new List<Vector2>();
     var triangles = new List<int>();
@@ -1032,6 +1100,22 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable, INetView
 
     // todo see if the collision mesh can be fixed as it probably is more performant
     UpdateCoefficients();
+
+    /*
+     * Magica's own API requires BuildAndRun() after all construction
+     * data has been assigned.
+     */
+    if (!m_sailCloth.BuildAndRun())
+    {
+      LoggerProvider.LogError(
+        $"CreateSailMesh(): MagicaCloth BuildAndRun failed for '{name}'.");
+
+      return;
+    }
+
+    m_sailCloth.enabled =
+      !m_sailFlags.HasFlag(
+        SailFlags.DisableCloth);
   }
 
   public float GetSailArea()
