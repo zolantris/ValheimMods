@@ -19,13 +19,6 @@
     <PropertyGroup>
         <DisableFastUpToDateCheck>True</DisableFastUpToDateCheck>
     </PropertyGroup>
-
-    <!--  Required for vehicle serialization/storage  -->
-    <ItemGroup>
-        <Reference Include="Newtonsoft.Json" Version="13.0.3">
-            <HintPath>$(SolutionDir)\Dependencies\Newtonsoft.Json.dll</HintPath>
-        </Reference>
-    </ItemGroup>
     
     <!-- Automatic publicize game libs -->
     <ItemGroup>

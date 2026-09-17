@@ -59,6 +59,13 @@
         </Reference>
     </ItemGroup>
 
+    <!--  Required for vehicle serialization/storage  -->
+    <ItemGroup>
+        <Reference Include="Newtonsoft.Json" Version="13.0.3">
+            <HintPath>$(SolutionDir)\Dependencies\Newtonsoft.Json.dll</HintPath>
+        </Reference>
+    </ItemGroup>
+
     <ItemGroup>
         <PackageReference Update="Krafs.Publicizer" Version="2.3.0">
             <PrivateAssets>all</PrivateAssets>
