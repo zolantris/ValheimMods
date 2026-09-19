@@ -7,38 +7,52 @@ namespace ValheimVehicles.Helpers;
 public class VehicleRotationHelpers
 {
   /// <summary>
-  /// Uses RelativeEuler but allows Vector3 shorthand
+  /// Uses RelativeEuler but allows Vector3 shorthand.
   /// </summary>
-  /// must be a separate function name (not an overload) otherwise Harmony errors with current setup
-  /// <param name="eulerAngles"></param>
-  /// <returns></returns>
+  /// <remarks>
+  /// Must be a separate function name rather than an overload because
+  /// Harmony errors with the current setup.
+  /// </remarks>
   public static Quaternion RelativeEulerFromVector(Vector3 eulerAngles)
   {
-    var x = eulerAngles.x;
-    var y = eulerAngles.y;
-    var z = eulerAngles.z;
-    return RelativeEuler(x, y, z);
+    return RelativeEuler(
+      eulerAngles.x,
+      eulerAngles.y,
+      eulerAngles.z);
   }
 
-
   /// <summary>
-  /// Relative rotation based on the boat
+  /// Creates an Euler rotation and applies the current vehicle-relative
+  /// rotation when placement is occurring on a vehicle.
   /// </summary>
-  /// <param name="x"></param>
-  /// <param name="y"></param>
-  /// <param name="z"></param>
-  /// <returns></returns>
   public static Quaternion RelativeEuler(float x, float y, float z)
   {
-    var rot = Quaternion.Euler(x, y, z);
-    if (!PatchSharedData.PlayerLastRayPiece) return rot;
+    return ApplyVehicleRelativeRotation(
+      Quaternion.Euler(x, y, z));
+  }
 
-    var bvc = PatchSharedData.PlayerLastRayPiece.GetComponentInParent<VehiclePiecesController>();
-    if (bvc)
+  /// <summary>
+  /// Applies vehicle-relative rotation to an already-created Quaternion.
+  ///
+  /// This exists separately from RelativeEuler so Harmony transpilers can
+  /// preserve vanilla Quaternion.Euler calls and transform their result
+  /// afterward.
+  /// </summary>
+  public static Quaternion ApplyVehicleRelativeRotation(
+    Quaternion rotation)
+  {
+    if (!PatchSharedData.PlayerLastRayPiece)
+      return rotation;
+
+    var vehiclePiecesController =
+      PatchSharedData.PlayerLastRayPiece
+        .GetComponentInParent<VehiclePiecesController>();
+
+    if (vehiclePiecesController)
     {
-      return bvc.transform.rotation * rot;
+      return vehiclePiecesController.transform.rotation * rotation;
     }
 
-    return rot;
+    return rotation;
   }
 }

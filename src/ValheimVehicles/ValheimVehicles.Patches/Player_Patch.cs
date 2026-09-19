@@ -603,20 +603,72 @@
 
     [HarmonyPatch(typeof(Player), "UpdatePlacementGhost")]
     [HarmonyTranspiler]
+    [HarmonyPriority(Priority.First)]
+    [HarmonyBefore("org.bepinex.plugins.valheim_plus")]
     public static IEnumerable<CodeInstruction> UpdatePlacementGhost(
       IEnumerable<CodeInstruction> instructions)
     {
       var list = instructions.ToList();
-      for (var i = 0; i < list.Count; i++)
-        if (list[i].Calls(AccessTools.Method(typeof(Quaternion), "Euler", new[]
-            {
-              typeof(float),
-              typeof(float),
-              typeof(float)
-            })))
-          list[i] = new CodeInstruction(OpCodes.Call,
-            AccessTools.Method(typeof(VehicleRotationHelpers),
-              nameof(VehicleRotationHelpers.RelativeEuler)));
+
+      var quaternionEuler = AccessTools.Method(
+        typeof(Quaternion),
+        nameof(Quaternion.Euler),
+        new[]
+        {
+          typeof(float),
+          typeof(float),
+          typeof(float)
+        });
+
+      var applyVehicleRelativeRotation = AccessTools.Method(
+        typeof(VehicleRotationHelpers),
+        nameof(VehicleRotationHelpers.ApplyVehicleRelativeRotation));
+
+      for (var i = 0; i < list.Count - 1; i++)
+      {
+        if (!list[i].Calls(quaternionEuler))
+          continue;
+
+        // Keep this exact sequence intact for compatibility with other
+        // transpilers such as Valheim Plus FreePlacementRotation:
+        //
+        //   call Quaternion.Euler
+        //   stloc.s <rotation>
+        //
+        // Valheim Plus explicitly searches for that pair.
+        var storeRotation = list[i + 1];
+
+        if (storeRotation.opcode != OpCodes.Stloc_S)
+          continue;
+
+        var rotationLocal = storeRotation.operand;
+
+        // Transform the already-created/stored Quaternion instead of
+        // replacing Quaternion.Euler itself.
+        //
+        // Result:
+        //
+        //   call Quaternion.Euler  
+        //   stloc.s rotation
+        //
+        //   ldloc.s rotation
+        //   call ApplyVehicleRelativeRotation
+        //   stloc.s rotation
+        //
+        // Vanilla then continues using the vehicle-relative rotation for
+        // snap-point and placement calculations.
+        list.InsertRange(i + 2, new[]
+        {
+          new CodeInstruction(OpCodes.Ldloc_S, rotationLocal),
+          new CodeInstruction(OpCodes.Call, applyVehicleRelativeRotation),
+          new CodeInstruction(OpCodes.Stloc_S, rotationLocal)
+        });
+
+        // UpdatePlacementGhost currently contains exactly one matching call,
+        // and this is specifically the placement rotation call.
+        break;
+      }
+
       return list;
     }
 
