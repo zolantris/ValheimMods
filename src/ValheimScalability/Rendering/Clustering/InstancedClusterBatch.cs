@@ -24,6 +24,31 @@ public sealed class InstancedClusterBatch
 
   public int DrawCallCount => _matrixChunks.Length;
 
+  /// <summary>
+  /// Approximate managed memory retained by pre-chunked instance matrices.
+  /// Mesh/material memory is shared and is not counted here.
+  /// </summary>
+  public long EstimatedMemoryBytes
+  {
+    get
+    {
+      long bytes = 0;
+
+      foreach (var chunk in _matrixChunks)
+      {
+        if (chunk != null)
+        {
+          bytes +=
+            (long) chunk.Length *
+            sizeof(float) *
+            16L;
+        }
+      }
+
+      return bytes;
+    }
+  }
+
   public InstancedClusterBatch(
     Mesh mesh,
     int subMeshIndex,

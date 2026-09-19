@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Profiling;
 using UnityEngine.Rendering;
 using ValheimScalability.BepInExConfig;
 
@@ -26,11 +27,31 @@ public sealed class SectorMeshClusterController : MonoBehaviour
   private float _zoneSize;
   private float _cellSize;
   private float _nextDestroyedRootCleanupTime;
+  private bool _isWarmCached;
 
   public Vector2s Sector => _sector;
 
   public bool HasRegisteredObjects =>
     _rootToCell.Count > 0;
+
+  public bool IsWarmCached =>
+    _isWarmCached;
+
+  public long EstimatedGeneratedMemoryBytes
+  {
+    get
+    {
+      long bytes = 0;
+
+      foreach (var cell in _cells.Values)
+      {
+        bytes +=
+          cell.EstimatedGeneratedMemoryBytes;
+      }
+
+      return bytes;
+    }
+  }
 
   public void Initialize(Vector2s sector)
   {
@@ -195,6 +216,12 @@ public sealed class SectorMeshClusterController : MonoBehaviour
       cell,
       OptimizedPresentation.None);
 
+    if (_isWarmCached)
+    {
+      DestroyOptimizedRepresentations(cell);
+      cell.ClusterBuilt = false;
+    }
+
     return true;
   }
 
@@ -202,6 +229,11 @@ public sealed class SectorMeshClusterController : MonoBehaviour
     Vector3 playerPosition,
     Camera camera)
   {
+    if (_isWarmCached)
+    {
+      return;
+    }
+
     var mode =
       ValheimScalabilityConfig.Mode;
 
@@ -260,6 +292,64 @@ public sealed class SectorMeshClusterController : MonoBehaviour
       cell.NearLocalPlayer = false;
       cell.VisibleToLocalPlayer = false;
       ApplyPresentation(cell);
+    }
+  }
+
+  /// <summary>
+  /// Moves this sector into the bounded warm cache.
+  /// Generated meshes are retained, but all optimized rendering is disabled.
+  /// </summary>
+  public void EnterWarmCache()
+  {
+    if (_isWarmCached)
+    {
+      return;
+    }
+
+    _isWarmCached = true;
+
+    // Capture dead roots before freezing maintenance. If a cluster is already
+    // stale, do not retain a representation that cannot safely be reused.
+    CleanupDestroyedRoots();
+
+    foreach (var cell in _cells.Values)
+    {
+      if (cell.CurrentPresentation !=
+          OptimizedPresentation.None)
+      {
+        TransitionPresentation(
+          cell,
+          OptimizedPresentation.None);
+      }
+
+      if (cell.ContainsStaleGeometry)
+      {
+        DestroyOptimizedRepresentations(cell);
+        cell.ClusterBuilt = false;
+      }
+
+      cell.NearLocalPlayer = false;
+      cell.VisibleToLocalPlayer = false;
+    }
+  }
+
+  /// <summary>
+  /// Reactivates a warm sector. If nothing changed while it was inactive,
+  /// the existing generated meshes can be presented again without recombining.
+  /// </summary>
+  public void ExitWarmCache()
+  {
+    if (!_isWarmCached)
+    {
+      return;
+    }
+
+    _isWarmCached = false;
+
+    foreach (var cell in _cells.Values)
+    {
+      cell.CurrentPresentation =
+        OptimizedPresentation.Uninitialized;
     }
   }
 
@@ -328,7 +418,8 @@ public sealed class SectorMeshClusterController : MonoBehaviour
 
   public void Tick()
   {
-    if (!_initialized)
+    if (!_initialized ||
+        _isWarmCached)
     {
       return;
     }
@@ -387,7 +478,8 @@ public sealed class SectorMeshClusterController : MonoBehaviour
   /// </summary>
   private void LateUpdate()
   {
-    if (ValheimScalabilityConfig.Mode ==
+    if (_isWarmCached ||
+        ValheimScalabilityConfig.Mode ==
           ClusterPresentationMode.Off ||
         !ValheimScalabilityConfig.IsGpuInstancingEnabled)
     {
@@ -650,6 +742,8 @@ public sealed class SectorMeshClusterController : MonoBehaviour
       cell.GeneratedRenderers.Count > 0 ||
       cell.InstancedBatches.Count > 0;
 
+    UpdateEstimatedGeneratedMemory(cell);
+
     cell.Dirty = false;
     cell.ContainsStaleGeometry = false;
   }
@@ -852,6 +946,15 @@ public sealed class SectorMeshClusterController : MonoBehaviour
         !renderer.enabled ||
         !renderer.gameObject.activeInHierarchy ||
         renderer.forceRenderingOff)
+    {
+      return false;
+    }
+
+    // A nominally-static root can still contain a nested moving physics
+    // hierarchy. Never merge a renderer whose current ancestors contain a
+    // Rigidbody into a world-sector mesh.
+    if (DynamicHierarchyBatchExclusion.ShouldExcludeRenderer(
+          renderer))
     {
       return false;
     }
@@ -1215,16 +1318,8 @@ public sealed class SectorMeshClusterController : MonoBehaviour
     GameObject root)
   {
     if (!root ||
-        root.GetComponentInParent<Character>())
-    {
-      return false;
-    }
-
-    var rigidbody =
-      root.GetComponentInParent<Rigidbody>();
-
-    if (rigidbody &&
-        !rigidbody.isKinematic)
+        root.GetComponentInParent<Character>() ||
+        DynamicHierarchyBatchExclusion.ShouldExclude(root))
     {
       return false;
     }
@@ -1264,6 +1359,12 @@ public sealed class SectorMeshClusterController : MonoBehaviour
     TransitionPresentation(
       cell,
       OptimizedPresentation.None);
+
+    if (_isWarmCached)
+    {
+      DestroyOptimizedRepresentations(cell);
+      cell.ClusterBuilt = false;
+    }
   }
 
   private void RefreshCellDimensions()
@@ -1748,6 +1849,52 @@ public sealed class SectorMeshClusterController : MonoBehaviour
     cell.GeneratedRenderers.Clear();
     cell.GeneratedMeshes.Clear();
     cell.InstancedBatches.Clear();
+    cell.EstimatedGeneratedMemoryBytes = 0L;
+  }
+
+  private static void UpdateEstimatedGeneratedMemory(
+    ClusterCellState cell)
+  {
+    long bytes = 0;
+
+    foreach (var mesh in cell.GeneratedMeshes)
+    {
+      if (!mesh)
+      {
+        continue;
+      }
+
+      try
+      {
+        bytes +=
+          Profiler.GetRuntimeMemorySizeLong(mesh);
+      }
+      catch
+      {
+        // Conservative fallback for unusual Unity/runtime configurations.
+        bytes +=
+          (long) mesh.vertexCount *
+          64L;
+      }
+    }
+
+    foreach (var batch in cell.InstancedBatches)
+    {
+      if (batch != null)
+      {
+        bytes +=
+          batch.EstimatedMemoryBytes;
+      }
+    }
+
+    // MeshRenderer/MeshFilter/GameObject overhead is small compared with large
+    // generated meshes but still non-zero. Include a modest approximation.
+    bytes +=
+      (long) cell.GeneratedObjects.Count *
+      2048L;
+
+    cell.EstimatedGeneratedMemoryBytes =
+      bytes;
   }
 
   private void CleanupDestroyedRoots()
@@ -1860,6 +2007,8 @@ public sealed class SectorMeshClusterController : MonoBehaviour
 
     public readonly List<InstancedClusterBatch>
       InstancedBatches = new();
+
+    public long EstimatedGeneratedMemoryBytes;
 
     public bool ClusterBuilt;
     public bool Dirty = true;

@@ -11,7 +11,9 @@ namespace ValheimScalability.Patches;
 /// Hooks concrete IDestructible.Damage(HitData) implementations without maintaining
 /// a hard-coded list of WearNTear / tree / rock / mine-rock types.
 ///
-/// The manager ignores damage for objects that were never registered as cluster candidates.
+/// Reflection is intentionally defensive because other mods can contain optional
+/// compatibility types whose referenced assemblies are not installed.
+/// One unloadable foreign type must never abort ValheimScalability startup.
 /// </summary>
 [HarmonyPatch]
 public static class SectorMeshClusterDamagePatch
@@ -23,66 +25,121 @@ public static class SectorMeshClusterDamagePatch
   [HarmonyTargetMethods]
   private static IEnumerable<MethodBase> TargetMethods()
   {
-    var destructibleInterface = typeof(IDestructible);
-    var damageInterfaceMethod = AccessTools.Method(
-      destructibleInterface,
-      nameof(IDestructible.Damage),
-      new[] { typeof(HitData) });
+    var destructibleInterface =
+      typeof(IDestructible);
+
+    var damageInterfaceMethod =
+      AccessTools.Method(
+        destructibleInterface,
+        nameof(IDestructible.Damage),
+        new[]
+        {
+          typeof(HitData)
+        });
 
     if (damageInterfaceMethod == null)
     {
       yield break;
     }
 
-    var seen = new HashSet<MethodBase>();
+    var seen =
+      new HashSet<MethodBase>();
 
-    foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
+    foreach (var assembly in
+             AppDomain.CurrentDomain.GetAssemblies())
     {
-      foreach (var type in GetLoadableTypes(assembly))
+      foreach (var type in
+               GetLoadableTypes(assembly))
       {
-        if (type == null ||
-            type.IsInterface ||
-            type.IsAbstract ||
-            type.ContainsGenericParameters ||
-            !destructibleInterface.IsAssignableFrom(type))
+        var target =
+          TryGetDamageTarget(
+            type,
+            destructibleInterface,
+            damageInterfaceMethod);
+
+        if (target != null &&
+            seen.Add(target))
         {
-          continue;
-        }
-
-        InterfaceMapping interfaceMap;
-
-        try
-        {
-          interfaceMap = type.GetInterfaceMap(destructibleInterface);
-        }
-        catch
-        {
-          continue;
-        }
-
-        for (var index = 0;
-             index < interfaceMap.InterfaceMethods.Length;
-             ++index)
-        {
-          if (!Equals(interfaceMap.InterfaceMethods[index], damageInterfaceMethod))
-          {
-            continue;
-          }
-
-          var target = interfaceMap.TargetMethods[index];
-
-          if (target != null && seen.Add(target))
-          {
-            yield return target;
-          }
-
-          break;
+          yield return target;
         }
       }
     }
   }
 
-  private static IEnumerable<Type> GetLoadableTypes(Assembly assembly)
+  /// <summary>
+  /// All metadata inspection for a foreign type happens behind this exception boundary.
+  ///
+  /// A mod can successfully load an assembly while still containing individual types
+  /// that cannot be fully resolved because an optional compatibility dependency is absent.
+  /// Even operations such as Type.IsAssignableFrom can trigger that resolution.
+  /// </summary>
+  private static MethodBase? TryGetDamageTarget(
+    Type? type,
+    Type destructibleInterface,
+    MethodInfo damageInterfaceMethod)
+  {
+    if (type == null)
+    {
+      return null;
+    }
+
+    try
+    {
+      // Compiler-generated closure/state-machine types can never be useful
+      // IDestructible components and are a common place for optional-mod
+      // compatibility references to surface.
+      if (type.Name.StartsWith(
+            "<",
+            StringComparison.Ordinal))
+      {
+        return null;
+      }
+
+      if (type.IsInterface ||
+          type.IsAbstract ||
+          type.ContainsGenericParameters)
+      {
+        return null;
+      }
+
+      // IMPORTANT:
+      // IsAssignableFrom itself can throw TypeLoadException when inspecting
+      // a foreign type whose dependency is missing.
+      if (!destructibleInterface.IsAssignableFrom(type))
+      {
+        return null;
+      }
+
+      var interfaceMap =
+        type.GetInterfaceMap(
+          destructibleInterface);
+
+      for (var index = 0;
+           index < interfaceMap.InterfaceMethods.Length;
+           ++index)
+      {
+        if (!Equals(
+              interfaceMap.InterfaceMethods[index],
+              damageInterfaceMethod))
+        {
+          continue;
+        }
+
+        return interfaceMap.TargetMethods[index];
+      }
+    }
+    catch
+    {
+      // Reflection over other mods must be best-effort.
+      // Skipping one unloadable type is vastly safer than preventing the
+      // entire plugin/Harmony patch set from loading.
+    }
+
+    return null;
+  }
+
+  private static IEnumerable<Type?> GetLoadableTypes(
+    Assembly assembly)
   {
     try
     {
@@ -90,6 +147,9 @@ public static class SectorMeshClusterDamagePatch
     }
     catch (ReflectionTypeLoadException exception)
     {
+      // The successfully loaded entries are still useful. Individual entries
+      // are guarded again by TryGetDamageTarget because even a returned Type
+      // can fail later metadata inspection.
       return exception.Types;
     }
     catch
@@ -99,7 +159,8 @@ public static class SectorMeshClusterDamagePatch
   }
 
   [HarmonyPrefix]
-  private static void Prefix(object __instance)
+  private static void Prefix(
+    object __instance)
   {
     if (Application.isBatchMode ||
         WearNTear.m_randomInitialDamage)
@@ -107,7 +168,8 @@ public static class SectorMeshClusterDamagePatch
       return;
     }
 
-    if (__instance is not Component component || !component)
+    if (__instance is not Component component ||
+        !component)
     {
       return;
     }
@@ -120,6 +182,7 @@ public static class SectorMeshClusterDamagePatch
     }
 
     SectorMeshClusterManager.Instance?
-      .NotifyDamage(component.gameObject);
+      .NotifyDamage(
+        component.gameObject);
   }
 }

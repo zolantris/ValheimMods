@@ -12,6 +12,7 @@ public static class ValheimScalabilityConfig
   private const string SectorClusteringSection = "Rendering.SectorClustering";
   private const string FilterSection = "Rendering.SectorClustering.Filters";
   private const string InstancingSection = "Rendering.SectorClustering.Instancing";
+  private const string CacheSection = "Rendering.SectorClustering.Cache";
 
   private static bool _isBound;
 
@@ -38,6 +39,17 @@ public static class ValheimScalabilityConfig
   public static ConfigEntry<bool> SectorSkipPropertyBlockRenderers { get; private set; } = null!;
   public static ConfigEntry<int> SectorMinimumEstimatedDrawCallSavings { get; private set; } = null!;
 
+  // Warm-zone cache. Limits apply only to inactive cached sectors, never the currently active area.
+  public static ConfigEntry<bool> WarmCacheEnabled { get; private set; } = null!;
+  public static ConfigEntry<int> MaxWarmZones { get; private set; } = null!;
+  public static ConfigEntry<int> MaxWarmMeshMemoryMB { get; private set; } = null!;
+  public static ConfigEntry<int> MaxSingleWarmZoneMB { get; private set; } = null!;
+  public static ConfigEntry<float> WarmZoneRetentionSeconds { get; private set; } = null!;
+  public static ConfigEntry<int> FrequentVisitThreshold { get; private set; } = null!;
+  public static ConfigEntry<int> MaxFrequentWarmZones { get; private set; } = null!;
+  public static ConfigEntry<float> FrequentWarmZoneRetentionSeconds { get; private set; } = null!;
+  public static ConfigEntry<bool> LogCacheDiagnostics { get; private set; } = null!;
+
   // User filtering. Names are case-insensitive substring matches.
   public static ConfigEntry<string> IncludedLayers { get; private set; } = null!;
   public static ConfigEntry<string> ExcludedLayers { get; private set; } = null!;
@@ -62,7 +74,7 @@ public static class ValheimScalabilityConfig
     ClusterRenderingMode?.Value ?? ClusterPresentationMode.Adaptive;
 
   public static int CellDivisions =>
-    SectorCellDivisions?.Value ?? 4;
+    SectorCellDivisions?.Value ?? 1;
 
   public static float UnclusterRadius =>
     PlayerUnclusterRadius?.Value ?? 18f;
@@ -109,6 +121,37 @@ public static class ValheimScalabilityConfig
   public static int MinimumEstimatedDrawCallSavings =>
     SectorMinimumEstimatedDrawCallSavings?.Value ?? 1;
 
+  public static bool IsWarmCacheEnabled =>
+    WarmCacheEnabled?.Value ?? true;
+
+  public static int WarmZoneLimit =>
+    MaxWarmZones?.Value ?? 96;
+
+  public static long WarmMeshMemoryLimitBytes =>
+    (long) (MaxWarmMeshMemoryMB?.Value ?? 768) *
+    1024L *
+    1024L;
+
+  public static long SingleWarmZoneMemoryLimitBytes =>
+    (long) (MaxSingleWarmZoneMB?.Value ?? 256) *
+    1024L *
+    1024L;
+
+  public static float WarmRetentionSeconds =>
+    WarmZoneRetentionSeconds?.Value ?? 300f;
+
+  public static int FrequentZoneVisitThreshold =>
+    FrequentVisitThreshold?.Value ?? 3;
+
+  public static int FrequentWarmZoneLimit =>
+    MaxFrequentWarmZones?.Value ?? 16;
+
+  public static float FrequentWarmRetentionSeconds =>
+    FrequentWarmZoneRetentionSeconds?.Value ?? 1800f;
+
+  public static bool IsCacheDiagnosticsEnabled =>
+    LogCacheDiagnostics?.Value ?? false;
+
   public static bool IsGpuInstancingEnabled =>
     EnableGpuInstancing?.Value ?? false;
 
@@ -130,7 +173,7 @@ public static class ValheimScalabilityConfig
       "CellDivisionsPerSector",
       1,
       new ConfigDescription(
-        "Subdivides each Valheim sector into independent rendering cells. 4 = 4x4 = 16 cells.",
+        "Subdivides each Valheim sector into independent rendering cells. 1 gives the strongest batching and is recommended by default. Higher values improve Adaptive-mode culling/proximity granularity at the cost of more render batches.",
         new AcceptableValueRange<int>(1, 8)));
 
     PlayerUnclusterRadius = config.Bind(
@@ -240,6 +283,75 @@ public static class ValheimScalabilityConfig
       new ConfigDescription(
         "A cell must save at least this many estimated draw submissions before its optimized representation is used.",
         new AcceptableValueRange<int>(1, 1024)));
+
+    // Warm-zone cache.
+    WarmCacheEnabled = config.Bind(
+      CacheSection,
+      "Enabled",
+      true,
+      "Keeps a bounded set of recently/frequently used inactive sector clusters in memory for fast revisits and teleports. Active sectors are never limited by this cache.");
+
+    MaxWarmZones = config.Bind(
+      CacheSection,
+      "MaxWarmZones",
+      96,
+      new ConfigDescription(
+        "Maximum number of inactive sector clusters retained in the warm cache. 0 = unlimited by count. Memory and TTL limits still apply.",
+        new AcceptableValueRange<int>(0, 4096)));
+
+    MaxWarmMeshMemoryMB = config.Bind(
+      CacheSection,
+      "MaxWarmMeshMemoryMB",
+      768,
+      new ConfigDescription(
+        "Approximate generated-mesh memory budget for inactive warm sectors only. Active sectors are not counted. 0 = unlimited. Increase this on high-memory systems if you frequently teleport between very large builds.",
+        new AcceptableValueRange<int>(0, 32768)));
+
+    MaxSingleWarmZoneMB = config.Bind(
+      CacheSection,
+      "MaxSingleWarmZoneMB",
+      256,
+      new ConfigDescription(
+        "Do not retain one inactive sector in the warm cache if its generated rendering data exceeds this approximate size. The sector still works while active and will rebuild when revisited. 0 = unlimited.",
+        new AcceptableValueRange<int>(0, 8192)));
+
+    WarmZoneRetentionSeconds = config.Bind(
+      CacheSection,
+      "WarmZoneRetentionSeconds",
+      300f,
+      new ConfigDescription(
+        "Normal inactive sectors may remain warm for this many seconds before becoming eligible for cold eviction.",
+        new AcceptableValueRange<float>(0f, 86400f)));
+
+    FrequentVisitThreshold = config.Bind(
+      CacheSection,
+      "FrequentVisitThreshold",
+      3,
+      new ConfigDescription(
+        "A sector visited at least this many distinct times during the current world session is treated as frequently used and receives longer warm-cache retention.",
+        new AcceptableValueRange<int>(1, 1000)));
+
+    MaxFrequentWarmZones = config.Bind(
+      CacheSection,
+      "MaxFrequentWarmZones",
+      16,
+      new ConfigDescription(
+        "Maximum number of frequently visited inactive sectors that receive extended retention. 0 disables the dedicated frequent-zone allowance.",
+        new AcceptableValueRange<int>(0, 1024)));
+
+    FrequentWarmZoneRetentionSeconds = config.Bind(
+      CacheSection,
+      "FrequentWarmZoneRetentionSeconds",
+      1800f,
+      new ConfigDescription(
+        "Retention time for frequently visited inactive sectors.",
+        new AcceptableValueRange<float>(0f, 86400f)));
+
+    LogCacheDiagnostics = config.Bind(
+      CacheSection,
+      "LogCacheDiagnostics",
+      false,
+      "Logs warm-cache entry, reactivation, eviction, and approximate generated-mesh memory usage.");
 
     // Layer filters.
     IncludedLayers = config.Bind(
