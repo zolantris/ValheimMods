@@ -338,7 +338,7 @@ public static class ValheimScalabilityConfig
     SubscribeRebuildSetting(IncludedObjectNames);
     SubscribeRebuildSetting(ExcludedObjectNames);
     SubscribeRebuildSetting(IncludedObjectRegexList);
-    SubscribeRebuildSetting(ExcludedObjectRegexList);
+    SubscribeRebuildSetting(ExcludedObjectRegexList); 
     SubscribeRebuildSetting(ExcludedMaterialNames);
     SubscribeRebuildSetting(ExcludedMaterialRegexList);
     SubscribeRebuildSetting(ExcludedShaderNames);
@@ -348,7 +348,7 @@ public static class ValheimScalabilityConfig
     SubscribeRebuildSetting(InstancedMaterialNameHints);
     SubscribeRebuildSetting(InstancedShaderNameHints);
     SubscribeRebuildSetting(InstancedCandidateRegexList);
-    SubscribeRebuildSetting(WindShaderPropertyNames);
+    SubscribeRebuildSetting(WindShaderPropertyNames); 
     SubscribeRebuildSetting(SectorUseLowestLod);
     SubscribeRebuildSetting(SectorSkipPropertyBlockRenderers);
     SubscribeRebuildSetting(SectorMinimumEstimatedDrawCallSavings);
