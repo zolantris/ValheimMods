@@ -1614,7 +1614,7 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable, INetView
   public void RequestSyncZDOData()
   {
     if (m_nview == null || m_nview.m_zdo == null) return;
-    m_nview.InvokeRPC(ZRoutedRpc.Everybody, nameof(RPC_SyncSailData));
+    m_nview.InvokeRPC(0L, nameof(RPC_SyncSailData));
   }
 
   public void RPC_SyncSailData(long sender)

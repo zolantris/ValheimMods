@@ -70,7 +70,7 @@ public class SafeRPCHandler : INetView
   /// </summary>
   public void InvokeRPC(Action callback, params object[] args)
   {
-    InvokeRPC(ZRoutedRpc.Everybody, callback, args);
+    InvokeRPC(0L, callback, args);
   }
 
   /// <summary>
@@ -78,7 +78,7 @@ public class SafeRPCHandler : INetView
   /// </summary>
   public void InvokeRPC(string rpcName, params object[] args)
   {
-    InvokeRPC(ZRoutedRpc.Everybody, rpcName, args);
+    InvokeRPC(0L, rpcName, args);
   }
 
   /// <summary>

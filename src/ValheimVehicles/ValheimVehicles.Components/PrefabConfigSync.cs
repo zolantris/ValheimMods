@@ -122,7 +122,7 @@ public class PrefabConfigSync<T, TComponentInterface> : MonoBehaviour, IPrefabCu
     if (!this.IsNetViewValid(out var netView)) return;
     var pkg = new ZPackage();
     CustomConfig.Serialize(pkg);
-    netView.InvokeRPC(ZRoutedRpc.Everybody, nameof(RPC_Load), pkg);
+    netView.InvokeRPC(0L, nameof(RPC_Load), pkg);
   }
 
   /// <summary>

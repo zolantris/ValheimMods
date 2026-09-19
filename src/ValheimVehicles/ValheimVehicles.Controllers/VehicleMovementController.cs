@@ -3998,7 +3998,7 @@
     {
       if (m_nview == null) return;
       CancelDebounceTakeoverControls();
-      m_nview.InvokeRPC(ZRoutedRpc.Everybody, nameof(RPC_RequestControl),
+      m_nview.InvokeRPC(0L, nameof(RPC_RequestControl),
         playerId);
     }
 
@@ -4036,7 +4036,7 @@
       if (!isInBoat) return;
 
       // the previous user could be invalid so always makes the current user valid if so.
-      m_nview.InvokeRPC(ZRoutedRpc.Everybody, nameof(RPC_RequestResponse),
+      m_nview.InvokeRPC(0L, nameof(RPC_RequestResponse),
         true, targetPlayerId, previousUserId);
     }
 
@@ -4553,7 +4553,7 @@
       if (m_nview == null) return;
       if (!m_nview.IsOwner()) m_nview.ClaimOwnership();
       m_nview.GetZDO()?.Set(VehicleZdoVars.VehicleIsTeleporting, isTeleporting);
-      m_nview.InvokeRPC(ZRoutedRpc.Everybody, nameof(RPC_SetIsTeleporting), isTeleporting);
+      m_nview.InvokeRPC(0L, nameof(RPC_SetIsTeleporting), isTeleporting);
     }
 
     internal void RPC_SetIsTeleporting(long sender, bool isTeleporting)
@@ -4970,7 +4970,7 @@
       CancelDebounceTakeoverControls();
       if (m_nview == null) return;
       if (!m_nview.IsValid()) return;
-      m_nview.InvokeRPC(ZRoutedRpc.Everybody, nameof(RPC_ReleaseControl),
+      m_nview.InvokeRPC(0L, nameof(RPC_ReleaseControl),
         player.GetPlayerID());
     }
 
