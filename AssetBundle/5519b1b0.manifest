@@ -1,0 +1,22 @@
+ManifestFileVersion: 0
+UnityVersion: 6000.1.8f1
+CRC: 3772751899
+Compression: LZMA
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 5d6f499771559c70690157c9842a4466
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 00000000000000000000000000000000
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: 00000000000000000000000000000000
+HashAppended: 0
+ClassTypes:
+- Class: 48
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/Shaders/Custom_Player.shader
+Dependencies: []

@@ -1,6 +1,6 @@
 ManifestFileVersion: 0
 UnityVersion: 6000.1.8f1
-CRC: 1451823921
+CRC: 2730652342
 HashAppended: 0
 AssetBundleManifest:
   AssetBundleInfos:
@@ -8,6 +8,23 @@ AssetBundleManifest:
       Name: valheim-vehicles
       Dependencies: {}
     Info_1:
+      Name: 1b6be223
+      Dependencies:
+        Dependency_0: 5519b1b0
+        Dependency_1: b6238389
+    Info_2:
+      Name: 1b1c1994
+      Dependencies:
+        Dependency_0: 1b6be223
+        Dependency_1: 5519b1b0
+        Dependency_2: b6238389
+    Info_3:
+      Name: 5519b1b0
+      Dependencies: {}
+    Info_4:
+      Name: b6238389
+      Dependencies: {}
+    Info_5:
       Name: eldritch
       Dependencies:
         Dependency_0: valheim-vehicles

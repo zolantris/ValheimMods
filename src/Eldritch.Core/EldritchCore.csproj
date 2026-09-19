@@ -3,11 +3,9 @@
     <Import Project="$(SolutionDir)build\unity_libs.props"/>
     <Import Project="$(SolutionDir)build\eldritch_version.props"/>
     <Import Project="$(SolutionDir)build\static_version_generator.targets"/>
-    
+
     <!--  TODO this might have to be embedded in the integration package  -->
     <ItemGroup Label="Assembly Assets">
-        <None Remove="$(SolutionDir)AssetBundle\eldritch"/>
-        <None Remove="$(SolutionDir)AssetBundle\eldritch.manifest"/>
         <EmbeddedResource Include="$(SolutionDir)AssetBundle\eldritch" LogicalName="eldritch"/>
         <EmbeddedResource Include="$(SolutionDir)AssetBundle\eldritch.manifest" LogicalName="eldritch.manifest"/>
     </ItemGroup>

@@ -6,7 +6,7 @@
   "sharedTargets": {
     shared_localAssets: {
       inputPath: "C:/path/to/Assets",
-      outputPath: "C:/Users/%USERNAME%/AppData/Roaming/r2modmanPlus-local/Valheim/profiles/ashlands/BepInEx/plugins/zolantris-ValheimRAFT/Assets/",
+      outputPath: "C:/Users/%USERNAME%/AppData/Roaming/r2modmanPlus-local/Valheim/profiles/deepnorth/BepInEx/plugins/zolantris-ValheimRAFT/Assets/",
     },
     shared_localClient: {
       "inputPath": "build/bin/ValheimRAFT/Debug",

@@ -79,11 +79,6 @@ public class SailCreatorComponent : MonoBehaviour
     Logger.LogDebug(
       $"Creating new sail {m_sailCreators.Count}/{m_sailSize}");
 
-    /*
-     * Capture exactly the creators participating in this sail.
-     *
-     * From this point onward their placement order is irrelevant.
-     */
     var creators = m_sailCreators
       .Take(m_sailSize)
       .ToList();
@@ -92,71 +87,55 @@ public class SailCreatorComponent : MonoBehaviour
       .Select(creator => creator.transform.position)
       .ToList();
 
+    if (!TryResolveSharedParentMast(
+          creators,
+          out var parentMastComponent))
+    {
+      return;
+    }
+
     /*
-     * The mast provides the preferred coordinate system for deciding:
+     * Never derive the ordering frame from creators[0]. The first creator is
+     * literally the player's first click, so using its transform leaks click
+     * order back into the supposedly canonical topology.
      *
-     *   - what "up" means
-     *   - which side of the sail plane is forward
-     *   - consequently what top-right/bottom-right/etc mean
-     *
-     * This makes the result deterministic even if the player clicks the
-     * exact same four locations in a completely different sequence.
+     * Prefer the mast's rotational yard because that is also the final parent
+     * coordinate system used by the generated sail. If there is no mast, the
+     * ordering code falls back to world axes and remains click-order invariant.
      */
-    var parentMastComponent =
-      creators[0].GetComponentInParent<MastComponent>();
-
-    Transform referenceTransform = null;
-
-    if (parentMastComponent)
-    {
-      referenceTransform = parentMastComponent.transform;
-    }
-    else
-    {
-      referenceTransform = creators[0].transform;
-    }
+    var referenceTransform =
+      parentMastComponent && parentMastComponent.m_rotationTransform
+        ? parentMastComponent.m_rotationTransform
+        : parentMastComponent
+          ? parentMastComponent.transform
+          : null;
 
     var center = CalculateCentroid(worldCorners);
 
-    if (!TryCalculateStableSailRotation(
-          worldCorners,
-          referenceTransform,
-          out var sailRotation))
+    var orderedWorldCorners =
+      OrderCorners(
+        worldCorners,
+        center,
+        referenceTransform);
+
+    if (orderedWorldCorners.Count != m_sailSize)
     {
       Logger.LogError(
-        "Unable to create sail because the supplied corners do not form a usable plane.");
+        "Unable to determine a stable sail corner order.");
 
       return;
     }
 
     /*
-     * Convert arbitrary click order into canonical topology.
-     *
-     * Quad:
-     *
-     *   3 -------- 0
-     *   |          |
-     *   |          |
-     *   2 -------- 1
-     *
-     *   0 = top-right
-     *   1 = bottom-right
-     *   2 = bottom-left
-     *   3 = top-left
-     *
-     * This is the topology expected by SailComponent.CreateSailMesh().
+     * Keep the original world orientation behavior. Stability comes from a
+     * canonical point order and final-parent-before-build invariant, not from
+     * inventing a different sail-object rotation from click order.
      */
-    var orderedWorldCorners =
-      OrderCorners(
-        worldCorners,
-        center,
-        sailRotation);
-
     var sailPrefabInstance =
       Instantiate(
         sailPrefab,
         center,
-        sailRotation);
+        Quaternion.identity);
 
     var netView =
       sailPrefabInstance.GetComponent<ZNetView>();
@@ -174,22 +153,15 @@ public class SailCreatorComponent : MonoBehaviour
     }
 
     /*
-     * IMPORTANT:
-     *
-     * Establish the FINAL transform hierarchy BEFORE generating the mesh
-     * or asking MagicaCloth to build.
-     *
-     * Magica should never be constructed and then immediately moved into
-     * another transform hierarchy.
+     * Establish the FINAL hierarchy before converting corners to local space or
+     * starting Magica. Building first and parenting afterward lets Magica cache
+     * an initialization pose in the wrong coordinate system.
      */
     if (parentMastComponent &&
         parentMastComponent.m_rotationTransform)
     {
-      var parentTransform =
-        parentMastComponent.m_rotationTransform;
-
       sailPrefabInstance.transform.SetParent(
-        parentTransform,
+        parentMastComponent.m_rotationTransform,
         true);
 
       var parentNetView =
@@ -213,13 +185,8 @@ public class SailCreatorComponent : MonoBehaviour
             persistentId);
 
           /*
-           * Store position/rotation relative to the ACTUAL transform
-           * WaitForSailParent() later uses as the parent.
-           *
-           * Previously these were calculated against
-           * parentMastComponent.transform but later applied under
-           * m_rotationTransform. Those spaces are not guaranteed to be
-           * equivalent.
+           * WaitForSailParent() later reparents to m_rotationTransform, so save
+           * the position/rotation in that exact local coordinate space.
            */
           zdo.Set(
             SailComponent.SailParentPositionHash,
@@ -232,17 +199,6 @@ public class SailCreatorComponent : MonoBehaviour
       }
     }
 
-    /*
-     * Now that the sail has its FINAL world transform and parent,
-     * translate the canonical world-space corners into sail-local space.
-     *
-     * This gives SailComponent/Magica a stable local mesh regardless of:
-     *
-     *   - placement order
-     *   - vehicle rotation
-     *   - mast rotation
-     *   - world orientation
-     */
     sailComponent.m_sailCorners = [];
 
     foreach (var worldCorner in orderedWorldCorners)
@@ -257,27 +213,16 @@ public class SailCreatorComponent : MonoBehaviour
       orderedWorldCorners);
 
     /*
-     * Material import happens after the final renderer transform exists.
+     * Import material state after the final renderer/hierarchy exists. The
+     * custom-material cache is refreshed inside LoadFromMaterial().
      */
     sailComponent.LoadFromMaterial();
 
     /*
-     * Build Magica LAST.
-     *
-     * SailComponent now owns the Magica lifecycle and will create/rebuild
-     * the cloth against this final mesh/transform topology.
+     * Build last. SailComponent creates the skinned furl rig first and starts
+     * Magica only after the source renderer has settled for one frame.
      */
     sailComponent.CreateSailMesh();
-
-    /*
-     * Save only after canonicalization.
-     *
-     * Future ZDO loads therefore receive exactly the same ordering:
-     *
-     *   quad: TR -> BR -> BL -> TL
-     *
-     * rather than preserving arbitrary player click order.
-     */
     sailComponent.SaveZdo();
 
     var piece =
@@ -294,8 +239,7 @@ public class SailCreatorComponent : MonoBehaviour
       var playerHistory =
         ZNet.World.m_playerHistory;
 
-      // Older pieces may have no platform author recorded
-      // in the world's history.
+      // Older pieces may have no platform author recorded in the world's history.
       var creatorPlatformUserId =
         creatorIndex >= 0 &&
         creatorIndex < playerHistory.Count
@@ -320,12 +264,43 @@ public class SailCreatorComponent : MonoBehaviour
     m_sailCreators.Clear();
   }
 
+  private static bool TryResolveSharedParentMast(
+    IReadOnlyList<SailCreatorComponent> creators,
+    out MastComponent? mastComponent)
+  {
+    mastComponent = null;
+
+    var masts = creators
+      .Select(creator => creator.GetComponentInParent<MastComponent>())
+      .Where(mast => mast)
+      .Distinct()
+      .ToList();
+
+    if (masts.Count == 0)
+    {
+      return true;
+    }
+
+    if (masts.Count == 1)
+    {
+      mastComponent = masts[0];
+      return true;
+    }
+
+    Logger.LogError(
+      "Cannot create one sail from corners belonging to multiple mast hierarchies.");
+
+    return false;
+  }
+
   private static Vector3 CalculateCentroid(
     IReadOnlyList<Vector3> points)
   {
     var center = Vector3.zero;
 
-    for (var i = 0; i < points.Count; i++)
+    for (var i = 0;
+         i < points.Count;
+         i++)
     {
       center += points[i];
     }
@@ -333,56 +308,141 @@ public class SailCreatorComponent : MonoBehaviour
     return center / points.Count;
   }
 
-  private static bool TryCalculateStableSailRotation(
-    IReadOnlyList<Vector3> points,
-    Transform referenceTransform,
-    out Quaternion rotation)
+  private static List<Vector3> OrderCorners(
+    IReadOnlyList<Vector3> worldCorners,
+    Vector3 center,
+    Transform? referenceTransform)
   {
-    rotation = Quaternion.identity;
+    if (!TryBuildStablePlaneBasis(
+          worldCorners,
+          referenceTransform,
+          out var right,
+          out var up))
+    {
+      return [];
+    }
+
+    var projected =
+      worldCorners
+        .Select(point =>
+        {
+          var offset = point - center;
+
+          return new SailCornerSortData(
+            point,
+            Vector3.Dot(offset, right),
+            Vector3.Dot(offset, up));
+        })
+        .ToList();
+
+    if (worldCorners.Count == 3)
+    {
+      var triangleTop = projected
+        .OrderByDescending(point => point.Y)
+        .ThenByDescending(point => point.X)
+        .First();
+
+      var triangleBottom = projected
+        .Where(point => point != triangleTop)
+        .OrderBy(point => point.X)
+        .ToList();
+
+      return
+      [
+        triangleBottom[0].World, // BL
+        triangleBottom[1].World, // BR
+        triangleTop.World // TOP
+      ];
+    }
+
+    /*
+     * Explicitly assign the four unordered points to the topology expected by
+     * SailComponent instead of choosing an angular start index.
+     *
+     *   3 (TL) -------- 0 (TR)
+     *     |              |
+     *     |              |
+     *   2 (BL) -------- 1 (BR)
+     *
+     * The top/bottom split and left/right split are both performed in the
+     * deterministic sail-plane basis above, so all 24 click permutations of
+     * the same physical quad produce the same [TR, BR, BL, TL] list.
+     */
+    var verticalOrder = projected
+      .OrderByDescending(point => point.Y)
+      .ThenByDescending(point => point.X)
+      .ToList();
+
+    var topRow = verticalOrder
+      .Take(2)
+      .OrderBy(point => point.X)
+      .ToList();
+
+    var bottomRow = verticalOrder
+      .Skip(2)
+      .Take(2)
+      .OrderBy(point => point.X)
+      .ToList();
+
+    if (topRow.Count != 2 || bottomRow.Count != 2)
+    {
+      return [];
+    }
+
+    var topLeft = topRow[0];
+    var topRight = topRow[1];
+    var bottomLeft = bottomRow[0];
+    var bottomRight = bottomRow[1];
+
+    return
+    [
+      topRight.World, // 0 = TR
+      bottomRight.World, // 1 = BR
+      bottomLeft.World, // 2 = BL
+      topLeft.World // 3 = TL
+    ];
+  }
+
+  private static bool TryBuildStablePlaneBasis(
+    IReadOnlyList<Vector3> points,
+    Transform? referenceTransform,
+    out Vector3 right,
+    out Vector3 up)
+  {
+    right = Vector3.zero;
+    up = Vector3.zero;
 
     if (points.Count < 3)
     {
       return false;
     }
 
-    /*
-     * Sort only for plane detection.
-     *
-     * This removes another subtle dependency on click order when two
-     * triangle combinations happen to have nearly identical areas.
-     */
-    var deterministicPoints =
-      points
-        .OrderBy(point => point.x)
-        .ThenBy(point => point.y)
-        .ThenBy(point => point.z)
-        .ToList();
+    var deterministicPoints = points
+      .OrderBy(point => point.x)
+      .ThenBy(point => point.y)
+      .ThenBy(point => point.z)
+      .ToList();
 
     var bestNormal = Vector3.zero;
     var bestNormalSqr = 0f;
 
-    /*
-     * Find the largest non-degenerate triangle from the point set.
-     *
-     * This is substantially more stable than simply using:
-     *
-     *   Cross(p1 - p0, p2 - p0)
-     *
-     * because p0/p1/p2 previously depended directly on click order.
-     */
-    for (var i = 0; i < deterministicPoints.Count - 2; i++)
+    for (var i = 0;
+         i < deterministicPoints.Count - 2;
+         i++)
     {
-      for (var j = i + 1; j < deterministicPoints.Count - 1; j++)
+      for (var j = i + 1;
+           j < deterministicPoints.Count - 1;
+           j++)
       {
-        for (var k = j + 1; k < deterministicPoints.Count; k++)
+        for (var k = j + 1;
+             k < deterministicPoints.Count;
+             k++)
         {
-          var normal =
-            Vector3.Cross(
-              deterministicPoints[j] - deterministicPoints[i],
-              deterministicPoints[k] - deterministicPoints[i]);
+          var normal = Vector3.Cross(
+            deterministicPoints[j] - deterministicPoints[i],
+            deterministicPoints[k] - deterministicPoints[i]);
 
-          var normalSqr =
-            normal.sqrMagnitude;
+          var normalSqr = normal.sqrMagnitude;
 
           if (normalSqr <= bestNormalSqr)
           {
@@ -400,78 +460,66 @@ public class SailCreatorComponent : MonoBehaviour
       return false;
     }
 
-    var planeNormal =
+    var normalDirection =
       bestNormal.normalized;
 
-    /*
-     * A plane has two mathematically equivalent normals.
-     *
-     * Choose ONE deterministically relative to the mast/reference
-     * transform instead of letting point ordering choose it.
-     */
-    planeNormal =
-      OrientNormalDeterministically(
-        planeNormal,
-        referenceTransform);
+    normalDirection = OrientNormalDeterministically(
+      normalDirection,
+      referenceTransform);
 
-    /*
-     * Prefer mast-up as sail-up.
-     *
-     * Project it onto the sail plane so LookRotation receives a proper
-     * orthogonal up direction.
-     */
-    var upAxis =
-      FindBestProjectedUpAxis(
-        planeNormal,
-        referenceTransform);
+    up = Vector3.ProjectOnPlane(
+      referenceTransform
+        ? referenceTransform.up
+        : Vector3.up,
+      normalDirection);
 
-    if (upAxis.sqrMagnitude <= MinimumAxisSqr)
+    if (up.sqrMagnitude <= MinimumAxisSqr)
+    {
+      up = Vector3.ProjectOnPlane(
+        referenceTransform
+          ? referenceTransform.forward
+          : Vector3.forward,
+        normalDirection);
+    }
+
+    if (up.sqrMagnitude <= MinimumAxisSqr)
     {
       return false;
     }
 
-    upAxis.Normalize();
+    up.Normalize();
 
-    rotation =
-      Quaternion.LookRotation(
-        planeNormal,
-        upAxis);
+    right = Vector3.Cross(
+      up,
+      normalDirection);
 
+    if (right.sqrMagnitude <= MinimumAxisSqr)
+    {
+      return false;
+    }
+
+    right.Normalize();
     return true;
   }
 
   private static Vector3 OrientNormalDeterministically(
     Vector3 normal,
-    Transform referenceTransform)
+    Transform? referenceTransform)
   {
-    Vector3[] referenceAxes;
-
-    if (referenceTransform)
-    {
-      referenceAxes =
+    Vector3[] referenceAxes = referenceTransform
+      ?
       [
         referenceTransform.forward,
         referenceTransform.right,
         referenceTransform.up
-      ];
-    }
-    else
-    {
-      referenceAxes =
+      ]
+      :
       [
         Vector3.forward,
         Vector3.right,
         Vector3.up
       ];
-    }
 
-    /*
-     * Pick whichever reference axis is most parallel to the plane normal.
-     *
-     * Because one of three orthogonal axes must have a substantial dot
-     * product with the normal, this avoids unstable sign decisions around
-     * a nearly-perpendicular reference axis.
-     */
     var bestDot = 0f;
     var bestAbsoluteDot = float.NegativeInfinity;
 
@@ -494,279 +542,9 @@ public class SailCreatorComponent : MonoBehaviour
       bestDot = dot;
     }
 
-    if (bestDot < 0f)
-    {
-      normal = -normal;
-    }
-
-    return normal;
-  }
-
-  private static Vector3 FindBestProjectedUpAxis(
-    Vector3 planeNormal,
-    Transform referenceTransform)
-  {
-    Vector3[] candidates;
-
-    if (referenceTransform)
-    {
-      candidates =
-      [
-        referenceTransform.up,
-        referenceTransform.forward,
-        referenceTransform.right
-      ];
-    }
-    else
-    {
-      candidates =
-      [
-        Vector3.up,
-        Vector3.forward,
-        Vector3.right
-      ];
-    }
-
-    var bestAxis = Vector3.zero;
-    var bestAxisSqr = 0f;
-
-    foreach (var candidate in candidates)
-    {
-      var projected =
-        Vector3.ProjectOnPlane(
-          candidate,
-          planeNormal);
-
-      var projectedSqr =
-        projected.sqrMagnitude;
-
-      if (projectedSqr <= bestAxisSqr)
-      {
-        continue;
-      }
-
-      bestAxis = projected;
-      bestAxisSqr = projectedSqr;
-    }
-
-    return bestAxis;
-  }
-
-  private static List<Vector3> OrderCorners(
-    IReadOnlyList<Vector3> worldCorners,
-    Vector3 center,
-    Quaternion sailRotation)
-  {
-    if (worldCorners.Count == 3)
-    {
-      return OrderTriangleCorners(
-        worldCorners,
-        center,
-        sailRotation);
-    }
-
-    if (worldCorners.Count == 4)
-    {
-      return OrderQuadCorners(
-        worldCorners,
-        center,
-        sailRotation);
-    }
-
-    return worldCorners.ToList();
-  }
-
-  private static List<Vector3> OrderQuadCorners(
-    IReadOnlyList<Vector3> worldCorners,
-    Vector3 center,
-    Quaternion sailRotation)
-  {
-    var inverseRotation =
-      Quaternion.Inverse(sailRotation);
-
-    var points =
-      worldCorners
-        .Select(worldPoint =>
-        {
-          var localPoint =
-            inverseRotation *
-            (worldPoint - center);
-
-          return new SailCornerSortData(
-            worldPoint,
-            localPoint);
-        })
-        .ToList();
-
-    /*
-     * Sort clockwise around the sail center when viewed along the
-     * canonical sail normal.
-     *
-     * Example:
-     *
-     *   TL -> TR -> BR -> BL
-     *
-     * We rotate this sequence below so that TR becomes index zero.
-     */
-    points.Sort(
-      (left, right) =>
-      {
-        var leftAngle =
-          Mathf.Atan2(
-            left.Local.y,
-            left.Local.x);
-
-        var rightAngle =
-          Mathf.Atan2(
-            right.Local.y,
-            right.Local.x);
-
-        return rightAngle.CompareTo(leftAngle);
-      });
-
-    var minX =
-      points.Min(point => point.Local.x);
-
-    var maxX =
-      points.Max(point => point.Local.x);
-
-    var minY =
-      points.Min(point => point.Local.y);
-
-    var maxY =
-      points.Max(point => point.Local.y);
-
-    var xRange =
-      Mathf.Max(
-        maxX - minX,
-        0.0001f);
-
-    var yRange =
-      Mathf.Max(
-        maxY - minY,
-        0.0001f);
-
-    /*
-     * Find the point furthest toward normalized top-right.
-     *
-     * Normalizing the dimensions prevents a very wide sail from choosing
-     * bottom-right simply because X is numerically much larger than Y.
-     */
-    var topRightIndex = 0;
-    var bestTopRightScore = float.NegativeInfinity;
-
-    for (var i = 0; i < points.Count; i++)
-    {
-      var normalizedX =
-        (points[i].Local.x - minX) /
-        xRange;
-
-      var normalizedY =
-        (points[i].Local.y - minY) /
-        yRange;
-
-      var score =
-        normalizedX +
-        normalizedY;
-
-      if (score <= bestTopRightScore)
-      {
-        continue;
-      }
-
-      bestTopRightScore = score;
-      topRightIndex = i;
-    }
-
-    /*
-     * Rotate the cyclic list without changing its winding.
-     *
-     * Result:
-     *
-     *   0 = top-right
-     *   1 = bottom-right
-     *   2 = bottom-left
-     *   3 = top-left
-     */
-    var ordered =
-      new List<Vector3>(4);
-
-    for (var i = 0; i < points.Count; i++)
-    {
-      var index =
-        (topRightIndex + i) %
-        points.Count;
-
-      ordered.Add(
-        points[index].World);
-    }
-
-    return ordered;
-  }
-
-  private static List<Vector3> OrderTriangleCorners(
-    IReadOnlyList<Vector3> worldCorners,
-    Vector3 center,
-    Quaternion sailRotation)
-  {
-    var inverseRotation =
-      Quaternion.Inverse(sailRotation);
-
-    var points =
-      worldCorners
-        .Select(worldPoint =>
-        {
-          var localPoint =
-            inverseRotation *
-            (worldPoint - center);
-
-          return new SailCornerSortData(
-            worldPoint,
-            localPoint);
-        })
-        .ToList();
-
-    /*
-     * Triangle topology used by SailComponent:
-     *
-     *             2
-     *            / \
-     *           /   \
-     *          /     \
-     *         0-------1
-     *
-     *   0 = bottom-left
-     *   1 = bottom-right
-     *   2 = top
-     *
-     * This also matches the triangle UV assignment:
-     *
-     *   0 -> (0, 0)
-     *   1 -> (1, 0)
-     *   2 -> (.5, 1)
-     */
-    var top =
-      points
-        .OrderByDescending(point => point.Local.y)
-        .ThenByDescending(point => point.Local.x)
-        .First();
-
-    var bottom =
-      points
-        .Where(point => !ReferenceEquals(point, top))
-        .OrderBy(point => point.Local.x)
-        .ToList();
-
-    /*
-     * SailCornerSortData is a reference type specifically so the
-     * ReferenceEquals exclusion above is exact.
-     */
-    return
-    [
-      bottom[0].World,
-      bottom[1].World,
-      top.World
-    ];
+    return bestDot < 0f
+      ? -normal
+      : normal;
   }
 
   private static void LogCanonicalCorners(
@@ -821,14 +599,17 @@ public class SailCreatorComponent : MonoBehaviour
   private sealed class SailCornerSortData
   {
     public readonly Vector3 World;
-    public readonly Vector3 Local;
+    public readonly float X;
+    public readonly float Y;
 
     public SailCornerSortData(
       Vector3 world,
-      Vector3 local)
+      float x,
+      float y)
     {
       World = world;
-      Local = local;
+      X = x;
+      Y = y;
     }
   }
 }

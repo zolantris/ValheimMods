@@ -1,0 +1,44 @@
+ManifestFileVersion: 0
+UnityVersion: 6000.1.8f1
+CRC: 936990659
+Compression: LZMA
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 6b57f10499a9fc0eb20c4eb9fabb586e
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 00000000000000000000000000000000
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: 00000000000000000000000000000000
+HashAppended: 0
+ClassTypes:
+- Class: 1
+  Script: {instanceID: 0}
+- Class: 4
+  Script: {instanceID: 0}
+- Class: 21
+  Script: {instanceID: 0}
+- Class: 28
+  Script: {instanceID: 0}
+- Class: 43
+  Script: {instanceID: 0}
+- Class: 90
+  Script: {instanceID: 0}
+- Class: 95
+  Script: {instanceID: 0}
+- Class: 137
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/Characters/valheim-player/model/old_PlayerCharacter2/PlayerCharacter_01_fem_n.png
+- Assets/Characters/valheim-player/model/old_PlayerCharacter2/PlayerCharacter_01_fem.png
+- Assets/Characters/valheim-player/model/bodyfem.asset
+- Assets/Characters/valheim-player/model/player_fem.prefab
+- Assets/Characters/valheim-player/Materials/PlayerMaterial_Fem.mat
+- Assets/Characters/valheim-player/model/player_femAvatar.asset
+Dependencies:
+- C:/Users/fre/dev/repos/ValheimMods/AssetBundle/1b6be223
+- C:/Users/fre/dev/repos/ValheimMods/AssetBundle/5519b1b0
+- C:/Users/fre/dev/repos/ValheimMods/AssetBundle/b6238389

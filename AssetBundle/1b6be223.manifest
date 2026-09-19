@@ -1,0 +1,46 @@
+ManifestFileVersion: 0
+UnityVersion: 6000.1.8f1
+CRC: 2475330850
+Compression: LZMA
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 30937b7db5196fdd7409ef572a03cefd
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 00000000000000000000000000000000
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: 00000000000000000000000000000000
+HashAppended: 0
+ClassTypes:
+- Class: 1
+  Script: {instanceID: 0}
+- Class: 4
+  Script: {instanceID: 0}
+- Class: 21
+  Script: {instanceID: 0}
+- Class: 28
+  Script: {instanceID: 0}
+- Class: 43
+  Script: {instanceID: 0}
+- Class: 90
+  Script: {instanceID: 0}
+- Class: 95
+  Script: {instanceID: 0}
+- Class: 137
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/Characters/valheim-player/model/beard_hair/PlayerHair.mat
+- Assets/Characters/valheim-player/model/old_PlayerCharacter2/PlayerCharacter_01_n.png
+- Assets/Characters/valheim-player/model/player_male.prefab
+- Assets/Characters/valheim-player/model/beard_hair/Hair_01_bw.png
+- Assets/Characters/valheim-player/Materials/PlayerMaterial.mat
+- Assets/Characters/valheim-player/model/beard_hair/Hair_01_n.png
+- Assets/Characters/valheim-player/model/old_PlayerCharacter2/PlayerCharacter_01.png
+- Assets/Characters/valheim-player/model/body.asset
+- Assets/Characters/valheim-player/model/player_maleAvatar.asset
+Dependencies:
+- C:/Users/fre/dev/repos/ValheimMods/AssetBundle/5519b1b0
+- C:/Users/fre/dev/repos/ValheimMods/AssetBundle/b6238389

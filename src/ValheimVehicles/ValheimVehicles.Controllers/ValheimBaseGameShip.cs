@@ -10,8 +10,6 @@ using Logger = Jotunn.Logger;
 
 namespace ValheimVehicles.Controllers;
 
-using MagicaCloth2;
-
 /*
  * Mostly vanilla Valheim However this is safe from other mods overriding valheim ships directly
  */
@@ -98,29 +96,14 @@ public class ValheimBaseGameShip : MonoBehaviour
 
   internal ZNetView? m_nview { get; set; }
 
-  internal MagicaCloth? m_sailCloth;
+  internal Cloth m_sailCloth;
 
-  public MagicaCloth? GetSailCloth()
+  public Cloth? GetSailCloth()
   {
-    if (!m_sailObject)
-    {
-      return null;
-    }
+    if (!m_sailObject) return null;
+    if (!m_sailCloth) m_sailCloth = m_sailObject.GetComponent<Cloth>();
 
-    if (m_sailCloth)
-    {
-      return m_sailCloth;
-    }
-
-    m_sailCloth =
-      m_sailObject.GetComponent<MagicaCloth>() ??
-      m_sailObject.GetComponentInChildren<MagicaCloth>(true);
-
-    if (!m_sailCloth)
-    {
-      Logger.LogWarning(
-        $"No MagicaCloth found for ship sail '{m_sailObject.name}'.");
-    }
+    if (!m_sailCloth) m_sailCloth = m_sailObject.AddComponent<Cloth>();
 
     return m_sailCloth;
   }

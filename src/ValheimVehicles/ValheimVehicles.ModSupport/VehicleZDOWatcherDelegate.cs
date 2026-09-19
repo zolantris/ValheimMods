@@ -23,6 +23,7 @@ public abstract class VehicleZDOWatcherDelegate
     VehiclePiecesController.InitZdo(zdo);
     SwivelComponentBridge.InitZdo(zdo);
   }
+
   private static void OnZdoDeserialize(ZDO zdo)
   {
     VehiclePiecesController.InitZdo(zdo);

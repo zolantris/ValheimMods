@@ -278,7 +278,7 @@
 
     public static GameObject GetVehiclePiecesObj(Transform prefabRoot)
     {
-      var obj = prefabRoot.Find("vehicle_pieces");
+      var obj = prefabRoot.Find("vehicle_ship_pieces");
       return obj.gameObject;
     }
 
