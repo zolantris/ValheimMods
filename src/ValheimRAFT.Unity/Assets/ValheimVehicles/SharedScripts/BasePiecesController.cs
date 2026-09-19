@@ -338,6 +338,8 @@
 
             FinalizeBoundsGenerationAfterShift();
 
+            Physics.SyncTransforms();
+
             CompleteSuccessfulBoundsRebuild();
           });
 
@@ -345,6 +347,7 @@
         }
 
         FinalizeBoundsGenerationAfterShift();
+        Physics.SyncTransforms();
         CompleteSuccessfulBoundsRebuild();
       }
 

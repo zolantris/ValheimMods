@@ -1,11 +1,11 @@
 ManifestFileVersion: 0
 UnityVersion: 6000.1.8f1
-CRC: 1941028193
+CRC: 516872616
 Compression: LZMA
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 98efb030139925deaf12e1b7161e5df8
+    Hash: b16f358568de5176d313d915cda888e2
   TypeTreeHash:
     serializedVersion: 2
     Hash: 00000000000000000000000000000000
@@ -66,8 +66,6 @@ ClassTypes:
   Script: {instanceID: 0}
 - Class: 153
   Script: {instanceID: 0}
-- Class: 183
-  Script: {instanceID: 0}
 - Class: 198
   Script: {instanceID: 0}
 - Class: 199
@@ -85,6 +83,62 @@ ClassTypes:
 - Class: 687078895
   Script: {instanceID: 0}
 SerializeReferenceClassIdentifiers:
+- AssemblyName: MagicaClothV2
+  ClassName: MagicaCloth2.AngleConstraint/LimitSerializeData
+- AssemblyName: MagicaClothV2
+  ClassName: MagicaCloth2.AngleConstraint/RestorationSerializeData
+- AssemblyName: MagicaClothV2
+  ClassName: MagicaCloth2.CheckSliderSerializeData
+- AssemblyName: MagicaClothV2
+  ClassName: MagicaCloth2.ClothInitSerializeData
+- AssemblyName: MagicaClothV2
+  ClassName: MagicaCloth2.ClothSerializeData
+- AssemblyName: MagicaClothV2
+  ClassName: MagicaCloth2.ClothSerializeData2
+- AssemblyName: MagicaClothV2
+  ClassName: MagicaCloth2.ColliderCollisionConstraint/SerializeData
+- AssemblyName: MagicaClothV2
+  ClassName: MagicaCloth2.CullingSettings
+- AssemblyName: MagicaClothV2
+  ClassName: MagicaCloth2.CurveSerializeData
+- AssemblyName: MagicaClothV2
+  ClassName: MagicaCloth2.CustomSkinningSettings
+- AssemblyName: MagicaClothV2
+  ClassName: MagicaCloth2.DistanceConstraint/SerializeData
+- AssemblyName: MagicaClothV2
+  ClassName: MagicaCloth2.InertiaConstraint/SerializeData
+- AssemblyName: MagicaClothV2
+  ClassName: MagicaCloth2.MotionConstraint/SerializeData
+- AssemblyName: MagicaClothV2
+  ClassName: MagicaCloth2.NormalAlignmentSettings
+- AssemblyName: MagicaClothV2
+  ClassName: MagicaCloth2.PreBuildSerializeData
+- AssemblyName: MagicaClothV2
+  ClassName: MagicaCloth2.ReductionSettings
+- AssemblyName: MagicaClothV2
+  ClassName: MagicaCloth2.ResultCode
+- AssemblyName: MagicaClothV2
+  ClassName: MagicaCloth2.SelectionData
+- AssemblyName: MagicaClothV2
+  ClassName: MagicaCloth2.SelfCollisionConstraint/SerializeData
+- AssemblyName: MagicaClothV2
+  ClassName: MagicaCloth2.SpringConstraint/SerializeData
+- AssemblyName: MagicaClothV2
+  ClassName: MagicaCloth2.TetherConstraint/SerializeData
+- AssemblyName: MagicaClothV2
+  ClassName: MagicaCloth2.TransformData/UniqueSerializationData
+- AssemblyName: MagicaClothV2
+  ClassName: MagicaCloth2.TransformRecordSerializeData
+- AssemblyName: MagicaClothV2
+  ClassName: MagicaCloth2.TriangleBendingConstraint/SerializeData
+- AssemblyName: MagicaClothV2
+  ClassName: MagicaCloth2.UniquePreBuildData
+- AssemblyName: MagicaClothV2
+  ClassName: MagicaCloth2.VirtualMesh/UniqueSerializationData
+- AssemblyName: MagicaClothV2
+  ClassName: MagicaCloth2.WindSettings
+- AssemblyName: Unity.Mathematics
+  ClassName: Unity.Mathematics.float3
 - AssemblyName: Unity.TextMeshPro
   ClassName: TMPro.FaceInfo_Legacy
 - AssemblyName: Unity.TextMeshPro

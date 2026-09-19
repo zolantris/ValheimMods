@@ -20,6 +20,9 @@ public class SailCreatorComponent : MonoBehaviour
   private const float MinimumPlaneAreaSqr = 0.000001f;
   private const float MinimumAxisSqr = 0.000001f;
 
+  private const string InvalidSailUserMessage =
+    "Sail is too small or too narrow. Place the sail points farther apart and do not place them in a straight line.";
+
   public void Awake()
   {
     if (ZNetView.m_forceDisableInit)
@@ -87,6 +90,23 @@ public class SailCreatorComponent : MonoBehaviour
       .Select(creator => creator.transform.position)
       .ToList();
 
+    /*
+     * Reject impossible sails before a networked sail prefab is instantiated.
+     * This catches tiny point clusters and nearly-collinear triangles/quads
+     * that otherwise produce a paper-thin/line mesh which can be very difficult
+     * or impossible to target with the hammer afterward.
+     */
+    if (!SailComponent.TryValidateSailGeometry(
+          worldCorners,
+          out var invalidGeometryReason))
+    {
+      RejectInvalidSailCreation(
+        creators,
+        invalidGeometryReason);
+
+      return;
+    }
+
     if (!TryResolveSharedParentMast(
           creators,
           out var parentMastComponent))
@@ -120,8 +140,25 @@ public class SailCreatorComponent : MonoBehaviour
 
     if (orderedWorldCorners.Count != m_sailSize)
     {
-      Logger.LogError(
-        "Unable to determine a stable sail corner order.");
+      RejectInvalidSailCreation(
+        creators,
+        "Unable to determine a stable non-degenerate sail plane from the selected points.");
+
+      return;
+    }
+
+    /*
+     * Validate the canonical point set as well. The first check is deliberately
+     * order-independent; this second check protects us if canonicalization ever
+     * exposes a collapsed topology in a future ordering change.
+     */
+    if (!SailComponent.TryValidateSailGeometry(
+          orderedWorldCorners,
+          out invalidGeometryReason))
+    {
+      RejectInvalidSailCreation(
+        creators,
+        invalidGeometryReason);
 
       return;
     }
@@ -253,6 +290,36 @@ public class SailCreatorComponent : MonoBehaviour
 
     AddToVehicle(netView);
 
+    foreach (var creator in creators)
+    {
+      if (creator)
+      {
+        Destroy(creator.gameObject);
+      }
+    }
+
+    m_sailCreators.Clear();
+  }
+
+  private static void RejectInvalidSailCreation(
+    IReadOnlyList<SailCreatorComponent> creators,
+    string reason)
+  {
+    Logger.LogWarning(
+      $"Sail creation rejected: {reason}");
+
+    if (Player.m_localPlayer)
+    {
+      Player.m_localPlayer.Message(
+        MessageHud.MessageType.Center,
+        InvalidSailUserMessage);
+    }
+
+    /*
+     * These creator pieces exist only to collect the corner positions. Once the
+     * set is known to be invalid, consume them exactly as a successful sail
+     * creation would so the player is not left with orphaned point pieces.
+     */
     foreach (var creator in creators)
     {
       if (creator)
