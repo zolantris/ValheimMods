@@ -27,6 +27,13 @@
         <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     </PropertyGroup>
 
+    <!-- Required for vehicle syncing (lots of players not using bepinex config manager)   -->
+    <ItemGroup>
+        <Reference Include="ServerSync" Version="1.20.0">
+            <HintPath>$(SolutionDir)\Dependencies\ServerSync.dll</HintPath>
+        </Reference>
+    </ItemGroup>
+
     <ItemGroup Label="Local Dependencies">
         <ProjectReference Include="..\Shared\Shared.csproj"/>
         <ProjectReference Include="..\DynamicLocations\DynamicLocations.csproj"/>

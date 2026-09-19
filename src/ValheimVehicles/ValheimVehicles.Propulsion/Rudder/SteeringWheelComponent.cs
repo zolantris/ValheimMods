@@ -29,7 +29,7 @@ public class SteeringWheelComponent : MonoBehaviour, IAnimatorHandler, Hoverable
   private VehicleMovementController _controls;
   public VehicleMovementController? Controls => _controls;
 
-  public IVehicleControllers ControllersInstance;
+  public IVehicleControllers? ControllersInstance;
   public Transform? wheelTransform;
   private Vector3 wheelLocalOffset;
 
@@ -225,6 +225,7 @@ public class SteeringWheelComponent : MonoBehaviour, IAnimatorHandler, Hoverable
 
   public string GetHoverText()
   {
+    if (ControllersInstance == null) return $"\n[<color=red><b>{ModTranslations.VehicleCommand_Message_VehicleNotFound}</b></color>]";
     var piecesController = ControllersInstance.PiecesController;
     var onboardController = ControllersInstance.OnboardController;
     var movementController = ControllersInstance.MovementController;

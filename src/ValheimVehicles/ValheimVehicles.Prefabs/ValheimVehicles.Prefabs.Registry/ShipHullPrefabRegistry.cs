@@ -53,9 +53,7 @@ public class ShipHullPrefabRegistry : RegisterPrefab<ShipHullPrefabRegistry>
     "hull_bow_tri",
     "hull_bow_curved",
     "hull_rib_aft_left",
-    "hull_rib_aft_right",
-    "hull_rib_iron",
-    "hull_rib_wood"
+    "hull_rib_aft_right"
   };
 
   public override void OnRegister()
@@ -246,7 +244,7 @@ public class ShipHullPrefabRegistry : RegisterPrefab<ShipHullPrefabRegistry>
       {
         "hull_rib_aft_center_wood", new TranslationData
         {
-          Name = "$valheim_vehicles_hull_rib_prow $valheim_vehicles_direction_center $valheim_vehicles_material_wood",
+          Name = "$valheim_vehicles_hull_rib_aft $valheim_vehicles_direction_center $valheim_vehicles_material_wood",
           Description = "$valheim_vehicles_hull_rib_aft_desc"
         }
       },

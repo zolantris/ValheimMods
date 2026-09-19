@@ -904,6 +904,24 @@
              !name.Contains(PrefabNames.ShipAnchorWood) && !PrefabNames.IsVehicle(name) && !PrefabNames.IsVehiclePiecesContainer(name) && !name.StartsWith(PrefabNames.SwivelPrefabName);
     }
 
+    private void WarnAboutDynamicRigidbodies(ZNetView netView)
+    {
+      var rigidbodies = netView.GetComponentsInChildren<Rigidbody>(true);
+
+      foreach (var rb in rigidbodies)
+      {
+        if (rb == m_localRigidbody || rb == m_syncRigidbody)
+          continue;
+
+        if (rb.isKinematic)
+          continue;
+
+        LoggerProvider.LogWarning(
+          $"Piece <{netView.name}> contains dynamic Rigidbody <{rb.name}>. " +
+          $"Leaving Rigidbody intact to avoid destructive hierarchy mutation.");
+      }
+    }
+
     public void AddPiece(ZNetView netView, bool isNew = false)
     {
       if (IsInvalid()) return;
@@ -936,28 +954,8 @@
           vehicleRamAoe.m_vehicle = Manager;
       }
 
-      // Remove non-kinematic rigidbodies if not a ram
-      if (CanRemoveRigidbodyFromChild(netView.name))
-      {
-        var rbs = netView.GetComponentsInChildren<Rigidbody>();
-        foreach (var rbsItem in rbs)
-        {
-          if (!rbsItem.isKinematic && rbsItem != m_localRigidbody || rbsItem != m_syncRigidbody)
-          {
-            var fixedJoint = rbsItem.GetComponent<FixedJoint>();
-            var destroyMessage = $"Destroying Rigidbody on netview <{netView.name}> for rigidbody GameObject Name <{rbsItem.name}>";
-
-            if (fixedJoint != null)
-            {
-              destroyMessage += $"\nDestroying FixedJoint detected on {fixedJoint.name}";
-              Destroy(fixedJoint);
-            }
-
-            LoggerProvider.LogWarning(destroyMessage);
-            Destroy(rbsItem);
-          }
-        }
-      }
+      // warn only about rigidbodies
+      WarnAboutDynamicRigidbodies(netView);
 
       UpdateMass(netView);
 
@@ -1596,6 +1594,41 @@
 
       var itemsToRemove = new List<ZDO>();
 
+
+      // if (m_pieces.Count != pieceToUpdateList.Count)
+      // {
+      //   LoggerProvider.LogDevDebounced("Piece count mismatch during force update");
+      //   foreach (var pieceNv in m_pieces)
+      //   {
+      //     if (pieceNv == null) continue;
+      //     var zdo = pieceNv.GetZDO();
+      //     if (zdo == null || !zdo.IsValid())
+      //     {
+      //       if (zdo != null)
+      //       {
+      //         itemsToRemove.Add(zdo);
+      //       }
+      //       continue;
+      //     }
+      //
+      //     if (pieceNv && m_prefabPieceDataItems.TryGetValue(pieceNv.gameObject, out var prefabPieceData))
+      //     {
+      //       if (prefabPieceData.IsBed)
+      //       {
+      //         UpdatePieceZdoPosition(zdo, vehiclePosition, prefabPieceData.IsBed);
+      //         continue;
+      //       }
+      //       if (prefabPieceData.IsSwivelChild && TrySetSwivelPiecePosition(pieceNv))
+      //       {
+      //         continue;
+      //       }
+      //     }
+      //
+      //     SetPrefabWorldPosition(zdo, vehiclePosition);
+      //   }
+      // }
+
+
       foreach (var zdo in pieceToUpdateList)
       {
         if (zdo == null || !zdo.IsValid())
@@ -1792,7 +1825,7 @@
       var currentSector = ZoneSystem.GetZone(m_syncRigidbody.position);
       m_sector = currentSector;
 
-      var shouldUpdate = VehicleGlobalConfig.ForceShipOwnerUpdatePerFrame.Value || zdoSector != m_sector || _nextForcedResyncUpdate >= Time.time;
+      var shouldUpdate = VehicleGlobalConfig.ForceShipOwnerUpdatePerFrame.Value || zdoSector != m_sector || _nextForcedResyncUpdate <= Time.time;
       if (shouldUpdate)
       {
         // Time.time is in seconds.
@@ -2395,6 +2428,8 @@
         return false;
       }
 
+      if (vehiclePiecesController == null || vehiclePiecesController.m_localRigidbody == null) return false;
+
       netView.m_zdo.Set(VehicleZdoVars.TempPieceParentId, vehiclePiecesController.PersistentZdoId);
       netView.m_zdo.Set(VehicleZdoVars.MBPositionHash,
         netView.transform.position - vehiclePiecesController.m_localRigidbody.worldCenterOfMass);
@@ -2739,9 +2774,6 @@
           list = [];
           m_allPieces.Add(id, list);
         }
-
-        // important for preventing a list error if the zdo has already been added
-        if (list.Contains(zdo)) return;
 
         list.Add(zdo);
       }

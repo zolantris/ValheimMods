@@ -210,6 +210,18 @@
     public static float HaulingOffsetLowestPointBuffer = 1f;
     public float distanceMovedSinceHaulTick = 0f;
 
+  #region controls handoff vars
+
+    private Coroutine? _controlHandoffPhysicsRoutine;
+
+    private bool _isControlHandoffInProgress;
+
+    private bool _controlHandoffWasKinematic;
+
+    private const int ControlHandoffSettleFixedFrames = 3;
+
+  #endregion
+
     public AnchorState vehicleAnchorState
     {
       get => _vehicleAnchorState;
@@ -890,6 +902,16 @@
       }
       _hasPower = true;
 
+      if (_isControlHandoffInProgress)
+      {
+        if (!m_body.isKinematic)
+        {
+          m_body.isKinematic = true;
+        }
+
+        return;
+      }
+
       // invalid wheel controller should always reset physics to kinematic and skip current run.
       if (LandMovementController != null && !LandMovementController.IsVehicleReady)
       {
@@ -908,6 +930,14 @@
 
       // if the vehicle has not generated a convex hull collider. We do not want to use physics.
       if (Manager!.PiecesController!.convexHullComponent.convexHullMeshes.Count < 1 || Manager!.PiecesController!.convexHullComponent.convexHullMeshColliders.Count < 1)
+      {
+        m_body.isKinematic = true;
+        return;
+      }
+
+
+      // prevents catastrophic physics update if owner is rebuilding physics
+      if (Manager.PiecesController.isRebuildingVehicle)
       {
         m_body.isKinematic = true;
         return;
@@ -3149,10 +3179,20 @@
       return true;
     }
 
+    // Match the initial full-size custom-sail proxy, including creative vehicles
+    // which synchronize their pieces without calling UpdateSailSize.
+    private float _vanillaSailPosition = 1f;
+
     public void UpdateSailSize(float dt)
     {
       var num = 0f;
       var speed = VehicleSpeed;
+      var vanillaTarget = speed == Ship.Speed.Full
+        ? 1f
+        : speed == Ship.Speed.Half
+          ? 0.5f
+          : 0f;
+      _vanillaSailPosition = Mathf.MoveTowards(_vanillaSailPosition, vanillaTarget, dt);
 
       switch (speed)
       {
@@ -3314,24 +3354,8 @@
           }
         }
 
-        // custom masts do not have sailcloth or sail objects yet.
-        if (mast.m_sailCloth)
-        {
-          if (mast.m_allowSailShrinking)
-          {
-            if (mast.m_sailObject.transform.localScale !=
-                m_sailObject.transform.localScale)
-              mast.m_sailCloth.enabled = false;
-            mast.m_sailObject.transform.localScale =
-              m_sailObject.transform.localScale;
-            mast.m_sailCloth.enabled = true;
-          }
-          else
-          {
-            mast.m_sailObject.transform.localScale = Vector3.one;
-            mast.m_sailCloth.enabled = !mast.m_disableCloth;
-          }
-        }
+        mast.UpdateSail(_vanillaSailPosition,
+          m_sailObject ? m_sailObject.transform.localScale : Vector3.one);
       }
 
       foreach (var rudder in PiecesController.m_rudderPieces
@@ -4008,7 +4032,7 @@
     {
       if (m_nview == null) return;
       CancelDebounceTakeoverControls();
-      m_nview.InvokeRPC(ZRoutedRpc.Everybody, nameof(RPC_RequestControl),
+      m_nview.InvokeRPC(0L, nameof(RPC_RequestControl),
         playerId);
     }
 
@@ -4046,7 +4070,7 @@
       if (!isInBoat) return;
 
       // the previous user could be invalid so always makes the current user valid if so.
-      m_nview.InvokeRPC(ZRoutedRpc.Everybody, nameof(RPC_RequestResponse),
+      m_nview.InvokeRPC(0L, nameof(RPC_RequestResponse),
         true, targetPlayerId, previousUserId);
     }
 
@@ -4563,7 +4587,7 @@
       if (m_nview == null) return;
       if (!m_nview.IsOwner()) m_nview.ClaimOwnership();
       m_nview.GetZDO()?.Set(VehicleZdoVars.VehicleIsTeleporting, isTeleporting);
-      m_nview.InvokeRPC(ZRoutedRpc.Everybody, nameof(RPC_SetIsTeleporting), isTeleporting);
+      m_nview.InvokeRPC(0L, nameof(RPC_SetIsTeleporting), isTeleporting);
     }
 
     internal void RPC_SetIsTeleporting(long sender, bool isTeleporting)
@@ -4769,70 +4793,102 @@
     }
 
     public void OnControlsHandOff(Player? targetPlayer, Player? previousPlayer)
-
     {
-      if (targetPlayer == null || !Manager ||
+      if (targetPlayer == null ||
+          !Manager ||
           PiecesController == null ||
-          m_nview == null || m_nview.m_zdo == null)
+          m_nview == null ||
+          m_nview.m_zdo == null)
+      {
         return;
+      }
 
       var targetPlayerId = targetPlayer.GetPlayerID();
 
       EjectPreviousPlayerFromControls(previousPlayer);
 
-      // start of ownership critical update
+      // Freeze BEFORE changing ownership.
+      BeginControlHandoffPhysics();
+
+      // ------------------------------------------------------------------
+      // Ownership critical update
+      // ------------------------------------------------------------------
 
       var isLocalPlayer = targetPlayer == Player.m_localPlayer;
       var previousUserId = previousPlayer?.GetPlayerID() ?? 0L;
-      // the person controlling the ship should control physics
+
       var playerOwner = targetPlayer.GetOwner();
 
       m_nview.GetZDO().SetOwner(playerOwner);
-      if (previousUserId != targetPlayerId || previousUserId == 0L)
-        m_nview.GetZDO().Set(ZDOVars.s_user, targetPlayerId);
 
-      // end of ownership critical update
+      if (previousUserId != targetPlayerId || previousUserId == 0L)
+      {
+        m_nview.GetZDO().Set(ZDOVars.s_user, targetPlayerId);
+      }
+
+      PiecesController.ForceRebuildBounds();
+
+      // ------------------------------------------------------------------
+      // End ownership critical update
+      // ------------------------------------------------------------------
 
       UpdatePlayerOnShip(targetPlayer);
       UpdateVehicleSpeedThrottle();
 
-      // allows looking through ship while controlling vehicle.
-      VehicleOnboardController.AddOrRemovePlayerBlockingCameraWhileControlling(targetPlayer, true);
-
+      VehicleOnboardController
+        .AddOrRemovePlayerBlockingCameraWhileControlling(targetPlayer, true);
 
       if (PiecesController)
       {
-        VehiclePiecesController.SyncAllPrefabsToVehiclePosition(Manager.PersistentZdoId);
+        VehiclePiecesController.SyncAllPrefabsToVehiclePosition(
+          Manager.PersistentZdoId);
+
         PiecesController.targetController.OnDetectionModeChange();
       }
 
-
       UpdateVehicleRamOwner(targetPlayer, targetPlayerId);
 
-      LoggerProvider.LogDebug("Changing ship owner to " + playerOwner +
-                              $", name: {targetPlayer.GetPlayerName()}");
+      LoggerProvider.LogDebug(
+        "Changing ship owner to " + playerOwner +
+        $", name: {targetPlayer.GetPlayerName()}");
 
       if (VehicleConfigSync != null)
       {
         VehicleConfigSync.SyncVehicleBounds();
       }
+
+      /*
+       * Start the physics settle period here rather than at the end of the method.
+       *
+       * We must still release physics if there is no wheel/attach point below.
+       */
+      StartControlHandoffPhysicsRelease();
+
       if (lastUsedWheelComponent == null) return;
 
-      // local player only.
-      if (isLocalPlayer) targetPlayer.StartDoodadControl(lastUsedWheelComponent);
+      if (isLocalPlayer)
+      {
+        targetPlayer.StartDoodadControl(lastUsedWheelComponent);
+      }
 
       var attachTransform = lastUsedWheelComponent.AttachPoint;
       if (attachTransform == null) return;
 
-      // non-local player too as this will show them controlling the object.
-      targetPlayer.AttachStart(attachTransform, null,
-        false, false,
-        true, m_attachAnimation, detachOffset);
+      targetPlayer.AttachStart(
+        attachTransform,
+        null,
+        false,
+        false,
+        true,
+        m_attachAnimation,
+        detachOffset);
 
       if (Manager != null &&
           lastUsedWheelComponent.wheelTransform != null)
+      {
         Manager.m_controlGuiPos =
           lastUsedWheelComponent.wheelTransform;
+      }
     }
 
     private void EjectPreviousPlayerFromControls(Player? player)
@@ -4980,7 +5036,7 @@
       CancelDebounceTakeoverControls();
       if (m_nview == null) return;
       if (!m_nview.IsValid()) return;
-      m_nview.InvokeRPC(ZRoutedRpc.Everybody, nameof(RPC_ReleaseControl),
+      m_nview.InvokeRPC(0L, nameof(RPC_ReleaseControl),
         player.GetPlayerID());
     }
 
@@ -4990,6 +5046,139 @@
       if (Manager == null) return false;
       return user != 0L && IsPlayerInBoat(user);
     }
+
+
+  #region controllshandoff
+
+    private void BeginControlHandoffPhysics()
+    {
+      if (!m_body) return;
+
+      if (_controlHandoffPhysicsRoutine != null)
+      {
+        StopCoroutine(_controlHandoffPhysicsRoutine);
+        _controlHandoffPhysicsRoutine = null;
+      }
+
+      _isControlHandoffInProgress = true;
+
+      /*
+       * IMPORTANT:
+       *
+       * Do not capture velocity here.
+       *
+       * On the incoming owner this Rigidbody was previously a non-authoritative
+       * network replica. Its linear/angular velocity cannot be trusted as the
+       * vehicle's actual physical velocity.
+       */
+      m_body.isKinematic = true;
+    }
+    private void StartControlHandoffPhysicsRelease()
+    {
+      if (!isActiveAndEnabled)
+      {
+        _isControlHandoffInProgress = false;
+        return;
+      }
+
+      if (_controlHandoffPhysicsRoutine != null)
+      {
+        StopCoroutine(_controlHandoffPhysicsRoutine);
+      }
+
+      _controlHandoffPhysicsRoutine =
+        StartCoroutine(ControlHandoffPhysicsReleaseRoutine());
+    }
+
+    private IEnumerator ControlHandoffPhysicsReleaseRoutine()
+    {
+      /*
+       * Give:
+       *
+       * - ZDO ownership
+       * - ZSyncTransform
+       * - water sampling
+       * - collider transforms
+       *
+       * a few FixedUpdates to settle before allowing physics integration again.
+       *
+       * The vehicle stays exactly where it currently is because the Rigidbody is
+       * kinematic during this period.
+       */
+      for (var i = 0; i < ControlHandoffSettleFixedFrames; i++)
+      {
+        if (!m_body)
+        {
+          _isControlHandoffInProgress = false;
+          _controlHandoffPhysicsRoutine = null;
+          yield break;
+        }
+
+        Physics.SyncTransforms();
+
+        /*
+         * Warm the floatation samples on the new owner while physics is frozen.
+         *
+         * This is important because Floating.GetWaterLevel uses the previous water
+         * samples by ref. A client that was previously not simulating the vehicle
+         * can otherwise become owner and immediately calculate buoyancy using a
+         * different sampling history.
+         */
+        if (m_nview != null &&
+            m_nview.IsOwner() &&
+            !Manager.IsLandVehicle &&
+            FloatCollider != null &&
+            OnboardCollider != null)
+        {
+          _currentShipFloatation = GetShipFloatationObj();
+        }
+
+        yield return new WaitForFixedUpdate();
+      }
+
+      _controlHandoffPhysicsRoutine = null;
+      _isControlHandoffInProgress = false;
+
+      if (!m_body) yield break;
+
+      /*
+       * Do not override a Rigidbody that was already kinematic before the handoff.
+       *
+       * This protects docking/nesting/etc. from a control transfer accidentally
+       * making the body dynamic.
+       */
+      if (_controlHandoffWasKinematic)
+      {
+        m_body.isKinematic = true;
+        yield break;
+      }
+
+      /*
+       * These states independently require the vehicle to stay frozen.
+       * Their normal FixedUpdate paths will determine when it is safe to release.
+       */
+      if (IsTeleporting ||
+          isWaitingForParentVehicleToBeReady ||
+          m_frozenSync is { isFrozen: true })
+      {
+        m_body.isKinematic = true;
+        yield break;
+      }
+
+      m_body.isKinematic = false;
+
+      /*
+       * Ownership affects useGravity, so explicitly reevaluate it after the body
+       * becomes dynamic instead of waiting for some unrelated state change.
+       *
+       * Force UpdateGravity to re-evaluate rather than allowing its cached state
+       * to early-out.
+       */
+      _prevGravity = !m_body.useGravity;
+      UpdateGravity();
+    }
+
+  #endregion
 
     /// <summary>
     /// If moder power is enabled

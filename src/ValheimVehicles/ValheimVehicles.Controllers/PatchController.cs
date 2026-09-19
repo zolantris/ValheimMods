@@ -5,7 +5,6 @@ using HarmonyLib;
 using Jotunn;
 using ValheimVehicles.BepInExConfig;
 using ValheimVehicles.Patches;
-using ValheimVehicles.QuickStartWorld.Patches;
 using ValheimVehicles.ValheimVehicles.Patches;
 using Zolantris.Shared;
 
@@ -52,7 +51,8 @@ public static class PatchController
       typeof(RPCManager_Patches),
       typeof(Humanoid_EquipPatch),
       typeof(Container_Patches),
-      typeof(ZNet_WorldSession_Patches)
+      typeof(ZNet_WorldSession_Patches),
+      typeof(BuildUi_VehicleCategories_Patch)
     );
 
     if (PatchConfig.MineRockPatch.Value)
@@ -62,11 +62,6 @@ public static class PatchController
 
 
     TryPatchDynamicLocations();
-
-#if DEBUG
-    HarmonyHelper.TryPatchAll(_harmonyInstance, typeof(QuickStartWorld_Patch));
-    // HarmonyHelper.TryPatchAll(_harmonyInstance, typeof(ZNetViewInvokeRPCHook));
-#endif
 
 
     HarmonyHelper.TryPatchAll(_harmonyInstance, typeof(GamePause_Patch));

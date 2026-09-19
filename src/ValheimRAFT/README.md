@@ -22,8 +22,8 @@ previews, swap to the beta variant.
 
 ## Video Tutorials
 
-    - [Swivels Visual Tutorial](https://youtu.be/wtnUCGz2zek)
-    - [Vehicle Dock (LandVehicles to WaterVehicle)](https://youtu.be/iJSqmvJZlzo)
+- [Swivels Visual Tutorial](https://youtu.be/wtnUCGz2zek)
+- [Vehicle Dock (LandVehicles to WaterVehicle)](https://youtu.be/iJSqmvJZlzo)
 
 ## Mod Info
 
@@ -94,6 +94,13 @@ source the mod on 12/25/2023.
     * [Power System](#power-system)
 
 <!-- TOC -->
+
+## Compatibility Matrix
+
+| ValheimRAFT Version | Valheim Version                | Compatibility |
+|---------------------|--------------------------------|---------------|
+| `5.0.0+`            | Deep North `1.0.15`            | ✅ Compatible  |
+| `<5.0.0` eg 4.2.2   | Ashlands Update (early access) | ✅ Compatible  |
 
 ## Features
 

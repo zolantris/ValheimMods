@@ -19,21 +19,7 @@
     <PropertyGroup>
         <DisableFastUpToDateCheck>True</DisableFastUpToDateCheck>
     </PropertyGroup>
-
-    <!--  Required for vehicle serialization/storage  -->
-    <ItemGroup>
-        <Reference Include="Newtonsoft.Json" Version="13.0.3">
-            <HintPath>$(SolutionDir)\Dependencies\Newtonsoft.Json.dll</HintPath>
-        </Reference>
-    </ItemGroup>
-
-    <!-- Required for vehicle syncing (lots of players not using bepinex config manager)   -->
-    <ItemGroup>
-        <Reference Include="ServerSync" Version="1.19.0">
-            <HintPath>$(SolutionDir)\Dependencies\ServerSync.dll</HintPath>
-        </Reference>
-    </ItemGroup>
-
+    
     <!-- Automatic publicize game libs -->
     <ItemGroup>
         <PackageReference Include="Krafs.Publicizer" Version="2.3.0">
@@ -55,6 +41,10 @@
         <Reference Include="assembly_valheim">
             <SpecificVersion>False</SpecificVersion>
             <HintPath>$(ManagedDataPath)\assembly_valheim.dll</HintPath>
+            <Private>False</Private>
+        </Reference>
+        <Reference Include="MagicaClothV2">
+            <HintPath>$(ManagedDataPath)\MagicaClothV2.dll</HintPath>
             <Private>False</Private>
         </Reference>
         <Reference Include="SPlatform">

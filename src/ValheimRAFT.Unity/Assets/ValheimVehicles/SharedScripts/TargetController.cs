@@ -201,43 +201,84 @@ namespace ValheimVehicles.SharedScripts
       {
         if (CannonController.Instances.Count > 1000)
         {
-          var colliders = Physics.OverlapSphere(transform.position, CannonControlCenterDiscoveryRadius, LayerHelpers.PieceLayerMask);
+          var colliders = Physics.OverlapSphere(
+            transform.position,
+            CannonControlCenterDiscoveryRadius,
+            LayerHelpers.PieceLayerMask);
 
           foreach (var collider in colliders)
           {
             var piece = collider.GetComponentInParent<Piece>();
             if (piece == null) continue;
-            var isCannonPiece = piece.name.StartsWith(PrefabNames.CannonTurretTier1) || piece.name.StartsWith(PrefabNames.CannonFixedTier1);
+
+            var isCannonPiece =
+              piece.name.StartsWith(PrefabNames.CannonTurretTier1) ||
+              piece.name.StartsWith(PrefabNames.CannonFixedTier1);
+
             if (!isCannonPiece) continue;
 
-            var cannonController = piece.GetComponentInParent<CannonController>();
+            var cannonController =
+              piece.GetComponentInParent<CannonController>();
+
             if (cannonController == null) continue;
+
             AddCannon(cannonController);
           }
         }
         else
         {
-          // Likely most optimal solution for < 1000 cannons in an area.
-          CannonController.Instances.Where(x => x != null && Vector3.Distance(x.transform.position, transform.position) < CannonControlCenterDiscoveryRadius).ToList().ForEach(AddCannon);
+          CannonController.Instances
+            .Where(x =>
+              x != null &&
+              Vector3.Distance(
+                x.transform.position,
+                transform.position) <
+              CannonControlCenterDiscoveryRadius)
+            .ToList()
+            .ForEach(AddCannon);
         }
       }
       else
       {
-        // Dropping the Rigidbody is cleanup for cannon pieces, which carry one of their own.
-        // This component is also added to the vehicle pieces container, whose Rigidbody is the
-        // anchor of the FixedJoint tying the pieces to the movement controller's body. Unity
-        // refuses to delete a Rigidbody a Joint depends on and logs an error for every attempt,
-        // so skip any host whose body is load-bearing for a joint.
-        var rb = GetComponent<Rigidbody>();
-        if (rb && !GetComponent<Joint>())
-        {
-          Destroy(rb);
-        }
+        RemoveOwnedCannonRigidbody();
+
         if (detectionAreaObj)
         {
           Destroy(detectionAreaObj);
         }
       }
+#endif
+    }
+
+    private void RemoveOwnedCannonRigidbody()
+    {
+#if VALHEIM
+      // TargetController also lives on the vehicle pieces controller.
+      // Its Rigidbody is structural and must NEVER be removed here.
+      if (GetComponent<VehiclePiecesController>() != null)
+      {
+        return;
+      }
+
+      // Only cannon objects are allowed through this cleanup path.
+      var cannonController = GetComponent<CannonController>();
+      if (cannonController == null)
+      {
+        return;
+      }
+
+      if (!gameObject.name.StartsWith(PrefabNames.CannonControlCenter) && !gameObject.name.Contains(PrefabNames.CannonFixedTier1))
+      {
+        return;
+      }
+
+      var rb = GetComponent<Rigidbody>();
+      if (rb == null)
+      {
+        return;
+      }
+
+      Destroy(rb);
 #endif
     }
 

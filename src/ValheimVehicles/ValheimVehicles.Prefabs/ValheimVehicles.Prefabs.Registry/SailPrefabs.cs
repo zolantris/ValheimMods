@@ -1,4 +1,4 @@
-using System;
+using Jotunn;
 using Jotunn.Configs;
 using Jotunn.Entities;
 using Jotunn.Managers;
@@ -41,9 +41,8 @@ public class SailPrefabs : RegisterPrefab<SailPrefabs>
 
   private void RegisterVikingMast()
   {
-    var vikingShipMast = LoadValheimAssets.vikingShipPrefab.transform
-      .Find("ship/visual/Mast")
-      .gameObject;
+    var vikingShip = LoadValheimAssets.vikingShipPrefab.GetComponent<Ship>();
+    var vikingShipMast = vikingShip.m_mastObject;
     var vikingShipMastPrefab =
       PrefabManager.Instance.CreateClonedPrefab(PrefabNames.Tier3RaftMastName,
         vikingShipMast);
@@ -66,6 +65,7 @@ public class SailPrefabs : RegisterPrefab<SailPrefabs>
 
     vikingShipMastComponent.m_sailCloth =
       vikingShipMastComponent.m_sailObject.GetComponentInChildren<MagicaCloth2.MagicaCloth>();
+    vikingShipMastComponent.ConfigureVanillaSail(vikingShip);
     vikingShipMastComponent.m_allowSailRotation = true;
     vikingShipMastComponent.m_allowSailShrinking = true;
 
@@ -113,9 +113,8 @@ public class SailPrefabs : RegisterPrefab<SailPrefabs>
 
   private void RegisterDrakkalMast()
   {
-    var drakkalMast = LoadValheimAssets.drakkarPrefab.transform
-      .Find("ship/visual/Mast")
-      .gameObject;
+    var drakkar = LoadValheimAssets.drakkarPrefab.GetComponent<Ship>();
+    var drakkalMast = drakkar.m_mastObject;
 
     var prefab =
       PrefabManager.Instance.CreateClonedPrefab(PrefabNames.Tier4RaftMastName,
@@ -130,10 +129,7 @@ public class SailPrefabs : RegisterPrefab<SailPrefabs>
     PrefabRegistryHelpers.AddNetViewWithPersistence(prefab);
 
     var mastComponent = prefab.AddComponent<MastComponent>();
-    var clothObj = prefab.GetComponentsInChildren<MagicaCloth2.MagicaCloth>()[0];
-    mastComponent.m_sailObject = clothObj.transform.parent.gameObject;
-
-    mastComponent.m_sailCloth = clothObj;
+    mastComponent.ConfigureVanillaSail(drakkar);
     mastComponent.m_allowSailRotation = true;
     mastComponent.m_allowSailShrinking = true;
 
@@ -174,34 +170,59 @@ public class SailPrefabs : RegisterPrefab<SailPrefabs>
 
   private void RegisterCustomSail()
   {
-    var prefab = PrefabManager.Instance.CreateClonedPrefab(
-      PrefabNames.Tier1CustomSailName,
-      LoadValheimVehicleAssets.CustomSail);
+    var prefab =
+      PrefabManager.Instance.CreateClonedPrefab(
+        PrefabNames.Tier1CustomSailName,
+        LoadValheimVehicleAssets.CustomSail);
 
-    var mbSailPrefabPiece = prefab.AddComponent<Piece>();
-    mbSailPrefabPiece.m_name = "$mb_sail";
-    mbSailPrefabPiece.m_description = "$mb_sail_desc";
+    var mbSailPrefabPiece =
+      prefab.AddComponent<Piece>();
+
+    mbSailPrefabPiece.m_name =
+      "$mb_sail";
+
+    mbSailPrefabPiece.m_description =
+      "$mb_sail_desc";
+
     mbSailPrefabPiece.m_placeEffect =
       LoadValheimAssets.woodFloorPiece.m_placeEffect;
 
-    PrefabRegistryHelpers.AddNetViewWithPersistence(prefab);
+    PrefabRegistryHelpers.AddNetViewWithPersistence(
+      prefab);
 
-    var sail = prefab.AddComponent<SailComponent>();
+    /*
+     * Mast first because SailComponent.Awake() needs it.
+     */
+    var mast =
+      prefab.GetOrAddComponent<MastComponent>();
 
-    // this is a tier 1 sail
-    PrefabRegistryHelpers.SetWearNTear(prefab, 1);
-    PrefabRegistryHelpers.FixSnapPoints(prefab);
-
-    // mast should allowSailShrinking
-    var mast = prefab.AddComponent<MastComponent>();
     mast.m_sailObject = prefab;
-    mast.m_sailCloth = sail.m_sailCloth;
     mast.m_allowSailRotation = false;
     mast.m_allowSailShrinking = true;
 
-    PrefabManager.Instance.AddPrefab(prefab);
+    /*
+     * SailComponent.Awake() can now safely initialize both MagicaCloth
+     * and MastComponent linkage.
+     */
+    var sail =
+      prefab.GetOrAddComponent<SailComponent>();
+
+    mast.m_sailCloth =
+      sail.m_sailCloth;
+
+    PrefabRegistryHelpers.SetWearNTear(
+      prefab,
+      1);
+
+    PrefabRegistryHelpers.FixSnapPoints(
+      prefab);
+
+    PrefabManager.Instance.AddPrefab(
+      prefab);
+
     SailCreatorComponent.sailPrefab =
-      PrefabManager.Instance.GetPrefab(PrefabNames.Tier1CustomSailName);
+      PrefabManager.Instance.GetPrefab(
+        PrefabNames.Tier1CustomSailName);
   }
 
   /**
@@ -225,7 +246,7 @@ public class SailPrefabs : RegisterPrefab<SailPrefabs>
     piece.m_name = pieceName;
     piece.m_description = $"$mb_sail_{sailCount}_desc";
     piece.m_placeEffect = LoadValheimAssets.woodFloorPiece.m_placeEffect;
-
+    piece.m_canRotate = false; // rotating causes weird behaviors for the points.
 
     var sailCreatorComponent = prefab.AddComponent<SailCreatorComponent>();
     sailCreatorComponent.m_sailSize = sailCount;
@@ -291,10 +312,7 @@ public class SailPrefabs : RegisterPrefab<SailPrefabs>
     var mastComponent = mbRaftMastPrefab.AddComponent<MastComponent>();
     mastComponent.m_allowSailRotation = true;
     mastComponent.m_allowSailShrinking = true;
-    mastComponent.m_sailObject =
-      mbRaftMastPrefab.transform.Find(ValheimSailName).gameObject;
-    mastComponent.m_sailCloth =
-      mastComponent.m_sailObject.GetComponentInChildren<MagicaCloth2.MagicaCloth>();
+    mastComponent.ConfigureVanillaSail(LoadValheimAssets.vanillaRaftPrefab.GetComponent<Ship>());
 
     PrefabRegistryHelpers.SetWearNTear(mbRaftMastPrefab);
 
@@ -333,7 +351,8 @@ public class SailPrefabs : RegisterPrefab<SailPrefabs>
   public void RegisterKarveMast()
   {
     var karve = PrefabManager.Instance.GetPrefab("Karve");
-    var karveMast = karve.transform.Find("ship/mast").gameObject;
+    var karveShip = karve.GetComponent<Ship>();
+    var karveMast = karveShip.m_mastObject;
     var mbKarveMastPrefab =
       PrefabManager.Instance.CreateClonedPrefab(PrefabNames.Tier2RaftMastName,
         karveMast);
@@ -349,9 +368,7 @@ public class SailPrefabs : RegisterPrefab<SailPrefabs>
 
     // tweak the mast
     var mast = mbKarveMastPrefab.AddComponent<MastComponent>();
-    mast.m_sailObject =
-      mbKarveMastPrefab.transform.Find(ValheimSailName).gameObject;
-    mast.m_sailCloth = mast.m_sailObject.GetComponentInChildren<MagicaCloth2.MagicaCloth>();
+    mast.ConfigureVanillaSail(karveShip);
     mast.m_allowSailShrinking = true;
     mast.m_allowSailRotation = true;
 

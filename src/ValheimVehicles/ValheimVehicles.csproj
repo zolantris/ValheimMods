@@ -19,15 +19,15 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <None Remove="$(SolutionDir)AssetBundle\valheim-vehicles"/>
-        <None Remove="$(SolutionDir)AssetBundle\valheim-vehicles.manifest"/>
+        <EmbeddedResource Include="$(SolutionDir)AssetBundle\valheim-vehicles" LogicalName="valheim-vehicles"/>
+        <EmbeddedResource Include="$(SolutionDir)AssetBundle\valheim-vehicles.manifest" LogicalName="valheim-vehicles.manifest"/>
+        <!--        <None Remove="$(SolutionDir)AssetBundle\valheim-vehicles"/>-->
+        <!--        <None Remove="$(SolutionDir)AssetBundle\valheim-vehicles.manifest"/>-->
 
         <!--  TODO to embed assets, but this needs a refactor and inflates dll size, not worth adding now      -->
         <!--        <EmbeddedResource Include="Assets\**"/>-->
         <!--        <EmbeddedResource Include="$(SolutionDir)AssetBundle\AssetBundle" LogicalName="AssetBundle"/>-->
         <!--        <EmbeddedResource Include="$(SolutionDir)AssetBundle\AssetBundle.manifest" LogicalName="AssetBundle.manifest"/>-->
-        <EmbeddedResource Include="$(SolutionDir)AssetBundle\valheim-vehicles" LogicalName="valheim-vehicles"/>
-        <EmbeddedResource Include="$(SolutionDir)AssetBundle\valheim-vehicles.manifest" LogicalName="valheim-vehicles.manifest"/>
         <!--        TODO import assets this way-->
         <!--        <EmbeddedResources Include="Assets\**.png" /> -->
     </ItemGroup>
@@ -51,6 +51,21 @@
         <ProjectReference Include="..\DynamicLocations\DynamicLocations.csproj"/>
         <ProjectReference Include="..\ZdoWatcher\ZdoWatcher.csproj"/>
     </ItemGroup>
+
+    <!-- Required for vehicle syncing (lots of players not using bepinex config manager)   -->
+    <ItemGroup>
+        <Reference Include="ServerSync" Version="1.20.0">
+            <HintPath>$(SolutionDir)\Dependencies\ServerSync.dll</HintPath>
+        </Reference>
+    </ItemGroup>
+
+    <!--  Required for vehicle serialization/storage  -->
+    <ItemGroup>
+        <Reference Include="Newtonsoft.Json" Version="13.0.3">
+            <HintPath>$(SolutionDir)\Dependencies\Newtonsoft.Json.dll</HintPath>
+        </Reference>
+    </ItemGroup>
+
     <ItemGroup>
         <PackageReference Update="Krafs.Publicizer" Version="2.3.0">
             <PrivateAssets>all</PrivateAssets>

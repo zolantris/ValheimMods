@@ -31,7 +31,7 @@ public class RPCEntity(
 
   public void Send(ZPackage pkg, bool canRunOnClient = true)
   {
-    Send(ZRoutedRpc.Everybody, pkg, canRunOnClient);
+    Send(0L, pkg, canRunOnClient);
   }
 
   // internal void RegisterNearbyOnlyRPC()
