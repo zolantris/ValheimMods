@@ -6,7 +6,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("zolantris")]
 [assembly: AssemblyProduct("ValheimScalability")]
-[assembly: AssemblyCopyright("Copyright © 2024, GNU-v3 licensed")]
+[assembly: AssemblyCopyright("Copyright © 2026, GNU-v3 licensed")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
