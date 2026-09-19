@@ -2757,7 +2757,18 @@
       var surfaceArea = speedCapMultiplier * area;
       var maxSpeed = Mathf.Min(PhysicsConfig.MaxLinearVelocity.Value, PropulsionConfig.MaxSailSpeed.Value);
       var massToPush = Mathf.Max(1f, TotalMass * mpFactor);
-      var lerpedSailForce = Mathf.Lerp(0f, maxSpeed, Mathf.Clamp01(surfaceArea / massToPush));
+
+      // EXPERIMENTAL: surfaceArea/massToPush alone saturates to Clamp01=1 (maxSpeed) with very
+      // few sails, because sail area and ship mass tend to scale together as ships grow, so the
+      // ratio barely changes between a small ship and a much larger one - it never produces real
+      // diminishing returns, just a near-linear ramp straight to the MaxSailSpeed failsafe. This
+      // drives the curve off raw area instead (massToPush is a softer sqrt dampener here) and
+      // saturates asymptotically toward the separate, tunable SailForceRealismCap.
+      var effectiveArea = surfaceArea / Mathf.Sqrt(massToPush);
+      var saturationConstant = Mathf.Max(0.01f, PropulsionConfig.SailForceSaturationConstant.Value);
+      var t = effectiveArea / (effectiveArea + saturationConstant);
+      var realismCap = PropulsionConfig.SailForceRealismCap.Value;
+      var lerpedSailForce = Mathf.Min(maxSpeed, Mathf.Lerp(0f, realismCap, t));
       return lerpedSailForce;
     }
 
