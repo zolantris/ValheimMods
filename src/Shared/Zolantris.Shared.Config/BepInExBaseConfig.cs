@@ -35,7 +35,8 @@ namespace Zolantris.Shared
 
       if (!ShouldSkipSyncOnBind)
       {
-        ServerSyncConfigSyncUtil.RegisterAllConfigEntries(configSync, typeof(TSelf));
+        // serversync 1.20 even though it works for valheimraft 1.0.0 does not work for on ConfigSettingsChanged and will error out. Disabling it now.
+        // ServerSyncConfigSyncUtil.RegisterAllConfigEntries(configSync, typeof(TSelf));
       }
       ShouldSkipSyncOnBind = false;
     }
