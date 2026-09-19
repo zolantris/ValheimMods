@@ -77,6 +77,9 @@
       internal bool _shouldUpdatePieceColliders;
       internal bool _shouldUpdateVehicleColliders;
 
+      // boolean for detecting bounds rebuilds so owner can be guarded.
+      internal bool isRebuildingVehicle = false;
+
       public virtual bool IsInitialPieceActivationComplete
       {
         get;
@@ -269,6 +272,14 @@
         _rebuildBoundsRoutineInstance = StartCoroutine(RebuildBoundsThrottleRoutine(() => RebuildBounds()));
       }
 
+      private void CompleteSuccessfulBoundsRebuild()
+      {
+        _lastRebuildPieceRevision = _lastPieceRevision;
+        _lastRebuildItemCount = m_prefabPieceDataItems.Count;
+
+        isRebuildingVehicle = false;
+      }
+
       /// <summary>
       /// - This RebuildBounds must be called within the override if overridden. 
       /// - Additional logic is implemented in the VehiclePiecesController
@@ -278,6 +289,8 @@
       {
         _rebuildBoundsRoutineInstance = null;
         if (!isActiveAndEnabled) return;
+
+        isRebuildingVehicle = true;
 
         _shouldUpdateVehicleColliders = true;
         _lastRebuildTime = Time.fixedTime;
@@ -290,8 +303,6 @@
 
         // always update them for now until we can get smarter with convex collider detecting which ones have been added if any.
         _shouldUpdateVehicleColliders = true;
-
-        _lastRebuildPieceRevision = _lastPieceRevision;
 
         TryGenerateConvexHull(clusterThreshold, OnConvexHullGenerated);
       }
@@ -326,12 +337,15 @@
             }
 
             FinalizeBoundsGenerationAfterShift();
+
+            CompleteSuccessfulBoundsRebuild();
           });
 
           return;
         }
 
         FinalizeBoundsGenerationAfterShift();
+        CompleteSuccessfulBoundsRebuild();
       }
 
       protected virtual Vector3 GetDesiredLocalOriginShift(Bounds bounds)
@@ -581,7 +595,7 @@
       /// 
       /// <param name="maxClusters"></param>
       /// <param name="callback"></param>
-      public void GenerateConvexHullOnMainThread(float maxClusters, Action<bool> callback)
+      public void GenerateConvexHullOnMainThread(float maxClusters, Action<bool>? callback)
       {
         verts.Clear();
         tris.Clear();
