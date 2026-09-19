@@ -25,17 +25,12 @@ public sealed class SectorMeshClusterController : MonoBehaviour
   private int _cellDivisions;
   private float _zoneSize;
   private float _cellSize;
+  private float _nextDestroyedRootCleanupTime;
 
   public Vector2s Sector => _sector;
 
-  public bool HasRegisteredObjects
-  {
-    get
-    {
-      CleanupDestroyedRoots();
-      return _rootToCell.Count > 0;
-    }
-  }
+  public bool HasRegisteredObjects =>
+    _rootToCell.Count > 0;
 
   public void Initialize(Vector2s sector)
   {
@@ -196,11 +191,9 @@ public sealed class SectorMeshClusterController : MonoBehaviour
       Time.unscaledTime +
       ValheimScalabilityConfig.DamageCooldown);
 
-    SetOptimizedPresentation(
+    TransitionPresentation(
       cell,
       OptimizedPresentation.None);
-
-    RestoreOriginalRenderers(cell);
 
     return true;
   }
@@ -210,7 +203,7 @@ public sealed class SectorMeshClusterController : MonoBehaviour
     Camera camera)
   {
     var mode =
-      ValheimScalabilityConfig.PresentationMode;
+      ValheimScalabilityConfig.Mode;
 
     Plane[] cameraPlanes = null;
 
@@ -302,6 +295,10 @@ public sealed class SectorMeshClusterController : MonoBehaviour
       }
 
       RestoreOriginalRenderers(cell);
+
+      cell.CurrentPresentation =
+        OptimizedPresentation.Uninitialized;
+
       DestroyOptimizedRepresentations(cell);
     }
 
@@ -336,23 +333,37 @@ public sealed class SectorMeshClusterController : MonoBehaviour
       return;
     }
 
-    CleanupDestroyedRoots();
+    if (Time.unscaledTime >= _nextDestroyedRootCleanupTime)
+    {
+      _nextDestroyedRootCleanupTime =
+        Time.unscaledTime + 2.0f;
+
+      CleanupDestroyedRoots();
+    }
 
     foreach (var cell in _cells.Values)
     {
-      if (!ValheimScalabilityConfig.IsSectorClusteringEnabled)
+      if (ValheimScalabilityConfig.Mode ==
+          ClusterPresentationMode.Off)
       {
-        SetOptimizedPresentation(
-          cell,
-          OptimizedPresentation.None);
+        if (cell.CurrentPresentation !=
+            OptimizedPresentation.None)
+        {
+          TransitionPresentation(
+            cell,
+            OptimizedPresentation.None);
+        }
 
-        RestoreOriginalRenderers(cell);
         continue;
       }
 
       if (cell.RegisteredRoots.Count == 0)
       {
         RestoreOriginalRenderers(cell);
+
+        cell.CurrentPresentation =
+          OptimizedPresentation.Uninitialized;
+
         DestroyOptimizedRepresentations(cell);
 
         cell.ClusterBuilt = false;
@@ -376,7 +387,9 @@ public sealed class SectorMeshClusterController : MonoBehaviour
   /// </summary>
   private void LateUpdate()
   {
-    if (!ValheimScalabilityConfig.IsSectorClusteringEnabled)
+    if (ValheimScalabilityConfig.Mode ==
+          ClusterPresentationMode.Off ||
+        !ValheimScalabilityConfig.IsGpuInstancingEnabled)
     {
       return;
     }
@@ -424,15 +437,15 @@ public sealed class SectorMeshClusterController : MonoBehaviour
       return false;
     }
 
-    if (ValheimScalabilityConfig.PresentationMode ==
-        ClusterPresentationMode.OriginalsOnly)
+    if (ValheimScalabilityConfig.Mode ==
+        ClusterPresentationMode.Off)
     {
       return false;
     }
 
     // Avoid spending rebuild time on a cell whose originals are intentionally
     // being shown to the local player. It will rebuild after the player leaves.
-    if (ValheimScalabilityConfig.PresentationMode ==
+    if (ValheimScalabilityConfig.Mode ==
           ClusterPresentationMode.Adaptive &&
         cell.NearLocalPlayer &&
         cell.VisibleToLocalPlayer)
@@ -446,8 +459,8 @@ public sealed class SectorMeshClusterController : MonoBehaviour
   private bool ShouldForceOriginals(
     ClusterCellState cell)
   {
-    if (ValheimScalabilityConfig.PresentationMode ==
-        ClusterPresentationMode.OriginalsOnly)
+    if (ValheimScalabilityConfig.Mode ==
+        ClusterPresentationMode.Off)
     {
       return true;
     }
@@ -465,78 +478,105 @@ public sealed class SectorMeshClusterController : MonoBehaviour
   private void ApplyPresentation(
     ClusterCellState cell)
   {
-    if (!ValheimScalabilityConfig.IsSectorClusteringEnabled ||
-        !cell.ClusterBuilt)
-    {
-      SetOptimizedPresentation(
-        cell,
-        OptimizedPresentation.None);
+    var desired =
+      DeterminePresentation(cell);
 
-      RestoreOriginalRenderers(cell);
+    if (cell.CurrentPresentation == desired)
+    {
       return;
     }
 
-    if (ShouldForceOriginals(cell))
+    TransitionPresentation(
+      cell,
+      desired);
+  }
+
+  private OptimizedPresentation DeterminePresentation(
+    ClusterCellState cell)
+  {
+    if (ValheimScalabilityConfig.Mode ==
+          ClusterPresentationMode.Off ||
+        !cell.ClusterBuilt ||
+        ShouldForceOriginals(cell))
     {
-      SetOptimizedPresentation(
-        cell,
-        OptimizedPresentation.None);
-
-      RestoreOriginalRenderers(cell);
-      return;
-    }
-
-    var mode =
-      ValheimScalabilityConfig.PresentationMode;
-
-    if (mode == ClusterPresentationMode.OriginalsOnly)
-    {
-      SetOptimizedPresentation(
-        cell,
-        OptimizedPresentation.None);
-
-      RestoreOriginalRenderers(cell);
-      return;
+      return OptimizedPresentation.None;
     }
 
     var adaptiveNear =
-      mode == ClusterPresentationMode.Adaptive &&
+      ValheimScalabilityConfig.Mode ==
+        ClusterPresentationMode.Adaptive &&
       cell.NearLocalPlayer &&
       cell.VisibleToLocalPlayer;
 
     if (!adaptiveNear)
     {
-      RestoreOriginalRenderers(cell);
-
-      SetOptimizedPresentation(
-        cell,
-        OptimizedPresentation.All);
-
-      HideSourceRenderers(
-        cell,
-        null);
-
-      return;
+      return OptimizedPresentation.All;
     }
 
-    RestoreOriginalRenderers(cell);
+    return ValheimScalabilityConfig.KeepPieceLayerClusteredNearPlayer
+      ? OptimizedPresentation.PieceLayerOnly
+      : OptimizedPresentation.None;
+  }
 
-    if (!ValheimScalabilityConfig.KeepPieceLayerClusteredNearPlayer)
+  /// <summary>
+  /// Renderer.enabled changes are expensive when repeated across thousands of pieces.
+  /// Only perform them when the cell actually changes presentation state.
+  /// </summary>
+  private void TransitionPresentation(
+    ClusterCellState cell,
+    OptimizedPresentation desired)
+  {
+    // Restore only when leaving/changing an optimized presentation.
+    // Never restore+hide the same renderer every maintenance tick.
+    if (cell.CurrentPresentation != OptimizedPresentation.None)
     {
-      SetOptimizedPresentation(
-        cell,
-        OptimizedPresentation.None);
-
-      return;
+      RestoreOriginalRenderers(cell);
     }
 
     SetOptimizedPresentation(
       cell,
-      OptimizedPresentation.PieceLayerOnly);
+      desired);
 
-    HideSourceRenderers(
-      cell,
-      SectorMeshClusterSettings.PieceLayer);
+    if (desired == OptimizedPresentation.All)
+    {
+      HideSourceRenderers(
+        cell,
+        null);
+    }
+    else if (desired ==
+             OptimizedPresentation.PieceLayerOnly)
+    {
+      HideSourceRenderers(
+        cell,
+        SectorMeshClusterSettings.PieceLayer);
+    }
+    else
+    {
+      RestoreOriginalRenderers(cell);
+    }
+
+    cell.CurrentPresentation =
+      desired;
+
+    if (ValheimScalabilityConfig.IsBatchDiagnosticsEnabled)
+    {
+      Debug.Log(
+        $"[ValheimScalability] Presentation sector={_sector.x},{_sector.y} cell={cell.Index} -> {desired}; roots={cell.RegisteredRoots.Count}; optimizedSources={cell.SourceRenderersByRoot.Count}; hiddenRenderers={CountHiddenRenderers(cell)}; generatedRenderers={cell.GeneratedRenderers.Count}; instancedBatches={cell.InstancedBatches.Count}");
+    }
+  }
+
+  private static int CountHiddenRenderers(
+    ClusterCellState cell)
+  {
+    var count = 0;
+
+    foreach (var renderers in
+             cell.CurrentlyHiddenRenderersByRoot.Values)
+    {
+      count += renderers.Count;
+    }
+
+    return count;
   }
 
   private void BuildCluster(
@@ -547,6 +587,9 @@ public sealed class SectorMeshClusterController : MonoBehaviour
     SetOptimizedPresentation(
       cell,
       OptimizedPresentation.None);
+
+    cell.CurrentPresentation =
+      OptimizedPresentation.Uninitialized;
 
     DestroyOptimizedRepresentations(cell);
 
@@ -680,7 +723,10 @@ public sealed class SectorMeshClusterController : MonoBehaviour
                 key,
                 out var bucket))
           {
-            bucket = new CombinedBucket();
+            bucket =
+              new CombinedBucket(
+                material);
+
             combinedBuckets.Add(
               key,
               bucket);
@@ -970,7 +1016,7 @@ public sealed class SectorMeshClusterController : MonoBehaviour
 
     foreach (var pair in buckets)
     {
-      if (pair.Key.Material &&
+      if (pair.Value.Material &&
           pair.Value.Instances.Count > 0)
       {
         ++count;
@@ -1009,16 +1055,25 @@ public sealed class SectorMeshClusterController : MonoBehaviour
       var key = pair.Key;
       var bucket = pair.Value;
 
-      if (!key.Material ||
+      var material =
+        bucket.Material;
+
+      if (!material ||
           bucket.Instances.Count == 0)
       {
         continue;
       }
 
+      if (ValheimScalabilityConfig.IsBatchDiagnosticsEnabled)
+      {
+        Debug.Log(
+          $"[ValheimScalability] Combined batch sector={_sector.x},{_sector.y} cell={cell.Index} material='{material.name}' materialKey={key.MaterialIdentity} instances={bucket.Instances.Count} layer={key.Layer} lightmap={key.LightmapIndex} shadows={key.ShadowCastingMode} receiveShadows={key.ReceiveShadows} lightProbes={key.LightProbeUsage} reflectionProbes={key.ReflectionProbeUsage} renderingLayerMask={key.RenderingLayerMask} sortingLayer={key.SortingLayerId} sortingOrder={key.SortingOrder}");
+      }
+
       var combinedMesh = new Mesh
       {
         name =
-          $"ValheimScalability_Sector_{_sector.x}_{_sector.y}_Cell_{cell.Index}_{key.Material.name}",
+          $"ValheimScalability_Sector_{_sector.x}_{_sector.y}_Cell_{cell.Index}_{material.name}",
         indexFormat = IndexFormat.UInt32
       };
 
@@ -1035,7 +1090,7 @@ public sealed class SectorMeshClusterController : MonoBehaviour
       combinedMesh.RecalculateBounds();
 
       var meshObject = new GameObject(
-        $"Combined_{_sector.x}_{_sector.y}_Cell_{cell.Index}_{key.Material.name}");
+        $"Combined_{_sector.x}_{_sector.y}_Cell_{cell.Index}_{material.name}_x{bucket.Instances.Count}");
 
       meshObject.layer =
         key.Layer;
@@ -1063,7 +1118,7 @@ public sealed class SectorMeshClusterController : MonoBehaviour
         meshObject.AddComponent<MeshRenderer>();
 
       meshRenderer.sharedMaterial =
-        key.Material;
+        material;
 
       meshRenderer.shadowCastingMode =
         key.ShadowCastingMode;
@@ -1145,11 +1200,9 @@ public sealed class SectorMeshClusterController : MonoBehaviour
     InstancedMaterialCache.MarkUnsupported(
       sourceMaterial);
 
-    SetOptimizedPresentation(
+    TransitionPresentation(
       cell,
       OptimizedPresentation.None);
-
-    RestoreOriginalRenderers(cell);
 
     cell.Dirty = true;
     cell.ContainsStaleGeometry = true;
@@ -1208,11 +1261,9 @@ public sealed class SectorMeshClusterController : MonoBehaviour
       return;
     }
 
-    SetOptimizedPresentation(
+    TransitionPresentation(
       cell,
       OptimizedPresentation.None);
-
-    RestoreOriginalRenderers(cell);
   }
 
   private void RefreshCellDimensions()
@@ -1223,10 +1274,14 @@ public sealed class SectorMeshClusterController : MonoBehaviour
         : 64f;
 
     _cellDivisions =
-      Mathf.Clamp(
-        ValheimScalabilityConfig.CellDivisions,
-        1,
-        8);
+      ValheimScalabilityConfig.Mode ==
+        ClusterPresentationMode.FullCluster &&
+      ValheimScalabilityConfig.UseSingleCellInFullCluster
+        ? 1
+        : Mathf.Clamp(
+          ValheimScalabilityConfig.CellDivisions,
+          1,
+          8);
 
     _cellSize =
       _zoneSize /
@@ -1750,6 +1805,9 @@ public sealed class SectorMeshClusterController : MonoBehaviour
         OptimizedPresentation.None);
 
       RestoreOriginalRenderers(cell);
+
+      cell.CurrentPresentation =
+        OptimizedPresentation.Uninitialized;
     }
   }
 
@@ -1768,6 +1826,7 @@ public sealed class SectorMeshClusterController : MonoBehaviour
 
   private enum OptimizedPresentation
   {
+    Uninitialized = -1,
     None = 0,
     All = 1,
     PieceLayerOnly = 2
@@ -1816,6 +1875,10 @@ public sealed class SectorMeshClusterController : MonoBehaviour
       InstancedPresentation =
         OptimizedPresentation.None;
 
+    public OptimizedPresentation
+      CurrentPresentation =
+        OptimizedPresentation.Uninitialized;
+
     public ClusterCellState(
       int index,
       Bounds worldBounds,
@@ -1843,8 +1906,16 @@ public sealed class SectorMeshClusterController : MonoBehaviour
 
   private sealed class CombinedBucket
   {
+    public readonly Material Material;
+
     public readonly List<CombineInstance>
       Instances = new();
+
+    public CombinedBucket(
+      Material material)
+    {
+      Material = material;
+    }
   }
 
   private sealed class InstancedBucket
@@ -1856,7 +1927,7 @@ public sealed class SectorMeshClusterController : MonoBehaviour
   private readonly struct CombinedBucketKey :
     IEquatable<CombinedBucketKey>
   {
-    public readonly Material Material;
+    public readonly MaterialBatchIdentity MaterialIdentity;
     public readonly int Layer;
     public readonly int LightmapIndex;
     public readonly ShadowCastingMode ShadowCastingMode;
@@ -1879,7 +1950,9 @@ public sealed class SectorMeshClusterController : MonoBehaviour
       int sortingLayerId,
       int sortingOrder)
     {
-      Material = material;
+      MaterialIdentity =
+        MaterialBatchIdentity.From(material);
+
       Layer = layer;
       LightmapIndex = lightmapIndex;
       ShadowCastingMode = shadowCastingMode;
@@ -1894,7 +1967,7 @@ public sealed class SectorMeshClusterController : MonoBehaviour
     public bool Equals(
       CombinedBucketKey other)
     {
-      return Material == other.Material &&
+      return MaterialIdentity.Equals(other.MaterialIdentity) &&
              Layer == other.Layer &&
              LightmapIndex == other.LightmapIndex &&
              ShadowCastingMode == other.ShadowCastingMode &&
@@ -1918,9 +1991,7 @@ public sealed class SectorMeshClusterController : MonoBehaviour
       unchecked
       {
         var hash =
-          Material
-            ? Material.GetInstanceID()
-            : 0;
+          MaterialIdentity.GetHashCode();
 
         hash =
           (hash * 397) ^

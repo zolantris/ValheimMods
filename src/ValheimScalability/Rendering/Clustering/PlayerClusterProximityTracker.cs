@@ -41,7 +41,9 @@ public sealed class PlayerClusterProximityTracker : MonoBehaviour
            _player)
     {
       if (Player.m_localPlayer == _player &&
-          !Application.isBatchMode)
+          !Application.isBatchMode &&
+          ValheimScalabilityConfig.Mode ==
+            ClusterPresentationMode.Adaptive)
       {
         SectorMeshClusterManager
           .EnsureAttached()?

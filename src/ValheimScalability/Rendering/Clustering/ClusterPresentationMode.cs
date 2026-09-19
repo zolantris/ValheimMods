@@ -1,27 +1,28 @@
 namespace ValheimScalability.Rendering.Clustering;
 
 /// <summary>
-/// Controls how player proximity affects generated sector cluster meshes.
+/// Controls how sector/cell optimized rendering is presented.
 /// Damage/stale-geometry safety still takes precedence over every mode.
 /// </summary>
 public enum ClusterPresentationMode
 {
   /// <summary>
-  /// Nearby cluster cells restore original renderers.
-  /// Distant cells use generated cluster meshes.
+  /// Do not build or present optimized cluster rendering.
+  /// Original renderers remain active.
+  /// Registration remains alive so the mode can be changed at runtime.
   /// </summary>
-  Adaptive = 0,
+  Off = 0,
 
   /// <summary>
   /// Player proximity never restores originals.
-  /// Useful for testing visual/performance behavior and for very large builds.
+  /// Useful for maximum rendering optimization and large builds.
   /// Damage/stale geometry can still temporarily restore originals until rebuilt.
   /// </summary>
   FullCluster = 1,
 
   /// <summary>
-  /// Never present generated cluster meshes.
-  /// Registration remains active so the mode can be changed at runtime.
+  /// Nearby cluster cells restore original renderers.
+  /// Distant cells use optimized rendering.
   /// </summary>
-  OriginalsOnly = 2
+  Adaptive = 2
 }

@@ -41,6 +41,8 @@
     <PropertyGroup Label="Build Marker Paths">
         <ValheimRAFTBuildReadyMarker>$(BuildReadyDir)ValheimRAFT.ready</ValheimRAFTBuildReadyMarker>
         <EldritchValheimBuildReadyMarker>$(BuildReadyDir)EldritchValheim.ready</EldritchValheimBuildReadyMarker>
+        <ValheimScalabilityBuildReadyMarker>$(BuildReadyDir)ValheimScalability.ready</ValheimScalabilityBuildReadyMarker>
+
 
         <!--        <DidBuildValheimRAFT>false</DidBuildValheimRAFT>-->
         <!--        <DidBuildEldritchValheim>false</DidBuildEldritchValheim>-->
@@ -49,12 +51,14 @@
     <PropertyGroup Label="Resolved Build Participation">
         <DidBuildValheimRAFT Condition="Exists('$(ValheimRAFTBuildReadyMarker)')">true</DidBuildValheimRAFT>
         <DidBuildEldritchValheim Condition="Exists('$(EldritchValheimBuildReadyMarker)')">true</DidBuildEldritchValheim>
+        <DidBuildValheimScalability Condition="Exists('$(ValheimScalabilityBuildReadyMarker)')">true</DidBuildValheimScalability>
     </PropertyGroup>
 
     <PropertyGroup Label="Build Generation Flags">
         <ShouldArchiveValheimRAFT Condition="'$(DidBuildValheimRAFT)' == 'true' And '$(IsReleaseArchive)' == 'true'">true</ShouldArchiveValheimRAFT>
         <ShouldArchiveValheimRAFTBeta Condition="'$(DidBuildValheimRAFT)' == 'true' And '$(IsReleaseBetaArchive)' == 'true'">true</ShouldArchiveValheimRAFTBeta>
         <ShouldArchiveEldritch Condition="'$(DidBuildEldritchValheim)' == 'true' And '$(IsReleaseArchive)' == 'true'">true</ShouldArchiveEldritch>
+        <ShouldArchiveValheimScalability Condition="'$(DidBuildValheimScalability)' == 'true' And '$(IsReleaseArchive)' == 'true'">true</ShouldArchiveValheimScalability>
     </PropertyGroup>
 
     <Target Name="LogArchiveConfig Vars" AfterTargets="Build" KeepDuplicateOutputs="false">
@@ -103,6 +107,15 @@
         />
         <Exec
                 Command="dotnet &quot;$(ModSyncDll)&quot; generateArchive --targets=valheimraft-release-nexus --env-release=true --override-version=$(ValheimRAFTVersion)"
+                WorkingDirectory="$(SolutionDir)"
+                IgnoreExitCode="false"
+        />
+    </Target>
+
+    <Import Project="$(SolutionDir)build\valheimscalability_version.props"/>
+    <Target KeepDuplicateOutputs="false" Name="Generate_Mod_Archive_ValheimScalability" AfterTargets="RunPostInstaller" Condition="'$(ShouldArchiveValheimScalability)' == 'true'">
+        <Exec
+                Command="dotnet &quot;$(ModSyncDll)&quot; generateArchive --targets=valheimscalability-release --env-release=true --override-version=$(ValheimScalabilityVersion)"
                 WorkingDirectory="$(SolutionDir)"
                 IgnoreExitCode="false"
         />

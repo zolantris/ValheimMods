@@ -18,13 +18,14 @@ public static class ValheimScalabilityConfig
   public static bool IsBound => _isBound;
 
   // Core / presentation.
-  public static ConfigEntry<bool> SectorClusteringEnabled { get; private set; } = null!;
-  public static ConfigEntry<ClusterPresentationMode> SectorPresentationMode { get; private set; } = null!;
+  public static ConfigEntry<ClusterPresentationMode> ClusterRenderingMode { get; private set; } = null!;
   public static ConfigEntry<int> SectorCellDivisions { get; private set; } = null!;
   public static ConfigEntry<float> PlayerUnclusterRadius { get; private set; } = null!;
   public static ConfigEntry<float> PlayerProximityPollInterval { get; private set; } = null!;
   public static ConfigEntry<bool> RequireCameraVisibilityToUncluster { get; private set; } = null!;
   public static ConfigEntry<bool> AlwaysClusterPieceLayerNearPlayer { get; private set; } = null!;
+  public static ConfigEntry<bool> FullClusterUsesSingleCellPerSector { get; private set; } = null!;
+  public static ConfigEntry<bool> LogBatchDiagnostics { get; private set; } = null!;
 
   // Lifecycle.
   public static ConfigEntry<float> SectorMaintenanceInterval { get; private set; } = null!;
@@ -57,11 +58,8 @@ public static class ValheimScalabilityConfig
   public static ConfigEntry<string> InstancedCandidateRegexList { get; private set; } = null!;
   public static ConfigEntry<string> WindShaderPropertyNames { get; private set; } = null!;
 
-  public static bool IsSectorClusteringEnabled =>
-    SectorClusteringEnabled?.Value ?? true;
-
-  public static ClusterPresentationMode PresentationMode =>
-    SectorPresentationMode?.Value ?? ClusterPresentationMode.Adaptive;
+  public static ClusterPresentationMode Mode =>
+    ClusterRenderingMode?.Value ?? ClusterPresentationMode.Adaptive;
 
   public static int CellDivisions =>
     SectorCellDivisions?.Value ?? 4;
@@ -77,6 +75,12 @@ public static class ValheimScalabilityConfig
 
   public static bool KeepPieceLayerClusteredNearPlayer =>
     AlwaysClusterPieceLayerNearPlayer?.Value ?? false;
+
+  public static bool UseSingleCellInFullCluster =>
+    FullClusterUsesSingleCellPerSector?.Value ?? true;
+
+  public static bool IsBatchDiagnosticsEnabled =>
+    LogBatchDiagnostics?.Value ?? false;
 
   public static float MaintenanceInterval =>
     SectorMaintenanceInterval?.Value ?? 0.20f;
@@ -106,7 +110,7 @@ public static class ValheimScalabilityConfig
     SectorMinimumEstimatedDrawCallSavings?.Value ?? 1;
 
   public static bool IsGpuInstancingEnabled =>
-    EnableGpuInstancing?.Value ?? true;
+    EnableGpuInstancing?.Value ?? false;
 
   public static void Bind(ConfigFile config)
   {
@@ -115,22 +119,16 @@ public static class ValheimScalabilityConfig
       return;
     }
 
-    SectorClusteringEnabled = config.Bind(
+    ClusterRenderingMode = config.Bind(
       SectorClusteringSection,
-      "Enabled",
-      true,
-      "Enables client-side sector/cell optimized rendering. Registration remains active while disabled so it can be toggled at runtime.");
-
-    SectorPresentationMode = config.Bind(
-      SectorClusteringSection,
-      "PresentationMode",
+      "Mode",
       ClusterPresentationMode.Adaptive,
-      "Adaptive restores originals near the local player. FullCluster ignores player proximity. OriginalsOnly never presents generated/instanced batches.");
+      "Off uses original renderers only. Adaptive restores originals near the local player and optimizes distant cells. FullCluster ignores player proximity and uses optimized rendering everywhere it is safe.");
 
     SectorCellDivisions = config.Bind(
       SectorClusteringSection,
       "CellDivisionsPerSector",
-      4,
+      1,
       new ConfigDescription(
         "Subdivides each Valheim sector into independent rendering cells. 4 = 4x4 = 16 cells.",
         new AcceptableValueRange<int>(1, 8)));
@@ -162,6 +160,18 @@ public static class ValheimScalabilityConfig
       "AlwaysClusterPieceLayerNearPlayer",
       false,
       "Experimental. Keeps eligible 'piece' layer batches optimized even when an Adaptive cell is near the player.");
+
+    FullClusterUsesSingleCellPerSector = config.Bind(
+      SectorClusteringSection,
+      "FullClusterUsesSingleCellPerSector",
+      true,
+      "Recommended. FullCluster has no player-proximity reason to subdivide a sector, so use one batch cell per Valheim sector to minimize generated renderers and draw-call fragmentation.");
+
+    LogBatchDiagnostics = config.Bind(
+      SectorClusteringSection,
+      "LogBatchDiagnostics",
+      false,
+      "Logs combined-batch keys/counts when cells rebuild. Useful for diagnosing materials that unexpectedly split into multiple batches.");
 
     SectorMaintenanceInterval = config.Bind(
       SectorClusteringSection,
@@ -297,8 +307,8 @@ public static class ValheimScalabilityConfig
     EnableGpuInstancing = config.Bind(
       InstancingSection,
       "Enabled",
-      true,
-      "Routes vegetation/wind-style renderers to GPU instancing instead of Mesh.CombineMeshes. If instancing is unsupported, those renderers stay original.");
+      false,
+      "Experimental. Routes vegetation/wind-style renderers through manual GPU instancing. Disabled by default because Valheim/Unity may already batch vegetation efficiently; wind candidates stay original when this is off.");
 
     InstancedObjectNameHints = config.Bind(
       InstancingSection,
@@ -333,12 +343,14 @@ public static class ValheimScalabilityConfig
     _isBound = true;
 
     // Parsed filters are cached for build performance.
+    SubscribeRebuildSetting(ClusterRenderingMode);
+    SubscribeRebuildSetting(FullClusterUsesSingleCellPerSector);
     SubscribeRebuildSetting(IncludedLayers);
     SubscribeRebuildSetting(ExcludedLayers);
     SubscribeRebuildSetting(IncludedObjectNames);
     SubscribeRebuildSetting(ExcludedObjectNames);
     SubscribeRebuildSetting(IncludedObjectRegexList);
-    SubscribeRebuildSetting(ExcludedObjectRegexList); 
+    SubscribeRebuildSetting(ExcludedObjectRegexList);
     SubscribeRebuildSetting(ExcludedMaterialNames);
     SubscribeRebuildSetting(ExcludedMaterialRegexList);
     SubscribeRebuildSetting(ExcludedShaderNames);
@@ -348,7 +360,7 @@ public static class ValheimScalabilityConfig
     SubscribeRebuildSetting(InstancedMaterialNameHints);
     SubscribeRebuildSetting(InstancedShaderNameHints);
     SubscribeRebuildSetting(InstancedCandidateRegexList);
-    SubscribeRebuildSetting(WindShaderPropertyNames); 
+    SubscribeRebuildSetting(WindShaderPropertyNames);
     SubscribeRebuildSetting(SectorUseLowestLod);
     SubscribeRebuildSetting(SectorSkipPropertyBlockRenderers);
     SubscribeRebuildSetting(SectorMinimumEstimatedDrawCallSavings);

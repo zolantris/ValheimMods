@@ -215,6 +215,12 @@ public sealed class SectorMeshClusterManager : MonoBehaviour
     Vector3 playerPosition,
     Camera camera)
   {
+    if (ValheimScalabilityConfig.Mode !=
+        ClusterPresentationMode.Adaptive)
+    {
+      return;
+    }
+
     foreach (var controller in
              _sectorControllers.Values)
     {
