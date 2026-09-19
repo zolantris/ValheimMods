@@ -523,6 +523,13 @@ For performance reports, include FPS from the same location with both
 
 ---
 
+## Other recommended performance mods
+
+https://thunderstore.io/c/valheim/p/Skarif/ValheimPerformanceOverhaul/ this mod
+can be used alongside ValheimScalability. It will likely do more to improve FPS
+in low-density areas, while ValheimScalability is focused on high-density
+areas / pieces.
+
 ## GitHub
 
 This project can be found at:
