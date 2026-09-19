@@ -19,17 +19,12 @@ public class ZdoPatch
     ZdoWatchController.Instance.Load(__instance);
   }
 
+  // this prefix must never return false otherwise it interferes with basegame recycling of zdos
+  // SaveClone bail for callbacks is to prevent 
   [HarmonyPatch(typeof(ZDO), nameof(ZDO.Reset))]
   [HarmonyPrefix]
-  private static bool ZDO_Reset(ZDO __instance)
+  private static void ZDO_Reset(ZDO __instance)
   {
-    if (__instance.SaveClone)
-    {
-      return false;
-    }
-
     ZdoWatchController.Instance.Reset(__instance);
-
-    return false;
   }
 }
