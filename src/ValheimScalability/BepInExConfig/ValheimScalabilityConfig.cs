@@ -376,7 +376,7 @@ public static class ValheimScalabilityConfig
     ExcludedObjectNames = config.Bind(
       FilterSection,
       "ExcludedObjectNames",
-      "portal,door,chest,cart,wheel,mechanism,Destruction,Portal_destruction,Destruction_Cube,vehicle_water_mesh,animated,energy_level",
+      "portal,door,chest,cart,wheel,mechanism,Destruction,Portal_destruction,Destruction_Cube,vehicle_water_mesh,animated,energy_level,banner,flag,cloth,tapestry,drape,pennant,sail",
       "Comma-separated case-insensitive object-name substrings that must remain original. Checked against both the registered root and child renderer GameObject names.");
 
     IncludedObjectRegexList = config.Bind(

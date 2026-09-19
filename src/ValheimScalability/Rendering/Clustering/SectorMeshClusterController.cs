@@ -954,7 +954,9 @@ public sealed class SectorMeshClusterController : MonoBehaviour
     // hierarchy. Never merge a renderer whose current ancestors contain a
     // Rigidbody into a world-sector mesh.
     if (DynamicHierarchyBatchExclusion.ShouldExcludeRenderer(
-          renderer))
+          renderer) ||
+        HasUnsafeDynamicRendering(
+          renderer.gameObject))
     {
       return false;
     }
@@ -1319,7 +1321,8 @@ public sealed class SectorMeshClusterController : MonoBehaviour
   {
     if (!root ||
         root.GetComponentInParent<Character>() ||
-        DynamicHierarchyBatchExclusion.ShouldExclude(root))
+        DynamicHierarchyBatchExclusion.ShouldExclude(root) ||
+        HasUnsafeDynamicRendering(root))
     {
       return false;
     }
@@ -1683,6 +1686,49 @@ public sealed class SectorMeshClusterController : MonoBehaviour
         }
       }
     }
+  }
+
+  /// <summary>
+  /// Static sector mesh combining cannot safely represent geometry whose vertices
+  /// or transforms are controlled by cloth, skinning, or animation systems.
+  ///
+  /// This is intentionally conservative. A prefab containing one of these
+  /// components remains on its original renderers rather than risking a missing,
+  /// frozen, or incorrectly deformed banner/sail/cloth object.
+  /// </summary>
+  private static bool HasUnsafeDynamicRendering(
+    GameObject root)
+  {
+    if (!root)
+    {
+      return true;
+    }
+
+    if (root.GetComponentInChildren<Cloth>(
+          true))
+    {
+      return true;
+    }
+
+    if (root.GetComponentInChildren<SkinnedMeshRenderer>(
+          true))
+    {
+      return true;
+    }
+
+    if (root.GetComponentInChildren<Animator>(
+          true))
+    {
+      return true;
+    }
+
+    if (root.GetComponentInChildren<Animation>(
+          true))
+    {
+      return true;
+    }
+
+    return false;
   }
 
   private static bool HasAnimatorBetween(
