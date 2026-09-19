@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="Microsoft.NET.Sdk">
+    <Import Project="$(SolutionDir)build\base.props"/>
+    <Import Project="$(SolutionDir)build\valheim.props"/>
+    <Import Project="$(SolutionDir)build\valheimscalability_version.props"/>
+
+    <Import Project="$(SolutionDir)build\static_version_generator.targets"/>
+
+    <!--  This lets SolutionPostBuild.csproj know if this project has built  -->
+    <Import Project="$(SolutionDir)build\build_ready.targets"/>
+
+    <PropertyGroup>
+        <Nullable>enable</Nullable>
+        <Configurations>Debug;Release;Release Archive;ReleaseBETA Archive;ModSyncOnly</Configurations>
+        <Platforms>AnyCPU</Platforms>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Update="Krafs.Publicizer" Version="2.3.0">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+        </PackageReference>
+    </ItemGroup>
+</Project>
