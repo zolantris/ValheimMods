@@ -32,6 +32,12 @@ public abstract class VehicleZDOWatcherDelegate
 
   public static void OnZdoReset(ZDO zdo)
   {
+    // never delete the zdo when saving which creates a clone of the zdo data during save but doesn't unload / remove the zdo, if the delete happens the onzdoload/deserialize do not call and that zdo is lost and does not restore to the global gamesession vehicle zdo tracker.
+    if (zdo.SaveClone)
+    {
+      return;
+    }
+
     VehiclePiecesController.RemoveZDO(zdo);
     SwivelComponentBridge.RemoveZdo(zdo);
   }
