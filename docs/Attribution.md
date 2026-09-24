@@ -3,12 +3,14 @@
 All contributions and assets required to build and use this mod. This document
 should include anything related to open source content attribution.
 
-| Name        | Contributions                                                                                              |
-|-------------|------------------------------------------------------------------------------------------------------------|
-| Sarcen      | For creating the initial mod and supporting it until v1.4.8!                                               |
-| Zolantris   | For supporting and expanding the Raft Mod since v1.5.0.                                                    |
-| RacerX      | For contributing a stag icon for sails - Looks awesome! And the nautilus assets, (experimental)            |
-| Cl0udstr1fe | For adding the new hull meshes for Rib Side, Prow, and Corners. Completes the ship look with these meshes! |
+| Name        | Contributions                                                                                                             |
+|-------------|---------------------------------------------------------------------------------------------------------------------------|
+| Sarcen      | For creating the initial mod and supporting it until v1.4.8!                                                              |
+| Zolantris   | For supporting and expanding the Raft Mod since v1.5.0.                                                                   |
+| RacerX      | For contributing a stag icon for sails - Looks awesome! And the nautilus assets, (experimental)                           |
+| Cl0udstr1fe | For adding the new hull meshes for Rib Side, Prow, and Corners both V3 and V4. Completes the ship look with these meshes! |
+| L4zerShark  | For coding and support for Valheim 1.0.0+. Thanks for keeping the mod stable and contributing                             |
+| EggyPresh   | For fixing a few bugs and making Sails logic a bit more realistic. Thanks for keeping the mod stable and contributing     |
 
 #### sounds
 
