@@ -8,7 +8,7 @@ public static class ZNet_WorldSession_Patches
   [HarmonyPostfix]
   private static void SessionStart()
   {
-    if (!ZNet.instance) return;
+    if (!ZNet.instance || ZNet.m_world == null) return;
     var currentWorldId = ZNet.instance.GetWorldUID();
     WorldSessionState.EnsureWorldScope(currentWorldId);
   }
