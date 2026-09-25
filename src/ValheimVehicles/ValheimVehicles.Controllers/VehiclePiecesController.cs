@@ -4291,8 +4291,37 @@
       HasClusterMeshesEnabled = RenderingConfig.EnableVehicleClusterMeshRendering.Value;
       MinClusterThreshold = RenderingConfig.ClusterRenderingPieceThreshold.Value;
 
+      // unsafe (this is shifting pieces origins)
+      // UpdateVehicleTrueCenter();
+
       UpdateTrackedColliders();
 
+      FinalizeBoundsGenerationAfterShift();
+
+      // Critical for vehicle stability otherwise it will blast off in a random direction to due colliders internally colliding.
+      IgnoreAllVehicleColliders();
+
+      // to accurately place player onboard after rebuild of bounds.
+      if (OnboardController != null)
+      {
+        OnboardController.OnBoundsRebuild();
+      }
+
+      OnBoundsChangeUpdateShipColliders();
+
+      // ensures the ram colliders have up to data collision maps.
+      if (MovementController != null && MovementController.vehicleRam != null)
+      {
+        VehicleRamAoe.RegisterVehicleColliders(Manager);
+        MovementController.vehicleRam.UpdateColliderCache();
+      }
+
+      // allows vehicle to move after rebuild
+      CompleteSuccessfulBoundsRebuild();
+    }
+
+    protected override void FinalizeBoundsGenerationAfterShift()
+    {
       BaseControllerPieceBounds = convexHullComponent.GetConvexHullBounds(true);
 
       try
@@ -4318,24 +4347,6 @@
         {
           LoggerProvider.LogError($"{e}");
         }
-      }
-
-      // Critical for vehicle stability otherwise it will blast off in a random direction to due colliders internally colliding.
-      IgnoreAllVehicleColliders();
-
-      // to accurately place player onboard after rebuild of bounds.
-      if (OnboardController != null)
-      {
-        OnboardController.OnBoundsRebuild();
-      }
-
-      OnBoundsChangeUpdateShipColliders();
-
-      // ensures the ram colliders have up to data collision maps.
-      if (MovementController != null && MovementController.vehicleRam != null)
-      {
-        VehicleRamAoe.RegisterVehicleColliders(Manager);
-        MovementController.vehicleRam.UpdateColliderCache();
       }
     }
 
@@ -4384,8 +4395,6 @@
           "Cached convexHullBounds is null this is like a problem with collider setup. Make sure to use custom colliders if other settings are not working");
         return;
       }
-
-
 
       /*
        * @description float collider logic

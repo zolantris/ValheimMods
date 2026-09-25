@@ -35,6 +35,9 @@
       public static float RebuildPieceMaxDelay = 60f;
       internal static float RebuildBoundsDelayPerPiece = 0.02f;
 
+      // unstable for now
+      public bool UNSTABLE_canUpdateVehicleCentral = false;
+
       public static bool isBasicHullCalculation = false;
 
       public static int clusterThreshold = 500;
@@ -272,7 +275,7 @@
         _rebuildBoundsRoutineInstance = StartCoroutine(RebuildBoundsThrottleRoutine(() => RebuildBounds()));
       }
 
-      private void CompleteSuccessfulBoundsRebuild()
+      protected void CompleteSuccessfulBoundsRebuild()
       {
         _lastRebuildPieceRevision = _lastPieceRevision;
         _lastRebuildItemCount = m_prefabPieceDataItems.Count;
@@ -315,7 +318,24 @@
           return;
         }
 
-        // UpdateVehicleTrueCenter();
+        if (UNSTABLE_canUpdateVehicleCentral)
+        {
+          UpdateVehicleTrueCenter((success) =>
+          {
+            if (!success)
+            {
+              RequestBoundsRebuild();
+              return;
+            }
+
+
+            CompleteSuccessfulBoundsRebuild();
+          });
+        }
+        else
+        {
+          CompleteSuccessfulBoundsRebuild();
+        }
       }
 
       /// <summary>
@@ -324,7 +344,7 @@
       /// TODO convert this into a placeable prefab so that the centerpoint is a manual update that players have to trigger
       ///
       /// 
-      public virtual void UpdateVehicleTrueCenter()
+      public virtual void UpdateVehicleTrueCenter(Action<bool> onComplete)
       {
         var currentBounds = m_convexHullAPI.GetConvexHullBounds(true);
 
@@ -334,27 +354,24 @@
         {
           // Rebuild immediately using the shifted piece transforms so the final convex hull
           // and movement bounds are aligned to the new effective origin.
-          TryGenerateConvexHull(clusterThreshold, shiftedSucceeded =>
+          TryGenerateConvexHull(clusterThreshold, (success) =>
           {
-            if (!shiftedSucceeded)
+            if (success)
             {
-              RequestBoundsRebuild();
-              return;
+              FinalizeBoundsGenerationAfterShift();
+              Physics.SyncTransforms();
+              onComplete.Invoke(true);
             }
-
-            FinalizeBoundsGenerationAfterShift();
-
-            Physics.SyncTransforms();
-
-            CompleteSuccessfulBoundsRebuild();
+            else
+            {
+              onComplete.Invoke(false);
+            }
           });
 
           return;
         }
 
-        FinalizeBoundsGenerationAfterShift();
-        Physics.SyncTransforms();
-        CompleteSuccessfulBoundsRebuild();
+        onComplete?.Invoke(true);
       }
 
       protected virtual Vector3 GetDesiredLocalOriginShift(Bounds bounds)
