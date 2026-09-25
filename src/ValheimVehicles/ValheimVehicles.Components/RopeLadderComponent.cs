@@ -28,6 +28,7 @@
     public float m_stepDistance = 0.5f;
 
     public float m_ladderHeight = 1f;
+    public float m_maxLadderHeight = 40f;
 
     public float baseLadderMoveSpeed = 2f;
     public float ladderRunSpeedMult => PrefabConfig.RopeLadderRunMultiplier.Value;
@@ -197,15 +198,19 @@
         rayMask = LayerMask.GetMask("Default", "static_solid", "Default_small",
           "piece", "terrain");
 
-      m_ladderHeight = 200f;
+      // Set initial raycast range to your max configuration limit
+      m_ladderHeight = m_maxLadderHeight;
+
       var hitpoint = new Vector3(m_attachPoint.transform.position.x, 0f,
         m_attachPoint.transform.position.z);
       var raystart = new Vector3(m_attachPoint.transform.position.x,
         transform.position.y,
         m_attachPoint.transform.position.z);
+
       var hits = Physics.RaycastAll(
         new Ray(raystart, -m_attachPoint.transform.up),
         m_ladderHeight, rayMask);
+
       for (var i = 0; i < hits.Length; i++)
       {
         var hit = hits[i];
@@ -218,6 +223,7 @@
         }
       }
 
+      // Reassignments occur here depending on vehicle movement/water logic:
       if (IsFlyingAndNotAnchored(hitpoint))
       {
         if (vehiclePiecesController)
@@ -242,6 +248,9 @@
         }
       }
 
+      // FIX: Use m_maxLadderHeight here to catch all reassignments from above
+      m_ladderHeight = Mathf.Clamp(m_ladderHeight, 0f, m_maxLadderHeight);
+
       if (m_ghostObject)
       {
         if (!m_ghostAttachPoint)
@@ -263,11 +272,19 @@
           -m_attachPoint.transform.up * m_ladderHeight);
       }
 
+      // Safety guard against divide-by-zero config errors
+      if (m_stepDistance <= 0.05f) m_stepDistance = 0.5f;
+
       var steps = Mathf.RoundToInt(m_ladderHeight / m_stepDistance);
+
+      // Secondary Loop Ceiling: Hard limits maximum instantiation overhead per execution
+      steps = Mathf.Clamp(steps, 0, 80);
+
       if (m_steps.Count != steps)
       {
         var wnt = GetComponent<WearNTear>();
-        wnt.ResetHighlight();
+        if (wnt != null) wnt.ResetHighlight();
+
         while (m_steps.Count > steps)
         {
           Destroy(m_steps[m_steps.Count - 1]);
@@ -286,15 +303,6 @@
         m_ropeLine.SetPosition(0, new Vector3(0.4f, 0f, 0f));
         m_ropeLine.SetPosition(1,
           new Vector3(0.4f, (0f - m_stepDistance) * (float)m_steps.Count, 0f));
-        m_ropeLine.SetPosition(2,
-          new Vector3(-0.4f, (0f - m_stepDistance) * (float)m_steps.Count, 0f));
-        m_ropeLine.SetPosition(3, new Vector3(-0.4f, 0f, 0f));
-        if (!m_ghostObject)
-        {
-          m_collider.size = new Vector3(1f, m_ladderHeight, 0.1f);
-          m_collider.transform.localPosition =
-            new Vector3(0f, (0f - m_ladderHeight) / 2f, 0f);
-        }
       }
     }
 
