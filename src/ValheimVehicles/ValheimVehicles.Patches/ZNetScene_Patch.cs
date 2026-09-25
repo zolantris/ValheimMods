@@ -36,6 +36,18 @@
       VehiclePiecesController.StartServerUpdaters();
     }
 
+
+    [HarmonyPatch(typeof(ZNetView), nameof(ZNetView.Awake))]
+    [HarmonyPostfix]
+    public static void ZNetView_Awake_Patch(ZNetView __instance)
+    {
+      // Ignore ghosts or inactive components
+      if (__instance == null || __instance.m_ghost) return;
+
+      // Automatically attempts to attach/register to its parent vehicle if MBParentId is set
+      VehiclePiecesController.TryInitPieceFromNetView(__instance);
+    }
+
     [HarmonyPatch(typeof(ZNetScene), nameof(ZNetScene.RemoveObjects))]
     [HarmonyPrefix]
     [HarmonyPriority(Priority.High)]
