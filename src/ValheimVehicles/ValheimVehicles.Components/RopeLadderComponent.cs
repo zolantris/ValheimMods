@@ -304,6 +304,21 @@
         m_ropeLine.SetPosition(1,
           new Vector3(0.4f, (0f - m_stepDistance) * (float)m_steps.Count, 0f));
       }
+
+      // Tell the line renderer it needs 4 coordinates to draw a complete U-shape loop
+      m_ropeLine.positionCount = 4;
+      m_ropeLine.useWorldSpace = false;
+
+      var halfWidth = 0.4f; // Distance from the center anchor to the side ropes
+      var ladderBottomY = (0f - m_stepDistance) * (float)m_steps.Count;
+
+      // Right Side - Top to Bottom
+      m_ropeLine.SetPosition(0, new Vector3(halfWidth, 0f, 0f));
+      m_ropeLine.SetPosition(1, new Vector3(halfWidth, ladderBottomY, 0f));
+
+      // Left Side - Bottom to Top
+      m_ropeLine.SetPosition(2, new Vector3(-halfWidth, ladderBottomY, 0f));
+      m_ropeLine.SetPosition(3, new Vector3(-halfWidth, 0f, 0f));
     }
 
     public void UpdateIK(Animator animator)
