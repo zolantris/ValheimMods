@@ -318,6 +318,7 @@
           return;
         }
 
+        // this method currently shifts pieces origin and is not garunteed to run on all pieces that exists for Valheim. This might work in unity but valheim context will need an override for the gameobjects iteration to use the persisted zdoids and iterate through those.
         if (UNSTABLE_canUpdateVehicleCentral)
         {
           UpdateVehicleTrueCenter((success) =>

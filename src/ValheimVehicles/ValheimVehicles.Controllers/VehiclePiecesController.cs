@@ -4291,9 +4291,6 @@
       HasClusterMeshesEnabled = RenderingConfig.EnableVehicleClusterMeshRendering.Value;
       MinClusterThreshold = RenderingConfig.ClusterRenderingPieceThreshold.Value;
 
-      // unsafe (this is shifting pieces origins)
-      // UpdateVehicleTrueCenter();
-
       UpdateTrackedColliders();
 
       FinalizeBoundsGenerationAfterShift();
