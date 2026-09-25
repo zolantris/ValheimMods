@@ -31,9 +31,9 @@
 
     <PropertyGroup Label="For target args generation">
         <SyncTargets Condition="'$(IsRunnableServer)' == 'true'">server</SyncTargets>
-        <SyncTargets Condition="'$(IsRunnableClient)' == 'true'">localClient,localClientEldritch,localClientValheimSaveFixes,localClientDirectWorld,localClientValheimScalability</SyncTargets>
+        <SyncTargets Condition="'$(IsRunnableClient)' == 'true'">localClient</SyncTargets>
         <!--  This overrides server or client config -->
-        <SyncTargets Condition="'$(IsRunnableClientServer)' == 'true'">localClient,localClientEldritch,vmClient,server</SyncTargets>
+        <SyncTargets Condition="'$(IsRunnableClientServer)' == 'true'">localClient,vmClient,server</SyncTargets>
         <SyncEnvFlags>--env-debug=true</SyncEnvFlags>
         <SyncEnvFlags Condition="'$(IsRelease)' == 'true'">--env-release</SyncEnvFlags>
     </PropertyGroup>
