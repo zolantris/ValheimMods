@@ -19,7 +19,10 @@ public class ZdoWatchController : MonoBehaviour
   public static Action<ZDO>? OnReset = null;
 
   public static ZdoWatchController Instance;
-  private readonly Dictionary<int, ZDO> _zdoGuidLookup = new();
+  private readonly Dictionary<int, ZDOID> _zdoIdGuidLookup = new();
+
+  // todo implement this so we can clean the pool if a zdoid no longer exists eg it was deleted by a player
+  private readonly Dictionary<ZDOID, int> zdoIdToIdLookup = new();
   private readonly List<DebugSafeTimer> _timers = new();
 
   private CustomRPC RPC_RequestPersistentIdInstance;
@@ -44,9 +47,9 @@ public class ZdoWatchController : MonoBehaviour
   /// <summary>
   /// This will not allow mutation. This should be locked down if there is risk of the original source being destroyed.
   /// </summary>
-  public Dictionary<int, ZDO> GetAllZdoGuids()
+  public Dictionary<int, ZDOID> GetAllZdoIdGuids()
   {
-    return _zdoGuidLookup.ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+    return _zdoIdGuidLookup.ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
   }
 
   public void Update()
@@ -56,15 +59,18 @@ public class ZdoWatchController : MonoBehaviour
 
   public void SyncToPeer(ZDOMan.ZDOPeer? zdoPeer)
   {
+    if (ZDOMan.instance == null) return;
     if (!ZNet.instance.IsServer() || zdoPeer == null)
     {
       // Non-servers will not send data to players.
       return;
     }
 
-    foreach (var zdoValue in _zdoGuidLookup.Values)
+    foreach (var zdoId in _zdoIdGuidLookup.Values)
     {
-      zdoPeer?.ForceSendZDO(zdoValue.m_uid);
+      var zdo = ZDOMan.instance.GetZDO(zdoId);
+      if (zdo == null || zdo.m_uid != zdoId) continue;
+      zdoPeer?.ForceSendZDO(zdoId);
     }
   }
 
@@ -102,10 +108,10 @@ public class ZdoWatchController : MonoBehaviour
     var zPackage = new ZPackage();
 
     Logger.LogMessage(
-      $"Writing {_zdoGuidLookup.Values.Count} zdos to a ZPackage");
-    foreach (var zdoValue in _zdoGuidLookup.Values)
+      $"Writing {_zdoIdGuidLookup.Values.Count} zdos to a ZPackage");
+    foreach (var zdoId in _zdoIdGuidLookup.Values)
     {
-      zPackage.Write(zdoValue.m_uid);
+      zPackage.Write(zdoId);
     }
 
     return zPackage;
@@ -195,9 +201,13 @@ public class ZdoWatchController : MonoBehaviour
     // A bit more efficient than the WaitUntil predicate
     while (timer.ElapsedMilliseconds < timeoutInMs && targetZdo == null)
     {
-      if (_zdoGuidLookup.TryGetValue(persistentId, out var maybeZdo))
+      if (_zdoIdGuidLookup.TryGetValue(persistentId, out var maybeZdoId))
       {
-        targetZdo = maybeZdo;
+        var zdo = ZDOMan.instance.GetZDO(maybeZdoId);
+        if (zdo != null && zdo.m_uid == maybeZdoId)
+        {
+          targetZdo = zdo;
+        }
         break;
       }
 
@@ -227,7 +237,7 @@ public class ZdoWatchController : MonoBehaviour
 
   public void Reset()
   {
-    _zdoGuidLookup.Clear();
+    _zdoIdGuidLookup.Clear();
   }
 
   public static bool GetPersistentID(ZDO zdo, out int id)
@@ -242,20 +252,20 @@ public class ZdoWatchController : MonoBehaviour
     {
       Logger.LogWarning(
         "GetOrCreatePersistentID called with a null ZDO, this will be disabled in the future.");
+      return 0;
     }
-
-    zdo ??= new ZDO();
+    if (zdo.m_uid == ZDOID.None) return 0;
 
     var id = zdo.GetInt(ZdoVarController.PersistentUidHash, 0);
     if (id != 0) return id;
     id = ZdoUtils.ZdoIdToId(zdo.m_uid);
 
     // If the ZDO is not unique/exists in the dictionary, this number must be incremented to prevent a collision
-    while (_zdoGuidLookup.ContainsKey(id))
+    while (_zdoIdGuidLookup.ContainsKey(id))
       ++id;
     zdo.Set(ZdoVarController.PersistentUidHash, id, false);
 
-    _zdoGuidLookup[id] = zdo;
+    _zdoIdGuidLookup[id] = zdo.m_uid;
 
     return id;
   }
@@ -267,7 +277,10 @@ public class ZdoWatchController : MonoBehaviour
       return;
     }
 
-    _zdoGuidLookup[id] = zdo;
+    // invalid zdo
+    if (zdo.m_uid == ZDOID.None) return;
+
+    _zdoIdGuidLookup[id] = zdo.m_uid;
   }
 
   private void HandleDeregisterPersistentId(ZDO zdo)
@@ -275,7 +288,7 @@ public class ZdoWatchController : MonoBehaviour
     if (!GetPersistentID(zdo, out var id))
       return;
 
-    _zdoGuidLookup.Remove(id);
+    _zdoIdGuidLookup.Remove(id);
   }
 
   public void Deserialize(ZDO zdo)
@@ -328,7 +341,8 @@ public class ZdoWatchController : MonoBehaviour
   /// <returns>ZDO|null</returns>
   public ZDO? GetZdo(int id)
   {
-    return _zdoGuidLookup.TryGetValue(id, out var zdo) ? zdo : null;
+    if (ZDOMan.instance == null) return null;
+    return _zdoIdGuidLookup.TryGetValue(id, out var zdo) ? ZDOMan.instance.GetZDO(zdo) : null;
   }
 
   public GameObject? GetGameObject(int id)

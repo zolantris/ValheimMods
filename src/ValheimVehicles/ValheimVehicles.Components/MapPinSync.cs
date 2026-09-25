@@ -76,7 +76,7 @@ public class MapPinSync : MonoBehaviour
   private void OnMapReady()
   {
     if (ZNet.instance == null || Minimap.instance == null) return;
-    ZdoWatchController.Instance.GetAllZdoGuids();
+    ZdoWatchController.Instance.GetAllZdoIdGuids();
     // clear everything first
     StopAllCoroutines();
     ClearAllVehiclePins();
@@ -289,14 +289,16 @@ public class MapPinSync : MonoBehaviour
     if (Minimap.instance.m_pins == null) return;
     if (ZdoWatchController.Instance == null) return;
     if (ZNetScene.instance == null) return;
+    if (ZDOMan.instance == null) return;
 
-    var guids = ZdoWatchController.Instance.GetAllZdoGuids();
+    var guids = ZdoWatchController.Instance.GetAllZdoIdGuids();
 
     // Build vehicle ZDO list without extra ToHashSet allocation on a LINQ chain
     var vehicleZdos = new HashSet<ZDO>();
     foreach (var pair in guids)
     {
-      var zdo = pair.Value;
+      var zdoId = pair.Value;
+      var zdo = ZDOMan.instance.GetZDO(zdoId);
       var prefab = ZNetScene.instance.GetPrefab(zdo.GetPrefab());
       if (prefab != null && PrefabNames.IsVehicle(prefab.name))
         vehicleZdos.Add(zdo);

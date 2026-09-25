@@ -315,9 +315,15 @@
           return;
         }
 
-        UpdateVehicleTrueCenter();
+        // UpdateVehicleTrueCenter();
       }
 
+      /// <summary>
+      /// This method is unsafe but it is meant to fix vehicles that have drastically migrated away from the central point.
+      /// </summary>
+      /// TODO convert this into a placeable prefab so that the centerpoint is a manual update that players have to trigger
+      ///
+      /// 
       public virtual void UpdateVehicleTrueCenter()
       {
         var currentBounds = m_convexHullAPI.GetConvexHullBounds(true);

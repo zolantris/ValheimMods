@@ -77,6 +77,15 @@
     private BoxCollider m_floatCollider;
     private BoxCollider m_onboardCollider;
 
+    public static VehicleManager? GetVehicle(int persistentId)
+    {
+      if (persistentId != 0 && VehicleInstances.TryGetValue(persistentId, out var vehicle))
+      {
+        return vehicle;
+      }
+      return null;
+    }
+
     public BoxCollider? FloatCollider
     {
       get => m_floatCollider;
