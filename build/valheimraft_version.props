@@ -6,4 +6,4 @@
         <PackageVersion>$(Version)</PackageVersion>
         <ValheimRAFTVersion>$(Version)</ValheimRAFTVersion>
     </PropertyGroup>
-</Project>
+</Project>  
