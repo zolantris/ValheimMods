@@ -502,11 +502,30 @@ public class PlayerSpawnController : MonoBehaviour
     var zoneId = ZoneSystem.GetZone(zdo.GetPosition());
     ZoneSystem.instance.PokeLocalZone(zoneId);
 
-    var zoneIsNotLoaded = false;
-    while (zoneIsNotLoaded == false)
+    // ZDOs are pooled. Resolve by ZDOID every iteration so a recycled ZDO (position reset to 0,0,0) cannot keep this loop waiting on an unrelated zone forever.
+    var targetZdoId = zdo.m_uid;
+    var hasZoneLoaded = false;
+    while (!hasZoneLoaded)
     {
+      var liveZdo = ZDOMan.instance?.GetZDO(targetZdoId);
+      if (liveZdo == null)
+      {
+        OnMovePlayerToZdoComplete(false,
+          $"Target ZDO {targetZdoId} no longer exists, exiting dynamic spawn MovePlayerToZdo.");
+        yield break;
+      }
+
+      if (HasExpiredTimer(timer,
+            DynamicLocationsConfig.LocationControlsTimeoutInMs.Value))
+      {
+        OnMovePlayerToZdoComplete(false,
+          $"Timed out waiting for zone of target ZDO {targetZdoId} to load, exiting dynamic spawn MovePlayerToZdo.");
+        yield break;
+      }
+
+      zdo = liveZdo;
       zoneId = ZoneSystem.GetZone(zdo.GetPosition());
-      zoneIsNotLoaded = ZoneSystem.instance.IsZoneLoaded(zoneId);
+      hasZoneLoaded = ZoneSystem.instance.IsZoneLoaded(zoneId);
       yield return new WaitForFixedUpdate();
     }
 
@@ -549,7 +568,8 @@ public class PlayerSpawnController : MonoBehaviour
     if (HasExpiredTimer(timer,
           DynamicLocationsConfig.LocationControlsTimeoutInMs.Value))
     {
-      Logger.LogError("Error attempting to find NetView instance of the ZDO");
+      OnMovePlayerToZdoComplete(false,
+        "Error attempting to find NetView instance of the ZDO");
       yield break;
     }
 
