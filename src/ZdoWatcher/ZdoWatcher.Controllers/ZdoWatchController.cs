@@ -288,7 +288,11 @@ public class ZdoWatchController : MonoBehaviour
     if (!GetPersistentID(zdo, out var id))
       return;
 
-    _zdoIdGuidLookup.Remove(id);
+    // only remove the mapping if it still points at this ZDO. Another ZDO may have registered the same id since.
+    if (_zdoIdGuidLookup.TryGetValue(id, out var registeredZdoId) && registeredZdoId == zdo.m_uid)
+    {
+      _zdoIdGuidLookup.Remove(id);
+    }
   }
 
   public void Deserialize(ZDO zdo)
@@ -322,6 +326,10 @@ public class ZdoWatchController : MonoBehaviour
 
   public void Reset(ZDO zdo)
   {
+    // ZDOMan.SaveCleanup calls Reset on every save clone after a world save. Clones share m_uid and ZDO data with the live ZDO (ZDO.Equals/GetHashCode use m_uid),
+    // so treating them as removals would deregister every persistent id and notify subscribers (vehicles, power) for each saved chunk.
+    if (zdo.SaveClone) return;
+
     HandleDeregisterPersistentId(zdo);
     if (OnReset == null) return;
     try
