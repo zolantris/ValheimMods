@@ -1,10 +1,36 @@
 using ValheimVehicles.Components;
+using ValheimVehicles.Controllers;
+using ValheimVehicles.Helpers;
 using ZdoWatcher;
 namespace ValheimVehicles.Integrations;
 
 public static class WorldSessionState
 {
   private static long _activeWorldKey = 0L;
+
+  /// <summary>
+  /// Clears every static registry keyed by ZDOID or pooled ZDO references. Must run when a new ZDOMan is created (before any ZDOs load or deserialize).
+  /// </summary>
+  /// <remarks>
+  /// Valheim reassigns ZDOIDs on every world load (ZDOID.SetID(++m_loadID)) and ZDOID.Reset() in the ZDOMan constructor remaps user keys. Any ZDOID kept from a previous session in the same process points at an unrelated object in the new session.
+  /// Stale ids in m_allPieces caused unrelated world objects (trees, LocationProxies) to be stamped onto the vehicle origin after a logout/rejoin without restarting the game.
+  /// </remarks>
+  public static void ResetZdoScopedRegistries()
+  {
+    VehiclePiecesController.m_allPieces.Clear();
+    VehiclePiecesController.m_dynamicObjects.Clear();
+    VehiclePiecesController.m_pendingPieces.Clear();
+    VehiclePiecesController.m_pendingTempPieces.Clear();
+    VehiclePiecesController.VehicleParentIdCache.Clear();
+
+    BasePieceActivatorComponent.m_pendingPieces.Clear();
+    BasePieceActivatorComponent.m_pendingTempPieces.Clear();
+
+    SwivelComponentBridge.AllSwivelPieces.Clear();
+    SwivelComponentBridge.ZdoToComponent.Clear();
+
+    PersistentIdHelper.ClearMBParentCache();
+  }
 
   public static void OnSessionTeardown()
   {

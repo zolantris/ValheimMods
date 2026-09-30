@@ -445,7 +445,7 @@
         var vehicleNetView = ZNetScene.instance.FindInstance(vehicleZdo);
         if (!vehicleNetView) yield break;
 
-        yield return SyncAllPrefabsToVehiclePosition_Routine(vehicleNetView, kvp.Value, stopWatchRuntime);
+        yield return SyncAllPrefabsToVehiclePosition_Routine(vehicleNetView, kvp.Key, kvp.Value, stopWatchRuntime);
         yield return null;
       }
 
@@ -467,14 +467,16 @@
     /// - Need to determine if this is still needed for dedicated
     /// 
     /// <param name="vehicleNetView"></param>
+    /// <param name="vehiclePersistentId"></param>
     /// <param name="zdoPieces"></param>
     /// <param name="stopWatchRuntime"></param>
     /// <returns></returns>
-    public static IEnumerator SyncAllPrefabsToVehiclePosition_Routine(ZNetView vehicleNetView, HashSet<ZDOID> zdoPieces, Stopwatch stopWatchRuntime)
+    public static IEnumerator SyncAllPrefabsToVehiclePosition_Routine(ZNetView vehicleNetView, int vehiclePersistentId, HashSet<ZDOID> zdoPieces, Stopwatch stopWatchRuntime)
     {
       var vehiclePosition = GetVehiclePosition(vehicleNetView);
       if (ZDOMan.instance == null) yield break;
       if (!vehiclePosition.HasValue) yield break;
+      List<ZDOID>? foreignZdoIds = null;
       foreach (var zdoId in zdoPieces)
       {
         var zdo = ZDOMan.instance.GetZDO(zdoId);
@@ -487,27 +489,56 @@
 
         if (zdo == null) continue;
         if (!zdo.IsValid()) continue;
+        if (!IsPieceOfVehicle(zdo, vehiclePersistentId))
+        {
+          (foreignZdoIds ??= new List<ZDOID>()).Add(zdoId);
+          continue;
+        }
         SetPrefabWorldPosition(zdo, vehiclePosition.Value);
       }
+
+      RemoveForeignZdoIds(vehiclePersistentId, zdoPieces, foreignZdoIds);
     }
 
     /// <summary>
     /// Meant for both client and server commands to sync vehicles. This is single threaded so there can be frame drops. Not meant for continuous runs.
     /// </summary>
     /// <param name="vehicleNetView"></param>
+    /// <param name="vehiclePersistentId"></param>
     /// <param name="zdoPieces"></param>
-    public static void SyncAllPrefabsToVehiclePosition(ZNetView vehicleNetView, HashSet<ZDOID> zdoPieces)
+    public static void SyncAllPrefabsToVehiclePosition(ZNetView vehicleNetView, int vehiclePersistentId, HashSet<ZDOID> zdoPieces)
     {
       if (ZDOMan.instance == null) return;
       var vehiclePosition = GetVehiclePosition(vehicleNetView);
       if (!vehiclePosition.HasValue) return;
+      List<ZDOID>? foreignZdoIds = null;
       foreach (var zdoId in zdoPieces)
       {
         var zdo = ZDOMan.instance.GetZDO(zdoId);
         if (zdo == null) continue;
         if (!zdo.IsValid()) continue;
+        if (!IsPieceOfVehicle(zdo, vehiclePersistentId))
+        {
+          (foreignZdoIds ??= new List<ZDOID>()).Add(zdoId);
+          continue;
+        }
         SetPrefabWorldPosition(zdo, vehiclePosition.Value);
       }
+
+      RemoveForeignZdoIds(vehiclePersistentId, zdoPieces, foreignZdoIds);
+    }
+
+    /// <summary>
+    /// Drops registry entries whose ZDO no longer belongs to the vehicle. Must be called after iteration completes.
+    /// </summary>
+    private static void RemoveForeignZdoIds(int vehiclePersistentId, HashSet<ZDOID> zdoPieces, List<ZDOID>? foreignZdoIds)
+    {
+      if (foreignZdoIds == null || foreignZdoIds.Count == 0) return;
+      foreach (var zdoId in foreignZdoIds)
+      {
+        zdoPieces.Remove(zdoId);
+      }
+      LoggerProvider.LogWarning($"Removed {foreignZdoIds.Count} stale ZDOID(s) from vehicle {vehiclePersistentId} piece registry that did not belong to the vehicle.");
     }
 
     public static void SyncAllPrefabsToVehiclePosition(int vehiclePersistentId)
@@ -520,7 +551,7 @@
 
       if (m_allPieces.TryGetValue(vehiclePersistentId, out var zdoPieces))
       {
-        SyncAllPrefabsToVehiclePosition(vehicleNetView, zdoPieces);
+        SyncAllPrefabsToVehiclePosition(vehicleNetView, vehiclePersistentId, zdoPieces);
       }
     }
 
@@ -575,6 +606,7 @@
       foreach (var zdoId in zdoPieces)
       {
         var zdo = ZDOMan.instance.GetZDO(zdoId);
+        if (!IsPieceOfVehicle(zdo, Manager.PersistentZdoId)) continue;
         var previousHash = zdo.GetVec3(VehicleZdoVars.MBPositionHash, Vector3.zero);
         zdo.Set(VehicleZdoVars.MBPositionHash, previousHash - offset);
       }
@@ -1058,7 +1090,7 @@
 
       if (vehicleZdo != null && Manager.m_nview.IsValid() && m_allPieces.TryGetValue(Manager.PersistentZdoId, out var zdoPieces))
       {
-        SyncAllPrefabsToVehiclePosition(Manager.m_nview, zdoPieces);
+        SyncAllPrefabsToVehiclePosition(Manager.m_nview, Manager.PersistentZdoId, zdoPieces);
       }
 
       UpdateChunkBoundsData(false);
@@ -1640,6 +1672,7 @@
       }
 
       var itemsToRemove = new List<ZDO>();
+      List<ZDOID>? foreignZdoIds = null;
 
 
       // if (m_pieces.Count != pieceToUpdateList.Count)
@@ -1688,6 +1721,12 @@
           continue;
         }
 
+        if (!IsPieceOfVehicle(zdo, Manager.PersistentZdoId))
+        {
+          (foreignZdoIds ??= new List<ZDOID>()).Add(zdoId);
+          continue;
+        }
+
         // NOTE: this might be a heavy task (alternatively we could use local dictionary)
         var nv = ZNetScene.instance.FindInstance(zdo);
         if (nv)
@@ -1731,6 +1770,8 @@
         }
         SetPrefabWorldPosition(zdo, vehiclePosition);
       }
+
+      RemoveForeignZdoIds(Manager.PersistentZdoId, pieceToUpdateList, foreignZdoIds);
 
       foreach (var swivelComponentBridge in m_swivelComponentBridgePieces)
       foreach (var swivelItemNetView in swivelComponentBridge.m_pieces)
@@ -3068,6 +3109,24 @@
       return id;
     }
 
+    /// <summary>
+    /// Guards registry iteration against stale ZDOIDs. A ZDOID that outlives its object can resolve to an unrelated ZDO (tree, LocationProxy, etc.) which must never be moved to the vehicle.
+    /// </summary>
+    public static bool IsPieceOfVehicle(ZDO? zdo, int vehiclePersistentId)
+    {
+      if (zdo == null || !zdo.IsValid() || vehiclePersistentId == 0) return false;
+      return zdo.GetInt(VehicleZdoVars.MBParentId, 0) == vehiclePersistentId;
+    }
+
+    /// <summary>
+    /// Same guard as <see cref="IsPieceOfVehicle"/> but for dynamic objects which use TempPieceParentId.
+    /// </summary>
+    public static bool IsTempPieceOfVehicle(ZDO? zdo, int vehiclePersistentId)
+    {
+      if (zdo == null || !zdo.IsValid() || vehiclePersistentId == 0) return false;
+      return zdo.GetInt(VehicleZdoVars.TempPieceParentId, 0) == vehiclePersistentId;
+    }
+
     public static bool TryInitTempPiece(ZNetView netView)
     {
       if (netView == null) return false;
@@ -3196,6 +3255,12 @@
             continue;
           }
 
+          if (!IsPieceOfVehicle(zdo, persistentId))
+          {
+            zdoIdsToRemove.Add(zdoId);
+            continue;
+          }
+
           var localOffset = zdo.GetVec3(VehicleZdoVars.MBPositionHash, Vector3.zero);
           // Valheim 1.0 updates the sector from each ZDO's position in SetPosition.
           zdo.SetPosition(newVehiclePos + localOffset);
@@ -3219,7 +3284,7 @@
         {
           var zdoid = dynamicZdoIds[i];
           var zdo = ZDOMan.instance?.GetZDO(zdoid);
-          if (zdo == null || !zdo.IsValid())
+          if (!IsTempPieceOfVehicle(zdo, persistentId))
           {
             dynamicZdoIds.RemoveAt(i);
             continue;
