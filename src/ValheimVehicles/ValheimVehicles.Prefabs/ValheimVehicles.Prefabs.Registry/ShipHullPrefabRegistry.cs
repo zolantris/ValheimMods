@@ -973,13 +973,18 @@ public class ShipHullPrefabRegistry : RegisterPrefab<ShipHullPrefabRegistry>
     // let this calculator garbage collect if the parentTransform is different.
     try
     {
-      convexHullCalculator.GenerateHull(localPoints, false, ref verts,
+      if (!convexHullCalculator.GenerateHull(localPoints, false, ref verts,
         ref tris,
-        ref normals, out var hasBailed);
+        ref normals, out _))
+      {
+        LoggerProvider.LogWarning($"Cannot generate a solid convex hull for prefab <{prefab.name}>; leaving its colliders unchanged.");
+        return;
+      }
     }
     catch (Exception e)
     {
       LoggerProvider.LogError($"Error with generating convex hull for prefab hull name: <{prefab.name}> \n{e}");
+      return;
     }
 
     GenerateMeshFromConvexOutput(meshObject, verts.ToArray(), tris.ToArray(), normals.ToArray());
