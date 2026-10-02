@@ -803,12 +803,14 @@
           case RopeAnchorComponent ropeAnchor:
             if (ropeAnchor.IsDockAnchor())
             {
-              OnAddUniquePieceDestroyPrevious(m_dockAnchor);
+              if (m_dockAnchor != ropeAnchor)
+                OnAddUniquePieceDestroyPrevious(m_dockAnchor);
               m_dockAnchor = ropeAnchor;
             }
             break;
           case SteeringWheelComponent wheel:
-            OnAddUniquePieceDestroyPrevious(_steeringWheelPiece);
+            if (_steeringWheelPiece != wheel)
+              OnAddUniquePieceDestroyPrevious(_steeringWheelPiece);
             _steeringWheelPiece = wheel;
             RotateVehicleForwardPosition();
 
@@ -968,6 +970,9 @@
         LoggerProvider.LogError("netView does not exist but somehow called AddPiece()");
         return;
       }
+
+      // A piece can be encountered again while pending network objects are activated.
+      if (m_pieces.Contains(netView)) return;
 
       // incrementRevision
       IncrementPieceRevision();
@@ -3761,10 +3766,10 @@
     {
       if (component == null) return;
       var netView = component.GetComponent<ZNetView>();
-      if (netView == null) return;
+      if (netView == null || !netView.IsValid() || !netView.IsOwner()) return;
 
       var wnt = netView.GetComponent<WearNTear>();
-      if (wnt != null)
+      if (wnt != null && wnt.m_nview != null)
       {
         wnt.Destroy();
       }
@@ -3797,13 +3802,15 @@
     /// <param name="netView"></param>
     public void AddFireEffectAreaComponent(ZNetView netView)
     {
+      var zdo = netView.GetZDO();
+      if (zdo == null) return;
+
       var effectAreaItems = netView.GetComponentsInChildren<EffectArea>();
       foreach (var effectAreaItem in effectAreaItems)
       {
         // player base burning type is for all fireplace fires. At least in >=0.219
         if (effectAreaItem.m_type != EffectArea.Type.PlayerBase) continue;
-        m_vehicleBurningEffectAreas.Add(netView.m_zdo.m_uid,
-          effectAreaItem);
+        m_vehicleBurningEffectAreas[zdo.m_uid] = effectAreaItem;
         break;
       }
     }
