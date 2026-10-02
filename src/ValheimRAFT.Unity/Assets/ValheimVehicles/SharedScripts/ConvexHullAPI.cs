@@ -1,4 +1,4 @@
-﻿#region
+#region
 
   using System;
   using System.Collections.Generic;
@@ -1293,9 +1293,9 @@
 
         // Generate convex hull and export the mesh
         // let this calculator garbage collect if the parentTransform is different.
-        convexHullCalculator.GenerateHull(localPoints, false, ref verts,
+        if (!convexHullCalculator.GenerateHull(localPoints, false, ref verts,
           ref tris,
-          ref normals, out var hasBailed);
+          ref normals, out _)) return;
 
         GenerateMeshFromConvexOutput(verts.ToArray(), tris.ToArray(), normals.ToArray(), meshIndex);
       }
