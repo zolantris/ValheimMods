@@ -1,4 +1,4 @@
-﻿#region
+#region
 
   using System;
   using System.Collections;
@@ -307,7 +307,21 @@
         // always update them for now until we can get smarter with convex collider detecting which ones have been added if any.
         _shouldUpdateVehicleColliders = true;
 
-        TryGenerateConvexHull(clusterThreshold, OnConvexHullGenerated);
+        TryGenerateConvexHull(clusterThreshold, success =>
+        {
+          // A rejected point set leaves the previous colliders intact. It must not
+          // leave an otherwise usable vehicle waiting for a rebuild forever.
+          // Vehicles without a hull remain protected by the movement controller.
+          if (!success)
+          {
+            isRebuildingVehicle = false;
+            // A forced rebuild can change boundary constraints without adding a
+            // piece. Keep that failure eligible for the same throttled retry.
+            if (_lastRebuildPieceRevision == _lastPieceRevision)
+              _lastRebuildPieceRevision = unchecked(_lastPieceRevision - 1);
+          }
+          OnConvexHullGenerated(success);
+        });
       }
 
       public virtual void OnConvexHullGenerated(bool hasSucceeded)
@@ -613,6 +627,7 @@
             break;
           case HullGenerationMode.Basic:
           default:
+            callback?.Invoke(false);
             break;
         }
       }
@@ -671,12 +686,9 @@
         // Apply boundary constraint filtering if implemented by derived class
         points = ApplyBoundaryConstraints(points);
 
-        // We cannot generate a convex collider with so view points. We must bail early. This task should can be rescheduled / handled by parent invoker.
-        if (points.Count <= 4 || !m_convexHullCalculator.GenerateHull(points, false, ref verts, ref tris, ref normals, out var hasBailed))
+        // Keep the previous mesh while pieces are loading or cannot form a solid hull.
+        if (!m_convexHullCalculator.GenerateHull(points, false, ref verts, ref tris, ref normals, out _))
         {
-#if DEBUG
-          LoggerProvider.LogDev($"Points less than 4. Got {points.Count} points. Bailing early. This task will be rescheduled");
-#endif
           callback?.Invoke(false);
           return;
         }

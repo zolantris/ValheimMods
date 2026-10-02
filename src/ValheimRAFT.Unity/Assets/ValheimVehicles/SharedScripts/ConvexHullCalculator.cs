@@ -98,20 +98,33 @@ namespace ValheimVehicles.SharedScripts
       ref List<int> tris,
       ref List<Vector3> normals, out bool hasBailed)
     {
+      hasBailed = true;
       if (points.Count < 4)
       {
-        hasBailed = true;
-        LoggerProvider.LogDev("Need at least 4 points to generate a convex hull");
         return false;
       }
 
+      foreach (var point in points)
+      {
+        if (float.IsNaN(point.x) || float.IsInfinity(point.x) ||
+            float.IsNaN(point.y) || float.IsInfinity(point.y) ||
+            float.IsNaN(point.z) || float.IsInfinity(point.z)) return false;
+      }
+
       SanitizePointsFast(points, SANITIZE_TOLERANCE, sanitizedPoints);
+      if (!TryFindInitialHullIndices(sanitizedPoints, out var b0, out var b1, out var b2, out var b3))
+      {
+        return false;
+      }
 
       var currentLoopDepth = 0;
-      var maxLoopDepth = Mathf.Min(sanitizedPoints.Count * maxLoopDepthMultiplier, 200);
+      // Each growth step consumes an outside point. Bound the work by the input
+      // size instead of truncating valid hulls with more than 200 exterior points.
+      var maxLoopDepth = (int)Math.Min(sanitizedPoints.Count,
+        (long)sanitizedPoints.Count * Math.Max(0, maxLoopDepthMultiplier));
       Initialize(sanitizedPoints, splitVerts);
 
-      GenerateInitialHull(sanitizedPoints);
+      GenerateInitialHull(sanitizedPoints, b0, b1, b2, b3);
 
       while (openSetTail >= 0 && currentLoopDepth < maxLoopDepth)
       {
@@ -119,19 +132,18 @@ namespace ValheimVehicles.SharedScripts
         currentLoopDepth++;
       }
 
-      hasBailed = currentLoopDepth >= maxLoopDepth;
+      hasBailed = openSetTail >= 0;
 
       if (hasBailed)
       {
-        LoggerProvider.LogDebug("ValheimRAFT ConvexHullCalculator bailed early due to reaching max loop depth. This means only part of the vehicle was generated.");
-
-        // must have the same size of triangles to vertices
-        tris = tris.GetRange(0, verts.Count);
+        LoggerProvider.LogDebug("Convex hull generation reached its iteration limit; keeping the previous hull.");
 
         if (hasPointDumpingEnabled)
         {
           LoggerProvider.LogDebug(StringifyPointsForUnity(sanitizedPoints, maxPointsToLog));
         }
+
+        return false;
       }
 
       ExportMesh(sanitizedPoints, splitVerts, ref verts, ref tris, ref normals);
@@ -175,11 +187,8 @@ namespace ValheimVehicles.SharedScripts
     /// <summary>
     ///   Create initial seed hull.
     /// </summary>
-    private void GenerateInitialHull(List<Vector3> points)
+    private void GenerateInitialHull(List<Vector3> points, int b0, int b1, int b2, int b3)
     {
-      int b0, b1, b2, b3;
-      FindInitialHullIndices(points, out b0, out b1, out b2, out b3);
-
       var v0 = points[b0];
       var v1 = points[b1];
       var v2 = points[b2];
@@ -284,43 +293,55 @@ namespace ValheimVehicles.SharedScripts
       VerifyOpenSet(points);
     }
 
-    private void FindInitialHullIndices(List<Vector3> points, out int b0,
+    private bool TryFindInitialHullIndices(List<Vector3> points, out int b0,
       out int b1,
       out int b2, out int b3)
     {
-      var count = points.Count;
+      b0 = 0;
+      b1 = b2 = b3 = -1;
+      if (points.Count < 4) return false;
 
-      for (var i0 = 0; i0 < count - 3; i0++)
-      for (var i1 = i0 + 1; i1 < count - 2; i1++)
+      // Choose a long edge, then the point farthest from that edge and its plane.
+      // Three scans also keep flat decks from triggering a search of every quadruple.
+      var origin = points[b0];
+      var largestDistance = EPSILON * EPSILON;
+      for (var i = 1; i < points.Count; i++)
       {
-        var p0 = points[i0];
-        var p1 = points[i1];
-
-        if (AreCoincident(p0, p1)) continue;
-
-        for (var i2 = i1 + 1; i2 < count - 1; i2++)
+        var distance = (points[i] - origin).sqrMagnitude;
+        if (distance > largestDistance)
         {
-          var p2 = points[i2];
-
-          if (AreCollinear(p0, p1, p2)) continue;
-
-          for (var i3 = i2 + 1; i3 < count - 0; i3++)
-          {
-            var p3 = points[i3];
-
-            if (AreCoplanar(p0, p1, p2, p3)) continue;
-
-            b0 = i0;
-            b1 = i1;
-            b2 = i2;
-            b3 = i3;
-            return;
-          }
+          largestDistance = distance;
+          b1 = i;
         }
       }
+      if (b1 < 0) return false;
 
-      throw new ArgumentException(
-        "Can't generate hull, points are coplanar");
+      var edge = points[b1] - origin;
+      var largestArea = EPSILON * EPSILON;
+      for (var i = 1; i < points.Count; i++)
+      {
+        var area = Cross(edge, points[i] - origin).sqrMagnitude;
+        if (area > largestArea)
+        {
+          largestArea = area;
+          b2 = i;
+        }
+      }
+      if (b2 < 0) return false;
+
+      var normal = Normal(origin, points[b1], points[b2]);
+      largestDistance = Mathf.Max(EPSILON, edge.magnitude * EPSILON);
+      for (var i = 1; i < points.Count; i++)
+      {
+        if (i == b1 || i == b2) continue;
+        var distance = Mathf.Abs(Dot(normal, points[i] - origin));
+        if (distance > largestDistance)
+        {
+          largestDistance = distance;
+          b3 = i;
+        }
+      }
+      return b3 >= 0;
     }
 
     private void GrowHull(List<Vector3> points)
@@ -690,14 +711,12 @@ namespace ValheimVehicles.SharedScripts
 
     /// <summary>
     ///   Calculate normal for triangle
-    ///   Second line is recommended by ChatGPT4 to prevent malformed triangles
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private Vector3 Normal(Vector3 v0, Vector3 v1, Vector3 v2)
     {
       var normal = Cross(v1 - v0, v2 - v0);
-      return normal.sqrMagnitude > EPSILON ? normal.normalized : Vector3.zero;
-      // return Cross(v1 - v0, v2 - v0).normalized;
+      return normal.sqrMagnitude > EPSILON * EPSILON ? normal / normal.magnitude : Vector3.zero;
     }
 
     /// <summary>
@@ -716,40 +735,6 @@ namespace ValheimVehicles.SharedScripts
         a.y * b.z - a.z * b.y,
         a.z * b.x - a.x * b.z,
         a.x * b.y - a.y * b.x);
-    }
-
-    /// <summary>
-    ///   Check if two points are coincident
-    /// </summary>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private bool AreCoincident(Vector3 a, Vector3 b)
-    {
-      return (a - b).magnitude <= EPSILON;
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private bool AreCollinear(Vector3 a, Vector3 b, Vector3 c)
-    {
-      return Cross(c - a, c - b).magnitude <= EPSILON;
-    }
-
-    /// <summary>
-    ///   Check if four points are coplanar
-    /// </summary>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private bool AreCoplanar(Vector3 a, Vector3 b, Vector3 c, Vector3 d)
-    {
-      var n1 = Cross(c - a, c - b);
-      var n2 = Cross(d - a, d - b);
-
-      var m1 = n1.magnitude;
-      var m2 = n2.magnitude;
-
-      return m1 <= EPSILON
-             || m2 <= EPSILON
-             || AreCollinear(Vector3.zero,
-               1.0f / m1 * n1,
-               1.0f / m2 * n2);
     }
 
     [Conditional("DEBUG_QUICKHULL")]
