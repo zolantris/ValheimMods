@@ -390,7 +390,7 @@
     /// <param name="collider"></param>
     public void OnTriggerStay(Collider collider)
     {
-      if (!IsReady()) return;
+      if (!isRebuildingCollisions) return;
       if (collider.gameObject.layer == LayerHelpers.ItemLayer)
       {
         return;
