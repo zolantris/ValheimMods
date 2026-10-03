@@ -1528,7 +1528,7 @@ public class VehicleCommands : ConsoleCommand
 
     if (vehicleZdo != null && vehicleZNetView != null && VehiclePiecesController.m_allPieces.TryGetValue(persistentZdoId, out var zdoPieces))
     {
-      VehiclePiecesController.SyncAllPrefabsToVehiclePosition(vehicleZNetView, zdoPieces);
+      VehiclePiecesController.SyncAllPrefabsToVehiclePosition(vehicleZNetView, persistentZdoId, zdoPieces);
     }
 
     return wasClamped;

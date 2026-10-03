@@ -167,17 +167,32 @@
     /// Meant for both client and server commands to sync vehicles. This is single threaded so there can be frame drops. Not meant for continuous runs.
     /// </summary>
     /// <param name="vehicleZdo"></param>
+    /// <param name="swivelPersistentId"></param>
     /// <param name="zdoPieces"></param>
-    public static void SyncAllPrefabsToSwivelPosition(ZDO vehicleZdo, HashSet<ZDO> zdoPieces)
+    public static void SyncAllPrefabsToSwivelPosition(ZDO vehicleZdo, int swivelPersistentId, HashSet<ZDO> zdoPieces)
     {
       var vehiclePosition = GetSwivelPosition(vehicleZdo);
       if (!vehiclePosition.HasValue) return;
+      List<ZDO>? foreignZdos = null;
       foreach (var zdo in zdoPieces)
       {
         if (zdo == null) continue;
         if (!zdo.IsValid()) continue;
+        // ZDOs are pooled. A recycled ZDO in this set can be an unrelated object which must never be moved to the swivel.
+        if (!TryGetSwivelParentId(zdo, out var parentId) || parentId != swivelPersistentId)
+        {
+          (foreignZdos ??= new List<ZDO>()).Add(zdo);
+          continue;
+        }
         SetPrefabWorldPosition(zdo, vehiclePosition.Value);
       }
+
+      if (foreignZdos == null) return;
+      foreach (var zdo in foreignZdos)
+      {
+        zdoPieces.Remove(zdo);
+      }
+      LoggerProvider.LogWarning($"Removed {foreignZdos.Count} stale ZDO(s) from swivel {swivelPersistentId} piece registry that did not belong to the swivel.");
     }
 
     public static void SetPrefabWorldPosition(ZDO zdo, Vector3 swivelParentPosition)
@@ -272,7 +287,7 @@
         // ensures any swivel pieces associated with it are force synced if rendered.
         if (AllSwivelPieces.TryGetValue(persistentId, out var zdoPieces))
         {
-          SyncAllPrefabsToSwivelPosition(_currentZdo, zdoPieces);
+          SyncAllPrefabsToSwivelPosition(_currentZdo, persistentId, zdoPieces);
         }
       });
 
@@ -513,9 +528,10 @@
       base.OnTransformParentChanged();
 
       // ensures any swivel pieces associated with it are force synced if rendered.
-      if (_currentZdo != null && AllSwivelPieces.TryGetValue(GetPersistentId(), out var zdoPieces))
+      var swivelPersistentId = GetPersistentId();
+      if (_currentZdo != null && AllSwivelPieces.TryGetValue(swivelPersistentId, out var zdoPieces))
       {
-        SyncAllPrefabsToSwivelPosition(_currentZdo, zdoPieces);
+        SyncAllPrefabsToSwivelPosition(_currentZdo, swivelPersistentId, zdoPieces);
       }
     }
 
