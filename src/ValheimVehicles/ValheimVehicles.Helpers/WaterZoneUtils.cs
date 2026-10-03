@@ -147,6 +147,16 @@ public static class WaterZoneUtils
       return IsInVehicleShipBounds(character);
     }
 
+#if DEBUG
+    var debugPlayer = character.GetComponent<Player>();
+    var playerExists = false;
+    // used to allow codepausing on players to debug them being on vehicle as this block is called for all characters otherwise
+    if (debugPlayer)
+    {
+      playerExists = true;
+    }
+#endif
+
     waterZoneData =
       VehicleOnboardController.GetOnboardCharacterData(character);
     var isCharacterOnboard = waterZoneData != null;
