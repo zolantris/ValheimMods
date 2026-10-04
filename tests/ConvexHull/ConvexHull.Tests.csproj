@@ -4,16 +4,21 @@
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <!-- Ensure SolutionDir is correctly set -->
+    <SolutionDir>$(MSBuildThisFileDirectory)..\..\</SolutionDir>
+    <!-- Initialize BaseIntermediateOutputPath early -->
+    <BaseIntermediateOutputPath>$(SolutionDir)obj\$(MSBuildProjectName)\</BaseIntermediateOutputPath>
   </PropertyGroup>
+  <Import Project="$(SolutionDir)build\base.props"/>
   <ItemGroup>
     <Compile Include="Program.cs" />
     <Compile Include="../../src/ValheimRAFT.Unity/Assets/ValheimVehicles/SharedScripts/ConvexHullCalculator.cs" Link="ConvexHullCalculator.cs" />
     <Reference Include="UnityEngine.CoreModule">
-      <HintPath>$(UnityManagedDirectory)/UnityEngine.CoreModule.dll</HintPath>
+      <HintPath>$(ManagedDataPath)/UnityEngine.CoreModule.dll</HintPath>
     </Reference>
   </ItemGroup>
   <Target Name="RequireUnityAssembly" BeforeTargets="ResolveReferences">
-    <Error Condition="!Exists('$(UnityManagedDirectory)/UnityEngine.CoreModule.dll')"
+    <Error Condition="!Exists('$(ManagedDataPath)/UnityEngine.CoreModule.dll')"
            Text="Set UnityManagedDirectory to the Valheim or Unity Managed directory." />
   </Target>
 </Project>
