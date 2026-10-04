@@ -4004,7 +4004,7 @@
     internal void ForceTakeoverControls(long playerId)
     {
 #if DEBUG
-      Logger.LogDebug("ForceTakeoverControls was called for the player.");
+      LoggerProvider.LogDebug("ForceTakeoverControls was called for the player.");
 #endif
       var prevOwnerId = GetUser();
       var prevPlayerOwner = Player.GetPlayer(prevOwnerId);
@@ -4077,7 +4077,7 @@
 
       if (ModEnvironment.IsDebug)
         if (!isInBoat)
-          Logger.LogDebug(
+          LoggerProvider.LogDebug(
             "RPC_RequestControl requested the owner to give control but they are not within the boat.");
 
       // the previous user could be invalid so always makes the current user valid if so.
