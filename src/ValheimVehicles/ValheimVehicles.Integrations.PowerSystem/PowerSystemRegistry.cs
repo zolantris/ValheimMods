@@ -6,7 +6,6 @@ using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using UnityEngine;
 using ValheimVehicles.Helpers;
-using ValheimVehicles.SharedScripts;
 using ValheimVehicles.SharedScripts.PowerSystem.Compute;
 using Zolantris.Shared;
 namespace ValheimVehicles.Integrations.PowerSystem;
@@ -17,8 +16,7 @@ namespace ValheimVehicles.Integrations.PowerSystem;
 public static class PowerSystemRegistry
 {
   // Backing sets/maps (all use reference or value equality)
-  internal static readonly Dictionary<ZDOID, PowerNetworkData> _byZdoid = new();
-  internal static readonly Dictionary<ZDO, PowerNetworkData> _byZdo = new();
+  internal static readonly Dictionary<ZDOID, PowerNetworkData> _byZdoId = new();
   internal static readonly Dictionary<PowerSystemComputeData, PowerNetworkData> _byData = new();
 
   // precomputed lists for quick lookups
@@ -34,8 +32,7 @@ public static class PowerSystemRegistry
   public static PowerNetworkData Register(ZDO zdo, PowerSystemComputeData data)
   {
     var d = new PowerNetworkData(zdo, data);
-    _byZdoid[d.Zdoid] = d;
-    _byZdo[d.Zdo] = d;
+    _byZdoId[d.Zdoid] = d;
     _byData[d.Data] = d;
 
     // Add to precomputed list by type
@@ -51,14 +48,15 @@ public static class PowerSystemRegistry
 
   public static void Unregister(ZDO zdo)
   {
-    if (!_byZdo.TryGetValue(zdo, out var d))
+    if (zdo == null || !zdo.IsValid()) return;
+
+    if (!_byZdoId.TryGetValue(zdo.m_uid, out var d))
     {
       PowerNetworkRebuildScheduler.Trigger();
       return;
     }
 
-    _byZdoid.Remove(d.Zdoid);
-    _byZdo.Remove(d.Zdo);
+    _byZdoId.Remove(d.Zdoid);
     _byData.Remove(d.Data);
 
     // Remove from precomputed list by type
@@ -90,12 +88,31 @@ public static class PowerSystemRegistry
   // Optionally: get all PowerNetworkData or raw PowerSystemComputeData
   public static IReadOnlyCollection<PowerNetworkData> GetAll()
   {
-    return _byZdoid.Values;
+    return _byZdoId.Values;
   }
+
+  private static readonly List<ZDO> _zdoBuffer = new();
+
+  /// <summary>
+  /// This gets all zdos and is optimized to not allocate per call
+  /// </summary>
+  /// <returns></returns>
   public static IReadOnlyCollection<ZDO> GetAllZDOs()
   {
-    return _byZdo.Keys;
+    _zdoBuffer.Clear();
+
+    foreach (var zdoId in _byZdoId.Keys)
+    {
+      var zdo = ZDOMan.instance.GetZDO(zdoId);
+      if (zdo != null && zdo.IsValid())
+      {
+        _zdoBuffer.Add(zdo);
+      }
+    }
+
+    return _zdoBuffer;
   }
+
   public static IReadOnlyCollection<PowerSystemComputeData> GetAllData()
   {
     return _byData.Keys;
@@ -119,23 +136,24 @@ public static class PowerSystemRegistry
     return (IReadOnlyList<T>)batch;
   }
 
-  public static bool ContainsZDO(ZDO zdo)
+  public static bool ContainsZDO(ZDO? zdo)
   {
-    if (zdo == null) return false;
-    return _byZdo.ContainsKey(zdo);
+    if (zdo == null || !zdo.IsValid()) return false;
+    var zdoId = zdo.m_uid;
+    return _byZdoId.ContainsKey(zdoId);
   }
 
   public static bool TryGetByZdo(ZDO? zdo, [NotNullWhen(true)] out PowerNetworkData? data)
   {
     data = null;
-    if (zdo == null) return false;
-    return _byZdo.TryGetValue(zdo, out data);
+    if (zdo == null || !zdo.IsValid()) return false;
+    return _byZdoId.TryGetValue(zdo.m_uid, out data);
   }
   public static bool TryGetByZdoid(ZDOID? zdoid, [NotNullWhen(true)] out PowerNetworkData? data)
   {
     data = null;
     if (zdoid == null) return false;
-    return _byZdoid.TryGetValue(zdoid.Value, out data);
+    return _byZdoId.TryGetValue(zdoid.Value, out data);
   }
   public static bool TryGetByData(PowerSystemComputeData? data, [NotNullWhen(true)] out PowerNetworkData? pnd)
   {

@@ -9,13 +9,11 @@ namespace ValheimVehicles.Integrations.PowerSystem;
 /// <typeparam name="T"></typeparam>
 public sealed class PowerNetworkData : IEquatable<PowerNetworkData>
 {
-  public readonly ZDO Zdo;
   public readonly ZDOID Zdoid;
   public readonly PowerSystemComputeData Data;
 
   public PowerNetworkData(ZDO zdo, PowerSystemComputeData data)
   {
-    Zdo = zdo ?? throw new ArgumentNullException(nameof(zdo));
     Data = data ?? throw new ArgumentNullException(nameof(data));
     Zdoid = zdo.m_uid;
   }

@@ -63,7 +63,7 @@
     public static Dictionary<ZDO, SwivelComponentBridge> ZdoToComponent = new();
     public ZDO? _currentZdo;
 
-    public static Dictionary<int, HashSet<ZDO>> AllSwivelPieces = new();
+    public static Dictionary<int, HashSet<ZDOID>> AllSwivelPieces = new();
 
     public override MotionState MotionState
     {
@@ -89,7 +89,7 @@
         AllSwivelPieces.Add(id, allSwivelPieces);
       }
 
-      allSwivelPieces.Add(zdo);
+      allSwivelPieces.Add(zdo.m_uid);
     }
 
 
@@ -101,7 +101,7 @@
         return;
       }
 
-      allSwivelPieces.Remove(zdo);
+      allSwivelPieces.Remove(zdo.m_uid);
     }
 
     public override int SwivelPersistentId
@@ -168,29 +168,30 @@
     /// </summary>
     /// <param name="vehicleZdo"></param>
     /// <param name="swivelPersistentId"></param>
-    /// <param name="zdoPieces"></param>
-    public static void SyncAllPrefabsToSwivelPosition(ZDO vehicleZdo, int swivelPersistentId, HashSet<ZDO> zdoPieces)
+    /// <param name="zdoIdPieces"></param>
+    public static void SyncAllPrefabsToSwivelPosition(ZDO vehicleZdo, int swivelPersistentId, HashSet<ZDOID> zdoIdPieces)
     {
       var vehiclePosition = GetSwivelPosition(vehicleZdo);
       if (!vehiclePosition.HasValue) return;
-      List<ZDO>? foreignZdos = null;
-      foreach (var zdo in zdoPieces)
+      List<ZDOID>? foreignZdos = null;
+      foreach (var zdoId in zdoIdPieces)
       {
+        var zdo = ZDOMan.instance.GetZDO(zdoId);
         if (zdo == null) continue;
         if (!zdo.IsValid()) continue;
         // ZDOs are pooled. A recycled ZDO in this set can be an unrelated object which must never be moved to the swivel.
         if (!TryGetSwivelParentId(zdo, out var parentId) || parentId != swivelPersistentId)
         {
-          (foreignZdos ??= new List<ZDO>()).Add(zdo);
+          (foreignZdos ??= new List<ZDOID>()).Add(zdoId);
           continue;
         }
         SetPrefabWorldPosition(zdo, vehiclePosition.Value);
       }
 
       if (foreignZdos == null) return;
-      foreach (var zdo in foreignZdos)
+      foreach (var zdoId in foreignZdos)
       {
-        zdoPieces.Remove(zdo);
+        zdoIdPieces.Remove(zdoId);
       }
       LoggerProvider.LogWarning($"Removed {foreignZdos.Count} stale ZDO(s) from swivel {swivelPersistentId} piece registry that did not belong to the swivel.");
     }
@@ -285,9 +286,9 @@
         }
 
         // ensures any swivel pieces associated with it are force synced if rendered.
-        if (AllSwivelPieces.TryGetValue(persistentId, out var zdoPieces))
+        if (AllSwivelPieces.TryGetValue(persistentId, out var zdoIdPieces))
         {
-          SyncAllPrefabsToSwivelPosition(_currentZdo, persistentId, zdoPieces);
+          SyncAllPrefabsToSwivelPosition(_currentZdo, persistentId, zdoIdPieces);
         }
       });
 
@@ -529,9 +530,9 @@
 
       // ensures any swivel pieces associated with it are force synced if rendered.
       var swivelPersistentId = GetPersistentId();
-      if (_currentZdo != null && AllSwivelPieces.TryGetValue(swivelPersistentId, out var zdoPieces))
+      if (_currentZdo != null && AllSwivelPieces.TryGetValue(swivelPersistentId, out var zdoIdPieces))
       {
-        SyncAllPrefabsToSwivelPosition(_currentZdo, swivelPersistentId, zdoPieces);
+        SyncAllPrefabsToSwivelPosition(_currentZdo, swivelPersistentId, zdoIdPieces);
       }
     }
 
