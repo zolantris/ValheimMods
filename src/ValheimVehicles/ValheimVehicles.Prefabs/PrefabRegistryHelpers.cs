@@ -728,7 +728,7 @@ public abstract class PrefabRegistryHelpers
     bool prioritized = false)
   {
     var netView = prefab.GetComponent<ZNetView>();
-    if (!(bool)netView) netView = prefab.AddComponent<ZNetView>();
+    if (netView == null) netView = prefab.AddComponent<ZNetView>();
 
     if (!netView)
     {

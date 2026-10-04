@@ -74,11 +74,6 @@ namespace ValheimVehicles.SharedScripts.PowerSystem
       totalSupply -= energyRequired;
     }
 
-    public static void RunPowerDischarge(PowerStorageData storage, float deltaTime, ref float totalSupply, ref float totalDemand)
-    {
-
-    }
-
     public static void SortStoragesByEnergy(List<PowerStorageData> storages)
     {
       storages.Sort((x, y) => x.Energy > y.Energy ? -1 : 1);

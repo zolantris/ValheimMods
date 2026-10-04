@@ -133,7 +133,7 @@ public class CannonPrefabConfig : BepInExBaseConfig<CannonPrefabConfig>
       CannonController.cannonballSpeed = Cannon_FireVelocity.Value;
     };
 
-    Cannon_FiringDelayPerCannon = config.BindUnique(VehicleCannonsSection, "Cannon_FiringDelayPerCannon", 0.1f, ConfigHelpers.CreateConfigDescription("Allows customizing cannon firing delays. This makes cannons fire in a order.", true, false, new AcceptableValueRange<float>(0.05f, 0.3f)));
+    Cannon_FiringDelayPerCannon = config.BindUnique(VehicleCannonsSection, "Cannon_FiringDelayPerCannon", 0.1f, ConfigHelpers.CreateConfigDescription("Allows customizing cannon firing delays. The value is in seconds. Decimals are allowed. This makes cannons fire in a order and can allow easier strafing shots.", true, false, new AcceptableValueRange<float>(0f, 5f)));
     Cannon_ReloadTime = config.BindUnique(VehicleCannonsSection, "Cannon_ReloadTime", 6f, ConfigHelpers.CreateConfigDescription("Allows setting cannon reload delays. This makes cannons reload longer or shorter. Shortest value is 100ms highest is 60seconds", true, false, new AcceptableValueRange<float>(0.1f, 60f)));
 
     CannonAutoAimYOffset = config.BindUnique(VehicleCannonsSection, "CannonAutoAimYOffset", 1f, ConfigHelpers.CreateConfigDescription("Set the Y offset where the cannonball attempt to hit. 0 will aim deadcenter, but it could miss due to gravity. Using above 0 will aim from center to top (1).", true, false, new AcceptableValueRange<float>(-1f, 1f)));

@@ -48,6 +48,8 @@ public class ShipHullPrefabRegistry : RegisterPrefab<ShipHullPrefabRegistry>
 
   public static HashSet<string> HullsWithInverseVariant = new()
   {
+    "hull_rib_wood",
+    "hull_rib_iron",
     "hull_bow_center",
     "hull_rib_expander",
     "hull_bow_tri",
@@ -974,8 +976,8 @@ public class ShipHullPrefabRegistry : RegisterPrefab<ShipHullPrefabRegistry>
     try
     {
       if (!convexHullCalculator.GenerateHull(localPoints, false, ref verts,
-        ref tris,
-        ref normals, out _))
+            ref tris,
+            ref normals, out _))
       {
         LoggerProvider.LogWarning($"Cannot generate a solid convex hull for prefab <{prefab.name}>; leaving its colliders unchanged.");
         return;
