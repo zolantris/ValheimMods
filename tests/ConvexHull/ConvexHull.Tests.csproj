@@ -15,6 +15,6 @@
     </ItemGroup>
     <Target Name="RequireUnityAssembly" BeforeTargets="ResolveReferences">
         <Error Condition="!Exists('$(ManagedDataPath)/UnityEngine.CoreModule.dll')"
-               Text="Set UnityManagedDirectory to the Valheim or Unity Managed directory."/>
+               Text="Set ManagedDataPath to the Valheim or Unity Managed directory."/>
     </Target>
 </Project>
