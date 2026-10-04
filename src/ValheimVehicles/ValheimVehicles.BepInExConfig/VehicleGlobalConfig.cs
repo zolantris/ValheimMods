@@ -11,10 +11,10 @@ public class VehicleGlobalConfig : BepInExBaseConfig<VehicleGlobalConfig>
   public static ConfigEntry<bool> EnableShipWakeSounds = null!;
   public static ConfigEntry<bool> EnableShipInWaterSounds = null!;
   public static ConfigEntry<bool> EnableShipSailSounds = null!;
-
   // updaters
   public static ConfigEntry<float> ServerRaftUpdateZoneInterval = null!;
   public static ConfigEntry<bool> ForceShipOwnerUpdatePerFrame { get; set; }
+  public static ConfigEntry<float> ForceVehicleOwnerShipTakeoverTime { get; set; }
 
   // section keys
   private const string VehicleGlobalBaseKey = "VehicleGlobal";
@@ -42,6 +42,13 @@ public class VehicleGlobalConfig : BepInExBaseConfig<VehicleGlobalConfig>
       ConfigHelpers.CreateConfigDescription(
         "Allows Server Admin control over the update tick for the RAFT location. Larger Rafts will take much longer and lag out players, but making this ticket longer will make the raft turn into a box from a long distance away.",
         true, true, new AcceptableValueRange<float>(1, 30f)));
+
+    ForceVehicleOwnerShipTakeoverTime = config.BindUnique(VehicleGlobalUpdateKey,
+      "ForceVehicleOwnerShipTakeoverTime",
+      0.2f,
+      ConfigHelpers.CreateConfigDescription(
+        "If the previous owner does not respond in this time in seconds, the vehicle will be transferred over to the new physics and controls owner immediately after this timer. Lower time has the risk of duplicate clients attempting to run physics, but the server will only reconcile the owner it detects on the server side.",
+        true, true, new AcceptableValueRange<float>(0.01f, 5f)));
   }
 
   private static void CreateSoundConfig(ConfigFile config)

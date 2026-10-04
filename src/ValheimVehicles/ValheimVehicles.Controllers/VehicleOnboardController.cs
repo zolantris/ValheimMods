@@ -35,11 +35,10 @@
       CharacterOnboardDataItems =
         new();
 
-    private static readonly Dictionary<ZDOID, Player> DelayedExitSubscriptions =
+    internal static readonly Dictionary<ZDOID, Player> DelayedExitSubscriptions =
       [];
 
-    public List<Player> m_localPlayers = [];
-
+    public HashSet<Player> m_localPlayers = new();
 
     public bool HasPlayersOnboard => m_localPlayers.Count > 0;
     private static bool _hasExitSubscriptionDelay = false;
@@ -60,8 +59,9 @@
 
     public List<Player> GetLocalPlayersSafe()
     {
-      m_localPlayers.RemoveAll(x => x == null);
-      return m_localPlayers;
+      // Remove null players from the HashSet
+      m_localPlayers.RemoveWhere(x => x == null);
+      return m_localPlayers.ToList();
     }
 
     private void Awake()
@@ -633,13 +633,12 @@
         return;
       }
 
-      var isPlayerInList = m_localPlayers.Contains(player);
       RemovePlayerBlockingCameraWhileOnboard(player);
       UpdateCameraZoom(player, false);
       player.transform.SetParent(piecesTransform);
 
-      if (!isPlayerInList)
-        m_localPlayers.Add(player);
+      // Add player to the HashSet
+      m_localPlayers.Add(player);
     }
 
     /// <summary>
@@ -766,7 +765,8 @@
 
         if (MovementController != null)
         {
-          m_localPlayers = validPlayers;
+          m_localPlayers.Clear();
+          m_localPlayers.UnionWith(validPlayers);
           if (validPlayers.Count == 0) MovementController.SendDelayedAnchor();
         }
 
