@@ -12,6 +12,7 @@ public static class ZNet_WorldSession_Patches
   private static void ZDOMan_Constructor()
   {
     WorldSessionState.ResetZdoScopedRegistries();
+    WorldSessionState.ResetStaticEntries();
   }
 
   [HarmonyPatch(typeof(ZNet), nameof(ZNet.Start))]

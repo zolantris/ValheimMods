@@ -29,6 +29,9 @@ public static class WorldSessionState
     SwivelComponentBridge.AllSwivelPieces.Clear();
     SwivelComponentBridge.ZdoToComponent.Clear();
 
+    VehicleOnboardController.CharacterOnboardDataItems.Clear();
+    VehicleOnboardController.DelayedExitSubscriptions.Clear();
+
     PersistentIdHelper.ClearMBParentCache();
   }
 
@@ -54,6 +57,11 @@ public static class WorldSessionState
 
     ClearWorldScopedState();
     _activeWorldKey = newWorldKey;
+  }
+
+  public static void ResetStaticEntries()
+  {
+    VehicleOnboardController.CharacterOnboardDataItems.Clear();
   }
 
   /// <summary>

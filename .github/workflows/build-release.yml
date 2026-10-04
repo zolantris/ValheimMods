@@ -1,4 +1,4 @@
-name: ValheimRAFT Build
+name: ValheimMods Build
 
 on:
   push:
@@ -31,26 +31,37 @@ jobs:
     runs-on: windows-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository and submodules
+        uses: actions/checkout@v4
         with:
-          submodules: true
-          token: ${{ secrets.REPO_TOKEN }}
+          submodules: recursive
+          token: ${{ secrets.REPO_TOKEN }} # Ensure REPO_TOKEN has read access to the private submodule repo
 
-      - uses: nuget/setup-nuget@v1
+      - name: Setup NuGet
+        uses: nuget/setup-nuget@v1
         with:
           nuget-version: '5.x'
 
-      - run: nuget restore ValheimMods.sln
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0"
+
+      - name: Restore NuGet Packages
+        run: nuget restore ValheimMods.sln
 
       - name: Setup MSBuild
         uses: microsoft/setup-msbuild@v1
 
-      - name: Navigate to Workspace
-        run: cd $GITHUB_WORKSPACE
-
+      # Note: Windows workflows use PowerShell by default, where mkdir syntax changes slightly.
       - name: Create Build Directory
-        run: mkdir _build
+        run: New-Item -ItemType Directory -Force -Path _build
 
-      - name: Build Solution
+      - name: Build Main Solution
         run: |
-          msbuild.exe ValheimMods.sln /nologo /nr:false /p:DeployOnBuild=true /p:DeployDefaultTarget=WebPublish /p:WebPublishMethod=FileSystem /p:DeleteExistingFiles=True /p:platform="Any CPU" /p:configuration="Release" /p:PublishUrl="../_build"
+          msbuild.exe ValheimMods.sln /nologo /nr:false /p:DeployOnBuild=true /p:DeployDefaultTarget=WebPublish /p:WebPublishMethod=FileSystem /p:DeleteExistingFiles=True /p:platform="Any CPU" /p:configuration="Release" /p:PublishUrl="../_build" /p:ManagedDataPath="${{ github.workspace }}\libs"
+
+      # Combined step: 'dotnet run' will automatically build your standalone test project first
+      - name: Run Convex Hull Tests
+        run: |
+          dotnet run --project tests/ConvexHull/ConvexHull.Tests.csproj --configuration Release -p:ManagedDataPath="${{ github.workspace }}\libs"

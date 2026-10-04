@@ -360,7 +360,7 @@ public class SteeringWheelComponent : MonoBehaviour, IAnimatorHandler, Hoverable
         ControllersInstance.OnboardController.m_localPlayers.ToArray() ??
         null;
 
-    if (player == null || player.IsEncumbered()) return false;
+    if (player == null) return false;
     /*
      * <note /> This logic allows for the player to just look at the Raft and see if the player is a child within it.
      */

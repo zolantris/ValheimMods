@@ -1,11 +1,11 @@
 # Convex hull regression checks
 
 Runs the production calculator against the actual Unity vector types. No game,
-world, network connection, or Unity scene is created. Requires .NET 8 and a
+world, network connection, or Unity scene is created. Requires .NET 12 and a
 Valheim or Unity installation containing `UnityEngine.CoreModule.dll`.
 
 ```powershell
-dotnet run --project tests/ConvexHull/ConvexHull.Tests.csproj --configuration Release -p:UnityManagedDirectory="<Valheim>/valheim_Data/Managed"
+dotnet run --project tests/ConvexHull/ConvexHull.Tests.csproj --configuration Release -p:ManagedDataPath="<
 ```
 
 Checks degenerate and non-finite inputs, retention of previous output on failure,
