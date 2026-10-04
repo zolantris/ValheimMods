@@ -90,11 +90,29 @@ public static class PowerSystemRegistry
   {
     return _byZdoId.Values;
   }
+
+  private static readonly List<ZDO> _zdoBuffer = new();
+
+  /// <summary>
+  /// This gets all zdos and is optimized to not allocate per call
+  /// </summary>
+  /// <returns></returns>
   public static IReadOnlyCollection<ZDO> GetAllZDOs()
   {
-    // ZDOs cannot be trusted as they are garbage collected so they must be grabbed from the current ZDOID keys
-    return _byZdoId.Keys.Select(zdoId => ZDOMan.instance.GetZDO(zdoId)).ToArray();
+    _zdoBuffer.Clear();
+
+    foreach (var zdoId in _byZdoId.Keys)
+    {
+      var zdo = ZDOMan.instance.GetZDO(zdoId);
+      if (zdo != null && zdo.IsValid())
+      {
+        _zdoBuffer.Add(zdo);
+      }
+    }
+
+    return _zdoBuffer;
   }
+
   public static IReadOnlyCollection<PowerSystemComputeData> GetAllData()
   {
     return _byData.Keys;
