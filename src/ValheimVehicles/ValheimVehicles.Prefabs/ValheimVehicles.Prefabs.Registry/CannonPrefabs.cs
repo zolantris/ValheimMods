@@ -93,6 +93,12 @@ public class CannonPrefabs : RegisterPrefab<CannonPrefabs>
 
   private void RegisterCannonballSolidProjectilePrefab()
   {
+    if (PrefabRegistryHelpers.PieceDataDictionary.ContainsKey(PrefabNames.CannonballSolidProjectile))
+    {
+      LoggerProvider.LogDebug($"Prefab {PrefabNames.CannonballSolidProjectile} is already registered!");
+      return;
+    }
+
     var prefabAsset = LoadValheimVehicleAssets._bundle.LoadAsset<GameObject>("cannon_ball_bronze");
     var prefab = PrefabManager.Instance.CreateClonedPrefab(PrefabNames.CannonballSolidProjectile, prefabAsset);
 
@@ -114,6 +120,12 @@ public class CannonPrefabs : RegisterPrefab<CannonPrefabs>
 
   private void RegisterCannonballExplosiveProjectilePrefab()
   {
+    if (PrefabRegistryHelpers.PieceDataDictionary.ContainsKey(PrefabNames.CannonballExplosiveProjectile))
+    {
+      LoggerProvider.LogDebug($"Prefab {PrefabNames.CannonballExplosiveProjectile} is already registered!");
+      return;
+    }
+
     var prefabAsset = LoadValheimVehicleAssets._bundle.LoadAsset<GameObject>("cannon_ball_blackmetal");
     var prefab = PrefabManager.Instance.CreateClonedPrefab(PrefabNames.CannonballExplosiveProjectile, prefabAsset);
     if (!prefab)
