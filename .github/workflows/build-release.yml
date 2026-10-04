@@ -59,7 +59,7 @@ jobs:
 
       - name: Build Main Solution
         run: |
-          msbuild.exe ValheimMods.sln /nologo /nr:false /p:DeployOnBuild=true /p:DeployDefaultTarget=WebPublish /p:WebPublishMethod=FileSystem /p:DeleteExistingFiles=True /p:platform="Any CPU" /p:configuration="Release" /p:PublishUrl="../_build"
+          msbuild.exe ValheimMods.sln /nologo /nr:false /p:DeployOnBuild=true /p:DeployDefaultTarget=WebPublish /p:WebPublishMethod=FileSystem /p:DeleteExistingFiles=True /p:platform="Any CPU" /p:configuration="Release" /p:PublishUrl="../_build" /p:ManagedDataPath="${{ github.workspace }}\libs"
 
       # Combined step: 'dotnet run' will automatically build your standalone test project first
       - name: Run Convex Hull Tests
