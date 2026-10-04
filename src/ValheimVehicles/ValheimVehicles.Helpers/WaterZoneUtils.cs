@@ -154,6 +154,14 @@ public static class WaterZoneUtils
     var isCharacterStandingOnVehicle =
       HasShipUnderneath(character, out var shipUnderneath);
 
+#if DEBUG
+    if (character.IsPlayer())
+    {
+      // for pausing code here for players only.
+      var isOnboardWithShip = shipUnderneath != null;
+    }
+#endif
+
     // Force adds the player if they are onboard but somehow not on the ship.
     if (isCharacterStandingOnVehicle && shipUnderneath != null && shipUnderneath.OnboardController != null && !isCharacterOnboard)
     {

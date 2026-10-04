@@ -4003,7 +4003,9 @@
 
     internal void ForceTakeoverControls(long playerId)
     {
-      Logger.LogDebug("Calling ForceSetOwner");
+#if DEBUG
+      LoggerProvider.LogDebug("ForceTakeoverControls was called for the player.");
+#endif
       var prevOwnerId = GetUser();
       var prevPlayerOwner = Player.GetPlayer(prevOwnerId);
       OnControlsHandOff(Player.GetPlayer(playerId), prevPlayerOwner);
@@ -4015,7 +4017,8 @@
     public IEnumerator DebouncedForceTakeoverControls(long playerId)
     {
       if (Manager.m_nview == null) yield break;
-      yield return new WaitForSeconds(2f);
+      var waitTime = Math.Clamp(VehicleGlobalConfig.ForceVehicleOwnerShipTakeoverTime.Value, 0.01f, 5f);
+      yield return new WaitForSeconds(waitTime);
       ForceTakeoverControls(playerId);
     }
 
@@ -4028,12 +4031,14 @@
         StopCoroutine(_debouncedForceTakeoverControlsInstance);
     }
 
-    public void SendRequestControl(long playerId)
+    public void SendRequestControl(long nextPlayerOwnerId)
     {
       if (m_nview == null) return;
       CancelDebounceTakeoverControls();
-      m_nview.InvokeRPC(0L, nameof(RPC_RequestControl),
-        playerId);
+      m_nview.InvokeRPC(m_nview.m_zdo.GetOwner(), nameof(RPC_RequestControl),
+        nextPlayerOwnerId);
+      _debouncedForceTakeoverControlsInstance =
+        StartCoroutine(DebouncedForceTakeoverControls(nextPlayerOwnerId));
     }
 
     /// <summary>
@@ -4049,10 +4054,18 @@
       if (m_nview == null || ZNet.instance == null) return;
       CancelDebounceTakeoverControls();
 
-      _debouncedForceTakeoverControlsInstance =
-        StartCoroutine(DebouncedForceTakeoverControls(targetPlayerId));
-
       var previousUserId = GetUser();
+
+      // The current physics owner is not to be trusted for tracking players.
+      // server = untrusted as it does not track unity components
+      // owners that are not on the vehicle should not be trusted either
+      if (ZNet.instance.IsDedicated() && ZNet.instance.IsServer() || !WaterZoneUtils.IsOnboard(Player.GetPlayer(targetPlayerId)))
+      {
+        m_nview.InvokeRPC(targetPlayerId, nameof(RPC_RequestResponse),
+          true, targetPlayerId, previousUserId);
+        return;
+      }
+
       var isInBoat = WaterZoneUtils.IsOnboard(Player.GetPlayer(targetPlayerId));
 
       if (!m_nview.IsOwner())
@@ -4064,14 +4077,12 @@
 
       if (ModEnvironment.IsDebug)
         if (!isInBoat)
-          Logger.LogDebug(
+          LoggerProvider.LogDebug(
             "RPC_RequestControl requested the owner to give control but they are not within the boat.");
 
-      if (!isInBoat) return;
-
       // the previous user could be invalid so always makes the current user valid if so.
-      m_nview.InvokeRPC(0L, nameof(RPC_RequestResponse),
-        true, targetPlayerId, previousUserId);
+      m_nview.InvokeRPC(targetPlayerId, nameof(RPC_RequestResponse),
+        isInBoat, targetPlayerId, previousUserId);
     }
 
     private void RPC_ReleaseControl(long sender, long playerId)
