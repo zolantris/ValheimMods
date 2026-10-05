@@ -111,7 +111,7 @@ public class ShieldGenerator_Patches
     }
 
     // uses ValheimVehicles.SharedScripts.Vector3Extensions
-    var isPositionNearEqual = vehicleShieldGenerator.LastPosition.IsCloseTo(vehicleShieldGenerator.GetShieldCenter(), 1f);
+    var isPositionNearEqual = vehicleShieldGenerator.LastPosition.IsCloseTo(vehicleShieldGenerator.GetShieldCenter(), 0.1f);
 
     // prevents spamming shieldDomeEffect visuals
     if (isPositionNearEqual) return;
