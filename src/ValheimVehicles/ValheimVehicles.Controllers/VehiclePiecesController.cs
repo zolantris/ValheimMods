@@ -142,9 +142,6 @@
     // abstraction from convexHullAPI overridess it.
     public ConvexHullComponent convexHullComponent = null!;
 
-    public List<MeshCollider> convexHullTriggerMeshColliders = [];
-    public List<Collider> convexHullTriggerColliders = [];
-
     public List<ZNetView> m_pieces = [];
     public List<ZNetView> m_tempPieces = [];
 
@@ -4701,7 +4698,7 @@
     public static List<Collider> GetCollidersInPiece(GameObject netView,
       bool includeInactive = true)
     {
-      return [..netView.GetComponentsInChildren<Collider>(includeInactive)];
+      return [.. netView.GetComponentsInChildren<Collider>(includeInactive)];
     }
 
     /// <summary>
