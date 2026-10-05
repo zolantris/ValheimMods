@@ -30,6 +30,7 @@
   using ValheimVehicles.Storage.Serialization;
   using ValheimVehicles.Structs;
   using ValheimVehicles.ValheimVehicles.Components;
+  using ValheimVehicles.ValheimVehicles.Patches;
   using ValheimVehicles.ValheimVehicles.Structs;
   using ZdoWatcher;
   using ZdoWatcher.ZdoWatcher.Utils;
@@ -141,9 +142,6 @@
 
     // abstraction from convexHullAPI overridess it.
     public ConvexHullComponent convexHullComponent = null!;
-
-    public List<MeshCollider> convexHullTriggerMeshColliders = [];
-    public List<Collider> convexHullTriggerColliders = [];
 
     public List<ZNetView> m_pieces = [];
     public List<ZNetView> m_tempPieces = [];
@@ -779,6 +777,7 @@
             break;
           case ShieldGenerator shieldGenerator:
             m_shieldGenerators.Add(shieldGenerator);
+            ShieldGenerator_Patches.InitializeShieldWithConvexHull(shieldGenerator);
             break;
           case TargetControlsInteractive prefabTargetControls:
             prefabTargetControls.targetController = targetController;
@@ -885,7 +884,7 @@
             RemoveEffectAreaFromVehicle(netView);
             break;
           case ShieldGenerator shieldGenerator:
-            m_shieldGenerators.Add(shieldGenerator);
+            m_shieldGenerators.Remove(shieldGenerator);
             break;
           case CannonController cannonController:
             targetController.RemoveCannon(cannonController);
@@ -4701,7 +4700,7 @@
     public static List<Collider> GetCollidersInPiece(GameObject netView,
       bool includeInactive = true)
     {
-      return [..netView.GetComponentsInChildren<Collider>(includeInactive)];
+      return [.. netView.GetComponentsInChildren<Collider>(includeInactive)];
     }
 
     /// <summary>

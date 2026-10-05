@@ -91,10 +91,72 @@ public class CannonPrefabs : RegisterPrefab<CannonPrefabs>
     }));
   }
 
+  private static void LogPrefabNetworkIdentity(
+    string label,
+    GameObject prefab)
+  {
+    if (!prefab)
+    {
+      LoggerProvider.LogError($"{label}: NULL");
+      return;
+    }
+
+    var views = prefab.GetComponentsInChildren<ZNetView>(true);
+
+    LoggerProvider.LogWarning(
+      $"{label}: " +
+      $"GO={prefab.GetInstanceID()} " +
+      $"name={prefab.name} " +
+      $"hash={prefab.name.GetStableHashCode()} " +
+      $"ZNetViews={views.Length}");
+
+    foreach (var view in views)
+    {
+      LoggerProvider.LogWarning(
+        $"{label}: " +
+        $"ZNetView={view.GetInstanceID()} " +
+        $"GO={view.gameObject.GetInstanceID()} " +
+        $"path={GetPath(view.transform)}");
+    }
+  }
+
+  private static string GetPath(Transform transform)
+  {
+    var path = transform.name;
+
+    while (transform.parent)
+    {
+      transform = transform.parent;
+      path = $"{transform.name}/{path}";
+    }
+
+    return path;
+  }
+
   private void RegisterCannonballSolidProjectilePrefab()
   {
+    // already registered. Don't re-register
+    var clonedPrefab = PrefabManager.Instance.GetPrefab(PrefabNames.CannonballSolidProjectile);
+    if (clonedPrefab != null)
+    {
+      LoggerProvider.LogDebug($"Already detecting cloned prefab {PrefabNames.CannonballSolidProjectile}");
+    }
+
+    if (CannonController.CannonballSolidPrefab)
+    {
+      Object.Destroy(CannonController.CannonballSolidPrefab);
+    }
+
+    if (CannonballSolidProjectile)
+    {
+      Object.Destroy(CannonballSolidProjectile);
+    }
+
     var prefabAsset = LoadValheimVehicleAssets._bundle.LoadAsset<GameObject>("cannon_ball_bronze");
-    var prefab = PrefabManager.Instance.CreateClonedPrefab(PrefabNames.CannonballSolidProjectile, prefabAsset);
+
+    var prefab = PrefabManager.Instance.CreateClonedPrefab(
+      PrefabNames.CannonballSolidProjectile,
+      prefabAsset);
 
     if (!prefab)
     {
@@ -102,7 +164,16 @@ public class CannonPrefabs : RegisterPrefab<CannonPrefabs>
       return;
     }
 
+    LogPrefabNetworkIdentity(
+      "SOLID PROJECTILE BEFORE NETVIEW",
+      prefab);
+
     var nv = PrefabRegistryHelpers.AddTempNetView(prefab, true);
+
+    LogPrefabNetworkIdentity(
+      "SOLID PROJECTILE AFTER NETVIEW",
+      prefab);
+
     nv.m_distant = true;
 
     var cannonBall = prefab.AddComponent<Cannonball>();
@@ -114,6 +185,29 @@ public class CannonPrefabs : RegisterPrefab<CannonPrefabs>
 
   private void RegisterCannonballExplosiveProjectilePrefab()
   {
+    // already registered. Don't re-register
+    var clonedPrefab = PrefabManager.Instance.GetPrefab(PrefabNames.CannonballExplosiveProjectile);
+    if (clonedPrefab != null)
+    {
+      LoggerProvider.LogDebug($"Already detecting cloned prefab {PrefabNames.CannonballExplosiveProjectile}");
+    }
+
+    if (CannonController.CannonballExplosivePrefab)
+    {
+      Object.Destroy(CannonController.CannonballSolidPrefab);
+    }
+
+    if (CannonballExplosiveProjectile)
+    {
+      Object.Destroy(CannonballExplosiveProjectile);
+    }
+
+    if (PrefabRegistryHelpers.PieceDataDictionary.ContainsKey(PrefabNames.CannonballExplosiveProjectile))
+    {
+      LoggerProvider.LogDebug($"Prefab {PrefabNames.CannonballExplosiveProjectile} is already registered!");
+      return;
+    }
+
     var prefabAsset = LoadValheimVehicleAssets._bundle.LoadAsset<GameObject>("cannon_ball_blackmetal");
     var prefab = PrefabManager.Instance.CreateClonedPrefab(PrefabNames.CannonballExplosiveProjectile, prefabAsset);
     if (!prefab)
@@ -219,6 +313,7 @@ public class CannonPrefabs : RegisterPrefab<CannonPrefabs>
   {
     var prefabAsset = LoadValheimVehicleAssets._bundle.LoadAsset<GameObject>("cannon_ball_blackmetal");
     var icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite("cannon_ball_blackmetal");
+
     var prefab = PrefabManager.Instance.CreateClonedPrefab(PrefabNames.CannonballExplosive, prefabAsset);
     if (!prefab)
     {

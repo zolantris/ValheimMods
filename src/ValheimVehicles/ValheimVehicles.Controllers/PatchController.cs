@@ -54,7 +54,8 @@ public static class PatchController
       typeof(ZNet_WorldSession_Patches),
       typeof(ZNet_WorldSession_Patches),
       typeof(BuildUi_VehicleCategories_Patch),
-      typeof(Vagon_Patch)
+      typeof(Vagon_Patch),
+      typeof(ShieldGenerator_Patches)
     );
 
     if (PatchConfig.MineRockPatch.Value)
