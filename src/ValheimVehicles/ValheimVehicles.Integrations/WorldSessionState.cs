@@ -63,7 +63,7 @@ public static class WorldSessionState
   public static void ResetStaticEntries()
   {
     VehicleOnboardController.CharacterOnboardDataItems.Clear();
-    // ShieldGenerator_Patches.Reset();
+    ShieldGenerator_Patches.Reset();
   }
 
   /// <summary>

@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using HarmonyLib;
 using UnityEngine;
+using ValheimVehicles.BepInExConfig;
 using ValheimVehicles.Controllers;
 using ValheimVehicles.Shared.Constants;
 using ValheimVehicles.SharedScripts;
@@ -81,26 +82,6 @@ public class ShieldGenerator_Patches
     VehicleShieldGenerators.Remove(__instance.m_nview.m_zdo.m_uid);
   }
 
-  [HarmonyPatch(typeof(ShieldDomeImageEffect), nameof(ShieldDomeImageEffect.SetShieldData))]
-  [HarmonyPrefix]
-  public static bool SetShieldData_Prefix(ShieldDomeImageEffect __instance, ShieldGenerator shield,
-    ref Vector3 position,
-    float radius,
-    float fuelFactor,
-    float lastHitTime)
-  {
-    if (!IsVehicleShield(shield)) return true;
-
-    // intercepts and updates some properties before the shield generator runs it's normal logic.
-    UpdateVehicleShieldCenter(shield, true);
-
-    // this must be updated directly otherwise the argument is stale and the original call will not get the new value
-    position = shield.m_shieldDome.transform.position;
-
-    return true;
-  }
-
-
   /// <summary>
   /// Prefix updates relate to centering the vehicle.
   /// </summary>
@@ -135,12 +116,27 @@ public class ShieldGenerator_Patches
     // prevents spamming shieldDomeEffect visuals
     if (isPositionNearEqual) return;
 
-    // visual update for the player camera (this uses same variable references as original method)
-    if (ShieldGenerator.m_shieldDomeEffect)
+
+    // base-game logic.
+
+    // this is run in the original method to skip running setShieldData (when this happens we must run SetShieldData for vehicles)
+    var hasSkippedDomeEffectUpdate = __instance.m_lastFuel == __instance.m_lastFuelSent && __instance.m_radius == __instance.m_radiusSent && __instance.m_lastHitTime == __instance.m_lastHitTimeSent;
+
+    // No need to run the update if it's already been done.
+    if (!hasSkippedDomeEffectUpdate)
     {
-      ShieldGenerator.m_shieldDomeEffect.SetShieldData(__instance, __instance.m_shieldDome.transform.position, __instance.m_radius, __instance.m_lastFuel, __instance.m_lastHitTime);
+      return;
     }
 
+    ShieldGenerator.m_shieldDomeEffect.SetShieldData(__instance, __instance.m_shieldDome.transform.position, __instance.m_radius, __instance.m_lastFuel, __instance.m_lastHitTime);
+
+    __instance.m_lastFuelSent = __instance.m_lastFuel;
+    __instance.m_radiusSent = __instance.m_radius;
+    __instance.m_lastHitTimeSent = __instance.m_lastHitTime;
+
+    // end of base-game logic
+
+    // run this to ensure the position update does not need to run again especially if anchored or flying and not-moving vehicle.
     vehicleShieldGenerator.UpdateShieldCenterPosition();
   }
 
@@ -199,13 +195,13 @@ public class ShieldGenerator_Patches
 
     // ensures min shield radius is not too small.
     // TODO add a global variable for this.
-    __instance.m_minShieldRadius = maxRadius * 0.75f;
+    __instance.m_minShieldRadius = Mathf.Clamp(VehicleGlobalConfig.VehicleShieldGeneratorMinRadius.Value, 4f, 30f);
 
-    // ensures shield can always expand to fit vehicle
-    __instance.m_maxShieldRadius = maxRadius * 1.2f;
+    // ensures shield can always expand to fit vehicle. Also Ensures min radius cannot be above max.
+    __instance.m_maxShieldRadius = Mathf.Max(__instance.m_minShieldRadius, Mathf.Clamp(VehicleGlobalConfig.VehicleShieldGeneratorMaxRadius.Value, 30f, 200f)); // caps at 200f so a vehicle shield cannot every exceed this size
 
     // radius target is set instead of radius to ensure that it expands to this value but not immediately
-    __instance.m_radiusTarget = maxRadius * 1.01f; // extra 1% size for vehicle
+    __instance.m_radiusTarget = maxRadius + 5f; // extra 2.5f around vehicle
 
     // force update position of the barrier.
     __instance.m_shieldDome.transform.position = shieldCenter;

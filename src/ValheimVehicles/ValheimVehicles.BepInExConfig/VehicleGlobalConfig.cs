@@ -62,12 +62,12 @@ public class VehicleGlobalConfig : BepInExBaseConfig<VehicleGlobalConfig>
     VehicleShieldGeneratorMaxRadius = config.BindUnique("Shield",
       "Shield MaxRadius", 100f,
       ConfigHelpers.CreateConfigDescription(
-        "The maximum radius a ShieldGenerator placed on a vehicle can expand to", true, true));
+        "The maximum radius a ShieldGenerator placed on a vehicle can expand to", true, true, new AcceptableValueRange<float>(30f, 200f)));
 
     VehicleShieldGeneratorMinRadius = config.BindUnique("Shield",
       "Shield MinRadius", 5f,
       ConfigHelpers.CreateConfigDescription(
-        "The minimum radius a ShieldGenerator placed on a vehicle can expand to", true, true));
+        "The minimum radius a ShieldGenerator placed on a vehicle can expand to", true, true, new AcceptableValueRange<float>(5f, 200f)));
   }
 
   private static void CreateSoundConfig(ConfigFile config)

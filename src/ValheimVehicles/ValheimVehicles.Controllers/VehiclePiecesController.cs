@@ -777,7 +777,7 @@
             break;
           case ShieldGenerator shieldGenerator:
             m_shieldGenerators.Add(shieldGenerator);
-            // ShieldGenerator_Patches.InitializeShieldWithConvexHull(shieldGenerator);
+            ShieldGenerator_Patches.InitializeShieldWithConvexHull(shieldGenerator);
             break;
           case TargetControlsInteractive prefabTargetControls:
             prefabTargetControls.targetController = targetController;
@@ -884,7 +884,7 @@
             RemoveEffectAreaFromVehicle(netView);
             break;
           case ShieldGenerator shieldGenerator:
-            m_shieldGenerators.Add(shieldGenerator);
+            m_shieldGenerators.Remove(shieldGenerator);
             break;
           case CannonController cannonController:
             targetController.RemoveCannon(cannonController);
