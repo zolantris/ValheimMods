@@ -30,6 +30,7 @@
   using ValheimVehicles.Storage.Serialization;
   using ValheimVehicles.Structs;
   using ValheimVehicles.ValheimVehicles.Components;
+  using ValheimVehicles.ValheimVehicles.Patches;
   using ValheimVehicles.ValheimVehicles.Structs;
   using ZdoWatcher;
   using ZdoWatcher.ZdoWatcher.Utils;
@@ -776,6 +777,7 @@
             break;
           case ShieldGenerator shieldGenerator:
             m_shieldGenerators.Add(shieldGenerator);
+            ShieldGenerator_Patches.InitializeShieldWithConvexHull(shieldGenerator);
             break;
           case TargetControlsInteractive prefabTargetControls:
             prefabTargetControls.targetController = targetController;

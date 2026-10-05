@@ -8,12 +8,35 @@ namespace ValheimVehicles.ValheimVehicles.Patches;
 public class VehicleShieldGenerator
 {
   public Vector3 LastPosition;
+  public ZDOID ZdoId;
   public ShieldGenerator? ShieldGenerator;
   public VehiclePiecesController? PiecesController;
 
   public bool IsVehicleShieldValid()
   {
-    return ShieldGenerator != null && ShieldGenerator.m_shieldDome != null && PiecesController != null && PiecesController.MovementController != null;
+    if (ShieldGenerator == null)
+    {
+      var zdo = ZDOMan.instance.GetZDO(ZdoId);
+      if (zdo == null) return false;
+
+      var shieldObj = ZNetScene.instance.FindInstance(zdo);
+      if (shieldObj == null) return false;
+
+      ShieldGenerator = shieldObj.GetComponentInChildren<ShieldGenerator>();
+    }
+
+    if (ShieldGenerator == null || ShieldGenerator.m_shieldDome == null)
+    {
+      return false;
+    }
+
+    // PiecesController does not initialize immediately
+    if (!PiecesController)
+    {
+      PiecesController = ShieldGenerator.GetComponentInParent<VehiclePiecesController>();
+    }
+
+    return PiecesController != null && PiecesController.MovementController != null;
   }
 
   public Vector3 GetShieldCenter()
@@ -21,7 +44,7 @@ public class VehicleShieldGenerator
     if (ShieldGenerator == null) return Vector3.zero;
     if (PiecesController == null) return ShieldGenerator.m_nview.transform.position;
     if (PiecesController.MovementController == null) return PiecesController.transform.position;
-    return PiecesController.MovementController.vehicleAutomaticCenterOfMassPoint;
+    return PiecesController.MovementController.m_body.position + PiecesController.MovementController.vehicleAutomaticCenterOfMassPoint;
   }
 
   public void UpdateShieldCenterPosition()
@@ -91,7 +114,7 @@ public class ShieldGenerator_Patches
     return shieldGenerator.m_nview != null && shieldGenerator.m_nview.IsValid() && VehicleShieldGenerators.TryGetValue(shieldGenerator.m_nview.m_zdo.m_uid, out _);
   }
 
-  private static void InitializeShieldWithConvexHull(ShieldGenerator __instance)
+  public static void InitializeShieldWithConvexHull(ShieldGenerator __instance)
   {
     if (!__instance || !__instance.m_nview || !__instance.m_nview.IsValid()) return;
     var parentId = __instance.m_nview.GetZDO().GetInt(VehicleZdoVars.MBParentId);
@@ -103,7 +126,7 @@ public class ShieldGenerator_Patches
     {
       ShieldGenerator = __instance,
       LastPosition = __instance.transform.position,
-      PiecesController = __instance.GetComponentInParent<VehiclePiecesController>()
+      PiecesController = __instance.GetComponentInParent<VehiclePiecesController>() // this will likely miss on first check
     };
   }
 
@@ -140,16 +163,19 @@ public class ShieldGenerator_Patches
     // max radius in 3 dimensions
     var maxRadius = Mathf.Max(vpcOnboardColliderSize.x, vpcOnboardColliderSize.y, vpcOnboardColliderSize.z) / 2;
 
+    // force min radius to fit vehicle
+    __instance.m_minShieldRadius = maxRadius;
+
     // radius target is set instead of radius to ensure that it expands to this value but not immediately
     __instance.m_radiusTarget = maxRadius * 1.01f; // extra 1% size for vehicle
 
     // force update position of the barrier.
     __instance.m_shieldDome.transform.position = shieldCenter;
 
-    // singleton instance that handles the effects
+    // visual update for the player camera (this uses same variable references as original method)
     if (ShieldGenerator.m_shieldDomeEffect && !skipSetShieldData)
     {
-      ShieldGenerator.m_shieldDomeEffect.SetShieldData(__instance, shieldCenter, maxRadius, __instance.m_lastFuel, __instance.m_lastHitTime);
+      ShieldGenerator.m_shieldDomeEffect.SetShieldData(__instance, __instance.m_shieldDome.transform.position, __instance.m_radius, __instance.m_lastFuel, __instance.m_lastHitTime);
     }
 
     vehicleShieldGenerator.UpdateShieldCenterPosition();
