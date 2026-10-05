@@ -1,183 +1,79 @@
-using System.Collections.Generic;
 using HarmonyLib;
 using UnityEngine;
+using Object = UnityEngine.Object;
 using ValheimVehicles.Controllers;
-using ValheimVehicles.Shared.Constants;
 namespace ValheimVehicles.ValheimVehicles.Patches;
-
-public class VehicleShieldGenerator
-{
-  public Vector3 LastPosition;
-  public ZDOID ZdoId;
-  public ShieldGenerator? ShieldGenerator;
-  public VehiclePiecesController? PiecesController;
-
-  public bool IsVehicleShieldValid()
-  {
-    if (ShieldGenerator == null)
-    {
-      var zdo = ZDOMan.instance.GetZDO(ZdoId);
-      if (zdo == null) return false;
-
-      var shieldObj = ZNetScene.instance.FindInstance(zdo);
-      if (shieldObj == null) return false;
-
-      ShieldGenerator = shieldObj.GetComponentInChildren<ShieldGenerator>();
-    }
-
-    if (ShieldGenerator == null || ShieldGenerator.m_shieldDome == null)
-    {
-      return false;
-    }
-
-    // PiecesController does not initialize immediately
-    if (!PiecesController)
-    {
-      PiecesController = ShieldGenerator.GetComponentInParent<VehiclePiecesController>();
-    }
-
-    return PiecesController != null && PiecesController.MovementController != null;
-  }
-
-  public Vector3 GetShieldCenter()
-  {
-    if (ShieldGenerator == null) return Vector3.zero;
-    if (PiecesController == null) return ShieldGenerator.m_nview.transform.position;
-    if (PiecesController.MovementController == null) return PiecesController.transform.position;
-    return PiecesController.MovementController.m_body.position + PiecesController.MovementController.vehicleAutomaticCenterOfMassPoint;
-  }
-
-  public void UpdateShieldCenterPosition()
-  {
-    LastPosition = GetShieldCenter();
-  }
-}
 
 public class ShieldGenerator_Patches
 {
-  public static readonly Dictionary<ZDOID, VehicleShieldGenerator> VehicleShieldGenerators = new();
-
-  public static void Reset()
-  {
-    VehicleShieldGenerators.Clear();
-  }
-
-  [HarmonyPatch(typeof(ShieldGenerator), nameof(ShieldGenerator.Start))]
-  [HarmonyPostfix]
-  public static void Start(ShieldGenerator __instance)
-  {
-    if (Player.IsPlacementGhost(__instance.gameObject)) return;
-    InitializeShieldWithConvexHull(__instance);
-  }
-
-  [HarmonyPatch(typeof(ShieldGenerator), nameof(ShieldGenerator.OnDestroy))]
-  [HarmonyPostfix]
-  public static void OnDestroy_Cleanup(ShieldGenerator __instance)
-  {
-    if (__instance.m_isPlacementGhost) return;
-    if (__instance.m_nview == null) return;
-    if (__instance.m_nview.m_zdo == null) return;
-    VehicleShieldGenerators.Remove(__instance.m_nview.m_zdo.m_uid);
-  }
-
-  [HarmonyPatch(typeof(ShieldDomeImageEffect), nameof(ShieldDomeImageEffect.SetShieldData))]
-  [HarmonyPrefix]
-  public static bool SetShieldData_Prefix(ShieldDomeImageEffect __instance, ShieldGenerator shield,
-    ref Vector3 position,
-    float radius,
-    float fuelFactor,
-    float lastHitTime)
-  {
-    if (!IsVehicleShield(shield)) return true;
-
-    // intercepts and updates some properties before the shield generator runs it's normal logic.
-    UpdateVehicleShield(shield, true);
-
-    // this must be updated directly otherwise the argument is stale and the original call will not get the new value
-    position = shield.m_shieldDome.transform.position;
-
-    return true;
-  }
-
+  // [HarmonyPatch(typeof(ShieldGenerator), nameof(ShieldGenerator.Start))]
+  // [HarmonyPostfix]
+  // public static void Start(ShieldGenerator __instance)
+  // {
+  //   if (Player.IsPlacementGhost(__instance.gameObject)) return;
+  //   InitializeShieldWithConvexHull(__instance);
+  // }
 
   [HarmonyPatch(typeof(ShieldGenerator), nameof(ShieldGenerator.Update))]
-  [HarmonyPostfix]
-  public static void UpdatePostfix(ShieldGenerator __instance)
+  [HarmonyPrefix]
+  public static bool UpdatePrefix(ShieldGenerator __instance)
   {
-    if (!IsVehicleShield(__instance)) return;
+    // skip prefix if not in vehicle
+    if (__instance.GetComponentInParent<VehiclePiecesController>() == null) return true;
+
+    // run full prefix. This is required to avoid weird interactions of the update when running only half of it.
+    UpdateShieldWithConvexHull(__instance);
+
+    if ((bool)(Object)__instance.m_shieldDome)
+    {
+      var num = __instance.m_shieldDome.transform.localScale.x + (__instance.m_radius - __instance.m_shieldDome.transform.localScale.x) * __instance.m_decreaseInertia;
+      __instance.m_shieldDome.transform.localScale = new Vector3(num, num, num);
+    }
+    if ((double)__instance.m_radiusTarget != (double)__instance.m_radius)
+    {
+      if (!__instance.m_firstCheck)
+      {
+        __instance.m_firstCheck = true;
+        __instance.m_radius = __instance.m_radiusTarget;
+      }
+      var f = __instance.m_radiusTarget - __instance.m_radius;
+      __instance.m_radius += Mathf.Min(__instance.m_startStopSpeed * Time.deltaTime, Mathf.Abs(f)) * ((double)f > 0.0 ? 1f : -1f);
+    }
+
+    // TODO this needs a positional check then it can skip running.
+    // if ((double)__instance.m_lastFuel == (double)__instance.m_lastFuelSent && (double)__instance.m_radius == (double)__instance.m_radiusSent && (double)__instance.m_lastHitTime == (double)__instance.m_lastHitTimeSent)
+    //   return false;
+
+    ShieldGenerator.m_shieldDomeEffect.SetShieldData(__instance, __instance.m_shieldDome.transform.position, __instance.m_radius, __instance.m_lastFuel, __instance.m_lastHitTime);
+    __instance.m_lastFuelSent = __instance.m_lastFuel;
+    __instance.m_radiusSent = __instance.m_radius;
+    __instance.m_lastHitTimeSent = __instance.m_lastHitTime;
     // Update the shield using the convex hull mesh
-    UpdateVehicleShield(__instance);
+
+    return false;
   }
 
-  private static bool IsVehicleShield(ShieldGenerator shieldGenerator)
+  private static void UpdateShieldWithConvexHull(ShieldGenerator __instance)
   {
-    return shieldGenerator.m_nview != null && shieldGenerator.m_nview.IsValid() && VehicleShieldGenerators.TryGetValue(shieldGenerator.m_nview.m_zdo.m_uid, out _);
-  }
-
-  public static void InitializeShieldWithConvexHull(ShieldGenerator __instance)
-  {
-    if (!__instance || !__instance.m_nview || !__instance.m_nview.IsValid()) return;
-    var parentId = __instance.m_nview.GetZDO().GetInt(VehicleZdoVars.MBParentId);
-    // no vehicle parent do nothing
-    if (parentId == 0) return;
-
-    var zdoId = __instance.m_nview.GetZDO().m_uid;
-    VehicleShieldGenerators[zdoId] = new VehicleShieldGenerator
-    {
-      ShieldGenerator = __instance,
-      LastPosition = __instance.transform.position,
-      PiecesController = __instance.GetComponentInParent<VehiclePiecesController>() // this will likely miss on first check
-    };
-  }
-
-  /// <summary>
-  /// Handles all updates for the VehicleShield. This can call twice when the vehicle is doing an update for a shield. But with this approach it ensures that any callsite will always go through here for vehicles
-  /// </summary>
-  /// <param name="__instance"></param>
-  /// <param name="skipSetShieldData">Skip the setShield data. Used in the patch to avoid infinite loop</param>
-  private static void UpdateVehicleShield(ShieldGenerator __instance, bool skipSetShieldData = false)
-  {
-    if (!VehicleShieldGenerators.TryGetValue(__instance.m_nview.m_zdo.m_uid, out var vehicleShieldGenerator))
-    {
-      return;
-    }
-
-    if (!vehicleShieldGenerator.IsVehicleShieldValid())
-    {
-      return;
-    }
-
-    var shieldCenter = vehicleShieldGenerator.GetShieldCenter();
-    // no need to update if expected position has not changed.
-    if (vehicleShieldGenerator.LastPosition == shieldCenter && __instance.m_shieldDome.transform.position == shieldCenter)
-    {
-      return;
-    }
-
-    if (vehicleShieldGenerator.PiecesController == null) return;
-
-    var onboardCollider = vehicleShieldGenerator.PiecesController.OnboardCollider;
-    if (onboardCollider == null) return;
-    var vpcOnboardColliderSize = onboardCollider.size;
-
-    // max radius in 3 dimensions
-    var maxRadius = Mathf.Max(vpcOnboardColliderSize.x, vpcOnboardColliderSize.y, vpcOnboardColliderSize.z) / 2;
-
-    // force min radius to fit vehicle
-    __instance.m_minShieldRadius = maxRadius;
-
-    // radius target is set instead of radius to ensure that it expands to this value but not immediately
-    __instance.m_radiusTarget = maxRadius * 1.01f; // extra 1% size for vehicle
+    var vpc = __instance.GetComponentInParent<VehiclePiecesController>();
+    if (vpc == null || vpc.MovementController == null) return;
+    var movementController = vpc.MovementController;
+    if (movementController == null) return;
 
     // force update position of the barrier.
-    __instance.m_shieldDome.transform.position = shieldCenter;
+    var vehicleCenter = movementController.OnboardCollider.bounds.center;
+    __instance.m_shieldDome.transform.position = vehicleCenter;
 
-    // visual update for the player camera (this uses same variable references as original method)
-    if (ShieldGenerator.m_shieldDomeEffect && !skipSetShieldData)
-    {
-      ShieldGenerator.m_shieldDomeEffect.SetShieldData(__instance, __instance.m_shieldDome.transform.position, __instance.m_radius, __instance.m_lastFuel, __instance.m_lastHitTime);
-    }
+    var vpcOnboardCollider = vpc.OnboardCollider;
 
-    vehicleShieldGenerator.UpdateShieldCenterPosition();
+    if (vpcOnboardCollider == null) return;
+
+    var vpcOnboardColliderSize = vpcOnboardCollider.size;
+
+    var maxRadius = Mathf.Max(vpcOnboardColliderSize.x, vpcOnboardColliderSize.y, vpcOnboardColliderSize.z) / 2;
+
+    // __instance.m_radius = maxRadius * 1.05f; // extra 5% size for vehicle
+    __instance.m_radiusTarget = maxRadius * 1.05f; // extra 5% size for vehicle
+    __instance.m_shieldDome.transform.position = vehicleCenter;
   }
 }
