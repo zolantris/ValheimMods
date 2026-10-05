@@ -1,6 +1,7 @@
 using ValheimVehicles.Components;
 using ValheimVehicles.Controllers;
 using ValheimVehicles.Helpers;
+using ValheimVehicles.ValheimVehicles.Patches;
 using ZdoWatcher;
 namespace ValheimVehicles.Integrations;
 
@@ -62,6 +63,7 @@ public static class WorldSessionState
   public static void ResetStaticEntries()
   {
     VehicleOnboardController.CharacterOnboardDataItems.Clear();
+    ShieldGenerator_Patches.Reset();
   }
 
   /// <summary>
