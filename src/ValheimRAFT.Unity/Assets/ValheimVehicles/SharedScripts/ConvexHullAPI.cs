@@ -1233,6 +1233,8 @@
             var convexHullMesh = convexHullMeshes[index];
             var previewInstance = GetOrInstantiateMesh(convexHullMesh, index, PreviewParent, convexHullPreviewMeshes);
 
+            previewInstance.name = "ConvexHullMesh_Preview";
+
             var previewMeshCollider =
               previewInstance.GetComponent<MeshCollider>();
 
@@ -1294,8 +1296,8 @@
         // Generate convex hull and export the mesh
         // let this calculator garbage collect if the parentTransform is different.
         if (!convexHullCalculator.GenerateHull(localPoints, false, ref verts,
-          ref tris,
-          ref normals, out _)) return;
+              ref tris,
+              ref normals, out _)) return;
 
         GenerateMeshFromConvexOutput(verts.ToArray(), tris.ToArray(), normals.ToArray(), meshIndex);
       }
