@@ -13,8 +13,13 @@ public class VehicleGlobalConfig : BepInExBaseConfig<VehicleGlobalConfig>
   public static ConfigEntry<bool> EnableShipSailSounds = null!;
   // updaters
   public static ConfigEntry<float> ServerRaftUpdateZoneInterval = null!;
-  public static ConfigEntry<bool> ForceShipOwnerUpdatePerFrame { get; set; }
-  public static ConfigEntry<float> ForceVehicleOwnerShipTakeoverTime { get; set; }
+  public static ConfigEntry<bool> ForceShipOwnerUpdatePerFrame = null!;
+  public static ConfigEntry<float> ForceVehicleOwnerShipTakeoverTime = null!;
+
+
+  // shields
+  public static ConfigEntry<float> VehicleShieldGeneratorMaxRadius = null!;
+  public static ConfigEntry<float> VehicleShieldGeneratorMinRadius = null!;
 
   // section keys
   private const string VehicleGlobalBaseKey = "VehicleGlobal";
@@ -25,6 +30,7 @@ public class VehicleGlobalConfig : BepInExBaseConfig<VehicleGlobalConfig>
   {
     CreateSoundConfig(config);
     CreateVehicleUpdaterConfig(config);
+    CreateVehicleShieldConfig(config);
   }
 
   private static void CreateVehicleUpdaterConfig(ConfigFile config)
@@ -49,6 +55,19 @@ public class VehicleGlobalConfig : BepInExBaseConfig<VehicleGlobalConfig>
       ConfigHelpers.CreateConfigDescription(
         "If the previous owner does not respond in this time in seconds, the vehicle will be transferred over to the new physics and controls owner immediately after this timer. Lower time has the risk of duplicate clients attempting to run physics, but the server will only reconcile the owner it detects on the server side.",
         true, true, new AcceptableValueRange<float>(0.01f, 5f)));
+  }
+
+  private static void CreateVehicleShieldConfig(ConfigFile config)
+  {
+    VehicleShieldGeneratorMaxRadius = config.BindUnique("Shield",
+      "Shield MaxRadius", 100f,
+      ConfigHelpers.CreateConfigDescription(
+        "The maximum radius a ShieldGenerator placed on a vehicle can expand to", true, true));
+
+    VehicleShieldGeneratorMinRadius = config.BindUnique("Shield",
+      "Shield MinRadius", 5f,
+      ConfigHelpers.CreateConfigDescription(
+        "The minimum radius a ShieldGenerator placed on a vehicle can expand to", true, true));
   }
 
   private static void CreateSoundConfig(ConfigFile config)
