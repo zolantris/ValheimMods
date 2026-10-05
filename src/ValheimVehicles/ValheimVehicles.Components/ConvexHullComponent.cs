@@ -9,6 +9,10 @@ namespace ValheimVehicles.Components;
 
 public class ConvexHullComponent : ConvexHullAPI
 {
+  // How deep underwater before showing this value to prevent it showing through water.
+  // todo make this configuration
+  public static float WaterOffset = 5f;
+
   public override void Awake()
   {
     IsAllowedAsHullOverride = IsAllowedForConvexHullFn;
@@ -24,7 +28,7 @@ public class ConvexHullComponent : ConvexHullAPI
         convexHullPreviewMeshRendererItems.Count == 0) return;
     foreach (var meshRenderer in convexHullPreviewMeshRendererItems)
       meshRenderer.material.SetFloat(MaxHeightShaderId,
-        MovementController.ShipFloatationObj.LowestWaterHeight - 1f);
+        MovementController.ShipFloatationObj.LowestWaterHeight - WaterOffset);
   }
 
   public static void UpdatePropertiesForAllComponents()
