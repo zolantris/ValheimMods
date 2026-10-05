@@ -155,6 +155,7 @@ public class ShieldGenerator_Patches
     var zdoId = __instance.m_nview.GetZDO().m_uid;
     VehicleShieldGenerators[zdoId] = new VehicleShieldGenerator
     {
+      ZdoId = zdoId,
       ShieldGenerator = __instance,
       LastPosition = __instance.transform.position,
       PiecesController = __instance.GetComponentInParent<VehiclePiecesController>() // this will likely miss on first check
