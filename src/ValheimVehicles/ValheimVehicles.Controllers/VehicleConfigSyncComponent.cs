@@ -93,6 +93,28 @@
       CommitConfigChange(updated); // saves + broadcasts
     }
 
+    public void Request_SyncVehicleMode(string mode)
+    {
+      if (!this.IsNetViewValid(out var netView)) return;
+      var pkg = new ZPackage();
+      pkg.Write(mode);
+      netView.InvokeRPC(netView.GetZDO().GetOwner(), nameof(RPC_SyncVehicleMode), pkg);
+    }
+
+    private void RPC_SyncVehicleMode(long sender, ZPackage pkg)
+    {
+      if (!this.IsNetViewValid(out var netView) || !netView.IsOwner()) return;
+
+      var vehicleMode = pkg.ReadString();
+
+      var updated = new VehicleCustomConfig();
+      updated.ApplyFrom(Config);
+
+      updated.VehicleMode = vehicleMode;
+
+      CommitConfigChange(updated); // saves + broadcasts
+    }
+
     public void SendRPCToAllClients(List<long> clients, string methodName, bool skipLocal = false)
     {
       if (!this.IsNetViewValid(out var netView)) return;

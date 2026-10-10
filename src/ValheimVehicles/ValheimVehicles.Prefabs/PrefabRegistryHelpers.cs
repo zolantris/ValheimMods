@@ -133,6 +133,15 @@ public abstract class PrefabRegistryHelpers
         Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
           .WaterOpacityBucket)
       });
+
+    PieceDataDictionary.Add(PrefabNames.BuildModeToggle,
+      new PieceData
+      {
+        Name = "$valheim_vehicles_vehiclemode_toggle",
+        Description = "$valheim_vehicles_vehiclemode_toggle_desc",
+        Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
+          .VehicleHammer)
+      });
   }
 
   /// <summary>

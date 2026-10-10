@@ -786,13 +786,13 @@
       TogglePlacementContainer(m_pieces.Count == 0);
     }
 
-    public void AddCustomPiece(ZNetView nv, bool isNew = false)
+    public void AddTempUtilityPiece(ZNetView nv, bool isNew = false)
     {
       LoggerProvider.LogWarning("CustomPieces not supported for SwivelComponentIntegration. This is likely a bug. Please report this to the mod author.");
       return;
     }
 
-    public void AddCustomPiece(GameObject prefab, bool isNew = false)
+    public void AddTempUtilityPiece(GameObject prefab, bool isNew = false)
     {
       LoggerProvider.LogWarning("CustomPieces not supported for SwivelComponentIntegration. This is likely a bug. Please report this to the mod author.");
       return;

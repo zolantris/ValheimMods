@@ -279,6 +279,7 @@
     }
 
     public string vehicleMode = "build";
+    public int vehicleConvexHullDataVersionHash = 0;
 
 
     public bool IsBuildMode()
@@ -289,6 +290,26 @@
     public bool IsVehicleReadOnlyMode()
     {
       return vehicleMode == "readonly";
+    }
+
+    public bool IsConvexHullInitialized()
+    {
+      return vehicleConvexHullDataVersionHash != 0;
+    }
+
+    public void SetVehicleMode(string val)
+    {
+      if (m_zdo == null || !m_zdo.IsValid()) return;
+      if (!m_zdo.IsOwner()) m_zdo.TryClaimOwnership();
+
+      if (val != "build" && val != "readonly")
+      {
+        LoggerProvider.LogError($"Invalid vehicle build mode. Got {val} expected 'build'|'readonly'");
+        return;
+      }
+
+      m_zdo.Set(VehicleZdoVars.VehicleMode, val);
+      vehicleMode = val;
     }
 
     public Rigidbody? MovementControllerRigidbody => MovementController?.m_body;
@@ -819,8 +840,9 @@
 
         // syncs a few keys
         vehicleMode = m_zdo.GetString(VehicleZdoVars.VehicleMode, "build");
+        vehicleConvexHullDataVersionHash = m_zdo.GetInt(VehicleZdoVars.VehicleConvexHullDataVersionHash, 0);
 
-        // wait afterwards
+        // wait at end vs beginning to be more accurate first load.
         yield return new WaitForSeconds(VehiclePropertySyncInterval);
       }
     }

@@ -58,6 +58,7 @@ public class VehicleCustomConfig : ISerializableConfig<VehicleCustomConfig, IVeh
 
   private bool _hasCustomFloatationHeight = false;
   private float _customFloatationHeight = 0f;
+  private string _vehicleMode = "build";
   private bool _forceDocked = false;
   private string _vehicleName = "";
 #if VALHEIM
@@ -127,6 +128,13 @@ public class VehicleCustomConfig : ISerializableConfig<VehicleCustomConfig, IVeh
   {
     get => _customFloatationHeight;
     set => _customFloatationHeight = Mathf.Clamp(value, -50f, 50f);
+  }
+
+
+  public string VehicleMode
+  {
+    get => _vehicleMode;
+    set => _vehicleMode = value;
   }
 
   public float CenterOfMassOffset

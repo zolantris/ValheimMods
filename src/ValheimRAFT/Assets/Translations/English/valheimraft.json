@@ -357,5 +357,11 @@
   "valheim_vehicles_boundary_mesh_eraser": "Boundary Chunk Eraser",
   "valheim_vehicles_boundary_mesh_eraser_desc": "Delete the boundary mesh. These can be viewed in the vehicle physics debugger",
   "valheim_vehicles_boundary_mesh": "Boundary Chunk Addition",
-  "valheim_vehicles_boundary_mesh_desc": "Vehicle Boundary Mesh allows constraining the boundary of the vehicle within the placed mesh. This will allow any prefab placed to expand until it exceed the area of the boundary."
+  "valheim_vehicles_boundary_mesh_desc": "Vehicle Boundary Mesh allows constraining the boundary of the vehicle within the placed mesh. This will allow any prefab placed to expand until it exceed the area of the boundary.",
+  "valheim_vehicles_build_mode": "Build Mode",
+  "valheim_vehicles_vehiclemode_toggle": "Vehicle Mode Toggle",
+  "valheim_vehicles_vehiclemode_toggle_description": "Toggle between 'build' and 'readonly' modes to allow building on vehicle safely in multiplayer.",
+  "valheim_vehicles_build_mode_desc": "Build Mode - allows building on the vehicle and expanding the vehicle's boundaries.",
+  "valheim_vehicles_readonly_mode": "Readonly Mode",
+  "valheim_vehicles_readonly_mode_desc": "Readonly Mode - Does not allow building on the vehicle. Use dock or hammer to toggle build mode"
 }

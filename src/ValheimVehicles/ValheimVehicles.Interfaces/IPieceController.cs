@@ -19,8 +19,8 @@
     public bool CanDestroy(); // To prevent destruction of prefab before pieces are unloaded.
     public void AddPiece(ZNetView nv, bool isNew = false);
     public void AddNewPiece(ZNetView nv);
-    public void AddCustomPiece(ZNetView nv, bool isNew = false);
-    public void AddCustomPiece(GameObject prefab, bool isNew = false);
+    public void AddTempUtilityPiece(ZNetView nv, bool isNew = false);
+    public void AddTempUtilityPiece(GameObject prefab, bool isNew = false);
 
     public void DestroyPiece(WearNTear wnt); // typically with wearntear but also in hammer deletion of non-wearnt pieces.
     public void RemovePiece(ZNetView nv);

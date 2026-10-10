@@ -187,7 +187,7 @@
       {
         if (gameObject.name.StartsWith(PrefabNames.CustomWaterFloatation))
         {
-          pieceController.AddCustomPiece(gameObject);
+          pieceController.AddTempUtilityPiece(gameObject);
           return gameObject;
         }
 

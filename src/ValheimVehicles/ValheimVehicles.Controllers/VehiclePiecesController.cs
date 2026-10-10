@@ -275,6 +275,8 @@
 
     private Transform piecesCollidersTransform;
 
+    public int m_lastConvexHullDataVersionHash = 0;
+
     public InitializationState BaseVehicleInitState
     {
       get;
@@ -455,10 +457,20 @@
       }
     }
 
-    public void ReadConvexHullColliderZdoData()
+    /// <summary>
+    /// Reads the vehicle zdo convexhull data. Updates the hash if it succeeds otherwise does nothing.
+    /// </summary>
+    public void TryReadConvexHullColliderZdoData()
     {
       if (m_zdo == null || !m_zdo.IsValid())
         return;
+
+      var vehicleConvexHashId = m_zdo.GetInt(
+        VehicleZdoVars.VehicleConvexHullDataVersionHash);
+
+      // same hash bail
+      if (m_lastConvexHullDataVersionHash == vehicleConvexHashId) return;
+
 
       var payload = m_zdo.GetByteArray(
         VehicleZdoVars.VehicleConvexHullData);
@@ -479,15 +491,56 @@
             hull.Triangles,
             null,
             i);
-
-          m_convexHullAPI.PostGenerateConvexMeshes();
-          IgnoreAllCollisionsFromConvexColliders();
         }
+
+        // similar to rebuild call this will update anything that has to do with colliders but it should exclude pieces.
+        OnConvexHullColliderZdoDataChange();
+
+        Manager.vehicleConvexHullDataVersionHash = vehicleConvexHashId;
+        m_lastConvexHullDataVersionHash = vehicleConvexHashId;
       }
       catch (InvalidDataException ex)
       {
         LoggerProvider.LogError(
           $"Failed to restore convex hull geometry: {ex.Message}");
+      }
+    }
+
+    /// <summary>
+    /// To be run when TryReadConvexHullColliderZdoData() completes
+    /// </summary>
+    public void OnConvexHullColliderZdoDataChange()
+    {
+      BaseControllerPieceBounds = convexHullComponent.GetConvexHullBounds(true);
+
+      m_convexHullAPI.PostGenerateConvexMeshes();
+
+
+      // todo confirm if IgnoreAllVehicleColliders() does this.
+      // IgnoreAllCollisionsFromConvexColliders();
+
+      // this might still be required
+      // todo confirm if IgnoreAllCollisionsFromConvexColliders handles this.
+      IgnoreAllVehicleColliders();
+
+
+      OnBoundsChangeUpdateShipColliders();
+
+
+    }
+
+    public void InitLandVehicleController()
+    {
+      try
+      {
+        if (LandMovementController != null)
+        {
+          LandMovementController.Initialize(BaseControllerPieceBounds);
+        }
+      }
+      catch (Exception e)
+      {
+        LoggerProvider.LogError($"{e}");
       }
     }
 
@@ -2361,7 +2414,14 @@
     /// </summary>
     public override void RequestBoundsRebuild()
     {
-      if (!isActiveAndEnabled || ZNetView.m_forceDisableInit || !IsInitialPieceActivationComplete || !Manager.IsBuildMode()) return;
+      if (!isActiveAndEnabled || ZNetView.m_forceDisableInit || !IsInitialPieceActivationComplete) return;
+
+      // ensures that if this is already generated it runs immediately. Otherwise it will not run immediately and just request.
+      if (Manager.IsConvexHullInitialized() && Manager.IsVehicleReadOnlyMode())
+      {
+        TryReadConvexHullColliderZdoData();
+        return;
+      }
 
       base.RequestBoundsRebuild();
     }
@@ -3645,29 +3705,31 @@
       }
     }
 
-    public void AddCustomPiece(GameObject prefab, bool isNew = false)
+    public void AddTempUtilityPiece(GameObject prefab, bool isNew = false)
     {
       if (prefab.name.StartsWith(PrefabNames.CustomWaterFloatation))
       {
-        AddCustomFloatationPrefab(prefab);
+        AddFloatationPrefab(prefab);
+        return;
+      }
+
+      if (prefab.name.StartsWith(PrefabNames.BuildModeToggle))
+      {
+        AddBuildModeTogglePrefab(prefab);
         return;
       }
     }
 
-    public void AddCustomPiece(ZNetView prefab, bool isNew = false)
+    public void AddTempUtilityPiece(ZNetView prefab, bool isNew = false)
     {
-      if (prefab.name.StartsWith(PrefabNames.CustomWaterFloatation))
-      {
-        AddCustomFloatationPrefab(prefab.gameObject);
-        return;
-      }
+      AddTempUtilityPiece(prefab.gameObject, isNew);
     }
 
     /// <summary>
     /// For custom config cubes that are deleted near instantly.
     /// </summary>
     /// <param name="prefab"></param>
-    private void AddCustomFloatationPrefab(GameObject prefab)
+    private void AddFloatationPrefab(GameObject prefab)
     {
       if (IsInvalid()) return;
       if (!prefab.name.StartsWith(PrefabNames.CustomWaterFloatation)) return;
@@ -3679,6 +3741,33 @@
       Manager.VehicleConfigSync.Request_SyncFloatationMode(nextState, prefab.transform.localPosition.y);
 
       var stateText = nextState ? ModTranslations.EnabledText : ModTranslations.DisabledText;
+
+      m_hoverFadeText.currentText = $"{ModTranslations.VehicleConfig_CustomFloatationHeight} ({stateText})";
+      m_hoverFadeText.transform.position = prefab.transform.position;
+      m_hoverFadeText.ResetHoverTimer();
+      m_hoverFadeText.Show();
+      IgnoreAllVehicleCollidersForGameObjectChildren(prefab);
+
+      // destroy the prefab. It has no use after this call.
+      Destroy(prefab);
+    }
+
+    /// <summary>
+    /// For custom config cubes that are deleted near instantly.
+    /// </summary>
+    /// <param name="prefab"></param>
+    private void AddBuildModeTogglePrefab(GameObject prefab)
+    {
+      if (IsInvalid()) return;
+      if (!prefab.name.StartsWith(PrefabNames.BuildModeToggle)) return;
+      prefab.transform.SetParent(_piecesContainerTransform);
+
+      var isBuildMode = Manager.IsBuildMode();
+      var nextState = isBuildMode ? "readonly" : "build";
+
+      Manager.VehicleConfigSync.Request_SyncVehicleMode(nextState);
+
+      var stateText = nextState == "build" ? ModTranslations.VehicleMode_BuildText : ModTranslations.VehicleMode_ReadOnly;
 
       m_hoverFadeText.currentText = $"{ModTranslations.VehicleConfig_CustomFloatationHeight} ({stateText})";
       m_hoverFadeText.transform.position = prefab.transform.position;
@@ -4351,6 +4440,7 @@
       // This is a safety check to ensure we do not have stale prefab entries. This may need to be run on generation of convex hull as well.
       m_prefabPieceDataItems.RemoveNullKeys();
     }
+
     /// <summary>
     /// An override of RebuildBounds scoped towards valheim integration instead of unity-only.
     /// - Must be wrapped in a delay/coroutine to prevent spamming on unmounting bounds
@@ -4384,6 +4474,7 @@
 
       try
       {
+
         // internal parent class must still be called.
         base.RebuildBounds(isForced);
       }
@@ -4528,6 +4619,8 @@
 
       FinalizeBoundsGenerationAfterShift();
 
+      InitLandVehicleController();
+
       // Critical for vehicle stability otherwise it will blast off in a random direction to due colliders internally colliding.
       IgnoreAllVehicleColliders();
 
@@ -4553,18 +4646,6 @@
     protected override void FinalizeBoundsGenerationAfterShift()
     {
       BaseControllerPieceBounds = convexHullComponent.GetConvexHullBounds(true);
-
-      try
-      {
-        if (LandMovementController != null)
-        {
-          LandMovementController.Initialize(BaseControllerPieceBounds);
-        }
-      }
-      catch (Exception e)
-      {
-        LoggerProvider.LogError($"{e}");
-      }
 
       if (HasClusterMeshesEnabled && m_pieces.Count >= MinClusterThreshold)
       {

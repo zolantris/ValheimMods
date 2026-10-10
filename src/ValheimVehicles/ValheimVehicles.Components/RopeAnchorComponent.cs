@@ -192,9 +192,14 @@ public class RopeAnchorComponent : MonoBehaviour, Interactable, Hoverable
 
   public string GetHoverText()
   {
+
+    // TODO Add Connect Dock to Vehicle text
     if (IsDockAnchor())
     {
-      return "";
+      if (m_draggingRopeTo != this)
+        return $"{StartAttachText}\n{HaulingStartText}";
+
+      return AttachToText;
     }
 
     if (isHauling)
@@ -285,7 +290,7 @@ public class RopeAnchorComponent : MonoBehaviour, Interactable, Hoverable
     {
       // todo cleanup this block.
 
-      if (m_draggingRopeTo != this)
+      if (m_draggingRopeTo != null && m_draggingRopeTo.gameObject != gameObject)
         AttachRope(m_draggingRopeTo, GetIndexAtLocation(m_draggingRopeTo));
 
       m_draggingRopeFrom = null;
@@ -766,16 +771,95 @@ public class RopeAnchorComponent : MonoBehaviour, Interactable, Hoverable
     }
   }
 
+  private static void SetVehicleMode(
+    VehiclePiecesController? vehicle,
+    string mode)
+  {
+    if (vehicle == null)
+      return;
+
+    vehicle.Manager.SetVehicleMode(mode);
+  }
+
+  private bool IsValidDockConnection(
+    RopeAnchorComponent target,
+    VehiclePiecesController? localVehicle,
+    VehiclePiecesController? targetVehicle)
+  {
+    // Ordinary rope anchors retain their existing connection rules.
+    if (!IsDockAnchor() && !target.IsDockAnchor())
+      return true;
+
+    // Dock connections must involve exactly one vehicle.
+    if (localVehicle != null == (targetVehicle != null))
+    {
+      Player.m_localPlayer?.Message(
+        MessageHud.MessageType.Center,
+        "A dock clamp must connect a vehicle to land.");
+      return false;
+    }
+
+    // The non-vehicle endpoint must itself be a dock clamp.
+    var landAnchor = localVehicle != null ? target : this;
+
+    if (!landAnchor.IsDockAnchor())
+    {
+      Player.m_localPlayer?.Message(
+        MessageHud.MessageType.Center,
+        "A dock clamp must connect to another dock clamp.");
+      return false;
+    }
+
+    return true;
+  }
+
+  private void SetConnectedVehicleMode(
+    GameObject? target,
+    string mode)
+  {
+    var localVehicle = GetComponentInParent<VehiclePiecesController>();
+
+    var targetVehicle = target
+      ? target.GetComponentInParent<VehiclePiecesController>()
+      : null;
+
+    SetVehicleMode(localVehicle, mode);
+
+    if (targetVehicle != localVehicle)
+      SetVehicleMode(targetVehicle, mode);
+  }
+
   private void RemoveUpdatingRopeAt(int i)
   {
     var index = m_ropes.IndexOf(m_updatingRopes[i]);
     if (index != -1) RemoveRopeAt(index);
   }
 
+
   private void RemoveRopeAt(int i)
   {
-    Destroy(m_ropes[i].m_ropeObject);
+    if (i < 0 || i >= m_ropes.Count)
+      return;
+
+    var rope = m_ropes[i];
+    var target = rope.m_ropeTarget;
+
+    // Remove local state before saving, so the persisted connections
+    // accurately represent the remaining ropes.
     m_ropes.RemoveAt(i);
+
+    if (target != null)
+      SetConnectedVehicleMode(target, "build");
+    else
+      SetVehicleMode(
+        GetComponentInParent<VehiclePiecesController>(),
+        "build");
+
+    if (rope.m_ropeObject != null)
+      Destroy(rope.m_ropeObject);
+
+    m_updatingRopes.Remove(rope);
     SaveToZDO();
   }
+
 }
