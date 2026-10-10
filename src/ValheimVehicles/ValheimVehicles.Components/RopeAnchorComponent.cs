@@ -379,7 +379,7 @@ public class RopeAnchorComponent : MonoBehaviour, Interactable, Hoverable
     {
       // todo cleanup this block.
 
-      if (m_draggingRopeTo != this)
+      if (m_draggingRopeTo != null && m_draggingRopeTo.gameObject != gameObject)
         AttachRope(m_draggingRopeTo, GetIndexAtLocation(m_draggingRopeTo));
 
       m_draggingRopeFrom = null;
