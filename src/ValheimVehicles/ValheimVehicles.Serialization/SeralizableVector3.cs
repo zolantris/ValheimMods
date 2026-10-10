@@ -1,6 +1,6 @@
 using System;
 using UnityEngine;
-namespace ValheimVehicles.Storage.Serialization;
+namespace ValheimVehicles.Serialization;
 
 [Serializable]
 public record struct SerializableVector3

@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using ValheimVehicles.Compat;
 using ValheimVehicles.Components;
+using ValheimVehicles.Enums;
 using ValheimVehicles.Helpers;
 using ValheimVehicles.Interfaces;
 using ValheimVehicles.SharedScripts;
@@ -24,7 +25,9 @@ public class VehicleCustomConfig : ISerializableConfig<VehicleCustomConfig, IVeh
   internal const string Key_CustomFloatationHeight = "vehicle_customFloatationHeight";
   internal const string Key_CenterOfMassOffset = "vehicle_centerOfMassOffset";
   internal const string Key_ForceDocked = "vehicle_forceDocked";
+  internal const string Key_DockZdoId = "vehicle_dockZdoId";
   internal const string Key_VehicleName = "vehicle_name";
+  internal const string Key_BuildMode = "vehicle_buildMode";
 
   // todo integrate these keys.
   // unused keys.
@@ -58,7 +61,9 @@ public class VehicleCustomConfig : ISerializableConfig<VehicleCustomConfig, IVeh
 
   private bool _hasCustomFloatationHeight = false;
   private float _customFloatationHeight = 0f;
+  private VehicleBuildMode _buildMode = VehicleBuildMode.Expandable;
   private bool _forceDocked = false;
+  private ZDOID _dockZdoId = ZDOID.None;
   private string _vehicleName = "";
 #if VALHEIM
   private float _centerOfMassOffset = PhysicsConfig.VehicleCenterOfMassOffset.Value;
@@ -129,6 +134,13 @@ public class VehicleCustomConfig : ISerializableConfig<VehicleCustomConfig, IVeh
     set => _customFloatationHeight = Mathf.Clamp(value, -50f, 50f);
   }
 
+
+  public VehicleBuildMode BuildMode
+  {
+    get => _buildMode;
+    set => _buildMode = value;
+  }
+
   public float CenterOfMassOffset
   {
     get => _centerOfMassOffset;
@@ -139,6 +151,12 @@ public class VehicleCustomConfig : ISerializableConfig<VehicleCustomConfig, IVeh
   {
     get => _forceDocked;
     set => _forceDocked = value;
+  }
+
+  public ZDOID DockZdoId
+  {
+    get => _dockZdoId;
+    set => _dockZdoId = value;
   }
 
   public string VehicleName
@@ -162,6 +180,7 @@ public class VehicleCustomConfig : ISerializableConfig<VehicleCustomConfig, IVeh
     pkg.Write(_treadScaleX);
     pkg.Write(_forceDocked);
     pkg.Write(_vehicleName);
+    pkg.Write((int)_buildMode);
   }
 
   public void Save(ZDO zdo, VehicleCustomConfig customConfig, string[]? filterKeys = null)
@@ -178,7 +197,9 @@ public class VehicleCustomConfig : ISerializableConfig<VehicleCustomConfig, IVeh
     zdo.SetDelta(Key_CustomFloatationHeight, customConfig.CustomFloatationHeight);
     zdo.SetDelta(Key_CenterOfMassOffset, customConfig.CenterOfMassOffset);
     zdo.SetDelta(Key_ForceDocked, customConfig.ForceDocked);
+    zdo.SetDelta(Key_DockZdoId, customConfig._dockZdoId);
     zdo.SetDelta(Key_VehicleName, customConfig.VehicleName);
+    zdo.SetDelta(Key_BuildMode, customConfig.BuildMode);
   }
 
   public VehicleCustomConfig Load(ZDO zdo, IVehicleConfig configFromComponent, string[]? filterKeys = null)
@@ -194,7 +215,9 @@ public class VehicleCustomConfig : ISerializableConfig<VehicleCustomConfig, IVeh
       CustomFloatationHeight = zdo.GetFloat(Key_CustomFloatationHeight, configFromComponent.CustomFloatationHeight),
       CenterOfMassOffset = zdo.GetFloat(Key_CenterOfMassOffset, configFromComponent.CenterOfMassOffset),
       ForceDocked = zdo.GetBool(Key_ForceDocked, configFromComponent.ForceDocked),
-      VehicleName = zdo.GetString(Key_VehicleName, configFromComponent.VehicleName)
+      DockZdoId = zdo.GetZDOID(Key_DockZdoId),
+      VehicleName = zdo.GetString(Key_VehicleName, configFromComponent.VehicleName),
+      BuildMode = (VehicleBuildMode)zdo.GetInt(Key_BuildMode, (int)configFromComponent.BuildMode)
     };
   }
 
@@ -209,8 +232,11 @@ public class VehicleCustomConfig : ISerializableConfig<VehicleCustomConfig, IVeh
     CustomFloatationHeight = config.CustomFloatationHeight;
     CenterOfMassOffset = config.CenterOfMassOffset;
     ForceDocked = config.ForceDocked;
+    DockZdoId = config.DockZdoId;
     VehicleName = config.VehicleName;
+    BuildMode = config.BuildMode;
   }
+
   public void ApplyTo(IVehicleConfig config)
   {
     config.Version = Version;
@@ -224,6 +250,8 @@ public class VehicleCustomConfig : ISerializableConfig<VehicleCustomConfig, IVeh
     config.CenterOfMassOffset = CenterOfMassOffset;
     config.ForceDocked = ForceDocked;
     config.VehicleName = VehicleName;
+    config.DockZdoId = DockZdoId;
+    config.BuildMode = BuildMode;
   }
 
   public VehicleCustomConfig Deserialize(ZPackage pkg)
@@ -240,7 +268,9 @@ public class VehicleCustomConfig : ISerializableConfig<VehicleCustomConfig, IVeh
       TreadHeight = pkg.ReadSingle(),
       TreadScaleX = pkg.ReadSingle(),
       ForceDocked = pkg.ReadBool(),
-      VehicleName = pkg.ReadString()
+      DockZdoId = pkg.ReadZDOID(),
+      VehicleName = pkg.ReadString(),
+      BuildMode = (VehicleBuildMode)pkg.ReadInt()
     };
   }
 }

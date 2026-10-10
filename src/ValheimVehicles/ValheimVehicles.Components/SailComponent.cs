@@ -15,7 +15,7 @@ using ValheimVehicles.Interfaces;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.Shared.Constants;
 using ValheimVehicles.SharedScripts;
-using ValheimVehicles.Storage.Serialization;
+using ValheimVehicles.Serialization;
 using ValheimVehicles.UI;
 using ZdoWatcher;
 using Zolantris.Shared;

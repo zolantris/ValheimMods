@@ -240,6 +240,12 @@
   "valheim_vehicles_vehicle_dock_messages_no_dockable_vehicle_found": "No dockable vehicle found nearby.",
   "valheim_vehicles_vehicle_dock_messages_dock_success": "Vehicle is docked",
   "valheim_vehicles_vehicle_dock_messages_undock_success": "Vehicle is undock",
+  "valheim_vehicles_status_docked": "docked",
+  "valheim_vehicles_status_onvehicle_dock": "docked",
+  "valheim_vehicles_status_onland_dock": "docked",
+  "valheim_vehicles_status_dock_enabled_desc": "vehicle will not move. Use the dock rope on the vehicle to undock.",
+  "valheim_vehicles_status_dock_disabled_desc": "not docked - vehicle requires a docking clamp outside of the vehicle to connect to any part of the vehicle to lock the vehicle in place.",
+  "valheim_vehicles_status_dock_disabled": "dock disabled",
   "valheim_vehicles_dock_anchor_point": "Vehicle Dock Anchor Point",
   "valheim_vehicles_dock_anchor_point_desc": "The attachment point for land-vehicles to dock between a boat. Only one of these should be added per vehicle. This will connect when the vehicle is manually or automatically docked to the vehicle.",
   "valheim_vehicles_swivel_saved": "Saved",
@@ -357,5 +363,14 @@
   "valheim_vehicles_boundary_mesh_eraser": "Boundary Chunk Eraser",
   "valheim_vehicles_boundary_mesh_eraser_desc": "Delete the boundary mesh. These can be viewed in the vehicle physics debugger",
   "valheim_vehicles_boundary_mesh": "Boundary Chunk Addition",
-  "valheim_vehicles_boundary_mesh_desc": "Vehicle Boundary Mesh allows constraining the boundary of the vehicle within the placed mesh. This will allow any prefab placed to expand until it exceed the area of the boundary."
+  "valheim_vehicles_boundary_mesh_desc": "Vehicle Boundary Mesh allows constraining the boundary of the vehicle within the placed mesh. This will allow any prefab placed to expand until it exceed the area of the boundary.",
+  "valheim_vehicles_buildmode_title": "Build Mode",
+  "valheim_vehicles_buildmode_toggle": "Build Mode Toggle",
+  "valheim_vehicles_buildmode_toggle_desc": "Toggle between 'expandable', 'fixed', and 'disabled' modes to allow building on vehicle safely.",
+  "valheim_vehicles_buildmode_expandable": "Expandable Mode",
+  "valheim_vehicles_buildmode_expandable_desc": "Expandable Mode - allows building on the vehicle and expanding the vehicle's boundaries. Boundaries should only be expanded while the vehicle is loaded. Please swap to fixed or disabled modes to ensure stability of the vehicle.",
+  "valheim_vehicles_buildmode_fixed": "Fixed Mode",
+  "valheim_vehicles_buildmode_fixed_desc": "Fixed Mode - Allows placement of pieces, but they will not expand the vehicle's boundaries. Swap to expandable mode to do this.",
+  "valheim_vehicles_buildmode_disabled": "Disabled Mode",
+  "valheim_vehicles_buildmode_disabled_desc": "This disables build mode. Players will not be able to place or remove any pieces on the current vehicle while it's in this state."
 }

@@ -129,6 +129,14 @@ public partial class ModTranslations
     DisabledText = SafeLocalize("$valheim_vehicles_gui_disabled");
     EnabledText = SafeLocalize("$valheim_vehicles_gui_enabled");
 
+    VehicleMode_Title = SafeLocalize("$valheim_vehicles_buildmode_title");
+    VehicleBuildMode_Expandable = SafeLocalize("$valheim_vehicles_buildmode_expandable");
+    VehicleBuildMode_ExpandableDesc = SafeLocalize("$valheim_vehicles_buildmode_expandable_desc");
+    VehicleBuildMode_Fixed = SafeLocalize("$valheim_vehicles_buildmode_fixed");
+    VehicleBuildMode_FixedDesc = SafeLocalize("$valheim_vehicles_buildmode_fixed_desc");
+    VehicleBuildMode_Disabled = SafeLocalize("$valheim_vehicles_buildmode_disabled");
+    VehicleBuildMode_DisabledDesc = SafeLocalize("$valheim_vehicles_buildmode_disabled_desc");
+
     SailVariant = SafeLocalize("$valheim_vehicles_sail_variant");
 
     CustomSail = SafeLocalize("$valheim_vehicles_sail_custom");

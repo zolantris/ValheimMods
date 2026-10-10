@@ -20,6 +20,7 @@
   using ValheimVehicles.Shared.Constants;
   using ValheimVehicles.SharedScripts;
   using ValheimVehicles.Structs;
+  using ValheimVehicles.ValheimVehicles.Controllers;
   using Zolantris.Shared;
   using Logger = Jotunn.Logger;
 
@@ -888,6 +889,19 @@
       }
 
       TryUpdateFrozenSyncFromVelocity();
+
+      if (Manager.IsDocked())
+      {
+        if (!m_body.isKinematic)
+        {
+          m_body.isKinematic = true;
+        }
+
+        // todo for gizmo this could be forced to rotate to Quaternion.identity.
+
+        return;
+      }
+
 
       if (PiecesController == null || PiecesController.m_pieces.Count < 1) return;
 

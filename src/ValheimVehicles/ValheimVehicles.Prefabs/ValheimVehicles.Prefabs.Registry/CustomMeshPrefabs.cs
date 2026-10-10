@@ -27,6 +27,7 @@ public class CustomMeshPrefabs : RegisterPrefab<CustomMeshPrefabs>
     RegisterWaterMaskCreator();
     RegisterWaterMaskPrefab();
     RegisterCustomFloatationPrefab();
+    RegisterVehicleModeTogglePrefab();
     RegisterShipChunkBoundaryFromMultiplier(2);
     RegisterShipChunkBoundaryFromMultiplier(4);
     RegisterShipChunkBoundaryFromMultiplier(8);
@@ -110,6 +111,43 @@ public class CustomMeshPrefabs : RegisterPrefab<CustomMeshPrefabs>
   //       Enabled = true
   //     }));
   // }
+  private static void RegisterVehicleModeTogglePrefab()
+  {
+    var prefab =
+      PrefabManager.Instance.CreateEmptyPrefab(PrefabNames.BuildModeToggle, false);
+    var meshRenderer = prefab.GetComponent<MeshRenderer>();
+    var material = new Material(LoadValheimVehicleAssets.DoubleSidedTransparentMat)
+    {
+      color = new Color(0.5f, 0.4f, 0.5f, 0.8f)
+    };
+    var collider = prefab.GetComponent<BoxCollider>();
+    prefab.layer = LayerMask.NameToLayer("piece_nonsolid");
+    collider.excludeLayers = LayerHelpers.CustomRaftLayerMask;
+    meshRenderer.material = material;
+    prefab.transform.localScale = new Vector3(0.4f, 0.1f, 0.4f);
+
+    // No special-effects, etc. Should be completely empty area invisible.
+    meshRenderer.lightProbeUsage = LightProbeUsage.Off;
+    meshRenderer.receiveShadows = false;
+    meshRenderer.shadowCastingMode = ShadowCastingMode.Off;
+    meshRenderer.rayTracingMode = RayTracingMode.Off;
+    meshRenderer.reflectionProbeUsage = ReflectionProbeUsage.Off;
+
+    PrefabRegistryHelpers.AddTempNetView(prefab);
+
+    PrefabRegistryHelpers.AddPieceForPrefab(
+      PrefabNames.BuildModeToggle,
+      prefab);
+
+    PrefabRegistryController.AddPiece(new CustomPiece(prefab, true,
+      new PieceConfig
+      {
+        PieceTable = PrefabRegistryController.GetPieceTableName(),
+        Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Tools),
+        Enabled = true
+      }));
+  }
+
   private static void RegisterCustomFloatationPrefab()
   {
     var prefab =

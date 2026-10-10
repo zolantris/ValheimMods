@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using ValheimVehicles.Components;
-namespace ValheimVehicles.Storage.Serialization;
+namespace ValheimVehicles.Serialization;
 
 /// <summary>
 /// ZDO helpers only.

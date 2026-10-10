@@ -99,7 +99,8 @@
     }
 
     public bool HasVehicleDebugger = false;
-    private Coroutine? _validateVehicleCoroutineInstance;
+    private CoroutineHandle? _validateVehicleCoroutineInstance;
+    private CoroutineHandle? _syncVehicleDataInstance;
 
     public void SetCreativeMode(bool val)
     {
@@ -107,6 +108,28 @@
       if (MovementController != null)
         MovementController.UpdateShipCreativeModeRotation();
       UpdateShipEffects();
+    }
+
+    /// <summary>
+    /// TODO this might need a RPC method if the commitConfigChange is not working
+    /// </summary>
+    public void SetDockedMode(ZDOID controllingZdoId)
+    {
+      var updated = new VehicleCustomConfig();
+      updated.ApplyFrom(Config);
+      updated.DockZdoId = controllingZdoId;
+
+      VehicleConfigSync.CommitConfigChange(updated);
+    }
+
+    public bool IsDocked()
+    {
+      if (Config.DockZdoId == ZDOID.None) return false;
+      var zdo = ZDOMan.instance.GetZDO(Config.DockZdoId);
+      if (zdo == null || !zdo.IsValid()) return false;
+      var activeInstance = ZNetScene.instance.FindInstance(zdo);
+      if (activeInstance == null) return false;
+      return true;
     }
 
 
@@ -277,6 +300,31 @@
       set => m_controlGuiPos = value;
     }
 
+    public int vehicleConvexHullDataVersionHash = 0;
+
+    public bool IsConvexHullInitialized()
+    {
+      return vehicleConvexHullDataVersionHash != 0;
+    }
+
+    public void SetVehicleMode(VehicleBuildMode val)
+    {
+      // this should handle the value being updated regardless if SP, LAN host, dedicated.
+      _vehicleConfigSync.Request_SyncBuildMode(val);
+      // if (m_zdo == null || !m_zdo.IsValid()) return;
+      // if (!m_zdo.IsOwner()) m_zdo.TryClaimOwnership();
+      //
+      // if (val != "build" && val != "readonly")
+      // {
+      //   LoggerProvider.LogError($"Invalid vehicle build mode. Got {val} expected 'build'|'readonly'");
+      //   return;
+      // }
+      //
+      // m_zdo.Set(VehicleZdoVars.VehicleBuildMode, val);
+      //
+      // _vehicleConfigSync.Config.VehicleBuildMode = val;
+    }
+
     public Rigidbody? MovementControllerRigidbody => MovementController?.m_body;
 
     public static GameObject GetVehicleMovingPiecesObj(Transform prefabRoot)
@@ -395,16 +443,14 @@
 
     private void OnDisable()
     {
-      if (_validateVehicleCoroutineInstance != null)
-      {
-        StopCoroutine(_validateVehicleCoroutineInstance);
-        _validateVehicleCoroutineInstance = null;
-      }
+      _validateVehicleCoroutineInstance?.Stop();
+      _syncVehicleDataInstance?.Stop();
 
       if (PersistentZdoId != 0 && VehicleInstances.ContainsKey(PersistentZdoId))
         VehicleInstances.Remove(PersistentZdoId);
 
       UpdateIsControllerValid();
+
       IsControllerValid = false;
     }
 
@@ -783,6 +829,7 @@
         }
 
         UpdateIsControllerValid();
+
         yield return new WaitForSeconds(0.1f);
         yield return new WaitForFixedUpdate();
       }
@@ -790,11 +837,36 @@
       IsControllerValid = false;
     }
 
+    public static float VehiclePropertySyncInterval = 5f;
+
+    private IEnumerator SyncVehiclePropertiesRoutine()
+    {
+      while (isActiveAndEnabled)
+      {
+        // make sure these syncs happen after the first fixed update.
+        yield return new WaitForFixedUpdate();
+
+        if (m_zdo == null || !m_zdo.IsValid())
+        {
+          continue;
+        }
+
+        // syncs a few keys
+        vehicleConvexHullDataVersionHash = m_zdo.GetInt(VehicleZdoVars.VehicleConvexHullDataVersionHash, 0);
+
+        // wait at end vs beginning to be more accurate first load.
+        yield return new WaitForSeconds(VehiclePropertySyncInterval);
+      }
+    }
+
     public void OnEnable()
     {
       // OnEnable should always reset this value.
       IsDestroying = false;
       IsInitialized = false;
+
+      _validateVehicleCoroutineInstance ??= new CoroutineHandle(this);
+      _syncVehicleDataInstance ??= new CoroutineHandle(this);
 
       if (!this.IsNetViewValid(out var netView))
       {
@@ -822,7 +894,8 @@
       if (HasVehicleDebugger && PiecesController != null)
         AddOrRemoveVehicleDebugger();
 
-      _validateVehicleCoroutineInstance = StartCoroutine(ValidateVehicleCoroutineRoutine());
+      _validateVehicleCoroutineInstance.Start(ValidateVehicleCoroutineRoutine());
+      _syncVehicleDataInstance.Start(SyncVehiclePropertiesRoutine());
     }
 
     public void UpdateShipZdoPosition()
@@ -1085,9 +1158,21 @@
       set {}
     }
 
+    public ZDOID DockZdoId
+    {
+      get => Config.DockZdoId;
+      set {}
+    }
+
     public string VehicleName
     {
       get => Config.VehicleName;
+      set {}
+    }
+
+    public VehicleBuildMode BuildMode
+    {
+      get => Config.BuildMode;
       set {}
     }
 

@@ -393,3 +393,4 @@ modSync.json5
 modSync*.json5
 
 mod-releases
+.aider*

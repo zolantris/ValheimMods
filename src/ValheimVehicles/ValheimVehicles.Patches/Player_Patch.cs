@@ -185,21 +185,24 @@
       var pieceController = PatchSharedData.PlayerLastRayPiece.GetComponentInParent<IPieceController>();
       if (pieceController != null)
       {
-        if (gameObject.name.StartsWith(PrefabNames.CustomWaterFloatation))
+        if (gameObject.name.StartsWith(PrefabNames.CustomWaterFloatation) || gameObject.name.StartsWith(PrefabNames.BuildModeToggle))
         {
-          pieceController.AddCustomPiece(gameObject);
+          pieceController.AddTempUtilityPiece(gameObject);
           return gameObject;
         }
 
-        if (piece.m_nview != null)
+        if (pieceController.CanPlacePiece(netView))
         {
-          pieceController.AddNewPiece(piece.m_nview);
-        }
-        else
-        {
-          pieceController.TrySetPieceToParent(piece.gameObject);
-          // should always run afterward.
-          TryFixPieceOverlap(gameObject);
+          if (piece.m_nview != null)
+          {
+            pieceController.AddNewPiece(piece.m_nview);
+          }
+          else
+          {
+            pieceController.TrySetPieceToParent(piece.gameObject);
+            // should always run afterward.
+            TryFixPieceOverlap(gameObject);
+          }
         }
 
         return gameObject;
