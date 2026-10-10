@@ -56,6 +56,7 @@
 
       rpcHandler?.Register(nameof(RPC_SyncBounds), RPC_SyncBounds);
       rpcHandler?.Register<ZPackage>(nameof(RPC_SyncFloatationMode), RPC_SyncFloatationMode);
+      rpcHandler?.Register<ZPackage>(nameof(RPC_SyncVehicleMode), RPC_SyncVehicleMode);
 
       hasRegisteredRPCListeners = true;
     }

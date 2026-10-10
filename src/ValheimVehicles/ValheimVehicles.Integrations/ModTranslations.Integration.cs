@@ -129,6 +129,7 @@ public partial class ModTranslations
     DisabledText = SafeLocalize("$valheim_vehicles_gui_disabled");
     EnabledText = SafeLocalize("$valheim_vehicles_gui_enabled");
 
+    VehicleMode_Title = SafeLocalize("$valheim_vehicles_vehicle_mode_title");
     VehicleMode_BuildText = SafeLocalize("$valheim_vehicles_build_mode");
     VehicleMode_ReadOnly = SafeLocalize("$valheim_vehicles_readonly_mode");
 

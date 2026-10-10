@@ -3769,7 +3769,7 @@
 
       var stateText = nextState == "build" ? ModTranslations.VehicleMode_BuildText : ModTranslations.VehicleMode_ReadOnly;
 
-      m_hoverFadeText.currentText = $"{ModTranslations.VehicleConfig_CustomFloatationHeight} ({stateText})";
+      m_hoverFadeText.currentText = $"{ModTranslations.VehicleMode_Title}:  ({stateText})";
       m_hoverFadeText.transform.position = prefab.transform.position;
       m_hoverFadeText.ResetHoverTimer();
       m_hoverFadeText.Show();

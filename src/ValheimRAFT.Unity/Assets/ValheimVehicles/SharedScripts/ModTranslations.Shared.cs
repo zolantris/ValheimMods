@@ -25,6 +25,7 @@ namespace ValheimVehicles.SharedScripts
 
     public static string VehicleMode_ReadOnly = null!;
     public static string VehicleMode_BuildText = null!;
+    public static string VehicleMode_Title = null!;
 
     public static string ValheimInput_KeyUse = null!;
     public static string ValheimInput_KeyAltPlace = null!;

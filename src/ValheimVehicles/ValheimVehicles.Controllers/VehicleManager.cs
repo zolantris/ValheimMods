@@ -278,18 +278,16 @@
       set => m_controlGuiPos = value;
     }
 
-    public string vehicleMode = "build";
     public int vehicleConvexHullDataVersionHash = 0;
-
 
     public bool IsBuildMode()
     {
-      return vehicleMode == "build";
+      return Config.VehicleMode == "build";
     }
 
     public bool IsVehicleReadOnlyMode()
     {
-      return vehicleMode == "readonly";
+      return Config.VehicleMode == "build";
     }
 
     public bool IsConvexHullInitialized()
@@ -299,17 +297,20 @@
 
     public void SetVehicleMode(string val)
     {
-      if (m_zdo == null || !m_zdo.IsValid()) return;
-      if (!m_zdo.IsOwner()) m_zdo.TryClaimOwnership();
-
-      if (val != "build" && val != "readonly")
-      {
-        LoggerProvider.LogError($"Invalid vehicle build mode. Got {val} expected 'build'|'readonly'");
-        return;
-      }
-
-      m_zdo.Set(VehicleZdoVars.VehicleMode, val);
-      vehicleMode = val;
+      // this should handle the value being updated regardless if SP, LAN host, dedicated.
+      _vehicleConfigSync.Request_SyncVehicleMode(val);
+      // if (m_zdo == null || !m_zdo.IsValid()) return;
+      // if (!m_zdo.IsOwner()) m_zdo.TryClaimOwnership();
+      //
+      // if (val != "build" && val != "readonly")
+      // {
+      //   LoggerProvider.LogError($"Invalid vehicle build mode. Got {val} expected 'build'|'readonly'");
+      //   return;
+      // }
+      //
+      // m_zdo.Set(VehicleZdoVars.VehicleMode, val);
+      //
+      // _vehicleConfigSync.Config.VehicleMode = val;
     }
 
     public Rigidbody? MovementControllerRigidbody => MovementController?.m_body;
@@ -839,7 +840,6 @@
         }
 
         // syncs a few keys
-        vehicleMode = m_zdo.GetString(VehicleZdoVars.VehicleMode, "build");
         vehicleConvexHullDataVersionHash = m_zdo.GetInt(VehicleZdoVars.VehicleConvexHullDataVersionHash, 0);
 
         // wait at end vs beginning to be more accurate first load.
@@ -1149,6 +1149,12 @@
     public string VehicleName
     {
       get => Config.VehicleName;
+      set {}
+    }
+
+    public string VehicleMode
+    {
+      get => Config.VehicleMode;
       set {}
     }
 

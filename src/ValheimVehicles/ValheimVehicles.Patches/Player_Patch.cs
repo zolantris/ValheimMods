@@ -185,7 +185,7 @@
       var pieceController = PatchSharedData.PlayerLastRayPiece.GetComponentInParent<IPieceController>();
       if (pieceController != null)
       {
-        if (gameObject.name.StartsWith(PrefabNames.CustomWaterFloatation))
+        if (gameObject.name.StartsWith(PrefabNames.CustomWaterFloatation) || gameObject.name.StartsWith(PrefabNames.BuildModeToggle))
         {
           pieceController.AddTempUtilityPiece(gameObject);
           return gameObject;

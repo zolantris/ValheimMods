@@ -218,7 +218,9 @@ public class VehicleCustomConfig : ISerializableConfig<VehicleCustomConfig, IVeh
     CenterOfMassOffset = config.CenterOfMassOffset;
     ForceDocked = config.ForceDocked;
     VehicleName = config.VehicleName;
+    VehicleMode = config.VehicleMode;
   }
+
   public void ApplyTo(IVehicleConfig config)
   {
     config.Version = Version;
@@ -232,6 +234,7 @@ public class VehicleCustomConfig : ISerializableConfig<VehicleCustomConfig, IVeh
     config.CenterOfMassOffset = CenterOfMassOffset;
     config.ForceDocked = ForceDocked;
     config.VehicleName = VehicleName;
+    config.VehicleMode = VehicleMode;
   }
 
   public VehicleCustomConfig Deserialize(ZPackage pkg)

@@ -61,4 +61,10 @@ public interface IVehicleConfig
     get;
     set;
   }
+
+  public string VehicleMode
+  {
+    get;
+    set;
+  }
 }
