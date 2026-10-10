@@ -193,14 +193,25 @@ public class RopeAnchorComponent : MonoBehaviour, Interactable, Hoverable
 
   public string GetHoverText()
   {
-
-    // TODO Add Connect Dock to Vehicle text
     if (IsDockAnchor())
     {
-      if (m_draggingRopeTo != this)
-        return $"{StartAttachText}\n{HaulingStartText}";
+      var dockParent = GetComponentInParent<VehiclePiecesController>();
 
-      return AttachToText;
+      if (dockParent)
+      {
+        if (dockParent.Manager.IsDocked())
+        {
+          return $"{Localization.instance.Localize("$valheim_vehicles_status_docked")}\n{Localization.instance.Localize("$valheim_vehicles_status_dock_enabled_desc")}";
+        }
+        else
+        {
+          return $"{Localization.instance.Localize("$valheim_vehicles_status_dock_disabled")}\n{Localization.instance.Localize("$valheim_vehicles_status_dock_disabled_desc")}";
+        }
+      }
+      else
+      {
+        return $"{AttachToText}\n\nUse this dock to connect a vehicle to shore or on a landvehicle to connect it to a watervehicle.";
+      }
     }
 
     if (isHauling)
@@ -263,6 +274,17 @@ public class RopeAnchorComponent : MonoBehaviour, Interactable, Hoverable
     m_ropes.Clear();
   }
 
+  public bool HandleDisconnectOnOtherRope(VehiclePiecesController vehicleParent)
+  {
+    var zdo = ZDOMan.instance.GetZDO(vehicleParent.Manager.DockZdoId);
+    if (zdo == null || !zdo.IsValid()) return false;
+    var netviewInstance = ZNetScene.instance.FindInstance(zdo);
+    var otherRopeAnchor = netviewInstance.GetComponent<RopeAnchorComponent>();
+    otherRopeAnchor.RemoveAllRopes();
+
+    return true;
+  }
+
   public bool HandleDockAnchorInteract(Humanoid user, bool hold, bool alt)
   {
     var vehicleParent = GetComponentInParent<VehiclePiecesController>();
@@ -272,9 +294,10 @@ public class RopeAnchorComponent : MonoBehaviour, Interactable, Hoverable
     {
       if (vehicleParent.Manager.IsDocked())
       {
-        var zdo = ZDOMan.instance.GetZDO(vehicleParent.Manager.DockZdoId);
-        if (zdo == null || !zdo.IsValid()) return false;
-        var netviewInstance = ZNetScene.instance.FindInstance(zdo);
+        if (HandleDisconnectOnOtherRope(vehicleParent) && vehicleParent.Manager.DockZdoId == ZDOID.None) return true;
+
+        vehicleParent.Manager.SetDockedMode(ZDOID.None);
+        return true;
       }
       return false;
     }
