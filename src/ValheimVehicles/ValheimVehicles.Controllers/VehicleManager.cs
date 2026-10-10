@@ -287,7 +287,7 @@
 
     public bool IsVehicleReadOnlyMode()
     {
-      return Config.VehicleMode == "build";
+      return Config.VehicleMode == "readonly";
     }
 
     public bool IsConvexHullInitialized()
