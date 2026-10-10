@@ -268,7 +268,16 @@ public class RopeAnchorComponent : MonoBehaviour, Interactable, Hoverable
     var vehicleParent = GetComponentInParent<VehiclePiecesController>();
 
     // do not do anything if the dock anchor piece is on the vehicle.
-    if (vehicleParent) return false;
+    if (vehicleParent)
+    {
+      if (vehicleParent.Manager.IsDocked())
+      {
+        var zdo = ZDOMan.instance.GetZDO(vehicleParent.Manager.DockZdoId);
+        if (zdo == null || !zdo.IsValid()) return false;
+        var netviewInstance = ZNetScene.instance.FindInstance(zdo);
+      }
+      return false;
+    }
 
     if (hold && m_draggingRopeFrom)
     {
