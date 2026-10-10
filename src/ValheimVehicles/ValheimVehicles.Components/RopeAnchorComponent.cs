@@ -191,6 +191,13 @@ public class RopeAnchorComponent : MonoBehaviour, Interactable, Hoverable
   }
 
 
+  /// <summary>
+  /// TODO split this into separate states.
+  /// - DockClamp Vehicle
+  /// - DockClamp onShore
+  /// - Normal Rope.
+  /// </summary>
+  /// <returns></returns>
   public string GetHoverText()
   {
     if (IsDockAnchor())
