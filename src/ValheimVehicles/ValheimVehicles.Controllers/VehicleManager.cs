@@ -99,7 +99,8 @@
     }
 
     public bool HasVehicleDebugger = false;
-    private Coroutine? _validateVehicleCoroutineInstance;
+    private CoroutineHandle? _validateVehicleCoroutineInstance;
+    private CoroutineHandle? _syncVehicleDataInstance;
 
     public void SetCreativeMode(bool val)
     {
@@ -277,6 +278,19 @@
       set => m_controlGuiPos = value;
     }
 
+    public string vehicleMode = "build";
+
+
+    public bool IsBuildMode()
+    {
+      return vehicleMode == "build";
+    }
+
+    public bool IsVehicleReadOnlyMode()
+    {
+      return vehicleMode == "readonly";
+    }
+
     public Rigidbody? MovementControllerRigidbody => MovementController?.m_body;
 
     public static GameObject GetVehicleMovingPiecesObj(Transform prefabRoot)
@@ -395,16 +409,14 @@
 
     private void OnDisable()
     {
-      if (_validateVehicleCoroutineInstance != null)
-      {
-        StopCoroutine(_validateVehicleCoroutineInstance);
-        _validateVehicleCoroutineInstance = null;
-      }
+      _validateVehicleCoroutineInstance?.Stop();
+      _syncVehicleDataInstance?.Stop();
 
       if (PersistentZdoId != 0 && VehicleInstances.ContainsKey(PersistentZdoId))
         VehicleInstances.Remove(PersistentZdoId);
 
       UpdateIsControllerValid();
+
       IsControllerValid = false;
     }
 
@@ -783,6 +795,7 @@
         }
 
         UpdateIsControllerValid();
+
         yield return new WaitForSeconds(0.1f);
         yield return new WaitForFixedUpdate();
       }
@@ -790,11 +803,36 @@
       IsControllerValid = false;
     }
 
+    public static float VehiclePropertySyncInterval = 5f;
+
+    private IEnumerator SyncVehiclePropertiesRoutine()
+    {
+      while (isActiveAndEnabled)
+      {
+        // make sure these syncs happen after the first fixed update.
+        yield return new WaitForFixedUpdate();
+
+        if (m_zdo == null || !m_zdo.IsValid())
+        {
+          continue;
+        }
+
+        // syncs a few keys
+        vehicleMode = m_zdo.GetString(VehicleZdoVars.VehicleMode, "build");
+
+        // wait afterwards
+        yield return new WaitForSeconds(VehiclePropertySyncInterval);
+      }
+    }
+
     public void OnEnable()
     {
       // OnEnable should always reset this value.
       IsDestroying = false;
       IsInitialized = false;
+
+      _validateVehicleCoroutineInstance ??= new CoroutineHandle(this);
+      _syncVehicleDataInstance ??= new CoroutineHandle(this);
 
       if (!this.IsNetViewValid(out var netView))
       {
@@ -822,7 +860,8 @@
       if (HasVehicleDebugger && PiecesController != null)
         AddOrRemoveVehicleDebugger();
 
-      _validateVehicleCoroutineInstance = StartCoroutine(ValidateVehicleCoroutineRoutine());
+      _validateVehicleCoroutineInstance.Start(ValidateVehicleCoroutineRoutine());
+      _syncVehicleDataInstance.Start(SyncVehiclePropertiesRoutine());
     }
 
     public void UpdateShipZdoPosition()

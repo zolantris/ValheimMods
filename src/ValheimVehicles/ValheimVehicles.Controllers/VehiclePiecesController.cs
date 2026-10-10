@@ -13,6 +13,7 @@
   using UnityEngine.Serialization;
   using ValheimVehicles.Components;
   using ValheimVehicles.BepInExConfig;
+  using ValheimVehicles.Compat;
   using ValheimVehicles.Constants;
   using ValheimVehicles.Enums;
   using ValheimVehicles.Helpers;
@@ -27,7 +28,7 @@
   using ValheimVehicles.SharedScripts;
   using ValheimVehicles.SharedScripts.Enums;
   using ValheimVehicles.SharedScripts.Helpers;
-  using ValheimVehicles.Storage.Serialization;
+  using ValheimVehicles.Serialization;
   using ValheimVehicles.Structs;
   using ValheimVehicles.ValheimVehicles.Components;
   using ValheimVehicles.ValheimVehicles.Patches;
@@ -409,6 +410,86 @@
     }
 
     public static float VehicleActiveAreaSyncRadius = 250f;
+
+    /// <summary>
+    /// Saves a single convex hull collider ZDO data.
+    ///
+    /// This does not handle changing modes from build to moving
+    /// 
+    /// </summary>
+    /// 
+    public void SaveConvexHullColliderZdoData()
+    {
+      if (m_zdo == null || !m_zdo.IsValid())
+        return;
+
+      if (!m_zdo.IsOwner())
+        m_zdo.TryClaimOwnership();
+
+      if (!m_zdo.IsOwner())
+      {
+        LoggerProvider.LogDebug(
+          "Unable to claim ZDO ownership while saving convex hull data.");
+        return;
+      }
+
+      try
+      {
+        var payload = ConvexHullDataSerializer.Serialize(
+          transform, // use pieces transform not movementcontroller transform
+          convexHullComponent.convexHullMeshColliders);
+
+        var revision = m_zdo.GetInt(VehicleZdoVars.VehicleConvexHullDataVersionHash, 0);
+        revision = revision == int.MaxValue ? 1 : revision + 1;
+
+        m_zdo.Set(VehicleZdoVars.VehicleConvexHullData, payload);
+        m_zdo.Set(VehicleZdoVars.VehicleConvexHullDataVersionHash, revision);
+
+        LoggerProvider.LogDebug(
+          $"Saved convex hull geometry: {payload.Length} bytes.");
+      }
+      catch (InvalidDataException ex)
+      {
+        LoggerProvider.LogError(
+          $"Failed to serialize vehicle convex hull geometry: {ex.Message}");
+      }
+    }
+
+    public void ReadConvexHullColliderZdoData()
+    {
+      if (m_zdo == null || !m_zdo.IsValid())
+        return;
+
+      var payload = m_zdo.GetByteArray(
+        VehicleZdoVars.VehicleConvexHullData);
+
+      if (payload == null || payload.Length == 0)
+        return;
+
+      try
+      {
+        var hulls = ConvexHullDataSerializer.Deserialize(payload);
+
+        for (var i = 0; i < hulls.Count; i++)
+        {
+          var hull = hulls[i];
+
+          m_convexHullAPI.GenerateMeshFromConvexOutput(
+            hull.Vertices,
+            hull.Triangles,
+            null,
+            i);
+
+          m_convexHullAPI.PostGenerateConvexMeshes();
+          IgnoreAllCollisionsFromConvexColliders();
+        }
+      }
+      catch (InvalidDataException ex)
+      {
+        LoggerProvider.LogError(
+          $"Failed to restore convex hull geometry: {ex.Message}");
+      }
+    }
 
     /// <summary>
     /// This is a full sync of all vehicles on a map. It is used for both servers and client commands to ensure vehicles sync across all peers.
@@ -2280,7 +2361,7 @@
     /// </summary>
     public override void RequestBoundsRebuild()
     {
-      if (!isActiveAndEnabled || ZNetView.m_forceDisableInit || !IsInitialPieceActivationComplete) return;
+      if (!isActiveAndEnabled || ZNetView.m_forceDisableInit || !IsInitialPieceActivationComplete || !Manager.IsBuildMode()) return;
 
       base.RequestBoundsRebuild();
     }

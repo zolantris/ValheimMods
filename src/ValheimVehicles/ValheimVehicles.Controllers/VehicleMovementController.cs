@@ -889,6 +889,14 @@
 
       TryUpdateFrozenSyncFromVelocity();
 
+
+      // Build mode will always be kinematic.
+      if (Manager.IsBuildMode())
+      {
+        m_body.isKinematic = true;
+        return;
+      }
+
       if (PiecesController == null || PiecesController.m_pieces.Count < 1) return;
 
       if (!CanRunPoweredVehicle())

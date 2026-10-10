@@ -91,7 +91,7 @@ public class RopeAnchorComponent : MonoBehaviour, Interactable, Hoverable
 
   private float m_lastRopeCheckTime;
 
-  public static GameObject m_draggingRopeTo;
+  public static GameObject? m_draggingRopeTo;
 
   public bool isHauling = false;
   private static string AttachToText = "";
@@ -257,9 +257,55 @@ public class RopeAnchorComponent : MonoBehaviour, Interactable, Hoverable
     m_ropes.Clear();
   }
 
+  public bool HandleDockAnchorInteract(Humanoid user, bool hold, bool alt)
+  {
+    var vehicleParent = GetComponentInParent<VehiclePiecesController>();
+
+    // do not do anything if the dock anchor piece is on the vehicle.
+    if (vehicleParent) return false;
+
+    if (hold && m_draggingRopeFrom)
+    {
+      m_draggingRopeFrom = null;
+      m_rope.enabled = false;
+      return false;
+    }
+
+    if (alt)
+    {
+      return true;
+    }
+
+    if (!m_draggingRopeFrom)
+    {
+      m_draggingRopeFrom = this;
+      m_rope.enabled = true;
+    }
+    else if (m_draggingRopeFrom == this)
+    {
+      // todo cleanup this block.
+
+      if (m_draggingRopeTo != this)
+        AttachRope(m_draggingRopeTo, GetIndexAtLocation(m_draggingRopeTo));
+
+      m_draggingRopeFrom = null;
+      m_rope.enabled = false;
+    }
+    else
+    {
+      // todo make sure this is accurate
+      m_draggingRopeFrom.AttachRope(this);
+      m_draggingRopeFrom.m_rope.enabled = false;
+      m_draggingRopeFrom = null;
+      m_rope.enabled = false;
+    }
+
+    return true;
+  }
+
   public bool Interact(Humanoid user, bool hold, bool alt)
   {
-    if (IsDockAnchor()) return false;
+    if (IsDockAnchor()) return HandleDockAnchorInteract(user, hold, alt);
 
     if (hold && m_draggingRopeFrom)
     {
@@ -274,6 +320,18 @@ public class RopeAnchorComponent : MonoBehaviour, Interactable, Hoverable
       return true;
     }
 
+    // prevents connecting rope to same object.
+    if (m_draggingRopeTo != null && m_draggingRopeFrom != null && m_draggingRopeTo.gameObject == m_draggingRopeFrom.gameObject)
+    {
+      m_draggingRopeFrom.m_rope.enabled = false;
+      m_rope.enabled = false;
+
+      m_draggingRopeFrom = null;
+      m_draggingRopeTo = null;
+
+      return true;
+    }
+
     if (!m_draggingRopeFrom)
     {
       m_draggingRopeFrom = this;
@@ -281,6 +339,8 @@ public class RopeAnchorComponent : MonoBehaviour, Interactable, Hoverable
     }
     else if (m_draggingRopeFrom == this)
     {
+      // todo cleanup this block.
+
       if (m_draggingRopeTo != this)
         AttachRope(m_draggingRopeTo, GetIndexAtLocation(m_draggingRopeTo));
 
@@ -289,6 +349,7 @@ public class RopeAnchorComponent : MonoBehaviour, Interactable, Hoverable
     }
     else
     {
+      // todo make sure this is accurate
       m_draggingRopeFrom.AttachRope(this);
       m_draggingRopeFrom.m_rope.enabled = false;
       m_draggingRopeFrom = null;
@@ -359,7 +420,7 @@ public class RopeAnchorComponent : MonoBehaviour, Interactable, Hoverable
     {
       var playerPos = Player.m_localPlayer.transform.position;
       byte index = 0;
-      var distance = float.MaxValue;
+      var distance = m_maxRopeDistance;
       for (var i = 0; i < points.Length; i++)
       {
         var point = points[i];
@@ -383,23 +444,50 @@ public class RopeAnchorComponent : MonoBehaviour, Interactable, Hoverable
 
   private void AttachRope(GameObject go, byte index, bool shouldPersist = true)
   {
+    if (go == null) return;
     var nv = go.GetComponentInParent<ZNetView>();
-    if ((bool)nv && nv.m_zdo != null)
+    if (nv == null || !nv.IsValid()) return;
+
+
+    // TODO do we allow docks clamp on vehicle to connect to anything on land?
+    // TODO do we only allow dock clamp on land to connect to a vehicle.
+
+    var isLocalDockOnVehicle = GetComponentInParent<VehiclePiecesController>();
+    // if (!isLocalDockOnVehicle) return;
+
+    var isTargetGoOnVehicle = go.GetComponentInParent<VehiclePiecesController>();
+
+    // do not allow two vehicles to dock to eachother. This should not be allowed and should not allow triggering build
+    // todo later this could be done to tow. But it would have to be guarded.
+
+    if (isTargetGoOnVehicle && isLocalDockOnVehicle)
     {
-      Logger.LogDebug($"AttachRope {index}");
-      var id =
-        new RopeAttachmentTarget(
-          ZdoWatchController.Instance.GetOrCreatePersistentID(nv.m_zdo),
-          index);
-      if (!RemoveRopeWithID(id))
+      Player.m_localPlayer.Message(MessageHud.MessageType.Center, "Anchoring two vehicles is not supported");
+      return;
+    }
+
+
+    Logger.LogDebug($"AttachRope {index}");
+    var id =
+      new RopeAttachmentTarget(
+        ZdoWatchController.Instance.GetOrCreatePersistentID(nv.m_zdo),
+        index);
+    if (!RemoveRopeWithID(id))
+    {
+      CreateNewRope(id);
+      if (shouldPersist)
       {
-        CreateNewRope(id);
-        if (shouldPersist)
+        if (IsDockAnchor())
         {
-          SaveToZDO();
+          if (isTargetGoOnVehicle)
+          {
+            nv.GetZDO().Set(VehicleZdoVars.VehicleMode, "build");
+          }
         }
-        CheckRopes();
+
+        SaveToZDO();
       }
+      CheckRopes();
     }
   }
 

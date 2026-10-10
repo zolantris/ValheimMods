@@ -1,4 +1,4 @@
-using ValheimVehicles.Storage.Serialization;
+using ValheimVehicles.Serialization;
 
 namespace ValheimVehicles.ValheimVehicles.Structs;
 

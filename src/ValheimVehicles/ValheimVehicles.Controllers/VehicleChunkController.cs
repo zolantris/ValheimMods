@@ -1,6 +1,6 @@
 using UnityEngine;
 using ValheimVehicles.SharedScripts;
-using ValheimVehicles.Storage.Serialization;
+using ValheimVehicles.Serialization;
 using ValheimVehicles.ValheimVehicles.Structs;
 namespace ValheimVehicles.Controllers;
 

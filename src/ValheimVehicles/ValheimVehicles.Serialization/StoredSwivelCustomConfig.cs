@@ -8,7 +8,7 @@ using ValheimVehicles.SharedScripts;
 
 #endregion
 
-namespace ValheimVehicles.Storage.Serialization;
+namespace ValheimVehicles.Serialization;
 
 // ReSharper disable once PartialTypeWithSinglePart
 [Serializable]
