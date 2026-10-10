@@ -461,12 +461,12 @@ public class RopeAnchorComponent : MonoBehaviour, Interactable, Hoverable
     var isLocalDockOnVehicle = GetComponentInParent<VehiclePiecesController>();
     // if (!isLocalDockOnVehicle) return;
 
-    var isTargetGoOnVehicle = go.GetComponentInParent<VehiclePiecesController>();
+    var targetVehicle = go.GetComponentInParent<VehiclePiecesController>();
 
     // do not allow two vehicles to dock to eachother. This should not be allowed and should not allow triggering build
     // todo later this could be done to tow. But it would have to be guarded.
 
-    if (isTargetGoOnVehicle && isLocalDockOnVehicle)
+    if (targetVehicle && isLocalDockOnVehicle)
     {
       Player.m_localPlayer.Message(MessageHud.MessageType.Center, "Anchoring two vehicles is not supported");
       return;
@@ -485,9 +485,9 @@ public class RopeAnchorComponent : MonoBehaviour, Interactable, Hoverable
       {
         if (IsDockAnchor())
         {
-          if (isTargetGoOnVehicle)
+          if (targetVehicle != null)
           {
-            nv.GetZDO().Set(VehicleZdoVars.VehicleMode, "build");
+            targetVehicle.Manager.SetDockedMode(true);
           }
         }
 

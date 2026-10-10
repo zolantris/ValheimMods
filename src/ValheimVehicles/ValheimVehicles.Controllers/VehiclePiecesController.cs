@@ -4634,9 +4634,6 @@
 
       SaveConvexHullColliderZdoData();
 
-      // Manager.VehicleConfigSync.Request_SyncFloatationMode();
-      Manager.VehicleConfigSync.SendRPCToAllClients();
-
       HasClusterMeshesEnabled = RenderingConfig.EnableVehicleClusterMeshRendering.Value;
       MinClusterThreshold = RenderingConfig.ClusterRenderingPieceThreshold.Value;
 

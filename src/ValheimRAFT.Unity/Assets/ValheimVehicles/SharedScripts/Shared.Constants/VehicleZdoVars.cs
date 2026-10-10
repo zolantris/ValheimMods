@@ -96,7 +96,7 @@ namespace ValheimVehicles.Shared.Constants
     public static readonly int VehicleConvexHullDataVersionHash = "VehicleConvexHullDataVersionHash".GetStableHashCode();
 
     // The mode of the vehicle
-    public static readonly int VehicleMode = "BuildMode".GetStableHashCode();
+    public static readonly int VehicleBuildMode = "VehicleBuildMode".GetStableHashCode();
 
     public static readonly int VehicleTargetHeight =
       "VehicleTargetHeight".GetStableHashCode();

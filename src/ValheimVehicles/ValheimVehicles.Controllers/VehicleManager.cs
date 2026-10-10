@@ -310,9 +310,9 @@
       //   return;
       // }
       //
-      // m_zdo.Set(VehicleZdoVars.BuildMode, val);
+      // m_zdo.Set(VehicleZdoVars.VehicleBuildMode, val);
       //
-      // _vehicleConfigSync.Config.BuildMode = val;
+      // _vehicleConfigSync.Config.VehicleBuildMode = val;
     }
 
     public Rigidbody? MovementControllerRigidbody => MovementController?.m_body;
