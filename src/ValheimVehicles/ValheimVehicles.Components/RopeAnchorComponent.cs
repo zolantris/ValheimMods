@@ -487,7 +487,7 @@ public class RopeAnchorComponent : MonoBehaviour, Interactable, Hoverable
         {
           if (targetVehicle != null)
           {
-            targetVehicle.Manager.SetDockedMode(true);
+            targetVehicle.Manager.SetDockedMode(m_nview.m_zdo.m_uid);
           }
         }
 
@@ -774,12 +774,12 @@ public class RopeAnchorComponent : MonoBehaviour, Interactable, Hoverable
 
   private static void SetDockedMode(
     VehiclePiecesController? vehicle,
-    bool isDocked)
+    ZDOID zdoid)
   {
     if (vehicle == null)
       return;
 
-    vehicle.Manager.SetDockedMode(isDocked);
+    vehicle.Manager.SetDockedMode(zdoid);
   }
 
   private bool IsValidDockConnection(
@@ -824,10 +824,10 @@ public class RopeAnchorComponent : MonoBehaviour, Interactable, Hoverable
       ? target.GetComponentInParent<VehiclePiecesController>()
       : null;
 
-    SetDockedMode(localVehicle, isDocked);
+    SetDockedMode(localVehicle, isDocked ? m_nview.m_zdo.m_uid : ZDOID.None);
 
     if (targetVehicle != localVehicle)
-      SetDockedMode(targetVehicle, isDocked);
+      SetDockedMode(targetVehicle, isDocked ? m_nview.m_zdo.m_uid : ZDOID.None);
   }
 
   private void RemoveUpdatingRopeAt(int i)
@@ -853,7 +853,7 @@ public class RopeAnchorComponent : MonoBehaviour, Interactable, Hoverable
       SetConnectedVehicleDockMode(target, false);
     else
       SetDockedMode(
-        GetComponentInParent<VehiclePiecesController>(), false
+        GetComponentInParent<VehiclePiecesController>(), ZDOID.None
       );
 
     if (rope.m_ropeObject != null)

@@ -240,6 +240,7 @@
   "valheim_vehicles_vehicle_dock_messages_no_dockable_vehicle_found": "No dockable vehicle found nearby.",
   "valheim_vehicles_vehicle_dock_messages_dock_success": "Vehicle is docked",
   "valheim_vehicles_vehicle_dock_messages_undock_success": "Vehicle is undock",
+  "valheim_vehicles_status_docked": "docked",
   "valheim_vehicles_dock_anchor_point": "Vehicle Dock Anchor Point",
   "valheim_vehicles_dock_anchor_point_desc": "The attachment point for land-vehicles to dock between a boat. Only one of these should be added per vehicle. This will connect when the vehicle is manually or automatically docked to the vehicle.",
   "valheim_vehicles_swivel_saved": "Saved",

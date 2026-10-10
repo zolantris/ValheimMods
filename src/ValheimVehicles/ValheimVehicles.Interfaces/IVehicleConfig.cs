@@ -57,6 +57,12 @@ public interface IVehicleConfig
     set;
   }
 
+  public ZDOID DockZdoId
+  {
+    get;
+    set;
+  }
+
   public string VehicleName
   {
     get;

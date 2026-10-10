@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using HarmonyLib;
 using UnityEngine;
 using ValheimVehicles.Compat;
 using ValheimVehicles.BepInExConfig;
@@ -139,7 +140,19 @@ public class SteeringWheelComponent : MonoBehaviour, IAnimatorHandler, Hoverable
     var isFlightCapable = VehicleManager.IsFlightCapable(variant);
     var isBallastCapable = VehicleManager.IsBallastCapable(variant);
 
+    var statusItems = new List<string>();
+
     interactMessage += $"\n{anchorMessage}";
+
+    if (_controls.Manager.IsDocked())
+    {
+      statusItems.Add($"<color=red><b>{Localization.instance.Localize("$valheim_vehicles_status_docked")}</b></color>");
+    }
+
+    if (statusItems.Count > 0)
+    {
+      interactMessage += $"\nStatus: [{string.Join(", ", statusItems)}]";
+    }
 
     if (isFlightCapable || isBallastCapable)
     {

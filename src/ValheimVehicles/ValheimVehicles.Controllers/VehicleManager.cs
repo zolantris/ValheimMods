@@ -113,13 +113,23 @@
     /// <summary>
     /// TODO this might need a RPC method if the commitConfigChange is not working
     /// </summary>
-    public void SetDockedMode(bool isDocked)
+    public void SetDockedMode(ZDOID controllingZdoId)
     {
       var updated = new VehicleCustomConfig();
       updated.ApplyFrom(Config);
-      updated.ForceDocked = isDocked;
+      updated.DockZdoId = controllingZdoId;
 
       VehicleConfigSync.CommitConfigChange(updated);
+    }
+
+    public bool IsDocked()
+    {
+      if (Config.DockZdoId == ZDOID.None) return false;
+      var zdo = ZDOMan.instance.GetZDO(Config.DockZdoId);
+      if (zdo == null || !zdo.IsValid()) return false;
+      var activeInstance = ZNetScene.instance.FindInstance(zdo);
+      if (activeInstance == null) return false;
+      return true;
     }
 
 
@@ -1145,6 +1155,12 @@
     public bool ForceDocked
     {
       get => Config.ForceDocked;
+      set {}
+    }
+
+    public ZDOID DockZdoId
+    {
+      get => Config.DockZdoId;
       set {}
     }
 

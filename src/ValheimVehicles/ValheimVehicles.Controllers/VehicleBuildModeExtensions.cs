@@ -23,7 +23,8 @@ public static class VehicleBuildModeExtensions
     return mode switch
     {
       VehicleBuildMode.Expandable => VehicleBuildMode.Fixed,
-      VehicleBuildMode.Fixed => VehicleBuildMode.Expandable,
+      VehicleBuildMode.Fixed => VehicleBuildMode.Disabled,
+      VehicleBuildMode.Disabled => VehicleBuildMode.Expandable,
       _ => VehicleBuildMode.Expandable
     };
   }
