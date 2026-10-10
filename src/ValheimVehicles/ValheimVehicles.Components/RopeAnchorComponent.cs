@@ -5,6 +5,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using ValheimVehicles.BepInExConfig;
 using ValheimVehicles.Controllers;
+using ValheimVehicles.Enums;
 using ValheimVehicles.Shared.Constants;
 using ValheimVehicles.SharedScripts;
 using ValheimVehicles.Structs;
@@ -771,14 +772,14 @@ public class RopeAnchorComponent : MonoBehaviour, Interactable, Hoverable
     }
   }
 
-  private static void SetVehicleMode(
+  private static void SetDockedMode(
     VehiclePiecesController? vehicle,
-    string mode)
+    bool isDocked)
   {
     if (vehicle == null)
       return;
 
-    vehicle.Manager.SetVehicleMode(mode);
+    vehicle.Manager.SetDockedMode(isDocked);
   }
 
   private bool IsValidDockConnection(
@@ -813,9 +814,9 @@ public class RopeAnchorComponent : MonoBehaviour, Interactable, Hoverable
     return true;
   }
 
-  private void SetConnectedVehicleMode(
+  private void SetConnectedVehicleDockMode(
     GameObject? target,
-    string mode)
+    bool isDocked)
   {
     var localVehicle = GetComponentInParent<VehiclePiecesController>();
 
@@ -823,10 +824,10 @@ public class RopeAnchorComponent : MonoBehaviour, Interactable, Hoverable
       ? target.GetComponentInParent<VehiclePiecesController>()
       : null;
 
-    SetVehicleMode(localVehicle, mode);
+    SetDockedMode(localVehicle, isDocked);
 
     if (targetVehicle != localVehicle)
-      SetVehicleMode(targetVehicle, mode);
+      SetDockedMode(targetVehicle, isDocked);
   }
 
   private void RemoveUpdatingRopeAt(int i)
@@ -849,11 +850,11 @@ public class RopeAnchorComponent : MonoBehaviour, Interactable, Hoverable
     m_ropes.RemoveAt(i);
 
     if (target != null)
-      SetConnectedVehicleMode(target, "build");
+      SetConnectedVehicleDockMode(target, false);
     else
-      SetVehicleMode(
-        GetComponentInParent<VehiclePiecesController>(),
-        "build");
+      SetDockedMode(
+        GetComponentInParent<VehiclePiecesController>(), false
+      );
 
     if (rope.m_ropeObject != null)
       Destroy(rope.m_ropeObject);

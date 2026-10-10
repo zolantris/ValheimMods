@@ -26,5 +26,5 @@
     public void RemovePiece(ZNetView nv);
     public void TrySetPieceToParent(ZNetView netView);
     public void TrySetPieceToParent(GameObject netView, bool isForced = false);
-
+    public bool CanPlacePiece(ZNetView? nv);
   }

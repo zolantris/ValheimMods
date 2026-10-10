@@ -31,6 +31,7 @@
   using ValheimVehicles.Serialization;
   using ValheimVehicles.Structs;
   using ValheimVehicles.ValheimVehicles.Components;
+  using ValheimVehicles.ValheimVehicles.Controllers;
   using ValheimVehicles.ValheimVehicles.Patches;
   using ValheimVehicles.ValheimVehicles.Structs;
   using ZdoWatcher;
@@ -447,8 +448,13 @@
         m_zdo.Set(VehicleZdoVars.VehicleConvexHullData, payload);
         m_zdo.Set(VehicleZdoVars.VehicleConvexHullDataVersionHash, revision);
 
+        m_lastConvexHullDataVersionHash = revision;
+        Manager.vehicleConvexHullDataVersionHash = revision;
+
         LoggerProvider.LogDebug(
           $"Saved convex hull geometry: {payload.Length} bytes.");
+
+        VehicleConfigSync.SendSyncBounds();
       }
       catch (InvalidDataException ex)
       {
@@ -2416,13 +2422,6 @@
     {
       if (!isActiveAndEnabled || ZNetView.m_forceDisableInit || !IsInitialPieceActivationComplete) return;
 
-      // ensures that if this is already generated it runs immediately. Otherwise it will not run immediately and just request.
-      if (Manager.IsConvexHullInitialized() && Manager.IsVehicleReadOnlyMode())
-      {
-        TryReadConvexHullColliderZdoData();
-        return;
-      }
-
       base.RequestBoundsRebuild();
     }
 
@@ -3669,6 +3668,19 @@
       }
       prefab.transform.SetParent(_piecesContainerTransform);
     }
+    public bool CanPlacePiece(ZNetView? nv)
+    {
+      var isContainer = false;
+
+      if (nv != null)
+      {
+        isContainer = nv.GetComponentInChildren<Container>() != null;
+      }
+
+      if (Manager && Manager.BuildMode.CanPlacePiece(isContainer)) return true;
+
+      return false;
+    }
 
     /**
      * True let's WearNTear destroy this vehicle
@@ -3762,14 +3774,15 @@
       if (!prefab.name.StartsWith(PrefabNames.BuildModeToggle)) return;
       prefab.transform.SetParent(_piecesContainerTransform);
 
-      var isBuildMode = Manager.IsBuildMode();
-      var nextState = isBuildMode ? "readonly" : "build";
+      var buildMode = Manager.BuildMode;
+      var nextState = buildMode.GetNextMode();
 
-      Manager.VehicleConfigSync.Request_SyncVehicleMode(nextState);
+      Manager.VehicleConfigSync.Request_SyncBuildMode(nextState);
 
-      var stateText = nextState == "build" ? ModTranslations.VehicleMode_BuildText : ModTranslations.VehicleMode_ReadOnly;
+      var stateText = nextState.GetModeText();
+      var stateTextDescription = nextState.GetModeTextDescription();
 
-      m_hoverFadeText.currentText = $"{ModTranslations.VehicleMode_Title}:  ({stateText})";
+      m_hoverFadeText.currentText = $"{ModTranslations.VehicleMode_Title}:  {stateText}\n{stateTextDescription}";
       m_hoverFadeText.transform.position = prefab.transform.position;
       m_hoverFadeText.ResetHoverTimer();
       m_hoverFadeText.Show();
@@ -4454,6 +4467,13 @@
       if (FloatCollider == null || OnboardCollider == null)
         return;
 
+      // ensures that if this is already generated it runs immediately. Otherwise it will not run immediately and just request.
+      if (Manager.IsConvexHullInitialized() && !Manager.BuildMode.CanExpandBounds())
+      {
+        TryReadConvexHullColliderZdoData();
+        return;
+      }
+
       PruneStalePieces();
 
       // methods related to VehiclePiecesController
@@ -4611,6 +4631,11 @@
         RequestBoundsRebuild();
         return;
       }
+
+      SaveConvexHullColliderZdoData();
+
+      // Manager.VehicleConfigSync.Request_SyncFloatationMode();
+      Manager.VehicleConfigSync.SendRPCToAllClients();
 
       HasClusterMeshesEnabled = RenderingConfig.EnableVehicleClusterMeshRendering.Value;
       MinClusterThreshold = RenderingConfig.ClusterRenderingPieceThreshold.Value;

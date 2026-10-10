@@ -110,6 +110,18 @@
       UpdateShipEffects();
     }
 
+    /// <summary>
+    /// TODO this might need a RPC method if the commitConfigChange is not working
+    /// </summary>
+    public void SetDockedMode(bool isDocked)
+    {
+      var updated = new VehicleCustomConfig();
+      updated.ApplyFrom(Config);
+      updated.ForceDocked = isDocked;
+
+      VehicleConfigSync.CommitConfigChange(updated);
+    }
+
 
     public GameObject? ShipEffectsObj;
     public VehicleShipEffects? ShipEffects;
@@ -280,25 +292,15 @@
 
     public int vehicleConvexHullDataVersionHash = 0;
 
-    public bool IsBuildMode()
-    {
-      return Config.VehicleMode == "build";
-    }
-
-    public bool IsVehicleReadOnlyMode()
-    {
-      return Config.VehicleMode == "readonly";
-    }
-
     public bool IsConvexHullInitialized()
     {
       return vehicleConvexHullDataVersionHash != 0;
     }
 
-    public void SetVehicleMode(string val)
+    public void SetVehicleMode(VehicleBuildMode val)
     {
       // this should handle the value being updated regardless if SP, LAN host, dedicated.
-      _vehicleConfigSync.Request_SyncVehicleMode(val);
+      _vehicleConfigSync.Request_SyncBuildMode(val);
       // if (m_zdo == null || !m_zdo.IsValid()) return;
       // if (!m_zdo.IsOwner()) m_zdo.TryClaimOwnership();
       //
@@ -308,9 +310,9 @@
       //   return;
       // }
       //
-      // m_zdo.Set(VehicleZdoVars.VehicleMode, val);
+      // m_zdo.Set(VehicleZdoVars.BuildMode, val);
       //
-      // _vehicleConfigSync.Config.VehicleMode = val;
+      // _vehicleConfigSync.Config.BuildMode = val;
     }
 
     public Rigidbody? MovementControllerRigidbody => MovementController?.m_body;
@@ -1152,9 +1154,9 @@
       set {}
     }
 
-    public string VehicleMode
+    public VehicleBuildMode BuildMode
     {
-      get => Config.VehicleMode;
+      get => Config.BuildMode;
       set {}
     }
 

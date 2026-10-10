@@ -1,3 +1,4 @@
+using ValheimVehicles.Enums;
 namespace ValheimVehicles.Interfaces;
 
 public interface IVehicleConfig
@@ -62,7 +63,7 @@ public interface IVehicleConfig
     set;
   }
 
-  public string VehicleMode
+  public VehicleBuildMode BuildMode
   {
     get;
     set;

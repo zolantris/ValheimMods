@@ -191,15 +191,18 @@
           return gameObject;
         }
 
-        if (piece.m_nview != null)
+        if (pieceController.CanPlacePiece(netView))
         {
-          pieceController.AddNewPiece(piece.m_nview);
-        }
-        else
-        {
-          pieceController.TrySetPieceToParent(piece.gameObject);
-          // should always run afterward.
-          TryFixPieceOverlap(gameObject);
+          if (piece.m_nview != null)
+          {
+            pieceController.AddNewPiece(piece.m_nview);
+          }
+          else
+          {
+            pieceController.TrySetPieceToParent(piece.gameObject);
+            // should always run afterward.
+            TryFixPieceOverlap(gameObject);
+          }
         }
 
         return gameObject;

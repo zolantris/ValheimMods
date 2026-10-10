@@ -839,6 +839,10 @@
         AddPieceToParent(prefab.transform);
       }
     }
+    public bool CanPlacePiece(ZNetView? nv)
+    {
+      return true;
+    }
 
     ///
     /// <summary>

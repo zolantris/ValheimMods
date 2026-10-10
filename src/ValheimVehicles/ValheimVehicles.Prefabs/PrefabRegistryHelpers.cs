@@ -137,8 +137,8 @@ public abstract class PrefabRegistryHelpers
     PieceDataDictionary.Add(PrefabNames.BuildModeToggle,
       new PieceData
       {
-        Name = "$valheim_vehicles_vehiclemode_toggle",
-        Description = "$valheim_vehicles_vehiclemode_toggle_desc",
+        Name = "$valheim_vehicles_buildmode_toggle",
+        Description = "$valheim_vehicles_buildmode_toggle_desc",
         Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
           .VehicleHammer)
       });

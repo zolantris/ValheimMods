@@ -20,6 +20,7 @@
   using ValheimVehicles.Shared.Constants;
   using ValheimVehicles.SharedScripts;
   using ValheimVehicles.Structs;
+  using ValheimVehicles.ValheimVehicles.Controllers;
   using Zolantris.Shared;
   using Logger = Jotunn.Logger;
 
@@ -888,14 +889,6 @@
       }
 
       TryUpdateFrozenSyncFromVelocity();
-
-
-      // Build mode will always be kinematic.
-      if (Manager.IsBuildMode())
-      {
-        m_body.isKinematic = true;
-        return;
-      }
 
       if (PiecesController == null || PiecesController.m_pieces.Count < 1) return;
 
