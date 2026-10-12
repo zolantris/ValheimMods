@@ -98,6 +98,7 @@ public class RopeAnchorComponent : MonoBehaviour, Interactable, Hoverable
   private static string AttachToText = "";
   private static string StartAttachText = "";
   private static string HaulingStartText = "";
+  private static string UseKeyText = "";
   private static string HaulingStopText = "";
 
   public Transform m_attachpoint;
@@ -147,6 +148,11 @@ public class RopeAnchorComponent : MonoBehaviour, Interactable, Hoverable
   {
     if (Localization.instance == null) return;
 
+    if (UseKeyText == string.Empty)
+    {
+      UseKeyText = Localization.instance.Localize("[<color=yellow><b>$KEY_Use</b></color>]");
+    }
+
     // alt key for hauling vehicles
     if (HaulingStartText == string.Empty)
     {
@@ -158,20 +164,20 @@ public class RopeAnchorComponent : MonoBehaviour, Interactable, Hoverable
     if (HaulingStopText == string.Empty)
     {
       HaulingStopText = Localization.instance.Localize(
-        "[<color=yellow><b>$KEY_Use</b></color>] $valheim_vehicles_haul_vehicle_stop");
+        $"{UseKeyText} $valheim_vehicles_haul_vehicle_stop");
     }
 
     if (AttachToText == string.Empty)
     {
       AttachToText = Localization.instance.Localize(
-        "[<color=yellow><b>$KEY_Use</b></color>] $mb_rope_anchor_attach_to");
+        $"{UseKeyText} $mb_rope_anchor_attach_to");
     }
 
 
     if (StartAttachText == string.Empty)
     {
       StartAttachText = Localization.instance.Localize(
-        "[<color=yellow><b>$KEY_Use</b></color>] $mb_rope_anchor_attach");
+        $"{UseKeyText} $mb_rope_anchor_attach");
     }
   }
 
@@ -190,6 +196,91 @@ public class RopeAnchorComponent : MonoBehaviour, Interactable, Hoverable
     return 0f;
   }
 
+  public string WithYellowBoldStatusText(string val)
+  {
+    return $"[{ModTranslations.WithBoldText(val, "yellow")}]";
+  }
+
+  public string GetDockActionText()
+  {
+    if (m_rope && m_rope.enabled)
+    {
+      // updates status on the fly
+      var dragToStatus = "";
+      if (m_draggingRopeTo && m_draggingRopeTo.GetComponentInParent<VehiclePiecesController>())
+      {
+        dragToStatus = WithYellowBoldStatusText(Localization.instance.Localize("$valheim_vehicles_action_connect"));
+      }
+      else if (m_draggingRopeFrom && m_draggingRopeFrom.gameObject == gameObject)
+      {
+        dragToStatus = WithYellowBoldStatusText(Localization.instance.Localize("$valheim_vehicles_action_cancel"));
+      }
+
+      var parentController = GetComponentInParent<VehiclePiecesController>();
+
+      // do not show an actual while not docked. Only show a description.
+      if (parentController && !parentController.Manager.IsDocked())
+      {
+        return "";
+      }
+
+      return $"{dragToStatus} $valheim_vehicles_action_dock_attach_to";
+    }
+
+    if (m_draggingRopeTo && m_draggingRopeTo.GetComponentInParent<VehiclePiecesController>())
+    {
+      return WithYellowBoldStatusText(Localization.instance.Localize("$valheim_vehicles_action_connect"));
+    }
+
+    // todo make this more performant. EG don't do this query per frame.
+    var vehicleParent = GetComponentInParent<VehiclePiecesController>();
+
+    // if on a vehicle or currently with more than 1 rope EG it's attached to a vehicle. This should show a disconnect action.
+    if (m_ropes.Count > 1 || vehicleParent && vehicleParent.Manager.IsDocked())
+    {
+      return WithYellowBoldStatusText(Localization.instance.Localize("$valheim_vehicles_action_disconnect"));
+    }
+
+    return WithYellowBoldStatusText(Localization.instance.Localize("$valheim_vehicles_action_cancel"));
+  }
+
+  public string GetCurrentStatusDescriptionText()
+  {
+    // todo make this more performant. EG don't do this query per frame.
+    var dockParent = GetComponentInParent<VehiclePiecesController>();
+
+    if (dockParent && dockParent.Manager.IsDocked())
+    {
+      return "$valheim_vehicles_status_dock_connected_desc";
+    }
+    if (dockParent)
+    {
+      return "$valheim_vehicles_status_dock_disconnected_desc";
+    }
+
+    return "$valheim_vehicles_status_dock_use_desc";
+  }
+
+  private static List<string> dockHoverItems = new();
+
+  public string GetDockHoverText()
+  {
+    var actionText = GetDockActionText();
+    var statusDescription = GetCurrentStatusDescriptionText();
+
+    var actionString = actionText != string.Empty ? $"{UseKeyText} $valheim_vehicles_action_next_action {actionText}" : "";
+
+    dockHoverItems.Clear();
+
+    if (actionString != string.Empty)
+    {
+      dockHoverItems.Add(actionString);
+    }
+
+    dockHoverItems.Add(statusDescription);
+
+    return Localization.instance.Localize(string.Join("\n", dockHoverItems));
+  }
 
   /// <summary>
   /// TODO split this into separate states.
@@ -202,23 +293,7 @@ public class RopeAnchorComponent : MonoBehaviour, Interactable, Hoverable
   {
     if (IsDockAnchor())
     {
-      var dockParent = GetComponentInParent<VehiclePiecesController>();
-
-      if (dockParent)
-      {
-        if (dockParent.Manager.IsDocked())
-        {
-          return $"{Localization.instance.Localize("$valheim_vehicles_status_docked")}\n{Localization.instance.Localize("$valheim_vehicles_status_dock_enabled_desc")}";
-        }
-        else
-        {
-          return $"{Localization.instance.Localize("$valheim_vehicles_status_dock_disabled")}\n{Localization.instance.Localize("$valheim_vehicles_status_dock_disabled_desc")}";
-        }
-      }
-      else
-      {
-        return $"{AttachToText}\n\nUse this dock to connect a vehicle to shore or on a landvehicle to connect it to a watervehicle.";
-      }
+      return GetDockHoverText();
     }
 
     if (isHauling)
@@ -226,7 +301,7 @@ public class RopeAnchorComponent : MonoBehaviour, Interactable, Hoverable
       return HaulingStopText;
     }
 
-    if (m_draggingRopeTo != this)
+    if (m_draggingRopeTo != gameObject)
       return $"{StartAttachText}\n{HaulingStartText}";
 
     return AttachToText;

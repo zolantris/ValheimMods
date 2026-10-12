@@ -72,15 +72,12 @@ public class SteeringWheelComponent : MonoBehaviour, IAnimatorHandler, Hoverable
 
   public string _cachedLocalizedWheelHoverText = "";
 
-  /// <summary>
-  /// Todo might be worth caching this.
-  /// </summary>
   public static string GetAnchorHotkeyString()
   {
     return ZInput.instance.GetBoundKeyString("Run");
   }
 
-  public static string GetAnchorMessage(bool isAnchored, string anchorKeyString)
+  public static string GetAnchorActionMessage(bool isAnchored, string anchorKeyString)
   {
     var anchoredStatus =
       isAnchored
@@ -103,19 +100,19 @@ public class SteeringWheelComponent : MonoBehaviour, IAnimatorHandler, Hoverable
 
     var piecesController = ControllersInstance.PiecesController;
     var sailArea = piecesController.cachedTotalSailArea;
-    var totalMass = piecesController.TotalMass;
-    var shipMass = piecesController.ShipMass;
+    // var totalMass = piecesController.TotalMass;
+    // var shipMass = piecesController.ShipMass;
     var shipPropulsion = piecesController.GetSailingForce();
 
     var shipMassToPush =
-      PropulsionConfig.SailingMassPercentageFactor.Value;
-    shipStatsText += $"\nsailArea: {sailArea}";
-    shipStatsText += $"\ntotalMass: {totalMass}";
-    shipStatsText +=
-      $"\nshipMass(no-containers): {shipMass}";
+      // PropulsionConfig.SailingMassPercentageFactor.Value;
+      shipStatsText += $"\nsailArea: {sailArea}";
+    // shipStatsText += $"\ntotalMass: {totalMass}";
+    // shipStatsText +=
+    //   $"\nshipMass(no-containers): {shipMass}";
 
-    shipStatsText +=
-      $"\ntotalMassToPush: {shipMassToPush}% * {totalMass} = {totalMass * shipMassToPush / 100f}";
+    // shipStatsText +=
+    //   $"\ntotalMassToPush: {shipMassToPush}% * {totalMass} = {totalMass * shipMassToPush / 100f}";
     shipStatsText +=
       $"\nshipPropulsion: {shipPropulsion}";
 
@@ -131,7 +128,7 @@ public class SteeringWheelComponent : MonoBehaviour, IAnimatorHandler, Hoverable
   public string GetHoverTextFromShip(bool isAnchored,
     string anchorKeyString)
   {
-    var anchorMessage = GetAnchorMessage(isAnchored, anchorKeyString);
+    var anchorActionMessage = GetAnchorActionMessage(isAnchored, anchorKeyString);
 
     var interactMessage = $"{ModTranslations.SharedKeys_InteractPrimary} {ModTranslations.WithBoldText(ModTranslations.Anchor_WheelUse_UseText, "white")}";
 
@@ -140,18 +137,37 @@ public class SteeringWheelComponent : MonoBehaviour, IAnimatorHandler, Hoverable
     var isFlightCapable = VehicleManager.IsFlightCapable(variant);
     var isBallastCapable = VehicleManager.IsBallastCapable(variant);
 
-    var statusItems = new List<string>();
+    interactMessage += $"\n{anchorActionMessage}";
 
-    interactMessage += $"\n{anchorMessage}";
-
-    if (_controls.Manager.IsDocked())
+    // TODO determine if we want to show dock status for landvehicle.
+    if (Controls)
     {
-      statusItems.Add($"<color=red><b>{Localization.instance.Localize("$valheim_vehicles_status_docked")}</b></color>");
+      if (!Controls.Manager.IsLandVehicle)
+      {
+        var dockStatusStateMessage = Localization.instance.Localize(_controls.Manager.IsDocked() ? "$valheim_vehicles_status_dock_connected" : "$valheim_vehicles_status_dock_disconnected");
+
+        var dockStatusVal = ModTranslations.WithBoldText(dockStatusStateMessage, "yellow");
+        var dockStatusTitle = Localization.instance.Localize("$valheim_vehicles_dock_status");
+
+        interactMessage += $"\n{dockStatusTitle}: [{dockStatusVal}]";
+      }
+      else
+      {
+        var dockStatusStateMessage = Localization.instance.Localize(_controls.Manager.IsDocked() ? "$valheim_vehicles_status_dock_connected" : "$valheim_vehicles_status_dock_disconnected");
+
+        var dockStatusVal = ModTranslations.WithBoldText(dockStatusStateMessage, "yellow");
+        var dockStatusTitle = Localization.instance.Localize("$valheim_vehicles_dock_status");
+
+        interactMessage += $"\n{dockStatusTitle}: [{dockStatusVal}]";
+      }
     }
 
-    if (statusItems.Count > 0)
+    if (Controls != null && Controls.MovementController)
     {
-      interactMessage += $"\nStatus: [{string.Join(", ", statusItems)}]";
+      var anchorStatusTitle = Localization.instance.Localize("$valheim_vehicles_anchor_status");
+
+      var anchoredStateTranslation = Localization.instance.Localize(Controls.MovementController.isAnchored ? "$valheim_vehicles_anchor_state_anchored" : "$valheim_vehicles_anchor_state_not_anchored");
+      interactMessage += $"\n{anchorStatusTitle}: [{ModTranslations.WithBoldText(anchoredStateTranslation, "yellow")}]";
     }
 
     if (isFlightCapable || isBallastCapable)
