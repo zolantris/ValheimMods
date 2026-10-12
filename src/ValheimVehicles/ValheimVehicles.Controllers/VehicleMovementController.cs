@@ -20,7 +20,7 @@
   using ValheimVehicles.Shared.Constants;
   using ValheimVehicles.SharedScripts;
   using ValheimVehicles.Structs;
-  using ValheimVehicles.ValheimVehicles.Controllers;
+  using ValheimVehicles.Controllers;
   using Zolantris.Shared;
   using Logger = Jotunn.Logger;
 

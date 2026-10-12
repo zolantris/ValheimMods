@@ -9,6 +9,7 @@ using ValheimVehicles.SharedScripts;
 using ValheimVehicles.Components;
 using ValheimVehicles.Controllers;
 using ValheimVehicles.Helpers;
+using ValheimVehicles.ValheimVehicles.Components;
 using Zolantris.Shared;
 using Logger = Jotunn.Logger;
 
@@ -118,22 +119,22 @@ public class CustomMeshPrefabs : RegisterPrefab<CustomMeshPrefabs>
     var meshRenderer = prefab.GetComponent<MeshRenderer>();
     var material = new Material(LoadValheimVehicleAssets.DoubleSidedTransparentMat)
     {
-      color = new Color(0.5f, 0.4f, 0.5f, 0.8f)
+      color = new Color(0f, 1f, 0f, 0.8f)
     };
     var collider = prefab.GetComponent<BoxCollider>();
     prefab.layer = LayerMask.NameToLayer("piece_nonsolid");
     collider.excludeLayers = LayerHelpers.CustomRaftLayerMask;
     meshRenderer.material = material;
-    prefab.transform.localScale = new Vector3(0.4f, 0.1f, 0.4f);
+    prefab.transform.localScale = new Vector3(0.1f, 0.1f, 0.1f);
 
     // No special-effects, etc. Should be completely empty area invisible.
-    meshRenderer.lightProbeUsage = LightProbeUsage.Off;
-    meshRenderer.receiveShadows = false;
-    meshRenderer.shadowCastingMode = ShadowCastingMode.Off;
-    meshRenderer.rayTracingMode = RayTracingMode.Off;
-    meshRenderer.reflectionProbeUsage = ReflectionProbeUsage.Off;
+    UpdateMeshRendererProperties(meshRenderer);
+
 
     PrefabRegistryHelpers.AddTempNetView(prefab);
+
+    prefab.AddComponent<DelayedSelfDeletingComponent>();
+    prefab.AddComponent<VehicleBuildModePreview>();
 
     PrefabRegistryHelpers.AddPieceForPrefab(
       PrefabNames.BuildModeToggle,
@@ -164,13 +165,11 @@ public class CustomMeshPrefabs : RegisterPrefab<CustomMeshPrefabs>
     prefab.transform.localScale = new Vector3(0.4f, 0.1f, 0.4f);
 
     // No special-effects, etc. Should be completely empty area invisible.
-    meshRenderer.lightProbeUsage = LightProbeUsage.Off;
-    meshRenderer.receiveShadows = false;
-    meshRenderer.shadowCastingMode = ShadowCastingMode.Off;
-    meshRenderer.rayTracingMode = RayTracingMode.Off;
-    meshRenderer.reflectionProbeUsage = ReflectionProbeUsage.Off;
+    UpdateMeshRendererProperties(meshRenderer);
 
     PrefabRegistryHelpers.AddTempNetView(prefab);
+
+    prefab.AddComponent<DelayedSelfDeletingComponent>();
 
     PrefabRegistryHelpers.AddPieceForPrefab(
       PrefabNames.CustomWaterFloatation,
@@ -221,6 +220,16 @@ public class CustomMeshPrefabs : RegisterPrefab<CustomMeshPrefabs>
       }));
   }
 
+  public static void UpdateMeshRendererProperties(MeshRenderer meshRenderer)
+  {
+    // No special effects etc. Should be completely empty area invisible.
+    meshRenderer.lightProbeUsage = LightProbeUsage.Off;
+    meshRenderer.receiveShadows = false;
+    meshRenderer.shadowCastingMode = ShadowCastingMode.Off;
+    meshRenderer.rayTracingMode = RayTracingMode.Off;
+    meshRenderer.reflectionProbeUsage = ReflectionProbeUsage.Off;
+  }
+
   private static void RegisterWaterMaskPrefab()
   {
     var prefab =
@@ -228,19 +237,13 @@ public class CustomMeshPrefabs : RegisterPrefab<CustomMeshPrefabs>
 
     var meshRenderer = prefab.GetComponent<MeshRenderer>();
 
-    // No special effects etc. Should be completely empty area invisible.
-    meshRenderer.lightProbeUsage = LightProbeUsage.Off;
-    meshRenderer.receiveShadows = false;
-    meshRenderer.shadowCastingMode = ShadowCastingMode.Off;
-    meshRenderer.rayTracingMode = RayTracingMode.Off;
-    meshRenderer.reflectionProbeUsage = ReflectionProbeUsage.Off;
+    UpdateMeshRendererProperties(meshRenderer);
 
     PrefabRegistryHelpers.AddNetViewWithPersistence(prefab);
 
     var piece = prefab.AddComponent<Piece>();
-    piece.m_name = "Water Mask";
-    piece.m_description =
-      "Vehicle Water Mask component, this requires the water mask creator to work. You should not see this message unless using a mod to expose this prefab";
+    piece.m_name = "$valheim_vehicles_water_mask";
+    piece.m_description = "$valheim_vehicles_water_mask_desc";
     piece.m_placeEffect =
       LoadValheimAssets.woodFloorPiece.m_placeEffect;
     prefab.AddComponent<WaterZoneController>();
@@ -391,11 +394,7 @@ public class CustomMeshPrefabs : RegisterPrefab<CustomMeshPrefabs>
 
     meshRenderer.material.renderQueue = 3000;
 
-    meshRenderer.lightProbeUsage = LightProbeUsage.Off;
-    meshRenderer.receiveShadows = false;
-    meshRenderer.shadowCastingMode = ShadowCastingMode.Off;
-    meshRenderer.rayTracingMode = RayTracingMode.Off;
-    meshRenderer.reflectionProbeUsage = ReflectionProbeUsage.Off;
+    UpdateMeshRendererProperties(meshRenderer);
   }
 
   private static void RegisterShipChunkBoundaryFromMultiplier(int multiplier)

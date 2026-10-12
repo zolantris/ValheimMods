@@ -382,5 +382,7 @@
   "valheim_vehicles_buildmode_fixed": "Fixed Mode",
   "valheim_vehicles_buildmode_fixed_desc": "Fixed Mode - Allows placement of pieces, but they will not expand the vehicle's boundaries. Swap to expandable mode to do this.",
   "valheim_vehicles_buildmode_disabled": "Disabled Mode",
-  "valheim_vehicles_buildmode_disabled_desc": "This disables build mode. Players will not be able to place or remove any pieces on the current vehicle while it's in this state."
+  "valheim_vehicles_buildmode_disabled_desc": "This disables build mode. Players will not be able to place or remove any pieces on the current vehicle while it's in this state.",
+  "valheim_vehicles_buildmode_unable_to_place_piece_message": "Unable to place piece in Vehicle BuildMode: Disabled. Swap to vehicle build mode that supports this.",
+  "valheim_vehicles_buildmode_unable_to_remove_piece_message": "Unable to remove piece in Build Mode: Disabled. Swap to vehicle build mode that supports this."
 }

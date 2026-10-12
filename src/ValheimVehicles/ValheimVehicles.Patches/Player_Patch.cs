@@ -5,7 +5,6 @@
   using System.Linq;
   using System.Reflection;
   using System.Reflection.Emit;
-  using DynamicLocations.Interfaces;
   using HarmonyLib;
   using UnityEngine;
   using Valheim.UI;
@@ -13,14 +12,11 @@
   using ValheimVehicles.Components;
   using ValheimVehicles.Controllers;
   using ValheimVehicles.Helpers;
-  using ValheimVehicles.Integrations;
   using ValheimVehicles.Interfaces;
-  using ValheimVehicles.Prefabs;
   using ValheimVehicles.Propulsion.Rudder;
   using ValheimVehicles.SharedScripts;
-  using ValheimVehicles.ValheimVehicles.Controllers;
+  using ValheimVehicles.Controllers;
   using Zolantris.Shared;
-  using Logger = Jotunn.Logger;
   using Object = UnityEngine.Object;
 
 #endregion
@@ -124,42 +120,178 @@
     {
       if (ZNet.instance && ZNet.instance.IsDedicated())
       {
-        Logger.LogWarning("[WrapInstantiateWithPlacedPiece] WARNING: This should not run on server!");
+        LoggerProvider.LogWarning("[WrapInstantiateWithPlacedPiece] WARNING: This should not run on server!");
+      }
+      var obj = Object.Instantiate(original, pos, rot) as GameObject;
+      return PlacedPiece(obj);
+    }
+
+    [HarmonyPatch(typeof(Player), nameof(Player.TryPlacePiece))]
+    [HarmonyTranspiler]
+    public static IEnumerable<CodeInstruction> TryPlacePieceTranspiler(IEnumerable<CodeInstruction> instructions)
+    {
+      var codes = new List<CodeInstruction>(instructions);
+
+      // FIX: Match Valheim's exact 5-parameter Message method signature
+      var messageMethod = AccessTools.Method(
+        typeof(Character),
+        nameof(Character.Message),
+        new Type[] { typeof(MessageHud.MessageType), typeof(string), typeof(int), typeof(Sprite), typeof(bool) }
+      );
+
+      if (messageMethod == null)
+      {
+        LoggerProvider.LogError("[TryPlacePieceTranspiler] CRITICAL ERROR: Could not find the 5-parameter Character.Message method!");
+        return instructions;
       }
 
-      var localPlayer = Player.m_localPlayer;
-      if (localPlayer != null && localPlayer.m_placementGhost != null)
+      var patchedCount = 0;
+      for (var i = 0; i < codes.Count; i++)
       {
-        // Find the vehicle root from the placement ghost
-        var waterVehicle = localPlayer.m_placementGhost.GetComponentInParent<VehiclePiecesController>();
-
-        if (waterVehicle != null)
+        // Find where Valheim hits a matching Message instruction call site
+        if (codes[i].opcode == OpCodes.Call || codes[i].opcode == OpCodes.Callvirt)
         {
-          // Safely grab the Piece component off the prefab blueprint before instantiation
-          var prefabGo = original as GameObject;
-          var pieceComponent = prefabGo != null ? prefabGo.GetComponent<Piece>() : null;
-
-          if (pieceComponent != null)
+          if (codes[i].operand as MethodInfo == messageMethod)
           {
-            var container = pieceComponent.GetComponentInChildren<Container>();
-            var isBuildModeDisabled = !waterVehicle.Manager.BuildMode.CanPlacePiece(container != null);
+            // Swap the call address over to our interceptor method
+            codes[i] = CodeInstruction.Call(typeof(Player_Patch), nameof(InterceptPlacementErrorMessage));
+            patchedCount++;
+          }
+        }
+      }
+
+      LoggerProvider.LogInfo($"[TryPlacePieceTranspiler] Successfully patched {patchedCount} Message call sites inside TryPlacePiece.");
+      return codes;
+    }
+
+    // FIX: Update this helper method signature to support all 5 parameters natively
+    public static void InterceptPlacementErrorMessage(Character character, MessageHud.MessageType type, string originalMsg, int amount, Sprite icon, bool flash)
+    {
+      var player = character as Player;
+
+      if (player != null && player.m_placementGhost != null && PatchSharedData.PlayerLastRayPiece != null)
+      {
+        var pieceController = PatchSharedData.PlayerLastRayPiece.GetComponentInParent<VehiclePiecesController>();
+        if (pieceController != null)
+        {
+          var ghostPiece = player.m_placementGhost.GetComponent<Piece>();
+          if (ghostPiece != null)
+          {
+            var container = ghostPiece.GetComponentInChildren<Container>();
+            var isBuildModeDisabled = !pieceController.Manager.BuildMode.CanPlacePiece(container != null);
 
             if (isBuildModeDisabled)
             {
-              // Send the error message to the user UI
-              localPlayer.Message(MessageHud.MessageType.Center, "$msg_placement_disabled_vehicle");
-
-              // Return null to cleanly cancel the assignment inside Valheim's internal logic 
-              // without crashing the local variable pipeline
-              return null;
+              // Bypasses check for utility toggles or water floats
+              var ghostName = player.m_placementGhost.name;
+              if (!ghostName.StartsWith(PrefabNames.CustomWaterFloatation) && !ghostName.StartsWith(PrefabNames.BuildModeToggle))
+              {
+                // Push your vehicle custom localized center-screen warning string
+                player.Message(
+                  MessageHud.MessageType.Center,
+                  Localization.instance.Localize("$valheim_vehicles_buildmode_unable_to_place_piece_message"),
+                  amount,
+                  icon,
+                  flash
+                );
+                return; // Suppress and abort early so originalMsg is completely discarded!
+              }
             }
           }
         }
       }
 
-      // If checks pass (or aren't on a vehicle), proceed with standard instantiation
-      var obj = Object.Instantiate(original, pos, rot) as GameObject;
-      return PlacedPiece(obj);
+      // If it's a normal vanilla failure context (Workbench missing, territory block), let it flow normally
+      character.Message(type, originalMsg, amount, icon, flash);
+    }
+
+    [HarmonyPatch(typeof(Player), nameof(Player.UpdatePlacementGhost))]
+    [HarmonyPostfix]
+    public static void UpdatePlacementGhost_BlockBuildMode(Player __instance)
+    {
+      // Ensure there is an active ghost and we are hovering over an existing vehicle structural component
+      if (__instance.m_placementGhost == null || PatchSharedData.PlayerLastRayPiece == null) return;
+
+      // BYPASS: If they are trying to place a build mode toggle or a water flotation device, don't lock it out
+      var ghostName = __instance.m_placementGhost.name;
+      if (ghostName.StartsWith(PrefabNames.BuildModeToggle))
+      {
+        return; // let placing these prefabs happen as these are critical to toggling build mode and it would trap users.
+      }
+
+      // Use your tracked raycast history to discover if the target is attached to a vehicle controller
+      var pieceController = PatchSharedData.PlayerLastRayPiece.GetComponentInParent<VehiclePiecesController>();
+      if (pieceController != null)
+      {
+        // Safely extract the Piece settings belonging to the ghost prefab template
+        var ghostPiece = __instance.m_placementGhost.GetComponent<Piece>();
+        if (ghostPiece != null)
+        {
+          var container = ghostPiece.GetComponentInChildren<Container>();
+
+          // Check if building is disabled for this type of structure
+          var isBuildModeDisabled = !pieceController.Manager.BuildMode.CanPlacePiece(container != null);
+
+          if (isBuildModeDisabled)
+          {
+            // Force Valheim's internal placement valid tracking loop to fail
+            // 1. Turns the visual placement ghost bright red instantly
+            // 2. Halts vanilla's internal placement logic so clicking does absolutely nothing!
+            __instance.m_placementStatus = Player.PlacementStatus.Invalid; // or .InvalidRegion / .BlockedByPlayer depending on your preferred fallback feedback type
+
+            // Manually refresh the color maps on the ghost renderer mesh instances to reflect the new state
+            __instance.SetPlacementGhostValid(false);
+          }
+        }
+      }
+    }
+
+    [HarmonyPatch(typeof(Player), nameof(Player.RemovePiece))]
+    [HarmonyPrefix]
+    public static bool RemovePiece_BlockBuildMode(Player __instance, ref bool __result)
+    {
+      // 1. Leverage Valheim's internal raycast tracking to find what piece the player is looking at
+      var targetedPiece = __instance.m_hoveringPiece;
+
+      // Fallback to your shared custom raycast tracking data if vanilla's hover cache is empty
+      if (targetedPiece == null)
+      {
+        targetedPiece = PatchSharedData.PlayerLastRayPiece;
+      }
+
+      if (targetedPiece != null)
+      {
+        // 2. Discover if the piece they want to break is parented to a vehicle controller
+        var pieceController = targetedPiece.GetComponentInParent<VehiclePiecesController>();
+        if (pieceController != null)
+        {
+          // BYPASS: Never block removing utility toggles or floatation items
+          var pieceName = targetedPiece.gameObject.name;
+          if (pieceName.StartsWith(PrefabNames.CustomWaterFloatation) || pieceName.StartsWith(PrefabNames.BuildModeToggle))
+          {
+            return true; // Allow the removal to proceed normally
+          }
+
+          // 3. Evaluate the vehicle container requirements
+          var container = targetedPiece.GetComponentInChildren<Container>();
+          var isBuildModeDisabled = !pieceController.Manager.BuildMode.CanPlacePiece(container != null);
+
+          if (isBuildModeDisabled)
+          {
+            // 4. Send your custom warning to the UI center canvas layer
+            __instance.Message(
+              MessageHud.MessageType.Center,
+              Localization.instance.Localize("$valheim_vehicles_buildmode_unable_to_remove_piece_message")
+            );
+
+            // Set the method's return value to false and return false to abort vanilla execution
+            __result = false;
+            return false;
+          }
+        }
+      }
+
+      return true; // Allow standard piece removal if conditions are met
     }
 
 

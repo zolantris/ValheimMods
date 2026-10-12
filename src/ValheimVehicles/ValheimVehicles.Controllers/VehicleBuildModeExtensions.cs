@@ -1,6 +1,6 @@
 using ValheimVehicles.Enums;
 using ValheimVehicles.SharedScripts;
-namespace ValheimVehicles.ValheimVehicles.Controllers;
+namespace ValheimVehicles.Controllers;
 
 public static class VehicleBuildModeExtensions
 {
