@@ -31,7 +31,7 @@
   using ValheimVehicles.Serialization;
   using ValheimVehicles.Structs;
   using ValheimVehicles.ValheimVehicles.Components;
-  using ValheimVehicles.ValheimVehicles.Controllers;
+  using ValheimVehicles.Controllers;
   using ValheimVehicles.ValheimVehicles.Patches;
   using ValheimVehicles.ValheimVehicles.Structs;
   using ZdoWatcher;
@@ -469,7 +469,7 @@
     ///
     /// This intentionally does not handle post convexhull generation. Methods must still call OnConvexHullGenerated to update other critical colliders and transforms.
     /// 
-    public void TryReadConvexHullColliderZdoData()
+    public void TryRebuildHullFromZdoData()
     {
       if (m_zdo == null || !m_zdo.IsValid())
         return;
@@ -491,16 +491,7 @@
       {
         var hulls = ConvexHullDataSerializer.Deserialize(payload);
 
-        for (var i = 0; i < hulls.Count; i++)
-        {
-          var hull = hulls[i];
-
-          m_convexHullAPI.GenerateMeshFromConvexOutput(
-            hull.Vertices,
-            hull.Triangles,
-            null,
-            i);
-        }
+        RebuildBoundsFromData(hulls, true);
 
         Manager.vehicleConvexHullDataVersionHash = vehicleConvexHashId;
         m_lastConvexHullDataVersionHash = vehicleConvexHashId;
@@ -513,7 +504,7 @@
     }
 
     /// <summary>
-    /// To be run when TryReadConvexHullColliderZdoData() completes
+    /// To be run when TryRebuildHullFromZdoData() completes
     /// </summary>
     public void OnConvexHullColliderZdoDataChange()
     {
@@ -4510,14 +4501,11 @@
         // convex hull must be available to safely do a read-only.
         if (Manager.IsConvexHullInitialized() && shouldReadStoredZdoConvexHullData)
         {
-          TryReadConvexHullColliderZdoData();
-
-          // must manually be called.
-          OnConvexHullGenerated(true);
+          TryRebuildHullFromZdoData();
         }
         else
         {
-          base.RebuildBounds(isForced);
+          base.RebuildBounds(true);
         }
       }
       catch (Exception e)

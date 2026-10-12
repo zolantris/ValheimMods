@@ -7,6 +7,7 @@
   using System.Linq;
   using Unity.Collections;
   using UnityEngine;
+  using ValheimVehicles.Serialization;
   using ValheimVehicles.Shared.Constants;
   using Zolantris.Shared;
   using Debug = UnityEngine.Debug;
@@ -284,15 +285,14 @@
       }
 
       /// <summary>
-      /// - This RebuildBounds must be called within the override if overridden. 
-      /// - Additional logic is implemented in the VehiclePiecesController
+      /// Exposed as a separate method to rebuildbounds to allow calling this method if skipping the rebuild and using data instead.
       /// </summary>
       /// <param name="isForced"></param>
-      public virtual void RebuildBounds(bool isForced = false)
+      public void RebuildResetVariables(bool isForced)
       {
-        _rebuildBoundsRoutineInstance = null;
         if (!isActiveAndEnabled) return;
 
+        _rebuildBoundsRoutineInstance = null;
         isRebuildingVehicle = true;
 
         _shouldUpdateVehicleColliders = true;
@@ -303,9 +303,45 @@
         {
           _shouldUpdatePieceColliders = true;
         }
+      }
 
-        // always update them for now until we can get smarter with convex collider detecting which ones have been added if any.
-        _shouldUpdateVehicleColliders = true;
+      public virtual void RebuildBoundsFromData(List<ConvexHullDataSerializer.ColliderData> hulls, bool isForced)
+      {
+        if (!isActiveAndEnabled) return;
+        RebuildResetVariables(isForced);
+
+        try
+        {
+
+          for (var i = 0; i < hulls.Count; i++)
+          {
+            var hull = hulls[i];
+            m_convexHullAPI.GenerateMeshFromConvexOutput(
+              hull.Vertices,
+              hull.Triangles,
+              null,
+              i);
+          }
+        }
+        catch (Exception e)
+        {
+          LoggerProvider.LogError(e.ToString());
+        }
+
+        // assume success.
+        OnConvexHullGenerated(true);
+      }
+
+      /// <summary>
+      /// - This RebuildBounds must be called within the override if overridden. 
+      /// - Additional logic is implemented in the VehiclePiecesController
+      /// </summary>
+      /// <param name="isForced"></param>
+      public virtual void RebuildBounds(bool isForced = false)
+      {
+        if (!isActiveAndEnabled) return;
+
+        RebuildResetVariables(isForced);
 
         TryGenerateConvexHull(clusterThreshold, success =>
         {
@@ -326,6 +362,9 @@
 
       public virtual void OnConvexHullGenerated(bool hasSucceeded)
       {
+        m_convexHullAPI.PostGenerateConvexMeshes();
+        IgnoreAllCollisionsFromConvexColliders();
+
         if (!hasSucceeded)
         {
           RequestBoundsRebuild();
@@ -696,8 +735,6 @@
         m_convexHullAPI.GenerateMeshFromConvexOutput(verts.ToArray(), tris.ToArray(), normals.ToArray(), 0);
 
         Debug.Log("✅ Convex Hull Generation Complete!");
-        m_convexHullAPI.PostGenerateConvexMeshes();
-        IgnoreAllCollisionsFromConvexColliders();
         callback?.Invoke(true);
       }
 
