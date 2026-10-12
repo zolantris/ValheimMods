@@ -18,6 +18,7 @@
   using ValheimVehicles.Prefabs;
   using ValheimVehicles.Propulsion.Rudder;
   using ValheimVehicles.SharedScripts;
+  using ValheimVehicles.ValheimVehicles.Controllers;
   using Zolantris.Shared;
   using Logger = Jotunn.Logger;
   using Object = UnityEngine.Object;
@@ -84,14 +85,81 @@
       return codes;
     }
 
+    // [HarmonyPatch(typeof(Player), nameof(Player.PlacePiece))]
+    // [HarmonyPrefix]
+    // [HarmonyPriority(Priority.High)]
+    // // Use a Prefix to intercept the placement before it happens
+    // public static bool PreventPlacementPatchIfDisabledPatch(Player __instance, Piece piece)
+    // {
+    //   // 1. Check if the player is currently hovering over or targeting a vehicle placement ghost
+    //   if (__instance.m_placementGhost != null)
+    //   {
+    //     // ValheimRAFT structures are parented under a vehicle root object
+    //     // Look for ValheimRAFT's vehicle component in the parent hierarchy
+    //     var waterVehicle = __instance.m_placementGhost.GetComponentInParent<VehiclePiecesController>(); // Or MoveableBaseRoot depending on the targeted ValheimRAFT version
+    //
+    //     if (waterVehicle != null)
+    //     {
+    //       // 2. Fetch your custom logic or check ValheimRAFT's build mode state 
+    //       // Replace 'YourCustomBuildModeCheck' with the exact boolean or property you are using to track the vehicle's state
+    //       var container = piece.GetComponentInChildren<Container>();
+    //       var isBuildModeDisabled = waterVehicle.Manager.BuildMode.CanPlacePiece(container != null);
+    //
+    //       if (isBuildModeDisabled)
+    //       {
+    //         // 3. Display an in-game error message to the player
+    //         __instance.Message(MessageHud.MessageType.Center, "$msg_placement_disabled_vehicle");
+    //
+    //         // 4. Return false to skip Valheim's original PlacePiece execution
+    //         return false;
+    //       }
+    //     }
+    //   }
+    //
+    //   // Return true to allow normal piece placement if conditions aren't met
+    //   return true;
+    // }
+
     public static GameObject WrapInstantiateWithPlacedPiece(Object original, Vector3 pos, Quaternion rot)
     {
       if (ZNet.instance && ZNet.instance.IsDedicated())
       {
         Logger.LogWarning("[WrapInstantiateWithPlacedPiece] WARNING: This should not run on server!");
       }
+
+      var localPlayer = Player.m_localPlayer;
+      if (localPlayer != null && localPlayer.m_placementGhost != null)
+      {
+        // Find the vehicle root from the placement ghost
+        var waterVehicle = localPlayer.m_placementGhost.GetComponentInParent<VehiclePiecesController>();
+
+        if (waterVehicle != null)
+        {
+          // Safely grab the Piece component off the prefab blueprint before instantiation
+          var prefabGo = original as GameObject;
+          var pieceComponent = prefabGo != null ? prefabGo.GetComponent<Piece>() : null;
+
+          if (pieceComponent != null)
+          {
+            var container = pieceComponent.GetComponentInChildren<Container>();
+            var isBuildModeDisabled = !waterVehicle.Manager.BuildMode.CanPlacePiece(container != null);
+
+            if (isBuildModeDisabled)
+            {
+              // Send the error message to the user UI
+              localPlayer.Message(MessageHud.MessageType.Center, "$msg_placement_disabled_vehicle");
+
+              // Return null to cleanly cancel the assignment inside Valheim's internal logic 
+              // without crashing the local variable pipeline
+              return null;
+            }
+          }
+        }
+      }
+
+      // If checks pass (or aren't on a vehicle), proceed with standard instantiation
       var obj = Object.Instantiate(original, pos, rot) as GameObject;
-      return PlacedPiece(obj); // your side-effect logic
+      return PlacedPiece(obj);
     }
 
 
