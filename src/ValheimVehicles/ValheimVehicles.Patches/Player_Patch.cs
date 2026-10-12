@@ -741,15 +741,26 @@
       {
         var ladder = __instance.m_attachPoint.parent
           .GetComponent<RopeLadderComponent>();
-        if ((bool)ladder) ladder.OnStepOffLadder(__instance);
-        ((Character)__instance).m_animator.SetIKPositionWeight(
-          AvatarIKGoal.LeftHand, 0);
-        ((Character)__instance).m_animator.SetIKPositionWeight(
-          AvatarIKGoal.RightHand, 0);
-        ((Character)__instance).m_animator.SetIKRotationWeight(
-          AvatarIKGoal.LeftHand, 0);
-        ((Character)__instance).m_animator.SetIKRotationWeight(
-          AvatarIKGoal.RightHand, 0);
+
+        var vpc = __instance.m_attachPoint.GetComponentInParent<VehiclePiecesController>();
+
+        if (vpc != null)
+        {
+          vpc.OnboardController.SetControlling(__instance.GetPlayerID(), false);
+        }
+
+        if ((bool)ladder)
+        {
+          ladder.OnStepOffLadder(__instance);
+          ((Character)__instance).m_animator.SetIKPositionWeight(
+            AvatarIKGoal.LeftHand, 0);
+          ((Character)__instance).m_animator.SetIKPositionWeight(
+            AvatarIKGoal.RightHand, 0);
+          ((Character)__instance).m_animator.SetIKRotationWeight(
+            AvatarIKGoal.LeftHand, 0);
+          ((Character)__instance).m_animator.SetIKRotationWeight(
+            AvatarIKGoal.RightHand, 0);
+        }
       }
 
       // always call this as the player might detach and not be in the vehicle briefly.

@@ -161,6 +161,31 @@
       return playerList;
     }
 
+    public long playerControllingVehicle = 0L;
+
+    public Player GetControllingPlayer()
+    {
+      return Player.GetPlayer(playerControllingVehicle);
+    }
+
+    /// <summary>
+    /// Helps track exactly who is controlling the vehicle
+    /// </summary>
+    /// <param name="playerId"></param>
+    /// <param name="isControlling"></param>
+    public void SetControlling(long playerId, bool isControlling)
+    {
+      if (!isControlling)
+      {
+        LoggerProvider.LogDebug($"Removing controlling player {Player.GetPlayer(playerId)}");
+      }
+      else
+      {
+        LoggerProvider.LogDebug($"Adding controlling player {Player.GetPlayer(playerId)}");
+      }
+      playerControllingVehicle = playerId;
+    }
+
     private bool IsValidCharacter(Character character)
     {
       return character != null && character.enabled;

@@ -321,7 +321,7 @@ public class SteeringWheelComponent : MonoBehaviour, IAnimatorHandler, Hoverable
 
   public void SetLastUsedWheel()
   {
-    if (ControllersInstance.MovementController != null)
+    if (ControllersInstance != null && ControllersInstance.MovementController != null)
       ControllersInstance.MovementController.lastUsedWheelComponent = this;
   }
 

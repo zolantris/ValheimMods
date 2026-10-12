@@ -1515,11 +1515,9 @@
      */
     public bool HaveControllingPlayer()
     {
-      if (OnboardController == null) return false;
-      if (OnboardController.m_localPlayers.Count != 0)
-        return HaveValidUser();
+      if (OnboardController == null || PiecesController == null) return false;
 
-      return false;
+      return PiecesController._steeringWheelPiece != null;
     }
 
     /// <summary>
@@ -2482,7 +2480,7 @@
 
     public void UpdateShipFloatation(ShipFloatation shipFloatation)
     {
-      var vehicleState = IsSubmerged() ? VehiclePhysicsState.Sea : VehiclePhysicsState.Submerged;
+      var vehicleState = IsSubmerged() ? VehiclePhysicsState.Submerged : VehiclePhysicsState.Sea;
       UpdateVehicleStats(vehicleState);
 
       UpdateWaterForce(shipFloatation);
@@ -4078,7 +4076,8 @@
       // owners that are not on the vehicle should not be trusted either
       if (ZNet.instance.IsDedicated() && ZNet.instance.IsServer() || !WaterZoneUtils.IsOnboard(Player.GetPlayer(targetPlayerId)))
       {
-        m_nview.InvokeRPC(targetPlayerId, nameof(RPC_RequestResponse),
+        // needs to be sent to everyone so 0L
+        m_nview.InvokeRPC(0L, nameof(RPC_RequestResponse),
           true, targetPlayerId, previousUserId);
         return;
       }
@@ -4097,8 +4096,8 @@
           LoggerProvider.LogDebug(
             "RPC_RequestControl requested the owner to give control but they are not within the boat.");
 
-      // the previous user could be invalid so always makes the current user valid if so.
-      m_nview.InvokeRPC(targetPlayerId, nameof(RPC_RequestResponse),
+      // all players should know that the player is changing ownership
+      m_nview.InvokeRPC(0L, nameof(RPC_RequestResponse),
         isInBoat, targetPlayerId, previousUserId);
     }
 
@@ -4833,7 +4832,10 @@
 
       var targetPlayerId = targetPlayer.GetPlayerID();
 
-      EjectPreviousPlayerFromControls(previousPlayer);
+      if (previousPlayer != targetPlayer)
+      {
+        EjectPreviousPlayerFromControls(previousPlayer);
+      }
 
       // Freeze BEFORE changing ownership.
       BeginControlHandoffPhysics();
@@ -4847,15 +4849,19 @@
 
       var playerOwner = targetPlayer.GetOwner();
 
-      m_nview.GetZDO().SetOwner(playerOwner);
+
       PiecesController.UpdateOwnerSwitchTime();
+      PiecesController.ClaimOwnershipAllPieces(targetPlayerId);
 
       if (previousUserId != targetPlayerId || previousUserId == 0L)
       {
         m_nview.GetZDO().Set(ZDOVars.s_user, targetPlayerId);
       }
 
-      PiecesController.ForceRebuildBounds();
+      if (isLocalPlayer)
+      {
+        PiecesController.ForceRebuildBounds();
+      }
 
       // ------------------------------------------------------------------
       // End ownership critical update
@@ -4893,24 +4899,35 @@
        */
       StartControlHandoffPhysicsRelease();
 
-      if (lastUsedWheelComponent == null) return;
+      // TODO swap away from lastUsedWheelComponent and use VehiclePiecesController to get the wheel component of the vehicle. Otherwise this might be inaccurate if there was a race-condition with multiple vehicles.
+      if (lastUsedWheelComponent == null)
+      {
+        LoggerProvider.LogError("lastUsedWheelComponent was null on VehicleMovementController. This should not happen");
+        return;
+      }
+
+      var attachTransform = lastUsedWheelComponent.AttachPoint;
+
+      if (attachTransform == null) return;
 
       if (isLocalPlayer)
       {
         targetPlayer.StartDoodadControl(lastUsedWheelComponent);
       }
 
-      var attachTransform = lastUsedWheelComponent.AttachPoint;
-      if (attachTransform == null) return;
-
       targetPlayer.AttachStart(
         attachTransform,
-        null,
-        false,
+        lastUsedWheelComponent.gameObject,
+        true,
         false,
         true,
         m_attachAnimation,
         detachOffset);
+
+      if (OnboardController)
+      {
+        OnboardController.SetControlling(targetPlayerId, true);
+      }
 
       if (Manager != null &&
           lastUsedWheelComponent.wheelTransform != null)
@@ -4934,7 +4951,7 @@
     {
       CancelDebounceTakeoverControls();
 
-      if (!Player.m_localPlayer || !Manager) return;
+      if (!Manager) return;
 
       if (granted)
       {
@@ -4950,7 +4967,9 @@
 
       if (!granted &&
           Player.m_localPlayer == Player.GetPlayer(targetPlayerId))
+      {
         Player.m_localPlayer.Message(MessageHud.MessageType.Center, InUseMessage);
+      }
     }
 
 

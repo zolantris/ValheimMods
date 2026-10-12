@@ -804,6 +804,20 @@
       }
     }
 
+    public void ClaimOwnershipAllPieces(long playerOwnerId)
+    {
+      if (m_nview == null) return;
+      m_nview.GetZDO().SetOwner(playerOwnerId);
+
+      foreach (var zNetView in m_pieces)
+      {
+        if (zNetView == null) continue;
+        if (!zNetView.IsValid()) continue;
+        if (zNetView.m_zdo == null || !zNetView.m_zdo.IsValid()) continue;
+        zNetView.m_zdo.SetOwner(playerOwnerId);
+      }
+    }
+
     /// <summary>
     /// Critical for ensuring that a owner switch does not cause a massive physics issue when boundaries can be expanded.
     /// </summary>
