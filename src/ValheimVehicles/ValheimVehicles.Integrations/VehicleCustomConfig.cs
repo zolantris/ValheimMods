@@ -179,6 +179,7 @@ public class VehicleCustomConfig : ISerializableConfig<VehicleCustomConfig, IVeh
     pkg.Write(_treadHeight);
     pkg.Write(_treadScaleX);
     pkg.Write(_forceDocked);
+    pkg.Write(_dockZdoId);
     pkg.Write(_vehicleName);
     pkg.Write((int)_buildMode);
   }
