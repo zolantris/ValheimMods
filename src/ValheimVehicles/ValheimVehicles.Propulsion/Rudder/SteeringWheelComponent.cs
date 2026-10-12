@@ -148,6 +148,7 @@ public class SteeringWheelComponent : MonoBehaviour, IAnimatorHandler, Hoverable
 
         var dockStatusVal = ModTranslations.WithBoldText(dockStatusStateMessage, "yellow");
         var dockStatusTitle = Localization.instance.Localize("$valheim_vehicles_dock_status");
+        var vehicleDockName = Localization.instance.Localize("$valheim_vehicles_dock");
 
         interactMessage += $"\n{dockStatusTitle}: [{dockStatusVal}]";
       }
@@ -157,12 +158,13 @@ public class SteeringWheelComponent : MonoBehaviour, IAnimatorHandler, Hoverable
 
         var dockStatusVal = ModTranslations.WithBoldText(dockStatusStateMessage, "yellow");
         var dockStatusTitle = Localization.instance.Localize("$valheim_vehicles_dock_status");
+        var vehicleDockName = Localization.instance.Localize("$valheim_vehicles_dock");
 
-        interactMessage += $"\n{dockStatusTitle}: [{dockStatusVal}]";
+        interactMessage += $"\n{dockStatusTitle}: [{dockStatusVal}] {vehicleDockName}";
       }
     }
 
-    if (Controls != null && Controls.MovementController)
+    if (Controls != null && Controls.MovementController && Controls.PiecesController && Controls.PiecesController.m_anchorPieces.Count > 0)
     {
       var anchorStatusTitle = Localization.instance.Localize("$valheim_vehicles_anchor_status");
 

@@ -203,17 +203,38 @@ public class RopeAnchorComponent : MonoBehaviour, Interactable, Hoverable
 
   public string GetDockActionText()
   {
+    var disconnectAction = Localization.instance.Localize("$valheim_vehicles_action_disconnect");
+    var cancelAction = Localization.instance.Localize("$valheim_vehicles_action_cancel");
+    var vehicleDockName = Localization.instance.Localize("$valheim_vehicles_dock");
+    var connectAction = Localization.instance.Localize("$valheim_vehicles_action_connect");
+
+
+    // todo make this more performant. EG don't do this query per frame.
+    var vehicleParent = GetComponentInParent<VehiclePiecesController>();
+
+
+    // no action text for a vehicle dock on a vehicle. Action text should only be shown on land dock not attached to vehicle.
+    // early bails on other logic as this should be handled by the rope from the land dock.
+    if (vehicleParent && !vehicleParent.Manager.IsDocked()) return "";
+
+
+    // if on a vehicle or currently with more than 1 rope EG it's attached to a vehicle. This should show a disconnect action.
+    if (m_ropes.Count > 0 || vehicleParent && vehicleParent.Manager.IsDocked())
+    {
+      return $"{WithYellowBoldStatusText(disconnectAction)} {vehicleDockName}";
+    }
+
     if (m_rope && m_rope.enabled)
     {
       // updates status on the fly
       var dragToStatus = "";
       if (m_draggingRopeTo && m_draggingRopeTo.GetComponentInParent<VehiclePiecesController>())
       {
-        dragToStatus = WithYellowBoldStatusText(Localization.instance.Localize("$valheim_vehicles_action_connect"));
+        dragToStatus = WithYellowBoldStatusText(connectAction);
       }
       else if (m_draggingRopeFrom && m_draggingRopeFrom.gameObject == gameObject)
       {
-        dragToStatus = WithYellowBoldStatusText(Localization.instance.Localize("$valheim_vehicles_action_cancel"));
+        dragToStatus = WithYellowBoldStatusText(Localization.instance.Localize(cancelAction));
       }
 
       var parentController = GetComponentInParent<VehiclePiecesController>();
@@ -229,19 +250,10 @@ public class RopeAnchorComponent : MonoBehaviour, Interactable, Hoverable
 
     if (m_draggingRopeTo && m_draggingRopeTo.GetComponentInParent<VehiclePiecesController>())
     {
-      return WithYellowBoldStatusText(Localization.instance.Localize("$valheim_vehicles_action_connect"));
+      return $"{WithYellowBoldStatusText(connectAction)} {vehicleDockName}";
     }
 
-    // todo make this more performant. EG don't do this query per frame.
-    var vehicleParent = GetComponentInParent<VehiclePiecesController>();
-
-    // if on a vehicle or currently with more than 1 rope EG it's attached to a vehicle. This should show a disconnect action.
-    if (m_ropes.Count > 1 || vehicleParent && vehicleParent.Manager.IsDocked())
-    {
-      return WithYellowBoldStatusText(Localization.instance.Localize("$valheim_vehicles_action_disconnect"));
-    }
-
-    return WithYellowBoldStatusText(Localization.instance.Localize("$valheim_vehicles_action_cancel"));
+    return $"{WithYellowBoldStatusText(cancelAction)} {vehicleDockName}";
   }
 
   public string GetCurrentStatusDescriptionText()
@@ -251,14 +263,14 @@ public class RopeAnchorComponent : MonoBehaviour, Interactable, Hoverable
 
     if (dockParent && dockParent.Manager.IsDocked())
     {
-      return "$valheim_vehicles_status_dock_connected_desc";
+      return Localization.instance.Localize("$valheim_vehicles_status_dock_connected_desc");
     }
     if (dockParent)
     {
-      return "$valheim_vehicles_status_dock_disconnected_desc";
+      return Localization.instance.Localize("$valheim_vehicles_status_dock_disconnected_desc");
     }
 
-    return "$valheim_vehicles_status_dock_use_desc";
+    return Localization.instance.Localize("$valheim_vehicles_status_dock_use_desc");
   }
 
   private static List<string> dockHoverItems = new();
@@ -268,7 +280,9 @@ public class RopeAnchorComponent : MonoBehaviour, Interactable, Hoverable
     var actionText = GetDockActionText();
     var statusDescription = GetCurrentStatusDescriptionText();
 
-    var actionString = actionText != string.Empty ? $"{UseKeyText} $valheim_vehicles_action_next_action {actionText}" : "";
+    var nextAction = Localization.instance.Localize("$valheim_vehicles_action_next_action");
+
+    var actionString = actionText != string.Empty ? $"{UseKeyText} {nextAction} {actionText}" : "";
 
     dockHoverItems.Clear();
 
@@ -339,8 +353,13 @@ public class RopeAnchorComponent : MonoBehaviour, Interactable, Hoverable
       LoggerProvider.LogError("error attempted to attach to the wrong type of RopeAnchorComponent");
       return;
     }
+
     // do not allow multiple ropes.
-    if (m_ropes.Count > 0) return;
+    if (m_ropes.Count > 0)
+    {
+      DestroyAllRopes();
+    }
+
     // dictionary index of 0 since this only connects to another rope anchor
     AttachRope(ropeAnchor, false);
   }
@@ -370,6 +389,12 @@ public class RopeAnchorComponent : MonoBehaviour, Interactable, Hoverable
   public bool HandleDockAnchorInteract(Humanoid user, bool hold, bool alt)
   {
     var vehicleParent = GetComponentInParent<VehiclePiecesController>();
+
+    if (m_ropes.Count > 0)
+    {
+      DestroyAllRopes();
+      return true;
+    }
 
     // do not do anything if the dock anchor piece is on the vehicle.
     if (vehicleParent)
@@ -569,11 +594,17 @@ public class RopeAnchorComponent : MonoBehaviour, Interactable, Hoverable
     if (nv == null || !nv.IsValid()) return;
 
 
+    // ensures only 1 vehicle can be anchored per dock
+    if (IsDockAnchor() && m_ropes.Count > 0)
+    {
+      DestroyAllRopes();
+    }
+
+
     // TODO do we allow docks clamp on vehicle to connect to anything on land?
     // TODO do we only allow dock clamp on land to connect to a vehicle.
 
     var isLocalDockOnVehicle = GetComponentInParent<VehiclePiecesController>();
-    // if (!isLocalDockOnVehicle) return;
 
     var targetVehicle = go.GetComponentInParent<VehiclePiecesController>();
 

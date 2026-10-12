@@ -466,6 +466,9 @@
     /// <summary>
     /// Reads the vehicle zdo convexhull data. Updates the hash if it succeeds otherwise does nothing.
     /// </summary>
+    ///
+    /// This intentionally does not handle post convexhull generation. Methods must still call OnConvexHullGenerated to update other critical colliders and transforms.
+    /// 
     public void TryReadConvexHullColliderZdoData()
     {
       if (m_zdo == null || !m_zdo.IsValid())
@@ -498,9 +501,6 @@
             null,
             i);
         }
-
-        // similar to rebuild call this will update anything that has to do with colliders but it should exclude pieces.
-        OnConvexHullColliderZdoDataChange();
 
         Manager.vehicleConvexHullDataVersionHash = vehicleConvexHashId;
         m_lastConvexHullDataVersionHash = vehicleConvexHashId;
@@ -817,9 +817,24 @@
       }
     }
 
+    /// <summary>
+    /// Critical for ensuring that a owner switch does not cause a massive physics issue when boundaries can be expanded.
+    /// </summary>
+    public void UpdateOwnerSwitchTime()
+    {
+      m_lastOwnerSwitch = Time.fixedTime;
+    }
+
     public override void CustomFixedUpdate(float deltaTime)
     {
       if (!CanSync()) return;
+
+      // ensures that the last owner time is matching fixed time.
+      if (m_lastOwnerSwitch == 0f)
+      {
+        m_lastOwnerSwitch = Time.fixedTime;
+      }
+
       try
       {
         Sync();
@@ -4467,13 +4482,6 @@
       if (FloatCollider == null || OnboardCollider == null)
         return;
 
-      // ensures that if this is already generated it runs immediately. Otherwise it will not run immediately and just request.
-      if (Manager.IsConvexHullInitialized() && !Manager.BuildMode.CanExpandBounds())
-      {
-        TryReadConvexHullColliderZdoData();
-        return;
-      }
-
       PruneStalePieces();
 
       // methods related to VehiclePiecesController
@@ -4494,14 +4502,36 @@
 
       try
       {
+        // ensures that if this is already generated it runs immediately. Otherwise, it will not run immediately and just request.
+        var isOwner = IsPlayerOwner(m_zdo);
 
-        // internal parent class must still be called.
-        base.RebuildBounds(isForced);
+        var shouldReadStoredZdoConvexHullData = !IsGeometryStable() || !isOwner || !Manager.BuildMode.CanExpandBounds();
+
+        // convex hull must be available to safely do a read-only.
+        if (Manager.IsConvexHullInitialized() && shouldReadStoredZdoConvexHullData)
+        {
+          TryReadConvexHullColliderZdoData();
+
+          // must manually be called.
+          OnConvexHullGenerated(true);
+        }
+        else
+        {
+          base.RebuildBounds(isForced);
+        }
       }
       catch (Exception e)
       {
         LoggerProvider.LogError($"{e}");
       }
+    }
+
+    public float m_lastOwnerSwitch = 0f;
+
+    public bool IsGeometryStable()
+    {
+      if (m_lastOwnerSwitch + 5f > Time.fixedTime) return true;
+      return false;
     }
 
 
@@ -4632,7 +4662,10 @@
         return;
       }
 
-      SaveConvexHullColliderZdoData();
+      if (IsPlayerOwner(m_zdo))
+      {
+        SaveConvexHullColliderZdoData();
+      }
 
       HasClusterMeshesEnabled = RenderingConfig.EnableVehicleClusterMeshRendering.Value;
       MinClusterThreshold = RenderingConfig.ClusterRenderingPieceThreshold.Value;

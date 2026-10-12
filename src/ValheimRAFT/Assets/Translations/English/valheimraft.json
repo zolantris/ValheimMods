@@ -247,6 +247,7 @@
   "valheim_vehicles_action_cancel": "cancel",
   "valheim_vehicles_action_disconnect": "disconnect",
   "valheim_vehicles_action_connect": "connect",
+  "valheim_vehicles_dock": "dock",
   "valheim_vehicles_action_dock_attach_to": "Attach dock to a vehicle",
   "valheim_vehicles_action_onland_dock_connect": "Connect to vehicle to dock vehicle.",
   "valheim_vehicles_status_dock_connected": "connected",

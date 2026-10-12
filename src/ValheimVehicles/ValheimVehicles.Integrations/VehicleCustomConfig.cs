@@ -61,7 +61,7 @@ public class VehicleCustomConfig : ISerializableConfig<VehicleCustomConfig, IVeh
 
   private bool _hasCustomFloatationHeight = false;
   private float _customFloatationHeight = 0f;
-  private VehicleBuildMode _buildMode = VehicleBuildMode.Expandable;
+  private VehicleBuildMode _buildMode = VehicleBuildMode.Fixed; // defaulting to fixed to prevent multiplayer issues and force players to swap build modes to Expandable in order to generate a realistic hull.
   private bool _forceDocked = false;
   private ZDOID _dockZdoId = ZDOID.None;
   private string _vehicleName = "";
@@ -200,7 +200,7 @@ public class VehicleCustomConfig : ISerializableConfig<VehicleCustomConfig, IVeh
     zdo.SetDelta(Key_ForceDocked, customConfig.ForceDocked);
     zdo.SetDelta(Key_DockZdoId, customConfig._dockZdoId);
     zdo.SetDelta(Key_VehicleName, customConfig.VehicleName);
-    zdo.SetDelta(Key_BuildMode, customConfig.BuildMode);
+    zdo.SetDelta(Key_BuildMode, (int)customConfig.BuildMode);
   }
 
   public VehicleCustomConfig Load(ZDO zdo, IVehicleConfig configFromComponent, string[]? filterKeys = null)

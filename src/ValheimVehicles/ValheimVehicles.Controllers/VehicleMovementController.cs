@@ -727,10 +727,13 @@
 
       // additional call in case add dockpoint was not ready before.
       if (Manager.PiecesController == null || Manager.VehicleParent == null || Manager.VehicleParent.Manager.PiecesController == null) yield break;
-      if (Manager.PiecesController.m_dockAnchor != null && Manager.VehicleParent.Manager.PiecesController.m_dockAnchor != null)
-      {
-        Manager.PiecesController.m_dockAnchor.AddDockPoint(Manager.VehicleParent.Manager.PiecesController.m_dockAnchor);
-      }
+
+
+      // TODO re-evaluate this logic. This is calling to add a vehicle positional point during a sync but it's likely not needed. 
+      // if (Manager.PiecesController.m_dockAnchor != null && Manager.VehicleParent.Manager.PiecesController.m_dockAnchor != null)
+      // {
+      //   Manager.PiecesController.m_dockAnchor.AddDockPoint(Manager.VehicleParent.Manager.PiecesController.m_dockAnchor);
+      // }
     }
 
     public static float velocityFreezeTarget = 2f;
@@ -4845,6 +4848,7 @@
       var playerOwner = targetPlayer.GetOwner();
 
       m_nview.GetZDO().SetOwner(playerOwner);
+      PiecesController.UpdateOwnerSwitchTime();
 
       if (previousUserId != targetPlayerId || previousUserId == 0L)
       {
