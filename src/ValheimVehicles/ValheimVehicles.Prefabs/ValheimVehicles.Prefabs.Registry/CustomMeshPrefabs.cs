@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Jotunn.Configs;
 using Jotunn.Entities;
 using Jotunn.Managers;
@@ -8,6 +9,7 @@ using ValheimVehicles.BepInExConfig;
 using ValheimVehicles.SharedScripts;
 using ValheimVehicles.Components;
 using ValheimVehicles.Controllers;
+using ValheimVehicles.Enums;
 using ValheimVehicles.Helpers;
 using ValheimVehicles.ValheimVehicles.Components;
 using Zolantris.Shared;
@@ -135,6 +137,15 @@ public class CustomMeshPrefabs : RegisterPrefab<CustomMeshPrefabs>
 
     prefab.AddComponent<DelayedSelfDeletingComponent>();
     prefab.AddComponent<VehicleBuildModePreview>();
+
+    List<VehicleBuildMode> buildModes = [VehicleBuildMode.Fixed, VehicleBuildMode.Disabled, VehicleBuildMode.Expandable];
+
+    // TODO experimental to see if this works.
+    // Adds the snappoints which will be listened for when placing to swap the mode immediately to that other mode.
+    foreach (var vehicleBuildMode in buildModes)
+    {
+      PrefabRegistryHelpers.AddSnapPoint(vehicleBuildMode.GetModeText(), prefab);
+    }
 
     PrefabRegistryHelpers.AddPieceForPrefab(
       PrefabNames.BuildModeToggle,

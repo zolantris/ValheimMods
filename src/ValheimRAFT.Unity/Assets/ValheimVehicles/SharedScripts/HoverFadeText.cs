@@ -93,6 +93,11 @@
         currentText = val;
       }
 
+      public string GetCurrentText()
+      {
+        return currentText;
+      }
+
       public void SetFadeTime(float val)
       {
         hideTextTimer = val;

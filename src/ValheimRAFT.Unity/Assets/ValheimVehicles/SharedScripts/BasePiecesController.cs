@@ -26,7 +26,6 @@
 
       public enum HullGenerationMode
       {
-        Basic, // for a simple bounds based mesh. This will not create any additional colliders besides a CapsuleCollider for the vehicle.
         ConvexHullForeground, // works but a bit Heavy. Very accurate collisions.
         ConvexHullBackground // not supported yet
       }
@@ -664,10 +663,8 @@
           case HullGenerationMode.ConvexHullBackground:
             GenerateConvexHullOnBackgroundThread(clusterThreshold, callback);
             break;
-          case HullGenerationMode.Basic:
           default:
-            callback?.Invoke(false);
-            break;
+            throw new ArgumentOutOfRangeException();
         }
       }
       /// <summary>

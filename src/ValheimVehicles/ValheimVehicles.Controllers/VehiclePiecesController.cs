@@ -508,10 +508,8 @@
     /// </summary>
     public void OnConvexHullColliderZdoDataChange()
     {
-      BaseControllerPieceBounds = convexHullComponent.GetConvexHullBounds(true);
-
       m_convexHullAPI.PostGenerateConvexMeshes();
-
+      BaseControllerPieceBounds = convexHullComponent.GetConvexHullBounds(true);
 
       // todo confirm if IgnoreAllVehicleColliders() does this.
       // IgnoreAllCollisionsFromConvexColliders();
@@ -522,8 +520,6 @@
 
 
       OnBoundsChangeUpdateShipColliders();
-
-
     }
 
     public void InitLandVehicleController()
@@ -3785,13 +3781,6 @@
 
       Manager.VehicleConfigSync.Request_SyncBuildMode(nextState);
 
-      var stateText = nextState.GetModeText();
-      var stateTextDescription = nextState.GetModeTextDescription();
-
-      m_hoverFadeText.currentText = $"{ModTranslations.VehicleMode_Title}:  {stateText}\n{stateTextDescription}";
-      m_hoverFadeText.transform.position = prefab.transform.position;
-      m_hoverFadeText.ResetHoverTimer();
-      m_hoverFadeText.Show();
       IgnoreAllVehicleCollidersForGameObjectChildren(prefab);
 
       // destroy the prefab. It has no use after this call.
@@ -4334,21 +4323,6 @@
     {
       if (Manager == null || MovementController == null) return;
 
-      // ✅ Clear before refilling to avoid stale data
-
-      // ✅ Fetch colliders using `List<>` (HashSet not allowed in GetComponentsInChildren)
-      // if (_shouldUpdateVehicleColliders)
-      // {
-      //   tempVehicleColliders.Clear();
-      //   BaseController.GetComponentsInChildren(true, tempVehicleColliders);
-      // }
-      //
-      // if (_shouldUpdatePieceColliders)
-      // {
-      //   tempPieceColliders.Clear();
-      //   GetComponentsInChildren(true, tempPieceColliders);
-      // }
-
       var vehicleColliders = Manager.GetComponentsInChildren<Collider>(true);
       if (vehicleColliders == null) return;
 
@@ -4518,8 +4492,8 @@
 
     public bool IsGeometryStable()
     {
-      if (m_lastOwnerSwitch + 5f > Time.fixedTime) return true;
-      return false;
+      if (m_lastOwnerSwitch + 5f > Time.time) return false;
+      return true;
     }
 
 
@@ -4649,6 +4623,10 @@
         RequestBoundsRebuild();
         return;
       }
+
+
+      m_convexHullAPI.PostGenerateConvexMeshes();
+      IgnoreAllCollisionsFromConvexColliders();
 
       if (IsPlayerOwner(m_zdo))
       {
