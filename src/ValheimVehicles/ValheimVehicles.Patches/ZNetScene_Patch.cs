@@ -16,6 +16,16 @@
   [HarmonyPatch]
   public static class ZNetScene_Patch
   {
+    [HarmonyPatch(typeof(ZNetScene), nameof(ZNetScene.Destroy))]
+    [HarmonyPrefix]
+    private static void ReleaseDestroyedAnchor(GameObject go)
+    {
+      if (!go) return;
+      var anchor = go.GetComponent<VehicleAnchorMechanismController>();
+      if (anchor && anchor.MovementController != null)
+        anchor.MovementController.PiecesController?.OnAnchorPieceDestroyed(go.GetComponent<ZNetView>());
+    }
+
     private static readonly AccessTools.FieldRef<ZNetScene, List<ZNetView>> TempRemovedRef =
       AccessTools.FieldRefAccess<ZNetScene, List<ZNetView>>("m_tempRemoved");
 
