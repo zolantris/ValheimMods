@@ -188,7 +188,7 @@ discontain other mods.
     <tr>
       <td>Vehicle Build Mode</td>
       <td><img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT.Unity/Assets/ValheimVehicles/Icons/construction.png" width="50"/></td>
-      <td>Allows toggling the current vehicle's build mode. Placing the build mode prefab will change the mode between Expandable, Fixed, and Disabled build modes. Players can repeatedly place the prefab on a vehicle, each placement will change to the next mode. <a href="https://github.com/zolantris/ValheimMods/blob/main/src/ValheimRAFT/README.md#build-mode">Build Mode</a><a href="https://github.com/zolantris/ValheimMods/blob/main/src/ValheimRAFT/README.md#video-tutorials">Tutorial</a></td>
+      <td>Allows toggling the current vehicle's build mode to the next mode. It will show preview text on current and next mode. <a href="https://github.com/zolantris/ValheimMods/blob/main/src/ValheimRAFT/README.md#vehicle-build-modes">More Info Here</a><a href="https://github.com/zolantris/ValheimMods/blob/main/src/ValheimRAFT/README.md#video-tutorials">Tutorial</a></td>
     </tr>
     <tr>
       <td>Boundary Chunk Addition (8x8) and (16x16)</td>
@@ -633,7 +633,7 @@ favorite logos or custom sail textures and see them in game.
 | Stag Logo   | <img style="object-fit: scale-down;" src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT.Unity/Assets/ValheimVehicles/Icons/stag.png" width="100"/>                      |
 | Pirate Logo | <img style="object-fit: scale-down;" src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT.Unity/Assets/ValheimVehicles/Icons/pirate_skull_uncompressed.png" width="100"/> |
 
-### Build Modes
+### Vehicle Build Modes
 
 Valheim Vehicles >= 5.1.0 introduces different build modes to allow players to construct various vehicles and structures
 within
