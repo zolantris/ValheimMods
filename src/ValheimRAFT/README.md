@@ -627,6 +627,33 @@ favorite logos or custom sail textures and see them in game.
 | Stag Logo   | <img style="object-fit: scale-down;" src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT.Unity/Assets/ValheimVehicles/Icons/stag.png" width="100"/>                      |
 | Pirate Logo | <img style="object-fit: scale-down;" src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT.Unity/Assets/ValheimVehicles/Icons/pirate_skull_uncompressed.png" width="100"/> |
 
+### Build Modes
+
+Valheim Vehicles >= 5.1.0 introduces different build modes to allow players to construct various vehicles and structures
+within
+the game. The build modes are defined in the `VehicleBuildMode` enum and include:
+
+- **Expandable**: The vehicle can be expanded by adding more pieces or modules.
+- **Fixed**: The vehicle cannot be expanded and has a fixed structure.
+- **Disabled**: The vehicle cannot be modified or expanded.
+
+### Build Mode Usage
+
+#### Expandable Mode
+
+In **Expandable** mode, players can add more pieces or modules to the vehicle to expand its functionality. For example,
+players can add more sails to a ship or additional seats to a vehicle.
+
+#### Fixed Mode
+
+In **Fixed** mode, the vehicle cannot be expanded. The structure is fixed, and players cannot add or remove any pieces
+or modules.
+
+#### Disabled Mode
+
+In **Disabled** mode, the vehicle cannot be modified or expanded. Players cannot interact with the vehicle to add or
+remove pieces or modules.
+
 ### Hull Mechanics
 
 These mechanics apply **only** to **V2 WaterVehicles**. The older V1 rafts will
