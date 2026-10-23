@@ -333,27 +333,38 @@
         return points;
       }
 
+      public static List<Vector3> tempMeshPoints = new();
+
       public static List<Vector3> GetMeshColliderVertices(
         MeshCollider meshCollider)
       {
+        tempMeshPoints.Clear();
+        if (meshCollider == null || meshCollider.sharedMesh == null) return tempMeshPoints;
         var transform = meshCollider.transform;
-        var points = new List<Vector3>();
-        var isReadable = meshCollider.sharedMesh.isReadable;
-        var mesh = isReadable
-          ? meshCollider.sharedMesh
-          : CreateReadableMesh(meshCollider.sharedMesh);
+        try
+        {
+          var isReadable = meshCollider.sharedMesh.isReadable;
+          var mesh = isReadable
+            ? meshCollider.sharedMesh
+            : CreateReadableMesh(meshCollider.sharedMesh);
 
-        if (mesh != null)
-          foreach (var vertex in mesh.vertices)
-          {
-            // Convert mesh vertex to world space
-            var worldVertex = transform.TransformPoint(vertex);
-            points.Add(worldVertex);
-          }
+          if (mesh != null)
+            foreach (var vertex in mesh.vertices)
+            {
+              // Convert mesh vertex to world space
+              var worldVertex = transform.TransformPoint(vertex);
+              tempMeshPoints.Add(worldVertex);
+            }
+        }
+        catch (Exception e)
+        {
+          LoggerProvider.LogWarning($"Object failed to create readable mesh for {meshCollider} {e}");
+          return tempMeshPoints;
+        }
 
         // immediately garbage collect the copy mesh to prevent memory problems.
         // if (!isReadable) AdaptiveDestroy(mesh);
-        return points;
+        return tempMeshPoints;
       }
 
       /// <summary>
@@ -542,6 +553,8 @@
             points.AddRange(GetMeshColliderVertices(meshCollider));
             break;
         }
+
+        tempMeshPoints.Clear();
 
         return points;
       }

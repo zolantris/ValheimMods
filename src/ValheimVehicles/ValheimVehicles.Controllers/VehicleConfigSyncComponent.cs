@@ -162,7 +162,7 @@
       pkg.SetPos(0);
 
       var hashId = pkg.ReadInt();
-      var binaryStream = pkg.GetArray();
+      var binaryStream = pkg.ReadByteArray();
 
       try
       {
