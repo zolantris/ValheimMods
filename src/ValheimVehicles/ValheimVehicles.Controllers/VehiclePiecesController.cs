@@ -736,6 +736,11 @@
       if (PrefabNames.IsVehicle(netView.name)) return;
       if (!m_pieces.Remove(netView)) return;
 
+      // Unregister streamed-out and destroyed anchors without changing saved state.
+      m_anchorPieces.Remove(netView);
+      var removedAnchor = netView.GetComponent<VehicleAnchorMechanismController>();
+      m_anchorMechanismComponents.RemoveAll(anchor => !anchor || anchor == removedAnchor);
+
       IncrementPieceRevision();
       UpdateMass(netView, true);
 
@@ -756,6 +761,31 @@
 
       var isRam = RamPrefabRegistry.IsRam(netView.name);
       if (isRam) m_ramPieces.Remove(netView);
+    }
+
+    internal void OnAnchorPieceDestroyed(ZNetView netView)
+    {
+      // ZNetScene.Destroy deletes persistent data only on the piece owner.
+      // Streaming removes local objects separately and must retain their anchor pose.
+      if (!netView || !netView.IsValid() || !netView.IsOwner() ||
+          !netView.GetComponent<VehicleAnchorMechanismController>()) return;
+      // Anchors that are still pending activation are not in m_anchorPieces yet.
+      if (HasOtherAnchor(m_anchorPieces, netView) ||
+          HasOtherAnchor(GetCurrentPendingPieces(), netView) ||
+          HasOtherAnchor(_newPendingPiecesQueue, netView)) return;
+      // Until initial activation completes, another anchor may not be loaded yet.
+      if (!IsInitialPieceActivationComplete) return;
+      MovementController?.ReleaseAnchorAfterRemoval();
+    }
+
+    private static bool HasOtherAnchor(List<ZNetView>? pieces, ZNetView removed)
+    {
+      if (pieces == null) return false;
+      foreach (var other in pieces)
+        if (other && other != removed && other.IsValid() &&
+            other.GetComponent<VehicleAnchorMechanismController>())
+          return true;
+      return false;
     }
 
     public static CannonballVariant AmmoVariantDefault = CannonballVariant.Solid;
@@ -2719,6 +2749,9 @@
              Vector3.zero;
     }
 
+    internal bool HasAnchorMechanism(VehicleAnchorMechanismController anchor) =>
+      m_anchorMechanismComponents.Contains(anchor);
+
     public void InitAnchorComponent(
       VehicleAnchorMechanismController anchorComponent)
     {
@@ -2727,6 +2760,7 @@
         anchorComponent.MovementController = MovementController;
 
       anchorComponent.TryGuardAgainstAnchorSyncIssues();
+      anchorComponent.RestoreSavedAnchorVisual();
     }
     /// <summary>
     /// Binds the Movement to the anchor components and allows for the anchor hotkeys to toggle all anchors on the ship
@@ -2748,6 +2782,7 @@
       var currentWheelStateText = VehicleAnchorMechanismController.GetCurrentStateTextStatic(anchorState, isLandVehicle);
       foreach (var anchorComponent in m_anchorMechanismComponents)
       {
+        if (!anchorComponent) continue;
         if (anchorState != anchorComponent.currentState)
           anchorComponent.UpdateAnchorState(anchorState, currentWheelStateText);
       }
