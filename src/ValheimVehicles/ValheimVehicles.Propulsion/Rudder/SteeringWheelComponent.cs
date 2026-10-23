@@ -96,23 +96,14 @@ public class SteeringWheelComponent : MonoBehaviour, IAnimatorHandler, Hoverable
   {
     shipStatsText = "";
     if (!PropulsionConfig.ShowShipStats.Value) return false;
-    if (ControllersInstance.PiecesController == null) return false;
+    if (ControllersInstance == null || ControllersInstance.PiecesController == null) return false;
 
     var piecesController = ControllersInstance.PiecesController;
     var sailArea = piecesController.cachedTotalSailArea;
-    // var totalMass = piecesController.TotalMass;
-    // var shipMass = piecesController.ShipMass;
     var shipPropulsion = piecesController.GetSailingForce();
 
-    var shipMassToPush =
-      // PropulsionConfig.SailingMassPercentageFactor.Value;
-      shipStatsText += $"\nsailArea: {sailArea}";
-    // shipStatsText += $"\ntotalMass: {totalMass}";
-    // shipStatsText +=
-    //   $"\nshipMass(no-containers): {shipMass}";
+    shipStatsText += $"\nsailArea: {sailArea}";
 
-    // shipStatsText +=
-    //   $"\ntotalMassToPush: {shipMassToPush}% * {totalMass} = {totalMass * shipMassToPush / 100f}";
     shipStatsText +=
       $"\nshipPropulsion: {shipPropulsion}";
 
