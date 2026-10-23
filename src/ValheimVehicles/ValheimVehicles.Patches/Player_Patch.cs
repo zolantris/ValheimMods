@@ -81,41 +81,6 @@
       return codes;
     }
 
-    // [HarmonyPatch(typeof(Player), nameof(Player.PlacePiece))]
-    // [HarmonyPrefix]
-    // [HarmonyPriority(Priority.High)]
-    // // Use a Prefix to intercept the placement before it happens
-    // public static bool PreventPlacementPatchIfDisabledPatch(Player __instance, Piece piece)
-    // {
-    //   // 1. Check if the player is currently hovering over or targeting a vehicle placement ghost
-    //   if (__instance.m_placementGhost != null)
-    //   {
-    //     // ValheimRAFT structures are parented under a vehicle root object
-    //     // Look for ValheimRAFT's vehicle component in the parent hierarchy
-    //     var waterVehicle = __instance.m_placementGhost.GetComponentInParent<VehiclePiecesController>(); // Or MoveableBaseRoot depending on the targeted ValheimRAFT version
-    //
-    //     if (waterVehicle != null)
-    //     {
-    //       // 2. Fetch your custom logic or check ValheimRAFT's build mode state 
-    //       // Replace 'YourCustomBuildModeCheck' with the exact boolean or property you are using to track the vehicle's state
-    //       var container = piece.GetComponentInChildren<Container>();
-    //       var isBuildModeDisabled = waterVehicle.Manager.BuildMode.CanPlacePiece(container != null);
-    //
-    //       if (isBuildModeDisabled)
-    //       {
-    //         // 3. Display an in-game error message to the player
-    //         __instance.Message(MessageHud.MessageType.Center, "$msg_placement_disabled_vehicle");
-    //
-    //         // 4. Return false to skip Valheim's original PlacePiece execution
-    //         return false;
-    //       }
-    //     }
-    //   }
-    //
-    //   // Return true to allow normal piece placement if conditions aren't met
-    //   return true;
-    // }
-
     public static GameObject WrapInstantiateWithPlacedPiece(Object original, Vector3 pos, Quaternion rot)
     {
       if (ZNet.instance && ZNet.instance.IsDedicated())
