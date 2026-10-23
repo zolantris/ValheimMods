@@ -9,7 +9,7 @@ should include anything related to open source content attribution.
 | Zolantris   | For supporting and expanding the Raft Mod since v1.5.0.                                                                   |
 | RacerX      | For contributing a stag icon for sails - Looks awesome! And the nautilus assets, (experimental)                           |
 | Cl0udstr1fe | For adding the new hull meshes for Rib Side, Prow, and Corners both V3 and V4. Completes the ship look with these meshes! |
-| L4zerShark  | For coding and support for Valheim 1.0.0+. Thanks for keeping the mod stable and contributing                             |
+| L4zerShark  | For Valheim 1.0.0+ compatibility, the fix for anchored ships drifting after reload, and configurable anchor axis locks.    |
 | EggyPresh   | For fixing a few bugs and making Sails logic a bit more realistic. Thanks for keeping the mod stable and contributing     |
 | JNDEV0      | For boat portal persistence, sector sync, ZDO save-cleanup shielding. Thanks for keeping the mod stable and contributing  |
 
