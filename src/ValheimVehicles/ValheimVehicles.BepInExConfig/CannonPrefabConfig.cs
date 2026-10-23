@@ -4,7 +4,7 @@ using UnityEngine;
 using ValheimVehicles.Helpers;
 using ValheimVehicles.Prefabs.Registry;
 using ValheimVehicles.SharedScripts;
-using ValheimVehicles.Storage.Serialization;
+using ValheimVehicles.Serialization;
 using Zolantris.Shared;
 namespace ValheimVehicles.BepInExConfig;
 

@@ -41,9 +41,17 @@ public static class ValheimExtensions
     {
       SetDeltaFloat(zdo, key, (float)(object)currentValue);
     }
+    if (type == typeof(bool))
+    {
+      SetDeltaBool(zdo, key, (bool)(object)currentValue);
+    }
+    else if (type == typeof(ZDOID))
+    {
+      SetDeltaZdoId(zdo, key, (ZDOID)(object)currentValue);
+    }
     else
     {
-      LoggerProvider.LogError($"TrySetZDOOnChange generic only supports float for now. Got: {type}");
+      LoggerProvider.LogError($"TrySetZDOOnChange generic only supports float/zdoid for now. Got: {type}");
     }
   }
 
@@ -62,6 +70,11 @@ public static class ValheimExtensions
     SetDeltaInt(zdo, key, currentValue);
   }
 
+  public static void SetDelta(this ZDO zdo, string key, ZDOID currentValue)
+  {
+    SetDeltaZdoId(zdo, key, currentValue);
+  }
+
   public static void SetDelta(this ZDO zdo, string key, bool currentValue)
   {
     SetDeltaBool(zdo, key, currentValue);
@@ -71,6 +84,15 @@ public static class ValheimExtensions
   public static void SetDeltaBool(this ZDO zdo, string key, bool currentValue)
   {
     var storedValue = zdo.GetBool(key);
+    if (currentValue != storedValue)
+    {
+      zdo.Set(key, currentValue);
+    }
+  }
+
+  public static void SetDeltaZdoId(this ZDO zdo, string key, ZDOID currentValue)
+  {
+    var storedValue = zdo.GetZDOID(key);
     if (currentValue != storedValue)
     {
       zdo.Set(key, currentValue);

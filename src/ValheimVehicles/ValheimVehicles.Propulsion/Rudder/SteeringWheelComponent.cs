@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using HarmonyLib;
 using UnityEngine;
 using ValheimVehicles.Compat;
 using ValheimVehicles.BepInExConfig;
@@ -71,15 +72,12 @@ public class SteeringWheelComponent : MonoBehaviour, IAnimatorHandler, Hoverable
 
   public string _cachedLocalizedWheelHoverText = "";
 
-  /// <summary>
-  /// Todo might be worth caching this.
-  /// </summary>
   public static string GetAnchorHotkeyString()
   {
     return ZInput.instance.GetBoundKeyString("Run");
   }
 
-  public static string GetAnchorMessage(bool isAnchored, string anchorKeyString)
+  public static string GetAnchorActionMessage(bool isAnchored, string anchorKeyString)
   {
     var anchoredStatus =
       isAnchored
@@ -98,23 +96,14 @@ public class SteeringWheelComponent : MonoBehaviour, IAnimatorHandler, Hoverable
   {
     shipStatsText = "";
     if (!PropulsionConfig.ShowShipStats.Value) return false;
-    if (ControllersInstance.PiecesController == null) return false;
+    if (ControllersInstance == null || ControllersInstance.PiecesController == null) return false;
 
     var piecesController = ControllersInstance.PiecesController;
     var sailArea = piecesController.cachedTotalSailArea;
-    var totalMass = piecesController.TotalMass;
-    var shipMass = piecesController.ShipMass;
     var shipPropulsion = piecesController.GetSailingForce();
 
-    var shipMassToPush =
-      PropulsionConfig.SailingMassPercentageFactor.Value;
     shipStatsText += $"\nsailArea: {sailArea}";
-    shipStatsText += $"\ntotalMass: {totalMass}";
-    shipStatsText +=
-      $"\nshipMass(no-containers): {shipMass}";
 
-    shipStatsText +=
-      $"\ntotalMassToPush: {shipMassToPush}% * {totalMass} = {totalMass * shipMassToPush / 100f}";
     shipStatsText +=
       $"\nshipPropulsion: {shipPropulsion}";
 
@@ -130,7 +119,7 @@ public class SteeringWheelComponent : MonoBehaviour, IAnimatorHandler, Hoverable
   public string GetHoverTextFromShip(bool isAnchored,
     string anchorKeyString)
   {
-    var anchorMessage = GetAnchorMessage(isAnchored, anchorKeyString);
+    var anchorActionMessage = GetAnchorActionMessage(isAnchored, anchorKeyString);
 
     var interactMessage = $"{ModTranslations.SharedKeys_InteractPrimary} {ModTranslations.WithBoldText(ModTranslations.Anchor_WheelUse_UseText, "white")}";
 
@@ -139,7 +128,40 @@ public class SteeringWheelComponent : MonoBehaviour, IAnimatorHandler, Hoverable
     var isFlightCapable = VehicleManager.IsFlightCapable(variant);
     var isBallastCapable = VehicleManager.IsBallastCapable(variant);
 
-    interactMessage += $"\n{anchorMessage}";
+    interactMessage += $"\n{anchorActionMessage}";
+
+    // TODO determine if we want to show dock status for landvehicle.
+    if (Controls)
+    {
+      if (!Controls.Manager.IsLandVehicle)
+      {
+        var dockStatusStateMessage = Localization.instance.Localize(_controls.Manager.IsDocked() ? "$valheim_vehicles_status_dock_connected" : "$valheim_vehicles_status_dock_disconnected");
+
+        var dockStatusVal = ModTranslations.WithBoldText(dockStatusStateMessage, "yellow");
+        var dockStatusTitle = Localization.instance.Localize("$valheim_vehicles_dock_status");
+        var vehicleDockName = Localization.instance.Localize("$valheim_vehicles_dock");
+
+        interactMessage += $"\n{dockStatusTitle}: [{dockStatusVal}]";
+      }
+      else
+      {
+        var dockStatusStateMessage = Localization.instance.Localize(_controls.Manager.IsDocked() ? "$valheim_vehicles_status_dock_connected" : "$valheim_vehicles_status_dock_disconnected");
+
+        var dockStatusVal = ModTranslations.WithBoldText(dockStatusStateMessage, "yellow");
+        var dockStatusTitle = Localization.instance.Localize("$valheim_vehicles_dock_status");
+        var vehicleDockName = Localization.instance.Localize("$valheim_vehicles_dock");
+
+        interactMessage += $"\n{dockStatusTitle}: [{dockStatusVal}] {vehicleDockName}";
+      }
+    }
+
+    if (Controls != null && Controls.MovementController && Controls.PiecesController && Controls.PiecesController.m_anchorPieces.Count > 0)
+    {
+      var anchorStatusTitle = Localization.instance.Localize("$valheim_vehicles_anchor_status");
+
+      var anchoredStateTranslation = Localization.instance.Localize(Controls.MovementController.isAnchored ? "$valheim_vehicles_anchor_state_anchored" : "$valheim_vehicles_anchor_state_not_anchored");
+      interactMessage += $"\n{anchorStatusTitle}: [{ModTranslations.WithBoldText(anchoredStateTranslation, "yellow")}]";
+    }
 
     if (isFlightCapable || isBallastCapable)
     {
@@ -290,7 +312,7 @@ public class SteeringWheelComponent : MonoBehaviour, IAnimatorHandler, Hoverable
 
   public void SetLastUsedWheel()
   {
-    if (ControllersInstance.MovementController != null)
+    if (ControllersInstance != null && ControllersInstance.MovementController != null)
       ControllersInstance.MovementController.lastUsedWheelComponent = this;
   }
 

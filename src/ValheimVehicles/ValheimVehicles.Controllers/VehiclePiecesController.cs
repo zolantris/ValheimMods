@@ -13,6 +13,7 @@
   using UnityEngine.Serialization;
   using ValheimVehicles.Components;
   using ValheimVehicles.BepInExConfig;
+  using ValheimVehicles.Compat;
   using ValheimVehicles.Constants;
   using ValheimVehicles.Enums;
   using ValheimVehicles.Helpers;
@@ -27,9 +28,10 @@
   using ValheimVehicles.SharedScripts;
   using ValheimVehicles.SharedScripts.Enums;
   using ValheimVehicles.SharedScripts.Helpers;
-  using ValheimVehicles.Storage.Serialization;
+  using ValheimVehicles.Serialization;
   using ValheimVehicles.Structs;
   using ValheimVehicles.ValheimVehicles.Components;
+  using ValheimVehicles.Controllers;
   using ValheimVehicles.ValheimVehicles.Patches;
   using ValheimVehicles.ValheimVehicles.Structs;
   using ZdoWatcher;
@@ -274,6 +276,8 @@
 
     private Transform piecesCollidersTransform;
 
+    public int m_lastConvexHullDataVersionHash = 0;
+
     public InitializationState BaseVehicleInitState
     {
       get;
@@ -409,6 +413,129 @@
     }
 
     public static float VehicleActiveAreaSyncRadius = 250f;
+
+    /// <summary>
+    /// Saves a single convex hull collider ZDO data.
+    ///
+    /// This does not handle changing modes from build to moving
+    /// 
+    /// </summary>
+    /// 
+    public void SaveConvexHullColliderZdoData()
+    {
+      if (m_zdo == null || !m_zdo.IsValid())
+        return;
+
+      if (!m_zdo.IsOwner())
+        m_zdo.TryClaimOwnership();
+
+      if (!m_zdo.IsOwner())
+      {
+        LoggerProvider.LogDebug(
+          "Unable to claim ZDO ownership while saving convex hull data.");
+        return;
+      }
+
+      try
+      {
+        var payload = ConvexHullDataSerializer.Serialize(
+          transform, // use pieces transform not movementcontroller transform
+          convexHullComponent.convexHullMeshColliders);
+
+        var revision = m_zdo.GetInt(VehicleZdoVars.VehicleConvexHullDataVersionHash, 0);
+        revision = revision == int.MaxValue ? 1 : revision + 1;
+
+        m_zdo.Set(VehicleZdoVars.VehicleConvexHullData, payload);
+        m_zdo.Set(VehicleZdoVars.VehicleConvexHullDataVersionHash, revision);
+
+        m_lastConvexHullDataVersionHash = revision;
+        Manager.vehicleConvexHullDataVersionHash = revision;
+
+        LoggerProvider.LogDebug(
+          $"Saved convex hull geometry: {payload.Length} bytes.");
+
+        VehicleConfigSync.SendSyncBounds();
+      }
+      catch (InvalidDataException ex)
+      {
+        LoggerProvider.LogError(
+          $"Failed to serialize vehicle convex hull geometry: {ex.Message}");
+      }
+    }
+
+    /// <summary>
+    /// Reads the vehicle zdo convexhull data. Updates the hash if it succeeds otherwise does nothing.
+    /// </summary>
+    ///
+    /// This intentionally does not handle post convexhull generation. Methods must still call OnConvexHullGenerated to update other critical colliders and transforms.
+    /// 
+    public void TryRebuildHullFromZdoData()
+    {
+      if (m_zdo == null || !m_zdo.IsValid())
+        return;
+
+      var vehicleConvexHashId = m_zdo.GetInt(
+        VehicleZdoVars.VehicleConvexHullDataVersionHash);
+
+      // same hash bail
+      if (m_lastConvexHullDataVersionHash == vehicleConvexHashId) return;
+
+
+      var payload = m_zdo.GetByteArray(
+        VehicleZdoVars.VehicleConvexHullData);
+
+      if (payload == null || payload.Length == 0)
+        return;
+
+      try
+      {
+        var hulls = ConvexHullDataSerializer.Deserialize(payload);
+
+        RebuildBoundsFromData(hulls, true);
+
+        Manager.vehicleConvexHullDataVersionHash = vehicleConvexHashId;
+        m_lastConvexHullDataVersionHash = vehicleConvexHashId;
+      }
+      catch (InvalidDataException ex)
+      {
+        LoggerProvider.LogError(
+          $"Failed to restore convex hull geometry: {ex.Message}");
+      }
+    }
+
+    /// <summary>
+    /// To be run when TryRebuildHullFromZdoData() completes
+    /// </summary>
+    public void OnConvexHullColliderZdoDataChange()
+    {
+      m_convexHullAPI.PostGenerateConvexMeshes();
+      BaseControllerPieceBounds = convexHullComponent.GetConvexHullBounds(true);
+
+      // todo confirm if IgnoreAllVehicleColliders() does this.
+      // IgnoreAllCollisionsFromConvexColliders();
+
+      // this might still be required
+      // todo confirm if IgnoreAllCollisionsFromConvexColliders handles this.
+      IgnoreAllVehicleColliders();
+
+
+      OnBoundsChangeUpdateShipColliders();
+    }
+
+    public void InitLandVehicleController()
+    {
+      try
+      {
+        if (LandMovementController != null)
+        {
+          LandMovementController.Initialize(BaseControllerPieceBounds);
+        }
+      }
+      catch (Exception e)
+      {
+        LoggerProvider.LogError($"{e}");
+      }
+    }
 
     /// <summary>
     /// This is a full sync of all vehicles on a map. It is used for both servers and client commands to ensure vehicles sync across all peers.
@@ -677,9 +804,38 @@
       }
     }
 
+    public void ClaimOwnershipAllPieces(long playerOwnerId)
+    {
+      if (m_nview == null) return;
+      m_nview.GetZDO().SetOwner(playerOwnerId);
+
+      foreach (var zNetView in m_pieces)
+      {
+        if (zNetView == null) continue;
+        if (!zNetView.IsValid()) continue;
+        if (zNetView.m_zdo == null || !zNetView.m_zdo.IsValid()) continue;
+        zNetView.m_zdo.SetOwner(playerOwnerId);
+      }
+    }
+
+    /// <summary>
+    /// Critical for ensuring that a owner switch does not cause a massive physics issue when boundaries can be expanded.
+    /// </summary>
+    public void UpdateOwnerSwitchTime()
+    {
+      m_lastOwnerSwitch = Time.fixedTime;
+    }
+
     public override void CustomFixedUpdate(float deltaTime)
     {
       if (!CanSync()) return;
+
+      // ensures that the last owner time is matching fixed time.
+      if (m_lastOwnerSwitch == 0f)
+      {
+        m_lastOwnerSwitch = Time.fixedTime;
+      }
+
       try
       {
         Sync();
@@ -3528,6 +3684,19 @@
       }
       prefab.transform.SetParent(_piecesContainerTransform);
     }
+    public bool CanPlacePiece(ZNetView? nv)
+    {
+      var isContainer = false;
+
+      if (nv != null)
+      {
+        isContainer = nv.GetComponentInChildren<Container>() != null;
+      }
+
+      if (Manager && Manager.BuildMode.CanPlacePiece(isContainer)) return true;
+
+      return false;
+    }
 
     /**
      * True let's WearNTear destroy this vehicle
@@ -3564,29 +3733,31 @@
       }
     }
 
-    public void AddCustomPiece(GameObject prefab, bool isNew = false)
+    public void AddTempUtilityPiece(GameObject prefab, bool isNew = false)
     {
       if (prefab.name.StartsWith(PrefabNames.CustomWaterFloatation))
       {
-        AddCustomFloatationPrefab(prefab);
+        AddFloatationPrefab(prefab);
+        return;
+      }
+
+      if (prefab.name.StartsWith(PrefabNames.BuildModeToggle))
+      {
+        AddBuildModeTogglePrefab(prefab);
         return;
       }
     }
 
-    public void AddCustomPiece(ZNetView prefab, bool isNew = false)
+    public void AddTempUtilityPiece(ZNetView prefab, bool isNew = false)
     {
-      if (prefab.name.StartsWith(PrefabNames.CustomWaterFloatation))
-      {
-        AddCustomFloatationPrefab(prefab.gameObject);
-        return;
-      }
+      AddTempUtilityPiece(prefab.gameObject, isNew);
     }
 
     /// <summary>
     /// For custom config cubes that are deleted near instantly.
     /// </summary>
     /// <param name="prefab"></param>
-    private void AddCustomFloatationPrefab(GameObject prefab)
+    private void AddFloatationPrefab(GameObject prefab)
     {
       if (IsInvalid()) return;
       if (!prefab.name.StartsWith(PrefabNames.CustomWaterFloatation)) return;
@@ -3603,6 +3774,27 @@
       m_hoverFadeText.transform.position = prefab.transform.position;
       m_hoverFadeText.ResetHoverTimer();
       m_hoverFadeText.Show();
+      IgnoreAllVehicleCollidersForGameObjectChildren(prefab);
+
+      // destroy the prefab. It has no use after this call.
+      Destroy(prefab);
+    }
+
+    /// <summary>
+    /// For custom config cubes that are deleted near instantly.
+    /// </summary>
+    /// <param name="prefab"></param>
+    private void AddBuildModeTogglePrefab(GameObject prefab)
+    {
+      if (IsInvalid()) return;
+      if (!prefab.name.StartsWith(PrefabNames.BuildModeToggle)) return;
+      prefab.transform.SetParent(_piecesContainerTransform);
+
+      var buildMode = Manager.BuildMode;
+      var nextState = buildMode.GetNextMode();
+
+      Manager.VehicleConfigSync.Request_SyncBuildMode(nextState);
+
       IgnoreAllVehicleCollidersForGameObjectChildren(prefab);
 
       // destroy the prefab. It has no use after this call.
@@ -4145,21 +4337,6 @@
     {
       if (Manager == null || MovementController == null) return;
 
-      // ✅ Clear before refilling to avoid stale data
-
-      // ✅ Fetch colliders using `List<>` (HashSet not allowed in GetComponentsInChildren)
-      // if (_shouldUpdateVehicleColliders)
-      // {
-      //   tempVehicleColliders.Clear();
-      //   BaseController.GetComponentsInChildren(true, tempVehicleColliders);
-      // }
-      //
-      // if (_shouldUpdatePieceColliders)
-      // {
-      //   tempPieceColliders.Clear();
-      //   GetComponentsInChildren(true, tempPieceColliders);
-      // }
-
       var vehicleColliders = Manager.GetComponentsInChildren<Collider>(true);
       if (vehicleColliders == null) return;
 
@@ -4270,6 +4447,7 @@
       // This is a safety check to ensure we do not have stale prefab entries. This may need to be run on generation of convex hull as well.
       m_prefabPieceDataItems.RemoveNullKeys();
     }
+
     /// <summary>
     /// An override of RebuildBounds scoped towards valheim integration instead of unity-only.
     /// - Must be wrapped in a delay/coroutine to prevent spamming on unmounting bounds
@@ -4303,13 +4481,33 @@
 
       try
       {
-        // internal parent class must still be called.
-        base.RebuildBounds(isForced);
+        // ensures that if this is already generated it runs immediately. Otherwise, it will not run immediately and just request.
+        var isOwner = IsPlayerOwner(m_zdo);
+
+        var shouldReadStoredZdoConvexHullData = !IsGeometryStable() || !isOwner || !Manager.BuildMode.CanExpandBounds();
+
+        // convex hull must be available to safely do a read-only.
+        if (Manager.IsConvexHullInitialized() && shouldReadStoredZdoConvexHullData)
+        {
+          TryRebuildHullFromZdoData();
+        }
+        else
+        {
+          base.RebuildBounds(true);
+        }
       }
       catch (Exception e)
       {
         LoggerProvider.LogError($"{e}");
       }
+    }
+
+    public float m_lastOwnerSwitch = 0f;
+
+    public bool IsGeometryStable()
+    {
+      if (m_lastOwnerSwitch + 5f > Time.time) return false;
+      return true;
     }
 
 
@@ -4440,12 +4638,23 @@
         return;
       }
 
+
+      m_convexHullAPI.PostGenerateConvexMeshes();
+      IgnoreAllCollisionsFromConvexColliders();
+
+      if (IsPlayerOwner(m_zdo))
+      {
+        SaveConvexHullColliderZdoData();
+      }
+
       HasClusterMeshesEnabled = RenderingConfig.EnableVehicleClusterMeshRendering.Value;
       MinClusterThreshold = RenderingConfig.ClusterRenderingPieceThreshold.Value;
 
       UpdateTrackedColliders();
 
       FinalizeBoundsGenerationAfterShift();
+
+      InitLandVehicleController();
 
       // Critical for vehicle stability otherwise it will blast off in a random direction to due colliders internally colliding.
       IgnoreAllVehicleColliders();
@@ -4472,18 +4681,6 @@
     protected override void FinalizeBoundsGenerationAfterShift()
     {
       BaseControllerPieceBounds = convexHullComponent.GetConvexHullBounds(true);
-
-      try
-      {
-        if (LandMovementController != null)
-        {
-          LandMovementController.Initialize(BaseControllerPieceBounds);
-        }
-      }
-      catch (Exception e)
-      {
-        LoggerProvider.LogError($"{e}");
-      }
 
       if (HasClusterMeshesEnabled && m_pieces.Count >= MinClusterThreshold)
       {

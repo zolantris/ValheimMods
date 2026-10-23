@@ -1,3 +1,4 @@
+using ValheimVehicles.Enums;
 namespace ValheimVehicles.Interfaces;
 
 public interface IVehicleConfig
@@ -56,7 +57,19 @@ public interface IVehicleConfig
     set;
   }
 
+  public ZDOID DockZdoId
+  {
+    get;
+    set;
+  }
+
   public string VehicleName
+  {
+    get;
+    set;
+  }
+
+  public VehicleBuildMode BuildMode
   {
     get;
     set;

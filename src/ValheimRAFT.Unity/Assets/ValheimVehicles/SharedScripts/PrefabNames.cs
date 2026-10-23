@@ -98,6 +98,9 @@
       public static readonly string CustomWaterFloatation =
         $"{ValheimVehiclesPrefix}_CustomWaterFloatation";
 
+      public static readonly string BuildModeToggle =
+        $"{ValheimVehiclesPrefix}_BuildModeToggle";
+
       public static readonly string ShipChunkBoundary1x1x1 =
         $"{ValheimVehiclesPrefix}_ShipChunkBoundary1x1x1";
 

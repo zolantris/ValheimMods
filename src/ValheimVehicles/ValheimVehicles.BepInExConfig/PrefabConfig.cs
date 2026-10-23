@@ -13,7 +13,7 @@ using ValheimVehicles.Prefabs.Registry;
 using ValheimVehicles.Prefabs.ValheimVehicles.Prefabs.Registry;
 using ValheimVehicles.SharedScripts;
 using ValheimVehicles.SharedScripts.PowerSystem;
-using ValheimVehicles.Storage.Serialization;
+using ValheimVehicles.Serialization;
 using ValheimVehicles.ValheimVehicles.Components;
 using Zolantris.Shared;
 

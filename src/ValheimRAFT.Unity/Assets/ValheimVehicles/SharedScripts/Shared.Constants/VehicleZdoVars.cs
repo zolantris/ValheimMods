@@ -91,11 +91,19 @@ namespace ValheimVehicles.Shared.Constants
 
     public const string VehicleChunkBounds = "VehicleChunkBounds";
 
+    // The hull data points in binary array format
+    public static readonly int VehicleConvexHullData = "VehicleConvexHullData".GetStableHashCode();
+    public static readonly int VehicleConvexHullDataVersionHash = "VehicleConvexHullDataVersionHash".GetStableHashCode();
+
+    // The mode of the vehicle
+    public static readonly int VehicleBuildMode = "VehicleBuildMode".GetStableHashCode();
+
     public static readonly int VehicleTargetHeight =
       "VehicleTargetHeight".GetStableHashCode();
 
     public static readonly int VehicleOceanSway =
       "VehicleOceanSway".GetStableHashCode();
+
 
     public static readonly int MBParentId = "MBParentId".GetStableHashCode();
 
@@ -114,7 +122,6 @@ namespace ValheimVehicles.Shared.Constants
       "MBRotationVec".GetStableHashCode();
 
     public static readonly int MBPieceCount = "MBPieceCount".GetStableHashCode();
-
 
 #if !TEST && VALHEIM
     // todo ZDO.GetHashZDOID is likely deprecated.

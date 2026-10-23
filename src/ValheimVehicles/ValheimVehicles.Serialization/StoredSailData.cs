@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace ValheimVehicles.Storage.Serialization;
+namespace ValheimVehicles.Serialization;
 
 /// <summary>
 /// Must be serializable data only. No helpers no Game references or Unity APIS

@@ -56,6 +56,7 @@
 
       rpcHandler?.Register(nameof(RPC_SyncBounds), RPC_SyncBounds);
       rpcHandler?.Register<ZPackage>(nameof(RPC_SyncFloatationMode), RPC_SyncFloatationMode);
+      rpcHandler?.Register<ZPackage>(nameof(RPC_SyncBuildMode), RPC_SyncBuildMode);
 
       hasRegisteredRPCListeners = true;
     }
@@ -89,6 +90,28 @@
 
       updated.HasCustomFloatationHeight = isCustom;
       updated.CustomFloatationHeight = relativeHeight;
+
+      CommitConfigChange(updated); // saves + broadcasts
+    }
+
+    public void Request_SyncBuildMode(VehicleBuildMode mode)
+    {
+      if (!this.IsNetViewValid(out var netView)) return;
+      var pkg = new ZPackage();
+      pkg.Write((int)mode);
+      netView.InvokeRPC(netView.GetZDO().GetOwner(), nameof(RPC_SyncBuildMode), pkg);
+    }
+
+    private void RPC_SyncBuildMode(long sender, ZPackage pkg)
+    {
+      if (!this.IsNetViewValid(out var netView) || !netView.IsOwner()) return;
+
+      var buildMode = (VehicleBuildMode)pkg.ReadInt();
+
+      var updated = new VehicleCustomConfig();
+      updated.ApplyFrom(Config);
+
+      updated.BuildMode = buildMode;
 
       CommitConfigChange(updated); // saves + broadcasts
     }
@@ -132,11 +155,30 @@
     /// </summary>
     public void SendSyncBounds()
     {
-      if (!this.IsNetViewValid(out var netView)) return;
+      if (!this.IsNetViewValid(out _)) return;
       if (!this || OnboardController == null) return;
 
-      var playerIds = OnboardController.m_localPlayers.Where(x => x != null).Select(x => x.GetPlayerID()).ToList();
-      SendRPCToAllClients(playerIds, nameof(RPC_SyncBounds), false);
+      var localPlayer = Player.m_localPlayer;
+      if (localPlayer == null) return;
+
+      var currentPlayerId = localPlayer.GetPlayerID();
+
+      var playerIds = OnboardController.m_localPlayers
+        .Where(player => player != null)
+        .Select(player => player.GetPlayerID())
+        .Distinct()
+        .ToList();
+
+      // Recalculate once on this machine.
+      SyncVehicleBounds();
+
+      // Ask every other onboard peer to recalculate locally.
+      foreach (var playerId in playerIds)
+      {
+        if (playerId == currentPlayerId) continue;
+
+        rpcHandler?.InvokeRPC(playerId, nameof(RPC_SyncBounds));
+      }
     }
 
     /// <summary>

@@ -22,7 +22,7 @@
     public class HoverFadeText : MonoBehaviour
     {
       public static bool hasHudEnabled = true;
-      public static float hideTextTimer = 3f;
+      public float hideTextTimer = 3f;
       private static readonly Color messageColor = new(249f, 224f, 0f, 255f);
       public float timePassedSinceStateUpdate;
       public string currentText = "";
@@ -88,6 +88,21 @@
         return hoverFadeText;
       }
 
+      public void SetText(string val)
+      {
+        currentText = val;
+      }
+
+      public string GetCurrentText()
+      {
+        return currentText;
+      }
+
+      public void SetFadeTime(float val)
+      {
+        hideTextTimer = val;
+      }
+
       private static void EnsureDefaultTmpFont(TextMeshPro label)
       {
         if (!label) return;
@@ -151,6 +166,11 @@
         ResetHoverTimer();
         gameObject.SetActive(true);
         UpdateTextCoroutine.Start(UpdateText());
+      }
+
+      public bool IsVisible()
+      {
+        return UpdateTextCoroutine.IsRunning;
       }
 
       public void ResetHoverTimer()

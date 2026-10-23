@@ -5,6 +5,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using ValheimVehicles.BepInExConfig;
 using ValheimVehicles.Controllers;
+using ValheimVehicles.Enums;
 using ValheimVehicles.Shared.Constants;
 using ValheimVehicles.SharedScripts;
 using ValheimVehicles.Structs;
@@ -91,12 +92,13 @@ public class RopeAnchorComponent : MonoBehaviour, Interactable, Hoverable
 
   private float m_lastRopeCheckTime;
 
-  public static GameObject m_draggingRopeTo;
+  public static GameObject? m_draggingRopeTo;
 
   public bool isHauling = false;
   private static string AttachToText = "";
   private static string StartAttachText = "";
   private static string HaulingStartText = "";
+  private static string UseKeyText = "";
   private static string HaulingStopText = "";
 
   public Transform m_attachpoint;
@@ -146,6 +148,11 @@ public class RopeAnchorComponent : MonoBehaviour, Interactable, Hoverable
   {
     if (Localization.instance == null) return;
 
+    if (UseKeyText == string.Empty)
+    {
+      UseKeyText = Localization.instance.Localize("[<color=yellow><b>$KEY_Use</b></color>]");
+    }
+
     // alt key for hauling vehicles
     if (HaulingStartText == string.Empty)
     {
@@ -157,20 +164,20 @@ public class RopeAnchorComponent : MonoBehaviour, Interactable, Hoverable
     if (HaulingStopText == string.Empty)
     {
       HaulingStopText = Localization.instance.Localize(
-        "[<color=yellow><b>$KEY_Use</b></color>] $valheim_vehicles_haul_vehicle_stop");
+        $"{UseKeyText} $valheim_vehicles_haul_vehicle_stop");
     }
 
     if (AttachToText == string.Empty)
     {
       AttachToText = Localization.instance.Localize(
-        "[<color=yellow><b>$KEY_Use</b></color>] $mb_rope_anchor_attach_to");
+        $"{UseKeyText} $mb_rope_anchor_attach_to");
     }
 
 
     if (StartAttachText == string.Empty)
     {
       StartAttachText = Localization.instance.Localize(
-        "[<color=yellow><b>$KEY_Use</b></color>] $mb_rope_anchor_attach");
+        $"{UseKeyText} $mb_rope_anchor_attach");
     }
   }
 
@@ -189,12 +196,118 @@ public class RopeAnchorComponent : MonoBehaviour, Interactable, Hoverable
     return 0f;
   }
 
+  public string WithYellowBoldStatusText(string val)
+  {
+    return $"[{ModTranslations.WithBoldText(val, "yellow")}]";
+  }
 
+  public string GetDockActionText()
+  {
+    var disconnectAction = Localization.instance.Localize("$valheim_vehicles_action_disconnect");
+    var cancelAction = Localization.instance.Localize("$valheim_vehicles_action_cancel");
+    var vehicleDockName = Localization.instance.Localize("$valheim_vehicles_dock");
+    var connectAction = Localization.instance.Localize("$valheim_vehicles_action_connect");
+
+
+    // todo make this more performant. EG don't do this query per frame.
+    var vehicleParent = GetComponentInParent<VehiclePiecesController>();
+
+
+    // no action text for a vehicle dock on a vehicle. Action text should only be shown on land dock not attached to vehicle.
+    // early bails on other logic as this should be handled by the rope from the land dock.
+    if (vehicleParent && !vehicleParent.Manager.IsDocked()) return "";
+
+
+    // if on a vehicle or currently with more than 1 rope EG it's attached to a vehicle. This should show a disconnect action.
+    if (m_ropes.Count > 0 || vehicleParent && vehicleParent.Manager.IsDocked())
+    {
+      return $"{WithYellowBoldStatusText(disconnectAction)} {vehicleDockName}";
+    }
+
+    if (m_rope && m_rope.enabled)
+    {
+      // updates status on the fly
+      var dragToStatus = "";
+      if (m_draggingRopeTo && m_draggingRopeTo.GetComponentInParent<VehiclePiecesController>())
+      {
+        dragToStatus = WithYellowBoldStatusText(connectAction);
+      }
+      else if (m_draggingRopeFrom && m_draggingRopeFrom.gameObject == gameObject)
+      {
+        dragToStatus = WithYellowBoldStatusText(Localization.instance.Localize(cancelAction));
+      }
+
+      var parentController = GetComponentInParent<VehiclePiecesController>();
+
+      // do not show an actual while not docked. Only show a description.
+      if (parentController && !parentController.Manager.IsDocked())
+      {
+        return "";
+      }
+
+      return $"{dragToStatus} $valheim_vehicles_action_dock_attach_to";
+    }
+
+    if (m_draggingRopeTo && m_draggingRopeTo.GetComponentInParent<VehiclePiecesController>())
+    {
+      return $"{WithYellowBoldStatusText(connectAction)} {vehicleDockName}";
+    }
+
+    return $"{WithYellowBoldStatusText(cancelAction)} {vehicleDockName}";
+  }
+
+  public string GetCurrentStatusDescriptionText()
+  {
+    // todo make this more performant. EG don't do this query per frame.
+    var dockParent = GetComponentInParent<VehiclePiecesController>();
+
+    if (dockParent && dockParent.Manager.IsDocked())
+    {
+      return Localization.instance.Localize("$valheim_vehicles_status_dock_connected_desc");
+    }
+    if (dockParent)
+    {
+      return Localization.instance.Localize("$valheim_vehicles_status_dock_disconnected_desc");
+    }
+
+    return Localization.instance.Localize("$valheim_vehicles_status_dock_use_desc");
+  }
+
+  private static List<string> dockHoverItems = new();
+
+  public string GetDockHoverText()
+  {
+    var actionText = GetDockActionText();
+    var statusDescription = GetCurrentStatusDescriptionText();
+
+    var nextAction = Localization.instance.Localize("$valheim_vehicles_action_next_action");
+
+    var actionString = actionText != string.Empty ? $"{UseKeyText} {nextAction} {actionText}" : "";
+
+    dockHoverItems.Clear();
+
+    if (actionString != string.Empty)
+    {
+      dockHoverItems.Add(actionString);
+    }
+
+    dockHoverItems.Add(statusDescription);
+
+    return Localization.instance.Localize(string.Join("\n", dockHoverItems));
+  }
+
+  /// <summary>
+  /// TODO split this into separate states.
+  /// - DockClamp Vehicle
+  /// - DockClamp onShore
+  /// - Normal Rope.
+  /// </summary>
+  /// <returns></returns>
   public string GetHoverText()
   {
     if (IsDockAnchor())
     {
-      return "";
+      return GetDockHoverText();
     }
 
     if (isHauling)
@@ -202,7 +315,7 @@ public class RopeAnchorComponent : MonoBehaviour, Interactable, Hoverable
       return HaulingStopText;
     }
 
-    if (m_draggingRopeTo != this)
+    if (m_draggingRopeTo != gameObject)
       return $"{StartAttachText}\n{HaulingStartText}";
 
     return AttachToText;
@@ -240,8 +353,13 @@ public class RopeAnchorComponent : MonoBehaviour, Interactable, Hoverable
       LoggerProvider.LogError("error attempted to attach to the wrong type of RopeAnchorComponent");
       return;
     }
+
     // do not allow multiple ropes.
-    if (m_ropes.Count > 0) return;
+    if (m_ropes.Count > 0)
+    {
+      DestroyAllRopes();
+    }
+
     // dictionary index of 0 since this only connects to another rope anchor
     AttachRope(ropeAnchor, false);
   }
@@ -257,9 +375,82 @@ public class RopeAnchorComponent : MonoBehaviour, Interactable, Hoverable
     m_ropes.Clear();
   }
 
+  public bool HandleDisconnectOnOtherRope(VehiclePiecesController vehicleParent)
+  {
+    var zdo = ZDOMan.instance.GetZDO(vehicleParent.Manager.DockZdoId);
+    if (zdo == null || !zdo.IsValid()) return false;
+    var netviewInstance = ZNetScene.instance.FindInstance(zdo);
+    var otherRopeAnchor = netviewInstance.GetComponent<RopeAnchorComponent>();
+    otherRopeAnchor.RemoveAllRopes();
+
+    return true;
+  }
+
+  public bool HandleDockAnchorInteract(Humanoid user, bool hold, bool alt)
+  {
+    var vehicleParent = GetComponentInParent<VehiclePiecesController>();
+
+    if (m_ropes.Count > 0)
+    {
+      DestroyAllRopes();
+      return true;
+    }
+
+    // do not do anything if the dock anchor piece is on the vehicle.
+    if (vehicleParent)
+    {
+      if (vehicleParent.Manager.IsDocked())
+      {
+        if (HandleDisconnectOnOtherRope(vehicleParent) && vehicleParent.Manager.DockZdoId == ZDOID.None) return true;
+
+        vehicleParent.Manager.SetDockedMode(ZDOID.None);
+        return true;
+      }
+      return false;
+    }
+
+    if (hold && m_draggingRopeFrom)
+    {
+      m_draggingRopeFrom = null;
+      m_rope.enabled = false;
+      return false;
+    }
+
+    if (alt)
+    {
+      return true;
+    }
+
+    if (!m_draggingRopeFrom)
+    {
+      m_draggingRopeFrom = this;
+      m_rope.enabled = true;
+    }
+    else if (m_draggingRopeFrom == this)
+    {
+      // todo cleanup this block.
+
+      if (m_draggingRopeTo != null && m_draggingRopeTo.gameObject != gameObject)
+        AttachRope(m_draggingRopeTo, GetIndexAtLocation(m_draggingRopeTo));
+
+      m_draggingRopeFrom = null;
+      m_rope.enabled = false;
+    }
+    else
+    {
+      // todo make sure this is accurate
+      m_draggingRopeFrom.AttachRope(this);
+      m_draggingRopeFrom.m_rope.enabled = false;
+      m_draggingRopeFrom = null;
+      m_rope.enabled = false;
+    }
+
+    return true;
+  }
+
   public bool Interact(Humanoid user, bool hold, bool alt)
   {
-    if (IsDockAnchor()) return false;
+    if (IsDockAnchor()) return HandleDockAnchorInteract(user, hold, alt);
 
     if (hold && m_draggingRopeFrom)
     {
@@ -274,6 +465,18 @@ public class RopeAnchorComponent : MonoBehaviour, Interactable, Hoverable
       return true;
     }
 
+    // prevents connecting rope to same object.
+    if (m_draggingRopeTo != null && m_draggingRopeFrom != null && m_draggingRopeTo.gameObject == m_draggingRopeFrom.gameObject)
+    {
+      m_draggingRopeFrom.m_rope.enabled = false;
+      m_rope.enabled = false;
+
+      m_draggingRopeFrom = null;
+      m_draggingRopeTo = null;
+
+      return true;
+    }
+
     if (!m_draggingRopeFrom)
     {
       m_draggingRopeFrom = this;
@@ -281,7 +484,9 @@ public class RopeAnchorComponent : MonoBehaviour, Interactable, Hoverable
     }
     else if (m_draggingRopeFrom == this)
     {
-      if (m_draggingRopeTo != this)
+      // todo cleanup this block.
+
+      if (m_draggingRopeTo != null && m_draggingRopeTo.gameObject != gameObject)
         AttachRope(m_draggingRopeTo, GetIndexAtLocation(m_draggingRopeTo));
 
       m_draggingRopeFrom = null;
@@ -289,6 +494,7 @@ public class RopeAnchorComponent : MonoBehaviour, Interactable, Hoverable
     }
     else
     {
+      // todo make sure this is accurate
       m_draggingRopeFrom.AttachRope(this);
       m_draggingRopeFrom.m_rope.enabled = false;
       m_draggingRopeFrom = null;
@@ -359,7 +565,7 @@ public class RopeAnchorComponent : MonoBehaviour, Interactable, Hoverable
     {
       var playerPos = Player.m_localPlayer.transform.position;
       byte index = 0;
-      var distance = float.MaxValue;
+      var distance = m_maxRopeDistance;
       for (var i = 0; i < points.Length; i++)
       {
         var point = points[i];
@@ -383,23 +589,56 @@ public class RopeAnchorComponent : MonoBehaviour, Interactable, Hoverable
 
   private void AttachRope(GameObject go, byte index, bool shouldPersist = true)
   {
+    if (go == null) return;
     var nv = go.GetComponentInParent<ZNetView>();
-    if ((bool)nv && nv.m_zdo != null)
+    if (nv == null || !nv.IsValid()) return;
+
+
+    // ensures only 1 vehicle can be anchored per dock
+    if (IsDockAnchor() && m_ropes.Count > 0)
     {
-      Logger.LogDebug($"AttachRope {index}");
-      var id =
-        new RopeAttachmentTarget(
-          ZdoWatchController.Instance.GetOrCreatePersistentID(nv.m_zdo),
-          index);
-      if (!RemoveRopeWithID(id))
+      DestroyAllRopes();
+    }
+
+
+    // TODO do we allow docks clamp on vehicle to connect to anything on land?
+    // TODO do we only allow dock clamp on land to connect to a vehicle.
+
+    var isLocalDockOnVehicle = GetComponentInParent<VehiclePiecesController>();
+
+    var targetVehicle = go.GetComponentInParent<VehiclePiecesController>();
+
+    // do not allow two vehicles to dock to eachother. This should not be allowed and should not allow triggering build
+    // todo later this could be done to tow. But it would have to be guarded.
+
+    if (targetVehicle && isLocalDockOnVehicle)
+    {
+      Player.m_localPlayer.Message(MessageHud.MessageType.Center, "Anchoring two vehicles is not supported");
+      return;
+    }
+
+
+    Logger.LogDebug($"AttachRope {index}");
+    var id =
+      new RopeAttachmentTarget(
+        ZdoWatchController.Instance.GetOrCreatePersistentID(nv.m_zdo),
+        index);
+    if (!RemoveRopeWithID(id))
+    {
+      CreateNewRope(id);
+      if (shouldPersist)
       {
-        CreateNewRope(id);
-        if (shouldPersist)
+        if (IsDockAnchor())
         {
-          SaveToZDO();
+          if (targetVehicle != null)
+          {
+            targetVehicle.Manager.SetDockedMode(m_nview.m_zdo.m_uid);
+          }
         }
-        CheckRopes();
+
+        SaveToZDO();
       }
+      CheckRopes();
     }
   }
 
@@ -678,16 +917,95 @@ public class RopeAnchorComponent : MonoBehaviour, Interactable, Hoverable
     }
   }
 
+  private static void SetDockedMode(
+    VehiclePiecesController? vehicle,
+    ZDOID zdoid)
+  {
+    if (vehicle == null)
+      return;
+
+    vehicle.Manager.SetDockedMode(zdoid);
+  }
+
+  private bool IsValidDockConnection(
+    RopeAnchorComponent target,
+    VehiclePiecesController? localVehicle,
+    VehiclePiecesController? targetVehicle)
+  {
+    // Ordinary rope anchors retain their existing connection rules.
+    if (!IsDockAnchor() && !target.IsDockAnchor())
+      return true;
+
+    // Dock connections must involve exactly one vehicle.
+    if (localVehicle != null == (targetVehicle != null))
+    {
+      Player.m_localPlayer?.Message(
+        MessageHud.MessageType.Center,
+        "A dock clamp must connect a vehicle to land.");
+      return false;
+    }
+
+    // The non-vehicle endpoint must itself be a dock clamp.
+    var landAnchor = localVehicle != null ? target : this;
+
+    if (!landAnchor.IsDockAnchor())
+    {
+      Player.m_localPlayer?.Message(
+        MessageHud.MessageType.Center,
+        "A dock clamp must connect to another dock clamp.");
+      return false;
+    }
+
+    return true;
+  }
+
+  private void SetConnectedVehicleDockMode(
+    GameObject? target,
+    bool isDocked)
+  {
+    var localVehicle = GetComponentInParent<VehiclePiecesController>();
+
+    var targetVehicle = target
+      ? target.GetComponentInParent<VehiclePiecesController>()
+      : null;
+
+    SetDockedMode(localVehicle, isDocked ? m_nview.m_zdo.m_uid : ZDOID.None);
+
+    if (targetVehicle != localVehicle)
+      SetDockedMode(targetVehicle, isDocked ? m_nview.m_zdo.m_uid : ZDOID.None);
+  }
+
   private void RemoveUpdatingRopeAt(int i)
   {
     var index = m_ropes.IndexOf(m_updatingRopes[i]);
     if (index != -1) RemoveRopeAt(index);
   }
 
+
   private void RemoveRopeAt(int i)
   {
-    Destroy(m_ropes[i].m_ropeObject);
+    if (i < 0 || i >= m_ropes.Count)
+      return;
+
+    var rope = m_ropes[i];
+    var target = rope.m_ropeTarget;
+
+    // Remove local state before saving, so the persisted connections
+    // accurately represent the remaining ropes.
     m_ropes.RemoveAt(i);
+
+    if (target != null)
+      SetConnectedVehicleDockMode(target, false);
+    else
+      SetDockedMode(
+        GetComponentInParent<VehiclePiecesController>(), ZDOID.None
+      );
+
+    if (rope.m_ropeObject != null)
+      Destroy(rope.m_ropeObject);
+
+    m_updatingRopes.Remove(rope);
     SaveToZDO();
   }
+
 }
