@@ -72,6 +72,7 @@ public class ShipHullPrefabRegistry : RegisterPrefab<ShipHullPrefabRegistry>
       "hull_rib_wood",
       "hull_rib_iron",
       "hull_bow_center_wood",
+      "hull_bow_center_iron",
       "hull_bow_curved_left_wood",
       "hull_bow_curved_right_wood",
       "hull_bow_curved_left_iron",
@@ -184,6 +185,13 @@ public class ShipHullPrefabRegistry : RegisterPrefab<ShipHullPrefabRegistry>
         "hull_bow_center_wood", new TranslationData
         {
           Name = "$valheim_vehicles_hull_rib_prow $valheim_vehicles_direction_center $valheim_vehicles_material_wood",
+          Description = "$valheim_vehicles_hull_rib_prow_desc"
+        }
+      },
+      {
+        "hull_bow_center_iron", new TranslationData
+        {
+          Name = "$valheim_vehicles_hull_rib_prow $valheim_vehicles_direction_center $valheim_vehicles_material_iron",
           Description = "$valheim_vehicles_hull_rib_prow_desc"
         }
       },

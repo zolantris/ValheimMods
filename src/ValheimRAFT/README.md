@@ -99,8 +99,8 @@ source the mod on 12/25/2023.
 
 | ValheimRAFT Version | Valheim Version                | Compatibility |
 |---------------------|--------------------------------|---------------|
-| `5.0.0+`            | Deep North `1.0.15`            | ✅ Compatible  |
-| `<5.0.0` eg 4.2.2   | Ashlands Update (early access) | ✅ Compatible  |
+| `5.0.0+`            | Deep North `1.0.15`            | ✅ Compatible |
+| `<5.0.0` eg 4.2.2   | Ashlands Update (early access) | ✅ Compatible |
 
 ## Features
 
@@ -233,32 +233,74 @@ point of ship. This will encapsulate whole ship.
       <td>Introduced in 3.6.x updates. The cannon control center controls all logic for manual cannons. Hold [Block] to use the hotkeys. This applies for wheel controls too.There are 4 groups for forward, left, right, backwards. Block + S will tilt all cannons upwards in a group. Block + W will tilt all cannons downwards in a group. Block + W (cycles backwards in Groups) Block + D (Cycles forwards in groups). Pressing Block and not holding will immediately fire the selected group of cannons. These directions are determined by the Wheel/Control center position.</td>
     </tr>
     <tr>
-      <td>Hull (Wood)</td>
-      <td><img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/hull_center_wood.png" width="200"/></td>
-      <td>V2 Raft Hull. See more info on <a href="#hull-mechanics-link">Hull Mechanics</a></td>
+      <td>Hull Bows (Left|Center|Right) (Curved|Triangle) (v4)</td>
+      <td>
+        <img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/hull_bow_center_wood.png" width="100"/>
+        <img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/hull_bow_curved_left_wood.png" width="100"/>
+        <img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/hull_bow_curved_right_wood.png" width="100"/>
+        <img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/hull_bow_tri_left_wood.png" width="100"/>
+        <img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/hull_bow_tri_right_wood.png" width="100"/>
+        <img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/hull_bow_center_iron.png" width="100"/>
+        <img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/hull_bow_curved_left_iron.png" width="100"/>
+        <img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/hull_bow_curved_right_iron.png" width="100"/>
+        <img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/hull_bow_tri_left_iron.png" width="100"/>
+        <img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/hull_bow_tri_right_iron.png" width="100"/>
+      </td>
+      <td>V4 Hull Variants. See more info on <a href="#hull-mechanics-link">Hull Mechanics</a>.</td>
     </tr>
     <tr>
-      <td>Hull (Iron)</td>
-      <td><img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/hull_center_iron.png" width="100"/></td>
-      <td>V2 Raft Hull Iron, See more info on <a href="#hull-mechanics-link">Hull Mechanics</a></td>
+      <td>Hull Aft (Left/Center/Right) (v4)</td>
+      <td>
+        <img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/hull_rib_aft_center_wood.png" width="100"/>
+        <img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/hull_rib_aft_left_wood.png" width="100"/>
+        <img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/hull_rib_aft_right_wood.png" width="100"/>
+        <img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/hull_rib_aft_right_wood.png" width="100"/>
+<img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/hull_rib_aft_center_iron.png" width="100"/>
+        <img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/hull_rib_aft_left_iron.png" width="100"/>
+        <img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/hull_rib_aft_right_iron.png" width="100"/>
+        <img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/hull_rib_aft_right_iron.png" width="100"/>
+      </td>
+      <td>V4 Hull Aft Variants. See more info on <a href="#hull-mechanics-link">Hull Mechanics</a>.</td>
     </tr>
     <tr>
-      <td>Hull Slab (Wood)</td>
-      <td><img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/hull_slab_wood_2x2.png" width="100"/></td>
-      <td>V2 Raft Hull Slab 2x2 and 4x4 variants. See more info on <a href="#hull-mechanics-link">Hull Mechanics</a></td>
+      <td>Hull Sides (Wood|Iron) (v4)</td>
+      <td>
+        <img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/hull_rib_wood.png" width="100"/>
+        <img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/hull_rib_iron.png" width="100"/>
+      </td>
+      <td>V4 Hull Variants. See more info on <a href="#hull-mechanics-link">Hull Mechanics</a>.</td>
     </tr>
     <tr>
-      <td>Hull Slab (Iron)</td>
-      <td><img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/hull_slab_iron_2x2.png" width="100"/></td>
-      <td>V2 Raft Hull Slab Iron 2x2 and 4x4 variants. See more info on <a href="#hull-mechanics-link">Hull Mechanics</a>.</td>
+      <td>Hull Slabs (4x4) (v4)</td>
+      <td>
+        <img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/hull_floor_4x4_wood.png" width="100"/>
+        <img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/hull_floor_4x4_iron.png" width="100"/>
+      </td>
+      <td>V4 Hull Floors. See more info on <a href="#hull-mechanics-link">Hull Mechanics</a>.</td>
     </tr>
     <tr>
-      <td>Hull Wall (Wood)</td>
-      <td><img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/hull_wall_wood_2x2.png" width="100"/></td>
-      <td>V2 Raft Hull Wall 2x2 and 4x4 variants. See more info on <a href="#hull-mechanics-link">Hull Mechanics</a>.</td>
+      <td>Hull Keels (2x4) (v4)</td>
+      <td>
+        <img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/hull_floor_keel_4x2_left_wood.png" width="100"/>
+        <img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/hull_floor_keel_4x2_right_wood.png" width="100"/>
+        <img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/hull_floor_keel_4x2_left_iron.png" width="100"/>
+        <img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/hull_floor_keel_4x2_right_iron.png" width="100"/>
+      </td>
+      <td>V4 Hull Floors. See more info on <a href="#hull-mechanics-link">Hull Mechanics</a>.</td>
     </tr>
     <tr>
-      <td>Hull Rib Side (Wood) (Iron)</td>
+      <td>Hull Rib Expander (Wood|Iron) (Left|Right) (v4)</td>
+      <td>
+        <img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/hull_rib_expander_left_wood.png" width="100"/>
+        <img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/hull_rib_expander_right_wood.png" width="100"/>
+        <img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/hull_rib_expander_left_iron.png" width="100"/>
+        <img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/hull_rib_expander_right_iron.png" width="100"/>
+      </td>
+      <td>V4 Hull Expanders allow expanding the vehicle hull and perfectly seal with other hull V4 pieces</td>
+    </tr>
+   <tr>
+    <tr>
+      <td>Hull Rib Side (Wood) (Iron) (V2) (Deprecated)(Use V4 variants)</td>
       <td>
         <img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/hull_rib_2x1x2_wood.png" width="100"/>
         <img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/hull_rib_2x1x2_iron.png" width="100"/>
@@ -269,53 +311,29 @@ point of ship. This will encapsulate whole ship.
       <td>V2 Raft Hull Rib, a curved hull wall going for 0-90 degrees a combo of 3 hull walls. See more info on <a href="#hull-mechanics-link">Hull Mechanics</a>.</td>
     </tr>
     <tr>
-      <td>Ship Prow (Wood)(Iron)</td>
-      <td>
-        <img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/hull_prow_2x2x4_iron.png" width="100"/>
-        <img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/hull_prow_2x2x4_wood.png" width="100"/>
-      </td>
-      <td>Allows for creating a front/back of the ship. Pairing this with a Rib side and a rib corner will seal the ship completely.</td>
+      <td>Hull Slab (Wood)</td>
+      <td><img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/hull_slab_wood_2x2.png" width="100"/></td>
+      <td>V2 Raft Hull Slab 2x2 and 4x4 variants. See more info on <a href="#hull-mechanics-link">Hull Mechanics</a></td>
     </tr>
     <tr>
-      <td>Ship Prow (sleek) (Wood, Iron)</td>
+      <td>Hull Slab (Wood|Iron) (2x2|4x4)</td>
       <td>
-        <img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/hull_rib_prow_sleek_2x2x8_left_wood.png" width="100"/>
-        <img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/hull_rib_prow_sleek_2x2x8_right_wood.png" width="100"/>
-        <img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/hull_rib_prow_sleek_2x2x8_left_iron.png" width="100"/>
-        <img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/hull_rib_prow_sleek_2x2x8_right_iron.png" width="100"/>
+        <img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/hull_slab_wood_2x2.png" width="100"/>
+        <img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/hull_slab_wood_4x4.png" width="100"/>
+        <img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/hull_slab_iron_2x2.png" width="100"/>
+        <img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/hull_slab_iron_4x4.png" width="100"/>
       </td>
-      <td>Makes ship more angular and compatible with 1x8 floor seals</td>
+      <td>V2 Raft Hull Slab Iron 2x2 and 4x4 variants. See more info on <a href="#hull-mechanics-link">Hull Mechanics</a>.</td>
     </tr>
     <tr>
-      <td>Ship Prow (cutter+seal) (Iron)</td>
+      <td>Hull Wall (Wood)</td>
       <td>
-        <img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/hull_rib_prow_cutter_2x2x8_left_iron.png" width="100"/>
-        <img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/hull_rib_prow_cutter_2x2x8_right_iron.png" width="100"/>
-        <img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/hull_prow_seal_iron.png" width="100"/>
+        <img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/hull_wall_wood_2x2.png" width="100"/>
+        <img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/hull_wall_wood_4x4.png" width="100"/>
+        <img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/hull_wall_iron_2x2.png" width="100"/>
+        <img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/hull_wall_iron_4x4.png" width="100"/>
       </td>
-      <td>Makes ship more angular and compatible with 1x8 floor seals</td>
-    </tr>
-    <tr>
-      <td>Ship Hull-Rib Corner (Wood, Iron)</td>
-      <td>
-        <img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/hull_rib_corner_2x1x8_left_iron.png" width="100"/>
-        <img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/hull_rib_corner_2x1x8_right_iron.png" width="100"/>
-        <img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/hull_rib_corner_2x2x4_right_wood.png" width="100"/>
-        <img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/hull_rib_corner_2x2x4_left_wood.png" width="100"/>
-        <img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/hull_rib_corner_2x2x4_right_iron.png" width="100"/>
-        <img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/hull_rib_corner_2x2x4_left_iron.png" width="100"/>
-      </td>
-      <td>Allows for sealing a hull for a ship. Useful when adding hull sides and prow pieces to seal a ship from all directions.</td>
-    </tr>
-    <tr>
-      <td>Ship Hull Corner floor (Wood left &amp; right, Iron left &amp; right)</td>
-      <td>
-        <img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/hull_corner_floor_2x8_left_wood.png" width="100"/>
-        <img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/hull_corner_floor_2x8_right_wood.png" width="100"/>
-        <img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/hull_corner_floor_2x8_left_iron.png" width="100"/>
-        <img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/hull_corner_floor_2x8_right_iron.png" width="100"/>
-      </td>
-      <td>Allows for sealing a hull for a ship. Useful when adding hull sides and prow pieces to seal a ship from all directions.</td>
+      <td>V2 Raft Hull Wall 2x2 and 4x4 variants. See more info on <a href="#hull-mechanics-link">Hull Mechanics</a>.</td>
     </tr>
     <tr>
       <td>Rudder Basic</td>
@@ -482,6 +500,98 @@ point of ship. This will encapsulate whole ship.
       <td>
         Allows for docking of ships. A single land vehicle can be attached to the dock and then undocked. This allows players to drop a land vehicle near the shore and the redock it when returning. Docks can also work in the air and can allow an air vehicle to drop a land vehicle and then later grab it from the ground.
       </td>
+    </tr>
+
+  </tbody>
+</table>
+
+## Deprecated Prefabs
+
+These will be removed eventually.
+
+<table style="width:100%; border-collapse:collapse;">
+  <thead>
+    <tr>
+      <th style="padding:8px; border-bottom:2px solid #444;">Name</th>
+      <th style="padding:8px; border-bottom:2px solid #444;">Icon</th>
+      <th style="padding:8px; border-bottom:2px solid #444;">Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Hull Rib Side (Wood) (Iron) (V2) (Deprecated)(Use V4 variants)</td>
+      <td>
+        <img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/hull_rib_2x1x2_wood.png" width="100"/>
+        <img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/hull_rib_2x1x2_iron.png" width="100"/>
+        <img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/hull_rib_2x2x2_wood.png" width="100"/>
+        <img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/hull_rib_2x2x2_iron.png" width="100"/>
+        <img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/hull_rib_2x1x8_iron.png" width="100"/>
+      </td>
+      <td>V2 Raft Hull Rib, a curved hull wall going for 0-90 degrees a combo of 3 hull walls. See more info on <a href="#hull-mechanics-link">Hull Mechanics</a>.</td>
+    </tr>
+   <tr>
+      <td>Hull (Wood) (Deprecated)(Use V4 variants)</td>
+      <td><img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/hull_center_wood.png" width="200"/></td>
+      <td>V2 Raft Hull. See more info on <a href="#hull-mechanics-link">Hull Mechanics</a></td>
+    </tr>
+    <tr>
+      <td>Hull (Iron) (Deprecated)(Use V4 variants)</td>
+      <td><img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/hull_center_iron.png" width="100"/></td>
+      <td>V2 Raft Hull Iron, See more info on <a href="#hull-mechanics-link">Hull Mechanics</a></td>
+    </tr>
+    <tr>
+      <td>Hull Bow Center</td>
+      <td><img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/hull_wall_wood_2x2.png" width="100"/></td>
+      <td>V2 Raft Hull Wall 2x2 and 4x4 variants. See more info on <a href="#hull-mechanics-link">Hull Mechanics</a>.</td>
+    </tr>
+    <tr>
+      <td>Ship Prow (Wood)(Iron)</td>
+      <td>
+        <img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/hull_prow_2x2x4_iron.png" width="100"/>
+        <img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/hull_prow_2x2x4_wood.png" width="100"/>
+      </td>
+      <td>Allows for creating a front/back of the ship. Pairing this with a Rib side and a rib corner will seal the ship completely.</td>
+    </tr>
+    <tr>
+      <td>Ship Prow (sleek) (Wood, Iron)</td>
+      <td>
+        <img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/hull_rib_prow_sleek_2x2x8_left_wood.png" width="100"/>
+        <img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/hull_rib_prow_sleek_2x2x8_right_wood.png" width="100"/>
+        <img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/hull_rib_prow_sleek_2x2x8_left_iron.png" width="100"/>
+        <img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/hull_rib_prow_sleek_2x2x8_right_iron.png" width="100"/>
+      </td>
+      <td>Makes ship more angular and compatible with 1x8 floor seals</td>
+    </tr>
+    <tr>
+      <td>Ship Prow (cutter+seal) (Iron)</td>
+      <td>
+        <img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/hull_rib_prow_cutter_2x2x8_left_iron.png" width="100"/>
+        <img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/hull_rib_prow_cutter_2x2x8_right_iron.png" width="100"/>
+        <img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/hull_prow_seal_iron.png" width="100"/>
+      </td>
+      <td>Makes ship more angular and compatible with 1x8 floor seals</td>
+    </tr>
+    <tr>
+      <td>Ship Hull-Rib Corner (Wood, Iron)</td>
+      <td>
+        <img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/hull_rib_corner_2x1x8_left_iron.png" width="100"/>
+        <img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/hull_rib_corner_2x1x8_right_iron.png" width="100"/>
+        <img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/hull_rib_corner_2x2x4_right_wood.png" width="100"/>
+        <img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/hull_rib_corner_2x2x4_left_wood.png" width="100"/>
+        <img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/hull_rib_corner_2x2x4_right_iron.png" width="100"/>
+        <img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/hull_rib_corner_2x2x4_left_iron.png" width="100"/>
+      </td>
+      <td>Allows for sealing a hull for a ship. Useful when adding hull sides and prow pieces to seal a ship from all directions.</td>
+    </tr>
+    <tr>
+      <td>Ship Hull Corner floor (Wood left &amp; right, Iron left &amp; right)</td>
+      <td>
+        <img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/hull_corner_floor_2x8_left_wood.png" width="100"/>
+        <img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/hull_corner_floor_2x8_right_wood.png" width="100"/>
+        <img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/hull_corner_floor_2x8_left_iron.png" width="100"/>
+        <img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/hull_corner_floor_2x8_right_iron.png" width="100"/>
+      </td>
+      <td>Allows for sealing a hull for a ship. Useful when adding hull sides and prow pieces to seal a ship from all directions.</td>
     </tr>
   </tbody>
 </table>
