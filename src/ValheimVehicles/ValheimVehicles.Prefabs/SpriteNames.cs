@@ -16,6 +16,7 @@ public abstract class SpriteNames
   public const string Power_Storage_Icon = "power_storage";
 
   public const string WaterOpacityBucket = "water_opacity_bucket";
+  public const string Construction = "construction";
   public const string VehicleBorderAdd = "border_all";
   public const string VehicleBorderErase = "border_clear";
   public const string WaterFloatationHeight = "sailing_boat_float";

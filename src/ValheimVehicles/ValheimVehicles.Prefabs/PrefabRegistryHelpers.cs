@@ -140,7 +140,7 @@ public abstract class PrefabRegistryHelpers
         Name = "$valheim_vehicles_buildmode_toggle",
         Description = "$valheim_vehicles_buildmode_toggle_desc",
         Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
-          .VehicleHammer)
+          .Construction)
       });
   }
 

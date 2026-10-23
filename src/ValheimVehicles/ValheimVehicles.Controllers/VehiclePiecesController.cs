@@ -414,6 +414,18 @@
 
     public static float VehicleActiveAreaSyncRadius = 250f;
 
+    public int GetHullRevision()
+    {
+      if (m_zdo == null) return 0;
+      var val = m_zdo.GetInt(VehicleZdoVars.VehicleConvexHullDataVersionHash, 0);
+      if (val == int.MaxValue)
+      {
+        return 0;
+      }
+
+      return val;
+    }
+
     /// <summary>
     /// Saves a single convex hull collider ZDO data.
     ///
@@ -423,6 +435,7 @@
     /// 
     public void SaveConvexHullColliderZdoData()
     {
+      if (VehicleConfigSync == null) return;
       if (m_zdo == null || !m_zdo.IsValid())
         return;
 
@@ -442,25 +455,57 @@
           transform, // use pieces transform not movementcontroller transform
           convexHullComponent.convexHullMeshColliders);
 
-        var revision = m_zdo.GetInt(VehicleZdoVars.VehicleConvexHullDataVersionHash, 0);
-        revision = revision == int.MaxValue ? 1 : revision + 1;
+        var hullRevision = GetHullRevision();
+        hullRevision += 1;
 
         m_zdo.Set(VehicleZdoVars.VehicleConvexHullData, payload);
-        m_zdo.Set(VehicleZdoVars.VehicleConvexHullDataVersionHash, revision);
+        m_zdo.Set(VehicleZdoVars.VehicleConvexHullDataVersionHash, hullRevision);
 
-        m_lastConvexHullDataVersionHash = revision;
-        Manager.vehicleConvexHullDataVersionHash = revision;
+        m_lastConvexHullDataVersionHash = hullRevision;
+        Manager.vehicleConvexHullDataVersionHash = hullRevision;
 
         LoggerProvider.LogDebug(
           $"Saved convex hull geometry: {payload.Length} bytes.");
 
-        VehicleConfigSync.SendSyncBounds();
+        VehicleConfigSync.SendSyncBounds(hullRevision, payload);
       }
       catch (InvalidDataException ex)
       {
         LoggerProvider.LogError(
           $"Failed to serialize vehicle convex hull geometry: {ex.Message}");
       }
+    }
+
+    /// <summary>
+    /// This should not update hashes as this is a direct rebuild from a RPC event. 
+    /// </summary>
+    public void RebuildHullFromData(int hashId, List<ConvexHullDataSerializer.ColliderData> data)
+    {
+      // no need to rebuild if the hashId is the same.
+      if (hashId == m_lastConvexHullDataVersionHash)
+      {
+        return;
+      }
+
+      try
+      {
+        RebuildBoundsFromData(data, true);
+        m_lastConvexHullDataVersionHash = hashId;
+      }
+      catch (InvalidDataException ex)
+      {
+        LoggerProvider.LogError(
+          $"Failed to restore convex hull geometry: {ex.Message}");
+      }
+    }
+
+    public byte[]? GetHullData()
+    {
+      if (m_zdo == null || !m_zdo.IsValid()) return null;
+      var payload = m_zdo.GetByteArray(
+        VehicleZdoVars.VehicleConvexHullData);
+
+      return payload;
     }
 
     /// <summary>
@@ -481,8 +526,7 @@
       if (m_lastConvexHullDataVersionHash == vehicleConvexHashId) return;
 
 
-      var payload = m_zdo.GetByteArray(
-        VehicleZdoVars.VehicleConvexHullData);
+      var payload = GetHullData();
 
       if (payload == null || payload.Length == 0)
         return;
@@ -2940,7 +2984,12 @@
 
       TryWriteChunkBoundsData([]);
       UpdateChunkBoundsData(true);
-      VehicleConfigSync.SendSyncBounds();
+
+      var hullRevision = GetHullRevision();
+      var hullData = GetHullData();
+      if (hullData == null) return;
+
+      VehicleConfigSync.SendSyncBounds(hullRevision, hullData);
       Player.m_localPlayer.Message(MessageHud.MessageType.Center,
         $"$valheim_vehicles_shared_clear_success chunks:<{chunkCount}>");
     }
@@ -2977,10 +3026,12 @@
 
       zdo.Set(VehicleZdoVars.VehicleChunkBounds, stream.ToArray());
 
-      if (VehicleConfigSync)
-      {
-        VehicleConfigSync.SendSyncBounds();
-      }
+      if (!VehicleConfigSync) return;
+
+      var hullRevision = GetHullRevision();
+      var hullData = GetHullData();
+      if (hullData == null) return;
+      VehicleConfigSync.SendSyncBounds(hullRevision, hullData);
     }
 
     /// <summary>

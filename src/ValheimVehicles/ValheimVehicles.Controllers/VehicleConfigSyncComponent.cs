@@ -3,6 +3,7 @@
   using System;
   using System.Collections.Generic;
   using System.Diagnostics.CodeAnalysis;
+  using System.IO;
   using System.Linq;
   using UnityEngine;
   using UnityEngine.Serialization;
@@ -11,7 +12,10 @@
   using ValheimVehicles.Enums;
   using ValheimVehicles.Helpers;
   using ValheimVehicles.Interfaces;
+  using ValheimVehicles.RPC;
+  using ValheimVehicles.Serialization;
   using ValheimVehicles.SharedScripts;
+  using Zolantris.Shared;
 
 #endregion
 
@@ -54,7 +58,7 @@
 
       base.RegisterRPCListeners();
 
-      rpcHandler?.Register(nameof(RPC_SyncBounds), RPC_SyncBounds);
+      rpcHandler?.Register<ZPackage>(nameof(RPC_SyncBounds), RPC_SyncBounds);
       rpcHandler?.Register<ZPackage>(nameof(RPC_SyncFloatationMode), RPC_SyncFloatationMode);
       rpcHandler?.Register<ZPackage>(nameof(RPC_SyncBuildMode), RPC_SyncBuildMode);
 
@@ -116,69 +120,35 @@
       CommitConfigChange(updated); // saves + broadcasts
     }
 
-    public void SendRPCToAllClients(List<long> clients, string methodName, bool skipLocal = false)
-    {
-      if (!this.IsNetViewValid(out var netView)) return;
-
-      // TODO ensure that GetZDO owner is the same as Player.GetPlayerID otherwise it could be GetOwner but that is the ownerId of the player's current netview.
-      var currentPlayer = Player.m_localPlayer.GetPlayerID();
-      var nvOwner = netView.m_zdo.GetOwner();
-      var hasSentSyncToOwner = false;
-
-
-      clients.ForEach(clientId =>
-      {
-        if (!skipLocal && clientId == nvOwner)
-        {
-          hasSentSyncToOwner = true;
-        }
-        if (currentPlayer == clientId)
-        {
-          SyncVehicleBounds();
-          return;
-        }
-
-        rpcHandler?.InvokeRPC(clientId, nameof(RPC_SyncBounds));
-      });
-
-      if (!hasSentSyncToOwner)
-      {
-        Invoke(nameof(methodName), 0.5f);
-      }
-    }
-
     /// <summary>
     /// bounds sync for all players on the boat.
     /// Todo integrate this and confirm it works. This will help avoid any one player from updating too quickly.
     ///
     /// Also should prevent desyncs if we can synchronize it.
     /// </summary>
-    public void SendSyncBounds()
+    public void SendSyncBounds(int hullRevision, byte[] payload)
     {
       if (!this.IsNetViewValid(out _)) return;
       if (!this || OnboardController == null) return;
+      if (m_zdo == null || !m_zdo.IsValid()) return;
 
       var localPlayer = Player.m_localPlayer;
       if (localPlayer == null) return;
 
-      var currentPlayerId = localPlayer.GetPlayerID();
 
-      var playerIds = OnboardController.m_localPlayers
-        .Where(player => player != null)
-        .Select(player => player.GetPlayerID())
-        .Distinct()
-        .ToList();
+      // ensures that the latest data is sent to other clients.
+      var package = new ZPackage();
+      package.Write(hullRevision);
+      package.Write(payload);
+
+      // sends the update only to peers nearby. Other peers will not need the update unless in the area.
+      RPCUtils.RunIfNearby(m_zdo, 250f, (peerId) =>
+      {
+        rpcHandler?.InvokeRPC(peerId, nameof(RPC_SyncBounds), package);
+      });
 
       // Recalculate once on this machine.
       SyncVehicleBounds();
-
-      // Ask every other onboard peer to recalculate locally.
-      foreach (var playerId in playerIds)
-      {
-        if (playerId == currentPlayerId) continue;
-
-        rpcHandler?.InvokeRPC(playerId, nameof(RPC_SyncBounds));
-      }
     }
 
     /// <summary>
@@ -186,15 +156,40 @@
     ///   only from host but then would require syncing all collider data that updates
     ///   in the OnBoundsUpdate
     /// </summary>
-    public void RPC_SyncBounds(long sender)
+    public void RPC_SyncBounds(long sender, ZPackage pkg)
     {
       if (!PiecesController) return;
-      SyncVehicleBounds();
+      pkg.SetPos(0);
+
+      var hashId = pkg.ReadInt();
+      var binaryStream = pkg.GetArray();
+
+      try
+      {
+        var data = ConvexHullDataSerializer.Deserialize(binaryStream);
+        if (data.Count == 0)
+        {
+          SyncVehicleBounds();
+        }
+        else
+        {
+          PiecesController.RebuildHullFromData(hashId, data);
+        }
+      }
+      catch (InvalidDataException ex)
+      {
+        LoggerProvider.LogError(
+          $"Failed to restore convex hull geometry: {ex.Message}");
+      }
     }
 
     public void SyncVehicleBounds()
     {
       if (PiecesController == null) return;
+      if (PiecesController.m_nview == null) return;
+
+      // owner should not resync to avoid a loop
+      if (PiecesController.m_nview.IsOwner()) return;
 
       // only update chunkbounds data. Rebuild will be requested after all updates are done.
       PiecesController.UpdateChunkBoundsData(false);
