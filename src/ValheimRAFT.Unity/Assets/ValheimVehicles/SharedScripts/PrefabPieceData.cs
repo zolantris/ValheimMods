@@ -29,6 +29,9 @@ namespace ValheimVehicles.SharedScripts
       AllColliders = new List<Collider>();
       HullColliders = new List<Collider>();
       ColliderPointData = null;
+      IsSwivelChild = false;
+      IsBed = false;
+      IsPortal = false;
 
       InitComponentProperties(prefab);
 
