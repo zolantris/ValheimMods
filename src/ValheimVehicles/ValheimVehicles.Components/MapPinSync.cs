@@ -299,6 +299,7 @@ public class MapPinSync : MonoBehaviour
     {
       var zdoId = pair.Value;
       var zdo = ZDOMan.instance.GetZDO(zdoId);
+      if (zdo == null) continue;
       var prefab = ZNetScene.instance.GetPrefab(zdo.GetPrefab());
       if (prefab != null && PrefabNames.IsVehicle(prefab.name))
         vehicleZdos.Add(zdo);
