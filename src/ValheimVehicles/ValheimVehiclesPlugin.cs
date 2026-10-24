@@ -182,6 +182,7 @@ public class ValheimVehiclesPlugin : MonoBehaviour
     CustomMeshConfig.BindConfig(config, ModConfigSync);
     WaterConfig.BindConfig(config, ModConfigSync);
     PhysicsConfig.BindConfig(config, ModConfigSync);
+    AnchorConfig.BindConfig(config, ModConfigSync);
     MinimapConfig.BindConfig(config, ModConfigSync);
     HudConfig.BindConfig(config, ModConfigSync);
     CameraConfig.BindConfig(config, ModConfigSync);
