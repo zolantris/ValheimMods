@@ -600,18 +600,12 @@ public class RopeAnchorComponent : MonoBehaviour, Interactable, Hoverable
       DestroyAllRopes();
     }
 
-
-    // TODO do we allow docks clamp on vehicle to connect to anything on land?
-    // TODO do we only allow dock clamp on land to connect to a vehicle.
-
     var isLocalDockOnVehicle = GetComponentInParent<VehiclePiecesController>();
 
     var targetVehicle = go.GetComponentInParent<VehiclePiecesController>();
 
-    // do not allow two vehicles to dock to eachother. This should not be allowed and should not allow triggering build
-    // todo later this could be done to tow. But it would have to be guarded.
-
-    if (targetVehicle && isLocalDockOnVehicle)
+    // do not allow two vehicles to dock to each other. This should not be allowed and should not allow triggering build
+    if (IsDockAnchor() && targetVehicle && isLocalDockOnVehicle)
     {
       Player.m_localPlayer.Message(MessageHud.MessageType.Center, "Anchoring two vehicles is not supported");
       return;
