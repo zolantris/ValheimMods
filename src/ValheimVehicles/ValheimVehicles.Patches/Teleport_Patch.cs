@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection.Emit;
 using HarmonyLib;
@@ -53,7 +54,7 @@ public class Teleport_Patch
     IEnumerable<CodeInstruction> instructions)
   {
     var found = false;
-    List<CodeInstruction> list = instructions.ToList();
+    var list = instructions.ToList();
     for (var i = 0; i < list.Count; i++)
       if (list[i].Calls(AccessTools.Method(typeof(Character), "TeleportTo")))
       {
@@ -138,15 +139,37 @@ public class Teleport_Patch
 
     ZNetView? go = null;
 
-    var zoneId = ZoneSystem.GetZone(zdo.m_position);
+    Vector2s zoneId;
 
-    while (go == null)
+    var timer = Stopwatch.StartNew();
+
+    while (go == null && timer is
+           {
+             IsRunning: true,
+             ElapsedMilliseconds: < 10000
+           })
     {
+      // zdo could have swapped
+      zdo = ZDOMan.instance.GetZDO(zdoid);
+      if (zdo == null || !zdo.IsValid()) break;
       go = ZNetScene.instance.FindInstance(zdo);
       if (go) break;
       zoneId = ZoneSystem.GetZone(zdo.m_position);
       ZoneSystem.instance.PokeLocalZone(zoneId);
       yield return new WaitForFixedUpdate();
+    }
+
+    timer.Stop();
+
+    if (zdo == null || zdo.m_uid != zdoid)
+    {
+      zdo = ZDOMan.instance.GetZDO(zdoid);
+    }
+
+    if (zdo == null || !zdo.IsValid())
+    {
+      m_teleportTarget.Remove(__instance);
+      yield break;
     }
 
     zoneId = ZoneSystem.GetZone(zdo.m_position);
