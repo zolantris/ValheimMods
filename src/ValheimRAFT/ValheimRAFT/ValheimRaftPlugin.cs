@@ -108,9 +108,12 @@ public class ValheimRaftPlugin : BaseUnityPlugin
   }
 #endif
 
+  private static bool _isApplicationQuitting;
+
   public void Awake()
   {
     Instance = this;
+    Application.quitting += () => _isApplicationQuitting = true;
 
     // RegisterHost command might need to be called before AddComponent
     // - ValheimRAFT_API allows for accessing ValheimRAFT old apis through reflection
@@ -158,6 +161,9 @@ public class ValheimRaftPlugin : BaseUnityPlugin
 
   private void OnDestroy()
   {
+    // Unpatching re-generates every patched method while Unity is tearing down; on quit this
+    // stalls the main thread (black screen, audio keeps playing, process never exits).
+    if (_isApplicationQuitting) return;
     PatchController.UnpatchSelf();
   }
 

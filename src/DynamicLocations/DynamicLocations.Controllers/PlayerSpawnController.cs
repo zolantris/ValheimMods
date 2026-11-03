@@ -553,6 +553,7 @@ public class PlayerSpawnController : MonoBehaviour
     ZoneSystem.instance.PokeLocalZone(zoneId);
 
     yield return new WaitUntil(() =>
+      Player.m_localPlayer == null ||
       Player.m_localPlayer.IsTeleporting() == false || HasExpiredTimer(timer,
         DynamicLocationsConfig.LocationControlsTimeoutInMs.Value));
 

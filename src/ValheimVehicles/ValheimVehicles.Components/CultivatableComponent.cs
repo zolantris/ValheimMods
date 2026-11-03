@@ -19,7 +19,10 @@ public class CultivatableComponent : MonoBehaviour
 
   public bool isCultivatable { get; set; } = true;
 
-  public Heightmap m_heightmap;
+  // A HeightMap was removed here. Heightmap.Awake registers itself in Heightmap.s_heightmaps, but without a material it
+  // disables itself and never generates m_heights,. Once the vehicle sails into newly loaded zones it sits ahead of the
+  // real terrain in that list, so Heightmap.FindHeightmap/GetHeight near the vehicle resolve to it and throw
+  // ArgumentOutOfRangeException (e.g. Fireplace.CheckUnderTerrain every 4s per fire). Planting is handled by Plantable_Patch.
 
   public void Awake()
   {
@@ -28,8 +31,6 @@ public class CultivatableComponent : MonoBehaviour
     if ((bool)wnt)
       wnt.m_onDestroyed =
         (Action)Delegate.Combine(wnt.m_onDestroyed, new Action(OnDestroyed));
-
-    m_heightmap = gameObject.AddComponent<Heightmap>();
   }
 
   public void Start()

@@ -7,6 +7,7 @@
   using ValheimVehicles.Controllers;
   using ValheimVehicles.Integrations;
   using ValheimVehicles.Shared.Constants;
+  using ZdoWatcher.ZdoWatcher.Config;
   using Zolantris.Shared;
 
 #endregion
@@ -68,6 +69,9 @@
 
         zdo.TempRemoveEarmark = earmark;
       }
+
+      // Children destroyed along with a vehicle hierarchy leave dead entries that block IsAreaReady (infinite respawn load).
+      InvalidZNetScenePatch.PurgeDestroyedInstances(__instance, earmark);
 
       var tempRemoved = TempRemovedRef(__instance);
       var instances = InstancesRef(__instance);
