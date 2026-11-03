@@ -1,0 +1,7 @@
+﻿{
+  "name": "MultiPeer",
+  "version_number": "1.0.0",
+  "website_url": "https://github.com/zolantris/ValheimMods/tree/main/src/MultiPeer",
+  "description": "MultiPeer - allows booting multiple valheim instances on one machine to test client/server interactions and issues. Built for modders and testers.",
+  "dependencies": []
+}
