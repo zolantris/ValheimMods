@@ -28,7 +28,7 @@
 
   namespace ValheimVehicles.Controllers;
 
-  public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, IVehicleSharedProperties,
+  public partial class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, IVehicleSharedProperties,
     IValheimShip,
     IMonoUpdater
   {
@@ -354,7 +354,7 @@
       {
         nextAnchorState = PiecesController.m_anchorPieces.Count > 0;
       }
-      CanAnchor = nextAnchorState;
+      CanAnchor = nextAnchorState || VehicleAnchorPose.IsAnchored(this);
     }
 
     private void Update()
@@ -881,6 +881,20 @@
     }
 
     public void GuardedFixedUpdate(float deltaTime)
+    {
+      VehicleAnchorPose.Hold(this);
+      try
+      {
+        UpdateMovementPhysics(deltaTime);
+      }
+      finally
+      {
+        VehicleAnchorPose.Hold(this);
+        DispatchPendingAnchorInput();
+      }
+    }
+
+    private void UpdateMovementPhysics(float deltaTime)
     {
       if (VehicleGuiMenuConfig.AutoShowVehicleColliders.Value &&
           DebugTargetHeightObj != null)
@@ -1696,6 +1710,7 @@
     /// <returns></returns>
     public IEnumerator FixShipRotation()
     {
+      if (VehicleAnchorPose.Hold(this)) yield break;
       if (IsInvalid()) yield break;
       if (!IsOwner()) yield break;
       if (Manager == null) yield break;
@@ -1808,6 +1823,7 @@
 
       RegisterRPCListeners();
       SyncShip();
+      VehicleAnchorPose.Hold(this);
     }
 
     public string GetVehicleMapKey()
@@ -2044,6 +2060,9 @@
 
     public void UpdateAndFreezeRotation()
     {
+      // Do not queue a MoveRotation that would fight the saved anchor pose
+      // during the following physics simulation.
+      if (VehicleAnchorPose.Hold(this)) return;
       var isApproxZeroX = Mathf.Approximately(m_body.rotation.eulerAngles.x, 0);
       var isApproxZeroZ = Mathf.Approximately(m_body.rotation.eulerAngles.z, 0);
 
@@ -3116,6 +3135,20 @@
     /// Physics syncs on 1 client are better otherwise the ships will desync across clients and both will stutter
     public void VehicleMovementUpdatesOwnerOnly()
     {
+      UpdateAnchorCapabilities();
+      VehicleAnchorPose.Hold(this);
+      try
+      {
+        UpdateOwnerMovementPhysics();
+      }
+      finally
+      {
+        VehicleAnchorPose.Hold(this);
+      }
+    }
+
+    private void UpdateOwnerMovementPhysics()
+    {
       if (IsInvalid()) return;
 
       var hasOwner = m_nview.HasOwner();
@@ -3145,7 +3178,7 @@
       var isFlying = IsFlying();
 
 
-      if (!ShipFloatationObj.IsAboveBuoyantLevel || !isFlying)
+      if (!VehicleAnchorPose.Hold(this) && (!ShipFloatationObj.IsAboveBuoyantLevel || !isFlying))
         if (m_body.constraints != RigidbodyConstraints.None)
           m_body.constraints = RigidbodyConstraints.None;
 
@@ -4422,6 +4455,7 @@
 
     private void OnAnchorKeyPress()
     {
+      if (QueueAnchorInputDuringHandoff()) return;
       if (!CanAnchor) return;
       if (GetAnchorKeyUp())
       {
@@ -4615,6 +4649,7 @@
       if (!m_nview.IsOwner()) m_nview.ClaimOwnership();
       m_nview.GetZDO()?.Set(VehicleZdoVars.VehicleIsTeleporting, isTeleporting);
       m_nview.InvokeRPC(0L, nameof(RPC_SetIsTeleporting), isTeleporting);
+      if (isTeleporting) VehicleAnchorPose.Suspend(this);
     }
 
     internal void RPC_SetIsTeleporting(long sender, bool isTeleporting)
@@ -4722,6 +4757,18 @@
 
     private void SyncAnchor()
     {
+      if (VehicleAnchorPose.TryPendingAnchor(this, out var pending))
+      {
+        vehicleAnchorState = pending;
+        if (PiecesController != null) PiecesController.UpdateAnchorState(pending);
+        return;
+      }
+      // Piece capabilities are rebuilt during loading; they must not erase saved anchoring.
+      if (!CanAnchor && VehicleAnchorPose.IsAnchored(this))
+      {
+        vehicleAnchorState = AnchorState.Anchored;
+        return;
+      }
       if (ZNetView.m_forceDisableInit) return;
       if (!isActiveAndEnabled) return;
       // exit if we do not have anchor prefab or m_nview
@@ -4777,6 +4824,7 @@
       }
 
       vehicleAnchorState = state;
+      VehicleAnchorPose.AnchorChanged(this, state);
     }
 
     public void RPC_SetAnchor(long sender, int state)
@@ -5009,7 +5057,7 @@
     internal void RPC_SpeedChange(long sender, int speed)
     {
       if (isAnchored && PropulsionConfig.ShouldLiftAnchorOnSpeedChange.Value)
-        vehicleAnchorState = HandleSetAnchor(AnchorState.Reeling);
+        SetAnchor(AnchorState.Reeling);
 
       vehicleSpeed = (Ship.Speed)speed;
 

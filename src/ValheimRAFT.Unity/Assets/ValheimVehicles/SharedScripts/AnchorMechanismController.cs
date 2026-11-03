@@ -62,6 +62,7 @@ namespace ValheimVehicles.SharedScripts
     private static readonly Color messageColor = new(249f, 224f, 0f, 255f);
 
     private Rigidbody anchorRb;
+    public bool IsAnchorInitialized { get; private set; }
     private Vector3 anchorStartLocalPosition;
     private Transform anchorStateFadeTextTransform;
     private HoverFadeText anchorStateFadeText;
@@ -107,16 +108,35 @@ namespace ValheimVehicles.SharedScripts
       anchorStartLocalPosition = anchorRb.transform.localPosition;
 
       anchorStateFadeText = anchorStateFadeTextTransform.gameObject.AddComponent<HoverFadeText>();
+      IsAnchorInitialized = true;
     }
 
-    private void Start()
+    protected virtual void Start()
     {
-      // Initialize LineRenderer for rope visualization
+      // Initialize visuals without publishing a release for a saved, lowered anchor.
       if (ropeLine == null) ropeLine = GetComponent<LineRenderer>();
+      if (currentState == AnchorState.Idle || currentState == AnchorState.Recovered)
+      {
+        anchorTransform.localPosition = anchorStartLocalPosition;
+        AlignAnchorBody();
+      }
+      UpdateHoverText(GetCurrentStateText());
       UpdateRopeVisual();
-      UpdateAnchorState(AnchorState.Recovered, GetCurrentStateText());
+    }
 
-      anchorRb.transform.localPosition = anchorStartLocalPosition;
+    protected void AlignAnchorBody()
+    {
+      if (anchorRb == null || anchorTransform == null) return;
+      var position = anchorTransform.position;
+      if (!IsFinitePosition(position)) return;
+      if (!anchorRb.position.Equals(position)) anchorRb.position = position;
+    }
+
+    private static bool IsFinitePosition(Vector3 position)
+    {
+      return !float.IsNaN(position.x) && !float.IsInfinity(position.x) &&
+             !float.IsNaN(position.y) && !float.IsInfinity(position.y) &&
+             !float.IsNaN(position.z) && !float.IsInfinity(position.z);
     }
 
     /// <summary>
@@ -138,10 +158,11 @@ namespace ValheimVehicles.SharedScripts
       if (!isActiveAndEnabled) return;
       if (anchorRb == null || anchorTransform == null) return;
 
-      if (transform.position.sqrMagnitude - anchorTransform.position.sqrMagnitude > 0.5f)
-      {
-        anchorTransform.localPosition = GetAnchorStartLocalPosition();
-      }
+      // A deployed or reeling anchor is intentionally away from its raised rest.
+      if (currentState != AnchorState.Idle && currentState != AnchorState.Recovered) return;
+      if (!IsAnchorInitialized || !IsFinitePosition(anchorStartLocalPosition)) return;
+      anchorTransform.localPosition = anchorStartLocalPosition;
+      AlignAnchorBody();
     }
 
     private void Update()
@@ -347,7 +368,7 @@ namespace ValheimVehicles.SharedScripts
       }
     }
 
-    private void UpdateRopeVisual()
+    protected void UpdateRopeVisual()
     {
       if (ropeLine == null) return;
 

@@ -28,6 +28,14 @@ public class VehicleZSyncTransform : MonoBehaviour, IMonoUpdater
   public Vector3 m_positionCached = Vector3.zero;
   public Vector3 m_velocityCached = Vector3.zero;
   private bool _isReady = false;
+  private VehicleMovementController? _movementController;
+
+  private void HoldAnchorPose()
+  {
+    // VehicleManager can add movement after this component's Awake has completed.
+    if (!_movementController) _movementController = GetComponent<VehicleMovementController>();
+    VehicleAnchorPose.Hold(_movementController);
+  }
 
   public void Awake()
   {
@@ -42,6 +50,7 @@ public class VehicleZSyncTransform : MonoBehaviour, IMonoUpdater
       m_nview = GetComponentInParent<ZNetView>();
       m_body = GetComponentInParent<Rigidbody>();
       m_projectile = GetComponent<Projectile>();
+      _movementController = GetComponent<VehicleMovementController>();
       if (m_nview == null || m_nview.GetZDO() == null || !m_nview.IsValid() || m_body == null)
       {
         _isReady = false;
@@ -91,6 +100,19 @@ public class VehicleZSyncTransform : MonoBehaviour, IMonoUpdater
   }
 
   public void OwnerSync()
+  {
+    HoldAnchorPose();
+    try
+    {
+      SyncOwnerTransform();
+    }
+    finally
+    {
+      HoldAnchorPose();
+    }
+  }
+
+  private void SyncOwnerTransform()
   {
     if (!_isReady) return;
     // force updates kinematic body.
@@ -348,6 +370,19 @@ public class VehicleZSyncTransform : MonoBehaviour, IMonoUpdater
   }
 
   public void ClientSync(float dt)
+  {
+    try
+    {
+      SyncClientTransform(dt);
+    }
+    finally
+    {
+      // Leave interpolation and velocity synchronization intact on unlocked axes.
+      HoldAnchorPose();
+    }
+  }
+
+  private void SyncClientTransform(float dt)
   {
     if (!_isReady) return;
     var zdo = m_nview.GetZDO();

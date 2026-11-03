@@ -33,6 +33,25 @@
     }
 
     public VehicleMovementController? MovementController;
+    private bool _hasAnchorGround;
+    private Vector2 _anchorGroundXZ;
+    private float _anchorGroundHeight;
+    private float _nextAnchorGroundRefresh;
+
+    protected override void Start()
+    {
+      base.Start();
+      RestoreSavedAnchorVisual();
+    }
+
+    internal void RestoreSavedAnchorVisual()
+    {
+      if (!IsAnchorInitialized || MovementController == null || IsLandVehicle() ||
+          MovementController.IsFlying() || !VehicleAnchorPose.IsAnchored(MovementController)) return;
+      currentState = AnchorState.Anchored;
+      UpdateHoverText(GetCurrentStateText());
+      UpdateAnchorPositionIfNotNearGround();
+    }
 
     public override void FixedUpdate()
     {
@@ -40,12 +59,42 @@
       if (currentState == AnchorState.Lowering) UpdateDistanceToGround();
     }
 
+    private void LateUpdate()
+    {
+      if (currentState != AnchorState.Anchored || MovementController == null ||
+          IsLandVehicle() || MovementController.IsFlying()) return;
+      // The ship may bob while its deployed anchor stays on the seabed.
+      UpdateAnchorPositionIfNotNearGround();
+      UpdateRopeVisual();
+    }
+
+    private float GetAnchorGroundHeight(Vector3 position)
+    {
+      var xz = new Vector2(position.x, position.z);
+      // A parked ship needs no terrain raycast every frame. Refresh periodically
+      // for terrain edits, or when an unlocked ship moves horizontally.
+      if (!_hasAnchorGround || Time.time >= _nextAnchorGroundRefresh ||
+          (xz - _anchorGroundXZ).sqrMagnitude > 0.0001f)
+      {
+        _anchorGroundHeight = ZoneSystem.instance.GetGroundHeight(position);
+        _anchorGroundXZ = xz;
+        _nextAnchorGroundRefresh = Time.time + 1f;
+        _hasAnchorGround = true;
+      }
+      return _anchorGroundHeight;
+    }
+
     public float GetDistanceToGround()
     {
-      var position = transform.position - GetAnchorStartLocalPosition();
+      var position = GetRaisedAnchorWorldPosition();
       var distanceFromAnchorToGround =
         position.y - ZoneSystem.instance.GetGroundHeight(position);
       return distanceFromAnchorToGround;
+    }
+
+    private Vector3 GetRaisedAnchorWorldPosition()
+    {
+      return anchorTransform.parent.TransformPoint(GetAnchorStartLocalPosition());
     }
 
     public void UpdateDistanceToGround()
@@ -84,15 +133,24 @@
     }
 
     /// <summary>
-    /// Catch all if the anchor is not near the ground when it becomes anchored, move it down to the ground. This always happens on initial spawn.
+    /// Place the deployed anchor below its raised rest, at the ground or the maximum drop distance.
     /// </summary>
     public void UpdateAnchorPositionIfNotNearGround()
     {
-      var deltaGround = GetDistanceToGround();
-      if (!(deltaGround > 2)) return;
-      var newPos = GetAnchorStartLocalPosition();
-      newPos.y -= deltaGround;
-      anchorTransform.localPosition = newPos;
+      // Piece activation can run before Awake captures the prefab's raised rest.
+      if (!IsAnchorInitialized || !anchorTransform) return;
+      var raisedPosition = GetRaisedAnchorWorldPosition();
+      var deltaGround = raisedPosition.y - GetAnchorGroundHeight(raisedPosition);
+      if (float.IsNaN(deltaGround) || float.IsInfinity(deltaGround)) return;
+      // Lower in world space, matching the physical drop/reel direction even
+      // when the boat or anchor mount is tilted.
+      // Keep shallow anchors deployed instead of returning them to their raised
+      // rest. A raised rest at or below the ground stays where it is.
+      var drop = Mathf.Clamp(deltaGround, 0f, maxAnchorDistance);
+      var deployedPosition = raisedPosition + Vector3.down * drop;
+      if ((anchorTransform.position - deployedPosition).sqrMagnitude > 0.00000001f)
+        anchorTransform.position = deployedPosition;
+      AlignAnchorBody();
     }
 
     public override void OnAnchorStateChange(AnchorState newState)
@@ -121,6 +179,6 @@
       }
 
       if (MovementController != null && MovementController.m_nview.IsOwner())
-        MovementController.SendSetAnchor(newState);
+        MovementController.CompleteAnchorTransition(this, newState);
     }
   }
